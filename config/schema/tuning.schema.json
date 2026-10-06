@@ -4695,6 +4695,48 @@
       "type": "number",
       "minimum": 0
     },
+    "simLod": {
+      "type": "object",
+      "properties": {
+        "full": {
+          "type": "object",
+          "properties": {
+            "ground": {
+              "type": "number",
+              "minimum": 0
+            },
+            "treetop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ground",
+            "treetop"
+          ],
+          "additionalProperties": false
+        },
+        "action": {
+          "type": "number",
+          "minimum": 0
+        },
+        "band": {
+          "type": "number",
+          "minimum": 0
+        },
+        "every": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "full",
+        "action",
+        "band",
+        "every"
+      ],
+      "additionalProperties": false
+    },
     "creatureSpeed": {
       "type": "number",
       "minimum": 0
@@ -4873,6 +4915,7 @@
     "dreams",
     "wildLegends",
     "creatureSimRadius",
+    "simLod",
     "creatureSpeed",
     "setPieceChance",
     "setPieceScale",

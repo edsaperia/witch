@@ -4,6 +4,7 @@
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
+import { coarseTurn, inFull, type LodCounts } from "./simLod";
 import { questFor, type Quest } from "./quest";
 import { rng } from "./random";
 import { countScale, startCount } from "./growth";
@@ -54,6 +55,8 @@ export interface Creature {
   walk: number;
   /** Game time it was last simulated. */
   seen: number;
+  /** Its level of detail (rules/simLod.ts) when last stepped: in full, or coarse (unset: never decided). */
+  lod?: "full" | "coarse";
   /** Invited, so leashed: to the witch or a placed sigil (rules/leash.ts moves it, not its roam). */
   leashed: boolean;
   /** Combat (rules/combat.ts): its health (maxHp by level when unset), when it was last hurt,
@@ -281,18 +284,20 @@ export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wande
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and
  *  the time), rather than where it was left. A `dormant` one (a wild legend still asleep) stays
  *  where it lies. */
-export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, seen = Infinity): void {
-  // Beyond `seen` (where none can be in sight: wild areas grow, Ed 2026-10-04, so there are
-  // thousands more) they roam every 4th step, by four steps at once, taking turns by id.
+export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts): void {
+  // In full within lod.full of her (what the view can show); beyond, coarsely (rules/simLod.ts):
+  // once every lod.every steps, by that many steps at once, taking turns by id; past `radius`
+  // (by its home) not at all.
   const tick = Math.round(time / dt);
   for (const c of all) {
     if (c.leashed || c.gone) continue;
     const ax = Math.abs(c.homeX - x), az = Math.abs(c.homeZ - z);
-    if (ax > radius || az > radius) continue;
-    const slow = ax > seen || az > seen;
-    if (slow && (tick + c.id) % 4 !== 0 && time - c.seen <= 3) { if (!heldByCombat(c)) c.seen = time; continue; }
-    if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
+    if (ax > radius || az > radius) { if (counts) counts.frozen++; continue; }
     if (heldByCombat(c)) { c.seen = time; continue; } // fighting, fleeing, marching or walking home: moved by combat and knockout
+    const full = inFull(c, Math.max(Math.abs(c.x - x), Math.abs(c.z - z)), lod.full, lod.band);
+    if (counts) { if (full) counts.full++; else counts.coarse++; }
+    if (!full && !coarseTurn(tick, c.id, lod.every) && time - c.seen <= 3) continue; // (its turn comes well within 3 s: `seen` is kept fresh by it)
+    if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);
       [c.x, c.z] = pointInArea(map, c, r);
@@ -300,7 +305,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
       c.rest = r() * 2;
     }
     c.seen = time;
-    stepCreature(c, slow ? dt * 4 : dt, map);
+    stepCreature(c, full ? dt : dt * lod.every, map);
   }
 }
 
