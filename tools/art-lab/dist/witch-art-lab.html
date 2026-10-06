@@ -1793,6 +1793,218 @@ const masks = {
 // the hat and cloak in neighbouring hues, the jacket against them).
 
 
+// ---- inlined from art/brooms.js ----
+// The broom's other kinds (Ed, 2026-10-06: "create some different kinds of broom; a missile, a curled tip, handlebars, hobby horse,
+// jet bike, oar, mop, pitchfork, canoe, wicker basket, ladder, speeder bike, bicycle, quad drone"; later: "a gyrocopter", and the
+// wicker basket left out). Each is drawn where her broom is
+// (art/witch.js broomHandle and broomBristles: the handle from its binding a to its nose b, the bristles' end at c, o.dir toward the
+// nose), so every pose that holds or rides a broom rides these too. Two colours, the creator's Broom box's two pickers: the body
+// (M.BROOM, the handle's) and the trim (M.STRAW, the bristles'); flames, exhausts and lights glow in her magic (M.MAGIC, MAGIC2).
+// The length knob stretches every one; the bend bows those still on a stick; the bristles knob grows its back end (the flame, the
+// blade, the mop, the tines). Moving bits turn with the frame (L.frame): the rotors, the wheels, the flames, the drips.
+
+
+/** The kinds after hers (classic, fan, twig, round), in the creator's order. */
+const NEW_BROOMS = ["missile", "curl", "handlebars", "hobbyhorse", "jetbike", "oar", "mop", "pitchfork", "canoe", "ladder", "speeder", "bicycle", "drone", "gyrocopter"];
+/** She sits in these (knees up) rather than astride. */
+const SIT_IN = new Set(["canoe"]);
+/** On foot these stand on the ground beside her (how high their binding is) rather than being held like a staff. */
+const PARKED = { canoe: .15, gyrocopter: .3, bicycle: .35, jetbike: .14, speeder: .1, drone: .11 };
+
+const BR_BODY = 2, BR_TAIL = 3, BR_TRIM = 13, BR_GLOW = 16, BR_BITS = 17; // groups: different ones meet with a crease, so the pieces read apart
+const BR_SIDE = [0, 0, 1];
+// The broom's frame: its binding a, its nose e (a towards b, longer by broomLength), along it d, its up and its side.
+function broomAlong(L, a, b) {
+  const e = v3.add(a, v3.mul(v3.sub(b, a), L.broomLength ?? 1)), len = Math.hypot(...v3.sub(e, a)), d = v3.norm(v3.sub(e, a)), up = v3.norm(v3.cross(BR_SIDE, d));
+  return { a, e, d, up, len, at: (t, u = 0, s = 0) => v3.add(v3.add(v3.add(a, v3.mul(d, t)), v3.mul(up, u)), v3.mul(BR_SIDE, s)) };
+}
+const broomTail = (c, r, o) => { const d = v3.norm(o.dir), up = v3.norm(v3.cross(BR_SIDE, d)), bind = v3.add(c, v3.mul(d, r[0] * .76)); return { d, up, bind, at: (t, u = 0, s = 0) => v3.add(v3.add(v3.add(bind, v3.mul(d, t)), v3.mul(up, u)), v3.mul(BR_SIDE, s)) }; };
+const broomF4 = L => (L.frame ?? 0) % 4;
+const broomFlick = L => [1, .8, 1.15, .9][broomF4(L)];
+// A plain stick, bowed by the bend (as hers).
+function broomStick(m, L, a, b, r1, r2) {
+  const F = broomAlong(L, a, b), bend = L.broomBend || 0;
+  if (!bend) m.seg(a, F.e, r1, r2, M.BROOM, { group: BR_BODY });
+  else m.chain([[...a, r1], [...v3.add(v3.lerp(a, F.e, .55), [0, bend * .12, 0]), (r1 + r2) / 2], [...F.e, r2]], M.BROOM, { group: BR_BODY });
+  return F;
+}
+// A ring of n segments round c in the plane of u and v.
+function broomRing(m, c, u, v, R, r, mat, group, n = 12) {
+  const p = k => v3.add(c, v3.add(v3.mul(u, R * Math.cos(k / n * Math.PI * 2)), v3.mul(v, R * Math.sin(k / n * Math.PI * 2))));
+  for (let k = 0; k < n; k++) m.seg(p(k), p(k + 1), r, r, mat, { group });
+}
+// A wheel: a dark tyre, a hub and three spokes turned by the frame.
+function broomWheel(m, c, d, up, R, turn) {
+  broomRing(m, c, d, up, R, .016, M.NOSE, BR_BITS, 14);
+  m.ell(c, [.025, .025, .02], M.STRAW, { group: BR_TRIM });
+  for (let k = 0; k < 3; k++) { const a = turn + k * Math.PI * 2 / 3; m.seg(c, v3.add(c, v3.add(v3.mul(d, R * Math.cos(a)), v3.mul(up, R * Math.sin(a)))), .008, .008, M.STRAW, { group: BR_TRIM }); }
+}
+
+// Each kind: body(m, L, a, b, r1, r2) in place of the handle, and tail(m, L, c, r, o) in place of the bristles (either may be absent:
+// a plain stick, no back end).
+const BROOM_KINDS = {
+  // a missile: a fat body with a pointed nose, fins at the back and a flame
+  missile: {
+    body(m, L, a, b) { const F = broomAlong(L, a, b); m.seg(a, F.e, .052, .052, M.BROOM, { group: BR_BODY }); m.seg(F.e, v3.add(F.e, v3.mul(F.d, .17)), .052, .006, M.STRAW, { group: BR_TRIM }); m.seg(F.at(F.len * .8), F.at(F.len * .84), .056, .056, M.STRAW, { group: BR_TRIM }); },
+    tail(m, L, c, r, o) {
+      const T = broomTail(c, r, o), k = L.bristles ?? 1;
+      for (const v of [T.up, v3.mul(T.up, -1), BR_SIDE, v3.mul(BR_SIDE, -1)]) m.box(v3.add(T.at(.02), v3.mul(v, .075)), [.065, .04, .007], M.STRAW, { dir: T.d, up: v, group: BR_TRIM, round: .006 });
+      const fl = .13 * k * broomFlick(L);
+      m.ell(T.at(-fl * .75), [fl, .045, .045], M.MAGIC, { dir: T.d, group: BR_GLOW, extra: true });
+      m.ell(T.at(-fl * .45), [fl * .5, .025, .025], M.MAGIC2, { dir: T.d, group: BR_GLOW, extra: true });
+    },
+  },
+  // a curled tip: hers, the nose rolled up into a curl
+  curl: {
+    bristles: true, // (hers at the back)
+    body(m, L, a, b, r1, r2) {
+      const F = broomStick(m, L, a, b, r1, r2), e = F.e, pts = [];
+      for (let i = 0; i <= 12; i++) { const th = i * .62, R = .075 * (1 - i / 16); pts.push([...v3.add(v3.add(e, v3.mul(F.d, Math.sin(th) * R)), v3.mul(F.up, R - Math.cos(th) * R)), r2 * (1 - i / 22)]); }
+      m.chain(pts, M.BROOM, { group: BR_BODY });
+    },
+  },
+  // handlebars: a stem up from the nose and a bar across it with grips
+  handlebars: {
+    bristles: true,
+    body(m, L, a, b, r1, r2) {
+      const F = broomStick(m, L, a, b, r1, r2), top = v3.add(F.e, v3.mul(F.up, .09));
+      m.seg(F.e, top, .016, .014, M.BROOM, { group: BR_BODY });
+      m.seg(v3.add(top, [0, 0, -.13]), v3.add(top, [0, 0, .13]), .013, .013, M.BROOM, { group: BR_TRIM });
+      for (const s of [-1, 1]) m.seg(v3.add(top, [0, 0, s * .1]), v3.add(top, [0, 0, s * .15]), .022, .022, M.STRAW, { group: BR_BITS });
+    },
+  },
+  // a hobby horse: a horse's head on the nose, a little wheel at the back
+  hobbyhorse: {
+    body(m, L, a, b, r1, r2) {
+      const F = broomStick(m, L, a, b, r1, r2), neck = v3.add(v3.add(F.e, v3.mul(F.d, .05)), v3.mul(F.up, .13)), head = v3.add(neck, v3.add(v3.mul(F.d, .07), v3.mul(F.up, .02)));
+      m.seg(F.e, neck, .035, .03, M.STRAW, { group: BR_TRIM });
+      m.ell(head, [.085, .042, .038], M.STRAW, { dir: v3.norm(v3.sub(F.d, v3.mul(F.up, .7))), up: F.up, group: BR_TRIM });
+      for (const s of [-1, 1]) { m.seg(v3.add(neck, [0, 0, s * .018]), v3.add(v3.add(neck, v3.mul(F.up, .06)), [0, 0, s * .022]), .014, .004, M.STRAW, { group: BR_TRIM }); m.ell(v3.add(head, [0, 0, s * .037]), [.012, .012, .006], M.EYE, { group: BR_TRIM }); }
+      m.chain([[...v3.add(neck, v3.mul(F.up, .03)), .022], [...v3.add(v3.lerp(F.e, neck, .5), v3.mul(F.d, -.035)), .02], [...v3.add(F.e, v3.mul(F.d, -.04)), .012]], M.BROOM, { group: BR_BITS }); // the mane
+    },
+    tail(m, L, c, r, o) { const T = broomTail(c, r, o); m.seg(T.at(.0), T.at(-.04), .015, .015, M.BROOM, { group: BR_BODY }); broomWheel(m, T.at(-.05), T.d, T.up, .05, broomF4(L) * Math.PI / 6); },
+  },
+  // a jet bike: a fat fairing under her, a windscreen, twin nozzles glowing at the back
+  jetbike: {
+    body(m, L, a, b) {
+      const F = broomAlong(L, a, b);
+      m.ell(v3.add(v3.lerp(a, F.e, .5), v3.mul(F.up, -.05)), [F.len * .52, .075, .085], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY });
+      m.ell(v3.add(F.at(F.len * .8), v3.mul(F.up, .03)), [.08, .04, .065], M.STRAW, { dir: v3.norm(v3.add(F.d, v3.mul(F.up, .5))), group: BR_TRIM });
+      m.seg(F.at(F.len * .25, -.06, .09), F.at(F.len * .7, -.06, .09), .012, .012, M.STRAW, { group: BR_TRIM }); // a stripe down each side
+      m.seg(F.at(F.len * .25, -.06, -.09), F.at(F.len * .7, -.06, -.09), .012, .012, M.STRAW, { group: BR_TRIM });
+    },
+    tail(m, L, c, r, o) {
+      const T = broomTail(c, r, o), k = L.bristles ?? 1, fl = .09 * k * broomFlick(L);
+      for (const s of [-1, 1]) { m.seg(T.at(.04, -.05, s * .045), T.at(-.05, -.05, s * .05), .03, .036, M.STRAW, { group: BR_TRIM }); m.ell(T.at(-.06 - fl * .6, -.05, s * .05), [fl, .028, .028], M.MAGIC, { dir: T.d, group: BR_GLOW, extra: true }); }
+    },
+  },
+  // an oar: hers, its back end a flat blade
+  oar: { body: broomStick, tail(m, L, c, r, o) { const T = broomTail(c, r, o), k = L.bristles ?? 1; m.seg(T.at(.0), T.at(-.06), .024, .028, M.STRAW, { group: BR_TRIM }); m.ell(T.at(-.06 - .17 * k), [.19 * k, .075, .016], M.STRAW, { dir: T.d, up: T.up, group: BR_TRIM }); } },
+  // a mop: a shaggy head of strands, dripping
+  mop: {
+    body: broomStick,
+    tail(m, L, c, r, o) {
+      const T = broomTail(c, r, o), k = L.bristles ?? 1, f = broomF4(L);
+      m.ell(T.at(-.01), [.04, .035, .035], M.STRAW, { dir: T.d, group: BR_TRIM });
+      for (let i = 0; i < 10; i++) {
+        const a = i / 10 * Math.PI * 2, out = v3.add(v3.mul(T.up, Math.cos(a)), v3.mul(BR_SIDE, Math.sin(a))), sway = [0, .015, .025, .01][(f + i) % 4];
+        const end = v3.add(v3.add(T.at(-.16 * k), v3.mul(out, .06)), [0, -.05 - .03 * k + sway, 0]);
+        m.chain([[...T.at(-.02), .016], [...v3.add(T.at(-.09 * k), v3.mul(out, .05)), .015], [...end, .012]], M.STRAW, { group: i % 2 ? BR_TAIL : BR_BITS });
+      }
+      for (let i = 0; i < 2; i++) { const t = ((f + i * 2) % 4) / 4; m.ell(v3.add(T.at(-.12 * k - i * .05), [0, -.12 - t * .12, (i - .5) * .04]), [.011, .016, .011], M.MAGIC2, { group: BR_GLOW, extra: true }); } // drips, falling
+    },
+  },
+  // a pitchfork: its back end three tines
+  pitchfork: {
+    body: broomStick,
+    tail(m, L, c, r, o) {
+      const T = broomTail(c, r, o), k = L.bristles ?? 1;
+      m.seg(T.at(.02), T.at(-.02), .022, .026, M.STRAW, { group: BR_TRIM });
+      m.chain([[...T.at(-.03, 0, -.065), .012], [...T.at(-.045, 0, 0), .014], [...T.at(-.03, 0, .065), .012]], M.STRAW, { group: BR_TRIM });
+      for (const s of [-.065, 0, .065]) m.chain([[...T.at(-.035, 0, s), .011], [...T.at(-.12 * k, .012, s * 1.08), .009], [...T.at(-.22 * k, .02, s * 1.1), .004]], M.STRAW, { group: BR_TRIM });
+    },
+  },
+  // a canoe: a hollow hull she sits in, its inside in the trim colour
+  canoe: {
+    body(m, L, a, b) {
+      const F = broomAlong(L, a, b), c = v3.add(v3.lerp(a, F.e, .45), v3.mul(F.up, -.06));
+      m.ell(c, [F.len * .6, .085, .14], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY });
+      m.ell(v3.add(c, v3.mul(F.up, .045)), [F.len * .55, .085, .115], M.STRAW, { dir: F.d, up: F.up, group: BR_BODY, cut: true });
+      for (const t of [-.5, .55]) m.seg(v3.add(c, v3.mul(F.d, t * F.len)), v3.add(v3.add(c, v3.mul(F.d, t * F.len * 1.12)), v3.mul(F.up, .1)), .02, .012, M.BROOM, { group: BR_TRIM }); // its ends sweeping up
+    },
+  },
+  // a ladder: two rails and rungs
+  ladder: {
+    body(m, L, a, b) {
+      const F = broomAlong(L, a, b), n = Math.max(3, Math.round(F.len / .11));
+      for (const s of [-.075, .075]) m.seg(F.at(0, 0, s), F.at(F.len, 0, s), .016, .016, M.BROOM, { group: BR_BODY });
+      for (let i = 0; i <= n; i++) m.seg(F.at(F.len * (i + .5) / (n + 1), 0, -.075), F.at(F.len * (i + .5) / (n + 1), 0, .075), .011, .011, M.STRAW, { group: BR_TRIM });
+    },
+  },
+  // a speeder bike: a slim body, two prongs out front with vanes, an engine glowing at the back
+  speeder: {
+    body(m, L, a, b) {
+      const F = broomAlong(L, a, b);
+      m.ell(v3.add(v3.lerp(a, F.e, .5), v3.mul(F.up, -.03)), [F.len * .5, .045, .055], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY });
+      for (const s of [-1, 1]) {
+        m.seg(F.at(F.len * .85, -.02, s * .03), F.at(F.len + .25, -.03, s * .07), .018, .01, M.STRAW, { group: BR_TRIM });
+        m.box(F.at(F.len + .2, -.03, s * .075), [.045, .035, .005], M.BROOM, { dir: F.d, up: F.up, group: BR_BITS, round: .004 });
+      }
+    },
+    tail(m, L, c, r, o) { const T = broomTail(c, r, o), k = L.bristles ?? 1, fl = .06 * k * broomFlick(L); m.ell(T.at(.03, -.03), [.11, .06, .07], M.STRAW, { dir: T.d, group: BR_TRIM }); m.ell(T.at(-.08 - fl * .5, -.03), [fl, .045, .05], M.MAGIC, { dir: T.d, group: BR_GLOW, extra: true }); },
+  },
+  // a bicycle: a frame under the handle, two wheels turning, a saddle and handlebars
+  bicycle: {
+    body(m, L, a, b) {
+      const F = broomAlong(L, a, b), turn = broomF4(L) * Math.PI / 6, R = .14, low = -.2;
+      const rear = F.at(.04, low), front = F.at(F.len - .02, low), seat = F.at(.46, -.02), bb = F.at(.5, low + .02), head = F.at(F.len - .1, 0);
+      broomWheel(m, rear, F.d, F.up, R, turn); broomWheel(m, front, F.d, F.up, R, turn);
+      for (const [p, q] of [[F.at(.36, 0), head], [head, bb], [seat, bb], [bb, rear], [seat, rear], [head, front]]) m.seg(p, q, .016, .016, M.BROOM, { group: BR_BODY });
+      m.ell(v3.add(seat, v3.mul(F.up, .03)), [.06, .018, .04], M.STRAW, { dir: F.d, up: F.up, group: BR_TRIM });
+      const top = v3.add(head, v3.mul(F.up, .07)); m.seg(head, top, .014, .014, M.BROOM, { group: BR_BODY }); m.seg(v3.add(top, [0, 0, -.1]), v3.add(top, [0, 0, .1]), .012, .012, M.STRAW, { group: BR_TRIM });
+      const cr = [Math.cos(turn * 2), Math.sin(turn * 2)]; for (const s of [-1, 1]) m.seg(bb, v3.add(bb, v3.add(v3.add(v3.mul(F.d, s * .05 * cr[0]), v3.mul(F.up, s * .05 * cr[1])), [0, 0, s * .03])), .01, .01, M.STRAW, { group: BR_BITS }); // the cranks
+    },
+  },
+  // a quad drone: a plate under her, four arms, rotors spinning, lights at their ends
+  drone: {
+    body(m, L, a, b) {
+      const F = broomAlong(L, a, b), c = v3.add(v3.add(a, v3.mul(F.d, .46)), v3.mul(F.up, -.06)), k = (L.broomLength ?? 1), turn = (L.frame ?? 0) * Math.PI / 3;
+      m.ell(c, [.15, .04, .13], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY });
+      m.ell(v3.add(c, v3.mul(F.up, -.045)), [.05, .03, .05], M.STRAW, { group: BR_TRIM }); // its camera, underneath
+      for (const [p, q] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const hub = v3.add(c, v3.add(v3.mul(F.d, p * .3 * k), [0, 0, q * .28 * k])), top = v3.add(hub, v3.mul(F.up, .05));
+        m.seg(c, hub, .022, .02, M.BROOM, { group: BR_BODY }); m.seg(hub, top, .03, .026, M.STRAW, { group: BR_TRIM });
+        const t = turn + (p * q > 0 ? 0 : Math.PI / 2), dr = v3.add(v3.mul(F.d, Math.cos(t) * .13), [0, 0, Math.sin(t) * .13]);
+        m.seg(v3.sub(top, dr), v3.add(top, dr), .014, .014, M.STRAW, { group: BR_BITS });
+        broomRing(m, top, F.d, BR_SIDE, .13, .006, M.STRAW, BR_BITS + 1, 12); // the blur of its blades
+        m.ell(v3.add(hub, v3.mul(F.up, -.02)), [.016, .016, .016], p > 0 ? M.MAGIC : M.MAGIC2, { group: BR_GLOW });
+      }
+    },
+  },
+  // a gyrocopter: a keel under her with a bubble nose, a mast behind her up past her hat, a big rotor turning on it, a tail fin and a
+  // pusher propeller at the back
+  gyrocopter: {
+    body(m, L, a, b) {
+      const F = broomAlong(L, a, b), turn = (L.frame ?? 0) * Math.PI / 3;
+      m.seg(F.at(0, -.06), F.at(F.len, -.06), .03, .028, M.BROOM, { group: BR_BODY });
+      m.ell(F.at(F.len - .02, -.02), [.1, .07, .07], M.STRAW, { dir: F.d, up: F.up, group: BR_TRIM }); // the nose
+      const foot = F.at(.3, -.04), top = v3.add(F.at(.24, 0), v3.mul(F.up, .98));
+      m.seg(foot, top, .022, .016, M.BROOM, { group: BR_BODY });
+      m.ell(top, [.03, .025, .03], M.STRAW, { group: BR_TRIM });
+      for (const k of [0, 1]) { const t = turn + k * Math.PI, dr = v3.add(v3.mul(F.d, Math.cos(t) * .5), [0, 0, Math.sin(t) * .5]); m.seg(top, v3.add(top, dr), .02, .014, M.STRAW, { group: BR_BITS, extra: true }); }
+      broomRing(m, v3.add(top, v3.mul(F.up, -.005)), F.d, BR_SIDE, .5, .005, M.BROOM, BR_BITS + 1, 20); // the blur of its rotor
+      for (const s2 of [-1, 1]) m.seg(F.at(.5, -.07, s2 * .02), F.at(.42, -.25, s2 * .13), .012, .012, M.BROOM, { group: BR_BITS }); // its little legs
+    },
+    tail(m, L, c, r, o) {
+      const T = broomTail(c, r, o), turn = (L.frame ?? 0) * Math.PI / 4 + .4;
+      m.box(T.at(.0, .08), [.07, .08, .008], M.STRAW, { dir: T.d, up: T.up, group: BR_TRIM, round: .006 }); // the fin
+      m.ell(T.at(-.03, -.06), [.03, .025, .025], M.STRAW, { group: BR_TRIM });
+      for (const k of [0, 1]) { const t = turn + k * Math.PI, dr = v3.add(v3.mul(T.up, Math.cos(t) * .11), [0, 0, Math.sin(t) * .11]); m.seg(T.at(-.05, -.06), v3.add(T.at(-.05, -.06), dr), .012, .008, M.BROOM, { group: BR_BITS }); }
+    },
+  },
+};
+
+
 // Ours: every axis as she is.
 const WITCH_GENOME = {
   hat: { shape: "classic", height: 1, brim: 1, tilt: 0, band: 1 },
@@ -1810,13 +2022,14 @@ const WITCH_AXES = {
   hatShape: ["none", "classic", "crooked", "floppy", "small", "flowers", "top", "cowboy", "conical", "boppers", "party", "musketeer", "wizard", "beanie", "crown", "mushroom", "traffic"],
   hatHeight: [.3, 3], hatBrim: [.3, 2.6], hatTilt: [-.9, 1], hatBand: [0, 4],
   hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"], cloak: ["none", "short", "long", "hooded"],
-  broom: ["classic", "fan", "twig", "round"], broomLength: [.4, 2.4], broomBend: [-1.2, 1.5], bristles: [.3, 3],
+  broom: ["classic", "fan", "twig", "round", ...NEW_BROOMS], broomLength: [.4, 2.4], broomBend: [-1.2, 1.5], bristles: [.3, 3],
   scarfLength: [0, 7], bagSize: [.4, 2.6], backpackSize: [0, 2.5],
   cloakLength: [.6, 6], familiar: ["none", "cat", "crow", "toad", "bat"], // (Ed, on #98: "Longer cloaks."; 2026-10-06: "allow a longer cloak and a longer scarf"; the familiar, an accessory with a choice: accessories.familiar)
 };
 // The generator's own limits (narrower: a new witch is a witch, a pointed hat with its glowing band; as before round 2, so a seed draws as it did).
 const WITCH_RANDOM = {
   hatShape: ["classic", "crooked", "floppy", "small", "flowers"],
+  broom: ["classic", "fan", "twig", "round"], // (a broom: the other kinds, art/brooms.js, are the creator's)
   hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4],
 };
 const SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
@@ -1842,7 +2055,7 @@ function witchGenome(seed = 0, { party = false } = {}) {
   const WITCHY = WITCH_RANDOM.hatShape, OTHER = WITCH_AXES.hatShape.filter(h => !WITCHY.includes(h) && h !== "none"), hs = r();
   const shape = hs < .66 ? pick(WITCHY) : hs < .97 ? pick(OTHER) : "none", hat = { shape, height: uni([.75, shape === "wizard" ? 1.2 : 1.6]), brim: uni([.85, shape === "floppy" ? 1.5 : 1.9]), tilt: uni(WITCH_RANDOM.hatTilt), band: uni([1.7, 2.4]) }; // a broad band, so it always shows; brims up to nearly twice hers (a floppy one's to 1.5, so its point still shows)
   const hair = pick(WITCH_AXES.hair), top = pick(WITCH_AXES.top), ck = r(), cloak = ck < .15 ? "none" : ck < .35 ? "short" : ck < .7 ? "long" : "hooded"; // cloaks mostly long
-  const broom = { kind: pick(WITCH_AXES.broom), length: uni(WITCH_RANDOM.broomLength), bend: uni(WITCH_RANDOM.broomBend), bristles: uni(WITCH_RANDOM.bristles) };
+  const broom = { kind: pick(WITCH_RANDOM.broom), length: uni(WITCH_RANDOM.broomLength), bend: uni(WITCH_RANDOM.broomBend), bristles: uni(WITCH_RANDOM.bristles) };
   const k = party ? 1.6 : 1, fk = r(), familiar = fk < .5 ? "none" : WITCH_AXES.familiar[1 + Math.floor((fk - .5) / .5 * 4)];
   const accessories = { phones: chance(.55), shades: chance(.25 * k) ? (chance(.5) ? "round" : true) : false, glowsticks: chance(.2 * k), scarf: chance(.35), satchel: chance(.3), pendant: chance(.3), earrings: chance(.4),
     familiar, lantern: chance(.22), vial: chance(.3), book: chance(.2), patches: cloak !== "none" && chance(.35), bumbag: chance(.22 * k), wristband: chance(.3 * k), chunky: chance(.35) };
@@ -1874,6 +2087,7 @@ function witchGenomeProblems(g) {
   if (g.palette) for (const [k, c] of Object.entries(g.palette)) if (!(Array.isArray(c) && c.length === 3 && c.every(v => v >= 0 && v <= 1))) out.push("palette " + k);
   return out;
 }
+
 
 
 // Her parts and the material each is drawn in. The last few are a party outfit's: its pattern and trim (sequins, a mesh,
@@ -1927,13 +2141,16 @@ const brimR = (L, r) => (L.hatBrim ?? 1) === 1 ? r : [r[0] * L.hatBrim, r[1], r[
 // The broom from the look: its handle from the binding a towards b (longer by broomLength, bowed up by broomBend), and its
 // bristles centred at c along o.dir (classic as hers; fan: wide and flat; twig: a long thin bundle with stray twigs; round: a puff),
 // longer by `bristles`, kept bound at the same point.
+// The other kinds (art/brooms.js: a missile, a canoe, a quad drone...) draw their own body and back end in the same places.
 function broomHandle(m, L, a, b, r1 = .022, r2 = .018) {
+  const K = BROOM_KINDS[L.broom]; if (K) return K.body(m, L, a, b, r1, r2);
   const k = L.broomLength ?? 1, bend = L.broomBend || 0;
   if (k === 1 && !bend) return m.seg(a, b, r1, r2, M.BROOM, { group: 2 });
   const e = v3.add(a, v3.mul(v3.sub(b, a), k)), mid = v3.add(v3.lerp(a, e, .55), [0, bend * .12, 0]);
   return m.chain([[...a, r1], [...mid, (r1 + r2) / 2], [...e, r2]], M.BROOM, { group: 2 });
 }
 function broomBristles(m, L, c, r, o) {
+  const K = BROOM_KINDS[L.broom]; if (K) { if (K.tail) K.tail(m, L, c, r, o); else if (K.bristles) broomBristles(m, { ...L, broom: "classic" }, c, r, o); return; }
   const kind = L.broom || "classic", k = L.bristles ?? 1;
   if (kind === "classic" && k === 1) return m.ell(c, r, M.STRAW, o);
   const d = v3.norm(o.dir), R = kind === "fan" ? [r[0] * k, r[1] * 1.6, r[2] * .5] : kind === "twig" ? [r[0] * 1.4 * k, r[1] * .7, r[2] * .7] : kind === "round" ? [r[0] * .85 * k, r[1] * 1.35, r[2] * 1.35] : [r[0] * k, r[1], r[2]];
@@ -2467,10 +2684,12 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const hipY = K.sit ? (K.seat ?? WITCH_SEAT_HEIGHT) + .06 : .45 - K.crouch * .21 + hop, hipX = -K.crouch * .12 + (K.hipX || 0);
   // the broom: astride it (the handle level between her legs), a binding point and a direction, through her far hand, or put down
   const B = K.broom, astride = !!(B && B.astride), yb = hipY - .04;
-  const bdir = !B || astride ? [1, 0, 0] : v3.norm(B.dir), bind = astride ? [-.36, yb, 0] : !B ? null : B.held !== undefined ? v3.sub(K.far, v3.mul(bdir, B.held)) : B.binding;
+  // (a canoe, a basket, a bicycle, a jet or speeder bike, a drone isn't held like a staff: it stands on the ground beside her, art/brooms.js)
+  const parked = !!B && !astride && PARKED[L.broom] !== undefined;
+  const bdir = !B || astride || parked ? [1, 0, 0] : v3.norm(B.dir), bind = astride ? [-.36, yb, 0] : !B ? null : parked ? [-.5, PARKED[L.broom], -.36] : B.held !== undefined ? v3.sub(K.far, v3.mul(bdir, B.held)) : B.binding;
   const along = t => v3.add(bind, v3.mul(bdir, t));
   if (B) {
-    broomHandle(m, L, along(0), along(astride ? .98 : 1.1));
+    broomHandle(m, L, along(0), along(astride || parked ? .98 : 1.1));
     broomBristles(m, L, along(-.13), [.17, .07, .08], { dir: bdir, group: 3, paint: p => { const t = v3.dot(v3.sub(p, bind), bdir); return t < -.22 ? M.MAGIC2 : t > -.01 ? M.BROOM : undefined; } });
   }
   // legs: jeans to the knee, then down to sneakers; one swung up over the broom; on her toes pushing off; or each foot placed
@@ -2495,7 +2714,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const H = v3.add(chest, v3.add(v3.mul(spine, .27), [K.look * .03 + K.nod * .07, -K.nod * .05, K.tilt * .04]));
   // arms: the far hand grips the broom (or not); the near hand is free (or on the handle, astride)
   const shoulder = side => v3.add(chest, v3.add(v3.mul(spine, .1), [0, 0, side * .12]));
-  const grip = astride ? [.28, yb + .03, -.05] : B ? along(Math.max(.12, (Math.min(.62, hipY + .2) - bind[1]) / Math.max(.3, bdir[1]))) : null;
+  const grip = astride ? [.28, yb + .03, -.05] : parked ? [.03, hipY + .01, -.17] : B ? along(Math.max(.12, (Math.min(.62, hipY + .2) - bind[1]) / Math.max(.3, bdir[1]))) : null;
   const free = astride ? [.28, yb + .03, .05] : K.free;
   for (const side of [-1, 1]) {
     const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip;
@@ -2566,7 +2785,8 @@ function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK } = {})
   // legs astride: jeans to the knee, then down to sneakers (reaching down and forward to land)
   for (const side of [-1, 1]) {
     const kick = cyc >= 0 ? [[0, 0], [.07, .04], [.01, .015], [-.06, -.015]][(cyc + (side > 0 ? 0 : 2)) % 4] : [0, 0]; // leaning along, her legs kick in turn
-    const hip = [-.04, y + .06, side * .07], knee = brake ? [.18, y - .01, side * .14] : desc ? [.16, y - .05, side * .14] : rise ? [.06, y - .07, side * .14] : [.12 + L * .5, y - .02, side * .14], foot = brake ? (side > 0 ? [.44, y - .02 + sway, side * .13] : [.3, y - .16, side * .13]) : desc ? [.2, y - .26, side * .13] : rise ? [-.1, y - .23, side * .13] : [.08 + L + kick[0], y - .2 + kick[1], side * .13]; // climbing, her legs tuck back and dangle
+    const sitIn = SIT_IN.has(LK.broom); // sitting in a canoe or a basket: knees up, feet in front of her
+    const hip = [-.04, y + .06, side * .07], knee = sitIn ? [.12 + L * .3, y + .11, side * .1] : brake ? [.18, y - .01, side * .14] : desc ? [.16, y - .05, side * .14] : rise ? [.06, y - .07, side * .14] : [.12 + L * .5, y - .02, side * .14], foot = sitIn ? [.24 + L * .3 + kick[0] * .3, y - .06, side * .09] : brake ? (side > 0 ? [.44, y - .02 + sway, side * .13] : [.3, y - .16, side * .13]) : desc ? [.2, y - .26, side * .13] : rise ? [-.1, y - .23, side * .13] : [.08 + L + kick[0], y - .2 + kick[1], side * .13]; // climbing, her legs tuck back and dangle
     m.seg(hip, knee, .055, .045, M.JEANS, { group: side > 0 ? 6 : 4 });
     m.seg(knee, foot, .045, .04, M.JEANS, { group: side > 0 ? 6 : 4 });
     m.ell(v3.add(foot, [.05, -.02, 0]), shoeR(look), M.SHOES, { group: side > 0 ? 6 : 4, paint: p => p[1] < foot[1] - .04 ? M.BELLY : undefined });
@@ -2615,14 +2835,14 @@ function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK } = {})
     const unrot = q => [P[0] + (q[0] - P[0]) * c + (q[1] - P[1]) * sn, P[1] - (q[0] - P[0]) * sn + (q[1] - P[1]) * c, q[2]];
     const dir = q => [q[0] * c - q[1] * sn, q[0] * sn + q[1] * c, q[2]];
     for (const q of m.parts) {
-      if (q.type === "ell") { q.c = rot(q.c); q.axes = q.axes.map(dir); } else { q.a = rot(q.a); q.b = rot(q.b); }
+      if (q.type !== "cone") { q.c = rot(q.c); q.axes = q.axes.map(dir); } else { q.a = rot(q.a); q.b = rot(q.b); }
       if (q.paint) { const f = q.paint; q.paint = (p, part) => f(unrot(p), part); } // markings stay where they were painted
     }
     for (const f of m.flats) { f.c = rot(f.c); f.u = dir(f.u); f.v = dir(f.v); }
     m.anchors.hand = rot(m.anchors.hand); m.anchors.hatTip = rot(m.anchors.hatTip);
     // lifted so her feet clear the ground as she tilts
-    const low = Math.min(...m.parts.filter(q => !q.extra).map(q => q.type === "ell" ? q.c[1] - Math.max(...q.r) : Math.min(q.a[1] - q.r1, q.b[1] - q.r2)));
-    if (low < .08) { for (const q of m.parts) { const d = .08 - low; if (q.type === "ell") q.c = [q.c[0], q.c[1] + d, q.c[2]]; else { q.a = [q.a[0], q.a[1] + d, q.a[2]]; q.b = [q.b[0], q.b[1] + d, q.b[2]]; } } for (const k of ["hand", "hatTip"]) m.anchors[k] = v3.add(m.anchors[k], [0, .08 - low, 0]); }
+    const low = Math.min(...m.parts.filter(q => !q.extra).map(q => q.type !== "cone" ? q.c[1] - Math.max(...(q.r || q.h)) : Math.min(q.a[1] - q.r1, q.b[1] - q.r2)));
+    if (low < .08) { for (const q of m.parts) { const d = .08 - low; if (q.type !== "cone") q.c = [q.c[0], q.c[1] + d, q.c[2]]; else { q.a = [q.a[0], q.a[1] + d, q.a[2]]; q.b = [q.b[0], q.b[1] + d, q.b[2]]; } } for (const k of ["hand", "hatTip"]) m.anchors[k] = v3.add(m.anchors[k], [0, .08 - low, 0]); }
     // rising: sparks and a puff falling from the bristles
     // braking: a puff of dust and sparks kicked forward from the bristles
     if (brake) { const tail = rot([-.45, y - .24, 0]); for (let i = 0; i < 5; i++) { const k = i + frame * .5, r = .055 - i * .008; m.ell([tail[0] + .1 + k * .08, Math.max(.04, tail[1] - .02 + Math.sin(k * 1.9) * .04), Math.cos(k * 1.3) * .06], [r, r * .8, r], i < 2 ? M.BELLY : i % 2 ? M.MAGIC : M.MAGIC2, { group: 25 + i, extra: true }); } }

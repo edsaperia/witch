@@ -98,7 +98,7 @@ export function stepWanderers(creatures: Creature[], map: ForestMap, dt: number)
     const dx = to.x - c.x, dz = to.z - c.z, d = Math.hypot(dx, dz);
     if (d < 3) {
       const range = wanderRange(map), [ax, az] = anchorOf(map, to.cell, to.x, to.z, range);
-      Object.assign(c, { cell: to.cell, homeX: to.x, homeZ: to.z, range, anchorX: ax, anchorZ: az, tx: c.x, tz: c.z, rest: 1, safeR: undefined });
+      Object.assign(c, { circle: undefined, cell: to.cell, homeX: to.x, homeZ: to.z, range, anchorX: ax, anchorZ: az, tx: c.x, tz: c.z, rest: 1, safeR: undefined });
       if (c.level === LEGEND) c.boss = true;
       c.wanderTo = undefined; settled = true;
       continue;
