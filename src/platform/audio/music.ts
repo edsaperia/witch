@@ -96,7 +96,7 @@ export class Music {
   }
 
   /** The engine's continuity (tools/music-lab/flight.cjs). */
-  get stats() { return this.engine?.stats ?? { resyncs: 0, late: 0, gap: 0 }; }
+  get stats() { return this.engine?.stats ?? { resyncs: 0, late: 0, gap: 0, ahead: 0 }; }
 
   /** What reaches the speakers (the audio watchdog taps it). */
   get output(): AudioNode { return this.master; }
