@@ -7,7 +7,7 @@ import { TUNING, withTuning, type Tuning } from "./tuning";
 // the moment it feels like they always stop short. They should be damaging whenever they're touched
 // while in attack mode. Charging creatures should have much more momentum, travelling in wide arcs."
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, brake: 1, contact: false, chase: 0 }, leap: { reach: 1, through: -1.5, contact: false, lead: 0 } } });
+const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, brake: 1, contact: false, chase: 0, miss: 0 }, leap: { reach: 1, through: -1.5, contact: false, lead: 0 } } });
 
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
 function quiet(t: Tuning = TUNING): Game {
@@ -127,6 +127,25 @@ describe("walking away is no escape (Ed, 2026-10-06: \"Charging creatures can ea
   }, 120000);
   it("still misses her if she steps out of its lane at its tell", () => {
     for (const sp of ["boar", "stag"]) expect(escape(sp, 25, "aside"), sp).toBe(false);
+  }, 120000);
+  it("is beaten by a blink at the right moment, sideways or straight through, and it stands winded after (Ed, 2026-10-06: \"reward skilful use of blink\")", () => {
+    expect(TUNING.fight.charge.miss).toBeGreaterThan(0);
+    for (const [sp, how] of [["boar", "side"], ["stag", "through"]] as const) {
+      const g = quiet(), c = pick(g, sp, 2, -25, 0), W = g.witches[0], hp0 = W.health.hp;
+      let blinked = false, winded = false, ran = false;
+      for (let i = 0; i < 6 / STEP; i++) {
+        const coming = !!c.charge && (c.charge.from === undefined || g.clock.time >= c.charge.from), near = Math.hypot(c.x - g.witch.x, c.z - g.witch.z);
+        if (c.charge) ran = true;
+        let ctl: Controls = idle;
+        if (coming && !blinked && near < (how === "side" ? 8 : 5)) { blinked = true; const ax = c.x - g.witch.x, az = c.z - g.witch.z, ad = Math.hypot(ax, az) || 1; ctl = how === "side" ? { ...idle, moveZ: 1, dash: true } : { ...idle, moveX: ax / ad, moveZ: az / ad, dash: true }; }
+        stepGame(g, ctl, STEP);
+        if (c.stunUntil !== undefined && g.clock.time < c.stunUntil) winded = true;
+        if (ran && !c.charge && !winded) break;
+      }
+      expect(blinked, sp).toBe(true);
+      expect(W.health.hp, `${sp}: blinked ${how}`).toBe(hp0);
+      expect(winded, sp).toBe(true);
+    }
   }, 120000);
   it("leads a toad's leap to where she's going", () => {
     expect(TUNING.fight.leap.lead).toBeGreaterThan(0);

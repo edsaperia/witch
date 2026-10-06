@@ -5571,6 +5571,10 @@
             "chase": {
               "type": "number",
               "minimum": 0
+            },
+            "miss": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -5578,7 +5582,8 @@
             "turn",
             "brake",
             "contact",
-            "chase"
+            "chase",
+            "miss"
           ],
           "additionalProperties": false
         },

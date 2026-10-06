@@ -664,6 +664,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const run = speed;
       if (P.move?.kind === "charge") {
         const was = c.charge, r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
+        // A charge that missed (Ed, 2026-10-06: "reward skilful use of blink and accurate invitation aiming"): it stands
+        // winded for fight.charge.miss seconds, stars round its head, an opening for her 💌s.
+        if (was && !c.charge && !was.struck && !was.hit?.length && (FIGHT.charge.miss ?? 0) > 0) { c.stunUntil = time + FIGHT.charge.miss!; c.vx = 0; c.vz = 0; s.events.push({ kind: "stunned", x: c.x, z: c.z, at: time, id: c.id }); }
         // A pair (the stags): its pack mates whose charge is ready set off with it, side by side.
         if (P.move.pair && !was && c.charge) for (const m of packs.get(c.id)?.members ?? []) if (m !== c && !m.charge && time >= (m.moveReadyAt ?? 0) && m.fight?.windupUntil === 0 && !m.fight.lunge) startCharge(m, P.move, p.x, p.z, time);
         const ram: Attack = { ...A, modifier: "knockback", knockback: 15 * S };
@@ -673,7 +676,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue;
         }
         // Contact (Ed, 2026-10-06: "damaging whenever they're touched while in attack mode"): its run hurts every foe it touches, once each.
-        if (r === "charging" && t.fight.charge?.contact && c.charge && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
+        if (r === "charging" && t.fight.charge?.contact && c.charge && !c.charge.braking && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
         if (r === "charging") continue;
       }
       if (P.move?.kind === "burrow") {
