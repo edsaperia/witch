@@ -7,6 +7,7 @@
 //     next wave's soundsystem before it lands and parks some of her posse there as guards, kites
 //     fighters, and rises to the treetops to heal at her last hit;
 //   idle: stands at home all run (the sieges alone, for comparing rules changes seed by seed);
+//   hover: idle, but over the treetops (nothing can go for her);
 //   crude: invites everything in the nearest wild area, area after area, and never parks, defends
 //     or heals.
 // The bot flies between areas over the treetops and fights on the ground, as a player does.
@@ -87,6 +88,7 @@ else {
       };
       if (w.ko) wasKo = true;
       else if (bot === "idle") { /* (stands at home all run: the sieges alone) */ }
+      else if (bot === "hover") { if (b.mode === "ground") toggle = true; } // (over the treetops at home all run: out of every fight)
       else if (careful && (healing || w.health.hp <= 1)) {
         // To the treetops to heal, then back to work.
         healing = w.health.hp < H;

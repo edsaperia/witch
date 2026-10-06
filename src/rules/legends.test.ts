@@ -277,3 +277,17 @@ describe("a wave on a legend's area (#87, found by the overnight playthrough)", 
   });
 });
 
+
+describe("an awake legend with nothing in reach (balance, 2026-10-06)", () => {
+  it("looks again every attack.recheck seconds, not every step", async () => {
+    const { cheer } = await import("./legends");
+    const g = newGame(1000, TUNING);
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    const L = g.creatures.find(c => c.boss)!;
+    cheer(L, 0); // (happy: it shoots the enraged, and there are none)
+    run(g, LEGENDS.attack.interval);
+    const at = L.fight!.readyAt;
+    expect(at).toBeGreaterThan(g.clock.time); // (its next look is ahead of it, not this step)
+    expect(at - g.clock.time).toBeLessThanOrEqual(LEGENDS.attack.recheck + 1e-9);
+  }, 30000);
+});
