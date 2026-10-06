@@ -105,8 +105,8 @@ const SCENES: Scene[] = [
     ],
   },
   {
-    // the deep forest, the music far off and muffled: a sleeping legend's moans and nightmare, a legend's wind-up, a charge
-    name: "forest", seconds: 27, section: "deep", wave: 2, distance: 170,
+    // the deep forest, the music far off and muffled: a sleeping legend's moans and nightmare, a legend's wind-up, a charge, restless legends calling out
+    name: "forest", seconds: 38, section: "deep", wave: 2, distance: 170,
     // (a sleeper 4 m off; a moment away resets its clock, so the nightmare's first moan comes 1.5 s on)
     frame: (s, t) => s.legends(t < 5 || (t >= 5.2 && t < 11) ? 0.9 : 0, 0.5, t < 5 ? 0 : 0.8, -0.2), frameG: "legend moans",
     cues: [
@@ -118,6 +118,8 @@ const SCENES: Scene[] = [
       ...series(17.8, 12, 0.22, "the charge's rumble", (s, i) => s.charge(Math.min(1, (i + 2) / 10), 0, 0)),
       ...series(20.5, 10, 0.1, "its braking skid", (s, i) => s.charge(0, Math.max(0, 1 - i / 9), 0)),
       { at: 23, g: "a legend turns angry (roar)", play: s => s.roar(0.2, 1) },
+      { at: 26, g: "a restless legend calls (near)", play: s => s.lament(v("elk", 3), 0.3, -0.5, 1) },
+      { at: 32, g: "a restless legend calls (far, urgent)", play: s => s.lament(v("owl", 3), 0.9, 0.8, 0.35) },
       ...series(0, 270, 0.1, "by a pond", (s, i) => s.pond(Math.min(1, i / 20), -0.4)),
     ],
     sounds: [
@@ -131,6 +133,8 @@ const SCENES: Scene[] = [
       { g: "the charge's rumble", kind: "body", at: 17.8, len: 2.6 },
       { g: "its braking skid", kind: "body", at: 20.5, len: 1 },
       { g: "a legend turns angry (roar)", kind: "telegraph", at: 23, len: 2.2 },
+      { g: "a restless legend calls (near)", kind: "call", at: 26, len: 4 },
+      { g: "a restless legend calls (far, urgent)", kind: "call", at: 32, len: 4 },
       { g: "by a pond", kind: "ambience", at: 3, len: 20 },
     ],
   },

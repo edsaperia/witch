@@ -147,6 +147,31 @@ export class Babble {
     this.syllable(at + 0.36, { ...base, pitch: p * 1.5, end: p * 1.05, vowel: 0, dur: 0.75, gain: vol }, out);
   }
 
+  /** A restless legend calling out sadly (Ed, 2026-10-06: "during the restless period, the legend
+   *  should call out sadly"): its own species' call, lowered and slowed, two to four long falling
+   *  syllables with a slow sob of vibrato, into the legends' big space and muffled with distance.
+   *  `urgency` (its restlessness, 0-1): more syllables, higher and louder, the sob quicker. */
+  lament(v: CreatureVoice, urgency: number, pan = 0, near = 1): void {
+    const K = this.k, L = K.T.lament, c = K.ctx, at = c.currentTime + 0.01, u = Math.max(0, Math.min(1, urgency)), call = v.call;
+    const n = 2 + (u > 0.45 ? 1 : 0) + (u > 0.8 ? 1 : 0), p = v.pitch * L.pitch * (1 + 0.18 * u);
+    // muffled the farther it is: a low-pass closing with distance, so it reads as far off over there
+    const out = K.voice(pan), lp = c.createBiquadFilter(), mix = c.createGain(), wet = c.createGain();
+    lp.type = "lowpass"; lp.frequency.value = 900 + 6000 * near * near; lp.connect(out);
+    mix.connect(lp); mix.connect(wet); wet.gain.value = 0.6 + 0.4 * (1 - near); wet.connect(K.space());
+    const vol = L.volume * (0.75 + 0.25 * u) * (0.35 + 0.65 * near) * (call?.volume ?? 1);
+    let t = at;
+    for (let i = 0; i < n; i++) {
+      const last = i === n - 1, dur = (0.42 + (last ? 0.35 : 0)) * L.slow * Math.max(0.6, call?.dur ?? 1) * (1 - 0.2 * u);
+      const f = p * (i === 0 ? 1.06 : 1 - 0.04 * i);
+      this.syllable(t, {
+        pitch: f, end: f * (last ? 0.7 : 0.86), vowel: call?.vowel ?? (i % 2 ? 4 : 3), dur, formants: v.formants * 0.9, wave: v.wave,
+        gain: vol * (last ? 1 : 0.8), grit: 0, pan, consonant: false, pure: call?.pure, am: call?.am, noise: call?.noise ? call.noise * 0.6 : undefined,
+        trill: [3.5 + 2.5 * u, 30 + 40 * u], // (a sob: a slow wide vibrato, quicker as it frets)
+      }, mix);
+      t += dur + 0.12 * L.slow * (call?.gap ?? 1);
+    }
+  }
+
   /** A creature's answer to a 💌 that lands (optional, Ed): one small syllable in its own voice, lifting as its affection fills. */
   reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void {
     const A = this.k.T.voice.animals, at = this.k.ctx.currentTime + 0.06, f = v.pitch * (1 + 0.4 * Math.max(0, Math.min(1, amount)));

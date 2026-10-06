@@ -22,8 +22,16 @@ export interface Mood {
   /** Each area type's own fog, grade tint and mist (by area id; "home" for home), over the above; eased across at areaEase a second. */
   /** The characters' moonlight rim (the witch, creatures): its hue, saturation and strength (0 off); and how much of her own glow lights the witch (0: none). */
   rimHue?: number; rimSat?: number; rim?: number; witchGlow?: number;
-  /** The moon's fill on upward faces (canopy tops, open ground), a share of the moon. */
-  moonUp?: number;
+  /** The moon's fill on upward faces (canopy tops, open ground), a share of the moon, in its own hue and saturation (left out: the moon's). */
+  moonUp?: number; moonUpHue?: number; moonUpSat?: number;
+  /** The share of the moon's fill every face gets whatever its normal (0: by its normal alone, 1: all alike). */
+  moonUpWrap?: number;
+  /** With a stylised art style (bold, ref): the rim's strength and her own glow on her, in place of rim and witchGlow. */
+  styledRim?: number; styledGlow?: number;
+  /** Her pool's light thrown up onto her, added (witchLift; styledLift with a stylised art style). */
+  witchLift?: number; styledLift?: number;
+  /** How far the party decor's lights go from their neon to the party's amber (partyWarm's first), 0 to 1. */
+  decorWarm?: number;
   /** The ley line's colour ("#rrggbb"; left out, each area's own) and its brightness times this. */
   leyRgb?: string; leyBright?: number;
   /** A berry's halo: its size (m) and strength times this (left out: 2.8 m, 1). */
@@ -70,7 +78,7 @@ export interface Tuning {
   /** The fight's scale and speed (Ed's motion scale pass): lengths and speeds in a fight times these. */
   fight: { scale: number; speed: number; momentum: number };
   /** How attacks feel on screen (render/attackFeel.ts): the wind-up's crouch, the lunge's stretch, a hit's squash and bounce, a knock-back's tumble. */
-  attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number };
+  attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number; legendFlash: number };
   combat: { aggro: number; witchLose: number; leaveArea: number; engage: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number };
   /** Parked party animals (at a sigil) guard within radius metres of it (Ed, 2026-10-04). */
   guard: { radius: number };
@@ -101,6 +109,7 @@ export interface Tuning {
     ouch: { volume: number; knockdown: number; duck: number; duckTime: number };
     impact: { volume: number; small: number };
     roar: { volume: number };
+    lament: { volume: number; pitch: number; slow: number; every: number; urgent: number; range: number; gap: number; max: number };
     shoes: { volume: number; range: number; max: number };
     pond: { volume: number; lap: number; frogs: number; frogEvery: number; drips: number; dripEvery: number; range: number };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
@@ -255,7 +264,7 @@ export interface Tuning {
   population: { start: { babies: number; young: number; adults: number }; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
   /** Area legends (Ed, 2026-10-04): one an area, asleep till its area's wave, then a mini-boss guarding it. */
   /** A sleeping legend's dream bubble (Ed, 2026-10-05): shown only to a witch on the ground within range metres of it. */
-  dreams: { range: number; nightmare: { at: number[]; faces: string[] } };
+  dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string } };
   wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
   /** The simulation's level of detail (rules/simLod.ts): creatures in full near her and the action, coarse beyond, frozen past creatureSimRadius. */

@@ -35,6 +35,7 @@ const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
+import { emojiOr, sleepyFace } from "./sleepyFace";
 import { FIGHT, profileOf } from "../rules/movement";
 import { huntsWitch } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
@@ -376,10 +377,12 @@ export class LeashView {
       for (let k = 0; k < N.at.length; k++) if (r >= N.at[k]) step = k;
       const faces = step >= 0 ? 1 : 0, ire = r * r; // (the reddening and the shake gentle while it's only sad)
       if (!open && !faces) continue;
+      // Asleep giving its quest (Ed, 2026-10-06): a sleepy face by the sigil, mostly 😴, now and then a yawn or a sigh for a turn.
+      const Z = g.tuning.dreams.sleepy, zzz = !faces && open && Z ? sleepyFace(c.id, g.clock.time, Z) : null;
       let el = this.dreamEls[used];
       if (!el) { el = document.createElement("div"); el.className = "bubble dream on"; host.append(el); this.dreamEls.push(el); }
       el.style.display = "";
-      const key = `${q.species}:${q.level}:${step}:${open}`;
+      const key = `${q.species}:${q.level}:${step}:${open}:${zzz ?? ""}`;
       if (el.dataset.e !== key) {
         el.dataset.e = key;
         const cv = document.createElement("canvas"), n = 44;
@@ -393,7 +396,7 @@ export class LeashView {
           x.putImageData(d, 0, 0);
         }
         // (its face in finer pixels than a chat face: its brows must read)
-        const face = step >= 0 ? this.pixelEmoji(N.faces[step] ?? "😠", 0.9, 18) : null;
+        const face = step >= 0 ? this.pixelEmoji(N.faces[step] ?? "😠", 0.9, 18) : zzz ? this.pixelEmoji(emojiOr(zzz, Z!.fallback), 0.9, 18) : null;
         face?.classList.add("face");
         el.replaceChildren(...(open ? [cv] : []), ...(face ? [face] : []));
         el.classList.toggle("nightmare", faces > 0);
@@ -504,7 +507,8 @@ export class LeashView {
         // thrown up: feathers off a bird, tufts off fur, chips off a shell, confetti in its neon off a party animal (a party,
         // nobody hurt). A legend's blow, all bigger.
         const top = (c && this.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : c ? coatOf(c.species, 0.75) : bits;
-        this.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * big, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * big });
+        const lf = e.big ? 1 + 2 * t.attackFx.legendFlash : 1; // (a legend's flash: attackFx.legendFlash, 0.5 twice anyone's)
+        this.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * lf, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * lf });
         if (e.big) this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2, n: 28, dot: 0.8 }); // a legend's blow: a shockwave along the ground
         this.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
         this.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
@@ -1051,3 +1055,4 @@ export class LeashView {
 
 /** A wild legend's slow breath, 0 out to 1 in, once every `every` seconds (offset by its id). */
 export const bossBreath = (time: number, id: number, every: number) => 0.5 - 0.5 * Math.cos((time / Math.max(0.1, every) + (id % 7) / 7) * Math.PI * 2);
+

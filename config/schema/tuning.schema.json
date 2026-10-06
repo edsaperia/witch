@@ -997,6 +997,10 @@
               "type": "number",
               "minimum": 0
             },
+            "decorWarm": {
+              "type": "number",
+              "minimum": 0
+            },
             "rimHue": {
               "type": "number",
               "minimum": 0
@@ -1014,6 +1018,30 @@
               "minimum": 0
             },
             "moonUp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpWrap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledRim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledGlow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledLift": {
               "type": "number",
               "minimum": 0
             },
@@ -1654,11 +1682,18 @@
             "decorLights",
             "decorReach",
             "decorStrength",
+            "decorWarm",
             "rimHue",
             "rimSat",
             "rim",
             "witchGlow",
             "moonUp",
+            "moonUpHue",
+            "moonUpSat",
+            "moonUpWrap",
+            "styledRim",
+            "styledGlow",
+            "styledLift",
             "leyRgb",
             "leyBright",
             "berryHalo",
@@ -3853,6 +3888,54 @@
           ],
           "additionalProperties": false
         },
+        "lament": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "slow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "urgent": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "pitch",
+            "slow",
+            "every",
+            "urgent",
+            "range",
+            "gap",
+            "max"
+          ],
+          "additionalProperties": false
+        },
         "shoes": {
           "type": "object",
           "properties": {
@@ -4229,6 +4312,7 @@
         "ouch",
         "impact",
         "roar",
+        "lament",
         "shoes",
         "pond",
         "picnic",
@@ -4410,6 +4494,11 @@
         "turnTo": {
           "type": "number",
           "minimum": 0
+        },
+        "legendFlash": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       },
       "required": [
@@ -4422,7 +4511,8 @@
         "tumbleHeight",
         "tumbleSecs",
         "turnFrom",
-        "turnTo"
+        "turnTo",
+        "legendFlash"
       ],
       "additionalProperties": false
     },
@@ -5484,11 +5574,45 @@
             "faces"
           ],
           "additionalProperties": false
+        },
+        "sleepy": {
+          "type": "object",
+          "properties": {
+            "face": {
+              "type": "string"
+            },
+            "weight": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "faces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fallback": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "face",
+            "weight",
+            "every",
+            "faces",
+            "fallback"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "range",
-        "nightmare"
+        "nightmare",
+        "sleepy"
       ],
       "additionalProperties": false
     },
