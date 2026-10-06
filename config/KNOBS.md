@@ -28,7 +28,7 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 
 ## `beach`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
 
-The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. witchChance of runs have witches[0] to witches[1] witches together somewhere on the beach; landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before.
+The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. Lying there (Ed, 2026-10-06: "the bend shader applies so that you can see the sky") the world bends stargazeCurve times the treetops' curve (Ed: "it's stronger than usual, so the sky takes up more of the screen"), eased in and out over about gazeEase seconds, so the night sky opens up over the sea. Lying there with a beach witch (Ed: "If you land near another witch, and you stargaze together, and you wait a few seconds, little hearts will start appearing near you both, floating upwards and disappearing"): after hearts.after seconds a ❤️ rises off one or the other every hearts.every[0] to [1] seconds, for hearts.life seconds each, until either gets up; the two stay lying together until she moves. A 💌 come down on the sand or the sea (Ed: "they last longer and disappear more slowly (5 seconds)") rests letterLinger seconds, fading over the last letterFade, bobbing gently on the water. witchChance of runs (Ed, 2026-10-06: "I think there should always be beach witches, but there are only a handful spread around it": every run) have spots[0] to spots[1] spots spread round the coast (evenly, each nudged by up to a third of the gap), each with witches[0] to witches[1] witches (Ed, 2026-10-06: "Beach witches appear solo": one); landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before.
 
 | knob | type | range |
 |---|---|---|
@@ -39,8 +39,16 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 | `beach.sand` | number | 0 to … |
 | `beach.sea` | number |  |
 | `beach.restAfter` | number | 0 to … |
+| `beach.stargazeCurve` | number | 0 to … |
+| `beach.gazeEase` | number | 0 to … |
+| `beach.letterLinger` | number | 0 to … |
+| `beach.letterFade` | number | 0 to … |
+| `beach.hearts.after` | number | 0 to … |
+| `beach.hearts.every` | array of number |  |
+| `beach.hearts.life` | number | 0 to … |
 | `beach.shown` | number | 0 to … |
 | `beach.witchChance` | number | 0 to … |
+| `beach.spots` | array of number |  |
 | `beach.witches` | array of number |  |
 | `beach.meet` | number | 0 to … |
 | `beach.idleAfter` | number | 0 to … |
@@ -771,7 +779,7 @@ The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are 
 | `bubbles.scale` | number | 0 to … |
 | `bubbles.levelScale` | array of number |  |
 
-## `scenes`, `grounds`, `legendClearing`
+## `scenes`, `grounds`
 
 Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own).
 
@@ -783,6 +791,16 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `grounds.chance` | number | 0 to … |
 | `grounds.kinds` | array of string |  |
 | `grounds.radius` | record |  |
+
+## `legendCircle`, `legendClearing`
+
+A legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower, things still move on the outside but very slowly, the music audibly slows down (this is a good audio cue for the transition) ... freeze only if the legend is asleep or restless. Enraged creatures outside the circle don't enter it. Your invitations disappear if they go outside the circle from inside"): slow: while she stands on the ground in the circle of a legend asleep or restless, the world (the clock, the waves' countdown, the music, every creature, siege and timer) runs at scale of its speed, easing there and back over ease seconds as she crosses its edge; she and everything of hers (moving, blinking, rising and landing, her sigils, her 💌s and their cooldowns, her hat) keep full speed. on false (or ?slow=0) for none. A calm circle (its legend asleep or restless) keeps enraged creatures out whether she's there or not, and a 💌 leaving it from inside vanishes in a sparkle.
+
+| knob | type | range |
+|---|---|---|
+| `legendCircle.slow.on` | boolean |  |
+| `legendCircle.slow.scale` | number | 0 to … |
+| `legendCircle.slow.ease` | number | 0 to … |
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
@@ -1072,6 +1090,11 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.room.crackle` | number | 0 to … |
 | `sfx.room.creak` | number | 0 to … |
 | `sfx.room.creakEvery` | number | 0 to … |
+| `sfx.spell.volume` | number | 0 to … |
+| `sfx.spell.hum` | number | 0 to … |
+| `sfx.spell.rustle` | number | 0 to … |
+| `sfx.spell.crackle` | number | 0 to … |
+| `sfx.spell.burst` | number | 0 to … |
 | `sfx.land.volume` | number | 0 to … |
 | `sfx.land.gap` | number | 0 to … |
 | `sfx.stir.volume` | number | 0 to … |
@@ -1310,7 +1333,7 @@ At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power
 
 ## `party`
 
-lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all never crosses itself: the noisy picker's order, untangled; noisy (?picker=noisy, the picker before it), near3, near3touch and nearest choose among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
+lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all crosses itself at most a few times, within Ed's rules: route (?route=) "spiral" (Ed, 2026-10-06, of the mock-up: "This last example looks great!"; out from home ring by ring, the same way round, a little lobe, a few crossings) or "varied" (the order before it: petals round home, then sweeps, lobes or combs); noisy (?picker=noisy, the picker before it), near3, near3touch and nearest choose among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
 
 | knob | type | range |
 |---|---|---|
@@ -1327,6 +1350,7 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 | `party.areasPerWave` | number | 0 to … |
 | `party.maxPerWave` | number | 0 to … |
 | `party.picker` | string |  |
+| `party.route` | string |  |
 | `party.noisy.wobble` | number | 0 to … |
 | `party.noisy.lobeSize` | number | 0 to … |
 | `party.noisy.candidates` | number | 0 to … |
@@ -1478,11 +1502,15 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 
 ## `legends`, `wildLegends`, `creatureSimRadius`
 
-Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads.
+Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands.
 
 | knob | type | range |
 |---|---|---|
 | `legends.share` | number | 0 to … |
+| `legends.partyEgg` | boolean |  |
+| `legends.partyHits` | number | 1 to … |
+| `legends.partyDrain` | number | 0 to … |
+| `legends.partyReach` | number | 0 to … |
 | `wildLegends.wake` | number | 0 to … |
 | `wildLegends.sink` | number | 0 to … |
 | `wildLegends.moss` | number | 0 to … |

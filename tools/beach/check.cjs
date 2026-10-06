@@ -55,13 +55,13 @@ async function open(browser, port, seed) {
       for (let i = 0; i < 90; i++) w.frame(C(), dt, false); // (down)
       await fly(600, out.ground, { moveX: 1 });
       const u = v.ground?.mesh?.material?.uniforms?.uBeach?.value;
-      return { ...out, beachOn: u ? u.z > 0 : null, beach: !!w.game.beach };
+      return { ...out, beachOn: u ? u.z > 0 : null, beach: (w.game.beach ?? []).some(s => !s.idle) };
     });
     const row = (k, a) => console.log(`${k.padEnd(8)} frame work median ${pct(a, 0.5).toFixed(2)} ms  p99 ${pct(a, 0.99).toFixed(2)} ms  worst ${Math.max(...a).toFixed(2)} ms`);
     console.log(`\n${root}: an ordinary run (seed 123)`);
     row("treetop", r.treetop); row("ground", r.ground);
     console.log(`draw calls a frame: median ${pct(r.calls, 0.5)}  max ${Math.max(...r.calls)}`);
-    if (r.beachOn !== null) check(!r.beachOn && !r.beach, "nothing of the beach made in an ordinary run (its ground uniform off, no beach witches)");
+    if (r.beachOn !== null) check(!r.beachOn && !r.beach, "nothing of the beach made in an ordinary run (its ground uniform off, every spot of beach witches left alone)");
     check(!errors.length, `no page errors${errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""}`);
     await page.close();
   }
@@ -71,7 +71,7 @@ async function open(browser, port, seed) {
     fs.mkdirSync(out, { recursive: true });
     // Out to the edge toward the beach witches, over the treetops.
     const aim = await page.evaluate(() => {
-      const g = window.witch.game, c = g.map.bounds.circle, b = g.beach;
+      const g = window.witch.game, c = g.map.bounds.circle, b = g.beach[0];
       const a = Math.atan2(b.z - c.z, b.x - c.x) + 0.2, r = c.r - 200; // (along the coast from them: she lies down alone first)
       g.witch = { ...g.witch, x: c.x + Math.cos(a) * r, z: c.z + Math.sin(a) * r, seated: false, vx: 0, vz: 0 };
       return { nx: Math.cos(a), nz: Math.sin(a), witches: b.list.length };
@@ -89,13 +89,13 @@ async function open(browser, port, seed) {
     await art([null]); s = await step(30, {});
     await page.screenshot({ path: path.join(out, "beach-stargaze.png") });
     // Over to the witches: walk to them, then keep still.
-    await page.evaluate(() => { const g = window.witch.game, b = g.beach, c = g.map.bounds.circle, k = 4 / Math.hypot(b.x - c.x, b.z - c.z); g.witch = { ...g.witch, stargazing: false, x: b.x - (b.x - c.x) * k, z: b.z - (b.z - c.z) * k, vx: 0, vz: 0 }; });
+    await page.evaluate(() => { const g = window.witch.game, b = g.beach[0], c = g.map.bounds.circle, k = 4 / Math.hypot(b.x - c.x, b.z - c.z); g.witch = { ...g.witch, stargazing: false, x: b.x - (b.x - c.x) * k, z: b.z - (b.z - c.z) * k, vx: 0, vz: 0 }; });
     const met = [];
-    for (let i = 0; i < 40; i++) { await step(30, {}); const p = await page.evaluate(() => window.witch.game.beach.players[0]?.pose); if (p && met[met.length - 1] !== p) met.push(p); if (met.length === 2) { await art(await page.evaluate(() => window.witch.game.beach.list.map(w => w.seed % 12))); await step(2, {}); await page.screenshot({ path: path.join(out, "beach-witches.png") }); } }
+    for (let i = 0; i < 40; i++) { await step(30, {}); const p = await page.evaluate(() => window.witch.game.beach[0].players[0]?.pose); if (p && met[met.length - 1] !== p) met.push(p); if (met.length === 2) { await art(await page.evaluate(() => window.witch.game.beach[0].list.map(w => w.seed % 12))); await step(2, {}); await page.screenshot({ path: path.join(out, "beach-witches.png") }); } }
     check(met.length >= 3, `landed by them, a beach witch comes over: ${met.join(", ")}`);
     await page.evaluate(() => { const g = window.witch.game, c = g.map.bounds.circle; g.witch = { ...g.witch, x: c.x, z: c.z + 30 }; });
     await step(60, {});
-    const gone = await page.evaluate(() => window.witch.game.beach.idle);
+    const gone = await page.evaluate(() => window.witch.game.beach.every(s => s.idle));
     check(gone, "back home, the beach witches are left alone");
     check(!errors.length, `no page errors${errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""}`);
     console.log(`screenshots in ${out}/beach-*.png`);

@@ -103,6 +103,9 @@ export interface Creature {
   state?: "wild" | "happy" | "leashed" | "enraged";
   /** When it was made happy (its 💌 ring full): its sigil rune pops out then (creatureStates.ts hasRune). */
   happyAt?: number;
+  /** A party legend (Ed's Easter egg, 2026-10-06; tuning legends.partyEgg): a happy legend won over by an absurd number of
+   *  💌s (legends.partyHits). It dances in place, fights no one, carries its (legendary) rune, and leashed it pins her to it. */
+  partyLegend?: boolean;
   /** Knocked down while wild: dazed (nothing attacks it, it can still be invited) until then, then it runs off. */
   dazed?: boolean;
   /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/creatureStates.ts danceAt). */
@@ -155,8 +158,6 @@ export interface Creature {
   quest?: Quest;
   /** Of an area whose legend's quest is done, still wild: it leaves her and her party be. */
   friendly?: boolean;
-  /** Of a friendly area the party has reached: a party animal guarding its area (not on her leash). */
-  guard?: boolean;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
   safeX?: number;
   safeZ?: number;

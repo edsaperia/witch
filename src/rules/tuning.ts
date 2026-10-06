@@ -55,11 +55,13 @@ export interface GladeTuning {
 }
 
 export interface Tuning {
+  /** A legend's circle (Ed, 2026-10-06): slow, the world slowed to scale of its speed (eased over ease seconds) while she stands on the ground in the circle of a legend asleep or restless; on false (?slow=0) for none. */
+  legendCircle?: { slow: { on?: boolean; scale: number; ease: number } };
   mapAreas: number;
   /** The map's shape (Ed, 2026-10-06: "circular rather than square, with a buffer zone with no runestones around the edge"): circle: the playable areas those within radius areas of home, a buffer ring buffer areas deep past them (forest she can fly over, nothing in it), her flight's edge soft over its last push metres (her outward speed easing to nothing, a drift of drift m/s back in), and the forest going on edge areas past it; square: mapAreas x mapAreas as before (?shape=square). */
   map?: { shape: "circle" | "square"; radius: number; buffer: number; push: number; drift: number; edge?: number; /** the coast's wobble (Ed, 2026-10-06: "slightly irregular"): rules/mapShape.ts makeCoast */ coast?: { amp: number; harmonics: number; detail: number } };
-  /** The beach round the circular map (Ed, 2026-10-06: an Easter egg): sand the last width metres inside her flight's edge, the sea from shore metres past it; the hills eased over ease metres to sand metres high at the sand, down to sea at the water. Flying on out over the beach for restAfter seconds she lands and lies down to stargaze. witchChance of runs have witches (witches[0] to [1]) on the beach; landing within meet metres of them and keeping still idleAfter seconds she chats, holds hands, hugs and stargazes with one, turn seconds each. Nothing of it is drawn, heard or stepped unless she's within shown metres of the sand (simRange of the witches). */
-  beach?: { on: boolean; width: number; shore: number; ease: number; sand: number; sea: number; restAfter: number; shown: number; witchChance: number; witches: number[]; meet: number; idleAfter: number; turn: number; simRange: number };
+  /** The beach round the circular map (Ed, 2026-10-06: an Easter egg): sand the last width metres inside her flight's edge, the sea from shore metres past it; the hills eased over ease metres to sand metres high at the sand, down to sea at the water. Flying on out over the beach for restAfter seconds she lands and lies down to stargaze. witchChance of runs (every run) have spots[0] to spots[1] spots of witches (witches[0] to [1] each) spread round the beach; landing within meet metres of them and keeping still idleAfter seconds she chats, holds hands, hugs and stargazes with one, turn seconds each. Nothing of it is drawn, heard or stepped unless she's within shown metres of the sand (simRange of the witches). */
+  beach?: { on: boolean; width: number; shore: number; ease: number; sand: number; sea: number; restAfter: number; shown: number; /** lying down to stargaze, the world bends stargazeCurve times the treetops' curve (stronger: the sky fills more of the screen), eased in over gazeEase seconds */ stargazeCurve?: number; gazeEase?: number; /** a 💌 come down on the sand or the sea rests letterLinger seconds (not invites.linger), fading over the last letterFade, bobbing on the water */ letterLinger?: number; letterFade?: number; /** stargazing with a beach witch: little hearts rising off them both, after `after` seconds, one every every[0] to every[1] seconds, each rising for life seconds */ hearts?: { after: number; every: number[]; life: number }; witchChance: number; /** how many spots of witches round the coast (from, to), spread evenly with a seeded jitter */ spots?: number[]; witches: number[]; meet: number; idleAfter: number; turn: number; simRange: number };
   areaSize: number;
   areaScale: number;
   /** Each area's fighting arena: mostly open within radius metres of its centre and soundsystem, the woods thickening smoothly over a band band metres wide (both times fight.scale), its edge wobbled by noise (a share of the band); bushes and tufts: the share of the undergrowth and ground cover left in its open middle. */
@@ -153,6 +155,8 @@ export interface Tuning {
     waves?: { volume: number; every: number; wash: number; range: number };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number };
+    /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
+    spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
     land: { volume: number; gap: number };
     stir: { volume: number };
     knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
@@ -224,7 +228,7 @@ export interface Tuning {
   stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; areaNeon: boolean; twinkle: number; chaseSpeed: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };
-    uplight: { strength: number; pulse: number; edge: number }; interval: number; /** seconds a destroyed soundsystem takes off the next wave's countdown (Ed, 2026-10-05) */ lossPenalty: number; startDelay: number; maxPerWave: number; /** areas each wave wakes: one per witch present (1 until multiplayer) */ areasPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
+    uplight: { strength: number; pulse: number; edge: number }; interval: number; /** seconds a destroyed soundsystem takes off the next wave's countdown (Ed, 2026-10-05) */ lossPenalty: number; startDelay: number; maxPerWave: number; /** areas each wave wakes: one per witch present (1 until multiplayer) */ areasPerWave: number; /** the route picker's planned order: "spiral" (default) or "varied" (?route=) */ route?: string; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     motes: { count: number; rise: number; speed: number; column: number };
     radius: number; clearing: number;
@@ -311,7 +315,7 @@ export interface Tuning {
   /** A sleeping legend's dream bubble (Ed, 2026-10-05): shown only to a witch on the ground within range metres of it. */
   dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string } };
   /** Which areas have a legend (Ed, 2026-10-06: "only in about half of areas (we can test this ratio)"): share of them, seeded per map and spread out (rules/map.ts chooseLegendCells); the map's, so a change needs a new map. */
-  legends: { share: number };
+  legends: { share: number; /** The party-legend Easter egg (rules/partyLegend.ts): on, 💌s to fill a happy legend's meter, its drain (share a second), how far (m) she can go from it leashed. */ partyEgg: boolean; partyHits: number; partyDrain: number; partyReach: number };
   wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
   /** The simulation's level of detail (rules/simLod.ts): creatures in full near her and the action, coarse beyond, frozen past creatureSimRadius. */

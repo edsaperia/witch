@@ -141,7 +141,7 @@ export function partyNear(g: Game, at: { x: number; z: number }): number {
     if (key === "home" || h.hp <= 0 || S.ruined.has(key)) continue;
     const d = Math.hypot(h.x - at.x, h.z - at.z), near = 1 - Math.min(1, Math.max(0, (d - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
     if (near <= best) continue;
-    if (!happy) { happy = new Set(); for (const c of g.creatures) if ((c.guard || (c.boss && c.legendState === "happy")) && !c.gone && !c.leashed) happy.add(`${c.cell[0]},${c.cell[1]}`); } // (one pass, only when one's in earshot)
+    if (!happy) { happy = new Set(); for (const c of g.creatures) if (c.boss && c.legendState === "happy" && !c.gone && !c.leashed) happy.add(`${c.cell[0]},${c.cell[1]}`); } // (one pass, only when one's in earshot)
     if (happy.has(key) || g.leash.placed.some(p => Math.hypot(p.x - h.x, p.z - h.z) < h.radius + 30)) best = near;
   }
   return best;

@@ -9,7 +9,6 @@ import { Forest } from "./forest";
 import { beachOf, edgeRadius } from "./mapShape";
 import { newWitch, stepWitch, NO_INTENT, type Intent, type WitchState } from "./witch";
 import { newBeachWitches, stepBeachWitches, SEQUENCE } from "./beach";
-import { hash2 } from "./random";
 import { TUNING, type Tuning } from "./tuning";
 
 const SEEDS = [1, 123, 4242];
@@ -85,17 +84,41 @@ describe("flying on past the beach, she lands and stargazes", () => {
 describe("witches on the beach", () => {
   const chanced = (on: boolean): Tuning => ({ ...TUNING, beach: { ...TUNING.beach!, witchChance: on ? 1 : 0 } });
 
-  it("only in some runs (witchChance of them)", () => {
-    let n = 0;
-    for (let s = 0; s < 400; s++) if (hash2(s, 77, 4111) < TUNING.beach!.witchChance) n++;
-    expect(n / 400).toBeGreaterThan(TUNING.beach!.witchChance - 0.1);
-    expect(n / 400).toBeLessThan(TUNING.beach!.witchChance + 0.1);
+  it("in every run, a handful of spots spread round the whole coast, never bunched (Ed, 2026-10-06: \"always ... only a handful spread around it\")", () => {
+    const [lo, hi] = TUNING.beach!.spots!;
+    for (const seed of [1, 123, 4242, 90210, 925469]) {
+      const map = generateMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, spots = newBeachWitches(seed, map.bounds, TUNING)!;
+      expect(spots, `seed ${seed}`).not.toBeNull();
+      expect(spots.length).toBeGreaterThanOrEqual(lo);
+      expect(spots.length).toBeLessThanOrEqual(hi);
+      const angles = spots.map(s => Math.atan2(s.z - b.z, s.x - b.x)).sort((p, q) => p - q), gap = (Math.PI * 2) / spots.length;
+      for (let i = 0; i < angles.length; i++) {
+        const next = i + 1 < angles.length ? angles[i + 1] : angles[0] + Math.PI * 2;
+        expect(next - angles[i], `seed ${seed}: spots ${i} and ${i + 1}`).toBeGreaterThan(gap * 0.3); // (a third of the gap's nudge either way at most)
+      }
+      for (const s of spots) {
+        expect(s.list.length).toBeGreaterThanOrEqual(TUNING.beach!.witches[0]);
+        expect(s.list.length).toBeLessThanOrEqual(TUNING.beach!.witches[1]);
+        for (const w of s.list) expect(b.intoSand(w.x, w.z)).toBeGreaterThan(0);
+      }
+    }
     const map = generateMap(123, TUNING);
-    expect(newBeachWitches(123, map.bounds, chanced(false))).toBeNull();
+    expect(newBeachWitches(123, map.bounds, chanced(false))).toBeNull(); // (witchChance 0: none)
+  });
+
+  it("each spot left alone unless she's near it", () => {
+    const map = generateMap(123, TUNING), spots = newBeachWitches(123, map.bounds, TUNING)!, s0 = spots[0];
+    const before = JSON.stringify(spots.map(s => s.list));
+    let time = 0;
+    const me = { x: s0.x, z: s0.z, onFoot: true, moving: false };
+    for (let k = 0; k < 300; k++) for (const s of spots) stepBeachWitches(s, [me], (time += STEP), STEP, TUNING);
+    expect(spots[0].idle).toBe(false);
+    for (const s of spots.slice(1)) expect(s.idle).toBe(true);
+    expect(JSON.stringify(spots.slice(1).map(s => s.list))).toBe(JSON.stringify(JSON.parse(before).slice(1)));
   });
 
   it("lie on the sand, left alone while she's away, and chat, hold hands, hug and stargaze with her when she lands by them", () => {
-    const t = chanced(true), map = generateMap(123, t), b = beachOf(map.bounds, t)!, s = newBeachWitches(123, map.bounds, t)!;
+    const t = chanced(true), map = generateMap(123, t), b = beachOf(map.bounds, t)!, s = newBeachWitches(123, map.bounds, t)![0];
     expect(s.list.length).toBeGreaterThanOrEqual(t.beach!.witches[0]);
     expect(s.list.length).toBeLessThanOrEqual(t.beach!.witches[1]);
     for (const w of s.list) { expect(b.intoSand(w.x, w.z)).toBeGreaterThan(0); expect(Math.hypot(w.x - b.x, w.z - b.z)).toBeLessThan(edgeRadius(map.bounds.circle!, w.x, w.z)); }
@@ -114,6 +137,10 @@ describe("witches on the beach", () => {
       if (I.pose && seen[seen.length - 1] !== I.pose) seen.push(I.pose);
     }
     expect(seen.slice(0, 4)).toEqual(SEQUENCE.map(q => q.pose));
+    // lying together to stargaze, they stay so while she keeps still (the hearts' time: render/beach.ts)
+    for (let k = 0; k < (t.beach!.turn * 3) / STEP; k++) stepBeachWitches(s, [me], (time += STEP), STEP, t);
+    expect(s.players[0].pose).toBe("stargaze");
+    expect(s.list.find(w => w.id === s.players[0].partner)!.pose).toBe("stargaze");
     const I = s.players[0], mate = s.list.find(w => w.id === I.partner)!;
     expect(mate.partner).toBe(-1);
     expect(Math.hypot(mate.x - me.x, mate.z - me.z)).toBeLessThan(3); // she came over

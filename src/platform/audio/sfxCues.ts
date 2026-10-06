@@ -7,8 +7,8 @@
 //    thrown its full range: a puff as it lands on the ground); the
 //    talk's invites (with 💌s off) still flourish.
 //  - States: a creature turning enraged (a growl and the nearest's angry speech; a crowd turning at
-//    once, one heavier growl) or happy (a pop and its happy speech): its area's guards, a friendly
-//    area's creatures, a legend at peace.
+//    once, one heavier growl) or happy (a pop and its happy speech): a friendly area's creatures,
+//    a legend at peace.
 //  - Legends: the nearest sleeping one moans now and then as it dreams; restless (#87), nightmares.
 //  - Attacks are speech (Ed, 2026-10-05): an attacker's burst of babble in its own voice, by mood;
 //    a legend winding up, one long building swell of its whale song; a lob landing, a thud (a legend's, a boom).
@@ -32,7 +32,7 @@ import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind>(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash"]);
 
-const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.guard || !!c.friendly || (!!c.boss && c.legendState === "happy"));
+const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.friendly || (!!c.boss && c.legendState === "happy"));
 
 /** What a cue step needs: the game, its time, how near a point is to her (0-1) and its pan. */
 interface Here { g: Game; time: number; near: (x: number, z: number) => number; pan: (x: number) => number }
@@ -220,14 +220,14 @@ export class SfxCues {
   /** Knocked back and stunned (#108): her knock as it begins (a thump and a whoosh by how far it
    *  throws her), then a soft dizzy twinkle round and round while she's staggered; read loosely
    *  until #108 lands (knock: kx, kz m/s easing off at witch.knock.ease; at; stunUntil). */
-  private knocked({ g, time }: Here): void {
+  private knocked({ g }: Here): void {
     const kn = (g.witches[0] as unknown as { knock?: { kx: number; kz: number; at: number; stunUntil: number } } | undefined)?.knock;
     if (kn && Number.isFinite(kn.at) && kn.at !== this.knockAt) {
       this.knockAt = kn.at;
       const ease = (g.tuning as unknown as { witch?: { knock?: { ease?: number } } }).witch?.knock?.ease ?? 6;
       if (this.primed) this.sfx.knock(Math.hypot(kn.kx, kn.kz) / Math.max(0.1, ease));
     }
-    if (kn && time < kn.stunUntil && time >= this.nextTwinkle) { this.nextTwinkle = time + g.tuning.sfx.knock.twinkleEvery; this.sfx.twinkle(this.twinkles++); }
+    if (kn && g.herTime < kn.stunUntil && g.herTime >= this.nextTwinkle) { this.nextTwinkle = g.herTime + g.tuning.sfx.knock.twinkleEvery; this.sfx.twinkle(this.twinkles++); } // (her stun: her clock, rules/slowTime.ts)
   }
 
   /** A legend's long charge (#114: c.run's phase windup, run, brake, home): the nearest charger

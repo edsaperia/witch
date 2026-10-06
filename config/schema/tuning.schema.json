@@ -99,6 +99,48 @@
           "type": "number",
           "minimum": 0
         },
+        "stargazeCurve": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gazeEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "letterLinger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "letterFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hearts": {
+          "type": "object",
+          "properties": {
+            "after": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "after",
+            "every",
+            "life"
+          ],
+          "additionalProperties": false
+        },
         "shown": {
           "type": "number",
           "minimum": 0
@@ -106,6 +148,13 @@
         "witchChance": {
           "type": "number",
           "minimum": 0
+        },
+        "spots": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
         },
         "witches": {
           "type": "array",
@@ -139,8 +188,14 @@
         "sand",
         "sea",
         "restAfter",
+        "stargazeCurve",
+        "gazeEase",
+        "letterLinger",
+        "letterFade",
+        "hearts",
         "shown",
         "witchChance",
+        "spots",
         "witches",
         "meet",
         "idleAfter",
@@ -3445,6 +3500,37 @@
       ],
       "additionalProperties": false
     },
+    "legendCircle": {
+      "type": "object",
+      "properties": {
+        "slow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "scale",
+            "ease"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "slow"
+      ],
+      "additionalProperties": false
+    },
     "legendClearing": {
       "type": "object",
       "properties": {
@@ -4889,6 +4975,39 @@
           ],
           "additionalProperties": false
         },
+        "spell": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hum": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rustle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "crackle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "burst": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "hum",
+            "rustle",
+            "crackle",
+            "burst"
+          ],
+          "additionalProperties": false
+        },
         "land": {
           "type": "object",
           "properties": {
@@ -5167,6 +5286,7 @@
         "pond",
         "picnic",
         "room",
+        "spell",
         "land",
         "stir",
         "knock",
@@ -6011,6 +6131,9 @@
         "picker": {
           "type": "string"
         },
+        "route": {
+          "type": "string"
+        },
         "noisy": {
           "type": "object",
           "properties": {
@@ -6060,6 +6183,7 @@
         "areasPerWave",
         "maxPerWave",
         "picker",
+        "route",
         "noisy",
         "transition",
         "lightReach",
@@ -6750,10 +6874,29 @@
         "share": {
           "type": "number",
           "minimum": 0
+        },
+        "partyEgg": {
+          "type": "boolean"
+        },
+        "partyHits": {
+          "type": "number",
+          "minimum": 1
+        },
+        "partyDrain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyReach": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "share"
+        "share",
+        "partyEgg",
+        "partyHits",
+        "partyDrain",
+        "partyReach"
       ],
       "additionalProperties": false
     },
@@ -7009,6 +7152,7 @@
     "bubbles",
     "scenes",
     "grounds",
+    "legendCircle",
     "legendClearing",
     "relics",
     "walls",
