@@ -582,8 +582,8 @@ describe("the party", () => {
     expect([...p.areas.keys()]).toEqual([key(map.centreCell)]);
     expect(p.areas.get(key(map.centreCell))!.soundsystem).toBeNull();
   });
-  it("wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last", () => {
-    const p = newParty(map);
+  it("wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last (the noisy picker)", () => {
+    const map = generateMap(123, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }), p = newParty(map);
     let besideLast = 0, couldAvoid = 0;
     for (let w = 1; w <= 25; w++) {
       expect(p.next.length).toBe(1);

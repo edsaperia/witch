@@ -1,159 +1,124 @@
-// The ley line's route never crosses itself (Ed, 2026-10-06: "Is it possible for the leylines to
-// never have to cross? even if it means the route they describe is much longer"). The route runs
-// through the runestones in the order the waves wake them (home first, then each area in the order
-// it joined the party, rules/party.ts): its first link the treehouse's departure curve
-// (rules/departure.ts), the rest straight from stone to stone. The line shows only a few links at
-// once (leyLines.ahead + behind), so it's those that must never meet: each link keeps clear of the
-// ones before it that it's ever shown with (older ones, no longer drawn, it may pass over). The wave
-// picker (party.ts) chooses areas the line can reach straight that way, with a way on from them;
-// when none can, the link bends round the links it's shown with (the shortest way round them) and
-// render/leylines.ts draws it along that. Worked out once per route and kept; no drawing here.
+// The ley line's route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves
+// the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"; before it,
+// "Is it possible for the leylines to never have to cross? even if it means the route they describe
+// is much longer"). With the route picker (party.picker "route", the default) the waves wake the
+// areas in one order worked out once per map, here, and the line runs through all of them, home
+// first: its first link the treehouse's departure curve (rules/departure.ts), the rest straight
+// from stone to stone. The order: a spiral out from the dancefloor (party.route.spacing times the
+// ring round home between its turns, starting at one of the ring's stones, due south first, where
+// the departure curve heads), then untangled: any two links that cross have the stones between them
+// reversed (2-opt), and a stone whose links still meet another's is moved to wherever its links
+// cross fewest; of the starts, the one that crosses least (none, on every seed tried: a strong
+// wish, not a rule). Seeded only by the map; no drawing here.
 import type { ForestMap } from "./map";
 import { departureRoute } from "./departure";
-import { polylinesMeet, type P2 } from "./crossing";
+import { polylinesMeet, segmentsMeet, type P2 } from "./crossing";
 
 export type { P2 };
 
-/** How far round a link's corner a bent link passes (m). */
-const CLEAR = 10;
-/** How far a straight link keeps from the stones of the links it's shown with (but its own ends),
- *  so it never seems to run through one (m). */
-const STONE_CLEAR = 20;
-const distToSegment = (p: P2, a: P2, b: P2) => {
-  const dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz, t = l2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / l2)) : 0;
-  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dz);
+export interface LeyRoute {
+  /** The areas' keys in the order the waves wake them (home not among them). */
+  order: string[];
+  /** Each one's stone (its soundsystem's spot), in that order. */
+  stones: P2[];
+  /** links[i] runs into order[i]: links[0] the departure curve from the treehouse, the rest straight. */
+  links: P2[][];
+}
+
+const ROUTES = new WeakMap<ForestMap, LeyRoute>();
+
+/** The map's route, worked out once. */
+export function leyRoute(map: ForestMap): LeyRoute {
+  let r = ROUTES.get(map);
+  if (!r) ROUTES.set(map, (r = planRoute(map)));
+  return r;
+}
+
+function planRoute(map: ForestMap): LeyRoute {
+  // The spiral may start at any of the stones round home (due south first, where the departure
+  // curve heads): the one whose route crosses itself least, untangled.
+  let best: LeyRoute | null = null, bestC = Infinity;
+  for (let start = 0; start < 12 && bestC > 0; start++) {
+    const r = planFrom(map, start);
+    if (!r) break;
+    const c = crossingsOf(r.links);
+    if (c < bestC) { best = r; bestC = c; }
+  }
+  return best ?? { order: [], stones: [], links: [] };
+}
+
+const crossingsOf = (links: readonly (readonly P2[])[]) => {
+  let c = 0;
+  for (let i = 0; i < links.length; i++) for (let j = i + 1; j < links.length; j++) if (polylinesMeet(links[i], links[j])) c++;
+  return c;
 };
 
-const keyOf = (c: readonly [number, number]) => `${c[0]},${c[1]}`;
-const SPOTS = new WeakMap<ForestMap, Map<string, P2>>();
-/** Where an area's runestone (its soundsystem) stands. */
-export function stoneAt(map: ForestMap, key: string): P2 {
-  let m = SPOTS.get(map);
-  if (!m) SPOTS.set(map, (m = new Map()));
-  let s = m.get(key);
-  if (!s) { const [x, y] = key.split(",").map(Number), p = map.soundsystemSpot(x, y); m.set(key, (s = [p.x, p.z])); }
-  return s;
-}
-
-const NEAREST = new WeakMap<ForestMap, Map<string, string[]>>();
-/** Every other area's key, nearest `key`'s stone first (worked out once per map). */
-function nearestTo(map: ForestMap, key: string, keys: readonly string[]): string[] {
-  let m = NEAREST.get(map);
-  if (!m) NEAREST.set(map, (m = new Map()));
-  let out = m.get(key);
-  if (!out) {
-    const c = stoneAt(map, key), d = (k: string) => { const s = stoneAt(map, k); return Math.hypot(s[0] - c[0], s[1] - c[1]); };
-    m.set(key, (out = keys.filter(k => k !== key).map(k => [k, d(k)] as const).sort((a, b) => a[1] - b[1]).map(e => e[0])));
+/** The route with the spiral starting at the `start`-th stone round home (by how far round from
+ *  due south), or null if there's no such stone. */
+function planFrom(map: ForestMap, start: number): LeyRoute | null {
+  const home = `${map.centreCell[0]},${map.centreCell[1]}`, d = map.dancefloor;
+  // A turn's spacing: the ring of areas round home's (their stones' distance from the dancefloor, on average).
+  const ring = [...(map.neighbours.get(home) ?? [])].map(k => { const [x, y] = k.split(",").map(Number), q = map.soundsystemSpot(x, y); return Math.hypot(q.x - d.x, q.z - d.z); });
+  const w = Math.max(1, (ring.length ? ring.reduce((a, b) => a + b, 0) / ring.length : map.areaSize) * (map.tuning.party.route?.spacing ?? 1));
+  // The spiral: each stone's turn (its distance out, less how far round it is from due south, half a
+  // turn in, so the ring round home is the first) and how far round.
+  const all: { key: string; p: P2; s: number; round: number; r: number }[] = [];
+  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+    const key = `${cx},${cy}`;
+    if (key === home) continue;
+    const q = map.soundsystemSpot(cx, cy), r = Math.hypot(q.x - d.x, q.z - d.z), round = (((Math.atan2(q.x - d.x, q.z - d.z) / (2 * Math.PI)) % 1) + 1) % 1;
+    all.push({ key, p: [q.x, q.z], s: 0, round, r });
   }
-  return out;
-}
-
-/** How many links before one it's ever shown with (the line shows ahead + behind of them). */
-export const shownWith = (map: ForestMap) => Math.max(1, map.tuning.leyLines.ahead + map.tuning.leyLines.behind);
-
-const clearOf = (links: readonly (readonly P2[])[], link: readonly P2[]) => !links.some(l => polylinesMeet(l, link));
-
-/** The link from `a` to `b` after `links`: straight if that meets none of the last `shownWith` of
- *  them, else the shortest way round them (passing CLEAR metres off their corners), or straight if
- *  there's none (never: a line that doesn't cross itself never closes a loop). */
-export function linkOnto(map: ForestMap, links: readonly (readonly P2[])[], a: P2, b: P2): P2[] {
-  const straight: P2[] = [a, b], near = links.slice(-shownWith(map));
-  if (clearOf(near, straight)) return straight;
-  // The corners to pass: every point of the links near (the departure curve's every few), a ring of
-  // eight round each; the shortest way from a to b through them that meets none of the links
-  // (passing closer where the gaps are narrow, each ring turned a little from the last).
-  for (let k = 0; k < 5; k++) {
-    const way = shortestRound(near, a, b, CLEAR / 3 ** k, k * 0.37);
-    if (way) return way;
-  }
-  return straight;
-}
-
-function shortestRound(near: readonly (readonly P2[])[], a: P2, b: P2, r: number, turn: number): P2[] | null {
-  const nodes: P2[] = [a];
-  for (const l of near) l.forEach((p, i) => { if (l.length > 12 && i % 3 && i !== l.length - 1) return; for (let k = 0; k < 8; k++) nodes.push([p[0] + r * Math.cos((k * Math.PI) / 4 + turn), p[1] + r * Math.sin((k * Math.PI) / 4 + turn)]); });
-  nodes.push(b);
-  // (A*: the nearest way so far plus the straight distance on to b, first.)
-  const n = nodes.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n);
-  const h = nodes.map(q => Math.hypot(b[0] - q[0], b[1] - q[1]));
-  dist[0] = 0;
-  for (;;) {
-    let u = -1;
-    for (let i = 0; i < n; i++) if (!done[i] && dist[i] < Infinity && (u < 0 || dist[i] + h[i] < dist[u] + h[u])) u = i;
-    if (u < 0 || u === n - 1) break;
-    done[u] = 1;
-    for (let v = 1; v < n; v++) {
-      if (done[v]) continue;
-      const d = dist[u] + Math.hypot(nodes[v][0] - nodes[u][0], nodes[v][1] - nodes[u][1]);
-      if (d < dist[v] && clearOf(near, [nodes[u], nodes[v]])) { dist[v] = d; prev[v] = u; }
+  const first = all.filter(a => Math.floor(a.r / w - a.round - 0.5) <= 0).sort((a, b) => a.round - b.round)[start];
+  if (!first) return null;
+  for (const a of all) { const round = (a.round - first.round + 1) % 1; a.s = Math.max(0, Math.floor(a.r / w - round - 0.5)) + round; }
+  all.sort((a, b) => a.s - b.s || (a.key < b.key ? -1 : 1));
+  const st = all.map(a => a.p), keys = all.map(a => a.key), n = st.length;
+  if (!n) return null;
+  const D = map.tuning.leyLines.depart, depart = departureRoute(map, { x: st[0][0], z: st[0][1] }, D.past, D.avoid, 4) as P2[];
+  // (The first stone stays first: the departure curve leads to it.)
+  const swap = (i: number, j: number) => { for (; i < j; i++, j--) { [st[i], st[j]] = [st[j], st[i]]; [keys[i], keys[j]] = [keys[j], keys[i]]; } };
+  const meets = (i: number, j: number) => (i === 0 ? polylinesMeet(depart, [st[j - 1], st[j]]) : segmentsMeet(st[i - 1], st[i], st[j - 1], st[j], j === i + 1));
+  const twoOpt = () => {
+    for (let pass = 0; pass < 200; pass++) {
+      let changed = false;
+      for (let i = 1; i < n; i++) for (let j = i + 2; j < n; j++) if (meets(i, j)) { swap(i, j - 1); changed = true; }
+      if (!changed) return;
     }
-  }
-  if (prev[n - 1] < 0) return null;
-  const out: P2[] = [];
-  for (let v = n - 1; v >= 0; v = prev[v]) out.unshift(nodes[v]);
-  return out;
-}
-
-/** Links worked out from a route's end, by its last link (each route's own) and the area they go to. */
-const ONTO = new WeakMap<readonly P2[], Map<string, P2[]>>();
-function linkFrom(map: ForestMap, links: readonly P2[][], a: P2, key: string): P2[] {
-  const lastLink = links[links.length - 1];
-  let m = ONTO.get(lastLink);
-  if (!m) ONTO.set(lastLink, (m = new Map()));
-  let l = m.get(key);
-  if (!l) m.set(key, (l = linkOnto(map, links, a, stoneAt(map, key))));
-  return l;
-}
-
-interface Node { link: P2[]; next: Map<string, Node> }
-const TRIES = new WeakMap<ForestMap, Node>();
-
-/** The route's links through these areas in order (home's key first, then each area's, the order
- *  they joined the party): links[i] runs into keys[i + 1]. Worked out once per route (kept by prefix). */
-export function routeLinks(map: ForestMap, keys: Iterable<string>): P2[][] {
-  let node: Node | undefined = TRIES.get(map);
-  if (!node) TRIES.set(map, (node = { link: [], next: new Map() }));
-  const home = keyOf(map.centreCell), links: P2[][] = [];
-  let last: P2 | null = null;
-  for (const k of keys) {
-    if (k === home) continue;
-    const to = stoneAt(map, k);
-    let child: Node | undefined = node.next.get(k);
-    if (!child) {
-      const D = map.tuning.leyLines.depart;
-      const link = !last ? (departureRoute(map, { x: to[0], z: to[1] }, D.past, D.avoid, 4) as P2[]) : map.tuning.party.uncrossed ? linkFrom(map, links, last, k) : [last, to];
-      node.next.set(k, (child = { link, next: new Map() }));
-    }
-    links.push(child.link);
-    node = child; last = to;
-  }
-  return links;
-}
-
-/** The wave picker's tests (party.ts) for an area the route could go to next, after `links` ending
- *  at `end` (null: none yet), best first: its straight link meets none of the links it's ever shown
- *  with (best keeping STONE_CLEAR off their stones too), and there's a way on from it after (some
- *  other dormant area its next link could reach straight the same way, so the line never walks into
- *  a pocket of its own links), unless it's the last area; else its link bent round those (linkOnto)
- *  meets none of them. */
-export function uncrossedTests(map: ForestMap, links: readonly P2[][], end: P2 | null, dormant: readonly { key: string }[], all: readonly { key: string }[]): ((key: string) => boolean)[] {
-  if (!end) return [() => true]; // (the first link, the departure curve: nothing before it to cross)
-  const open = new Set(dormant.map(d => d.key)), keys = all.map(c => c.key);
-  const back = shownWith(map);
-  const straight = (away: number) => (key: string) => {
-    const c = stoneAt(map, key), link: P2[] = [end, c], before = links.slice(-back);
-    if (!clearOf(before, link)) return false;
-    for (const l of before) { const s = l[l.length - 1]; if (s !== end && distToSegment(s, end, c) < away) return false; }
-    if (open.size <= 1) return true;
-    const after = [...links, link].slice(-back);
-    for (const d of nearestTo(map, key, keys)) if (open.has(d) && clearOf(after, [c, stoneAt(map, d)])) return true;
-    return false;
   };
-  // Last, any it can reach bent round the links it's shown with (linkOnto): a few, it costs more.
-  let tries = 0;
-  const bent = (key: string) => ++tries <= BENT_TRIES && clearOf(links.slice(-back), linkFrom(map, links, end, key));
-  return [straight(STONE_CLEAR), straight(0), bent];
+  twoOpt();
+  // Then a stone at a crossing moved, while that helps: wherever the links it changes (into it, into
+  // the stone after it, and into the one that followed it where it was) cross the fewest others.
+  const crossingsAt = (idx: number[]) => {
+    const set = [...new Set(idx.filter(i => i >= 0 && i < n))];
+    let c = 0;
+    for (const k of set) for (let i = 0; i < n; i++) if (i !== k && !(set.includes(i) && i < k) && meets(Math.min(i, k), Math.max(i, k))) c++;
+    return c;
+  };
+  for (let round = 0; round < 8; round++) {
+    let at = -1;
+    for (let i = 0; i < n && at < 0; i++) for (let j = i + 1; j < n && at < 0; j++) if (meets(i, j)) at = j;
+    if (at < 0) break;
+    let moved = false;
+    for (const k of [at, at - 1]) {
+      if (k < 1 || moved) continue;
+      const before = crossingsAt([k, k + 1]), sk = st[k], kk = keys[k], next = keys[k + 1];
+      st.splice(k, 1); keys.splice(k, 1);
+      let best = -1, bestC = before;
+      for (let p = 1; p <= st.length; p++) {
+        if (p === k) continue;
+        st.splice(p, 0, sk); keys.splice(p, 0, kk);
+        const c = crossingsAt([p, p + 1, next === undefined ? -1 : keys.indexOf(next)]);
+        st.splice(p, 1); keys.splice(p, 1);
+        if (c < bestC) { bestC = c; best = p; if (c === 0) break; }
+      }
+      st.splice(best >= 0 ? best : k, 0, sk); keys.splice(best >= 0 ? best : k, 0, kk);
+      moved = best >= 0;
+    }
+    if (!moved) break;
+    twoOpt();
+  }
+  const links: P2[][] = [depart];
+  for (let i = 1; i < n; i++) links.push([st[i - 1], st[i]]);
+  return { order: keys, stones: st, links };
 }
-
-/** How many areas the last test tries a pick (bending round is the dear one). */
-const BENT_TRIES = 4;

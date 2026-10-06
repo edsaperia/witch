@@ -6,7 +6,7 @@ import type { Tuning } from "./tuning";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
-import { routeLinks, stoneAt, uncrossedTests } from "./leyroute";
+import { leyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -63,10 +63,9 @@ export function newParty(map: ForestMap): PartyState {
   return p;
 }
 
-/** Every area's cell, its soundsystem's spot and distance from the dancefloor and its noisy picker's
- *  cost (distance times a smooth seeded wobble: lobes, not a disc), worked out once per map. */
-type CellInfo = { key: string; cell: Cell; x: number; z: number; dist: number; cost: number };
-const CELLS = new WeakMap<ForestMap, CellInfo[]>();
+/** Every area's cell, its soundsystem's distance from the dancefloor and its noisy picker's cost
+ *  (distance times a smooth seeded wobble: lobes, not a disc), worked out once per map. */
+const CELLS = new WeakMap<ForestMap, { key: string; cell: Cell; dist: number; cost: number }[]>();
 function cellsOf(map: ForestMap) {
   let out = CELLS.get(map);
   if (out) return out;
@@ -75,49 +74,40 @@ function cellsOf(map: ForestMap) {
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     const s = map.soundsystemSpot(cx, cy), site = map.siteOf(cx, cy), dist = Math.hypot(s.x - d.x, s.z - d.z);
     const n = 0.65 * vnoise(site.x / L, site.z / L, s0) + 0.35 * vnoise(site.x / (L / 2.3), site.z / (L / 2.3), s0 + 1);
-    out.push({ key: `${cx},${cy}`, cell: [cx, cy], x: s.x, z: s.z, dist, cost: dist * (1 + N.wobble * (n - 0.5) * 2) });
+    out.push({ key: `${cx},${cy}`, cell: [cx, cy], dist, cost: dist * (1 + N.wobble * (n - 0.5) * 2) });
   }
   CELLS.set(map, out);
   return out;
 }
 
-export type Picker = "noisy" | "near3" | "near3touch" | "nearest";
+export type Picker = "route" | "noisy" | "near3" | "near3touch" | "nearest";
 
 /** Choose the area the next wave wakes, by the tuning's picker (?picker= in the URL):
- *  - noisy (default): of the dormant areas bordering the party (no islands), the `candidates`
+ *  - route (default; Ed, 2026-10-06: the ley line "should cover the entire set of waves the whole
+ *    time, but ideally it shouldn't cross itself"): the next area in the map's planned order
+ *    (rules/leyroute.ts) the party hasn't, or whose soundsystem fell;
+ *  - noisy: of the dormant areas bordering the party (no islands), the `candidates`
  *    cheapest by distance to the dancefloor times a smooth seeded wobble (lobes, not a disc),
  *    not beside the last pick if there's another, one at random;
  *  - near3: of all the dormant areas, the 3 nearest the dancefloor, one at random;
  *  - near3touch: the same among those bordering the party;
  *  - nearest: the nearest dormant area bordering the party. */
 export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0, border?: Set<string>): Cell | null {
+  if (picker === "route") {
+    for (const key of leyRoute(map).order) if (!p.areas.has(key) && !p.ruined?.has(key)) { const c = key.split(",").map(Number) as unknown as Cell; candidates?.push(c); return c; }
+    return null;
+  }
   const N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3 + salt * 104729);
   const touching = border ?? new Set<string>(); // (the dormant areas bordering the party: wavePlan keeps its own)
   if (!border) for (const k of p.areas.keys()) for (const nk of map.neighbours.get(k) ?? []) if (!p.areas.has(nk)) touching.add(nk);
-  const dormant: CellInfo[] = [];
+  const dormant: { key: string; cell: Cell; dist: number; cost: number }[] = [];
   for (const c of cellsOf(map)) if (!p.areas.has(c.key) && !p.ruined?.has(c.key)) dormant.push(c);
   const frontier = dormant.filter(c => touching.has(c.key));
-  let pool = picker === "near3" ? dormant : frontier.length ? frontier : dormant;
+  const pool = picker === "near3" ? dormant : frontier.length ? frontier : dormant;
   if (!pool.length) return null;
-  // Uncrossed (Ed, 2026-10-06; rules/leyroute.ts): only areas the line can reach without meeting
-  // the links it's ever shown with, straight, else bent round them; bordering the party if any can,
-  // else anywhere; only if none can at all, as before.
-  const route = map.tuning.party.uncrossed ? [...p.areas.keys()] : [], last = route[route.length - 1];
-  const tests = route.length ? uncrossedTests(map, routeLinks(map, route), route.length > 1 ? stoneAt(map, last) : null, dormant, cellsOf(map)).map(t => (c: CellInfo) => t(c.key)) : [];
-  const n = Math.max(1, N.candidates);
-  const cheapest = (from: CellInfo[], ok: (c: CellInfo) => boolean) => { const out: CellInfo[] = []; for (const c of [...from].sort((a, b) => a.cost - b.cost)) if (ok(c)) { out.push(c); if (out.length >= n) break; } return out; };
-  let best: CellInfo[] = [];
-  for (const from of tests.length ? (pool === dormant ? [pool] : [pool, dormant]) : []) {
-    for (const ok of tests) {
-      if (picker === "noisy") best = cheapest(from, ok);
-      else { const fit = from.filter(ok); if (fit.length) pool = fit; best = fit; }
-      if (best.length) break;
-    }
-    if (best.length) break;
-  }
   if (picker === "nearest") { const c = [...pool].sort((a, b) => a.dist - b.dist)[0].cell; candidates?.push(c); return c; }
   if (picker === "noisy") {
-    if (!best.length) best = [...pool].sort((a, b) => a.cost - b.cost).slice(0, n);
+    let best = [...pool].sort((a, b) => a.cost - b.cost).slice(0, Math.max(1, N.candidates));
     if (N.spreadFromLast && p.last) {
       const beside = map.neighbours.get(cellKey(p.last)) ?? new Set<string>();
       const away = best.filter(c => !beside.has(c.key));

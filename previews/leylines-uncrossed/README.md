@@ -1,6 +1,6 @@
-# Ley lines that never cross (Ed, 2026-10-06)
+# The ley line: the whole route, not crossing itself (Ed, 2026-10-06)
 
-"Is it possible for the leylines to never have to cross? even if it means the route they describe is much longer."
+"I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself, or try and minimise crossings."
 
-- `diagram.png`: the ley line as drawn (three sections behind the last stone reached, in violet; three ahead, in cyan; the yellow dot is the last stone reached, numbers are waves), top-down, before (`?uncrossed=0`, the picker as it was) and after, for seeds 10, 11 and 14 three waves in and seed 40 six waves in. Before: 7, 7, 9 and 3 crossings. After: none.
-- `seed10-wave3-before.png`, `seed10-wave3-after.png`: the same in the game, seed 10 three waves in, from the treetops over the spot where the old line crossed itself (the camera raised to 420 m and the line brightened about threefold for the picture; tilt-shift off). Before, the lines cross in an X over the clearing; after, they run round it without meeting.
+- `diagram.png`: top-down, the whole route through every area in wave order for seeds 10 and 40, from home (yellow) and the first waves (blue, thicker) to the last (pink). Left, the noisy picker as it was (`?picker=noisy`): 3533 and 3243 crossings. Right, the route picker: a spiral out from home, untangled, with no crossings.
+- `seed10-wave3-before.png`, `seed10-wave3-after.png`: in the game, seed 10 three waves in, from the treetops over the last stone reached (the camera raised to 520 m and the line brightened about threefold for the picture; tilt-shift off). Before, the whole line through the old order is a web of crossings over the forest; after, the route's sections run round the stones without meeting.

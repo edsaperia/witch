@@ -73,9 +73,9 @@ if (params.get("find") === "0") tuning.find = { ...tuning.find, on: false }; // 
 // ?rune=beam|column|both: how an awake rune stone shows above it.
 const runeParam = params.get("rune");
 if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMarkers = { ...tuning.runeMarkers, awakeStyle: runeParam };
-// ?picker=noisy|near3|near3touch|nearest: how the party picks the next area to wake.
+// ?picker=route|noisy|near3|near3touch|nearest: how the party picks the next area to wake (route, the default: the ley line's planned order; noisy the one before it).
 const pickerParam = params.get("picker");
-if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
+if (pickerParam && ["route", "noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
 // ?glow=<reach>,<falloff>,<near>: the witch's glow, to tune live (e.g. ?glow=50,2.5,0.7; 0 keeps a value).
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
@@ -120,8 +120,6 @@ const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
 // ?ley=0: no ley lines through the runestones.
 if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
-// ?uncrossed=0: the wave picker as it was, its ley line free to cross itself (party.uncrossed; Ed, 2026-10-06), to compare.
-if (params.get("uncrossed") === "0") tuning.party = { ...tuning.party, uncrossed: false };
 if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
 // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
 // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no

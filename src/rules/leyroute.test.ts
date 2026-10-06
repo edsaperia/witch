@@ -1,13 +1,12 @@
-// The ley line never crosses itself where it shows (Ed, 2026-10-06: "Is it possible for the
-// leylines to never have to cross? even if it means the route they describe is much longer"):
-// rules/leyroute.ts and the wave picker (rules/party.ts, party.uncrossed). node tools/balance/leycross.mjs
-// measures it over hundreds of seeds.
+// The ley line's route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves
+// the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"):
+// rules/leyroute.ts and the route picker (rules/party.ts). node tools/balance/leycross.mjs measures
+// it over hundreds of seeds.
 import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newParty, spreadWave, wavePlan, cellKey } from "./party";
-import { leyChain } from "./leylines";
-import { routeLinks, shownWith } from "./leyroute";
+import { leyRoute } from "./leyroute";
 import { polylinesMeet, segmentsMeet, crossings } from "./crossing";
 
 describe("lines meeting", () => {
@@ -23,51 +22,44 @@ describe("lines meeting", () => {
   });
 });
 
-/** A seed's whole run: the route's links through every area, in the order the waves wake them. */
-const runOf = (seed: number, t: Tuning = TUNING) => {
-  const map = generateMap(seed, t), p = newParty(map);
-  return { map, p, links: routeLinks(map, [...p.areas.keys(), ...wavePlan(p, map).keys()]) };
-};
-
 describe("the ley line's route (Ed, 2026-10-06)", () => {
   const SEEDS = Array.from({ length: 30 }, (_, i) => i + 1);
-  it("never meets itself where it shows: no two links ever shown together meet, through the first 150 waves of 30 seeds", () => {
-    for (const seed of SEEDS) {
-      const { map, links } = runOf(seed);
-      expect(crossings(links.slice(0, 150), shownWith(map)), `seed ${seed}`).toBe(0);
-    }
-  }, 120_000);
-  it("is the same for a seed every time", () => {
-    const a = runOf(7), b = runOf(7);
-    expect(b.links.map(l => l.map(q => q.join()).join(";"))).toEqual(a.links.map(l => l.map(q => q.join()).join(";")));
+  it("runs through every area once, home first, and the waves wake them in its order", () => {
+    const map = generateMap(7, TUNING), r = leyRoute(map), p = newParty(map);
+    expect(r.order.length).toBe(map.n * map.n - 1);
+    expect(new Set(r.order).size).toBe(r.order.length);
+    expect(r.order).not.toContain(cellKey(map.centreCell));
+    expect([...wavePlan(p, map).keys()]).toEqual(r.order);
+    for (let w = 0; w < 5; w++) expect(spreadWave(p, map, (w + 1) * 300).map(a => cellKey(a.cell))).toEqual([r.order[w]]);
   });
-  it("(the picker as before crossed itself where it showed, within the first 40 waves of most seeds)", () => {
-    const t = structuredClone(TUNING) as Tuning;
-    t.party.uncrossed = false;
-    let crossed = 0;
-    for (const seed of SEEDS.slice(0, 10)) { const { map, links } = runOf(seed, t); if (crossings(links.slice(0, 40), shownWith(map)) > 0) crossed++; }
-    expect(crossed).toBeGreaterThan(5);
-  }, 60_000);
-  it("keeps the opening: the first waves wake areas bordering the party, as near home as before", () => {
-    for (const seed of SEEDS.slice(0, 10)) {
-      const map = generateMap(seed, TUNING), p = newParty(map);
-      for (let w = 0; w < 8; w++) for (const a of spreadWave(p, map, (w + 1) * 300)) {
-        const touches = [...(map.neighbours.get(cellKey(a.cell)) ?? [])].some(k => p.areas.get(k)?.wave !== undefined && p.areas.get(k)!.wave < a.wave);
-        expect(touches, `seed ${seed} wave ${a.wave}`).toBe(true);
-      }
-    }
-  }, 60_000);
-  it("hands the drawing its bends: a link that can't run straight carries them in the chain", () => {
+  it("is the same for a seed every time", () => {
+    const a = leyRoute(generateMap(11, TUNING)), b = leyRoute(generateMap(11, TUNING));
+    expect(b.order).toEqual(a.order);
+  });
+  it("doesn't cross itself: none on most of 30 seeds (a strong wish, not a rule: never more than once)", () => {
+    let clean = 0;
     for (const seed of SEEDS) {
-      const { map, p, links } = runOf(seed), bent = links.findIndex((l, i) => i > 0 && l.length > 2);
-      if (bent < 0 || bent > 60) continue;
-      // Play the waves up to just before that link's stone, so it's in the line ahead.
-      for (let w = 0; w < bent - 1; w++) spreadWave(p, map, (w + 1) * 300);
-      const c = leyChain(p, map, 3, 3), into = c.stones.find(s => s.via?.length);
-      expect(into, `seed ${seed}`).toBeDefined();
-      expect(into!.via).toEqual(links[bent].slice(1, -1).map(q => [q[0], q[1]]));
-      return;
+      const c = crossings(leyRoute(generateMap(seed, TUNING)).links);
+      expect(c, `seed ${seed}`).toBeLessThanOrEqual(1);
+      if (c === 0) clean++;
     }
-    throw new Error("no seed of 30 bent a link in its first 60 waves");
+    expect(clean).toBeGreaterThanOrEqual(28);
   }, 120_000);
+  it("(the noisy picker before it crossed itself thousands of times a run)", () => {
+    const t = structuredClone(TUNING) as Tuning;
+    t.party.picker = "noisy";
+    const map = generateMap(1, t), p = newParty(map), order = [...wavePlan(p, map).keys()], r = leyRoute(map);
+    const st = order.map(k => r.stones[r.order.indexOf(k)]), links = [r.links[0]];
+    for (let i = 1; i < st.length; i++) links.push([st[i - 1], st[i]]);
+    expect(crossings(links)).toBeGreaterThan(1000);
+  }, 60_000);
+  it("starts about the ring round home, and keeps the waves near each other", () => {
+    for (const seed of SEEDS.slice(0, 10)) {
+      const map = generateMap(seed, TUNING), r = leyRoute(map), d = map.dancefloor, far = (q: readonly number[]) => Math.hypot(q[0] - d.x, q[1] - d.z);
+      const ring = Math.max(...[...(map.neighbours.get(cellKey(map.centreCell)) ?? [])].map(k => far(r.stones[r.order.indexOf(k)])));
+      expect(far(r.stones[0]), `seed ${seed}`).toBeLessThan(ring * 1.3);
+      const steps = r.stones.slice(1, 40).map((q, i) => Math.hypot(q[0] - r.stones[i][0], q[1] - r.stones[i][1]));
+      expect(steps.reduce((a, b) => a + b, 0) / steps.length, `seed ${seed}`).toBeLessThan(2 * map.areaSize);
+    }
+  }, 60_000);
 });
