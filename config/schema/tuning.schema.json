@@ -2449,7 +2449,23 @@
     "partyWitches": {
       "type": "object",
       "properties": {
-        "max": {
+        "roam": {
+          "type": "number",
+          "minimum": 0
+        },
+        "centreBias": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopBoost": {
           "type": "number",
           "minimum": 0
         },
@@ -2522,7 +2538,11 @@
         }
       },
       "required": [
-        "max",
+        "roam",
+        "centreBias",
+        "swoopTime",
+        "swoopHeight",
+        "treetopBoost",
         "idleAfter",
         "idleReach",
         "activityMin",

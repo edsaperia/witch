@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newPartyWitches, pairOffset, stepPartyWitches, type PartyWitches, type PlayerView } from "./partyWitches";
+import { newPartyWitches, OFF_FLOOR, pairOffset, stepPartyWitches, type PartyWitches, type PlayerView } from "./partyWitches";
 import { TUNING } from "./tuning";
 
 const t = TUNING, floor = { x: 100, z: 200, radius: 15 }, P = t.partyWitches;
@@ -11,7 +11,7 @@ const run = (s: PartyWitches, as: ReturnType<typeof areas>, secs: number, from =
 };
 
 describe("party witches (Ed, 2026-10-04)", () => {
-  it("one flies in for each playing soundsystem, at most max, and lands on the floor clear of the speakers", () => {
+  it("one flies in for each playing soundsystem, however many (Ed, 2026-10-06), and lands round the floor", () => {
     const s = newPartyWitches(1);
     run(s, areas(5), 1);
     expect(s.list.length).toBe(5);
@@ -19,17 +19,17 @@ describe("party witches (Ed, 2026-10-04)", () => {
     run(s, areas(5), P.arriveTime + 1, 1);
     expect(s.list.every(w => w.state === "floor")).toBe(true);
     const s2 = newPartyWitches(2);
-    run(s2, areas(P.max + 10), 1);
-    expect(s2.list.length).toBe(P.max);
+    run(s2, areas(130), 1);
+    expect(s2.list.length).toBe(130); // no cap
   });
 
-  it("stays on the floor through her activities, pairs are mutual, and flies off when her soundsystem stops", () => {
+  it("stays within roam of the floor through her activities, pairs are mutual, and flies off when her soundsystem stops", () => {
     const s = newPartyWitches(3), as = areas(8), seen = new Set<string>();
     run(s, as, 120, 0, [], () => {
       for (const w of s.list) {
         seen.add(w.activity);
         if (w.state !== "floor") continue;
-        if (w.activity !== "fly") expect(Math.hypot(w.x - floor.x, w.z - floor.z)).toBeLessThanOrEqual(floor.radius * P.floorShare + 1e-6);
+        if (w.activity !== "fly" && w.activity !== "swoop") expect(Math.hypot(w.x - floor.x, w.z - floor.z)).toBeLessThanOrEqual(P.roam + 1e-6);
         if (w.partner !== null && w.partner >= 0 && !w.third) { const o = s.list.find(p => p.id === w.partner)!; expect(o.partner).toBe(w.id); }
         if (w.third) { const o = s.list.find(p => p.id === w.partner)!; expect(o.pose).toBe("limboHold"); }
       }
@@ -77,5 +77,48 @@ describe("party witches (Ed, 2026-10-04)", () => {
     const s = newPartyWitches(11), seen = new Set<string>();
     run(s, areas(14), 400, 0, [], () => { for (const w of s.list) if (w.state === "floor") seen.add(w.pose); });
     for (const p of ["twirl", "twirled", "limboHold", "limboHelp", "limbo"]) expect(seen.has(p)).toBe(true);
+  });
+
+  it("wanders within 40 m of the floor's middle, mildly preferring it (Ed, 2026-10-06)", () => {
+    expect(P.roam).toBe(40);
+    const s = newPartyWitches(21); let sum = 0, n = 0, far = 0, onIt = 0;
+    run(s, areas(30), 300, 0, [], () => {
+      for (const w of s.list) {
+        if (w.state !== "floor" || w.y > 0.2) continue;
+        const d = Math.hypot(w.x - floor.x, w.z - floor.z);
+        expect(d).toBeLessThanOrEqual(40 + 1e-6);
+        sum += d; n++; if (d > floor.radius * 1.5) far++; if (d < floor.radius) onIt++;
+      }
+    });
+    expect(sum / n).toBeLessThan(20); // nearer the middle more often
+    expect(far / n).toBeGreaterThan(0.15); // but the crowd spills out round it
+    expect(onIt / n).toBeGreaterThan(0.2); // and the floor stays busy
+  });
+  it("keeps clear of what stands round the floor", () => {
+    const s = newPartyWitches(23), blocked = (x: number, _z: number) => x > floor.x + 20; // (a stand of trees to the east)
+    for (let i = 0; i < 4000; i++) { const time = i * 0.05; stepPartyWitches(s, areas(20), { ...floor, clear: (x, z) => !blocked(x, z) }, [], time, 0.05, t);
+      for (const w of s.list) if (w.state === "floor" && w.activity !== "run" && w.y <= 0.2 && w.partner === null) expect(blocked(w.x, w.z) && Math.hypot(w.x - w.tx, w.z - w.tz) < 0.3).toBe(false); }
+  });
+  it("never drinks, rests, chats or holds hands on the dancefloor itself", () => {
+    const s = newPartyWitches(25), seen = new Set<string>();
+    run(s, areas(30), 400, 0, [], () => {
+      for (const w of s.list) {
+        if (w.state !== "floor") continue;
+        if (OFF_FLOOR.has(w.activity) || w.pose === "holdHands") { seen.add(w.activity); expect(Math.hypot(w.x - floor.x, w.z - floor.z)).toBeGreaterThanOrEqual(floor.radius - 1e-6); }
+      }
+    });
+    for (const a of ["drink", "rest", "chat"]) expect(seen.has(a)).toBe(true);
+  });
+  it("swoops up over the treetops and down again, much more often while a player's up there", () => {
+    const count = (treetop: boolean) => {
+      const s = newPartyWitches(27); let starts = 0, top = 0; const was = new Map<number, boolean>();
+      run(s, areas(30), 300, 0, [{ x: floor.x, z: floor.z + 60, onFoot: false, moving: true, treetop }], () => {
+        for (const w of s.list) { const sw = w.activity === "swoop"; if (sw && !was.get(w.id)) starts++; was.set(w.id, sw); top = Math.max(top, w.y); }
+      });
+      return { starts, top };
+    };
+    const ground = count(false), up = count(true);
+    expect(up.starts).toBeGreaterThan(ground.starts * 2.5);
+    expect(up.top).toBeGreaterThan(24); // over the 24 m treetops
   });
 });

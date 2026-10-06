@@ -558,7 +558,9 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   // Debug (?witches=N): N more, as if from soundsystems round the floor.
   for (let i = 0; i < t.partyWitches.debugExtra; i++) areas.push({ key: `debug-${i}`, x: d.x + Math.cos(i * 2.4) * 100, z: d.z + Math.sin(i * 2.4) * 100, at: 0 });
   const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell);
-  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving }], g.clock.time, dt, t);
+  // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
+  const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
+  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t);
 }
 
 const neonOf = neon;
