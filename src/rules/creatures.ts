@@ -152,7 +152,7 @@ export interface Creature {
   rand: () => number;
 }
 
-export type LegendState = "asleep" | "restless" | "angry" | "happy" | /** (older states, read as asleep) */ "waking" | "awake" | "slept";
+export type LegendState = "asleep" | "restless" | "angry" | "happy";
 
 export interface AreaPopulation { babies: number; young: number; adults: number }
 
@@ -162,12 +162,6 @@ export interface AreaPopulation { babies: number; young: number; adults: number 
 export function population(map: ForestMap): AreaPopulation {
   const S = map.tuning.population.start;
   return { babies: S.babies, young: S.young, adults: S.adults };
-}
-
-/** How far an area's rune stone (where its soundsystem will stand) is from the dancefloor, in metres. */
-export function runeDistance(map: ForestMap, cx: number, cy: number): number {
-  const s = map.soundsystemSpot(cx, cy), d = map.dancefloor;
-  return Math.hypot(s.x - d.x, s.z - d.z);
 }
 
 /** A new wild creature of an area: at `at` if given, else somewhere in the area chosen by `r`. */

@@ -17,6 +17,8 @@ import { AREA_FLORA, floraSlots } from "./flora/areas.js";
 // the props that sway in the wind: they get a sway mask (sway.js) beside their albedo and normals
 export const SWAYING_PROPS = new Set(["tree", "shrub", "grass", "reeds", "fern", "flowers", "flowerbed", "bramble", "hedge"]);
 import { TALL_KINDS, tallPiece } from "./tall.js";
+import { groundTile } from "./ground.js";
+import { propPiece, propFor } from "./props/generator.js";
 
 // [kind, params] shorthands for the prop library below
 const tree = (type, o = {}) => ["tree", { type, ...o }];
@@ -213,35 +215,16 @@ export const WALLS_BLOCK = false;
 export const SET_PIECE_CHANCE = .25;
 
 // ---------------- the floor: a tile of the area's ground ----------------
-// Materials: BODY ground, BODY2 dark, BELLY light, ACCENT stones, FLOWER flowers, LEAF/LEAF2 green bits.
-function floorTile(def, st, W = 64, H = 48) {
-  const [kind, hue, sat, val] = def.floor, sp = new Sprite(W, H), seed = def.id.length * 131;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    // noise that wraps at the tile's edges, so tiles repeat without a seam
-    const n = (vnoise(x / 7, y / 5, seed) * (W - x) * (H - y) + vnoise((x - W) / 7, y / 5, seed) * x * (H - y) + vnoise(x / 7, (y - H) / 5, seed) * (W - x) * y + vnoise((x - W) / 7, (y - H) / 5, seed) * x * y) / (W * H);
-    const m = n < .38 ? M.BODY2 : n > .64 ? M.BELLY : M.BODY;
-    sp.px(x, y, m, 0, -.42, .91);
-  }
-  const r = rng(seed), dot = (x, y, m) => sp.px(((x % W) + W) % W, ((y % H) + H) % H, m, 0, -.42, .91);
-  const n = { moss: 0, needles: 70, mud: 25, stony: 30, nettles: 60, leaves: 80, grass: 70, lawn: 30, plants: 60, roots: 30, slate: 40, tallgrass: 90, flowers: 70, pebbles: 60, scree: 70, earth: 15, stone: 40, heather: 90, bluebells: 90, clover: 60 }[kind] ?? 40;
-  for (let i = 0; i < n; i++) {
-    const x = Math.floor(r() * W), y = Math.floor(r() * H);
-    if (kind === "needles") { const d = r() < .5 ? 1 : -1; for (let k = 0; k < 3; k++) dot(x + k * d, y + (k >> 1), r() < .5 ? M.BODY2 : M.ACCENT); }
-    else if (["grass", "lawn", "tallgrass", "plants", "nettles", "clover", "flowers", "bluebells", "heather"].includes(kind)) {
-      const h = kind === "tallgrass" ? 4 : kind === "lawn" ? 1 : 2;
-      for (let k = 0; k < h; k++) dot(x, y - k, k === h - 1 ? M.LEAF2 : M.LEAF);
-      if ((kind === "flowers" || kind === "bluebells" || kind === "heather" || kind === "clover") && r() < .5) dot(x + 1, y - h, M.FLOWER);
-    }
-    else if (["stony", "pebbles", "scree", "slate", "stone", "roots"].includes(kind)) { dot(x, y, M.ACCENT); if (r() < .6) dot(x + 1, y, M.ACCENT); if (r() < .4) dot(x, y + 1, M.BODY2); if (kind === "roots" && r() < .5) for (let k = 0; k < 5; k++) dot(x + k, y + (k > 2 ? 1 : 0), M.TRUNK); }
-    else if (kind === "leaves") { dot(x, y, M.FLOWER); dot(x + 1, y, M.FLOWER); if (r() < .5) dot(x, y + 1, M.ACCENT); }
-    else if (kind === "mud" || kind === "earth") { for (let k = 0; k < 3; k++) dot(x + k, y, M.BODY2); }
-  }
-  const flower = { flowers: hsv2rgb(.13, .6, .95), bluebells: [90, 110, 230], heather: [180, 90, 170], clover: [240, 235, 240], leaves: hsv2rgb(hue + .02, .65, .6) }[kind] || hsv2rgb(hue, .3, .6);
-  const colours = {
-    [M.BODY]: hsv2rgb(hue, sat * st.sat, val), [M.BODY2]: hsv2rgb(hue + .02, sat * st.sat * 1.1, val * .78), [M.BELLY]: hsv2rgb(hue - .02, sat * st.sat * .9, Math.min(1, val * 1.15)),
-    [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower, [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03, .5 * st.sat, .62), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3),
-  };
-  return { sp, colours };
+// Grown from the area's ground genome (art/ground.js, #119): its floor kind's, with the area's own `ground` over it.
+// The floor as a strip of FLOOR_VARIANTS tiles side by side, each its own seed; the ground shader picks one for each repeat of the
+// tile (src/render/ground.ts), so the floor doesn't visibly repeat. They share the base and keep their details inside, so any
+// variant sits next to any other without a seam.
+export const FLOOR_VARIANTS = 4;
+function floorTile(def, st) {
+  const tiles = Array.from({ length: FLOOR_VARIANTS }, (_, v) => groundTile(def, st, v)), w = tiles[0].sp.w, h = tiles[0].sp.h, sp = new Sprite(w * FLOOR_VARIANTS, h);
+  tiles.forEach((t, v) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, j = y * sp.w + v * w + x; sp.m[j] = t.sp.m[i]; sp.n[j * 3] = t.sp.n[i * 3]; sp.n[j * 3 + 1] = t.sp.n[i * 3 + 1]; sp.n[j * 3 + 2] = t.sp.n[i * 3 + 2]; } });
+  if (tiles[0].sp.stylised) sp.stylised = tiles[0].sp.stylised;
+  return { sp, colours: tiles[0].colours };
 }
 
 // ---------------- the prop library ----------------
@@ -255,6 +238,7 @@ function rock(sp, c, rx, ry, st, r, moss) { // a lumpy stone, lit above, mossy o
 }
 // Each returns { sp, colours }; s scales to the pixel size.
 function prop(kind, o, def, st, r, s) {
+  if (st.propGen && o.gen) return propPiece(o.gen[0], { ...o.gen[1], seed: o.gen[2] }, def, st); // ?props=gen: the prop generator's variant (art/props/)
   if (TALL_KINDS.includes(kind)) return tallPiece(kind, o, def, st, r); // the tall pieces (tall.js): 3D, at the witch's scale
   const leafCol = { [M.LEAF]: hsv2rgb(def.leaf, .6 * st.sat, .55), [M.LEAF2]: hsv2rgb(def.leaf - .05, .55 * st.sat, .78), [M.LEAF3]: hsv2rgb(def.leaf + .03, .66 * st.sat, .36) };
   const wood = { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BELLY]: hsv2rgb(st.trunkHue + .02, .3, .7) };
@@ -405,7 +389,10 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0);
   const bk = (p, kind, text) => ({ sp: bake(p.sp, p.colours, st, "none", makeCanvas), kind, text });
   const ft = floorTile(def, st);
-  const col = list => (list || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand
+  // ?props=gen (st.propGen): each hand-made prop the prop generator stands in for (propFor) becomes `variants` of it (3; a sparse one's
+  // share split among them), each its own shape from its own seed, so a pool or a stone isn't one sprite placed again and again
+  const gen = list => !st.propGen ? list : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, o]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
+  const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
   if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres, origin: sp0.origin }; } // the new 3D ones: their size, and where their middle on the ground lands
