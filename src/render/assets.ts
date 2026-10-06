@@ -268,9 +268,9 @@ export class AssetLibrary {
   }
   /** A creature asleep (art/naps.js: lying down, eyes shut, curled, tucked, coiled or flat by species; each level in 2 breathing
    *  frames), or undefined (and asked for). */
-  napArt(species: string): CreatureArt | undefined {
-    const k = `nap-${species}`, a = this.creatures.get(k);
-    if (!a) this.ask({ kind: "nap", id: k, species, style: this.style });
+  napArt(species: string, dressed?: { id: number; colour: number[] | null }): CreatureArt | undefined { // dressed: a party (or happy) animal's own gear, worn asleep
+    const k = dressed ? `nap-${dressed.colour ? "party" : "happy"}-${dressed.id}` : `nap-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, ...(dressed ? { dressed: { seed: dressed.id, colour: dressed.colour } } : {}) });
     return a;
   }
   /** A creature's enraged look (a wave woke its area: red eyes), or undefined (and asked for). */

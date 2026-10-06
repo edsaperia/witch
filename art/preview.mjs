@@ -12,7 +12,7 @@
 //   node art/preview.mjs partyobjects litter|small|furniture|set|all|<ids> art/previews/party-objects.png [scale]   (the party objects, neon ones cycling the neons; NIGHT=1 to see them glow)
 //   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
 //   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row)
-//   node art/preview.mjs naps all|<species> art/previews/naps.png [scale]   (each species asleep, art/naps.js: baby, young and adult awake, then each asleep in its 2 breathing frames, the witch for scale; LEVELS=[...] to choose)
+//   node art/preview.mjs naps all|<species> art/previews/naps.png [scale]   (each species asleep, art/naps.js: baby, young and adult awake, then each asleep in its 2 breathing frames, the witch for scale; LEVELS=[...] to choose; DRESSED=1: in party gear awake, then asleep bare and asleep dressed)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
 //   node art/preview.mjs genome wolf,fox,...|all art/previews/genome-palettes.png [scale]   (each species' sprite baked once as a material mask, then painted with its own palette and every curated variant: no rebake)
 //   node art/preview.mjs silhouettes young|adult art/previews/silhouettes.png [scale]   (every species' shape at game size, 24 px, as the silhouette check sees it, then its sprite; the closest pairs listed in the log)
@@ -64,6 +64,7 @@ if (process.env.SMALL) await b.page.addInitScript(() => { window.SMALL = true; }
 if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
+if (process.env.DRESSED) await b.page.addInitScript(() => { window.DRESSED = true; });
 if (process.env.PER) await b.page.addInitScript(n => { window.PER = n; }, +process.env.PER);
 if (process.env.VARIANTS) await b.page.addInitScript(() => { window.VARIANTS = true; });
 if (process.env.HALVES) await b.page.addInitScript(() => { window.HALVES = true; });
@@ -258,6 +259,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [];
     for (const id of ids) items.push(...[0, 1, 2, 3].map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
     for (let i = 0; i < ids.length; i += per) rows.push([...items.slice(i * 4, (i + per) * 4), wit]);
+  } else if (what === "naps" && window.DRESSED) { // per species: in party gear awake (adult), asleep as before (bare), asleep dressed (Ed, 2026-10-06: sleepers keep their party gear), the witch for scale
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
+    ids.forEach((id, n) => { const gear = G.partyGear(n * 3 + 1, G.sigilColour(id)), l = 2; rows.push([G.bake(G.critter(id, l, 0, st, "towards", gear), G.speciesColours(id, st, gear), st, st.cOutline), G.bake(G.critter(id, l, 0, st, "towards", { nap: true }), G.speciesColours(id, st), st, st.cOutline), G.bake(G.critter(id, l, 0, st, "towards", { ...gear, nap: true }), G.speciesColours(id, st, gear), st, st.cOutline), wit]); });
   } else if (what === "naps") { // per species (or listed): baby, young and adult awake, then each asleep (art/naps.js: 2 breathing frames), then the witch for scale; LEVELS to choose
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), nap = { nap: true };
     for (const id of ids) rows.push([...(window.LEVELS || [0, 1, 2]).map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)), ...(window.LEVELS || [0, 1, 2]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, "towards", nap), G.speciesColours(id, st), st, st.cOutline))), wit]);

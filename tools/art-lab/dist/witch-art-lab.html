@@ -2875,8 +2875,22 @@ function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pos
   const { sp, project, s } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw }) : pose ? render(model, { scale: witchScale(h), facing }) : look && look !== DEFAULT_LOOK ? render(model, { scale: ownScale(h, frame, lean, facing), facing }) : render(model, { height: h, facing }); // (another look at the scale she has in that pose, so a tall hat doesn't shrink her)
   sp.scale = s; // pixels per model unit
   if (model.anchors.hand) sp.anchors = Object.fromEntries(Object.entries(model.anchors).filter(([k]) => k !== "feet").map(([k, p]) => [k, project(p)]));
+  liftShadow(sp, model, project);
   cleanFlecks(sp); // (Ed: "The witch has these little flecks … we should remove them")
   return sp;
+}
+// Her shadow, drawn by the game instead (Ed, 2026-10-06: she floated over her shadow lying on the beach): the model's dark
+// ellipse on its ground is taken out of the sprite (the box kept, so she stands and flies exactly where she did), and two
+// anchors say where it was: `ground`, the point on the model's ground under her (the game stands her there and lays her
+// shadow there), and `shadow`, its size in pixels across and deep. Drawn into the sprite, it hung in the air under her as
+// she flew, and lying down it was a second shadow beside the game's.
+function liftShadow(sp, model, project) {
+  const sh = model.parts.find(q => q.type === "ell" && q.group === 0 && q.mat === M.NOSE && Math.abs(q.c[1] - .005) < 1e-6);
+  if (!sh) return;
+  const [cx, , cz] = sh.c, rx = sh.r[0], rz = sh.r[2], pts = [[cx - rx, cz], [cx + rx, cz], [cx, cz - rz], [cx, cz + rz], [cx - rx, cz - rz], [cx + rx, cz + rz], [cx - rx, cz + rz], [cx + rx, cz - rz]].map(([x, z]) => project([x, .005, z]));
+  const x0 = Math.floor(Math.min(...pts.map(p => p[0]))) - 1, x1 = Math.ceil(Math.max(...pts.map(p => p[0]))) + 1, y0 = Math.floor(Math.min(...pts.map(p => p[1]))) - 1, y1 = Math.ceil(Math.max(...pts.map(p => p[1]))) + 1;
+  for (let y = Math.max(0, y0); y <= Math.min(sp.h - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(sp.w - 1, x1); x++) if (sp.m[y * sp.w + x] === M.NOSE) sp.m[y * sp.w + x] = 0;
+  sp.anchors = { ...(sp.anchors ?? {}), ground: project([cx, 0, cz]), shadow: [x1 - x0 - 2, y1 - y0 - 2] };
 }
 // Her hat lying on the ground where she was knocked out (Ed, 2026-10-06: "when you are killed, you drop your hat"): her
 // own hat (the look's shape, sizes and colours) alone, at her ordinary scale, sitting on its brim, knocked a little askew.

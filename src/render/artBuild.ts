@@ -161,7 +161,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "woken"; id: string; species: string; style: Style }
   /** An area legend asleep (art/legends.js legendForm): its two breathing frames, sunk and grown over. */
   | { kind: "sleep"; id: string; species: string; style: Style }
-  | { kind: "nap"; id: string; species: string; style: Style }
+  | { kind: "nap"; id: string; species: string; style: Style; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
   | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
@@ -383,9 +383,11 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   // a creature asleep (art/naps.js): each level (baby to legend) in its 2 breathing frames, towards (mirrored for the other way), with its ground line
   if (job.kind === "nap") {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
+    // (dressed: in its party gear, Ed 2026-10-06: sleepers keep their party gear on)
+    const gear = { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true } as unknown as null;
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
-      const sp = Art.critter(job.species, level, f, job.style, "towards", { nap: true } as unknown as null) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
-      sprites.push(Art.bake(sp, Art.speciesColours(job.species, job.style), job.style, job.style.cOutline, mk) as Baked);
+      const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
+      sprites.push(Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked);
       ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
     }
     return { px: packPixels(sprites, 2048), ground, centre };
