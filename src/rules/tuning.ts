@@ -55,6 +55,8 @@ export interface GladeTuning {
 }
 
 export interface Tuning {
+  /** A legend's circle (Ed, 2026-10-06): slow, the world slowed to scale of its speed (eased over ease seconds) while she stands on the ground in the circle of a legend asleep or restless; on false (?slow=0) for none. */
+  legendCircle?: { slow: { on?: boolean; scale: number; ease: number } };
   mapAreas: number;
   /** The map's shape (Ed, 2026-10-06: "circular rather than square, with a buffer zone with no runestones around the edge"): circle: the playable areas those within radius areas of home, a buffer ring buffer areas deep past them (forest she can fly over, nothing in it), her flight's edge soft over its last push metres (her outward speed easing to nothing, a drift of drift m/s back in), and the forest going on edge areas past it; square: mapAreas x mapAreas as before (?shape=square). */
   map?: { shape: "circle" | "square"; radius: number; buffer: number; push: number; drift: number; edge?: number };
