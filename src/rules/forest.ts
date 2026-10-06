@@ -97,7 +97,8 @@ function patternMask(map: ForestMap, x: number, z: number, L: AreaLayout): numbe
 // edge the forest swells, thicker and of its tallest kinds, easing out over legendClearing.grove.reach metres to the area's
 // own; open toward the camera (south) for the way in and the view of the sleeper. The clearings bucketed by 64 m squares,
 // once a map, for the lookup.
-const GROVE_CELL = 64, groveBuckets = new WeakMap<ForestMap, Map<string, LegendClearing[]>>();
+const GROVE_CELL = 64, groveBuckets = new WeakMap<ForestMap, Map<number, LegendClearing[]>>();
+const groveKey = (i: number, j: number) => (i + 4096) * 8192 + (j + 4096); // (a number, not a string: it's asked for every tree spot)
 function grovesNear(map: ForestMap, x: number, z: number): LegendClearing[] | undefined {
   let b = groveBuckets.get(map);
   if (!b) {
@@ -106,11 +107,11 @@ function grovesNear(map: ForestMap, x: number, z: number): LegendClearing[] | un
     for (const lc of map.legendClearings) {
       const R = lc.r + 1.5 + reach;
       for (let i = Math.floor((lc.x - R) / GROVE_CELL); i <= Math.floor((lc.x + R) / GROVE_CELL); i++)
-        for (let j = Math.floor((lc.z - R) / GROVE_CELL); j <= Math.floor((lc.z + R) / GROVE_CELL); j++) { const k = i + "," + j; let l = b.get(k); if (!l) b.set(k, (l = [])); l.push(lc); }
+        for (let j = Math.floor((lc.z - R) / GROVE_CELL); j <= Math.floor((lc.z + R) / GROVE_CELL); j++) { const k = groveKey(i, j); let l = b.get(k); if (!l) b.set(k, (l = [])); l.push(lc); }
     }
     groveBuckets.set(map, b);
   }
-  return b.get(Math.floor(x / GROVE_CELL) + "," + Math.floor(z / GROVE_CELL));
+  return b.get(groveKey(Math.floor(x / GROVE_CELL), Math.floor(z / GROVE_CELL)));
 }
 
 /** How strongly a legend's grove grows at (x, z), 0 to 1: 1 at its clearing's edge, easing out to 0 at reach metres
