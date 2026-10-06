@@ -11,6 +11,7 @@
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 import { shade } from "../../art/lighting.js";
+import { LOOKS, lookGenome, pleasingWitch } from "./looks";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -80,6 +81,11 @@ function swatches(part: string): number[][] {
   return [[0, 0, .08], [0, 0, .5], [0, 0, .97]];
 }
 const css = ([h, s, v]: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(h, s, v); return `rgb(${r | 0},${g | 0},${b | 0})`; };
+
+/** The creator's groups that are open, kept on this browser (localStorage witch.creator.open); at first, the looks, the hat and the colours. */
+const OPEN_KEY = "witch.creator.open";
+function openGroups(): Set<string> { try { const v = localStorage.getItem(OPEN_KEY); if (v) return new Set(JSON.parse(v) as string[]); } catch { /* storage blocked */ } return new Set(["Looks", "Hat", "Colours"]); }
+function saveOpenGroups(s: Set<string>): void { try { localStorage.setItem(OPEN_KEY, JSON.stringify([...s])); } catch { /* storage blocked: this run only */ } }
 
 /** The night round the treehouse, behind the room: deep blue in steps, stars, and the giant tree's leaves at the edges,
  *  painted small (one art pixel per pixel) and shown big. */
@@ -161,7 +167,8 @@ export class Creator {
     this.hide();
     this.onStart(this.genome());
   }
-  private randomise(): void { this.g = upgrade((Art.witchGenome as (s: number) => Genome)(Math.floor(Math.random() * 1e9))); this.build(); this.dirty = true; }
+  private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
+  private look(id: string): void { this.g = upgrade(lookGenome(id)); this.build(); this.dirty = true; }
   /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour anywhere in the rainbows. */
   private wild(): void {
     const R = Math.random, g = upgrade(CLASSIC), any = <T>(a: T[]) => a[Math.floor(R() * a.length)];
@@ -182,15 +189,34 @@ export class Creator {
     const P = this.panel, g = this.g;
     P.innerHTML = "";
     const h = document.createElement("div");
-    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows, then fly. (Enter starts, R randomises.)</div>`;
+    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows, then fly. Start from a look, or 🎲. (Enter starts, R randomises; double-click a slider to put it back.)</div>`;
     P.append(h);
-    const groups = new Map<string, HTMLElement>();
+    const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
+    // Each group folds away (its legend toggles it), the open ones kept on this browser; a first-time player sees the looks,
+    // the hat and the colours open, the rest folded, so the panel isn't a wall of sliders.
+    const groups = new Map<string, HTMLElement>(), open = openGroups();
     const group = (name: string) => {
       let el = groups.get(name);
-      if (!el) { el = document.createElement("fieldset"); Object.assign(el.style, { border: "1px solid rgba(232,226,244,.2)", borderRadius: "6px", margin: "0 0 8px", padding: "4px 8px 8px" }); el.innerHTML = `<legend style="padding:0 4px;color:#ffb8e6">${name}</legend>`; groups.set(name, el); P.append(el); }
+      if (!el) {
+        const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend");
+        Object.assign(fs.style, { border: "1px solid rgba(232,226,244,.2)", borderRadius: "6px", margin: "0 0 8px", padding: "4px 8px 6px" });
+        Object.assign(lg.style, { padding: "0 4px", color: "#ffb8e6", cursor: "pointer", userSelect: "none" });
+        const paint = () => { const on = open.has(name); lg.textContent = `${on ? "▾" : "▸"} ${name}`; body.style.display = on ? "block" : "none"; };
+        lg.addEventListener("click", () => { if (open.has(name)) open.delete(name); else open.add(name); saveOpenGroups(open); paint(); });
+        fs.append(lg, body); paint(); P.append(fs); groups.set(name, body); el = body;
+      }
       return el;
     };
-    const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
+    // Her looks to start from (ui/looks.ts)
+    const lk = row(group("Looks"), "");
+    lk.firstElementChild?.remove();
+    for (const L of LOOKS) {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = L.name; b.title = L.note; b.dataset.look = L.id;
+      Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "rgba(255,255,255,.08)" });
+      b.addEventListener("click", () => this.look(L.id));
+      lk.append(b);
+    }
     const get = (axis: string) => { const [part, key] = slot(axis); return part ? (g[part] as Record<string, unknown>)[key] : g[key]; };
     const set = (axis: string, v: unknown) => { const [part, key] = slot(axis); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; this.dirty = true; };
     for (const [axis, lim] of Object.entries(AXES)) {
@@ -208,13 +234,17 @@ export class Creator {
       } else {
         const [a, z] = lim as [number, number], s = document.createElement("input");
         s.type = "range"; s.min = String(a); s.max = String(z); s.step = String((z - a) / 200); s.value = String(get(axis) ?? a);
-        s.style.flex = "1"; s.dataset.axis = axis;
+        s.style.flex = "1"; s.style.accentColor = "#ff5fb4"; s.dataset.axis = axis;
         const wear = WEARS[axis];
         const out = document.createElement("span");
         Object.assign(out.style, { width: "38px", textAlign: "right", opacity: ".7" });
         const show = () => { const v = +s.value; out.textContent = NONE_AT_ZERO.has(axis) && v === 0 ? "none" : axis === "hatTilt" || axis === "broomBend" ? (v > 0 ? "+" : "") + v.toFixed(2) : "×" + v.toFixed(2); };
         show();
-        s.addEventListener("input", () => { show(); set(axis, +s.value); if (wear && !g.accessories[wear]) { g.accessories[wear] = true; const c = P.querySelector<HTMLInputElement>(`input[data-wear="${wear}"]`); if (c) c.checked = true; } });
+        // a light snap to her classic value (so it's easy to get back to), and a double-click resets the slider to it
+        const home = Number((() => { const [part, key] = slot(axis); return part ? (CLASSIC[part] as Record<string, unknown>)[key] : CLASSIC[key]; })() ?? a);
+        s.title = "double-click: back to hers";
+        s.addEventListener("dblclick", () => { s.value = String(home); s.dispatchEvent(new Event("input")); });
+        s.addEventListener("input", () => { if (Math.abs(+s.value - home) < (z - a) * .02) s.value = String(home); show(); set(axis, +s.value); if (wear && !g.accessories[wear]) { g.accessories[wear] = true; const c = P.querySelector<HTMLInputElement>(`input[data-wear="${wear}"]`); if (c) c.checked = true; } });
         r.append(s, out);
       }
     }
