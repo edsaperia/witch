@@ -411,7 +411,7 @@ let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | nu
 // ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
 // It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
 // Start waits ("getting ready") until play can begin.
-const creator = new Creator(style, savedLook);
+const creator = new Creator(style, savedLook, tuning.pixelSize);
 let lookNow = JSON.stringify(savedLook);
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
 creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); } catch { /* no sound yet */ } };
