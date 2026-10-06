@@ -43,7 +43,7 @@ describe("the wave pointer's target, the ley line's pulse", () => {
     expect(start.x).toBeCloseTo(link![0][0], 3); expect(start.z).toBeCloseTo(link![0][1], 3);
     expect(end.x).toBeCloseTo(link![1][0], 3); expect(end.z).toBeCloseTo(link![1][1], 3);
     // given the link as the renderer drew it, the pulse follows that instead
-    const drawn: [number, number][] = [link![0] as [number, number], [link![0][0] + 50, link![0][1]], link![1] as [number, number]];
+    const drawn: (readonly [number, number])[] = [link![0], [link![0][0] + 50, link![0][1]], link![1]];
     expect(leyPulse(p, map, at(0.5), drawn)).toMatchObject(pointAlong(drawn, 0.5));
   });
   it("fills with the boot while home boots up", () => {
