@@ -294,6 +294,9 @@ export interface ScoreContext {
   legend?: number;
   /** In a sleeping legend's clearing (Ed, 2026-10-06): its species' layer, at `level` (0-1). */
   circle?: { species: string; level: number };
+  /** The home speakers' boot (rules/musicPlan.ts bootLayers): how much has booted, 0 silent to 1 whole;
+   *  in the intro, a part plays once the boot is past its `from` (its layers, one a speaker). */
+  build?: number;
 }
 
 const VOICE_FAMILIES = (voices as unknown as { species: Record<string, { family?: string }> }).species;
@@ -334,6 +337,8 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   if (ctx.siege > 0.01) for (const [k, u] of Object.entries(style.siege)) parts.push([k, u, ctx.siege]);
   if ((ctx.party ?? 0) > 0.01) for (const [k, u] of Object.entries(style.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.party!]);
   if ((ctx.legend ?? 0) > 0.01) for (const [k, u] of Object.entries(style.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.legend!]);
+  // the boot's intro: nothing before the first speaker, then a layer a speaker (other sections build as they always did)
+  const build = ctx.build ?? 1, building = ctx.build !== undefined && plan.section === style.intro;
   const circle = ctx.circle && ctx.circle.level > 0.01 ? ctx.circle : null, layer = new Set<string>();
   if (circle) for (const [k, u] of circleParts(style, circle.species)) if (!sec.parts[k]) { parts.push([k, u, circle.level]); layer.add(k); }
   if (fillBar) parts.push([style.fill.part, { p: "__fill" }, 1]);
@@ -342,7 +347,8 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     if (!def) continue;
     const u = use(u0);
     const own = layer.has(name);
-    if (!own && (progress < u.from || a.energy < u.energy || muted.includes(name))) continue;
+    if (!own && (building ? build <= 0 || build < u.from : progress < u.from)) continue;
+    if (!own && (a.energy < u.energy || muted.includes(name))) continue;
     // in a fill bar, the fill part plays the fill instead of its pattern
     if (fillBar && name === style.fill.part && u.p !== "__fill") continue;
     const pat = u.p === "__fill" ? style.fill.pattern : def.patterns[u.p];
@@ -356,7 +362,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const seed = own ? ctx.seed + nameHash(circle!.species) : ctx.seed; // (a legend's layer its species' own melody)
     const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed + phrase * 7919);
     if (ch === "?" && r >= a.energy) continue;
-    const level = u.level * scaleLevel * (0.94 + 0.06 * r);
+    const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1); // (the boot's few speakers quieter, filling out to the twelfth)
     const base = { part: name, patch: def.patch, step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}) };
     if (def.role === "drum") {
       if (ch === "r") { out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level }); continue; }
