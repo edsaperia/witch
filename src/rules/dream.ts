@@ -32,3 +32,15 @@ export function dreamStone(map: ForestMap, species: string, x: number, z: number
   const home = best[0] === map.centreCell[0] && best[1] === map.centreCell[1], s = home ? map.dancefloor : map.soundsystemSpot(best[0], best[1]);
   return { cell: best, x: s.x, z: s.z };
 }
+
+/** The eight compass points, north first, going round clockwise (the camera looks north, toward -z: north is up the screen). */
+export const COMPASS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"] as const;
+/** Which of the eight points (an index into COMPASS) the way (dx, dz) goes, from x east and z south. */
+export const compassPoint = (dx: number, dz: number): number => ((Math.round(Math.atan2(dx, -dz) / (Math.PI / 4)) % 8) + 8) % 8;
+/** The dream's pointer in words (Ed, 2026-10-06: "the legend speech bubble should tell you in what direction you can find the
+ *  runestone for the area that has the quest animal in it"): its compass point and how far, from (x, z) to the stone; "here" when
+ *  she's within `near` metres of it. */
+export function dreamWay(from: { x: number; z: number }, to: { x: number; z: number }, near = 20): { point: number; word: string; metres: number } {
+  const dx = to.x - from.x, dz = to.z - from.z, metres = Math.hypot(dx, dz), point = compassPoint(dx, dz);
+  return { point, word: metres <= near ? "here" : `${COMPASS[point]}, ${metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${Math.round(metres / 10) * 10} m`}`, metres };
+}
