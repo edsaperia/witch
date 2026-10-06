@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { loseSoundsystem, newGame, STEP, stepGame, type Game } from "./game";
 import { TUNING } from "./tuning";
+import { castPartySpell } from "./party";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const P = TUNING.party.lossPenalty, I = TUNING.party.interval;
@@ -10,7 +11,7 @@ const P = TUNING.party.lossPenalty, I = TUNING.party.interval;
 /** A game a few seconds in, with `left` seconds to the next wave. */
 function game(left: number): Game {
   const g = newGame(7, TUNING);
-  g.clock.paused = false; g.witch.seated = false; // (up from the decks: the boot-up counts from then)
+  g.clock.paused = false; g.witch.seated = false; castPartySpell(g.party, g.map, 0); // (the party spell cast: the boot-up counts from then)
   for (let i = 0; i < 30; i++) stepGame(g, idle, STEP);
   g.party.nextAt = g.clock.time + left;
   return g;

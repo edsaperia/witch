@@ -1162,11 +1162,12 @@ Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the l
 
 ## `boot`
 
-At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then.
+At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. spell (Ed, 2026-10-06: "The game starts when the witch casts the party spell, which sets off the pulse that starts turning stones into speakers"): the game waits, its clock at 00:00 and nothing moving, until her first spell, the party spell; it sets off the boot's pulse from the treehouse round the home ring clockwise from the top (rules/bootRing.ts), each stone turning into a speaker as it passes, the last as the boot's time is up; the ley line runs ahead of it at leyLines.reveal times its pace. false: the boot counts from her first step off the decks, as before.
 
 | knob | type | range |
 |---|---|---|
 | `boot.time` | number | 0 to … |
+| `boot.spell` | boolean |  |
 
 ## `party`
 

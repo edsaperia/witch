@@ -11,7 +11,7 @@ import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan, castPartySpell } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -617,6 +617,7 @@ describe("the party", () => {
   });
   it("boots the home speakers up first, one by one, then counts down to the first wave (Ed, 2026-10-04)", () => {
     const p = newParty(map), B = TUNING.boot.time, n = map.dancefloor.speakers.length;
+    castPartySpell(p, map, 0); // (the party spell sets the boot off: Ed, 2026-10-06; rules/bootRing.ts)
     expect(p.bootUntil).toBe(B);
     expect(speakersOn(p, map, 0, n)).toBe(0);
     const counts = Array.from({ length: 61 }, (_, i) => speakersOn(p, map, (i / 60) * B, n));
@@ -632,7 +633,7 @@ describe("the party", () => {
   });
   it("waits for her to get up from the decks: five minutes from her first step (Ed, 2026-10-05)", () => {
     expect(TUNING.boot.time).toBe(300);
-    const p = newParty(map), B = TUNING.boot.time, due = p.nextAt;
+    const p = { ...newParty(map), spellAt: undefined }, B = TUNING.boot.time, due = p.nextAt; // (a build without the party spell)
     for (let s = 0; s < 40; s++) stepParty(p, map, s, 1, true); // (40 s sitting behind the decks)
     expect(p.bootUntil).toBe(B + 40); expect(p.nextAt).toBe(due + 40);
     stepParty(p, map, 40, 1, false); // (up: the boot runs from here)
@@ -708,6 +709,7 @@ describe("the party", () => {
   });
   it("comes in waves every interval seconds, and pauses", () => {
     const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay + TUNING.boot.time;
+    castPartySpell(p, map, 0);
     expect(stepParty(p, map, start + I - 0.1, 0.1)).toEqual([]);
     expect(stepParty(p, map, start + I, 0.1).length).toBeGreaterThan(0);
     p.paused = true;
@@ -1354,7 +1356,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
   const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
   it("shows only the moon before the first wave, in its twilight palette, and switches on, once, when the first wave comes", () => {
     const g = newGame(3, TUNING), P = TUNING.moon.floor.palette.map(c => c.join());
-    g.clock.paused = false;
+    g.clock.paused = false; castPartySpell(g.party, g.map, 0);
     const colours = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
@@ -1452,6 +1454,7 @@ describe("ground cover (Ed, v171)", () => {
 describe("music by proximity (Ed, 2026-10-04)", () => {
   const M = TUNING.music;
   const g0 = newGame(6, TUNING), map = g0.map; // the game's own map
+  castPartySpell(g0.party, map, 0); // (the party spell cast at the start: the boot runs from 0)
   const atW = (x: number, z: number, time: number) => { const g = at(x, z, time); return [g, g.witch] as const; };
   const at = (x: number, z: number, time: number) => { const g = { ...g0, speakers: [...g0.speakers], clock: { ...g0.clock, time } }; g.witch = { ...g.witch, x, z, seated: false }; return g; };
   it("is full and clear by the playing dancefloor, quiet and muffled in the deep forest", () => {
@@ -1491,7 +1494,7 @@ describe("the spell (Ed, 2026-10-04)", () => {
     expect(castSpell(s, 10 + S.duration + S.cooldown, TUNING)).toBe(true);
   });
   it("makes her fly faster in the game", () => {
-    const run = (spell: boolean) => { const g = newGame(4, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
+    const run = (spell: boolean) => { const g = newGame(4, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; castPartySpell(g.party, g.map, 0); stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
     expect(run(true)).toBeGreaterThan(run(false) * (S.mult - 0.3));
   });
 });

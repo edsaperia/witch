@@ -2,6 +2,7 @@
 // `interval` seconds a wave comes and wakes one area (Ed, v149), chosen as soon as the previous one
 // woke (see pickNext), which gets a soundsystem and is partified. Seeded and deterministic; no
 // drawing here.
+import { stonesTurned } from "./bootRing";
 import type { Tuning } from "./tuning";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
@@ -60,7 +61,7 @@ export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
   const boot = map.tuning.boot.time;
-  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: [], last: null, bootUntil: boot, afterNext: [], probable: [], areasPerWave: Math.max(1, map.tuning.party.areasPerWave) };
+  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: [], last: null, bootUntil: boot, afterNext: [], probable: [], areasPerWave: Math.max(1, map.tuning.party.areasPerWave), spellAt: map.tuning.boot.spell === false ? undefined : null };
   p.next = pickSet(p, map, p.areasPerWave);
   planAhead(p, map);
   return p;
@@ -222,7 +223,9 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
  *  behind the decks (Ed, 2026-10-05): the boot-up waits for her to get up, so its minutes count
  *  from her first step. */
 export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false): Partified[] {
-  if (p.paused || (seated && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
+  // Waiting for the party spell (Ed, 2026-10-06: "The game starts when the witch casts the party spell"), nothing moves;
+  // a build without it waits for her first step off the decks instead.
+  if (p.paused || p.spellAt === null || (p.spellAt === undefined && seated && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
   if (time < p.nextAt) return [];
   p.nextAt += map.tuning.party.interval;
   return spreadWave(p, map, time);
@@ -245,13 +248,19 @@ export function waveCountdown(p: PartyState, map: ForestMap, time: number): { le
   return { left, gone: 1 - Math.min(1, left / interval), booting: bootLeft > 0, boot: B > 0 ? 1 - Math.min(1, bootLeft / B) : 1, bootLeft };
 }
 
-/** How many of the home ring's `count` speakers have powered on by `time`: one by one round the
- *  ring over the boot (Ed, 2026-10-04), all of them once it's done. */
+/** How many of the home ring's `count` speakers have turned on by `time`: each as the boot's pulse reaches its stone,
+ *  round the ring clockwise from the top (rules/bootRing.ts; Ed, 2026-10-06), all of them once the boot is done. */
 export function speakersOn(p: PartyState, map: ForestMap, time: number, count: number): number {
-  const B = map.tuning.boot.time;
-  if (B <= 0 || time >= p.bootUntil) return count;
-  const k = 1 - (p.bootUntil - time) / B;
-  return Math.max(0, Math.min(count, Math.floor(k * (count + 1))));
+  return Math.min(count, stonesTurned(p, map, time));
+}
+
+/** The party spell (Ed, 2026-10-06): cast while the game waits for it, it starts the game, setting off the boot's pulse
+ *  round the ring; the boot ends boot.time later and the first wave's countdown runs on from there. */
+export function castPartySpell(p: PartyState, map: ForestMap, time: number): boolean {
+  if (p.spellAt !== null) return false;
+  const shift = time + map.tuning.boot.time - p.bootUntil;
+  p.spellAt = time; p.bootUntil += shift; p.nextAt += shift;
+  return true;
 }
 
 /** A spawn marker (Ed, v147): a rune stone on the spot where an area's soundsystem will stand,

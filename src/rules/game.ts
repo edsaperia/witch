@@ -15,7 +15,7 @@ import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { cellKey, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
+import { cellKey, hurryWave, newParty, spreadWave, stepParty, type PartyState, castPartySpell } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
@@ -311,7 +311,9 @@ function fixedStep(g: Game, controls: Controls): void {
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id), ...legends.filter(id => buffing(g.creatures[id]))], g.tuning);
   const t = g.buffs.tuning;
-  if (c.spell) castSpell(g.spells, g.clock.time, t);
+  // Her first spell while the game waits for it is the party spell (Ed, 2026-10-06; DECISION FOR ED in #boot-ring): it
+  // starts the game rather than casting the boost.
+  if (c.spell && !castPartySpell(g.party, g.map, g.clock.time)) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
   const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = 1 + M.charges;

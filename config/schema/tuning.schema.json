@@ -5284,10 +5284,14 @@
         "time": {
           "type": "number",
           "minimum": 0
+        },
+        "spell": {
+          "type": "boolean"
         }
       },
       "required": [
-        "time"
+        "time",
+        "spell"
       ],
       "additionalProperties": false
     },

@@ -8,7 +8,8 @@ import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import type { WaveNumber } from "../waveNumbers";
 import { beatTime } from "../../rules/beat";
 import { canopyShown } from "../../rules/witch";
-import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, wavePlan } from "../../rules/party";
+import { cellKey, spawnMarkers, symbolCount, waveCountdown, wavePlan } from "../../rules/party";
+import { stoneTurned } from "../../rules/bootRing";
 import { hash2 } from "../../rules/random";
 import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
@@ -143,7 +144,6 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   if (!A) return lights;
   // The boot-up (Ed, 2026-10-04): they power on one by one round the ring, each with a flare;
   // the ones still off stand silent.
-  const on = speakersOn(g.party, g.map, time, g.map.dancefloor.speakers.length);
   if (!v.speakerBatch) {
     v.speakerBatch = new SpriteBatch(A.atlas, v.mpp, { solid: true });
     v.scene.add(...v.speakerBatch.meshes);
@@ -153,7 +153,7 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   const beat = (beatTime(g.beat, time) * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
   const list: SpriteInstance[] = [];
   g.map.dancefloor.speakers.forEach((sp, i) => {
-    const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", powered = i < on;
+    const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", powered = stoneTurned(g.party, g.map, time, i);
     if (powered && v.speakerFlare[i] === undefined) v.speakerFlare[i] = time;
     if (!powered) v.speakerFlare[i] = undefined;
     const flare = powered ? Math.max(0, 1 - (time - (v.speakerFlare[i] ?? time)) / 0.8) : 0;
