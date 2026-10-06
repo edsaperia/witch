@@ -36,16 +36,16 @@ describe("the legend circle's explainer", () => {
     const { g, L } = setup(), at = { x: L.x, z: L.z, mode: "ground" };
     const words = () => circleLines(L).map(l => l.text).join(" ");
     expect(words()).toMatch(/^This is a slumbering elder\./);
-    expect(words()).toContain("{sigil}"); expect(words()).toContain("{relic}"); expect(words()).toContain("none of its children are nearby");
+    expect(words()).toContain("{sigil}"); expect(words()).toContain("{relic}"); expect(words()).toContain("none of its kin are nearby");
     L.quest!.done = 10;
     expect(circleLines(L).find(l => l.done)?.text).toMatch(/^Its boon is yours/);
     L.legendState = "restless";
     expect(legendCircleNear(g, at)?.legend).toBe(L);
-    expect(words()).toMatch(/^This elder is restless\./); expect(words()).toContain("Bring one of its children back");
+    expect(words()).toMatch(/^This elder is restless\./); expect(words()).toContain("Bring one of its kin back");
     L.legendState = "angry";
     expect(legendCircleNear(g, at)?.legend).toBe(L);
     expect(words()).toMatch(/^This elder is angry/); expect(words()).not.toContain("{relic}");
-    expect(words()).toContain("bring one of its children back"); // (it settles once one of its kind is back in its area, too: rules/legends.ts)
+    expect(words()).toContain("bring one of its kin back"); // (it settles once one of its kind is back in its area, too: rules/legends.ts)
     L.legendState = "happy";
     expect(words()).toMatch(/^This elder is your ally now\./);
     for (const s of ["asleep", "restless", "angry", "happy"] as const) { L.legendState = s; expect(words()).not.toMatch(/kill|die|dead/i); }
