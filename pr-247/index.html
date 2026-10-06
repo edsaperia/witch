@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a16">
+  <title>Witch — prototype</title>
+  <style>
+    :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #e8b46a; --accent-dim: rgba(232, 180, 106, .45); --love: #d9789e; --loss: #d8606e; } /* the HUD in the art's palette (art review round 1): one accent, lantern amber; love (💌, hearts) and loss muted */
+    html, body { margin: 0; height: 100%; background: #0b0a16; overflow: hidden; color: var(--ink); font: 14px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    #game { position: fixed; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+    #seed { position: fixed; left: 10px; bottom: 8px; color: var(--dim); font-size: 12px; text-shadow: 0 1px 0 #000; pointer-events: auto; }
+    #seed a { color: var(--dim); }
+    #version { position: fixed; right: 10px; bottom: 8px; color: var(--dim); font-size: 12px; text-shadow: 0 1px 0 #000; pointer-events: none; }
+    .touch #version { bottom: auto; top: 8px; }
+    #debug { position: fixed; left: 10px; top: 10px; background: var(--panel); padding: 8px 10px; border-radius: 6px; white-space: pre; font-size: 12px; display: none; pointer-events: none; }
+    #debug.on { display: block; }
+    #debug-buttons { position: fixed; left: 10px; top: 150px; display: none; gap: 6px; }
+    #debug-buttons.on { display: flex; }
+    #fight-knobs { position: fixed; left: 10px; bottom: 44px; display: none; background: var(--panel); border-radius: 6px; padding: 6px 10px; font-size: 12px; color: var(--ink); }
+    #fight-knobs.on { display: grid; grid-template-columns: auto 120px 34px; gap: 4px 8px; align-items: center; }
+    #fight-knobs button { grid-column: 1 / -1; font: inherit; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; padding: 3px 8px; }
+    #debug-buttons button { font: inherit; font-size: 12px; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 6px 10px; }
+    #wave { position: fixed; right: 12px; top: 18%; height: 40%; width: 6px; border: 1px solid rgba(232, 226, 244, .22); border-radius: 4px; background: rgba(14, 11, 28, .45); pointer-events: none; }
+    #wave .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(var(--accent), #a87a48); border-radius: 3px; opacity: .85; }
+    #wave .label { position: absolute; right: 14px; bottom: 0; white-space: nowrap; color: var(--dim); font-size: 11px; text-align: right; text-shadow: 0 1px 0 #000; }
+    #wave.paused .fill { opacity: .4; }
+    /* A soundsystem lost: the bar shrinks to its new countdown with a red flash, and the seconds taken off pop out beside it. */
+    #wave.lost { animation: wave-lost .9s ease-out; }
+    #wave.lost .fill { transition: height .45s cubic-bezier(.3, 1.6, .5, 1); animation: wave-lost-fill .9s ease-out; }
+    @keyframes wave-lost { 0%, 30% { border-color: var(--loss); box-shadow: 0 0 8px var(--loss); } }
+    @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: var(--loss); filter: brightness(1.3); } 100% { filter: none; } }
+    #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: var(--loss); font-weight: bold; font-size: 13px; text-shadow: 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
+    #wave .boot-pop { position: absolute; right: 16px; top: 0; white-space: nowrap; color: var(--accent); font-size: 12px; text-shadow: 0 1px 0 #000; animation: boot-pop 4s ease-out forwards; }
+    @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes loss-pop { 0% { opacity: 0; transform: translateY(50%) scale(1.8); } 12% { opacity: 1; transform: translateY(50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120%); } }
+    .touch #wave { top: 12%; height: 30%; }
+    #over { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); z-index: 6; }
+    #over.on { display: flex; }
+    #over button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px 14px; margin-top: 14px; cursor: pointer; }
+    #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); cursor: pointer; z-index: 5; }
+    #start .card, #over .card { max-width: 30em; margin: 16px; padding: 22px 24px; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 10px; text-align: center; }
+    #start h1, #over h1 { margin: 0 0 4px; font-size: 28px; letter-spacing: .08em; color: var(--accent); }
+    #start .go { margin: 18px 0 12px; font-size: 18px; }
+    #start .keys { color: var(--dim); font-size: 12px; text-align: left; }
+    #waves { margin: 0 0 14px; color: var(--dim); font-size: 12px; }
+    #waves button { font: inherit; margin: 2px 3px; padding: 3px 8px; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; cursor: pointer; }
+    #waves button.on { background: #3a2f5c; color: #fff; }
+    #shake-opt { margin: 0 0 14px; color: var(--dim); font-size: 12px; }
+    #shake-opt button { font: inherit; margin: 2px 3px; padding: 3px 8px; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; cursor: pointer; }
+    #shake-opt button.on { background: #3a2f5c; color: #fff; }
+    #news { margin: 0 0 14px; color: var(--dim); font-size: 12px; text-align: left; max-height: 12em; overflow-y: auto; }
+    #news b { color: var(--ink); font-weight: normal; }
+    #news ul { margin: 2px 0 6px; padding-left: 1.3em; }
+    #start .keys b { color: var(--ink); font-weight: normal; }
+    #progress { position: relative; height: 16px; margin: -4px 0 14px; border: 1px solid #3a2f5c; border-radius: 8px; overflow: hidden; }
+    #progress .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: #3a2f5c; transition: width .3s; }
+    #progress .label { position: relative; font-size: 11px; line-height: 16px; color: var(--dim); }
+    #progress.done { display: none; }
+    #start.loading .go::after { content: " (growing the forest…)"; color: var(--dim); }
+    #touch { position: fixed; inset: 0; display: none; pointer-events: none; }
+    .touch #touch { display: block; }
+    #stick-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 55%; pointer-events: auto; }
+    #stick { position: absolute; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; border: 2px solid rgba(232, 226, 244, .3); display: none; }
+    #stick.on { display: block; }
+    #stick .knob { position: absolute; left: 32px; top: 32px; width: 48px; height: 48px; border-radius: 50%; background: rgba(232, 226, 244, .35); }
+    .tbtn { position: absolute; pointer-events: auto; border-radius: 50%; border: 2px solid rgba(232, 226, 244, .45); background: rgba(14, 11, 28, .45); color: var(--ink); display: flex; align-items: center; justify-content: center; text-align: center; }
+    .tbtn.down { background: var(--accent-dim); }
+    #rise { right: 22px; bottom: 30px; width: 86px; height: 86px; font-size: 12px; }
+    #zoom-in, #zoom-out { width: 46px; height: 46px; font-size: 22px; right: 42px; }
+    #zoom-in { bottom: 186px; }
+    #zoom-out { bottom: 128px; }
+    #sigil, #spell, #dash, #invite { width: 62px; height: 62px; font-size: 12px; }
+    #invite { right: 274px; bottom: 30px; font-size: 24px; }
+    #dash { right: 126px; bottom: 104px; }
+    .touch #actionbar { display: none !important; }
+    #sigil { right: 126px; bottom: 30px; }
+    #spell { right: 200px; bottom: 30px; }
+    #bubbles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+    /* Pixel speech bubbles: an outline only (no fill), one game pixel thick (--px), its corners
+       notched, a stepped tail; the emoji in it are pixel sprites (see src/render/leash.ts). */
+    .bubble { --px: 3px; --ink: rgba(240, 232, 255, .9); position: absolute; transform: translate(-50%, calc(-100% - var(--px) * 3)); color: var(--ink); padding: calc(var(--px) * 2) calc(var(--px) * 3); font-size: 15px; line-height: 1.2; white-space: nowrap; display: none; text-shadow: 0 1px 0 #000; }
+    .bubble::before { content: ""; position: absolute; inset: 0; border: var(--px) solid var(--ink);
+      clip-path: polygon(var(--px) 0, calc(100% - var(--px)) 0, 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, 0 calc(100% - var(--px)), 0 var(--px)); }
+    .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
+    .bubble canvas { display: block; image-rendering: pixelated; }
+    .bubble.on { display: block; }
+    /* A sleeping legend's dream (the first quest): the same pixel bubble, a legend's size (--px by level:
+       bubblePx in src/render/leash.ts), darkly filled, holding the sigil it wants in its level's variant.
+       A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its ink reddening. */
+    .bubble.dream { --ink: rgba(225, 215, 255, .85); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); }
+    .bubble.dream::before { background: rgba(14, 10, 30, .62); z-index: -1; }
+    .bubble.dream.nightmare::before { background: rgba(40, 6, 12, .7); }
+    .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
+    .bubble .bar i { display: block; height: 100%; background: var(--love); }
+  </style>
+  <script type="module" crossorigin src="./assets/index-4lUlQNqt.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DnShPyXc.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="seed"></div>
+  <div id="version"></div>
+  <div id="debug"></div>
+  <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button" class="fight-reset">reset fight scale, speed and momentum</button><span>treetop speed m/s</span><input type="range" name="treetop" min="16" max="160" step="2"><span class="treetop"></span><span>area (?areaSize=)</span><span class="area" style="grid-column: 2 / -1"></span><button type="button" class="world-reset">reset area size and treetop speed (new map)</button></div>
+  <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
+  <div id="wave"><div class="fill"></div><div class="label"></div></div>
+  <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
+  <div id="touch">
+    <div id="stick-zone"></div>
+    <div id="stick"><div class="knob"></div></div>
+    <div class="tbtn" id="rise">rise /<br>descend</div>
+    <div class="tbtn" id="zoom-in">+</div>
+    <div class="tbtn" id="zoom-out">−</div>
+    <div class="tbtn" id="sigil">sigil</div>
+    <div class="tbtn" id="spell">spell</div>
+    <div class="tbtn" id="dash">dash</div>
+    <div class="tbtn" id="invite">💌</div>
+  </div>
+  <div id="over"><div class="card"><h1>THE PARTY'S OVER</h1><div>Every soundsystem has fallen.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
+  <div id="start" class="loading">
+    <div class="card">
+      <h1>WITCH</h1>
+      <div>a prototype: fly the witch round the forest at night</div>
+      <div class="go">Tap, click or press any key to start</div>
+      <button type="button" id="look-btn" style="font:inherit;margin:6px 0;padding:4px 10px;border-radius:6px;border:1px solid rgba(232,226,244,.45);background:rgba(255,95,180,.18);color:inherit;cursor:pointer">👗 Change her look</button>
+      <div id="progress"><div class="fill"></div><span class="label"></span></div>
+      <div id="waves"></div>
+      <div id="shake-opt"></div>
+      <div id="news"></div>
+      <div class="keys">
+        <b>Keyboard and mouse</b> WASD (or the arrow keys) fly · the mouse aims (the ring at the cursor glows pink within a 💌's reach, and a blue arc fills round it while the dodge recharges) · on the ground, left click (or hold 1) throws 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · right click dodges: a 10 m blink on the ground (Space too; pressed a moment early, it goes as soon as it can) · Q rises to the treetops or lands · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · R spell (speed boost) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
+        <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
+        <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
+      </div>
+    </div>
+  </div>
+</body>
+</html>
