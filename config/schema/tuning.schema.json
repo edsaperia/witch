@@ -84,6 +84,93 @@
           "type": "number",
           "minimum": 0
         },
+        "vary": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 1
+            },
+            "rocky": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "rockyWidth": {
+              "type": "number",
+              "minimum": 0
+            },
+            "min": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "rocky",
+            "rockyWidth",
+            "min"
+          ],
+          "additionalProperties": false
+        },
+        "decor": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "finds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trails": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "prints": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "clear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sectors": {
+              "type": "number",
+              "minimum": 8
+            },
+            "kinds": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "required": [
+            "on",
+            "finds",
+            "trails",
+            "prints",
+            "clear",
+            "sectors",
+            "kinds"
+          ],
+          "additionalProperties": false
+        },
         "ease": {
           "type": "number",
           "minimum": 0
@@ -106,44 +193,6 @@
         "gazeEase": {
           "type": "number",
           "minimum": 0
-        },
-        "camera": {
-          "type": "object",
-          "properties": {
-            "approach": {
-              "type": "number",
-              "minimum": 0
-            },
-            "angle": {
-              "type": "number",
-              "minimum": 0
-            },
-            "curve": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeAngle": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistance": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeLook": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "approach",
-            "angle",
-            "curve",
-            "gazeAngle",
-            "gazeDistance",
-            "gazeLook"
-          ],
-          "additionalProperties": false
         },
         "letterLinger": {
           "type": "number",
@@ -216,19 +265,58 @@
         "simRange": {
           "type": "number",
           "minimum": 0
+        },
+        "camera": {
+          "type": "object",
+          "properties": {
+            "approach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "curve": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeAngle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeDistance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeLook": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "approach",
+            "angle",
+            "curve",
+            "gazeAngle",
+            "gazeDistance",
+            "gazeLook"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "on",
         "width",
         "shore",
+        "vary",
+        "decor",
         "ease",
         "sand",
         "sea",
         "restAfter",
         "stargazeCurve",
         "gazeEase",
-        "camera",
         "letterLinger",
         "letterFade",
         "hearts",
@@ -239,7 +327,8 @@
         "meet",
         "idleAfter",
         "turn",
-        "simRange"
+        "simRange",
+        "camera"
       ],
       "additionalProperties": false
     },
@@ -4309,6 +4398,29 @@
         "spin": {
           "type": "number",
           "minimum": 0
+        },
+        "orbit": {
+          "type": "object",
+          "properties": {
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "min": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "scale",
+            "gap",
+            "min"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4332,7 +4444,8 @@
         "linger",
         "lingerFade",
         "lingerMax",
-        "spin"
+        "spin",
+        "orbit"
       ],
       "additionalProperties": false
     },
@@ -4398,6 +4511,33 @@
         "spacing": {
           "type": "number",
           "minimum": 0
+        },
+        "runeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runePull": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "speed",
+            "stop"
+          ],
+          "additionalProperties": false
         },
         "weight": {
           "type": "object",
@@ -4470,6 +4610,8 @@
         "runSpeed",
         "pickRadius",
         "spacing",
+        "runeRadius",
+        "runePull",
         "weight"
       ],
       "additionalProperties": false
@@ -5606,13 +5748,23 @@
             },
             "contact": {
               "type": "boolean"
+            },
+            "chase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "miss": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "reach",
             "turn",
             "brake",
-            "contact"
+            "contact",
+            "chase",
+            "miss"
           ],
           "additionalProperties": false
         },
@@ -5628,12 +5780,17 @@
             },
             "contact": {
               "type": "boolean"
+            },
+            "lead": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "reach",
             "through",
-            "contact"
+            "contact",
+            "lead"
           ],
           "additionalProperties": false
         }

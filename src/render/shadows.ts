@@ -23,8 +23,11 @@ void main() {
   gl_Position = clipOf(w);
 }`;
 
+/** ?debug=shadows: every shadow drawn as a flat magenta tint, so where it lies against what casts it shows plainly. */
+export const SHADOW_DEBUG = { value: 0 };
+
 const FRAG = /* glsl */ `
-uniform float uStrength;
+uniform float uStrength, uShadowDebug;
 varying vec2 vLocal;
 varying vec3 vWorld;
 varying float vScenery;
@@ -38,6 +41,7 @@ void main() {
   float r = dot(vLocal, vLocal);
   if (r > 1.0) discard;
   float a = uStrength * (1.0 - r * r) * (vScenery > 0.5 ? sceneryFade(vWorld) : 1.0); // fading with its scenery
+  if (uShadowDebug > 0.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; }
   if (uSmooth > 0.5) {
     float h = smoothstep(uHazeRange.x, uHazeRange.y, length(vWorld.xz - uHazeCentre));
     gl_FragColor = vec4(mix(vec3(1.0 - a * (1.0 - r)), vec3(1.0), h * h), 1.0); // multiplied over the ground
@@ -61,7 +65,7 @@ export class ShadowBatch {
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));
     this.attr = this.grow(1024);
-    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength } }, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4,
+    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength }, uShadowDebug: SHADOW_DEBUG }, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4,
       ...(smooth ? { transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor } : {}) });
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;

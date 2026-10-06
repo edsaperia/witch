@@ -59,7 +59,7 @@ import { leyPulse, pointerShown } from "../rules/leypulse";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
-import { ShadowBatch, type ShadowInstance } from "./shadows";
+import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
@@ -143,8 +143,6 @@ export class View {
   private ride = new Ride();
   private camRide = new Ride();
   private rideOff = 0;
-  /** How far she's drawn in a party pose (eased 0 to 1): her flight shadow fades out under it. */
-  private posedK = 0;
   private rideTime = NaN;
   treehouseBatch: SpriteBatch;
   markerArt: MarkerArt;
@@ -240,6 +238,8 @@ export class View {
   /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
   readonly witchBase = { x: 0, y: 0, z: 0 };
   shadowList: ShadowInstance[] = [];
+  /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
+  witchShadows: ShadowInstance[] = [];
   private mist: Mist | null = null;
   width = 1;
   height = 1;
@@ -395,8 +395,8 @@ export class View {
     const sm = t.fx === "smooth"
       ? new THREE.ShaderMaterial({
         transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor,
-        vertexShader: SHADOW_VERT, uniforms: { ...HEIGHT_UNIFORMS },
-        fragmentShader: "varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; float r = dot(p, p); if (r > 1.0) discard; gl_FragColor = vec4(vec3(1.0 - 0.75 * (1.0 - r) * (1.0 - r)), 1.0); }",
+        vertexShader: SHADOW_VERT, uniforms: { ...HEIGHT_UNIFORMS, uShadowDebug: SHADOW_DEBUG },
+        fragmentShader: "uniform float uShadowDebug; varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; float r = dot(p, p); if (r > 1.0) discard; gl_FragColor = uShadowDebug > 0.5 ? vec4(1.0, 0.0, 1.0, 1.0) : vec4(vec3(1.0 - 0.75 * (1.0 - r) * (1.0 - r)), 1.0); }",
       })
       : new THREE.ShaderMaterial({
         transparent: false, depthWrite: false,
@@ -409,6 +409,13 @@ export class View {
     this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.7, 6, 3).rotateX(-Math.PI / 2), sm);
     this.shadow.renderOrder = 1;
     this.scene.add(this.shadow);
+  }
+
+  /** ?debug=shadows (render/shadows.ts SHADOW_DEBUG): every shadow drawn flat magenta over the ground, not multiplied (on dark
+   *  ground a multiplied tint is lost), so each shows plainly against what casts it. */
+  debugShadows(): void {
+    SHADOW_DEBUG.value = 1;
+    for (const m of [this.shadow.material, this.shadows.mesh.material] as THREE.Material[]) { m.blending = THREE.NormalBlending; m.transparent = true; m.needsUpdate = true; }
   }
 
   /** Fit the canvas to the window: the scene at low resolution, shown scaled up by the pixel size. */
@@ -977,14 +984,20 @@ export class View {
       if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
       else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
     }
-    // Over the ride's smoothed height (eased in off the treehouse seat).
-    wyy += this.rideOff * (1 - this.seatK * this.seatK * (3 - 2 * this.seatK));
+    // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
+    // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").
+    wyy += this.rideOff * (1 - this.seatK * this.seatK * (3 - 2 * this.seatK)) * (1 - footEase);
     // Her hat knocked off (rules/hat.ts): her frames without it, and the hat where it lies. Baked a moment after the game is up
     // (not at a knockout, mid-fight), if she has a hat to lose.
     const Hat = g.witches[0].hat;
     if (!this.bareAsked && Hat.has && !g.clock.paused && ht > 1) { this.bareAsked = true; setTimeout(() => { this.bareBatch ??= this.makeWitchBatch(true); }, 0); }
     const bare = Hat.has && !!Hat.down ? (this.bareBatch ??= this.makeWitchBatch(true)) : null;
-    const wframe = (bare ? this.assets.witchBare() : this.assets.witch).frames[wf], hatTop = wyy + wframe.h * this.mpp;
+    const watlas = bare ? this.assets.witchBare() : this.assets.witch, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * this.mpp;
+    // Stood by her frame's ground (art/witch.js liftShadow): the point under her on the model's ground lands on wyy, so on
+    // foot her feet are on the ground, not on the bottom of a box that held a shadow drawn into her (Ed, 2026-10-06); and
+    // her shadow lies at that point, under her feet whatever the pose.
+    const wg = watlas.grounds?.[wf], wflip = w.seated ? false : w.facing < 0, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
+    const wsink = wg ? (wframe.h - wg.y) * this.mpp : 0, wside = wg ? (wg.x - wframe.w / 2) * this.mpp * (wflip ? -1 : 1) : 0;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4));
     this.swoopTrails.update(g.partyWitches.list, time);
     setOverlayTilt(t.tiltShift, w.lift, this.canvas.clientHeight || window.innerHeight, this.height); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
@@ -993,7 +1006,7 @@ export class View {
     this.stateMarks.update(g, time, this.leashView.tops);
     this.inviteView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
-    const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }];
+    const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink, y: wyy + groundHeight(wx, wz) - U.y * wsink, z: wz - U.z * wsink, frame: wframe, flip: wflip }];
     const hatFrame = bare ? this.assets.witchBare().frames[this.assets.witchHatFrame] : undefined;
     { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
       const LV = this.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && this.foot < 0.05 && !this.partyWitchView.herIdle;
@@ -1003,6 +1016,9 @@ export class View {
     }
     this.witchBatch.set(bare ? [] : her);
     this.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
+    // The party's and the beach's witches' shadows, and a small one under her hat where it lies.
+    this.witchShadows = [...this.partyWitchView.shadows, ...this.beachView.shadows];
+    if (bare && hatFrame) this.witchShadows.push({ x: Hat.down!.x + HAT_BESIDE, z: Hat.down!.z, w: hatFrame.w * this.mpp * 0.9, d: hatFrame.w * this.mpp * 0.35 });
     // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
     // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
     // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
@@ -1026,11 +1042,12 @@ export class View {
       this.post.pool.set(foot[0] / this.width, foot[1] / this.height, Math.max(1e-3, Math.abs(across[0] - foot[0]) / this.width), Math.max(1e-3, Math.abs(down[1] - foot[1]) / this.height));
     }
     this.clouds.update(time, this.camera, SPRITE_UNIFORMS.uWitch.value, this.width, this.height);
-    this.shadow.position.set(wx, 0.08, wz);
-    // Drawn in a party pose (lying on the beach to stargaze, or idling at the party), her art's own contact shadow lies under her:
-    // the flight shadow, centred under her feet, fades out (Ed's playtest, 2026-10-06: "Stargazing, you lie above your shadow").
-    this.posedK += ((this.partyWitchView.herIdle || onBeach ? 1 : 0) - this.posedK) * Math.min(1, fdt * 8);
-    this.shadow.scale.setScalar((1 - 0.5 * canopyShown(w)) * (1 - this.seatK) * (1 - this.posedK) + 1e-3); // none while she's up on the terrace
+    // Her shadow under her feet (her frame's ground), as wide as the pose (lying down, all of her); none while she's up on the
+    // terrace, nowhere (mid-blink, sparkled away), or drawn by the party's or the beach's view (they lay her shadow there).
+    const ref = watlas.grounds?.[0], wide = wg && ref && ref.w > 0 ? Math.max(0.6, Math.min(3, wg.w / ref.w)) : 1;
+    this.shadow.position.set(wx + R.x * wside, 0.08, wz + R.z * wside);
+    const shown = hidden || this.partyWitchView.herIdle || onBeach ? 0 : (1 - 0.5 * canopyShown(w)) * (1 - this.seatK);
+    this.shadow.scale.set(shown * wide + 1e-3, 1, shown + 1e-3);
 
     this.time("witch");
     refresh(this);

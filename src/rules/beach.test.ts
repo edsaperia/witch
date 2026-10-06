@@ -18,13 +18,13 @@ describe("the beach", () => {
   for (const seed of SEEDS) {
     it(`nothing grows, stands or runs on the sand or in the sea (seed ${seed})`, () => {
       const map = generateMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, forest = new Forest(map);
-      const c = map.bounds.circle!, e0 = edgeRadius(c, c.x + 1, c.z), mid = { x: c.x + e0 - b.width / 2, z: c.z }; // (due east, on the coast's own edge there)
+      const c = map.bounds.circle!, e0 = edgeRadius(c, c.x + 1, c.z), mid = { x: c.x + e0 - b.sandAt(0) / 2, z: c.z }; // (due east, on the coast's own edge there, halfway across the sand there)
       expect(b.intoSand(mid.x, mid.z)).toBeGreaterThan(0); // the sand inside the edge, the sea beyond it
       expect(b.intoSea(mid.x, mid.z)).toBeLessThan(0);
       expect(b.intoSea(c.x + e0 + b.out + 1, c.z)).toBeGreaterThan(0);
       expect(b.intoSand(c.x, c.z)).toBeLessThan(0);
       for (let k = 0; k < 64; k++) {
-        const a = (k / 64) * Math.PI * 2 - Math.PI, d = b.edge(a) - b.width + 1 + (k % 8) * 20, x = b.x + Math.cos(a) * d, z = b.z + Math.sin(a) * d;
+        const a = (k / 64) * Math.PI * 2 - Math.PI, d = b.edge(a) - b.sandAt(a) + 1 + (k % 8) * 20, x = b.x + Math.cos(a) * d, z = b.z + Math.sin(a) * d;
         expect(map.hardClear(x, z)).toBe(true);
         expect(map.treeWeight(x, z)).toBe(0);
         for (const t of forest.treesNear(x, z, 12)) expect(b.intoSand(t.x, t.z)).toBeLessThan(0);
@@ -36,6 +36,39 @@ describe("the beach", () => {
       for (const j of map.paths.junctions) expect(map.paths.lines[j.line].pts.some(p => p[0] === j.x && p[1] === j.z)).toBe(true);
     });
   }
+
+  it("varies in width round the coast (Ed, 2026-10-06: \"more irregularly shaped\"): wide bays, narrows, rocky stretches", () => {
+    for (const seed of SEEDS) {
+      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!, V = TUNING.beach!.vary!, w = [...b.sand];
+      expect(Math.max(...w)).toBeGreaterThan(b.width * 1.8);
+      expect(Math.min(...w)).toBeLessThan(b.width * 0.3);
+      expect(Math.min(...w)).toBeGreaterThanOrEqual(V.min);
+      expect(w.some((_, k) => b.rockyAt(-Math.PI + (k / w.length) * Math.PI * 2) > 0.5)).toBe(true);
+      // The sand starts where its width says, round the coast.
+      for (let k = 0; k < 16; k++) {
+        const a = -Math.PI + (k / 16) * Math.PI * 2, d = b.edge(a) - b.sandAt(a);
+        expect(b.intoSand(b.x + Math.cos(a) * (d + 0.5), b.z + Math.sin(a) * (d + 0.5))).toBeGreaterThan(0);
+        expect(b.intoSand(b.x + Math.cos(a) * (d - 0.5), b.z + Math.sin(a) * (d - 0.5))).toBeLessThan(0);
+      }
+    }
+    // How far in or out is a true distance anywhere, deep inland too (it was only right about the sign inside the
+    // nearest the coast comes: the waves' loudness, the hills' easing and the paths' clipping read it as a distance).
+    for (const seed of SEEDS) {
+      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!;
+      for (let k = 0; k < 24; k++) {
+        const a = -Math.PI + ((k + 0.5) / 24) * Math.PI * 2;
+        for (const back of [1, 30, 80, 150, 300]) {
+          const d = b.edge(a) - back, x = b.x + Math.cos(a) * d, z = b.z + Math.sin(a) * d;
+          expect(b.intoSea(x, z)).toBeCloseTo(-back - b.out, 3);
+          expect(b.intoSand(x, z)).toBeCloseTo(b.sandAt(a) - back, 3);
+        }
+      }
+    }
+    // The same for the same seed; another seed, another shape.
+    const one = beachOf(generateMap(1, TUNING).bounds, TUNING)!, again = beachOf(generateMap(1, TUNING).bounds, TUNING)!, other = beachOf(generateMap(123, TUNING).bounds, TUNING)!;
+    expect([...one.sand]).toEqual([...again.sand]);
+    expect([...one.sand]).not.toEqual([...other.sand]);
+  });
 
   it("off, or on the square map, there's none", () => {
     expect(beachOf(generateMap(1, { ...TUNING, beach: { ...TUNING.beach!, on: false } }).bounds, { beach: { ...TUNING.beach!, on: false } })).toBeNull();
