@@ -34,8 +34,8 @@ for (const seed of seeds) {
    for(let y=0;y<m.n;y++)for(let x=0;x<m.n;x++){const s=m.siteOf(x,y),t=m.typeOf(x,y);all.push({x:s.x,z:s.z,t,d:Math.hypot(s.x-w.x,s.z-w.z)});}
    all.sort((a,b)=>a.d-b.d);for(const s of all){if(s.d<250||seen.has(s.t))continue;seen.add(s.t);out.push(s);if(out.length===3)break;}return out;});
  for (const [k,s] of sites.entries()) {
-   await tp(s.x,s.z); await fr(30); await shot(`area${k}-t${s.t}-clearing`);
-   await tp(s.x+28,s.z+18); await fr(30); await shot(`area${k}-t${s.t}-trees`);
+   await tp(s.x,s.z); await fr(240); await shot(`area${k}-t${s.t}-clearing`); // (4 s first: the area's mood eases in)
+   await tp(s.x+28,s.z+18); await fr(60); await shot(`area${k}-t${s.t}-trees`);
    if(k===0){ await to("treetop"); await shot(`area${k}-t${s.t}-treetop`); await to("ground"); }
  }
  // late game: six waves on, a newly partified area

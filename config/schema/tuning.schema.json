@@ -996,6 +996,602 @@
             "decorStrength": {
               "type": "number",
               "minimum": 0
+            },
+            "areaEase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "areas": {
+              "type": "object",
+              "properties": {
+                "bog": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "wetland": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "beaver-pond": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "stream": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "deadwood": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "ancient": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "log-pile": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "bluebell-glade": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "gradeHue",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "wispy-forest": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "gradeHue",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "moor": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "heath": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "grassland": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "cave-mouth": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "ravine": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "rocky-slope": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "old-pinewood": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "norway": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "honeysuckle-tangle": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "garden": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "berry-thicket": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "home": {
+                  "type": "object",
+                  "properties": {
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "gradeHue",
+                    "gradeSat",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "bog",
+                "wetland",
+                "beaver-pond",
+                "stream",
+                "deadwood",
+                "ancient",
+                "log-pile",
+                "bluebell-glade",
+                "wispy-forest",
+                "moor",
+                "heath",
+                "grassland",
+                "cave-mouth",
+                "ravine",
+                "rocky-slope",
+                "old-pinewood",
+                "norway",
+                "honeysuckle-tangle",
+                "garden",
+                "berry-thicket",
+                "home"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -1022,7 +1618,9 @@
             "partyStrength",
             "decorLights",
             "decorReach",
-            "decorStrength"
+            "decorStrength",
+            "areaEase",
+            "areas"
           ],
           "additionalProperties": false
         }
