@@ -34,7 +34,7 @@ function serve() {
     const [style, px] = combo.split("/"), tag = `${style}-${px}`, page = await browser.newPage({ viewport: { width: 1280, height: 720 } }), errors = [];
     page.on("pageerror", e => errors.push(e.message));
     try {
-      await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&wave=off&style=${style}&px=${px}`);
+      await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&spell=auto&wave=off&style=${style}&px=${px}`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 400000, polling: 500 });
       await page.keyboard.press("Enter");
       await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
