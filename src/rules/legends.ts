@@ -1,5 +1,5 @@
 // Legends, redesigned (Ed, 2026-10-05; issue #87; config/legends.json). A legend sleeps, dreaming
-// (its quest: bring the creature it dreams of while its area's soundsystem is off, and you get its
+// (its quest: bring the creature it dreams of while it sleeps, soundsystem on or not (Ed, 2026-10-06), and you get its
 // buff; it sleeps on). With none of its kind left in its area it grows restless (a nightmare), and
 // after angryAfter seconds of that it's angry: it attacks the witch and her posse from afar. A
 // relic put down next to it while it sleeps makes it happy: you get its buff and it defends,
@@ -150,7 +150,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     const c = w.creatures[id];
     if (c.gone || c.leashed) continue;
     const key = cellKey(c.cell), q = c.quest;
-    c.questOpen = !!q && q.done === undefined && !w.partified(key) && (c.legendState === "asleep" || c.legendState === "restless");
+    c.questOpen = !!q && q.done === undefined && (c.legendState === "asleep" || c.legendState === "restless"); // (open while it sleeps, its soundsystem on or not: Ed, 2026-10-06)
     if (q?.done !== undefined) c.buffed = true; // (its quest done: its buff, for good)
     if (c.legendState !== "asleep" && c.legendState !== "restless") continue;
     if (kin) {

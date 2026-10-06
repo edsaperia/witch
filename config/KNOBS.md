@@ -542,7 +542,15 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyObjects.home.lights` | number | 0 to … |
 | `partyObjects.exclude` | array of string |  |
 | `partyObjects.generated` | boolean |  |
-| `partyWitches.max` | number | 0 to … |
+| `partyWitches.roam` | number | 0 to … |
+| `partyWitches.centreBias` | number | 0 to … |
+| `partyWitches.swoopTime` | number | 0 to … |
+| `partyWitches.swoopHeight` | number | 0 to … |
+| `partyWitches.swoopMin` | number | 0 to … |
+| `partyWitches.swoopMax` | number | 0 to … |
+| `partyWitches.treetopBoost` | number | 0 to … |
+| `partyWitches.simRange` | number | 0 to … |
+| `partyWitches.simRangeTreetop` | number | 0 to … |
 | `partyWitches.idleAfter` | number | 0 to … |
 | `partyWitches.idleReach` | number | 0 to … |
 | `partyWitches.activityMin` | number | 0 to … |
@@ -1100,7 +1108,7 @@ The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) b
 
 ## `knockout`
 
-Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this').
+Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this'). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this.
 
 | knob | type | range |
 |---|---|---|
@@ -1109,6 +1117,7 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 | `knockout.emptyBeat` | number | 0 to … |
 | `knockout.teleport` | number | 0 to … |
 | `knockout.legendsLoyal` | boolean |  |
+| `knockout.dropHat` | boolean |  |
 
 ## `dash`, `spells`
 
@@ -1326,12 +1335,13 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.sleepy.faces` | array of string |  |
 | `dreams.sleepy.fallback` | string |  |
 
-## `wildLegends`, `creatureSimRadius`
+## `legends`, `wildLegends`, `creatureSimRadius`
 
-Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one legend of its kind, sleeping, sunk into the ground like scenery (no AI, no glow, no health bar; sink: the share of it under the ground, moss: how far its colours go toward moss). When its area's wave comes it wakes, angry: wake seconds of heaving out of the ground (untouchable), then a mini-boss guarding its own area with its move set (movement.json legends). Beaten, it sinks back to sleep for good. A happy legend (home's from the start; others by their quest, or the debug key O) guards its area for her like a parked party animal, anything in its area within guard metres of where it stands, with its move set, and heals heal hp a second while no enemy is near; beaten, it sleeps for good and its buff ends. Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
+Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads.
 
 | knob | type | range |
 |---|---|---|
+| `legends.share` | number | 0 to … |
 | `wildLegends.wake` | number | 0 to … |
 | `wildLegends.sink` | number | 0 to … |
 | `wildLegends.moss` | number | 0 to … |

@@ -1,6 +1,6 @@
 // 💌 throughput under stacked legend buffs (Ed, 2026-10-05, issue #87): how fast she can fill
 // a crowd's affection with no buffs, typical builds and worst-case stacks, with the per-animal hit
-// gap (invites.perAnimalHitGap, 0.5 s) and other limits; then waves survived in the creature-state
+// gap (none in the game since 2026-10-06; 0.5 s before, to compare) and other limits; then waves survived in the creature-state
 // model (src/rules/states.ts) with each build.
 //   node tools/balance/buffs.mjs [--seeds 4] [--gap 120] [--cap 60] [--skills 0.5,1] [--policies defend,leash] [--relics 0] [--no-sim]
 import { openRules, arg, list, mean } from "./lib.mjs";
