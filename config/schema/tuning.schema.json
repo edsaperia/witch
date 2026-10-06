@@ -1025,14 +1025,6 @@
               "type": "number",
               "minimum": 0
             },
-            "glowScatter": {
-              "type": "number",
-              "minimum": 0
-            },
-            "glowFloor": {
-              "type": "number",
-              "minimum": 0
-            },
             "styledRim": {
               "type": "number",
               "minimum": 0
@@ -1689,8 +1681,6 @@
             "moonUp",
             "moonUpHue",
             "moonUpSat",
-            "glowScatter",
-            "glowFloor",
             "styledRim",
             "styledGlow",
             "styledLift",

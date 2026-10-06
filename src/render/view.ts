@@ -214,9 +214,8 @@ export class View {
     SPRITE_UNIFORMS.uWitchLift.value = (styled ? M?.styledLift : undefined) ?? M?.witchLift ?? 0;
     SPRITE_UNIFORMS.uRimInset.value = styled ? 1 : 0;
     // The moon's fill on upward faces (the art director's round 2), in its own hue (round 3: green-cyan, not periwinkle);
-    // its strength a share of the moon's. And her pool on the floor (round 3).
+    // its strength a share of the moon's.
     { const U = LIGHT_UNIFORMS.uMoon.value; hsvInto(LIGHT_UNIFORMS.uMoonUp.value, M?.moonUpHue ?? M?.moonHue ?? 0, M?.moonUpSat ?? M?.moonSat ?? 0, 1, Math.max(U.x, U.y, U.z) * (M?.moonUp ?? 0)); }
-    LIGHT_UNIFORMS.uGlowSurface.value.set(M?.glowScatter ?? 0, M?.glowFloor ?? 0);
     if (M) LIGHT_UNIFORMS.uHazeColour.value.fromArray(hsv2rgb(M.hazeHue, M.hazeSat, 1).map((c: number) => (c / 255) * M.haze));
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     LIGHT_UNIFORMS.uGlowNear.value = Math.max(0.05, Math.min(1, t.glowNear ?? 1));

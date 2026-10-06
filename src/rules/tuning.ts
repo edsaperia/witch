@@ -24,8 +24,6 @@ export interface Mood {
   rimHue?: number; rimSat?: number; rim?: number; witchGlow?: number;
   /** The moon's fill on upward faces (canopy tops, open ground), a share of the moon, in its own hue and saturation (left out: the moon's). */
   moonUp?: number; moonUpHue?: number; moonUpSat?: number;
-  /** Her pool on the floor: her light's own colour added over it (glowScatter) and the floor's colour giving way to grey under it (glowFloor, 0 to 1). */
-  glowScatter?: number; glowFloor?: number;
   /** With a stylised art style (bold, ref): the rim's strength and her own glow on her, in place of rim and witchGlow. */
   styledRim?: number; styledGlow?: number;
   /** Her pool's light thrown up onto her, added (witchLift; styledLift with a stylised art style). */

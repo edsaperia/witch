@@ -74,8 +74,8 @@ void main() {
   vec4 c = texture2D(uStrip, vec2(uv.x, fract(uv.y)));
   if (c.a < 0.5) discard;
   if (c.a < 0.999) { gl_FragColor = vec4(haze(c.rgb, vWorld), sceneryFade(vWorld)); return; } // the magic trail glows
-  vec3 light = nightLightShaded(vec3(0.0, 1.0, 0.0), vec3(p.x, 0.0, p.y), 1.0), q = vec3(p.x, 0.0, p.y);
-  gl_FragColor = vec4(haze(min(vec3(1.0), glowFloor(c.rgb, q) * light * 1.25 + glowScatter(q)), vWorld), sceneryFade(vWorld));
+  vec3 light = nightLightShaded(vec3(0.0, 1.0, 0.0), vec3(p.x, 0.0, p.y), 1.0);
+  gl_FragColor = vec4(haze(min(vec3(1.0), c.rgb * light * 1.25), vWorld), sceneryFade(vWorld));
 }
 `;
 
