@@ -142,9 +142,10 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
       if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale, sway });
       // Set pieces model their own ground: no blob under them (it read as a hard dark oval).
       // Its shadow lies under it, its front edge at its base (not centred on its bottom edge,
-      // which leaves half of it in front, reading as a shadow below something hovering).
+      // which leaves half of it in front, reading as a shadow below something hovering); one
+      // drawn in perspective, anchored by its middle (its origin), round that middle, as relics are.
       const sd = frame.w * m * 0.3;
-      if (kind !== "setpiece") shadows.push({ x: p.x, z: p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
+      if (kind !== "setpiece") shadows.push({ x: p.x, z: piece.origin ? p.z : p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
       nb++;
       if (sliceDone()) { yield; resume(); }
     }
