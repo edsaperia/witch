@@ -22,6 +22,7 @@ import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, ty
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { dropCache, newInvites, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
@@ -97,6 +98,8 @@ export interface Game {
   byArea?: Map<string, Creature[]> | null;
   /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
   legendIds?: number[];
+  /** This step's simulation level of detail (rules/simLod.ts): how many creatures in each, for the debug overlay. */
+  lod?: LodCounts;
   /** The debug arena (?arena=, rules/arena.ts): its spec and the creatures it put down. */
   arena?: { spec: string; ids: number[] };
   /** The run is over (every soundsystem destroyed): when. */
@@ -221,6 +224,7 @@ export const affectionOf = (g: Game): Affection => {
 export function hitWitch(g: Game, id: number, at: number, t: Tuning = g.tuning, blow?: Blow): void {
   const w = g.witches[id];
   if (!w || w.ko || dashing(w.dash, at)) return;
+  if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
   if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); return; }
   // Thrown and staggered by it (rules/knock.ts); not by the blow that knocks her out.
   if (blow) knockWitch((w.knock ??= newKnock()), w.body, blow, at, t);
@@ -247,14 +251,16 @@ function remember(g: Game): void {
 
 /** Run `draw` with the witches, creatures and camera eased between the last two steps by alpha
  *  (so motion is smooth whatever the display's rate), then put the simulated state back. */
+let held = new Float64Array(0); // (the simulated positions while drawing: one array kept, not one a frame)
 export function interpolated<T>(g: Game, draw: () => T): T {
   const k = g.alpha, pw = g.prev.witches, pc = g.prev.creatures, C = g.creatures;
   if (k >= 1 || !pw.length || pc.length !== C.length * 2) return draw();
-  const bodies = g.witches.map(w => w.body), camera = g.camera, cx = new Float64Array(C.length * 2);
+  if (held.length < C.length * 2) held = new Float64Array(C.length * 4);
+  const bodies = g.witches.map(w => w.body), camera = g.camera, cx = held;
   const mix = (a: number, b: number) => a + (b - a) * k;
   g.witches.forEach((w, i) => { const p = pw[i]; if (p) w.body = { ...w.body, x: mix(p.x, w.body.x), z: mix(p.z, w.body.z), lift: mix(p.lift, w.body.lift) }; });
   // (a jump further than a charge covers in a slow frame is a teleport: not blended)
-  for (let i = 0; i < C.length; i++) { cx[2 * i] = C[i].x; cx[2 * i + 1] = C[i].z; if (Math.hypot(pc[2 * i] - C[i].x, pc[2 * i + 1] - C[i].z) < 20) { C[i].x = mix(pc[2 * i], C[i].x); C[i].z = mix(pc[2 * i + 1], C[i].z); } }
+  for (let i = 0; i < C.length; i++) { cx[2 * i] = C[i].x; cx[2 * i + 1] = C[i].z; const ex = pc[2 * i] - C[i].x, ez = pc[2 * i + 1] - C[i].z; if (ex * ex + ez * ez < 400) { C[i].x = mix(pc[2 * i], C[i].x); C[i].z = mix(pc[2 * i + 1], C[i].z); } }
   const pcam = g.prev.camera;
   if (pcam) g.camera = { ...camera, tx: mix(pcam.tx, camera.tx), ty: mix(pcam.ty, camera.ty), tz: mix(pcam.tz, camera.tz), lift: mix(pcam.lift, camera.lift), zoom: mix(pcam.zoom, camera.zoom), ax: mix(pcam.ax, camera.ax), az: mix(pcam.az, camera.az), pull: pcam.pull === undefined || camera.pull === undefined ? camera.pull : mix(pcam.pull, camera.pull), intro: pcam.intro === undefined || camera.intro === undefined ? camera.intro : mix(pcam.intro, camera.intro) };
   try { return draw(); }
@@ -291,7 +297,13 @@ function fixedStep(g: Game, controls: Controls): void {
   const was = W.body;
   rechargeDash(W.dash, g.clock.time, charges, t.dash.cooldown);
   // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
-  if (c.dash && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain) && M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
+  // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
+  if (c.dash) W.dash.bufferUntil = g.clock.time + t.dash.buffer;
+  if (g.clock.time <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, g.clock.time)
+    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain)) {
+    W.dash.bufferUntil = undefined;
+    if (M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
+  }
   W.body = applyDash(W.dash, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds));
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, dt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
@@ -312,6 +324,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepGrowth(g, wave);
   for (let i = grown; i < g.creatures.length; i++) { const c = g.creatures[i]; if (g.friendly.has(cellKey(c.cell)) && !g.party.areas.has(cellKey(c.cell))) c.friendly = true; } // (a friendly area's newcomers are friendly too)
   updateModes(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
+  g.lod = newLodCounts();
   stepFights(g, t, dt, busy);
   // Noticing her (before they step, so a curious baby sets off this step).
   {
@@ -320,7 +333,7 @@ function fixedStep(g: Game, controls: Controls): void {
     const T = COMBAT.temperament;
     stepNotice(near, g.witches.map(w => ({ x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated && !w.ko })), sp => (T.curious.includes(sp) ? "curious" : T.skittish.includes(sp) ? "skittish" : null), t);
   }
-  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c), g.tuning.haze.far + 20 + wanderRange(g.map) * 1.5);
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
   const placedBefore = g.leash.events.length;
@@ -420,8 +433,11 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   // Angry and happy legends shoot from afar (#87): stepped wherever she is.
   for (const id of g.legendIds ?? []) { const c = g.creatures[id]; if (!seen.has(id) && !c.gone && (c.legendState === "angry" || c.legendState === "happy")) { seen.add(id); active.push(c); } }
   S.busy = new Set();
+  // Besiegers marching far from her and from the action go coarsely (rules/simLod.ts).
+  const coarse = coarseMarchers(g, active, t, dt);
+  const stepped = coarse.size ? active.filter(c => !coarse.has(c)) : active;
   stepCombat(S, {
-    creatures: g.creatures, active, time, dt, t, busy,
+    creatures: g.creatures, active: stepped, time, dt, t, busy,
     witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko, vx: w.body.vx, vz: w.body.vz })),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
     asleep: c => dormant(g, c) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be)
@@ -447,6 +463,43 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   const home = S.sounds.get("home");
   if (home && home.hp < home.max) { const f = 1 - home.hp / home.max, n = g.speakers.length; g.speakers = g.speakers.map((_, i) => (f >= (i + 1) / n ? "destroyed" : f >= (i + 0.5) / n ? "damaged" : "playing")); }
   if (!g.over && [...S.sounds.values()].every(h => h.hp <= 0)) g.over = { at: time };
+}
+
+/** The besiegers to march coarsely this step (rules/simLod.ts): marching on a soundsystem (nothing
+ *  else to do: no fight, lunge, charge, leap, burrow, knock or daze under way) further than
+ *  simLod.full from every witch and simLod.action from every standing soundsystem, party animal
+ *  and happy legend's guard. On its turn each marches on by simLod.every steps at once; the rest
+ *  of the time it waits. All of them are left out of the combat step (and kept busy). */
+function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set<Creature> {
+  const L = t.simLod, out = new Set<Creature>(), S = g.combat, time = g.clock.time, tick = Math.round(time / dt);
+  if (L.every <= 1) return out;
+  // The action: each a point and how near counts.
+  const near: { x: number; z: number; r: number }[] = [];
+  for (const w of g.witches) near.push({ x: w.body.x, z: w.body.z, r: fullRadius(t, w.body.mode) });
+  for (const h of S.sounds.values()) if (h.hp > 0) near.push({ x: h.x, z: h.z, r: L.action });
+  for (const w of g.witches) for (const id of [...w.leash.stack, ...w.leash.placed.map(p => p.id)]) { const c = g.creatures[id]; if (c && !c.gone) near.push({ x: c.x, z: c.z, r: L.action }); }
+  for (const id of g.legendIds ?? []) { const c = g.creatures[id]; if (c && !c.gone && c.legendState === "happy") near.push({ x: c.x, z: c.z, r: L.action + t.wildLegends.guard }); }
+  const counts = g.lod;
+  for (const c of active) {
+    const f = c.fight, tg = f?.target;
+    const marching = !!c.siege && !c.leashed && !c.boss && !c.fleeUntil && !c.dazed && !c.wanderTo && !c.kx && !c.kz && !c.charge && !c.leap && !c.burrow
+      && (!tg || tg.kind === "sound") && (!f || (f.windupUntil === 0 && !f.lunge));
+    if (!marching) continue;
+    // Its distance in from the nearest line (negative: inside one).
+    let d = Infinity;
+    for (const p of near) d = Math.min(d, Math.max(Math.abs(c.x - p.x), Math.abs(c.z - p.z)) - p.r);
+    if (inFull(c, d, 0, L.band)) { if (counts) counts.marchFull++; continue; }
+    if (counts) counts.marchCoarse++;
+    out.add(c);
+    if (!coarseTurn(tick, c.id, L.every)) continue;
+    const key = tg?.kind === "sound" ? tg.key : c.siege!, h = S.sounds.get(key) ?? null;
+    if (!h || h.hp <= 0) { c.lod = "full"; out.delete(c); continue; } // (its soundsystem fell: combat finds it the next)
+    const dx = h.x - c.x, dz = h.z - c.z, dist = Math.hypot(dx, dz), step = Math.min(Math.max(0, dist - 10), c.speed * t.combat.marchMult * dt * L.every); // (over the line it's in full next step)
+    if (dist > 1e-6) { c.x += (dx / dist) * step; c.z += (dz / dist) * step; }
+    if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
+    c.away = dz < -Math.abs(dx); c.moving = step > 0; c.walk += dt * L.every * 5;
+  }
+  return out;
 }
 
 /** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers

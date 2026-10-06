@@ -38,9 +38,10 @@ export function drawBerries(v: View, time: number): void {
     }
   }
   for (const [id, at] of v.evolvedAt) if (time - at > 1.2) v.evolvedAt.delete(id);
+  const V = v.lastView, VH = V ? V.half + 4 : Infinity; // (the scenery's square first: much cheaper than inView)
   for (const b of B.berries) {
     const p = B.bushes[b.bush];
-    if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || !inView(v, p.x, p.z, 0.5, 1.2, 2)) continue;
+    if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || (V && (Math.abs(p.x - V.x) > VH || Math.abs(p.z - V.z) > VH)) || !inView(v, p.x, p.z, 0.5, 1.2, 2)) continue;
     const at = v.regrewAt.get(b.id), grow = at === undefined ? 1 : Math.min(1, (time - at) / 0.5);
     if (grow <= 0.05) continue;
     items.push({ x: p.x, y: 0.75, z: p.z + 0.25, frame: f, flip: false, scale: grow });

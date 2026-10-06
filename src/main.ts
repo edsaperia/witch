@@ -27,6 +27,7 @@ import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
+import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
@@ -219,6 +220,7 @@ const sceneryAt = Number(params.get("scenery"));
 if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
+const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
@@ -535,10 +537,14 @@ function frame(now: number): void {
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   frameStats.endGpu();
+  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over);
   frameStats.work(performance.now() - work0);
   applyShake();
   freeze.update();
-  if (debugOn) {
+  // The overlay, four times a second (a new text every frame was a page layout every frame), with
+  // its buttons kept just below it however many lines it has.
+  if (debugOn && now - lastDebug > 250) {
+    lastDebug = now;
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
       ...frameStats.lines(),
@@ -549,10 +555,13 @@ function frame(now: number): void {
       `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
       `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
       `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
+      ...(game.lod ? [`sim    full ${game.lod.full}  coarse ${game.lod.coarse}  frozen ${game.lod.frozen}   marching full ${game.lod.marchFull}  coarse ${game.lod.marchCoarse}`] : []),
       ...powerLines(),
     ].join("\n");
+    debugButtons.style.top = `${debugEl.offsetTop + debugEl.offsetHeight + 6}px`;
   }
 }
+let lastDebug = -Infinity;
 requestAnimationFrame(frame);
 
 /** The power meter (Ed, 2026-10-04): fighting value, Σ √(hp × dps) (rules/power.ts), of the party
