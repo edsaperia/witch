@@ -221,15 +221,16 @@ shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake wh
 | `camera.intro.angle` | number | 0 to … |
 | `camera.intro.ease` | number | 0 to … |
 
-## `pixelSize`, `glowReach`, `glowFalloff`, `glowToCutout`, `glowHeight`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`, `lightBudget`
+## `pixelSize`, `glowReach`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`, `lightBudget`
 
-Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel. The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowFalloff: how fast it falls off, as (1 - distance/reach)^glowFalloff. ?glow=<reach>,<falloff> in the URL fixes the reach (glowReach metres) and the falloff, to try values live. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.
+Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel. The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach × glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.
 
 | knob | type | range |
 |---|---|---|
 | `pixelSize` | number | 0 to … |
 | `glowReach` | number | 0 to … |
 | `glowFalloff` | number | 0 to … |
+| `glowNear` | number | 0 to … |
 | `glowToCutout` | number | 0 to … |
 | `glowHeight` | number | 0 to … |
 | `spriteTilt` | number | 0 to … |
@@ -239,7 +240,7 @@ Everything the camera can see is drawn, plus viewMargin metres round the view, s
 
 ## `lights`, `glowPower`
 
-How far (reach, metres) and how strongly each kind of light lights its surroundings. glowPower: the witch's own glow at its brightest (0-1; 0.65 lights without blowing out), full under her, falling off as glowFalloff says out to glowReach metres, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands.
+How far (reach, metres) and how strongly each kind of light lights its surroundings. glowPower: the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands.
 
 | knob | type | range |
 |---|---|---|
@@ -662,7 +663,7 @@ Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wi
 
 ## `invites`, `invite`, `leash`, `bond`
 
-The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit. perAnimalHitGap (Ed, 2026-10-05): a creature takes affection from at most one letter every this many seconds; letters landing inside its gap still land (a small pop, used up) but add nothing, so stacked multi-shot buffs help against crowds, not to win one creature faster. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). Data, so legend buffs can change any of it (config/legend-buffs.json).
+The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit. perAnimalHitGap (Ed, 2026-10-05): a creature takes affection from at most one letter every this many seconds; letters landing inside its gap still land (a small pop, used up) but add nothing, so stacked multi-shot buffs help against crowds, not to win one creature faster. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). Data, so legend buffs can change any of it (config/legend-buffs.json). Round 11 (Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"): one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the gap, so a held fire never wastes one), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s), range 33 (was 22) and speed 31.2 (was 26); arc: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat).
 
 | knob | type | range |
 |---|---|---|
@@ -672,6 +673,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 | `invites.cooldown` | number | 0 to … |
 | `invites.range` | number | 0 to … |
 | `invites.speed` | number | 0 to … |
+| `invites.arc` | number | 0 to … |
 | `invites.homing` | number | 0 to … |
 | `invites.homingCone` | number | 0 to … |
 | `invites.homingRange` | number | 0 to … |
@@ -783,10 +785,10 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.farDist` | number | 0 to … |
 | `music.floor` | number | 0 to … |
 | `music.muffle` | number | 0 to … |
+| `music.audible` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
-| `music.audible` | number | 0 to … |
 
 ## `forecast`
 
