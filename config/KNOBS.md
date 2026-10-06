@@ -1082,6 +1082,11 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.room.crackle` | number | 0 to … |
 | `sfx.room.creak` | number | 0 to … |
 | `sfx.room.creakEvery` | number | 0 to … |
+| `sfx.spell.volume` | number | 0 to … |
+| `sfx.spell.hum` | number | 0 to … |
+| `sfx.spell.rustle` | number | 0 to … |
+| `sfx.spell.crackle` | number | 0 to … |
+| `sfx.spell.burst` | number | 0 to … |
 | `sfx.land.volume` | number | 0 to … |
 | `sfx.land.gap` | number | 0 to … |
 | `sfx.stir.volume` | number | 0 to … |
@@ -1144,11 +1149,11 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.slow.on` | boolean |  |
 | `music.slow.pitch` | number | 0 to … |
 | `music.slow.floor` | number | 0 to … |
-| `music.over.stop` | number | 0 to … |
-| `music.over.floor` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
+| `music.over.stop` | number | 0 to … |
+| `music.over.floor` | number | 0 to … |
 
 ## `fight`
 
