@@ -33,6 +33,7 @@ import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
+import { StallLog } from "./platform/stallLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
@@ -529,6 +530,9 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) last 
 let lastDraw = 0;
 let last = 0;
 const frameStats = new FrameStats(view.renderer.getContext());
+// Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
+const stallLog = new StallLog();
+playtest.stalls = () => stallLog.stalls;
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
@@ -548,7 +552,9 @@ function frame(now: number): void {
   c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
+  const step0 = performance.now();
   stepGame(game, c, dt);
+  const stepMs = performance.now() - step0;
   // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
   if (game.over && !overShown) {
     overShown = true;
@@ -556,13 +562,16 @@ function frame(now: number): void {
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
+  const log0 = performance.now();
   playtest.update();
+  const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   lastMix = musicMix(game, game.witch);
   music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
+  const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
   if (!ready) return;
   for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
   waveHud();
@@ -576,6 +585,7 @@ function frame(now: number): void {
   frameStats.endGpu();
   aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over);
   frameStats.work(performance.now() - work0);
+  if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   applyShake();
   freeze.update();
   // The overlay, four times a second (a new text every frame was a page layout every frame), with
@@ -585,6 +595,7 @@ function frame(now: number): void {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
       ...frameStats.lines(),
+      stallLog.line(),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,
