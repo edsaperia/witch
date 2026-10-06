@@ -6,6 +6,7 @@ import { TUNING, withTuning, type Tuning } from "./tuning";
 import { AREA_TYPES } from "./map";
 import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
+import { hasRune } from "./creatureStates";
 import { hurt, knockOut, newHealth, repair } from "./knockout";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -295,7 +296,7 @@ describe("Ed's Stage 4 rulings", () => {
     expect(wild.hp).toBeUndefined();
   }, 60000);
 
-  it("leaves a woken area's babies out of its siege: they stay home and can still be invited", () => {
+  it("leaves a woken area's babies out of its siege: they stay home, happy, and can still be leashed (their rune)", () => {
     const g = newGame(77, TUNING);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
@@ -305,7 +306,7 @@ describe("Ed's Stage 4 rulings", () => {
     stepGame(g, { ...idle, nextWave: true }, STEP);
     expect(baby.siege).toBeUndefined();
     expect(here.slice(1).every(c => c.siege)).toBe(true);
-    expect(invitable(baby)).toBe(true);
+    expect(invitable(baby) || hasRune(baby, g.clock.time)).toBe(true); // (happy at its soundsystem: leashed by picking up its rune, Ed 2026-10-06)
   }, 60000);
 
   it("has kiting kinds (the raven) keep their distance while they shoot", () => {
@@ -379,7 +380,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     expect(friend.fight?.target).toEqual({ kind: "witch", id: 0 });
   }, 60000);
 
-  it("can't invite a creature enraged by a wave (besieging); a woken area's babies stay invitable", () => {
+  it("can't invite a creature enraged by a wave (besieging); a woken area's babies can still be had (invited, or happy with their rune)", () => {
     const g = newGame(77, TUNING);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
@@ -390,7 +391,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     expect(angry.enraged).toBe(true);
     expect(invitable(angry)).toBe(false);
     expect(here[0].enraged).toBeFalsy();
-    expect(invitable(here[0])).toBe(true);
+    expect(invitable(here[0]) || hasRune(here[0], g.clock.time)).toBe(true);
   }, 60000);
 
   it("has a beaten creature run off, out of sight, and then it's gone for good", () => {

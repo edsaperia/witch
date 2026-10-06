@@ -14,7 +14,8 @@ function beside(): { g: Game; L: Game["creatures"][number] } {
   // (beside it on its area's side: legends lie out toward their area's edge)
   const site = g.map.siteOf(L.cell[0], L.cell[1]), d = Math.hypot(site.x - L.x, site.z - L.z) || 1;
   g.witch = { ...g.witch, seated: false, x: L.x + ((site.x - L.x) / d) * 4, z: L.z + ((site.z - L.z) / d) * 4, mode: "ground", lift: 0 };
-  for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - L.x, c.z - L.z) < (c.species === L.species ? 40 : 120)) c.gone = true; // just the two of them (and its own kin, which never fight it, further off: without them it grows restless; near, they'd fight her)
+  for (const c of g.creatures) if (!c.boss && c.species !== L.species && Math.hypot(c.x - L.x, c.z - L.z) < 120) c.gone = true; // just the two of them (and its own kin, which never fight it: without them it grows restless)
+  for (const c of g.creatures) if (!c.boss && c.species === L.species) c.friendly = true; // (its kin leave her be, as a friendly area's do, wherever they wander)
   g.byArea = null;
   g.witches[0].health.hp = 1e6;
   return { g, L };

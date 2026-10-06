@@ -5,15 +5,13 @@
 // (tilted nose-up, its shaft bowed, its bristles splaying sparks), and sinking in the treetops a few sparks fall from her.
 // Nothing at low load: the first few sigils are free.
 //
-// The load comes from the rules' leashLoad(g) once it lands (builder hotel's, claude/sigil-weight-rules); until then,
-// `stubLoad` below stands in for it, by the same rule and numbers. Everything here writes into one object, so nothing is made per frame.
-import type { Game } from "../rules/game";
-import { strengthOf } from "../rules/combat";
+// The load is the rules' leashLoad(g) (builder hotel's: rules/leashWeight.ts): its `over`, past the free allowance, makes
+// the look, full at `full`; she's sinking while her lift is below 1 in treetop mode. Everything here writes into one object, so nothing is made per frame.
+import { leashLoad, type Game } from "../rules/game";
 
 export interface LoadTuning {
   on: boolean;
-  /** The free allowance (weight units: the stub's, till the rules' leash.weight.free), and the load past it at which the look is full. */
-  free: number;
+  /** The load past the rules' free allowance (leashLoad's over, weight units) at which the look is full. */
   full: number;
   /** The stack: its gaps shrink by up to sag (a share), and it leans toward the pull by lean metres a sigil up it. */
   stackSag: number;
@@ -27,49 +25,18 @@ export interface LoadTuning {
   broomTilt: number;
   broomBow: number;
   sparks: number;
-  /** Over the treetops, sinking from this load (0 to 1): sparks falling from her. */
-  sinkFrom: number;
 }
 
-export const LOAD_DEFAULT: LoadTuning = { on: true, free: 2.5, full: 8, stackSag: 0.4, stackLean: 0.35, threadFrom: 0.45, threadBright: 1.2, witchLean: 0.16, broomTilt: 0.12, broomBow: 1.5, sparks: 14, sinkFrom: 0.6 };
+export const LOAD_DEFAULT: LoadTuning = { on: true, full: 8, stackSag: 0.4, stackLean: 0.35, threadFrom: 0.45, threadBright: 1.2, witchLean: 0.16, broomTilt: 0.12, broomBow: 1.5, sparks: 14 };
 
 /** What the art reads: the load (0 none, 1 full), the pull's direction on the ground (unit), how much she's flying away
  *  from it (0 to 1), and how fast she's sinking over the treetops (0 to 1). */
 export interface LoadView { load: number; dx: number; dz: number; away: number; sinking: number }
 
-/** A creature's weight by level (baby, young, adult, legend), times its species' strength: the stub's, until the rules'. */
-const WEIGHT = [0.5, 1, 2, 3]; // (the rules' leash.weight.levels)
-
-/** The rules' leashLoad(g) as builder hotel settled it (2026-10-06): the summed pull's size (total, weight units), the part
- *  past the free allowance (over: 0, she feels nothing), its direction from her toward the creatures (x, z: unit, or 0, 0),
- *  and whether it's extreme (she sinks all the way to the ground). */
-export interface RulesLoad { total: number; over: number; x: number; z: number; extreme: boolean }
-
-/** Until leashLoad(g) is on the prototype, the same rule: each sigil in her stack (placed ones weigh nothing) pulls toward
- *  its creature by its leash's strain (the dotted thread's: 0 within 0.85 of its length, rising to 1) times its weight. */
-export function stubLoad(g: Game, T: LoadTuning, out: RulesLoad): RulesLoad {
-  const w = g.witch, L = g.tuning.leash.length;
-  let px = 0, pz = 0;
-  for (const id of g.leash.stack) {
-    const c = g.creatures[id];
-    if (!c) continue;
-    const dx = c.x - w.x, dz = c.z - w.z, d = Math.hypot(dx, dz), strain = Math.max(0, Math.min(1, (d - L * 0.85) / L));
-    if (strain <= 0 || d < 1e-3) continue;
-    const pull = strain * (WEIGHT[c.level] ?? 1) * strengthOf(c.species, c.level);
-    px += (dx / d) * pull; pz += (dz / d) * pull;
-  }
-  const total = Math.hypot(px, pz);
-  out.total = total; out.over = Math.max(0, total - T.free); out.x = total > 1e-6 ? px / total : 0; out.z = total > 1e-6 ? pz / total : 0;
-  out.extreme = out.over >= T.full; // (the rules' leash.weight.extreme)
-  return out;
-}
-
-const raw: RulesLoad = { total: 0, over: 0, x: 0, z: 0, extreme: false };
-
 /** The load as the art reads it, eased (so a sigil picked up or let go doesn't snap the look), into `out`. */
 export function loadView(g: Game, T: LoadTuning, dt: number, out: LoadView): LoadView {
   if (!T.on) { out.load = 0; out.away = 0; out.sinking = 0; return out; }
-  stubLoad(g, T, raw);
+  const raw = leashLoad(g);
   const want = Math.max(0, Math.min(1, raw.over / Math.max(0.01, T.full))), e = 1 - Math.exp(-Math.max(0, dt) * 3);
   out.load += (want - out.load) * e;
   if (out.load < 1e-3) out.load = 0;
@@ -77,9 +44,10 @@ export function loadView(g: Game, T: LoadTuning, dt: number, out: LoadView): Loa
   const w = g.witch, sp = Math.hypot(w.vx, w.vz), top = w.mode === "treetop" ? g.tuning.treetopSpeed : g.tuning.groundSpeed;
   const away = sp > 0.5 ? Math.max(0, -(w.vx * out.dx + w.vz * out.dz) / sp) * Math.min(1, sp / Math.max(1, top * 0.6)) : 0;
   out.away += (away - out.away) * e;
-  // sinking: over the treetops, loaded (the rules drop her lift below 1 while she stays in treetop mode), or extreme
-  const lift = typeof w.lift === "number" ? w.lift : 1;
-  const sink = w.mode === "treetop" && raw.over > 0 ? Math.max(raw.extreme ? 1 : 0, Math.max(0, (out.load - T.sinkFrom) / Math.max(0.01, 1 - T.sinkFrom)), Math.min(1, (1 - lift) * 4)) : 0;
+  // sinking: the rules drop her lift below 1 while she stays in treetop mode (toward leash.weight.floor flying on; all the
+  // way if she stops or the load is extreme)
+  const lift = typeof w.lift === "number" ? w.lift : 1, floor = g.tuning.leash.weight?.floor ?? 0.75;
+  const sink = w.mode === "treetop" && raw.over > 0 && lift < 0.999 ? (raw.extreme ? 1 : Math.min(1, (1 - lift) / Math.max(0.05, 1 - floor))) : 0;
   out.sinking += (sink - out.sinking) * e;
   return out;
 }
