@@ -65,7 +65,7 @@ describe("the party's over", () => {
     // Her leash lets go: asleep where it stood.
     expect(g.leash.stack).toEqual([]);
     expect(leashed.leashed).toBe(false);
-    expect(leashed.asleep?.why).toBe("partyOver");
+    expect(leashed.asleep).toBe(true);
     expect(leashed.x).toBe(at.x); expect(leashed.z).toBe(at.z);
     // The one that ran off is back, at home, asleep.
     expect(ran.gone).toBe(false);

@@ -12,10 +12,6 @@ export interface StatesData { affection: { hits: number[]; drain: number; drainD
 export const STATES = raw as unknown as StatesData;
 
 /** A creature's state now. */
-/** Asleep (the one shared sleep: Creature.asleep): still, out of every fight, no rune, no 💌s. (A sleeping legend's own
- *  legendState "asleep" is its own thing: this is set on legends only once the party's over.) */
-export const isAsleep = (c: Pick<Creature, "asleep">): boolean => !!c.asleep;
-
 export function stateOf(c: Creature): State {
   if (c.leashed) return "leashed";
   if (c.state === "happy" || c.legendState === "happy") return "happy";

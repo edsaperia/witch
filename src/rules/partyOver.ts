@@ -9,8 +9,8 @@
 // waves stop for good, nothing fights or attacks her, and every creature, wild or not, legends and her leashed ones too,
 // goes to sleep: the ones in her sight walk home to a spot in their own area at their own pace and lie down there, the rest
 // (and those that ran off the map earlier: their records are kept, `gone`) are simply there, already asleep, out of her
-// sight. Her leashed ones are let go and sleep where they stand. Asleep is the one shared state (Creature.asleep,
-// creatureStates.ts isAsleep): still, out of every fight, no rune, no 💌s. No drawing here.
+// sight. Her leashed ones are let go and sleep where they stand. Asleep is the one shared state (Creature.asleep, with the
+// naps and the sleeping art): still, out of every fight, no rune, no 💌s. No drawing here.
 import type { Game } from "./game";
 import type { Creature } from "./creatures";
 import { pointInArea } from "./creatures";
@@ -37,7 +37,7 @@ function unseen(g: Game, x: number, z: number): boolean {
 
 /** Asleep for good, here, now. */
 function sleep(c: Creature, time: number): void {
-  c.asleep = { at: time, why: "partyOver" };
+  c.asleep = true; c.asleepAt = time; // (no napUntil: asleep for good)
   c.bed = undefined; c.moving = false; c.vx = 0; c.vz = 0;
   if (c.boss) { c.legendState = "asleep"; c.homing = undefined; c.stateAt = time; c.restlessness = 0; c.questOpen = false; }
 }

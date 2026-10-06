@@ -133,9 +133,11 @@ export interface Creature {
   sprung?: number;
   /** Enraged by a wave (it's besieging or marching on a soundsystem): it can't be invited (Ed's playtest). */
   enraged?: boolean;
-  /** Asleep (the one shared sleep, rules/creatureStates.ts isAsleep): when it lay down (world clock) and why. Undefined
-   *  awake. Asleep it's still, out of every fight, has no rune and takes no 💌s. "partyOver": for good (rules/partyOver.ts). */
-  asleep?: { at: number; why: "nap" | "partyOver" };
+  /** Asleep (the one shared sleep, with the bug hunter's naps and art builder 1's sleeping art): still, out of every fight,
+   *  no rune, no 💌s, till whoever set it clears it (a nap has napUntil too; the party's over, rules/partyOver.ts, doesn't). */
+  asleep?: boolean;
+  /** When it lay down (world clock). */
+  asleepAt?: number;
   /** The party's over and it's walking home to bed here (rules/partyOver.ts): then it lies down. */
   bed?: { x: number; z: number };
   /** Gone for the run: a beaten creature that ran off the map. */
