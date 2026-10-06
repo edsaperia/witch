@@ -1,0 +1,27 @@
+{
+ "frameMedian": 478.5,
+ "frameP95": 1908,
+ "ownMedian": 478.5,
+ "ownP95": 1907.9000000022352,
+ "callsMedian": 80,
+ "callsMax": 85,
+ "stats": {
+  "berries": 100,
+  "forestMs": 0,
+  "forestMissing": 0,
+  "sceneryRadius": 360,
+  "fps": 52.75397635324252,
+  "gameplay": 10,
+  "scenery": 2898,
+  "dropped": 0,
+  "trees": 2224,
+  "bushes": 674,
+  "creatures": 10,
+  "batches": 20,
+  "drawCalls": 83,
+  "pendingArt": 27,
+  "pendingGround": 0,
+  "lights": 12,
+  "heightMoves": 6
+ }
+}
