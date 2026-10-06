@@ -357,6 +357,157 @@
       ],
       "additionalProperties": false
     },
+    "moon": {
+      "type": "object",
+      "properties": {
+        "phasePeriod": {
+          "type": "number",
+          "minimum": 0
+        },
+        "phaseStart": {
+          "type": "number",
+          "minimum": 0
+        },
+        "orbit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "arcStart": {
+          "type": "number",
+          "minimum": 0
+        },
+        "left": {
+          "type": "number",
+          "minimum": 0
+        },
+        "right": {
+          "type": "number",
+          "minimum": 0
+        },
+        "low": {
+          "type": "number",
+          "minimum": 0
+        },
+        "high": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourEvery": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colours": {
+          "type": "object",
+          "properties": {
+            "red": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "blue": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "gold": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "red",
+            "blue",
+            "gold"
+          ],
+          "additionalProperties": false
+        },
+        "tint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bloodTint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "disc": {
+          "type": "number",
+          "minimum": 0
+        },
+        "floor": {
+          "type": "object",
+          "properties": {
+            "palette": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stars": {
+              "type": "number",
+              "minimum": 0
+            },
+            "flare": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "palette",
+            "size",
+            "stars",
+            "flare"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "phasePeriod",
+        "phaseStart",
+        "orbit",
+        "arcStart",
+        "left",
+        "right",
+        "low",
+        "high",
+        "colourEvery",
+        "colourChance",
+        "colourTime",
+        "colourFade",
+        "colours",
+        "tint",
+        "bloodTint",
+        "disc",
+        "floor"
+      ],
+      "additionalProperties": false
+    },
     "wind": {
       "type": "object",
       "properties": {
@@ -2814,11 +2965,31 @@
               "legend"
             ]
           }
+        },
+        "wakeSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "angryWake": {
+          "type": "number",
+          "minimum": 0
+        },
+        "settleSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sink": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "minPx",
-        "alwaysLevels"
+        "alwaysLevels",
+        "wakeSecs",
+        "angryWake",
+        "settleSecs",
+        "sink"
       ],
       "additionalProperties": false
     },
@@ -6098,6 +6269,7 @@
     "ground",
     "smoke",
     "sky",
+    "moon",
     "wind",
     "groundCover",
     "density",
