@@ -24,7 +24,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced";
+export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number }
 
 export interface LeashState {
@@ -48,8 +48,13 @@ export interface LeashState {
 
 export interface LeashControls {
   /** The sigil button was pressed this frame: on the ground, place the bottom sigil or pick one up;
-   *  in the treetops, cycle the stack (Ed, 2026-10-05: no cycle button of its own). */
+   *  in the treetops, cycle the stack (the gamepad's and touch's one button). */
   sigil: boolean;
+  /** Place (E, Ed 2026-10-06: "E for place, Q for cycle"): on the ground, place the bottom sigil or
+   *  pick one up; nothing in the treetops. */
+  place?: boolean;
+  /** Cycle (Q): the bottom sigil to the top, on the ground or in the treetops. */
+  cycle?: boolean;
   /** Debug: invite the nearest invitable creature, however far. */
   inviteNearest?: boolean;
   /** Whether she may talk this frame: always with auto-talk on (the default); with it off, only
@@ -160,12 +165,13 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // can't cycle in ground mode"): in the treetops it cycles the stack, the bottom sigil (the one it
   // puts down next) to the top; on the ground it picks up a placed sigil she's over, else puts the
   // bottom one down. Sigils go down and come up only on the ground.
-  if (c.sigil && !onGround && s.stack.length > 1) {
+  // (Since 2026-10-06 the keyboard has a button for each: E places, Q cycles anywhere.)
+  if (((c.sigil && !onGround) || c.cycle) && s.stack.length > 1) {
     const id = s.stack.pop()!;
     s.stack.unshift(id);
     s.events.push({ kind: "cycled", id, x: witch.x, z: witch.z, at: time });
   }
-  if (c.sigil && onGround) {
+  if ((c.sigil || c.place) && onGround) {
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
     if (pick >= 0) {

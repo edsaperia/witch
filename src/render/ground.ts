@@ -51,6 +51,11 @@ uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
 uniform vec4 uCircle;
 uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
+// The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
+// uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
+uniform vec4 uLegendRings[6];
+uniform float uLegendGlow[6];
+uniform int uLegendRingCount;
 uniform int uSweepCount; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
@@ -133,6 +138,22 @@ void main() {
       if (T.z > 0.0) c *= 1.0 + T.z * 0.14 * sin((p.x * 0.55 + p.y) / 4.0 + vnoise(p / 30.0) * 6.0);
     }
   }
+  // A sleeping legend's clearing: a soft ring of trodden earth set with pale stones marks its edge, the
+  // floor inside a touch darker and mossier (worn smooth round the sleeper); its ring brightens while
+  // she stands in it. (Its twilight and motes are the lighting's: render/mood.ts and friends.)
+  for (int i = 0; i < 6; i++) {
+    if (i >= uLegendRingCount) break;
+    vec4 L = uLegendRings[i];
+    float d = length(p - L.xy);
+    if (d > L.z + 1.0) continue;
+    float wob = (vnoise(p / 3.0) - 0.5) * 0.6, band = 1.0 - smoothstep(0.0, L.w * 0.5, abs(d + wob - (L.z - L.w * 0.5)));
+    if (d < L.z - L.w) c = mix(c, c * vec3(0.86, 0.95, 0.9), 0.6);
+    c *= 1.0 - 0.38 * band;
+    vec2 sc = floor(px / 2.0);
+    float h = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
+    if (band > 0.55 && h > 0.84) c = mix(vec3(0.42, 0.44, 0.47), vec3(0.62, 0.64, 0.66), fract(h * 7.0)) * (0.8 + 0.4 * vnoise(px));
+    if (uLegendGlow[i] > 0.0) c += vec3(0.35, 0.55, 0.6) * band * uLegendGlow[i] * 0.35;
+  }
   // The dancefloor: the art's floor of glass tiles inside its stone rim; a lit tile glows in its
   // colour (unlit by the night: it is the light), the rest is lit like the ground.
   {
@@ -186,10 +207,25 @@ void main() {
       vec3 R = reflect(-V, vec3(0.0, 1.0, 0.0));
       vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
       float spec = dot(R, moon) + (vnoise(px * vec2(0.6, 2.5) + vec2(uTime * 1.5, 0.0)) - 0.5) * 0.05;
-      vec3 water = vec3(0.015, 0.03, 0.055) * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 4.0;
+      vec3 water = vec3(0.045, 0.08, 0.088) * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 4.0; // dark, but water, not a hole (#235)
       if (spec > 0.985) water = vec3(0.92, 0.95, 1.0);
       else if (spec > 0.965) water = vec3(0.45, 0.55, 0.7);
       else if (mod(px.y, 4.0) < 1.0 && vnoise(px / 3.0 + uTime) > 0.62) water += vec3(0.06, 0.08, 0.12); // ripples
+      // Never a rimless hole (the art director, #235): like the generated pools, a moonlit rim along the far shore (up the
+      // screen), the sky's faint sheen across the far half, a dark muddy lip on the near and side banks, and a glint or two.
+      vec2 at = p + j - uExtent.xy;
+      float up1 = texture2D(uAreas, (at + vec2(0.0, -max(uPixel * 2.0, 0.3))) / uExtent.zw).b, up2 = texture2D(uAreas, (at + vec2(0.0, -max(uPixel * 4.0, 0.6))) / uExtent.zw).b;
+      float far = texture2D(uAreas, (at + vec2(0.0, -1.3)) / uExtent.zw).b;
+      float lip = max(uPixel * 1.5, 0.25), side = min(min(texture2D(uAreas, (at + vec2(-lip, 0.0)) / uExtent.zw).b, texture2D(uAreas, (at + vec2(lip, 0.0)) / uExtent.zw).b), texture2D(uAreas, (at + vec2(0.0, lip)) / uExtent.zw).b);
+      vec3 rim = mix(vec3(0.6, 0.66, 0.74), uMoon, 0.25);
+      if (spec <= 0.965) {
+        if (far < 0.5 && mod(px.x + px.y, 2.0) < 1.0) water += vec3(0.05, 0.07, 0.11); // the sky in the far water
+        float g = fract(sin(dot(floor(px / 2.0), vec2(41.3, 289.1))) * 43758.5453);
+        if (g > 0.985 && sin(uTime * (1.5 + g * 40.0) + g * 90.0) > 0.6) water = vec3(0.75, 0.8, 0.88); // a glint
+      }
+      if (up1 < 0.5) water = rim; // the moonlit far shore
+      else if (up2 < 0.5 && mod(px.x, 2.0) < 1.0) water = mix(water, rim, 0.5);
+      else if (side < 0.5) water = vec3(0.07, 0.06, 0.05) * (0.6 + 0.8 * nightLight(vec3(0.0, 1.0, 0.0), vWorld)); // the muddy lip
       gl_FragColor = vec4(haze(water, vWorld), 1.0);
       return;
     }
@@ -252,7 +288,8 @@ void main() {
 export class Ground {
   readonly mesh: THREE.Mesh;
   private texture: THREE.DataTexture;
-  private tile = new THREE.DataTexture(new Uint8Array(TILE * TILE * 4), TILE, TILE);
+  /** One tile's texels, filled on the CPU and copied into the texture. */
+  private tile = new Uint8Array(TILE * TILE * 4);
   private filled: Uint8Array;
   private tilesX: number;
   private tilesZ: number;
@@ -269,7 +306,6 @@ export class Ground {
     this.filled = new Uint8Array(this.tilesX * this.tilesZ);
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
     this.texture = nearest(new THREE.DataTexture(new Uint8Array(W * H * 4), W, H));
-    nearest(this.tile);
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(st, map.dancefloor.radius);
@@ -292,6 +328,9 @@ export class Ground {
         uCircle: { value: new THREE.Vector4() },
         uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uSweepCount: { value: 0 },
+        uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
+        uLegendGlow: { value: new Array(6).fill(0) },
+        uLegendRingCount: { value: 0 },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
@@ -328,6 +367,13 @@ export class Ground {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uSweeps.value as THREE.Vector4[];
     sweeps.slice(0, 4).forEach((w, i) => list[i].set(w.x, w.z, w.radius, w.strength));
     u.uSweepCount.value = Math.min(4, sweeps.length);
+  }
+
+  /** The sleeping legends' clearings nearest her (up to 6): their middles, radii, ring widths, and each ring's brightening (0-1). */
+  setLegendRings(rings: readonly { x: number; z: number; r: number; edge: number; glow?: number }[]): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uLegendRings.value as THREE.Vector4[], glow = u.uLegendGlow.value as number[];
+    rings.slice(0, 6).forEach((c, i) => { list[i].set(c.x, c.z, c.r, c.edge); glow[i] = c.glow ?? 0; });
+    u.uLegendRingCount.value = Math.min(6, rings.length);
   }
 
   /** The magic circle: its two hues, brightness now, and the rune band's turn. */
@@ -380,7 +426,7 @@ export class Ground {
   }
 
   private fillTile(renderer: THREE.WebGLRenderer, i: number, j: number): void {
-    const e = this.map.extent, data = this.tile.image.data as Uint8Array, tm = TILE / TEXELS_PER_METRE;
+    const e = this.map.extent, data = this.tile, tm = TILE / TEXELS_PER_METRE;
     const x0 = e.minX + i * tm, z0 = e.minZ + j * tm;
     // Ponds are part of the ground: every one is marked in the tile, so none can pop.
     const ponds = this.forest.lightsNear(x0 + tm / 2, z0 + tm / 2, tm / 2 + 6).filter(l => l.kind === "pond");
@@ -391,12 +437,14 @@ export class Ground {
       for (const p of ponds) if (Math.hypot(wx - p.x, wz - p.z) < 3 * p.size) pond = 255;
       data[o] = a.look; data[o + 1] = Math.round(a.openness * 255); data[o + 2] = pond; data[o + 3] = 255;
     }
-    this.tile.needsUpdate = true;
-    renderer.copyTextureToTexture(this.tile, this.texture, null, new THREE.Vector2(i * TILE, j * TILE));
+    // Copied from a texture three.js has never seen, so it's a plain texSubImage2D from these bytes:
+    // one it had uploaded went through framebuffers (copyTexSubImage2D), which waits on the GPU's
+    // queued work, up to hundreds of ms a tile (Ed, 2026-10-06: occasional half-second freezes).
+    renderer.copyTextureToTexture(new THREE.DataTexture(this.tile, TILE, TILE), this.texture, null, new THREE.Vector2(i * TILE, j * TILE));
     this.filled[j * this.tilesX + i] = 1;
   }
 
-  dispose(): void { this.texture.dispose(); this.tile.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
+  dispose(): void { this.texture.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
 }
 
 /** The plaza round the floor (tuning dancefloor.paving), in the rim's stone (art/dancefloor.js DISCO_LOOK). */
