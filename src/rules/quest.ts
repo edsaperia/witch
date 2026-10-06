@@ -15,7 +15,16 @@ export interface Quest { species: string; level: Level; /** game time it was don
 
 /** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed. */
 export function questFor(map: ForestMap, cell: [number, number], own: string): Quest | undefined {
-  const kinds = [...new Set(map.cells.map(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature))].filter(s => s !== own).sort();
+  // From near and safe (balance, 2026-10-06: a dream creature living somewhere far or dangerous could eat a run): the
+  // legends.questNear nearest other kinds round it, an area nearer home counting as nearer (remoteness, 0 at home to 1
+  // at the edge, adds up to an area's width), seeded; else (questNear 0, or none) any kind on the map, as before.
+  const near = map.tuning.legends?.questNear ?? 0, site = map.siteOf(cell[0], cell[1]), A = map.areaSize;
+  const ranked = map.cells.filter(([cx, cy]) => (cx !== map.centreCell[0] || cy !== map.centreCell[1]) && AREA_TYPES[map.typeOf(cx, cy)].creature !== own)
+    .map(([cx, cy]) => { const s = map.siteOf(cx, cy); return { sp: AREA_TYPES[map.typeOf(cx, cy)].creature, d: Math.hypot(s.x - site.x, s.z - site.z) + map.remoteness(cx, cy) * A }; })
+    .sort((a, b) => a.d - b.d || (a.sp < b.sp ? -1 : 1));
+  const nearKinds: string[] = [];
+  for (const k of ranked) { if (nearKinds.length >= near) break; if (!nearKinds.includes(k.sp)) nearKinds.push(k.sp); }
+  const kinds = nearKinds.length ? nearKinds : [...new Set(map.cells.map(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature))].filter(s => s !== own).sort();
   if (!kinds.length) return undefined;
   const r = rng(map.seed * 6151 + cell[0] * 389 + cell[1] * 1031 + 17);
   return { species: kinds[Math.floor(r() * kinds.length)], level: Math.floor(r() * 3) as Level };

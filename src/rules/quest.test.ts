@@ -4,7 +4,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { AREA_TYPES, generateMap } from "./map";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, first: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, i === 0 ? first : idle, STEP); };
@@ -63,5 +63,24 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     expect(L.buffed).toBe(true);
     expect(g.friendly.has(key)).toBe(false); // (its wave has come and gone: the buff alone)
     expect(g.party.leyDone?.has(key) ?? false).toBe(false); // (and the ley line doesn't move for it: it moved on at the wave)
+  }, 60000);
+});
+
+describe("dream creatures from near and safe (balance, 2026-10-06: a far or dangerous one could eat a run)", () => {
+  /** Each legend's distance (m) to the nearest area of the kind it dreams of. */
+  const dists = (questNear: number) => {
+    const map = generateMap(8919, withTuning({ legends: { ...TUNING.legends, questNear } })), out: number[] = [];
+    for (const L of spawnCreatures(map).filter(c => c.boss && c.quest)) {
+      const s = map.siteOf(L.cell[0], L.cell[1]);
+      out.push(Math.min(...map.cells.filter(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature === L.quest!.species).map(([cx, cy]) => { const t = map.siteOf(cx, cy); return Math.hypot(t.x - s.x, t.z - s.z); })));
+    }
+    return out.sort((a, b) => a - b);
+  };
+  it("dreams of one of the few kinds nearest it, never its own", () => {
+    expect(TUNING.legends.questNear).toBeGreaterThan(0);
+    const near = dists(TUNING.legends.questNear), any = dists(0);
+    expect(near[near.length - 1]).toBeLessThan(3 * TUNING.areaSize * TUNING.areaScale); // (the farthest within about three areas)
+    expect(near[near.length >> 1]).toBeLessThan(any[any.length >> 1] * 0.6);
+    for (const L of spawnCreatures(generateMap(8919, TUNING)).filter(c => c.boss && c.quest)) expect(L.quest!.species).not.toBe(L.species);
   }, 60000);
 });

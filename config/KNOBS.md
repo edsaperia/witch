@@ -1006,6 +1006,10 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.runSpeed` | number | 0 to … |
 | `leash.pickRadius` | number | 0 to … |
 | `leash.spacing` | number | 0 to … |
+| `leash.runeRadius` | number | 0 to … |
+| `leash.runePull.radius` | number | 0 to … |
+| `leash.runePull.speed` | number | 0 to … |
+| `leash.runePull.stop` | number | 0 to … |
 | `leash.weight.free` | number | 0 to … |
 | `leash.weight.levels` | array of number |  |
 | `leash.weight.drag` | number | 0 to … |
@@ -1016,10 +1020,6 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.weight.floor` | number | 0 to 1 |
 | `leash.weight.extreme` | number | 0 to … |
 | `leash.weight.maxTension` | number | 0 to … |
-| `leash.runeRadius` | number | 0 to … |
-| `leash.runePull.radius` | number | 0 to … |
-| `leash.runePull.speed` | number | 0 to … |
-| `leash.runePull.stop` | number | 0 to … |
 
 ## `bond`
 
@@ -1555,13 +1555,14 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 
 ## `legends`
 
-Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 (2026-10-06): buffPower, every legend's buff's strength ("Bigger buffs", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); bombard ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge. stomp (Ed, 2026-10-06, a "perhaps": "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer"): on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands.
+Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 (2026-10-06): buffPower, every legend's buff's strength ("Bigger buffs", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); bombard ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge. stomp (Ed, 2026-10-06, a "perhaps": "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer"): on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear (balance, 2026-10-06: a dream creature living somewhere far or dangerous could eat a run): a legend dreams of one of the questNear nearest other kinds round it, an area nearer home counting as nearer (its remoteness adds up to an area's width); 0, any kind on the map.
 
 | knob | type | range |
 |---|---|---|
 | `legends.share` | number | 0 to … |
 | `legends.buffPower` | number | 0 to … |
 | `legends.happyRange` | number | 0 to … |
+| `legends.questNear` | number | 0 to … |
 | `legends.bombard.on` | boolean |  |
 | `legends.bombard.range` | number | 0 to … |
 | `legends.bombard.damage` | number | 0 to … |
