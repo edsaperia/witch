@@ -145,8 +145,8 @@ export class RigBody {
       const bias = near ? 0.02 : -0.02;
       this.bone(discs, L.hip[0], hipY, kx, ky, z, L.r[0] * 0.8, L.r[1], a, flip, u2m, m.s, bias, out);
       this.bone(discs, kx, ky, ex, ey, z, L.r[1], L.r[2], a, flip, u2m, m.s, bias, out);
-      const fp = pickDisc(L.hoof && m.discs[HOOF] ? discLut(m, HOOF) : discs, L.fl * 0.9 * m.s);
-      if (fp) { this.world(ex + L.fl * 0.5, ey, z, a, flip, u2m); out.push(fp, this.wx, this.wy, this.wz, flip, bias); }
+      const fp = m.shoe?.[i] ?? pickDisc(L.hoof && m.discs[HOOF] ? discLut(m, HOOF) : discs, L.fl * 0.9 * m.s); // a party animal's shoe, else its hoof or paw
+      if (fp) { this.world(ex + L.fl * 0.5, ey, z, a, flip, u2m); out.push(fp, this.wx, this.wy, this.wz, flip, bias + (m.shoe ? 0.01 : 0)); }
     }
   }
 

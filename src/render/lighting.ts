@@ -21,6 +21,8 @@ export const LIGHT_UNIFORMS = {
   uGlowRgb: { value: new THREE.Vector3() },
   uGlowR: { value: 8 },
   uGlowFalloff: { value: 2.5 },
+  /** The share of uGlowR where the glow has fallen to dark (tuning glowNear). */
+  uGlowNear: { value: 1 },
   uGlowPower: { value: 1.4 },
   // The twilight haze: the forest fades into it from near to far metres from the witch.
   uHazeCentre: { value: new THREE.Vector2() },
@@ -65,7 +67,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
-uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowPower, uTime, uSmooth;
+uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uTime, uSmooth;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
 uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
@@ -110,14 +112,15 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
       if (s < 34.0 && (chk > 0.5 || (s > 4.0 && s < 30.0))) l += uMoonBeam;
     }
   }
-  // The witch's glow (Ed, v147: "should fall off faster"): full under her, falling off with the
-  // distance along the ground as (1 - d/reach)^falloff (about half at 12 m, a faint tail, nothing
-  // at the reach); lit from a source above her, so there's no hot spot under her.
+  // The witch's glow (Ed, v147: "should fall off faster"; round 11: "a bit flat, it should fall off
+  // closer"): full under her, falling off with the distance along the ground as
+  // (1 - d/(reach × near))^falloff, a bright centre dropping quickly to dark at near of the reach;
+  // lit from a source above her, so there's no hot spot under her.
   vec3 v = uGlowPos - P;
-  float dg = length(v.xz);
-  if (dg < uGlowR) {
+  float dg = length(v.xz), gr = uGlowR * uGlowNear;
+  if (dg < gr) {
     float ndl = max(0.0, dot(N, normalize(v + vec3(0.0, 1e-4, 0.0)))) * 0.35 + 0.65;
-    float fall = pow(1.0 - dg / uGlowR, uGlowFalloff);
+    float fall = pow(1.0 - dg / gr, uGlowFalloff);
     l += uGlowRgb * min(1.0, ndl * fall * uGlowPower);
   }
   for (int i = 0; i < ${MAX_LIGHTS}; i++) {
