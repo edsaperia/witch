@@ -4121,7 +4121,11 @@
           "type": "number",
           "minimum": 0
         },
-        "threadArc": {
+        "threadArcSlack": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadArcTaut": {
           "type": "number",
           "minimum": 0
         },
@@ -4135,7 +4139,8 @@
         "sparks",
         "thread",
         "sparkEvery",
-        "threadArc",
+        "threadArcSlack",
+        "threadArcTaut",
         "threadArcMax"
       ],
       "additionalProperties": false
