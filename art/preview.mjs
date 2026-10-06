@@ -34,6 +34,8 @@
 //   node art/preview.mjs tufts all|<areas> art/previews/tufts.png [scale]   (each area's ground-cover tufts on its floor, then their sway masks in grey; weights under them)
 //   node art/preview.mjs partyrelics all|<ids> art/previews/party-relics.png [scale]   (the party relics, half-buried, with the witch; their glint's frames, ground then treetop; their one sigil, bare and in each level's frame)
 //   node art/preview.mjs wind <species> art/previews/wind.png [scale]   (each species' mature tree in the pixel wind: 6 moments of a strong gust, each region (a blob) moving whole, by whole pixels; then the same with the smooth sway; CHANGES=1 colours each pixel by how far it moved)
+//   node art/preview.mjs props all|standingStone,cairn,pool,brokenTrunk art/previews/props.png [scale]   (the prop generator: a row of seeded variants per kind, the witch for scale; PER=n, AREA=<id> its grass, BOG=1 bog pools)
+//   node art/preview.mjs areaprops moor,muddy-forest art/previews/area-props.png [scale]   (each area's props as hand-made, then from the prop generator (?props=gen), a row each, the witch for scale)
 //   node art/preview.mjs witchgen 15|<seeds> art/previews/witches.png [scale]   (ours, then generated witches from their genomes: each hovering, leaning and standing; PER to a row)
 //   node art/preview.mjs sway <areas> art/previews/sway.png [scale]   (each area's trees and leafy props beside their sway masks: black is rigid, white sways most)
 //   node art/preview.mjs disco all|<ids> art/previews/dancefloor-patterns.png [scale]   (every dancefloor pattern's key frame from above, named, grouped by kind; PER=n to a row)
@@ -70,6 +72,8 @@ if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, 
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.STUDIO) await b.page.addInitScript(() => { window.STUDIO = true; });
 if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = true; });
+if (process.env.AREA) await b.page.addInitScript(a => { window.AREA = a; }, process.env.AREA);
+if (process.env.BOG) await b.page.addInitScript(() => { window.BOG = true; });
 if (process.env.SEEDS) await b.page.addInitScript(l => { window.SEEDS = l; }, process.env.SEEDS.split(",").map(Number));
 if (process.env.CHANGES) await b.page.addInitScript(() => { window.CHANGES = true; });
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
@@ -264,6 +268,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       items.push({ A, N, w: n * K, h: n * K }, G.bake(sp, G.speciesColours(S.id, st), st, st.cOutline));
     }
     for (let i = 0; i < items.length; i += 12) rows.push(items.slice(i, i + 12));
+  } else if (what === "shoes") { // per species: barefoot, then in each party shoe style (creatures3d.js shoe3d), at its adult (or LEVELS), with its collar
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
+    for (const id of ids) for (const l of window.LEVELS || [2]) rows.push([null, ...Object.keys(G.SHOE_STYLES)].map(shoes => { const gear = { collar: G.sigilColour(id), shoes, face: "happy" }; return G.bake(G.critter(id, l, 0, st, "towards", gear), G.speciesColours(id, st, gear), st, st.cOutline); }));
   } else if (what === "faces") { // per species: its four expressions (neutral, angry, happy, dazed) at adult, young and baby, then angry with the woken look's red eyes (enraged)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...(window.LEVELS || [2, 1, 0]).flatMap(l => G.EXPRESSIONS.map(face => G.bake(G.critter(id, l, 0, st, facing, { face }), G.speciesColours(id, st), st, st.cOutline))), G.bake(G.critter(id, 1, 0, st, facing, { face: "angry", woken: true }), G.speciesColours(id, st, { woken: true }), st, st.cOutline)]);
@@ -374,6 +381,12 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const one = g => { const { look, outfit } = G.genomeLook(g), col = outfit ? G.witchColours(st, outfit, { styleHues: false }) : G.witchColours(st), b = o => G.bake(G.witchSprite(st, { ...o, look }), col, st, st.cOutline); return [b({ frame: 0 }), b({ pose: "lean", frame: 1 }), b({ pose: "stand", frame: 0 })]; };
     const items = [one(G.WITCH_GENOME), ...seeds.map(s => one(G.witchGenome(s)))];
     for (let i = 0; i < items.length; i += per) rows.push(items.slice(i, i + per).flat());
+  } else if (what === "props") { // the prop generator (art/props/): each kind (all, or listed), a row of variants (PER, default 8) from seeds 0.., the witch closing each row; AREA=moor for its grass
+    const kinds = list === "all" ? G.PROP_KINDS : list.split(","), per = window.PER || 8, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "moor"];
+    for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.propPiece(kind, { seed, ...(window.BOG ? { bog: true } : {}) }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);
+  } else if (what === "areaprops") { // each listed area's props (walls, small, big but trees) as hand-made, then under ?props=gen (the prop generator's shapes), the witch closing each row
+    const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
+    for (const id of list.split(",")) for (const g of [0, 1]) { const a = G.areaAssets(id, { ...st, propGen: g }); rows.push([...a.walls, ...a.small, ...a.big.filter(b => b.kind !== "tree" && b.kind !== "mound")].map(b => b.sp).concat([wit])); }
   } else if (what === "partyrelics") { // the party relics (all or listed ids), the witch closing the row; then their glint's frames at the ground and treetop zooms; then their sigils (bare, then as a legend's)
     const ids = list === "all" ? G.PARTY_RELIC_IDS : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     rows.push([...ids.map(id => G.bake(G.partyRelicSprite(id, st).sp, G.partyRelicColours(id, st), st, "none")), wit]);

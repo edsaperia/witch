@@ -18,5 +18,8 @@ export default defineConfig({
   base: "./",
   define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash) },
   build: { target: "es2022", chunkSizeWarningLimit: 1200 },
-  test: { include: ["src/**/*.test.ts"], environment: "node" },
+  // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
+  // under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
+  // One generous limit for all (a hung test still fails, after a minute).
+  test: { include: ["src/**/*.test.ts"], environment: "node", testTimeout: 60_000, hookTimeout: 60_000 },
 });

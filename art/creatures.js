@@ -23,7 +23,8 @@ export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", ta
 
 // Party gear's colourways (gear in critter).
 export const HAT_COLOURWAYS = [[[255, 70, 170], [255, 245, 250], [255, 230, 70]], [[40, 220, 255], [255, 236, 60], [255, 80, 180]], [[150, 80, 255], [175, 255, 60], [255, 255, 255]]];
-export const SHOE_STYLES = { sneakers: [[255, 70, 90], [250, 250, 245]], glitter: [[215, 215, 235], [190, 190, 210]], platform: [[160, 60, 230], [40, 30, 52]] };
+// shoe, sole: trainers, glitter, platforms, heels, go-go boots and light-up trainers (their soles glow in the animal's neon)
+export const SHOE_STYLES = { sneakers: [[255, 70, 90], [250, 250, 245]], glitter: [[215, 215, 235], [190, 190, 210]], platform: [[160, 60, 230], [40, 30, 52]], heels: [[255, 40, 150], [34, 22, 44]], boots: [[70, 210, 255], [250, 250, 245]], lightup: [[245, 245, 250], [250, 250, 245]] };
 export const GLASSES_STYLES = ["bar", "star", "heart"];
 // A seeded mix of party gear for an invited creature (the prototype gives each its own seed):
 // always the collar in its sigil colour; often a hat, sunglasses or shoes; sometimes all three.
@@ -33,7 +34,7 @@ export function partyGear(seed, collarColour = true) {
     collar: collarColour,
     hat: all || r() < .45 ? Math.floor(r() * HAT_COLOURWAYS.length) : null,
     glasses: all || r() < .4 ? GLASSES_STYLES[r() < .6 ? 0 : r() < .5 ? 1 : 2] : null,
-    shoes: all || r() < .4 ? Object.keys(SHOE_STYLES)[Math.floor(r() * 3)] : null,
+    shoes: all || r() < .4 ? Object.keys(SHOE_STYLES)[Math.floor(r() * 6)] : null,
   };
 }
 // sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
@@ -43,7 +44,7 @@ export function speciesColours(sp, st, gear = null) {
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
   if (gear.glasses) { c[M.SHADES] = [22, 18, 32]; c[M.FRAME] = gear.glasses === "heart" ? [255, 60, 110] : [255, 90, 210]; }
-  if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; }
+  if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; if (gear.shoes === "lightup" && !gear.collar) c[M.COLLAR] = c[M.MAGIC]; } // (light-up soles glow in its neon, its collar's or its magic's)
   if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
   return c;
 }
