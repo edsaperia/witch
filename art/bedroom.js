@@ -393,8 +393,8 @@ export function bedroomModel({ S = ROOM.S } = {}) {
     BEDROOM_PROPS.openBook(m, [.62, bz - .35], { turn: .6, k: 11, cover: M.BODY3 }); BEDROOM_PROPS.openBook(m, [.85, bz + .2], { turn: -.4, k: 12, cover: M.IRIS }); BEDROOM_PROPS.openBook(m, [.5, bz + .55], { turn: 1.9, k: 13, cover: M.EAR });
     const top = BEDROOM_PROPS.bookPile(m, [.45, 3.05], { n: 4, k: 6 }); BEDROOM_PROPS.candle(m, [.45, top, 3.05], { h: .1, k: 6 }); block(.45, 3.05, .1, .1);
     // in the middle of the new floor: a beanbag with headphones on it, the records out of their crate, a party hat, a sock
-    BEDROOM_PROPS.beanbag(m, [1.75, S - .9], { mat: M.JEANS }); block(1.75, S - .9, .32, .3);
-    BEDROOM_PROPS.headphones(m, [1.65, .4, S - .95], { turn: .3 });
+    BEDROOM_PROPS.beanbag(m, [1.8, S - .72], { mat: M.JEANS }); block(1.8, S - .72, .32, .3); // (room to pass between it and the chair)
+    BEDROOM_PROPS.headphones(m, [1.7, .4, S - .77], { turn: .3 });
     BEDROOM_PROPS.records(m, [2.55, S - .55], { turn: .25 }); block(2.55, S - .55, .2, .16);
     BEDROOM_PROPS.hat(m, [3.3, 2.75], { kind: "party", k: 6 }); BEDROOM_PROPS.clothes(m, [3.1, 3.3], { kind: "sock", turn: 2.2, k: 9, mat: M.EYE });
     BEDROOM_PROPS.clothes(m, [1.2, S - .45], { kind: "scarf", turn: -.3, k: 10, mat: M.FLOWER });
@@ -402,7 +402,7 @@ export function bedroomModel({ S = ROOM.S } = {}) {
   // where she stands to look at a thing of hers (the creator opens its box): the hats heaped at the bed's foot, the broom, the
   // sneakers; on the new floor, the rail, the mirror, the scarf, the headphones and the rune books
   const spots = { hat: [.68, 2.5], broom: [.4, 2.78], shoes: [1.75, 2.8] };
-  if (S >= 3.6) Object.assign(spots, { outfit: [3.35, .7], hair: [S - .65, 1.3], scarf: [1.2, S - .5], phones: [2.25, S - .95], more: [.6, 3 + (S - 3) * .55] });
+  if (S >= 3.6) Object.assign(spots, { outfit: [3.35, .7], hair: [S - .65, 1.3], scarf: [1.2, S - .5], phones: [2.3, S - 1.05], more: [.6, 3 + (S - 3) * .55] });
   m.anchors.floor = { S, wall, blocks, spots };
   return m;
 }

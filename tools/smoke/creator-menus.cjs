@@ -46,13 +46,19 @@ const root = path.join(__dirname, "../.."), out = path.join(root, "previews/menu
     // a frame: the room's own canvas (a screenshot of the page is too slow with the forest drawing behind)
     const shoot = async () => { const url = await page.evaluate(() => { const c = document.querySelector("#creator canvas[title]"), k = 3, z = document.createElement("canvas"); z.width = c.width * k; z.height = c.height * k; const x = z.getContext("2d"); x.imageSmoothingEnabled = false; x.fillStyle = "#14132c"; x.fillRect(0, 0, z.width, z.height); x.drawImage(c, 0, 0, z.width, z.height); return z.toDataURL(); }); fs.writeFileSync(path.join(frames, `f${String(n++).padStart(3, "0")}.png`), Buffer.from(url.split(",")[1], "base64")); };
     const go = async (id) => {
-      for (let i = 0; i < 80; i++) {
+      let detour = 0, dkeys = [], last = null;
+      for (let i = 0; i < 120; i++) {
         const s = await page.evaluate(id => { const c = window.__creator, w = c.walker, f = c.room.walk, t = f.spots[id], a = f.project([w.x, 0, w.z]), b = f.project([t[0], 0, t[2] ?? t[1]]); return { dx: b[0] - a[0], dy: b[1] - a[1], near: c.near }; }, id);
         if (s.near === id) return true;
-        const keys = [];
+        let keys = [];
         if (Math.abs(s.dx) > 1.5) keys.push(s.dx > 0 ? "KeyD" : "KeyA");
         if (Math.abs(s.dy) > 1.5) keys.push(s.dy > 0 ? "KeyS" : "KeyW");
         if (!keys.length) return false;
+        // stuck against something: a few steps one way round it
+        const here = await page.evaluate(() => [window.__creator.walker.x, window.__creator.walker.z]);
+        if (last && Math.hypot(here[0] - last[0], here[1] - last[1]) < .02 && !detour) { detour = 6; dkeys = [["KeyW", "KeyA"], ["KeyW", "KeyD"], ["KeyS", "KeyA"], ["KeyS", "KeyD"]][i % 4]; }
+        last = here;
+        if (detour) { detour--; keys = dkeys; }
         for (const k of keys) await page.keyboard.down(k);
         await page.waitForTimeout(120);
         for (const k of keys) await page.keyboard.up(k);
