@@ -78,7 +78,7 @@ async function main() {
     await sleep(300);
     let s = await state(page);
     check(!s.paused, "a key press starts the game");
-    // (Not by batches: since the bigger areas (168 m) the start often sees one area type's batch and two creatures', 3 in all, and that's fine.)
+    // (Not by batch count: 0.3 s in, seated at the treehouse zoomed in, it can be as few as 3 (6 area types' and 4 creatures' once she's out); the trees and draw calls are what matter.)
     check(s.stats.trees > 20 && s.stats.batches >= 1 && s.stats.drawCalls > 15, `trees drawn round the start (${s.stats.trees} trees, ${s.stats.batches} batches, ${s.stats.drawCalls} draw calls)`);
     await shot(page, "01-ground-dancefloor.png");
     // Speeds are measured in game time: a slow headless renderer runs fewer, capped frames.
