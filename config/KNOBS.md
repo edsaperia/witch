@@ -10,7 +10,7 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
 |---|---|---|
 | `mapAreas` | number | 0 to … |
 
-## `map`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+## `map`
 
 The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). shape circle: the playable areas are those whose centres lie within radius areas of home's (7.9: about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is a circle, soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. coast (Ed, 2026-10-06: "The island shouldn't be a totally perfect circle; make the coast slightly irregular"): every edge round home (the playable areas', the buffer's, her flight's) wobbles by the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
 
@@ -25,6 +25,27 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.coast.amp` | number | 0 to … |
 | `map.coast.harmonics` | number | 0 to … |
 | `map.coast.detail` | number | 0 to … |
+
+## `beach`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+
+The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. witchChance of runs have witches[0] to witches[1] witches together somewhere on the beach; landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before.
+
+| knob | type | range |
+|---|---|---|
+| `beach.on` | boolean |  |
+| `beach.width` | number | 0 to … |
+| `beach.shore` | number | 0 to … |
+| `beach.ease` | number | 0 to … |
+| `beach.sand` | number | 0 to … |
+| `beach.sea` | number |  |
+| `beach.restAfter` | number | 0 to … |
+| `beach.shown` | number | 0 to … |
+| `beach.witchChance` | number | 0 to … |
+| `beach.witches` | array of number |  |
+| `beach.meet` | number | 0 to … |
+| `beach.idleAfter` | number | 0 to … |
+| `beach.turn` | number | 0 to … |
+| `beach.simRange` | number | 0 to … |
 | `areaSize` | number | 0 to … |
 | `areaScale` | number | 0 to … |
 | `arena.radius` | number | 0 to … |
@@ -776,6 +797,10 @@ A legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower, thi
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
 | `legendClearing.minFromStone` | number | 0 to … |
+| `legendClearing.floor.on` | boolean |  |
+| `legendClearing.floor.overgrowth` | number | 0 to … |
+| `legendClearing.floor.slab` | number | 0 to … |
+| `legendClearing.floor.glint` | number | 0 to … |
 | `legendClearing.rim.spacing` | number | 0 to … |
 | `legendClearing.rim.chance` | number | 0 to … |
 | `legendClearing.rim.out` | number | 0 to … |
@@ -942,7 +967,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 | `invite.turn` | array of number |  |
 | `invite.decayRate` | number | 0 to … |
 
-## `leash`, `bond`
+## `leash`
 
 length: metres her creatures follow within; runSpeed: how fast one out of range hurries back (m/s); pickRadius: how near (m) she picks up a sigil, a relic's, a happy creature's rune or her hat; spacing: how far apart (m) sigils can be put down. weight, sigil weight (Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down"; rules/leashWeight.ts): each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength). Less free (the first few sigils' worth, so early play feels the same), that's her load (weight units, a young on a taut leash being 1). drag: moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers); drift: she drifts toward the pull at up to that share of her top speed, reached at an extreme load; rise: rising takes 1 + rise x load times as long; sink: over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it.
 
@@ -962,11 +987,19 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.weight.floor` | number | 0 to 1 |
 | `leash.weight.extreme` | number | 0 to … |
 | `leash.weight.maxTension` | number | 0 to … |
+
+## `bond`
+
+The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), never more than threadArcMax metres.
+
+| knob | type | range |
+|---|---|---|
 | `bond.rim` | boolean |  |
 | `bond.sparks` | boolean |  |
 | `bond.thread` | boolean |  |
 | `bond.sparkEvery` | number | 0 to … |
-| `bond.threadArc` | number | 0 to … |
+| `bond.threadArcSlack` | number | 0 to … |
+| `bond.threadArcTaut` | number | 0 to … |
 | `bond.threadArcMax` | number | 0 to … |
 
 ## `sfx`, `music`
@@ -1083,6 +1116,10 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.whale.depth` | number | 0 to … |
 | `sfx.whale.reverb` | number | 0 to … |
 | `sfx.whale.sleepEvery` | number | 0 to … |
+| `sfx.waves.volume` | number | 0 to … |
+| `sfx.waves.every` | number | 0 to … |
+| `sfx.waves.wash` | number | 0 to … |
+| `sfx.waves.range` | number | 0 to … |
 | `music.on` | boolean |  |
 | `music.volume` | number | 0 to … |
 | `music.nearDist` | number | 0 to … |
@@ -1095,6 +1132,9 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.circle.ease` | number | 0 to … |
 | `music.circle.level` | number | 0 to … |
 | `music.circle.radius` | number | 0 to … |
+| `music.slow.on` | boolean |  |
+| `music.slow.pitch` | number | 0 to … |
+| `music.slow.floor` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
@@ -1263,7 +1303,7 @@ At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power
 
 ## `party`
 
-lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all never crosses itself: the noisy picker's order, untangled; noisy (?picker=noisy, the picker before it), near3, near3touch and nearest choose among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
+lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all crosses itself at most a few times, within Ed's rules: route (?route=) "spiral" (Ed, 2026-10-06, of the mock-up: "This last example looks great!"; out from home ring by ring, the same way round, a little lobe, a few crossings) or "varied" (the order before it: petals round home, then sweeps, lobes or combs); noisy (?picker=noisy, the picker before it), near3, near3touch and nearest choose among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
 
 | knob | type | range |
 |---|---|---|
@@ -1280,6 +1320,7 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 | `party.areasPerWave` | number | 0 to … |
 | `party.maxPerWave` | number | 0 to … |
 | `party.picker` | string |  |
+| `party.route` | string |  |
 | `party.noisy.wobble` | number | 0 to … |
 | `party.noisy.lobeSize` | number | 0 to … |
 | `party.noisy.candidates` | number | 0 to … |

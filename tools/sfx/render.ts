@@ -51,6 +51,7 @@ const SOUNDS: [string, number, Play][] = [
   ["legend-lament-far", 8, s => s.lament(v("elk", 3), 0.5, 0.6, 0.25)],
   ["shoes", 3, () => {}],
   ["pond", 12, () => {}],
+  ["sea", 16, () => {}],
   ["picnic", 10, () => {}],
   ["creator-room", 12, () => {}],
   ["letter-land", 1.6, () => {}],
@@ -77,6 +78,9 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "shoes") {
     // four dancers' party shoes on the beat at 120 bpm
     for (let b = 0; b < 6; b++) void oc.suspend(Math.round(b * 0.5 * rate) / rate).then(() => { s.taps(4, 0, 1); return oc.resume(); });
+  } else if (name === "sea") {
+    // walking down the beach to the water (two waves or so), then away up it until it's let go
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 11 ? 1 : Math.max(0, 1 - (sec - 11) / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sea(L, 0.3); return oc.resume(); }); }
   } else if (name === "pond" || name === "picnic" || name === "creator-room") {
     // walking up to it and standing by it: its level each 0.1 s
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = Math.min(1, sec / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { if (name === "pond") s.pond(L, -0.2); else if (name === "picnic") s.picnic(L, 0.2); else s.room(L); return oc.resume(); }); }

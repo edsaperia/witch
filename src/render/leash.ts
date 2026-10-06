@@ -654,9 +654,8 @@ export class LeashView {
       // A wild legend in its second phase: a red aura pulsing round its feet.
       if (c.legend?.phase === 2 && !c.leashed) { const pk = 0.5 + 0.5 * Math.sin(time * 6 + c.id); for (let i = 0; i < 28; i++) { const a = (i / 28) * Math.PI * 2 + time * 0.5, R = 2.6 + pk * 0.4; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.45, dot, 1, 0.2, 0.25, 0.3 + 0.4 * pk); } }
       if (legendCharging(c, time)) for (let i = 0; i < 3; i++) this.standing.add(c.x + (hash2(c.id, Math.floor(time * 15) + i, 23) - 0.5) * 2, 0.4, c.z + (hash2(c.id, Math.floor(time * 15) + i, 29) - 0.5) * 1.2, 0.8, dot, 0.7, 0.6, 0.5, 0.4);
-      // A friendly area's creature (its legend's quest done): a rosy heart-mote over it now and then;
-      // a guard (that area partified): a steady mote in its sigil's colour.
-      if ((c.friendly || c.guard) && !c.leashed && c.level > 0) { const top = (this.tops.get(c.id) ?? 1.2 + c.level * 0.6) + 0.35, ph = (time * 0.5 + c.id * 0.37) % 1, col = c.guard ? neon(c.species) : { r: 1, g: 0.5, b: 0.75 }; this.standing.add(c.x, top + (c.guard ? 0 : ph * 0.6), c.z, 0.28, dot, col.r, col.g, col.b, c.guard ? 0.85 : Math.sin(ph * Math.PI) * 0.9); }
+      // A friendly area's creature (its legend's quest done): a rosy heart-mote over it now and then.
+      if (c.friendly && !c.leashed && c.level > 0) { const top = (this.tops.get(c.id) ?? 1.2 + c.level * 0.6) + 0.35, ph = (time * 0.5 + c.id * 0.37) % 1; this.standing.add(c.x, top + ph * 0.6, c.z, 0.28, dot, 1, 0.5, 0.75, Math.sin(ph * Math.PI) * 0.9); }
       // About to charge (the boar lowering its head): the lane it will run down, brightening.
       if (c.charge?.from !== undefined && time < c.charge.from) { const ch = c.charge, k = 1 - Math.max(0, ch.from! - time) / 0.5, L = ch.speed * (ch.until - ch.from!), col = c.leashed ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 }; for (let s2 = 1.5; s2 < L; s2 += 1.2) for (const side of [-1, 1]) this.flat.add(c.x + ch.dx * s2 - ch.dz * side * 1.6, 0, c.z + ch.dz * s2 + ch.dx * side * 1.6, 0.35, dot, col.r, col.g, col.b, 0.15 + 0.55 * k); }
       // A legend's long charge (legends.json charge): head down, its first lane on the ground, brightening;
@@ -989,9 +988,10 @@ export class LeashView {
       const d = Math.hypot(c.x - lp.x, c.z - lp.z);
       if (B.thread && d > L.length * 0.85) {
         const strain = Math.min(1, (d - L.length * 0.85) / L.length), n = Math.min(60, Math.floor(d / 1.2));
-        // A gentle upward bow (Ed: "arc upwards a little"), and the dots march from the creature
-        // to the leash point.
-        const arc = Math.min(B.threadArcMax, B.threadArc * d);
+        // An upward bow (Ed: "arc upwards a little"), high while it's slack and flattening to a near-straight line as it
+        // goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), and the dots march from
+        // the creature to the leash point.
+        const arc = Math.min(B.threadArcMax, d * (B.threadArcTaut + (B.threadArcSlack - B.threadArcTaut) * (1 - strain)));
         for (let i = 1; i < n; i++) {
           const k = (i + 1 - (time * 2) % 1) / n;
           if (k >= 1) continue;

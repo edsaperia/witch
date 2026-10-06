@@ -2,7 +2,7 @@
 // "Nobody is being killed in this game; we are throwing a party, we're inviting everyone, some
 // people don't get invites and so are offended." Who fights whom is one table (foes): leashed
 // against wild and enraged, enraged against happy, and never one's own kind. The older flags
-// (leashed, enraged, guard, a happy legend) still say the same, and stateOf reads them, so the
+// (leashed, enraged, a happy legend) still say the same, and stateOf reads them, so the
 // rest of the rules and the view keep working. No drawing here.
 import raw from "../../config/states.json";
 import { LEGEND, type Creature } from "./creatures";
@@ -14,7 +14,7 @@ export const STATES = raw as unknown as StatesData;
 /** A creature's state now. */
 export function stateOf(c: Creature): State {
   if (c.leashed) return "leashed";
-  if (c.state === "happy" || c.guard || c.legendState === "happy") return "happy";
+  if (c.state === "happy" || c.legendState === "happy") return "happy";
   if (c.enraged) return "enraged";
   return "wild";
 }
@@ -51,7 +51,7 @@ export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
   if (c.gone || c.leashed || (c.fleeUntil && !c.dazedUntil) || c.level === LEGEND || c.boss) return false;
   const s = stateOf(c);
   if (s === "wild") return !c.wanderTo;
-  return s === "happy" && !c.guard && c.legendState !== "happy" && data.leash === "again";
+  return s === "happy" && c.legendState !== "happy" && data.leash === "again";
 }
 
 /** Its sigil rune (Ed, 2026-10-06; states.leash "pickup"): a happy one carries its sigil as a rune on the ground at its

@@ -79,6 +79,9 @@ if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMark
 // ?picker=route|noisy|near3|near3touch|nearest: how the party picks the next area to wake (route, the default: the ley line's planned order; noisy the one before it).
 const pickerParam = params.get("picker");
 if (pickerParam && ["route", "noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
+// ?route=spiral|varied: the route picker's planned order (spiral, the default, Ed 2026-10-06; varied the one before it).
+const routeParam = params.get("route");
+if (routeParam && ["spiral", "varied"].includes(routeParam)) tuning.party.route = routeParam;
 // ?glow=<reach>,<falloff>,<near>: the witch's glow, to tune live (e.g. ?glow=50,2.5,0.7; 0 keeps a value).
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
@@ -606,7 +609,7 @@ function frame(now: number): void {
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   lastMix = musicMix(game, game.witch);
-  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused, tuning.music);
+  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused, tuning.music, (game as { timeScale?: number }).timeScale ?? 1); // (the world slowed in a legend's circle: the music with it)
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
   const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)

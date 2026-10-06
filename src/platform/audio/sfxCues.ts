@@ -7,8 +7,8 @@
 //    thrown its full range: a puff as it lands on the ground); the
 //    talk's invites (with 💌s off) still flourish.
 //  - States: a creature turning enraged (a growl and the nearest's angry speech; a crowd turning at
-//    once, one heavier growl) or happy (a pop and its happy speech): its area's guards, a friendly
-//    area's creatures, a legend at peace.
+//    once, one heavier growl) or happy (a pop and its happy speech): a friendly area's creatures,
+//    a legend at peace.
 //  - Legends: the nearest sleeping one moans now and then as it dreams; restless (#87), nightmares.
 //  - Attacks are speech (Ed, 2026-10-05): an attacker's burst of babble in its own voice, by mood;
 //    a legend winding up, one long building swell of its whale song; a lob landing, a thud (a legend's, a boom).
@@ -22,6 +22,7 @@ import { restlessness } from "../../rules/dream";
 import { bossBreath } from "../../render/leash";
 import type { CombatEventKind } from "../../rules/combat";
 import type { Sfx } from "./sfx";
+import { beachOf, type Beach } from "../../rules/mapShape";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
 import { beatAt } from "../../rules/beat";
@@ -31,7 +32,7 @@ import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind>(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash"]);
 
-const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.guard || !!c.friendly || (!!c.boss && c.legendState === "happy"));
+const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.friendly || (!!c.boss && c.legendState === "happy"));
 
 /** What a cue step needs: the game, its time, how near a point is to her (0-1) and its pan. */
 interface Here { g: Game; time: number; near: (x: number, z: number) => number; pan: (x: number) => number }
@@ -87,6 +88,7 @@ export class SfxCues {
     this.shoes(h);
     this.pond(h);
     this.picnic(h);
+    this.sea(h);
     this.primed = true;
   }
 
@@ -324,6 +326,18 @@ export class SfxCues {
     for (const l of g.forest.lightsNear(w.x, w.z, P.range)) if (l.kind === "pond") { const d = Math.hypot(l.x - w.x, l.z - w.z); if (d < best) { best = d; bx = l.x; } }
     this.sfx.pond(Number.isFinite(best) ? Math.max(0, 1 - best / P.range) : 0, pan(bx));
   }
+
+  /** By the sea on the beach round the circular map: its waves, by how near the water (nothing at all further off). */
+  private sea({ g }: Here): void {
+    if (this.beach?.map !== g.map) this.beach = { map: g.map, at: beachOf(g.map.bounds, g.tuning) };
+    const P = g.tuning.sfx.waves, B = this.beach.at;
+    if (!P || !B) return;
+    const w = g.witch, off = -B.intoSea(w.x, w.z); // (metres from the water)
+    if (off >= P.range) { this.sfx.sea(0); return; } // (Sfx.sea: nothing unless already made)
+    const d = Math.hypot(w.x - B.x, w.z - B.z) || 1;
+    this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
+  }
+  private beach: { map: Game["map"]; at: Beach | null } | null = null;
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {

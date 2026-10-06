@@ -10,6 +10,11 @@ import type { MusicCue } from "../../rules/musicPlan";
 import type { MusicStyle } from "../../rules/musicScore";
 import { MusicEngine } from "./musicEngine";
 
+/** The notes' pitch with the music running at `rate` (a tape slowing: rate^pitch, never under floor). */
+export function tapePitch(rate: number, S?: { on: boolean; pitch: number; floor: number }): number {
+  return !S?.on || rate >= 1 ? 1 : Math.max(S.floor, Math.pow(Math.max(1e-3, rate), S.pitch));
+}
+
 export class Music {
   private master: GainNode;
   private wobble: GainNode;
@@ -56,7 +61,8 @@ export class Music {
   }
 
   /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. */
-  update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"]): void {
+  /** `rate`: the game's time scale (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape. */
+  update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"], rate = 1): void {
     const c = this.ctx, now = c.currentTime, k = 0.08;
     // In a sleeping legend's clearing: in and out eased over about a second, the music muffled under
     // its layer (which plays while she's in, or still fading out)
@@ -81,7 +87,7 @@ export class Music {
     this.wobble.gain.setTargetAtTime(1 - mix.distort * 0.45 * (0.5 + 0.5 * Math.sin(now * 7.3 + Math.sin(now * 2.1) * 2)), now, 0.02);
     // Crackle: little bursts of noise.
     if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
-    this.engine?.update(cue, gameTime, clock, on);
+    this.engine?.update(cue, gameTime, clock, on, 0.3, rate, tapePitch(rate, M?.slow));
   }
 
   /** What reaches the speakers (the audio watchdog taps it). */
