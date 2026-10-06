@@ -400,7 +400,7 @@ export class LeashView {
       }
       el.style.setProperty("--px", `${bubblePx(c.level)}px`);
       (el.querySelector("canvas:not(.face)") as HTMLElement | null)?.style.setProperty("opacity", `${1 - 0.75 * r}`);
-      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(225 + 30 * ire)}, ${Math.round(215 - 160 * ire)}, ${Math.round(255 - 190 * ire)}, ${(0.85 + 0.15 * ire).toFixed(2)})`);
+      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(232 + 23 * ire)}, ${Math.round(180 - 125 * ire)}, ${Math.round(106 - 41 * ire)}, ${(0.55 + 0.4 * ire).toFixed(2)})`); // (from the dream's amber to red)
       else el.style.removeProperty("--ink");
       const bx = ((this.v.x + 1) / 2) * width, ly = ((1 - this.v.y) / 2) * height, by = Math.max(ly, el.offsetHeight + 56); // (kept on screen when she's close, below the top edge's cues)
       el.style.left = `${bx}px`;
