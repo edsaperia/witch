@@ -477,7 +477,8 @@ export class Creator {
       : (() => { const s = this.standing(t); return { fr: s.fr, flip: s.flip !== w.flip }; })(), fr = now.fr;
     if (!fr) return;
     const feet = [w.x, 0, w.z], [sx, sy] = room.walk.project(feet), feetT = room.walk.depthOf(feet), bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
-    this.behind(x, room, Math.round(sx - fr.width * 1.2), Math.round(sy) - Math.ceil(fr.width * .6), Math.ceil(fr.width * 2.4), Math.ceil(fr.width * 1.2), sy, feetT, true, c => pool(c, fr.width * 1.2, fr.width * .6, fr.width), "lighter");
+    const pw = this.frames.stand[0]?.width ?? fr.width; // (her pool as wide as she stands, whatever she's doing)
+    this.behind(x, room, Math.round(sx - pw * 1.2), Math.round(sy) - Math.ceil(pw * .6), Math.ceil(pw * 2.4), Math.ceil(pw * 1.2), sy, feetT, true, c => pool(c, pw * 1.2, pw * .6, pw), "lighter");
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
     this.behind(x, room, fx, fy, fr.width, fr.height, sy, feetT, false, c => { if (now.flip) { c.translate(fr.width, 0); c.scale(-1, 1); } c.drawImage(fr, 0, 0); });
@@ -501,7 +502,8 @@ export class Creator {
         if (!d[a]) continue;
         const rx = ox + i;
         if (rx < 0 || ry < 0 || rx >= RW || ry >= RH) continue;
-        if (D[ry * RW + rx] < me - OCCLUDE) d[a] = 0;
+        const z = D[ry * RW + rx];
+        if (z < me - OCCLUDE || (flat && z === Infinity)) d[a] = 0; // (her light only on the room, never on the night past its edge)
       }
     }
     k.putImageData(img, 0, 0);

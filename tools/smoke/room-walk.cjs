@@ -7,7 +7,7 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const root = path.join(__dirname, "../.."), out = path.join(root, "previews/room"), frames = path.join(out, "frames");
 const query = process.argv[2] || "";
 (async () => {
-  fs.rmSync(frames, { recursive: true, force: true }); fs.mkdirSync(frames, { recursive: true });
+  fs.rmSync(frames, { recursive: true, force: true }); fs.mkdirSync(frames, { recursive: true }); // (the frames go once the GIF is made)
   const server = spawn("npx", ["vite", "preview", "--port", "4182", "--strictPort"], { cwd: root, stdio: "ignore" });
   await new Promise(r => setTimeout(r, 2500));
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
@@ -44,6 +44,7 @@ const query = process.argv[2] || "";
     await page.screenshot({ path: path.join(out, "after.png") });
     // the GIF: every frame, at 10 a second
     execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "10", "-i", path.join(frames, "f%03d.png"), "-vf", "split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=none", path.join(out, "walk.gif")]);
+    fs.rmSync(frames, { recursive: true, force: true });
     console.log("frames", n, "errors", errors.length);
     if (errors.length) throw new Error(errors.join("\n"));
   } finally { await browser.close(); server.kill(); }
