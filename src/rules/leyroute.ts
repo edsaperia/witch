@@ -76,7 +76,10 @@ export function variedOrder(map: ForestMap): string[] {
     all.push({ k, r: Math.hypot(q.x - d.x, q.z - d.z), a: Math.atan2(q.x - d.x, q.z - d.z) });
   }
   const near = all.filter(p => map.neighbours.get(home)?.has(p.k)), ring = near.length ? near.reduce((t, p) => t + p.r, 0) / near.length : map.areaSize;
-  const a0 = R() * TAU, dir = R() < 0.5 ? 1 : -1, rel = (p: Pt) => (dir > 0 ? wrap(p.a - a0) : wrap(a0 - p.a));
+  const seeded = R() * TAU, dir = R() < 0.5 ? 1 : -1;
+  // (the first petal starts just before the first of home's neighbours round from the seeded angle, so the route always leaves from beside home)
+  const first = near.length ? near.reduce((m, p) => (wrap(dir * (p.a - seeded)) < wrap(dir * (m.a - seeded)) ? p : m)) : null;
+  const a0 = first ? first.a - dir * 1e-3 : seeded, rel = (p: Pt) => (dir > 0 ? wrap(p.a - a0) : wrap(a0 - p.a));
   const out: string[] = [], used = new Set<string>();
   const take = (list: Pt[]) => { for (const p of list) if (!used.has(p.k)) { used.add(p.k); out.push(p.k); } };
   const petal = (ps: Pt[], from: number, w: number) => {

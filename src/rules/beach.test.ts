@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { Forest } from "./forest";
-import { beachOf } from "./mapShape";
+import { beachOf, edgeRadius } from "./mapShape";
 import { newWitch, stepWitch, NO_INTENT, type Intent, type WitchState } from "./witch";
 import { newBeachWitches, stepBeachWitches, SEQUENCE } from "./beach";
 import { hash2 } from "./random";
@@ -19,10 +19,10 @@ describe("the beach", () => {
   for (const seed of SEEDS) {
     it(`nothing grows, stands or runs on the sand or in the sea (seed ${seed})`, () => {
       const map = generateMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, forest = new Forest(map);
-      const c = map.bounds.circle!, mid = { x: c.x + c.r - b.width / 2, z: c.z };
+      const c = map.bounds.circle!, e0 = edgeRadius(c, c.x + 1, c.z), mid = { x: c.x + e0 - b.width / 2, z: c.z }; // (due east, on the coast's own edge there)
       expect(b.intoSand(mid.x, mid.z)).toBeGreaterThan(0); // the sand inside the edge, the sea beyond it
       expect(b.intoSea(mid.x, mid.z)).toBeLessThan(0);
-      expect(b.intoSea(c.x + c.r + b.out + 1, c.z)).toBeGreaterThan(0);
+      expect(b.intoSea(c.x + e0 + b.out + 1, c.z)).toBeGreaterThan(0);
       expect(b.intoSand(c.x, c.z)).toBeLessThan(0);
       for (let k = 0; k < 64; k++) {
         const a = (k / 64) * Math.PI * 2 - Math.PI, d = b.edge(a) - b.width + 1 + (k % 8) * 20, x = b.x + Math.cos(a) * d, z = b.z + Math.sin(a) * d;
@@ -45,13 +45,13 @@ describe("the beach", () => {
 });
 
 describe("flying on past the beach, she lands and stargazes", () => {
-  const map = generateMap(123, TUNING), c = map.bounds.circle!, out = { x: 0.6, z: 0.8 };
+  const map = generateMap(123, TUNING), c = map.bounds.circle!, out = { x: 0.6, z: 0.8 }, edge = edgeRadius(c, c.x + out.x, c.z + out.z); // (the coast's edge that way)
   const at = (d: number, mode: WitchState["mode"]): WitchState => ({ ...newWitch(c.x + out.x * d, c.z + out.z * d), mode, lift: mode === "treetop" ? 1 : 0 });
   const seaward: Intent = { moveX: out.x, moveZ: out.z, toggleMode: false }, inland: Intent = { moveX: -out.x, moveZ: -out.z, toggleMode: false };
   const run = (w: WitchState, i: Intent, secs: number) => { for (let k = 0; k < secs / STEP; k++) w = stepWitch(w, i, STEP, TUNING, map.bounds); return w; };
 
   it("on foot: pushing out against the edge she lies down, and stays down", () => {
-    let w = run(at(c.r - 60, "ground"), seaward, 12);
+    let w = run(at(edge - 60, "ground"), seaward, 12);
     expect(w.stargazing).toBe(true);
     expect(beachOf(map.bounds, TUNING)!.intoSand(w.x, w.z)).toBeGreaterThan(0);
     const lay = { x: w.x, z: w.z };
@@ -65,7 +65,7 @@ describe("flying on past the beach, she lands and stargazes", () => {
   });
 
   it("from the treetops: she comes down first", () => {
-    let w = at(c.r - 60, "treetop"), saw = false;
+    let w = at(edge - 60, "treetop"), saw = false;
     for (let k = 0; k < 20 / STEP && !w.stargazing; k++) { w = stepWitch(w, seaward, STEP, TUNING, map.bounds); if (w.mode === "descending") saw = true; }
     expect(saw).toBe(true);
     expect(w.mode).toBe("ground");
@@ -76,9 +76,9 @@ describe("flying on past the beach, she lands and stargazes", () => {
   });
 
   it("never in the woods, nor flying along the beach", () => {
-    expect(run(at(c.r - 400, "ground"), seaward, 6).stargazing).toBeFalsy();
+    expect(run(at(edge - 400, "ground"), seaward, 6).stargazing).toBeFalsy();
     const along: Intent = { moveX: -out.z, moveZ: out.x, toggleMode: false };
-    expect(run(at(c.r - 30, "ground"), along, 6).stargazing).toBeFalsy();
+    expect(run(at(edge - 30, "ground"), along, 6).stargazing).toBeFalsy();
   });
 });
 
@@ -98,7 +98,7 @@ describe("witches on the beach", () => {
     const t = chanced(true), map = generateMap(123, t), b = beachOf(map.bounds, t)!, s = newBeachWitches(123, map.bounds, t)!;
     expect(s.list.length).toBeGreaterThanOrEqual(t.beach!.witches[0]);
     expect(s.list.length).toBeLessThanOrEqual(t.beach!.witches[1]);
-    for (const w of s.list) { expect(b.intoSand(w.x, w.z)).toBeGreaterThan(0); expect(Math.hypot(w.x - b.x, w.z - b.z)).toBeLessThan(map.bounds.circle!.r); }
+    for (const w of s.list) { expect(b.intoSand(w.x, w.z)).toBeGreaterThan(0); expect(Math.hypot(w.x - b.x, w.z - b.z)).toBeLessThan(edgeRadius(map.bounds.circle!, w.x, w.z)); }
     // far away: nothing moves, nothing is picked
     const before = JSON.stringify(s.list);
     let time = 0;
