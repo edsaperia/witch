@@ -8,7 +8,7 @@ import raw from "../../config/states.json";
 import { LEGEND, type Creature } from "./creatures";
 
 export type State = "wild" | "happy" | "leashed" | "enraged";
-export interface StatesData { daze: number; affection: { hits: number[]; drain: number; drainDelay: number; gap: number }; leash: "again" | "hold"; holdTime: number }
+export interface StatesData { affection: { hits: number[]; drain: number; drainDelay: number; gap: number }; leash: "again" | "hold"; holdTime: number }
 export const STATES = raw as unknown as StatesData;
 
 /** A creature's state now. */
@@ -60,5 +60,5 @@ export function danceAt(c: Creature, at: { x: number; z: number }, radius = 10):
   c.anchorX = at.x; c.anchorZ = at.z; c.range = radius; c.dancing = true;
 }
 
-/** Dazed (a knocked-down wild one, for states.daze seconds): nothing attacks it, it attacks nothing, it can be invited. */
+/** Dazed (a knocked-down wild one, for tuning combat.daze seconds): nothing attacks it, it attacks nothing, it can be invited. */
 export const dazed = (c: Creature, time: number) => c.dazedUntil !== undefined && time < c.dazedUntil;

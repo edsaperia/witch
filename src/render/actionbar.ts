@@ -1,5 +1,5 @@
-// The action bar (Ed, 2026-10-04: MOBA style; keys remapped 2026-10-05): eight slots along the bottom
-// of the screen, 1 2 3 4 Q E R and the right mouse button, each with its key and what it does; the spell's and the dash's recharge sweep over
+// The action bar (Ed, 2026-10-04: MOBA style; keys remapped 2026-10-05 and 06): nine slots along the
+// bottom of the screen, 1 2 3 4 Q E R, Space and the right mouse button, each with its key and what it does; the spell's and the dash's recharge sweep over
 // theirs, bright when ready. Empty slots wait for more spells, items and totems.
 import type { Game } from "../rules/game";
 import { ACTION_BAR } from "../platform/input";
@@ -9,15 +9,14 @@ import { inviteCharge } from "../rules/invites";
 
 const LOOK: Record<string, { icon: string; name: string }> = {
   spell: { icon: "⚡", name: "spell: speed boost" },
-  dash: { icon: "»", name: "dodge: blink (right click or Space, on the ground)" },
+  dash: { icon: "»", name: "dodge: blink toward the cursor (right click, on the ground)" },
   rise: { icon: "↕", name: "rise to the treetops or land" },
+  cycle: { icon: "↻", name: "cycle the sigils (the bottom one, the next put down, to the top)" },
   invite: { icon: "💌", name: "invite: shoot 💌s at the cursor (left click, or hold 1; gamepad: right stick aims, a trigger fires), on the ground" },
   sigil: { icon: "◈", name: "put down / pick up a sigil" },
   autoTalk: { icon: "💬", name: "auto-talk on or off (also T); off, hold Shift to talk" },
 };
 
-/** The sigil slot in the treetops, where E cycles the stack. */
-const CYCLE = { icon: "↻", name: "cycle the sigils (the bottom one to the top)" };
 
 export class ActionBar {
   private root = document.createElement("div");
@@ -55,14 +54,10 @@ export class ActionBar {
     ACTION_BAR.forEach((s, i) => {
       const shade = this.shades[i], el = this.slots[i];
       if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(232,180,106,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
-      // The sigil slot shows what E does now (Ed, 2026-10-05): cycle in the treetops, put down / pick up on the ground.
-      if (s.action === "sigil") {
-        const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;
-        const look = ground ? LOOK.sigil : CYCLE;
-        if (icon.textContent !== look.icon) { icon.textContent = look.icon; el.title = `${s.key}: ${look.name}`; }
-        return;
-      }
-      // The up/down slot shows which way Q takes her now.
+      // E puts down / picks up, only on the ground; Q cycles, with two or more to cycle (Ed, 2026-10-06).
+      if (s.action === "sigil") { el.style.opacity = W.body.mode === "ground" ? "1" : "0.5"; return; }
+      if (s.action === "cycle") { el.style.opacity = W.leash.stack.length > 1 ? "1" : "0.5"; return; }
+      // The up/down slot shows which way Space takes her now.
       if (s.action === "rise") {
         const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;
         const look = ground ? { icon: "↑", name: "rise to the treetops" } : { icon: "↓", name: "land" };
