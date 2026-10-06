@@ -6104,6 +6104,71 @@ const SIGILS = {
   beetle: [E(.5, .64, .2, .26), L([.5, .4], [.5, .9]), E(.5, .32, .12, .08), ...pair(L([.43, .27], [.32, .14], [.3, .04]), L([.33, .16], [.4, .11]), L([.31, .54], [.14, .48]), L([.3, .66], [.12, .68]), L([.33, .78], [.18, .9]))],
 };
 
+// ---- legendary sigils ----
+// (Ed, 2026-10-06: "let's have the legendary sigils be huge, twice as wide and more detailed than the normal ones, with a
+// decorative border.") A legendary sigil is the animal's own icon with more of the animal (LEGEND_DETAIL: tufts, inner ears,
+// brows, whiskers, ridges, a fuller head), in the same stroke family, in the middle of a mark twice as wide as it is tall, framed
+// by one border every species shares (legendFrame): a gold cartouche with pointed ends, a three-pointed crown on its top edge,
+// a laurel sprig in each end and runic ticks along its sides. Every renderer takes `legendary: true` (the level frame is then
+// replaced by this one); its size is still the mark's height, and it draws twice as wide.
+const LEGEND_GOLD = [255, 205, 110];
+const LEGEND_ASPECT = 2;
+const LEGEND_DETAIL_PX = 28; // below this many pixels tall, its pixel forms leave the detail out (it would clog)
+const LEGEND_DETAIL = {
+  wolf: [...pair(L([.25, .17], [.3, .35]), L([.17, .46], [.08, .53], [.19, .57], [.12, .66], [.27, .69]), L([.28, .41], [.4, .44])), L([.5, .56], [.5, .72])],
+  fox: [...pair(bow([.28, .6], [.44, .74], .25), D(.42, .76)), L([.5, .34], [.5, .46])],
+  badger: [...pair(L([.37, .8], [.2, .84]), bow([.18, .7], [.34, .88], .2)), L([.5, .16], [.5, .26])],
+  boar: [...pair(L([.29, .37], [.41, .35]), L([.2, .5], [.08, .5]), L([.22, .58], [.1, .64]))],
+  stag: [...pair(L([.41, .72], [.34, .95]), L([.33, .24], [.27, .32]))],
+  elk: [...pair(L([.4, .76], [.3, .94]), D(.46, .8))],
+  hare: [...pair(L([.39, .13], [.39, .35]), L([.29, .7], [.22, .82], [.36, .83]))],
+  owl: [...pair(bow([.47, .36], [.22, .37], .25)), L([.4, .79], [.45, .84], [.5, .79], [.55, .84], [.6, .79])],
+  bear: [...pair(A(.23, .27, .05, 110, 330), L([.31, .42], [.41, .4]), L([.18, .62], [.11, .7], [.21, .73])), L([.5, .7], [.5, .76])],
+  hedgehog: [L(...Array.from({ length: 11 }, (_, i) => at(.5, .55, i % 2 ? .23 : .29, 192 + i * 156 / 10))), ...pair(L([.43, .8], [.32, .82]))],
+  squirrel: [L([.85, .28], [.95, .24]), L([.88, .42], [.97, .42]), L([.85, .56], [.94, .6]), L([.32, .82], [.35, .9]), L([.48, .82], [.45, .9])],
+  toad: [D(.32, .76), D(.68, .76), D(.5, .8), ...pair(L([.2, .86], [.13, .95]), L([.27, .87], [.27, .96]))],
+  otter: [...pair(L([.3, .38], [.41, .4]), L([.25, .78], [.3, .95])), bow([.42, .76], [.58, .76], -.3)],
+  lynx: [...pair(L([.24, .19], [.28, .34]), L([.12, .6], [.23, .63]), L([.31, .42], [.43, .45]))],
+  raven: [L([.6, .44], [.86, .465]), L([.63, .6], [.67, .72]), L([.55, .64], [.58, .76]), L([.26, .56], [.4, .72], [.44, .86])],
+  bat: [...pair(L([.25, .31], [.2, .58]), L([.26, .31], [.33, .52]), L([.47, .68], [.45, .76]))],
+  mole: [...pair(L([.44, .72], [.3, .7]), L([.45, .77], [.32, .81]), L([.42, .18], [.44, .12]))],
+  beaver: [...pair(L([.38, .6], [.22, .58]), L([.39, .65], [.24, .7]), L([.31, .37], [.42, .38]), A(.22, .22, .035, 120, 330))],
+  stoat: [L([.77, .3], [.88, .3]), L([.76, .34], [.86, .39]), L([.3, .8], [.27, .9]), L([.44, .86], [.44, .95])],
+  snail: [...rays(.44, .5, .21, .29, [195, 245, 295]), D(.14, .9), D(.28, .91), D(.42, .9)],
+  ram: [...pair(...rays(.24, .38, .12, .2, [75, 135, 195, 255]), D(.46, .78)), L([.4, .34], [.45, .41], [.5, .35], [.55, .41], [.6, .34])],
+  woodlouse: [...pair(L([.24, .06], [.16, .1]), L([.43, .9], [.39, .97]), D(.43, .27))],
+  snake: [D(.53, .46), ...[.5, .62, .74, .86].map(t => D(...at(.5, .54, .07 + .24 * t, t * 468)))],
+  moth: [...pair(C(.34, .7, .045), L([.45, .4], [.14, .24]))],
+  marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
+  salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
+  newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
+  heron: [L([.35, .48], [.31, .6]), L([.4, .5], [.37, .62]), bow([.32, .56], [.64, .6], -.25), L([.42, .94], [.36, .97]), L([.56, .94], [.63, .97])],
+  glowworm: [...rays(.69, .55, .15, .2, [-60, 0, 60, 120]), L([.14, .58], [.08, .5]), D(.69, .55)],
+  spider: [...pair(D(.47, .37)), L([.5, .54], [.5, .7]), L([.44, .6], [.56, .6])],
+  dormouse: [C(.32, .3, .035), L([.3, .44], [.18, .42]), L([.3, .47], [.19, .5]), ...rays(.52, .58, .23, .28, [120, 160, 200])],
+  beetle: [...pair(L([.41, .46], [.41, .84]), D(.45, .31))],
+};
+// The shared border, in the mark's box (x 0..2, y 0..1): the cartouche (pointed ends), the crown, the laurels, the ticks.
+const legendFrameCache = [];
+function legendFrame() {
+  if (legendFrameCache.length) return legendFrameCache;
+  const top = .1, bot = .92, mid = (top + bot) / 2, half = (bot - top) / 2, X0 = .035, X1 = 2 - X0, edge = (x, s) => { const u = (x - 1) / (1 - X0); return mid + s * half * (1 - Math.abs(u) ** 4.5); };
+  const xs = Array.from({ length: 49 }, (_, i) => X0 + (X1 - X0) * i / 48);
+  const out = [L(...xs.map(x => [x, edge(x, -1)])), L(...xs.map(x => [x, edge(x, 1)]))];
+  out.push(L([.84, edge(.84, -1)], [.88, .015], [.94, .075], [1, .005], [1.06, .075], [1.12, .015], [1.16, edge(1.16, -1)])); // the crown
+  const side = s => { // s: 1 the left end, -1 the right (mirrored)
+    const X = x => s > 0 ? x : 2 - x, ss = [];
+    ss.push(bow([X(.17), .72], [X(.5), .3], s * -.25)); // the laurel's stem, rising toward the middle
+    // its leaves: narrow pointed ovals (two arcs each) off both sides of the stem
+    for (const [x, y, dx, dy] of [[.2, .64, -.07, -.12], [.29, .52, -.05, -.13], [.39, .41, -.02, -.13], [.25, .69, .12, -.03], [.34, .58, .12, -.05]]) for (const k of [.2, -.2]) ss.push(bow([X(x), y], [X(x + dx), y + dy], s * k));
+    for (const x of [.3, .44]) for (const sgn of [-1, 1]) { const y = edge(x, sgn); ss.push(L([X(x), y + sgn * -.025], [X(x), y + sgn * -.085])); } // runic ticks inside the edge
+    ss.push(D(X(.12), mid)); // a bead in each point
+    return ss;
+  };
+  legendFrameCache.push(...out, ...side(1), ...side(-1));
+  return legendFrameCache;
+}
+
 // ---- neon: a colour per species, kept as a palette slot ----
 // The palette; recolour by changing an entry (or passing `colour` to any renderer).
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
@@ -6149,7 +6214,8 @@ function sigilStrokes(id) {
 // size): the frame (rings, band, rays: drawn first, in the first 15% of the draw-on), then the
 // sigil, scaled into the middle. w: each stroke's width in mark units. level null: the bare sigil.
 const markCache = new Map();
-function sigilMark(id, level = 0) {
+function sigilMark(id, level = 0, legendary = false) {
+  if (legendary) return legendMark(id);
   const key = id + ":" + level; if (markCache.has(key)) return markCache.get(key);
   const F = level === null ? null : sigilFrame(level), k = !F ? 1 : F.rings >= 2 ? .6 : F.rings || F.dots ? .66 : .8, o = (1 - k) / 2;
   const thick = F ? F.core : 1, ring = SIGIL_STROKE * .55 * ((F?.level ?? 0) < 3 ? 1 : Math.min(1.6, .8 + .25 * F.level)), frame = []; // an adult's ring at the normal line weight; the legend's heavier
@@ -6163,7 +6229,18 @@ function sigilMark(id, level = 0) {
   }
   const gk = Math.min(1.25, thick); // the glyph thickens a little with level, never enough to clog (the rings carry the rest)
   const sig = sigilStrokes(id).map(s => ({ dot: s.dot, len: s.len * k, pts: s.pts.map(([x, y]) => [o + x * k, o + y * k]), w: s.w * k * gk, r: SIGIL_DOT * k * gk, part: "sigil" }));
-  const out = { level, frame: F, k, strokes: [...timeline(frame, 0, frame.length ? .15 : 0), ...timeline(sig, frame.length ? .15 : 0, 1)] };
+  const out = { level, frame: F, k, aspect: 1, strokes: [...timeline(frame, 0, frame.length ? .15 : 0), ...timeline(sig, frame.length ? .15 : 0, 1)] };
+  markCache.set(key, out);
+  return out;
+}
+// A legendary sigil's mark (see LEGEND_DETAIL): x 0..2, y 0..1; the border first (its first 20% of the draw-on), then the animal.
+// Its frame is the legend level's (for its glow and shimmer), its border in gold.
+function legendMark(id, detail = true) {
+  const key = id + ":legendary" + (detail ? "" : ":plain"); if (markCache.has(key)) return markCache.get(key);
+  const k = .7, ox = 1 - k / 2, oy = .17, F = sigilFrame(3), ring = SIGIL_STROKE * .62;
+  const frame = legendFrame().map(s => ({ ...polyline(s), w: ring, r: SIGIL_DOT * .9, part: "gold" }));
+  const sig = timeline([...(SIGILS[id] || []), ...(detail && LEGEND_DETAIL[id] || [])].map(s => ({ ...polyline(s) }))).map(s => ({ dot: s.dot, len: s.len * k, pts: s.pts.map(([x, y]) => [ox + x * k, oy + y * k]), w: SIGIL_STROKE * k * 1.2, r: SIGIL_DOT * k * 1.2, part: "sigil" }));
+  const out = { level: 3, frame: F, k, aspect: LEGEND_ASPECT, legendary: true, strokes: [...timeline(frame, 0, .2), ...timeline(sig, .2, 1)] };
   markCache.set(key, out);
   return out;
 }
@@ -6183,31 +6260,33 @@ function partial(s, p) { // the part of a stroke drawn at overall progress p: it
 }
 // An SVG string: the neon halo under a near-white core. level: null (default) the bare sigil,
 // or a creature level for its frame. progress below 1 draws it partly written.
-function sigilSVG(id, { size = 64, level = null, colour = sigilColour(id), glow = true, progress = 1 } = {}) {
-  const M = sigilMark(id, level), fid = `sigil-glow-${id}-${level}`, halo = M.frame ? M.frame.halo : .7, core = toward(colour, WHITE, .72), lines = [];
+function sigilSVG(id, { size = 64, level = null, colour = sigilColour(id), glow = true, progress = 1, legendary = false } = {}) {
+  const M = sigilMark(id, level, legendary), fid = `sigil-glow-${id}-${legendary ? "legendary" : level}`, halo = M.frame ? M.frame.halo : .7, core = toward(colour, WHITE, .72), lines = [], gold = [], VW = 100 * M.aspect;
   for (const s of M.strokes) {
     const pts = partial(s, progress); if (!pts) continue;
-    lines.push(s.dot ? `<circle cx="${(pts[0][0] * 100).toFixed(2)}" cy="${(pts[0][1] * 100).toFixed(2)}" r="${(s.r * 100).toFixed(2)}" fill="CURRENT" stroke="none"/>` : `<polyline points="${pts.map(p => (p[0] * 100).toFixed(2) + "," + (p[1] * 100).toFixed(2)).join(" ")}" stroke-width="${(s.w * 100).toFixed(2)}"/>`);
+    (s.part === "gold" && glow ? gold : lines).push(s.dot ? `<circle cx="${(pts[0][0] * 100).toFixed(2)}" cy="${(pts[0][1] * 100).toFixed(2)}" r="${(s.r * 100).toFixed(2)}" fill="CURRENT" stroke="none"/>` : `<polyline points="${pts.map(p => (p[0] * 100).toFixed(2) + "," + (p[1] * 100).toFixed(2)).join(" ")}" stroke-width="${(s.w * 100).toFixed(2)}"/>`);
   }
-  const g = (col, scale, extra) => `<g fill="none" stroke="${rgb(col)}" stroke-linecap="round" stroke-linejoin="round"${extra}>${lines.join("").replaceAll("CURRENT", rgb(col)).replace(/stroke-width="([\d.]+)"/g, (_, w) => `stroke-width="${(+w * scale).toFixed(2)}"`)}</g>`;
+  const g = (col, scale, extra, ls = lines) => `<g fill="none" stroke="${rgb(col)}" stroke-linecap="round" stroke-linejoin="round"${extra}>${ls.join("").replaceAll("CURRENT", rgb(col)).replace(/stroke-width="([\d.]+)"/g, (_, w) => `stroke-width="${(+w * scale).toFixed(2)}"`)}</g>`;
   const filter = glow ? `<defs><filter id="${fid}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter></defs>` : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}">${filter}${glow ? g(colour, 2.2, ` opacity="${halo.toFixed(2)}" filter="url(#${fid})"`) : ""}${g(glow ? core : colour, glow ? .62 : 1, "")}</svg>`;
+  const halos = glow ? g(colour, 2.2, ` opacity="${halo.toFixed(2)}" filter="url(#${fid})"`, [...gold, ...lines]) : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VW} 100" width="${size * M.aspect}" height="${size}">${filter}${halos}${gold.length ? g(toward(LEGEND_GOLD, WHITE, .3), .7, "", gold) : ""}${g(glow ? core : colour, glow ? .62 : 1, "")}</svg>`;
 }
-// Draws a sigil on a canvas, neon: the mark box maps to (x, y, size, size). Transform the
+// Draws a sigil on a canvas, neon: the mark box maps to (x, y, size, size) (a legendary one's to (x, y, 2 size, size)). Transform the
 // context first to lay it on a plane. level: null (default) the bare sigil, or a creature level.
-function drawSigil(ctx, id, { x = 0, y = 0, size = 64, level = null, colour = sigilColour(id), progress = 1, glow = true } = {}) {
-  const M = sigilMark(id, level), halo = M.frame ? M.frame.halo : .7;
+function drawSigil(ctx, id, { x = 0, y = 0, size = 64, level = null, colour = sigilColour(id), progress = 1, glow = true, legendary = false } = {}) {
+  const M = sigilMark(id, level, legendary), halo = M.frame ? M.frame.halo : .7, gold = toward(LEGEND_GOLD, WHITE, .3);
   ctx.save(); ctx.translate(x, y); ctx.scale(size, size); ctx.lineCap = "round"; ctx.lineJoin = "round";
   const pass = (col, wk, alpha, blur) => {
     ctx.globalAlpha = alpha; ctx.strokeStyle = ctx.fillStyle = rgb(col); ctx.shadowColor = rgb(colour); ctx.shadowBlur = blur;
     for (const s of M.strokes) {
       const pts = partial(s, progress); if (!pts) continue;
+      if (s.part === "gold" && glow && wk < 1) { ctx.strokeStyle = ctx.fillStyle = rgb(gold); } else ctx.strokeStyle = ctx.fillStyle = rgb(col);
       ctx.beginPath();
       if (s.dot) { ctx.arc(pts[0][0], pts[0][1], s.r * (wk > 1 ? 1.5 : 1), 0, Math.PI * 2); ctx.fill(); continue; }
       ctx.lineWidth = s.w * wk; pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
     }
   };
-  if (glow) { pass(colour, 2.4, Math.min(halo, .7) * .55, size / 12); pass(toward(colour, WHITE, .72), .62, 1, size / 30); }
+  if (glow) { pass(colour, 2.4, Math.min(halo, .7) * .55, size / 12); pass(toward(colour, WHITE, .72), M.legendary ? .7 : .62, 1, size / 30); }
   else pass(colour, 1, 1, 0);
   ctx.restore();
 }
@@ -6218,7 +6297,7 @@ function inkAt(strokes, u, v, half) {
   let best = Infinity;
   for (const s of strokes) {
     if (s.start >= best) break;
-    if (s.dot) { if (Math.hypot(u - s.pts[0][0], v - s.pts[0][1]) < SIGIL_DOT + half - SIGIL_STROKE / 2) best = s.start; continue; }
+    if (s.dot) { if (Math.hypot(u - s.pts[0][0], v - s.pts[0][1]) < (s.r ?? SIGIL_DOT) + half - (s.w ?? SIGIL_STROKE) / 2) best = s.start; continue; }
     let run = 0;
     for (let i = 1; i < s.pts.length; i++) {
       const a = s.pts[i - 1], b = s.pts[i], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy, l = Math.sqrt(l2);
@@ -6234,7 +6313,17 @@ function inkAt(strokes, u, v, half) {
 function sigilHit(id, u, v, w = SIGIL_STROKE / 2) { return inkAt(sigilStrokes(id), u, v, w) < Infinity; }
 // A pixel glyph of the bare sigil, `size` px tall: { w, h, m }, m 1 where there is ink. Strokes
 // are at least one pixel thick at any size. For carving and small icons.
-function sigilGlyph(id, size = 16, { progress = 1 } = {}) {
+// legendary: the legendary sigil, `size` px tall and twice as wide, its border's pixels also marked in `gold`.
+function sigilGlyph(id, size = 16, { progress = 1, legendary = false } = {}) {
+  if (legendary) {
+    const M = legendMark(id, size >= LEGEND_DETAIL_PX), w = size * M.aspect, m = new Uint8Array(w * size), gold = new Uint8Array(w * size), half = Math.max(SIGIL_STROKE * M.k * .6, .62 / size);
+    const art = M.strokes.filter(s => s.part !== "gold"), rim = M.strokes.filter(s => s.part === "gold");
+    for (let y = 0; y < size; y++) for (let x = 0; x < w; x++) {
+      const u = (x + .5) / size, v = (y + .5) / size, i = y * w + x;
+      if (inkAt(art, u, v, half) <= progress) m[i] = 1; else if (inkAt(rim, u, v, Math.max(SIGIL_STROKE * .31, .5 / size)) <= progress) m[i] = gold[i] = 1;
+    }
+    return { w, h: size, m, gold };
+  }
   const strokes = sigilStrokes(id), m = new Uint8Array(size * size), half = Math.max(SIGIL_STROKE / 2, .62 / size);
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (inkAt(strokes, (x + .5) / size, (y + .5) / size, half) <= progress) m[y * size + x] = 1;
   return { w: size, h: size, m };
@@ -6246,8 +6335,8 @@ function sigilGlyph(id, size = 16, { progress = 1 } = {}) {
 // each pixel's arrival in the draw-on and its distance from the nearest core line, so painting a
 // frame is cheap. The core is at least 1 px thick both ways; the halo reaches 2-4 px past it.
 const GROUND_PITCH = 35 * Math.PI / 180;
-function sigilField(id, { level = 0, size = 64, squash = 1 } = {}) {
-  const M = sigilMark(id, level), F = M.frame || sigilFrame(0), w = Math.ceil(size) + 4, h = Math.ceil(size * squash) + 4;
+function sigilField(id, { level = 0, size = 64, squash = 1, legendary = false } = {}) {
+  const M = legendary ? legendMark(id, size >= LEGEND_DETAIL_PX) : sigilMark(id, level), F = M.frame || sigilFrame(0), w = Math.ceil(size * M.aspect) + 4, h = Math.ceil(size * squash) + 4;
   // halo, in pixels past the core: the glyph's stays tight so its lines stay distinct at every level; the rings and ornament carry the extra glow
   const reach = 2 + 2 * F.halo, reachOf = kind => kind === 1 ? Math.min(2, reach) : reach + 1;
   const atCore = new Float32Array(w * h).fill(Infinity), atHalo = new Float32Array(w * h).fill(Infinity), fall = new Float32Array(w * h).fill(Infinity), part = new Uint8Array(w * h), haloPart = new Uint8Array(w * h);
@@ -6255,7 +6344,7 @@ function sigilField(id, { level = 0, size = 64, squash = 1 } = {}) {
   const segs = [];
   for (const s of M.strokes) {
     // the glyph's core lines stay thin in pixels, however big the mark, so its marks never run together
-    const P = s.pts.map(([u, v]) => [2 + u * size, 2 + v * size * squash]), kind = s.part === "sigil" ? 1 : 2, core = Math.max(.6, Math.min((s.dot ? s.r : s.w / 2) * size, kind === 1 ? (s.dot ? 1.6 : 1) + .15 * F.level : Infinity));
+    const P = s.pts.map(([u, v]) => [2 + u * size, 2 + v * size * squash]), kind = s.part === "sigil" ? 1 : s.part === "gold" ? 3 : 2, core = Math.max(.6, Math.min((s.dot ? s.r : s.w / 2) * size, kind === 1 ? (s.dot ? 1.6 : 1) + .15 * F.level : Infinity));
     if (s.dot) { segs.push({ a: P[0], b: P[0], at0: s.start, at1: s.start, core, kind }); continue; }
     let run = 0;
     for (let i = 1; i < P.length; i++) { const l = Math.hypot(s.pts[i][0] - s.pts[i - 1][0], s.pts[i][1] - s.pts[i - 1][1]); segs.push({ a: P[i - 1], b: P[i], at0: s.start + run / s.len * (s.end - s.start), at1: s.start + (run + l) / s.len * (s.end - s.start), core, kind }); run += l; }
@@ -6274,17 +6363,20 @@ function sigilField(id, { level = 0, size = 64, squash = 1 } = {}) {
       if (d / R < fall[i]) { fall[i] = d / R; haloPart[i] = g.kind; }
     }
   }
-  return { id, level, frame: F, w, h, size, squash, reach, atCore, atHalo, fall, part, haloPart };
+  return { id, level, legendary: !!M.legendary, frame: F, w, h, size, squash, reach, atCore, atHalo, fall, part, haloPart };
 }
 // The leashing rune on the ground: a sigilField foreshortened by the pitch, sized by its
 // level's frame (metres) at pxPerMetre.
-function groundSigil(id, { level = 0, pxPerMetre = 16, pitch = GROUND_PITCH } = {}) { return sigilField(id, { level, size: sigilFrame(level).metres * pxPerMetre, squash: Math.sin(pitch) }); }
+// legendary: the legendary sigil, as tall (deep) as a legend's rune and twice as wide.
+function groundSigil(id, { level = 0, pxPerMetre = 16, pitch = GROUND_PITCH, legendary = false } = {}) { return sigilField(id, { level, legendary, size: sigilFrame(legendary ? 3 : level).metres * pxPerMetre, squash: Math.sin(pitch) }); }
 // The floating form, upright and facing the camera, for the leash stack over the witch's head:
 // `px` across for a baby, larger for higher levels (the same frames, scaled down).
-function floatSigil(id, { level = 0, px = 16 } = {}) { return sigilField(id, { level, size: px * floatScale(level) }); }
+// legendary: as tall as a legend's and twice as wide.
+function floatSigil(id, { level = 0, px = 16, legendary = false } = {}) { return sigilField(id, { level, legendary, size: px * floatScale(legendary ? 3 : level) }); }
 const floatScale = level => Math.pow(sigilFrame(level).metres / 2, .6);
 // A floating sigil's height in metres, for the leash stack (a baby's is tuning.size).
-const floatSize = (level, tuning = STACK_TUNING) => tuning.size * floatScale(level);
+// A legendary one is a legend's height (and LEGEND_ASPECT times as wide).
+const floatSize = (level, tuning = STACK_TUNING, legendary = false) => tuning.size * floatScale(legendary ? 3 : level);
 
 // Paints a field at t seconds after its draw-on began: the strokes trace in order over
 // SIGIL_DRAW_TIME with a bright, flickering pen tip, then glow and pulse (legends shimmer).
@@ -6301,7 +6393,7 @@ function paintSigilField(g, t, { colour = sigilColour(g.id), canvas, progress, m
     const tip = written ? 0 : Math.max(0, 1 - (p - g.atCore[i]) * 10);
     const sh = F.shimmer && written ? .86 + .14 * Math.sin(t * 2.4 - ((i % g.w) + Math.floor(i / g.w) * 1.7) * .12) : 1; // a slow wave of light across it
     if (g.atCore[i] <= p) {
-      const col = g.part[i] === 2 ? toward(colour, WHITE, .35 + .2 * pulse) : toward(core, WHITE, tip);
+      const col = g.part[i] === 3 ? toward(toward(LEGEND_GOLD, WHITE, .25 + .2 * pulse), WHITE, tip) : g.part[i] === 2 ? toward(colour, WHITE, .35 + .2 * pulse) : toward(core, WHITE, tip);
       d.set([col[0], col[1], col[2], Math.round(255 * Math.min(1, (g.part[i] === 2 ? .8 : 1) * flicker * sh))], i * 4);
     } else {
       const f = Math.max(0, 1 - g.fall[i]), k = g.haloPart[i] === 1 ? Math.min(haloK, .6) : haloK; // soft falloff; the glyph's own halo capped
@@ -6337,13 +6429,14 @@ class SigilStack {
   constructor(tuning = {}) { this.tuning = { ...STACK_TUNING, ...tuning }; this.items = []; this.head = [0, 0, 0]; this.vel = [0, 0, 0]; this.time = 0; this.seed = 0; }
   // A new sigil joins at the bottom (newest), lifting off from `from` (a world point, e.g. the
   // ground rune it was picked up from) or appearing just above her head.
-  push(id, level = 0, from) {
-    const size = floatSize(level, this.tuning), start = from ? [...from] : [this.head[0], this.head[1] + size / 2, this.head[2]];
-    this.items.unshift({ id, level, size, pos: start, vel: [0, 0, 0], phase: hash2(this.seed++, 3, 11) * Math.PI * 2, enter: from ? 0 : 1, from: from ? [...from] : null });
+  // legendary: its legendary sigil, a legend's height and twice as wide.
+  push(id, level = 0, from, { legendary = false } = {}) {
+    const size = floatSize(level, this.tuning, legendary), start = from ? [...from] : [this.head[0], this.head[1] + size / 2, this.head[2]];
+    this.items.unshift({ id, level, legendary, width: size * (legendary ? LEGEND_ASPECT : 1), size, pos: start, vel: [0, 0, 0], phase: hash2(this.seed++, 3, 11) * Math.PI * 2, enter: from ? 0 : 1, from: from ? [...from] : null });
     return this.items[0];
   }
-  // Takes the bottom sigil to place it: returns { id, level, pos } (where it was, in the world).
-  place() { const it = this.items.shift(); return it ? { id: it.id, level: it.level, pos: [...it.pos] } : null; }
+  // Takes the bottom sigil to place it: returns { id, level, legendary, pos } (where it was, in the world).
+  place() { const it = this.items.shift(); return it ? { id: it.id, level: it.level, legendary: it.legendary, pos: [...it.pos] } : null; }
   get length() { return this.items.length; }
   // Advances by dt seconds. Give her head's world position (`head`), or her velocity (`velocity`,
   // metres per second, which moves the head).
@@ -6375,12 +6468,12 @@ class SigilStack {
     }
     this.head = newHead; this.vel = v;
   }
-  // Where each sigil is, bottom (newest) first: { id, level, size (metres tall), offset (from her head; its centre), tilt
+  // Where each sigil is, bottom (newest) first: { id, level, legendary, size (metres tall), width (metres), offset (from her head; its centre), tilt
   // (radians, leaning from the one below; positive to the right), enter (0..1 of its lift-off) }.
   layout() {
     return this.items.map((it, i) => {
       const below = i === 0 ? this.head : this.items[i - 1].pos, dx = it.pos[0] - below[0], dy = it.pos[1] - below[1];
-      return { id: it.id, level: it.level, size: it.size, offset: it.pos.map((x, j) => x - this.head[j]), tilt: Math.atan2(dx, Math.max(.05, dy)), enter: it.enter };
+      return { id: it.id, level: it.level, legendary: it.legendary, size: it.size, width: it.width, offset: it.pos.map((x, j) => x - this.head[j]), tilt: Math.atan2(dx, Math.max(.05, dy)), enter: it.enter };
     });
   }
 }
