@@ -12,7 +12,7 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
 
 ## `map`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
 
-The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). shape circle: the playable areas are those whose centres lie within radius areas of home's (7.9: about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is a circle, soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
+The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). shape circle: the playable areas are those whose centres lie within radius areas of home's (7.9: about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is a circle, soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. coast (Ed, 2026-10-06: "The island shouldn't be a totally perfect circle; make the coast slightly irregular"): every edge round home (the playable areas', the buffer's, her flight's) wobbles by the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
 
 | knob | type | range |
 |---|---|---|
@@ -22,6 +22,9 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.push` | number | 0 to … |
 | `map.drift` | number | 0 to … |
 | `map.edge` | number | 0 to … |
+| `map.coast.amp` | number | 0 to … |
+| `map.coast.harmonics` | number | 0 to … |
+| `map.coast.detail` | number | 0 to … |
 | `areaSize` | number | 0 to … |
 | `areaScale` | number | 0 to … |
 | `arena.radius` | number | 0 to … |
@@ -762,6 +765,18 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
+| `legendClearing.rim.spacing` | number | 0 to … |
+| `legendClearing.rim.chance` | number | 0 to … |
+| `legendClearing.rim.out` | number | 0 to … |
+| `legendClearing.rim.spread` | number | 0 to … |
+| `legendClearing.rim.gap` | number | 0 to … |
+| `legendClearing.grove.reach` | number | 0 to … |
+| `legendClearing.grove.density` | number | 0 to … |
+| `legendClearing.grove.tallest` | number | 0 to … |
+| `legendClearing.grove.scale` | number | 0 to … |
+| `legendClearing.grove.gap` | number | 0 to … |
+| `legendClearing.grove.soft` | number | 0 to … |
+| `legendClearing.grove.jitter` | number | 0 to … |
 | `legendClearing.species` | record |  |
 
 ## `relics`
@@ -1317,12 +1332,13 @@ Off (Ed, 2026-10-06: "Remove the floating numbers above the runestones."); set o
 
 ## `canopyCutout`
 
-In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole.
+In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. whole: how much the fade goes by each crown's middle rather than by each pixel (Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode... If these had softer edges, it would be fine"): by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it.
 
 | knob | type | range |
 |---|---|---|
 | `canopyCutout.screenFraction` | number | 0 to … |
 | `canopyCutout.edge` | number | 0 to … |
+| `canopyCutout.whole` | number | 0 to … |
 
 ## `find`, `tone`, `bloom`, `tiltShift`
 
@@ -1349,6 +1365,7 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `tiltShift.on` | boolean |  |
 | `tiltShift.where` | string | "before" / "after" |
 | `tiltShift.sky` | boolean |  |
+| `tiltShift.skyBlur` | number | 0 to … |
 | `tiltShift.strength` | number | 0 to … |
 | `tiltShift.band` | number | 0 to … |
 | `tiltShift.centre` | number | 0 to … |

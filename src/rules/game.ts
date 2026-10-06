@@ -2,7 +2,7 @@
 import { MOVEMENT } from "./movement";
 import { bodyRadius, spaceOut } from "./spacing";
 import { onAreaDone } from "./leylines";
-import { questPlaced, type QuestEvent } from "./quest";
+import { questOutside, questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
@@ -11,7 +11,7 @@ import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
-import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
+import { befriend, danceAt, invitableNow, runeNear, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
@@ -217,8 +217,8 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
 }
 
 /** The affection rules the 💌s and the view use (issue #87): the state machine's meter
- *  (rules/affection.ts). A full meter makes a wild one happy; filled again (states.leash "again"),
- *  a happy one is leashed. How many letters fill it is the tuning's invites.hits (buffs change it);
+ *  (rules/affection.ts). A full meter makes a wild one happy; she leashes it by picking up its rune (states.leash
+ *  "pickup", rules/leash.ts), or by filling it again (the old "again"). How many letters fill it is the tuning's invites.hits (buffs change it);
  *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace). */
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, data = { ...STATES, affection: { ...STATES.affection, hits: t.invites.hits, gap: 0 } };
@@ -386,7 +386,8 @@ function fixedStep(g: Game, controls: Controls): void {
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
-  const placedBefore = g.leash.events.length;
+  // (the relic button's events: added after the leash's step, which starts its events afresh)
+  const relicEvents: LeashEvent[] = [];
   // Far from her on the ground, or from its sigil, a party animal travels (rules/travel.ts): quiet, along area borders.
   stepTravel(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
@@ -394,24 +395,28 @@ function fixedStep(g: Game, controls: Controls): void {
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
   if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.pickRadius)) {
     sigil = false; place = false;
-    g.leash.events.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: g.clock.time });
+    relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: g.clock.time }); // (after the leash's step, which starts its events afresh)
   }
   if ((sigil || place) && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.pickRadius);
+    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.pickRadius, g.map);
     if (r) {
       sigil = false; place = false;
-      if ("picked" in r) g.leash.events.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: g.clock.time });
-      else g.leash.events.push({ kind: "relicPlaced", id: r.placed.id, x: r.legend.x, z: r.legend.z, at: g.clock.time });
+      if ("picked" in r) relicEvents.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: g.clock.time });
+      else if ("placed" in r) relicEvents.push({ kind: "relicPlaced", id: r.placed.id, x: r.legend.x, z: r.legend.z, at: g.clock.time });
+      else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  g.leash.events.push(...relicEvents);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), g.clock.time, dt, t, M);
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") refundDash(W.dash, g.clock.time, charges);
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
-  for (const e of g.leash.events.slice(placedBefore)) if (e.kind === "placed" && e.at === g.clock.time) {
-    const L = questPlaced(g.map, g.creatures, (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
+  for (const e of g.leash.events.slice()) if (e.kind === "placed" && e.at === g.clock.time) {
+    const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), L = questPlaced(g.map, g.creatures, ids, g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
+    // (the right creature, but outside its legend's clearing: a gentle cue, and nothing happens)
+    if (!L) { const O = questOutside(g.map, g.creatures, ids, k => g.party.areas.has(k), e.id, e.x, e.z); if (O) g.leash.events.push(outsideCircle(g, O)); }
     if (L) {
       g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
       if (!g.party.areas.has(cellKey(L.cell))) onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave; after it, the line has moved on already)
@@ -472,7 +477,9 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
     // Its besiegers march wherever she is (stepped from now on as busy, not only once she comes near).
     for (const c of g.creatures) if (c.siege === key && !c.gone) S.busy.add(c.id);
-    // Its happy ones (#87) come and dance: round it, or at the area's party places (rules/partyGuests.ts).
+    // Its wild babies turn happy at once (Ed, 2026-10-06), its legend's circle's too; then its happy ones (#87) come and
+    // dance: round it, or at the area's party places (rules/partyGuests.ts).
+    for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && !c.fleeUntil && stateOf(c) === "wild" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) befriend(c, time);
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area
@@ -500,9 +507,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     asleep: c => dormant(g, c) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be)
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
-    exit: (x, z) => {
-      return exitPoint(g.map.bounds, x, z, 30);
-    },
+    exit: (x, z) => mapExit(g.map, x, z),
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
@@ -560,10 +565,23 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
 /** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers
  *  marching on, and the next wave sooner (Ed, 2026-10-05: a loss takes party.lossPenalty seconds
  *  off the countdown, "all waves sooner is the wrong kind of penalty"). */
+/** Where something running off the map heads: just past its nearest edge. */
+function mapExit(map: ForestMap, x: number, z: number): { x: number; z: number } {
+  return exitPoint(map.bounds, x, z, 30);
+}
+
 export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
   const S = g.combat, time = g.clock.time;
   if (key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
-  else { g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key); }
+  else {
+    g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key);
+    // Its happy babies run off home, for good (Ed, 2026-10-06); leashed ones (and parked ones) stay hers.
+    for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) {
+      const out = mapExit(g.map, c.x, c.z);
+      Object.assign(c, { fleeUntil: Infinity, fleeX: out.x, fleeZ: out.z, dancing: false, fight: undefined });
+      S.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); S.busy.add(c.id);
+    }
+  }
   marchOn(S, key, g.creatures);
   const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0);
   g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
@@ -639,6 +657,9 @@ function stepDancefloor(g: Game, waveBefore: number): void {
 
 /** An area legend that isn't up and about (asleep, waking, or asleep for good): no roaming, no
  *  fighting, nothing to invite (DESIGN.md, "Sleeping legends"). */
+/** The cue for something put down by a sleeping legend but outside its clearing: at its clearing's middle (or the legend). */
+const outsideCircle = (g: Game, L: Creature) => { const c = g.map.legendClearing(L.cell[0], L.cell[1]); return { kind: "outsideCircle" as const, id: L.id, x: c?.x ?? L.x, z: c?.z ?? L.z, at: g.clock.time }; };
+
 export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless"); // (asleep or restless: scenery, untouchable)
 
 /** The legends' states (Ed, 2026-10-05, #87; rules/legends.ts): asleep, dreaming; restless while
@@ -668,6 +689,9 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
 /** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and
  *  dances there, at a party place in the first free slot round it (guestSlot, guestGap: by the guests already there). */
 export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
+  // A legend's circle's baby dances in its circle, on its open floor (Ed, 2026-10-06: "Happy Circle baby should stay in its
+  // circle, though it can dance there").
+  if (c.circle) { const k = c.circle; danceAt(c, { x: k.x, z: k.z + k.r * 0.3 }, k.r * 0.45); return; }
   const spot = guestSpot(c, soundsystem, partySpots(g.map, cell, g.tuning));
   if (spot.kind === "soundsystem") { danceAt(c, spot, spot.r); return; }
   // the guests already round this place, and their slots

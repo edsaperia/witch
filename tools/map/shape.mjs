@@ -27,7 +27,7 @@ function draw(map, box, W, label) {
     const fill = c[0] === C[0] && c[1] === C[1] ? "#6a5520" : map.playable(c[0], c[1]) ? `hsl(${(t * 137.5) % 360},${30 + v * 4}%,${26 + v * 3}%)` : map.inBuffer(c[0], c[1]) ? `rgb(${44 + v * 4},${44 + v * 4},${50 + v * 4})` : `rgb(${16 + v * 2},${15 + v * 2},${22 + v * 2})`;
     p.push(`<rect x="${X(x)}" y="${Z(z)}" width="${(step * k + 0.6).toFixed(1)}" height="${(step * k + 0.6).toFixed(1)}" fill="${fill}"/>`);
   }
-  if (b.circle) p.push(`<circle cx="${X(b.circle.x)}" cy="${Z(b.circle.z)}" r="${(b.circle.r * k).toFixed(1)}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`);
+  if (b.circle) { const c = b.circle, pts = []; for (let i = 0; i < 360; i++) { const a = (i / 360) * Math.PI * 2, r = c.r * map.coast(a); pts.push(`${X(c.x + Math.cos(a) * r)},${Z(c.z + Math.sin(a) * r)}`); } p.push(`<polygon points="${pts.join(" ")}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`); }
   else p.push(`<rect x="${X(b.minX)}" y="${Z(b.minZ)}" width="${((b.maxX - b.minX) * k).toFixed(1)}" height="${((b.maxZ - b.minZ) * k).toFixed(1)}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`);
   p.push(`<rect x="${X(e.minX)}" y="${Z(e.minZ)}" width="${((e.maxX - e.minX) * k).toFixed(1)}" height="${((e.maxZ - e.minZ) * k).toFixed(1)}" fill="none" stroke="#555" stroke-dasharray="4 4"/>`);
   for (const lc of map.legendClearings) p.push(`<circle cx="${X(lc.x)}" cy="${Z(lc.z)}" r="${Math.max(1.5, lc.r * k).toFixed(1)}" fill="#8fd18f" fill-opacity=".7"/>`);

@@ -20,6 +20,7 @@ const { load, close } = await openRules();
 const { TUNING } = await load("/src/rules/tuning.ts");
 const { newGame, stepGame, STEP, affectionOf } = await load("/src/rules/game.ts");
 const { cellKey } = await load("/src/rules/party.ts");
+const { runeNear } = await load("/src/rules/creatureStates.ts");
 
 const g = newGame(SEED, TUNING), W = g.witches[0], A = () => affectionOf(g);
 g.clock.paused = false;
@@ -27,6 +28,7 @@ const odd = [], seen = new Set(), note = (key, text) => { if (seen.has(key)) ret
 const finite = v => v === undefined || Number.isFinite(v);
 const B = g.map.bounds, inside = (x, z, pad = 200) => x > B.minX - pad && x < B.maxX + pad && z > B.minZ - pad && z < B.maxZ + pad;
 const last = new Map(); // id -> { x, z, at } while busy
+const wasPlaced = new Set(); // (a "picked" of one she'd put down isn't a new invite; one picked off a happy creature's rune is)
 const tally = { invited: 0, happy: 0, placed: 0, hits: 0, knockouts: 0, wavesSeen: 0, soundsLost: 0, letters: 0, maxLetters: 0, maxCreatures: 0 };
 const stepMs = [];
 let mode = "invite", goal = null, rest = false, steps = 0;
@@ -78,8 +80,10 @@ while (g.clock.time < end && !g.over) {
   } else {
     if (g.leash.stack.length >= CARRY) { mode = "carry"; goal = null; }
     else if (w.mode === "ground") {
-      const k = nearestInvitable(60);
-      if (k) {
+      // One won over (happy): its sigil lies as a rune at its feet; walk to it and pick it up to leash it (Ed, 2026-10-06).
+      const rn = runeNear(g.creatures, w.x, w.z, 30, g.clock.time), k = rn ? null : nearestInvitable(60);
+      if (rn) { if (go(rn) < TUNING.leash.pickRadius * 0.6) { c.moveX = 0; c.moveZ = 0; if (steps % 10 === 0) c.place = true; } }
+      else if (k) {
         const d = dist(k, w);
         if (d > 14) go(k); else if (d < 8) { go(k); c.moveX *= -1; c.moveZ *= -1; }
         c.fire = true; c.aimX = k.x - w.x; c.aimZ = k.z - w.z;
@@ -96,7 +100,7 @@ while (g.clock.time < end && !g.over) {
 
   // What happened this step.
   for (const e of W.invites.events) { if (e.kind === "hit" && !e.spent) tally.hits++; if (e.kind === "happy") tally.happy++; }
-  for (const e of g.leash.events) { if (e.kind === "invited" && e.at === g.clock.time) tally.invited++; if (e.kind === "placed" && e.at === g.clock.time) tally.placed++; }
+  for (const e of g.leash.events) { if ((e.kind === "invited" || (e.kind === "picked" && !wasPlaced.has(e.id))) && e.at === g.clock.time) tally.invited++; if (e.kind === "placed") wasPlaced.add(e.id); if (e.kind === "placed" && e.at === g.clock.time) tally.placed++; }
   for (const e of g.koEvents) if (e.kind === "down" && e.at === g.clock.time) tally.knockouts++;
   for (const e of g.combat.events) if (e.kind === "soundDestroyed" && e.at === g.clock.time) tally.soundsLost++;
   tally.maxLetters = Math.max(tally.maxLetters, W.invites.letters.length);
