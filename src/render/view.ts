@@ -17,6 +17,7 @@ import type { LightSource } from "../rules/forest";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
 import { Clouds } from "./clouds";
+import { Smoke } from "./smoke";
 import { Ride } from "./ride";
 import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
@@ -100,6 +101,11 @@ export class View {
   private sky: Sky;
   /** Real clouds over the bend, with lightning. */
   private clouds: Clouds;
+  /** Smoke rising from the fires (Ed, round 13). */
+  private smoke: Smoke;
+  /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
+  private mounds: number[] = [];
+  private moundsAt = { x: Infinity, z: Infinity };
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   decorBatches = new Map<string, SpriteBatch>();
@@ -251,6 +257,8 @@ export class View {
     this.scene.add(this.sky.mesh);
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);
+    this.smoke = new Smoke(t.smoke);
+    this.scene.add(this.smoke.mesh);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
     const cs = t.canopyShadow;
@@ -496,6 +504,21 @@ export class View {
   private frameStart = 0;
   /** Whether the hills' next strip was all worked out last frame. */
   private heightsReady = true;
+  /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
+  private updateSmoke(g: Game, time: number): void {
+    const S = this.smoke, t = g.tuning, w = g.witch, R = t.smoke.range;
+    S.begin();
+    for (const f of this.worldFires) S.add(f.x, groundHeight(f.x, f.z), f.z, f.scale, w.x, w.z);
+    this.partyObjects.fires(g, time, w.x, w.z, R, (x, z, size) => S.add(x, groundHeight(x, z), z, size, w.x, w.z));
+    if (Math.hypot(w.x - this.moundsAt.x, w.z - this.moundsAt.z) > R * 0.25) { // the charcoal burner's mound smoulders by its hut (art/setpieces.js charcoal-hut: the mound to its right, a little nearer)
+      this.moundsAt = { x: w.x, z: w.z }; this.mounds = [];
+      const k = t.setPieceScale;
+      for (const p of g.forest.setPiecesNear(w.x, w.z, R * 1.3)) if (AREA_TYPES[p.type]?.id === "twiggy-forest") this.mounds.push(p.x + 2.3 * k, p.z + 1.0 * k);
+    }
+    for (let i = 0; i < this.mounds.length; i += 2) S.add(this.mounds[i], groundHeight(this.mounds[i], this.mounds[i + 1]), this.mounds[i + 1], 1.2, w.x, w.z);
+    S.end(time);
+  }
+
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
 
   /** Her sprite batch, from the assets' witch frames. */
@@ -712,6 +735,7 @@ export class View {
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
+    this.updateSmoke(g, time);
     if (t.bare) { this.dancefloor.update(time, this.ground, g); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time;

@@ -201,6 +201,82 @@
       ],
       "additionalProperties": false
     },
+    "smoke": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "warm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pixel": {
+          "type": "boolean"
+        },
+        "perFire": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxFires": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "rate",
+        "life",
+        "rise",
+        "speed",
+        "size",
+        "grow",
+        "drift",
+        "opacity",
+        "warm",
+        "pixel",
+        "perFire",
+        "maxFires",
+        "range"
+      ],
+      "additionalProperties": false
+    },
     "sky": {
       "type": "object",
       "properties": {
@@ -5886,6 +5962,7 @@
     "areaEdgeBlend",
     "groundBlend",
     "ground",
+    "smoke",
     "sky",
     "wind",
     "groundCover",

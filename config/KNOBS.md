@@ -69,12 +69,26 @@ The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises 
 | `ground.hills.octaves` | number | 0 to … |
 | `ground.hills.shade` | number | 0 to … |
 
-## `sky`
+## `smoke`, `sky`
 
-The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness). clouds (Ed, 2026-10-04: real ones, seen only from underneath, over the bend): count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey). lightning: about every so many seconds a cloud in view flickers (flashes per strike), sometimes with a forked bolt toward the horizon; ground: the faint flash on the forest (0 none).
+Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading. on: false turns it off.
 
 | knob | type | range |
 |---|---|---|
+| `smoke.on` | boolean |  |
+| `smoke.rate` | number | 0 to … |
+| `smoke.life` | number | 0 to … |
+| `smoke.rise` | number | 0 to … |
+| `smoke.speed` | number | 0 to … |
+| `smoke.size` | number | 0 to … |
+| `smoke.grow` | number | 0 to … |
+| `smoke.drift` | number | 0 to … |
+| `smoke.opacity` | number | 0 to … |
+| `smoke.warm` | number | 0 to … |
+| `smoke.pixel` | boolean |  |
+| `smoke.perFire` | number | 0 to … |
+| `smoke.maxFires` | number | 0 to … |
+| `smoke.range` | number | 0 to … |
 | `sky.on` | boolean |  |
 | `sky.stars` | number | 0 to … |
 | `sky.moon` | number | 0 to … |
