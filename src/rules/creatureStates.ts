@@ -12,6 +12,10 @@ export interface StatesData { affection: { hits: number[]; drain: number; drainD
 export const STATES = raw as unknown as StatesData;
 
 /** A creature's state now. */
+/** Asleep (the one shared sleep: Creature.asleep): still, out of every fight, no rune, no 💌s. (A sleeping legend's own
+ *  legendState "asleep" is its own thing: this is set on legends only once the party's over.) */
+export const isAsleep = (c: Pick<Creature, "asleep">): boolean => !!c.asleep;
+
 export function stateOf(c: Creature): State {
   if (c.leashed) return "leashed";
   if (c.state === "happy" || c.legendState === "happy") return "happy";
@@ -48,6 +52,7 @@ export function enrage(c: Creature): boolean {
 /** Whether it can be invited now: a wild one (dazed or not; not a legend), or a happy one for its
  *  second step (states.leash). Enraged ones, legends and leashed ones can't. */
 export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
+  if (c.asleep || c.bed) return false; // (asleep, or walking home to bed: rules/partyOver.ts)
   if (data.partyEgg && partyEggOpen(c)) return true; // (the Easter egg: a happy legend takes 💌s, 100 of them)
   if (c.gone || c.leashed || (c.fleeUntil && !c.dazedUntil) || c.level === LEGEND || c.boss) return false;
   const s = stateOf(c);
@@ -73,6 +78,7 @@ export function makePartyLegend(c: Creature, time: number): void {
  *  legend circle's baby, once happy, carries one like any other). `time` given: whether it's ready yet
  *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
 export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
+  if (c.asleep || c.bed) return false;
   if (c.partyLegend) { if (data.leash !== "pickup" || c.gone || c.leashed) return false; } // (a party legend's: the egg)
   else if (data.leash !== "pickup" || c.gone || c.leashed || c.boss || c.level === LEGEND || c.legendState === "happy" || stateOf(c) !== "happy") return false;
   return time === undefined || time >= (c.happyAt ?? -Infinity) + (data.pickupDelay ?? 0);
