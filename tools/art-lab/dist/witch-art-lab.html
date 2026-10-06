@@ -4308,6 +4308,8 @@ const GENOMES = [
   { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3, stretch: 1.6 } },
   { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .6, val: .45 }, body: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, legW: .85, back: "arch" }, head: { snout: .65, snoutD: .6 }, parts: { ears: { kind: "round", size: .9 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["mane"] },
   { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
+  // the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
+  { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .44, len: 1.1, chest: .11, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .32, legW: .7 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: true }, legend: ["crystals"], texture: { kind: "smooth" } },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
@@ -5585,6 +5587,8 @@ const SIGILS = {
   marten: [stave(.32), L([.3, .2], [.5, .32], [.7, .2]), ...pair(A(.3, .14, .07, 90, -180)), A(.28, .56, .22, 0, 150), D(.28 + .22 * Math.cos(150 * Math.PI / 180), .56 + .22 * Math.sin(150 * Math.PI / 180)), FOOT],
   // a flame at the head, legs as bent ticks along the spine, spots
   salamander: [stave(.3), bow([.5, .3], [.5, .06], .35), bow([.5, .3], [.5, .06], -.35), ...pair(L([.5, .42], [.32, .38], [.26, .48]), L([.5, .64], [.32, .6], [.26, .7])), FOOT, ...pair(D(.38, .52))],
+  // the fen's newt: a crest waving along the spine, legs as bent ticks, spots on the belly
+  newt: [stave(.24), wave(.5, .3, .06, .07, 1.5), ...pair(L([.5, .42], [.32, .38], [.26, .48]), L([.5, .64], [.32, .6], [.26, .7])), FOOT, ...pair(D(.4, .56))],
   // a shining star at the tail end: a ring with rays
   glowworm: [stave(.4), A(.5, .27, .1, 90, 450), ...rays(.5, .27, .15, .25, [0, 60, 120, 180, 240, 300]), FOOT],
   // eight legs round a body, hanging from a thread
@@ -5600,7 +5604,7 @@ const SIGILS = {
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta" };
+const SIGIL_NEON = { badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -6568,7 +6572,28 @@ function tallPiece(kind, o, def, st, r, ppm = 16) {
 //   settings            { treeDensity, groundCover } (config/area-types.json's numbers, which win when it names the area)
 //   ground              its own ground genome over its floor kind's (art/ground.js)
 // The creature a recipe names must be a species the game has (art/genome/species.js and the configs keyed by species).
-const AREA_RECIPES = [];
+// ---- inlined from art/recipes/fen.js ----
+// The fen (#119): the first area type written as a recipe, data alone (art/recipes.js says what each field is). Ed's columns as
+// for the 30: open peaty water and sedge under alder and willow carr, the newt its creature.
+const FEN = {
+  id: "fen", name: "Fen", creature: "newt", by: "recipe", leaf: .23, floor: ["moss", .2, .5, .32],
+  text: { floor: "peat moss and sedge", wall: "black pools", small: "sedge and reeds", big: "aspen and alder carr", set: "a punt sunk among the sedge" },
+  wall: [["water", { w: 1.4 }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: 1.2 }]],
+  big: [["tree", { type: "aspen", scale: .9 }], ["tree", { type: "alder", minor: true, scale: .85, gnarl: .6 }]],
+  ponds: true, wet: true, pathKinds: ["stepping"],
+  setPiece: ["punt", "a punt sunk among the sedge", 1],
+  layout: {
+    pattern: "edgeOnly", density: .45, clump: .6, glades: { count: 2, size: [12, 18] },
+    heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .85, lean: { dir: 0, amount: 0 },
+    terrain: ["pools", "hollows"], decor: { rate: .25, ruins: .2, rocks: .1, freak: .1, lake: .5, modern: .1 },
+    feel: "Black peaty pools between tussocks of sedge, alder and willow carr round the rim; still, low and full of small lives.",
+  },
+  flora: { species: [["aspen", .45], ["alder", .35], ["willow", .2]], palette: { sat: .85, val: .9 } },
+  settings: { treeDensity: .55, groundCover: { density: .8, kinds: ["moss", "blades"] } },
+};
+
+
+const AREA_RECIPES = [FEN];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -9533,6 +9558,7 @@ const LEGEND_POSES = {
   ram: { sink: .42, droop: .9, drop: [], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 4, stones: 2, flowers: 0 } },
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
+  newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
   raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },
