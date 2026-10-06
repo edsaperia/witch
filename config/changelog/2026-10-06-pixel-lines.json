@@ -2,6 +2,8 @@
   "version": null,
   "items": [
     "Projectiles, sparks, the leash's beads and the attack rings are drawn in chunky art pixels now, with their glow still soft round them",
-    "The ley line is much easier to see: a bright pixel line with a soft glow, on every ground and from the treetops; its pulse and the boot ring are pixels too"
+    "The ley line is much easier to see: a bright pixel line with a soft glow, on every ground and from the treetops; its pulse and the boot ring are pixels too",
+    "The ley line shows along its whole length, from the treehouse to its tip, as bright all the way: through the trees, over the hills, and on into every stone",
+    "Invitations are pixel art now as they spin, orbit, fall and rest, their pixels lined up with everything else's"
   ]
 }

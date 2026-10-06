@@ -57,14 +57,14 @@ describe("the whole line, from home to its tip (Ed, 2026-10-06: \"The leyline sh
     const chain = leyChain(g.party, g.map);
     for (let i = 0; i < 2000 && !ley.currentLink(); i++) ley.update(1, () => chain, () => new THREE.Vector3(1, 1, 1), 0, 0);
     const geo = (ley as unknown as { cur: { geo: InstanceType<typeof THREE.BufferGeometry> } }).cur.geo;
-    const P = geo.getAttribute("position"), L = geo.getAttribute("aLink"), A = geo.getAttribute("aT");
+    const at = (k: string) => geo.getAttribute(k) as InstanceType<typeof THREE.BufferAttribute>, P = at("position"), L = at("aLink"), A = at("aT");
     // From the treehouse's front (home's stone), link after link with no gap, to the last stone.
     expect(Math.hypot(P.getX(0) - chain.stones[0].x, P.getZ(0) - chain.stones[0].z)).toBeLessThan(0.01); // (float32)
     let last = 0;
     for (let i = 2; i < P.count; i += 2) {
       const along = L.getX(i) + A.getX(i), was = L.getX(i - 2) + A.getX(i - 2);
       expect(along).toBeGreaterThanOrEqual(was - 1e-6);
-      if (L.getX(i) === L.getX(i - 2)) expect(Math.hypot(P.getX(i) - P.getX(i - 2), P.getZ(i) - P.getZ(i - 2))).toBeLessThanOrEqual(2 + 1e-6);
+      if (L.getX(i) === L.getX(i - 2)) expect(Math.hypot(P.getX(i) - P.getX(i - 2), P.getZ(i) - P.getZ(i - 2))).toBeLessThanOrEqual(2.001); // (float32)
       last = along;
     }
     expect(last).toBeCloseTo(chain.stones.length - 1);
