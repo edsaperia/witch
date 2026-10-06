@@ -9,11 +9,19 @@ import { spawnCreatures } from "./creatures";
 import { LEGENDS, placeRelics } from "./legends";
 import { TUNING } from "./tuning";
 
-const SEEDS = Array.from({ length: 30 }, (_, i) => 1 + i * 7919);
+// (871136: Ed's, v1628: the ghost area 6,8's runestone and heron legend at (1061, 1507), on area 5,7's ground in the Old pinewood)
+const SEEDS = [871136, ...Array.from({ length: 30 }, (_, i) => 1 + i * 7919)];
 const LC = TUNING.legendClearing;
 
 describe("point features keep apart", () => {
-  it(`over ${SEEDS.length} seeds: every area owns its runestone's ground; no legend near a runestone; circles clear of runestones, each other and relics`, () => {
+  it("Ed's map (seed 871136): no runestone and legend on one spot in the Old pinewood", () => {
+    const map = generateMap(871136, TUNING), creatures = spawnCreatures(map), at = { x: 1061, z: 1507 };
+    expect(map.playable(6, 8), "the ghost area 6,8 owns no ground: not playable").toBe(false);
+    const stones = map.cells.map(([x, y]) => map.soundsystemSpot(x, y)).filter(s => Math.hypot(s.x - at.x, s.z - at.z) < 30);
+    const legends = creatures.filter(c => c.boss && Math.hypot(c.x - at.x, c.z - at.z) < 30);
+    for (const s of stones) for (const L of legends) expect(Math.hypot(s.x - L.x, s.z - L.z)).toBeGreaterThanOrEqual(15);
+  }, 120_000);
+  it(`over ${SEEDS.length} seeds (Ed's among them): every area owns its runestone's ground; no legend near a runestone; circles clear of runestones, each other and relics`, () => {
     for (const seed of SEEDS) {
       const map = generateMap(seed, TUNING), creatures = spawnCreatures(map), relics = placeRelics(map, new Forest(map));
       const home = map.centreCell, stones = map.cells.filter(([x, y]) => !(x === home[0] && y === home[1])).map(([x, y]) => ({ cell: [x, y], ...map.soundsystemSpot(x, y) }));
