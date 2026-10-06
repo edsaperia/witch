@@ -483,6 +483,50 @@ const report = await b.page.evaluate(async () => {
     if (Math.abs(moor.big.filter(a => a.kind === "standingstone").reduce((t, a) => t + (a.sparse || 0), 0) - .12) > 1e-6) bad.push("the standing stones' sparse share changed");
     res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk and fallen log one piece; logs, mushroom rings and stone circles too; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   }
+  { // generated bridges (art/props/bridges.js, under ?props=gen): each bridge's variants draw and stand, none alike, nothing NaN,
+    // the hand-made piece's size within a third either way (so a crossing's corridor still fits), nothing glowing
+    const bad = [], EM = new Set([...G.EMISSIVE]);
+    for (const id of G.BRIDGE_IDS) {
+      const base = G.pathPieceSprite(id, st), seen = new Set();
+      for (let k = 0; k < 8; k++) {
+        const p = G.pathPieceSprite(`${id}~${k}`, st), sp = p.sp, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (!Array.from(sp.n).every(Number.isFinite) || sp.m.filter(Boolean).length < 200) { bad.push(`${id}~${k} empty or NaN`); continue; }
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${id}~${k} floats`);
+        if (seen.has(key)) bad.push(`${id}~${k} repeats another`); seen.add(key);
+        if (sp.w < base.sp.w * .67 || sp.w > base.sp.w * 1.33) bad.push(`${id}~${k} ${sp.w} px wide, the piece ${base.sp.w}`);
+        if (Array.from(sp.m).some(m => EM.has(m))) bad.push(`${id}~${k} glows`);
+      }
+    }
+    const posts = new Set(); // the fingerposts (only generated): standing, none alike, 1.4 to 3 m tall, unlit
+    for (let k = 0; k < 8; k++) {
+      const p = G.pathPieceSprite(`fingerpost~${k}`, st), sp = p.sp, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+      let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++;
+      if (!bottom || !Array.from(sp.n).every(Number.isFinite) || posts.has(key) || p.metres.height < 1.4 || p.metres.height > 3 || Array.from(sp.m).some(m => EM.has(m))) bad.push(`fingerpost~${k}: ${p.metres.height} m${bottom ? "" : ", floats"}${posts.has(key) ? ", repeats" : ""}`);
+      posts.add(key);
+    }
+    res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit; fingerposts 8 variants, standing, none alike, 1.4 to 3 m, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
+  { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
+    // (6 to 12 m across or tall) with their origin on the sprite, one warm glowing touch at most (a lantern, embers), a punt's and a jetty's pool mostly water;
+    // and an area naming one as its set piece gets it built (setPiece3d)
+    const bad = [], EM = new Set([...G.EMISSIVE]), water = [G.M.WATER, G.M.BODY2, G.M.ACCENT, G.M.WEB, G.M.GLINT];
+    for (const kind of G.SET_PROP_KINDS) {
+      const seen = new Set();
+      for (let seed = 0; seed < 12; seed++) {
+        const p = G.genSetPiece(kind, { seed }, G.AREA_BY_ID["muddy-forest"], st), sp = p.sp, n = sp.m.filter(Boolean).length, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (n < 400 || !Array.from(sp.n).every(Number.isFinite)) { bad.push(`${kind} ${seed}: ${n} px`); continue; }
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${kind} ${seed} floats`);
+        if (seen.has(key)) bad.push(`${kind} ${seed} repeats another`); seen.add(key);
+        const big = Math.max(p.metres.width, p.metres.height), o = p.origin; if (big < 6 || big > 12) bad.push(`${kind} ${seed}: ${p.metres.width} x ${p.metres.height} m`);
+        if (!(o.x >= 0 && o.x <= sp.w && o.y >= 0 && o.y <= sp.h)) bad.push(`${kind} ${seed}: origin off it`);
+        const lit = new Set(Array.from(sp.m).filter(m => EM.has(m) && m !== G.M.GLINT)); if (lit.size > 1 || [...lit].some(m => m !== G.M.GLOW)) bad.push(`${kind} ${seed} glows in ${[...lit].join(",")}`);
+        if ((kind === "punt" || kind === "jetty") && sp.m.filter(m => water.includes(m)).length / n < .3) bad.push(`${kind} ${seed}: little water`);
+      }
+    }
+    const fake = { ...G.AREA_BY_ID["muddy-forest"], id: "test-area" }, a = G.setPiece3d("jetty", fake, st), b = G.setPiece3d("jetty", { ...fake, id: "another-area" }, st);
+    if (!a.sp || !a.origin || a.sp.w * a.sp.h === b.sp.w * b.sp.h && a.sp.w === b.sp.w) bad.push("setPiece3d: a generated kind isn't built, or two areas get the same one");
+    res.push({ what: "set-piece generator: punts, jetties, rings and heaps, 12 variants each, standing, none alike, 6 to 12 m, origin on it, one warm glow at most, punts and jetties in their pools; an area naming one gets its own", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
   { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
     // (its trees across their heights, or for the open areas the tall pieces); the tall pieces (snag, cairn, standing stone, pillar, spire, stalagmite)
     // stand on the ground, 4.5 to 12 m tall, and are flagged sparse (a small share of the area's big objects)
@@ -512,7 +556,7 @@ const report = await b.page.evaluate(async () => {
       const o = x.origin, inside = o && o.x >= 0 && o.x <= x.sp.w && o.y >= 0 && o.y <= x.sp.h, tight = x.metres.height * 16 === x.sp.h || Math.abs(x.metres.height * 16 - x.sp.h) < 1; // its origin on the sprite; metres match the cropped sprite
       if (!(big >= 6 && big <= 12 && bottom > 0 && inside && tight)) bad.push(`${A.id} ${x.metres.width}x${x.metres.height} m${bottom ? "" : ", floating"}${inside ? "" : ", origin"}${tight ? "" : ", metres"}`);
     }
-    res.push({ what: "set pieces: all 30 areas have one; the 20 new ones stand on the ground, 6 to 12 m across or tall, cropped (metres match the sprite), their origin on it", good: !bad.length && sizes.length === 20, info: bad.join(", ") || `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
+    res.push({ what: "set pieces: every area has one; the new ones (20 or more) stand on the ground, 6 to 12 m across or tall, cropped (metres match the sprite), their origin on it", good: !bad.length && sizes.length >= 20, info: bad.join(", ") || `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
   }
   { // modern relics, the playground, the sports grounds: each standing (decals flat), sized, tall ones split, only the flagged ones glow; arrangements name real pieces, at most one glowing piece each; sports grounds 15 to 30 m across
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);

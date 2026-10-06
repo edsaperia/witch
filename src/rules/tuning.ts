@@ -3,6 +3,34 @@ import raw from "../../config/tuning.json";
 
 export interface CameraModeTuning { angleIn: number; angleOut: number; distanceIn: number; distanceOut: number }
 
+/** The lighting's spooky grade (render/mood.ts), drawing only. */
+export interface Mood {
+  /** The ambient (shadow) light's hue (0 to 1) and its brightness, times the tuning's. */
+  ambientHue: number; ambient: number;
+  /** The moonlight's hue, saturation and brightness (times the tuning's). */
+  moonHue: number; moonSat: number; moon: number;
+  /** The fog's colour (hue, saturation, brightness 0 to 1) and where it starts and is whole (m from the witch). */
+  hazeHue: number; hazeSat: number; haze: number; hazeNear: number; hazeFar: number;
+  /** The low ground mist's strength. */
+  mist: number;
+  /** The witch's glow's hue and saturation. */
+  glowHue: number; glowSat: number;
+  /** The grade over the finished picture (post.ts): its amount (0 off), the share of colour drained from the dark and middle tones, the brightness above which nothing is graded, and the tint's hue and saturation. */
+  grade: number; gradeDesat: number; gradePivot: number; gradeHue: number; gradeSat: number;
+  /** The party as the warm light in the wood: the soundsystems' light colours (rgb 0 to 1, one per variant, instead of their crystal colours), their reach and strength (times the tuning's); the party decor's lights, how many an area (instead of partyObjects.lightsPerArea), and their reach and strength (times their own). */
+  partyWarm: number[][]; partyReach: number; partyStrength: number; decorLights: number; decorReach: number; decorStrength: number;
+  /** Each area type's own fog, grade tint and mist (by area id; "home" for home), over the above; eased across at areaEase a second. */
+  /** The characters' moonlight rim (the witch, creatures): its hue, saturation and strength (0 off); and how much of her own glow lights the witch (0: none). */
+  rimHue?: number; rimSat?: number; rim?: number; witchGlow?: number;
+  /** The moon's fill on upward faces (canopy tops, open ground), a share of the moon. */
+  moonUp?: number;
+  /** The ley line's colour ("#rrggbb"; left out, each area's own) and its brightness times this. */
+  leyRgb?: string; leyBright?: number;
+  /** A berry's halo: its size (m) and strength times this (left out: 2.8 m, 1). */
+  berryHalo?: number; berryGlow?: number;
+  areas?: Record<string, Partial<{ hazeHue: number; hazeSat: number; haze: number; gradeHue: number; gradeSat: number; mist: number }>>; areaEase?: number;
+}
+
 export interface Tuning {
   mapAreas: number;
   areaSize: number;
@@ -195,9 +223,11 @@ export interface Tuning {
   home: { margin: number; gap: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
-  paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
+  paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; fingerposts: boolean; treesOnBroken: number; edgeBushes: number; bushBoost: number };
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
+  /** The lighting's mood (render/mood.ts): spooky (the grade below) or plain (the light as it was). */
+  light?: { mood: "spooky" | "plain"; spooky: Mood };
   /** The beat clock (rules/beat.ts): the base tempo; each wave's tempo (from the music style's arc),
    *  eased over rampBars from the block line (blockBars) its music lands on. */
   beat: { bpm: number; tempos?: number[]; rampBars?: number; blockBars?: number };
