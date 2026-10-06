@@ -203,14 +203,14 @@ export function pairOffset(pose: string, facing: 1 | -1, t: Tuning): { dx: numbe
 export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: number; z: number }[], floor: Floor, players: PlayerView[], time: number, dt: number, t: Tuning): void {
   const P = t.partyWitches, r = s.rand;
   // Who should be here: one for each soundsystem playing, however many (Ed, 2026-10-06).
-  const want = new Map(areas.map(a => [a.key, a])), treetop = players.some(p => p.treetop), byId = new Map<number, PartyWitch>();
-  for (const w of s.list) byId.set(w.id, w);
+  const want = new Map(areas.map(a => [a.key, a])), treetop = players.some(p => p.treetop);
   for (const w of s.list) if (w.state !== "leaving" && !want.has(w.area)) {
     release(s, w, time);
     const a = Math.atan2(w.z - floor.z, w.x - floor.x);
     Object.assign(w, { state: "leaving", since: time, from: { x: w.x, z: w.z }, to: { x: floor.x + Math.cos(a) * P.flyFrom, z: floor.z + Math.sin(a) * P.flyFrom } });
   }
-  for (const [key, a] of want) if (!s.list.some(w => w.area === key && w.state !== "leaving")) {
+  const here = new Set<string>(); for (const w of s.list) if (w.state !== "leaving") here.add(w.area); // (a set: no list scan per soundsystem)
+  for (const [key, a] of want) if (!here.has(key)) {
     // She flies in from her soundsystem's side of the floor.
     const ang = Math.atan2(a.z - floor.z, a.x - floor.x), from = { x: floor.x + Math.cos(ang) * P.flyFrom, z: floor.z + Math.sin(ang) * P.flyFrom }, to = spot(r, floor, t);
     s.list.push({ id: s.nextId++, seed: Math.floor(r() * 1e6), area: key, ...from, y: P.flyHeight, facing: to.x >= from.x ? 1 : -1, away: to.z < from.z,
@@ -230,6 +230,7 @@ export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: numbe
   // anything new; who's here is still kept. Coming back in range, they all pick something new at once, so it's lively.
   const near = !players.length || players.some(p => Math.hypot(p.x - floor.x, p.z - floor.z) <= (p.treetop ? P.simRangeTreetop : P.simRange));
   if (!near) { s.idle = true; players.forEach((_, i) => { s.players[i] = { still: 0, activity: null, pose: null, partner: null, until: 0, facing: s.players[i]?.facing ?? 1 }; }); return; } // (a player far off isn't idling into it)
+  const byId = new Map<number, PartyWitch>(); for (const w of s.list) byId.set(w.id, w);
   if (s.idle) { s.idle = false; for (const w of s.list) if (w.state === "floor") { release(s, w, time); w.until = time; } }
   // On the floor: each activity, and a new one when it's done.
   for (const w of s.list) {
