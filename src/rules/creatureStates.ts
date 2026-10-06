@@ -8,7 +8,7 @@ import raw from "../../config/states.json";
 import { LEGEND, type Creature } from "./creatures";
 
 export type State = "wild" | "happy" | "leashed" | "enraged";
-export interface StatesData { affection: { hits: number[]; drain: number; drainDelay: number; gap: number }; leash: "again" | "hold"; holdTime: number }
+export interface StatesData { affection: { hits: number[]; drain: number; drainDelay: number; gap: number }; leash: "pickup" | "again" | "hold"; /** Seconds after the hearts before a happy one's rune can be picked up (leash "pickup"). */ pickupDelay: number; holdTime: number }
 export const STATES = raw as unknown as StatesData;
 
 /** A creature's state now. */
@@ -33,7 +33,7 @@ export const huntsWitch = (s: State) => s === "wild" || s === "enraged";
 /** Invited: happy, for good (never enraged), whole again; it stays in its own area. */
 export function befriend(c: Creature, time: number): void {
   c.state = "happy"; c.enraged = false; c.siege = undefined; c.fight = undefined; c.dazedUntil = undefined;
-  c.affection = undefined; c.wanderTo = undefined;
+  c.affection = undefined; c.wanderTo = undefined; c.happyAt = time;
   if (c.hp !== undefined) { c.hp = undefined; c.healedAt = time; }
 }
 
@@ -52,6 +52,27 @@ export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
   const s = stateOf(c);
   if (s === "wild") return !c.wanderTo;
   return s === "happy" && !c.guard && c.legendState !== "happy" && data.leash === "again";
+}
+
+/** Its sigil rune (Ed, 2026-10-06; states.leash "pickup"): a happy one carries its sigil as a rune on the ground at its
+ *  feet, moving with it, from its hearts on; she leashes it by picking that up (E within leash.pickRadius: rules/leash.ts).
+ *  None for those that can't be leashed: happy legends (and legends) only (Ed, 2026-10-06: "There are no more guards"; a
+ *  legend circle's baby, once happy, carries one like any other). `time` given: whether it's ready yet
+ *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
+export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
+  if (data.leash !== "pickup" || c.gone || c.leashed || c.boss || c.level === LEGEND || c.legendState === "happy" || stateOf(c) !== "happy") return false;
+  return time === undefined || time >= (c.happyAt ?? -Infinity) + (data.pickupDelay ?? 0);
+}
+
+/** The nearest happy creature whose rune is ready within r of (x, z), or null. */
+export function runeNear(creatures: readonly Creature[], x: number, z: number, r: number, time: number, data: StatesData = STATES): Creature | null {
+  let best: Creature | null = null, bd = r;
+  for (const c of creatures) {
+    if (Math.abs(c.x - x) > r || Math.abs(c.z - z) > r || !hasRune(c, time, data)) continue;
+    const d = Math.hypot(c.x - x, c.z - z);
+    if (d <= bd) { bd = d; best = c; }
+  }
+  return best;
 }
 
 /** Happy ones in an area with a soundsystem enjoy the party (#87): they keep round it, dancing

@@ -11,7 +11,7 @@ import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
-import { befriend, danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
+import { befriend, danceAt, invitableNow, runeNear, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
@@ -224,8 +224,8 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
 }
 
 /** The affection rules the 💌s and the view use (issue #87): the state machine's meter
- *  (rules/affection.ts). A full meter makes a wild one happy; filled again (states.leash "again"),
- *  a happy one is leashed. How many letters fill it is the tuning's invites.hits (buffs change it);
+ *  (rules/affection.ts). A full meter makes a wild one happy; she leashes it by picking up its rune (states.leash
+ *  "pickup", rules/leash.ts), or by filling it again (the old "again"). How many letters fill it is the tuning's invites.hits (buffs change it);
  *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace). */
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, data = { ...STATES, affection: { ...STATES.affection, hits: t.invites.hits, gap: 0 } };
@@ -408,7 +408,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
   if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.pickRadius)) {
     sigil = false; place = false;
-    g.leash.events.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
+    relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht }); // (after the leash's step, which starts its events afresh)
   }
   if ((sigil || place) && g.witch.mode === "ground") {
     const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.pickRadius, g.map);
@@ -419,7 +419,7 @@ function fixedStep(g: Game, controls: Controls): void {
       else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g));
