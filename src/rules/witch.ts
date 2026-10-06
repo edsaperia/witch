@@ -66,7 +66,6 @@ export function newWitch(x: number, z: number): WitchState {
 }
 
 export const witchHeight = (w: WitchState, t: Tuning) => lerp(t.groundHeight, t.treetopHeight, smoothstep(w.lift));
-export const witchMaxSpeed = (w: WitchState, t: Tuning) => lerp(t.groundSpeed, t.treetopSpeed, smoothstep(w.lift));
 /** How much of the canopy shows: 0 in ground mode, 1 in treetop mode. */
 export const canopyShown = (w: WitchState) => smoothstep(w.lift);
 

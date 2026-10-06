@@ -5,6 +5,7 @@
 // Which area each spot belongs to comes from a data texture filled in small tiles near the
 // camera (working the partition out for the whole map at once takes seconds on a phone).
 import * as THREE from "three";
+import { BAYER_GLSL, VALUE_NOISE_GLSL } from "./shaders";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
@@ -71,16 +72,7 @@ uniform float uBare;  // ?bare=2: a flat grey ground with contour lines (0.5 m) 
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 ${HEIGHT_GLSL}
-float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float vnoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
-  float a = hash(i), b = hash(i + vec2(1, 0)), c = hash(i + vec2(0, 1)), d = hash(i + vec2(1, 1));
-  return a + (b - a) * u.x + (c - a) * u.y + (a - b - c + d) * u.x * u.y;
-}
-// An ordered (Bayer) threshold on the art's pixel grid, 0 to 1.
-float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
-float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
-vec3 hsv(float h, float s, float v) {
+${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
   vec3 k = clamp(abs(mod(fract(h) * 6.0 + vec3(0, 4, 2), 6.0) - 3.0) - 1.0, 0.0, 1.0);
   return clamp(v, 0.0, 1.0) * mix(vec3(1.0), k, clamp(s, 0.0, 1.0));
 }

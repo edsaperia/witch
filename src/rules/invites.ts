@@ -8,7 +8,6 @@
 // legends block letters; anything else (her own party, happy ones) lets them through; scenery never
 // stops them (Ed). A creature takes affection from at most one letter every perAnimalHitGap seconds
 // (Ed: stacked multi-shot helps against crowds, not to win one creature faster). No drawing here.
-import { inviteCreature, invitable as canInvite, type LeashState } from "./leash";
 import { LEGEND, type Creature } from "./creatures";
 import { bodyRadius } from "./spacing";
 import type { Tuning } from "./tuning";
@@ -54,8 +53,15 @@ export interface Letter {
 /** A lantern on the ground (Glow-worm): any animal it touches before it goes out is a hit. */
 export interface Lantern { x: number; z: number; until: number; n: number }
 
-export type InviteEventKind = "shot" | "hit" | "blocked" | "fizzled" | "happy";
-export interface InviteEvent { kind: InviteEventKind; x: number; z: number; at: number; /** the creature hit, blocked by or made happy */ id?: number; n?: number; /** a hit inside the creature's gap: it lands (a small pop) but adds no affection */ spent?: boolean }
+/** What a 💌 did this frame: thrown or fizzled (its number n); landed on a creature (id; spent: inside the
+ *  creature's gap, a small pop that adds no affection) or stopped by one; or a creature won over (happy). */
+interface InviteEventAt { x: number; z: number; at: number }
+export type InviteEvent =
+  | (InviteEventAt & { kind: "shot" | "fizzled"; n: number; id?: undefined; spent?: undefined })
+  | (InviteEventAt & { kind: "hit"; id: number; n: number; spent: boolean })
+  | (InviteEventAt & { kind: "blocked"; id: number; n: number; spent?: undefined })
+  | (InviteEventAt & { kind: "happy"; id: number; n?: undefined; spent?: undefined });
+export type InviteEventKind = InviteEvent["kind"];
 
 export interface Invites {
   letters: Letter[];
@@ -87,14 +93,11 @@ export interface Invites {
   events: InviteEvent[];
   /** When each creature last took affection from a letter (perAnimalHitGap). */
   lastLove: Map<number, number>;
-  /** Affection per creature, 0 to 1 (the stand-in below; the state machine will own it). */
-  meter: Map<number, number>;
 }
 
-export const newInvites = (): Invites => ({ letters: [], queue: [], bursts: 0, chargeFrom: null, charge: 0, cacheAt: 0, orbitAt: [], lanterns: [], burstLeft: 0, nextVolley: 0, readyAt: 0, burstAt: -Infinity, ax: 1, az: 0, next: 0, events: [], lastLove: new Map(), meter: new Map() });
+export const newInvites = (): Invites => ({ letters: [], queue: [], bursts: 0, chargeFrom: null, charge: 0, cacheAt: 0, orbitAt: [], lanterns: [], burstLeft: 0, nextVolley: 0, readyAt: 0, burstAt: -Infinity, ax: 1, az: 0, next: 0, events: [], lastLove: new Map() });
 
-/** The affection interface (issue #87), which the creature state machine provides. Until it lands,
- *  `standInAffection` does the job with today's leash: a full meter invites (leashes) the creature. */
+/** The affection interface (issue #87): rules/affection.ts behind it (game.ts affectionOf). */
 export interface Affection {
   /** Whether a 💌 can affect it now. */
   invitable(c: Creature): boolean;
@@ -104,25 +107,6 @@ export interface Affection {
   hit(c: Creature, amount: number, time: number): void;
   /** Its meter, 0 to 1, or null when it has none. */
   affection(c: Creature): number | null;
-}
-
-/** How many 💌s fill a creature at its level (babies few, adults many). */
-export const hitsNeeded = (c: Creature, t: Tuning) => t.invites.hits[Math.min(c.level, t.invites.hits.length - 1)];
-
-export function standInAffection(s: Invites, leash: LeashState, t: Tuning): Affection {
-  return {
-    invitable: c => canInvite(c) && c.level !== LEGEND && !c.boss && (!c.legendState || c.legendState === "awake"),
-    blocksLetters: c => !!c.enraged || !!c.boss || c.level === LEGEND,
-    hit(c, amount, time) {
-      const v = (s.meter.get(c.id) ?? 0) + amount / Math.max(1, hitsNeeded(c, t));
-      if (v >= 1 - 1e-9) {
-        s.meter.delete(c.id);
-        inviteCreature(leash, c, c.x, c.z, time);
-        s.events.push({ kind: "happy", x: c.x, z: c.z, at: time, id: c.id });
-      } else s.meter.set(c.id, v);
-    },
-    affection: c => s.meter.get(c.id) ?? null,
-  };
 }
 
 export interface InviteControls {
@@ -320,11 +304,6 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
   });
 
   for (const [id, at] of s.lastLove) if (time - at >= I.perAnimalHitGap) s.lastLove.delete(id);
-  // The stand-in's meters drain slowly when not being hit.
-  for (const [id, v] of s.meter) {
-    const left = v - I.drain * dt, k = creatures[id];
-    if (left <= 0 || !k || k.leashed || k.gone || k.enraged) s.meter.delete(id); else s.meter.set(id, left);
-  }
 }
 
 /** How far the next burst has recharged: 0 just fired, 1 ready (for the action bar). */

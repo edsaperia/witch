@@ -46,6 +46,10 @@ export class Input {
   /** The 💌's aim from the cursor: the world direction from her to the ground under (clientX, clientY). */
   aimFrom: ((clientX: number, clientY: number) => { x: number; z: number } | null) | null = null;
   private pointer: { x: number; y: number } | null = null;
+  /** Where the mouse is (client pixels), or null before it has moved: for the aim reticle. */
+  get cursor(): { x: number; y: number } | null { return this.pointer; }
+  /** The ground under the cursor from her at the last read (metres), or null. */
+  lastAim: { x: number; z: number } | null = null;
   private mouseDown = false;
   private mouseClicked = false;
   private rightClicked = false;
@@ -107,6 +111,7 @@ export class Input {
     let fire = this.mouseDown || this.mouseClicked || k(KEYS.invite) > 0 || p(KEYS.invite);
     this.mouseClicked = false;
     const cursorAim = this.pointer && this.aimFrom ? this.aimFrom(this.pointer.x, this.pointer.y) : null;
+    this.lastAim = cursorAim;
     let aimX = cursorAim?.x ?? 0, aimZ = cursorAim?.z ?? 0;
     this.pressed.clear();
 

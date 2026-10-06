@@ -881,12 +881,13 @@ Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they 
 
 ## `witchHealth`
 
-The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight.
+The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight. grace: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three (balance, 2026-10-06: DECISION FOR ED, 0.5).
 
 | knob | type | range |
 |---|---|---|
 | `witchHealth.hits` | number | 0 to … |
 | `witchHealth.repairTime` | number | 0 to … |
+| `witchHealth.grace` | number | 0 to … |
 
 ## `knockout`
 
@@ -902,13 +903,14 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 
 ## `dash`, `spells`
 
-The dash, a blink (Ed, 2026-10-04, 2026-10-05; W, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's steering (or flying, or facing) in one step, then cooldown seconds before the next. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.
+The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click or Space, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's steering (or flying, or facing) in one step, then cooldown seconds before the next. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.
 
 | knob | type | range |
 |---|---|---|
 | `dash.distance` | number | 0 to … |
 | `dash.gone` | number | 0 to … |
 | `dash.cooldown` | number | 0 to … |
+| `dash.buffer` | number | 0 to … |
 | `dash.clear.tree` | number | 0 to … |
 | `dash.clear.decor` | number | 0 to … |
 | `dash.clear.sound` | number | 0 to … |
@@ -1056,12 +1058,12 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `bloom.threshold` | number | 0 to … |
 | `tiltShift.on` | boolean |  |
 | `tiltShift.where` | string | "before" / "after" |
+| `tiltShift.sky` | boolean |  |
 | `tiltShift.strength` | number | 0 to … |
 | `tiltShift.band` | number | 0 to … |
 | `tiltShift.centre` | number | 0 to … |
 | `tiltShift.treetop.strength` | number | 0 to … |
 | `tiltShift.treetop.band` | number | 0 to … |
-| `tiltShift.sky` | boolean |  |
 
 ## `population`
 
@@ -1087,7 +1089,7 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.nightmare.at` | array of number |  |
 | `dreams.nightmare.faces` | array of string |  |
 
-## `wildLegends`, `creatureSimRadius`, `creatureSpeed`
+## `wildLegends`, `creatureSimRadius`
 
 Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one legend of its kind, sleeping, sunk into the ground like scenery (no AI, no glow, no health bar; sink: the share of it under the ground, moss: how far its colours go toward moss). When its area's wave comes it wakes, angry: wake seconds of heaving out of the ground (untouchable), then a mini-boss guarding its own area with its move set (movement.json legends). Beaten, it sinks back to sleep for good. A happy legend (home's from the start; others by their quest, or the debug key O) guards its area for her like a parked party animal, anything in its area within guard metres of where it stands, with its move set, and heals heal hp a second while no enemy is near; beaten, it sleeps for good and its buff ends. Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
 
@@ -1104,6 +1106,18 @@ Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one
 | `wildLegends.aura` | number | 0 to … |
 | `wildLegends.glow` | number | 0 to … |
 | `creatureSimRadius` | number | 0 to … |
+
+## `simLod`, `creatureSpeed`
+
+The simulation's level of detail (Ed, 2026-10-05: creatures far from the action frozen until she comes closer; rules/simLod.ts). Wild creatures roaming are simulated every step within full.ground metres of the witch on the ground, full.treetop over the treetops (each a little past the most the view shows from there at any zoom: 178 and 262 m in a 1900 by 1240 window); beyond, coarsely: once every `every` steps (60 a second), by that many steps' time at once, taking turns; past creatureSimRadius not at all. Besiegers marching on a soundsystem are simulated every step within full of her or within action metres of a soundsystem, a party animal or a happy legend's guard; elsewhere coarsely, marching `every` steps at a time. Going out, one stays in full until band metres past the line, so none flickers. The debug overlay's sim line counts them.
+
+| knob | type | range |
+|---|---|---|
+| `simLod.full.ground` | number | 0 to … |
+| `simLod.full.treetop` | number | 0 to … |
+| `simLod.action` | number | 0 to … |
+| `simLod.band` | number | 0 to … |
+| `simLod.every` | number | 0 to … |
 | `creatureSpeed` | number | 0 to … |
 
 ## `setPieceChance`, `setPieceScale`, `setPieceClear`
