@@ -119,12 +119,14 @@ void main() {
       float front = shore - 1.0 - 4.0 * lap;
       vec3 col;
       if (bd > front + uPixel * 1.5) {
-        // The sea: dark and calm, the night sky mirrored in it (its gradient, its stars, the moon's road), rippling.
+        // The sea: calm, a moonlit deep blue-teal (Ed's playtest, 2026-10-06: "The sea is too dark"), the night sky mirrored
+        // in it (its glow low down, its stars, the moon's road), rippling, swells catching the light.
         vec3 V = normalize(cameraPosition - vec3(p.x, vWorld.y, p.y));
         vec2 rip = vec2(vnoise(p * vec2(0.3, 1.1) + vec2(uTime * 0.35, 0.0)), vnoise(p * vec2(0.22, 0.8) + vec2(0.0, uTime * 0.27) + 19.0)) - 0.5;
         vec3 R = reflect(-V, normalize(vec3(rip.x * 0.035, 1.0, rip.y * 0.08)));
         float up = clamp(R.y, 0.0, 1.0);
-        col = mix(uHazeColour * 0.5, vec3(0.004, 0.006, 0.016), smoothstep(0.0, 0.3, up)) + vec3(0.004, 0.008, 0.014); // (calm: the sky's dark top over most of it, its glow low down)
+        col = mix(uHazeColour * 0.9 + vec3(0.1, 0.17, 0.22), vec3(0.09, 0.18, 0.26), smoothstep(0.0, 0.3, up)); // (the sky's glow low down, the deep blue-teal over most of it)
+        col *= 0.9 + 0.25 * (rip.x + 0.5); // (its ripples, lighter and darker)
         vec2 sc = floor(R.xz / max(0.08, R.y) * 26.0);
         float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
         if (hs > 0.9965) col += vec3(0.42, 0.46, 0.56) * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0)); // a star
@@ -132,8 +134,8 @@ void main() {
         float spec = dot(R, moon);
         if (spec > 0.993) col = mix(col, uMoon + vec3(0.25), 0.8);
         else if (spec > 0.975) col = mix(col, uMoon * 0.7, 0.3);
-        else if (mod(px.y, 6.0) < 1.0 && vnoise(px / vec2(9.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.8) col += vec3(0.02, 0.026, 0.04); // a swell catching the light
-        if (bd < front + 1.0 + lap) col = mix(col, vec3(0.55, 0.6, 0.66), 0.25); // the shallows over the sand
+        else if (mod(px.y, 6.0) < 1.0 && vnoise(px / vec2(9.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.75) col += vec3(0.09, 0.13, 0.15); // a swell catching the light
+        if (bd < front + 1.0 + lap) col = mix(col, vec3(0.42, 0.66, 0.7), 0.4); // the shallows over the sand
         gl_FragColor = vec4(haze(col, vWorld), 1.0);
         return;
       }

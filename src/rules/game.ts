@@ -19,7 +19,7 @@ import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, spreadWave, 
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { exitPoint } from "./mapShape";
-import { keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
+import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
@@ -566,7 +566,10 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   const stepped = coarse.size ? active.filter(c => !coarse.has(c)) : active;
   stepCombat(S, {
     creatures: g.creatures, active: stepped, time, dt, t, busy,
-    witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko, vx: w.body.vx, vz: w.body.vz })),
+    witches: g.witches.map((w, i) => {
+      const onGround = w.body.mode === "ground" && !w.body.seated;
+      return { id: i, x: w.body.x, z: w.body.z, onGround, down: !!w.ko, vx: w.body.vx, vz: w.body.vz, shelter: onGround ? calmRingAt(g, w.body.x, w.body.z)?.id : undefined }; // (in a calm legend's circle, safe from outside: Ed, round 14)
+    }),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
     asleep: c => !!c.partyLegend || dormant(g, c) || napping(c, time) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be; a sleeper, or one getting up, is out of it)
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),

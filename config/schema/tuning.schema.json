@@ -2409,17 +2409,12 @@
         "depart": {
           "type": "object",
           "properties": {
-            "past": {
-              "type": "number",
-              "minimum": 0
-            },
             "avoid": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "past",
             "avoid"
           ],
           "additionalProperties": false
@@ -2555,13 +2550,52 @@
         "size": {
           "type": "number",
           "minimum": 0
+        },
+        "creatures": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "happy": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "max",
+            "size",
+            "opacity",
+            "happy",
+            "fade"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "height",
         "opacity",
         "beam",
-        "size"
+        "size",
+        "creatures"
       ],
       "additionalProperties": false
     },
@@ -6092,6 +6126,63 @@
       ],
       "additionalProperties": false
     },
+    "load": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "full": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackSag": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackLean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadBright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "witchLean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "broomTilt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "broomBow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sparks": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "full",
+        "stackSag",
+        "stackLean",
+        "threadFrom",
+        "threadBright",
+        "witchLean",
+        "broomTilt",
+        "broomBow",
+        "sparks"
+      ],
+      "additionalProperties": false
+    },
     "swoopTrail": {
       "type": "object",
       "properties": {
@@ -6154,11 +6245,16 @@
         "transform": {
           "type": "number",
           "minimum": 0
+        },
+        "firstAfter": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "time",
-        "transform"
+        "transform",
+        "firstAfter"
       ],
       "additionalProperties": false
     },
@@ -7320,6 +7416,7 @@
     "dash",
     "spells",
     "trail",
+    "load",
     "swoopTrail",
     "boot",
     "party",

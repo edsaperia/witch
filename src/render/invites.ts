@@ -17,6 +17,7 @@ import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf } from "./inviteRing";
 import { beachOf } from "../rules/mapShape";
+import { tiltFilter } from "./overlayTilt";
 
 const HERS = ["💌", "🎉", "🥳", "💃", "🎈", "😘", "🎶", "✨"];
 // Replies by how full its meter is: unsure, warming, nearly, won over; and stung (blocked).
@@ -125,9 +126,11 @@ export class InviteView {
     const place = (el: HTMLElement, x: number, y: number, z: number) => {
       placed(this.v.set(x, y, z)).project(camera);
       const vis = this.v.z < 1 && Math.abs(this.v.x) < 1.2 && Math.abs(this.v.y) < 1.2;
+      const sy = ((1 - this.v.y) / 2) * height;
       el.style.left = `${((this.v.x + 1) / 2) * width}px`;
-      el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      el.style.top = `${sy}px`;
       el.style.visibility = vis ? "visible" : "hidden";
+      if (vis) tiltFilter(el, sy); // (blurred as the world is there: render/overlayTilt.ts)
     };
     const head = (id: number) => (tops.get(id) ?? 1.2 + g.creatures[id].level * 0.8) + 0.3;
     const pick = (list: string[], a: number, b: number) => list[Math.floor(hash2(a, b, 17) * list.length) % list.length];

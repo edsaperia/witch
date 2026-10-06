@@ -63,6 +63,13 @@ export class MusicEngine {
   private g0 = NaN;
   private a0 = 0;
   private rate = 1;
+  /** Continuity, for the checks (tools/music-lab/flight.cjs): times the timeline was re-anchored, sixteenths dropped
+   *  for being late, and audio seconds left with nothing scheduled between one sixteenth and the next. */
+  readonly stats = { resyncs: 0, late: 0, gap: 0 };
+  private heardTo = -1;
+  private lastNow = -1;
+  /** How much faster or slower than the game the music may run while easing back into step (a share). */
+  static slew = 0.05;
   /** Notes' pitch now (the tape slowing with the music: 1 at full speed). */
   private pitch = 1;
   /** The note being played's pitch (the circle's layer never slowed). */
@@ -127,17 +134,24 @@ export class MusicEngine {
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
    *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
-  update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.3, rate = 1, pitch = 1): void {
+  update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.6, rate = 1, pitch = 1): void {
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
-    if (!playing) { this.nextStep = -1; this.cNext = -1; return; }
+    if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; return; }
     // Game time as heard: running on from where it was at the old rate, then at the new one (the
-    // world slowing in a legend's circle); smoothed so the frames' jitter doesn't reach the notes,
-    // and a jump (a hitch, a pause, a jump in game time) starts it afresh.
+    // world slowing in a legend's circle). The music never waits for the game (Ed's playtest, 2026-10-06:
+    // "The music cuts in and out a lot": a frame over the rules' MAX_STEP loses game time, and re-anchoring
+    // on it left a silence at every hitch): it plays on and is eased back into step, never more than
+    // `slew` faster or slower, so the frames' jitter and the hitches never reach the notes. Only a real
+    // jump (game time going back, a pause, a new run, far out of step) starts it afresh.
     rate = Math.max(0.01, rate);
     if (rate !== this.rate) { if (Number.isFinite(this.g0)) { this.g0 += (now - this.a0) * this.rate; this.a0 = now; } this.rate = rate; }
     this.pitch = pitch;
-    const err = gameTime - (this.g0 + (now - this.a0) * rate);
-    if (!(Math.abs(err) < 0.06 * rate)) { this.g0 = gameTime; this.a0 = now; this.nextStep = -1; } else this.g0 += err * 0.05;
+    const dtA = this.lastNow < 0 ? 0 : Math.max(0, now - this.lastNow);
+    this.lastNow = now;
+    const err = gameTime - (this.g0 + (now - this.a0) * rate), slew = MusicEngine.slew * Math.min(dtA, 0.05) * rate; // (a long frame no bigger a nudge than an ordinary one)
+    if (!Number.isFinite(err) || err > 0.25 * rate) { if (Number.isFinite(this.g0)) this.stats.resyncs++; this.g0 = gameTime; this.a0 = now; this.nextStep = -1; }
+    else if (err < -6 * rate) { this.g0 += err + 6 * rate; this.stats.resyncs++; } // (a game running far slower than its audio for long: the music waits, never more than 6 s ahead)
+    else this.g0 += Math.max(-slew, Math.min(slew, err * 0.05));
     const audioAt = (g: number) => this.a0 + (g - this.g0) / rate;
     if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
       this.nextStep = Math.ceil(stepNow);
@@ -145,10 +159,18 @@ export class MusicEngine {
       if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
     }
     this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime) / rate), now, 0.05);
+    // A frame longer than what was scheduled ahead: the next sixteenth is already late. Played now rather than
+    // dropped: the music held for the hitch, then on from where it was (the slew takes it back into step).
+    if (this.heardTo >= 0 && this.nextStep >= 0) { const t = audioAt(timeAt(clock, this.nextStep / 4)); if (t < now) { this.a0 += now + 0.005 - t; this.stats.late++; } }
     for (;;) {
-      const g = timeAt(clock, this.nextStep / 4), t = audioAt(g);
+      const g = timeAt(clock, this.nextStep / 4), t = this.a0 + (g - this.g0) / rate;
       if (t >= now + ahead) break;
-      if (t >= now) { this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4 / rate); this.lastStep = this.nextStep; }
+      if (t >= now) {
+        const sps = 60 / bpmAt(clock, g) / 4 / rate;
+        if (this.heardTo >= 0 && t > this.heardTo + 0.02) this.stats.gap += t - this.heardTo;
+        this.heardTo = t + sps;
+        this.step(cue, this.nextStep, t, sps); this.lastStep = this.nextStep;
+      }
       this.nextStep++;
     }
     // A legend's circle's layer: its own time, at the music's tempo as if never slowed (the circle's
