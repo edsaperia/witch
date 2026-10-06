@@ -2409,17 +2409,12 @@
         "depart": {
           "type": "object",
           "properties": {
-            "past": {
-              "type": "number",
-              "minimum": 0
-            },
             "avoid": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "past",
             "avoid"
           ],
           "additionalProperties": false
@@ -6606,12 +6601,22 @@
         "whole": {
           "type": "number",
           "minimum": 0
+        },
+        "wobble": {
+          "type": "number",
+          "minimum": 0
+        },
+        "outer": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "screenFraction",
         "edge",
-        "whole"
+        "whole",
+        "wobble",
+        "outer"
       ],
       "additionalProperties": false
     },
