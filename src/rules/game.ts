@@ -806,6 +806,9 @@ export function coastOf(g: Game): CoastView | null {
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */
 export function areaUnderWitch(g: Game): string {
-  const a = g.map.areaAt(g.witch.x, g.witch.z), piece = g.map.setPieceOf(a.cell[0], a.cell[1]);
-  return AREA_TYPES[a.type].name + (piece ? ` (set piece: ${piece})` : "");
+  const a = g.map.areaAt(g.witch.x, g.witch.z), piece = g.map.setPieceOf(a.cell[0], a.cell[1]), name = AREA_TYPES[a.type].name;
+  // (on the sand or past it, the beach, the area it borders after it: the map's areas run to the edge under the sand)
+  const b = beachOf(g.map.bounds, g.tuning), where = !b ? "" : b.intoSea(g.witch.x, g.witch.z) > 0 ? "Sea" : b.intoSand(g.witch.x, g.witch.z) > 0 ? "Beach" : "";
+  if (where) return `${where} (by the ${name})`;
+  return name + (piece ? ` (set piece: ${piece})` : "");
 }
