@@ -38,7 +38,7 @@ export function circleLines(c: Creature): CircleLine[] {
   const boon: CircleLine | null = q ? (done ? { text: "Its boon is yours.", done: true } : { text: "If you bring a {sigil} and place it in this circle, it will grant you a boon." }) : null;
   const ally: CircleLine = { text: "If you bring a {relic} and place it in this circle, you will gain a powerful ally." };
   if (st === "happy") return [{ text: "This elder is your ally now." }, { text: "It guards its area and anyone partying in it." }, ...(boon?.done ? [boon] : [])];
-  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
+  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its children back, and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
   if (st === "restless") return [{ text: "This elder is restless." }, ...(boon ? [boon] : []), ally, { text: "Bring one of its children back here to calm it." }];
   return [{ text: "This is a slumbering elder." }, ...(boon ? [boon] : []), ally, { text: "It becomes angered if none of its children are nearby." }];
 }
