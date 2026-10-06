@@ -20,6 +20,18 @@ export interface MusicMix {
 }
 
 /** The music heard now at `at` (a listener: each witch hears her own mix, Ed's co-op). */
+/** How far the party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops
+ *  ... all the animals go to sleep ... and you can walk the map safely"), 0 to 1, read as the look reads it
+ *  (render/partyOver.ts): g.partyOver's own `ease` (or a number), or with only its start `at`, eased in over `secs`; else the
+ *  debug start (?partyover=<s>); 0 in a game without it. */
+export function partyOverEase(g: { clock: { time: number } }, debugAt: number | null = null, secs = 12): number {
+  const p = (g as { partyOver?: number | { ease?: number; at?: number } | null }).partyOver;
+  const e = typeof p === "number" ? p : typeof p?.ease === "number" ? p.ease : null;
+  if (e !== null) return Number.isFinite(e) ? Math.max(0, Math.min(1, e)) : 0;
+  const at = typeof p === "object" && typeof p?.at === "number" ? p.at : debugAt;
+  return at === null ? 0 : Math.max(0, Math.min(1, (g.clock.time - at) / secs));
+}
+
 export function musicMix(g: Game, at: { x: number; z: number }): MusicMix {
   const M = g.tuning.music, w = at, time = g.clock.time, d = g.map.dancefloor;
   const sources: { x: number; z: number; loud: number; damage: number }[] = [];

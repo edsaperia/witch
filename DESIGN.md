@@ -484,6 +484,7 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 
 - A run is a sequence of **waves** (above) and ends when every soundsystem is destroyed.
 - Exploring and defending are **probably in phases**; to be found by experiment.
+- **The party's over** (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little 😴 speech bubbles, and you can walk the map safely. We can have nice environmental music and sounds that match each area"). The sound of it: the music winds down like a record stopped (slowing and dropping in pitch over `music.over.stop` of the switch-off, then silent); each area is then heard as a quiet night in the legends' circles' key, its own sounds over a soft bed (wind in the pines; frogs and water in the bogs; owls, crickets and rustling in the woods; a stream; crickets, moths and chimes in the meadows; drips on the open rock; at home the crickets and the sea far off), crossfading at the borders, only the area she's in playing; and the sleepers near her snore softly (`platform/audio/night.ts`, the tuning's `sfx.night`).
 
 ## Camera and controls
 
