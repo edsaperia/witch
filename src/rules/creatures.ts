@@ -133,8 +133,8 @@ export interface Creature {
    *  own kind, where it becomes an ordinary wild creature of that area. */
   wanderTo?: { x: number; z: number; cell: [number, number] };
   /** The legend's clearing it was born in (Ed, 2026-10-06: "Legend circles should spawn with a ... baby in them, which
-   *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out; leashed, it follows
-   *  her, dancing at its area's party it's there, and back off the leash it goes home to its circle (keepsToCircle). */
+   *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out, dancing there
+   *  once its area's party comes; leashed, it follows her (keepsToCircle). */
   circle?: { x: number; z: number; r: number; legendX: number; legendZ: number };
   /** When it was last healed to full (a berry, or being invited): the view's heal pop. */
   healedAt?: number;
@@ -226,11 +226,11 @@ export function anchorOf(map: ForestMap, cell: [number, number], hx: number, hz:
 }
 
 /** Somewhere inside the creature's own area, chosen by `r` (round its home, or round its party spot while it dances); its anchor if none is found. */
-/** Whether a creature keeps to the legend's clearing it was born in: while it's wild (not leashed, not happy, not enraged, not dancing). */
-/** Whether it keeps to its legend's clearing: the circle's baby, wild or happy, but not dancing at its area's party nor
- *  while leashed (Ed, 2026-10-06: "if it is invited and becomes happy, it continues to stay in the
- *  circle as before"; "happy creatures don't follow you - only leashed creatures do"). */
-export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "enraged">> & { dancing?: boolean }) => !!c.circle && !c.leashed && !c.enraged && !c.dancing;
+/** Whether it keeps to its legend's clearing: the circle's baby, wild or happy (dancing there once its area's party
+ *  comes), but not while leashed (Ed, 2026-10-06: "if it is invited and becomes happy, it continues to stay in the
+ *  circle as before"; "happy creatures don't follow you - only leashed creatures do"; "Happy Circle baby should stay
+ *  in its circle, though it can dance there"). */
+export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "enraged">>) => !!c.circle && !c.leashed && !c.enraged;
 
 /** A spot on a clearing's open floor: its front (south) part, clear of the legend's lair at its top. */
 export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => number): [number, number] {
@@ -273,7 +273,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     L.quest = questFor(map, cell, L.species);
     out.push(L);
     // A wild baby of its own kind in its clearing (Ed, 2026-10-06), keeping to it: so the legend starts with kin. Like any
-    // baby: happy once its area's soundsystem comes (it goes to dance), off home for good once that falls (game.ts).
+    // baby: happy once its area's soundsystem comes (it dances, in its circle), off home for good once that falls (game.ts).
     const lc = map.legendClearing(cx, cy);
     if (lc) {
       const circle = { x: lc.x, z: lc.z, r: lc.r, legendX: lc.legend.x, legendZ: lc.legend.z }, B = makeCreature(map, cell, 0, out.length, r, pointInCircle(circle, r));
