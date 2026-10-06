@@ -243,7 +243,7 @@ void main() {
     if (mod(px.x, 10.0 / uPixel) < 1.0 || mod(px.y, 10.0 / uPixel) < 1.0) c *= 0.85;
   }
   vec3 light = nightLightShaded(N, vWorld, moonK);
-  gl_FragColor = vec4(haze(min(vec3(1.0), c * light * 1.25), vWorld), 1.0);
+  gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), c * light * 1.25), vWorld), vWorld), 1.0); // (her pool in her light's colour)
 }
 `;
 
