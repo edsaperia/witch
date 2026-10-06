@@ -101,7 +101,7 @@ export function drawCreatures(v: View, time = 0): void {
     if (!c.leashed) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
     // Hit: a white flash; the blow's feel (render/attackFeel.ts): crouching in its wind-up, stretched in its lunge, squashed
     // and springing back when hit, tumbling when knocked back.
-    if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) glow = Math.max(glow, 1 - (time - c.hurtAt) / 0.25);
+    if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) glow = Math.max(glow, (1 - (time - c.hurtAt) / 0.25) * (c.level === 3 ? 0.5 : 1)); // (a legend's at half: whole, it whites out the screen; the contact star marks the blow)
     const feel = attackFeel(c, time, g.tuning.attackFx, FEEL);
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
     const hop = (c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0) + feel.hop;
