@@ -13,7 +13,7 @@ describe("a dream's direction", () => {
     expect(AREA_TYPES[map.typeOf(s.cell[0], s.cell[1])].creature).toBe(species);
     // none of its kind is nearer
     const d = Math.hypot(map.siteOf(s.cell[0], s.cell[1]).x - from.x, map.siteOf(s.cell[0], s.cell[1]).z - from.z);
-    for (let i = 0; i < map.n; i++) for (let j = 0; j < map.n; j++) if (AREA_TYPES[map.typeOf(i, j)].creature === species) expect(Math.hypot(map.siteOf(i, j).x - from.x, map.siteOf(i, j).z - from.z)).toBeGreaterThanOrEqual(d);
+    for (const [i, j] of map.cells) if (AREA_TYPES[map.typeOf(i, j)].creature === species) expect(Math.hypot(map.siteOf(i, j).x - from.x, map.siteOf(i, j).z - from.z)).toBeGreaterThanOrEqual(d);
     expect(dreamStone(map, "no-such-creature", from.x, from.z)).toBeNull();
   });
 

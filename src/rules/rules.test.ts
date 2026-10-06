@@ -1,6 +1,6 @@
-import { stateOf } from "./creatureStates";
+import { STATES, stateOf } from "./creatureStates";
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
@@ -8,7 +8,7 @@ import { AREA_TYPES, HOME_LOOK, LOOKS, generateMap, parseSeed, sceneFootprint } 
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
+import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
@@ -25,7 +25,7 @@ import { bootSpeaker, floorInputs, speakerBoot } from "./game";
 import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
 import { musicMix } from "./music";
-import { tuftsInCell, TUFT_KINDS } from "./groundcover";
+import { tuftSpan, tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
@@ -121,7 +121,7 @@ describe("the map", () => {
   it("is a circle of about mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
     expect(Math.abs(map.cells.length - TUNING.mapAreas ** 2)).toBeLessThan(TUNING.mapAreas * 2);
     expect(AREA_TYPES.length).toBeGreaterThanOrEqual(30);
-    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r);
+    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r * (1 + TUNING.map!.coast!.amp)); // (the box round its furthest headland)
   });
 
   it("never gives two touching areas the same type", () => {
@@ -520,7 +520,7 @@ describe("creatures", () => {
   }, 60000);
 
   it("roam their whole area, slowly, and never leave it", () => {
-    const sample = all.filter((_, i) => i % 97 === 0).slice(0, 5);
+    const sample = all.filter(c => !keepsToCircle(c)).filter((_, i) => i % 97 === 0).slice(0, 5); // (a legend's circle baby keeps to its circle)
     for (const c of sample) {
       const visited = new Set<string>(), start = [c.x, c.z];
       const k = map.areaSize / 112, minutes = 40 * k * k, sq = 8 * k; // forty minutes in an area 112 m across, longer in bigger ones by its area (they walk no faster)
@@ -765,6 +765,10 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
+  // (The old proximity chat: a second talk leashes a happy one, as states.leash "again" does; the game picks up its rune now, pickup.test.ts.)
+  let savedLeash = STATES.leash;
+  beforeEach(() => { savedLeash = STATES.leash; STATES.leash = "again"; });
+  afterEach(() => { STATES.leash = savedLeash; });
   // (Every level to talk to: a baby, a young and an adult in each area.)
   const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
@@ -1437,7 +1441,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
 
 describe("ground cover (Ed, v171)", () => {
   const G = TUNING.groundCover, d = map.dancefloor;
-  const around = (x: number, z: number, r: number) => { const out = []; for (let cj = Math.floor((z - r) / G.cell); cj <= Math.floor((z + r) / G.cell); cj++) for (let ci = Math.floor((x - r) / G.cell); ci <= Math.floor((x + r) / G.cell); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, G.density)); return out; };
+  const around = (x: number, z: number, r: number) => { const out = [], C = tuftSpan(G.cell, G.spacing); for (let cj = Math.floor((z - r) / C); cj <= Math.floor((z + r) / C); cj++) for (let ci = Math.floor((x - r) / C); ci <= Math.floor((x + r) / C); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, G.density)); return out; };
   it("is seeded per cell: the same patch every time", () => {
     expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1)).toEqual(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1));
   });

@@ -44,6 +44,7 @@ describe("the legend circle's explainer", () => {
     L.legendState = "angry";
     expect(legendCircleNear(g, at)?.legend).toBe(L);
     expect(words()).toMatch(/^This elder is angry/); expect(words()).not.toContain("{relic}");
+    expect(words()).toContain("bring one of its children back"); // (it settles once one of its kind is back in its area, too: rules/legends.ts)
     L.legendState = "happy";
     expect(words()).toMatch(/^This elder is your ally now\./);
     for (const s of ["asleep", "restless", "angry", "happy"] as const) { L.legendState = s; expect(words()).not.toMatch(/kill|die|dead/i); }

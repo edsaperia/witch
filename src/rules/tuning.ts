@@ -57,7 +57,7 @@ export interface GladeTuning {
 export interface Tuning {
   mapAreas: number;
   /** The map's shape (Ed, 2026-10-06: "circular rather than square, with a buffer zone with no runestones around the edge"): circle: the playable areas those within radius areas of home, a buffer ring buffer areas deep past them (forest she can fly over, nothing in it), her flight's edge soft over its last push metres (her outward speed easing to nothing, a drift of drift m/s back in), and the forest going on edge areas past it; square: mapAreas x mapAreas as before (?shape=square). */
-  map?: { shape: "circle" | "square"; radius: number; buffer: number; push: number; drift: number; edge?: number };
+  map?: { shape: "circle" | "square"; radius: number; buffer: number; push: number; drift: number; edge?: number; /** the coast's wobble (Ed, 2026-10-06: "slightly irregular"): rules/mapShape.ts makeCoast */ coast?: { amp: number; harmonics: number; detail: number } };
   areaSize: number;
   areaScale: number;
   /** Each area's fighting arena: mostly open within radius metres of its centre and soundsystem, the woods thickening smoothly over a band band metres wide (both times fight.scale), its edge wobbled by noise (a share of the band); bushes and tufts: the share of the undergrowth and ground cover left in its open middle. */
@@ -236,7 +236,7 @@ export interface Tuning {
   };
   /** Wave numbers over the rune stones (Ed, 2026-10-04, a design aid): on, a digit's height as a share of the screen's, metres above the stone (or the canopy), and how bright the reached areas' are (0-1). */
   waveNumbers: { on: boolean; size: number; lift: number; spent: number; pinRange: number };
-  canopyCutout: { screenFraction: number; edge: number };
+  canopyCutout: { screenFraction: number; edge: number; /** How much the fade goes by each crown's middle rather than each pixel (1: whole crowns fade; Ed, 2026-10-06: concentric circles). */ whole?: number };
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
@@ -290,11 +290,13 @@ export interface Tuning {
   invites: { on: boolean; burst: number; burstGap: number; cooldown: number; range: number; speed: number; /** The lob's rise (m) over the line from her hand down to the ground at the range (drawn only). */ arc?: number; homing: number; homingCone: number; homingRange: number; multiShot: number; spread: number; radius: number; amount: number; hits: number[]; drain: number; /** Her ground speed while firing, times (Ram's Steady takes it away). */ fireSlow?: number; /** A 💌 that met no one rests on the ground this many seconds (drawn only), fading over the last lingerFade; at most lingerMax at once. */ linger: number; lingerFade: number; lingerMax: number; /** Turns a second a 💌 spins in flight, flat like a frisbee (drawn only). */ spin: number };
   invite: { talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
   /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
-  leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number };
+  leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number;
+    /** Sigil weight (rules/leashWeight.ts): free allowance, levels' weights, drag, drift, rise, sink, sinkMax, floor, extreme, maxTension. */
+    weight: { free: number; levels: number[]; drag: number; drift: number; rise: number; sink: number; sinkMax: number; floor: number; extreme: number; maxTension: number } };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
-  tiltShift: { on: boolean; where: "before" | "after"; /** Whether the sky over the bend is blurred too (Ed, round 12); false leaves it sharp. */ sky?: boolean; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
+  tiltShift: { on: boolean; where: "before" | "after"; /** Whether the sky over the bend is blurred too (Ed, round 12); false leaves it sharp. */ sky?: boolean; /** The share of the blur the sky takes, so the stars stay perceptible (Ed, 2026-10-06); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
   /** Wild creatures (Ed, 2026-10-04): every area starts with `start`; while wild it gains
    *  growth.perWave a wave at a random level by growth.weights (baby, young, adult); new ones
    *  appear beyond the haze's far edge plus growth.hide metres from every witch (rules/growth.ts). */

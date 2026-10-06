@@ -37,7 +37,7 @@ import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { emojiOr, sleepyFace } from "./sleepyFace";
 import { FIGHT, profileOf } from "../rules/movement";
-import { huntsWitch } from "../rules/creatureStates";
+import { hasRune, huntsWitch, runeNear } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
 import { circleLines, circleShown, legendCircleNear } from "../rules/legendCircle";
 import { witchHeight } from "../rules/witch";
@@ -54,6 +54,8 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 
 /** Seconds a legend's charge ruts take to fade. */
 const RUTS = 12;
+/** How far from her (m) happy creatures' runes are drawn. */
+const RUNE_VIEW = 70;
 
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 const SQ = SLOTS * SLOTS - 1; // and the last a solid square
@@ -903,6 +905,18 @@ export class LeashView {
       this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
+    // Happy creatures' runes (Ed, 2026-10-06; states.leash "pickup"): each carries its sigil as a dim rune at its feet,
+    // moving with it; it pops out with its hearts (up off it and down, growing, written in) and settles. Ready to pick up
+    // (pickupDelay after), a little brighter. Only near her (RUNE_VIEW m), with the placed sigils' instances.
+    for (const c of g.creatures) {
+      if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
+      const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
+      const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
+      const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3;
+      this.flat.add(c.x, 0.03 + hop, c.z, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      if (ready) this.flat.add(c.x, 0.015, c.z, 4.2, dot, col.r, col.g, col.b, 0.18);
+    }
+
     // From the treetops, each placed sigil is projected up above the canopy over its spot, flat
     // and glowing, joined to its rune by a faint pulsing column of light (Ed, 2026-10-03). It
     // fades in as she rises; on the ground the real rune is enough.
@@ -916,7 +930,7 @@ export class LeashView {
     }
 
     // The ghost: where the bottom sigil would land, red where it can't.
-    if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.pickRadius)) { // (on a relic's sigil the button picks the relic up)
+    if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.pickRadius, time) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.pickRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const no = blocked(s, w.x, w.z, t);
       const sg = this.sigilOf(c);

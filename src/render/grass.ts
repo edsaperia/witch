@@ -12,7 +12,7 @@ import { LOOKS } from "../rules/map";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import type { Tuning } from "../rules/tuning";
-import { tuftsInCell, TUFT_KINDS, type Tuft } from "../rules/groundcover";
+import { tuftSpan, tuftsInCell, TUFT_KINDS, type Tuft } from "../rules/groundcover";
 import { hash2 } from "../rules/random";
 import { packAtlas, type Atlas, type Baked } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -168,7 +168,7 @@ export class GrassView {
     const near = clear.map(c => ({ ...c, d: Math.hypot(c.x - x, c.z - z) })).filter(c => c.d < G.radius + c.r + 2).sort((a, b) => a.d - b.d);
     (u.uClear.value as THREE.Vector4[]).forEach((v, i) => { const p = near[i]; if (p) v.set(p.x, p.z, p.r, 1); else v.set(0, 0, 0, 0); });
     // Work out the cells in reach, nearest first, within a time budget; rebuild when she moves a cell.
-    const C = G.cell, ci0 = Math.floor((x - G.radius) / C), ci1 = Math.floor((x + G.radius) / C), cj0 = Math.floor((z - G.radius) / C), cj1 = Math.floor((z + G.radius) / C);
+    const C = tuftSpan(G.cell, G.spacing), ci0 = Math.floor((x - G.radius) / C), ci1 = Math.floor((x + G.radius) / C), cj0 = Math.floor((z - G.radius) / C), cj1 = Math.floor((z + G.radius) / C);
     const want: [number, number, number][] = [];
     for (let cj = cj0; cj <= cj1; cj++) for (let ci = ci0; ci <= ci1; ci++) {
       const d = Math.hypot((ci + 0.5) * C - x, (cj + 0.5) * C - z);
@@ -181,7 +181,7 @@ export class GrassView {
       const k = ci + "," + cj;
       if (this.cells.has(k)) continue;
       if (performance.now() - t0 > G.budgetMs) break;
-      this.cells.set(k, tuftsInCell(this.map, ci, cj, C, G.spacing, G.density, this.forest));
+      this.cells.set(k, tuftsInCell(this.map, ci, cj, G.cell, G.spacing, G.density, this.forest));
       built = true;
     }
     this.stats.buildMs = performance.now() - t0;
