@@ -34,6 +34,29 @@
         "edge": {
           "type": "number",
           "minimum": 0
+        },
+        "coast": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "detail"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -42,7 +65,8 @@
         "buffer",
         "push",
         "drift",
-        "edge"
+        "edge",
+        "coast"
       ],
       "additionalProperties": false
     },
@@ -6130,11 +6154,16 @@
         "edge": {
           "type": "number",
           "minimum": 0
+        },
+        "whole": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "screenFraction",
-        "edge"
+        "edge",
+        "whole"
       ],
       "additionalProperties": false
     },
