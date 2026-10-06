@@ -62,7 +62,7 @@ const report = await b.page.evaluate(async () => {
     for (const S of G.SPECIES) { const own = JSON.stringify(G.speciesColours(S.id, st)); for (const v of Object.keys(G.PALETTE_VARIANTS)) { const c = G.variantColours(S.id, st, v), row = G.paletteRow(c), m = G.bakeMask(G.critter(S.id, 1, 0, st), st.cOutline); if (JSON.stringify(c) === own) vb.push(`${S.id} ${v} same`); for (let i = 0; i < m.mat.length; i++) if (m.kind[i] === 1 && row[m.mat[i] * 4] === 255 && row[m.mat[i] * 4 + 1] === 0 && row[m.mat[i] * 4 + 2] === 255) { vb.push(`${S.id} ${v} magenta`); break; } } }
     res.push({ what: `palette variants: all ${Object.keys(G.PALETTE_VARIANTS).length} curated coats colour every species, no material uncoloured, each its own`, good: !vb.length, info: vb.slice(0, 5).join(", ") || "ok" });
   }
-  { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy and dazed
+  { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy, dazed and asleep
     // drawn as part of its face: each different from its neutral face, its brows showing (and standing out from its coat), no bigger than
     // neutral by more than 2 px, nothing NaN; and the away view drawn
     const bad = [], lum = c => c[0] * .3 + c[1] * .55 + c[2] * .15;
@@ -82,7 +82,7 @@ const report = await b.page.evaluate(async () => {
         if (!brow) bad.push(`${id} no brows`);
       }
     }
-    res.push({ what: `expressions: every species at every level angry, happy and dazed as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger than 3 px or 1%, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
+    res.push({ what: `expressions: every species at every level angry, happy, dazed and asleep as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger than 3 px or 1%, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
   }
   { // surface texture (Ed, 2026-10-05, #119): every species at every level in its fur, feathers, scales, plates, shell or bristles: textured
     // (its coat broken into tones along its stamps), its detail (tone edges a coat pixel) growing with age (a baby's softest), the same size
@@ -119,7 +119,7 @@ const report = await b.page.evaluate(async () => {
       if (P.template === "quadruped" && (P.joints.legs.length !== 4 || P.joints.legs.some(l => !l.hip || !l.knee || !l.foot))) bad.push(`${S.id} ${level} legs`);
       if (!Object.values(P.discs).some(d => Object.keys(d).length)) bad.push(`${S.id} ${level} no discs`);
       if (level === 1) for (const [name, gear] of [["party", { collar: [255, 60, 200], hat: 0, glasses: "bar" }], ["woken", { woken: true }]]) { const G2 = G.rigParts(S.id, level, st, gear), h = G2?.pieces.head?.[2], h0 = P.pieces.head[2]; if (!h || (h0 && h.sp.m.join() === h0.sp.m.join())) bad.push(`${S.id} ${level} ${name} head as plain`); } // party gear and the woken eyes baked on its head
-      for (const face of ["angry", "happy", "dazed"]) { const f = P.faces?.[face]; if (!f || f.length !== 5 || f.some(p => !p)) bad.push(`${S.id} ${level} no ${face} head`); else if (P.pieces.head[2] && f[2].sp.m.join() === P.pieces.head[2].sp.m.join()) bad.push(`${S.id} ${level} ${face} head as neutral`); } // its head in each expression
+      for (const face of ["angry", "happy", "dazed", ...(level === 3 ? ["asleep"] : [])]) { const f = P.faces?.[face]; if (!f || f.length !== 5 || f.some(p => !p)) bad.push(`${S.id} ${level} no ${face} head`); else if (P.pieces.head[2] && f[2].sp.m.join() === P.pieces.head[2].sp.m.join()) bad.push(`${S.id} ${level} ${face} head as neutral`); } // its head in each expression
     }
     res.push({ what: "rig parts: every four-legged species and the snake, at every level, baked as torso and head pieces (the snake its head) at the five headings with their pivots near them, four two-bone legs, discs to string bones and bodies, and the head in every expression, in party gear and woken", good: !bad.length, info: bad.slice(0, 6).join(", ") || "ok" });
   }
