@@ -7,6 +7,11 @@
 //    its neon, in a ring that fills clockwise from 12 o'clock as the countdown to the next wave
 //    runs, flashing when the party spreads; an arrowhead toward the stone and its distance in
 //    metres, on the far side of the ring from the arrow.
+//  - The wave pointer (Ed, 2026-10-06: "The wave timing indicator should point towards the leyline pulse. It no longer
+//    needs the symbol that indicates the upcoming rune; Instead it can have a 🎶 symbol. It keeps the wave countdown
+//    circle"): the same ring and arrow, a 🎶 in the middle (NOTES), pointing at the ley line's pulse (rules/leypulse.ts).
+//    The music-this-way cue toward the dancefloor is no longer shown (Ed: "You can remove the UI icon that points towards
+//    the dancefloor").
 // Directions are in screen space, y down: an angle a points along (cos a, sin a) on the canvas.
 import * as THREE from "three";
 import { sigilGlyph } from "../../art/generator.js";
@@ -94,6 +99,23 @@ export const calm = (c: number[]) => {
   return d.map(v => Math.min(255, v * k));
 };
 
+/** 🎶 in pixels: two eighth notes joined by their beams, 15 across (the wave pointer's middle). */
+export const NOTES = [
+  "....##########.",
+  "....##########.",
+  "....##......##.",
+  "....##########.",
+  "....##......##.",
+  "....##......##.",
+  "....##......##.",
+  "....##......##.",
+  "....##......##.",
+  ".####....#####.",
+  "#####...######.",
+  "#####...######.",
+  ".###.....####..",
+];
+
 const PARTY: number[][] = [[232, 180, 106], [232, 180, 106], [232, 180, 106]]; // the HUD's one accent (art review round 1: the UI in the art's palette)
 
 export class MusicIndicator {
@@ -133,11 +155,19 @@ export class StoneIndicator {
   private lastFill = 0;
   private flashAt = -Infinity;
   /** `scale`, `opacity`: its size and strength (only the next stone has one: Ed, 2026-10-05). */
-  constructor(parent: HTMLElement, scale = SCALE, opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
+  constructor(parent: HTMLElement, scale = SCALE, private opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
+  private shown = -1;
+  /** How much it shows, 0 to 1, times its own strength (the wave pointer fading in as the boot ends). */
+  fade(a: number): void {
+    if (Math.abs(a - this.shown) < 0.01) return;
+    this.shown = a;
+    const o = `${(a * this.opacity).toFixed(2)}`;
+    this.cue.canvas.style.opacity = o; this.cue.label.style.opacity = o;
+  }
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -166,11 +196,16 @@ export class StoneIndicator {
       if (turn <= fill || flash > 0) c.dot(x, y, bright, 1);
       else c.dot(x, y, neon.map(v => v * 0.55), 0.9); // the rest of the ring: dimmer, but still there on dark grass
     }
-    // The rune in the middle: the area's creature's sigil, in its neon.
-    let g = this.glyphs.get(at.species);
-    if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
-    const o = Math.floor((N - g.w) / 2);
-    for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
+    // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
+    if (at.notes) {
+      const ox = Math.floor((N - NOTES[0].length) / 2), oy = Math.floor((N - NOTES.length) / 2);
+      NOTES.forEach((row, y) => [...row].forEach((on, x) => { if (on === "#") c.dot(ox + x, oy + y, bright, 1); }));
+    } else {
+      let g = this.glyphs.get(at.species);
+      if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
+      const o = Math.floor((N - g.w) / 2);
+      for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
+    }
     // The arrowhead outside the ring, toward the stone (fading as it comes over the stone).
     for (const [x, y] of arrowPixels(e.angle, N, R + 2, R + 7, 3.5)) c.dot(x, y, bright, e.show);
     c.flush();

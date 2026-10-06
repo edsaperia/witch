@@ -18,9 +18,10 @@ import { cellKey } from "./rules/party";
 import { areaUnderWitch, interpolated, joinParty, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
+import { awaitingSpell, clockSeconds, clockText } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
-import { Input } from "./platform/input";
+import { ACTION_BAR, Input } from "./platform/input";
 import { View } from "./render/view";
 import { bendPoint, groundHeight, placed } from "./render/height";
 import { Vector3 } from "three";
@@ -345,41 +346,47 @@ const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
-const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector<HTMLElement>(".fill")!, waveLabel = waveEl.querySelector<HTMLElement>(".label")!;
-/** The wave countdown bar: empties toward the next wave. */
+const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!, clockAsk = clockEl.querySelector<HTMLElement>(".ask")!;
+/** The prompt to cast the party spell, with its key on this device (the spell's binding: R, gamepad B, the touch spell button). */
+const spellPrompt = () => document.body.classList.contains("touch") ? "tap spell to cast the party spell and start" : `press ${ACTION_BAR.find(s => s.action === "spell")?.key ?? "R"} to cast the party spell and start`;
+/** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
+ *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
 function waveHud(): void {
   const cd = waveCountdown(game.party, game.map, game.clock.time);
-  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
+  clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
+  const now = clockText(clockSeconds(game.party, game.clock.time));
+  if (clockT.textContent !== now) clockT.textContent = now;
+  // before the party spell (Ed, 2026-10-06: the game starts when she casts it), a prompt to cast it, with its key
+  const ask = awaitingSpell(game.party) && !game.clock.paused;
+  clockEl.classList.toggle("waiting", ask);
+  if (ask && clockAsk.textContent !== spellPrompt()) clockAsk.textContent = spellPrompt();
+  clockEl.classList.toggle("paused", game.clock.paused);
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
-  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
-  // (only in debug: the art review's round 1 found it sitting on the art; the next stone's ring carries the countdown)
-  waveLabel.textContent = debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
-  waveEl.classList.toggle("paused", game.party.paused);
-  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word by the bar.
+  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
+  clockLabel.textContent = debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
+  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word under the clock.
   if (!bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
     bootShown = true;
     const pop = document.createElement("div");
     pop.className = "boot-pop";
     pop.textContent = `speakers up · wave 1 in ${clock(cd.left)}`;
-    waveEl.append(pop);
+    clockEl.append(pop);
     setTimeout(() => pop.remove(), 4000);
   }
 }
 let bootShown = false;
-// A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
-// bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
+// A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner; the clock flashes and the seconds taken off pop out
+// under it ("−60 s", "wave now!"), and the wave pointer's ring jumps on.
 let lossShown = -1;
 function showLoss(e: WaveEvent): void {
   lossShown = e.at;
-  waveEl.classList.remove("lost"); void waveEl.offsetWidth; waveEl.classList.add("lost"); // (restart the animation)
-  waveHud(); // (the bar eases down to its new countdown)
+  clockEl.classList.remove("lost"); void clockEl.offsetWidth; clockEl.classList.add("lost"); // (restart the animation)
   const pop = document.createElement("div");
   pop.className = "loss-pop";
   pop.textContent = e.left <= 0 ? "wave now!" : `\u2212${Math.round(e.cut)} s`;
-  pop.style.bottom = `${Math.min(100, (e.left / tuning.party.interval) * 100)}%`;
-  waveEl.append(pop);
+  clockEl.append(pop);
   setTimeout(() => pop.remove(), 1800);
-  setTimeout(() => { if (lossShown === e.at) waveEl.classList.remove("lost"); }, 900);
+  setTimeout(() => { if (lossShown === e.at) clockEl.classList.remove("lost"); }, 900);
 }
 let debugOn = params.has("debug");
 debugEl.classList.toggle("on", debugOn);
@@ -465,9 +472,10 @@ function start(): boolean {
 input.onAny = start;
 // The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second,
 // a context suspended is resumed, and music gone silent (or anything non-finite in the music or the
-// sound effects) is rebuilt afresh; each mend goes in the playtest log (L).
+// sound effects) is rebuilt afresh; each mend goes in the playtest log (L). (Before the first home speaker
+// boots, the music is silent on purpose: not expected.)
 const watchdog = new AudioWatchdog(
-  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden }),
+  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden && game.speakerBoot.some(t => t !== null) }),
   what => {
     playtest.audio(what);
     console.warn(`audio watchdog: ${what}`);
