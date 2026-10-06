@@ -279,3 +279,20 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(b.descendTime).toBeLessThan(t.descendTime);
   }, 60000);
 });
+
+describe("buff strength (legends.buffPower; Ed, 2026-10-06, on quests: \"Bigger buffs\")", () => {
+  const S = LEGEND_BUFFS.species;
+  it("leaves every buff as written at 1, and strengthens scales, adds and counts by it, inside their limits", () => {
+    expect(TUNING.legends.buffPower).toBeGreaterThanOrEqual(1);
+    const one = buffedTuning(TUNING, [S.snake], LEGEND_BUFFS, 1), two = buffedTuning(TUNING, [S.snake], LEGEND_BUFFS, 2);
+    expect(one.invites.speed).toBeCloseTo(TUNING.invites.speed * S.snake.scale!["invites.speed"], 6);
+    expect(two.invites.speed).toBeCloseTo(Math.min(LEGEND_BUFFS.limits["invites.speed"][1], TUNING.invites.speed * (1 + (S.snake.scale!["invites.speed"] - 1) * 2)), 6);
+    const fast = buffedTuning(TUNING, [S.salamander], LEGEND_BUFFS, 2); // (a scale below 1: a shorter cooldown, held at its floor)
+    expect(fast.invites.cooldown).toBeLessThan(buffedTuning(TUNING, [S.salamander], LEGEND_BUFFS, 1).invites.cooldown);
+    expect(fast.invites.cooldown).toBeGreaterThanOrEqual(LEGEND_BUFFS.limits["invites.cooldown"][0]);
+    expect(buffedTuning(TUNING, [S.moth], LEGEND_BUFFS, 2).invites.burst).toBe(TUNING.invites.burst + 2 * S.moth.add!["invites.burst"]);
+    expect(modsOf([S.beetle], LEGEND_BUFFS, 1).fan).toBe(1);
+    expect(modsOf([S.beetle], LEGEND_BUFFS, 2).fan).toBe(2);
+    expect(modsOf([S.fox], LEGEND_BUFFS, 3).charm).toBe(1); // (a one-off behaviour stays one)
+  });
+});
