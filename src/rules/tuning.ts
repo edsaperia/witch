@@ -17,6 +17,8 @@ export interface Mood {
   glowHue: number; glowSat: number;
   /** The grade over the finished picture (post.ts): its amount (0 off), the share of colour drained from the dark and middle tones, the brightness above which nothing is graded, and the tint's hue and saturation. */
   grade: number; gradeDesat: number; gradePivot: number; gradeHue: number; gradeSat: number;
+  /** The party as the warm light in the wood: the soundsystems' light colours (rgb 0 to 1, one per variant, instead of their crystal colours), their reach and strength (times the tuning's); the party decor's lights, how many an area (instead of partyObjects.lightsPerArea), and their reach and strength (times their own). */
+  partyWarm: number[][]; partyReach: number; partyStrength: number; decorLights: number; decorReach: number; decorStrength: number;
 }
 
 export interface Tuning {

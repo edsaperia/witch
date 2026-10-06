@@ -966,6 +966,36 @@
             "gradeSat": {
               "type": "number",
               "minimum": 0
+            },
+            "partyWarm": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "partyReach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "partyStrength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorLights": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorReach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorStrength": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -986,7 +1016,13 @@
             "gradeDesat",
             "gradePivot",
             "gradeHue",
-            "gradeSat"
+            "gradeSat",
+            "partyWarm",
+            "partyReach",
+            "partyStrength",
+            "decorLights",
+            "decorReach",
+            "decorStrength"
           ],
           "additionalProperties": false
         }
