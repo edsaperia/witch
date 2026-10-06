@@ -48,7 +48,7 @@ The set pieces (punt, jetty, ring, heap) are already on without the switch: the 
    - reeds, ferns, small stones, flower beds, hedges, walls and rock walls;
    - the tall pieces: pillars, spires and stalagmites;
    - the relic party objects (a DECISION FOR ED on #191).
-4. **Pool outlines:** #218, which breaks up the near-oval pool outlines, isn't merged yet. It only affects the set pieces.
+4. **Pool outlines:** #218 (bulges and coves on the set pieces' pools) has merged since this build (c40eaffd), so the pools in these shots predate it. It only affects the set pieces.
 5. **Checks:** `node art/check.mjs` covers every generated kind. Neither smoke test has been run with `?props=gen` on (CI's quick smoke runs the default game). These runs had no page or console errors.
 6. **Bake time:** three shapes of each kind mean more sprites to bake per area type. That made no measurable difference here (art queued 27 in both).
 
