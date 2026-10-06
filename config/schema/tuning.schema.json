@@ -808,6 +808,10 @@
       "type": "number",
       "minimum": 0
     },
+    "glowNear": {
+      "type": "number",
+      "minimum": 0
+    },
     "glowToCutout": {
       "type": "number",
       "minimum": 0
@@ -990,6 +994,18 @@
         "on": {
           "type": "boolean"
         },
+        "ahead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behind": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behindBright": {
+          "type": "number",
+          "minimum": 0
+        },
         "advance": {
           "type": "string"
         },
@@ -1029,11 +1045,11 @@
         "depart": {
           "type": "object",
           "properties": {
-            "avoid": {
+            "past": {
               "type": "number",
               "minimum": 0
             },
-            "past": {
+            "avoid": {
               "type": "number",
               "minimum": 0
             }
@@ -1043,18 +1059,6 @@
             "avoid"
           ],
           "additionalProperties": false
-        },
-        "ahead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "behind": {
-          "type": "number",
-          "minimum": 0
-        },
-        "behindBright": {
-          "type": "number",
-          "minimum": 0
         }
       },
       "required": [
@@ -1076,30 +1080,6 @@
     "witch": {
       "type": "object",
       "properties": {
-        "lightFloor": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lightTint": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lightRim": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightSmooth": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightLookAhead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightClearance": {
-          "type": "number",
-          "minimum": 0
-        },
         "knock": {
           "type": "object",
           "properties": {
@@ -1156,6 +1136,30 @@
             "immune"
           ],
           "additionalProperties": false
+        },
+        "lightFloor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightTint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightRim": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightSmooth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightLookAhead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightClearance": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -1841,6 +1845,10 @@
     "treehouse": {
       "type": "object",
       "properties": {
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        },
         "angle": {
           "type": "number"
         },
@@ -1853,10 +1861,6 @@
           "minimum": 0
         },
         "lightStrength": {
-          "type": "number",
-          "minimum": 0
-        },
-        "gap": {
           "type": "number",
           "minimum": 0
         }
@@ -1885,6 +1889,32 @@
       "required": [
         "margin",
         "gap"
+      ],
+      "additionalProperties": false
+    },
+    "rig": {
+      "type": "object",
+      "properties": {
+        "minPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "alwaysLevels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "baby",
+              "young",
+              "adult",
+              "legend"
+            ]
+          }
+        }
+      },
+      "required": [
+        "minPx",
+        "alwaysLevels"
       ],
       "additionalProperties": false
     },
@@ -2530,6 +2560,10 @@
           "type": "number",
           "minimum": 0
         },
+        "arc": {
+          "type": "number",
+          "minimum": 0
+        },
         "homing": {
           "type": "number",
           "minimum": 0
@@ -2572,6 +2606,11 @@
         "perAnimalHitGap": {
           "type": "number",
           "minimum": 0
+        },
+        "fireSlow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       },
       "required": [
@@ -2581,6 +2620,7 @@
         "cooldown",
         "range",
         "speed",
+        "arc",
         "homing",
         "homingCone",
         "homingRange",
@@ -2590,7 +2630,8 @@
         "amount",
         "hits",
         "drain",
-        "perAnimalHitGap"
+        "perAnimalHitGap",
+        "fireSlow"
       ],
       "additionalProperties": false
     },
@@ -2963,15 +3004,15 @@
               "type": "number",
               "minimum": 0
             },
+            "knockdown": {
+              "type": "number",
+              "minimum": 0
+            },
             "duck": {
               "type": "number",
               "minimum": 0
             },
             "duckTime": {
-              "type": "number",
-              "minimum": 0
-            },
-            "knockdown": {
               "type": "number",
               "minimum": 0
             }
@@ -2981,6 +3022,55 @@
             "knockdown",
             "duck",
             "duckTime"
+          ],
+          "additionalProperties": false
+        },
+        "impact": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "small": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "small"
+          ],
+          "additionalProperties": false
+        },
+        "land": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "stir": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
           ],
           "additionalProperties": false
         },
@@ -3178,55 +3268,6 @@
             "sleepEvery"
           ],
           "additionalProperties": false
-        },
-        "impact": {
-          "type": "object",
-          "properties": {
-            "volume": {
-              "type": "number",
-              "minimum": 0
-            },
-            "small": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "volume",
-            "small"
-          ],
-          "additionalProperties": false
-        },
-        "land": {
-          "type": "object",
-          "properties": {
-            "volume": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gap": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "volume",
-            "gap"
-          ],
-          "additionalProperties": false
-        },
-        "stir": {
-          "type": "object",
-          "properties": {
-            "volume": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "volume"
-          ],
-          "additionalProperties": false
         }
       },
       "required": [
@@ -3281,6 +3322,10 @@
           "type": "number",
           "minimum": 0
         },
+        "audible": {
+          "type": "number",
+          "minimum": 0
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -3300,6 +3345,7 @@
         "farDist",
         "floor",
         "muffle",
+        "audible",
         "clear",
         "distort",
         "src"
@@ -4311,11 +4357,15 @@
             "band"
           ],
           "additionalProperties": false
+        },
+        "sky": {
+          "type": "boolean"
         }
       },
       "required": [
         "on",
         "where",
+        "sky",
         "strength",
         "band",
         "centre",
@@ -4545,32 +4595,6 @@
         "legend"
       ],
       "additionalProperties": false
-    },
-    "rig": {
-      "type": "object",
-      "properties": {
-        "minPx": {
-          "type": "number",
-          "minimum": 0
-        },
-        "alwaysLevels": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "baby",
-              "young",
-              "adult",
-              "legend"
-            ]
-          }
-        }
-      },
-      "required": [
-        "minPx",
-        "alwaysLevels"
-      ],
-      "additionalProperties": false
     }
   },
   "required": [
@@ -4617,6 +4641,7 @@
     "pixelSize",
     "glowReach",
     "glowFalloff",
+    "glowNear",
     "glowToCutout",
     "glowHeight",
     "spriteTilt",

@@ -13,22 +13,17 @@
 // The guesses: ground time a visit = ground-base s (fighting, inviting, placing a sigil) plus
 // crossing the area on foot (1.5 × its size at ground speed); a player's growth = growth × (areas
 // visited a wave / the same at 112 m and 32 m/s), since each area holds the same babies and berries.
-import { createServer } from "vite";
+import { openRules, arg, nums as list, mean, pct } from "./lib.mjs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
-const list = s => String(s).split(",").map(Number);
 const SEEDS = +arg("seeds", 8), SIZES = list(arg("sizes", "112,168,224,280")), TREETOPS = list(arg("treetops", "32,48,64,96"));
 const AREAS = +arg("areas", 14), GAP = +arg("gap", 60), GROWTH = +arg("growth", 50), GROUND_BASE = +arg("ground-base", 15);
 const BOOST = +arg("boost", 1.4), ROUTE = +arg("route", 1.3), CAP = +arg("cap", 60), MARCH_ON = +arg("attrition", 1);
 
-const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-const load = p => server.ssrLoadModule(p);
+const { load, close } = await openRules();
 const { generateMap } = await load("/src/rules/map.ts");
 const { TUNING } = await load("/src/rules/tuning.ts");
 const { simulate } = await load("/src/rules/balance.ts");
 
-const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-const pct = x => (Number.isNaN(x) ? "–" : `${Math.round(x * 100)}%`);
 const seeds = Array.from({ length: SEEDS }, (_, i) => 1000 + i * 7919);
 const GROUND = TUNING.groundSpeed, POSSE = TUNING.leash.runSpeed * BOOST, PLACE = +arg("place", 0.5);
 // You have to land to place a sigil (Ed, 2026-10-05): her descent, the placing (a guess) and her rise.
@@ -81,4 +76,4 @@ grid("Posse in time as the frontier grows: waves 1–10 / 11–20 / 21+", c => c
 grid("Seconds to spare (first blow minus posse arrival, mean; negative is late), and announcement to first blow", c => `${Math.round(c.slack)} s (of ${Math.round(c.firstHit)} s)`);
 grid("Party animals' walk from home to the frontier, in waves: at wave 5 / 10 / 20", c => c.fromHome.map(x => (Number.isNaN(x) ? "–" : x.toFixed(1))).join(" / "));
 say(`(${((Date.now() - t0) / 1000).toFixed(0)} s)`);
-await server.close();
+await close();
