@@ -3416,6 +3416,33 @@
           "type": "number",
           "minimum": 0
         },
+        "floor": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "overgrowth": {
+              "type": "number",
+              "minimum": 0
+            },
+            "slab": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glint": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "overgrowth",
+            "slab",
+            "glint"
+          ],
+          "additionalProperties": false
+        },
         "rim": {
           "type": "object",
           "properties": {
@@ -3505,6 +3532,7 @@
         "edge",
         "top",
         "minFromStone",
+        "floor",
         "rim",
         "grove",
         "species"
@@ -4247,7 +4275,11 @@
           "type": "number",
           "minimum": 0
         },
-        "threadArc": {
+        "threadArcSlack": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadArcTaut": {
           "type": "number",
           "minimum": 0
         },
@@ -4261,7 +4293,8 @@
         "sparks",
         "thread",
         "sparkEvery",
-        "threadArc",
+        "threadArcSlack",
+        "threadArcTaut",
         "threadArcMax"
       ],
       "additionalProperties": false
@@ -5131,6 +5164,28 @@
           ],
           "additionalProperties": false
         },
+        "slow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "pitch",
+            "floor"
+          ],
+          "additionalProperties": false
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -5152,6 +5207,7 @@
         "muffle",
         "audible",
         "circle",
+        "slow",
         "clear",
         "distort",
         "src"

@@ -30,6 +30,19 @@ const TRUNK_ROUND = 1.3; // across a trunk, its lit side over its shaded one (me
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// Known failures (the coordinator, 2026-10-06: "make the list small and honest, so a red full smoke
+// means something new"): checks that fail on claude/prototype itself for a reason we know and have an
+// issue for. A known check that fails is reported apart ("known: N") and doesn't fail the run; one that
+// passes says so, so it can come off the list. Every entry: the check's key, its issue, and why.
+const KNOWN = {
+  "speed-build": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "boost-p99": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "boost-worst": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "vanish-1900x1240": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "vanish-2000x1076": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+};
+
 async function main() {
   fs.mkdirSync(out, { recursive: true });
   const server = await serve(), port = server.address().port;
@@ -39,7 +52,13 @@ async function main() {
   });
   const errors = [];
   const results = [];
-  const check = (ok, what) => { results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what); };
+  const known = [], fixed = [];
+  const check = (ok, what, key) => {
+    const k = key && KNOWN[key];
+    if (k && !ok) { results.push(`KNOWN ${what} (#${k.issue}: ${k.why})`); known.push(`${what} (#${k.issue})`); return; }
+    if (k && ok) fixed.push(`${key} (#${k.issue})`);
+    results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what);
+  };
 
   let shared = null;
   async function run(name, viewport, steps, query) {
@@ -143,7 +162,7 @@ async function main() {
     check(!!heath, `the pop check also flies a Heath (${heath})`);
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
-    check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`);
+    check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
     await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 60000 });
     if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
@@ -208,12 +227,14 @@ async function main() {
     await shot(page, "41-dancefloor-treetop.png");
     // The wave numbers follow the bend (Ed, 2026-10-05: "the glowing numbers can be seen past the
     // bend"): over the treetops, none shows for a stone hidden behind the bent horizon.
-    const t0 = await page.evaluate(() => window.witch.game.clock.time);
+    // (they're a design aid, off in the tuning since #188's round: on for this check, off again after)
+    const t0 = await page.evaluate(() => { const g = window.witch.game; g.tuning.waveNumbers.on = true; return g.clock.time; });
     await page.waitForFunction(t => window.witch.game.clock.time - t >= 1.5, t0, { timeout: 240000, polling: 50 }); // (their fade settles)
     const nb = await page.evaluate(() => {
       const v = window.witch.view, list = v.waveNumbers.last;
       let hidden = 0, shownPast = 0;
       for (const n of list) { const k = v.overBulge(n.x, n.z, n.top ?? 0); if (k === 0) { hidden++; if ((n.show ?? 1) > 0.1) shownPast++; } }
+      window.witch.game.tuning.waveNumbers.on = false;
       return { drawn: list.length, hidden, shownPast };
     });
     check(nb.shownPast === 0 && nb.drawn > 0, `over the treetops, no wave number shows for a stone past the bent horizon (${nb.drawn} drawn, ${nb.hidden} past the horizon, ${nb.shownPast} still showing)`);
@@ -503,7 +524,8 @@ async function main() {
     const r = await page.evaluate(() => { const L = window.speedLog; L.stop = true; const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))] : 0; }; return { n: L.forest.length, worst: q(L.forest, 1), p99: q(L.forest, 0.99), median: q(L.forest, 0.5), frameMedian: q(L.frame, 0.5), frameWorst: q(L.frame, 1), missing: window.witch.view.stats.forestMissing }; });
     const dist = Math.hypot(s1.x - s0.x, s1.z - s0.z), speed = dist / (s1.t - s0.t);
     results.push(`info speed: ${dist.toFixed(0)} m of fresh forest at ${speed.toFixed(1)} m/s; forest building per frame: median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms over ${r.n} frames; frames here (software renderer): median ${r.frameMedian.toFixed(0)} ms, worst ${r.frameWorst.toFixed(0)} ms`);
-    check(dist > 150 && r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`);
+    check(dist > 150, `flying into new forest at full boost covers fresh ground (${dist.toFixed(0)} m)`);
+    check(r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`, "speed-build");
   });
 
   // The hills at their default (Ed, v289): from the steepest spot near home (its shot, to catch
@@ -615,8 +637,9 @@ async function main() {
       return { hover: q(hover, 0.5), median: q(boost, 0.5), p99: q(boost, 0.99), worst: q(boost, 1), top, dist: Math.hypot(w.game.witch.x - x0, w.game.witch.z - z0) };
     });
     results.push(`info boost: ${r.dist.toFixed(0)} m north in 10 s at up to ${r.top.toFixed(0)} m/s; frame work hovering ${r.hover.toFixed(1)} ms (median), boosting median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms`);
-    check(r.top > 100 && r.p99 <= 22, `boosting over the treetops at over 100 m/s, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`);
-    check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`);
+    check(r.top > 100, `boosting over the treetops goes over 100 m/s (${r.top.toFixed(0)} m/s)`);
+    check(r.p99 <= 22, `boosting over the treetops, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`, "boost-p99");
+    check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`, "boost-worst");
   });
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
@@ -687,7 +710,8 @@ async function main() {
           const err = Math.max(0, ...[-half, half].map(s => base - h(cx + R.x * s, cz + R.z * s))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;
           if (err > out.worst) out.worst = err;
-          if (err > 1 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(1)} px`);
+          // (feet snap to whole art pixels, so one exactly a pixel off reads a hair over 1 from the height's rounding: 0.05 px of slack)
+          if (err > 1.05 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(2)} px`);
         }
       }
       return out;
@@ -714,7 +738,7 @@ async function main() {
       await shot(page, `vanish-${w}x${h}-treetop-out.png`);
       const r = await page.evaluate(() => ({ dropped: window.maxDropped, pops: window.witch.view.pops.slice(0, 12), n: window.witch.view.pops.length, trees: window.witch.view.stats.trees, radius: window.witch.view.stats.sceneryRadius, fps: window.witch.view.stats.fps }));
       check(r.dropped === 0, `${w}x${h} at DPR ${dpr}: every tree, bush and creature set is drawn (most dropped in a frame: ${r.dropped}; ${r.trees} trees now; scenery radius ${(r.radius ?? 0).toFixed(0)} m at ${(r.fps ?? 0).toFixed(1)} fps)`);
-      check(r.n === 0, `${w}x${h} at DPR ${dpr}: nothing appears or vanishes on screen in full-speed flight (${r.n})${r.n ? ": " + r.pops.join("; ") : ""}`);
+      check(r.n === 0, `${w}x${h} at DPR ${dpr}: nothing appears or vanishes on screen in full-speed flight (${r.n})${r.n ? ": " + r.pops.join("; ") : ""}`, `vanish-${w}x${h}`);
     }, "&debug=cull");
   }
 
@@ -735,6 +759,8 @@ async function main() {
   await browser.close();
   server.close();
   console.log(results.join("\n"));
+  if (known.length) console.log(`\nknown: ${known.length} (failing for a known reason, not counted: tools/smoke/smoke.cjs KNOWN)\n` + known.map(k => "- " + k).join("\n"));
+  if (fixed.length) console.log(`\nknown checks now passing (take them off KNOWN if they keep passing): ${fixed.join(", ")}`);
   if (errors.length) { console.error("\nFAILED:\n" + errors.join("\n")); process.exit(1); }
   console.log("\nsmoke test passed");
 }

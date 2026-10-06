@@ -776,6 +776,10 @@ A legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower, thi
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
 | `legendClearing.minFromStone` | number | 0 to … |
+| `legendClearing.floor.on` | boolean |  |
+| `legendClearing.floor.overgrowth` | number | 0 to … |
+| `legendClearing.floor.slab` | number | 0 to … |
+| `legendClearing.floor.glint` | number | 0 to … |
 | `legendClearing.rim.spacing` | number | 0 to … |
 | `legendClearing.rim.chance` | number | 0 to … |
 | `legendClearing.rim.out` | number | 0 to … |
@@ -942,7 +946,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 | `invite.turn` | array of number |  |
 | `invite.decayRate` | number | 0 to … |
 
-## `leash`, `bond`
+## `leash`
 
 length: metres her creatures follow within; runSpeed: how fast one out of range hurries back (m/s); pickRadius: how near (m) she picks up a sigil, a relic's, a happy creature's rune or her hat; spacing: how far apart (m) sigils can be put down. weight, sigil weight (Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down"; rules/leashWeight.ts): each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength). Less free (the first few sigils' worth, so early play feels the same), that's her load (weight units, a young on a taut leash being 1). drag: moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers); drift: she drifts toward the pull at up to that share of her top speed, reached at an extreme load; rise: rising takes 1 + rise x load times as long; sink: over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it.
 
@@ -962,11 +966,19 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.weight.floor` | number | 0 to 1 |
 | `leash.weight.extreme` | number | 0 to … |
 | `leash.weight.maxTension` | number | 0 to … |
+
+## `bond`
+
+The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), never more than threadArcMax metres.
+
+| knob | type | range |
+|---|---|---|
 | `bond.rim` | boolean |  |
 | `bond.sparks` | boolean |  |
 | `bond.thread` | boolean |  |
 | `bond.sparkEvery` | number | 0 to … |
-| `bond.threadArc` | number | 0 to … |
+| `bond.threadArcSlack` | number | 0 to … |
+| `bond.threadArcTaut` | number | 0 to … |
 | `bond.threadArcMax` | number | 0 to … |
 
 ## `sfx`, `music`
@@ -1095,6 +1107,9 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.circle.ease` | number | 0 to … |
 | `music.circle.level` | number | 0 to … |
 | `music.circle.radius` | number | 0 to … |
+| `music.slow.on` | boolean |  |
+| `music.slow.pitch` | number | 0 to … |
+| `music.slow.floor` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |

@@ -2,7 +2,8 @@
 // circle in ground mode"): node tools/music-lab/circles.mjs [species,...]
 // Renders tools/music-lab/circles.ts offline in headless Chromium: for each species (default all
 // 30 legends), 3 s of wave 1's music 40 m from a soundsystem, then she steps into its legend's
-// clearing: the music muffled under the legend's own layer. Prints, in dB, the music before, the
+// clearing: the music muffled under the legend's own layer, slowing to a tenth with the world there
+// (a tape slowing; SLOW=0 renders it as before), the layer at full speed; at 11 s she leaves. Prints, in dB, the music before, the
 // layer alone and the whole inside; fails on a script error, NaN, clipping, a silent layer or a
 // layer drowned by (or drowning) the muffled music. Writes previews/music/circles/<species>.mp3.
 import { build } from "esbuild";
@@ -28,7 +29,7 @@ page.on("pageerror", e => errors.push(String(e)));
 await page.setContent("<!doctype html><meta charset=utf-8><body></body>");
 const seed = "window.seedRandom = () => { let r = 12345; Math.random = () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 4294967296); }; window.seedRandom();";
 await page.addScriptTag({ content: seed + "\n" + code });
-const out = await page.evaluate(sp => window.circleRender(sp), species);
+const out = await page.evaluate(([sp, slow]) => window.circleRender(sp, slow), [species, process.env.SLOW !== "0"]);
 await browser.close();
 ok(errors.length === 0, `no script errors: ${errors.join(" | ")}`);
 const dir = resolve(root, "previews/music/circles");
