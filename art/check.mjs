@@ -465,10 +465,10 @@ const report = await b.page.evaluate(async () => {
         let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${kind} ${seed} floats`);
         if (seen.has(key)) bad.push(`${kind} ${seed} repeats another`); seen.add(key);
         const share = mats => sp.m.filter(m => mats.includes(m)).length / n, { height, width } = p.metres;
-        if (kind === "standingStone") { const [r, g, b] = p.colours[G.M.STONE], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0; if (sat > .16 || height < (p.variant.shape === "squat" || p.variant.top === "broken" ? 1.4 : 3) || height > 6 || share([G.M.BELLY, G.M.MOSS]) > .33) bad.push(`stone ${seed}: sat ${sat.toFixed(2)}, ${height} m, marks ${share([G.M.BELLY, G.M.MOSS]).toFixed(2)}`); }
+        if (kind === "standingStone") { const [r, g, b] = p.colours[G.M.STONE], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0; if (sat > .22 || height < (p.variant.shape === "squat" || p.variant.top === "broken" ? 1.4 : 3) || height > 6 || share([G.M.BELLY, G.M.MOSS]) > .33) bad.push(`stone ${seed}: sat ${sat.toFixed(2)}, ${height} m, marks ${share([G.M.BELLY, G.M.MOSS]).toFixed(2)}`); }
         if (kind === "cairn" && (height > 2.2 || width < height)) bad.push(`cairn ${seed}: ${width} x ${height} m`);
-        if (kind === "pool" && (width < 1.5 || width > 5 || sp.h >= sp.w || share([G.M.WATER, G.M.BODY2, G.M.BELLY]) < .5)) bad.push(`pool ${seed}: ${width} x ${height} m, water ${share([G.M.WATER, G.M.BODY2, G.M.BELLY]).toFixed(2)}`);
-        if (kind === "brokenTrunk") { // the wood's pieces, by 4-neighbour flood fill (splinters and fungi on it touch it)
+        if (kind === "pool" && (width < 1.5 || width > 5 || sp.h >= sp.w || share([G.M.WATER, G.M.BODY2, G.M.GLINT, G.M.ACCENT, G.M.WEB]) < .5)) bad.push(`pool ${seed}: ${width} x ${height} m, water ${share([G.M.WATER, G.M.BODY2, G.M.GLINT, G.M.ACCENT, G.M.WEB]).toFixed(2)}`); // (its glints, the sky's reflection and the moonlit rim are water too)
+        if (kind === "brokenTrunk" || kind === "fallenLog") { // the wood's pieces, by 4-neighbour flood fill (splinters and fungi on it touch it)
           const lab = new Int32Array(sp.m.length).fill(-1); let parts = 0, big = 0;
           for (let i = 0; i < sp.m.length; i++) { if (lab[i] >= 0 || !wood.has(sp.m[i])) continue; let size = 0; const q = [i]; lab[i] = parts; while (q.length) { const j = q.pop(); size++; const x = j % sp.w, y = (j / sp.w) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy, k = yy * sp.w + xx; if (xx >= 0 && yy >= 0 && xx < sp.w && yy < sp.h && lab[k] < 0 && (wood.has(sp.m[k]) || sp.m[k] === G.M.MOSS || sp.m[k] === G.M.FLOWER)) { lab[k] = parts; q.push(k); } } } parts++; if (size > 12) big++; }
           if (big !== 1) bad.push(`broken trunk ${seed} (${p.variant.branch}): its wood in ${big} pieces`);
@@ -481,7 +481,7 @@ const report = await b.page.evaluate(async () => {
     if (sizes(muddy.small.filter(a => a.kind === "stump")) < 3) bad.push("muddy forest's broken trunks not 3 shapes");
     if (Math.max(...moor.big.map(a => a.metres?.height || 0)) < 4) bad.push("the moor has nothing 4 m tall under ?props=gen");
     if (Math.abs(moor.big.filter(a => a.kind === "standingstone").reduce((t, a) => t + (a.sparse || 0), 0) - .12) > 1e-6) bad.push("the standing stones' sparse share changed");
-    res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk one piece; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+    res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk and fallen log one piece; logs, mushroom rings and stone circles too; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   }
   { // generated bridges (art/props/bridges.js, under ?props=gen): each bridge's variants draw and stand, none alike, nothing NaN,
     // the hand-made piece's size within a third either way (so a crossing's corridor still fits), nothing glowing

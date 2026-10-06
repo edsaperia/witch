@@ -1374,6 +1374,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "generated": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1387,7 +1390,8 @@
         "lanternReach",
         "arch",
         "home",
-        "exclude"
+        "exclude",
+        "generated"
       ],
       "additionalProperties": false
     },
@@ -4062,6 +4066,9 @@
             "type": "string"
           }
         },
+        "areaNeon": {
+          "type": "boolean"
+        },
         "twinkle": {
           "type": "number",
           "minimum": 0
@@ -4084,6 +4091,7 @@
         "sag",
         "bulbSpacing",
         "palette",
+        "areaNeon",
         "twinkle",
         "chaseSpeed"
       ],
