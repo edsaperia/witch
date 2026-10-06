@@ -98,7 +98,6 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     const key = cellKey(c.cell), q = c.quest;
     c.questOpen = !!q && q.done === undefined && !w.partified(key) && (c.legendState === "asleep" || c.legendState === "restless");
     if (q?.done !== undefined) c.buffed = true; // (its quest done: its buff, for good)
-    if (c.legendState === "slept" || c.legendState === "waking" || c.legendState === "awake") c.legendState = "asleep"; // (the old states)
     if (c.legendState !== "asleep" && c.legendState !== "restless") continue;
     if (kin) {
       if (kin.has(key)) { c.legendState = "asleep"; c.restlessness = 0; }
