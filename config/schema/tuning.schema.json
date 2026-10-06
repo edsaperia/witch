@@ -2388,6 +2388,13 @@
             "minimum": 0
           }
         },
+        "core": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
         "height": {
           "type": "array",
           "items": {
@@ -2429,6 +2436,7 @@
         "fade",
         "brightness",
         "width",
+        "core",
         "height",
         "valley",
         "flow",
