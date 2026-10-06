@@ -124,8 +124,11 @@ export class Dancefloor {
   }
 
   /** Bring the show to `time` seconds; returns the floor's light for the light list. */
-  update(time: number, ground: Ground, g: Game): { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number } {
-    const d = this.tuning.dancefloor, inp = floorInputs(g), tiles = composeFloor(g.floor, inp, this.tuning, this.tiles), on = g.floor.on !== null;
+  /** off: the party's over (render/partyOver.ts), 0 playing to 1 switched off: its tiles go dark one by one (each at its
+   *  own moment, as if the power's been cut), the ball, its specks, the motes and its light with them. */
+  update(time: number, ground: Ground, g: Game, off = 0): { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number } {
+    const d = this.tuning.dancefloor, inp = floorInputs(g), tiles = composeFloor(g.floor, inp, this.tuning, this.tiles), on = g.floor.on !== null && off < 0.999;
+    if (off > 0) { const T = tiles.rgbi; for (let i = 0, n = 0; i < T.length; i += 4, n++) if (((n * 0.6180339887) % 1) * 0.85 < off - 0.1) T[i + 3] = 0; }
     ground.setFloorTiles(tiles.rgbi);
     const pulse = 0.75 + 0.25 * Math.sin(time * d.pulse * Math.PI * 2);
     ground.setCircle(d.circleHue, d.circleHue2, 0.7 + 0.3 * pulse, (time * d.runeSpeed / 60) * Math.PI * 2); // the party's sweeps still use its hues
@@ -135,11 +138,12 @@ export class Dancefloor {
     // The ball lights and the motes rise once the floor is on; more motes at higher levels.
     this.ball.visible = this.beam.visible = on;
     LIGHT_UNIFORMS.uDisco.value.set(this.centre.x, y + groundHeight(this.centre.x, this.centre.z), this.centre.z, on ? 1 : 0); // over the floor's plateau
-    this.motes.geometry.setDrawRange(0, on ? Math.round(this.moteCount * (0.25 + 0.25 * inp.level)) : 0);
+    LIGHT_UNIFORMS.uDiscoParams.value.z = d.speckBrightness * (1 - off);
+    this.motes.geometry.setDrawRange(0, on ? Math.round(this.moteCount * (0.25 + 0.25 * inp.level) * (1 - off)) : 0);
     // The light takes the lit tiles' colour, brighter the more of the floor is lit and the higher the level.
     if (tiles.lit > 0) this.lightRgb.set(...tiles.average).multiplyScalar(1 / Math.max(0.3, ...tiles.average));
     const strength = on ? d.lightStrength * (0.35 + 0.65 * Math.min(1, tiles.lit * 3)) * (0.6 + 0.15 * inp.level)
       : d.lightStrength * 0.25 * Math.min(1, tiles.lit * 3); // before the first wave: the moon's faint light (rules/dancefloor.ts moonTiles)
-    return { x: this.centre.x, y: 2.5, z: this.centre.z, reach: d.lightReach, rgb: this.lightRgb, strength };
+    return { x: this.centre.x, y: 2.5, z: this.centre.z, reach: d.lightReach, rgb: this.lightRgb, strength: strength * (1 - off) };
   }
 }

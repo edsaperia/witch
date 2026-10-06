@@ -31,6 +31,7 @@ import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
+import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
 import { LOAD_DEFAULT, loadView } from "./load";
 import { InviteView } from "./invites";
@@ -191,6 +192,9 @@ export class View {
   private leyScaled = -1;
   /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
   private leyParty: Game["party"] | null = null;
+  /** The party's over (render/partyOver.ts): its look this frame, and ?partyover=<s> (debug). */
+  readonly over = newPartyOverLook();
+  private overDebug: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
   private readonly leyHome = new THREE.Vector3(0.8, 0.7, 1);
   private readonly leyChainNow = () => leyChain(this.leyParty ?? this.game.party, this.game.map);
   private readonly leyColour = (s: { cell: readonly [number, number] }) => {
@@ -801,7 +805,11 @@ export class View {
     updateSources(this, time);
     this.time("sources");
     // The party: soundsystems rising in partifying areas, their lights, the sweeping fronts.
+    // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
+    const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
+    this.leashView.partyOverEase = over.ease;
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false);
+    if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
@@ -833,7 +841,7 @@ export class View {
       const U = SPRITE_UNIFORMS, P = t.party, list = [...g.party.areas.values()].map(a => ({ a, s: g.map.siteOf(a.cell[0], a.cell[1]) }))
         .sort((p, q) => Math.hypot(p.s.x - w.x, p.s.z - w.z) - Math.hypot(q.s.x - w.x, q.s.z - w.z)).slice(0, 16);
       list.forEach(({ a, s }, i) => {
-        const fade = a.wave === 0 ? 1 : Math.min(1, Math.max(0, (time - a.at) / Math.max(0.01, P.transition)));
+        const fade = (a.wave === 0 ? 1 : Math.min(1, Math.max(0, (time - a.at) / Math.max(0.01, P.transition)))) * (1 - offAt(s.x, s.z));
         U.uParty.value[i].set(s.x, s.z, g.map.areaSize * 0.85, fade);
         const c = sigilColour(AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature);
         U.uPartyCol.value[i].set(c[0] / 255, c[1] / 255, c[2] / 255);
@@ -888,7 +896,9 @@ export class View {
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
-    if (t.bare) { this.dancefloor.update(time, this.ground, g); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
+    const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
+    if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
+    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);

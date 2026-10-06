@@ -54,6 +54,8 @@ import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 import { tiltFilter } from "./overlayTilt";
 
+/** The party's over: 😴 bubbles over at most this many sleepers, within this many metres of her. */
+const SNORES = 6, SNORE_RANGE = 40;
 /** Seconds a legend's charge ruts take to fade. */
 const RUTS = 12;
 /** How far from her (m) happy creatures' runes are drawn. */
@@ -375,11 +377,56 @@ export class LeashView {
   /** Sleeping legends dreaming this frame (the first quest), drawn as thought bubbles by drawDreams. */
   private dreams: Creature[] = [];
   private dreamEls: HTMLElement[] = [];
+  /** The party's over (render/partyOver.ts; the view sets it each frame): its ease, 0 to 1. */
+  partyOverEase = 0;
+  /** The sleepers' 😴 bubbles (pooled), and the nearest sleepers this frame (reused). */
+  private snoreEls: HTMLElement[] = [];
+  private snoreNear: { c: Creature; d: number }[] = [];
 
   /** A sleeping legend's dream (the first quest, Ed 2026-10-04): a bubble over it holding the
    *  sigil of the creature it wants, in its colour, drawn in that level's variant (Ed, 2026-10-05:
    *  the sigil's own level look, no pips). Only to a witch on the ground near it (dreams.range;
    *  Ed, 2026-10-05: never from the treetops). HTML, like the talk bubbles, so it reads at any zoom. */
+  /** The party's over (Ed, 2026-10-06: "all the animals go to sleep and make little 😴 speech bubbles"): over the nearest few
+   *  sleepers within SNORE_RANGE of her on the ground, a little dream bubble with a sleepy face (mostly 😴, now and then a yawn
+   *  or a sigh: sleepyFace), bobbing and drifting. A sleeper is one the rules have put to sleep (c.asleep: builder hotel's
+   *  party's-over rules, legends too), or, before those rules, any creature not hers once the party's well over. */
+  private drawSnores(camera: THREE.Camera, width: number, height: number): void {
+    const host = this.bubbleWitch?.parentElement, g = this.game, w = g.witch, near = this.snoreNear;
+    let used = 0;
+    near.length = 0;
+    if (host && this.partyOverEase > 0.3 && w.mode === "ground" && w.lift < 0.5) {
+      for (const c of g.creatures) {
+        if (c.gone || c.leashed) continue;
+        // (asleep: the rules' c.asleep, legends too; before builder hotel's party's-over rules, any creature not hers once it's well over)
+        const asleep = (c as { asleep?: boolean }).asleep, rules = "partyOver" in g, dx = c.x - w.x, dz = c.z - w.z;
+        if (!(asleep || (!rules && asleep === undefined && this.partyOverEase >= 0.6 && c.level !== 3 && !c.boss)) || Math.abs(dx) > SNORE_RANGE || Math.abs(dz) > SNORE_RANGE) continue;
+        const d = Math.hypot(dx, dz);
+        if (d > SNORE_RANGE) continue;
+        if (near.length < SNORES) near.push({ c, d });
+        else { let far = 0; for (let i = 1; i < near.length; i++) if (near[i].d > near[far].d) far = i; if (d < near[far].d) near[far] = { c, d }; }
+      }
+      const Z = g.tuning.dreams.sleepy, time = g.clock.time;
+      for (const { c } of near) {
+        const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(this.tops.get(c.id) ?? 1.5, 4) + 0.35 + bob;
+        placed(this.v.set(c.x + Math.sin(time * 0.7 + c.id) * 0.15, y, c.z)).project(camera);
+        if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) continue;
+        let el = this.snoreEls[used];
+        if (!el) { el = document.createElement("div"); el.className = "bubble dream on snore"; host.append(el); this.snoreEls.push(el); }
+        el.style.display = "";
+        const face = Z ? emojiOr(sleepyFace(c.id, time, Z), Z.fallback) : "😴";
+        if (el.dataset.e !== face) { el.dataset.e = face; const f = this.pixelEmoji(face, 0.9, 18); f.classList.add("face"); el.replaceChildren(f); }
+        el.style.setProperty("--px", `${Math.max(1, bubblePx(c.level) * 0.8)}px`);
+        el.style.left = `${((this.v.x + 1) / 2) * width}px`;
+        el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+        el.style.opacity = `${Math.min(1, (this.partyOverEase - 0.3) * 4).toFixed(2)}`;
+        el.style.transform = "translate(-50%, calc(-100% - var(--px) * 9))";
+        used++;
+      }
+    }
+    for (let i = used; i < this.snoreEls.length; i++) this.snoreEls[i].style.display = "none";
+  }
+
   private drawDreams(camera: THREE.Camera, width: number, height: number): void {
     const host = this.bubbleWitch?.parentElement, g = this.game, w = g.witch, range = g.tuning.dreams.range;
     if (!host) return;
@@ -1075,6 +1122,7 @@ export class LeashView {
     this.standing.end(); this.flat.end(); this.over.end(); this.solid.end();
     this.bubbles(time, camera, width, height);
     this.drawDreams(camera, width, height);
+    this.drawSnores(camera, width, height);
     this.drawCirclePanel(camera, width, height);
   }
 
