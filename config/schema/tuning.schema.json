@@ -1025,6 +1025,10 @@
               "type": "number",
               "minimum": 0
             },
+            "moonUpWrap": {
+              "type": "number",
+              "minimum": 0
+            },
             "styledRim": {
               "type": "number",
               "minimum": 0
@@ -1681,6 +1685,7 @@
             "moonUp",
             "moonUpHue",
             "moonUpSat",
+            "moonUpWrap",
             "styledRim",
             "styledGlow",
             "styledLift",

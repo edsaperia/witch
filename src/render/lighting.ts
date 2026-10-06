@@ -13,8 +13,9 @@ export const LIGHT_UNIFORMS = {
   uMoon: { value: new THREE.Vector3() },
   uMoonDir: { value: new THREE.Vector3(-0.45, 0.75, 0.5).normalize() },
   uMoonBeam: { value: new THREE.Vector3() },
-  /** The moon's fill on upward faces: its colour times its strength (the mood's moonUp, moonUpHue, moonUpSat; 0 none). */
-  uMoonUp: { value: new THREE.Vector3() },
+  /** The moon's fill on upward faces: its colour times its strength (the mood's moonUp, moonUpHue, moonUpSat; 0 none), and in w
+   *  the share every face gets whatever its normal (moonUpWrap). */
+  uMoonUp: { value: new THREE.Vector4() },
   uBands: { value: 4 },
   uDither: { value: 0.35 },
   uShafts: { value: 0.3 },
@@ -69,7 +70,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
-uniform vec3 uMoonUp;
+uniform vec4 uMoonUp;
 uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uTime, uSmooth;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
@@ -108,7 +109,8 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   vec3 l = uAmb * mix(1.0, moonK, 0.5) + uMoon * moonK * lightStep(max(0.0, dot(N, uMoonDir)));
   // The moon's fill from the open sky on whatever faces up (the art director's round 2: "dark should
   // still be legible"): canopy tops and open ground catch it, the undersides and the shade don't.
-  l += uMoonUp * (moonK * max(0.0, N.y));
+  // Wrapped (round 3): a crown's regular bumps lit by their own normals alone made a lattice of bright dots.
+  l += uMoonUp.rgb * (moonK * mix(max(0.0, N.y), 1.0, uMoonUp.w));
   if (uShafts > 0.0 && moonK > 0.99) {
     // Moonbeams: diagonal bands across the world, as the lab draws them across the screen.
     float s = mod(P.x / uShaftScale + P.z * 0.9 / uShaftScale, 150.0);
