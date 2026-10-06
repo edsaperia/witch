@@ -588,7 +588,7 @@ async function main() {
   // A siege (Stage 4), headless and frame by frame: a wave wakes the next area (its creatures grown
   // to young, as the areas round home hold only babies), they march on its new soundsystem and bring
   // it down (its health cut short for the test); its party ends and they march on to the dancefloor;
-  // when that falls too, the run is over and the end screen shows.
+  // when that falls too, the party's over (Ed, 2026-10-06): no end screen, the game runs on, quiet, everyone asleep.
   await run("siege", { width: 1280, height: 800 }, async page => {
     await page.keyboard.press("Enter");
     const r = await page.evaluate(async () => {
@@ -609,15 +609,16 @@ async function main() {
       const home = g.combat.sounds.get("home"); home.hp = 0.001;
       for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
       for (let i = 0; i < 60 * 60 && !g.over; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
+      for (let i = 0; i < 60 * 6; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); } // (the quiet comes on)
+      const awake = besiegers.filter(c => !c.gone && !c.boss && !c.sleeping && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 0).length;
       w.manual = false;
-      return { besiegers: besiegers.length, hit, fell, ended, marched, over: !!g.over };
+      return { besiegers: besiegers.length, hit, fell, ended, marched, over: !!g.over, quiet: g.partyOver, running: !g.clock.paused, walkingHome: awake };
     });
     if (r.error) { check(false, `a siege: ${r.error}`); return; }
-    await page.waitForFunction(() => document.getElementById("over").classList.contains("on"), null, { timeout: 120000 }).catch(() => {});
     const screen = await page.evaluate(() => document.getElementById("over").classList.contains("on"));
     await shot(page, "80-siege-over.png");
     check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
-    check(r.over && screen, `when every soundsystem has fallen the run is over and the end screen shows (${r.over}, ${screen})`);
+    check(r.over && r.quiet >= 1 && r.running && !screen, `when every soundsystem has fallen the party's over: no end screen, the game runs on and goes quiet (${r.over}, quiet ${r.quiet}, running ${r.running}, screen ${screen})`);
   });
 
   await run("boost", { width: 1900, height: 1240 }, async page => {

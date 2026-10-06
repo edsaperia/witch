@@ -132,7 +132,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
 
 /** A sleeping legend's restlessness 0..1 (the music builder's nightmare reads c.restlessness), and
  *  whether its dream quest is still open (c.questOpen: it can still be done, so its dream shows). */
-export interface LegendWorld { creatures: Creature[]; map: ForestMap; time: number; dt: number; partified: (key: string) => boolean; /** where a creature is bound to now (a leashed one at a sigil: there; else its own area) */ areaOf: (c: Creature) => string }
+export interface LegendWorld { creatures: Creature[]; map: ForestMap; time: number; dt: number; partified: (key: string) => boolean; /** where a creature is bound to now (a leashed one at a sigil: there; else its own area) */ areaOf: (c: Creature) => string; /** the party's over (rules/partyOver.ts): they only walk home and sleep, never stirring */ calm?: boolean }
 
 /** One step of every legend's state. */
 export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsData = LEGENDS): void {
@@ -143,6 +143,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     // Going back to sleep away from where it lay (Ed, 2026-10-06: "they should go back to their
     // circle first and sleep in the spot where they spawned initially"): it walks home, then lies down.
     if (c.homing) { walkHome(c, w.time, w.dt, data); continue; }
+    if (w.calm) continue; // (the party's over: asleep for good)
     c.questOpen = !!q && q.done === undefined && (c.legendState === "asleep" || c.legendState === "restless"); // (open while it sleeps, its soundsystem on or not: Ed, 2026-10-06)
     if (q?.done !== undefined) c.buffed = true; // (its quest done: its buff, for good)
     // Every check seconds, each legend on its own beat (Ed, 2026-10-06: "the legends could check

@@ -130,6 +130,8 @@ export interface Creature {
   sprung?: number;
   /** Enraged by a wave (it's besieging or marching on a soundsystem): it can't be invited (Ed's playtest). */
   enraged?: boolean;
+  /** Asleep for good (rules/partyOver.ts, Ed 2026-10-06): the party's over, it lies down where it settled and doesn't stir. */
+  sleeping?: boolean;
   /** Gone for the run: a beaten creature that ran off the map. */
   gone?: boolean;
   /** Marching on a soundsystem (its area's key, "home" for the dancefloor): a siege. */
@@ -209,7 +211,7 @@ const inCell = (map: ForestMap, x: number, z: number, cell: [number, number]) =>
 /** Whether (x, z) is in the creature's own area: asked of the map only once it leaves the disc
  *  last found to be surely inside (map.cellSafe), so a creature ambling about asks every metre
  *  or so, not every step (the area lookup was most of a frame's work with hundreds of them). */
-function inOwnArea(map: ForestMap, c: Creature, x: number, z: number): boolean {
+export function inOwnArea(map: ForestMap, c: Creature, x: number, z: number): boolean {
   if (c.safeR !== undefined && Math.hypot(x - c.safeX!, z - c.safeZ!) < c.safeR) return true;
   const r = map.cellSafe(x, z);
   if (r.cell[0] !== c.cell[0] || r.cell[1] !== c.cell[1]) return false;
@@ -292,6 +294,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
 /** Roam: walk to a random spot in its own area, pause a while, pick another. It never crosses
  *  its area's border: a step that would cross it is not taken, and it chooses again. */
 export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
+  if (c.sleeping) { c.moving = false; return; } // (the party's over: asleep where it settled)
   // Out of its own area (it chased the witch, Ed 2026-10-04): it walks back to its spot first.
   if (!inOwnArea(map, c, c.x, c.z)) {
     const dx = c.anchorX - c.x, dz = c.anchorZ - c.z, d = Math.hypot(dx, dz) || 1, step = Math.min(d, c.speed * 2 * dt);

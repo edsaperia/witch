@@ -784,6 +784,15 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `grounds.kinds` | array of string |  |
 | `grounds.radius` | record |  |
 
+## `partyOver`
+
+The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little 😴 speech bubbles, and you can walk the map safely"; "Sitting on the beach is the reward. If the music ends, it doesn't matter"): no game-over screen. Once every soundsystem and the home ring have fallen, the waves stop for good, nothing fights or attacks her, and every creature goes home (one that ran off walks back at homeSpeed m/s) and sleeps; the lights and the music wind down over ease seconds (g.partyOver, 0 to 1). ?partyover=1 jumps there.
+
+| knob | type | range |
+|---|---|---|
+| `partyOver.ease` | number | 0 to … |
+| `partyOver.homeSpeed` | number | 0 to … |
+
 ## `legendCircle`, `legendClearing`
 
 A legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower, things still move on the outside but very slowly, the music audibly slows down (this is a good audio cue for the transition) ... freeze only if the legend is asleep or restless. Enraged creatures outside the circle don't enter it. Your invitations disappear if they go outside the circle from inside"): slow: while she stands on the ground in the circle of a legend asleep or restless, the world (the clock, the waves' countdown, the music, every creature, siege and timer) runs at scale of its speed, easing there and back over ease seconds as she crosses its edge; she and everything of hers (moving, blinking, rising and landing, her sigils, her 💌s and their cooldowns, her hat) keep full speed. on false (or ?slow=0) for none. A calm circle (its legend asleep or restless) keeps enraged creatures out whether she's there or not, and a 💌 leaving it from inside vanishes in a sparkle.

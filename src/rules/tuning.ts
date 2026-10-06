@@ -55,6 +55,8 @@ export interface GladeTuning {
 }
 
 export interface Tuning {
+  /** The party's over (rules/partyOver.ts, Ed 2026-10-06): once every soundsystem and the home ring have fallen, g.partyOver eases 0 to 1 over ease seconds. */
+  partyOver?: { ease: number; /** how fast one that ran off walks home (m/s) */ homeSpeed: number };
   /** A legend's circle (Ed, 2026-10-06): slow, the world slowed to scale of its speed (eased over ease seconds) while she stands on the ground in the circle of a legend asleep or restless; on false (?slow=0) for none. */
   legendCircle?: { slow: { on?: boolean; scale: number; ease: number } };
   mapAreas: number;

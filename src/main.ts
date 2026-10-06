@@ -16,6 +16,7 @@ import { setupQuestDemo } from "./rules/quest";
 import { witchHeight } from "./rules/witch";
 import { cellKey } from "./rules/party";
 import { areaUnderWitch, hitWitch, interpolated, joinParty, leashLoad, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
+import { endParty } from "./rules/partyOver";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
 import { awaitingSpell, clockSeconds, clockText } from "./rules/leypulse";
@@ -576,7 +577,7 @@ playtest.stalls = () => stallLog.stalls;
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
-let overShown = false;
+const partyOverParam = params.get("partyover") === "1";
 document.getElementById("again")?.addEventListener("click", () => location.reload());
 document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 function frame(now: number): void {
@@ -596,13 +597,9 @@ function frame(now: number): void {
   const step0 = performance.now();
   stepGame(game, c, dt);
   const stepMs = performance.now() - step0;
-  // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
-  if (game.over && !overShown) {
-    overShown = true;
-    game.clock.paused = true;
-    document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
-    document.getElementById("over")!.classList.add("on");
-  }
+  // When every soundsystem has fallen the party's over (Ed, 2026-10-06): no end screen, the world just goes quiet and she can
+  // wander it (rules/partyOver.ts). ?partyover=1 jumps there once the game's under way.
+  if (partyOverParam && !game.clock.paused && !game.over) endParty(game);
   const log0 = performance.now();
   playtest.update();
   const audio0 = performance.now();

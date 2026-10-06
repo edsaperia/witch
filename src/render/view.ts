@@ -175,6 +175,9 @@ export class View {
   private lasers: Lasers;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   private ley: LeyLines;
+  /** The ley line's brightness by the mood, and the share of it shown (it fades as the party's over: rules/partyOver.ts). */
+  private leyBright = 1;
+  private leyShown = 1;
   /** The sleeping legends' clearings: their twilight and rising motes. */
   private glades: Glades;
   private gladeTime = 0;
@@ -357,7 +360,8 @@ export class View {
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
-    this.ley.scale(M?.leyBright ?? 1);
+    this.leyBright = M?.leyBright ?? 1;
+    this.ley.scale(this.leyBright);
     this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
     this.glades = new Glades(t.glades);
@@ -788,12 +792,13 @@ export class View {
       // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
       this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
+      if (1 - g.partyOver !== this.leyShown) { this.leyShown = 1 - g.partyOver; this.ley.scale(this.leyBright * this.leyShown); } // (the party's over: the line fades)
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
       this.ley.pulse(shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
       this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
-        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, g.party.spellAt === null ? 0 : live ? 1 : 0.35, this.leyRgb ?? undefined);
+        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * this.leyShown, this.leyRgb ?? undefined);
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
