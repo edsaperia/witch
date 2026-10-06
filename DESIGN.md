@@ -522,6 +522,10 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 - A **list of every asset** the game needs, kept in the repository: foliage (top and bottom halves), and each creature at each level with a few frames each of **walking, attacking and being hurt**.
 - A **style**, written as a prompt plus fixed rules (palette, pixel size), that the whole list is generated from. Changing the style and regenerating is how art styles are tried out.
 
+## Easter eggs
+
+- **The party legend** (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless."): a happy legend (by its relic or its quest) takes 💌s, unlike any other legend; its ring is 100 long (`legends.partyHits`) and drains slowly (`partyDrain`). Full, it's a **party legend**: it keeps its buff (that was for good), wears a giant party hat, dances where it stands and stops guarding and fighting (the bodyguard is what she gives up), and its rune lies at its feet. Picked up, it never comes to her: she can go anywhere within the leash's slack of it (`legends.partyReach`) and not a step further, on foot, in the treetops or by a blink; at the edge its leash goes ruler-straight and bright, with a boing. Putting its sigil down (E) lets it go where it stands, dancing, and she's free; so does a knockout. `legends.partyEgg` turns it off. Rules in `src/rules/partyLegend.ts`.
+
 ## Engine
 
 **Prototype in Three.js in the browser; port to Godot once Ed is happy with it** (Ed, 2026-10-03). The game's state and rules live in modules with no Three.js in them, so the port carries them over. The art is drawn by JavaScript code (the Art Lab's generator), which the prototype uses directly.

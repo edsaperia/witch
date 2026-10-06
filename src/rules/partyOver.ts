@@ -8,6 +8,7 @@
 // for the view (the lights going out) and the audio (the music winding down).
 import { inOwnArea, type Creature } from "./creatures";
 import type { Game } from "./game";
+import { letPartyLegendGo } from "./leash";
 import { lull } from "./legends";
 
 /** Asleep for the view's 😴 and the audio: a creature settled for good (c.sleeping), or a legend lying asleep in its circle. */
@@ -25,7 +26,9 @@ export function settle(g: Game): void {
   const unseen = (x: number, z: number) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > far);
   for (const c of g.creatures) {
     if (c.gone) continue;
+    if (c.partyLegend && c.leashed) { for (const w of g.witches) w.leash.stack = w.leash.stack.filter(id => id !== c.id); letPartyLegendGo(c); c.sleeping = true; } // (the egg's leash let go, so she walks free: it sleeps where it danced)
     calm(c);
+    if (c.sleeping) continue;
     if (c.boss && !c.leashed) { lull(c, time); continue; } // (back to its circle, and to sleep)
     if (c.leashed || parked.has(c.id)) { c.sleeping = true; continue; } // (hers: asleep where it is)
     if (inOwnArea(g.map, c, c.x, c.z)) { c.sleeping = true; continue; }
