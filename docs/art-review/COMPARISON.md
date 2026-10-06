@@ -45,6 +45,6 @@ The latest set also has a shot the first set didn't take: a partified area away 
 - A lime glow sits on the ground at the front of home's dancefloor.
 - A checkerboard dither on the dark crowns and rock spires reads as a screen door.
 - Creature attack visuals (Ed's second direction): #193 and #203 are in review and not yet in these shots.
-- **Bold against ref is still Ed's call.** At night the styles show only in the party's light, so compare them in a partified area, not on the dark moor.
+- **Bold against ref is still Ed's call.** In the fight at home both read (`round-03/bold-fight.png`, `ref-fight.png`). On the dark moor the witch disappears in both (`bold-moor-ground`, `ref-moor-ground`), and that's briefed to rendering. So compare them in the party's light, not on the dark moor.
 
 Round by round: `round-01/` (its area shots were off the map), `round-01b/`, `round-02/` and `round-03/`. Each has a README with its critique and briefs. The running thread is PR #177.
