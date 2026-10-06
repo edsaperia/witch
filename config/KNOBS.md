@@ -823,6 +823,7 @@ A legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower, thi
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
 | `legendClearing.minFromStone` | number | 0 to … |
+| `legendClearing.minFromOtherStones` | number | 0 to … |
 | `legendClearing.floor.on` | boolean |  |
 | `legendClearing.floor.overgrowth` | number | 0 to … |
 | `legendClearing.floor.slab` | number | 0 to … |
@@ -1006,6 +1007,10 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.runSpeed` | number | 0 to … |
 | `leash.pickRadius` | number | 0 to … |
 | `leash.spacing` | number | 0 to … |
+| `leash.runeRadius` | number | 0 to … |
+| `leash.runePull.radius` | number | 0 to … |
+| `leash.runePull.speed` | number | 0 to … |
+| `leash.runePull.stop` | number | 0 to … |
 | `leash.weight.free` | number | 0 to … |
 | `leash.weight.levels` | array of number |  |
 | `leash.weight.drag` | number | 0 to … |
@@ -1016,10 +1021,6 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.weight.floor` | number | 0 to 1 |
 | `leash.weight.extreme` | number | 0 to … |
 | `leash.weight.maxTension` | number | 0 to … |
-| `leash.runeRadius` | number | 0 to … |
-| `leash.runePull.radius` | number | 0 to … |
-| `leash.runePull.speed` | number | 0 to … |
-| `leash.runePull.stop` | number | 0 to … |
 
 ## `bond`
 
