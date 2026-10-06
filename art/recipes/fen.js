@@ -6,7 +6,7 @@ export const FEN = {
   wall: [["water", { w: 1.4 }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: 1.2 }]],
   big: [["tree", { type: "aspen", scale: .9 }], ["tree", { type: "alder", minor: true, scale: .85, gnarl: .6 }]],
   ponds: true, wet: true, pathKinds: ["stepping"],
-  setPiece: ["sunken-boat", "a punt sunk among the sedge", 1],
+  setPiece: ["punt", "a punt sunk among the sedge", 1],
   layout: {
     pattern: "edgeOnly", density: .45, clump: .6, glades: { count: 2, size: [12, 18] },
     heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .85, lean: { dir: 0, amount: 0 },

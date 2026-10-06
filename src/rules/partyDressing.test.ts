@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dressingOf, isLit, partyDef } from "./partyDressing";
+import { areaNeons, dressingOf, isLit, leftOut, partyDef } from "./partyDressing";
 import { generateMap } from "./map";
 import { floorClearing } from "./speakers";
 import { TUNING } from "./tuning";
@@ -61,5 +61,24 @@ describe("party objects (Ed, 2026-10-04)", () => {
     const sample = dressingOf(map, [1, 1], t);
     expect(sample.clusters.length).toBeGreaterThanOrEqual(P.clusters[0] - 1);
     expect(sample.loose.length).toBeGreaterThanOrEqual(P.loose[0] * 0.75);
+  });
+  it("the prop generator's party pieces (gen-*) only under partyObjects.generated (?props=gen), in place of the ones they replace", () => {
+    const refs = (tt: typeof t) => { const all: string[] = []; for (let cx = 0; cx < 12; cx++) for (let cy = 0; cy < 12; cy++) { const d = dressingOf(map, [cx, cy], tt); all.push(...d.loose.map(p => p.ref), ...d.hanging.map(p => p.ref)); } return all; };
+    expect(refs(t).some(r => r.includes(":gen-"))).toBe(false);
+    const on = { ...t, partyObjects: { ...P, generated: true } }, gen = refs(on);
+    expect(gen.some(r => r.includes(":gen-"))).toBe(true);
+    for (const id of ["bunting-run", "balloons-stake", "lantern-string", "lanterns-hanging"]) { expect(leftOut(id, on), id).toBe(true); expect(leftOut(id, t), id).toBe(false); }
+    expect(gen.some(r => /:(bunting-run|balloons-stake|lantern-string|lanterns-hanging)[@~]?/.test(r))).toBe(false);
+  });
+  it("an area's party neons are its own colour plus one accent (the art director, round 1), its balloons mostly by its lights", () => {
+    let near = 0, balloons = 0;
+    for (let cx = 0; cx < 12; cx++) for (let cy = 0; cy < 12; cy++) {
+      const d = dressingOf(map, [cx, cy], t), neons = new Set(areaNeons(map, [cx, cy]));
+      expect(neons.size).toBeLessThanOrEqual(2);
+      for (const p of [...d.loose, ...d.hanging]) { const n = p.ref.split("@")[1]?.split("~")[0]; if (n) expect(neons.has(n), p.ref).toBe(true); }
+      for (const p of d.loose) if (partyDef(p.ref)?.cls === "balloon" && d.lights.length) { balloons++; if (d.lights.some(L => Math.hypot(L.x - p.x, L.z - p.z) < 3.5)) near++; }
+    }
+    if (balloons) expect(near / balloons).toBeGreaterThan(0.4);
+    expect(new Set(areaNeons(map, map.centreCell))).toEqual(new Set(["cyan"])); // home: its cyan alone (round 2)
   });
 });
