@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
 import { affectionOf, newGame, stepGame } from "../rules/game";
-import { STATES, stateOf } from "../rules/creatureStates";
+import { hasRune, STATES, stateOf } from "../rules/creatureStates";
 import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf, type RingChange } from "./inviteRing";
 
@@ -27,7 +27,7 @@ describe("the 💌 ring", () => {
     }
   });
 
-  it("joins one envelope a hit into the next gap, and a full ring turns to hearts as the creature is won over", () => {
+  it("joins one envelope a hit into the next gap, and a full ring turns to hearts as the creature is won over (then its rune, not a second ring)", () => {
     const { g, A, c, hits } = setup(1), M = new RingModel(), now = (k: Creature) => ringOf(k.level, A.affection(k), TUNING.invites.hits);
     const all: RingChange[] = [];
     for (let k = 1; k < hits; k++) {
@@ -41,9 +41,10 @@ describe("the 💌 ring", () => {
     expect(stateOf(c)).toBe("happy");
     expect(M.update([c], now, [c.id])).toEqual([{ kind: "hearts", id: c.id, slots: hits }]);
     expect(M.rings.has(c.id)).toBe(false);
-    // Its second invite (happy to leashed): a fresh ring, filling the same way.
+    // No second ring (Ed, 2026-10-06: she leashes it by picking up its sigil rune, rules/pickup.test.ts): 💌s at it fill nothing.
     A.hit(c, TUNING.invites.amount, g.clock.time);
-    expect(M.update([c], now, [])).toEqual([{ kind: "join", id: c.id, slot: 0, slots: hits }]);
+    expect(M.update([c], now, [])).toEqual([]);
+    expect(hasRune(c, g.clock.time)).toBe(true);
   });
 
   it("left alone, the meter drains and the envelopes drop out of orbit one at a time, last first, as it does", () => {
