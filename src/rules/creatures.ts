@@ -88,9 +88,11 @@ export interface Creature {
   /** A charging legend's long charge (rules/combat.ts, legends.json charge): winding up, running,
    *  braking in its arc, or walking home; its heading (radians), speed, target, whom it has hit. */
   run?: { phase: "windup" | "run" | "brake" | "home"; at: number; angle: number; speed: number; turn: 1 | -1; target: import("./combat").Target | null; tx: number; tz: number; ran: number; hit: number[]; fromX: number; fromZ: number; decel?: number };
-  /** Where a legend lies (it charges from here, and walks back here). */
+  /** Where a legend lies: where it spawned (it charges from here, and walks back here). */
   lairX?: number;
   lairZ?: number;
+  /** A legend gone back to sleep away from where it lay, walking home to lie down there (Ed, 2026-10-06; rules/legends.ts). */
+  homing?: boolean;
   charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number };
   /** Dug in (a badger) or braced behind its tail (a beaver) until then: rooted, taking less. */
   dug?: number;
@@ -252,6 +254,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     if (map.hasLegend && !map.hasLegend(cx, cy)) continue; // (legends in legends.share of the areas: Ed, 2026-10-06)
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = "asleep"; L.stateAt = 0;
+    L.lairX = L.x; L.lairZ = L.z; // (where it lies: home, which it goes back to before it sleeps again; Ed, 2026-10-06)
     L.quest = questFor(map, cell, L.species);
     out.push(L);
   }
