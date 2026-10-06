@@ -997,6 +997,10 @@
               "type": "number",
               "minimum": 0
             },
+            "decorWarm": {
+              "type": "number",
+              "minimum": 0
+            },
             "rimHue": {
               "type": "number",
               "minimum": 0
@@ -1014,6 +1018,30 @@
               "minimum": 0
             },
             "moonUp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpWrap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledRim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledGlow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledLift": {
               "type": "number",
               "minimum": 0
             },
@@ -1654,11 +1682,18 @@
             "decorLights",
             "decorReach",
             "decorStrength",
+            "decorWarm",
             "rimHue",
             "rimSat",
             "rim",
             "witchGlow",
             "moonUp",
+            "moonUpHue",
+            "moonUpSat",
+            "moonUpWrap",
+            "styledRim",
+            "styledGlow",
+            "styledLift",
             "leyRgb",
             "leyBright",
             "berryHalo",
@@ -4410,6 +4445,11 @@
         "turnTo": {
           "type": "number",
           "minimum": 0
+        },
+        "legendFlash": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       },
       "required": [
@@ -4422,7 +4462,8 @@
         "tumbleHeight",
         "tumbleSecs",
         "turnFrom",
-        "turnTo"
+        "turnTo",
+        "legendFlash"
       ],
       "additionalProperties": false
     },

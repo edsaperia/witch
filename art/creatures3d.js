@@ -354,7 +354,8 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (has("crystals")) [.15, .3, .45, .6, .75].forEach((t, i) => { const b = backAt(t), h = [.3, .5, .4, .6, .35][i]; m.ell(v3.add(b, [0, h * .45, (i % 2 - .5) * .1]), [h * .55, .08, .08], M.MAGIC, { dir: [(i - 2) * .12, 1, 0], group: 80 + i % 2, extra: true, paint: p => p[2] > 0 ? M.MAGIC2 : undefined }); });
   if (has("moss")) {
     for (let i = 0; i < 6; i++) m.ell(backAt(.08 + i * .15), [len * .22, .07, bw * .85], M.LEAF, { group: 85, extra: true });
-    // a little wood growing on its back (Ed, 2026-10-06: proper generated trees, not lollipops): two or three, grown by backTree3d
+    // a little wood growing on its back (Ed, 2026-10-06: bigger generated trees, not the lollipops that read as flat "mint domes"
+    // from the game's camera, the art director's round 2): two or three, grown by backTree3d
     // in the species' own kind (BACK_TREES), each from its own seed, the tallest in the middle
     const kind = BACK_TREES[S.id] ?? "broad", seed = [...S.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0, r = rng(seed);
     for (const [i, t, h] of [[0, .22, .95], [1, .5, 1.35], [2, .78, .8]]) backTree3d(m, backAt(t + uni(r, -.04, .04)), h * len * uni(r, .9, 1.1), seed + i * 977, kind, 86);

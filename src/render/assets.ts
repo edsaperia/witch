@@ -17,7 +17,7 @@ export interface TypeArt {
 }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
-export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[] }
 /** A species' live-rig parts at one level (#79): its atlas page and what the rig needs. */
 export interface RigArt { atlas: Atlas; meta: RigMeta; used: number }
 /** How many rig pages (a species at a level each) are kept at once. */
@@ -190,7 +190,8 @@ export class AssetLibrary {
       }
       this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
-    } else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
+    } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground });
+    else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
     this.inFlight.delete(this.key(r.job));
     this.version++;
   }
@@ -254,6 +255,12 @@ export class AssetLibrary {
   creatureArt(species: string): CreatureArt | undefined {
     const a = this.creatures.get(species);
     if (!a) this.ask({ kind: "creature", id: species, style: this.style });
+    return a;
+  }
+  /** An area legend asleep (art/legends.js: sunk in its area's earth, mossed over, eyes shut; 2 breathing frames), or undefined (and asked for). */
+  sleepArt(species: string): CreatureArt | undefined {
+    const k = `sleep-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "sleep", id: k, species, style: this.style });
     return a;
   }
   /** A creature's enraged look (a wave woke its area: red eyes), or undefined (and asked for). */
