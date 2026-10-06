@@ -7209,7 +7209,11 @@
           "type": "number",
           "minimum": 0
         },
-        "questNear": {
+        "questCap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "questFar": {
           "type": "number",
           "minimum": 0
         },
@@ -7272,7 +7276,8 @@
         "share",
         "buffPower",
         "happyRange",
-        "questNear",
+        "questCap",
+        "questFar",
         "bombard",
         "stomp",
         "partyEgg",

@@ -66,21 +66,22 @@ describe("the first quest (Ed, 2026-10-04)", () => {
   }, 60000);
 });
 
-describe("legends.questNear: dream creatures from near, when it's on (off by default: Ed, 2026-10-06, quests are a gamble)", () => {
-  /** Each legend's distance (m) to the nearest area of the kind it dreams of. */
-  const dists = (questNear: number) => {
-    const map = generateMap(8919, withTuning({ legends: { ...TUNING.legends, questNear } })), out: number[] = [];
+describe("legends.questCap: dreams from anywhere but the truly far (Ed, 2026-10-06: quests are a gamble)", () => {
+  /** Each legend's distance (in areas) to the nearest area of the kind it dreams of, and its quest's far. */
+  const dists = (questCap: number) => {
+    const map = generateMap(8919, withTuning({ legends: { ...TUNING.legends, questCap } })), out: { d: number; far: number }[] = [];
     for (const L of spawnCreatures(map).filter(c => c.boss && c.quest)) {
       const s = map.siteOf(L.cell[0], L.cell[1]);
-      out.push(Math.min(...map.cells.filter(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature === L.quest!.species).map(([cx, cy]) => { const t = map.siteOf(cx, cy); return Math.hypot(t.x - s.x, t.z - s.z); })));
+      out.push({ far: L.quest!.far!, d: Math.min(...map.cells.filter(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature === L.quest!.species).map(([cx, cy]) => { const t = map.siteOf(cx, cy); return Math.hypot(t.x - s.x, t.z - s.z); })) / map.areaSize });
     }
-    return out.sort((a, b) => a - b);
+    return out.sort((a, b) => a.d - b.d);
   };
-  it("dreams of one of the few kinds nearest it, never its own", () => {
-    expect(TUNING.legends.questNear).toBe(0); // (the gamble kept)
-    const near = dists(4), any = dists(0);
-    expect(near[near.length - 1]).toBeLessThan(3 * TUNING.areaSize * TUNING.areaScale); // (the farthest within about three areas)
-    expect(near[near.length >> 1]).toBeLessThan(any[any.length >> 1] * 0.6);
+  it("keeps the spread of near and far, cutting only the far tail; never its own kind; the far ones roll stronger", () => {
+    const cap = TUNING.legends.questCap, capped = dists(cap), any = dists(0), med = (a: { d: number }[]) => a[a.length >> 1].d;
+    expect(capped[capped.length - 1].d).toBeLessThanOrEqual(cap + 1e-9);
+    expect(any[any.length - 1].d).toBeGreaterThan(cap); // (there was a tail to cut)
+    expect(med(capped)).toBeGreaterThan(med(any) * 0.85); // (the gamble kept: most dreams as far as ever)
+    for (const q of capped) { expect(q.far).toBeGreaterThan(0); expect(q.far).toBeLessThanOrEqual(1); expect(q.far).toBeCloseTo(q.d / cap, 6); }
     for (const L of spawnCreatures(generateMap(8919, TUNING)).filter(c => c.boss && c.quest)) expect(L.quest!.species).not.toBe(L.species);
   }, 60000);
 });

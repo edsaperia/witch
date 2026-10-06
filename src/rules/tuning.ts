@@ -322,8 +322,10 @@ export interface Tuning {
   legends: { share: number; /** How strong every legend's buff is (Ed, 2026-10-06, on quests: "Bigger buffs"): a scale of v becomes 1 + (v - 1) × buffPower, an add v × buffPower, a behaviour's count rounded × buffPower (never fewer); 1 as each is written. Its limits still hold. */ buffPower: number;
     /** A happy legend's reach, metres (Ed, 2026-10-06, on relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); an angry one's is legends.json attack.range. */
     happyRange: number;
-    /** A legend dreams of one of the questNear nearest other kinds round it, nearer home counting as nearer (0: any kind on the map). */
-    questNear: number;
+    /** A legend dreams of any other kind on the map, equally likely, but none whose nearest area lies over questCap areas away (about the farthest tenth at 5; 0: no cap). */
+    questCap: number;
+    /** A done quest's buff is 1 + questFar × its dream's distance (Quest.far, 0 to 1 at the cap) times as strong: the far ones pay more. */
+    questFar: number;
     /** An angry legend bombarding soundsystems (Ed, 2026-10-06: "Legend bombards, but prioritises you"): with no witch in its reach, the first lob or beam of its volley goes at the nearest standing soundsystem within range metres, doing damage to it (of combat.soundsystemHealth). */
     bombard: { on: boolean; range: number; damage: number };
     /** The stomp (Ed, 2026-10-06, a "perhaps"): a legend turning angry with its own area's soundsystem standing destroys it at once; with it on, legends stay restless angryAfter seconds (not legends.json's) before they anger. */

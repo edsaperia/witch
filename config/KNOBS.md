@@ -1562,7 +1562,8 @@ Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test 
 | `legends.share` | number | 0 to … |
 | `legends.buffPower` | number | 0 to … |
 | `legends.happyRange` | number | 0 to … |
-| `legends.questNear` | number | 0 to … |
+| `legends.questCap` | number | 0 to … |
+| `legends.questFar` | number | 0 to … |
 | `legends.bombard.on` | boolean |  |
 | `legends.bombard.range` | number | 0 to … |
 | `legends.bombard.damage` | number | 0 to … |
