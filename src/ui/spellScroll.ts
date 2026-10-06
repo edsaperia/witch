@@ -116,7 +116,7 @@ export class SpellScroll {
   }
 
   private frame(): void {
-    const now = performance.now(), slow = (window as unknown as { __spellSlow?: number }).__spellSlow ?? 1, dt = Math.min(.1, (now - this.last) / 1000 * slow); this.last = now;
+    const now = performance.now(), slow = (window as unknown as { __spellSlow?: number }).__spellSlow ?? 1, dt = Math.max(0, Math.min(.1, (now - this.last) / 1000 * slow)); this.last = now; // (never backwards: a clock set back)
     const t = this.vt += dt;
     const want = this.casting ? 1 : Math.max(this.target, this.focused ? 1 : 0);
     this.near += (want - this.near) * (1 - Math.exp(-dt / .14));
