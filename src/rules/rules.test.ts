@@ -25,7 +25,7 @@ import { bootSpeaker, floorInputs, speakerBoot } from "./game";
 import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
 import { musicMix } from "./music";
-import { tuftsInCell, TUFT_KINDS } from "./groundcover";
+import { tuftSpan, tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
@@ -1441,7 +1441,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
 
 describe("ground cover (Ed, v171)", () => {
   const G = TUNING.groundCover, d = map.dancefloor;
-  const around = (x: number, z: number, r: number) => { const out = []; for (let cj = Math.floor((z - r) / G.cell); cj <= Math.floor((z + r) / G.cell); cj++) for (let ci = Math.floor((x - r) / G.cell); ci <= Math.floor((x + r) / G.cell); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, G.density)); return out; };
+  const around = (x: number, z: number, r: number) => { const out = [], C = tuftSpan(G.cell, G.spacing); for (let cj = Math.floor((z - r) / C); cj <= Math.floor((z + r) / C); cj++) for (let ci = Math.floor((x - r) / C); ci <= Math.floor((x + r) / C); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, G.density)); return out; };
   it("is seeded per cell: the same patch every time", () => {
     expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1)).toEqual(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1));
   });
