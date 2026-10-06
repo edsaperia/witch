@@ -38,6 +38,8 @@ export interface LeyTuning {
   valley: number;
   /** The shimmer's speed (m/s) and spacing (m) along the line. */
   flow: number[];
+  /** Its pixel core (Ed, round 14): half-width on the ground and over the treetops, then its half-bright rim on each, metres. */
+  core?: number[];
   /** The faintest a section gets, ahead and behind, as a share of the next one's (Ed, 2026-10-06: the whole route always shows). */
   far: number[];
   /** The first line's way out from the treehouse (rules/leylines.ts departureRoute). */
@@ -61,7 +63,7 @@ attribute float aLink;   // which link (0 the first, the oldest)
 attribute vec3 aCol;
 uniform vec2 uLeyWidth, uLeyHeight;
 uniform float uLift, uTime, uGlowPass;
-varying float vSide, vS, vT, vLink, vSeen;
+varying float vSide, vS, vT, vLink, vSeen, vW;
 varying vec3 vCol;
 ${HEIGHT_VERT_GLSL}
 void main() {
@@ -72,7 +74,7 @@ void main() {
   vec2 xz = position.xz + side * (drift * sin(3.14159 * aT) + aSide * w * 0.5);
   vec3 p = onGround(vec3(xz.x, mix(uLeyHeight.x, uLeyHeight.y, uLift), xz.y));
   vSeen = uGlowPass > 0.5 ? overBend(p) : 1.0; // (seen through the leaves, never through the earth)
-  vSide = aSide; vS = aS; vT = aT; vLink = aLink; vCol = aCol;
+  vSide = aSide; vS = aS; vT = aT; vLink = aLink; vCol = aCol; vW = w;
   gl_Position = clipOf(p);
 }`;
 
@@ -82,7 +84,9 @@ uniform vec2 uFar; // the faintest a section gets, ahead and behind (the whole r
 uniform vec2 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1: Ed's reveal, growing out from the treehouse
 uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
 uniform vec2 uFlow;
-varying float vSide, vS, vT, vLink, vSeen;
+uniform vec4 uCore; // its pixel core's half-width and rim (metres) on the ground and over the treetops
+uniform float uMpp; // metres per art pixel
+varying float vSide, vS, vT, vLink, vSeen, vW;
 varying vec3 vCol;
 float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
@@ -90,11 +94,20 @@ void main() {
   if (vSeen < 0.5) discard;
   float along = vLink + vT; // links along the route from its start
   if (uGrow.y > 0.5 && along > uGrow.x) discard;
-  float across = 1.0 - abs(vSide), core = across * across * across, halo = across * across;
+  float across = 1.0 - abs(vSide), halo = across * across;
+  // Ed, round 14: "the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they should be lighting
+  // objects that are pixels"; and "the leyline is too faint". On the ground the line itself is pixels: a hard core a whole
+  // number of art pixels across and a half-bright rim round it, its brightness worked out per art pixel along it in a few
+  // flat steps; round it, the smooth glow it casts (light). From the treetops, the glow through the crowns stays smooth.
+  float sq = (floor(vS / uMpp) + 0.5) * uMpp;                                // along, at its art pixel's middle
+  float off = floor(abs(vSide) * 0.5 * vW / uMpp);                            // art pixels from its middle
+  float coreN = floor(mix(uCore.x, uCore.y, uLift) / uMpp + 0.5), rimN = max(1.0, floor(mix(uCore.z, uCore.w, uLift) / uMpp + 0.5));
+  float solid = off < coreN ? 1.0 : off < coreN + rimN ? 0.5 : 0.0;
+  float sAt = uGlowPass > 0.5 ? vS : sq;
   // The shimmer: bright heads travelling from the earlier stone to the later, each trailing off behind.
-  float f = fract(vS / uFlow.y - uTime * uFlow.x / uFlow.y), pulse = pow(f, 7.0) * (1.0 - smoothstep(0.96, 1.0, f));
+  float f = fract(sAt / uFlow.y - uTime * uFlow.x / uFlow.y), pulse = pow(f, 7.0) * (1.0 - smoothstep(0.96, 1.0, f));
   // Wisps: the glow thins and thickens along the line, drifting with the flow.
-  float wisp = 0.35 + 0.65 * ln(vS * 0.09 - uTime * 0.8 + vLink * 13.0) * ln(vS * 0.023 + uTime * 0.31 + vLink * 5.0 + vSide * 0.7);
+  float wisp = 0.35 + 0.65 * ln(sAt * 0.09 - uTime * 0.8 + vLink * 13.0) * ln(sAt * 0.023 + uTime * 0.31 + vLink * 5.0);
   // Into each stone softly; each link fainter than the one before (easing to its new place after a wave).
   float ends = smoothstep(0.0, 0.05, vT) * smoothstep(1.0, 0.95, vT);
   // Its rank: 0 the section on from the last stone reached, 1 the one after, -1 the one just left
@@ -102,21 +115,25 @@ void main() {
   float r = vLink - uCurrent + uShift;
   float rank = r >= 0.0 ? max(pow(uFade, r), uFar.x) : max(mix(1.0, uBehind, min(1.0, -r)) * pow(uFade, max(0.0, -r - 1.0)), uFar.y);
   float link = uBright * rank * mix(1.0, 0.8, uLift);
-  // From the treetops the line is on the ground under the crowns: a wide faint glow shows through them.
-  float a = uGlowPass > 0.5 ? 0.4 * halo * wisp * uLift : (core * (0.6 + 1.6 * pulse) + halo * (0.18 + 0.5 * pulse)) * wisp;
+  // The core's own brightness, in flat steps (a quarter at a time); the glow it casts, smooth.
+  float lvl = floor((0.7 + 0.3 * wisp + 1.4 * pulse) * 4.0 + 0.5) / 4.0;
+  float glow = halo * (0.15 + 0.35 * pulse) * wisp;
+  float a = uGlowPass > 0.5 ? 0.4 * halo * wisp * uLift : solid * lvl + glow;
   // The wave's pulse (Ed, 2026-10-06: "the leyline between the last and next wave soundsystem should grow in intensity
   // in proportion to how much time is left before the next wave; so you can see the pulse travel along the leyline, and
   // the next soundsystem appears when it arrives"): on the link from the last stone reached, the stretch it has
   // travelled lit brighter than the stretch ahead, the whole link brightening toward the wave, a bright head at the pulse,
-  // and a flash at the far stone as it arrives. vT runs by arc length, so it follows the route's curves.
+  // and a flash at the far stone as it arrives. vT runs by arc length, so it follows the route's curves. Its head, like the
+  // line, is pixels (stepped, on the core and rim) with its glow round it.
   if (uPulse.y > 0.5 && abs(vLink - uCurrent) < 0.5) {
-    float p = uPulse.x, behind = 1.0 - smoothstep(p - 0.01, p + 0.01, vT);
+    float p = uPulse.x, behind = 1.0 - step(p, vT);
     link *= mix(0.35, 1.3, behind) * (0.45 + 1.2 * p);
-    a += exp(-abs(vT - p) * 25.0) * (uGlowPass > 0.5 ? halo : core) * (2.5 + 3.5 * p);
-    a += smoothstep(0.96, 1.0, p) * exp(-(1.0 - vT) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 3.0;
+    float head = exp(-abs(vT - p) * 25.0), arrive = smoothstep(0.96, 1.0, p) * exp(-(1.0 - vT) * 30.0);
+    if (uGlowPass > 0.5) a += (head * (2.5 + 3.5 * p) + arrive * 3.0) * halo;
+    else a += floor((head * (2.5 + 3.5 * p) + arrive * 3.0) * solid * 3.0) / 3.0 + (head + arrive) * glow * 2.0;
   }
-  // Growing out through the first wave (Ed): a soft glow leads its tip.
-  if (uGrow.y > 0.5) a += exp(-abs(along - uGrow.x) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 2.0;
+  // Growing out (Ed): a bright tip leads it, pixels with a glow.
+  if (uGrow.y > 0.5) { float tip = exp(-abs(along - uGrow.x) * 30.0); a += uGlowPass > 0.5 ? tip * halo * 2.0 : floor(tip * solid * 2.0 * 3.0) / 3.0 + tip * glow * 2.0; }
   gl_FragColor = vec4(vCol * a * link * ends * uStrength, 1.0);
 }`;
 
@@ -162,6 +179,7 @@ export class LeyLines {
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
       uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() },
+      uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? 1 / (map.tuning.artPixelsPerMetre * (2 / map.tuning.pixelSize)) : 0.1 },
     };
     this.cur = this.makeSet();
     this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength });

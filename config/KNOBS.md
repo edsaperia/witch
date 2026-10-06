@@ -525,6 +525,7 @@ The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in 
 | `leyLines.fade` | number | 0 to … |
 | `leyLines.brightness` | number | 0 to … |
 | `leyLines.width` | array of number |  |
+| `leyLines.core` | array of number |  |
 | `leyLines.height` | array of number |  |
 | `leyLines.valley` | number | 0 to … |
 | `leyLines.flow` | array of number |  |
