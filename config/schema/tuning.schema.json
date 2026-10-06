@@ -4066,6 +4066,9 @@
             "type": "string"
           }
         },
+        "areaNeon": {
+          "type": "boolean"
+        },
         "twinkle": {
           "type": "number",
           "minimum": 0
@@ -4088,6 +4091,7 @@
         "sag",
         "bulbSpacing",
         "palette",
+        "areaNeon",
         "twinkle",
         "chaseSpeed"
       ],

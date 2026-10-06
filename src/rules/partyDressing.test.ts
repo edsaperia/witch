@@ -79,5 +79,6 @@ describe("party objects (Ed, 2026-10-04)", () => {
       for (const p of d.loose) if (partyDef(p.ref)?.cls === "balloon" && d.lights.length) { balloons++; if (d.lights.some(L => Math.hypot(L.x - p.x, L.z - p.z) < 3.5)) near++; }
     }
     if (balloons) expect(near / balloons).toBeGreaterThan(0.4);
+    expect(new Set(areaNeons(map, map.centreCell))).toEqual(new Set(["cyan"])); // home: its cyan alone (round 2)
   });
 });
