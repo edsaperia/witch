@@ -16,6 +16,8 @@ import { M, hsv2rgb } from "./core.js";
 import { Model, v3, masks } from "./model3d.js";
 import { NEON } from "./sigils.js";
 import { ctHash, ctCell, ctWorn, ctPlank, ctBar, ctGlow, ctCyl, ctTufts, mark, place, pieceSprite } from "./country.js";
+import { propVariant } from "./props/generator.js";
+import { PARTY_PROP_GENOMES } from "./props/genomes.js";
 
 // ---------------- building blocks ----------------
 const pCup = (m, c, g, mat = M.ACCENT, tip = 0) => { const n = mark(m); m.seg([0, 0, 0], [0, .13, 0], .045, .06, mat, { group: g, paint: p => p[1] > .11 ? M.BELLY : undefined }); m.seg([0, .02, 0], [0, .15, 0], .035, .05, M.NOSE, { group: g, cut: true }); place(m, n, { roll: tip, at: c }); };
@@ -224,9 +226,48 @@ const PICNIC = Object.fromEntries([
 
 // ---------------- the table ----------------
 const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1, home: 1, picnic: 1 }; // litter a touch larger than life, to read at all
+// ---------------- generated (the prop generator, #119; behind ?props=gen): a few seeded variants each of the bunting, the balloon bunches
+// and the paper lanterns, so they vary in shape (their genomes: PARTY_PROP_GENOMES, art/props/genomes.js). Each variant is a piece of
+// its own ("gen-<kind>-<n>") that `replaces` the hand-made ones: the game swaps them in with partyObjects.generated (?props=gen). ----------------
+const pgVar = (kind, k) => propVariant(kind, k * 7 + 3, {}, PARTY_PROP_GENOMES);
+const PG_FLAG = { triangle: (s, t) => Math.abs(s) < (t + 1) / 2, square: (s, t) => t > -.8, round: (s, t) => s * s + (t - .2) ** 2 < .7, pennant: (s, t) => t > -1 + Math.abs(s) * 1.6 && (t < .6 || Math.abs(s) < .9) };
+function pgBunting(m, v) {
+  const L = v.span / 2, h = v.height, cols = [M.BODY, M.HAT1, M.POM, M.TOP, M.HAT2];
+  for (const x of [-L, L]) ctBar(m, [x, 0, 0], [x * 1.01, h, 0], 1, .025, M.WOOD, undefined);
+  for (let s = 0; s < v.strands; s++) {
+    const y = h - .05 - s * .24, pts = pSag([-L, y, 0], [L, y, 0], v.sag * (1 + s * .35), v.flags + 1);
+    m.chain(pts.map(p => [...p, .006]), M.CLOTH, { group: 2 + s * 3 });
+    for (let i = 1; i < pts.length - 1; i++) { const mat = cols[(i + v.offset + s) % v.colours], sz = v.size * (1 - s * .15), f = PG_FLAG[v.shape]; m.flat(v3.add(pts[i], [0, -sz, 0]), [1, 0, 0], [0, 1, 0], sz * .75, sz, (a, b) => f(a, b) ? mat : null, { group: 3 + s * 3, bend: .1 }); }
+    for (let i = 0; i < v.bulbs; i++) { const p = pts[Math.min(pts.length - 1, 1 + Math.floor((i + .5) / v.bulbs * (pts.length - 2)))]; m.ell(v3.add(p, [.03, -.02, .01]), [.018, .022, .018], M.GLOW, { group: 4 + s * 3 }); } // warm bulbs along it
+  }
+}
+function pgBalloons(m, v) {
+  const tie = v.anchor === "stake" ? [0, .3, 0] : [0, .06, 0];
+  if (v.anchor === "stake") pStake(m, tie, 1); else m.ell([0, .04, 0], [.06, .05, .06], M.BODY3, { group: 1 }); // a stake, or a little weight on the ground
+  pBunch(m, tie, v.count, 2, { lift: v.lift, spread: v.spread, from: v.from, seed: v.seed + 11, r: v.size });
+}
+function pgLanternShape(m, c, r, shape, i, g) { const tall = shape === "tall" || (shape === "mixed" && i % 2); m.ell(c, tall ? [r * .8, r * 1.5, r * .8] : [r, r * 1.05, r], i % 2 ? M.MAGIC2 : M.MAGIC, { group: g, paint: p => Math.abs(Math.sin((p[1] - c[1]) / r * 6)) > .88 ? M.MAGIC2 : undefined }); return tall ? r * 1.5 : r * 1.05; }
+function pgLanternString(m, v) {
+  const L = v.span / 2, h = v.height;
+  for (const x of [-L, L]) ctBar(m, [x, 0, 0], [x, h, 0], 1, .02, M.WOOD, undefined);
+  const pts = pSag([-L, h - .03, 0], [L, h - .03, 0], v.sag, 12); m.chain(pts.map(p => [...p, .005]), M.NOSE, { group: 2 });
+  for (let i = 0; i < v.count; i++) { const p = pts[1 + Math.round((i + .5) / v.count * 10)], r = v.size * (.8 + ((i * 37) % 5) / 10), drop = .04 + r; m.seg(p, v3.add(p, [0, -drop + r, 0]), .004, .004, M.NOSE, { group: 2 }); pgLanternShape(m, v3.add(p, [0, -drop, 0]), r, v.shape, i, 3 + i); }
+}
+function pgLanternsHanging(m, v, top) {
+  for (let i = 0; i < v.count; i++) { const a = i / Math.max(1, v.count) * 2.4 - 1.2, x = Math.sin(a) * .38 * (v.count > 1), z = Math.cos(a) * .05, r = v.size * (.8 + ((i * 53) % 5) / 10), y = top[1] - v.drop * (.55 + ((i * 29) % 7) / 10); m.chain([[...top, .004], [x, y + r * 1.4, z, .004]], M.NOSE, { group: 1 }); pgLanternShape(m, [x, y, z], r, v.shape, i, 2 + i); }
+}
+const PARTY_GEN = {};
+for (let k = 0; k < 4; k++) {
+  const b = pgVar("buntingRun", k), bl = pgVar("balloonBunch", k), ls = pgVar("lanternString", k), lh = pgVar("lanternsHanging", k), top = [0, .45 + lh.drop * 1.6, 0];
+  PARTY_GEN[`gen-bunting-${k}`] = { cls: "set", replaces: ["bunting-run"], desc: `bunting: ${b.strands} ${b.shape} strand${b.strands > 1 ? "s" : ""} of ${b.flags} flags, warm bulbs along it`, glow: true, light: "warm", bob: [.02, 3.4], build(m) { pgBunting(m, pgVar("buntingRun", k)); } };
+  PARTY_GEN[`gen-balloons-${k}`] = { cls: "balloon", replaces: ["balloons-stake", "balloon-single"], desc: `a bunch of ${bl.count} balloons tied to a ${bl.anchor}`, bob: [.1, 3.6], anchors: { tie: bl.anchor === "stake" ? [0, .3, 0] : [0, .06, 0] }, build(m) { pgBalloons(m, pgVar("balloonBunch", k)); } };
+  PARTY_GEN[`gen-lanterns-${k}`] = { cls: "small", replaces: ["lantern-string"], desc: `${ls.count} ${ls.shape} paper lanterns sagging between two poles, glowing in a neon`, glow: true, light: "neon", bob: [.05, 3.2], pointLight: { rgb: "neon", radius: 4.5, height: 1.2 }, build(m) { pgLanternString(m, pgVar("lanternString", k)); } };
+  PARTY_GEN[`gen-lanterns-hanging-${k}`] = { cls: "small", replaces: ["lanterns-hanging", "lantern-hanging"], desc: `${lh.count} ${lh.shape} paper lantern${lh.count > 1 ? "s" : ""} hanging from a branch, glowing in a neon`, glow: true, light: "neon", hang: true, anchors: { hang: top }, bob: [.06, 3.1], pointLight: { rgb: "neon", radius: 4, height: 1.2 }, build(m) { pgLanternsHanging(m, pgVar("lanternsHanging", k), top); } };
+}
+
 export const PARTY_CLASSES = ["litter", "balloon", "small", "furniture", "set", "home", "picnic"];
 const bobOf = (id, b) => b && { amplitude: b[0], period: b[1], phase: +((id.length * .137 + id.charCodeAt(id.length - 1) * .071) % 1).toFixed(2) };
-export const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES), ...Object.entries(HOME).map(([id, d]) => [id, { cls: "home", ...d }]), ...Object.entries(PICNIC).map(([id, d]) => [id, { cls: "picnic", ...d }])].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
+export const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES), ...Object.entries(HOME).map(([id, d]) => [id, { cls: "home", ...d }]), ...Object.entries(PICNIC).map(([id, d]) => [id, { cls: "picnic", ...d }]), ...Object.entries(PARTY_GEN)].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
 export const PARTY_BY_ID = Object.fromEntries(PARTY_OBJECTS.map(d => [d.id, d]));
 // The party neons (the sigils' neon palette) a neon piece can be baked in; warm light is candle gold.
 export const PARTY_LIGHT_NEONS = Object.keys(NEON);

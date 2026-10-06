@@ -14,8 +14,8 @@ import { groundColours } from "../ground.js";
 const PR_U = 1 / 1.9; // model units a metre (the witch's model is about 1.9 m a unit)
 const prPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
 // A variant: each range picked within (integers stay whole where both ends are), each list of options by weight; `over` fixes any.
-export function propVariant(kind, seed = 0, over = {}) {
-  const G = PROP_GENOMES[kind]; if (!G) throw new Error(`no prop kind "${kind}"`);
+export function propVariant(kind, seed = 0, over = {}, table = PROP_GENOMES) { // table: another set of genomes (the party's: PARTY_PROP_GENOMES)
+  const G = table[kind]; if (!G) throw new Error(`no prop kind "${kind}"`);
   const r = rng(((seed + 1) * 2654435761 + kind.length * 97) >>> 0), v = {};
   for (const [k, g] of Object.entries(G)) {
     if (k === "colour" || k === "bog") continue;
