@@ -186,10 +186,25 @@ void main() {
       vec3 R = reflect(-V, vec3(0.0, 1.0, 0.0));
       vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
       float spec = dot(R, moon) + (vnoise(px * vec2(0.6, 2.5) + vec2(uTime * 1.5, 0.0)) - 0.5) * 0.05;
-      vec3 water = vec3(0.015, 0.03, 0.055) * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 4.0;
+      vec3 water = vec3(0.035, 0.065, 0.1) * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 4.0; // dark, but water, not a hole (#235)
       if (spec > 0.985) water = vec3(0.92, 0.95, 1.0);
       else if (spec > 0.965) water = vec3(0.45, 0.55, 0.7);
       else if (mod(px.y, 4.0) < 1.0 && vnoise(px / 3.0 + uTime) > 0.62) water += vec3(0.06, 0.08, 0.12); // ripples
+      // Never a rimless hole (the art director, #235): like the generated pools, a moonlit rim along the far shore (up the
+      // screen), the sky's faint sheen across the far half, a dark muddy lip on the near and side banks, and a glint or two.
+      vec2 at = p + j - uExtent.xy;
+      float up1 = texture2D(uAreas, (at + vec2(0.0, -max(uPixel * 2.0, 0.3))) / uExtent.zw).b, up2 = texture2D(uAreas, (at + vec2(0.0, -max(uPixel * 4.0, 0.6))) / uExtent.zw).b;
+      float far = texture2D(uAreas, (at + vec2(0.0, -1.3)) / uExtent.zw).b;
+      float lip = max(uPixel * 1.5, 0.25), side = min(min(texture2D(uAreas, (at + vec2(-lip, 0.0)) / uExtent.zw).b, texture2D(uAreas, (at + vec2(lip, 0.0)) / uExtent.zw).b), texture2D(uAreas, (at + vec2(0.0, lip)) / uExtent.zw).b);
+      vec3 rim = mix(vec3(0.6, 0.66, 0.74), uMoon, 0.25);
+      if (spec <= 0.965) {
+        if (far < 0.5 && mod(px.x + px.y, 2.0) < 1.0) water += vec3(0.05, 0.07, 0.11); // the sky in the far water
+        float g = fract(sin(dot(floor(px / 2.0), vec2(41.3, 289.1))) * 43758.5453);
+        if (g > 0.985 && sin(uTime * (1.5 + g * 40.0) + g * 90.0) > 0.6) water = vec3(0.75, 0.8, 0.88); // a glint
+      }
+      if (up1 < 0.5) water = rim; // the moonlit far shore
+      else if (up2 < 0.5 && mod(px.x, 2.0) < 1.0) water = mix(water, rim, 0.5);
+      else if (side < 0.5) water = vec3(0.07, 0.06, 0.05) * (0.6 + 0.8 * nightLight(vec3(0.0, 1.0, 0.0), vWorld)); // the muddy lip
       gl_FragColor = vec4(haze(water, vWorld), 1.0);
       return;
     }
