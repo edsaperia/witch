@@ -365,7 +365,7 @@ export class LeashView {
     const list = w.mode !== "ground" || w.lift > 0.5 ? [] : this.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
     let used = 0;
     for (const { c } of list) {
-      const y = Math.min(this.tops.get(c.id) ?? 2, 4.5) + 1.2;
+      const y = Math.min(this.tops.get(c.id) ?? 2, 4.5) + 0.5; // (low over it, so its puffs rise from just above the sleeper's head: the art director, #238)
       placed(this.v.set(c.x, y, c.z)).project(camera);
       if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) continue;
       // Restless (#87: its area has none of its kind), the dream turns to a nightmare (Ed, 2026-10-05):
@@ -403,13 +403,13 @@ export class LeashView {
       }
       el.style.setProperty("--px", `${bubblePx(c.level)}px`);
       (el.querySelector("canvas:not(.face)") as HTMLElement | null)?.style.setProperty("opacity", `${1 - 0.75 * r}`);
-      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(225 + 30 * ire)}, ${Math.round(215 - 160 * ire)}, ${Math.round(255 - 190 * ire)}, ${(0.85 + 0.15 * ire).toFixed(2)})`);
+      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(232 - 42 * ire)}, ${Math.round(180 - 130 * ire)}, ${Math.round(106 - 76 * ire)}, ${(0.55 + 0.35 * ire).toFixed(2)})`); // (from the dream's amber to a deep ember: never the enraged eyes' bright red, the art director #238)
       else el.style.removeProperty("--ink");
       const bx = ((this.v.x + 1) / 2) * width, ly = ((1 - this.v.y) / 2) * height, by = Math.max(ly, el.offsetHeight + 56); // (kept on screen when she's close, below the top edge's cues)
       el.style.left = `${bx}px`;
       el.style.top = `${by}px`;
       const shake = faces ? ire * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
-      el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), -100%)`;
+      el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), calc(-100% - var(--px) * 12.5))`; // (lifted by its puffs, the lowest just above the sleeper)
       // Its direction (rules/dream.ts): a soft glow on the side of the bubble facing the runestone
       // of the nearest area of the kind it dreams of, explored or not.
       if (!this.dreamStones.has(c.id)) this.dreamStones.set(c.id, dreamStone(g.map, q.species, c.x, c.z));
