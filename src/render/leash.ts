@@ -10,7 +10,8 @@
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
-import { dreamStone, questOpen, restlessness } from "../rules/dream";
+import { dreamStone, dreamWay, questOpen, restlessness } from "../rules/dream";
+import { compassArrow } from "./compass";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
@@ -176,6 +177,8 @@ class Instances {
  *  screen px) by level, babies smallest, legends (dreams and nightmares) largest. One style for
  *  every bubble: index.html's .bubble. */
 export const BUBBLE_PX = 3;
+/** How far she goes (metres) before a dream's pointer works out her nearest runestone again. */
+const DREAM_REFRESH = 15;
 export const bubblePx = (level: number): number => BUBBLE_PX + Math.max(0, Math.min(3, level));
 
 const PARTY = ["🎉", "🎈", "💃", "🎊", "🥳", "😛", "🍉", "🍒", "🍷", "🍸", "🍹", "🥂", "🍺", "😁", "😆"];
@@ -395,12 +398,15 @@ export class LeashView {
     }
   }
 
-  /** Each dreaming legend's runestone to point at (rules/dream.ts), by legend: the map never changes. */
-  private dreamStones = new Map<number, { x: number; z: number } | null>();
+  /** Each dreaming legend's runestone to point at (rules/dream.ts): the nearest of its dreamt kind's areas to her, worked out
+   *  again once she's gone `DREAM_REFRESH` metres from where it last was (Ed, 2026-10-06: it points the way as she moves). */
+  private dreamStones = new Map<number, { to: { x: number; z: number } | null; fx: number; fz: number }>();
 
   /** Sleeping legends dreaming this frame (the first quest), drawn as thought bubbles by drawDreams. */
   private dreams: Creature[] = [];
   private dreamEls: HTMLElement[] = [];
+  /** Each dream's way (its caption: the arrow and the words), pooled with the bubbles. */
+  private wayEls: HTMLElement[] = [];
   /** The party's over (render/partyOver.ts; the view sets it each frame): its ease, 0 to 1. */
   partyOverEase = 0;
   /** The sleepers' 😴 bubbles (pooled), and the nearest sleepers this frame (reused). */
@@ -503,38 +509,30 @@ export class LeashView {
       tiltFilter(el, by - el.offsetHeight * 0.5 - bubblePx(c.level) * 12.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
       const shake = faces ? ire * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
       el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), calc(-100% - var(--px) * 12.5))`; // (lifted by its puffs, the lowest just above the sleeper)
-      // Its direction (rules/dream.ts): a soft glow on the side of the bubble facing the runestone
-      // of the nearest area of the kind it dreams of, explored or not.
-      if (!this.dreamStones.has(c.id)) this.dreamStones.set(c.id, dreamStone(g.map, q.species, c.x, c.z));
-      const to = open ? this.dreamStones.get(c.id) : null;
-      let dir = el.querySelector<HTMLElement>(".dream-dir");
+      // Its direction (rules/dream.ts; Ed, 2026-10-06: "the legend speech bubble should tell you in what direction you can find
+      // the runestone for the area that has the quest animal in it"): the nearest area of the kind it dreams of to her, explored,
+      // partified or not; a pixel arrow on the bubble's edge that way (the eight compass points: the camera looks north, so north
+      // is up the screen), and its compass point and distance under the sigil, kept up as she moves.
+      let st = this.dreamStones.get(c.id);
+      if (!st || Math.hypot(w.x - st.fx, w.z - st.fz) > DREAM_REFRESH) { st = { to: dreamStone(g.map, q.species, w.x, w.z), fx: w.x, fz: w.z }; this.dreamStones.set(c.id, st); }
+      const to = open ? st.to : null;
+      // (its own caption under the bubble, not inside it: the bubble takes the tilt-shift's blur, the way must stay sharp)
+      let cap = this.wayEls[used];
+      if (!cap) { cap = document.createElement("div"); cap.className = "dream-way"; const cv = document.createElement("canvas"); cv.className = "dream-dir"; cap.append(cv, document.createElement("span")); host.append(cap); this.wayEls.push(cap); }
       if (to) {
-        const d = Math.hypot(to.x - c.x, to.z - c.z) || 1; // (a step its way, not the stone itself: that may be behind the camera)
-        placed(this.v.set(c.x + ((to.x - c.x) / d) * 8, y, c.z + ((to.z - c.z) / d) * 8)).project(camera);
-        const ang = Math.atan2(((1 - this.v.y) / 2) * height - ly, // (from the legend's own spot, not where the bubble's kept)
-           ((this.v.x + 1) / 2) * width - bx), col = this.colours.get(q.species) ?? (this.slotOf(q.species, 0), this.colours.get(q.species));
-        if (!dir) {
-          dir = document.createElement("div");
-          dir.className = "dream-dir";
-          dir.style.cssText = "position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none";
-          const glow = document.createElement("i");
-          glow.style.cssText = "position:absolute;left:30px;top:-8px;width:44px;height:16px;border-radius:50%;filter:blur(1px)";
-          dir.append(glow);
-          // drifting outward and fading, over and over: which way, not how far
-          glow.animate?.([{ transform: "translateX(0)", opacity: 0.95 }, { transform: "translateX(14px)", opacity: 0 }], { duration: 2200, iterations: Infinity, easing: "ease-out" });
-          el.append(dir);
-        }
-        const rgb = col ? `${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)}` : "225,215,255";
-        (dir.firstChild as HTMLElement).style.background = `radial-gradient(ellipse at 20% 50%, rgba(${rgb},.9), rgba(${rgb},0) 72%)`;
-        dir.style.transform = `rotate(${ang}rad)`;
-        // (from the bubble's edge that way, however big it is)
-        const hw = el.offsetWidth / 2, hh = el.offsetHeight / 2, edge = Math.min(hw / Math.max(1e-3, Math.abs(Math.cos(ang))), hh / Math.max(1e-3, Math.abs(Math.sin(ang))));
-        (dir.firstChild as HTMLElement).style.left = `${Math.round(edge - 6)}px`;
-        dir.style.display = "";
-      } else if (dir) dir.style.display = "none";
+        const wy = dreamWay(w, to), col = this.colours.get(q.species) ?? (this.slotOf(q.species, 0), this.colours.get(q.species));
+        const rgb: [number, number, number] = col ? [Math.round(col.r * 255), Math.round(col.g * 255), Math.round(col.b * 255)] : [225, 215, 255];
+        const cv = cap.firstChild as HTMLCanvasElement, text = cap.lastChild as HTMLElement, akey = wy.word === "here" ? "here" : `${wy.point}:${rgb}`;
+        if (cv.dataset.k !== akey) { cv.dataset.k = akey; compassArrow(cv, wy.word === "here" ? -1 : wy.point, rgb); }
+        if (text.textContent !== wy.word) text.textContent = wy.word;
+        cap.style.setProperty("--px", `${bubblePx(c.level)}px`);
+        cap.style.left = `${bx}px`; cap.style.top = `${Math.round(by - bubblePx(c.level) * 12.5 + 2)}px`;
+        cap.style.display = "";
+      } else cap.style.display = "none";
       used++;
     }
     for (let i = used; i < this.dreamEls.length; i++) this.dreamEls[i].style.display = "none";
+    for (let i = used; i < this.wayEls.length; i++) this.wayEls[i].style.display = "none";
   }
 
   /** How far to shake the camera now (metres): a legend's quake nearby. */
@@ -1205,8 +1203,9 @@ export class LeashView {
       el.replaceChildren(...lines.map(l => {
         const p = document.createElement("p");
         if (l.done) p.className = "done";
-        l.text.split(/(\{sigil\}|\{relic\})/).forEach(part => {
+        l.text.split(/(\{sigil\}|\{relic\}|\{boon\})/).forEach(part => {
           if (part === "{sigil}" && c.quest) p.append(icon(c.quest.species, c.quest.level, sigilColour(c.quest.species)));
+          else if (part === "{boon}") p.append(icon(c.species, null, sigilColour(c.species))); // (its own sigil: the buff's icon in the HUD)
           else if (part === "{relic}") p.append(icon("relic", null, [255, 205, 90]));
           else if (part) p.append(document.createTextNode(part));
         });
