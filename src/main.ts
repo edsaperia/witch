@@ -415,7 +415,10 @@ let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | nu
 const creator = new Creator(style, savedLook, tuning.pixelSize);
 let lookNow = JSON.stringify(savedLook);
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
-creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); } catch { /* no sound yet */ } };
+/** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
+function ensureSfx(): void { if (audio && !sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } }
+// (its room's ambience plays while it's open: overnight, 2026-10-06)
+creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); ensureSfx(); } catch { /* no sound yet */ } };
 creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); } start(); };
 if (params.get("creator") !== "0") creator.show();
 const lookBtn = document.getElementById("look-btn");
@@ -426,7 +429,7 @@ if (lookBtn) {
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); if (!sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); ensureSfx(); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -519,6 +522,7 @@ function frame(now: number): void {
   musicCueNow = musicCue(game, musicCueNow);
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
+  sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
   if (!ready) return;
   for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
   waveHud();
