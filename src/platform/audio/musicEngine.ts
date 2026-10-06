@@ -49,6 +49,9 @@ export class MusicEngine {
   private channels = new Map<string, Channel>();
   private curves = new Map<number, Float32Array<ArrayBuffer>>();
   private nextStep = -1;
+  /** The last step scheduled: a re-anchoring never schedules it again (round 13: the game running
+   *  slower than the audio, every frame re-anchored, had each note scheduled several times over). */
+  private lastStep = -Infinity;
   private anchor = NaN; // audio time of game time 0
   private reverbTime = 0;
 
@@ -107,12 +110,16 @@ export class MusicEngine {
     // (a hitch, a pause, a jump in game time) resets it
     const raw = now - gameTime;
     if (!(Math.abs(raw - this.anchor) < 0.06)) { this.anchor = raw; this.nextStep = -1; } else this.anchor += (raw - this.anchor) * 0.05;
-    if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) this.nextStep = Math.ceil(stepNow);
+    if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
+      this.nextStep = Math.ceil(stepNow);
+      // (not what's already scheduled, unless time went back: a new run, a jump)
+      if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
+    }
     this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime)), now, 0.05);
     for (;;) {
       const g = timeAt(clock, this.nextStep / 4), t = this.anchor + g;
       if (t >= now + ahead) break;
-      if (t >= now) this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4);
+      if (t >= now) { this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4); this.lastStep = this.nextStep; }
       this.nextStep++;
     }
   }
@@ -128,7 +135,7 @@ export class MusicEngine {
   }
 
   /** Stop scheduling and forget the plans (a jump in the timeline). */
-  reset(): void { this.nextStep = -1; this.conductor.reset(); }
+  reset(): void { this.nextStep = -1; this.lastStep = -Infinity; this.conductor.reset(); }
 
   /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
   private step(cue: MusicCue, step: number, t: number, sps: number): void {
