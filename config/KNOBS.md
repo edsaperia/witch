@@ -674,7 +674,7 @@ The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are 
 | `bubbles.scale` | number | 0 to … |
 | `bubbles.levelScale` | array of number |  |
 
-## `scenes`, `grounds`
+## `scenes`, `grounds`, `legendClearing`
 
 Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own).
 
@@ -686,6 +686,10 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `grounds.chance` | number | 0 to … |
 | `grounds.kinds` | array of string |  |
 | `grounds.radius` | record |  |
+| `legendClearing.radius` | number | 0 to … |
+| `legendClearing.edge` | number | 0 to … |
+| `legendClearing.top` | number | 0 to … |
+| `legendClearing.species` | record |  |
 
 ## `relics`
 

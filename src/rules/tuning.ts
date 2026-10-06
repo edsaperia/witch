@@ -220,6 +220,9 @@ export interface Tuning {
   runeMarkers: { awakeStyle: string; laser: { opacity: number; width: number; length: number }; scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number }; flare: { time: number; light: number } };
   walls: { runs: number[]; runLength: number[]; gateChance: number; rings: number[]; ringStones: number[]; ringRadius: number[]; avenueChance: number; loneChance: number; clumps: number[]; clumpSize: number[]; clumpRadius: number };
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
+  /** Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06): radius metres (or its species' own,
+   *  sized to the legend), a soft edge ring edge metres wide, the legend lying top of the radius toward its far (north) side. */
+  legendClearing: { radius: number; edge: number; top: number; species: Record<string, number> };
   /** Scenes (art/scenes.js): the share of areas that get one (if an unused scene suits them); footprint = farthest piece's authored offset times scale, plus pad metres. */
   scenes: { chance: number; scale: number; pad: number };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
