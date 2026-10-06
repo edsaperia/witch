@@ -29,12 +29,12 @@ describe("legends in a share of the areas (legends.share)", () => {
       expect(Math.max(...deg)).toBeLessThanOrEqual(3);
       expect(deg.reduce((a, b) => a + b, 0) / deg.length).toBeLessThan(1.8);
       // and at a third or less, never more than two neighbouring areas together
-      const thin = generateMap(seed, withTuning({ legends: { share: 0.3 } }));
+      const thin = generateMap(seed, withTuning({ legends: { ...TUNING.legends, share: 0.3 } }));
       expect(Math.max(...clumps(thin))).toBeLessThanOrEqual(2);
     }
   }, 60000);
   it("puts one in every area but home at 1, and differs by seed", () => {
-    const m = generateMap(7, withTuning({ legends: { share: 1 } }));
+    const m = generateMap(7, withTuning({ legends: { ...TUNING.legends, share: 1 } }));
     expect(m.legendCells.size).toBe(playable(m) - 1);
     expect([...generateMap(8, TUNING).legendCells].sort()).not.toEqual([...generateMap(9, TUNING).legendCells].sort());
   }, 60000);

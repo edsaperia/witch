@@ -27,6 +27,21 @@
       "default": 0.5, "apply": { "knob": "legends.share", "reload": true }
     },
     {
+      "id": "bombard", "label": "Legend bombardment", "note": "Damage an angry legend's lob or beam does a soundsystem (of 4000) when she's out of its reach (0: none). It always goes for her first.",
+      "control": { "type": "slider", "min": 0, "max": 1000, "step": 50 },
+      "default": 300, "apply": { "knob": "legends.bombard.damage" }
+    },
+    {
+      "id": "buffPower", "label": "Legend buff strength", "note": "How strong every legend's buff is, from quests and relics (1: as written, 2: twice the effect, a Fan two fans).",
+      "control": { "type": "slider", "min": 1, "max": 4, "step": 0.25 },
+      "default": 1, "apply": { "knob": "legends.buffPower" }
+    },
+    {
+      "id": "happyRange", "label": "Happy legend reach (m)", "note": "How far a happy legend (a relic's ally) reaches from its lair to hit the enraged: about 2 areas at 420.",
+      "control": { "type": "slider", "min": 420, "max": 1500, "step": 60 },
+      "default": 420, "apply": { "knob": "legends.happyRange" }
+    },
+    {
       "id": "grace", "label": "Grace after a hit (s)", "note": "Seconds after the witch is hit in which no other blow lands, so a pack striking together costs one hit.",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
       "default": 0.5, "apply": { "knob": "witchHealth.grace" }

@@ -92,6 +92,29 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
   }), 60000);
 
+  it("when angry with her out of reach, bombard the nearest standing soundsystem within bombard.range (Ed, 2026-10-06: \"Legend bombards, but prioritises you\")", () => withAngryAfter(0.5, () => {
+    const { g, L, mate } = beside();
+    mate!.gone = true;
+    run(g, 1.2);
+    expect(L.legendState).toBe("angry");
+    const B = TUNING.legends.bombard;
+    expect(B.on).toBe(true);
+    for (const k of [...g.combat.sounds.keys()]) g.combat.sounds.delete(k); // (only the one to bombard, and one past its range)
+    g.combat.sounds.set("near", { hp: 4000, max: 4000, x: L.x + 120, z: L.z, radius: 2 });
+    g.combat.sounds.set("far", { hp: 4000, max: 4000, x: L.x + B.range + 60, z: L.z, radius: 2 });
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (out of its reach: not on the ground)
+    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1);
+    const near = g.combat.sounds.get("near")!;
+    expect(near.hp).toBeLessThan(4000);
+    expect(4000 - near.hp).toBeGreaterThanOrEqual(B.damage * 0.99); // (a whole lob, or a beam's whole burn)
+    expect(g.combat.sounds.get("far")!.hp).toBe(4000);
+    // with her on the ground in reach, she comes first: the soundsystem is spared
+    const hp1 = near.hp;
+    g.witch = { ...g.witch, mode: "ground", lift: 0, x: L.x + 30, z: L.z };
+    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1);
+    expect(near.hp).toBe(hp1);
+  }), 60000);
+
   it("fire each volley at up to attack.targets of the nearest (balance builder's values: 10 a hit, every 15 s)", () => withAngryAfter(0.5, () => {
     const { g, L, mate } = beside();
     mate!.gone = true;
@@ -264,7 +287,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
 
 describe("a wave on a legend's area (#87, found by the overnight playthrough)", () => {
   it("enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging", () => {
-    const g = newGame(123, withTuning({ legends: { share: 1 } })); // (a legend in the woken area: with legends.share 0.5 the first wave's may have none)
+    const g = newGame(123, withTuning({ legends: { ...TUNING.legends, share: 1 } })); // (a legend in the woken area: with legends.share 0.5 the first wave's may have none)
     g.clock.paused = false;
     const before = new Set(g.party.areas.keys());
     run(g, 0.1, { ...idle, nextWave: true });

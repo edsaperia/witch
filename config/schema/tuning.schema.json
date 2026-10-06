@@ -6098,10 +6098,43 @@
         "share": {
           "type": "number",
           "minimum": 0
+        },
+        "buffPower": {
+          "type": "number",
+          "minimum": 0
+        },
+        "happyRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bombard": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "damage": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "range",
+            "damage"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
-        "share"
+        "share",
+        "buffPower",
+        "happyRange",
+        "bombard"
       ],
       "additionalProperties": false
     },

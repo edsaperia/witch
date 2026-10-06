@@ -120,10 +120,12 @@ export interface Shot {
   attack: string;
   /** A lob: from where to where, and when it was thrown and lands (it hits only where it lands). */
   lob?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number };
+  /** A legend's bombardment (legends.json attack.bombard): the soundsystem it was thrown at, and the damage it does that one if it lands on it. */
+  sound?: { key: string; damage: number };
 }
 
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
-export interface Beam { /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
+export interface Beam { /** A legend's bombardment: the soundsystem it burns, and the damage a tick. */ sound?: { key: string; damage: number }; /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
 
 export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed";
 /** A soundsystem's events carry its key; every other combat event its creature's id (witchHit: the witch's). */
@@ -473,6 +475,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const from = w.creatures[sh.from] ?? null, a = attackNamed(sh.attack, data);
       s.events.push({ kind: "landed", x: L.tx, z: L.tz, at: time, id: sh.from });
       area(w, s, from, sh.side, sh.species, L.tx, L.tz, sh.radius, sh.damage, a, grid);
+      if (sh.sound) { const h = s.sounds.get(sh.sound.key); if (h && h.hp > 0 && Math.hypot(h.x - L.tx, h.z - L.tz) <= sh.radius + h.radius) land(w, s, from, { kind: "sound", key: sh.sound.key }, sh.sound.damage, a, L.tx, L.tz); }
       return false;
     }
     sh.x += sh.vx * dt; sh.z += sh.vz * dt;
@@ -524,6 +527,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         for (const v of w.witches) if (v.onGround && !v.down && hit(v.x, v.z, 0.3)) land(w, s, c, { kind: "witch", id: v.id }, b.damage, a, c.x, c.z);
         if (b.side === "enraged") for (const [key, h] of s.sounds) if (h.hp > 0 && hit(h.x, h.z, h.radius)) land(w, s, c, { kind: "sound", key }, b.damage, a, c.x, c.z);
       }
+      if (b.sound) { const h = s.sounds.get(b.sound.key); if (h && h.hp > 0 && hit(h.x, h.z, h.radius)) land(w, s, c, { kind: "sound", key: b.sound.key }, b.sound.damage, a, c.x, c.z); }
     }
     return true;
   });
@@ -803,7 +807,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
  *  lobFlight seconds) or beams (by its species), each hit attack.damage times its level's power for
  *  interval seconds. (Its shots are the wild's when angry, the happy's when happy: foes() does the rest.) */
 function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: CombatData, grid: Grid): void {
-  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, R = A.range * S, angry = c.legendState !== "happy", side: State = angry ? "wild" : "happy";
+  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, angry = c.legendState !== "happy", R = (angry ? A.range : w.t.legends?.happyRange ?? A.range) * S, side: State = angry ? "wild" : "happy";
   const f = (c.fight ??= { target: null, readyAt: time + A.interval * 0.5, windupUntil: 0, aimX: 0, aimZ: 0 });
   if (c.lairX === undefined) { c.lairX = c.x; c.lairZ = c.z; }
   const charger = LEGENDS.charge.species.includes(c.species);
@@ -814,10 +818,10 @@ function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: Co
     f.windupUntil = 0; f.readyAt = time + A.interval;
     const beam = A.beam.includes(c.species);
     for (const a of c.aims ?? []) {
+      const ticks = Math.max(1, Math.round(A.beamTime / 0.25)), sk = a.target.kind === "sound" ? a.target.key : null;
       if (beam) {
-        const ticks = Math.max(1, Math.round(A.beamTime / 0.25));
-        s.beams.push({ id: s.nextShot++, from: c.id, angle: Math.atan2(a.z - c.z, a.x - c.x), length: R, width: A.beamWidth * S, until: time + A.beamTime, nextTick: time, tick: 0.25, damage: A.damage / ticks, side, species: c.species, attack: "legendBeam", target: a.target });
-      } else s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: 0, vz: 0, until: time + A.lobFlight + 1, from: c.id, side, species: c.species, damage: A.damage, radius: A.lobRadius * S, attack: "legendLob", lob: { fx: c.x, fz: c.z, tx: a.x, tz: a.z, at: time, lands: time + A.lobFlight } });
+        s.beams.push({ id: s.nextShot++, from: c.id, angle: Math.atan2(a.z - c.z, a.x - c.x), length: Math.max(R, Math.hypot(a.x - c.x, a.z - c.z) + 4), width: A.beamWidth * S, until: time + A.beamTime, nextTick: time, tick: 0.25, damage: A.damage / ticks, side, species: c.species, attack: "legendBeam", target: a.target, ...(sk ? { sound: { key: sk, damage: (w.t.legends?.bombard?.damage ?? 0) / ticks } } : {}) });
+      } else s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: 0, vz: 0, until: time + A.lobFlight + 1, from: c.id, side, species: c.species, damage: A.damage, radius: A.lobRadius * S, attack: "legendLob", lob: { fx: c.x, fz: c.z, tx: a.x, tz: a.z, at: time, lands: time + A.lobFlight }, ...(sk ? { sound: { key: sk, damage: w.t.legends?.bombard?.damage ?? 0 } } : {}) });
     }
     if (c.aims?.length) s.events.push({ kind: beam ? "beam" : "shot", x: c.x, z: c.z, at: time, id: c.id });
     c.aims = undefined;
@@ -834,9 +838,18 @@ function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: Co
     const d = Math.hypot(o.x - c.x, o.z - c.z);
     if (d <= R) found.push({ d, x: o.x, z: o.z, target: { kind: "creature", id: o.id } });
   }
-  if (!found.length) { f.target = null; f.readyAt = time + A.recheck; return; } // (nothing in reach: look again in a moment, not every step)
   found.sort((a, b) => a.d - b.d);
-  if (charger) {
+  // Bombarding (Ed, 2026-10-06: "Legend bombards, but prioritises you"): an angry one with no witch in
+  // its reach throws its first lob or beam at the nearest standing soundsystem within bombard.range.
+  const B = w.t.legends?.bombard;
+  let bombard = false;
+  if (angry && B?.on && !found.some(t => t.target.kind === "witch")) {
+    let key: string | null = null, bd = B.range * S, at = { x: 0, z: 0 };
+    for (const [k, h] of s.sounds) { if (h.hp <= 0) continue; const d = Math.hypot(h.x - c.x, h.z - c.z); if (d <= bd) { bd = d; key = k; at = h; } }
+    if (key) { found.unshift({ d: bd, x: at.x, z: at.z, target: { kind: "sound", key } }); bombard = true; }
+  }
+  if (!found.length) { f.target = null; f.readyAt = time + A.recheck; return; } // (nothing in reach: look again in a moment, not every step)
+  if (charger && !bombard) {
     // A charging legend: one long charge at the nearest, its head lowered windup seconds first.
     const t0 = found[0], a = Math.atan2(t0.z - c.z, t0.x - c.x);
     c.run = { phase: "windup", at: time, angle: a, speed: 0, turn: 1, target: t0.target, tx: t0.x, tz: t0.z, ran: 0, hit: [], fromX: c.x, fromZ: c.z };
