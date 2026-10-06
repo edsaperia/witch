@@ -117,7 +117,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   }
   if (bounds.circle) ({ vx, vz } = softEdge(bounds, w.x, w.z, vx, vz, Math.max(max, Math.hypot(vx, vz)), t.map?.push ?? 0, t.map?.drift ?? 0)); // (the circular map's soft edge)
   let x = w.x + (vx + driftX) * dt, z = w.z + (vz + driftZ) * dt;
-  if (bounds.circle) { const p = keepIn(bounds, x, z); if (p.x !== x || p.z !== z) { const c = bounds.circle, nx = (p.x - c.x) / c.r, nz = (p.z - c.z) / c.r, out = vx * nx + vz * nz; if (out > 0) { vx -= nx * out; vz -= nz * out; } x = p.x; z = p.z; } }
+  if (bounds.circle) { const p = keepIn(bounds, x, z); if (p.x !== x || p.z !== z) { const c = bounds.circle, l = Math.hypot(p.x - c.x, p.z - c.z) || 1, nx = (p.x - c.x) / l, nz = (p.z - c.z) / l, out = vx * nx + vz * nz; if (out > 0) { vx -= nx * out; vz -= nz * out; } x = p.x; z = p.z; } }
   else {
     if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
     if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
