@@ -750,7 +750,7 @@ The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are 
 | `bubbles.scale` | number | 0 to … |
 | `bubbles.levelScale` | array of number |  |
 
-## `scenes`, `grounds`, `legendClearing`
+## `scenes`, `grounds`
 
 Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own).
 
@@ -762,6 +762,16 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `grounds.chance` | number | 0 to … |
 | `grounds.kinds` | array of string |  |
 | `grounds.radius` | record |  |
+
+## `legendCircle`, `legendClearing`
+
+A legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower, things still move on the outside but very slowly, the music audibly slows down (this is a good audio cue for the transition) ... freeze only if the legend is asleep or restless. Enraged creatures outside the circle don't enter it. Your invitations disappear if they go outside the circle from inside"): slow: while she stands on the ground in the circle of a legend asleep or restless, the world (the clock, the waves' countdown, the music, every creature, siege and timer) runs at scale of its speed, easing there and back over ease seconds as she crosses its edge; she and everything of hers (moving, blinking, rising and landing, her sigils, her 💌s and their cooldowns, her hat) keep full speed. on false (or ?slow=0) for none. A calm circle (its legend asleep or restless) keeps enraged creatures out whether she's there or not, and a 💌 leaving it from inside vanishes in a sparkle.
+
+| knob | type | range |
+|---|---|---|
+| `legendCircle.slow.on` | boolean |  |
+| `legendCircle.slow.scale` | number | 0 to … |
+| `legendCircle.slow.ease` | number | 0 to … |
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
