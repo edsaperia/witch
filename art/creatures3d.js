@@ -657,7 +657,7 @@ export function woodlouse3d(S, level, frame, st, facing = "towards") {
   }
   if (q.tailSpikes) for (const side of [-1, 1]) m.seg([-.55, .12, side * .08], [-.75, .08, side * .14], .03, .006, M.BODY3, { group: 4, extra: true });
   const hc = [.58, .15, 0], hr = [.12, .1, .17]; m.ell(hc, hr, M.BODY2, { group: 1 }); // its head, in front of the plates
-  m.anchors.head = { c: hc, r: hr, top: [.42, .46, 0] }; // (its top: a party hat sits on its front plate, above its head)
+  m.anchors.head = { c: hc, r: hr, top: [.3, .58, 0] }; // (its top: a party hat sits on its front plate, above its head)
   eyesOn(m, hc, hr, [[.8, .45, .45], [.8, .45, -.45]], .026, legend ? M.MAGIC2 : M.EYE);
   return finish(m, S, level, st, .4, facing);
 }
