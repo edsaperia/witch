@@ -31,7 +31,7 @@ for (const seed of seeds) {
  await to("treetop"); await shot("home-treetop"); await to("ground");
  // three far areas of different types: in the clearing, and among the trees
  const sites=await page.evaluate(()=>{const g=window.witch.game,m=g.map,w=g.witch,seen=new Set(),out=[];const all=[];
-   for(let y=0;y<m.n;y++)for(let x=0;x<m.n;x++){const s=m.siteOf(x,y),t=m.typeOf(x,y);all.push({x:s.x,z:s.z,t,d:Math.hypot(s.x-w.x,s.z-w.z)});}
+   for(const [x,y] of m.cells){const s=m.siteOf(x,y),t=m.typeOf(x,y);all.push({x:s.x,z:s.z,t,d:Math.hypot(s.x-w.x,s.z-w.z)});}
    all.sort((a,b)=>a.d-b.d);for(const s of all){if(s.d<250||seen.has(s.t))continue;seen.add(s.t);out.push(s);if(out.length===3)break;}return out;});
  for (const [k,s] of sites.entries()) {
    await tp(s.x,s.z); await fr(240); await shot(`area${k}-t${s.t}-clearing`); // (4 s first: the area's mood eases in)

@@ -118,15 +118,15 @@ describe("the map", () => {
     expect(checked).toBe(400 * 24);
     expect(safeSum / 400).toBeGreaterThan(0.3); // worth having: a creature asks about every so many metres
   });
-  it("is mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
-    expect(map.n).toBe(TUNING.mapAreas);
+  it("is a circle of about mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
+    expect(Math.abs(map.cells.length - TUNING.mapAreas ** 2)).toBeLessThan(TUNING.mapAreas * 2);
     expect(AREA_TYPES.length).toBeGreaterThanOrEqual(30);
-    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo((map.n - 1) * map.areaSize);
+    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r);
   });
 
   it("never gives two touching areas the same type", () => {
     let pairs = 0;
-    const inMap = (x: number, y: number) => x >= -map.margin && y >= -map.margin && x < map.n + map.margin && y < map.n + map.margin;
+    const e = map.extent, inMap = (x: number, y: number) => { const s = map.siteOf(x, y); return s.x > e.minX && s.x < e.maxX && s.z > e.minZ && s.z < e.maxZ; };
     for (const [k, set] of map.neighbours) {
       const [ax, ay] = k.split(",").map(Number);
       if (!inMap(ax, ay)) continue;
@@ -296,7 +296,7 @@ describe("trees", () => {
 });
 
 describe("the witch", () => {
-  const b = map.bounds;
+  const b = { minX: 84, maxX: 2268, minZ: 84, maxZ: 2268 }; // (a square box, as the square map's: the circular map's edge is in mapShape.test.ts)
   const fly = (w = newWitch(200, 200), steps = 120, intent = { moveX: 1, moveZ: 0, toggleMode: false }) => {
     for (let i = 0; i < steps; i++) w = stepWitch(w, intent, 1 / 60, TUNING, b);
     return w;
@@ -493,7 +493,7 @@ describe("creatures", () => {
   it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each that has one (legends.share: Ed, 2026-10-06)", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
     const S = TUNING.population.start;
-    for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
+    for (const [cx, cy] of map.cells.filter((_, i) => i % 9 === 0)) {
       if (cx === mx && cy === my) continue;
       const here = inCell(cx, cy);
       expect(here.filter(c => c.level === 0).length).toBe(S.babies);
@@ -658,7 +658,7 @@ describe("the party", () => {
       const p = newParty(map);
       if (per > 1) { p.areasPerWave = per; p.next = pickSet(p, map, per); planAhead(p, map); }
       const plan = wavePlan(p, map);
-      expect(plan.size).toBe(map.n * map.n - 1); // all but home
+      expect(plan.size).toBe(map.cells.length - 1); // all but home
       for (let w = 1; w <= 12; w++) {
         for (const c of p.next) expect(plan.get(key(c))).toBe(w);
         spreadWave(p, map, w);

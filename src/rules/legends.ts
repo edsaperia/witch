@@ -9,6 +9,7 @@
 import raw from "../../config/legends.json";
 import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
+import { isInside } from "./mapShape";
 import { crownReach, type Plant } from "./forest";
 import { cellKey } from "./party";
 import { hash2 } from "./random";
@@ -52,7 +53,7 @@ export const relicGlints = (forest: { treesNear(x: number, z: number, r: number)
  *  a cleared place (a legend's clearing, a set piece's, a soundsystem's: map.hardClear). A map that
  *  can't fit one minGap from the rest has it at the farthest spot found, and says so. */
 export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: number, r: number): Plant[] }, data: LegendsData = LEGENDS): Relic[] {
-  const R = data.relics, b = map.bounds, inside = (x: number, z: number) => x > b.minX + 60 && x < b.maxX - 60 && z > b.minZ + 60 && z < b.maxZ - 60;
+  const R = data.relics, b = map.bounds, inside = (x: number, z: number) => isInside(b, x, z, 60);
   const woods = (px: number, pz: number) => forest.treesNear(px, pz, 14).filter(t => Math.hypot(t.x - px, t.z - pz) < 14).length >= 3;
   const out: Relic[] = [];
   const gapTo = (x: number, z: number) => out.reduce((m, r) => Math.min(m, Math.hypot(r.x - x, r.z - z)), Infinity);
@@ -99,7 +100,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
 
   // The rest: best-candidate over the areas far enough from home, seeded.
   const cells: [number, number][] = [];
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) { const s = map.siteOf(cx, cy); if (map.remoteness(cx, cy) >= R.minRemoteness && !(cx === map.centreCell[0] && cy === map.centreCell[1]) && inside(s.x, s.z)) cells.push([cx, cy]); }
+  for (const [cx, cy] of map.cells) { const s = map.siteOf(cx, cy); if (map.remoteness(cx, cy) >= R.minRemoteness && !(cx === map.centreCell[0] && cy === map.centreCell[1]) && inside(s.x, s.z)) cells.push([cx, cy]); }
   cells.sort((a, c) => hash2(a[0], a[1], map.seed + 7717) - hash2(c[0], c[1], map.seed + 7717));
   const used = new Set<string>([cellKey(out[0].cell)]);
   for (let i = 1; i < kinds.length; i++) {

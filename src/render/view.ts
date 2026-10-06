@@ -184,7 +184,7 @@ export class View {
   private partyWitchView: PartyWitchView;
   /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */
   private swoopTrails: SwoopTrails;
-  /** The 💌s, their bubbles and meters (render/invites.ts). */
+  /** The 💌s, their bubbles and rings (render/invites.ts). */
   private inviteView: InviteView;
   /** Angry brows and daze stars over the creatures (render/looks.ts). */
   private stateMarks: StateMarks;

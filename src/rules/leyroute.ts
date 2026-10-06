@@ -69,7 +69,7 @@ export function variedOrder(map: ForestMap): string[] {
   const wrap = (a: number) => ((a % TAU) + TAU) % TAU;
   type Pt = { k: string; r: number; a: number };
   const all: Pt[] = [];
-  for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) {
+  for (const [x, y] of map.cells) { // (the playable areas: never the circular map's buffer ring)
     const k = `${x},${y}`;
     if (k === home) continue;
     const q = map.soundsystemSpot(x, y);
