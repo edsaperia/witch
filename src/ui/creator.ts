@@ -55,7 +55,7 @@ export const BOXES: { id: string; name: string; axes: string[]; wear: string[]; 
   { id: "face", name: "🙂 Face", axes: [], wear: ["shades"], parts: ["skin"] },
   { id: "outfit", name: "🧥 Outfit", axes: ["top", "cloak", "cloakLength"], wear: ["patches", "pendant"], parts: ["jacket", "cloak", "top", "jeans"] },
   { id: "shoes", name: "👟 Shoes", axes: [], wear: ["chunky"], parts: ["sneakers"] },
-  { id: "broom", name: "🧹 Broom", axes: ["broom", "broomLength", "broomBend", "bristles"], wear: [], parts: ["broom", "bristles"] },
+  { id: "broom", name: "🧹 Broom", axes: ["broom", "broomLength", "broomThickness", "broomBend", "bristles"], wear: [], parts: ["broom", "bristles"] },
   { id: "scarf", name: "🧣 Scarf", axes: ["scarfLength"], wear: ["scarf"], parts: ["scarf"] },
   { id: "bag", name: "👜 Bag", axes: ["bagSize"], wear: ["satchel", "bumbag"], parts: ["satchel"] },
   { id: "backpack", name: "🎒 Backpack", axes: ["backpackSize"], wear: [], parts: ["backpack"] },
@@ -64,6 +64,9 @@ export const BOXES: { id: string; name: string; axes: string[]; wear: string[]; 
 ];
 /** The box an axis, an accessory or a colour part is in (the last box for one none names). */
 export const boxOf = (kind: "axes" | "wear" | "parts", k: string): string => (BOXES.find(b => b[kind].includes(k)) ?? BOXES[BOXES.length - 1]).id;
+/** Whether a slider draws anything on her look (art/witchGenome.js sliderApplies), and what greys it out. */
+export const applies = Art.sliderApplies as (axis: string, look: Record<string, unknown>) => boolean;
+const INERT_WHAT: Record<string, string> = { hatHeight: "hat", hatTilt: "hat", hatBrim: "hat", hatBand: "hat", broomBend: "broom", bristles: "broom", cloakLength: "cloak" };
 const label = (s: string) => s.replace(/([A-Z])/g, " $1").replace(/^hat |^broom /i, "").toLowerCase();
 /** What a choice is called on its button (its genome name otherwise). */
 const NAMES: Record<string, string> = { conical: "farmer's", boppers: "deely boppers", top: "top hat", party: "party hat", traffic: "traffic cone" };
@@ -269,9 +272,14 @@ export class Creator {
     this.g = g; this.build(); this.dirty = true;
   }
   /** With no hat, the hat's sliders are greyed (they keep their places for when a hat goes back on). */
-  private hatless(): void {
-    const none = this.g.hat.shape === "none";
-    this.panel.querySelectorAll<HTMLInputElement>("input[data-axis^=hat]").forEach(s => { s.disabled = none; s.style.opacity = none ? ".35" : "1"; });
+  /** Greys out the sliders that draw nothing on what she has chosen (art/witchGenome.js WITCH_INERT: no hat's height, a
+   *  beanie's brim, a canoe's bend, no cloak's length...), so every slider she can move changes her (Ed, 2026-10-06). */
+  private inert(): void {
+    const look = (Art.genomeLook as (g: unknown) => { look: Record<string, unknown> })(this.g).look;
+    this.panel.querySelectorAll<HTMLInputElement>("input[data-axis]").forEach(s => {
+      const on = applies(s.dataset.axis!, look);
+      s.disabled = !on; s.style.opacity = on ? "1" : ".35"; s.title = on ? "double-click: back to hers" : `no ${label(s.dataset.axis!)} on this ${INERT_WHAT[s.dataset.axis!] ?? "one"}`;
+    });
   }
   private classic(): void { this.g = upgrade(CLASSIC); this.build(); this.dirty = true; }
 
@@ -340,7 +348,7 @@ export class Creator {
       for (const axis of axes) this.axisRow(body, axis, row, get, set);
       if (parts.length) this.picker(body, B.id, parts, row, pal, cur);
     }
-    this.hatless();
+    this.inert();
     if (!this.boxes.has(this.box)) this.openBox(this.boxes.keys().next().value ?? "");
     // The buttons.
     const bar = document.createElement("div");
@@ -369,7 +377,7 @@ export class Creator {
         const on = () => { const chosen = get(axis) === opt; b.style.background = chosen ? "var(--accent)" : "rgba(255,255,255,.08)"; b.style.color = chosen ? "#1d1408" : "inherit"; }; // (the HUD's one accent, lantern amber: #188, art review round 2)
         Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" });
         if (axis === "hatShape") b.dataset.hat = opt;
-        b.addEventListener("click", () => { set(axis, opt); if (axis === "hatShape") this.hatless(); r.querySelectorAll("button").forEach(x => { (x as HTMLElement).style.background = "rgba(255,255,255,.08)"; (x as HTMLElement).style.color = "inherit"; }); on(); });
+        b.addEventListener("click", () => { set(axis, opt); this.inert(); r.querySelectorAll("button").forEach(x => { (x as HTMLElement).style.background = "rgba(255,255,255,.08)"; (x as HTMLElement).style.color = "inherit"; }); on(); });
         on(); r.append(b);
       }
       return;
