@@ -4,7 +4,7 @@
 //   npm run build && node tools/smoke/legendary-sigil.cjs <out dir> [seed] [species]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
-const [outDir = "previews/sigils/legendary-ingame", seed = "123", species = ""] = process.argv.slice(2);
+const [outDir = "previews/sigils/legendary-ingame", seed = "123", species = "fox"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm" };
 (async () => {
@@ -34,16 +34,22 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     for (let i = 0; i < 20; i++) await step({});
     console.log(await page.evaluate(sp => {
       const g = window.witch.game, w = g.witch, c = g.creatures.find(c => !c.gone && c.level === 3 && (!sp || c.species === sp));
-      if (!c) return "no legend";
-      Object.assign(c, { x: w.x - 4, z: w.z + 3, tx: w.x - 4, tz: w.z + 3, homeX: w.x - 4, homeZ: w.z + 3, leashed: true, asleep: false, state: "leashed", rest: 99 });
+      if (!c || sp === "none") return "no legend";
+      Object.assign(c, { x: w.x - 14, z: w.z - 10, tx: w.x - 14, tz: w.z - 10, homeX: w.x - 14, homeZ: w.z - 10, leashed: true, asleep: false, state: "leashed", rest: 99 });
       g.leash.stack.push(c.id); g.byArea = null;
       return `legend ${c.species} joined; stack ${g.leash.stack.length}`;
     }, species));
+    for (let i = 0; i < 4; i++) { await step({ zoom: -1 }); await step({}); } // (in close)
     for (let i = 0; i < 30; i++) await step({});
-    await shot("stack", { x: 490, y: 60, width: 300, height: 380 });
+    await page.screenshot({ path: path.join(outDir, "stack-full.png") });
+    console.log("t before", await page.evaluate(() => window.witch.game.clock.time));
     await step({ sigil: true }); // put down
+
+    await page.evaluate(() => { const g = window.witch.game, p = g.leash.placed[0], c = g.creatures[p.id]; Object.assign(c, { x: p.x - 30, z: p.z - 20, tx: p.x - 30, tz: p.z - 20 }); }); // (its legend off it, for the picture)
     for (let i = 0; i < 30; i++) await step({});
-    await shot("placed");
+    console.log("t after", await page.evaluate(() => [window.witch.game.clock.time, window.witch.game.clock.paused]));
+    await page.screenshot({ path: path.join(outDir, "placed-full.png") });
+    console.log(await page.evaluate(() => { const g = window.witch.game; return JSON.stringify({ placed: g.leash.placed.map(p => ({ ...p, species: g.creatures[p.id].species, level: g.creatures[p.id].level })), witch: [g.witch.x, g.witch.z], stack: g.leash.stack.map(i => g.creatures[i].species + g.creatures[i].level) }); }));
     await step({ moveX: 1 }); for (let i = 0; i < 20; i++) await step({ moveX: 1 });
     await step({ toggleMode: true });
     for (let i = 0; i < 80; i++) await step({});
