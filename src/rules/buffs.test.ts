@@ -4,7 +4,7 @@ import { LEGEND, spawnCreatures, type Creature } from "./creatures";
 import { AREA_TYPES, generateMap } from "./map";
 import { newGame, stepGame, STEP, type Controls } from "./game";
 import { TUNING } from "./tuning";
-import { newInvites, stepInvites, type Affection } from "./invites";
+import { newInvites, stepInvites, type Affection, type Lantern } from "./invites";
 import { dashing, newDash, refundDash, startDash } from "./dash";
 import { newWitch } from "./witch";
 
@@ -53,7 +53,6 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
       for (const k of Object.keys(d.mods ?? {})) expect(MOD_KINDS).toContain(k);
       // Never a stronger 💌: nothing touches its affection.
       expect(Object.keys({ ...d.scale, ...d.add })).not.toContain("invites.amount");
-      expect(Object.keys({ ...d.scale, ...d.add })).not.toContain("invites.perAnimalHitGap");
     }
     expect(Object.keys(B.species).every(s => species.has(s))).toBe(true);
     expect(B.species.owl.name).toBe("Echo");
@@ -176,13 +175,17 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(shoot(["elk"], [critter(2, 5, 0, { boss: true, level: 3 }), critter(1, 10, 0)], 1).A.hits.get(1)).toBeUndefined();
   });
   it("Lanterns (glow-worm): a glowing trail that lands on an animal walking into it", () => {
-    const M = mods("glowworm"), A = counting(), s = newInvites(), c = critter(1, 6, 20);
+    const M = mods("glowworm"), A = counting(), s = newInvites(), c = critter(1, 6, 20), lit = new Set<Lantern>();
     for (let i = 0, time = 0; i < 0.5 / STEP; i++, time += STEP) {
       s.events = [];
       if (time > 0.3) Object.assign(c, { x: 6, z: 0.2 }); // (it steps onto the path after the letters have passed)
       stepInvites(s, { fire: i === 0, aimX: 1, aimZ: 0 }, her, true, [c], A, time, STEP, t, M);
+      for (const p of s.lanterns) lit.add(p);
     }
-    expect(A.hits.get(1)).toBe(1);
+    // Each lantern it stands in lands once (not every step it touches: there's no per-animal gap to stop that since 2026-10-06).
+    const touched = [...lit].filter(p => p.hit?.includes(1)).length;
+    expect(touched).toBeGreaterThanOrEqual(1);
+    expect(A.hits.get(1)).toBe(touched);
   });
   it("Cache (squirrel): a 💌 waits on the ground and flies at an animal that comes near", () => {
     const M = mods("squirrel"), A = counting(), s = newInvites(), c = critter(1, 60, 0);
@@ -206,10 +209,10 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(circling).toBe(H.orbit.letters);
     expect(A.hits.get(1)).toBeGreaterThanOrEqual(1);
   });
-  it("stacked shots still give any one animal at most one 💌 every perAnimalHitGap", () => {
+  it("stacked shots: every 💌 that lands on an animal counts (no per-animal gap since 2026-10-06)", () => {
     const { A, ev } = shoot(["beetle", "beetle", "owl", "moth", "stag", "otter", "toad", "fox"], [critter(1, 8, 0)], 0.45, { aim: [1, 0] });
     expect(ev.filter(e => e.kind === "hit" && e.id === 1).length).toBeGreaterThan(3);
-    expect(A.hits.get(1)).toBe(1);
+    expect(A.hits.get(1)).toBe(ev.filter(e => e.kind === "hit" && e.id === 1).length);
   });
 
   // Movement.

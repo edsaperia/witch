@@ -23,13 +23,13 @@ describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () =>
   });
 
   it("grows every still-wild area by perWave a wave, as counts only, never home or a partified area", () => {
-    const s = newGrowth(), [hx, hy] = map.centreCell, party = new Set([cellKey(map.centreCell), "3,3"]);
+    const s = newGrowth(), [hx, hy] = map.centreCell, party = new Set([cellKey(map.centreCell), cellKey(map.cells[5])]);
     for (let w = 1; w <= 5; w++) growWave(s, map, w, key => !party.has(key));
     growWave(s, map, 5, () => true); // (a wave grows once)
-    expect(s.grown).toBe((map.n * map.n - 2) * 5 * T1.population.growth.perWave);
+    expect(s.grown).toBe((map.cells.length - 2) * 5 * T1.population.growth.perWave);
     expect(s.pending.has(`${hx},${hy}`)).toBe(false);
-    expect(s.pending.has("3,3")).toBe(false);
-    expect(pendingCounts(s, "0,0").reduce((a, b) => a + b, 0)).toBe(5);
+    expect(s.pending.has(cellKey(map.cells[5]))).toBe(false);
+    expect(pendingCounts(s, cellKey(map.cells[0])).reduce((a, b) => a + b, 0)).toBe(5);
     const off = newGrowth();
     growWave(off, generateMap(123, withTuning({ population: { ...T1.population, growth: { ...T1.population.growth, on: false } } })), 1, () => true);
     expect(off.grown).toBe(0);
@@ -38,7 +38,7 @@ describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () =>
   it("makes the counts real only near a witch, out of her sight; a woken area's at once", () => {
     const s = newGrowth(), creatures = spawnCreatures(map), before = creatures.length;
     for (let w = 1; w <= 3; w++) growWave(s, map, w, () => true);
-    const site = map.siteOf(2, 2), far = { x: site.x + 5000, z: site.z };
+    const site = map.siteOf(map.cells[0][0], map.cells[0][1]), far = { x: site.x + 5000, z: site.z };
     expect(materialize(s, creatures, map, [far], 600, 10)).toBe(0); // nobody near: counts only
     // A witch 500 m off: its area's creatures appear, beyond the haze from her.
     const near = { x: site.x + 500, z: site.z };
@@ -70,7 +70,7 @@ describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () =>
       stepGame(g, { ...still, nextWave: true }, 1 / 60);
       stepGame(g, still, 1 / 60);
     }
-    expect(g.growth.grown).toBeGreaterThan((g.map.n * g.map.n - 10) * 3); // (every wild area, a creature a wave)
+    expect(g.growth.grown).toBeGreaterThan((g.map.cells.length - 10) * 3); // (every wild area, a creature a wave)
     expect(g.creatures.length - start).toBeLessThan(g.growth.grown); // most still counts
     const mine = g.creatures.filter(c => cellKey(c.cell) === woke);
     expect(mine.length).toBe(T1.population.start.babies + T1.population.start.young + T1.population.start.adults + 3 + (mine.some(c => c.boss) ? 1 : 0));
