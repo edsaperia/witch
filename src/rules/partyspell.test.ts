@@ -14,7 +14,7 @@ describe("the party spell", () => {
     const g = newGame(123, TUNING);
     g.party.spellAt = null; g.clock.paused = false;
     const x0 = g.witch.x, z0 = g.witch.z, bootLeft0 = g.party.bootUntil - g.clock.time;
-    run(g, 3, { moveX: 1, moveZ: 0.5, fire: true, dash: true, spell: true });
+    run(g, 3, { moveX: 1, moveZ: 0.5, fire: true, dash: true });
     run(g, 0.5, { toggleMode: true });
     expect(g.witch.x).toBeCloseTo(x0, 6); expect(g.witch.z).toBeCloseTo(z0, 6);
     expect(g.witch.seated).toBe(true); expect(g.witch.mode).toBe("ground");
@@ -45,6 +45,14 @@ describe("the party spell", () => {
     // a second press does nothing
     run(g, STEP, { castParty: true });
     expect(g.party.spellAt).toBe(at);
+  });
+  it("is cast by her spell key too, which then isn't the boost", () => {
+    const g = newGame(123, TUNING);
+    g.party.spellAt = null; g.clock.paused = false;
+    run(g, 1);
+    run(g, STEP, { spell: true });
+    expect(typeof g.party.spellAt).toBe("number");
+    expect(g.spells.activeUntil).toBeLessThanOrEqual(g.clock.time);
   });
   it("leaves a game without it (the tools, the tests) as before: she moves at once", () => {
     const g = newGame(123, TUNING);

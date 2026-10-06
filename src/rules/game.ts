@@ -314,8 +314,9 @@ function fixedStep(g: Game, controls: Controls): void {
   stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id), ...legends.filter(id => buffing(g.creatures[id]))], g.tuning);
   const t = g.buffs.tuning;
   // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
-  // rising, blinking, spells or 💌s (the camera's zoom still works).
-  if (c.castParty) castPartySpell(g.party, g.map, g.clock.time);
+  // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, gamepad B, touch
+  // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
+  if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
   if (heldBySpell(g.party, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
