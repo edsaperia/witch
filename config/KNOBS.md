@@ -1215,13 +1215,18 @@ Wild creatures (Ed, 2026-10-04): every area starts with the same population, pop
 
 ## `dreams`
 
-A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of (Ed, 2026-10-05): shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops. nightmare: a restless legend's one face (Ed, 2026-10-05), slightly sad to angry: faces[k] from restlessness at[k] on.
+A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of (Ed, 2026-10-05): shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops. nightmare: a restless legend's one face (Ed, 2026-10-05), slightly sad to angry: faces[k] from restlessness at[k] on. sleepy (Ed, 2026-10-06): while it sleeps giving its quest (its dream open, no nightmare), its face beside the sigil: mostly face (😴), and now and then, for one turn of every seconds, one of faces instead; each turn its own throw per legend (seeded by its id, so legends never change together), face with chance weight. A face the browser can't draw (🫠 and 😮‍💨 are new) shows as fallback.
 
 | knob | type | range |
 |---|---|---|
 | `dreams.range` | number | 0 to … |
 | `dreams.nightmare.at` | array of number |  |
 | `dreams.nightmare.faces` | array of string |  |
+| `dreams.sleepy.face` | string |  |
+| `dreams.sleepy.weight` | number | 0 to … |
+| `dreams.sleepy.every` | number | 0 to … |
+| `dreams.sleepy.faces` | array of string |  |
+| `dreams.sleepy.fallback` | string |  |
 
 ## `wildLegends`, `creatureSimRadius`
 

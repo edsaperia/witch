@@ -5490,11 +5490,45 @@
             "faces"
           ],
           "additionalProperties": false
+        },
+        "sleepy": {
+          "type": "object",
+          "properties": {
+            "face": {
+              "type": "string"
+            },
+            "weight": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "faces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fallback": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "face",
+            "weight",
+            "every",
+            "faces",
+            "fallback"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "range",
-        "nightmare"
+        "nightmare",
+        "sleepy"
       ],
       "additionalProperties": false
     },
