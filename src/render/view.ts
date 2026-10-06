@@ -1005,7 +1005,7 @@ export class View {
     setOverlayTilt(t.tiltShift, w.lift, this.canvas.clientHeight || window.innerHeight, this.height); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
     this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     const onBeach = this.beachView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
-    this.stateMarks.update(g, time, this.leashView.tops);
+    this.stateMarks.update(g, time, this.leashView.tops, 70, this.camera.position);
     this.inviteView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
     const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink, y: wyy + groundHeight(wx, wz) - U.y * wsink, z: wz - U.z * wsink, frame: wframe, flip: wflip }];
