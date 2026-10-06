@@ -57,8 +57,8 @@ export function gladesOf(g: Game, T: GladeTuning, out: Glade[]): number {
   let n = 0;
   const put = (x: number, z: number, radius: number, edge: number) => { const o = out[n] ?? (out[n] = { x: 0, z: 0, radius: 0, edge: 0 }); o.x = x; o.z = z; o.radius = radius; o.edge = edge; n++; };
   // Art builder 1's clearings (#235: map.legendClearings, each { x, z, r, ... }), where the map has them.
-  const mapped = (g.map as { legendClearings?: { x: number; z: number; r: number }[] }).legendClearings;
-  if (mapped) { for (const c of mapped) put(c.x, c.z, c.r, 0); return n; }
+  const mapped = g.map.legendClearings;
+  if (mapped?.length) { for (const c of mapped) put(c.x, c.z, c.r, 0); return n; }
   for (const id of g.legendIds ?? []) {
     const c = g.creatures[id];
     if (c && !c.gone && dormant(g, c)) put(c.x, c.z + T.radius * T.top, T.radius, 0);
