@@ -14,7 +14,7 @@ import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speak
  *  the dance floor, outside the speaker ring"): past the ring's outer edge by gap, plus its footprint. */
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
-import { isInside, type Bounds } from "./mapShape";
+import { isInside, makeCoast, type Bounds } from "./mapShape";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -98,6 +98,10 @@ export interface ForestMap {
   playable(cx: number, cy: number): boolean;
   /** Is this area in the buffer ring: not playable, but where she can fly (scenery only)? */
   inBuffer(cx: number, cy: number): boolean;
+  /** The coast (Ed, 2026-10-06: "slightly irregular"): every edge round home, at an angle (radians,
+   *  atan2(dz, dx) from the dancefloor), as a factor of its round radius (1 on the square map). The
+   *  playable areas reach radius x coast, the buffer and her flight (bounds.circle) theirs x coast. */
+  coast(angle: number): number;
   readonly areaSize: number;
   readonly partition: Partition;
   /** The middle area, whose clearing holds the dancefloor. */
@@ -218,6 +222,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const MS = tuning.map ?? { shape: "square" as const, radius: 0, buffer: 0, push: 0, drift: 0, edge: 2 };
   const shape: "circle" | "square" = MS.shape === "circle" ? "circle" : "square", round = shape === "circle";
   const R = MS.radius, flightR = (R + 0.5 + MS.buffer) * A, edgeK = MS.edge ?? 2;
+  // The coast's wobble (Ed, 2026-10-06): seeded, the same for every edge; the forest's extent covers its furthest headland.
+  // (The grid doesn't change with it, so the coast's knobs never reshuffle the map: its slack of an area holds the
+  // playable areas' furthest headland, and the buffer's past it are the forest's anyway.)
+  const coast = round ? makeCoast(seed, MS.coast) : () => 1, most = 1 + (round ? Math.max(0, MS.coast?.amp ?? 0) : 0);
   const n = round ? 2 * Math.ceil(R + 0.5 + MS.buffer + 1) + 1 : tuning.mapAreas, margin = round ? Math.ceil(edgeK) : 2;
   // Areas vary in size: the world is warped smoothly before it is cut, so in some stretches of
   // the map the cells spread out (big areas) and in others they crowd (small ones). The warp
@@ -253,7 +261,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   }
   const partition = makePartition(seed, tuning.borderLayers, { cell: centreCell, radius: homeR * 1.03, gap: H.gap });
   // (circular: the extent a square round the flight circle, edge areas past it; the cells it covers, and one more for the warp)
-  const ext = round ? { minX: homeWorld[0] - flightR - edgeK * A, maxX: homeWorld[0] + flightR + edgeK * A, minZ: homeWorld[1] - flightR - edgeK * A, maxZ: homeWorld[1] + flightR + edgeK * A } : null;
+  const ext = round ? { minX: homeWorld[0] - flightR * most - edgeK * A, maxX: homeWorld[0] + flightR * most + edgeK * A, minZ: homeWorld[1] - flightR * most - edgeK * A, maxZ: homeWorld[1] + flightR * most + edgeK * A } : null;
   const lo = ext ? Math.floor(Math.min(ext.minX, ext.minZ) / A) - 1 : -margin, hi = ext ? Math.ceil(Math.max(ext.maxX, ext.maxZ) / A) + 1 : n + margin;
   const neighbours = findNeighbours(partition, lo, hi, 6);
 
@@ -277,7 +285,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const siteOf = (cx: number, cy: number) => { const s = partition.site(cx, cy), w = toWorld(s[0], s[1]); return { x: w[0], z: w[1] }; };
   const centre = siteOf(centreCell[0], centreCell[1]);
   // The playable areas and the buffer ring, by their centres' distance from home's.
-  const fromHome = (cx: number, cy: number) => { const s = siteOf(cx, cy); return Math.hypot(s.x - centre.x, s.z - centre.z); };
+  // (each by how far its centre lies out along its own direction, as a share of the coast there)
+  const fromHome = (cx: number, cy: number) => { const s = siteOf(cx, cy), dx = s.x - centre.x, dz = s.z - centre.z; return Math.hypot(dx, dz) / coast(Math.atan2(dz, dx)); };
   const playable = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < n && cy < n && (!round || fromHome(cx, cy) <= R * A);
   const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && fromHome(cx, cy) <= flightR + A * 0.5;
   const cells: Cell[] = [];
@@ -429,10 +438,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (round ? R : n / 2));
   const pad = A * 0.5;
   const bounds: Bounds = round
-    ? { minX: centre.x - flightR, maxX: centre.x + flightR, minZ: centre.z - flightR, maxZ: centre.z + flightR, circle: { x: centre.x, z: centre.z, r: flightR } }
+    ? { minX: centre.x - flightR * most, maxX: centre.x + flightR * most, minZ: centre.z - flightR * most, maxZ: centre.z + flightR * most, circle: { x: centre.x, z: centre.z, r: flightR, coast } }
     : { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad };
   const map = {
-    seed, tuning, n, margin, shape, cells, playable, inBuffer, areaSize: A, partition, centreCell, homeRadius,
+    seed, tuning, n, margin, shape, cells, playable, inBuffer, coast, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
     treehouse, treehouseFront: { x: treehouse.x, z: treehouse.z + tuning.treehouse.clear }, grounds, scenes,
     start: { x: treehouse.x, z: treehouse.z + 1 },
