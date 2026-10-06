@@ -1,5 +1,6 @@
 // The broom's other kinds (Ed, 2026-10-06: "create some different kinds of broom; a missile, a curled tip, handlebars, hobby horse,
-// jet bike, oar, mop, pitchfork, canoe, wicker basket, ladder, speeder bike, bicycle, quad drone"). Each is drawn where her broom is
+// jet bike, oar, mop, pitchfork, canoe, wicker basket, ladder, speeder bike, bicycle, quad drone"; later: "a gyrocopter", and the
+// wicker basket left out). Each is drawn where her broom is
 // (art/witch.js broomHandle and broomBristles: the handle from its binding a to its nose b, the bristles' end at c, o.dir toward the
 // nose), so every pose that holds or rides a broom rides these too. Two colours, the creator's Broom box's two pickers: the body
 // (M.BROOM, the handle's) and the trim (M.STRAW, the bristles'); flames, exhausts and lights glow in her magic (M.MAGIC, MAGIC2).
@@ -9,11 +10,11 @@ import { M } from "./core.js";
 import { v3 } from "./model3d.js";
 
 /** The kinds after hers (classic, fan, twig, round), in the creator's order. */
-export const NEW_BROOMS = ["missile", "curl", "handlebars", "hobbyhorse", "jetbike", "oar", "mop", "pitchfork", "canoe", "basket", "ladder", "speeder", "bicycle", "drone"];
+export const NEW_BROOMS = ["missile", "curl", "handlebars", "hobbyhorse", "jetbike", "oar", "mop", "pitchfork", "canoe", "ladder", "speeder", "bicycle", "drone", "gyrocopter"];
 /** She sits in these (knees up) rather than astride. */
-export const SIT_IN = new Set(["canoe", "basket"]);
+export const SIT_IN = new Set(["canoe"]);
 /** On foot these stand on the ground beside her (how high their binding is) rather than being held like a staff. */
-export const PARKED = { canoe: .15, basket: .28, bicycle: .35, jetbike: .14, speeder: .1, drone: .11 };
+export const PARKED = { canoe: .15, gyrocopter: .3, bicycle: .35, jetbike: .14, speeder: .1, drone: .11 };
 
 const BR_BODY = 2, BR_TAIL = 3, BR_TRIM = 13, BR_GLOW = 16, BR_BITS = 17; // groups: different ones meet with a crease, so the pieces read apart
 const BR_SIDE = [0, 0, 1];
@@ -137,16 +138,6 @@ export const BROOM_KINDS = {
       for (const t of [-.5, .55]) m.seg(v3.add(c, v3.mul(F.d, t * F.len)), v3.add(v3.add(c, v3.mul(F.d, t * F.len * 1.12)), v3.mul(F.up, .1)), .02, .012, M.BROOM, { group: BR_TRIM }); // its ends sweeping up
     },
   },
-  // a wicker basket: she sits in it, its weave in both colours
-  basket: {
-    body(m, L, a, b) {
-      const F = broomAlong(L, a, b), c = v3.add(v3.add(a, v3.mul(F.d, .46)), v3.mul(F.up, -.1)), weave = p => (Math.floor(p[1] * 28) + Math.floor((p[0] + p[2]) * 18)) % 2 ? M.STRAW : undefined;
-      m.box(c, [.19, .17, .19], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY, round: .04, paint: weave });
-      m.box(v3.add(c, v3.mul(F.up, .06)), [.16, .17, .16], M.STRAW, { dir: F.d, up: F.up, group: BR_BODY, round: .03, cut: true });
-      const rim = v3.add(c, v3.mul(F.up, .17)); broomRing(m, rim, F.d, BR_SIDE, .19, .022, M.STRAW, BR_TRIM, 16);
-      m.chain([[...v3.add(rim, [0, 0, -.19]), .014], [...v3.add(rim, v3.add(v3.mul(F.up, .14), [0, 0, -.1])), .014], [...v3.add(rim, v3.add(v3.mul(F.up, .2), [0, 0, 0])), .014], [...v3.add(rim, v3.add(v3.mul(F.up, .14), [0, 0, .1])), .014], [...v3.add(rim, [0, 0, .19]), .014]], M.STRAW, { group: BR_TRIM, extra: true }); // its handle, arching over her
-    },
-  },
   // a ladder: two rails and rungs
   ladder: {
     body(m, L, a, b) {
@@ -193,6 +184,27 @@ export const BROOM_KINDS = {
         broomRing(m, top, F.d, BR_SIDE, .13, .006, M.STRAW, BR_BITS + 1, 12); // the blur of its blades
         m.ell(v3.add(hub, v3.mul(F.up, -.02)), [.016, .016, .016], p > 0 ? M.MAGIC : M.MAGIC2, { group: BR_GLOW });
       }
+    },
+  },
+  // a gyrocopter: a keel under her with a bubble nose, a mast behind her up past her hat, a big rotor turning on it, a tail fin and a
+  // pusher propeller at the back
+  gyrocopter: {
+    body(m, L, a, b) {
+      const F = broomAlong(L, a, b), turn = (L.frame ?? 0) * Math.PI / 3;
+      m.seg(F.at(0, -.06), F.at(F.len, -.06), .03, .028, M.BROOM, { group: BR_BODY });
+      m.ell(F.at(F.len - .02, -.02), [.1, .07, .07], M.STRAW, { dir: F.d, up: F.up, group: BR_TRIM }); // the nose
+      const foot = F.at(.3, -.04), top = v3.add(F.at(.24, 0), v3.mul(F.up, .98));
+      m.seg(foot, top, .022, .016, M.BROOM, { group: BR_BODY });
+      m.ell(top, [.03, .025, .03], M.STRAW, { group: BR_TRIM });
+      for (const k of [0, 1]) { const t = turn + k * Math.PI, dr = v3.add(v3.mul(F.d, Math.cos(t) * .5), [0, 0, Math.sin(t) * .5]); m.seg(top, v3.add(top, dr), .02, .014, M.STRAW, { group: BR_BITS, extra: true }); }
+      broomRing(m, v3.add(top, v3.mul(F.up, -.005)), F.d, BR_SIDE, .5, .005, M.BROOM, BR_BITS + 1, 20); // the blur of its rotor
+      for (const s2 of [-1, 1]) m.seg(F.at(.5, -.07, s2 * .02), F.at(.42, -.25, s2 * .13), .012, .012, M.BROOM, { group: BR_BITS }); // its little legs
+    },
+    tail(m, L, c, r, o) {
+      const T = broomTail(c, r, o), turn = (L.frame ?? 0) * Math.PI / 4 + .4;
+      m.box(T.at(.0, .08), [.07, .08, .008], M.STRAW, { dir: T.d, up: T.up, group: BR_TRIM, round: .006 }); // the fin
+      m.ell(T.at(-.03, -.06), [.03, .025, .025], M.STRAW, { group: BR_TRIM });
+      for (const k of [0, 1]) { const t = turn + k * Math.PI, dr = v3.add(v3.mul(T.up, Math.cos(t) * .11), [0, 0, Math.sin(t) * .11]); m.seg(T.at(-.05, -.06), v3.add(T.at(-.05, -.06), dr), .012, .008, M.BROOM, { group: BR_BITS }); }
     },
   },
 };

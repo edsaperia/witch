@@ -67,7 +67,7 @@ const label = (s: string) => s.replace(/([A-Z])/g, " $1").replace(/^hat |^broom 
 /** What a choice is called on its button (its genome name otherwise). */
 const NAMES: Record<string, string> = { conical: "farmer's", boppers: "deely boppers", top: "top hat", party: "party hat", traffic: "traffic cone" };
 /** The broom kinds' names on their buttons (art/brooms.js). */
-const BROOM_NAMES: Record<string, string> = { curl: "curled tip", hobbyhorse: "hobby horse", jetbike: "jet bike", basket: "wicker basket", speeder: "speeder bike", drone: "quad drone" };
+const BROOM_NAMES: Record<string, string> = { curl: "curled tip", hobbyhorse: "hobby horse", jetbike: "jet bike", speeder: "speeder bike", drone: "quad drone" };
 const optName = (axis: string, opt: string) => axis === "hatShape" ? (opt === "none" ? "no hat" : NAMES[opt] ?? opt) : axis === "broom" ? BROOM_NAMES[opt] ?? opt : opt;
 /** What a toggle or a colour part is called in its box (its genome name otherwise). */
 const WEAR_NAMES: Record<string, string> = { phones: "wearing them", shades: "sunglasses", scarf: "wearing it", satchel: "satchel", bumbag: "bum bag", chunky: "chunky trainers", glowsticks: "glow sticks", vial: "potion vial", book: "spellbook", patches: "cloak patches" };

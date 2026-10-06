@@ -10,8 +10,8 @@ const url = await b.page.evaluate(async only => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), base = G.genomeLook(G.WITCH_GENOME).look;
   const kinds = only ? only.split(",") : G.WITCH_AXES.broom;
   // body, trim (hue, saturation, value)
-  const COL = { missile: [[.0, .05, .85], [.0, .75, .85]], jetbike: [[.55, .7, .7], [.13, .2, .95]], speeder: [[.08, .25, .75], [.6, .3, .45]], bicycle: [[.0, .75, .8], [.0, 0, .3]], drone: [[.6, .1, .55], [.55, .35, .9]],
-    canoe: [[.03, .7, .65], [.09, .5, .9]], basket: [[.08, .6, .55], [.1, .45, .85]], ladder: [[.07, .5, .55], [.09, .4, .8]], hobbyhorse: [[.07, .5, .5], [.0, .0, .95]], pitchfork: [[.07, .5, .5], [.6, .08, .75]],
+  const COL = { missile: [[.0, .05, .85], [.0, .75, .85]], jetbike: [[.55, .7, .7], [.13, .2, .95]], speeder: [[.08, .25, .75], [.6, .3, .45]], bicycle: [[.0, .75, .8], [.0, 0, .3]], drone: [[.6, .1, .55], [.55, .35, .9]], gyrocopter: [[.14, .75, .9], [.6, .15, .35]],
+    canoe: [[.03, .7, .65], [.09, .5, .9]], ladder: [[.07, .5, .55], [.09, .4, .8]], hobbyhorse: [[.07, .5, .5], [.0, .0, .95]], pitchfork: [[.07, .5, .5], [.6, .08, .75]],
     mop: [[.6, .6, .7], [.12, .05, .95]], oar: [[.08, .45, .6], [.08, .5, .85]], handlebars: [[.08, .55, .55], [.0, .7, .7]], curl: [[.08, .55, .55], [.12, .55, .9]] };
   const items = kinds.map(kind => {
     const look = { ...base, broom: kind }, [broom, bristles] = COL[kind] ?? [G.DEFAULT_OUTFIT.broom, G.DEFAULT_OUTFIT.bristles];

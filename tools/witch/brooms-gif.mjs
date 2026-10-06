@@ -6,15 +6,15 @@ import { writeFileSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
-const [out = "previews/brooms", only = "missile,jetbike,bicycle,drone,canoe,mop,speeder,hobbyhorse"] = process.argv.slice(2);
+const [out = "previews/brooms", only = "missile,jetbike,bicycle,drone,canoe,mop,speeder,gyrocopter"] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
 const tmp = mkdtempSync(path.join(tmpdir(), "witch-brooms-"));
 const b = await openBrowser();
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const frames = await b.page.evaluate(async only => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), base = G.genomeLook(G.WITCH_GENOME).look, kinds = only.split(",");
-  const COL = { missile: [[.0, .05, .85], [.0, .75, .85]], jetbike: [[.55, .7, .7], [.13, .2, .95]], speeder: [[.08, .25, .75], [.6, .3, .45]], bicycle: [[.0, .75, .8], [.0, 0, .3]], drone: [[.6, .1, .55], [.55, .35, .9]],
-    canoe: [[.03, .7, .65], [.09, .5, .9]], basket: [[.08, .6, .55], [.1, .45, .85]], hobbyhorse: [[.07, .5, .5], [.0, .0, .95]], mop: [[.6, .6, .7], [.12, .05, .95]] };
+  const COL = { missile: [[.0, .05, .85], [.0, .75, .85]], jetbike: [[.55, .7, .7], [.13, .2, .95]], speeder: [[.08, .25, .75], [.6, .3, .45]], bicycle: [[.0, .75, .8], [.0, 0, .3]], drone: [[.6, .1, .55], [.55, .35, .9]], gyrocopter: [[.14, .75, .9], [.6, .15, .35]],
+    canoe: [[.03, .7, .65], [.09, .5, .9]], hobbyhorse: [[.07, .5, .5], [.0, .0, .95]], mop: [[.6, .6, .7], [.12, .05, .95]] };
   const sprites = kinds.map(kind => { const look = { ...base, broom: kind }, [broom, bristles] = COL[kind] ?? [G.DEFAULT_OUTFIT.broom, G.DEFAULT_OUTFIT.bristles], col = G.witchColours(st, { ...G.DEFAULT_OUTFIT, broom, bristles });
     return [0, 1, 2, 3].map(frame => G.bake(G.witchSprite(st, { look, pose: "lean", frame }), col, st, st.cOutline)); });
   const per = 4, k = 3, cellW = 330, cellH = 230, W = per * cellW, H = Math.ceil(kinds.length / per) * cellH, out = [];
