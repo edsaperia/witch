@@ -106,9 +106,9 @@ export interface Beach {
   edgeMin: number; edgeMax: number;
   /** The edge's radius at `angle`, between its samples. */
   edge(angle: number): number;
-  /** How far (x, z) is past where the sand starts (negative inland; nearer the middle than edgeMin - width less exactly, only ever negative enough). */
+  /** How far (x, z) is past where the sand starts, in its own direction from the middle (negative inland), exactly. */
   intoSand(x: number, z: number): number;
-  /** How far (x, z) is past where the sea starts (negative on land, likewise). */
+  /** How far (x, z) is past where the sea starts (negative on land), exactly. */
   intoSea(x: number, z: number): number;
 }
 /** The beach's width knobs (the tuning's beach.vary): amp, how far it strays from `width` (as a power of e: 0.8 gives
@@ -152,16 +152,15 @@ function makeBeach(b: Bounds, c: NonNullable<Bounds["circle"]>, B: BeachKnobs): 
   const N = COAST_SAMPLES, coast = new Float32Array(N);
   for (let k = 0; k < N; k++) coast[k] = edgeAt(b, -Math.PI + (k / N) * Math.PI * 2);
   const { sand, rocky } = sandWidths(c.seed ?? 0, B.width, B.vary);
-  let edgeMin = Infinity, edgeMax = 0, sandMax = 0;
+  let edgeMin = Infinity, edgeMax = 0;
   for (const r of coast) { edgeMin = Math.min(edgeMin, r); edgeMax = Math.max(edgeMax, r); }
-  for (const w of sand) sandMax = Math.max(sandMax, w);
   const at = (A: Float32Array) => (a: number) => { const u = ((a + Math.PI) / (Math.PI * 2)) * N, i = Math.floor(u), f = u - i, i0 = ((i % N) + N) % N; return A[i0] + (A[(i0 + 1) % N] - A[i0]) * f; };
   const edge = at(coast), sandAt = at(sand), rockyAt = at(rocky);
+  // Measured along its own direction from the middle, always (no shortcut by edgeMin: inland that gave the right sign
+  // but not the distance, flattening a ring of hills and cutting paths well inside the sand).
   const past = (x: number, z: number, off: number, inSand: boolean) => {
-    const dx = x - c.x, dz = z - c.z, d2 = dx * dx + dz * dz, lo = edgeMin + (inSand ? -sandMax : off);
-    if (lo > 0 && d2 < lo * lo) return Math.sqrt(d2) - lo; // (quickly: well inside the nearest the edge comes)
-    const a = Math.atan2(dz, dx);
-    return Math.sqrt(d2) - edge(a) - (inSand ? -sandAt(a) : off);
+    const dx = x - c.x, dz = z - c.z, a = Math.atan2(dz, dx);
+    return Math.hypot(dx, dz) - edge(a) - (inSand ? -sandAt(a) : off);
   };
   return { x: c.x, z: c.z, width: B.width, out: B.shore, coast, sand, sandAt, rockyAt, edgeMin, edgeMax, edge,
     intoSand: (x, z) => past(x, z, 0, true), intoSea: (x, z) => past(x, z, B.shore, false) };

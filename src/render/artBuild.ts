@@ -167,6 +167,8 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
   | { kind: "decor"; id: string; style: Style }
+  /** The beach's edge of the woods (render/beach.ts): palms (split as trees are), beach shrubs and grass clumps, each with its sway mask. */
+  | { kind: "beachEdge"; id: string; style: Style; K: number }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
   | { kind: "pathPieces"; id: string; style: Style }
   /** Modern relics, playground and sports pieces, with the art's arrangements. */
@@ -200,6 +202,9 @@ export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean
 /** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
 export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The small runestone each home speaker starts as (Ed, 2026-10-06), and its ground point. */ stone?: number; stoneOrigin?: { x: number; y: number } }
 
+/** The beach's edge of the woods in its atlas (render/beach.ts): palms as crown and trunk frames, shrubs and grass clumps whole. */
+export interface BeachEdgeArt { palms: { top: number; bot: number }[]; shrubs: number[]; grass: number[] }
+
 /** One relic in its atlas: family (modern, playground, sports), whether it's a flat ground decal, and its ground point. */
 export interface RelicArt { id: string; family: string; decal: boolean; frame: number; originX: number; originY: number }
 export type RelicLayouts = Record<string, { id: string; x: number; z: number }[]>;
@@ -212,7 +217,7 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
+export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
 
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
@@ -284,6 +289,24 @@ function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces
     pieces.push({ id: `${id}~${k}`, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
   return { sprites, pieces };
+}
+
+/** The beach's edge of the woods (Ed, 2026-10-06, after a photo of a real beach forest: "rounded bushes and shrubs, dense low
+ *  vegetation, pandanus and palm-like plants, clumps spilling onto the sand"): the art's palms, and its shrubs, round bushes, ferns
+ *  and grass, in a beach palette (the leaves a deep green, a little brighter than the woods' at night), with their sway masks. */
+function beachEdgeSprites(st: Style, K: number, mk: MakeCanvas): { sprites: Baked[]; beach: BeachEdgeArt } {
+  const sprites: Baked[] = [], beach: BeachEdgeArt = { palms: [], shrubs: [], grass: [] }, add = (b: Baked) => sprites.push(b) - 1;
+  const bst = { ...st, leafHue: 0.31, leafVal: 1.12, leafVariety: 0.12, bushSize: (st as { bushSize: number }).bushSize * K } as Style;
+  const sway = (b: Baked, sp: unknown) => ({ ...b, S: Art.bakeSway(sp, mk) as Baked["A"] });
+  for (let v = 0; v < 4; v++) {
+    const r = Art.rng(9100 + v * 37) as () => number, f = Art.palmTree as (r: () => number, st: Style, s: number) => unknown;
+    const t = f(r, bst, (st as { treeSize: number }).treeSize * K * (0.8 + 0.12 * v)), col = Art.treeColours(r, bst, f), parts = Art.splitTree(t) as { top: unknown; bot: unknown };
+    beach.palms.push({ top: add(sway(Art.bake(parts.top, col, bst, "none", mk) as Baked, parts.top)), bot: add(sway(Art.bake(parts.bot, col, bst, "none", mk) as Baked, parts.bot)) });
+  }
+  const kinds = ["shrub", "round", "shrub", "fern", "round", "shrub", "fern", "round"];
+  kinds.forEach((kind, i) => { const { sp, colours } = Art.bush(Art.rng(9300 + i * 41), bst, kind) as { sp: unknown; colours: unknown }; beach.shrubs.push(add(sway(Art.bake(sp, colours, bst, "none", mk) as Baked, sp))); });
+  for (let i = 0; i < 4; i++) { const { sp, colours } = Art.bush(Art.rng(9500 + i * 43), bst, "grass") as { sp: unknown; colours: unknown }; beach.grass.push(add(sway(Art.bake(sp, colours, bst, "none", mk) as Baked, sp))); }
+  return { sprites, beach };
 }
 
 function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: DecorPiece[] } {
@@ -388,6 +411,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
   if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk); return { px: packPixels(sprites, 2048), speakers }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
+  if (job.kind === "beachEdge") { const { sprites, beach } = beachEdgeSprites(job.style, job.K, mk); return { px: packPixels(sprites, 2048), beachEdge: beach }; }
   // (enraged: red eyes and the angry face; dressed up: the happy face; art/genome/expressions.js)
   if (job.kind === "sleep") {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];

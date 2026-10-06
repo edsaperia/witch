@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked, type FrameGround, groundOf } from "./atlas";
-import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type BeachArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -34,6 +34,8 @@ export class AssetLibrary {
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
   private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
+  /** The beach's edge of the woods (render/beach.ts): asked for only when she comes near the sand. */
+  private beachEdge: (BeachEdgeArt & { atlas: Atlas }) | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private scenes: (SceneArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
@@ -118,7 +120,7 @@ export class AssetLibrary {
   private key = (j: ArtJob) => j.kind + ":" + j.id;
   /** Where a set is kept between visits: the art's code, the style, the set, and for an area type
    *  its seed and scale. Party looks are per creature, so they aren't kept. */
-  private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : ""].join("|");
+  private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
   private ask(job: ArtJob, urgent = false): void {
@@ -170,6 +172,8 @@ export class AssetLibrary {
       this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "partyWitch") {
       this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
+    } else if (r.job.kind === "beachEdge") {
+      this.beachEdge = { atlas, ...r.result.beachEdge! };
     } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
@@ -207,6 +211,11 @@ export class AssetLibrary {
     const a = this.types.get(t);
     if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }, true);
     return a;
+  }
+  /** The beach's edge of the woods (palms, shrubs, grass clumps), or undefined (and asked for). */
+  beachEdgeArt(): (BeachEdgeArt & { atlas: Atlas }) | undefined {
+    if (!this.beachEdge) this.ask({ kind: "beachEdge", id: "all", style: this.style, K: this.K }, true);
+    return this.beachEdge;
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
   decorArt(): DecorArt | undefined {
