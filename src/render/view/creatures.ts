@@ -1,5 +1,7 @@
 // The creatures and berries (from render/view.ts, issue #122): each creature's look, dance, glow and
 // shadow every frame, and the berries growing back and nibbled.
+import * as THREE from "three";
+import type { Tuning } from "../../rules/tuning";
 import type { CreatureArt } from "../assets";
 import { ENRAGED_TINT, dances, expression, lookOf } from "../looks";
 
@@ -9,7 +11,7 @@ import type { RigGear } from "../rig/rigBuild";
 import type { ShadowInstance } from "../shadows";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { beatTime } from "../../rules/beat";
-import { bossBreath } from "../leash";
+import { bossBreath, legendNeon } from "../leash";
 import { dormant } from "../../rules/game";
 import { hash2 } from "../../rules/random";
 import { restlessness } from "../../rules/dream";
@@ -176,9 +178,17 @@ export function drawCreatures(v: View, time = 0): void {
   v.rig?.end();
   for (const [s, b] of v.creatureBatches) if (!per.has(s)) b.set([]);
   for (const [s, list] of per) {
-    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-") && !s.startsWith("nap-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-") && !s.startsWith("nap-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(s.startsWith("sleep-") ? sleeperLook(s.slice(6), v.game.tuning) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
     b?.set(list);
   }
   v.stats.creatures = n;
   if (v.game.tuning.shadows.on) v.shadows.set(v.shadowList.concat(creatureShadows, v.witchShadows));
+}
+
+/** A sleeping legend in its circle, read at a glance (Ed's round 14 playtest: "Legends in the circle are not very distinct"):
+ *  its outline in its sigil's neon (a little toward white, so a deep colour still shows at night) and a light floor. */
+export function sleeperLook(species: string, t: Tuning): { legend?: THREE.Vector4; legendFloor?: number } {
+  const S = t.wildLegends.seen;
+  if (!S) return {};
+  return { legend: new THREE.Vector4(...legendNeon(species), S.rim), legendFloor: S.floor };
 }
