@@ -6,6 +6,7 @@ import type { Tuning } from "./tuning";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
+import { leyRoute, type LeyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -49,9 +50,29 @@ export interface PartyState {
   areasPerWave: number;
   /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04; 5 minutes from her first step, 2026-10-05): the first wave's countdown starts then. */
   bootUntil: number;
+  /** The party spell (Ed, 2026-10-06: the game starts when she casts it, setting off the boot): undefined in a build without
+   *  it (the game clock runs from the start of play); null while waiting for it (the clock at 00:00, a prompt to cast it);
+   *  the game time she cast it. Set by the boot-up's own rules; read by the HUD (rules/leypulse.ts clockStart). */
+  spellAt?: number | null;
 }
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
+
+/** The party spell's cast (Ed, 2026-10-06: "there is a button on the screen that says "CAST THE PARTY SPELL", when you
+ *  press it, the witch does a spellcasting animation, the pulse appears, and starts going around the dancefloor runestone
+ *  ring, and you can start moving around"): seconds the cast takes, in which she can't move yet. */
+export const PARTY_CAST = 1.2;
+/** Casts the party spell at `time`, if waiting for it: the game clock and the boot-up start (the boot's minutes from now).
+ *  Returns whether it was cast. The renderer's hook: `party.spellAt` turning from null to a time. */
+export function castPartySpell(p: PartyState, map: ForestMap, time: number): boolean {
+  if (p.spellAt !== null) return false;
+  p.spellAt = time;
+  const boot = map.tuning.boot.time, left = p.nextAt - p.bootUntil; // (the countdown after the boot, as it was set)
+  p.bootUntil = time + boot; p.nextAt = p.bootUntil + left;
+  return true;
+}
+/** Whether she's held still by the party spell: waiting for it, or still casting it. */
+export const heldBySpell = (p: PartyState, time: number): boolean => p.spellAt === null || (p.spellAt !== undefined && time < p.spellAt + PARTY_CAST);
 
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
@@ -79,16 +100,23 @@ function cellsOf(map: ForestMap) {
   return out;
 }
 
-export type Picker = "noisy" | "near3" | "near3touch" | "nearest";
+export type Picker = "route" | "noisy" | "near3" | "near3touch" | "nearest";
 
 /** Choose the area the next wave wakes, by the tuning's picker (?picker= in the URL):
- *  - noisy (default): of the dormant areas bordering the party (no islands), the `candidates`
+ *  - route (default; Ed, 2026-10-06: the ley line "should cover the entire set of waves the whole
+ *    time" and have "no crossings"): the next area in the map's planned order the party hasn't
+ *    (routeOf: the noisy picker's order, untangled, rules/leyroute.ts);
+ *  - noisy: of the dormant areas bordering the party (no islands), the `candidates`
  *    cheapest by distance to the dancefloor times a smooth seeded wobble (lobes, not a disc),
  *    not beside the last pick if there's another, one at random;
  *  - near3: of all the dormant areas, the 3 nearest the dancefloor, one at random;
  *  - near3touch: the same among those bordering the party;
  *  - nearest: the nearest dormant area bordering the party. */
 export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0, border?: Set<string>): Cell | null {
+  if (picker === "route") {
+    for (const key of routeOf(map).order) if (!p.areas.has(key) && !p.ruined?.has(key)) { const c = key.split(",").map(Number) as unknown as Cell; candidates?.push(c); return c; }
+    return null;
+  }
   const N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3 + salt * 104729);
   const touching = border ?? new Set<string>(); // (the dormant areas bordering the party: wavePlan keeps its own)
   if (!border) for (const k of p.areas.keys()) for (const nk of map.neighbours.get(k) ?? []) if (!p.areas.has(nk)) touching.add(nk);
@@ -214,11 +242,12 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
   return fresh;
 }
 
-/** Advance the party's clock: a wave whenever its time comes (unless paused). `seated`: she's still
- *  behind the decks (Ed, 2026-10-05): the boot-up waits for her to get up, so its minutes count
- *  from her first step. */
+/** Advance the party's clock: a wave whenever its time comes (unless paused). The boot-up waits for the party spell
+ *  (Ed, 2026-10-06: the game starts when she casts it), so its minutes count from the cast; in a game without the spell
+ *  (`spellAt` undefined: the tools and tests) it waits while she's `seated` behind the decks, as before. */
 export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false): Partified[] {
-  if (p.paused || (seated && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
+  const waiting = p.spellAt === null || (p.spellAt === undefined && seated);
+  if (p.paused || (waiting && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
   if (time < p.nextAt) return [];
   p.nextAt += map.tuning.party.interval;
   return spreadWave(p, map, time);
@@ -277,4 +306,13 @@ export function symbolCount(stage: SpawnMarker["stage"], gone: number, flicker: 
   if (stage === "afterNext") return Math.round(F.afterNext[0] + (F.afterNext[1] - F.afterNext[0]) * Math.max(0, Math.min(1, gone)));
   if (stage === "probable") return 1 + Math.min(F.probableMax - 1, Math.floor(Math.max(0, Math.min(0.999, flicker)) * F.probableMax));
   return 0;
+}
+
+/** The ley line's route for this map (rules/leyroute.ts): the order the noisy picker would wake the
+ *  areas in, untangled so the line through them all never crosses itself. Worked out once a map. */
+export function routeOf(map: ForestMap): LeyRoute {
+  return leyRoute(map, () => {
+    const m: ForestMap = { ...map, tuning: { ...map.tuning, party: { ...map.tuning.party, picker: "noisy" } } };
+    return [...wavePlan(newParty(m), m).keys()];
+  });
 }
