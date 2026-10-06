@@ -52,12 +52,16 @@ export function refFor(d: PartyDef, r: () => number): string {
   return `party:${d.id}${neon}${pal}`;
 }
 
-/** Whether a piece is left out (partyObjects.exclude; Ed, v271: "the glowing party cubes look too much like game objects"). */
-export const excluded = (ref: string, t: Tuning) => t.partyObjects.exclude.includes(pieceId(ref));
+/** The hand-made pieces the prop generator's variants replace (art/party.js PARTY_GEN, "gen-*", each with its `replaces`). */
+const REPLACED = new Set(DEFS.flatMap(d => (d as PartyDef & { replaces?: string[] }).replaces ?? []));
+/** Whether a piece is left out: partyObjects.exclude (Ed, v271: "the glowing party cubes look too much like game objects"); the
+ *  generated variants unless partyObjects.generated (?props=gen), and the hand-made ones they replace when it is. */
+export const leftOut = (id: string, t: Tuning) => t.partyObjects.exclude.includes(id) || (id.startsWith("gen-") ? !t.partyObjects.generated : t.partyObjects.generated && REPLACED.has(id));
+export const excluded = (ref: string, t: Tuning) => leftOut(pieceId(ref), t);
 
 /** The party objects of a partified area (seeded by its cell). */
 export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
-  const pool = POOL.filter(d => !t.partyObjects.exclude.includes(d.id)), sets = SETS.filter(d => !t.partyObjects.exclude.includes(d.id));
+  const pool = POOL.filter(d => !leftOut(d.id, t)), sets = SETS.filter(d => !leftOut(d.id, t));
   const P = t.partyObjects, r = rng(map.seed * 4517 + cell[0] * 7349 + cell[1] * 2903 + 11), site = map.siteOf(cell[0], cell[1]);
   const d = map.dancefloor, clear = floorClearing(t) + 3, ss = map.soundsystemSpot(cell[0], cell[1]);
   const taken: { x: number; z: number; r: number }[] = [];
@@ -97,7 +101,7 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
     const s = spotFor(0.6, 0.05, 0.5);
     if (s) out.loose.push({ ref: refFor(pool[Math.floor(r() * pool.length)], r), ...s, flip: r() < 0.5 });
   }
-  const hangs = HANGING.filter(d => !t.partyObjects.exclude.includes(d.id));
+  const hangs = HANGING.filter(d => !leftOut(d.id, t));
   for (let i = 0, n = hangs.length ? between(P.hanging) : 0; i < n; i++) { const s = spotFor(2, 0.1, 0.5); if (s) out.hanging.push({ ref: refFor(hangs[Math.floor(r() * hangs.length)], r), ...s, flip: r() < 0.5 }); }
   if (r() < P.caughtChance) { const s = spotFor(1, 0.2, 0.55); if (s) out.caught = { ref: `party:balloon-caught~${PALETTES[Math.floor(r() * PALETTES.length)]}`, ...s, flip: r() < 0.5 }; }
   // Real lights: the loose campfires and lanterns first (the clusters' own are added by the view, which knows their layout), at most lightsPerArea.
@@ -108,7 +112,7 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
 /** Home's dressing: party pieces scattered over its whole meadow (see dressingOf). */
 function homeDressing(map: ForestMap, t: Tuning, r: () => number, out: Dressing, ref: (d: PartyDef, r: () => number) => string): Dressing {
   const P = t.partyObjects, H = P.home, d = map.dancefloor, th = map.treehouse, clear = floorClearing(t);
-  const ok = (id: string) => !P.exclude.includes(id);
+  const ok = (id: string) => !leftOut(id, t);
   const byClass = new Map<string, PartyDef[]>();
   for (const def of DEFS) if (!def.hang && ok(def.id) && def.id !== P.arch && H.weights[def.cls] !== undefined) byClass.set(def.cls, [...(byClass.get(def.cls) ?? []), def]);
   const classes = [...byClass.keys()], total = classes.reduce((a, c) => a + H.weights[c], 0);

@@ -61,3 +61,22 @@ export const PROP_GENOMES = {
   },
 };
 export const PROP_KINDS = Object.keys(PROP_GENOMES);
+
+// The party's generated decorations (art/party.js "gen-*" pieces, behind ?props=gen): bunting, balloon bunches and paper lanterns,
+// each a few seeded variants, in the witch model's units like the other party pieces. Their colours are the party's (neon or
+// balloon palettes at bake), so the genomes hold shapes only.
+export const PARTY_PROP_GENOMES = {
+  buntingRun: { // flags along a sagging line between two poles, a string of warm bulbs along it
+    span: [1.8, 3], height: [1.3, 1.9], sag: [.12, .4], flags: [7, 15], strands: [1, 2], size: [.08, .13],
+    shape: [["triangle", 4], ["square", 1], ["round", 1], ["pennant", 2]], colours: [2, 5], offset: [0, 4], bulbs: [3, 9],
+  },
+  balloonBunch: { // a bunch tied to a stake or a weight: how many, how high, how spread, its colours' first slot, each balloon's size
+    count: [2, 9], lift: [.7, 1.4], spread: [0, .5], from: [0, 6], size: [.11, .16], anchor: [["stake", 3], ["weight", 1]],
+  },
+  lanternString: { // paper lanterns sagging between two poles, round or tall, in the neon
+    span: [1.3, 1.9], height: [1.15, 1.5], sag: [.12, .32], count: [3, 6], size: [.07, .12], shape: [["round", 3], ["tall", 2], ["mixed", 2]],
+  },
+  lanternsHanging: { // one to four paper lanterns hanging on cords of different lengths from a branch
+    count: [1, 4], drop: [.3, .8], size: [.08, .14], shape: [["round", 3], ["tall", 2]],
+  },
+};
