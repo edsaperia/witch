@@ -219,6 +219,7 @@ export const affectionOf = (g: Game): Affection => {
 export function hitWitch(g: Game, id: number, at: number, t: Tuning = g.tuning, blow?: Blow): void {
   const w = g.witches[id];
   if (!w || w.ko || dashing(w.dash, at)) return;
+  if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
   if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); return; }
   // Thrown and staggered by it (rules/knock.ts); not by the blow that knocks her out.
   if (blow) knockWitch((w.knock ??= newKnock()), w.body, blow, at, t);

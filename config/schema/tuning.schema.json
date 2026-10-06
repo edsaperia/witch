@@ -2621,7 +2621,8 @@
         "amount",
         "hits",
         "drain",
-        "perAnimalHitGap"
+        "perAnimalHitGap",
+        "fireSlow"
       ],
       "additionalProperties": false
     },
@@ -3312,6 +3313,10 @@
           "type": "number",
           "minimum": 0
         },
+        "audible": {
+          "type": "number",
+          "minimum": 0
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -3322,10 +3327,6 @@
         },
         "src": {
           "type": "string"
-        },
-        "audible": {
-          "type": "number",
-          "minimum": 0
         }
       },
       "required": [
@@ -3555,11 +3556,16 @@
         "repairTime": {
           "type": "number",
           "minimum": 0
+        },
+        "grace": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "hits",
-        "repairTime"
+        "repairTime",
+        "grace"
       ],
       "additionalProperties": false
     },

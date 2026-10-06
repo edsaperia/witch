@@ -107,8 +107,9 @@ describe("combat (Stage 4)", () => {
     run(g, 8);
     expect(g.witches[0].health.hp).toBe(TUNING.witchHealth.hits);
     g.witch = { ...g.witch, mode: "ground", lift: 0 };
+    const down = g.clock.time;
     run(g, 14); // (lobs land a second or two after they're thrown, and the first may miss)
-    expect(g.witches[0].health.hp).toBeLessThan(TUNING.witchHealth.hits);
+    expect(g.witches[0].health.hurtAt).toBeGreaterThan(down); // (hit: by the end she may have been knocked out and be back whole)
     expect(owl.gone).toBeFalsy();
   }, 60000);
 
