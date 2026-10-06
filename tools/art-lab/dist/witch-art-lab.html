@@ -3491,7 +3491,9 @@ const gsPlanks = (d, up) => p => { const s = v3.dot(p, up) * 16; return (s - Mat
 function gsPool(m, v, R, A, { reedsAt } = {}) {
   const r = v.r, rimW = v.rim * GS_U / R;
   const waves = [...Array(v.waves).keys()].map(k => [k + 2, (r() - .5) * 2 * v.wobble, r() * Math.PI * 2]);
-  const shore = a => 1 + waves.reduce((s, [k, amp, ph]) => s + amp * Math.cos(k * a + ph), 0) - v.wobble * .4;
+  const lobes = [...Array(2 + Math.floor(r() * 2)).keys()].map(i => [r() * Math.PI * 2, (i ? -.12 : .22) * (.7 + r() * .6), .35 + r() * .35]); // a bulge or two and a cove: no oval (the art director on #204)
+  const dA = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+  const shore = a => 1 + waves.reduce((s, [k, amp, ph]) => s + amp * Math.cos(k * a + ph), 0) + lobes.reduce((s, [c, amp, w]) => s + amp * Math.exp(-((dA(a, c) / w) ** 2)), 0) - v.wobble * .4;
   const ph = [...Array(4)].map(() => r() * Math.PI * 2);
   const bite = a => .3 + .9 * (.5 + .3 * Math.sin(3 * a + ph[0]) + .2 * Math.sin(7 * a + ph[1])); // the rim's width round the shore: bites in and out (the art director on #204: no clean ellipse)
   const muddy = a => Math.sin(2 * a + ph[2]) + .4 * Math.sin(5 * a + ph[3]) > .2; // the pale outer band only on the muddy stretches, not the whole loop
