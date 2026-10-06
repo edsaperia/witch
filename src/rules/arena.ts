@@ -70,7 +70,7 @@ export function setupArena(g: Game, spec: string): void {
       const c = spare.shift();
       if (!c) return;
       const row = Math.floor(i / 4), col = i % 4, x = cx + sx + (party ? -row : row) * 5 * S, z = cz + (col - 1.5) * 6 * S + (row % 2) * 3 * S;
-      Object.assign(c, {
+      Object.assign(c, { circle: undefined,
         species: gr.species, level: gr.level, x, z, tx: x, tz: z, cell, homeX: cx, homeZ: cz, anchorX: x, anchorZ: z, range: wanderRange(g.map),
         speed: (gr.level === LEGEND ? t.legendSpeed : t.creatureSpeed * speedFactor(gr.species, gr.level, t)) * (0.85 + c.rand() * 0.3),
         gone: false, seen: time, hp: undefined, boss: false, siege: undefined, enraged: false, rest: 2, fight: undefined, fleeUntil: undefined, wanderTo: undefined, sprung: undefined, charge: undefined, vx: 0, vz: 0, facing: party ? 1 : -1,
