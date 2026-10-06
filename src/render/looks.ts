@@ -71,10 +71,11 @@ function pixels(w: number, h: number, draw: (x: CanvasRenderingContext2D) => voi
   return t;
 }
 
-/** A party sparkle: a tiny white-and-pink twinkle, three pixels across. */
-const SPARKLE = (): THREE.CanvasTexture => pixels(3, 3, x => {
-  x.fillStyle = "#ffb3e6"; x.fillRect(1, 0, 1, 3); x.fillRect(0, 1, 3, 1);
-  x.fillStyle = "#ffffff"; x.fillRect(1, 1, 1, 1);
+/** A party sparkle: a tiny warm twinkle, two pixels across, in the lanterns' amber (the art director, #200: never a white
+ *  cross, which is a hit's contact star). */
+const SPARKLE = (): THREE.CanvasTexture => pixels(2, 2, x => {
+  x.fillStyle = "#e8b46a"; x.fillRect(0, 0, 2, 2);
+  x.fillStyle = "#f6d59a"; x.fillRect(0, 0, 1, 1);
 });
 const hash01 = (a: number, b: number) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
 
@@ -142,7 +143,7 @@ export class StateMarks {
           const ph = (time * P.rate + hash01(c.id, i)) % 1, lit = Math.sin(Math.min(1, ph / 0.5) * Math.PI);
           if (ph > 0.5) continue;
           const a = hash01(c.id, i + 7) * Math.PI * 2, r = 0.35 + top * 0.45, h = 0.15 + hash01(c.id, i + 13) * top;
-          this.put(this.sparkle, c.x + Math.cos(a) * r, h, c.z + Math.sin(a) * r * 0.4, 3 * px * P.size * (0.6 + 0.4 * lit), 3 * px * P.size * (0.6 + 0.4 * lit), lit * P.strength);
+          this.put(this.sparkle, c.x + Math.cos(a) * r, h, c.z + Math.sin(a) * r * 0.4, 2 * px * P.size * (0.6 + 0.4 * lit), 2 * px * P.size * (0.6 + 0.4 * lit), lit * P.strength);
         }
       }
       if (ex === "angry" && !c.boss) {
