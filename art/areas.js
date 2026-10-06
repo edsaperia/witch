@@ -232,7 +232,16 @@ export const SET_PIECE_CHANCE = .25;
 
 // ---------------- the floor: a tile of the area's ground ----------------
 // Grown from the area's ground genome (art/ground.js, #119): its floor kind's, with the area's own `ground` over it.
-function floorTile(def, st) { return groundTile(def, st, 0); }
+// The floor as a strip of FLOOR_VARIANTS tiles side by side, each its own seed; the ground shader picks one for each repeat of the
+// tile (src/render/ground.ts), so the floor doesn't visibly repeat. They share the base and keep their details inside, so any
+// variant sits next to any other without a seam.
+export const FLOOR_VARIANTS = 4;
+function floorTile(def, st) {
+  const tiles = Array.from({ length: FLOOR_VARIANTS }, (_, v) => groundTile(def, st, v)), w = tiles[0].sp.w, h = tiles[0].sp.h, sp = new Sprite(w * FLOOR_VARIANTS, h);
+  tiles.forEach((t, v) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, j = y * sp.w + v * w + x; sp.m[j] = t.sp.m[i]; sp.n[j * 3] = t.sp.n[i * 3]; sp.n[j * 3 + 1] = t.sp.n[i * 3 + 1]; sp.n[j * 3 + 2] = t.sp.n[i * 3 + 2]; } });
+  if (tiles[0].sp.stylised) sp.stylised = tiles[0].sp.stylised;
+  return { sp, colours: tiles[0].colours };
+}
 
 // ---------------- the prop library ----------------
 const stoneCol = (moss) => ({ [M.ACCENT]: hsv2rgb(.1, .06, .6), [M.BODY2]: hsv2rgb(.62, .08, .4), [M.BELLY]: hsv2rgb(.1, .05, .78), [M.LEAF]: hsv2rgb(.27, .5, .45), [M.LEAF2]: hsv2rgb(.25, .45, .62), [M.NOSE]: [20, 16, 24], ...(moss ? {} : {}) });

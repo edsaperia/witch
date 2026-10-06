@@ -6,6 +6,7 @@
 // bakeTufts: each area's kinds in its palette, with their shares), lit by their normal maps; each
 // sways by its sway mask (rigid pebbles, litter and mushrooms stay still).
 import * as THREE from "three";
+import { BAYER_GLSL, PIXEL_SNAP_GLSL, VALUE_NOISE_GLSL, WIND_GUST_GLSL } from "./shaders";
 import * as Art from "../../art/generator.js";
 import { LOOKS } from "../rules/map";
 import type { ForestMap } from "../rules/map";
@@ -37,13 +38,7 @@ varying vec2 vUv;
 varying vec3 vWorld;
 varying float vMoonK;
 ${HEIGHT_VERT_GLSL}
-float gHash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float gNoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
-  float a = gHash(i), b = gHash(i + vec2(1, 0)), c = gHash(i + vec2(0, 1)), d = gHash(i + vec2(1, 1));
-  return a + (b - a) * u.x + (c - a) * u.y + (a - b - c + d) * u.x * u.y;
-}
-void main() {
+${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
   float s = iTuft.z * uGrass.x;
   vec3 base = onGround(vec3(iTuft.x, 0.0, iTuft.y)); // on the rolling ground
   // Round a placed sigil the cover is trampled: none over its rune, short and flattened just beyond.
@@ -55,10 +50,7 @@ void main() {
   float top = uv.y * iPx.z, hgt = iPx.y * s; // rigid tufts (pebbles, litter) don't sway or part
   // The same wind as the trees, stronger for their size.
   vec2 q = base.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
-  vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
-  float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
-  float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
-  float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
+  float gust = windGust(q);
   w += uRight * top * hgt * uGrass.y * (gust * 0.8 + sin(uWind.w * 2.3 + base.x * 0.7 + base.z * 0.4) * 0.3) * step(0.0001, uWind.x);
   // Parting round the witch and creatures: the top pushed away and down.
   for (int k = 0; k < 4; k++) {
@@ -75,14 +67,12 @@ void main() {
   vMoonK = 1.0;
   if (uCanopy.x > 0.0) {
     vec2 p = vec2(iTuft.x, iTuft.y), cq = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
-    float leaves = gNoise(cq / 2.6) * 0.6 + gNoise(cq / 1.1 + 31.0) * 0.4;
+    float leaves = vnoise(cq / 2.6) * 0.6 + vnoise(cq / 1.1 + 31.0) * 0.4;
     float cover = uCanopy.z * smoothstep(0.0, 1.0, (iOpen - uClearing.x) / max(0.01, uClearing.y));
     vMoonK = 1.0 - uCanopy.x * (uSmooth > 0.5 ? smoothstep(-0.07, 0.07, cover - leaves) : step(leaves, cover));
   }
   gl_Position = clipOf(w);
-  vec4 b = clipOf(base);
-  vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
-  gl_Position.xy += (snapped - ndc) * gl_Position.w;
+  gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;
 }`;
 
 const FRAG = /* glsl */ `
@@ -93,9 +83,7 @@ varying vec2 vUv;
 varying vec3 vWorld;
 varying float vMoonK;
 ${LIGHT_GLSL}
-float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
-float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
-void main() {
+${BAYER_GLSL}void main() {
   vec4 m = texture2D(uTufts, vUv);
   if (m.a < 0.5) discard;
   // Fading out towards the edge of the cover, and as she rises, in an ordered dither.

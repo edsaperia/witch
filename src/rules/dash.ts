@@ -23,6 +23,9 @@ export interface DashState {
   toZ: number;
   /** Set when it starts, until the step that puts her there. */
   pending?: boolean;
+  /** A press waits until this game time for the dash to be ready (dash.buffer): pressed a moment
+   *  early, mid-landing or mid-stagger, it still blinks. */
+  bufferUntil?: number;
   /** Blinks ready (Hare's Dash bursts: more than one, recharging one at a time, dash.cooldown
    *  each), and when the next comes back (Infinity when full). */
   charges: number;

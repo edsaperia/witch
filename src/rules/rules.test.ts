@@ -856,7 +856,7 @@ describe("inviting and leashing", () => {
 
   it("can't invite legends", () => {
     const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3 && k.legendState === "asleep")!;
-    legend.legendState = "awake"; // (asleep, it's scenery: not even a look)
+    legend.legendState = undefined; legend.boss = false; // (an arena's wild legend: an area's is never chatted to)
     for (const c of all) if (c !== legend) c.leashed = true; // only the legend is left near
     const w = { x: legend.x + 1, z: legend.z };
     stepLeash(s, all, none, w, true, 0, 0.1, TUNING);
@@ -1628,6 +1628,25 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
     run(g, 10);
     expect(z1 - g.witch.z).toBeLessThan(TUNING.dash.distance * 0.5);
+  });
+
+  it("holds a press made just before it's ready (dash.buffer), and lets go of one made too early", () => {
+    const g = ready(), D = g.witches[0].dash;
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
+    const first = D.at;
+    // Too early: pressed well over dash.buffer before it's ready, it's forgotten.
+    while (g.clock.time < D.readyAt - g.buffs.tuning.dash.buffer - 0.2) run(g, 1);
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
+    while (g.clock.time < D.readyAt + 0.1) run(g, 1);
+    expect(D.at).toBe(first);
+    // Just early: pressed inside dash.buffer, it blinks the moment it's ready.
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // (ready now: this one goes at once)
+    const second = D.at;
+    expect(second).toBeGreaterThan(first);
+    while (g.clock.time < D.readyAt - g.buffs.tuning.dash.buffer / 2) run(g, 1);
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
+    while (g.clock.time < D.readyAt + 2 * STEP) run(g, 1);
+    expect(D.at).toBeGreaterThan(second);
   });
 
   it("goes the way she faces when she's still, and stops short of anything in the way", () => {
