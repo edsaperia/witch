@@ -3160,6 +3160,39 @@
           "type": "number",
           "minimum": 0
         },
+        "rim": {
+          "type": "object",
+          "properties": {
+            "spacing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "out": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "spacing",
+            "chance",
+            "out",
+            "spread",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
         "grove": {
           "type": "object",
           "properties": {
@@ -3215,6 +3248,7 @@
         "radius",
         "edge",
         "top",
+        "rim",
         "grove",
         "species"
       ],

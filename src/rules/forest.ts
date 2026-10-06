@@ -132,6 +132,32 @@ export function legendGrove(map: ForestMap, x: number, z: number): number {
   return best;
 }
 
+// The rim kit round each legend's clearing (art builder 3's #262: stones, cairns, boulders, toadstools,
+// stumps and posts, none over a metre, by its area): a piece every legendClearing.rim.spacing metres of
+// its edge (at its chance), on the ring just past its floor, leaving the way in (due south) and paths
+// clear; the variant the view's pick of its area's six. Worked out once a map.
+const rimPieces = new WeakMap<ForestMap, Plant[]>();
+function legendRim(map: ForestMap): Plant[] {
+  let out = rimPieces.get(map);
+  if (out) return out;
+  out = [];
+  const R = map.tuning.legendClearing.rim, s = map.seed;
+  if (R && R.spacing > 0) for (const lc of map.legendClearings) {
+    const n = Math.max(6, Math.round((2 * Math.PI * lc.r) / R.spacing)), type = map.typeOf(lc.cell[0], lc.cell[1]);
+    for (let k = 0; k < n; k++) {
+      const h = (salt: number) => hash2(Math.round(lc.x) * 31 + k, Math.round(lc.z), s + salt);
+      if (h(301) >= R.chance) continue;
+      const a = ((k + (h(302) - 0.5) * 0.6) / n) * Math.PI * 2, d = lc.r + R.out + h(303) * R.spread;
+      const x = lc.x + Math.sin(a) * d, z = lc.z + Math.cos(a) * d; // (a = 0: due south, toward the camera)
+      if (Math.abs(((a * 180) / Math.PI + 180) % 360 - 180) < R.gap) continue; // the way in
+      if (map.paths.at(x, z, 1.5)) continue;
+      out.push({ x, z, type, variant: Math.floor(h(304) * 1e6), flip: h(305) < 0.5 });
+    }
+  }
+  rimPieces.set(map, out);
+  return out;
+}
+
 function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   const { treeSpacingX: sx, treeSpacingZ: sz } = map.tuning, s = map.seed;
   const out: Plant[] = [], lift = crownReach(map), half = map.tuning.crownHalfWidth;
@@ -478,6 +504,10 @@ export class Forest {
   wallsNear(x: number, z: number, radius: number): Plant[] { return this.features(x, z, radius, f => f.walls); }
   /** A formal garden's flower beds, in rows along its walls. */
   bedsNear(x: number, z: number, radius: number): Plant[] { return this.features(x, z, radius, f => f.beds); }
+  /** The rim kit's pieces round the legends' clearings within a square of half-size `radius` round (x, z). */
+  rimNear(x: number, z: number, radius: number): Plant[] {
+    return legendRim(this.map).filter(p => Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius);
+  }
   /** Set pieces near a point: each stands in its area's clearing, a little north of the centre. */
   setPiecesNear(x: number, z: number, radius: number): Plant[] {
     const m = this.map, A = m.areaSize, out: Plant[] = [];

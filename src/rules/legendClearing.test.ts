@@ -173,4 +173,22 @@ describe("legend clearings", () => {
     const perArea = (k: number) => n[k] / (k + 0.5);
     expect(perArea(0)).toBeGreaterThan(perArea(bins) * 0.9);
   });
+
+  // Art builder 3's rim kit (#262) round each: on its ring, never its floor, leaving the way in and paths clear.
+  it("each is edged by the rim kit: small pieces just past its floor, the way in (south) left open", () => {
+    const map = generateMap(123, TUNING), forest = new Forest(map), R = TUNING.legendClearing.rim;
+    let edged = 0;
+    for (const lc of map.legendClearings) {
+      const mine = forest.rimNear(lc.x, lc.z, lc.r + R.out + R.spread + 1).filter(p => Math.abs(Math.hypot(p.x - lc.x, p.z - lc.z) - lc.r - R.out - R.spread / 2) <= R.spread / 2 + 1e-6);
+      for (const p of mine) {
+        const d = Math.hypot(p.x - lc.x, p.z - lc.z);
+        expect(d).toBeGreaterThanOrEqual(lc.r + R.out - 1e-6);
+        expect((p.z - lc.z) / d).toBeLessThan(Math.cos((R.gap * Math.PI) / 180) + 1e-6);
+        expect(map.paths.at(p.x, p.z, 1.5)).toBeFalsy();
+        expect(p.type).toBe(map.typeOf(lc.cell[0], lc.cell[1]));
+      }
+      if (mine.length >= Math.round((2 * Math.PI * lc.r) / R.spacing) * R.chance * 0.5) edged++;
+    }
+    expect(edged).toBeGreaterThan(map.legendClearings.length * 0.8);
+  });
 });
