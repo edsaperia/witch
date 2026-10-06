@@ -29,7 +29,7 @@ function run(seed, start, policy) {
   w.body = { ...w.body, seated: false }; // (her first step: the boot runs from here)
   const [hx, hy] = g.map.centreCell, d0 = g.map.dancefloor;
   const order = [];
-  for (let i = 0; i < g.map.n; i++) for (let j = 0; j < g.map.n; j++) if (i !== hx || j !== hy) { const s = g.map.siteOf(i, j); order.push({ cell: [i, j], x: s.x, z: s.z, d: Math.hypot(s.x - d0.x, s.z - d0.z), species: AREA_TYPES[g.map.typeOf(i, j)].creature }); }
+  for (const [i, j] of g.map.cells) if (i !== hx || j !== hy) { const s = g.map.siteOf(i, j); order.push({ cell: [i, j], x: s.x, z: s.z, d: Math.hypot(s.x - d0.x, s.z - d0.z), species: AREA_TYPES[g.map.typeOf(i, j)].creature }); }
   order.sort((a, b) => a.d - b.d);
   const plan = order.slice(0, AREAS);
   let ai = 0, since = 0, kos = 0, wasKo = false, parked = false, firstAngry = null;
