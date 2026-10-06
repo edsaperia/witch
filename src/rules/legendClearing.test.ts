@@ -71,7 +71,9 @@ describe("legend clearings", () => {
 
   // Ed (2026-10-06): "if it is invited and becomes happy, it continues to stay in the circle as before";
   // "happy creatures don't follow you - only leashed creatures do".
-  it("its baby, invited, stays in the circle when she leaves, until its area's soundsystem calls it to dance; leashed it follows her, and let go it goes home to its circle", () => {
+  // Ed (2026-10-06): "Happy Circle baby should stay in its circle, though it can dance there"; "There's no way to release a
+  // leashed animal."
+  it("its baby, invited, stays in the circle when she leaves, and dances there when its area's party comes; only leashed does it follow her", () => {
     const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
     const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
     const g = newGame(123, TUNING);
@@ -84,21 +86,16 @@ describe("legend clearings", () => {
     // she flies off over the treetops, still near enough that it's stepped: it keeps to its circle
     g.witch = { ...g.witch, seated: false, x: k.x + k.r + 30, z: k.z, mode: "treetop", lift: 1 };
     run(g, 60, () => expect(dist()).toBeLessThan(k.r + 0.5));
-    // its area's party calls it to dance (Ed, 2026-10-06: babies "join the dancing"): no longer kept to the circle
+    // its area's party comes: it dances, in its circle
     joinParty(g, B, { x: k.x + 60, z: k.z }, B.cell);
     expect(B.dancing).toBe(true);
-    expect(keepsToCircle(B)).toBe(false);
-    B.dancing = false; B.anchorX = B.homeX; B.anchorZ = B.homeZ;
+    expect(Math.hypot(B.anchorX - k.x, B.anchorZ - k.z)).toBeLessThan(k.r);
+    run(g, 30, () => expect(dist()).toBeLessThan(k.r + 0.5));
     // leashed, it follows her out of its circle
     inviteCreature(g.leash, B, B.x, B.z, g.clock.time);
     g.witch = { ...g.witch, x: k.x + k.r + 40, z: k.z, mode: "ground", lift: 0 };
     run(g, 25);
     expect(dist()).toBeGreaterThan(k.r + 10);
-    // let go (DECISION FOR ED: the game has no unleash yet; this is the rule if one comes), it goes home to its circle
-    g.leash.stack = g.leash.stack.filter(id => id !== B.id); g.leash.placed = g.leash.placed.filter(p => p.id !== B.id);
-    B.leashed = false; B.state = "happy";
-    run(g, 40);
-    expect(dist()).toBeLessThan(k.r);
   });
 
   // Ed (2026-10-06): a soundsystem turns its area's wild babies happy (they join the dancing); when it's destroyed its happy
@@ -121,11 +118,12 @@ describe("legend clearings", () => {
     spare.forEach((o, i) => Object.assign(o, { species: S, level: i < 2 ? 0 : 2, cell: [next[0], next[1]], x: L.x + 6 + i * 2, z: L.z + 12, tx: L.x + 6 + i * 2, tz: L.z + 12, homeX: L.x, homeZ: L.z + 12, anchorX: L.x, anchorZ: L.z + 12, state: undefined, enraged: false, hp: undefined }));
     const [baby2, leashed, a1, a2] = spare;
     inviteCreature(g.leash, leashed, leashed.x, leashed.z, g.clock.time);
-    // the wave brings its soundsystem: its wild babies turn happy and go to dance, its adults are enraged and besiege it
+    // the wave brings its soundsystem: its wild babies turn happy and dance (the circle's in its circle), its adults are enraged and besiege it
     stepGame(g, { ...idle, nextWave: true }, STEP);
     for (let i = 0; i < 20; i++) stepGame(g, idle, STEP);
     expect(g.party.areas.get(key)?.soundsystem).toBeTruthy();
     for (const b of [B, baby2]) { expect(b.state).toBe("happy"); expect(b.dancing).toBe(true); }
+    expect(Math.hypot(B.anchorX - B.circle!.x, B.anchorZ - B.circle!.z)).toBeLessThan(B.circle!.r); // (the circle's dances in its circle)
     for (const a of [a1, a2]) { expect(a.enraged).toBe(true); expect(a.siege).toBe(key); }
     expect(L.legendState).toBe("asleep");
     // the siege brings it down: its happy babies run off home, its besiegers march on to the next soundsystem
