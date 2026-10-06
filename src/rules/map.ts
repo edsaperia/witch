@@ -345,7 +345,9 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     pieceSpots.set(key, spot);
     return spot;
   };
-  const legendCells = chooseLegendCells(n, centreCell, neighbours, tuning.legends?.share ?? 1, seed);
+  const squareCells: Cell[] = [];
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) squareCells.push([cx, cy]);
+  const legendCells = chooseLegendCells(squareCells, centreCell, neighbours, tuning.legends?.share ?? 1, seed); // (the playable areas: with #281's circular map, its map.cells)
   const grounds: Ground[] = [], scenes: Scene[] = [], clearings = new Map<string, LegendClearing>();
   const reserved = (x: number, z: number, r: number) => {
     const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
@@ -518,9 +520,9 @@ export function sceneFootprint(id: string, tuning: Tuning): number {
  *  neighbouring legend areas to two at most; then (an area has about six neighbours, so half can't
  *  all be kept that apart) ones that leave no legend area bordering more than two others; then
  *  any left over, those with the fewest legend neighbours first. */
-export function chooseLegendCells(n: number, home: Cell, neighbours: ReadonlyMap<string, ReadonlySet<string>>, share: number, seed: number): Set<string> {
+export function chooseLegendCells(cells: readonly Cell[], home: Cell, neighbours: ReadonlyMap<string, ReadonlySet<string>>, share: number, seed: number): Set<string> {
   const all: { key: string; h: number }[] = [];
-  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (cx !== home[0] || cy !== home[1]) all.push({ key: cellKey(cx, cy), h: hash2(cx, cy, seed + 901) });
+  for (const [cx, cy] of cells) if (cx !== home[0] || cy !== home[1]) all.push({ key: cellKey(cx, cy), h: hash2(cx, cy, seed + 901) });
   const want = Math.max(0, Math.min(all.length, Math.round(Math.max(0, Math.min(1, share)) * all.length)));
   const chosen = new Set<string>();
   if (want >= all.length) { for (const a of all) chosen.add(a.key); return chosen; }
