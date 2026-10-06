@@ -28,6 +28,7 @@ else {
   const { AREA_TYPES } = await load("/src/rules/map.ts");
   const { cellKey } = await load("/src/rules/party.ts");
   const { cheer } = await load("/src/rules/legends.ts");
+  const { powerReport } = await load("/src/rules/power.ts");
 
   function over() {
     const o = {};
@@ -162,7 +163,8 @@ else {
         for (const [key, a] of g.party.areas) if (a.wave === g.party.wave) {
           const wild = g.creatures.filter(c => !c.gone && !c.boss && !c.leashed && cellKey(c.cell) === key).length;
           const got = [...origin.values()].filter(k => k === key).length, L = legendOf.get(key);
-          waves.push({ wave: g.party.wave, at: g.clock.time, cell: a.cell, key, wild, got, share: wild + got ? got / (wild + got) : NaN, friendly: g.friendly.has(key), legend: L !== undefined ? g.creatures[L].legendState : null });
+          const P = powerReport(g.creatures, g.witches, g.combat.sounds);
+          waves.push({ wave: g.party.wave, at: g.clock.time, cell: a.cell, key, wild, got, partyF: P.leashed + P.parked, siegeF: P.sieges.reduce((x, y) => x + y.value, 0), marching: P.marching, share: wild + got ? got / (wild + got) : NaN, friendly: g.friendly.has(key), legend: L !== undefined ? g.creatures[L].legendState : null });
         }
       }
       if (g.over) break;
