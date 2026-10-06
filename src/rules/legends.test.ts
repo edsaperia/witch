@@ -125,7 +125,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     const { g, L } = beside();
     expect(g.relics.length).toBe(LEGENDS.relics.kinds.length); // (one of each; where: relics.test.ts)
     const r = g.relics[1], back = { x: g.witch.x, z: g.witch.z };
-    g.witch = { ...g.witch, x: r.x + 1, z: r.z };
+    g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil, south of it)
     run(g, 0.2, { ...idle, sigil: true });
     expect(r.state).toBe("carried");
     expect(g.leash.relics).toEqual([r.id]);

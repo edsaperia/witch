@@ -15,7 +15,7 @@ import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { cellKey, hurryWave, newParty, speakersOn, spreadWave, stepParty, type PartyState } from "./party";
+import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, speakersOn, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { exitPoint } from "./mapShape";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
@@ -138,6 +138,8 @@ export interface WaveEvent { kind: "soundsystemLost"; key: string; x: number; z:
 export interface Controls extends Intent, Partial<LeashControls>, InviteControls {
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
   happyNearest?: boolean;
+  /** The party spell's button (or its key) pressed: the game starts (rules/party.ts castPartySpell). */
+  castParty?: boolean;
   /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
   autoTalk?: boolean;
   talkHeld?: boolean;
@@ -316,6 +318,11 @@ function fixedStep(g: Game, controls: Controls): void {
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id), ...legends.filter(id => buffing(g.creatures[id]))], g.tuning);
   const t = g.buffs.tuning;
+  // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
+  // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, gamepad B, touch
+  // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
+  if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
+  if (heldBySpell(g.party, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
@@ -377,7 +384,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
   let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
   if ((sigil || place) && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time);
+    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.pickRadius);
     if (r) {
       sigil = false; place = false;
       if ("picked" in r) g.leash.events.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: g.clock.time });

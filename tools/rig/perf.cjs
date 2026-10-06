@@ -25,7 +25,7 @@ const pct = (a, p) => { const s = [...a].sort((x, y) => x - y); return s[Math.mi
   for (const rig of ["0", "1"]) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } }), errors = [];
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto(`http://127.0.0.1:${port}/?seed=123&debug&rig=${rig}&arena=${encodeURIComponent("boar*1,wolf*12@1")}`);
+    await page.goto(`http://127.0.0.1:${port}/?seed=123&spell=auto&debug&rig=${rig}&arena=${encodeURIComponent("boar*1,wolf*12@1")}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });

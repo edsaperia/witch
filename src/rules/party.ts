@@ -57,6 +57,22 @@ export interface PartyState {
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
 
+/** The party spell's cast (Ed, 2026-10-06: "there is a button on the screen that says "CAST THE PARTY SPELL", when you
+ *  press it, the witch does a spellcasting animation, the pulse appears, and starts going around the dancefloor runestone
+ *  ring, and you can start moving around"): seconds the cast takes, in which she can't move yet. */
+export const PARTY_CAST = 1.2;
+/** Casts the party spell at `time`, if waiting for it: the game clock and the boot-up start (the boot's minutes from now).
+ *  Returns whether it was cast. The renderer's hook: `party.spellAt` turning from null to a time. */
+export function castPartySpell(p: PartyState, map: ForestMap, time: number): boolean {
+  if (p.spellAt !== null) return false;
+  p.spellAt = time;
+  const boot = map.tuning.boot.time, left = p.nextAt - p.bootUntil; // (the countdown after the boot, as it was set)
+  p.bootUntil = time + boot; p.nextAt = p.bootUntil + left;
+  return true;
+}
+/** Whether she's held still by the party spell: waiting for it, or still casting it. */
+export const heldBySpell = (p: PartyState, time: number): boolean => p.spellAt === null || (p.spellAt !== undefined && time < p.spellAt + PARTY_CAST);
+
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
   const boot = map.tuning.boot.time;
@@ -218,11 +234,12 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
   return fresh;
 }
 
-/** Advance the party's clock: a wave whenever its time comes (unless paused). `seated`: she's still
- *  behind the decks (Ed, 2026-10-05): the boot-up waits for her to get up, so its minutes count
- *  from her first step. */
+/** Advance the party's clock: a wave whenever its time comes (unless paused). The boot-up waits for the party spell
+ *  (Ed, 2026-10-06: the game starts when she casts it), so its minutes count from the cast; in a game without the spell
+ *  (`spellAt` undefined: the tools and tests) it waits while she's `seated` behind the decks, as before. */
 export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false): Partified[] {
-  if (p.paused || (seated && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
+  const waiting = p.spellAt === null || (p.spellAt === undefined && seated);
+  if (p.paused || (waiting && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
   if (time < p.nextAt) return [];
   p.nextAt += map.tuning.party.interval;
   return spreadWave(p, map, time);

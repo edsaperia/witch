@@ -18,7 +18,7 @@ const MAX = 384;
  *  strength, its colour (3). */
 const F = 12;
 /** The palette: the moonlight's blue-violet (the blink), the broom's amber. */
-const AMBER = [0.91, 0.71, 0.42], MOON = [0.4, 0.4, 0.85]; // (deep: the motes bloom and overlap, and must never reach white)
+const AMBER = [0.91, 0.71, 0.42], ROSE = [0.85, 0.47, 0.62], MOON = [0.4, 0.4, 0.85]; // (deep: the motes bloom and overlap, and must never reach white)
 
 export class SpellFx {
   readonly trail: THREE.Points;
@@ -44,6 +44,16 @@ export class SpellFx {
     p[o] = x; p[o + 1] = y; p[o + 2] = z; p[o + 3] = vx; p[o + 4] = vy; p[o + 5] = vz;
     p[o + 6] = at; p[o + 7] = life; p[o + 8] = a; p[o + 9] = c[0]; p[o + 10] = c[1]; p[o + 11] = c[2];
     this.next = (this.next + 1) % MAX;
+  }
+
+  /** The party spell (Ed, 2026-10-06): a burst of amber and rose sparkles round her as she casts it at the decks, rising
+   *  and spreading out over the cast. x, y, z: her feet (y over the ground); at: the cast's time. */
+  partyBurst(x: number, y: number, z: number, at: number): void {
+    const r = Math.random;
+    for (let k = 0; k < 64; k++) {
+      const a = r() * Math.PI * 2, s = 1.5 + r() * 3.5, h = 1.4 + r() * 1.4, c = k % 3 ? AMBER : ROSE;
+      this.mote(x + Math.cos(a) * 0.3, y + h, z + Math.sin(a) * 0.3, Math.cos(a) * s, 1.2 + r() * 2.4, Math.sin(a) * s, at + r() * 0.5, 0.8 + r() * 0.7, 0.55, c);
+    }
   }
 
   /** `y`: her height (metres) where the trail streams from. */

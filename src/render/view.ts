@@ -37,7 +37,7 @@ import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, SymbolRings, type Mote } from "./markers";
-import { waveCountdown, type SpawnMarker } from "../rules/party";
+import { PARTY_CAST, waveCountdown, type SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
@@ -135,6 +135,8 @@ export class View {
   speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
   private spellFx = new SpellFx();
+  /** The party spell's cast already burst into sparkles (its time). */
+  private castSeen: number | null | undefined = undefined;
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail: WitchTrail;
   private trailAt = -1;
@@ -757,6 +759,7 @@ export class View {
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...near.sort((a, b) => a.d - b.d).slice(0, 3)];
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
+    for (const r of g.relics) if (r.state === "lying" && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
@@ -820,7 +823,15 @@ export class View {
       g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
       const fwd = this.camera.getWorldDirection(this.v3);
       wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
-      if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
+      if (w.seated) {
+        // Behind the decks (Ed, 2026-10-06): standing, waiting for the party spell; casting it, her arms up over her hat
+        // (the liftSigil pose, through once over the cast) in a burst of sparkles; in a game without the spell, sitting.
+        const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST;
+        if (casting) { const n = F.liftSigil.towards.length; wf = F.liftSigil.towards[Math.min(n - 1, Math.floor(((time - sp!) / PARTY_CAST) * n))]; }
+        else if (sp === undefined) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
+        else wf = F.stand.towards[Math.floor(time * F.stand.fps) % F.stand.towards.length];
+        if (typeof sp === "number" && sp !== this.castSeen) { this.castSeen = sp; this.spellFx.partyBurst(wx, wyy, wz, sp); }
+      }
     }
     // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
     // vanishes in a sparkle and comes back in one at the treehouse.
