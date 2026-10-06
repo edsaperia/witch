@@ -400,7 +400,7 @@ function fixedStep(g: Game, controls: Controls): void {
     const L = questPlaced(g.map, g.creatures, (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
     if (L) {
       g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
-      onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave)
+      if (!g.party.areas.has(cellKey(L.cell))) onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave; after it, the line has moved on already)
       g.byArea = null;
     }
   }
