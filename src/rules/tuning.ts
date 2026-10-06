@@ -69,6 +69,8 @@ export interface Tuning {
   /** Combat (Stage 4; the attacks are data in config/combat.json): see config/tuning.json's _combat. */
   /** The fight's scale and speed (Ed's motion scale pass): lengths and speeds in a fight times these. */
   fight: { scale: number; speed: number; momentum: number };
+  /** How attacks feel on screen (render/attackFeel.ts): the wind-up's crouch, the lunge's stretch, a hit's squash and bounce, a knock-back's tumble. */
+  attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number };
   combat: { aggro: number; witchLose: number; leaveArea: number; engage: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number };
   /** Parked party animals (at a sigil) guard within radius metres of it (Ed, 2026-10-04). */
   guard: { radius: number };
