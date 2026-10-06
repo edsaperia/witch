@@ -294,6 +294,8 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
   // each pass round the loop the chords start a step on (the same progression, a new turn of it)
   const chord = chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  // a long block (the boot's intro, up to five minutes) turns a new phrase every 16 bars: new melodies, its ? hits falling anew
+  const phrase = pass + (plan.bars > 32 ? Math.floor(barIn / 16) : 0);
   const out: NoteEvent[] = [];
   // the last bar before a new section: a fill, and the last beat's mutes
   const ending = next !== null && (next.section !== plan.section || next.start !== plan.start) ? sec.ending ?? "fill" : "none";
@@ -316,7 +318,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const i = (barIn * 16 + s) % pat.length;
     const { ch, dur } = hitAt(pat, i);
     if (ch === "." || ch === "-") continue;
-    const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx.seed + pass * 7919);
+    const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx.seed + phrase * 7919);
     if (ch === "?" && r >= a.energy) continue;
     const level = u.level * scaleLevel * (0.94 + 0.06 * r);
     const base = { part: name, patch: def.patch, step, offset: 0, dur };
@@ -337,7 +339,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
       out.push({ ...base, midi: degreeToMidi(style, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     } else {
-      const m = motifFor(ctx.seed + pass * 104729, plan.arc, name), pos = ((barIn % 4) * 16 + s) % 32; // (a new melody each pass)
+      const m = motifFor(ctx.seed + phrase * 104729, plan.arc, name), pos = ((barIn % 4) * 16 + s) % 32; // (a new melody each pass or phrase)
       const vary = barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently
       out.push({ ...base, midi: degreeToMidi(style, scale, chord.root + m[pos] + vary, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     }
