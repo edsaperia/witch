@@ -61,7 +61,7 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     run(g, 0.2, { ...idle, sigil: true });
     expect(L.quest!.done).toBeDefined();
     expect(L.buffed).toBe(true);
-    expect(g.friendly.has(key)).toBe(false); // (its wave has come and gone: no guards from it now)
+    expect(g.friendly.has(key)).toBe(false); // (its wave has come and gone: the buff alone)
     expect(g.party.leyDone?.has(key) ?? false).toBe(false); // (and the ley line doesn't move for it: it moved on at the wave)
   }, 60000);
 });
