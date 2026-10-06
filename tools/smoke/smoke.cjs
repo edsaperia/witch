@@ -435,10 +435,14 @@ async function main() {
     await page.keyboard.down("Digit1");
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 0.5, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
-    // (#87: a full meter makes a wild one happy, and it would wander off to dance; a second fill leashes it: it's held in front of her.)
-    await page.waitForFunction(i => { const g = window.witch.game, c = g.creatures[i]; g.witch = { ...g.witch, facing: 1 }; Object.assign(c, { x: g.witch.x + 5, z: g.witch.z, tx: g.witch.x + 5, tz: g.witch.z, anchorX: g.witch.x + 5, anchorZ: g.witch.z, dancing: false }); return c.leashed; }, id, { timeout: 400000, polling: 100 });
+    // (#87: a full meter makes a wild one happy, and it would wander off to dance: it's held in front of her. Since 2026-10-06
+    // its sigil lies as a rune at its feet, and E beside it leashes it.)
+    await page.waitForFunction(i => { const g = window.witch.game, c = g.creatures[i]; g.witch = { ...g.witch, facing: 1 }; Object.assign(c, { x: g.witch.x + 5, z: g.witch.z, tx: g.witch.x + 5, tz: g.witch.z, anchorX: g.witch.x + 5, anchorZ: g.witch.z, dancing: false }); return c.state === "happy" || c.leashed; }, id, { timeout: 400000, polling: 100 });
     await page.keyboard.up("Digit1");
-    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter and invite it onto her sigil stack");
+    await page.evaluate(i => { const g = window.witch.game, c = g.creatures[i]; Object.assign(c, { x: g.witch.x + 0.8, z: g.witch.z, tx: g.witch.x + 0.8, tz: g.witch.z, anchorX: g.witch.x + 0.8, anchorZ: g.witch.z }); }, id);
+    await page.keyboard.press("KeyE");
+    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 60000, polling: 100 }).catch(() => {});
+    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter, and E on its rune invites it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
     for (let i = 0; i < 3; i++) {
       const before = await page.evaluate(() => window.witch.game.leash.stack.length);

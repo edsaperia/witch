@@ -11,7 +11,7 @@ import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
-import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
+import { danceAt, invitableNow, runeNear, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
@@ -216,8 +216,8 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
 }
 
 /** The affection rules the 💌s and the view use (issue #87): the state machine's meter
- *  (rules/affection.ts). A full meter makes a wild one happy; filled again (states.leash "again"),
- *  a happy one is leashed. How many letters fill it is the tuning's invites.hits (buffs change it);
+ *  (rules/affection.ts). A full meter makes a wild one happy; she leashes it by picking up its rune (states.leash
+ *  "pickup", rules/leash.ts), or by filling it again (the old "again"). How many letters fill it is the tuning's invites.hits (buffs change it);
  *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace). */
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, data = { ...STATES, affection: { ...STATES.affection, hits: t.invites.hits, gap: 0 } };
@@ -403,7 +403,7 @@ function fixedStep(g: Game, controls: Controls): void {
       else g.leash.events.push({ kind: "relicPlaced", id: r.placed.id, x: r.legend.x, z: r.legend.z, at: g.clock.time });
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), g.clock.time, dt, t, M);
   // Frenzy (Stoat): an animal won over gives back a blink.

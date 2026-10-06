@@ -1,6 +1,6 @@
-import { stateOf } from "./creatureStates";
+import { STATES, stateOf } from "./creatureStates";
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
@@ -765,6 +765,10 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
+  // (The old proximity chat: a second talk leashes a happy one, as states.leash "again" does; the game picks up its rune now, pickup.test.ts.)
+  let savedLeash = STATES.leash;
+  beforeEach(() => { savedLeash = STATES.leash; STATES.leash = "again"; });
+  afterEach(() => { STATES.leash = savedLeash; });
   // (Every level to talk to: a baby, a young and an adult in each area.)
   const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));

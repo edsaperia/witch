@@ -55,6 +55,8 @@ export interface LeashControls {
   place?: boolean;
   /** Cycle (Q): the bottom sigil to the top, on the ground or in the treetops. */
   cycle?: boolean;
+  /** The happy creature whose sigil rune is ready within r of (x, z), nearest first (states.leash "pickup"), or null. */
+  rune?: (x: number, z: number, r: number) => Creature | null;
   /** Debug: invite the nearest invitable creature, however far. */
   inviteNearest?: boolean;
   /** Whether she may talk this frame: always with auto-talk on (the default); with it off, only
@@ -99,7 +101,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
 }
 
 /** Invite it: leashed to her, for good (#87), its sigil on the bottom of the stack (the 💌's second step: rules/invites.ts). */
-export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number): void {
+export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number, kind: "invited" | "picked" = "invited"): void {
   c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
@@ -107,7 +109,7 @@ export function inviteCreature(s: LeashState, c: Creature, x: number, z: number,
   // Invited, it's whole again (Ed, 2026-10-04), with a heal pop if it was hurt.
   if (c.hp !== undefined) { c.hp = undefined; c.healedAt = time; }
   s.stack.push(c.id);
-  s.events.push({ kind: "invited", id: c.id, x, z, at: time });
+  s.events.push({ kind, id: c.id, x, z, at: time });
 }
 
 /** One step: talking, placing and picking up, and the leashed creatures moving. `onGround` is
@@ -174,10 +176,15 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   if ((c.sigil || c.place) && onGround) {
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
+    // (Her own placed sigil first, then a happy creature's rune: Ed, 2026-10-06, the nearest; her hat before both, rules/game.ts.)
+    const rune = pick < 0 ? c.rune?.(witch.x, witch.z, L.pickRadius) ?? null : null;
     if (pick >= 0) {
       const [p] = s.placed.splice(pick, 1);
       s.stack.push(p.id);
       s.events.push({ kind: "picked", id: p.id, x: p.x, z: p.z, at: time });
+    } else if (rune) {
+      // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
+      inviteCreature(s, rune, rune.x, rune.z, time, "picked");
     } else if (s.stack.length) {
       const id = s.stack[s.stack.length - 1];
       if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });

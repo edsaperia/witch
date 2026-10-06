@@ -27,6 +27,7 @@ else {
   const { newGame, stepGame } = await load("/src/rules/game.ts");
   const { AREA_TYPES } = await load("/src/rules/map.ts");
   const { cellKey } = await load("/src/rules/party.ts");
+  const { runeNear } = await load("/src/rules/creatureStates.ts");
   const { cheer, LEGENDS } = await load("/src/rules/legends.ts");
   if (process.argv.includes("--calm")) LEGENDS.angryAfter = 1e9; // (--calm: no legend ever turns angry, to see what their rage does)
   const { powerReport } = await load("/src/rules/power.ts");
@@ -83,7 +84,7 @@ else {
 
     for (let step = 0; step * dt < TIME; step++) {
       const b = w.body, time = g.clock.time;
-      let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false;
+      let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false, place = false;
       const goTo = (x, z, land, within = 45) => {
         const dx = x - b.x, dz = z - b.z, d = Math.hypot(dx, dz) || 1;
         if (d > 45) { if (b.mode === "ground") toggle = true; mx = dx / d; mz = dz / d; return false; }
@@ -175,6 +176,10 @@ else {
             if (feeding.until === Infinity) feeding.until = time + 20; // (20 s among the bushes)
             if (time >= feeding.until) { feeding = null; feedAgain = time + 60; }
           }
+        } else if (b.mode === "ground" && !b.seated && runeNear(g.creatures, b.x, b.z, 25, time)) {
+          // One won over (happy): its sigil lies as a rune at its feet; pick it up to leash it (Ed, 2026-10-06).
+          const rn = runeNear(g.creatures, b.x, b.z, 25, time), rd = Math.hypot(rn.x - b.x, rn.z - b.z);
+          if (rd > TUNING.leash.pickRadius * 0.6) { mx = (rn.x - b.x) / rd; mz = (rn.z - b.z) / rd; } else if (step % 10 === 0) place = true;
         } else {
           if (!target || time >= pickAt) { target = pickRecruit(); pickAt = time + 3; }
           if (target && goTo(target.x, target.z, true)) {
@@ -195,7 +200,7 @@ else {
       }
       if (process.env.QDBG && step % 600 === 0) { const sb = spotBy; process.stderr.write(`t${(time/60).toFixed(1)} q:${qjob ? qjob.phase + " " + qjob.L.species + qjob.L.cell + " want " + qjob.want.species + qjob.want.level + (qjob.want.leashed ? "L" : "") + " d" + Math.round(Math.hypot(...sb(qjob.L).map((v, i) => v - [w.body.x, w.body.z][i]))) + " open " + qjob.L.questOpen : "-"} r:${rjob ? rjob.phase + " d" + (rjob.r ? Math.round(Math.hypot(rjob.r.x - w.body.x, rjob.r.z - w.body.z)) : "") : "-"} relics ${w.leash.relics.length} stack ${w.leash.stack.length} placed ${w.leash.placed.length} mode ${w.body.mode}\n`); }
       const before = g.party.wave, hp0 = w.health.hp;
-      stepGame(g, { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil }, dt);
+      stepGame(g, { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place }, dt);
       for (const e of w.invites.events) if (e.kind === "happy" && !origin.has(e.id)) origin.set(e.id, cellKey(g.creatures[e.id].cell));
       // A woken area's wild babies hurt (struck, or knocked down) while its siege is on (Ed's "their babies get hurt during sieges").
       for (const e of g.combat.events) if ((e.kind === "hit" || e.kind === "dazed") && e.id !== undefined) { const c = g.creatures[e.id]; if (c && c.level === 0 && !c.boss && !c.leashed && g.party.areas.has(cellKey(c.cell))) { if (e.kind === "hit") babyHits++; else babiesDown.push({ at: g.clock.time, wave: g.party.wave, key: cellKey(c.cell) }); } }
