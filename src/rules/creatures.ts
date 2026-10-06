@@ -164,7 +164,7 @@ export interface Creature {
   friendly?: boolean;
   /** Asleep, lying where it is: an idle wild creature's nap (Ed, 2026-10-06: "animals in wild areas which are idling can
    *  sleep"), or any other sleep that sets it (the party's over). Its roam is skipped, it's out of every fight, and the
-   *  view lays it down. Not a legend's (legendState). */
+   *  view lays it down and draws it sleeping (art/naps.js: curled, tucked, coiled or flat by species). Not a legend's (legendState). */
   asleep?: boolean;
   /** An idle nap's end by itself (game time): set only for a nap, whose own wake rules (NapRules) apply while it is; a
    *  sleep without it stays down till whoever set it clears it. */
