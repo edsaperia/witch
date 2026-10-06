@@ -5707,13 +5707,23 @@
             },
             "contact": {
               "type": "boolean"
+            },
+            "chase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "miss": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "reach",
             "turn",
             "brake",
-            "contact"
+            "contact",
+            "chase",
+            "miss"
           ],
           "additionalProperties": false
         },
@@ -5729,12 +5739,17 @@
             },
             "contact": {
               "type": "boolean"
+            },
+            "lead": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "reach",
             "through",
-            "contact"
+            "contact",
+            "lead"
           ],
           "additionalProperties": false
         }

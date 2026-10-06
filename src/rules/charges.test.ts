@@ -7,7 +7,7 @@ import { TUNING, withTuning, type Tuning } from "./tuning";
 // the moment it feels like they always stop short. They should be damaging whenever they're touched
 // while in attack mode. Charging creatures should have much more momentum, travelling in wide arcs."
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, brake: 1, contact: false }, leap: { reach: 1, through: -1.5, contact: false } } });
+const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, brake: 1, contact: false, chase: 0, miss: 0 }, leap: { reach: 1, through: -1.5, contact: false, lead: 0 } } });
 
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
 function quiet(t: Tuning = TUNING): Game {
@@ -105,4 +105,51 @@ describe("a chase given up (Ed, 2026-10-06: 'pursue you 30 m outside of their ar
     expect(Math.hypot(wolf.x - site.x, wolf.z - site.z)).toBeLessThan(TUNING.combat.retreatHome + 10);
     expect(wolf.retreat).toBeFalsy(); // (roaming again)
   }, 60000);
+});
+
+describe("walking away is no escape (Ed, 2026-10-06: \"Charging creatures can easily be evaded by just walking away from them\")", () => {
+  /** A charger or leaper `dist` m off; she stands till its head goes down (its tell), then walks straight away or steps aside. */
+  function escape(species: string, dist: number, how: "away" | "aside", t: Tuning = TUNING) {
+    const g = quiet(t), c = pick(g, species, 2, -dist, 0), W = g.witches[0], hp0 = W.health.hp;
+    let seen = false;
+    for (let i = 0; i < 8 / STEP; i++) {
+      if ((c.charge && c.charge.from !== undefined) || c.leap) seen = true;
+      const ax = g.witch.x - c.x, az = g.witch.z - c.z, ad = Math.hypot(ax, az) || 1;
+      stepGame(g, seen ? (how === "away" ? { ...idle, moveX: ax / ad, moveZ: az / ad } : { ...idle, moveZ: 1 }) : idle, STEP);
+      if (W.health.hp < hp0) return true;
+    }
+    return false;
+  }
+  it("runs a boar's or a stag's charge on till it catches her walking straight down its lane, from near or far", () => {
+    expect(TUNING.fight.charge.chase).toBeGreaterThan(1);
+    for (const sp of ["boar", "stag"]) for (const d of [15, 30]) expect(escape(sp, d, "away"), `${sp} ${d} m`).toBe(true);
+    expect(escape("boar", 30, "away", OLD)).toBe(false); // (as it was: she walked clear)
+  }, 120000);
+  it("still misses her if she steps out of its lane at its tell", () => {
+    for (const sp of ["boar", "stag"]) expect(escape(sp, 25, "aside"), sp).toBe(false);
+  }, 120000);
+  it("is beaten by a blink at the right moment, sideways or straight through, and it stands winded after (Ed, 2026-10-06: \"reward skilful use of blink\")", () => {
+    expect(TUNING.fight.charge.miss).toBeGreaterThan(0);
+    for (const [sp, how] of [["boar", "side"], ["stag", "through"]] as const) {
+      const g = quiet(), c = pick(g, sp, 2, -25, 0), W = g.witches[0], hp0 = W.health.hp;
+      let blinked = false, winded = false, ran = false;
+      for (let i = 0; i < 6 / STEP; i++) {
+        const coming = !!c.charge && (c.charge.from === undefined || g.clock.time >= c.charge.from), near = Math.hypot(c.x - g.witch.x, c.z - g.witch.z);
+        if (c.charge) ran = true;
+        let ctl: Controls = idle;
+        if (coming && !blinked && near < (how === "side" ? 8 : 5)) { blinked = true; const ax = c.x - g.witch.x, az = c.z - g.witch.z, ad = Math.hypot(ax, az) || 1; ctl = how === "side" ? { ...idle, moveZ: 1, dash: true } : { ...idle, moveX: ax / ad, moveZ: az / ad, dash: true }; }
+        stepGame(g, ctl, STEP);
+        if (c.stunUntil !== undefined && g.clock.time < c.stunUntil) winded = true;
+        if (ran && !c.charge && !winded) break;
+      }
+      expect(blinked, sp).toBe(true);
+      expect(W.health.hp, `${sp}: blinked ${how}`).toBe(hp0);
+      expect(winded, sp).toBe(true);
+    }
+  }, 120000);
+  it("leads a toad's leap to where she's going", () => {
+    expect(TUNING.fight.leap.lead).toBeGreaterThan(0);
+    expect(escape("toad", 20, "away")).toBe(true);
+    expect(escape("toad", 20, "away", withTuning({ fight: { ...TUNING.fight, leap: { ...TUNING.fight.leap, lead: 0 } } }))).toBe(false); // (landing where she was)
+  }, 120000);
 });
