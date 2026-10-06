@@ -74,6 +74,14 @@ export class ActionBar {
       const on = s.action === "spell" ? spellActive(W.spells, time) : s.action === "invite" ? W.invites.burstLeft > 0 : dashing(W.dash, time);
       const usable = s.action === "dash" || s.action === "invite" ? W.body.mode === "ground" && !W.body.seated : true;
       shade.style.height = `${(1 - charge) * 100}%`;
+      // Hare's Dash bursts: the blinks ready, a count in the corner; Bear's Wind-up: the 💌 slot glows pink as it charges.
+      if (s.action === "dash") {
+        let n = el.querySelector<HTMLElement>(".charges");
+        if (!n) { n = document.createElement("span"); n.className = "charges"; Object.assign(n.style, { position: "absolute", right: "3px", bottom: "1px", fontSize: "10px", color: "#6fe6ff", zIndex: "1" }); el.append(n); }
+        const text = g.buffs.mods.charges > 0 ? String(W.dash.charges) : "";
+        if (n.textContent !== text) n.textContent = text;
+      }
+      if (s.action === "invite") el.style.boxShadow = W.invites.charge > 0 ? `0 0 ${(3 + W.invites.charge * 12).toFixed(0)}px rgba(255,95,180,${(0.4 + 0.6 * W.invites.charge).toFixed(2)})` : "";
       el.style.borderColor = on ? "#ffffff" : charge >= 1 && usable ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)";
       el.style.opacity = usable ? "1" : "0.5";
     });

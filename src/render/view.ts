@@ -200,6 +200,7 @@ export class View {
     const moonLook: Record<string, number> = t.find.on ? { moonHue: t.find.moonHue, moonSat: t.find.moonSat } : {};
     applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook }, t.glowReach, this.mpp, t.find.on ? t.find.ambient : t.tone.ambient, t.glowFalloff, t.tone.moon);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
+    LIGHT_UNIFORMS.uGlowNear.value = Math.max(0.05, Math.min(1, t.glowNear ?? 1));
     if (t.bare) {
       // The bare view: a low moon raking across the ground so the slopes read; no glow, no haze.
       LIGHT_UNIFORMS.uMoonDir.value.set(-0.85, 0.28, 0.42).normalize();
@@ -1272,7 +1273,7 @@ export class View {
       const wx = g.witch.x, wz = g.witch.z, R = SPRITE_UNIFORMS.uRight.value;
       const a = placed(this.v3.set(wx, 0, wz)).project(this.camera).x, b = placed(this.v3.set(wx + R.x * 10, 0, wz + R.z * 10)).project(this.camera).x;
       const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
-      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout * g.buffs.totals.glowReach; // a glow-reach legend buff widens it
+      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
     }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
@@ -1450,7 +1451,7 @@ export class View {
         });
       };
       // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
-      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined);
+      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
     }
     this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
@@ -1497,3 +1498,6 @@ export class View {
     this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count;
   }
 }
+
+/** Seconds as "4:59" from a minute up, "42 s" under. */
+function mmss(s: number): string { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; }

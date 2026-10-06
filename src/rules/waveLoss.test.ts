@@ -10,7 +10,7 @@ const P = TUNING.party.lossPenalty, I = TUNING.party.interval;
 /** A game a few seconds in, with `left` seconds to the next wave. */
 function game(left: number): Game {
   const g = newGame(7, TUNING);
-  g.clock.paused = false;
+  g.clock.paused = false; g.witch.seated = false; // (up from the decks: the boot-up counts from then)
   for (let i = 0; i < 30; i++) stepGame(g, idle, STEP);
   g.party.nextAt = g.clock.time + left;
   return g;

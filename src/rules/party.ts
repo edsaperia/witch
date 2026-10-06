@@ -47,7 +47,7 @@ export interface PartyState {
   seeAhead?: number;
   /** How many areas each wave wakes: one per witch present (Ed, 2026-10-04), read at each wave. */
   areasPerWave: number;
-  /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04): the first wave's countdown starts then. */
+  /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04; 5 minutes from her first step, 2026-10-05): the first wave's countdown starts then. */
   bootUntil: number;
 }
 
@@ -214,9 +214,11 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
   return fresh;
 }
 
-/** Advance the party's clock: a wave whenever its time comes (unless paused). */
-export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number): Partified[] {
-  if (p.paused) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
+/** Advance the party's clock: a wave whenever its time comes (unless paused). `seated`: she's still
+ *  behind the decks (Ed, 2026-10-05): the boot-up waits for her to get up, so its minutes count
+ *  from her first step. */
+export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false): Partified[] {
+  if (p.paused || (seated && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
   if (time < p.nextAt) return [];
   p.nextAt += map.tuning.party.interval;
   return spreadWave(p, map, time);

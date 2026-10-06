@@ -125,11 +125,11 @@ export const PLANT_GENOMES = {
 };
 // The bushes a kind is picked from (round twice as often), and each kind's numbers.
 export const BUSH_KINDS = ["round", "round", "fern", "grass", "shrub"];
-export const BUSH_GENOMES = {
-  round: { name: "leafy mound", form: "shrub", generator: "mound", params: { w: 40, h: 28, clumps: 3 } },
-  shrub: { name: "flowering shrub", form: "shrub", generator: "mound", params: { w: 40, h: 28, clumps: 5, flowering: true } },
-  fern: { name: "fern", form: "fern", generator: "fern", params: { w: 40, h: 28, fronds: 7, len: 15 } },
-  grass: { name: "grass tuft", form: "grass", generator: "grass", params: { w: 40, h: 28, blades: 18 } },
+export const BUSH_GENOMES = { // grown by the blob generator's undergrowth (blobBush in art/flora/blob.js), in the trees' stamps
+  round: { name: "leafy mound", form: "shrub", generator: "blob", params: { kind: "mound", w: 40, h: 28, clumps: [2, 3], r: [8, 10.5], spread: 6 } },
+  shrub: { name: "flowering shrub", form: "shrub", generator: "blob", params: { kind: "mound", w: 40, h: 28, clumps: [3, 4], r: [7, 9.5], spread: 8, flowering: true, bloom: .08 } },
+  fern: { name: "fern", form: "fern", generator: "blob", params: { kind: "fronds", w: 40, h: 28, fronds: 7, len: 17, spread: 1.7, droop: .7, leaflet: 3 } },
+  grass: { name: "grass tuft", form: "grass", generator: "blob", params: { kind: "blades", w: 40, h: 28, blades: 18, clumps: 4, spread: 10 } },
 };
 // The style a species draws in: gnarl scaled (mul), raised to at least (min) or set; a default for treeTrunks.
 export function genomeStyle(st, style) {
