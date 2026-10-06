@@ -1,7 +1,8 @@
 // The art director's review set (the overnight visual-coherence loop): the same shots every round, so rounds compare.
 // Serves the built game (dist/), loads it in headless Chromium at 1280x720 and saves, at night as the game is:
 //   default look: the creator room; home after she steps off, and from the treetops; four areas on the ground and from the
-//   treetops (moor, fern forest, ravine, stone shrine); a fight (a debug arena by the dancefloor);
+//   treetops (moor, fern forest, ravine, stone shrine); a partified area two waves on, by its soundsystem; a fight (a debug
+//   arena by the dancefloor);
 //   ?style=bold&px=4 and ?style=ref&px=4: home on the ground, the moor on the ground and from the treetops, the fight.
 //   npm run build && node tools/art-review/capture.cjs <out dir> [seed] [only: default|bold|ref]
 const http = require("http");
@@ -18,7 +19,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 const AREAS = ["moor", "fern-forest", "ravine", "stone-shrine"];
 const VARIANTS = [
-  { name: "default", query: "", creator: true, home: true, areas: AREAS, fight: true },
+  { name: "default", query: "", creator: true, home: true, areas: AREAS, party: true, fight: true },
   { name: "bold", query: "style=bold&px=4", home: true, areas: ["moor"], fight: true },
   { name: "ref", query: "style=ref&px=4", home: true, areas: ["moor"], fight: true },
 ].filter(v => !only || v.name === only);
@@ -92,6 +93,20 @@ async function session(browser, port, v, fight) {
       await shot(`${area}-ground`);
       await rise(); await shot(`${area}-treetops`);
     }
+  }
+  // a partified area away from home (the party's warm pools): bring the next wave (N), then stand by its soundsystem
+  if (v.party && !fight) {
+    await page.keyboard.press("KeyN"); await wait(1); await page.keyboard.press("KeyN");
+    await wait(12);
+    const at = await page.evaluate(() => {
+      const g = window.witch.game, a = [...g.party.areas.values()].filter(p => p.wave > 0 && p.soundsystem).sort((p, q) => p.wave - q.wave)[0];
+      if (!a) return null;
+      const s = a.soundsystem;
+      g.witch = { ...g.witch, x: s.x - 8, z: s.z + 12, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
+      return { cell: a.cell, wave: a.wave };
+    });
+    if (!at) log("no partified area");
+    else { await nudge(); await wait(6); await page.waitForTimeout(8000); await shot("party-ground"); await rise(); await shot("party-treetops"); }
   }
   if (errors.length) log(v.name, "page errors:", errors);
   await page.close();
