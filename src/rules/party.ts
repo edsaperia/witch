@@ -2,6 +2,7 @@
 // `interval` seconds a wave comes and wakes one area (Ed, v149), chosen as soon as the previous one
 // woke (see pickNext), which gets a soundsystem and is partified. Seeded and deterministic; no
 // drawing here.
+import { stonesTurned } from "./bootRing";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
@@ -261,14 +262,12 @@ export function waveCountdown(p: PartyState, map: ForestMap, time: number): { le
   return { left, gone: 1 - Math.min(1, left / interval), booting: bootLeft > 0, boot: B > 0 ? 1 - Math.min(1, bootLeft / B) : 1, bootLeft };
 }
 
-/** How many of the home ring's `count` speakers have powered on by `time`: one by one round the
- *  ring over the boot (Ed, 2026-10-04), all of them once it's done. */
+/** How many of the home ring's `count` speakers have turned on by `time`: each as the boot's pulse reaches its stone,
+ *  round the ring clockwise from the top (rules/bootRing.ts; Ed, 2026-10-06), all of them once the boot is done. */
 export function speakersOn(p: PartyState, map: ForestMap, time: number, count: number): number {
-  const B = map.tuning.boot.time;
-  if (B <= 0 || time >= p.bootUntil) return count;
-  const k = 1 - (p.bootUntil - time) / B;
-  return Math.max(0, Math.min(count, Math.floor(k * (count + 1))));
+  return Math.min(count, stonesTurned(p, map, time));
 }
+
 
 /** A spawn marker (Ed, v147): a rune stone on the spot where an area's soundsystem will stand,
  *  until the party reaches it; awake when the next wave will take its area, dormant otherwise. */
