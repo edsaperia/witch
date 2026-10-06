@@ -12,6 +12,8 @@ import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, ty
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
 import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
+import { guestSpot, partySpots } from "./partyGuests";
+import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -352,7 +354,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
   // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
-  for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) danceAt(c, a.soundsystem); }
+  for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
@@ -400,8 +402,8 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
     // Its besiegers march wherever she is (stepped from now on as busy, not only once she comes near).
     for (const c of g.creatures) if (c.siege === key && !c.gone) S.busy.add(c.id);
-    // Its happy ones (#87) come and dance round it.
-    for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) danceAt(c, a.soundsystem);
+    // Its happy ones (#87) come and dance: round it, or at the area's party places (rules/partyGuests.ts).
+    for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area
   // of a witch or a party animal (wild never fights wild, and only besiegers go for soundsystems;
@@ -532,6 +534,12 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
 /** How far from the witch creatures are simulated (by their home): at least far enough that one
  *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps
  *  in view. */
+/** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and dances there. */
+export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
+  const spot = guestSpot(c, soundsystem, partySpots(g.map, cell, g.tuning));
+  danceAt(c, spot, spot.r);
+}
+
 export const simRadius = (g: Game) => Math.max(g.tuning.creatureSimRadius, g.tuning.haze.far + 20 + wanderRange(g.map) * 2.5);
 
 export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.camera.lift, g.tuning);

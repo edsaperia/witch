@@ -212,10 +212,12 @@ export function anchorOf(map: ForestMap, cell: [number, number], hx: number, hz:
   return [hx, hz];
 }
 
-/** Somewhere inside the creature's own area, chosen by `r`; its anchor if none is found. */
-export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ">, r: () => number): [number, number] {
+/** Somewhere inside the creature's own area, chosen by `r` (round its home, or round its party spot while it dances); its anchor if none is found. */
+export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & { dancing?: boolean }, r: () => number): [number, number] {
+  // (a dancing one keeps round its party spot, its anchor: rules/partyGuests.ts)
+  const cx = c.dancing ? c.anchorX : c.homeX, cz = c.dancing ? c.anchorZ : c.homeZ;
   for (let i = 0; i < 12; i++) {
-    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * c.range, x = c.homeX + Math.cos(a) * d, z = c.homeZ + Math.sin(a) * d;
+    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * c.range, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d;
     if (inCell(map, x, z, c.cell)) return [x, z];
   }
   return [c.anchorX, c.anchorZ];

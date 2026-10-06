@@ -2,6 +2,9 @@
 // shadow every frame, and the berries growing back and nibbled.
 import type { CreatureArt } from "../assets";
 import { ENRAGED_TINT, dances, expression, lookOf } from "../looks";
+
+/** The party's dances (dealt by id): a bounce, a sway, a hop every other beat, a quick bob. */
+const DANCE_STYLES = ["bounce", "sway", "hop", "bob"] as const;
 import type { RigGear } from "../rig/rigBuild";
 import type { ShadowInstance } from "../shadows";
 import { SpriteBatch, type SpriteInstance } from "../sprites";
@@ -81,7 +84,17 @@ export function drawCreatures(v: View, time = 0): void {
     // Party animals never stand still: a bounce and a sway on the beat when idle, a little
     // bounce as they go. (Wild ones roam, graze and pause.)
     const ph = (bt / beat + (c.id % 4) * 0.25) * Math.PI;
-    const party2 = dances(g, c), dance = party2 ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = party2 && !c.moving ? Math.sin(ph * 0.5) * 0.12 : 0;
+    const party2 = dances(g, c), idle = party2 && !c.moving;
+    // Each guest its own dance, all up-and-down or side to side, never toward anyone, so a dance never
+    // reads as an attack: a bounce, a sway, a hop every other beat, a quick bob; and a foot tapping on the beat (the rig's).
+    let dance = party2 ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = idle ? Math.sin(ph * 0.5) * 0.12 : 0, tap = 0;
+    if (idle) {
+      const style = DANCE_STYLES[c.id % DANCE_STYLES.length], b = bt / beat + (c.id % 4) * 0.25, k = b - Math.floor(b);
+      if (style === "sway") { dance = Math.abs(Math.sin(ph)) * 0.12; sway = Math.sin(ph * 0.5) * 0.22; }
+      else if (style === "hop") { dance = Math.floor(b) % 2 === 0 ? Math.sin(k * Math.PI) * 0.55 : 0; sway = 0; }
+      else if (style === "bob") { dance = Math.abs(Math.sin(ph * 2)) * 0.12; sway = Math.sin(ph * 0.25) * 0.06; }
+      if (style !== "hop") tap = (Math.floor(b) % 2 ? 1 : -1) * (k < 0.4 ? Math.sin((k / 0.4) * Math.PI) : 0); // left foot, right foot
+    }
     // Evolving: glowing white, pulsing on the beat, brighter toward the bar line; then the flash
     // as it becomes its next level, and a pop from 1.3 times its size back to its own.
     const ev = g.berries.evolving.get(c.id), done = v.evolvedAt.get(c.id);
@@ -104,7 +117,7 @@ export function drawCreatures(v: View, time = 0): void {
     if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
     // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
     const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-    if (!(v.rig && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
+    if (!(v.rig && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
       l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     creatureShadows.push({ x: c.x, z: c.z, w: frame.w * v.mpp * 0.7, d: frame.w * v.mpp * 0.25 });
