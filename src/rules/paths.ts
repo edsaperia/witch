@@ -234,6 +234,12 @@ export class PathNetwork {
         }
       }
     });
+    // Fingerposts (the prop generator's, under ?props=gen): where a footpath comes into an area's clearing, by its side (a dead
+    // end's far end leads nowhere, so none there). Last, so they never take another piece's place.
+    if (T.fingerposts) this.lines.forEach(l => {
+      if (l.kind !== "path" || l.pts.length < 3) return;
+      for (const [i, k] of l.deadEnd ? [[1, 1]] : [[1, 1], [l.pts.length - 2, -1]]) add("fingerpost", ...side(l, i, k * (l.half + 1)), 1);
+    });
   }
 
   /** The clear radius of any piece covering (x, z). */

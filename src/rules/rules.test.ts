@@ -1139,6 +1139,10 @@ describe("paths, roads and railways", () => {
     let bridges = 0;
     for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
     expect(bridges).toBeGreaterThan(0);
+    expect(P.pieces.some(p => p.id === "fingerpost")).toBe(false); // fingerposts only with paths.fingerposts (?props=gen)
+    const withPosts = generateMap(123, { ...TUNING, paths: { ...TUNING.paths, fingerposts: true } }).paths.pieces;
+    expect(withPosts.filter(p => p.id === "fingerpost").length).toBeGreaterThan(3);
+    expect(withPosts.filter(p => p.id !== "fingerpost")).toEqual(P.pieces); // placed last: every other piece where it was
     for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
     for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.paths.pieceGap); // never a row of them
     for (const p of P.pieces) expect(map.reserved(p.x, p.z, p.r)).toBe(false); // clear of soundsystems, set pieces, grounds

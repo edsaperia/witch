@@ -3269,6 +3269,9 @@
           "type": "number",
           "minimum": 0
         },
+        "fingerposts": {
+          "type": "boolean"
+        },
         "treesOnBroken": {
           "type": "number",
           "minimum": 0
@@ -3297,6 +3300,7 @@
         "landmarkChance",
         "vergeSpacing",
         "pieceGap",
+        "fingerposts",
         "treesOnBroken",
         "edgeBushes",
         "bushBoost"
