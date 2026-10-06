@@ -8,10 +8,10 @@
 // repeats itself: the share of 4 s stretches whose six-band envelope matches an earlier stretch
 // within 1 dB. Fails on a script error, NaN, clipping (a peak at 0.99) or a silent second (below
 // -50 dB). Writes previews/sfx/run/run[-<out-name>].json and .wav (not committed); with --clips,
-// 30 s mp3s of the boot, the siege and the last wave beside them (needs ffmpeg).
+// 30 s mp3s of the boot, an angry legend, the siege and the last wave beside them (needs ffmpeg).
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync, unlinkSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -81,7 +81,7 @@ const wav = resolve(dir, `run${tag}.wav`);
 writeFileSync(wav, Buffer.concat([h, pcm]));
 const { pcm: _p, bands: _b, ...rest } = r;
 writeFileSync(resolve(dir, `run${tag}.json`), JSON.stringify({ ...rest, repeats: rep }, null, 1));
-if (clips) for (const [what, at] of [["boot", 20], ["siege", 285], ["wave3", 545]]) {
+if (clips) for (const [what, at] of [["boot", 20], ["legend", 128], ["siege", 285], ["wave3", 545]]) {
   const out = resolve(dir, `${what}${tag}.mp3`);
   execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-ss", String(at), "-t", "30", "-i", wav, "-af", "afade=t=in:d=0.5,afade=t=out:st=29:d=1", "-b:a", "128k", out]);
   console.log(`wrote ${out}`);
