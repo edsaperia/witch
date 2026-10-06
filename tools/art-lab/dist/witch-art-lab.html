@@ -5452,6 +5452,34 @@ function groundColours(def, st) {
 }
 
 
+// ---- inlined from art/recipes.js ----
+// Area recipes (#119): an area type as data alone, one object each, so a new area type is a recipe and some tuning, no code.
+// art/areas.js folds every recipe into the registries the game and the art read, as if it had been written there:
+//   the area itself     id, name, creature (a species id), by, leaf (its plants' hue), floor ([kind, hue, sat, val]; the kind
+//                       picks its ground genome, art/ground.js, and its tuft mix, art/tufts.js), text ({ floor, wall, small, big,
+//                       set }: Ed's columns), wall, small, big (props, as art/areas.js P() and tree() write them), set (a set piece)
+//   flags               ponds (more moonlit ponds), wet (its paths run as streams and boardwalks), steep (a flight of stairs may
+//                       stand at its clearing's edge), pathKinds (path kinds it suits besides those whose moods name it)
+//   layout              how its trees and undergrowth stand (art/areas.js AREA_LAYOUTS: pattern, density, clump, glades, ...)
+//   flora               its tree species and palette (art/flora/areas.js AREA_FLORA)
+//   setPiece            [kind, text, size] for art/setpieces.js NEW_SET_PIECES, when it has no `set` of its own
+//   settings            { treeDensity, groundCover } (config/area-types.json's numbers, which win when it names the area)
+//   ground              its own ground genome over its floor kind's (art/ground.js)
+// The creature a recipe names must be a species the game has (art/genome/species.js and the configs keyed by species).
+const AREA_RECIPES = [];
+
+// What is missing from a recipe, if anything.
+function recipeProblems(R) {
+  const out = [];
+  for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R[k] == null) out.push(k);
+  if (R.floor && (!Array.isArray(R.floor) || R.floor.length !== 4)) out.push("floor");
+  if (!R.set && !R.setPiece) out.push("set or setPiece");
+  if (!(R.big?.length)) out.push("big");
+  return out;
+}
+
+
+const RECIPE_LAYOUTS = {};
 
 // [kind, params] shorthands for the prop library below
 const tree = (type, o = {}) => ["tree", { type, ...o }];
@@ -5520,6 +5548,19 @@ const AREAS = [
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("hazel", { trunks: 5, scale: .9, thin: true }), tree("rowan", { minor: true, scale: .8 })] }, // a taller coppice, so the area has something tall
 ];
+// Each area's flags, as data the rules read (src/rules/map.ts AreaType): ponds (more moonlit ponds), wet (its paths run as streams
+// and boardwalks), steep (a flight of stairs may stand at its clearing's edge), pathKinds (path kinds besides those whose moods name it).
+const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, stream: { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
+  ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "cave-mouth": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
+for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find(a => a.id === id), f);
+// The area recipes (art/recipes.js): area types written as data alone, folded in here as if written above.
+for (const R of AREA_RECIPES) {
+  const bad = recipeProblems(R); if (bad.length) throw new Error(`area recipe ${R.id}: missing ${bad.join(", ")}`);
+  const { layout, flora, setPiece, ...area } = R;
+  AREAS.push(area); RECIPE_LAYOUTS[R.id] = layout;
+  if (flora) AREA_FLORA[R.id] = flora;
+  if (setPiece && !R.set) NEW_SET_PIECES[R.id] = setPiece;
+}
 // Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
 for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
@@ -5622,6 +5663,7 @@ const AREA_LAYOUTS = {
   "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .5, .05, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
     "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
 };
+Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS); // the recipes' own
 for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
 // Checks a layout's shape; returns a list of problems (empty when it's sound).
 function layoutProblems(a) {
@@ -8834,8 +8876,9 @@ function pathPieceSprite(id, st = {}, ppm = 16) {
   const [ox, oy] = r.project([0, 0, 0]);
   return { sp, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }
-// The areas each path kind suits, turned round: { areaId: [kinds] }, for an area's layout to name its preferred paths.
-function areaPathKinds() { const out = {}; for (const [k, K] of Object.entries(PATH_KINDS)) for (const a of K.moods) (out[a] = out[a] || []).push(k); out["ravine"] = [...(out["ravine"] || []), "stairs"]; out["rocky-slope"] = [...(out["rocky-slope"] || []), "stairs"]; out["cave-mouth"] = [...(out["cave-mouth"] || []), "stairs"]; out["stream"] = [...(out["stream"] || []), "bridges"]; return out; }
+// The areas each path kind suits, turned round: { areaId: [kinds] }, for an area's layout to name its preferred paths; with each
+// area's own extra kinds (areas: art/areas.js AREAS, an area's `pathKinds`: stairs on the steep ones, bridges over the stream).
+function pathKindsByArea(areas = []) { const out = {}; for (const [k, K] of Object.entries(PATH_KINDS)) for (const a of K.moods) (out[a] = out[a] || []).push(k); for (const A of areas) for (const k of A.pathKinds || []) (out[A.id] = out[A.id] || []).push(k); return out; }
 
 
 
@@ -8850,6 +8893,8 @@ function areaPathKinds() { const out = {}; for (const [k, K] of Object.entries(P
 
 
 
+// The path kinds each area suits, its own extra kinds (stairs, bridges) included.
+function areaPathKinds() { return pathKindsByArea(AREAS); }
 
 
 // ---- inlined from art/dancefloor.js ----
@@ -9548,7 +9593,7 @@ const KNOBS = [
   { k: "clearing", g: "Trees", label: "Clearing size", min: 0, max: 1, step: 0.05, v: 0.55 },
   { k: "depth", g: "Map", label: "Border detail (fractal layers)", min: 0, max: 6, step: 1, v: 4 },
   { k: "areaScale", g: "Map", label: "Area size (screens)", min: 0.6, max: 2, step: 0.05, v: 1 },
-  { k: "areaTypes", g: "Map", label: "Area types", min: 4, max: 30, step: 1, v: 30 },
+  { k: "areaTypes", g: "Map", label: "Area types", min: 4, max: AREAS.length, step: 1, v: AREAS.length }, // (every one, recipes too)
   { k: "density", g: "Trees", label: "Foliage density", min: 0.2, max: 1, step: 0.05, v: 0.55 },
   { k: "clump", g: "Trees", label: "Clumpiness", min: 0, max: 1, step: 0.05, v: 0.6 },
   { k: "gnarl", g: "Trees", label: "Gnarliness", min: 0, max: 1, step: 0.05, v: 0.5 },

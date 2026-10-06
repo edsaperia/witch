@@ -18,6 +18,8 @@ import { AREA_FLORA, floraSlots } from "./flora/areas.js";
 export const SWAYING_PROPS = new Set(["tree", "shrub", "grass", "reeds", "fern", "flowers", "flowerbed", "bramble", "hedge"]);
 import { TALL_KINDS, tallPiece } from "./tall.js";
 import { groundTile } from "./ground.js";
+import { AREA_RECIPES, recipeProblems } from "./recipes.js";
+const RECIPE_LAYOUTS = {};
 import { propPiece, propFor } from "./props/generator.js";
 
 // [kind, params] shorthands for the prop library below
@@ -87,6 +89,19 @@ export const AREAS = [
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("hazel", { trunks: 5, scale: .9, thin: true }), tree("rowan", { minor: true, scale: .8 })] }, // a taller coppice, so the area has something tall
 ];
+// Each area's flags, as data the rules read (src/rules/map.ts AreaType): ponds (more moonlit ponds), wet (its paths run as streams
+// and boardwalks), steep (a flight of stairs may stand at its clearing's edge), pathKinds (path kinds besides those whose moods name it).
+const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, stream: { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
+  ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "cave-mouth": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
+for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find(a => a.id === id), f);
+// The area recipes (art/recipes.js): area types written as data alone, folded in here as if written above.
+for (const R of AREA_RECIPES) {
+  const bad = recipeProblems(R); if (bad.length) throw new Error(`area recipe ${R.id}: missing ${bad.join(", ")}`);
+  const { layout, flora, setPiece, ...area } = R;
+  AREAS.push(area); RECIPE_LAYOUTS[R.id] = layout;
+  if (flora) AREA_FLORA[R.id] = flora;
+  if (setPiece && !R.set) NEW_SET_PIECES[R.id] = setPiece;
+}
 // Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
 for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 export const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
@@ -189,6 +204,7 @@ export const AREA_LAYOUTS = {
   "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .5, .05, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
     "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
 };
+Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS); // the recipes' own
 for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
 // Checks a layout's shape; returns a list of problems (empty when it's sound).
 export function layoutProblems(a) {

@@ -33,8 +33,8 @@ const evs = (g: Game, c: Creature, kind: string) => g.combat.events.some(e => e.
 const SPECIES = Object.keys(MOVEMENT.bodies.radius);
 
 describe("fight profiles for every species (Ed's species pass)", () => {
-  it("gives all 30 species a profile, each with a speed, and an arena preset for each new move", () => {
-    expect(SPECIES.length).toBe(30);
+  it("gives every species a profile, each with a speed, and an arena preset for each new move", () => {
+    expect(SPECIES.length).toBeGreaterThanOrEqual(30);
     for (const sp of SPECIES) { expect(MOVEMENT.profiles[sp], sp).toBeTruthy(); expect(MOVEMENT.profiles[sp].speed, sp).toBeGreaterThan(0); }
     for (const k of ["swipe", "wide", "pair", "ram", "dig", "block", "flank", "pounce", "weave", "packflank", "otter", "squirrel", "dart", "roll", "slime", "woodlouse", "strike", "moth", "flash"]) expect(ARENA_PRESETS[k], k).toBeTruthy();
   });

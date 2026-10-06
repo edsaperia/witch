@@ -33,6 +33,8 @@ export interface AreaType {
   groundCover: { density: number; kinds: string[] };
   /** How its vegetation is arranged (art/areas.js AREA_LAYOUTS): pattern, density, clump, undergrowth... */
   layout: AreaLayout;
+  /** Its flags (art/areas.js; an area recipe's own): more moonlit ponds; wet ground (streams and boardwalks for paths); steep (stairs may stand). */
+  ponds: boolean; wet: boolean; steep: boolean;
 }
 
 export interface AreaLayout {
@@ -45,14 +47,15 @@ export interface AreaLayout {
   decor?: { rate: number; ruins: number; rocks: number; freak: number; lake: number; modern: number };
 }
 
-interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout }
+interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout; ponds?: boolean; wet?: boolean; steep?: boolean; settings?: { treeDensity?: number; groundCover?: { density: number; kinds: string[] } } }
 const settings = (rawTypes as { types: Record<string, { treeDensity: number; groundCover?: { density: number; kinds: string[] } }> }).types;
 export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).map(a => ({
   id: a.id, name: a.name, creature: a.creature, text: a.text,
   setPiece: a.set ? a.text.set ?? "a set piece" : "", hasWalls: !!a.wall?.length,
-  floor: [a.floor[1], a.floor[2], a.floor[3]], treeDensity: settings[a.id]?.treeDensity ?? 1,
-  groundCover: settings[a.id]?.groundCover ?? { density: 0.5, kinds: ["blades"] },
+  floor: [a.floor[1], a.floor[2], a.floor[3]], treeDensity: settings[a.id]?.treeDensity ?? a.settings?.treeDensity ?? 1, // (an area recipe carries its own settings)
+  groundCover: settings[a.id]?.groundCover ?? a.settings?.groundCover ?? { density: 0.5, kinds: ["blades"] },
   layout: a.layout ?? { pattern: "scatter", density: 0.6, clump: 0.3, undergrowth: 0.5 },
+  ponds: !!a.ponds, wet: !!a.wet, steep: !!a.steep,
 }));
 /** Home's look (Ed, 2026-10-05: "its own custom floor; a pleasant green meadow with flowers"; party
  *  decorations instead of trees): its ground and flora are its own (art/areas.js HOME_AREA), not one
@@ -64,7 +67,7 @@ export const LOOKS: readonly AreaType[] = [...AREA_TYPES, {
   id: H_.id, name: H_.name, creature: AREA_TYPES[0].creature, text: H_.text, setPiece: "", hasWalls: false,
   floor: [H_.floor[1], H_.floor[2], H_.floor[3]], treeDensity: 0,
   groundCover: settings.home?.groundCover ?? { density: 0.9, kinds: ["blades", "clover"] },
-  layout: { pattern: "scatter", density: 0, clump: 0.3, undergrowth: 0 },
+  layout: { pattern: "scatter", density: 0, clump: 0.3, undergrowth: 0 }, ponds: false, wet: false, steep: false,
 }];
 
 export interface AreaSample {
