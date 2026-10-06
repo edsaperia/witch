@@ -7,7 +7,7 @@ import { ENRAGED_TINT, dances, expression, lookOf } from "../looks";
 const DANCE_STYLES = ["bounce", "sway", "hop", "bob"] as const;
 import type { RigGear } from "../rig/rigBuild";
 import type { ShadowInstance } from "../shadows";
-import { SpriteBatch, type SpriteInstance } from "../sprites";
+import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { beatTime } from "../../rules/beat";
 import { bossBreath } from "../leash";
 import { dormant } from "../../rules/game";
@@ -102,8 +102,8 @@ export function drawCreatures(v: View, time = 0): void {
     // Asleep, its own sleeping form (art/legends.js), drawn once it's baked; until then the awake one sunk, as before.
     const slept = sleeping ? v.assets.sleepArt(c.species) : undefined;
     // Lain down asleep (more than half way: the rig, where it draws, carries it there and back), its nap (art/naps.js), its level's frames.
-    const napped = !st && lying > 0.5 ? v.assets.napArt(c.species) : undefined;
-    const art = napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = napped ? `nap-${c.species}` : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
+    const napped = !st && lying > 0.5 ? v.assets.napArt(c.species, party ? { id: c.id, colour: look === "leashed" ? sigilColour(c.species) : null } : undefined) : undefined; // (a party animal asleep in its party gear: Ed, 2026-10-06)
+    const art = napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = napped ? (party ? `nap-${look === "happy" ? "happy" : "party"}-${c.id}` : `nap-${c.species}`) : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
     if (!art) continue;
     arts.set(key, art);
     const fi = slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37)) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * 0.3), c.away), frame = art.atlas.frames[fi]; // (asleep: a slow breath, in and out)
@@ -156,14 +156,21 @@ export function drawCreatures(v: View, time = 0): void {
     // ground and no moss tint over its own. Getting up or lying down (render/legendSleep.ts) the rig draws it, sunk a little and
     // mossed by how far asleep it is; so does the baked frame, sunk, until the rig's parts are ready.
     const form = (!!slept && lying >= 0.999) || (!!napped && lying >= 0.999), fh = (frame.h - (frame.pad ?? 0)) * v.mpp * scale;
-    const sunk = form || napped ? -(frame.h - (frame.pad ?? 0) - ((slept ?? napped)!.ground?.[fi] ?? frame.h)) * v.mpp * scale : st ? -W.sink * lying * fh : 0, rigSunk = st ? -(g.tuning.rig?.sink ?? 0.1) * lying * fh : 0;
+    const sunk = form || napped ? -(frame.h - (frame.pad ?? 0) - ((slept ?? napped)!.ground?.[fi] ?? frame.h)) * v.mpp * scale * SPRITE_UNIFORMS.uUp.value.y : // (rows run up the screen, tilted: its ground row exactly on the ground)
+      st ? -W.sink * lying * fh : 0, rigSunk = st ? -(g.tuning.rig?.sink ?? 0.1) * lying * fh : 0;
     if (form && st) glow = -2; else if (lying > 0 && st) glow = -2 - W.moss * lying; // (a legend's moss; a napping creature is itself)
     // Restless in its sleep (#87, a nightmare): it tosses in bursts, and turns over when it's bad (on the rig, its legs paddle and its head jerks).
     const toss = sleeping ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
     if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
-      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, fresh, glow, scale, sx: feel.sx, sy: feel.sy });
+    { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
+      const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1);
+      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k, y: dance + hop + sunk, z: c.z + R.z * k, frame, flip, fresh, glow, scale, sx: feel.sx, sy: feel.sy });
+    }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
-    creatureShadows.push({ x: c.x, z: c.z, w: frame.w * v.mpp * 0.7, d: frame.w * v.mpp * 0.25 });
+    // Its shadow under it as drawn (its sway and a nightmare's tossing too), as big as it's drawn (a legend's size, an evolving
+    // pop); off the ground (a hop, a leap, a tumble) still on the ground under it, smaller the higher it goes.
+    const air = Math.max(0, dance + hop), sk = scale / (1 + air * 0.35);
+    creatureShadows.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), z: c.z, w: frame.w * v.mpp * 0.7 * sk, d: frame.w * v.mpp * 0.25 * sk });
     n++;
   }
   v.rig?.end();
@@ -173,5 +180,5 @@ export function drawCreatures(v: View, time = 0): void {
     b?.set(list);
   }
   v.stats.creatures = n;
-  if (v.game.tuning.shadows.on) v.shadows.set(v.shadowList.concat(creatureShadows));
+  if (v.game.tuning.shadows.on) v.shadows.set(v.shadowList.concat(creatureShadows, v.witchShadows));
 }

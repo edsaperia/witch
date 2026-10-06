@@ -2,7 +2,7 @@
 // must land on a field of her genome, so a new axis the art builders add works without code here.
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
-import { BOXES, boxOf, fromPicker, slot, STEPS, toPicker, upgrade } from "./creator";
+import { applies, BOXES, boxOf, fromPicker, slot, STEPS, toPicker, upgrade } from "./creator";
 import { clear, newWalker, spotAt, type RoomFloor } from "./roomWalk";
 
 describe("the character creator", () => {
@@ -32,6 +32,27 @@ describe("the character creator", () => {
       for (const [axis, lim] of Object.entries(A)) { const [part, key] = slot(axis), v = typeof lim[0] === "number" ? lim[end] : lim[end ? lim.length - 1 : 0]; if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; }
       expect((Art.witchGenomeProblems as (g: unknown) => string[])(g)).toEqual([]);
     }
+  });
+  it("greys out only real sliders on real options, and none on her classic look but her missing cloak's length (Ed, 2026-10-06: every slider does something)", () => {
+    const A = Art.WITCH_AXES as unknown as Record<string, unknown[]>, I = Art.WITCH_INERT as unknown as Record<string, Record<string, string[]>>;
+    const field: Record<string, string> = { hat: "hatShape", broom: "broom", cloak: "cloak" };
+    for (const [axis, by] of Object.entries(I)) {
+      expect(typeof A[axis]?.[0], axis).toBe("number");
+      for (const [f, kinds] of Object.entries(by)) for (const k of kinds) expect(A[field[f]], `${axis}: ${f} ${k}`).toContain(k);
+    }
+    const look = (Art.genomeLook as (g: unknown) => { look: Record<string, unknown> })(upgrade({})).look;
+    for (const axis of Object.keys(A)) if (typeof A[axis][0] === "number") expect(applies(axis, look), axis).toBe(axis !== "cloakLength");
+    expect(applies("broomBend", { ...look, broom: "canoe" })).toBe(false);
+    expect(applies("broomThickness", { ...look, broom: "canoe" })).toBe(true);
+  });
+  it("keeps the broom's thickness in her save, and an old save's broom as thick as hers", () => {
+    const g = upgrade({ broom: { kind: "drone", length: 1.2, bend: 0, bristles: 1 } });
+    expect(g.broom.thickness).toBe(1);
+    g.broom.thickness = 1.8;
+    const back = upgrade(JSON.parse(JSON.stringify(g)));
+    expect(back.broom.thickness).toBe(1.8);
+    expect((Art.genomeLook as (g: unknown) => { look: Record<string, unknown> })(back).look.broomThickness).toBe(1.8);
+    expect((Art.witchGenomeProblems as (g: unknown) => string[])({ ...back, broom: { ...back.broom, thickness: 9 } })).toEqual(["broomThickness 9"]);
   });
   it("picks colours in 256 steps that come back to the same steps", () => {
     for (let i = 0; i < STEPS; i += 17) for (const [sh, gr] of [[0, 0], [80, 0], [153, 0], [200, 0], [255, 0], [100, 128], [60, 255]]) {
