@@ -18,9 +18,10 @@ import { cellKey } from "./rules/party";
 import { areaUnderWitch, interpolated, joinParty, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
+import { awaitingSpell, clockSeconds, clockText } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
-import { Input } from "./platform/input";
+import { ACTION_BAR, Input } from "./platform/input";
 import { View } from "./render/view";
 import { bendPoint, groundHeight, placed } from "./render/height";
 import { Vector3 } from "three";
@@ -33,6 +34,7 @@ import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
+import { StallLog } from "./platform/stallLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
@@ -211,7 +213,7 @@ if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
-{ const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
+{ const artStyle = params.get("style") ?? "bold"; if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // bold by default (Ed, 2026-10-06: "I think I prefer bold style"); ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
 if (propsGen) { style.propGen = 1; tuning.partyObjects.generated = true; } // the prop generator (by default; ?props=hand turns it off): the prop generator (art/props/) stands in for the areas' stones, cairns, pools, stumps, logs, fungi and henges, several shapes of each, and the party's generated bunting, balloons and lanterns for the hand-made ones (carried to the art worker in the style, to the rules in the tuning)
 if (params.get("texture") === "0") style.texture = 0; // ?texture=0: creatures as before their fur, feathers and scales (art/genome/texture.js), to compare
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
@@ -233,6 +235,16 @@ if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
 const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
+/** Where a dodge would put her now (toward the cursor, rules/dash.ts), in client pixels, for the reticle's mark. */
+const landV = new Vector3();
+function dashLanding(): { x: number; y: number } | null {
+  const a = input.lastAim, D = game.buffs.tuning.dash, W = game.witch;
+  if (!a || !D.toCursor || W.mode !== "ground") return null;
+  const l = Math.hypot(a.x, a.z), dx = l >= D.aimDead ? a.x / l : W.facing, dz = l >= D.aimDead ? a.z / l : 0;
+  placed(landV.set(W.x + dx * D.distance, 0, W.z + dz * D.distance)).project(view.camera);
+  const r = canvas.getBoundingClientRect();
+  return { x: r.left + (landV.x * 0.5 + 0.5) * r.width, y: r.top + (-landV.y * 0.5 + 0.5) * r.height };
+}
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
@@ -334,41 +346,47 @@ const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
-const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector<HTMLElement>(".fill")!, waveLabel = waveEl.querySelector<HTMLElement>(".label")!;
-/** The wave countdown bar: empties toward the next wave. */
+const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!, clockAsk = clockEl.querySelector<HTMLElement>(".ask")!;
+/** The prompt to cast the party spell, with its key on this device (the spell's binding: R, gamepad B, the touch spell button). */
+const spellPrompt = () => document.body.classList.contains("touch") ? "tap spell to cast the party spell and start" : `press ${ACTION_BAR.find(s => s.action === "spell")?.key ?? "R"} to cast the party spell and start`;
+/** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
+ *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
 function waveHud(): void {
   const cd = waveCountdown(game.party, game.map, game.clock.time);
-  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
+  clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
+  const now = clockText(clockSeconds(game.party, game.clock.time));
+  if (clockT.textContent !== now) clockT.textContent = now;
+  // before the party spell (Ed, 2026-10-06: the game starts when she casts it), a prompt to cast it, with its key
+  const ask = awaitingSpell(game.party) && !game.clock.paused;
+  clockEl.classList.toggle("waiting", ask);
+  if (ask && clockAsk.textContent !== spellPrompt()) clockAsk.textContent = spellPrompt();
+  clockEl.classList.toggle("paused", game.clock.paused);
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
-  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
-  // (only in debug: the art review's round 1 found it sitting on the art; the next stone's ring carries the countdown)
-  waveLabel.textContent = debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
-  waveEl.classList.toggle("paused", game.party.paused);
-  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word by the bar.
+  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
+  clockLabel.textContent = debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
+  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word under the clock.
   if (!bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
     bootShown = true;
     const pop = document.createElement("div");
     pop.className = "boot-pop";
     pop.textContent = `speakers up · wave 1 in ${clock(cd.left)}`;
-    waveEl.append(pop);
+    clockEl.append(pop);
     setTimeout(() => pop.remove(), 4000);
   }
 }
 let bootShown = false;
-// A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
-// bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
+// A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner; the clock flashes and the seconds taken off pop out
+// under it ("−60 s", "wave now!"), and the wave pointer's ring jumps on.
 let lossShown = -1;
 function showLoss(e: WaveEvent): void {
   lossShown = e.at;
-  waveEl.classList.remove("lost"); void waveEl.offsetWidth; waveEl.classList.add("lost"); // (restart the animation)
-  waveHud(); // (the bar eases down to its new countdown)
+  clockEl.classList.remove("lost"); void clockEl.offsetWidth; clockEl.classList.add("lost"); // (restart the animation)
   const pop = document.createElement("div");
   pop.className = "loss-pop";
   pop.textContent = e.left <= 0 ? "wave now!" : `\u2212${Math.round(e.cut)} s`;
-  pop.style.bottom = `${Math.min(100, (e.left / tuning.party.interval) * 100)}%`;
-  waveEl.append(pop);
+  clockEl.append(pop);
   setTimeout(() => pop.remove(), 1800);
-  setTimeout(() => { if (lossShown === e.at) waveEl.classList.remove("lost"); }, 900);
+  setTimeout(() => { if (lossShown === e.at) clockEl.classList.remove("lost"); }, 900);
 }
 let debugOn = params.has("debug");
 debugEl.classList.toggle("on", debugOn);
@@ -529,6 +547,9 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) last 
 let lastDraw = 0;
 let last = 0;
 const frameStats = new FrameStats(view.renderer.getContext());
+// Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
+const stallLog = new StallLog();
+playtest.stalls = () => stallLog.stalls;
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
@@ -548,7 +569,9 @@ function frame(now: number): void {
   c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
+  const step0 = performance.now();
   stepGame(game, c, dt);
+  const stepMs = performance.now() - step0;
   // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
   if (game.over && !overShown) {
     overShown = true;
@@ -556,13 +579,16 @@ function frame(now: number): void {
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
+  const log0 = performance.now();
   playtest.update();
+  const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   lastMix = musicMix(game, game.witch);
-  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused);
+  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused, tuning.music);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
+  const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
   if (!ready) return;
   for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
   waveHud();
@@ -574,8 +600,9 @@ function frame(now: number): void {
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   frameStats.endGpu();
-  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over);
+  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over, dashLanding());
   frameStats.work(performance.now() - work0);
+  if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   applyShake();
   freeze.update();
   // The overlay, four times a second (a new text every frame was a page layout every frame), with
@@ -585,6 +612,7 @@ function frame(now: number): void {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
       ...frameStats.lines(),
+      stallLog.line(),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,

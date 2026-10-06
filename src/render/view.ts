@@ -10,12 +10,13 @@ import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf, STEP } from "../rules/game";
-import { AREA_TYPES, HOME_LOOK } from "../rules/map";
+import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
+import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
 import { Ride } from "./ride";
@@ -44,7 +45,8 @@ import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
-import { MusicIndicator, StoneIndicator } from "./indicator";
+import { StoneIndicator } from "./indicator";
+import { leyPulse, pointerShown } from "../rules/leypulse";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
@@ -99,6 +101,11 @@ export class View {
   private camLift = 0;
   /** The night sky that shows over the bend, in treetop mode. */
   private sky: Sky;
+  /** The moonlight as the style and mood set it, before the moon's colour tints it (rules/moon.ts). */
+  private moonBase = new THREE.Vector3();
+  private moonUpBase = new THREE.Vector3();
+  /** Seconds added to game time for the moon only (previews: a time-lapse of its phases, way and colours). */
+  moonShift = 0;
   /** Real clouds over the bend, with lightning. */
   private clouds: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
@@ -164,7 +171,6 @@ export class View {
   /** The party objects strewn over partified areas (#38). */
   partyObjects: PartyObjectsView;
   private borders: BorderView;
-  private music = new MusicIndicator(document.body);
   private nextStones: StoneIndicator[] = [];
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
@@ -243,6 +249,7 @@ export class View {
       LIGHT_UNIFORMS.uAmb.value.multiplyScalar(2);
       LIGHT_UNIFORMS.uGlowPower.value = 0;
     }
+    this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome);
     this.assets.crownShare = t.trunkFade.crownShare;
     {
@@ -253,7 +260,7 @@ export class View {
     useHeightField(this.heights);
     this.heights.follow(game.witch.x, game.witch.z);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
-    this.sky = new Sky(t.sky);
+    this.sky = new Sky(t.sky, t.moon.disc);
     this.scene.add(this.sky.mesh);
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);
@@ -456,6 +463,8 @@ export class View {
   nibbles: { x: number; z: number; at: number }[] = [];
   /** When each party animal evolved (game time): the flash, the pop and the sparkles. */
   readonly evolvedAt = new Map<number, number>();
+  /** Each area legend's lying down and getting up, as the view has seen its state change (render/legendSleep.ts). */
+  readonly legendSleeps = new Map<number, import("./legendSleep").SleepTrack>();
   /** Each creature's distance walked as drawn, for its baked walk's frames (view/creatures.ts strideFrame). */
   readonly strides = new Map<number, { x: number; z: number; d: number; at: number }>();
   /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
@@ -504,6 +513,16 @@ export class View {
   private frameStart = 0;
   /** Whether the hills' next strip was all worked out last frame. */
   private heightsReady = true;
+  /** The moon now (one moon: rules/moon.ts), and the moonlight tinted a little with its colour (moon.tint). */
+  private updateMoon(g: Game): MoonState {
+    const m = moonState(g.clock.time + this.moonShift, g.seed, g.tuning), k = m.kind === "red" ? g.tuning.moon.bloodTint : g.tuning.moon.tint, P = [0.92, 0.94, 0.86];
+    const r = 1 + (m.rgb[0] / P[0] - 1) * k, gr = 1 + (m.rgb[1] / P[1] - 1) * k, b = 1 + (m.rgb[2] / P[2] - 1) * k, n = 3 / (r + gr + b); // its hue, not its brightness
+    LIGHT_UNIFORMS.uMoon.value.set(this.moonBase.x * r * n, this.moonBase.y * gr * n, this.moonBase.z * b * n);
+    const U = LIGHT_UNIFORMS.uMoonUp.value;
+    U.set(this.moonUpBase.x * r * n, this.moonUpBase.y * gr * n, this.moonUpBase.z * b * n, U.w);
+    return m;
+  }
+
   /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
   private updateSmoke(g: Game, time: number): void {
     const S = this.smoke, t = g.tuning, w = g.witch, R = t.smoke.range;
@@ -550,6 +569,8 @@ export class View {
   /** The drawing's CPU time (ms), eased over the last frames: the work ahead leaves room for it. */
   private drawEst = 0;
 
+  /** The legends' clearings nearest her this frame (reused: no garbage a frame). */
+  private nearRings: LegendClearing[] = [];
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
@@ -587,7 +608,7 @@ export class View {
       this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
-      this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
+      this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));
     }
     this.time("sky");
     const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
@@ -670,6 +691,7 @@ export class View {
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false);
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
+    this.ground.setLegendRings(nearestClearings(g.map.legendClearings, g.witch.x, g.witch.z, this.nearRings));
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
@@ -851,24 +873,29 @@ export class View {
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
-    const df = g.map.dancefloor;
-    this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, this.debugReadouts);
+    // (no cue toward the dancefloor any more: Ed, 2026-10-06, "You can remove the UI icon that points towards the dancefloor")
     this.minimap.update(g.party, w.x, w.z);
-    // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen; only
-    // those (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two").
+    // The wave pointer (Ed, 2026-10-06): toward the ley line's pulse on its way to the next wave's stone (rules/leypulse.ts,
+    // along the link as drawn), 🎶 in its ring as the countdown fills; for a second witch's next stone, its rune as before
+    // (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two"). None while home boots up (Ed,
+    // 2026-10-06: "The wave pointer first appears when bootup finishes"; the dancefloor's boot ring shows the boot), fading
+    // in as the pulse sets off.
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
+      const shown = pointerShown(g.party, g.map, time);
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
         while (list.length < cells.length) list.push(make());
         list.forEach((ind, i) => {
           const c = cells[i];
-          if (!c) { ind.update(this.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
+          ind.fade(shown);
+          if (!c || shown <= 0) { ind.update(this.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
           const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
-          ind.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
+          const pulse = i === 0 ? leyPulse(g.party, g.map, time, this.ley.currentLink()) : null, at = pulse ?? s;
+          ind.update(this.camera, cw, ch, { x: at.x, z: at.z, colour: this.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
         });
       };
-      // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
-      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
+      // Pausing holds the countdown.
+      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone);
     }
     this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
@@ -917,5 +944,3 @@ export class View {
   }
 }
 
-/** Seconds as "4:59" from a minute up, "42 s" under. */
-function mmss(s: number): string { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; }
