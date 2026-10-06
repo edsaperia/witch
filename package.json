@@ -10,7 +10,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "smoke": "node tools/smoke/smoke.cjs",
-    "smoke:quick": "node tools/smoke/quick.cjs"
+    "smoke:quick": "node tools/smoke/quick.cjs",
+    "bench": "node tools/bench/run.mjs",
+    "bench:compare": "node tools/bench/compare.cjs"
   },
   "dependencies": {
     "three": "0.186.1"

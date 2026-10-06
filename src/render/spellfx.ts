@@ -10,6 +10,7 @@
 // action bar: render/actionbar.ts.)
 import * as THREE from "three";
 import { spellActive } from "../rules/spells";
+import { rng } from "../rules/random";
 import type { Game } from "../rules/game";
 import { groundPoints } from "./height";
 
@@ -26,6 +27,8 @@ export class SpellFx {
   private col = new Float32Array(MAX * 4);
   private pool = new Float32Array(MAX * F);
   private next = 0;
+  /** Their scatter, seeded (not Math.random), so a run draws the same motes every time (the bench harness compares pictures pixel by pixel). */
+  private rand = rng(9157);
   private lastSpark = 0;
   private lastBlink = -Infinity;
 
@@ -48,7 +51,7 @@ export class SpellFx {
 
   /** `y`: her height (metres) where the trail streams from. */
   update(g: Game, time: number, y: number): void {
-    const w = g.witch, r = Math.random;
+    const w = g.witch, r = this.rand;
     // The broom: flying, a small amber spark from its bristles (behind her) now and then (trail.sparks): sparse, her magic beside
     // the trail's colour of where she is; more only in the speed boost, and a few as she blinks (the art director, #237).
     const speed = Math.hypot(w.vx, w.vz), D = g.witches[0].dash, boost = spellActive(g.spells, time), dashing = time >= D.at - 1 / 60 && time < D.at + 0.25;
