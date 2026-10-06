@@ -22,7 +22,7 @@ export interface TrailTuning {
   curve: number;
   /** Its width (m) on the ground and over the treetops. */
   width: number[];
-  /** Its brightness, and how quickly it fades along its length (the power of what's left). */
+  /** Its brightness, and how it fades along its length (eased out: 1 - t^fade, squared; its width tapering with it). */
   bright: number;
   fade: number;
   /** Seconds its length takes to grow to a new speed's, and to shrink back; and its colour to change to a new area's. */
@@ -33,7 +33,7 @@ export interface TrailTuning {
   sparks: boolean;
 }
 
-export const TRAIL_DEFAULT: TrailTuning = { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 2.6], bright: 1, fade: 1, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true };
+export const TRAIL_DEFAULT: TrailTuning = { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 1.7], bright: 1, fade: 2, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true };
 
 const DYNAMIC = ["position", "aDir", "aT", "aS", "aCol"];
 /** Points of her path kept (enough for the longest trail at its spacing). */
@@ -43,21 +43,22 @@ const VERT = /* glsl */ `
 attribute vec2 aDir;
 attribute float aSide, aT, aS;
 attribute vec3 aCol;
-uniform float uTrailWidth;
+uniform float uTrailWidth, uFade;
 varying float vSide, vT, vS;
 varying vec3 vCol;
 ${HEIGHT_VERT_GLSL}
 void main() {
   vec2 side = vec2(-aDir.y, aDir.x);
-  // narrowing toward the tail, and a little at her broom
-  float w = uTrailWidth * (1.0 - 0.55 * aT) * (0.6 + 0.4 * smoothstep(0.0, 0.08, aT));
+  // narrowing with its fade (the tail a thread, never a cut-off band), and a little at her broom
+  float fade = 1.0 - pow(aT, uFade);
+  float w = uTrailWidth * (0.15 + 0.85 * fade) * (0.6 + 0.4 * smoothstep(0.0, 0.08, aT));
   vec3 p = onGround(vec3(position.x + side.x * aSide * w * 0.5, position.y, position.z + side.y * aSide * w * 0.5));
   vSide = aSide; vT = aT; vS = aS; vCol = aCol;
   gl_Position = clipOf(p);
 }`;
 
 const FRAG = /* glsl */ `
-uniform float uTime, uBright, uFade;
+uniform float uTime, uBright, uFade, uHead;
 varying float vSide, vT, vS;
 varying vec3 vCol;
 float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
@@ -66,9 +67,16 @@ void main() {
   float across = 1.0 - abs(vSide), core = across * across * across, halo = across * across;
   // wisps: the glow thinning and thickening along it, drifting back from her (as the ley lines' do)
   float wisp = 0.72 + 0.28 * ln(vS * 0.3 + uTime * 1.6) * ln(vS * 0.11 - uTime * 0.7 + vSide * 0.6);
-  float fade = pow(max(0.0, 1.0 - vT), uFade);
-  float a = (core * 0.9 + halo * 0.35) * wisp * fade;
-  gl_FragColor = vec4(vCol * a * uBright, 1.0);
+  // eased out: bright for its first third, then thinning quickly to nothing (the art director, #237)
+  float f = 1.0 - pow(min(1.0, vT), uFade), fade = f * f;
+  float a = (core * 0.9 + halo * 0.35) * wisp * fade * uBright;
+  // the area's hue at its full value, never white: only its first metre, at the broom, goes near-white (#237)
+  vec3 hue = vCol / max(0.001, max(vCol.r, max(vCol.g, vCol.b)));
+  float head = 1.0 - smoothstep(0.0, uHead, vT);
+  vec3 c = mix(hue, vec3(1.0), 0.65 * head * core) * a;
+  float m = max(c.r, max(c.g, c.b)), cap = mix(0.82, 1.0, head);
+  if (m > cap) c *= cap / m;
+  gl_FragColor = vec4(c, 1.0);
 }`;
 
 export class WitchTrail {
@@ -84,7 +92,7 @@ export class WitchTrail {
   private ss: Float32Array;
   private col: Float32Array;
   private geo = new THREE.BufferGeometry();
-  private u = { uTime: LIGHT_UNIFORMS.uTime, uTrailWidth: { value: 0.5 }, uBright: { value: 1 }, uFade: { value: 1.6 } };
+  private u = { uTime: LIGHT_UNIFORMS.uTime, uTrailWidth: { value: 0.5 }, uBright: { value: 1 }, uFade: { value: 2 }, uHead: { value: 0.2 } };
   /** Its length now (m), and its colour now (eased toward the area's). */
   private len = 0;
   private rgb = new THREE.Vector3(-1, 0, 0);
@@ -178,6 +186,7 @@ export class WitchTrail {
     this.u.uTrailWidth.value = T.width[0] + (T.width[1] - T.width[0]) * lift;
     this.u.uBright.value = T.bright * 1.7;
     this.u.uFade.value = T.fade;
+    this.u.uHead.value = this.len > 0.01 ? Math.min(1, 1 / this.len) : 1; // (its first metre)
     void time;
   }
 }

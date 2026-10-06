@@ -9,6 +9,7 @@
 // Every mote is in one fixed pool (typed arrays, a ring of MAX): nothing is made per frame. (Their recharge shows on the
 // action bar: render/actionbar.ts.)
 import * as THREE from "three";
+import { spellActive } from "../rules/spells";
 import type { Game } from "../rules/game";
 import { groundPoints } from "./height";
 
@@ -48,9 +49,10 @@ export class SpellFx {
   /** `y`: her height (metres) where the trail streams from. */
   update(g: Game, time: number, y: number): void {
     const w = g.witch, r = Math.random;
-    // The broom: flying, a small amber spark from its bristles (behind her) now and then, more the faster she goes (trail.sparks).
-    const speed = Math.hypot(w.vx, w.vz), D = g.witches[0].dash;
-    if (g.tuning.trail?.sparks !== false && speed > 2 && !(time >= D.at && time < D.until) && time - this.lastSpark > 1 / Math.min(12, speed)) {
+    // The broom: flying, a small amber spark from its bristles (behind her) now and then (trail.sparks): sparse, her magic beside
+    // the trail's colour of where she is; more only in the speed boost, and a few as she blinks (the art director, #237).
+    const speed = Math.hypot(w.vx, w.vz), D = g.witches[0].dash, boost = spellActive(g.spells, time), dashing = time >= D.at - 1 / 60 && time < D.at + 0.25;
+    if (g.tuning.trail?.sparks !== false && speed > 2 && time - this.lastSpark > 1 / (boost || dashing ? Math.min(12, speed) : 2.5)) {
       this.lastSpark = time;
       const ux = w.vx / speed, uz = w.vz / speed;
       this.mote(w.x - ux * 0.9 + (r() - 0.5) * 0.2, y - 0.35 + (r() - 0.5) * 0.2, w.z - uz * 0.9, -ux * 0.4, -0.5 - r() * 0.4, -uz * 0.4, time, 0.4 + r() * 0.3, 0.5, AMBER);
