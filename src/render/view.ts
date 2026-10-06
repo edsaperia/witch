@@ -32,6 +32,7 @@ import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
+import { LOAD_DEFAULT, loadView } from "./load";
 import { InviteView } from "./invites";
 import { stunned } from "../rules/knock";
 import { StateMarks } from "./looks";
@@ -861,6 +862,9 @@ export class View {
       const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - this.trailAt)); this.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, D = g.witches[0].dash;
       this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at);
+      // the load she carries (render/load.ts): read once a frame, for the stack, the threads, her lean and her broom
+      loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
+      const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
     this.actionBar.update(g, ht);
     this.buffHud.update(g, time);
@@ -979,6 +983,12 @@ export class View {
     // Idling into the party, she's drawn in her party pose there instead.
     const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }];
     const hatFrame = bare ? this.assets.witchBare().frames[this.assets.witchHatFrame] : undefined;
+    { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
+      const LV = this.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && this.foot < 0.05 && !this.partyWitchView.herIdle;
+      const fwd = w.facing < 0 ? -1 : 1, k = flying ? LV.load : 0;
+      this.witchBatch.leanU.value.set(fwd * LT.witchLean * k * LV.away, fwd * LT.broomTilt * k, LT.broomBow * k, 0);
+      this.leashView.bristle.on = flying && !hidden;
+    }
     this.witchBatch.set(bare ? [] : her);
     this.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
     // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by

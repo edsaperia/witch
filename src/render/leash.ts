@@ -38,6 +38,7 @@ import { hash2 } from "../rules/random";
 import { emojiOr, sleepyFace } from "./sleepyFace";
 import { FIGHT, profileOf } from "../rules/movement";
 import { hasRune, huntsWitch, runeNear } from "../rules/creatureStates";
+import { LOAD_DEFAULT, newLoadView, type LoadView } from "./load";
 import { LEGENDS, relicGlints } from "../rules/legends";
 import { circleLines, circleShown, legendCircleNear } from "../rules/legendCircle";
 import { witchHeight } from "../rules/witch";
@@ -198,6 +199,9 @@ export class LeashView {
   private stackY = new Map<number, number>();
   private chain: { x: number; z: number; vx: number; vz: number }[] = [];
   private lastTime = 0;
+  /** The load she carries as the art reads it (render/load.ts; the view sets it each frame), and where her broom's bristles are. */
+  load: LoadView = newLoadView();
+  bristle = { x: 0, y: 0, z: 0, on: false };
   private bubbleWitch = document.getElementById("bubble-witch");
   private bubbleCreature = document.getElementById("bubble-creature");
   private v = new THREE.Vector3();
@@ -866,6 +870,7 @@ export class LeashView {
     // one below with lag, so the stack trails behind her flight in proportion to speed, overshoots
     // when she stops or turns, and settles into a gentle idle sway; higher ones swing more.
     const S = t.stack, dt = Math.min(0.1, Math.max(0, time - this.lastTime)), slotPos = new Map<number, THREE.Vector3>();
+    const LV = this.load, LT = t.load ?? LOAD_DEFAULT;
     this.lastTime = time;
     while (this.chain.length < s.stack.length) this.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
     let below = { x: 0, z: 0 }, y = hatTop;
@@ -873,12 +878,14 @@ export class LeashView {
     for (let k = s.stack.length - 1; k >= 0; k--) {
       const id = s.stack[k], c = g.creatures[id], j = s.stack.length - 1 - k, link = this.chain[j]; // j: 0 at the bottom
       const sg = this.sigilOf(c), size = (2 + c.level * 0.4) * S.scale * sg.scale;
-      const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5);
-      const tx = below.x - w.vx * S.trail + idle, tz = below.z - w.vz * S.trail;
+      const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5) * (1 - 0.6 * LV.load);
+      // (under a load it leans toward the pull, each sigil a little further: render/load.ts)
+      const lean = LT.stackLean * LV.load;
+      const tx = below.x - w.vx * S.trail + idle + LV.dx * lean, tz = below.z - w.vz * S.trail + LV.dz * lean;
       link.vx += ((tx - link.x) * S.stiffness - link.vx * S.damping) * dt; link.vz += ((tz - link.z) * S.stiffness - link.vz * S.damping) * dt;
       link.x += link.vx * dt; link.z += link.vz * dt;
       below = link;
-      y += (j === 0 ? S.offset * size : S.gap * size) + size / 2;
+      y += ((j === 0 ? S.offset * size : S.gap * size) + size / 2) * (1 - LT.stackSag * LV.load); // (and sags, its gaps closing)
       // Each sigil eases to its height in the stack, so when the cycle button sends the bottom one
       // to the top (Ed, 2026-10-04) it rises past the others and they settle down a place.
       const rel = y - hatTop, had = this.stackY.get(id), sy = had === undefined ? rel : had + (rel - had) * (1 - Math.exp(-dt * 9));
@@ -1047,8 +1054,10 @@ export class LeashView {
         continue;
       }
       const d = Math.hypot(c.x - lp.x, c.z - lp.z);
-      if (B.thread && d > L.length * 0.85) {
-        const strain = Math.min(1, (d - L.length * 0.85) / L.length), n = Math.min(60, Math.floor(d / 1.2));
+      // (under a load, carried leashes show sooner, taut and brighter: render/load.ts)
+      const ld = s.stack.includes(id) ? this.load.load : 0, LT2 = t.load ?? LOAD_DEFAULT, from0 = 0.85 - (0.85 - LT2.threadFrom) * ld;
+      if (B.thread && d > L.length * from0) {
+        const strain = Math.min(1, (d - L.length * from0) / L.length + ld * 0.5), n = Math.min(60, Math.floor(d / 1.2)), lit = 1 + LT2.threadBright * ld;
         // An upward bow (Ed: "arc upwards a little"), high while it's slack and flattening to a near-straight line as it
         // goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), and the dots march from
         // the creature to the leash point.
@@ -1056,14 +1065,36 @@ export class LeashView {
         for (let i = 1; i < n; i++) {
           const k = (i + 1 - (time * 2) % 1) / n;
           if (k >= 1) continue;
-          this.standing.add(from.x + (c.x - from.x) * k, from.y + (0.5 - from.y) * k + Math.sin(k * Math.PI) * arc, from.z + (c.z - from.z) * k, 0.22, dot, col.r, col.g, col.b, 0.25 + 0.75 * strain);
+          this.standing.add(from.x + (c.x - from.x) * k, from.y + (0.5 - from.y) * k + Math.sin(k * Math.PI) * arc, from.z + (c.z - from.z) * k, 0.22 * (1 + 0.6 * ld), dot, Math.min(1, col.r * lit), Math.min(1, col.g * lit), Math.min(1, col.b * lit), Math.min(1, 0.25 + 0.75 * strain));
         }
       }
     }
+    this.drawStrain(time, dot);
     this.standing.end(); this.flat.end(); this.over.end(); this.solid.end();
     this.bubbles(time, camera, width, height);
     this.drawDreams(camera, width, height);
     this.drawCirclePanel(camera, width, height);
+  }
+
+  /** Her broom straining under a load (render/load.ts): sparks splaying back from its bristles, more the heavier; and over
+   *  the treetops, sinking, a few sparks falling away below her. Each a fixed loop by its index, so nothing is made per frame. */
+  private drawStrain(time: number, dot: number[]): void {
+    const LV = this.load, LT = this.game.tuning.load ?? LOAD_DEFAULT, b = this.bristle, w = this.game.witch;
+    if (!b.on || LV.load <= 0.02) return;
+    const sp = Math.hypot(w.vx, w.vz), bx = sp > 0.3 ? -w.vx / sp : -LV.dx, bz = sp > 0.3 ? -w.vz / sp : -LV.dz;
+    const n = Math.min(24, Math.round(LT.sparks * LV.load));
+    for (let i = 0; i < n; i++) {
+      const life = 0.35 + 0.25 * hash2(i, 1, 41), k = ((time / life) + hash2(i, 2, 41)) % 1, side = (hash2(i, 3, 41) - 0.5) * 2;
+      const r = 0.25 + k * (0.9 + 0.6 * LV.load), fan = side * (0.5 + 0.7 * LV.load);
+      this.standing.add(b.x + (bx - bz * fan) * r, b.y - 0.1 + side * 0.15 * k - 0.4 * k * k, b.z + (bz + bx * fan) * r, 0.16, dot, 1, 0.78, 0.42, (1 - k) * 0.9);
+    }
+    if (LV.sinking > 0.02) {
+      const m = Math.round(10 * LV.sinking);
+      for (let i = 0; i < m; i++) {
+        const k = ((time / 1.3) + hash2(i, 5, 43)) % 1, a = hash2(i, 6, 43) * Math.PI * 2, r = 0.4 + 0.8 * hash2(i, 7, 43);
+        this.over.add(w.x + Math.cos(a) * r, b.y - 0.3 - k * 3.5, w.z + Math.sin(a) * r, 0.22, dot, 1, 0.85, 0.55, (1 - k) * LV.sinking);
+      }
+    }
   }
 
   /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
