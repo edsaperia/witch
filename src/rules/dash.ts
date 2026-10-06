@@ -6,6 +6,7 @@
 // shortened to the furthest clear spot along its line. No drawing here.
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
+import { keepIn, type Bounds } from "./mapShape";
 
 export interface DashState {
   /** Game time the current dash began, and ends. */
@@ -61,7 +62,6 @@ export function dashCharge(d: DashState, time: number): number {
   return total > 0 ? Math.max(0, Math.min(1, (time - d.at) / total)) : 1;
 }
 
-type Bounds = { minX: number; maxX: number; minZ: number; maxZ: number };
 
 /** The dash button: blink if she's on the ground, off her seat and it's ready, toward the cursor
  *  (`aimX`, `aimZ`: the ground under it from her, metres; 0, 0 with none) or, with none, the way she
@@ -84,10 +84,9 @@ export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: num
   d.readyAt = d.charges >= 1 ? time + chain : d.chargeAt;
   d.fromX = w.x; d.fromZ = w.z;
   // The furthest clear spot along the line, in half-metre steps back from the full distance.
-  const inside = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
   d.toX = w.x; d.toZ = w.z;
   for (let r = D.distance; r > 0; r -= 0.5) {
-    const x = inside(w.x + d.dx * r, bounds.minX, bounds.maxX), z = inside(w.z + d.dz * r, bounds.minZ, bounds.maxZ);
+    const { x, z } = keepIn(bounds, w.x + d.dx * r, w.z + d.dz * r);
     if (clear(x, z)) { d.toX = x; d.toZ = z; break; }
   }
   d.pending = true;

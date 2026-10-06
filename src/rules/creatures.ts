@@ -9,6 +9,7 @@ import { questFor, type Quest } from "./quest";
 import { rng } from "./random";
 import { countScale, startCount } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
+import { isInside } from "./mapShape";
 import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
 import type { Fight } from "./combat";
@@ -87,9 +88,11 @@ export interface Creature {
   /** A charging legend's long charge (rules/combat.ts, legends.json charge): winding up, running,
    *  braking in its arc, or walking home; its heading (radians), speed, target, whom it has hit. */
   run?: { phase: "windup" | "run" | "brake" | "home"; at: number; angle: number; speed: number; turn: 1 | -1; target: import("./combat").Target | null; tx: number; tz: number; ran: number; hit: number[]; fromX: number; fromZ: number; decel?: number };
-  /** Where a legend lies (it charges from here, and walks back here). */
+  /** Where a legend lies: where it spawned (it charges from here, and walks back here). */
   lairX?: number;
   lairZ?: number;
+  /** A legend gone back to sleep away from where it lay, walking home to lie down there (Ed, 2026-10-06; rules/legends.ts). */
+  homing?: boolean;
   charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number };
   /** Dug in (a badger) or braced behind its tail (a beaver) until then: rooted, taking less. */
   dug?: number;
@@ -132,6 +135,10 @@ export interface Creature {
   /** Let go when its witch was knocked out (Ed, 2026-10-04): neutral, walking to this area of its
    *  own kind, where it becomes an ordinary wild creature of that area. */
   wanderTo?: { x: number; z: number; cell: [number, number] };
+  /** The legend's clearing it was born in (Ed, 2026-10-06: "Legend circles should spawn with a ... baby in them, which
+   *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out, dancing there
+   *  once its area's party comes; leashed, it follows her (keepsToCircle). */
+  circle?: { x: number; z: number; r: number; legendX: number; legendZ: number };
   /** When it was last healed to full (a berry, or being invited): the view's heal pop. */
   healedAt?: number;
   /** An area's legend (Ed, 2026-10-04: every area has one, sleeping): a mini-boss once awake. */
@@ -188,7 +195,7 @@ function legendSpot(map: ForestMap, cell: [number, number], r: () => number): [n
   if (lc) return [lc.legend.x, lc.legend.z];
   const site = map.siteOf(cell[0], cell[1]), range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, site.x, site.z, range);
   const base = { cell, homeX: site.x, homeZ: site.z, range, anchorX, anchorZ }, B = map.bounds;
-  const inside = (px: number, pz: number) => px > B.minX + 15 && px < B.maxX - 15 && pz > B.minZ + 15 && pz < B.maxZ - 15;
+  const inside = (px: number, pz: number) => isInside(B, px, pz, 15);
   let best = -1, at: [number, number] = [anchorX, anchorZ];
   for (let i = 0; i < 9; i++) { const [px, pz] = pointInArea(map, base, r), dd = Math.hypot(px - site.x, pz - site.z); if (inside(px, pz) && dd > best) { best = dd; at = [px, pz]; } }
   return at;
@@ -222,7 +229,23 @@ export function anchorOf(map: ForestMap, cell: [number, number], hx: number, hz:
 }
 
 /** Somewhere inside the creature's own area, chosen by `r` (round its home, or round its party spot while it dances); its anchor if none is found. */
-export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & { dancing?: boolean }, r: () => number): [number, number] {
+/** Whether it keeps to its legend's clearing: the circle's baby, wild or happy (dancing there once its area's party
+ *  comes), but not while leashed (Ed, 2026-10-06: "if it is invited and becomes happy, it continues to stay in the
+ *  circle as before"; "happy creatures don't follow you - only leashed creatures do"; "Happy Circle baby should stay
+ *  in its circle, though it can dance there"). */
+export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "enraged">>) => !!c.circle && !c.leashed && !c.enraged;
+
+/** A spot on a clearing's open floor: its front (south) part, clear of the legend's lair at its top. */
+export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => number): [number, number] {
+  for (let i = 0; i < 8; i++) {
+    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * k.r * 0.75, x = k.x + Math.cos(a) * d, z = k.z + Math.sin(a) * d;
+    if (z > k.z - k.r * 0.15 && Math.hypot(x - k.legendX, z - k.legendZ) > k.r * 0.35) return [x, z];
+  }
+  return [k.x, k.z + k.r * 0.3];
+}
+
+export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged">> & { dancing?: boolean }, r: () => number): [number, number] {
+  if (keepsToCircle(c)) return pointInCircle(c.circle!, r); // (the circle's baby, wild or happy)
   // (a dancing one keeps round its party spot, its anchor: rules/partyGuests.ts)
   const cx = c.dancing ? c.anchorX : c.homeX, cz = c.dancing ? c.anchorZ : c.homeZ;
   for (let i = 0; i < 12; i++) {
@@ -237,7 +260,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
   // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
   const [hx, hy] = map.centreCell;
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (home) continue;
@@ -251,8 +274,17 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     if (map.hasLegend && !map.hasLegend(cx, cy)) continue; // (legends in legends.share of the areas: Ed, 2026-10-06)
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = "asleep"; L.stateAt = 0;
+    L.lairX = L.x; L.lairZ = L.z; // (where it lies: home, which it goes back to before it sleeps again; Ed, 2026-10-06)
     L.quest = questFor(map, cell, L.species);
     out.push(L);
+    // A wild baby of its own kind in its clearing (Ed, 2026-10-06), keeping to it: so the legend starts with kin. Like any
+    // baby: happy once its area's soundsystem comes (it dances, in its circle), off home for good once that falls (game.ts).
+    const lc = map.legendClearing(cx, cy);
+    if (lc) {
+      const circle = { x: lc.x, z: lc.z, r: lc.r, legendX: lc.legend.x, legendZ: lc.legend.z }, B = makeCreature(map, cell, 0, out.length, r, pointInCircle(circle, r));
+      B.circle = circle; B.tx = B.x; B.tz = B.z;
+      out.push(B);
+    }
   }
   return out;
 }
@@ -264,6 +296,14 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
   if (!inOwnArea(map, c, c.x, c.z)) {
     const dx = c.anchorX - c.x, dz = c.anchorZ - c.z, d = Math.hypot(dx, dz) || 1, step = Math.min(d, c.speed * 2 * dt);
     c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = c.anchorX; c.tz = c.anchorZ; c.rest = 0;
+    if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
+    c.moving = true; c.walk += dt * 4;
+    return;
+  }
+  // The circle's baby, out of its circle (pushed, knocked, back from fleeing or a fight, off the leash): it walks back in.
+  if (keepsToCircle(c) && Math.hypot(c.x - c.circle!.x, c.z - c.circle!.z) > c.circle!.r) {
+    const k = c.circle!, dx = k.x - c.x, dz = k.z + k.r * 0.3 - c.z, d = Math.hypot(dx, dz) || 1, step = Math.min(d, c.speed * dt);
+    c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = k.x; c.tz = k.z + k.r * 0.3; c.rest = 0;
     if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
     c.moving = true; c.walk += dt * 4;
     return;

@@ -71,7 +71,7 @@ else {
     }
     function pickRecruit() {
       let best = null, bs = Infinity;
-      for (let i = 0; i < map.n; i++) for (let j = 0; j < map.n; j++) {
+      for (const [i, j] of map.cells) {
         const cell = [i, j], key = cellKey(cell);
         if (g.party.areas.has(key) || g.party.ruined?.has(key)) continue;
         const L = legendOf.get(key); if (L !== undefined && g.creatures[L].legendState === "angry") continue; // (keep out of an angry legend's area)
@@ -105,11 +105,13 @@ else {
         if (defending) {
           const cell = left < 50 ? next : waves[waves.length - 1]?.cell ?? next, key = cellKey(cell), s = spot(cell);
           if (left < 50) landWave = g.party.wave + 1;
-          if (goTo(s.x, s.z, true)) {
-            // A quest she can do: the creature this area's legend dreams of, on her stack: put it down here.
-            const L = legendOf.get(key), q = L !== undefined ? g.creatures[L].quest : null;
-            const st = w.leash.stack;
-            const qi = q && g.creatures[L].questOpen ? st.findIndex(id => g.creatures[id].species === q.species && g.creatures[id].level === q.level) : -1;
+          // A quest she can do: the creature this area's legend dreams of, on her stack: put it down
+          // in the legend's clearing (Ed, 2026-10-06: quest sigils count only in its circle), on its open floor.
+          const L = legendOf.get(key), q = L !== undefined ? g.creatures[L].quest : null;
+          const st = w.leash.stack;
+          const qi = q && g.creatures[L].questOpen ? st.findIndex(id => g.creatures[id].species === q.species && g.creatures[id].level === q.level) : -1;
+          const lc = qi >= 0 ? g.map.legendClearing(cell[0], cell[1]) : null, at = lc ? { x: lc.x, z: lc.z + lc.r * 0.35 } : s;
+          if (goTo(at.x, at.z, true)) {
             if (qi >= 0 && qi !== st.length - 1) { st.push(st.splice(qi, 1)[0]); } // (cycling the stack, as the sigil button does in the treetops)
             if (qi >= 0) sigil = true;
             else if (!parkedAt.has(key) && st.length > KEEP) { sigil = true; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }

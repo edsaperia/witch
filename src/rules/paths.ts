@@ -126,7 +126,8 @@ export class PathNetwork {
         if (seen.has(pair)) continue;
         seen.add(pair);
         const [bx, by] = nk.split(",").map(Number);
-        if (bx < 0 || by < 0 || bx >= map.n || by >= map.n) continue;
+        if (!map.playable(bx, by) && !map.inBuffer(bx, by)) continue; // (where she can fly)
+        if (map.shape === "circle" && !map.playable(ax, ay) && !map.inBuffer(ax, ay)) continue;
         if (hash2(ax * 31 + bx, ay * 31 + by, map.seed + 811) > t.linkChance) continue;
         const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
         if (a) this.lines.push({ kind: "path", pts: this.meander(a, c, r), half: t.pathHalf });
@@ -198,7 +199,7 @@ export class PathNetwork {
     // its own at the edge of the clearing of a ravine, rocky slope, cave mouth or stone shrine
     // (seeded which), clear of the paths and everything placed for gameplay.
     const homes: [number, number, number][] = []; // the steep area types (art/areas.js flags)
-    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) if (AREA_TYPES[m.typeOf(x, y)].steep) homes.push([x, y, hash2(x, y, s + 849)]);
+    for (const [x, y] of m.cells) if (AREA_TYPES[m.typeOf(x, y)].steep) homes.push([x, y, hash2(x, y, s + 849)]);
     homes.sort((a, b) => a[2] - b[2]);
     let flight = 0;
     const flights = ["stairs", "stairs-turn"];

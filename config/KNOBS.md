@@ -2,13 +2,26 @@
 
 Generated from `config/tuning.json` and its schema by `node tools/config/schema.mjs --docs`; don't edit by hand. A test fails if it's out of date.
 
-## `mapAreas`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+## `mapAreas`
 
 The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger). areaSizeVariance (0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed (2026-10-05: "make areas larger; each is effectively a fighting arena"): 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m. arena: every area is mostly open within radius metres of its centre and its soundsystem, for fights (they range 15 to 45 m), and (Ed: softer edges; then, at v473, a smaller clearing and a long soft gradient from the area's edge to near its runestone) the woods thicken over a band band metres wide beyond it, across most of the area, along curve (linear: thinning in from right past the open middle; smooth: a slow start), lone trees and bushes thinning out into the clearing, its edge wobbled by noise (a share of the band) so it's no ring; both times fight.scale. bushes and tufts: the share of the undergrowth and the ground cover left in its open middle.
 
 | knob | type | range |
 |---|---|---|
 | `mapAreas` | number | 0 to … |
+
+## `map`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+
+The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). shape circle: the playable areas are those whose centres lie within radius areas of home's (7.9: about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is a circle, soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
+
+| knob | type | range |
+|---|---|---|
+| `map.shape` | string | "circle" / "square" |
+| `map.radius` | number | 0 to … |
+| `map.buffer` | number | 0 to … |
+| `map.push` | number | 0 to … |
+| `map.drift` | number | 0 to … |
+| `map.edge` | number | 0 to … |
 | `areaSize` | number | 0 to … |
 | `areaScale` | number | 0 to … |
 | `arena.radius` | number | 0 to … |
@@ -447,13 +460,33 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 | `berries.colour` | string |  |
 | `berries.glow` | number | 0 to … |
 
-## `leyLines`
+## `glades`, `leyLines`
 
-depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "the treehouse should be 5m due north of the dance floor ... The ley line leads from it south across the dancefloor and then towards the first speaker"): until the first stone is reached the line starts at the treehouse's front and runs due south straight across the dancefloor and through its ring of speakers, on past metres beyond the ring (avoid metres outside it), then curves smoothly to the first objective's soundsystem, that stretch kept outside the ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"; 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"): a glowing line through every wave's runestone in the order the waves wake them, home first, the whole route the whole time (party.picker route keeps it from crossing itself): the sections ahead of the last stone reached each fade times as bright as the one before, the one just left behind behindBright times as bright as the next and each before it fade times that, none fainter than far[0] ahead or far[1] behind (as shares). brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
+The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it."; render/glades.ts): art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. hue, sat: the twilight's colour (a cool violet dusk, against the party's amber); light: its pool, filling the circle and soft at its edge; edge: the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one (Ed, 2026-10-06: "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."): the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds. motes: per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright.
 
 | knob | type | range |
 |---|---|---|
+| `glades.on` | boolean |  |
+| `glades.radius` | number | 0 to … |
+| `glades.top` | number | 0 to … |
+| `glades.reach` | number | 0 to … |
+| `glades.hue` | number | 0 to … |
+| `glades.sat` | number | 0 to … |
+| `glades.light` | number | 0 to … |
+| `glades.edge` | number | 0 to … |
+| `glades.edgeEase` | number | 0 to … |
+| `glades.dark` | number | 0 to … |
+| `glades.glowOff` | number | 0 to … |
+| `glades.fade` | number | 0 to … |
+| `glades.motes.per` | number | 0 to … |
+| `glades.motes.rise` | number | 0 to … |
+| `glades.motes.height` | number | 0 to … |
+| `glades.motes.size` | number | 0 to … |
+| `glades.motes.hue` | number | 0 to … |
+| `glades.motes.sat` | number | 0 to … |
+| `glades.motes.bright` | number | 0 to … |
 | `leyLines.on` | boolean |  |
+| `leyLines.reveal` | number | 0 to … |
 | `leyLines.far` | array of number |  |
 | `leyLines.behindBright` | number | 0 to … |
 | `leyLines.advance` | string |  |
@@ -542,7 +575,15 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyObjects.home.lights` | number | 0 to … |
 | `partyObjects.exclude` | array of string |  |
 | `partyObjects.generated` | boolean |  |
-| `partyWitches.max` | number | 0 to … |
+| `partyWitches.roam` | number | 0 to … |
+| `partyWitches.centreBias` | number | 0 to … |
+| `partyWitches.swoopTime` | number | 0 to … |
+| `partyWitches.swoopHeight` | number | 0 to … |
+| `partyWitches.swoopMin` | number | 0 to … |
+| `partyWitches.swoopMax` | number | 0 to … |
+| `partyWitches.treetopBoost` | number | 0 to … |
+| `partyWitches.simRange` | number | 0 to … |
+| `partyWitches.simRangeTreetop` | number | 0 to … |
 | `partyWitches.idleAfter` | number | 0 to … |
 | `partyWitches.idleReach` | number | 0 to … |
 | `partyWitches.activityMin` | number | 0 to … |
@@ -721,6 +762,18 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
+| `legendClearing.rim.spacing` | number | 0 to … |
+| `legendClearing.rim.chance` | number | 0 to … |
+| `legendClearing.rim.out` | number | 0 to … |
+| `legendClearing.rim.spread` | number | 0 to … |
+| `legendClearing.rim.gap` | number | 0 to … |
+| `legendClearing.grove.reach` | number | 0 to … |
+| `legendClearing.grove.density` | number | 0 to … |
+| `legendClearing.grove.tallest` | number | 0 to … |
+| `legendClearing.grove.scale` | number | 0 to … |
+| `legendClearing.grove.gap` | number | 0 to … |
+| `legendClearing.grove.soft` | number | 0 to … |
+| `legendClearing.grove.jitter` | number | 0 to … |
 | `legendClearing.species` | record |  |
 
 ## `relics`
@@ -843,7 +896,7 @@ Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wi
 
 ## `invites`, `invite`, `leash`, `bond`
 
-The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit. perAnimalHitGap (Ed, 2026-10-05): a creature takes affection from at most one letter every this many seconds; letters landing inside its gap still land (a small pop, used up) but add nothing, so stacked multi-shot buffs help against crowds, not to win one creature faster. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). linger (Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"): a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit). spin (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json). Round 11 (Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"): one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the gap, so a held fire never wastes one), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s), range 33 (was 22) and speed 31.2 (was 26); arc: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat).
+The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit. Every letter that lands on an invitable creature counts (Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"): how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). linger (Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"): a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit). spin (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json). Round 11 (Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"): one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s), range 33 (was 22) and speed 31.2 (was 26); arc: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat).
 
 | knob | type | range |
 |---|---|---|
@@ -863,7 +916,6 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 | `invites.amount` | number | 0 to … |
 | `invites.hits` | array of number |  |
 | `invites.drain` | number | 0 to … |
-| `invites.perAnimalHitGap` | number | 0 to … |
 | `invites.fireSlow` | number | 0 to 1 |
 | `invites.linger` | number | 0 to … |
 | `invites.lingerFade` | number | 0 to … |
@@ -1101,7 +1153,7 @@ The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) b
 
 ## `knockout`
 
-Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this').
+Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this'). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this.
 
 | knob | type | range |
 |---|---|---|
@@ -1110,6 +1162,7 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 | `knockout.emptyBeat` | number | 0 to … |
 | `knockout.teleport` | number | 0 to … |
 | `knockout.legendsLoyal` | boolean |  |
+| `knockout.dropHat` | boolean |  |
 
 ## `dash`, `spells`
 
@@ -1151,6 +1204,22 @@ Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the l
 | `trail.shrink` | number | 0 to … |
 | `trail.colourEase` | number | 0 to … |
 | `trail.sparks` | boolean |  |
+
+## `swoopTrail`
+
+The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get the same following glow that you have, but it should be bright and multicoloured."): while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange).
+
+| knob | type | range |
+|---|---|---|
+| `swoopTrail.on` | boolean |  |
+| `swoopTrail.life` | number | 0 to … |
+| `swoopTrail.width` | number | 0 to … |
+| `swoopTrail.near` | number | 0 to … |
+| `swoopTrail.bright` | number | 0 to … |
+| `swoopTrail.hueSpeed` | number | 0 to … |
+| `swoopTrail.hueSpread` | number | 0 to … |
+| `swoopTrail.liftFade` | number | 0 to … |
+| `swoopTrail.slots` | number | 0 to … |
 
 ## `boot`
 

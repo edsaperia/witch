@@ -28,7 +28,7 @@ function park(g: Game, c: Creature): void { g.leash.stack = g.leash.stack.filter
 /** Put a creature at (x, z) as a given kind and level, wild or in the witch's party. */
 function place(g: Game, i: number, species: string, level: Level, x: number, z: number, party = false): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && k.id >= i && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 80)!;
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   if (party) { c.leashed = true; g.leash.stack.push(c.id); }
   g.byArea = null;
