@@ -41,6 +41,11 @@ const SOUNDS: [string, number, Play][] = [
   ["enraged-crowd", 0.8, s => s.enraged(0, 1, 6)],
   ["happy", 0.6, s => s.happy(0)],
   ["lob-landing", 2.8, () => {}],
+  ["legend-roar", 2.8, s => s.roar()],
+  ["shoes", 3, () => {}],
+  ["pond", 12, () => {}],
+  ["picnic", 10, () => {}],
+  ["creator-room", 12, () => {}],
   ["letter-land", 1.6, () => {}],
   ["boot-stir", 6, s => s.stir()],
   ["legend-sleep", 5, s => s.legends(1, 1, 0)],
@@ -62,6 +67,12 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "letter-land") {
     // three 💌s that met no one coming down, a quarter second apart
     for (let i = 0; i < 3; i++) void oc.suspend(Math.round((0.1 + i * 0.4) * rate) / rate).then(() => { s.land(i - 1); return oc.resume(); });
+  } else if (name === "shoes") {
+    // four dancers' party shoes on the beat at 120 bpm
+    for (let b = 0; b < 6; b++) void oc.suspend(Math.round(b * 0.5 * rate) / rate).then(() => { s.taps(4, 0, 1); return oc.resume(); });
+  } else if (name === "pond" || name === "picnic" || name === "creator-room") {
+    // walking up to it and standing by it: its level each 0.1 s
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = Math.min(1, sec / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { if (name === "pond") s.pond(L, -0.2); else if (name === "picnic") s.picnic(L, 0.2); else s.room(L); return oc.resume(); }); }
   } else if (name === "lob-landing") {
     // a creature's lob coming down, then a legend's
     void oc.suspend(0).then(() => { s.impact(false); return oc.resume(); });
