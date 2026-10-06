@@ -64,6 +64,11 @@ void main() {
       float shade = 0.75 + 0.25 * clamp(dot(normalize(md + 1e-4), normalize(vec2(-uMoonDir.x, 0.6))), 0.0, 1.0);
       float xt = cos(uMoonAt.z * 6.2832) * sqrt(max(0.0, 1.0 - n.y * n.y));
       float lit = uMoonAt.z < 0.5 ? step(xt, n.x) : step(n.x, -xt);
+      // A thin crescent narrower than one of the art's pixels would break into dots: past new moon, the
+      // limb's outermost pixel in each row stays lit, so it reads as an unbroken sliver (Ed: the moon reads through the blur).
+      float rim = sqrt(max(0.0, 1.0 - n.y * n.y)), step1 = cell / mr;
+      float limb = uMoonAt.z < 0.5 ? step(rim, n.x + step1) : step(n.x - step1, -rim);
+      lit = max(lit, limb * step(abs(n.y), 0.92) * step(0.02, min(uMoonAt.z, 1.0 - uMoonAt.z)));
       vec3 face = uMoonRgb * sea * shade * uSky.y;
       col = mix(col * 0.4 + face * 0.07, face, lit); // the dark side: the sky dimmed behind it, a little earthshine
     }
