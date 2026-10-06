@@ -762,6 +762,10 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
+| `legendClearing.floor.on` | boolean |  |
+| `legendClearing.floor.overgrowth` | number | 0 to … |
+| `legendClearing.floor.slab` | number | 0 to … |
+| `legendClearing.floor.glint` | number | 0 to … |
 | `legendClearing.rim.spacing` | number | 0 to … |
 | `legendClearing.rim.chance` | number | 0 to … |
 | `legendClearing.rim.out` | number | 0 to … |

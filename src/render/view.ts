@@ -631,8 +631,20 @@ export class View {
       Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)) });
     }
     this.ringCount = near.length;
+    // Their floors (render/ground.ts): each carving its legend's kind; its grooves' glint (the tuning's knob, 0 off) while it sleeps.
+    const glint = g.tuning.legendClearing.floor?.glint ?? 0;
+    for (let i = 0; i < near.length; i++) {
+      const c = near[i], f = this.floorItems[i];
+      f.species = AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])].creature;
+      let id = this.ringLegend.get(c);
+      if (id === undefined) { id = (g.legendIds ?? []).find(k => { const L = g.creatures[k]; return L && L.cell[0] === c.cell[0] && L.cell[1] === c.cell[1]; }) ?? -1; this.ringLegend.set(c, id); }
+      const L = id >= 0 ? g.creatures[id] : undefined;
+      f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
+    }
     return out;
   }
+  private floorItems: { species: string; glint: number }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0 }));
+  private ringLegend = new Map<LegendClearing, number>();
   private ringCount = 0;
 
   render(time: number, draw = true): void {
@@ -756,6 +768,7 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
+    this.ground.setLegendFloors(this.floorItems, this.ringCount);
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
