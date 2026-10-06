@@ -133,8 +133,8 @@ export interface Creature {
    *  own kind, where it becomes an ordinary wild creature of that area. */
   wanderTo?: { x: number; z: number; cell: [number, number] };
   /** The legend's clearing it was born in (Ed, 2026-10-06: "Legend circles should spawn with a ... baby in them, which
-   *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out; leashed, it follows
-   *  her, dancing at its area's party it's there, and back off the leash it goes home to its circle (keepsToCircle). */
+   *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out, dancing there
+   *  once its area's party comes; leashed, it follows her (keepsToCircle). */
   circle?: { x: number; z: number; r: number; legendX: number; legendZ: number };
   /** When it was last healed to full (a berry, or being invited): the view's heal pop. */
   healedAt?: number;
@@ -226,11 +226,11 @@ export function anchorOf(map: ForestMap, cell: [number, number], hx: number, hz:
 }
 
 /** Somewhere inside the creature's own area, chosen by `r` (round its home, or round its party spot while it dances); its anchor if none is found. */
-/** Whether a creature keeps to the legend's clearing it was born in: while it's wild (not leashed, not happy, not enraged, not dancing). */
-/** Whether it keeps to its legend's clearing: the circle's baby, wild or happy, but not dancing at its area's party nor
- *  while leashed (Ed, 2026-10-06: "if it is invited and becomes happy, it continues to stay in the
- *  circle as before"; "happy creatures don't follow you - only leashed creatures do"). */
-export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "enraged">> & { dancing?: boolean }) => !!c.circle && !c.leashed && !c.enraged && !c.dancing;
+/** Whether it keeps to its legend's clearing: the circle's baby, wild or happy (dancing there once its area's party
+ *  comes), but not while leashed (Ed, 2026-10-06: "if it is invited and becomes happy, it continues to stay in the
+ *  circle as before"; "happy creatures don't follow you - only leashed creatures do"; "Happy Circle baby should stay
+ *  in its circle, though it can dance there"). */
+export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "enraged">>) => !!c.circle && !c.leashed && !c.enraged;
 
 /** A spot on a clearing's open floor: its front (south) part, clear of the legend's lair at its top. */
 export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => number): [number, number] {
@@ -255,7 +255,7 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
-  // shouldn't have a legend": so no buff at the start). Every other area has its legend, sleeping, out of its clearing.
+  // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
   const [hx, hy] = map.centreCell;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     const home = cx === hx && cy === hy;
@@ -268,12 +268,13 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       for (let i = 0; i < startCount(pop.young, k); i++) make(1);
       for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
     }
+    if (map.hasLegend && !map.hasLegend(cx, cy)) continue; // (legends in legends.share of the areas: Ed, 2026-10-06)
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = "asleep"; L.stateAt = 0;
     L.quest = questFor(map, cell, L.species);
     out.push(L);
     // A wild baby of its own kind in its clearing (Ed, 2026-10-06), keeping to it: so the legend starts with kin. Like any
-    // baby: happy once its area's soundsystem comes (it goes to dance), off home for good once that falls (game.ts).
+    // baby: happy once its area's soundsystem comes (it dances, in its circle), off home for good once that falls (game.ts).
     const lc = map.legendClearing(cx, cy);
     if (lc) {
       const circle = { x: lc.x, z: lc.z, r: lc.r, legendX: lc.legend.x, legendZ: lc.legend.z }, B = makeCreature(map, cell, 0, out.length, r, pointInCircle(circle, r));

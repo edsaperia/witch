@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { LEGEND_BUFFS } from "./buffs";
-import { LEGENDS, canopyOver, relicGlints } from "./legends";
+import { LEGENDS, anger, canopyOver, relicGlints } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { inLegendClearing } from "./map";
@@ -204,7 +204,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(g.buffs.active.map(b => b.id)).toContain(L.id);
   }, 60000);
 
-  it("has the dream quest give her its buff (it sleeps on, the creature stays hers), and close once its area's soundsystem is on", () => {
+  it("has the dream quest give her its buff (it sleeps on, the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {
     const g = newGame(123, TUNING);
     g.clock.paused = false; g.party.paused = true;
     const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
@@ -220,9 +220,12 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(gift.leashed).toBe(true); // hers, parked there
     expect(g.leash.placed.map(p => p.id)).toContain(gift.id);
     expect(g.buffs.active.map(b => b.id)).toContain(L.id);
-    // Another legend: once its area's soundsystem is on, its quest is closed.
+    // Another legend: its area's soundsystem on, its quest stays open while it sleeps; awake (angry), it's closed.
     const M = g.creatures.find(c => c.boss && c !== L && c.legendState === "asleep" && c.quest)!;
     g.party.areas.set(cellKey(M.cell), { cell: M.cell, wave: 1, at: g.clock.time, from: null, soundsystem: null });
+    run(g, 0.2);
+    expect(M.questOpen).toBe(true);
+    anger(M, g.clock.time);
     run(g, 0.2);
     expect(M.questOpen).toBe(false);
   }, 60000);
@@ -307,7 +310,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
 
 describe("a wave on a legend's area (#87, found by the overnight playthrough)", () => {
   it("enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging", () => {
-    const g = newGame(123, TUNING);
+    const g = newGame(123, withTuning({ legends: { share: 1 } })); // (a legend in the woken area: with legends.share 0.5 the first wave's may have none)
     g.clock.paused = false;
     const before = new Set(g.party.areas.keys());
     run(g, 0.1, { ...idle, nextWave: true });

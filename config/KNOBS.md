@@ -1028,20 +1028,6 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
 
-## `forecast`
-
-Forecasting (Ed, 2026-10-04): the next two waves are confirmed and the one after has a few probable areas. Every such rune stone grows a circle of up to symbols magic symbols round it on the ground, in its area's neon: the next stone has all of them; the after-next stone fills from afterNext[0] to afterNext[1] as the countdown runs; probable stones (probable of them) flicker with 1 to probableMax. They stand radius metres out, each size metres across, appear with a flare (flare seconds) and pulse on the beat; from the treetops the circle shows above the canopy.
-
-| knob | type | range |
-|---|---|---|
-| `forecast.symbols` | number | 0 to … |
-| `forecast.probable` | number | 0 to … |
-| `forecast.probableMax` | number | 0 to … |
-| `forecast.afterNext` | array of number |  |
-| `forecast.radius` | number | 0 to … |
-| `forecast.size` | number | 0 to … |
-| `forecast.flare` | number | 0 to … |
-
 ## `fight`
 
 The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live in the debug overlay (~): [ and ] for scale, ; and ' for speed. charge and leap (Ed, round 13, 2026-10-06: 'charging and jumping creatures should charge or jump much further ... damaging whenever they're touched while in attack mode ... much more momentum, travelling in wide arcs'): every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum); contact: it hurts every foe it touches on the way, once each (her grace making one charge one hit). Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); contact: a pounce hurts whoever it touches in the air.
@@ -1353,12 +1339,13 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.sleepy.faces` | array of string |  |
 | `dreams.sleepy.fallback` | string |  |
 
-## `wildLegends`, `creatureSimRadius`
+## `legends`, `wildLegends`, `creatureSimRadius`
 
-Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one legend of its kind, sleeping, sunk into the ground like scenery (no AI, no glow, no health bar; sink: the share of it under the ground, moss: how far its colours go toward moss). When its area's wave comes it wakes, angry: wake seconds of heaving out of the ground (untouchable), then a mini-boss guarding its own area with its move set (movement.json legends). Beaten, it sinks back to sleep for good. A happy legend (home's from the start; others by their quest, or the debug key O) guards its area for her like a parked party animal, anything in its area within guard metres of where it stands, with its move set, and heals heal hp a second while no enemy is near; beaten, it sleeps for good and its buff ends. Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
+Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads.
 
 | knob | type | range |
 |---|---|---|
+| `legends.share` | number | 0 to … |
 | `wildLegends.wake` | number | 0 to … |
 | `wildLegends.sink` | number | 0 to … |
 | `wildLegends.moss` | number | 0 to … |

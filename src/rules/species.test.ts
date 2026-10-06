@@ -135,9 +135,8 @@ describe("fight profiles for every species (Ed's species pass)", () => {
   }, 60000);
 
   it("has beavers brace against shots, blocking them, then slap back", () => {
-    // (on a few maps: whether a raven's shot meets a braced beaver's front within 10 s is down to chance, so one map alone is brittle)
     let braced = 0, blocked = 0;
-    for (const seed of [77, 1, 90210]) {
+    for (const seed of [77, 78, 79, 80, 1, 90210]) { // (over a few fights: in any one, the ravens may happen to shoot the other beaver)
       const g = quiet(seed);
       setupArena(g, "raven*3@2,beaver*2@2");
       const beavers = g.arena!.ids.map(i => g.creatures[i]).filter(c => c.species === "beaver"), ids = new Set(beavers.map(b => b.id));
