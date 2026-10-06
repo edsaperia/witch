@@ -57,7 +57,7 @@ function wildArea() {
 
 const end = MINUTES * 60, t0 = Date.now();
 let errors = 0;
-while (g.clock.time < end && !g.over) {
+while (g.clock.time < end && !g.partyOver) {
   const w = g.witch, T = g.clock.time;
   const c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
   const go = (p, slow = 1) => { const dx = p.x - w.x, dz = p.z - w.z, d = Math.hypot(dx, dz) || 1; c.moveX = (dx / d) * slow; c.moveZ = (dz / d) * slow; return d; };
@@ -138,7 +138,7 @@ if (arg("inspect")) for (const id of arg("inspect").split(",").map(Number)) { co
 const sorted = [...stepMs].sort((a, b) => a - b), q = f => +(sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * f))] ?? 0).toFixed(2);
 const timing = { meanMs: +(stepMs.reduce((a, b) => a + b, 0) / Math.max(1, stepMs.length)).toFixed(3), p50: q(0.5), p99: q(0.99), p999: q(0.999), worstMs: q(1), over8ms: stepMs.filter(x => x > 8).length };
 const out = {
-  seed: SEED, timing, gameMinutes: +(g.clock.time / 60).toFixed(2), wallSeconds: Math.round((Date.now() - t0) / 1000), over: !!g.over, errors,
+  seed: SEED, timing, gameMinutes: +(g.clock.time / 60).toFixed(2), wallSeconds: Math.round((Date.now() - t0) / 1000), over: !!g.partyOver, errors,
   ...tally, stack: g.leash.stack.length, placedNow: g.leash.placed.length, partified: g.party.areas.size, hp: W.health.hp,
   creatures: { live: g.creatures.filter(k => !k.gone).length, happy: g.creatures.filter(k => !k.gone && k.state === "happy").length, enraged: g.creatures.filter(k => !k.gone && k.state === "enraged").length, leashed: g.creatures.filter(k => !k.gone && k.leashed).length, legends: Object.fromEntries(["asleep", "restless", "angry", "happy"].map(s => [s, g.creatures.filter(k => k.boss && k.legendState === s).length])) },
   oddities: odd,

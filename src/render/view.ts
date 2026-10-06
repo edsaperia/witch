@@ -107,6 +107,9 @@ export class View {
   private heights: HeightField;
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   bendTo = 0;
+  /** How far the stargazing bend has eased in (0 to 1), and when it was last eased. */
+  private gaze = 0;
+  private gazeTime = NaN;
   /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
   numberSeen = new Map<string, number>();
   numbersAt = 0;
@@ -181,6 +184,9 @@ export class View {
   private gladeTime = 0;
   /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
   private leyRgb: THREE.Vector3 | null;
+  /** The ley line's brightness (the decisions panel's), and the last scale given it (the party's over fades it). */
+  private leyBase = 1;
+  private leyScaled = -1;
   /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
   private leyParty: Game["party"] | null = null;
   private readonly leyHome = new THREE.Vector3(0.8, 0.7, 1);
@@ -358,7 +364,8 @@ export class View {
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
-    this.ley.scale(M?.leyBright ?? 1);
+    this.leyBase = M?.leyBright ?? 1;
+    this.ley.scale(this.leyBase);
     this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
     this.glades = new Glades(t.glades);
@@ -697,9 +704,17 @@ export class View {
     // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
     // camera's focus, along its forward on the ground.
     {
-      const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift)), k = C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m);
+      const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift));
+      // Lying on the beach to stargaze (Ed, 2026-10-06: "the bend shader applies so that you can see the sky"): the bend eased up
+      // past the treetops' over beach.gazeEase seconds, the night sky opening over the sea, and back down as she gets up.
+      const B = t.beach, gdt = Number.isNaN(this.gazeTime) ? 0 : Math.min(0.25, Math.max(0, time - this.gazeTime)), gz = this.beachView.gazing ? 1 : 0;
+      this.gazeTime = time;
+      this.gaze += (gz - this.gaze) * (1 - Math.exp(-gdt * 3 / Math.max(0.05, B?.gazeEase ?? 1.5)));
+      if (Math.abs(gz - this.gaze) < 0.001) this.gaze = gz;
+      const gk = this.gaze * this.gaze * (3 - 2 * this.gaze) * C.treetop * (B?.stargazeCurve ?? 0);
+      const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
       HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
-      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground);
+      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, this.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) : 0);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));
@@ -744,6 +759,7 @@ export class View {
     // (The edge stays its full softness as the hole closes: shrunk with it, a small hole's edge was crisp, Ed v289.)
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
     SPRITE_UNIFORMS.uCutWhole.value = cut.whole ?? 0;
+    SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35);
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
     SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
@@ -796,11 +812,14 @@ export class View {
       // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
       this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
-      this.ley.pulse(shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
+      // The party's over (rules/partyOver.ts): the line fades to partyOver.leyFloor of itself, its pulse gone.
+      const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
+      if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
+      this.ley.pulse(g.partyOver ? null : shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
       this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
-        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, g.party.spellAt === null ? 0 : live ? 1 : 0.35, this.leyRgb ?? undefined);
+        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
@@ -1006,7 +1025,7 @@ export class View {
     // in as the pulse sets off.
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
-      const shown = pointerShown(g.party, g.map, time);
+      const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)); // (none once the party's over: rules/partyOver.ts)
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
         while (list.length < cells.length) list.push(make());
         list.forEach((ind, i) => {
