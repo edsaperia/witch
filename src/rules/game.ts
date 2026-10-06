@@ -12,7 +12,7 @@ import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, ty
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
 import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
-import { guestSpot, partySpots } from "./partyGuests";
+import { ARC_SLOTS, guestSlot, guestSpot, partySpots, SLOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
@@ -534,9 +534,20 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
 /** How far from the witch creatures are simulated (by their home): at least far enough that one
  *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps
  *  in view. */
-/** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and dances there. */
+/** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and
+ *  dances there, at a party place in the next free slot round it (guestSlot: the guests already there counted). */
 export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
   const spot = guestSpot(c, soundsystem, partySpots(g.map, cell, g.tuning));
+  if (spot.kind === "soundsystem") { danceAt(c, spot, spot.r); return; }
+  // the guests already round this place, and their slots
+  const taken: Creature[] = [];
+  for (const o of g.creatures) if (o !== c && o.dancing && !o.gone && o.range <= SLOT_RANGE && o.cell[0] === cell[0] && o.cell[1] === cell[1] && Math.hypot(o.anchorX - spot.x, o.anchorZ - spot.z) < spot.r * 0.7 + 4) taken.push(o);
+  // the first free slot in its area (the far arc's, then the near arc's, for a place by its area's edge); else round the place itself
+  const free = (p: { x: number; z: number }) => { const cl = g.map.cellSafe(p.x, p.z).cell; return cl[0] === cell[0] && cl[1] === cell[1] && taken.every(o => Math.hypot(o.anchorX - p.x, o.anchorZ - p.z) > 1); };
+  for (const front of [false, true]) for (let k = 0; k < ARC_SLOTS * 3; k++) {
+    const at = guestSlot(spot, k, c.level, front);
+    if (free(at)) { danceAt(c, at, at.r); return; }
+  }
   danceAt(c, spot, spot.r);
 }
 

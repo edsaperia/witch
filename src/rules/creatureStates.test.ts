@@ -167,7 +167,8 @@ describe("creature states (#87)", () => {
     g.party.areas.set(key, { cell: h.cell, soundsystem: site, at: g.clock.time } as never);
     run(g, 0.2);
     expect(h.dancing).toBe(true);
+    // by the soundsystem, or at one of the party places, in a slot round it (partyGuests.ts guestSlot)
     const places = [site, ...partySpots(g.map, h.cell, g.tuning)];
-    expect(Math.min(...places.map(p => Math.hypot(h.anchorX - p.x, h.anchorZ - p.z)))).toBeLessThan(0.01);
+    expect(Math.min(...places.map(p => Math.hypot(h.anchorX - p.x, h.anchorZ - p.z)))).toBeLessThan(h.range < 1 ? 7 : 0.01);
   }, 60000);
 });

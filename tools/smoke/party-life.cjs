@@ -36,9 +36,10 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
         if (W.guest) W.guest(id); else { c.state = "happy"; c.anchorX = D.x; c.anchorZ = D.z; c.range = 10; c.dancing = true; } // (as before: round the dancefloor)
         const a = (id * 2.399) % (Math.PI * 2), d = c.range * 0.55; c.x = c.tx = c.anchorX + Math.cos(a) * d; c.z = c.tz = c.anchorZ + Math.sin(a) * d;
       }
-      const by = new Map(); for (const id of ids) { const c = g.creatures[id]; if (c.range >= 5) continue; const k = `${c.anchorX.toFixed(1)},${c.anchorZ.toFixed(1)}`; by.set(k, (by.get(k) ?? 0) + 1); }
-      const best = [...by.entries()].sort((a, b) => b[1] - a[1])[0];
-      return { party: best ? best[0].split(",").map(Number) : [D.x + 18, D.z + 6], floor: [D.x, D.z], guests: ids.length, places: by.size };
+      // (the guests at party places, each in its slot round one: grouped by place, a few metres across)
+      const by = new Map(); for (const id of ids) { const c = g.creatures[id]; if (c.range >= 5) continue; const k = `${Math.round(c.anchorX / 6)},${Math.round(c.anchorZ / 6)}`, e = by.get(k) ?? { n: 0, x: 0, z: 0 }; e.n++; e.x += c.anchorX; e.z += c.anchorZ; by.set(k, e); }
+      const best = [...by.values()].sort((a, b) => b.n - a.n)[0];
+      return { party: best ? [+(best.x / best.n).toFixed(1), +(best.z / best.n).toFixed(1)] : [D.x + 18, D.z + 6], floor: [D.x, D.z], guests: ids.length, places: by.size };
     });
     console.log(JSON.stringify(spots));
     const fly = async ([x, z], name, frames) => {

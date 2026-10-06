@@ -45,6 +45,19 @@ export function partySpots(map: ForestMap, cell: Cell, t: Tuning): PartySpot[] {
   return spots;
 }
 
+/** Guests stand round a party place (the art director, #200: "they pile up"): each its own slot on an arc behind it (the
+ *  far side, -z, so the side towards the camera stays open and none stands in front of another), a body's width or more
+ *  apart, the small ones on the inside (nearer the front) and the big ones on the outside (at the back); past
+ *  `ARC_SLOTS` a second, wider arc (`front`: the arc on the near side, for a place whose far side is over its area's edge). Each keeps to its slot, shuffling within `SLOT_RANGE` metres. */
+export const ARC_SLOTS = 5, SLOT_RANGE = 0.5;
+const ARC_ORDER = [0.5, 0.25, 0.75, 0, 1]; // (the middle first, then either side, then the ends)
+export function guestSlot(spot: PartySpot, slot: number, level: number, front = false): { x: number; z: number; r: number } {
+  if (spot.kind === "soundsystem") return spot;
+  const t = ARC_ORDER[slot % ARC_SLOTS], a = Math.PI + 0.35 + t * (Math.PI - 0.7);
+  const ring = spot.r * 0.7 + 0.5 * Math.min(3, level) + Math.floor(slot / ARC_SLOTS) * 1.3;
+  return { x: spot.x + Math.cos(a) * ring, z: spot.z + (front ? -1 : 1) * Math.sin(a) * ring, r: SLOT_RANGE };
+}
+
 /** Where this guest gathers: by its soundsystem (a share of them) or at one of the area's party places, dealt by its id. */
 export function guestSpot(c: Pick<Creature, "id">, soundsystem: { x: number; z: number }, spots: PartySpot[]): PartySpot {
   if (!spots.length || hash2(c.id, 17, 401) < AT_SOUNDSYSTEM) return { x: soundsystem.x, z: soundsystem.z, r: SPOT_RANGE.soundsystem, kind: "soundsystem" };

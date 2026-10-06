@@ -40,8 +40,9 @@ import { LEGENDS, relicGlints } from "../rules/legends";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 
-/** The join burst's colours (the art director's night palette, #188): the lanterns' amber, the 💌s' rose, cream. */
-const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.85, 0.47, 0.62], [0.95, 0.86, 0.7]];
+/** The join burst's colours (the art director, #188 and #200): the lanterns' amber, light and deep, with the creature's own
+ *  neon; nothing white (white is a hit's). */
+const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.82, 0.52, 0.28], [0.91, 0.71, 0.42]];
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 
@@ -706,15 +707,15 @@ export class LeashView {
     this.bursts = this.bursts.filter(b => time - b.at < 1.1);
     for (const [id, at] of this.joined) if (time - at > 1) this.joined.delete(id);
     // Joining the party (an invite, or made happy): a short burst in the night's party palette (the art director's: the
-    // lanterns' amber, the 💌s' rose, cream, and the creature's own colour): confetti thrown up and falling, a few sparkles drifting up.
+    // lanterns' amber and the creature's own neon): confetti thrown up and falling, a few sparkles drifting up.
     // (Thrown from just in front of it, toward the camera, so its own body doesn't hide the burst.)
     for (const b of this.bursts) {
       const k = (time - b.at) / 1.1;
       for (let i = 0; i < 28; i++) {
         const a = hash2(b.seed, i, 3) * Math.PI * 2, sp = 2 + hash2(b.seed, i, 5) * 2.4, up = 2.2 + hash2(b.seed, i, 7) * 2.6;
-        const c = i % 4 === 3 ? b.rgb : JOIN_PALETTE[i % 3], spark = i % 5 === 0;
+        const c = i % 3 === 2 ? b.rgb : JOIN_PALETTE[i % 3], spark = i % 5 === 0;
         const y = spark ? 0.9 + k * 2.6 : 0.7 + up * k - 4 * k * k, r = spark ? sp * 0.3 : sp;
-        this.standing.add(b.x + Math.cos(a) * r * k, y, b.z + 1.2 + Math.sin(a) * r * k * 0.7, spark ? 0.5 : 0.62, dot, c[0], c[1], c[2], spark ? 1 - k * k : Math.min(1, 1.6 * (1 - k)));
+        this.standing.add(b.x + Math.cos(a) * r * k, y, b.z + 1.2 + Math.sin(a) * r * k * 0.7, spark ? 0.5 : 0.62, dot, c[0], c[1], c[2], 0.85 * (spark ? 1 - k * k : Math.min(1, 1.6 * (1 - k)))); // (under 1: overlapping, they add up toward amber, not white)
       }
     }
     // Talking: a faint ring round the creature she's talking to, filling as the chat goes on; a
