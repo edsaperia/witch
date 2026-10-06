@@ -121,9 +121,6 @@ export function newBerries(map: ForestMap, t: Tuning): BerryState {
   return { bushes, berries, onBush, fed: new Map(), feeding: new Map(), evolving: new Map(), ateAt: new Map(), events: [], rand: r };
 }
 
-/** Where a berry is (its bush). */
-export const berryAt = (s: BerryState, b: Berry): BerryBush => s.bushes[b.bush];
-
 /** Grow an eaten berry again on a random free bush anywhere on the map (never its own). */
 function regrow(s: BerryState, b: Berry): void {
   s.onBush[b.bush] = -1;
