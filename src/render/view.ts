@@ -181,7 +181,7 @@ export class View {
   };
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
-  /** The 💌s, their bubbles and meters (render/invites.ts). */
+  /** The 💌s, their bubbles and rings (render/invites.ts). */
   private inviteView: InviteView;
   /** Angry brows and daze stars over the creatures (render/looks.ts). */
   private stateMarks: StateMarks;

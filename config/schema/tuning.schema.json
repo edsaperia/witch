@@ -3751,10 +3751,6 @@
           "type": "number",
           "minimum": 0
         },
-        "perAnimalHitGap": {
-          "type": "number",
-          "minimum": 0
-        },
         "fireSlow": {
           "type": "number",
           "minimum": 0,
@@ -3794,7 +3790,6 @@
         "amount",
         "hits",
         "drain",
-        "perAnimalHitGap",
         "fireSlow",
         "linger",
         "lingerFade",
