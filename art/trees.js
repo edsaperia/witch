@@ -282,13 +282,16 @@ export function chooseType(r, st) {
   for (const [k, f] of TREE_TYPES) { x -= st[k]; if (x <= 0) return f; }
   return broadTree;
 }
+// The night palette (the art director, round 1, after Ed's "a spooky dark forest with a party in it": a dark blue-green and violet
+// forest, no lime): a green hue pulled toward blue-green, compressed into .34 to .44; golds, browns, blues and violets left alone.
+export const nightGreen = h => (h >= .17 && h < .42 ? .34 + (h - .17) * .4 : h);
 export function treeColours(r, st, type, blob = false) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = (S?.val || 1) * (st.leafVal ?? 1); // leafVal: an area's palette, brighter or darker leaves
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
-  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
+  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = nightGreen((S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh); // hueAbs: a hue of its own, whatever the area's; never lime (nightGreen)
   const c = {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
-    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
+    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .46 * st.sat * sa), Math.min(1, .68 * va)), /* (the night palette: the lit tone quieter, so a lit crown never glows) */ [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
   if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
     // towards blue-violet, the light pale and towards cream; "ref" (Ed's reference, rung 6) keeps one tone family, "bold" (rung 3/4) shifts further

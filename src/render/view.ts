@@ -18,7 +18,7 @@ import { Ground } from "./ground";
 import { Sky } from "./sky";
 import { Clouds } from "./clouds";
 import { Ride } from "./ride";
-import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
+import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { AreaMoods, hsvInto, moodOf } from "./mood";
@@ -169,6 +169,12 @@ export class View {
   readonly rig: RigView | null;
   /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
   readonly subpixel = { x: 0, y: 0 };
+  /** What the canvas's glide follows: "witch" (her own snap, so she holds still on screen while the
+   *  world glides: Ed's 2026-10-06 playtest, "it feels low") or "camera" (the camera's snap: the world
+   *  exact, her a pixel either way from frame to frame). ?glide= picks one. */
+  glide: "witch" | "camera" = "witch";
+  /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
+  readonly witchBase = { x: 0, y: 0, z: 0 };
   shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   width = 1;
@@ -768,12 +774,27 @@ export class View {
     this.inviteView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
     this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
+    // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
+    // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
+    this.witchBase.x = wx; this.witchBase.y = wyy + groundHeight(wx, wz); this.witchBase.z = wz;
+    if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle) {
+      const b = bendPoint(this.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(this.camera);
+      const X = (b.x * 0.5 + 0.5) * this.width, Y = (b.y * 0.5 + 0.5) * this.height;
+      // (Her place under the camera before its snap: what her own snap takes off, and what the camera's did.)
+      this.subpixel.x += X - (Math.floor(X) + 0.5); this.subpixel.y += -(Y - (Math.floor(Y) + 0.5));
+    }
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
       const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
       SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h + this.rideOff, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
+      // Her pool on screen, for the grade to spare (render/post.ts: on a dark floor her light sits among the tones the
+      // spooky grade drains to blue, and it vanished: the art director's round 3, the fern forest): its centre under her
+      // feet and its half-widths across and up the screen, out to half her light's reach.
+      const R = LIGHT_UNIFORMS.uGlowR.value * LIGHT_UNIFORMS.uGlowNear.value * 0.5, foot = px(wx, 0, wz), across = px(wx + R, 0, wz), down = px(wx, 0, wz + R);
+      this.post.pool.set(foot[0] / this.width, foot[1] / this.height, Math.max(1e-3, Math.abs(across[0] - foot[0]) / this.width), Math.max(1e-3, Math.abs(down[1] - foot[1]) / this.height));
     }
     this.clouds.update(time, this.camera, SPRITE_UNIFORMS.uWitch.value, this.width, this.height);
     this.shadow.position.set(wx, 0.08, wz);

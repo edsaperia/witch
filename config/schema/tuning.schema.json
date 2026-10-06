@@ -3328,6 +3328,9 @@
           "type": "number",
           "minimum": 0
         },
+        "fingerposts": {
+          "type": "boolean"
+        },
         "treesOnBroken": {
           "type": "number",
           "minimum": 0
@@ -3356,6 +3359,7 @@
         "landmarkChance",
         "vergeSpacing",
         "pieceGap",
+        "fingerposts",
         "treesOnBroken",
         "edgeBushes",
         "bushBoost"
@@ -4396,6 +4400,64 @@
         "scale",
         "speed",
         "momentum"
+      ],
+      "additionalProperties": false
+    },
+    "attackFx": {
+      "type": "object",
+      "properties": {
+        "windupSquash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "windupMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lungeStretch": {
+          "type": "number",
+          "minimum": 0
+        },
+        "squash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "squashSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleKnock": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnTo": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "windupSquash",
+        "windupMax",
+        "lungeStretch",
+        "squash",
+        "squashSecs",
+        "tumbleKnock",
+        "tumbleHeight",
+        "tumbleSecs",
+        "turnFrom",
+        "turnTo"
       ],
       "additionalProperties": false
     },
@@ -5727,6 +5789,7 @@
     "music",
     "forecast",
     "fight",
+    "attackFx",
     "combat",
     "notice",
     "guard",

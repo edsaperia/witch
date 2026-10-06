@@ -768,7 +768,7 @@ Decorations scattered as discoveries: one chance per spacing-metre cell, of a ru
 
 ## `paths`
 
-Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).
+Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; fingerposts: a fingerpost by each footpath where it comes into a clearing (the prop generator's; ?props=gen turns it on); the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).
 
 | knob | type | range |
 |---|---|---|
@@ -786,6 +786,7 @@ Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wi
 | `paths.landmarkChance` | number | 0 to … |
 | `paths.vergeSpacing` | number | 0 to … |
 | `paths.pieceGap` | number | 0 to … |
+| `paths.fingerposts` | boolean |  |
 | `paths.treesOnBroken` | number | 0 to … |
 | `paths.edgeBushes` | number | 0 to … |
 | `paths.bushBoost` | number | 0 to … |
@@ -964,12 +965,22 @@ The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals do
 | `fight.speed` | number | 0 to … |
 | `fight.momentum` | number | 0 to … |
 
-## `combat`
+## `attackFx`, `combat`
 
-Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). fightRun: how fast a creature runs in a fight (m/s), when its movement profile doesn't say (movement.json speed); legendRun: a legend's; reaction: seconds before a creature that has just noticed something goes for it; pursuitRun: how fast it closes in while over 30 m off (so an area's creatures are onto her in a few seconds when she lands in it); pursuit: how far from her (or its sigil, guarding) a party animal chases a foe before giving up; aggro: wild creatures go for party animals within this, and for the witch anywhere in their area. leaveArea (Ed, 2026-10-05): a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range (Ed's playtest, 2026-10-04), and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party, within engage metres beyond their leash (leash.length); parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. In a fight wild ones move at chaseMult times their own speed, party animals at partyChaseMult; marching on a soundsystem, marchMult. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good (Ed, 2026-10-04); a party animal is lost for the run. A soundsystem has soundsystemHealth (the dancefloor at home homeHealth), passive, and is hit within soundsystemRadius (homeRadius) metres: sieges should outlast the wave gap. shake: how hard a legend's quake shakes the screen (0 none).
+How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better'; render/attackFeel.ts), a party not a fight: windupSquash, how low and wide an attacker crouches as its wind-up nears the blow (at most windupMax seconds of it shown); lungeStretch, how far it stretches out in its lunge; squash, how flat a hit squashes the one it hits, springing back past its shape over squashSecs seconds; a knock-back thrown faster than tumbleKnock m/s tumbles: up tumbleHeight metres (at most 1.5 times that for the hardest) for tumbleSecs, over on its back from turnFrom to turnTo of the way (one slow beat, never a strobe), landing with a squash. Squash and stretch go in whole art pixels.
 
 | knob | type | range |
 |---|---|---|
+| `attackFx.windupSquash` | number | 0 to … |
+| `attackFx.windupMax` | number | 0 to … |
+| `attackFx.lungeStretch` | number | 0 to … |
+| `attackFx.squash` | number | 0 to … |
+| `attackFx.squashSecs` | number | 0 to … |
+| `attackFx.tumbleKnock` | number | 0 to … |
+| `attackFx.tumbleHeight` | number | 0 to … |
+| `attackFx.tumbleSecs` | number | 0 to … |
+| `attackFx.turnFrom` | number | 0 to … |
+| `attackFx.turnTo` | number | 0 to … |
 | `combat.aggro` | number | 0 to … |
 | `combat.witchLose` | number | 0 to … |
 | `combat.leaveArea` | number | 0 to … |
@@ -1196,7 +1207,7 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 
 ## `population`
 
-Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more, each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
+Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more (a fraction carries over: 0.5 is one every other wave; balance, 2026-10-06, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters), each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 
 | knob | type | range |
 |---|---|---|

@@ -52,6 +52,11 @@ export type LightUniforms = typeof LIGHT_UNIFORMS;
 
 /** Set the light colours from a style (the Art Lab's knobs). One set of uniforms is shared by
  *  every material, so this and the glow position update everything at once. */
+/** How far her pool's ground takes her light's own colour at its centre (0 none, 1 all): glowPool. */
+export const POOL_WARMTH = 0.65;
+/** The least brightness of her pool's ground at its centre (0 to 1): a dark floor still shows her light. */
+export const POOL_LIFT = 0.16;
+
 export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel: number, ambientScale = 1, glowFalloff = 2.5, moonScale = 1): void {
   const v = (rgb: number[], k: number) => new THREE.Vector3(rgb[0] / 255 * k, rgb[1] / 255 * k, rgb[2] / 255 * k);
   LIGHT_UNIFORMS.uAmb.value.copy(v(hsv2rgb(st.ambientHue, 0.55, 1), st.ambient * ambientScale));
@@ -158,4 +163,17 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   return l;
 }
 vec3 nightLight(vec3 N, vec3 P) { return nightLightShaded(N, P, 1.0); }
+// Her pool in her light's own colour (the art director, round 3: "a lime glow sits on the ground at the front of home's
+// dancefloor"): her warm light times green grass came out lime, the brightest thing at home and off its palette. Within her
+// pool, the lit ground's colour (col) is pulled toward her light's hue at the same brightness, most at its centre. And on a
+// dark floor (the fern forest's litter: "her light doesn't show") it's never darker than POOL_LIFT there, so her pool reads.
+vec3 glowPool(vec3 col, vec3 P) {
+  vec3 v = uGlowPos - P;
+  float dg = length(v.xz), gr = uGlowR * uGlowNear;
+  if (dg >= gr || uGlowPower <= 0.0) return col;
+  vec3 Y = vec3(0.3, 0.55, 0.15);
+  float fall = pow(1.0 - dg / gr, uGlowFalloff) * min(1.0, uGlowPower);
+  vec3 warm = max(dot(col, Y), ${POOL_LIFT.toFixed(3)} * fall) * uGlowRgb / max(1e-3, dot(uGlowRgb, Y));
+  return mix(col, min(vec3(1.0), warm), ${POOL_WARMTH.toFixed(2)} * fall);
+}
 `;
