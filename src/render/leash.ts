@@ -35,6 +35,7 @@ const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
+import { emojiOr, sleepyFace } from "./sleepyFace";
 import { FIGHT, profileOf } from "../rules/movement";
 import { huntsWitch } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
@@ -376,10 +377,12 @@ export class LeashView {
       for (let k = 0; k < N.at.length; k++) if (r >= N.at[k]) step = k;
       const faces = step >= 0 ? 1 : 0, ire = r * r; // (the reddening and the shake gentle while it's only sad)
       if (!open && !faces) continue;
+      // Asleep giving its quest (Ed, 2026-10-06): a sleepy face by the sigil, mostly 😴, now and then a yawn or a sigh for a turn.
+      const Z = g.tuning.dreams.sleepy, zzz = !faces && open && Z ? sleepyFace(c.id, g.clock.time, Z) : null;
       let el = this.dreamEls[used];
       if (!el) { el = document.createElement("div"); el.className = "bubble dream on"; host.append(el); this.dreamEls.push(el); }
       el.style.display = "";
-      const key = `${q.species}:${q.level}:${step}:${open}`;
+      const key = `${q.species}:${q.level}:${step}:${open}:${zzz ?? ""}`;
       if (el.dataset.e !== key) {
         el.dataset.e = key;
         const cv = document.createElement("canvas"), n = 44;
@@ -393,7 +396,7 @@ export class LeashView {
           x.putImageData(d, 0, 0);
         }
         // (its face in finer pixels than a chat face: its brows must read)
-        const face = step >= 0 ? this.pixelEmoji(N.faces[step] ?? "😠", 0.9, 18) : null;
+        const face = step >= 0 ? this.pixelEmoji(N.faces[step] ?? "😠", 0.9, 18) : zzz ? this.pixelEmoji(emojiOr(zzz, Z!.fallback), 0.9, 18) : null;
         face?.classList.add("face");
         el.replaceChildren(...(open ? [cv] : []), ...(face ? [face] : []));
         el.classList.toggle("nightmare", faces > 0);
@@ -1052,3 +1055,4 @@ export class LeashView {
 
 /** A wild legend's slow breath, 0 out to 1 in, once every `every` seconds (offset by its id). */
 export const bossBreath = (time: number, id: number, every: number) => 0.5 - 0.5 * Math.cos((time / Math.max(0.1, every) + (id % 7) / 7) * Math.PI * 2);
+

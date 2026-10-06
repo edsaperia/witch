@@ -2,7 +2,8 @@
 // must land on a field of her genome, so a new axis the art builders add works without code here.
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
-import { fromPicker, slot, STEPS, toPicker, upgrade } from "./creator";
+import { BOXES, boxOf, fromPicker, slot, STEPS, toPicker, upgrade } from "./creator";
+import { clear, newWalker, spotAt, type RoomFloor } from "./roomWalk";
 
 describe("the character creator", () => {
   it("maps every axis of the witch generator onto her genome", () => {
@@ -50,6 +51,25 @@ describe("the character creator", () => {
       for (const k of ["stand", "screen", "lantern", "potions", "decks"]) expect(inside(a[k]), k).toBe(true);
       expect((a.runes as unknown[]).length).toBeGreaterThanOrEqual(2);
       expect((a.letters as [string][]).map(l => l[0]).join("")).toBe("PARTYTONIGHT");
+    }
+  });
+  it("puts every item of hers in its own box: every axis, accessory and colour part in exactly one, each box's parts its own", () => {
+    const ids = BOXES.map(b => b.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const axis of Object.keys(Art.WITCH_AXES)) expect(ids, axis).toContain(boxOf("axes", axis));
+    for (const kind of ["axes", "wear", "parts"] as const) { const all = BOXES.flatMap(b => b[kind]); expect(new Set(all).size, kind).toBe(all.length); }
+    for (const id of ["hat", "hair", "outfit", "shoes", "broom", "scarf", "bag", "backpack"]) expect(ids).toContain(id);
+    expect(boxOf("parts", "plume")).toBe("hat");
+    expect(boxOf("axes", "someNewAxis")).toBe(BOXES[BOXES.length - 1].id); // (a new one shows up in the last box)
+  });
+  it("has a place in her room by each of her things she can walk up to, its box a real one", () => {
+    const f = (Art.bedroomSprite as unknown as (st: object) => { walk: RoomFloor })({ pixel: 4 }).walk, ids = BOXES.map(b => b.id);
+    expect(Object.keys(f.spots ?? {}).length).toBeGreaterThanOrEqual(6);
+    for (const [id, [x, z]] of Object.entries(f.spots!)) {
+      expect(ids, id).toContain(id);
+      expect(clear(f, x, z), `${id}: she can stand there`).toBe(true);
+      const w = newWalker(f); w.x = x; w.z = z;
+      expect(spotAt(f, w)).toBe(id);
     }
   });
 });
