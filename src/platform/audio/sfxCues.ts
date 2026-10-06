@@ -16,7 +16,7 @@
 //  - Features still open, each read loosely until it lands: the witch knocked back and stunned
 //    (#108), a legend's long charge (#114), a relic bottle found (#99).
 //  - Home's meadow.
-import type { Game } from "../../rules/game";
+import { affectionOf, type Game } from "../../rules/game";
 import type { Creature } from "../../rules/creatures";
 import { restlessness } from "../../rules/dream";
 import { bossBreath } from "../../render/leash";
@@ -80,7 +80,7 @@ export class SfxCues {
       if (e.kind === "shot") S.letter(pan(e.x), Math.max(0.6, k));
       else if (e.kind === "hit") {
         S.hit(pan(e.x), k, !!e.spent);
-        const m = e.id !== undefined ? inv?.meter?.get(e.id) : undefined;
+        const m = e.id !== undefined && g.creatures[e.id] ? affectionOf(g).affection(g.creatures[e.id]) ?? undefined : undefined; // (its meter after the hit: rules/affection.ts)
         if (!e.spent && m !== undefined) S.fill(m, pan(e.x), k);
         const c = e.id !== undefined ? g.creatures[e.id] : undefined;
         if (c && !e.spent && this.ready(c.id, time, 0.3)) S.reply(voiceOf(c, g.tuning), m ?? 0, pan(e.x), k);
