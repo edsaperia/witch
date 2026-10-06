@@ -77,6 +77,16 @@
       "default": 2, "apply": { "knob": "fight.charge.reach" }
     },
     {
+      "id": "chargeChase", "label": "Charge speed vs her walk", "note": "Charges run at least this many times her walking speed, on till they catch her walking straight away: only stepping out of the lane, a blink sideways or the treetops get her clear (0: as before).",
+      "control": { "type": "slider", "min": 0, "max": 2.5, "step": 0.1 },
+      "default": 1.6, "apply": { "knob": "fight.charge.chase" }
+    },
+    {
+      "id": "leapLead", "label": "Leaps lead her", "note": "How far a leap aims ahead of her, to where she'll be when it lands (1: all the way, 0: where she was).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.1 },
+      "default": 1, "apply": { "knob": "fight.leap.lead" }
+    },
+    {
       "id": "chargeTurn", "label": "Charge turning", "note": "How fast a charger turns as it brakes, times each species' own: lower is wider arcs (1 as before, 0.4 now).",
       "control": { "type": "slider", "min": 0.2, "max": 1, "step": 0.1 },
       "default": 0.4, "apply": { "knob": "fight.charge.turn" }

@@ -109,9 +109,9 @@ export interface Tuning {
   /** The fight's scale and speed (Ed's motion scale pass): lengths and speeds in a fight times these. */
   fight: { scale: number; speed: number; momentum: number;
     /** Every charge scaled (Ed, 2026-10-06): its run's time and overshoot, its turn rate, its braking; contact: it hurts whoever it touches on the way, once each. */
-    charge: { reach: number; turn: number; brake: number; contact: boolean };
+    charge: { reach: number; turn: number; brake: number; contact: boolean; /** Walking away is no escape (Ed, 2026-10-06): a charge runs at least chase times her ground speed, on till it's caught up with her walking down its lane (0: off). */ chase: number };
     /** Every leap: from how far off (times its `to`), landing through metres past its target; contact: a low pounce hurts whoever it touches in the air. */
-    leap: { reach: number; through: number; contact: boolean } };
+    leap: { reach: number; through: number; contact: boolean; /** Leading her (Ed, 2026-10-06): a leap comes down where she'll be when it lands, as she's going at take-off, this share of it (0: where she was). */ lead: number } };
   /** How attacks feel on screen (render/attackFeel.ts): the wind-up's crouch, the lunge's stretch, a hit's squash and bounce, a knock-back's tumble. */
   attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number; legendFlash: number };
   combat: { aggro: number; witchLose: number; leaveArea: number; engage: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number; /** a retreating wild creature roams again once it's back in its area within this many metres of home */ retreatHome: number; /** seconds a knocked-down wild creature lies stunned before it runs off (Ed, 2026-10-06: 20) */ daze: number };

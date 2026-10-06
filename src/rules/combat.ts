@@ -469,6 +469,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed; FIGHT.momentum = t.fight.momentum ?? 1;
   if (t.fight.charge) FIGHT.charge = t.fight.charge;
   if (t.fight.leap) FIGHT.leap = t.fight.leap;
+  FIGHT.walk = t.groundSpeed;
   // Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range.
   const grid = new Grid(w.active.filter(c => fighting(c)));
   s.shots = s.shots.filter(sh => {
@@ -688,7 +689,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       if (P.move?.kind === "leap") {
         // The toad: a leap in an arc at its target (a ring shows where it'll land), slamming down: its attack.
-        const r = stepLeap(c, P.move, p.x, p.z, time >= f.readyAt, time);
+        const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
+        const r = stepLeap(c, P.move, p.x, p.z, time >= f.readyAt, time, tv?.vx ?? 0, tv?.vz ?? 0);
         if (r === "leapt") s.events.push({ kind: "leapt", x: c.x, z: c.z, at: time, id: c.id });
         // A low pounce (the lynx's, a strike) hurts every foe it touches in the air (fight.leap.contact); a high leap's slam is its landing.
         if (r === "air" && P.move.strike && t.fight.leap?.contact && c.leap) touch(w, s, c, atk.damage, A, grid, (c.leap.hit ??= []));
