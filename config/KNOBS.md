@@ -10,7 +10,7 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
 |---|---|---|
 | `mapAreas` | number | 0 to … |
 
-## `map`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+## `map`
 
 The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). shape circle: the playable areas are those whose centres lie within radius areas of home's (7.9: about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is a circle, soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
 
@@ -22,6 +22,27 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.push` | number | 0 to … |
 | `map.drift` | number | 0 to … |
 | `map.edge` | number | 0 to … |
+
+## `beach`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+
+The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. witchChance of runs have witches[0] to witches[1] witches together somewhere on the beach; landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before.
+
+| knob | type | range |
+|---|---|---|
+| `beach.on` | boolean |  |
+| `beach.width` | number | 0 to … |
+| `beach.shore` | number | 0 to … |
+| `beach.ease` | number | 0 to … |
+| `beach.sand` | number | 0 to … |
+| `beach.sea` | number |  |
+| `beach.restAfter` | number | 0 to … |
+| `beach.shown` | number | 0 to … |
+| `beach.witchChance` | number | 0 to … |
+| `beach.witches` | array of number |  |
+| `beach.meet` | number | 0 to … |
+| `beach.idleAfter` | number | 0 to … |
+| `beach.turn` | number | 0 to … |
+| `beach.simRange` | number | 0 to … |
 | `areaSize` | number | 0 to … |
 | `areaScale` | number | 0 to … |
 | `arena.radius` | number | 0 to … |
@@ -976,6 +997,10 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.pond.drips` | number | 0 to … |
 | `sfx.pond.dripEvery` | number | 0 to … |
 | `sfx.pond.range` | number | 0 to … |
+| `sfx.waves.volume` | number | 0 to … |
+| `sfx.waves.every` | number | 0 to … |
+| `sfx.waves.wash` | number | 0 to … |
+| `sfx.waves.range` | number | 0 to … |
 | `sfx.picnic.volume` | number | 0 to … |
 | `sfx.picnic.murmur` | number | 0 to … |
 | `sfx.picnic.clinks` | number | 0 to … |

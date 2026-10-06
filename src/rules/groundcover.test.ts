@@ -8,9 +8,9 @@ import { tuftsInCell, TUFT_KINDS } from "./groundcover";
 
 const map = generateMap(123, TUNING), forest = new Forest(map), G = TUNING.groundCover;
 const cells = (x: number, z: number, r: number, f?: Forest) => {
-  const out = [];
-  for (let cj = Math.floor((z - r) / G.cell); cj <= Math.floor((z + r) / G.cell); cj++)
-    for (let ci = Math.floor((x - r) / G.cell); ci <= Math.floor((x + r) / G.cell); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, 1, f));
+  const out = [], span = Math.max(1, Math.round(G.cell / G.spacing)) * G.spacing; // (a cell's true size: whole tufts across, as tuftsInCell has it)
+  for (let cj = Math.floor((z - r) / span); cj <= Math.floor((z + r) / span); cj++)
+    for (let ci = Math.floor((x - r) / span); ci <= Math.floor((x + r) / span); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, 1, f));
   return out;
 };
 

@@ -15,6 +15,7 @@ import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speak
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
 import { isInside, type Bounds } from "./mapShape";
+import { beachOf } from "./mapShape";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -388,7 +389,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     }
     return false;
   };
+  // The beach and the sea past it (the tuning's beach): nothing grows or stands there.
+  const beach = round ? beachOf({ minX: 0, maxX: 0, minZ: 0, maxZ: 0, circle: { x: centre.x, z: centre.z, r: flightR } }, tuning) : null;
   const hardCell = (x: number, z: number, cell: Cell) => {
+    if (beach && beach.intoSand(x, z) > 0) return true;
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     const lc = clearings.get(cellKey(cell[0], cell[1]));
     if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r) return true; // a sleeping legend's clearing

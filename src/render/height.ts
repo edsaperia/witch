@@ -17,6 +17,7 @@ import * as THREE from "three";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { floorClearing } from "../rules/speakers";
+import { beachOf, type Beach } from "../rules/mapShape";
 import { smoothstep, vnoise } from "../rules/random";
 
 export interface HillsTuning { on: boolean; amplitude: number; scale: number; octaves: number; /** The steepest the ground may rise (tan of the camera's shallowest pitch): the hills are made at least broad enough for it (HeightField). */ maxSlope?: number }
@@ -190,6 +191,7 @@ export class HeightField {
     this.PATH_EDGE = Math.max(6, H.amplitude * 0.6);
     this.PLATEAU_FADE = Math.max(16, H.amplitude * 2);
     amplitude = H.on ? H.amplitude : 0;
+    { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) this.beach = { b, ease: Math.max(1, B.ease), hSand: B.sand, hSea: B.sea }; }
     this.seed = map.seed + 6113;
     this.texture = new THREE.DataTexture(this.half, N, N, THREE.RedFormat, THREE.HalfFloatType);
     const t = this.texture;
@@ -219,7 +221,19 @@ export class HeightField {
     }
   }
 
-  private raw(x: number, z: number): number { return this.H.on ? hillsAt(x, z, this.seed, this.H) : 0; }
+  private raw(x: number, z: number): number {
+    if (!this.H.on) return 0;
+    const h = hillsAt(x, z, this.seed, this.H), b = this.beach;
+    if (!b) return h;
+    // The beach (rules/mapShape.ts beachOf): the hills eased down over `ease` metres to the sand's
+    // height where it starts, the sand sloping gently to the sea's, flat beyond.
+    const into = b.b.intoSand(x, z);
+    if (into < -b.ease) return h;
+    if (into < 0) return h + (b.hSand - h) * smoothstep((into + b.ease) / b.ease);
+    return b.hSand + (b.hSea - b.hSand) * smoothstep(Math.min(1, into / Math.max(1, b.b.width + b.b.out)));
+  }
+  /** The beach's levels, on the circular map with it on. */
+  private beach: { b: Beach; ease: number; hSand: number; hSea: number } | null = null;
 
   private addCircle(c: Circle): void {
     const R = c.r + this.PLATEAU_FADE;

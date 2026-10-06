@@ -46,6 +46,85 @@
       ],
       "additionalProperties": false
     },
+    "beach": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shore": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ease": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sand": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sea": {
+          "type": "number"
+        },
+        "restAfter": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shown": {
+          "type": "number",
+          "minimum": 0
+        },
+        "witchChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "witches": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "meet": {
+          "type": "number",
+          "minimum": 0
+        },
+        "idleAfter": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turn": {
+          "type": "number",
+          "minimum": 0
+        },
+        "simRange": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "width",
+        "shore",
+        "ease",
+        "sand",
+        "sea",
+        "restAfter",
+        "shown",
+        "witchChance",
+        "witches",
+        "meet",
+        "idleAfter",
+        "turn",
+        "simRange"
+      ],
+      "additionalProperties": false
+    },
     "areaSize": {
       "type": "number",
       "minimum": 0
@@ -4422,6 +4501,34 @@
           ],
           "additionalProperties": false
         },
+        "waves": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "wash": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "every",
+            "wash",
+            "range"
+          ],
+          "additionalProperties": false
+        },
         "picnic": {
           "type": "object",
           "properties": {
@@ -4736,6 +4843,7 @@
         "lament",
         "shoes",
         "pond",
+        "waves",
         "picnic",
         "room",
         "land",
@@ -6354,6 +6462,7 @@
   "required": [
     "mapAreas",
     "map",
+    "beach",
     "areaSize",
     "areaScale",
     "arena",
