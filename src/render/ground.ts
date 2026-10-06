@@ -7,6 +7,7 @@
 import * as THREE from "three";
 import { BAYER_GLSL, VALUE_NOISE_GLSL } from "./shaders";
 import { CARVING_SIZE, carvingMask } from "./legendCarving";
+import type { FloorLook } from "./legendFloor";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
@@ -64,6 +65,11 @@ uniform int uLegendRingCount;
 uniform sampler2D uLegendCarve;
 uniform vec4 uLegendFloor;
 uniform float uLegendGlint[6];
+// Each one's character, by its area (render/legendFloor.ts): its stone (rgb; a: wet, puddles), its debris (rgb; a: shape,
+// 0 leaves, 1 needles, 2 pebbles, 3 flowers), and its growth (x: litter, y: cover, z: 1 lichen and dry grass, 0 moss).
+uniform vec4 uLegendStone[6];
+uniform vec4 uLegendDebris[6];
+uniform vec4 uLegendGrowth[6];
 uniform int uSweepCount; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
@@ -171,7 +177,8 @@ void main() {
         if (dd < d1) { d2 = d1; d1 = dd; id = cell; at = jp; } else if (dd < d2) d2 = dd;
       }
       float hs = hash(id + s0 + 3.1), joint = 1.0 - smoothstep(0.02, 0.1, d2 - d1);
-      vec3 stone = mix(vec3(0.33, 0.35, 0.34), vec3(0.45, 0.46, 0.43), hs) * (0.86 + 0.28 * vnoise(px * 0.9 + s0));
+      vec4 ST = uLegendStone[i], DB = uLegendDebris[i], GR = uLegendGrowth[i];
+      vec3 stone = ST.rgb * (0.82 + 0.3 * hs) * (0.86 + 0.28 * vnoise(px * 0.9 + s0));
       stone = mix(stone, c * 1.25, 0.3); // (the area's own floor in it, so it sits in its palette)
       vec2 tilt = vec2(hash(id + s0 + 7.3), hash(id + s0 + 11.1)) - 0.5;
       stone *= 1.0 - dot(at, tilt) * 0.55 * step(0.62, hs); // tilted slabs: one side lit, one in shade
@@ -183,13 +190,26 @@ void main() {
         lip = max(0.0, texture2D(uLegendCarve, cu - vec2(sh.x / 6.0, sh.y)).r - groove); // (the groove's lit far edge)
       }
       stone *= (1.0 - 0.65 * groove) * (1.0 + 0.4 * lip) * (1.0 - 0.55 * joint);
+      // its area's debris strewn over the stone: leaves in small blobs, needles and reeds in streaks, pebbles in
+      // clumps, flowers in bright specks
+      float sz = DB.a < 0.5 ? 2.0 : DB.a < 1.5 ? 1.0 : DB.a < 2.5 ? 2.0 : 1.0;
+      vec2 dc = floor(px / sz);
+      float dh = hash(dc + s0 + 5.7), streak = DB.a > 0.5 && DB.a < 1.5 ? step(0.5, fract((px.x + px.y * (hash(dc + 2.0) > 0.5 ? 1.0 : -1.0)) * 0.5)) : 1.0;
+      float lit = step(1.0 - GR.x * (DB.a > 2.5 ? 0.12 : 0.3), dh) * streak * (0.6 + 0.4 * vnoise(q / 1.5 + s0 + 9.0) * 1.6);
+      stone = mix(stone, DB.rgb * (0.75 + 0.5 * hash(dc + 1.3)), clamp(lit, 0.0, 1.0));
       float m = vnoise(q / 2.6 + s0) * 0.65 + vnoise(q / 0.9 + s0 * 2.0) * 0.35;
-      m += smoothstep(0.5, 1.0, rr) * 0.3 + joint * 0.3 + (uLegendFloor.y - 0.5);
+      m += smoothstep(0.5, 1.0, rr) * 0.3 + joint * (GR.z > 0.5 ? 0.12 : 0.3) + (uLegendFloor.y - 0.5) + (GR.y - 0.5);
       float moss = smoothstep(0.42, 0.58, m);
-      vec3 growth = c * mix(vec3(0.78, 1.12, 0.74), vec3(0.95, 0.9, 0.72), step(0.7, vnoise(px * 0.6 + s0))) * (0.85 + 0.3 * vnoise(px * 1.3));
+      // moss in damp places (green, deep); lichen and dry grass in open ones (pale, patchy)
+      vec3 growth = GR.z > 0.5
+        ? mix(c * vec3(1.1, 1.05, 0.72), vec3(0.62, 0.64, 0.5), 0.25 * step(0.6, vnoise(px * 0.8 + s0)))
+        : c * mix(vec3(0.78, 1.12, 0.74), vec3(0.95, 0.9, 0.72), step(0.7, vnoise(px * 0.6 + s0)));
+      growth *= 0.85 + 0.3 * vnoise(px * 1.3);
       vec3 fl = mix(stone, growth, moss);
+      // puddles in wet areas: in the missing slabs and the low places, dark with a little sky
+      if (ST.a > 0.5) { float pud = smoothstep(0.7, 0.76, vnoise(q / 2.2 + s0 + 31.0)) * (1.0 - moss * 0.6); fl = mix(fl, vec3(0.07, 0.09, 0.12) + 0.05 * vnoise(px * 0.5 + s0), pud); }
       if (uLegendGlint[i] > 0.0) fl += vec3(0.3, 0.5, 0.55) * groove * (1.0 - moss) * uLegendGlint[i] * 0.3;
-      float show = (1.0 - smoothstep(0.6, 0.95, rr + (vnoise(q / 1.7 + s0) - 0.5) * 0.25)) * step(0.1, hs);
+      float show = (1.0 - smoothstep(0.6, 0.95, rr + (vnoise(q / 1.7 + s0) - 0.5) * 0.25)) * (ST.a > 0.5 ? 1.0 : step(0.1, hs));
       c = mix(c, fl, show);
     }
     c *= 1.0 - 0.38 * band;
@@ -381,6 +401,9 @@ export class Ground {
         uLegendCarve: { value: this.carve },
         uLegendFloor: { value: new THREE.Vector4(map.tuning.legendClearing.floor?.on ? 1 : 0, map.tuning.legendClearing.floor?.overgrowth ?? 0.5, map.tuning.legendClearing.floor?.slab ?? 1.3, 0) },
         uLegendGlint: { value: new Array(6).fill(0) },
+        uLegendStone: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
+        uLegendDebris: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
+        uLegendGrowth: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
@@ -428,11 +451,15 @@ export class Ground {
 
   /** Each nearby legend circle's floor: its carving's species (its mask copied into its slot only when that changes:
    *  lazily, for the nearest few) and its grooves' glint (0 off). */
-  setLegendFloors(floors: readonly { species: string; glint: number }[], count = floors.length): void {
+  setLegendFloors(floors: readonly { species: string; glint: number; look: FloorLook }[], count = floors.length): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, glint = u.uLegendGlint.value as number[], data = this.carve.image.data as Uint8Array, W = CARVING_SIZE * 6;
+    const stone = u.uLegendStone.value as THREE.Vector4[], debris = u.uLegendDebris.value as THREE.Vector4[], growth = u.uLegendGrowth.value as THREE.Vector4[];
     for (let i = 0; i < Math.min(6, count); i++) {
-      const f = floors[i];
+      const f = floors[i], L = f.look;
       glint[i] = f.glint;
+      stone[i].set(L.stone[0], L.stone[1], L.stone[2], L.wet ? 1 : 0);
+      debris[i].set(L.debris[0], L.debris[1], L.debris[2], L.shape);
+      growth[i].set(L.litter, L.cover, L.growth === "lichen" ? 1 : 0, 0);
       if (this.carveSlots[i] === f.species) continue;
       this.carveSlots[i] = f.species;
       const m = carvingMask(f.species);

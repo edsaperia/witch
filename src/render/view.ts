@@ -10,6 +10,7 @@ import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf, STEP } from "../rules/game";
+import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
@@ -635,7 +636,8 @@ export class View {
     const glint = g.tuning.legendClearing.floor?.glint ?? 0;
     for (let i = 0; i < near.length; i++) {
       const c = near[i], f = this.floorItems[i];
-      f.species = AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])].creature;
+      const A = AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])];
+      f.species = A.creature; f.look = floorLook(A.id);
       let id = this.ringLegend.get(c);
       if (id === undefined) { id = (g.legendIds ?? []).find(k => { const L = g.creatures[k]; return L && L.cell[0] === c.cell[0] && L.cell[1] === c.cell[1]; }) ?? -1; this.ringLegend.set(c, id); }
       const L = id >= 0 ? g.creatures[id] : undefined;
@@ -643,7 +645,7 @@ export class View {
     }
     return out;
   }
-  private floorItems: { species: string; glint: number }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0 }));
+  private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
   private ringLegend = new Map<LegendClearing, number>();
   private ringCount = 0;
 
