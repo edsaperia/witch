@@ -16,7 +16,7 @@ import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
-import { slowAmount, timeScaleOf, WorldClock } from "./slowtime";
+import { slowAmount, slowest } from "./slowtime";
 import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
@@ -363,6 +363,7 @@ export class View {
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
     this.inviteView = new InviteView(game);
+    this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
     this.stateMarks = new StateMarks(this.scene, this.mpp);
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
@@ -525,7 +526,6 @@ export class View {
   /** A 💌 vanishes at a slowed circle's edge: a small sparkle there (the prototype builder's event calls this). */
   edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
   /** The world's own clock: it slows in a legend's circle (render/slowtime.ts). */
-  private worldClock = new WorldClock();
   /** The world's campfires showing this frame, for the party objects to draw. */
   worldFires: { x: number; z: number; scale: number; flip: boolean }[] = [];
   /** Each light source's area (a campfire's party), worked out once. */
@@ -781,7 +781,8 @@ export class View {
       this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
-    { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt, w.mode === "ground", undefined, slowAmount(timeScaleOf(g))); }
+    { const gdt = Math.min(0.1, Math.max(0, ht - this.gladeTime)); this.gladeTime = ht; // (eased on her clock, so the slowing doesn't slow its own look)
+      this.glades.update(g, w.x, w.z, gdt, w.mode === "ground", undefined, slowAmount(g.timeScale, slowest(t))); }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
@@ -839,11 +840,10 @@ export class View {
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
-    const worldTime = this.worldClock.step(time, timeScaleOf(g)); // (what moves on its own slows with the world: render/slowtime.ts)
-    this.updateSmoke(g, worldTime);
+    this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     if (t.bare) { this.dancefloor.update(time, this.ground, g); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
-    LIGHT_UNIFORMS.uTime.value = worldTime; LIGHT_UNIFORMS.uRealTime.value = time;
+    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(ht * 2.4) * 0.12;
     // Her hover frames, turned away when flying up the screen, leaning when fast.

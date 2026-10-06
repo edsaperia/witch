@@ -97,6 +97,9 @@ export class InviteView {
     b.el.classList.add("on");
   }
 
+  /** A 💌 gone out of a calm circle at (x, z): the view's sparkle (render/slowtime.ts). */
+  onVanished?: (x: number, z: number) => void;
+
   private pop(e: string, x: number, y: number, z: number, at: number): void {
     const n = 7, k = this.game.tuning.pixelSize * this.game.tuning.bubbles.scale, el = document.createElement("img");
     el.src = pixelEmoji(e, n);
@@ -130,6 +133,7 @@ export class InviteView {
         this.show(this.hers, pick(HERS, e.n ?? 0, 1), 0, 0, 0, time + 0.8);
       } else if (e.kind === "vanished") {
         this.pop("✨", e.x, 1.2, e.z, time); // (out of a sleeping legend's circle: gone in a sparkle, rules/slowTime.ts)
+        this.onVanished?.(e.x, e.z); // (and a burst of pixel motes at the edge: render/view/home.ts)
       } else if (e.kind === "fizzled") {
         // (landed on the ground at its range: a soft rose puff, render/leash.ts drawLetters; and it rests there a while)
         if ((t.invites.linger ?? 0) > 0) {
