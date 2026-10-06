@@ -3445,6 +3445,37 @@
       ],
       "additionalProperties": false
     },
+    "legendCircle": {
+      "type": "object",
+      "properties": {
+        "slow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "scale",
+            "ease"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "slow"
+      ],
+      "additionalProperties": false
+    },
     "legendClearing": {
       "type": "object",
       "properties": {
@@ -5954,6 +5985,9 @@
         "picker": {
           "type": "string"
         },
+        "route": {
+          "type": "string"
+        },
         "noisy": {
           "type": "object",
           "properties": {
@@ -6003,6 +6037,7 @@
         "areasPerWave",
         "maxPerWave",
         "picker",
+        "route",
         "noisy",
         "transition",
         "lightReach",
@@ -6971,6 +7006,7 @@
     "bubbles",
     "scenes",
     "grounds",
+    "legendCircle",
     "legendClearing",
     "relics",
     "walls",

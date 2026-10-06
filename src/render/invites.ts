@@ -128,6 +128,8 @@ export class InviteView {
       if (e.kind === "shot" && time - this.lastHers > 0.7) {
         this.lastHers = time;
         this.show(this.hers, pick(HERS, e.n ?? 0, 1), 0, 0, 0, time + 0.8);
+      } else if (e.kind === "vanished") {
+        this.pop("✨", e.x, 1.2, e.z, time); // (out of a sleeping legend's circle: gone in a sparkle, rules/slowTime.ts)
       } else if (e.kind === "fizzled") {
         // (landed on the ground at its range: a soft rose puff, render/leash.ts drawLetters; and it rests there a while)
         if ((t.invites.linger ?? 0) > 0) {

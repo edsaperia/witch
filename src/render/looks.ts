@@ -161,9 +161,9 @@ export class StateMarks {
       }
     }
     // Her too, staggered by a blow (rules/knock.ts): the daze stars round her hat.
-    if (stunned(g.witches[0].knock, time)) {
+    if (stunned(g.witches[0].knock, g.herTime)) { // (her clock: rules/slowTime.ts)
       const top = witchHeight(w, g.tuning) + 2.1;
-      for (let i = 0; i < 3; i++) { const a = time * 6 + (i / 3) * Math.PI * 2; this.put(this.star, w.x + Math.cos(a) * 0.6, top + Math.sin(a) * 0.12, w.z + Math.sin(a) * 0.3, 5 * px, 5 * px); }
+      for (let i = 0; i < 3; i++) { const a = g.herTime * 6 + (i / 3) * Math.PI * 2; this.put(this.star, w.x + Math.cos(a) * 0.6, top + Math.sin(a) * 0.12, w.z + Math.sin(a) * 0.3, 5 * px, 5 * px); }
     }
     for (let i = this.used; i < this.pool.length; i++) this.pool[i].visible = false;
   }
