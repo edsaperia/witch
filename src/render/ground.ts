@@ -51,6 +51,11 @@ uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
 uniform vec4 uCircle;
 uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
+// The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
+// uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
+uniform vec4 uLegendRings[6];
+uniform float uLegendGlow[6];
+uniform int uLegendRingCount;
 uniform int uSweepCount; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
@@ -132,6 +137,22 @@ void main() {
       c *= 1.0 + bump * slope * 0.45 - T.y * smoothstep(0.62, 0.9, 1.0 - n0) * 0.3;
       if (T.z > 0.0) c *= 1.0 + T.z * 0.14 * sin((p.x * 0.55 + p.y) / 4.0 + vnoise(p / 30.0) * 6.0);
     }
+  }
+  // A sleeping legend's clearing: a soft ring of trodden earth set with pale stones marks its edge, the
+  // floor inside a touch darker and mossier (worn smooth round the sleeper); its ring brightens while
+  // she stands in it. (Its twilight and motes are the lighting's: render/mood.ts and friends.)
+  for (int i = 0; i < 6; i++) {
+    if (i >= uLegendRingCount) break;
+    vec4 L = uLegendRings[i];
+    float d = length(p - L.xy);
+    if (d > L.z + 1.0) continue;
+    float wob = (vnoise(p / 3.0) - 0.5) * 0.6, band = 1.0 - smoothstep(0.0, L.w * 0.5, abs(d + wob - (L.z - L.w * 0.5)));
+    if (d < L.z - L.w) c = mix(c, c * vec3(0.86, 0.95, 0.9), 0.6);
+    c *= 1.0 - 0.38 * band;
+    vec2 sc = floor(px / 2.0);
+    float h = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
+    if (band > 0.55 && h > 0.84) c = mix(vec3(0.42, 0.44, 0.47), vec3(0.62, 0.64, 0.66), fract(h * 7.0)) * (0.8 + 0.4 * vnoise(px));
+    if (uLegendGlow[i] > 0.0) c += vec3(0.35, 0.55, 0.6) * band * uLegendGlow[i] * 0.35;
   }
   // The dancefloor: the art's floor of glass tiles inside its stone rim; a lit tile glows in its
   // colour (unlit by the night: it is the light), the rest is lit like the ground.
@@ -307,6 +328,9 @@ export class Ground {
         uCircle: { value: new THREE.Vector4() },
         uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uSweepCount: { value: 0 },
+        uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
+        uLegendGlow: { value: new Array(6).fill(0) },
+        uLegendRingCount: { value: 0 },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
@@ -343,6 +367,13 @@ export class Ground {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uSweeps.value as THREE.Vector4[];
     sweeps.slice(0, 4).forEach((w, i) => list[i].set(w.x, w.z, w.radius, w.strength));
     u.uSweepCount.value = Math.min(4, sweeps.length);
+  }
+
+  /** The sleeping legends' clearings nearest her (up to 6): their middles, radii, ring widths, and each ring's brightening (0-1). */
+  setLegendRings(rings: readonly { x: number; z: number; r: number; edge: number; glow?: number }[]): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uLegendRings.value as THREE.Vector4[], glow = u.uLegendGlow.value as number[];
+    rings.slice(0, 6).forEach((c, i) => { list[i].set(c.x, c.z, c.r, c.edge); glow[i] = c.glow ?? 0; });
+    u.uLegendRingCount.value = Math.min(6, rings.length);
   }
 
   /** The magic circle: its two hues, brightness now, and the rune band's turn. */

@@ -329,7 +329,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
   if (c.dash) W.dash.bufferUntil = g.clock.time + t.dash.buffer;
   if (g.clock.time <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, g.clock.time)
-    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain)) {
+    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0)) {
     W.dash.bufferUntil = undefined;
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
   }
@@ -487,7 +487,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
       g.creatures[id].leashed = false;
     },
   }, COMBAT);
-  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed)) S.busy.add(c.id); // carried on wherever she is
+  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed || c.retreat)) S.busy.add(c.id); // carried on wherever she is
   for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
   // The home ring shows its damage speaker by speaker.
   const home = S.sounds.get("home");
