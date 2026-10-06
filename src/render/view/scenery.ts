@@ -93,10 +93,15 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   for (const p of g.forest.treesNear(cx, cz, half)) {
     const art = v.assets.typeArt(p.type);
     if (!art || !art.layout.big.length) continue;
-    const f = art.atlas.frames, big = art.layout.big[pickWeighted(art.layout.bigWeight, p.variant)], whole = f[big.top ?? big.bot];
-    if (!inView(v, p.x, p.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
-    // Squeeze the tallest variants so they never bury her flight (treeCap).
-    const tall = whole.h * mpp, C = t.treeCap, scale = tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1;
+    // (a legend's grove, rules/forest.ts legendGrove: as strong as it is here, a share of the area's two tallest kinds,
+    // drawn bigger, both easing out with it into the area's own forest)
+    const gv = art.layout.grove, gs = p.grove ?? 0, GT = t.legendClearing.grove, u = ((p.variant >> 3) % 101) / 100;
+    const G = gs > 0 && gv && u < GT.tallest * gs ? (u < GT.tallest * gs * 0.4 ? gv.giant : gv.tall) : undefined;
+    const f = art.atlas.frames, big = art.layout.big[G?.length ? G[p.variant % G.length] : pickWeighted(art.layout.bigWeight, p.variant)], whole = f[big.top ?? big.bot];
+    const boost = 1 + (GT.scale - 1) * gs * (0.75 + 0.5 * (((p.variant >> 5) % 97) / 96));
+    if (!inView(v, p.x, p.z, whole.w * mpp * boost, whole.h * mpp * boost, margin, reach)) continue;
+    // Squeeze the tallest variants so they never bury her flight (treeCap); a grove's a little beyond.
+    const tall = whole.h * mpp, C = t.treeCap, scale = (tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1) * boost;
     const fresh = mark(v, "tree", p.x, p.z, tall * scale);
     const at = stand(p.x, p.z, f[big.bot], mpp * scale);
     // A tree's two halves share one box and sway alike (from its foot), so crown and trunk stay together.

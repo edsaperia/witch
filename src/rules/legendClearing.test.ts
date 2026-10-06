@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { isInside } from "./mapShape";
-import { Forest } from "./forest";
+import { Forest, legendGrove } from "./forest";
 import { keepsToCircle, pointInArea, spawnCreatures, stepCreature } from "./creatures";
 import { rng } from "./random";
 import { soundsystemFor } from "./party";
@@ -145,5 +145,32 @@ describe("legend clearings", () => {
     expect(restlessAt).toBeGreaterThan(0);
     expect(angryAt).toBeGreaterThan(restlessAt);
     expect(leashed.leashed).toBe(true);
+  });
+
+  // Ed (2026-10-06): "I think there should be an area of the tallest trees around each legend circle"; "It should blend back
+  // smoothly into the rest of the forest around this area, so it doesn't stand out too much".
+  it("each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, open toward the camera", () => {
+    const map = generateMap(123, TUNING), forest = new Forest(map), G = TUNING.legendClearing.grove, bins = 6, w = G.reach / bins;
+    const sum = new Array(bins + 1).fill(0), n = new Array(bins + 1).fill(0);
+    for (const lc of map.legendClearings) {
+      for (const p of forest.treesNear(lc.x, lc.z, lc.r + 1.5 + G.reach + w)) {
+        const d = Math.hypot(p.x - lc.x, p.z - lc.z), out = d - lc.r - 1.5, s = p.grove ?? 0, g0 = legendGrove(map, p.x, p.z);
+        if (out < 0) continue;
+        // each tree's strength is the grove's here, jittered by at most G.jitter either way
+        expect(s).toBeLessThanOrEqual(Math.min(1, g0 * (1 + G.jitter)) + 0.011);
+        if (g0 * (1 - G.jitter) > 0.03) expect(s).toBeGreaterThanOrEqual(g0 * (1 - G.jitter) - 0.011);
+        if ((p.z - lc.z) / d > Math.cos((G.gap * Math.PI) / 180)) continue;
+        const k = Math.min(bins, Math.floor(out / w));
+        sum[k] += s; n[k]++;
+      }
+    }
+    const mean = sum.map((v, k) => v / Math.max(1, n[k]));
+    // strong at the edge, gone past its reach (but for another clearing's near by), and easing down step by step between (no wall, no cliff)
+    expect(mean[0]).toBeGreaterThan(0.6);
+    expect(mean[bins]).toBeLessThan(0.08);
+    for (let k = 1; k <= bins; k++) { expect(mean[k]).toBeLessThan(mean[k - 1]); expect(mean[k - 1] - mean[k]).toBeLessThan(0.4); }
+    // and thicker near it than out where the area's own forest stands (per metre of ring)
+    const perArea = (k: number) => n[k] / (k + 0.5);
+    expect(perArea(0)).toBeGreaterThan(perArea(bins) * 0.9);
   });
 });

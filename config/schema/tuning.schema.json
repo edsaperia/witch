@@ -3357,6 +3357,49 @@
           "type": "number",
           "minimum": 0
         },
+        "grove": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "density": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tallest": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "soft": {
+              "type": "number",
+              "minimum": 0
+            },
+            "jitter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "density",
+            "tallest",
+            "scale",
+            "gap",
+            "soft",
+            "jitter"
+          ],
+          "additionalProperties": false
+        },
         "species": {
           "type": "object",
           "additionalProperties": {
@@ -3369,6 +3412,7 @@
         "radius",
         "edge",
         "top",
+        "grove",
         "species"
       ],
       "additionalProperties": false
