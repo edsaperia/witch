@@ -8,7 +8,7 @@
 import { M, Sprite, hsv2rgb, hash2, rng } from "../core.js";
 import { Model, render, v3 } from "../model3d.js";
 import { witchPixelsPerUnit, cleanFlecks } from "../witch.js";
-import { PROP_GENOMES } from "./genomes.js";
+import { PROP_GENOMES, RIM_GENOMES } from "./genomes.js";
 import { groundColours } from "../ground.js";
 
 const PR_U = 1 / 1.9; // model units a metre (the witch's model is about 1.9 m a unit)
@@ -265,4 +265,48 @@ export function propFor(kind, o = {}) {
   if (kind === "henge") return ["stoneCircle", o.scale ? { radius: 2.2 * o.scale } : {}];
   if (kind === "stump" && !o.gnawed) return ["brokenTrunk", o.snag ? {} : { branch: "none" }];
   return null;
+}
+
+// ---- the legend clearings' rim kit (RIM_GENOMES): a small piece of one of six forms, none over a metre ----
+// a short post: a squared stake, weathered, leaning a little; its top flat, cut to a point or split; moss up its foot
+function prPost(m, v) {
+  const r = v.r, H = v.height * PR_U, R = v.girth * PR_U, up = v3.norm([v.lean, 1, (r() - .5) * .1]), at = y => v3.mul(up, y);
+  const grain = p => Math.sin(p[0] * 90 + p[2] * 40 + p[1] * 6) > .85 ? M.BARKD : p[1] < H * v.moss * (.7 + .6 * gpPrCell(p, 30, 4)) ? M.MOSS : undefined;
+  const top = v.top === "point" ? H * .82 : H;
+  m.box(at(top * .5 - .01), [top * .5 + .01, R, R * .9], M.TRUNK, { dir: up, up: [1, 0, 0], round: R * .25, rough: .006, group: 1, paint: grain });
+  if (v.top === "point") for (const s0 of [-1, 1]) m.box(v3.add(at(top), [s0 * R * .9, 0, 0]), [R * 1.1, R * .9, R * 1.2], M.TRUNK, { dir: v3.norm(v3.add(up, [-s0 * .9, 0, 0])), up: [0, 0, 1], cut: true, group: 1 });
+  if (v.top === "point") m.box(at(top + R * .45), [R * .45, R * .5, R * .5], M.BELLY, { dir: up, up: [1, 0, 0], round: R * .3, group: 2 });
+  else if (v.top === "split") { m.box(at(top + .004), [.004, R * .95, R * .85], M.BELLY, { dir: up, up: [1, 0, 0], group: 2 }); m.box(v3.add(at(top), [R * .2, 0, R * .5]), [R * .5, .01, R * .6], M.BARKD, { dir: up, up: [1, 0, 0], cut: true, group: 1 }); }
+  else m.box(at(top + .004), [.004, R * .95, R * .85], M.BELLY, { dir: up, up: [1, 0, 0], group: 2 }); // its cut end, pale
+  for (let k = 0; k < 5; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R * 2, z = Math.sin(a) * R * 2; m.seg([x, 0, z], [x, .05 + r() * .09, z], .018, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 9 }); }
+}
+// Whether an area is open (no trees among its big objects): its rim leans to stones; wooded ones to toadstools and stumps.
+const RIM_STONY_FLOORS = new Set(["stony", "scree", "stone", "gravel", "rock"]);
+const rimWooded = def => !!def?.big?.some(b => b[0] === "tree") && !RIM_STONY_FLOORS.has(def?.floor?.[0]) && !def?.layout?.terrain?.includes("rocky");
+const rimAreaSeed = def => [...(def?.id ?? "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 99991, 3);
+/** The form of an area's k-th rim piece (seeded by the area and k, weighted by RIM_GENOMES.forms). */
+export function rimForm(def, k) {
+  const w = rimWooded(def) ? 1 : 0, opts = Object.entries(RIM_GENOMES.forms).map(([f, ws]) => [f, ws[w]]);
+  return prPick(rng((rimAreaSeed(def) * 7 + k * 131 + 17) >>> 0), opts);
+}
+/** An area's k-th rim piece's seed (its shape), its own in every area. */
+export const rimSeed = (def, k) => rimAreaSeed(def) * 13 + k * 17 + 5;
+/** One rim piece: o.form (or the area's k-th, o.k), o.seed. Returns propPiece's { sp, colours, metres, variant } and its form. */
+export function rimPiece(o = {}, def = null, st = {}, ppm = 16) {
+  for (let t = 0; t < 6; t++) { const p = rimPieceOnce({ ...o, seed: (o.seed ?? 0) + t * 1009 }, def, st, ppm); if (p.metres.height <= 1 || t === 5) return p; } // none over a metre: a taller one is seeded again
+}
+function rimPieceOnce(o, def, st, ppm) {
+  const form = o.form ?? rimForm(def, o.k ?? 0), G = RIM_GENOMES[form], seed = o.seed ?? 0, r = rng(((seed + 3) * 2654435761 + form.length * 131) >>> 0);
+  const fix = Object.fromEntries(Object.entries(G).filter(([k]) => k !== "kind" && k !== "colour").map(([k, g]) => [k, Array.isArray(g) && Array.isArray(g[0]) ? prPick(r, g) : Array.isArray(g) ? (Number.isInteger(g[0]) && Number.isInteger(g[1]) ? Math.round(g[0] + (g[1] - g[0]) * r()) : g[0] + (g[1] - g[0]) * r()) : g]));
+  if (form === "post") {
+    const v = { ...fix, seed, r }, m = new Model({ blend: .03 });
+    prPost(m, v);
+    const sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp); cleanFlecks(sp);
+    const vr = rng((seed * 7919 + 13) >>> 0), C = G.colour, k = C.spread, leaf = def?.leaf ?? .26;
+    const colours = { [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.TRUNK]: prTone(C.wood, vr, k), [M.BARKD]: prTone(C.dark, vr, k), [M.BARKL]: prTone(C.light, vr, k), [M.BELLY]: prTone(C.pale, vr, k * .5), [M.MOSS]: prTone(C.moss, vr, k), [M.LINE]: [24, 22, 30] };
+    const { r: _r, ...variant } = v;
+    return { sp, colours, metres: { height: +(sp.h / ppm).toFixed(2), width: +(sp.w / ppm).toFixed(2) }, variant, form };
+  }
+  const p = propPiece(G.kind, { ...fix, seed }, def, st, ppm);
+  return { ...p, metres: { height: +(p.sp.h / ppm).toFixed(2), width: +(p.sp.w / ppm).toFixed(2) }, form };
 }
