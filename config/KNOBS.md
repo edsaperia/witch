@@ -967,6 +967,11 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.floor` | number | 0 to … |
 | `music.muffle` | number | 0 to … |
 | `music.audible` | number | 0 to … |
+| `music.circle.muffle` | number | 0 to … |
+| `music.circle.quiet` | number | 0 to … |
+| `music.circle.ease` | number | 0 to … |
+| `music.circle.level` | number | 0 to … |
+| `music.circle.radius` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
