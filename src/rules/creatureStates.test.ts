@@ -79,7 +79,7 @@ describe("creature states (#87)", () => {
     const g = quiet(), w = place(g, "boar", 1, 4, 0), l = place(g, "wolf", 2, 0, 0, "leashed");
     w.hp = 0.5;
     let dazedAt = -1;
-    run(g, 20, () => { if (dazedAt < 0 && w.dazed) dazedAt = g.clock.time; });
+    run(g, TUNING.combat.daze + 12, () => { if (dazedAt < 0 && w.dazed) dazedAt = g.clock.time; });
     expect(dazedAt).toBeGreaterThan(0);
     expect(w.fleeUntil).toBeTruthy(); // ran off once its daze was over
     // While dazed: untouched, and invitable.
@@ -87,14 +87,16 @@ describe("creature states (#87)", () => {
     w2.hp = 0.5;
     for (let i = 0; i < 20 / STEP && !w2.dazed; i++) stepGame(g2, idle, STEP);
     expect(w2.dazed).toBe(true);
+    expect(TUNING.combat.daze).toBe(20); // (Ed, 2026-10-06)
+    expect(w2.dazedUntil! - g2.clock.time).toBeGreaterThan(TUNING.combat.daze - 1); // (down the full stun)
     const hp = w2.hp;
-    run(g2, STATES.daze * 0.5, () => { expect(targets(l2, w2)).toBe(false); });
+    run(g2, TUNING.combat.daze * 0.5, () => { expect(targets(l2, w2)).toBe(false); });
     expect(w2.hp).toBe(hp);
     expect(invitable(w2)).toBe(true);
     const world = { time: g2.clock.time, leash: (c: Creature) => inviteCreature(g2.leash, c, c.x, c.z, g2.clock.time) };
     for (let i = 0; i < 20 && stateOf(w2) === "wild"; i++) hit(world, w2, 1, g2.clock.time + i);
     expect(stateOf(w2)).toBe("happy");
-    run(g2, STATES.daze);
+    run(g2, TUNING.combat.daze);
     expect(w2.fleeUntil).toBeFalsy(); // happy now: it doesn't run off
     void l; void l2;
   }, 60000);

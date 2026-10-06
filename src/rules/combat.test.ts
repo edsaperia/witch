@@ -400,7 +400,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true);
     park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
-    for (let i = 0; i < 20 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
+    for (let i = 0; i < (TUNING.combat.daze + 12) / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
     expect(wild.fleeUntil).toBeTruthy();
     expect(wild.gone).toBeFalsy(); // not on the spot
     for (let i = 0; i < 600 / STEP && !wild.gone; i++) stepGame(g, idle, STEP / 1);

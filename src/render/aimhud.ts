@@ -2,7 +2,9 @@
 // arrow, where the mouse aims her 💌s. On the ground it says whether the ground under it is within
 // a 💌's range (bright and whole inside, dim and broken beyond; just a dot in the treetops or
 // sitting, where she can't throw), and while her dodge recharges a thin arc fills round it, so the
-// eye on the aim sees both. DOM only, laid over the canvas; nothing in the rules.
+// eye on the aim sees both. Where a dodge would take her (toward the cursor: Ed's playtest,
+// 2026-10-06), a small diamond on the ground, bright when it's ready, faint while it recharges.
+// DOM only, laid over the canvas; nothing in the rules.
 import type { Game } from "../rules/game";
 import { dashCharge } from "../rules/dash";
 
@@ -18,6 +20,7 @@ export class AimHud {
   private over = false;
   private flashUntil = 0;
   private wasCharging = false;
+  private mark: HTMLDivElement;
 
   constructor(private canvas: HTMLCanvasElement, parent: HTMLElement = document.body) {
     this.root = document.createElement("div");
@@ -34,15 +37,25 @@ export class AimHud {
     this.dot = circle(1.4);
     this.root.append(svg);
     parent.append(this.root);
+    this.mark = document.createElement("div");
+    Object.assign(this.mark.style, { position: "fixed", left: "0", top: "0", width: "8px", height: "8px", marginLeft: "-4px", marginTop: "-4px", border: "1.5px solid rgba(111,230,255,.95)", boxSizing: "border-box", pointerEvents: "none", zIndex: "2", display: "none", filter: "drop-shadow(0 0 2px rgba(0,0,0,.9))" });
+    parent.append(this.mark);
     canvas.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") this.over = true; });
     canvas.addEventListener("pointerleave", () => { this.over = false; });
   }
 
   /** `pointer`: the mouse in client pixels (null: no mouse yet); `aim`: the ground under it from her
-   *  (metres, null off the ground plane); `on`: the game is being played (not the start screen). */
-  update(g: Game, time: number, pointer: { x: number; y: number } | null, aim: { x: number; z: number } | null, on: boolean): void {
+   *  (metres, null off the ground plane); `on`: the game is being played (not the start screen);
+   *  `landing`: where a dodge would put her, in client pixels (null: none to show). */
+  update(g: Game, time: number, pointer: { x: number; y: number } | null, aim: { x: number; z: number } | null, on: boolean, landing: { x: number; y: number } | null = null): void {
     const show = on && this.over && !!pointer;
     this.canvas.style.cursor = on ? "none" : "";
+    const Wd = g.witches[0], grounded = Wd.body.mode === "ground" && !Wd.body.seated && !Wd.ko;
+    if (show && landing && grounded) {
+      this.mark.style.display = "block";
+      this.mark.style.transform = `translate(${Math.round(landing.x)}px, ${Math.round(landing.y)}px) rotate(45deg)`;
+      this.mark.style.opacity = dashCharge(Wd.dash, time) >= 1 ? "0.9" : "0.3";
+    } else this.mark.style.display = "none";
     if (!show) { this.root.style.display = "none"; return; }
     this.root.style.display = "block";
     this.root.style.transform = `translate(${Math.round(pointer.x - C)}px, ${Math.round(pointer.y - C)}px)`;
