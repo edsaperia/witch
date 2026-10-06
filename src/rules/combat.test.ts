@@ -299,7 +299,7 @@ describe("Ed's Stage 4 rulings", () => {
     const g = newGame(77, TUNING);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
-    const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss && !c.circle); // (its legend sleeps on: legends.test.ts; its circle's baby is happy, never besieging)
+    const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss); // (its legend sleeps on: legends.test.ts)
     here.slice(1).forEach(c => { c.level = 1; });
     const baby = here[0]; baby.level = 0;
     stepGame(g, { ...idle, nextWave: true }, STEP);
