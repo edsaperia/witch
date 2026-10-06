@@ -3,8 +3,8 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
-import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { atlasFromPixels, packAtlas, type Atlas, type Baked, type FrameGround, groundOf } from "./atlas";
+import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -17,7 +17,7 @@ export interface TypeArt {
 }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
-export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[] }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
 /** A creature asleep's frame: its level's two breaths (render/artBuild.ts "nap"). */
 export const napFrame = (level: number, f: number) => level * 2 + (f % 2);
 /** A species' live-rig parts at one level (#79): its atlas page and what the rig needs. */
@@ -34,10 +34,13 @@ export class AssetLibrary {
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
   private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
+  /** The beach's edge of the woods (render/beach.ts): asked for only when she comes near the sand. */
+  private beachEdge: (BeachEdgeArt & { atlas: Atlas }) | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private scenes: (SceneArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
   private relicSet: RelicSet | undefined;
+  private beach: (BeachArt & { atlas: Atlas }) | undefined;
   private queue: ArtJob[] = [];
   private inFlight = new Set<string>();
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
@@ -117,7 +120,7 @@ export class AssetLibrary {
   private key = (j: ArtJob) => j.kind + ":" + j.id;
   /** Where a set is kept between visits: the art's code, the style, the set, and for an area type
    *  its seed and scale. Party looks are per creature, so they aren't kept. */
-  private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : ""].join("|");
+  private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
   private ask(job: ArtJob, urgent = false): void {
@@ -157,6 +160,8 @@ export class AssetLibrary {
     if (r.job.kind === "relics") {
       const list = r.result.relics!;
       this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
+    } else if (r.job.kind === "beach") {
+      this.beach = { atlas, ...r.result.beach! };
     } else if (r.job.kind === "scenes") {
       this.scenes = { atlas, ...r.result.scenes! };
     } else if (r.job.kind === "speakers") {
@@ -167,6 +172,8 @@ export class AssetLibrary {
       this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "partyWitch") {
       this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
+    } else if (r.job.kind === "beachEdge") {
+      this.beachEdge = { atlas, ...r.result.beachEdge! };
     } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
@@ -192,8 +199,8 @@ export class AssetLibrary {
       }
       this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
-    } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground });
-    else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground });
+    } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
+    else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
     this.inFlight.delete(this.key(r.job));
     this.version++;
@@ -205,6 +212,11 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }, true);
     return a;
   }
+  /** The beach's edge of the woods (palms, shrubs, grass clumps), or undefined (and asked for). */
+  beachEdgeArt(): (BeachEdgeArt & { atlas: Atlas }) | undefined {
+    if (!this.beachEdge) this.ask({ kind: "beachEdge", id: "all", style: this.style, K: this.K }, true);
+    return this.beachEdge;
+  }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
   decorArt(): DecorArt | undefined {
     if (!this.decor) this.ask({ kind: "decor", id: "all", style: this.style });
@@ -214,6 +226,11 @@ export class AssetLibrary {
   relicArt(): RelicSet | undefined {
     if (!this.relicSet) this.ask({ kind: "relics", id: "all", style: this.style });
     return this.relicSet;
+  }
+  /** The beach's decorations (art/beach.js), or undefined (and asked for): only once she's near the beach (render/beach.ts). */
+  beachArt(): (BeachArt & { atlas: Atlas }) | undefined {
+    if (!this.beach) this.ask({ kind: "beach", id: "all", style: this.style }, true); // (small, and asked for only once she's at the beach: ahead of the scenery queued)
+    return this.beach;
   }
   /** The scenes' pieces and layouts, or undefined (and asked for). */
   sceneArt(): (SceneArt & { atlas: Atlas }) | undefined {
@@ -268,9 +285,9 @@ export class AssetLibrary {
   }
   /** A creature asleep (art/naps.js: lying down, eyes shut, curled, tucked, coiled or flat by species; each level in 2 breathing
    *  frames), or undefined (and asked for). */
-  napArt(species: string): CreatureArt | undefined {
-    const k = `nap-${species}`, a = this.creatures.get(k);
-    if (!a) this.ask({ kind: "nap", id: k, species, style: this.style });
+  napArt(species: string, dressed?: { id: number; colour: number[] | null }): CreatureArt | undefined { // dressed: a party (or happy) animal's own gear, worn asleep
+    const k = dressed ? `nap-${dressed.colour ? "party" : "happy"}-${dressed.id}` : `nap-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, ...(dressed ? { dressed: { seed: dressed.id, colour: dressed.colour } } : {}) });
     return a;
   }
   /** A creature's enraged look (a wave woke its area: red eyes), or undefined (and asked for). */
@@ -309,7 +326,12 @@ export class AssetLibrary {
     // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
     // Bare (her hat knocked off: rules/hat.ts): the same frames, at the same places, with no hat; then the hat on the ground.
     const style = this.style, mine = witchLookOf(style, genome), wc = mine.colours, look = bare ? { ...(mine.look ?? {}), hat: "none" } : mine.look;
-    const wb = (o: object) => Art.bake((Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }), wc, style, style.cOutline) as Baked;
+    const grounds: (FrameGround | null)[] = []; // (each frame's ground, in the order they're made: every one is kept, in order)
+    const wb = (o: object) => {
+      const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }) as { anchors?: Record<string, number[]> };
+      grounds.push(groundOf(sp.anchors));
+      return Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline) as Baked;
+    };
     const witchFoot = bare ? {} as typeof this.witchFoot : this.witchFoot, witchFly = bare ? {} as typeof this.witchFly : this.witchFly;
     const witchLean = bare ? { towards: [] as number[], away: [] as number[] } : this.witchLean, witchHeading = bare ? {} as typeof this.witchHeading : this.witchHeading;
     for (const k of Object.keys(witchFoot)) delete witchFoot[k];
@@ -338,8 +360,9 @@ export class AssetLibrary {
     if (bare) {
       const hat = (Art.witchHatSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite> | null)(style, { look: mine.look });
       this.witchHatFrame = hat ? sprites.push(Art.bake(hat, wc, style, style.cOutline) as Baked) - 1 : -1;
+      if (hat) grounds.push(null);
     } else this.witchGenome = genome;
-    return packAtlas(sprites, 2048);
+    return { ...packAtlas(sprites, 2048), grounds };
   }
   /** The character creator changed her look: her frames again (the view swaps its batch). */
   rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.bare = null; this.version++; }
