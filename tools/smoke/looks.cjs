@@ -16,7 +16,7 @@ const root = path.join(__dirname, "../..");
     await page.waitForTimeout(1200);
     const ids = await page.$$eval("button[data-look]", bs => bs.map(b => b.dataset.look));
     const shots = [];
-    const grab = async label => { await page.waitForTimeout(500); shots.push([label, await page.evaluate(() => { const c = document.querySelector("#creator canvas[title]"), w = 64, h = 72, x0 = Math.round(c.width * .53 - w / 2), y0 = Math.round(c.height * .74 - h * .85), z = document.createElement("canvas"); z.width = w * 4; z.height = h * 4; const x = z.getContext("2d"); x.imageSmoothingEnabled = false; x.drawImage(c, x0, y0, w, h, 0, 0, z.width, z.height); return z.toDataURL(); })]); };
+    const grab = async label => { await page.waitForTimeout(500); shots.push([label, await page.evaluate(() => { const c = document.querySelector("#creator canvas[title]"), w = 64, h = 72, x0 = Math.round(c.width * .555 - w / 2), y0 = Math.round(c.height * .82 - h * .85), z = document.createElement("canvas"); z.width = w * 4; z.height = h * 4; const x = z.getContext("2d"); x.imageSmoothingEnabled = false; x.drawImage(c, x0, y0, w, h, 0, 0, z.width, z.height); return z.toDataURL(); })]); };
     for (const id of ids) { await page.click(`button[data-look="${id}"]`); await grab(id); }
     for (let i = 0; i < 6; i++) { await page.keyboard.press("KeyR"); await grab("random " + (i + 1)); }
     const sheet = await page.evaluate(async shots => {
