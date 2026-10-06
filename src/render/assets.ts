@@ -17,7 +17,7 @@ export interface TypeArt {
 }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
-export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[] }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
 /** A creature asleep's frame: its level's two breaths (render/artBuild.ts "nap"). */
 export const napFrame = (level: number, f: number) => level * 2 + (f % 2);
 /** A species' live-rig parts at one level (#79): its atlas page and what the rig needs. */
@@ -192,8 +192,8 @@ export class AssetLibrary {
       }
       this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
-    } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground });
-    else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground });
+    } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
+    else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
     this.inFlight.delete(this.key(r.job));
     this.version++;

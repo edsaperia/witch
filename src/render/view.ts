@@ -977,8 +977,9 @@ export class View {
       if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
       else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
     }
-    // Over the ride's smoothed height (eased in off the treehouse seat).
-    wyy += this.rideOff * (1 - this.seatK * this.seatK * (3 - 2 * this.seatK));
+    // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
+    // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").
+    wyy += this.rideOff * (1 - this.seatK * this.seatK * (3 - 2 * this.seatK)) * (1 - footEase);
     // Her hat knocked off (rules/hat.ts): her frames without it, and the hat where it lies. Baked a moment after the game is up
     // (not at a knockout, mid-fight), if she has a hat to lose.
     const Hat = g.witches[0].hat;
