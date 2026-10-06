@@ -49,6 +49,10 @@ export interface PartyState {
   areasPerWave: number;
   /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04; 5 minutes from her first step, 2026-10-05): the first wave's countdown starts then. */
   bootUntil: number;
+  /** The party spell (Ed, 2026-10-06: the game starts when she casts it, setting off the boot): undefined in a build without
+   *  it (the game clock runs from the start of play); null while waiting for it (the clock at 00:00, a prompt to cast it);
+   *  the game time she cast it. Set by the boot-up's own rules; read by the HUD (rules/leypulse.ts clockStart). */
+  spellAt?: number | null;
 }
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;

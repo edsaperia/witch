@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame } from "./game";
-import { clockText, leyPulse, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
+import { awaitingSpell, clockSeconds, clockStart, clockText, leyPulse, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
 import { waveCountdown } from "./party";
 
 describe("the game clock", () => {
@@ -17,6 +17,18 @@ describe("the game clock", () => {
     expect(clockText(100 * 60)).toBe("100:00");
     expect(clockText(-3)).toBe("00:00");
     expect(clockText(NaN)).toBe("00:00");
+  });
+});
+
+describe("the game clock's start (Ed, 2026-10-06: at the party spell)", () => {
+  it("runs from the start of play in a build without the party spell", () => {
+    const g = newGame(123, TUNING), p = { ...g.party, spellAt: undefined };
+    expect(clockStart(p)).toBe(0); expect(clockSeconds(p, 75)).toBe(75); expect(awaitingSpell(p)).toBe(false);
+  });
+  it("stays at 00:00 and prompts while waiting for the spell, then counts from the cast", () => {
+    const g = newGame(123, TUNING), waiting = { ...g.party, spellAt: null }, cast = { ...g.party, spellAt: 40 };
+    expect(clockStart(waiting)).toBeNull(); expect(clockText(clockSeconds(waiting, 300))).toBe("00:00"); expect(awaitingSpell(waiting)).toBe(true);
+    expect(clockText(clockSeconds(cast, 101))).toBe("01:01"); expect(clockSeconds(cast, 10)).toBe(0); expect(awaitingSpell(cast)).toBe(false);
   });
 });
 

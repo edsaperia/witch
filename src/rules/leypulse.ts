@@ -61,6 +61,19 @@ export function leyPulse(p: PartyState, map: ForestMap, time: number, link?: rea
   return { ...pointAlong(line, t), t };
 }
 
+/** When the game clock starts (Ed, 2026-10-06: at the party spell): the spell's time, 0 in a build without the spell (the
+ *  start of play), null while waiting for it (the clock at 00:00, not running). */
+export function clockStart(p: PartyState): number | null {
+  return p.spellAt === undefined ? 0 : p.spellAt;
+}
+/** The game clock's seconds now: from its start, 0 before it. */
+export function clockSeconds(p: PartyState, time: number): number {
+  const s = clockStart(p);
+  return s === null ? 0 : Math.max(0, time - s);
+}
+/** Whether to prompt her to cast the party spell (waiting for it). */
+export const awaitingSpell = (p: PartyState): boolean => p.spellAt === null;
+
 /** The game clock (Ed, 2026-10-06: "a game clock at the top middle of the screen mm:ss counting up from 0"): minutes and
  *  seconds of play, the minutes running on past 99 as needed. */
 export function clockText(seconds: number): string {
