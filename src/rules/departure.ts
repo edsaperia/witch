@@ -1,41 +1,40 @@
-// The first ley line's way out from home (Ed, 2026-10-05): from the treehouse's front due south
-// across the dancefloor, then round to the first objective. Its own module so rules/party.ts (which
-// keeps the line's route from crossing itself) and rules/leylines.ts can both use it. No drawing here.
+// The first ley line's way out from home (Ed, 2026-10-05; 2026-10-06): from the treehouse's front round
+// the ring of speakers, never over the dancefloor, then off and looping round to the first objective.
+// Its own module so rules/leyroute.ts (which keeps the line's route from crossing itself) and
+// rules/leylines.ts can both use it. No drawing here.
 import type { ForestMap } from "./map";
 import { speakerRadius } from "./speakers";
 
-/** The first line's way out from home (Ed, 2026-10-05: "The treehouse should be 5m due north of the
- *  dance floor ... The ley line leads from it south across the dancefloor and then towards the first
- *  speaker"): from the treehouse's front due south, straight across the dancefloor and through its
- *  ring of speakers, on `past` metres beyond the ring (`avoid` metres outside it), then a smooth
- *  curve to the first objective's soundsystem, that stretch kept outside the ring. Points every
- *  `step` metres, from the front to `to`. */
-export function departureRoute(map: ForestMap, to: { x: number; z: number }, past: number, avoid: number, step: number): [number, number][] {
-  const d = map.dancefloor, R = departureClear(map, avoid), f = map.treehouseFront;
-  // The straight run south: across the floor to past metres beyond the far side of the ring.
-  const dx = f.x - d.x, far = Math.abs(dx) < R ? d.z + Math.sqrt(R * R - dx * dx) : f.z, len = Math.max(step, far + past - f.z);
-  const pts: [number, number][] = [];
-  for (let s = 0; s < len; s += step) pts.push([f.x, f.z + s]);
-  pts.push([f.x, f.z + len]);
-  const [px, pz] = pts[pts.length - 1], L = Math.hypot(to.x - px, to.z - pz);
-  // Then a curve leaving south, bending toward the objective's side, to the objective.
-  const side = Math.sign(to.x - px) || 1, m = Math.min(45, L * 0.5);
-  const c1: [number, number] = [px + side * m * 0.35, pz + m * 0.8];
-  const ux = to.x - c1[0], uz = to.z - c1[1], ul = Math.hypot(ux, uz) || 1, m2 = Math.min(40, ul * 0.4);
-  const c2: [number, number] = [to.x - (ux / ul) * m2, to.z - (uz / ul) * m2];
-  const n = Math.max(4, Math.ceil((L + m) / step)), curve: [number, number][] = [];
-  for (let i = 1; i <= n; i++) {
-    const t = i / n, a = (1 - t) ** 3, b = 3 * (1 - t) ** 2 * t, c = 3 * (1 - t) * t * t, e = t ** 3;
-    curve.push([a * px + b * c1[0] + c * c2[0] + e * to.x, a * pz + b * c1[1] + c * c2[1] + e * to.z]);
+/** The first line's way out from home (Ed, 2026-10-06: "The leyline shouldn't cross the dancefloor. After going around
+ *  the speaker circle it should go off to the right and loop around to whatever direction it needs to go"; before, from
+ *  2026-10-05, it ran due south straight across the floor): from the treehouse's front round the ring of speakers,
+ *  `avoid` metres outside it (out to the front, if that's further), on the first objective's side (clockwise on the
+ *  screen, off to the right, for one east of home; the other way round for one west of it), to the ring's east (or
+ *  west) side, or sooner if the objective lies that way; then off the ring, heading out, looping on round the same way
+ *  as it goes out to the objective. Points every `step` metres, from the front to `to`, none inside the ring. */
+export function departureRoute(map: ForestMap, to: { x: number; z: number }, avoid: number, step: number): [number, number][] {
+  const d = map.dancefloor, R = departureClear(map, avoid), f = map.treehouseFront, TAU = Math.PI * 2;
+  // Angles round home: 0 south (+z, down the screen), PI/2 east (+x); clockwise on the screen is decreasing.
+  const ang = (x: number, z: number) => Math.atan2(x - d.x, z - d.z), at = (a: number, r: number): [number, number] => [d.x + Math.sin(a) * r, d.z + Math.cos(a) * r];
+  const s = to.x >= d.x ? -1 : 1, sweep = (a0: number, a1: number) => (((s * (a1 - a0)) % TAU) + TAU) % TAU;
+  const fr = Math.hypot(f.x - d.x, f.z - d.z), rho = Math.max(R, fr), af = ang(f.x, f.z);
+  const aTo = ang(to.x, to.z), rTo = Math.max(rho, Math.hypot(to.x - d.x, to.z - d.z)), toTo = sweep(af, aTo), toExit = sweep(af, s < 0 ? Math.PI / 2 : -Math.PI / 2);
+  const ring = Math.min(toTo, toExit), loop = toTo - ring; // (round the ring, then on round as it goes out)
+  const pts: [number, number][] = [[f.x, f.z]];
+  if (fr < rho - 0.5) { const n = Math.ceil((rho - fr) / step); for (let i = 1; i <= n; i++) pts.push(at(af, fr + ((rho - fr) * i) / n)); }
+  const nRing = Math.max(1, Math.ceil((ring * rho) / step));
+  for (let i = 1; i <= nRing; i++) pts.push(at(af + (s * ring * i) / nRing, rho));
+  // Off the ring: its distance from home easing out fast, then on to the objective's, while it turns on round by `loop`.
+  const a0 = af + s * ring, len = Math.hypot(loop * (rho + rTo) * 0.5, rTo - rho), nOut = Math.max(4, Math.ceil(len / step));
+  for (let i = 1; i <= nOut; i++) { const u = i / nOut, e = 1 - (1 - u) ** 2; pts.push(at(a0 + s * loop * u, rho + (rTo - rho) * e)); }
+  pts[pts.length - 1] = [to.x, to.z];
+  // Smoothed (the ends held), kept off the ring.
+  const push = (p: [number, number]) => { const ex = p[0] - d.x, ez = p[1] - d.z, l = Math.hypot(ex, ez) || 1; if (l < rho) { p[0] = d.x + (ex / l) * rho; p[1] = d.z + (ez / l) * rho; } };
+  for (let pass = 0; pass < 4; pass++) {
+    for (let i = 1; i < pts.length - 1; i++) pts[i] = [(pts[i - 1][0] + 2 * pts[i][0] + pts[i + 1][0]) / 4, (pts[i - 1][1] + 2 * pts[i][1] + pts[i + 1][1]) / 4];
+    for (let i = 1; i < pts.length - 1; i++) push(pts[i]);
   }
-  // Off the ring after the crossing: anything inside pushed out round it, then smoothed (the ends held), and again.
-  const push = (p: [number, number]) => { const ex = p[0] - d.x, ez = p[1] - d.z, l = Math.hypot(ex, ez) || 1; if (l < R) { p[0] = d.x + (ex / l) * R; p[1] = d.z + (ez / l) * R; } };
-  for (let pass = 0; pass < 6; pass++) {
-    curve.forEach(push);
-    for (let i = 0; i < curve.length - 1; i++) { const a = i ? curve[i - 1] : [px, pz], b = curve[i + 1]; curve[i] = [(a[0] + 2 * curve[i][0] + b[0]) / 4, (a[1] + 2 * curve[i][1] + b[1]) / 4]; }
-  }
-  curve.forEach(push);
-  return [...pts, ...curve];
+  return pts;
 }
 
 /** How far the first line keeps from the dancefloor's middle: out past its ring of speakers by `avoid` metres. */

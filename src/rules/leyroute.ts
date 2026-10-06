@@ -13,7 +13,7 @@
 // combs). Past the rules, the noisy picker's order untangled instead. Seeded only by the map; no
 // drawing here.
 import type { ForestMap } from "./map";
-import { departureRoute } from "./departure";
+import { departureClear, departureRoute } from "./departure";
 import { polylinesMeet, segmentsMeet, type P2 } from "./crossing";
 import { rng } from "./random";
 
@@ -64,6 +64,14 @@ export function crossingPairs(links: readonly (readonly P2[])[]): [number, numbe
   for (let i = 0; i < links.length; i++) for (let j = i + 1; j < links.length; j++) if (polylinesMeet(links[i], links[j])) out.push([i, j]);
   return out;
 }
+/** Whether straight link a-b passes over the dancefloor (Ed, 2026-10-06: "The leyline shouldn't cross the dancefloor"):
+ *  within the line's clearance round its ring of speakers (rules/departure.ts departureClear). */
+export function overHome(map: ForestMap, a: P2, b: P2): boolean {
+  const d = map.dancefloor, R = departureClear(map, map.tuning.leyLines.depart.avoid), vx = b[0] - a[0], vz = b[1] - a[1], l2 = vx * vx + vz * vz || 1;
+  const t = Math.max(0, Math.min(1, ((d.x - a[0]) * vx + (d.z - a[1]) * vz) / l2));
+  return Math.hypot(a[0] + vx * t - d.x, a[1] + vz * t - d.z) < R;
+}
+
 /** Where two segments cross (null if they don't, or only touch end to end). */
 function segmentPoint(a: P2, b: P2, c: P2, d: P2): P2 | null {
   const r0 = b[0] - a[0], r1 = b[1] - a[1], s0 = d[0] - c[0], s1 = d[1] - c[1], den = r0 * s1 - r1 * s0;
@@ -139,11 +147,17 @@ export function spiralOrder(map: ForestMap): string[] {
     const q = map.soundsystemSpot(x, y);
     all.push({ k, r: Math.hypot(q.x - d.x, q.z - d.z), a: Math.atan2(q.x - d.x, q.z - d.z), p: [q.x, q.z] });
   }
-  const K = 5 + Math.floor(R() * 3), dir = R() < 0.5 ? 1 : -1, seeded = R() * TAU, n = all.length;
+  // Clockwise on the screen (dir -1: angles run 0 south, PI/2 east), starting east of home, where the line leaves it (Ed,
+  // 2026-10-06: "After going around the speaker circle it should go off to the right and loop around to whatever direction
+  // it needs to go"; rules/departure.ts): round the speakers from the treehouse and off to the right, so the spiral goes
+  // on the way the line came, never folding back. (It was either way round, from anywhere, seeded.)
+  const K = 5 + Math.floor(R() * 3), dir = (R(), -1), seeded = (R(), Math.PI / 2), n = all.length;
   const byR = [...all].sort((u, v) => u.r - v.r), rings: Pt[][] = [];
   for (let i = 0; i < K; i++) rings.push(byR.slice(Math.round((i * n) / K), Math.round(((i + 1) * n) / K)));
-  const near = all.filter(p => map.neighbours.get(home)?.has(p.k));
-  const first = near.length ? near.reduce((m, p) => (wrap(dir * (p.a - seeded)) < wrap(dir * (m.a - seeded)) ? p : m)) : null;
+  // The first stone: the innermost of the first ring's just past the line's way out (so the ring's end, coming back round,
+  // passes outside the line leaving home); else the first of home's neighbours round from there.
+  const near = all.filter(p => map.neighbours.get(home)?.has(p.k)), past = rings[0].filter(p => wrap(dir * (p.a - seeded)) < 0.6);
+  const first = past.length ? past.reduce((m, p) => (p.r < m.r ? p : m)) : near.length ? near.reduce((m, p) => (wrap(dir * (p.a - seeded)) < wrap(dir * (m.a - seeded)) ? p : m)) : null;
   let from = first ? first.a - dir * 1e-3 : seeded;
   const rel = (p: Pt) => wrap(dir * (p.a - from));
   const out: Pt[] = [], used = new Set<string>();
@@ -242,7 +256,7 @@ export function addCrossings(map: ForestMap, route: LeyRoute): LeyRoute {
   // order, the list made afresh after each one kept.
   while (count < target && tries < SPIRAL_RULES.tries) {
     const cap = SPIRAL_RULES.stretch * meanLen, pairs: [number, number][] = [];
-    for (let i = 1; i < n; i++) for (let j = CROSSING_RULES.pace * (i + 1) + CROSSING_RULES.margin; j < n; j++) if (len(st[i - 1], st[j - 1]) <= cap && len(st[i], st[j]) <= cap) pairs.push([i, j]);
+    for (let i = 1; i < n; i++) for (let j = CROSSING_RULES.pace * (i + 1) + CROSSING_RULES.margin; j < n; j++) if (len(st[i - 1], st[j - 1]) <= cap && len(st[i], st[j]) <= cap && !overHome(map, st[i - 1], st[j - 1]) && !overHome(map, st[i], st[j])) pairs.push([i, j]);
     for (let k = pairs.length - 1; k > 0; k--) { const r = Math.floor(R() * (k + 1)); [pairs[k], pairs[r]] = [pairs[r], pairs[k]]; }
     let kept = false;
     for (const [i, j] of pairs) {
@@ -345,7 +359,7 @@ const crossingsOf = (links: readonly (readonly P2[])[]) => {
 export function untangle(map: ForestMap, order: readonly string[]): LeyRoute | null {
   const keys = [...order], st = keys.map(k => { const [x, y] = k.split(",").map(Number), q = map.soundsystemSpot(x, y); return [q.x, q.z] as P2; }), n = st.length;
   if (!n) return null;
-  const D = map.tuning.leyLines.depart, depart = departureRoute(map, { x: st[0][0], z: st[0][1] }, D.past, D.avoid, 4) as P2[];
+  const D = map.tuning.leyLines.depart, depart = departureRoute(map, { x: st[0][0], z: st[0][1] }, D.avoid, 4) as P2[];
   // (The first stone stays first: the departure curve leads to it.)
   const swap = (i: number, j: number) => { for (; i < j; i++, j--) { [st[i], st[j]] = [st[j], st[i]]; [keys[i], keys[j]] = [keys[j], keys[i]]; } };
   const meets = (i: number, j: number) => (i === 0 ? polylinesMeet(depart, [st[j - 1], st[j]]) : segmentsMeet(st[i - 1], st[i], st[j - 1], st[j], j === i + 1));

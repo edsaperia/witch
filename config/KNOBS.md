@@ -528,7 +528,6 @@ The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in 
 | `leyLines.height` | array of number |  |
 | `leyLines.valley` | number | 0 to … |
 | `leyLines.flow` | array of number |  |
-| `leyLines.depart.past` | number | 0 to … |
 | `leyLines.depart.avoid` | number | 0 to … |
 
 ## `witch`
@@ -556,7 +555,7 @@ The witch knocked back and staggered by a blow (Ed, 2026-10-05: "add a knockback
 
 ## `sigilProjection`, `occlusion`
 
-From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises.
+From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises. creatures (Ed's playtest, 2026-10-06: "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"): each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range. Not for one in her stack (its sigil's already over her) or one standing at its placed sigil (that one's projected already).
 
 | knob | type | range |
 |---|---|---|
@@ -564,6 +563,12 @@ From the treetops, each placed sigil shows above the canopy over its spot: heigh
 | `sigilProjection.opacity` | number | 0 to … |
 | `sigilProjection.beam` | number | 0 to … |
 | `sigilProjection.size` | number | 0 to … |
+| `sigilProjection.creatures.range` | number | 0 to … |
+| `sigilProjection.creatures.max` | number | 0 to … |
+| `sigilProjection.creatures.size` | number | 0 to … |
+| `sigilProjection.creatures.opacity` | number | 0 to … |
+| `sigilProjection.creatures.happy` | number | 0 to … |
+| `sigilProjection.creatures.fade` | number | 0 to … |
 | `occlusion.on` | boolean |  |
 | `occlusion.fadeOpacity` | number | 0 to … |
 | `occlusion.edge` | number | 0 to … |
@@ -1311,6 +1316,23 @@ Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the l
 | `trail.colourEase` | number | 0 to … |
 | `trail.sparks` | boolean |  |
 
+## `load`
+
+Sigil weight, made visible (Ed, 2026-10-06: "We can make the mechanic obvious through the artwork."; render/load.ts): the load her carried leashes put on her (the rules' leashLoad, by tension and weight) shows from nothing (the rules' leashLoad: its over, the pull past leash.weight.free, so the first few sigils change nothing) to full weight units over: her sigil stack sags (its gaps closing by up to stackSag) and leans toward the pull (stackLean metres a sigil); carried leashes' threads show from threadFrom of the leash's length (0.85 unloaded), taut and brighter (threadBright); flying away from the pull she leans forward (witchLean metres per metre up), her broom tilts nose-up (broomTilt) and its shaft bows (broomBow art pixels), sparks splaying back from its bristles (sparks a second); over the treetops, sinking (her lift below 1 in treetop mode, the rules' leash.weight), sparks fall away below her.
+
+| knob | type | range |
+|---|---|---|
+| `load.on` | boolean |  |
+| `load.full` | number | 0 to … |
+| `load.stackSag` | number | 0 to … |
+| `load.stackLean` | number | 0 to … |
+| `load.threadFrom` | number | 0 to … |
+| `load.threadBright` | number | 0 to … |
+| `load.witchLean` | number | 0 to … |
+| `load.broomTilt` | number | 0 to … |
+| `load.broomBow` | number | 0 to … |
+| `load.sparks` | number | 0 to … |
+
 ## `swoopTrail`
 
 The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get the same following glow that you have, but it should be bright and multicoloured."): while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange).
@@ -1329,12 +1351,13 @@ The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get 
 
 ## `boot`
 
-At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker. The boot runs from the party spell (golf: rules/party.ts castPartySpell; Ed, 2026-10-06): its pulse goes from the treehouse round the home ring clockwise from the top (rules/bootRing.ts), each stone turning into a speaker as it passes, the last as the boot's time is up; the ley line runs ahead of it at leyLines.reveal times its pace.
+At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker. The boot runs from the party spell (golf: rules/party.ts castPartySpell; Ed, 2026-10-06): its pulse goes from the treehouse round the home ring clockwise from the top (rules/bootRing.ts), each stone turning into a speaker as it passes, the last as the boot's time is up; the ley line runs ahead of it at leyLines.reveal times its pace. firstAfter (Ed, 2026-10-06: "The time between the game start and the first mini-runestone turning into a speaker should be about three seconds ... after you leave your decks ... You can start the boot time from when the first speaker is activated"): seconds from her leaving the decks (the party spell cast) to the first stone turning; the boot's time then runs from that first speaker to the last.
 
 | knob | type | range |
 |---|---|---|
 | `boot.time` | number | 0 to … |
 | `boot.transform` | number | 0 to … |
+| `boot.firstAfter` | number | 0 to … |
 
 ## `party`
 
@@ -1436,13 +1459,15 @@ Off (Ed, 2026-10-06: "Remove the floating numbers above the runestones."); set o
 
 ## `canopyCutout`
 
-In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. whole: how much the fade goes by each crown's middle rather than by each pixel (Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode... If these had softer edges, it would be fine"): by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it.
+In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. whole: how much the fade goes by each crown's middle rather than by each pixel (Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode... If these had softer edges, it would be fine"): by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it. Round 14 (Ed: "canopy cut-out circle is still very sharp"): by the crown's middle, a big crown near the camera (its middle far off) stood whole right up to her and its edge read as a hard ring, so whole 0.75 -> 0.25 (mostly by pixel again) and the rings are broken another way: wobble, how far the hole's line wanders (a share of edge) by a slow noise on the ground, so the fade's lines aren't circles; outer, how far past the radius the fade reaches (a share of edge; 0.35 before), with edge 0.3 -> 0.5, so the canopy thins over a band several crowns deep. A trunk cut from its crown now fades its top in alpha too (smooth effects; the dither stays with ?fx=pixel).
 
 | knob | type | range |
 |---|---|---|
 | `canopyCutout.screenFraction` | number | 0 to … |
 | `canopyCutout.edge` | number | 0 to … |
 | `canopyCutout.whole` | number | 0 to … |
+| `canopyCutout.wobble` | number | 0 to … |
+| `canopyCutout.outer` | number | 0 to … |
 
 ## `find`, `tone`, `bloom`, `tiltShift`
 
@@ -1505,7 +1530,7 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.sleepy.faces` | array of string |  |
 | `dreams.sleepy.fallback` | string |  |
 
-## `legends`, `wildLegends`, `creatureSimRadius`
+## `legends`
 
 Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 (2026-10-06): buffPower, every legend's buff's strength ("Bigger buffs", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); bombard ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge. stomp (Ed, 2026-10-06, a "perhaps": "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer"): on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands.
 
@@ -1523,6 +1548,16 @@ Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test 
 | `legends.partyHits` | number | 1 to … |
 | `legends.partyDrain` | number | 0 to … |
 | `legends.partyReach` | number | 0 to … |
+
+## `partyOver`, `wildLegends`, `creatureSimRadius`
+
+The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little 😴 speech bubbles, and you can walk the map safely"; rules/partyOver.ts): once every soundsystem and the home ring's speakers are down, the afterparty: the waves stop, nothing fights, and every creature walks home and sleeps. walk: their pace home, times their roaming speed (they walk, not run: a stroll home after the party). ease: seconds it eases in over (g.partyOver.ease, 0 to 1: the lights going out, the music winding down, the ley line fading to leyFloor of its brightness). ?partyover=1 starts it at once.
+
+| knob | type | range |
+|---|---|---|
+| `partyOver.ease` | number | 0 to … |
+| `partyOver.leyFloor` | number | 0 to 1 |
+| `partyOver.walk` | number | 0 to … |
 | `wildLegends.wake` | number | 0 to … |
 | `wildLegends.sink` | number | 0 to … |
 | `wildLegends.moss` | number | 0 to … |
