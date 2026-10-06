@@ -25,6 +25,8 @@ export const SPRITE_UNIFORMS = {
   uTopFade: { value: 0 },
   // The hole in the canopy round the witch: her place on screen (pixels), radius and edge (pixels).
   uCutout: { value: new THREE.Vector4(0, 0, 0, 1) },
+  /** How much the hole goes by each crown's middle rather than each pixel (canopyCutout.whole): 1, whole crowns fade. */
+  uCutWhole: { value: 0 },
   // ?debug=cull: anything that has just appeared is tinted bright red.
   uDebugCull: { value: 0 },
   // The low-resolution picture's size in pixels: each sprite's base is snapped to its pixel grid.
@@ -68,6 +70,7 @@ uniform vec4 uOcc;
 uniform float uAbsolute; // its y is a world height, not a height over the ground
 uniform vec4 uCutout, uWitch;
 varying float vHole;   // crowns and cut trunks: the radius of the hole round her (pixels) for this tree
+varying float vCrownD; // and how far its crown's middle is from her on screen (pixels)
 varying float vOverHer; // over her on screen and nearer the camera: it could hide her
 attribute vec3 iPos;
 attribute vec2 iSize;
@@ -129,13 +132,14 @@ void main() {
   // The hole cut in the canopy round her (Ed, round 7: "the crown-hiding circle still has a very
   // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
   // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
-  vHole = 1.0; vOverHer = 0.0;
+  vHole = 1.0; vOverHer = 0.0; vCrownD = 0.0;
   if (abs(iFlags.y) > 0.001) {
     vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
     vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
     // Its own radius for the hole (vHole here: in pixels), each tree a little nearer or further.
     float j = fract(sin(dot(floor(iPos.xz * 2.0), vec2(12.9898, 78.233))) * 43758.5453);
     vHole = uCutout.z * (0.8 + 0.4 * j);
+    vCrownD = length((s0 + s1) * 0.5 - uCutout.xy);
     // Whether it could hide her: over her sprite on screen and nearer the camera than her.
     float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
     vec2 cc = (s0 + s1) * 0.5;
@@ -164,7 +168,8 @@ varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 varying float vFront;
-varying float vHole, vOverHer;
+varying float vHole, vOverHer, vCrownD;
+uniform float uCutWhole;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
@@ -239,7 +244,10 @@ void shade() {
   // is drawn see-through in the second pass where it's over her, after her, like whatever stands
   // in front of her: in the opaque pass it hid her (Ed, v289: she showed only as her silhouette inside a crisp disc).
   // The hole: a wide soft band at this tree's own radius (vHole); the pass by the whole crown (vOverHer).
-  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * 0.35, length(gl_FragCoord.xy - uCutout.xy));
+  // Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode": a fade by
+  // each pixel's distance drew the same circular gradient across every crown, lining up into rings; by each crown's
+  // middle (uCutWhole of the way), a crown fades much as a whole.
+  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * 0.35, mix(length(gl_FragCoord.xy - uCutout.xy), vCrownD, uCutWhole));
   float shown = 1.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
