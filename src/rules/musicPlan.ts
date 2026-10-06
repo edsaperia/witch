@@ -28,11 +28,25 @@ export interface MusicCue {
   party?: number;
   /** How near an angry legend is (0-1): charging, or shooting from afar. */
   legend?: number;
+  /** The home speakers' boot (Ed, 2026-10-06: "the music first starts when the first speaker appears,
+   *  sounding incomplete, and becomes gradually more complete until the last of the 12 appears"): the
+   *  bar each speaker turned on, of `speakers` in all. Absent: the music whole (previews, the lab). */
+  speakerBars?: number[];
+  speakers?: number;
   /** In a sleeping legend's clearing on the ground (Ed, 2026-10-06): its species, the layer's level 0-1. */
   circle?: { species: string; level: number };
   /** ?music= previews: always this section; or this wave's arc step whatever the wave. */
   forceSection?: string;
   forceWave?: number;
+}
+
+/** How much of the music has booted at bar `bar` (0 silent to 1 whole): the home speakers on, each
+ *  counted from the bar line after it turned (so its layer comes in on a bar, after its crackle). */
+export function bootLayers(cue: Pick<MusicCue, "speakerBars" | "speakers">, bar: number): number {
+  if (!cue.speakerBars || !cue.speakers) return 1;
+  let on = 0;
+  for (const b of cue.speakerBars) if (Math.ceil(b - 1e-6) <= bar) on++;
+  return Math.min(1, on / cue.speakers);
 }
 
 /** Bars gone by at game time `time` on the beat clock. */
@@ -52,6 +66,7 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
     waves, nextAt: g.tuning.party.interval >= 1e9 ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
     knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), legend: legendNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
     circle: circleCue(g, g.witch),
+    speakerBars: g.speakerBoot.filter((t): t is number => t !== null).map(bar).sort((a, b) => a - b), speakers: g.speakerBoot.length,
   };
 }
 

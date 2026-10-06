@@ -429,6 +429,9 @@ export class View {
   // Everything drawn goes through this one test, so nothing is added or dropped on screen.
   frustum = new THREE.Frustum();
   frustumTo = new THREE.Frustum();
+  /** How far the camera moved since the last frame (m): the horizon cull judges things that much nearer (view/culling.ts inView). */
+  camStep = 0;
+  lastCamPos = new THREE.Vector3(NaN, NaN, NaN);
   cullCam = new THREE.PerspectiveCamera();
   box = new THREE.Box3();
   m4 = new THREE.Matrix4();
