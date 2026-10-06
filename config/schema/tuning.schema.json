@@ -34,6 +34,29 @@
         "edge": {
           "type": "number",
           "minimum": 0
+        },
+        "coast": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "detail"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -42,7 +65,8 @@
         "buffer",
         "push",
         "drift",
-        "edge"
+        "edge",
+        "coast"
       ],
       "additionalProperties": false
     },
@@ -3357,6 +3381,10 @@
           "type": "number",
           "minimum": 0
         },
+        "minFromStone": {
+          "type": "number",
+          "minimum": 0
+        },
         "rim": {
           "type": "object",
           "properties": {
@@ -3445,6 +3473,7 @@
         "radius",
         "edge",
         "top",
+        "minFromStone",
         "rim",
         "grove",
         "species"
@@ -4095,13 +4124,79 @@
         "spacing": {
           "type": "number",
           "minimum": 0
+        },
+        "weight": {
+          "type": "object",
+          "properties": {
+            "free": {
+              "type": "number",
+              "minimum": 0
+            },
+            "levels": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "drag": {
+              "type": "number",
+              "minimum": 0
+            },
+            "drift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sink": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sinkMax": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "extreme": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxTension": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "free",
+            "levels",
+            "drag",
+            "drift",
+            "rise",
+            "sink",
+            "sinkMax",
+            "floor",
+            "extreme",
+            "maxTension"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "length",
         "runSpeed",
         "pickRadius",
-        "spacing"
+        "spacing",
+        "weight"
       ],
       "additionalProperties": false
     },
@@ -6107,11 +6202,16 @@
         "edge": {
           "type": "number",
           "minimum": 0
+        },
+        "whole": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "screenFraction",
-        "edge"
+        "edge",
+        "whole"
       ],
       "additionalProperties": false
     },
@@ -6242,6 +6342,10 @@
         "sky": {
           "type": "boolean"
         },
+        "skyBlur": {
+          "type": "number",
+          "minimum": 0
+        },
         "strength": {
           "type": "number",
           "minimum": 0
@@ -6277,6 +6381,7 @@
         "on",
         "where",
         "sky",
+        "skyBlur",
         "strength",
         "band",
         "centre",
