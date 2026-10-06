@@ -359,13 +359,11 @@ seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
 const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!;
-/** The party spell's button (Ed, 2026-10-06: "a button on the screen that says "CAST THE PARTY SPELL""): a click or a tap,
- *  or Enter (once play has begun, so the start screen's Enter isn't it), casts it on the next step. */
-const castBtn = document.getElementById("cast")!;
+/** The party spell (Ed, 2026-10-06): cast by the creator's scroll (ui/spellScroll.ts), its burst starting play; without the
+ *  creator (?creator=0&spell=wait), Enter (once play has begun, so the start screen's Enter isn't it) or her spell key casts it
+ *  on the next step. */
 let castQueued = false;
 const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
-for (const ev of ["pointerdown", "pointerup", "touchstart"]) castBtn.addEventListener(ev, e => e.stopPropagation()); // (not the game's input)
-castBtn.addEventListener("click", e => { e.stopPropagation(); queueCast(); });
 window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
 /** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
  *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
@@ -374,9 +372,6 @@ function waveHud(): void {
   clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
   const now = clockText(clockSeconds(game.party, game.clock.time));
   if (clockT.textContent !== now) clockT.textContent = now;
-  // before the party spell (Ed, 2026-10-06: the game starts when she casts it), its button in the middle of the screen
-  const ask = awaitingSpell(game.party) && !game.clock.paused && !creator.open;
-  castBtn.classList.toggle("on", ask);
   clockEl.classList.toggle("paused", game.clock.paused);
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
@@ -470,7 +465,8 @@ creator.progress = () => { const a = view.assets; return { done: a.done, total: 
 function ensureSfx(): void { if (audio && !sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } }
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); ensureSfx(); } catch { /* no sound yet */ } };
-creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } start(); };
+creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } if (start()) queueCast(); }; // (the scroll's burst: play, and the spell cast)
+creator.spellSound = (cue, v) => sfx?.spell(cue, v);
 if (params.get("creator") !== "0") creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {

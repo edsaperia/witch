@@ -1,8 +1,8 @@
 // The start of play (Ed, 2026-10-06: "you are standing behind your decks in your treehouse, there is a button on the screen
 // that says "CAST THE PARTY SPELL", when you press it, the witch does a spellcasting animation ... and you can start moving
 // around"): the built game (DIST, default dist/) at 1280×720 on a seed, frames stepped by hand a fixed 1/30 s. Waiting at
-// the decks (the button, the clock at 00:00, held though she's told to move), the press (the button goes, the cast and its
-// sparkles, the clock running), then off she goes. Writes start.gif and the stills waiting.png, casting.png, off.png.
+// the decks (the clock at 00:00, held though she's told to move; the creator skipped: Enter casts it, the scroll's way is
+// tools/smoke/spell-scroll.cjs), the cast (its sparkles, the clock running), then off she goes. Writes start.gif and the stills waiting.png, casting.png, off.png.
 //   npm run build && node tools/smoke/partyspell.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), { execFileSync } = require("child_process");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -21,7 +21,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&spell=wait`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 600000, polling: 500 });
     await page.keyboard.press("Enter"); // (past the start screen: the clock not yet run, so not a cast)
-    await page.waitForFunction(() => document.querySelector("#cast.on"), null, { timeout: 600000, polling: 500 });
+    await page.waitForFunction(() => window.witch.game.party.spellAt === null && !window.witch.game.clock.paused, null, { timeout: 600000, polling: 500 });
     await page.waitForTimeout(8000); // (the treehouse's art in)
     // from here the loop stands still and each frame is stepped by hand; the HUD's clock and button kept as the loop keeps them
     const step = o => page.evaluate(o => {
@@ -29,7 +29,6 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 30);
       const s = g.party.spellAt == null ? 0 : Math.max(0, Math.floor(g.clock.time - g.party.spellAt));
       document.querySelector("#clock").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-      document.querySelector("#cast").classList.toggle("on", g.party.spellAt === null);
       return { x: g.witch.x, z: g.witch.z, spellAt: g.party.spellAt, t: g.clock.time, boot: g.party.bootUntil - g.clock.time };
     }, o);
     let n = 0, last;
@@ -41,7 +40,6 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     if (Math.abs(last.x - x0) > 1e-6 || last.spellAt !== null) throw new Error(`she moved before the spell: ${JSON.stringify(last)}`);
     console.log("waiting", JSON.stringify(last));
     // the press (as the button does), the cast, then off
-    await page.evaluate(() => document.querySelector("#cast").classList.add("pressed"));
     await film(i => (i === 0 ? { castParty: true, moveX: 1 } : { moveX: 1 }), 36, "casting.png");
     console.log("cast", JSON.stringify(last));
     await film({ moveX: 1, moveZ: 0.3 }, 30, "off.png");
