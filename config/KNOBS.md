@@ -1120,6 +1120,15 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.waves.every` | number | 0 to … |
 | `sfx.waves.wash` | number | 0 to … |
 | `sfx.waves.range` | number | 0 to … |
+| `sfx.night.volume` | number | 0 to … |
+| `sfx.night.bed` | number | 0 to … |
+| `sfx.night.noise` | number | 0 to … |
+| `sfx.night.sounds` | number | 0 to … |
+| `sfx.night.from` | number | 0 to … |
+| `sfx.night.snore.volume` | number | 0 to … |
+| `sfx.night.snore.gap` | number | 0 to … |
+| `sfx.night.snore.range` | number | 0 to … |
+| `sfx.night.snore.max` | number | 0 to … |
 | `music.on` | boolean |  |
 | `music.volume` | number | 0 to … |
 | `music.nearDist` | number | 0 to … |
@@ -1135,6 +1144,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.slow.on` | boolean |  |
 | `music.slow.pitch` | number | 0 to … |
 | `music.slow.floor` | number | 0 to … |
+| `music.over.stop` | number | 0 to … |
+| `music.over.floor` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |

@@ -4,9 +4,9 @@ import { FrameStats } from "./platform/frameStats";
 import { Shake } from "./render/shake";
 import { Music } from "./platform/audio/music";
 import { Sfx } from "./platform/audio/sfx";
-import { SfxCues } from "./platform/audio/sfxCues";
+import { OVER_DEBUG, SfxCues } from "./platform/audio/sfxCues";
 import { AudioWatchdog } from "./platform/audio/watchdog";
-import { musicMix } from "./rules/music";
+import { musicMix, partyOverEase } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
 import musicStyleJson from "../config/music-style.json";
@@ -609,7 +609,7 @@ function frame(now: number): void {
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   lastMix = musicMix(game, game.witch);
-  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused, tuning.music, (game as { timeScale?: number }).timeScale ?? 1); // (the world slowed in a legend's circle: the music with it)
+  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused, tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
   const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)

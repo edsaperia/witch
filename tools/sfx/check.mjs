@@ -1,5 +1,5 @@
 // The sound effects' check (before every push that touches them):
-//   node tools/sfx/check.mjs
+//   node tools/sfx/check.mjs [name,...]   (only those, while working on them)
 // Bundles tools/sfx/render.ts (the game's own src/platform/audio/sfx.ts and tuning), renders every effect
 // offline in headless Chromium, and fails on a script error, silence, NaN or clipping; writes each
 // as a WAV to previews/sfx/ to listen to. Math.random is seeded, so each render is the same every
@@ -25,7 +25,7 @@ await page.setContent("<!doctype html><meta charset=utf-8><body></body>");
 // (a seeded Math.random: the same renders every run)
 const seed = "{ let r = 12345; Math.random = () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 4294967296); }";
 await page.addScriptTag({ content: seed + "\n" + code });
-const results = await page.evaluate(() => window.sfxRender());
+const results = await page.evaluate(only => window.sfxRender(only), process.argv[2]?.split(",") ?? []);
 await browser.close();
 ok(errors.length === 0, `renders with no script errors${errors.length ? ": " + errors.join(" | ") : ""}`);
 mkdirSync(resolve(root, "previews/sfx"), { recursive: true });
@@ -38,5 +38,5 @@ for (const r of results) {
   h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
   writeFileSync(resolve(root, `previews/sfx/${r.name}.wav`), Buffer.concat([h, pcm]));
 }
-ok(results.length >= 40, `${results.length} effects rendered (previews/sfx/*.wav)`);
+ok(results.length >= (process.argv[2] ? 1 : 40), `${results.length} effects rendered (previews/sfx/*.wav)`);
 process.exit(failed ? 1 : 0);
