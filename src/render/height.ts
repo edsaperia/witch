@@ -191,7 +191,7 @@ export class HeightField {
     this.PATH_EDGE = Math.max(6, H.amplitude * 0.6);
     this.PLATEAU_FADE = Math.max(16, H.amplitude * 2);
     amplitude = H.on ? H.amplitude : 0;
-    { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) this.beach = { b, ease: Math.max(1, B.ease), hSand: B.sand, hSea: B.sea }; }
+    { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) { const ease = Math.max(1, B.ease), clear = b.edgeMin - Math.max(...b.sand) - ease; this.beach = { b, ease, hSand: B.sand, hSea: B.sea, clear2: clear > 0 ? clear * clear : 0 }; } }
     this.seed = map.seed + 6113;
     this.texture = new THREE.DataTexture(this.half, N, N, THREE.RedFormat, THREE.HalfFloatType);
     const t = this.texture;
@@ -230,13 +230,15 @@ export class HeightField {
     if (!b) return h;
     // The beach (rules/mapShape.ts beachOf): the hills eased down over `ease` metres to the sand's
     // height where it starts, the sand sloping gently to the sea's, flat beyond.
+    const dx = x - b.b.x, dz = z - b.b.z;
+    if (dx * dx + dz * dz < b.clear2) return h; // (quickly: nearer the middle than the sand comes anywhere, less the ease)
     const into = b.b.intoSand(x, z);
     if (into < -b.ease) return h;
     if (into < 0) return h + (b.hSand - h) * smoothstep((into + b.ease) / b.ease);
     return b.hSand + (b.hSea - b.hSand) * smoothstep(Math.min(1, into / Math.max(1, b.b.sandAt(Math.atan2(z - b.b.z, x - b.b.x)) + b.b.out)));
   }
   /** The beach's levels, on the circular map with it on. */
-  private beach: { b: Beach; ease: number; hSand: number; hSea: number } | null = null;
+  private beach: { b: Beach; ease: number; hSand: number; hSea: number; clear2: number } | null = null;
 
   private addCircle(c: Circle): void {
     const R = c.r + this.PLATEAU_FADE;
