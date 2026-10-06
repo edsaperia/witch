@@ -18,6 +18,7 @@ import { AREA_FLORA, floraSlots } from "./flora/areas.js";
 export const SWAYING_PROPS = new Set(["tree", "shrub", "grass", "reeds", "fern", "flowers", "flowerbed", "bramble", "hedge"]);
 import { TALL_KINDS, tallPiece } from "./tall.js";
 import { groundTile } from "./ground.js";
+import { propPiece, propFor } from "./props/generator.js";
 
 // [kind, params] shorthands for the prop library below
 const tree = (type, o = {}) => ["tree", { type, ...o }];
@@ -228,6 +229,7 @@ function rock(sp, c, rx, ry, st, r, moss) { // a lumpy stone, lit above, mossy o
 }
 // Each returns { sp, colours }; s scales to the pixel size.
 function prop(kind, o, def, st, r, s) {
+  if (st.propGen && o.gen) return propPiece(o.gen[0], { ...o.gen[1], seed: o.gen[2] }, def, st); // ?props=gen: the prop generator's variant (art/props/)
   if (TALL_KINDS.includes(kind)) return tallPiece(kind, o, def, st, r); // the tall pieces (tall.js): 3D, at the witch's scale
   const leafCol = { [M.LEAF]: hsv2rgb(def.leaf, .6 * st.sat, .55), [M.LEAF2]: hsv2rgb(def.leaf - .05, .55 * st.sat, .78), [M.LEAF3]: hsv2rgb(def.leaf + .03, .66 * st.sat, .36) };
   const wood = { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BELLY]: hsv2rgb(st.trunkHue + .02, .3, .7) };
@@ -378,7 +380,10 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0);
   const bk = (p, kind, text) => ({ sp: bake(p.sp, p.colours, st, "none", makeCanvas), kind, text });
   const ft = floorTile(def, st);
-  const col = list => (list || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand
+  // ?props=gen (st.propGen): each hand-made prop the prop generator stands in for (propFor) becomes `variants` of it (3; a sparse one's
+  // share split among them), each its own shape from its own seed, so a pool or a stone isn't one sprite placed again and again
+  const gen = list => !st.propGen ? list : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, o]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
+  const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
   if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres, origin: sp0.origin }; } // the new 3D ones: their size, and where their middle on the ground lands
