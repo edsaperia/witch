@@ -2049,13 +2049,12 @@
           "type": "number",
           "minimum": 0
         },
-        "ahead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "behind": {
-          "type": "number",
-          "minimum": 0
+        "far": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
         },
         "behindBright": {
           "type": "number",
@@ -2119,8 +2118,7 @@
       "required": [
         "on",
         "reveal",
-        "ahead",
-        "behind",
+        "far",
         "behindBright",
         "advance",
         "fade",
@@ -4769,52 +4767,6 @@
       ],
       "additionalProperties": false
     },
-    "forecast": {
-      "type": "object",
-      "properties": {
-        "symbols": {
-          "type": "number",
-          "minimum": 0
-        },
-        "probable": {
-          "type": "number",
-          "minimum": 0
-        },
-        "probableMax": {
-          "type": "number",
-          "minimum": 0
-        },
-        "afterNext": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "radius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "size": {
-          "type": "number",
-          "minimum": 0
-        },
-        "flare": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "symbols",
-        "probable",
-        "probableMax",
-        "afterNext",
-        "radius",
-        "size",
-        "flare"
-      ],
-      "additionalProperties": false
-    },
     "fight": {
       "type": "object",
       "properties": {
@@ -6408,7 +6360,6 @@
     "bond",
     "sfx",
     "music",
-    "forecast",
     "fight",
     "attackFx",
     "combat",
