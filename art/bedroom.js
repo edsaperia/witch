@@ -399,7 +399,11 @@ export function bedroomModel({ S = ROOM.S } = {}) {
     BEDROOM_PROPS.hat(m, [3.3, 2.75], { kind: "party", k: 6 }); BEDROOM_PROPS.clothes(m, [3.1, 3.3], { kind: "sock", turn: 2.2, k: 9, mat: M.EYE });
     BEDROOM_PROPS.clothes(m, [1.2, S - .45], { kind: "scarf", turn: -.3, k: 10, mat: M.FLOWER });
   }
-  m.anchors.floor = { S, wall, blocks };
+  // where she stands to look at a thing of hers (the creator opens its box): the hats heaped at the bed's foot, the broom, the
+  // sneakers; on the new floor, the rail, the mirror, the scarf, the headphones and the rune books
+  const spots = { hat: [.68, 2.5], broom: [.4, 2.78], shoes: [1.75, 2.8] };
+  if (S >= 3.6) Object.assign(spots, { outfit: [3.35, .7], hair: [S - .65, 1.3], scarf: [1.2, S - .5], phones: [2.25, S - .95], more: [.6, 3 + (S - 3) * .55] });
+  m.anchors.floor = { S, wall, blocks, spots };
   return m;
 }
 
