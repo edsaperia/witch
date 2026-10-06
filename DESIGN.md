@@ -153,6 +153,7 @@ Area types after the first 30 are written as **recipes**: one object of data eac
 | Area | Floor | Wall | Small | Big | Set piece | Creature | By |
 |---|---|---|---|---|---|---|---|
 | Fen | peat moss and sedge | black pools | sedge and reeds | aspen and alder carr | a punt sunk among the sedge | Newt | recipe |
+| Heronry | rough grass and reed litter | the mere's edge | reeds and rushes | tall elms with herons' nests | an old jetty out over the mere | Heron | recipe |
 
 ## Combat, pacing and forecasting (Ed, 2026-10-04)
 
