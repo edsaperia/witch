@@ -25,9 +25,12 @@ export class BeachView {
     if (!b) return false;
     if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0)) { this.leave(); return false; }
     if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
-    const I = g.beach?.players[0], her = I?.activity ? I : w.stargazing ? { activity: "rest" as const, pose: "stargaze", facing: w.facing } : null;
-    if (!g.beach?.list.length && !her && !this.witches) return false;
-    const v = (this.witches ??= new PartyWitchView(this.scene, this.assets, this.mpp, this.light)), list = g.beach?.list ?? [];
+    // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
+    let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
+    for (const s of g.beach ?? []) { const d = (s.x - w.x) ** 2 + (s.z - w.z) ** 2; if (d < sd) { sd = d; spot = s; } }
+    const I = spot?.players[0], her = I?.activity ? I : w.stargazing ? { activity: "rest" as const, pose: "stargaze", facing: w.facing } : null;
+    if (!spot?.list.length && !her && !this.witches) return false;
+    const v = (this.witches ??= new PartyWitchView(this.scene, this.assets, this.mpp, this.light)), list = spot?.list ?? [];
     v.update(g, time, visible, { list, her });
     v.bubbles(g, time, camera, width, height, list);
     return v.herIdle;

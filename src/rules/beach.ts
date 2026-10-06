@@ -1,11 +1,13 @@
 // Witches on the beach (Ed, 2026-10-06: "Other witches can be found on the beach occasionally; if you
-// land near them, you chat, hold hands, and hug"): in witchChance of runs (seeded), a few witches
-// lie about together somewhere on the sand round the circular map, resting and chatting. Landing
+// land near them, you chat, hold hands, and hug"; then "I think there should always be beach witches,
+// but there are only a handful spread around it"): a handful of spots (beach.spots) spread round the
+// coast, evenly but for a seeded jitter, each with a few witches lying about together on the sand,
+// resting and chatting (in witchChance of runs: every run, now). Landing
 // within meet metres of them and keeping still (lying stargazing counts) for idleAfter seconds, the
 // nearest comes over and they chat, hold hands, hug and stargaze side by side, turn seconds each,
 // round again until she moves. They're party witches in all but where they are: the same looks,
 // poses and pairing (rules/partyWitches.ts), drawn by their own PartyWitchView, made only once
-// she's near. Most runs never come here, so nothing is done unless she's within simRange.
+// she's near. Most runs never come here, so a spot does nothing unless she's within its simRange.
 import { beachOf, type Bounds } from "./mapShape";
 import { pairOffset, type PartyWitch, type PlayerIdle } from "./partyWitches";
 import { hash2, rng } from "./random";
@@ -30,11 +32,20 @@ export const SEQUENCE: { activity: PartyWitch["activity"]; pose: string }[] = [
 ];
 const REST = ["sitGround", "stargaze"];
 
-/** This run's beach witches, or null (most runs, the square map, the beach off). */
-export function newBeachWitches(seed: number, bounds: Bounds, t: Tuning): BeachWitches | null {
+/** This run's spots of beach witches round the coast, or null (the square map, the beach off, or a run without them). */
+export function newBeachWitches(seed: number, bounds: Bounds, t: Tuning): BeachWitches[] | null {
   const B = t.beach, beach = beachOf(bounds, t);
   if (!B || !beach || hash2(seed, 77, 4111) >= B.witchChance) return null;
-  const r = rng(seed * 6007 + 13), a = r() * Math.PI * 2 - Math.PI, d = beach.edge(a) - Math.min(30, B.width * 0.4); // (in from where the edge holds her)
+  // A handful, spread round the whole coast: evenly, each nudged by up to a third of the gap either way, so never bunched.
+  const r = rng(seed * 6007 + 13), [lo, hi] = B.spots ?? [1, 1], n = Math.max(1, Math.round(lo + r() * (hi - lo))), gap = (Math.PI * 2) / n, a0 = r() * Math.PI * 2;
+  const out: BeachWitches[] = [];
+  for (let k = 0; k < n; k++) out.push(beachSpot(r, a0 + k * gap + (r() - 0.5) * gap * 0.66, beach, B));
+  return out;
+}
+
+/** One spot of beach witches at angle `a` round the coast. */
+function beachSpot(r: () => number, angle: number, beach: NonNullable<ReturnType<typeof beachOf>>, B: NonNullable<Tuning["beach"]>): BeachWitches {
+  const a = Math.atan2(Math.sin(angle), Math.cos(angle)), d = beach.edge(a) - Math.min(30, B.width * 0.4); // (in from where the edge holds her)
   const nx = Math.cos(a), nz = Math.sin(a), tx = -nz, tz = nx, x = beach.x + nx * d, z = beach.z + nz * d;
   const n = Math.max(1, Math.round(B.witches[0] + r() * (B.witches[1] - B.witches[0])));
   const list: PartyWitch[] = [];
@@ -43,7 +54,7 @@ export function newBeachWitches(seed: number, bounds: Bounds, t: Tuning): BeachW
     list.push({ id: i, seed: Math.floor(r() * 1e6), area: "beach", x: wx, y: 0, z: wz, facing: r() < 0.5 ? 1 : -1, away: false, state: "floor", since: 0,
       from: { x: wx, z: wz }, to: { x: wx, z: wz }, activity: "rest", pose: REST[i % 2], until: 0, partner: null, lead: false, tx: wx, tz: wz });
   }
-  return { x, z, list, players: [], idle: true, rand: r, step: 0 };
+  return { x, z, list, players: [], idle: true, rand: rng(Math.floor(r() * 1e9)), step: 0 }; // (its own stream: stepping one spot never shifts another)
 }
 
 /** What the beach witches need to know about a player this step. */

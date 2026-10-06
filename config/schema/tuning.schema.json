@@ -107,6 +107,13 @@
           "type": "number",
           "minimum": 0
         },
+        "spots": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
         "witches": {
           "type": "array",
           "items": {
@@ -141,6 +148,7 @@
         "restAfter",
         "shown",
         "witchChance",
+        "spots",
         "witches",
         "meet",
         "idleAfter",
