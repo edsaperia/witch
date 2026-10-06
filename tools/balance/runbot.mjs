@@ -51,7 +51,7 @@ else {
     const waves = [], parkedAt = new Set();
     let qjob = null, questAgain = 0, rjob = null, relicAgain = 0, questsDone = [], relicsPlaced = [];
     let feeding = null, feedAgain = 0, firstKo = null, kos = 0, wasKo = false, healing = false, target = null, pickAt = -1, landWave = -1, lastWave = 0;
-    const T0 = Date.now(), angryAt = [], restlessAt = [], restWas = new Map(), babiesDown = []; let babyHits = 0;
+    const T0 = Date.now(), angryAt = [], restlessAt = [], restWas = new Map(), ruinedAt = new Map(), babiesDown = []; let babyHits = 0;
 
     /** Where to recruit next: a wild area with someone she may invite (careful: never its last one of the area's kind). */
     const careful = bot === "skilled";
@@ -215,11 +215,12 @@ else {
         }
       }
       // When each legend turns restless (its area emptied of its kind) and angry, and whether its area's wave had come (a siege's doing, or hers before it).
+      if (step % 60 === 0) for (const k of g.party.ruined ?? []) if (!ruinedAt.has(k)) ruinedAt.set(k, g.clock.time);
       if (step % 60 === 0) for (const id of legendOf.values()) {
         const c = g.creatures[id], key = cellKey(c.cell), woken = g.party.areas.has(key);
         if (c.legendState === "restless" && !(restWas.get(id))) restlessAt.push({ id, at: g.clock.time, wave: g.party.wave, woken });
         restWas.set(id, c.legendState === "restless");
-        if (c.legendState === "angry" && !angryAt.some(a => a.id === id)) angryAt.push({ id, at: g.clock.time, wave: g.party.wave, woken });
+        if (c.legendState === "angry" && !angryAt.some(a => a.id === id)) angryAt.push({ id, at: g.clock.time, wave: g.party.wave, woken, ruinedAt: ruinedAt.get(key) ?? null });
       }
       if (g.over) break;
     }
@@ -229,7 +230,7 @@ else {
       seed, bot, set: [...SETS.map(([k, v]) => `${k.join(".")}=${JSON.stringify(v)}`), ...(HAPPY ? [`happy=${HAPPY}`] : []), ...(GUARDS !== 3 || KEEP !== 2 ? [`guards=${GUARDS},keep=${KEEP}`] : []), ...(FEED ? ["feed"] : []), ...(process.argv.includes("--calm") ? ["calm"] : []), ...(QUESTS ? ["quests"] : []), ...(RELICS ? ["relics"] : [])].join(";"), end: g.clock.time, over: g.over?.at ?? null, wave: g.party.wave,
       firstKo, kos, invited: origin.size, posse: w.leash.stack.length, parked: w.leash.placed.length,
       angry: L.filter(c => c.legendState === "angry").length, happy: L.filter(c => c.legendState === "happy").length, quests: g.friendly.size,
-      standing, ruined: g.party.ruined?.size ?? 0, angryAt, restlessAt, legends: legendOf.size, babyHits, babiesDown, questsDone, relicsPlaced, buffsAt: [...questsDone, ...relicsPlaced].map(x => x.at).sort((a, b) => a - b), waves, tally: { ...g.tally }, levels: [0, 1, 2, 3].map(l => [...w.leash.stack, ...w.leash.placed.map(p => p.id)].filter(id => !g.creatures[id].gone && g.creatures[id].level === l).length), secs: (Date.now() - T0) / 1000,
+      standing, ruined: g.party.ruined?.size ?? 0, angryAt, restlessAt, ruinedAt: [...ruinedAt].map(([key, at]) => ({ key, at, legend: legendOf.has(key) })), legends: legendOf.size, babyHits, babiesDown, questsDone, relicsPlaced, buffsAt: [...questsDone, ...relicsPlaced].map(x => x.at).sort((a, b) => a - b), waves, tally: { ...g.tally }, levels: [0, 1, 2, 3].map(l => [...w.leash.stack, ...w.leash.placed.map(p => p.id)].filter(id => !g.creatures[id].gone && g.creatures[id].level === l).length), secs: (Date.now() - T0) / 1000,
     };
   }
 
