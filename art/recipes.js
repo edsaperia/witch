@@ -12,7 +12,8 @@
 //   settings            { treeDensity, groundCover } (config/area-types.json's numbers, which win when it names the area)
 //   ground              its own ground genome over its floor kind's (art/ground.js)
 // The creature a recipe names must be a species the game has (art/genome/species.js and the configs keyed by species).
-export const AREA_RECIPES = [];
+import { FEN } from "./recipes/fen.js";
+export const AREA_RECIPES = [FEN];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {

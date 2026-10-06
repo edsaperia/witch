@@ -96,7 +96,9 @@ describe("berries and evolving", () => {
     const s = newBerries(map, t), [a, b] = spawnCreatures(map), D = t.berries.detour;
     // Lone berries, for a clean test: everything else is taken.
     for (const x of s.berries) x.claimedBy = -1;
-    const on = s.berries[0], off = s.berries[1], po = s.bushes[on.bush], pf = s.bushes[off.bush];
+    // the second the furthest from the first (two close by would put both on a's way, whatever the map)
+    const on = s.berries[0], po = s.bushes[on.bush], far = (x: typeof on) => Math.hypot(s.bushes[x.bush].x - po.x, s.bushes[x.bush].z - po.z);
+    const off = s.berries.reduce((m, x) => (far(x) > far(m) ? x : m)), pf = s.bushes[off.bush];
     on.claimedBy = off.claimedBy = null;
     // a walks towards its leash point past the first berry, 1 m off its line; b's line passes far from the second.
     Object.assign(a, { x: po.x - 5, z: po.z + 1, leashed: true, level: 0, rest: 0 });
