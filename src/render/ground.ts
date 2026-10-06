@@ -186,7 +186,7 @@ void main() {
       vec3 R = reflect(-V, vec3(0.0, 1.0, 0.0));
       vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
       float spec = dot(R, moon) + (vnoise(px * vec2(0.6, 2.5) + vec2(uTime * 1.5, 0.0)) - 0.5) * 0.05;
-      vec3 water = vec3(0.035, 0.065, 0.1) * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 4.0; // dark, but water, not a hole (#235)
+      vec3 water = vec3(0.045, 0.08, 0.088) * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 4.0; // dark, but water, not a hole (#235)
       if (spec > 0.985) water = vec3(0.92, 0.95, 1.0);
       else if (spec > 0.965) water = vec3(0.45, 0.55, 0.7);
       else if (mod(px.y, 4.0) < 1.0 && vnoise(px / 3.0 + uTime) > 0.62) water += vec3(0.06, 0.08, 0.12); // ripples
