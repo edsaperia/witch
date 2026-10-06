@@ -56,7 +56,7 @@ import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
-import { LeyLines } from "./leylines";
+import { LeyLines, leyReveal, shaderPulse } from "./leylines";
 import { Glades } from "./glades";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
@@ -606,6 +606,35 @@ export class View {
 
   /** The legends' clearings nearest her this frame (reused: no garbage a frame). */
   private nearRings: LegendClearing[] = [];
+  /** Each clearing's ring brightening: eased up while she stands in it, and its last cue (a flash when
+   *  something meant for its legend was put down outside it). */
+  private ringGlow = new Map<LegendClearing, { k: number; flash: number }>();
+  private ringItems: { x: number; z: number; r: number; edge: number; glow: number }[] = Array.from({ length: 6 }, () => ({ x: 0, z: 0, r: 0, edge: 0, glow: 0 }));
+  private lastRingTime = 0;
+  /** The legends' clearings nearest her, each with its ring's brightening (Ed, 2026-10-06: quest sigils and relics count
+   *  only in the circle): up while she stands on the ground inside it, and a flash (dying over a second and a half) when a
+   *  sigil or a relic meant for its legend was put down outside it. No garbage a frame. */
+  private legendRings(g: Game, time: number): { x: number; z: number; r: number; edge: number; glow: number }[] {
+    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings);
+    this.lastRingTime = time;
+    for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
+      const L = g.creatures[e.id], c = L && g.map.legendClearing(L.cell[0], L.cell[1]);
+      if (c) { const s = this.ringGlow.get(c) ?? { k: 0, flash: -9 }; s.flash = time; this.ringGlow.set(c, s); }
+    }
+    const out = this.ringItems;
+    for (let i = 0; i < near.length; i++) {
+      const c = near[i], s = this.ringGlow.get(c) ?? { k: 0, flash: -9 };
+      const inside = w.mode === "ground" && Math.hypot(w.x - c.x, w.z - c.z) <= c.r ? 1 : 0;
+      s.k += (inside - s.k) * Math.min(1, dt * 4);
+      if (!this.ringGlow.has(c)) this.ringGlow.set(c, s);
+      const f = time - s.flash, flash = f >= 0 && f < 1.5 ? (1 - f / 1.5) * (0.6 + 0.4 * Math.cos(f * 12)) : 0;
+      Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)) });
+    }
+    this.ringCount = near.length;
+    return out;
+  }
+  private ringCount = 0;
+
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
@@ -726,7 +755,7 @@ export class View {
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false);
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
-    this.ground.setLegendRings(nearestClearings(g.map.legendClearings, g.witch.x, g.witch.z, this.nearRings));
+    this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
@@ -735,6 +764,8 @@ export class View {
       // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
       this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
+      this.ley.pulse(shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
+      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
     { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt, w.mode === "ground"); }

@@ -24,7 +24,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked";
+export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number }
 
 export interface LeashState {

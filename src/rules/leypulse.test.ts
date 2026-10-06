@@ -82,7 +82,7 @@ describe("a runestone's column of light (Ed, 2026-10-06: \"first appears when th
     castPartySpell(p, g.map, 10);
     const times = leyReachTimes(p, g.map)!, step = TUNING.party.interval / TIP_PACE;
     const markers = spawnMarkers(p, g.map), next = markers.find(m => m.stage === "next")!, at = times.get(next.key)!;
-    expect(at).toBeCloseTo(10 + step); // the first stone after home, one link at three times the pulse
+    expect(at).toBeCloseTo(p.bootUntil + step); // the first stone after home: one link at three times the pulse, from the boot's end
     expect(times.get(cellKey(g.map.centreCell))).toBe(-Infinity); // home, reached from the start
     expect(columnShown(at, at - 0.01, F)).toBeNull(); // no column before the tip arrives
     const arrive = columnShown(at, at, F)!;
