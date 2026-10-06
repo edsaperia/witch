@@ -4394,12 +4394,62 @@
         "momentum": {
           "type": "number",
           "minimum": 0
+        },
+        "charge": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "brake": {
+              "type": "number",
+              "minimum": 0
+            },
+            "contact": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "reach",
+            "turn",
+            "brake",
+            "contact"
+          ],
+          "additionalProperties": false
+        },
+        "leap": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "through": {
+              "type": "number"
+            },
+            "contact": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "reach",
+            "through",
+            "contact"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "scale",
         "speed",
-        "momentum"
+        "momentum",
+        "charge",
+        "leap"
       ],
       "additionalProperties": false
     },
@@ -4541,6 +4591,14 @@
         "shake": {
           "type": "number",
           "minimum": 0
+        },
+        "daze": {
+          "type": "number",
+          "minimum": 0
+        },
+        "retreatHome": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -4561,7 +4619,9 @@
         "soundsystemRadius",
         "homeHealth",
         "homeRadius",
-        "shake"
+        "shake",
+        "daze",
+        "retreatHome"
       ],
       "additionalProperties": false
     },
