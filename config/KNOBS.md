@@ -101,6 +101,35 @@ Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissi
 | `sky.lightning.flashes` | number | 0 to … |
 | `sky.lightning.ground` | number | 0 to … |
 
+## `moon`
+
+The moon (Ed, 2026-10-06: "The moon should slowly change: occasionally becoming red, and blue, and yellow, and going through phases, and moving across the sky"): one moon, drawn in the sky, tinting the moonlight a little, and shown on the dancefloor before the first wave (the same phase). phasePeriod: seconds from new moon to new moon; phaseStart: its phase at the start (0 new, 0.25 first quarter, 0.5 full). orbit: seconds to cross the sky once (it rises at the left from behind the far forest and sets at the right), from arcStart (0-1 of the way); left, right: how far across the screen it goes; low, high: the height of its way up the sky band (fractions of the screen from the bottom: low is behind the far forest). Coloured moons: the run is cut into windows of colourEvery seconds, and in each but the first there's a colourChance of a red (blood), blue or gold (harvest) moon for colourTime seconds, easing in and out over colourFade; colours: theirs (0-1 rgb). tint: how much of its colour the moonlight on the world takes (0 none, 1 all); bloodTint: the same for a red (blood) moon, a little more so it reads through the night grade (the rendering builder, #252). disc: the sky moon's size, times its old one (1.5: a crescent survives the sky's tilt-shift blur, the art director, #252). floor: the dancefloor's moon before the first wave (Ed: "only phases of the moon, in muted twilight colours"): palette (dusky violet, slate blue, soft silver, 0-255), size (the moon's radius, a share of the floor's), stars (the share of the floor's sky twinkling round it), flare (seconds the full moon flares out into the party when the first wave comes).
+
+| knob | type | range |
+|---|---|---|
+| `moon.phasePeriod` | number | 0 to … |
+| `moon.phaseStart` | number | 0 to … |
+| `moon.orbit` | number | 0 to … |
+| `moon.arcStart` | number | 0 to … |
+| `moon.left` | number | 0 to … |
+| `moon.right` | number | 0 to … |
+| `moon.low` | number | 0 to … |
+| `moon.high` | number | 0 to … |
+| `moon.colourEvery` | number | 0 to … |
+| `moon.colourChance` | number | 0 to … |
+| `moon.colourTime` | number | 0 to … |
+| `moon.colourFade` | number | 0 to … |
+| `moon.colours.red` | array of number |  |
+| `moon.colours.blue` | array of number |  |
+| `moon.colours.gold` | array of number |  |
+| `moon.tint` | number | 0 to … |
+| `moon.bloodTint` | number | 0 to … |
+| `moon.disc` | number | 0 to … |
+| `moon.floor.palette` | array of array |  |
+| `moon.floor.size` | number | 0 to … |
+| `moon.floor.stars` | number | 0 to … |
+| `moon.floor.flare` | number | 0 to … |
+
 ## `wind`
 
 Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; treetop: the share of it seen over the treetops (gentler). Walls and set pieces stand still. ?wind=0 turns it off.
