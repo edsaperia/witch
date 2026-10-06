@@ -4,7 +4,7 @@ Ed's brief (2026-10-06): "take sets of screenshots of the game and think about w
 
 Every shot uses the same seed (123), the same places and the same window (1280×720), at night as the game is:
 - **First:** `claude/prototype` at 5766018, about 01:00 UTC (`round-01b/`, re-shot with the fixed capture script).
-- **Latest:** round 3, about 05:00 UTC (`round-03/`). That's prototype at d02b5d8 plus three open PRs: #208 (round 2's lighting fixes), #205 (night palette) and #212 (her magic).
+- **Latest:** round 4, about 06:30 UTC (`round-04/`). That's `claude/prototype` at 8b019fb0, now carrying nearly all of the night's work, plus the open #203 (attack cues).
 
 Each picture in `compare/` has the first on the left and the latest on the right.
 
@@ -20,7 +20,7 @@ Each picture in `compare/` has the first on the left and the latest on the right
 | **The stone shrine** | ![](compare/stone-shrine-ground.jpg) |
 | **A fight at home** | ![](compare/fight.jpg) |
 
-The latest set also has a shot the first set didn't take: a partified area away from home, at `round-03/default-party-ground.png` and `default-party-treetops.png`. It is the clearest picture of "a spooky dark forest with a party in it" so far.
+The latest sets also have a shot the first set didn't take: a partified area away from home (`round-03/default-party-*.png`, `round-04/default-party-*.png`). Round 3's amber pool is the clearest picture of "a spooky dark forest with a party in it" so far.
 
 ## What changed overnight
 
@@ -37,14 +37,17 @@ The latest set also has a shot the first set didn't take: a partified area away 
 5. **A quiet UI** (golf, #188 and #209): one amber accent, smaller countdowns, the creator in the same amber, and the creator's new isometric bedroom (#143).
 6. **Creatures' eyes in the dark** are small, crisp red pairs, not blurred red discs.
 
-## Still to do (round 3's notes)
+## Still to do (after round 4)
 
-- The forest has swung a little too far into blue-violet. It should be blue-green with violet in the shadows.
-- The shrine's pale flags are brighter than the witch.
-- Her light doesn't show in the fern forest.
-- A lime glow sits on the ground at the front of home's dancefloor.
-- A checkerboard dither on the dark crowns and rock spires reads as a screen door.
-- Creature attack visuals (Ed's second direction): #193 and #203 are in review and not yet in these shots.
-- **Bold against ref is still Ed's call.** In the fight at home both read (`round-03/bold-fight.png`, `ref-fight.png`). On the dark moor the witch disappears in both (`bold-moor-ground`, `ref-moor-ground`), and that's briefed to rendering. So compare them in the party's light, not on the dark moor.
+- **Checker dither:** a checkerboard dither on the ravine's rock spires reads as a screen door.
+- **Party light colour:** the partified area's light went lime-yellow in round 4. It should stay amber, with the neon on the bulbs.
+- **Bold against ref is still Ed's call.** In the fight at home both read (`round-03/bold-fight.png`, `ref-fight.png`). On the dark moor the witch disappeared in both in round 3, which is briefed to rendering. So compare them in the party's light, not on the dark moor.
+- **Attacks (Ed's second direction):** the squash, the tumble and the contact puff are in (#193). The cues (#203) are under review.
 
-Round by round: `round-01/` (its area shots were off the map), `round-01b/`, `round-02/` and `round-03/`. Each has a README with its critique and briefs. The running thread is PR #177.
+Fixed between round 3 and round 4:
+- the blue-violet swing;
+- the shrine's bright flags;
+- her missing light in the fern forest;
+- the lime glow at home.
+
+Round by round: `round-01/` (its area shots were off the map), `round-01b/`, `round-02/`, `round-03/` and `round-04/`. Each has a README with its critique and briefs. The running thread is PR #177.
