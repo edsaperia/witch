@@ -8,6 +8,8 @@
 // with nothing to invite near, it flies to the nearest wild area. A summary and the oddities found go
 // to stdout (and --json out.json).
 //   node tools/balance/playthrough.mjs [--seed 123] [--minutes 15] [--carry 4] [--stuck 30] [--json out.json]
+//   The summary's timing: the rules' milliseconds a step (mean, p50, p99, p999, the worst, how many over 8 ms);
+//   --slow 1 prints each step over 30 ms as it happens.
 //   Looking into one: --watch 316,613 [--from 590] prints those creatures each second (position, siege,
 //   target, timers); --inspect 356 prints their state at the end. ~5 s of wall time a game minute.
 import { openRules, arg } from "./lib.mjs";
@@ -18,6 +20,7 @@ const { load, close } = await openRules();
 const { TUNING } = await load("/src/rules/tuning.ts");
 const { newGame, stepGame, STEP, affectionOf } = await load("/src/rules/game.ts");
 const { cellKey } = await load("/src/rules/party.ts");
+const { runeNear } = await load("/src/rules/creatureStates.ts");
 
 const g = newGame(SEED, TUNING), W = g.witches[0], A = () => affectionOf(g);
 g.clock.paused = false;
@@ -25,7 +28,9 @@ const odd = [], seen = new Set(), note = (key, text) => { if (seen.has(key)) ret
 const finite = v => v === undefined || Number.isFinite(v);
 const B = g.map.bounds, inside = (x, z, pad = 200) => x > B.minX - pad && x < B.maxX + pad && z > B.minZ - pad && z < B.maxZ + pad;
 const last = new Map(); // id -> { x, z, at } while busy
+const wasPlaced = new Set(); // (a "picked" of one she'd put down isn't a new invite; one picked off a happy creature's rune is)
 const tally = { invited: 0, happy: 0, placed: 0, hits: 0, knockouts: 0, wavesSeen: 0, soundsLost: 0, letters: 0, maxLetters: 0, maxCreatures: 0 };
+const stepMs = [];
 let mode = "invite", goal = null, rest = false, steps = 0;
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -75,8 +80,10 @@ while (g.clock.time < end && !g.over) {
   } else {
     if (g.leash.stack.length >= CARRY) { mode = "carry"; goal = null; }
     else if (w.mode === "ground") {
-      const k = nearestInvitable(60);
-      if (k) {
+      // One won over (happy): its sigil lies as a rune at its feet; walk to it and pick it up to leash it (Ed, 2026-10-06).
+      const rn = runeNear(g.creatures, w.x, w.z, 30, g.clock.time), k = rn ? null : nearestInvitable(60);
+      if (rn) { if (go(rn) < TUNING.leash.pickRadius * 0.6) { c.moveX = 0; c.moveZ = 0; if (steps % 10 === 0) c.place = true; } }
+      else if (k) {
         const d = dist(k, w);
         if (d > 14) go(k); else if (d < 8) { go(k); c.moveX *= -1; c.moveZ *= -1; }
         c.fire = true; c.aimX = k.x - w.x; c.aimZ = k.z - w.z;
@@ -87,12 +94,13 @@ while (g.clock.time < end && !g.over) {
       else if (go(goal) < 25) { c.toggleMode = true; goal = null; }
     }
   }
-  try { stepGame(g, c, STEP); } catch (e) { errors++; note(`err:${e.message}`, `exception: ${e.stack?.split("\n").slice(0, 3).join(" | ")}`); if (errors > 5) break; }
+  const ts = performance.now();
+  try { stepGame(g, c, STEP); const dt = performance.now() - ts; stepMs.push(dt); if (dt > 30 && arg("slow")) console.log("SLOW", dt.toFixed(0), "ms at", g.clock.time.toFixed(2), "wave", g.party.wave, "mode", g.witch.mode); } catch (e) { errors++; note(`err:${e.message}`, `exception: ${e.stack?.split("\n").slice(0, 3).join(" | ")}`); if (errors > 5) break; }
   steps++;
 
   // What happened this step.
   for (const e of W.invites.events) { if (e.kind === "hit" && !e.spent) tally.hits++; if (e.kind === "happy") tally.happy++; }
-  for (const e of g.leash.events) { if (e.kind === "invited" && e.at === g.clock.time) tally.invited++; if (e.kind === "placed" && e.at === g.clock.time) tally.placed++; }
+  for (const e of g.leash.events) { if ((e.kind === "invited" || (e.kind === "picked" && !wasPlaced.has(e.id))) && e.at === g.clock.time) tally.invited++; if (e.kind === "placed") wasPlaced.add(e.id); if (e.kind === "placed" && e.at === g.clock.time) tally.placed++; }
   for (const e of g.koEvents) if (e.kind === "down" && e.at === g.clock.time) tally.knockouts++;
   for (const e of g.combat.events) if (e.kind === "soundDestroyed" && e.at === g.clock.time) tally.soundsLost++;
   tally.maxLetters = Math.max(tally.maxLetters, W.invites.letters.length);
@@ -126,8 +134,11 @@ while (g.clock.time < end && !g.over) {
 }
 
 if (arg("inspect")) for (const id of arg("inspect").split(",").map(Number)) { const k = g.creatures[id], h = k.siege ? g.combat.sounds.get(k.siege) : null; console.log("INSPECT", JSON.stringify({ id, species: k.species, level: k.level, boss: k.boss, legendState: k.legendState, state: k.state, enraged: k.enraged, siege: k.siege, x: +k.x.toFixed(1), z: +k.z.toFixed(1), cell: k.cell, fight: k.fight && { target: k.fight.target, readyAt: +k.fight.readyAt.toFixed(1), windupUntil: k.fight.windupUntil }, run: k.run && k.run.phase, dazed: k.dazed, stunUntil: k.stunUntil, slowUntil: k.slowUntil, fleeUntil: k.fleeUntil, wanderTo: k.wanderTo, travelling: k.travelling, sound: h && { x: h.x, z: h.z, hp: h.hp, d: +Math.hypot(h.x - k.x, h.z - k.z).toFixed(1) }, active: g.combat.busy.has(k.id), time: g.clock.time })); }
+// The rules' cost: milliseconds a step (one a frame), the worst and the slow ones.
+const sorted = [...stepMs].sort((a, b) => a - b), q = f => +(sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * f))] ?? 0).toFixed(2);
+const timing = { meanMs: +(stepMs.reduce((a, b) => a + b, 0) / Math.max(1, stepMs.length)).toFixed(3), p50: q(0.5), p99: q(0.99), p999: q(0.999), worstMs: q(1), over8ms: stepMs.filter(x => x > 8).length };
 const out = {
-  seed: SEED, gameMinutes: +(g.clock.time / 60).toFixed(2), wallSeconds: Math.round((Date.now() - t0) / 1000), over: !!g.over, errors,
+  seed: SEED, timing, gameMinutes: +(g.clock.time / 60).toFixed(2), wallSeconds: Math.round((Date.now() - t0) / 1000), over: !!g.over, errors,
   ...tally, stack: g.leash.stack.length, placedNow: g.leash.placed.length, partified: g.party.areas.size, hp: W.health.hp,
   creatures: { live: g.creatures.filter(k => !k.gone).length, happy: g.creatures.filter(k => !k.gone && k.state === "happy").length, enraged: g.creatures.filter(k => !k.gone && k.state === "enraged").length, leashed: g.creatures.filter(k => !k.gone && k.leashed).length, legends: Object.fromEntries(["asleep", "restless", "angry", "happy"].map(s => [s, g.creatures.filter(k => k.boss && k.legendState === s).length])) },
   oddities: odd,

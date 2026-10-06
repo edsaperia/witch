@@ -37,8 +37,9 @@ import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { emojiOr, sleepyFace } from "./sleepyFace";
 import { FIGHT, profileOf } from "../rules/movement";
-import { huntsWitch } from "../rules/creatureStates";
+import { hasRune, huntsWitch, runeNear } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
+import { circleLines, circleShown, legendCircleNear } from "../rules/legendCircle";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { lobHeight } from "./invites";
@@ -53,6 +54,8 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 
 /** Seconds a legend's charge ruts take to fade. */
 const RUTS = 12;
+/** How far from her (m) happy creatures' runes are drawn. */
+const RUNE_VIEW = 70;
 
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 const SQ = SLOTS * SLOTS - 1; // and the last a solid square
@@ -886,6 +889,18 @@ export class LeashView {
       this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
+    // Happy creatures' runes (Ed, 2026-10-06; states.leash "pickup"): each carries its sigil as a dim rune at its feet,
+    // moving with it; it pops out with its hearts (up off it and down, growing, written in) and settles. Ready to pick up
+    // (pickupDelay after), a little brighter. Only near her (RUNE_VIEW m), with the placed sigils' instances.
+    for (const c of g.creatures) {
+      if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
+      const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
+      const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
+      const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3;
+      this.flat.add(c.x, 0.03 + hop, c.z, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      if (ready) this.flat.add(c.x, 0.015, c.z, 4.2, dot, col.r, col.g, col.b, 0.18);
+    }
+
     // From the treetops, each placed sigil is projected up above the canopy over its spot, flat
     // and glowing, joined to its rune by a faint pulsing column of light (Ed, 2026-10-03). It
     // fades in as she rises; on the ground the real rune is enough.
@@ -898,7 +913,7 @@ export class LeashView {
     }
 
     // The ghost: where the bottom sigil would land, red where it can't.
-    if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius)) {
+    if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.pickRadius, time) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.pickRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const no = blocked(s, w.x, w.z, t);
       this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, this.uv(this.slotOf(c.species, c.level)), no ? 0.85 : col.r, no ? 0.38 : col.g, no ? 0.43 : col.b, 0.22); // (can't: the HUD's loss red, #188)
@@ -915,6 +930,13 @@ export class LeashView {
     const aloft = w.lift > 0.5;
     for (const r of g.relics) {
       if (r.state !== "lying" || Math.abs(r.x - w.x) > 400 || Math.abs(r.z - w.z) > 400) continue;
+      // Its relic sigil on the ground south of it, written like any placed sigil (Ed, 2026-10-06:
+      // stand on it and press the sigil button to pick the relic up), gold.
+      {
+        const col = (this.slotOf("relic", 0), this.colours.get("relic")!), pulse = 1.05 + 0.25 * Math.sin(time * 2 + r.id);
+        this.flat.add(r.sx, 0.02, r.sz, 3.4, this.uv(this.slotOf("relic", 0)), col.r * pulse, col.g * pulse, col.b * pulse, 1);
+        this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38);
+      }
       if (!relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
       for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; this.standing.add(r.x + Math.cos(a) * 2.5, 0.4 + (i % 3) * 0.5, r.z + Math.sin(a) * 1.8, 1.2, dot, 1, 0.78, 0.3, 0.8); }
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
@@ -980,6 +1002,66 @@ export class LeashView {
     this.standing.end(); this.flat.end(); this.over.end(); this.solid.end();
     this.bubbles(time, camera, width, height);
     this.drawDreams(camera, width, height);
+    this.drawCirclePanel(camera, width, height);
+  }
+
+  /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
+   *  the circle explaining mechanics to do with legends"; rules/legendCircle.ts): a soft dark panel beside the clearing she stands
+   *  in (on the ground), on its right on screen, or its left if that would run off; fading in and out (circleShown). Its icons:
+   *  the sigil the legend dreams of, at its level, and a relic sigil in gold. */
+  private circlePanel: HTMLElement | null = null;
+  private circleFade = 0;
+  private circleAt = 0;
+  private circleLast: { legend: Creature; x: number; z: number; r: number } | null = null;
+  private drawCirclePanel(camera: THREE.Camera, width: number, height: number): void {
+    const host = this.bubbleWitch?.parentElement, g = this.game;
+    if (!host) return;
+    const now = performance.now() / 1000, dt = this.circleAt ? Math.min(0.1, now - this.circleAt) : 0;
+    this.circleAt = now;
+    const near = legendCircleNear(g, g.witch.lift > 0.5 ? { ...g.witch, mode: "treetop" } : g.witch);
+    if (near) this.circleLast = near;
+    this.circleFade = circleShown(this.circleFade, !!near, dt);
+    let el = this.circlePanel;
+    if (!this.circleFade || !this.circleLast) { if (el) el.style.display = "none"; return; }
+    if (!el) { el = document.createElement("div"); el.className = "legend-panel"; host.append(el); this.circlePanel = el; }
+    const { legend: c, x, z, r } = this.circleLast, lines = circleLines(c);
+    const key = `${c.id}:${c.legendState}:${c.quest?.done !== undefined}:${c.quest?.species}:${c.quest?.level}`;
+    if (el.dataset.k !== key) {
+      el.dataset.k = key;
+      el.dataset.state = c.legendState ?? "asleep";
+      const icon = (id: string, level: number | null, colour: number[]) => {
+        const cv = document.createElement("canvas"), n = 40;
+        cv.width = cv.height = n; cv.className = "icon";
+        const x2 = cv.getContext("2d");
+        if (x2) drawSigil(x2, id, { x: 1, y: 1, size: n - 2, level: level as unknown as null, colour, glow: false });
+        return cv;
+      };
+      el.replaceChildren(...lines.map(l => {
+        const p = document.createElement("p");
+        if (l.done) p.className = "done";
+        l.text.split(/(\{sigil\}|\{relic\})/).forEach(part => {
+          if (part === "{sigil}" && c.quest) p.append(icon(c.quest.species, c.quest.level, sigilColour(c.quest.species)));
+          else if (part === "{relic}") p.append(icon("relic", null, [255, 205, 90]));
+          else if (part) p.append(document.createTextNode(part));
+        });
+        if (l.done) p.prepend(document.createTextNode("✓ "));
+        return p;
+      }));
+    }
+    // beside the circle on screen: its middle and its edge (at about head height), the panel off its right side, or its left
+    placed(this.v.set(x, 1.5, z)).project(camera);
+    const cx = ((this.v.x + 1) / 2) * width, cy = ((1 - this.v.y) / 2) * height, behind = this.v.z > 1;
+    placed(this.v.set(x + r, 1.5, z)).project(camera);
+    const rx = Math.abs(((this.v.x + 1) / 2) * width - cx);
+    el.style.display = behind ? "none" : "";
+    const w = el.offsetWidth, h = el.offsetHeight, gap = 16;
+    let left = cx + rx + gap;
+    if (left + w > width - 8) left = cx - rx - gap - w; // (off the right edge: the other side)
+    if (left < 8) left = width - w - 24; // (the circle wider than the screen: by its right edge)
+    left = Math.max(8, Math.min(width - w - 8, left));
+    const top = Math.max(56, Math.min(height - h - 70, Math.max(height * .3, Math.min(height * .6, cy)) - h / 2)); // (about level with the circle's middle, clear of the clock and the action bar)
+    el.style.left = `${Math.round(left)}px`; el.style.top = `${Math.round(top)}px`;
+    el.style.opacity = this.circleFade.toFixed(2);
   }
 
   /** Show an emoji in a bubble as a pixel sprite: drawn small (bubbles.emojiPixels across), its

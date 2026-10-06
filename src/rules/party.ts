@@ -2,10 +2,10 @@
 // `interval` seconds a wave comes and wakes one area (Ed, v149), chosen as soon as the previous one
 // woke (see pickNext), which gets a soundsystem and is partified. Seeded and deterministic; no
 // drawing here.
-import type { Tuning } from "./tuning";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
+import { leyRoute, variedOrder, type LeyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -33,18 +33,14 @@ export interface PartyState {
   next: Cell[];
   /** The area the last wave woke (the picker spreads away from it). */
   last: Cell | null;
-  /** Forecasting (Ed, 2026-10-04): the area the wave after next will wake (confirmed too: the
-   *  picker is seeded, so it's what that wave will pick), and the probable ones for the wave
-   *  after that (the picker's candidates then, about forecast.probable of them). */
+  /** The area the wave after next will wake (Ed, 2026-10-04; confirmed too: the picker is seeded, so it's what that wave
+   *  will pick). (The forecast's probable set for the wave after, and its rings of symbols, went with Ed's 2026-10-06 note:
+   *  the ley line, its pulse and the beacons show what's coming.) */
   afterNext: Cell[];
   /** Areas whose soundsystem was destroyed (rules/combat.ts): the party there is over; no wave wakes them again. */
   ruined?: Set<string>;
   /** Areas whose quest is done before their wave (rules/leylines.ts onAreaDone): key → game time. The ley line moves on from them. */
   leyDone?: Map<string, number>;
-  probable: Cell[];
-  /** Waves further the forecast sees (a legend buff, rules/buffs.ts): 1 or more and the wave after
-   *  the after-next is confirmed too, so `probable` holds just the areas it will wake. */
-  seeAhead?: number;
   /** How many areas each wave wakes: one per witch present (Ed, 2026-10-04), read at each wave. */
   areasPerWave: number;
   /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04; 5 minutes from her first step, 2026-10-05): the first wave's countdown starts then. */
@@ -57,10 +53,26 @@ export interface PartyState {
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
 
+/** The party spell's cast (Ed, 2026-10-06: "there is a button on the screen that says "CAST THE PARTY SPELL", when you
+ *  press it, the witch does a spellcasting animation, the pulse appears, and starts going around the dancefloor runestone
+ *  ring, and you can start moving around"): seconds the cast takes, in which she can't move yet. */
+export const PARTY_CAST = 1.2;
+/** Casts the party spell at `time`, if waiting for it: the game clock and the boot-up start (the boot's minutes from now).
+ *  Returns whether it was cast. The renderer's hook: `party.spellAt` turning from null to a time. */
+export function castPartySpell(p: PartyState, map: ForestMap, time: number): boolean {
+  if (p.spellAt !== null) return false;
+  p.spellAt = time;
+  const boot = map.tuning.boot.time, left = p.nextAt - p.bootUntil; // (the countdown after the boot, as it was set)
+  p.bootUntil = time + boot; p.nextAt = p.bootUntil + left;
+  return true;
+}
+/** Whether she's held still by the party spell: waiting for it, or still casting it. */
+export const heldBySpell = (p: PartyState, time: number): boolean => p.spellAt === null || (p.spellAt !== undefined && time < p.spellAt + PARTY_CAST);
+
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
   const boot = map.tuning.boot.time;
-  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: [], last: null, bootUntil: boot, afterNext: [], probable: [], areasPerWave: Math.max(1, map.tuning.party.areasPerWave) };
+  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: [], last: null, bootUntil: boot, afterNext: [], areasPerWave: Math.max(1, map.tuning.party.areasPerWave) };
   p.next = pickSet(p, map, p.areasPerWave);
   planAhead(p, map);
   return p;
@@ -74,7 +86,7 @@ function cellsOf(map: ForestMap) {
   if (out) return out;
   const d = map.dancefloor, N = map.tuning.party.noisy, L = N.lobeSize, s0 = map.seed + 911;
   out = [];
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  for (const [cx, cy] of map.cells) {
     const s = map.soundsystemSpot(cx, cy), site = map.siteOf(cx, cy), dist = Math.hypot(s.x - d.x, s.z - d.z);
     const n = 0.65 * vnoise(site.x / L, site.z / L, s0) + 0.35 * vnoise(site.x / (L / 2.3), site.z / (L / 2.3), s0 + 1);
     out.push({ key: `${cx},${cy}`, cell: [cx, cy], dist, cost: dist * (1 + N.wobble * (n - 0.5) * 2) });
@@ -83,16 +95,23 @@ function cellsOf(map: ForestMap) {
   return out;
 }
 
-export type Picker = "noisy" | "near3" | "near3touch" | "nearest";
+export type Picker = "route" | "noisy" | "near3" | "near3touch" | "nearest";
 
 /** Choose the area the next wave wakes, by the tuning's picker (?picker= in the URL):
- *  - noisy (default): of the dormant areas bordering the party (no islands), the `candidates`
+ *  - route (default; Ed, 2026-10-06: the ley line "should cover the entire set of waves the whole
+ *    time" and have "no crossings"): the next area in the map's planned order the party hasn't
+ *    (routeOf: the noisy picker's order, untangled, rules/leyroute.ts);
+ *  - noisy: of the dormant areas bordering the party (no islands), the `candidates`
  *    cheapest by distance to the dancefloor times a smooth seeded wobble (lobes, not a disc),
  *    not beside the last pick if there's another, one at random;
  *  - near3: of all the dormant areas, the 3 nearest the dancefloor, one at random;
  *  - near3touch: the same among those bordering the party;
  *  - nearest: the nearest dormant area bordering the party. */
 export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0, border?: Set<string>): Cell | null {
+  if (picker === "route") {
+    for (const key of routeOf(map).order) if (!p.areas.has(key) && !p.ruined?.has(key)) { const c = key.split(",").map(Number) as unknown as Cell; candidates?.push(c); return c; }
+    return null;
+  }
   const N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3 + salt * 104729);
   const touching = border ?? new Set<string>(); // (the dormant areas bordering the party: wavePlan keeps its own)
   if (!border) for (const k of p.areas.keys()) for (const nk of map.neighbours.get(k) ?? []) if (!p.areas.has(nk)) touching.add(nk);
@@ -133,9 +152,9 @@ export function pickSet(p: PartyState, map: ForestMap, n: number, candidates?: C
 const dummyArea = (c: Cell): Partified => ({ cell: c, wave: 0, at: 0, from: null, soundsystem: null });
 
 /** Plan the waves after `next` (Ed, 2026-10-04): what the picker will choose once next has woken
- *  (confirmed: the same seed, the same party), and its candidates the wave after (probable). */
+ *  (confirmed: the same seed, the same party). */
 export function planAhead(p: PartyState, map: ForestMap): void {
-  p.afterNext = []; p.probable = [];
+  p.afterNext = [];
   if (!p.next.length) return;
   const n = p.areasPerWave, woke = (v: PartyState, set: Cell[], wave: number): PartyState => {
     const areas = new Map(v.areas);
@@ -144,10 +163,6 @@ export function planAhead(p: PartyState, map: ForestMap): void {
   };
   const v1 = woke(p, p.next, p.wave + 1);
   p.afterNext = pickSet(v1, map, n);
-  if (!p.afterNext.length) return;
-  const cands: Cell[] = [];
-  const third = pickSet(woke(v1, p.afterNext, p.wave + 2), map, n, cands);
-  p.probable = (p.seeAhead ?? 0) >= 1 && third.length ? third : cands.slice(0, Math.max(1, map.tuning.forecast.probable * n));
 }
 
 /** Every dormant area's wave number (Ed, 2026-10-04: "a big glowing number above the stones", a
@@ -218,11 +233,12 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
   return fresh;
 }
 
-/** Advance the party's clock: a wave whenever its time comes (unless paused). `seated`: she's still
- *  behind the decks (Ed, 2026-10-05): the boot-up waits for her to get up, so its minutes count
- *  from her first step. */
+/** Advance the party's clock: a wave whenever its time comes (unless paused). The boot-up waits for the party spell
+ *  (Ed, 2026-10-06: the game starts when she casts it), so its minutes count from the cast; in a game without the spell
+ *  (`spellAt` undefined: the tools and tests) it waits while she's `seated` behind the decks, as before. */
 export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false): Partified[] {
-  if (p.paused || (seated && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
+  const waiting = p.spellAt === null || (p.spellAt === undefined && seated);
+  if (p.paused || (waiting && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
   if (time < p.nextAt) return [];
   p.nextAt += map.tuning.party.interval;
   return spreadWave(p, map, time);
@@ -256,29 +272,27 @@ export function speakersOn(p: PartyState, map: ForestMap, time: number, count: n
 
 /** A spawn marker (Ed, v147): a rune stone on the spot where an area's soundsystem will stand,
  *  until the party reaches it; awake when the next wave will take its area, dormant otherwise. */
-export interface SpawnMarker { key: string; cell: Cell; x: number; z: number; awake: boolean; /** Forecasting: next (awake), afterNext, probable or dormant. */ stage: "next" | "afterNext" | "probable" | "dormant" }
+export interface SpawnMarker { key: string; cell: Cell; x: number; z: number; awake: boolean; /** Next (awake), after-next, or dormant. */ stage: "next" | "afterNext" | "dormant" }
 
 /** The spawn markers: one for every area the party hasn't reached (where its soundsystem will stand). */
 export function spawnMarkers(p: PartyState, map: ForestMap): SpawnMarker[] {
   const next = new Set(nextWave(p, map).map(c => c.key)), out: SpawnMarker[] = [];
-  const after = new Set(p.afterNext.map(cellKey)), probable = new Set(p.probable.map(cellKey));
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  const after = new Set(p.afterNext.map(cellKey));
+  for (const [cx, cy] of map.cells) {
     const key = `${cx},${cy}`;
     if (p.areas.has(key)) continue;
     const s = map.soundsystemSpot(cx, cy), awake = next.has(key);
-    out.push({ key, cell: [cx, cy], x: s.x, z: s.z, awake, stage: awake ? "next" : after.has(key) ? "afterNext" : probable.has(key) ? "probable" : "dormant" });
+    out.push({ key, cell: [cx, cy], x: s.x, z: s.z, awake, stage: awake ? "next" : after.has(key) ? "afterNext" : "dormant" });
   }
   return out;
 }
 
-/** How many symbols ring a rune stone (Ed, 2026-10-04): all of them on the next stone (the last
- *  appearing confirms it); the after-next stone fills through the middle range as the countdown
- *  runs (`gone`, 0-1); a probable one flickers between 1 and probableMax (`flicker`, 0-1, the
- *  view's); none on the rest. */
-export function symbolCount(stage: SpawnMarker["stage"], gone: number, flicker: number, t: Tuning): number {
-  const F = t.forecast;
-  if (stage === "next") return F.symbols;
-  if (stage === "afterNext") return Math.round(F.afterNext[0] + (F.afterNext[1] - F.afterNext[0]) * Math.max(0, Math.min(1, gone)));
-  if (stage === "probable") return 1 + Math.min(F.probableMax - 1, Math.floor(Math.max(0, Math.min(0.999, flicker)) * F.probableMax));
-  return 0;
+/** The ley line's route for this map (rules/leyroute.ts): a varied order (petals round home, then
+ *  sweeps, lobes or combs: variedOrder), untangled so the line through it all never crosses itself
+ *  (or only as Ed's crossing rules allow; else the noisy picker's order, untangled). Worked out once a map. */
+export function routeOf(map: ForestMap): LeyRoute {
+  return leyRoute(map, () => variedOrder(map), () => {
+    const m: ForestMap = { ...map, tuning: { ...map.tuning, party: { ...map.tuning.party, picker: "noisy" } } };
+    return [...wavePlan(newParty(m), m).keys()];
+  });
 }

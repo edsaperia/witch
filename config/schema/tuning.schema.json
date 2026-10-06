@@ -5,6 +5,71 @@
       "type": "number",
       "minimum": 0
     },
+    "map": {
+      "type": "object",
+      "properties": {
+        "shape": {
+          "type": "string",
+          "enum": [
+            "circle",
+            "square"
+          ]
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "buffer": {
+          "type": "number",
+          "minimum": 0
+        },
+        "push": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "coast": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "detail"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "shape",
+        "radius",
+        "buffer",
+        "push",
+        "drift",
+        "edge",
+        "coast"
+      ],
+      "additionalProperties": false
+    },
     "areaSize": {
       "type": "number",
       "minimum": 0
@@ -2039,19 +2104,133 @@
       ],
       "additionalProperties": false
     },
+    "glades": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "top": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "light": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edgeEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dark": {
+          "type": "number",
+          "minimum": 0
+        },
+        "glowOff": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "motes": {
+          "type": "object",
+          "properties": {
+            "per": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bright": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "per",
+            "rise",
+            "height",
+            "size",
+            "hue",
+            "sat",
+            "bright"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "radius",
+        "top",
+        "reach",
+        "hue",
+        "sat",
+        "light",
+        "edge",
+        "edgeEase",
+        "dark",
+        "glowOff",
+        "fade",
+        "motes"
+      ],
+      "additionalProperties": false
+    },
     "leyLines": {
       "type": "object",
       "properties": {
         "on": {
           "type": "boolean"
         },
-        "ahead": {
+        "reveal": {
           "type": "number",
           "minimum": 0
         },
-        "behind": {
-          "type": "number",
-          "minimum": 0
+        "far": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
         },
         "behindBright": {
           "type": "number",
@@ -2114,8 +2293,8 @@
       },
       "required": [
         "on",
-        "ahead",
-        "behind",
+        "reveal",
+        "far",
         "behindBright",
         "advance",
         "fade",
@@ -2449,7 +2628,39 @@
     "partyWitches": {
       "type": "object",
       "properties": {
-        "max": {
+        "roam": {
+          "type": "number",
+          "minimum": 0
+        },
+        "centreBias": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopMin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopBoost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "simRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "simRangeTreetop": {
           "type": "number",
           "minimum": 0
         },
@@ -2522,7 +2733,15 @@
         }
       },
       "required": [
-        "max",
+        "roam",
+        "centreBias",
+        "swoopTime",
+        "swoopHeight",
+        "swoopMin",
+        "swoopMax",
+        "treetopBoost",
+        "simRange",
+        "simRangeTreetop",
         "idleAfter",
         "idleReach",
         "activityMin",
@@ -3162,6 +3381,82 @@
           "type": "number",
           "minimum": 0
         },
+        "rim": {
+          "type": "object",
+          "properties": {
+            "spacing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "out": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "spacing",
+            "chance",
+            "out",
+            "spread",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "grove": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "density": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tallest": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "soft": {
+              "type": "number",
+              "minimum": 0
+            },
+            "jitter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "density",
+            "tallest",
+            "scale",
+            "gap",
+            "soft",
+            "jitter"
+          ],
+          "additionalProperties": false
+        },
         "species": {
           "type": "object",
           "additionalProperties": {
@@ -3174,6 +3469,8 @@
         "radius",
         "edge",
         "top",
+        "rim",
+        "grove",
         "species"
       ],
       "additionalProperties": false
@@ -3713,10 +4010,6 @@
           "type": "number",
           "minimum": 0
         },
-        "perAnimalHitGap": {
-          "type": "number",
-          "minimum": 0
-        },
         "fireSlow": {
           "type": "number",
           "minimum": 0,
@@ -3756,7 +4049,6 @@
         "amount",
         "hits",
         "drain",
-        "perAnimalHitGap",
         "fireSlow",
         "linger",
         "lingerFade",
@@ -3827,13 +4119,79 @@
         "spacing": {
           "type": "number",
           "minimum": 0
+        },
+        "weight": {
+          "type": "object",
+          "properties": {
+            "free": {
+              "type": "number",
+              "minimum": 0
+            },
+            "levels": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "drag": {
+              "type": "number",
+              "minimum": 0
+            },
+            "drift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sink": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sinkMax": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "extreme": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxTension": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "free",
+            "levels",
+            "drag",
+            "drift",
+            "rise",
+            "sink",
+            "sinkMax",
+            "floor",
+            "extreme",
+            "maxTension"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "length",
         "runSpeed",
         "pickRadius",
-        "spacing"
+        "spacing",
+        "weight"
       ],
       "additionalProperties": false
     },
@@ -4764,52 +5122,6 @@
       ],
       "additionalProperties": false
     },
-    "forecast": {
-      "type": "object",
-      "properties": {
-        "symbols": {
-          "type": "number",
-          "minimum": 0
-        },
-        "probable": {
-          "type": "number",
-          "minimum": 0
-        },
-        "probableMax": {
-          "type": "number",
-          "minimum": 0
-        },
-        "afterNext": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "radius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "size": {
-          "type": "number",
-          "minimum": 0
-        },
-        "flare": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "symbols",
-        "probable",
-        "probableMax",
-        "afterNext",
-        "radius",
-        "size",
-        "flare"
-      ],
-      "additionalProperties": false
-    },
     "fight": {
       "type": "object",
       "properties": {
@@ -5135,6 +5447,9 @@
         },
         "legendsLoyal": {
           "type": "boolean"
+        },
+        "dropHat": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -5142,7 +5457,8 @@
         "releaseMax",
         "emptyBeat",
         "teleport",
-        "legendsLoyal"
+        "legendsLoyal",
+        "dropHat"
       ],
       "additionalProperties": false
     },
@@ -5319,6 +5635,58 @@
         "shrink",
         "colourEase",
         "sparks"
+      ],
+      "additionalProperties": false
+    },
+    "swoopTrail": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hueSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hueSpread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "liftFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "slots": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "life",
+        "width",
+        "near",
+        "bright",
+        "hueSpeed",
+        "hueSpread",
+        "liftFade",
+        "slots"
       ],
       "additionalProperties": false
     },
@@ -5829,11 +6197,16 @@
         "edge": {
           "type": "number",
           "minimum": 0
+        },
+        "whole": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "screenFraction",
-        "edge"
+        "edge",
+        "whole"
       ],
       "additionalProperties": false
     },
@@ -5964,6 +6337,10 @@
         "sky": {
           "type": "boolean"
         },
+        "skyBlur": {
+          "type": "number",
+          "minimum": 0
+        },
         "strength": {
           "type": "number",
           "minimum": 0
@@ -5999,6 +6376,7 @@
         "on",
         "where",
         "sky",
+        "skyBlur",
         "strength",
         "band",
         "centre",
@@ -6137,6 +6515,19 @@
         "range",
         "nightmare",
         "sleepy"
+      ],
+      "additionalProperties": false
+    },
+    "legends": {
+      "type": "object",
+      "properties": {
+        "share": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "share"
       ],
       "additionalProperties": false
     },
@@ -6308,6 +6699,7 @@
   },
   "required": [
     "mapAreas",
+    "map",
     "areaSize",
     "areaScale",
     "arena",
@@ -6364,6 +6756,7 @@
     "light",
     "beat",
     "berries",
+    "glades",
     "leyLines",
     "witch",
     "sigilProjection",
@@ -6403,7 +6796,6 @@
     "bond",
     "sfx",
     "music",
-    "forecast",
     "fight",
     "attackFx",
     "combat",
@@ -6414,6 +6806,7 @@
     "dash",
     "spells",
     "trail",
+    "swoopTrail",
     "boot",
     "party",
     "stringLights",
@@ -6426,6 +6819,7 @@
     "tiltShift",
     "population",
     "dreams",
+    "legends",
     "wildLegends",
     "creatureSimRadius",
     "simLod",

@@ -370,10 +370,10 @@ export class Ground {
   }
 
   /** The sleeping legends' clearings nearest her (up to 6): their middles, radii, ring widths, and each ring's brightening (0-1). */
-  setLegendRings(rings: readonly { x: number; z: number; r: number; edge: number; glow?: number }[]): void {
-    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uLegendRings.value as THREE.Vector4[], glow = u.uLegendGlow.value as number[];
-    rings.slice(0, 6).forEach((c, i) => { list[i].set(c.x, c.z, c.r, c.edge); glow[i] = c.glow ?? 0; });
-    u.uLegendRingCount.value = Math.min(6, rings.length);
+  setLegendRings(rings: readonly { x: number; z: number; r: number; edge: number; glow?: number }[], count = rings.length): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uLegendRings.value as THREE.Vector4[], glow = u.uLegendGlow.value as number[], n = Math.min(6, count);
+    for (let i = 0; i < n; i++) { const c = rings[i]; list[i].set(c.x, c.z, c.r, c.edge); glow[i] = c.glow ?? 0; }
+    u.uLegendRingCount.value = n;
   }
 
   /** The magic circle: its two hues, brightness now, and the rune band's turn. */

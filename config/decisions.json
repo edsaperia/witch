@@ -17,9 +17,24 @@
       "default": "gen", "apply": { "param": "props", "reload": true }
     },
     {
+      "id": "skyBlur", "label": "Stars through the blur", "note": "How much of the tilt-shift blur the night sky takes: 0 leaves the stars sharp, 1 blurs them like the ground.",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.3, "apply": { "knob": "tiltShift.skyBlur" }
+    },
+    {
+      "id": "tiltTreetop", "label": "Tilt-shift from the treetops", "note": "The blur toward the top and bottom of the screen over the treetops (the ground's is 3).",
+      "control": { "type": "slider", "min": 0, "max": 8, "step": 0.5 },
+      "default": 6, "apply": { "knob": "tiltShift.treetop.strength" }
+    },
+    {
       "id": "growth", "label": "Wild growth a wave", "note": "Creatures each wild area gains every wave (0.5: one every other wave).",
       "control": { "type": "slider", "min": 0.25, "max": 1, "step": 0.25 },
       "default": 0.5, "apply": { "knob": "population.growth.perWave" }
+    },
+    {
+      "id": "legendShare", "label": "Areas with a legend", "note": "The share of areas (home never) with a sleeping legend, seeded and spread out; the rest have none (no clearing, quest or legend music). A new map: it reloads.",
+      "control": { "type": "slider", "min": 0.25, "max": 1, "step": 0.05 },
+      "default": 0.5, "apply": { "knob": "legends.share", "reload": true }
     },
     {
       "id": "grace", "label": "Grace after a hit (s)", "note": "Seconds after the witch is hit in which no other blow lands, so a pack striking together costs one hit.",

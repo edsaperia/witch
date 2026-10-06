@@ -4,8 +4,8 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame } from "./game";
-import { awaitingSpell, clockSeconds, clockStart, clockText, leyPulse, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
-import { waveCountdown } from "./party";
+import { awaitingSpell, clockSeconds, clockStart, clockText, columnShown, leyPulse, leyReachTimes, TIP_PACE, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
+import { castPartySpell, cellKey, spawnMarkers, waveCountdown } from "./party";
 
 describe("the game clock", () => {
   it("counts mm:ss from 0, whole seconds down, minutes running past 99", () => {
@@ -71,5 +71,29 @@ describe("the wave pointer's target, the ley line's pulse", () => {
     const start = leyPulse(p, map, p.bootUntil + 0.01)!, link = straightLink(p, map)!;
     expect(start.t).toBeLessThan(0.01);
     expect(Math.hypot(start.x - link[0][0], start.z - link[0][1])).toBeLessThan(2);
+  });
+});
+
+describe("a runestone's column of light (Ed, 2026-10-06: \"first appears when the leyline meets it\")", () => {
+  it("none before the line's tip reaches the stone; it shoots up with a flare when it does, then stays", () => {
+    const g = newGame(123, TUNING), p = g.party, F = TUNING.runeMarkers.flare.time;
+    p.spellAt = null; // waiting for the party spell
+    expect(leyReachTimes(p, g.map)).toBeNull(); // the tip waits for it
+    castPartySpell(p, g.map, 10);
+    const times = leyReachTimes(p, g.map)!, step = TUNING.party.interval / TIP_PACE;
+    const markers = spawnMarkers(p, g.map), next = markers.find(m => m.stage === "next")!, at = times.get(next.key)!;
+    expect(at).toBeCloseTo(p.bootUntil + step); // the first stone after home: one link at three times the pulse, from the boot's end
+    expect(times.get(cellKey(g.map.centreCell))).toBe(-Infinity); // home, reached from the start
+    expect(columnShown(at, at - 0.01, F)).toBeNull(); // no column before the tip arrives
+    const arrive = columnShown(at, at, F)!;
+    expect(arrive.up).toBe(0); expect(arrive.flare).toBe(1); // it meets the stone: the flare-up begins
+    const later = columnShown(at, at + F * 2, F)!;
+    expect(later.up).toBe(1); expect(later.flare).toBe(0); // up for good
+    // Further stones are reached one by one, later; any stone off the line has none.
+    const order = [...times.entries()].filter(([k]) => k !== cellKey(g.map.centreCell)).map(([, t]) => t);
+    for (let k = 1; k < order.length; k++) expect(order[k]).toBeGreaterThan(order[k - 1]);
+    expect(columnShown(undefined, 1e6, F)).toBeNull();
+    const far = markers.map(m => times.get(m.key)!).filter(t => t !== undefined);
+    expect(far.filter(t => t > 10 + 100 * step).length).toBeGreaterThan(0); // the far ones much later
   });
 });
