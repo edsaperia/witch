@@ -144,7 +144,9 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     run(g, 0.2, { ...idle, happyNearest: true });
     expect(L.legendState).toBe("happy");
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
-    const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + 120, L.z); far.enraged = true; far.state = "enraged"; far.siege = "home";
+    // (120 m off toward the map's middle, wherever in its clearing the legend lies)
+    const dx = g.map.dancefloor.x - L.x, dz = g.map.dancefloor.z - L.z, dd = Math.hypot(dx, dz) || 1;
+    const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + (dx / dd) * 120, L.z + (dz / dd) * 120); far.enraged = true; far.state = "enraged"; far.siege = "home";
     let hitFar = false;
     run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { if (far.hp !== undefined) hitFar = true; });
     expect(hitFar).toBe(true);

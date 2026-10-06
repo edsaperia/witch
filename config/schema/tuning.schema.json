@@ -2900,6 +2900,37 @@
       ],
       "additionalProperties": false
     },
+    "legendClearing": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "top": {
+          "type": "number",
+          "minimum": 0
+        },
+        "species": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "radius",
+        "edge",
+        "top",
+        "species"
+      ],
+      "additionalProperties": false
+    },
     "relics": {
       "type": "object",
       "properties": {
@@ -5780,6 +5811,7 @@
     "bubbles",
     "scenes",
     "grounds",
+    "legendClearing",
     "relics",
     "walls",
     "runeMarkers",

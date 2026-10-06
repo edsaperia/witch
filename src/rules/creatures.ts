@@ -180,6 +180,9 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Where an area's legend lies (Ed, 2026-10-04): out of its clearing, but well inside the map (where she can fly). */
 function legendSpot(map: ForestMap, cell: [number, number], r: () => number): [number, number] {
+  // In its clearing, near the top (Ed, 2026-10-06); else, where none fit, as before.
+  const lc = map.legendClearing(cell[0], cell[1]);
+  if (lc) return [lc.legend.x, lc.legend.z];
   const site = map.siteOf(cell[0], cell[1]), range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, site.x, site.z, range);
   const base = { cell, homeX: site.x, homeZ: site.z, range, anchorX, anchorZ }, B = map.bounds;
   const inside = (px: number, pz: number) => px > B.minX + 15 && px < B.maxX - 15 && pz > B.minZ + 15 && pz < B.maxZ - 15;
