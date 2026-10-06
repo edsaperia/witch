@@ -5,6 +5,7 @@
 // Which area each spot belongs to comes from a data texture filled in small tiles near the
 // camera (working the partition out for the whole map at once takes seconds on a phone).
 import * as THREE from "three";
+import { BAYER_GLSL, VALUE_NOISE_GLSL } from "./shaders";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
@@ -20,6 +21,7 @@ const TILE = 32; // texels
 const FLOOR_COLS = 8;
 const TYPE_SLOTS = Math.max(32, LOOKS.length); // a slot per area type and home's look (area recipes can add types)
 const FLOOR_ROWS = Math.ceil(TYPE_SLOTS / FLOOR_COLS);
+const FLOOR_VARIANTS = 4; // each type's floor: this many tiles side by side (art/areas.js FLOOR_VARIANTS), one picked per repeat of the tile
 
 // The ground's grid: GRID metres a square, out to REACH metres round the witch (past the haze's
 // far edge), its outermost ring stretched out to SKIRT metres; it follows her, snapped to its squares.
@@ -72,16 +74,7 @@ uniform float uBare;  // ?bare=2: a flat grey ground with contour lines (0.5 m) 
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 ${HEIGHT_GLSL}
-float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float vnoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
-  float a = hash(i), b = hash(i + vec2(1, 0)), c = hash(i + vec2(0, 1)), d = hash(i + vec2(1, 1));
-  return a + (b - a) * u.x + (c - a) * u.y + (a - b - c + d) * u.x * u.y;
-}
-// An ordered (Bayer) threshold on the art's pixel grid, 0 to 1.
-float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
-float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
-vec3 hsv(float h, float s, float v) {
+${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
   vec3 k = clamp(abs(mod(fract(h) * 6.0 + vec3(0, 4, 2), 6.0) - 3.0) - 1.0, 0.0, 1.0);
   return clamp(v, 0.0, 1.0) * mix(vec3(1.0), k, clamp(s, 0.0, 1.0));
 }
@@ -114,9 +107,12 @@ void main() {
   vec3 c;
   if (area.a > 0.5 && uFloorReady[t] > 0.5) {
     // The area's floor tile, repeated on the art's pixel grid.
-    vec2 cell = vec2(mod(float(t), ${FLOOR_COLS}.0), floor(float(t) / ${FLOOR_COLS}.0));
+    // Which of its variants: a hash of which repeat of the tile this is, so the floor doesn't visibly repeat.
+    vec2 cell = vec2(mod(float(t), ${FLOOR_COLS}.0), floor(float(t) / ${FLOOR_COLS}.0)), rep = floor(px / uTile), q = fract(rep * vec2(0.1031, 0.1030));
+    q += dot(q, q.yx + 33.33);
+    float variant = floor(fract((q.x + q.y) * q.x) * ${FLOOR_VARIANTS}.0);
     vec2 tp = mod(px, uTile);
-    c = texture2D(uFloors, (cell * uTile + tp + 0.5) / uFloorsSize).rgb;
+    c = texture2D(uFloors, (cell * vec2(uTile.x * ${FLOOR_VARIANTS}.0, uTile.y) + vec2(variant * uTile.x, 0.0) + tp + 0.5) / uFloorsSize).rgb;
   } else {
     vec3 f = area.a > 0.5 ? uTypeFloor[t] : vec3(0.25, 0.45, 0.4);
     float v = vnoise(px / vec2(9.0, 6.0)) * 0.7 + vnoise(px / vec2(2.5, 2.0)) * 0.3;
@@ -274,7 +270,7 @@ export class Ground {
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
     this.texture = nearest(new THREE.DataTexture(new Uint8Array(W * H * 4), W, H));
     nearest(this.tile);
-    this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_COLS, 48 * FLOOR_ROWS));
+    this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(st, map.dancefloor.radius);
     const mat = new THREE.ShaderMaterial({
@@ -289,7 +285,7 @@ export class Ground {
         uTerrain: { value: Array.from({ length: TYPE_SLOTS }, (_, i) => { const tr = LOOKS[i]?.layout.terrain ?? []; return new THREE.Vector3(+tr.includes("mounds"), +tr.includes("hollows"), +tr.includes("ridges")); }) },
         uFloors: { value: this.floors },
         uTile: { value: new THREE.Vector2(64, 48) },
-        uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_COLS, 48 * FLOOR_ROWS) },
+        uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS) },
         uSat: { value: st.sat },
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
         uCanopy: { value: new THREE.Vector4() },
@@ -350,10 +346,11 @@ export class Ground {
   private placeFloors(renderer: THREE.WebGLRenderer): void {
     for (const [type, tile] of this.pendingFloors) {
       const u = this.mesh.material as THREE.ShaderMaterial, size = u.uniforms.uTile.value as THREE.Vector2;
-      if (tile.w !== size.x || tile.h !== size.y) continue; // a tile of another size: keep the flat colour
+      const n = tile.w / size.x; // a strip of FLOOR_VARIANTS tiles, or a single tile (put in every variant's place)
+      if ((n !== FLOOR_VARIANTS && n !== 1) || tile.h !== size.y) continue; // a tile of another size: keep the flat colour
       const t = new THREE.DataTexture(tile.albedo, tile.w, tile.h);
       t.needsUpdate = true;
-      renderer.copyTextureToTexture(t, this.floors, null, new THREE.Vector2((type % FLOOR_COLS) * tile.w, Math.floor(type / FLOOR_COLS) * tile.h));
+      for (let v = 0; v < FLOOR_VARIANTS; v += n) renderer.copyTextureToTexture(t, this.floors, null, new THREE.Vector2((type % FLOOR_COLS) * size.x * FLOOR_VARIANTS + v * size.x, Math.floor(type / FLOOR_COLS) * size.y));
       t.dispose();
       this.floorReady[type] = 1;
     }
