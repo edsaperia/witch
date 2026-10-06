@@ -1,0 +1,67 @@
+# Is the game unchanged? (For refactors that should change nothing: the overnight programme, 2026-10-06.) On every pull
+# request into claude/prototype: the quick bench (npm run bench:quick: the rules' state to wave 10 on two seeds, and three
+# scenes pixel by pixel) on the PR's base and on its head, compared. Green: the same game. Red: something changed, which is
+# right for a PR that means to change the game; the compare's table (the job summary, and the bench-quick artifact with any
+# diff-<scene>.png) says what. Optional: its own workflow, never needed for check or smoke.
+name: Bench
+on:
+  pull_request:
+    branches: [claude/prototype]
+concurrency:
+  group: bench-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  game-unchanged:
+    name: game unchanged (bench:quick)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PLAYWRIGHT_VERSION: 1.56.1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: head
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: head/package-lock.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
+      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      # The head's bench on both, so the two runs are measured the same way (the rules bench builds from each one's src/).
+      - name: Base
+        working-directory: base
+        run: |
+          npm ci
+          npm run build
+          rm -rf tools/bench && cp -r ../head/tools/bench tools/bench
+          NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node tools/bench/run.mjs ../out/base --quick
+      - name: Head
+        working-directory: head
+        run: |
+          npm ci
+          npm run build
+          NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node tools/bench/run.mjs ../out/head --quick
+      - name: Compare
+        shell: bash
+        run: |
+          set -o pipefail
+          NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node head/tools/bench/compare.cjs out/base out/head | tee out/compare.md
+      - if: always()
+        run: '[ -f out/compare.md ] && cat out/compare.md >> "$GITHUB_STEP_SUMMARY" || true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-quick
+          path: out
+          retention-days: 7

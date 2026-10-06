@@ -12,7 +12,8 @@
     "smoke": "node tools/smoke/smoke.cjs",
     "smoke:quick": "node tools/smoke/quick.cjs",
     "bench": "node tools/bench/run.mjs",
-    "bench:compare": "node tools/bench/compare.cjs"
+    "bench:compare": "node tools/bench/compare.cjs",
+    "bench:quick": "node tools/bench/run.mjs --quick"
   },
   "dependencies": {
     "three": "0.186.1"
