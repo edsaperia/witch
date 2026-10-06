@@ -138,7 +138,8 @@ export class Dancefloor {
     this.motes.geometry.setDrawRange(0, on ? Math.round(this.moteCount * (0.25 + 0.25 * inp.level)) : 0);
     // The light takes the lit tiles' colour, brighter the more of the floor is lit and the higher the level.
     if (tiles.lit > 0) this.lightRgb.set(...tiles.average).multiplyScalar(1 / Math.max(0.3, ...tiles.average));
-    const strength = on ? d.lightStrength * (0.35 + 0.65 * Math.min(1, tiles.lit * 3)) * (0.6 + 0.15 * inp.level) : 0;
+    const strength = on ? d.lightStrength * (0.35 + 0.65 * Math.min(1, tiles.lit * 3)) * (0.6 + 0.15 * inp.level)
+      : d.lightStrength * 0.25 * Math.min(1, tiles.lit * 3); // before the first wave: the moon's faint light (rules/dancefloor.ts moonTiles)
     return { x: this.centre.x, y: 2.5, z: this.centre.z, reach: d.lightReach, rgb: this.lightRgb, strength };
   }
 }

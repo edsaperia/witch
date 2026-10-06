@@ -1,19 +1,21 @@
 // The ley lines (Ed, 2026-10-04; 2026-10-05: "they essentially make a 2d game into a 1d game; you
-// just follow them from objective to objective"): a line from the last runestone reached on to the
-// next objectives, the next areas in the order the waves wake them, and back through the stones
-// reached before it (Ed, 2026-10-05: "six sections long, showing the next three and the past three
-// runestones": leyLines.ahead and behind).
+// just follow them from objective to objective"): a line through every wave's runestone in the
+// order the waves wake them, home first, the stones already reached and those to come (Ed,
+// 2026-10-06: "I think the leylines should cover the entire set of waves the whole time"; before
+// it, six sections, the next three and the past three). The route picker (rules/leyroute.ts) keeps
+// it from crossing itself.
 // A stone is reached when its area's wave arrives or its quest is done (onAreaDone), whichever
 // comes first, and the line moves on to the next one not yet reached. The order is the party's
 // own (party.ts): the next and after-next waves are already planned there, and the waves after
 // them are what the same seeded picker will choose once those have woken, so the line shows what
 // will happen, not a guess. Drawing them is render/leylines.ts.
 import type { ForestMap } from "./map";
-import { speakerRadius } from "./speakers";
 import type { Cell } from "./partition";
-import { cellKey, pickSet, type PartyState, type Partified } from "./party";
+import { cellKey, wavePlan, type PartyState } from "./party";
+export { departureClear, departureRoute } from "./departure";
 
-export interface LeyStone { cell: Cell; x: number; z: number; /** The wave that wakes (or woke) it: 0 home. */ wave: number; /** Home's start (Ed, 2026-10-05): the line leaves from the treehouse's front, setting off due south. */ depart?: boolean }
+export interface LeyStone { cell: Cell; x: number; z: number; /** The wave that wakes (or woke) it: 0 home. */ wave: number; /** Home's start (Ed, 2026-10-05): the line leaves from the treehouse's front, setting off due south. */ depart?: boolean;
+}
 
 /** Where a stone stands: an area's soundsystem spot; home's, the treehouse's front (Ed, 2026-10-05:
  *  "The start of the first leyline should go from the front of the treehouse"), the line leaving it
@@ -32,12 +34,11 @@ export function onAreaDone(p: PartyState, cell: Cell, time: number): void {
   (p.leyDone ??= new Map()).set(k, time);
 }
 
-/** The chain (Ed, 2026-10-05: "six sections long, showing the next three and the past three
- *  runestones"): the stones in wave order, `behind` of those reached before the last one reached,
- *  that last one (home before anything else), and `ahead` of the next ones not yet reached; fewer
- *  where the run or the map runs out. `current` is the last reached one's place in `stones`: the
+/** The chain (Ed, 2026-10-06: the whole route; `ahead` and `behind` cut it to fewer, for tests):
+ *  the stones in wave order, `behind` of those reached before the last one reached, that last one
+ *  (home before anything else), and `ahead` of the next ones not yet reached. `current` is the last reached one's place in `stones`: the
  *  sections before it are behind her, the ones after it ahead. */
-export function leyChain(p: PartyState, map: ForestMap, ahead: number, behind = 0): { stones: LeyStone[]; current: number } {
+export function leyChain(p: PartyState, map: ForestMap, ahead = Infinity, behind = Infinity): { stones: LeyStone[]; current: number } {
   const done = p.leyDone ?? new Map<string, number>();
   const reached = (k: string) => p.areas.has(k) || done.has(k);
   // The stones reached, in the order they were: woken (by its wave) or done (by its quest), the
@@ -50,64 +51,23 @@ export function leyChain(p: PartyState, map: ForestMap, ahead: number, behind = 
   }
   const order = [...past.values()].sort((u, v) => u.at - v.at || u.s.wave - v.s.wave).map(u => u.s);
   const back = order.slice(Math.max(0, order.length - 1 - Math.max(0, behind))), last = back[back.length - 1];
-  const out: LeyStone[] = [], seen = new Set([cellKey(last.cell)]);
-  // The waves to come: next and after-next as planned, then the picker run on from there.
-  let v: PartyState = p, wave = p.wave;
-  const wake = (set: Cell[]): PartyState => {
-    const areas = new Map<string, Partified>(v.areas);
-    for (const c of set) areas.set(cellKey(c), { cell: c, wave: wave + 1, at: 0, from: null, soundsystem: null });
-    return { ...v, areas, wave: wave + 1, last: set[set.length - 1] };
-  };
-  for (let k = 0; out.length < ahead && k < ahead + 8; k++) {
-    const set = k === 0 ? p.next : k === 1 && p.afterNext.length ? p.afterNext : pickSet(v, map, p.areasPerWave);
-    if (!set.length) break;
-    for (const c of set) {
-      const key = cellKey(c);
-      if (!reached(key) && !seen.has(key)) { seen.add(key); out.push(stoneOf(map, c, wave + 1)); }
-    }
-    v = wake(set); wave++;
+  // The waves to come, in the order the picker will choose them (wavePlan: next, after-next and on).
+  const out: LeyStone[] = [];
+  // (One or two ahead, as the pulse asks every frame: the next and after-next as planned, without planning on.)
+  const plan: Iterable<[string, number]> = ahead <= 2 ? [...p.next.map(c => [cellKey(c), p.wave + 1] as [string, number]), ...p.afterNext.map(c => [cellKey(c), p.wave + 2] as [string, number])] : wavePlan(p, map);
+  if (ahead > 0) for (const [key, wave] of plan) {
+    if (out.length >= ahead) break;
+    if (!reached(key) && key !== cellKey(last.cell)) { const [x, y] = key.split(",").map(Number); out.push(stoneOf(map, [x, y], wave)); }
   }
-  return { stones: [...back, ...out.slice(0, Math.max(0, ahead))], current: back.length - 1 };
+  const stones = [...back, ...out];
+  return { stones, current: back.length - 1 };
 }
 
 /** A key that changes whenever the chain would (a wave, the plan, a quest done): to know when to redraw it. */
-export function leyKey(p: PartyState): string {
-  return `${p.wave}|${p.next.map(cellKey).join(";")}|${p.afterNext.map(cellKey).join(";")}|${p.areasPerWave}|${p.ruined?.size ?? 0}|${[...(p.leyDone?.keys() ?? [])].join(";")}`;
+export function leyKey(p: PartyState): number {
+  // (A number, worked out every frame without allocating: Ed, 2026-10-06, the whole line must stay cheap.)
+  let h = p.wave * 131 + p.areasPerWave * 7 + (p.ruined?.size ?? 0) * 1009 + (p.leyDone?.size ?? 0) * 7919;
+  for (const c of p.next) h = (Math.imul(h, 31) + c[0] * 97 + c[1]) | 0;
+  for (const c of p.afterNext) h = (Math.imul(h, 31) + c[0] * 97 + c[1]) | 0;
+  return h;
 }
-
-/** The first line's way out from home (Ed, 2026-10-05: "The treehouse should be 5m due north of the
- *  dance floor ... The ley line leads from it south across the dancefloor and then towards the first
- *  speaker"): from the treehouse's front due south, straight across the dancefloor and through its
- *  ring of speakers, on `past` metres beyond the ring (`avoid` metres outside it), then a smooth
- *  curve to the first objective's soundsystem, that stretch kept outside the ring. Points every
- *  `step` metres, from the front to `to`. */
-export function departureRoute(map: ForestMap, to: { x: number; z: number }, past: number, avoid: number, step: number): [number, number][] {
-  const d = map.dancefloor, R = departureClear(map, avoid), f = map.treehouseFront;
-  // The straight run south: across the floor to past metres beyond the far side of the ring.
-  const dx = f.x - d.x, far = Math.abs(dx) < R ? d.z + Math.sqrt(R * R - dx * dx) : f.z, len = Math.max(step, far + past - f.z);
-  const pts: [number, number][] = [];
-  for (let s = 0; s < len; s += step) pts.push([f.x, f.z + s]);
-  pts.push([f.x, f.z + len]);
-  const [px, pz] = pts[pts.length - 1], L = Math.hypot(to.x - px, to.z - pz);
-  // Then a curve leaving south, bending toward the objective's side, to the objective.
-  const side = Math.sign(to.x - px) || 1, m = Math.min(45, L * 0.5);
-  const c1: [number, number] = [px + side * m * 0.35, pz + m * 0.8];
-  const ux = to.x - c1[0], uz = to.z - c1[1], ul = Math.hypot(ux, uz) || 1, m2 = Math.min(40, ul * 0.4);
-  const c2: [number, number] = [to.x - (ux / ul) * m2, to.z - (uz / ul) * m2];
-  const n = Math.max(4, Math.ceil((L + m) / step)), curve: [number, number][] = [];
-  for (let i = 1; i <= n; i++) {
-    const t = i / n, a = (1 - t) ** 3, b = 3 * (1 - t) ** 2 * t, c = 3 * (1 - t) * t * t, e = t ** 3;
-    curve.push([a * px + b * c1[0] + c * c2[0] + e * to.x, a * pz + b * c1[1] + c * c2[1] + e * to.z]);
-  }
-  // Off the ring after the crossing: anything inside pushed out round it, then smoothed (the ends held), and again.
-  const push = (p: [number, number]) => { const ex = p[0] - d.x, ez = p[1] - d.z, l = Math.hypot(ex, ez) || 1; if (l < R) { p[0] = d.x + (ex / l) * R; p[1] = d.z + (ez / l) * R; } };
-  for (let pass = 0; pass < 6; pass++) {
-    curve.forEach(push);
-    for (let i = 0; i < curve.length - 1; i++) { const a = i ? curve[i - 1] : [px, pz], b = curve[i + 1]; curve[i] = [(a[0] + 2 * curve[i][0] + b[0]) / 4, (a[1] + 2 * curve[i][1] + b[1]) / 4]; }
-  }
-  curve.forEach(push);
-  return [...pts, ...curve];
-}
-
-/** How far the first line keeps from the dancefloor's middle: out past its ring of speakers by `avoid` metres. */
-export const departureClear = (map: ForestMap, avoid: number) => speakerRadius(map.tuning) + map.tuning.dancefloor.speakers.footprint + avoid;

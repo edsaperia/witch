@@ -122,12 +122,11 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(L.fleeUntil).toBeUndefined();
   }), 60000);
 
-  it("lie relics about the map, far from home and apart; she picks one up with the sigil button and puts it down by a sleeping legend: happy, and its buff hers for good", () => {
+  it("lie relics about the map, one of each; she picks one up with the sigil button and puts it down by a sleeping legend: happy, and its buff hers for good", () => {
     const { g, L } = beside();
-    expect(g.relics.length).toBe(LEGENDS.relics.count);
-    for (const r of g.relics) expect(g.map.remoteness(r.cell[0], r.cell[1])).toBeGreaterThanOrEqual(LEGENDS.relics.minRemoteness);
-    const r = g.relics[0], back = { x: g.witch.x, z: g.witch.z };
-    g.witch = { ...g.witch, x: r.x + 1, z: r.z };
+    expect(g.relics.length).toBe(LEGENDS.relics.kinds.length); // (one of each; where: relics.test.ts)
+    const r = g.relics[1], back = { x: g.witch.x, z: g.witch.z };
+    g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil, south of it)
     run(g, 0.2, { ...idle, sigil: true });
     expect(r.state).toBe("carried");
     expect(g.leash.relics).toEqual([r.id]);
@@ -145,7 +144,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     const { g, L } = beside(), lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
     expect(lc).not.toBeNull();
     const r = g.relics[0];
-    g.witch = { ...g.witch, x: r.x + 1, z: r.z };
+    g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil)
     run(g, 0.2, { ...idle, sigil: true });
     expect(g.leash.relics).toEqual([r.id]);
     // just outside the ring, on its open (south) side
