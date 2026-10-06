@@ -486,6 +486,7 @@ The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in 
 | `glades.motes.sat` | number | 0 to … |
 | `glades.motes.bright` | number | 0 to … |
 | `leyLines.on` | boolean |  |
+| `leyLines.reveal` | number | 0 to … |
 | `leyLines.far` | array of number |  |
 | `leyLines.behindBright` | number | 0 to … |
 | `leyLines.advance` | string |  |

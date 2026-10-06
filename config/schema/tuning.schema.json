@@ -2197,6 +2197,10 @@
         "on": {
           "type": "boolean"
         },
+        "reveal": {
+          "type": "number",
+          "minimum": 0
+        },
         "far": {
           "type": "array",
           "items": {
@@ -2265,6 +2269,7 @@
       },
       "required": [
         "on",
+        "reveal",
         "far",
         "behindBright",
         "advance",
