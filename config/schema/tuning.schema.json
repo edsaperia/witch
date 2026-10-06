@@ -1914,11 +1914,31 @@
               "legend"
             ]
           }
+        },
+        "wakeSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "angryWake": {
+          "type": "number",
+          "minimum": 0
+        },
+        "settleSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sink": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "minPx",
-        "alwaysLevels"
+        "alwaysLevels",
+        "wakeSecs",
+        "angryWake",
+        "settleSecs",
+        "sink"
       ],
       "additionalProperties": false
     },

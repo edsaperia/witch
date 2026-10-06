@@ -408,6 +408,8 @@ export class View {
   nibbles: { x: number; z: number; at: number }[] = [];
   /** When each party animal evolved (game time): the flash, the pop and the sparkles. */
   readonly evolvedAt = new Map<number, number>();
+  /** Each area legend's lying down and getting up, as the view has seen its state change (render/legendSleep.ts). */
+  readonly legendSleeps = new Map<number, import("./legendSleep").SleepTrack>();
   /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
   private rigGears = new Map<string, RigGear>();
   rigGear(c: Creature, leashed: boolean): RigGear {

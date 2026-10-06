@@ -188,7 +188,7 @@ export interface Tuning {
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
   /** The creature states' looks (render/looks.ts): enraged ones tinted toward colour by amount (0 none, 1 all). */
   /** The live rig (#79, render/rig/): on by default (?rig=0 off); creatures in the treetops, or drawn smaller than minPx art pixels, keep their baked frames, except the levels in alwaysLevels ("baby", "young", "adult", "legend"), rigged at any size (Ed, 2026-10-05: legends always). */
-  rig?: { minPx: number; alwaysLevels: string[] };
+  rig?: { minPx: number; alwaysLevels: string[]; /** a sleeping legend's drowsy wake (s), an angry one's share of it, its settling back to sleep (s), and how far it sinks on the rig (share of its height) */ wakeSecs?: number; angryWake?: number; settleSecs?: number; sink?: number };
   looks?: { enragedTint: { colour: string; amount: number }; /** the 💢 beside an enraged creature's head: on, and its size (times its level's bubble size) */ anger: { on: boolean; size: number }; /** party animals' twinkle: how many, how often (a second), how big, how bright */ partyGlow: { on: boolean; sparkles: number; rate: number; size: number; strength: number } };
   bubbles: { emojiPixels: number; scale: number; /** a creature's bubble size by level (baby, young, adult, legend) */ levelScale: number[] };
   /** Home's area, settled first: its circle reaches margin metres past the treehouse's footprint; other areas' centres stay gap (areas) beyond it. */
