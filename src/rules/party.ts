@@ -6,7 +6,7 @@ import type { Tuning } from "./tuning";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
-import { leyRoute, type LeyRoute } from "./leyroute";
+import { leyRoute, variedOrder, type LeyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -291,10 +291,11 @@ export function symbolCount(stage: SpawnMarker["stage"], gone: number, flicker: 
   return 0;
 }
 
-/** The ley line's route for this map (rules/leyroute.ts): the order the noisy picker would wake the
- *  areas in, untangled so the line through them all never crosses itself. Worked out once a map. */
+/** The ley line's route for this map (rules/leyroute.ts): a varied order (petals round home, then
+ *  sweeps, lobes or combs: variedOrder), untangled so the line through it all never crosses itself
+ *  (or only as Ed's crossing rules allow; else the noisy picker's order, untangled). Worked out once a map. */
 export function routeOf(map: ForestMap): LeyRoute {
-  return leyRoute(map, () => {
+  return leyRoute(map, () => variedOrder(map), () => {
     const m: ForestMap = { ...map, tuning: { ...map.tuning, party: { ...map.tuning.party, picker: "noisy" } } };
     return [...wavePlan(newParty(m), m).keys()];
   });
