@@ -290,7 +290,9 @@ export interface Tuning {
   invites: { on: boolean; burst: number; burstGap: number; cooldown: number; range: number; speed: number; /** The lob's rise (m) over the line from her hand down to the ground at the range (drawn only). */ arc?: number; homing: number; homingCone: number; homingRange: number; multiShot: number; spread: number; radius: number; amount: number; hits: number[]; drain: number; /** Her ground speed while firing, times (Ram's Steady takes it away). */ fireSlow?: number; /** A 💌 that met no one rests on the ground this many seconds (drawn only), fading over the last lingerFade; at most lingerMax at once. */ linger: number; lingerFade: number; lingerMax: number; /** Turns a second a 💌 spins in flight, flat like a frisbee (drawn only). */ spin: number };
   invite: { talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
   /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
-  leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number };
+  leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number;
+    /** Sigil weight (rules/leashWeight.ts): free allowance, levels' weights, drag, drift, rise, sink, sinkMax, floor, extreme, maxTension. */
+    weight: { free: number; levels: number[]; drag: number; drift: number; rise: number; sink: number; sinkMax: number; floor: number; extreme: number; maxTension: number } };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
