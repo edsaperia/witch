@@ -4,19 +4,19 @@
 import { AREA_TYPES, type ForestMap } from "./map";
 import type { Cell } from "./partition";
 import type { Creature } from "./creatures";
-import { cellKey, type PartyState } from "./party";
+import type { PartyState } from "./party";
 
 /** A sleeping legend's restlessness, 0 calm to 1 about to wake angry (Ed, #87: restless while its
  *  area has none of its kind). One place to read it from; the rules' own value lands with #87,
  *  till then whatever is set on the creature (0 if nothing is). */
 export const restlessness = (c: Creature): number => Math.max(0, Math.min(1, (c as Creature & { restlessness?: number }).restlessness ?? 0));
 
-/** Whether a legend's quest can still be done, so its dream shows (Ed, 2026-10-05: once its area's
- *  soundsystem switches on the chance is gone; a relic aside). The rules' own flag lands with #87;
- *  till then: its area isn't partified. */
-export const questOpen = (party: PartyState, c: Creature): boolean => {
+/** Whether a legend's quest can still be done, so its dream shows: while it sleeps (Ed, 2026-10-06:
+ *  "at any time the legend is sleeping, not just before the soundsystem is made"). The rules set the
+ *  flag every step (rules/legends.ts); till then, its quest isn't done. */
+export const questOpen = (_party: PartyState, c: Creature): boolean => {
   const flag = (c as Creature & { questOpen?: boolean }).questOpen;
-  return flag ?? !party.areas.has(cellKey(c.cell));
+  return flag ?? (!!c.quest && c.quest.done === undefined);
 };
 
 /** The runestone of the nearest area (its centre, by site) whose type's creature is `species`,
