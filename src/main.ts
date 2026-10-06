@@ -69,10 +69,11 @@ if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMark
 // ?picker=noisy|near3|near3touch|nearest: how the party picks the next area to wake.
 const pickerParam = params.get("picker");
 if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
-// ?glow=<reach>,<falloff>: the witch's glow, to tune live (e.g. ?glow=50,2.5).
+// ?glow=<reach>,<falloff>,<near>: the witch's glow, to tune live (e.g. ?glow=50,2.5,0.7; 0 keeps a value).
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
 if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
+if (glowParam && glowParam[2] > 0) tuning.glowNear = glowParam[2];
 // The music's style (config/music-style.json) sets the beat everything pulses to.
 const musicStyle = musicStyleJson as unknown as MusicStyle;
 // The beat's base tempo is the style's; each wave's tempo is its arc step's (Ed: 120 rising to about 140).

@@ -808,6 +808,10 @@
       "type": "number",
       "minimum": 0
     },
+    "glowNear": {
+      "type": "number",
+      "minimum": 0
+    },
     "glowToCutout": {
       "type": "number",
       "minimum": 0
@@ -4633,6 +4637,7 @@
     "pixelSize",
     "glowReach",
     "glowFalloff",
+    "glowNear",
     "glowToCutout",
     "glowHeight",
     "spriteTilt",
