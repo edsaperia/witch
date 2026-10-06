@@ -91,6 +91,10 @@ export interface Creature {
   /** Where a legend lies: where it spawned (it charges from here, and walks back here). */
   lairX?: number;
   lairZ?: number;
+  /** Lying asleep where it is (Ed, 2026-10-06: when the party's over every creature walks home, lies down and sleeps): the
+   *  view settles it down, eyes shut, and draws it sleeping (art/naps.js: curled, tucked, coiled or flat by species);
+   *  cleared, it gets up. Set by the rules; an area legend's own sleep is its legendState. */
+  asleep?: boolean;
   /** A legend gone back to sleep away from where it lay, walking home to lie down there (Ed, 2026-10-06; rules/legends.ts). */
   homing?: boolean;
   charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number };

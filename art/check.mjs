@@ -137,6 +137,22 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `sleeping legend ${id} ${facing}: asleep x2 (sunk, no taller than awake, no glow, eyes shut, breathing; drawn, standing, origin on the sprite, coloured)`, good: !bad.length, info: bad.join(", ") || `asleep ${fs[0].sp.w}x${fs[0].sp.h}, awake ${aw.w}x${aw.h}` });
     }
   }
+  { // every creature asleep (art/naps.js; Ed, 2026-10-06: "we will need sleeping artwork for all the creatures"): every species at every level in 2
+    // breathing frames, each drawn and standing on its bottom row, its ground origin on the sprite, no taller than it stands awake, no pupils
+    // (eyes shut), every material coloured, its two breaths different
+    for (const S of G.SPECIES) {
+      const bad = [];
+      for (let level = 0; level < 4; level++) {
+        const aw = G.critter(S.id, level, 0, st), fs = [0, 1].map(f => G.critter(S.id, level, f, st, "towards", { nap: true })), colours = G.speciesColours(S.id, st);
+        fs.forEach((sp, i) => { const s = stats(sp), o = sp.origin, miss = [...new Set(sp.m)].filter(m => m && m !== G.M.LINE && !colours[m]);
+          if (!(s.n > 20 && s.bottom > 0 && o && o[0] >= 0 && o[0] <= sp.w && o[1] >= sp.h * .5 && o[1] <= sp.h + 2 && !sp.n.some(Number.isNaN) && !miss.length)) bad.push(`L${level} f${i} ${s.w}x${s.h}${o ? " origin " + o : " no origin"}${miss.length ? " uncoloured " + miss : ""}`);
+          if (sp.h > aw.h) bad.push(`L${level} f${i} ${sp.h} taller than awake ${aw.h}`);
+          if (sp.m.some(m => m === G.M.PUPIL || m === G.M.IRIS)) bad.push(`L${level} f${i} eyes open`); });
+        if (fs[0].m.length === fs[1].m.length && fs[0].m.every((m, i) => m === fs[1].m[i])) bad.push(`L${level} no breath`);
+      }
+      res.push({ what: `${S.id} asleep (${G.napPose(S.id).kind}): baby to legend x2 breaths (drawn, standing, origin on the sprite, no taller than awake, eyes shut, coloured)`, good: !bad.length, info: bad.slice(0, 4).join(", ") || "ok" });
+    }
+  }
   for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) { const r = G.rng(v + 1), t = f(r, st, st.treeSize * G.uni(r, .9, 1.1)), s = stats(t.sp); res.push({ what: `tree ${key} ${v}`, good: s.n > 200 && s.bottom > 0 && t.crownY > 0 && t.crownY < s.h, info: `${s.w}x${s.h}` }); }
   for (let v = 0; v < 8; v++) { const s = stats(G.bush(G.rng(v), st).sp); res.push({ what: `bush ${v}`, good: s.n > 20, info: `${s.w}x${s.h}` }); }
   for (const facing of ["towards", "away"]) for (const frame of [0, 1, 2]) { const s = stats(G.witchSprite(st, { frame, facing })); res.push({ what: `witch ${facing} frame ${frame}`, good: s.n > 200 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
