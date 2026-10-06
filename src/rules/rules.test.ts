@@ -121,7 +121,7 @@ describe("the map", () => {
   it("is a circle of about mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
     expect(Math.abs(map.cells.length - TUNING.mapAreas ** 2)).toBeLessThan(TUNING.mapAreas * 2);
     expect(AREA_TYPES.length).toBeGreaterThanOrEqual(30);
-    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r);
+    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r * (1 + TUNING.map!.coast!.amp)); // (the box round its furthest headland)
   });
 
   it("never gives two touching areas the same type", () => {
