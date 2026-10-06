@@ -47,7 +47,7 @@ describe("ley lines", () => {
 });
 
 describe("the whole route, the whole time (Ed, 2026-10-06: \"I think the leylines should cover the entire set of waves the whole time\")", () => {
-  const all = map.n * map.n;
+  const all = map.cells.length;
   it("at the start runs from home through every area, in the order the waves will wake them", () => {
     const p = newParty(map), c = leyChain(p, map);
     expect(c.current).toBe(0);

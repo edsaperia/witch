@@ -5,6 +5,47 @@
       "type": "number",
       "minimum": 0
     },
+    "map": {
+      "type": "object",
+      "properties": {
+        "shape": {
+          "type": "string",
+          "enum": [
+            "circle",
+            "square"
+          ]
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "buffer": {
+          "type": "number",
+          "minimum": 0
+        },
+        "push": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "shape",
+        "radius",
+        "buffer",
+        "push",
+        "drift",
+        "edge"
+      ],
+      "additionalProperties": false
+    },
     "areaSize": {
       "type": "number",
       "minimum": 0
@@ -6317,6 +6358,7 @@
   },
   "required": [
     "mapAreas",
+    "map",
     "areaSize",
     "areaScale",
     "arena",

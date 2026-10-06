@@ -58,7 +58,7 @@ export function growWave(s: GrowthState, map: ForestMap, wave: number, wild: (ke
   s.wave = wave;
   if (!G.on || G.perWave <= 0) return;
   const [hx, hy] = map.centreCell;
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  for (const [cx, cy] of map.cells) {
     if (cx === hx && cy === hy) continue;
     const key = `${cx},${cy}`, cell: [number, number] = [cx, cy];
     if (!wild(key, cell)) continue;
