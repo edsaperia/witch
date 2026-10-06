@@ -8,6 +8,7 @@ import { hash2, smoothstep } from "../rules/random";
 import type { Atlas } from "./atlas";
 import type { SpriteInstance } from "./sprites";
 import type { ForestLight } from "./view";
+import { moodOf } from "./mood";
 
 const CRYSTAL = [new THREE.Vector3(0.25, 0.85, 1), new THREE.Vector3(0.7, 0.4, 1), new THREE.Vector3(1, 0.65, 0.2)];
 
@@ -18,9 +19,17 @@ export interface Playing { x: number; y: number; z: number; seed: number; ready:
 export class PartyView {
   constructor(private atlas: Atlas, private metresPerPixel: number) {}
 
+  /** The mood's warm light colours as vectors, made once (not every frame). */
+  private warm: { from: number[][]; rgb: THREE.Vector3[] } | null = null;
+  private warmOf(from: number[][]): THREE.Vector3[] {
+    if (this.warm?.from !== from) this.warm = { from, rgb: from.map(c => new THREE.Vector3(c[0], c[1], c[2])) };
+    return this.warm.rgb;
+  }
+
   /** This frame's soundsystem sprites, their lights, and the ground's sweeping fronts. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, mark: (x: number, z: number, h: number) => boolean) {
     const t = g.tuning.party, items: SpriteInstance[] = [], lights: ForestLight[] = [], sweeps: Sweep[] = [], playing: Playing[] = [];
+    const M = moodOf(g.tuning), warm = M?.partyWarm.length ? this.warmOf(M.partyWarm) : null;
     // Home has no soundsystem of its own: the dancefloor's ring of speakers carries its music (Ed,
     // v183), and each of them has a single laser (lasers.ts speakerLasers; none from the disco ball, Ed).
     const list: { x: number; z: number; variant: number; at: number; from: null | { x: number; z: number } }[] = [];
@@ -47,7 +56,8 @@ export class PartyView {
       }
       if (p >= 1) playing.push({ x: s.x, y: h * 0.85, z: s.z, seed: Math.floor(Math.abs(s.x * 7.3 + s.z * 13.1)) % 100000, ready: s.at + t.transition });
       const beat = 0.85 + 0.15 * Math.sin(time * 8);
-      if (rise > 0) lights.push({ x: s.x, y: 3, z: s.z, reach: t.lightReach, rgb: CRYSTAL[s.variant % 3], strength: t.lightStrength * beat * rise * (1 + (1 - p) * 2) });
+      // Spooky (render/mood.ts): the party is the warm light in a cold wood, its pools wider and warmer.
+      if (rise > 0) lights.push({ x: s.x, y: 3, z: s.z, reach: t.lightReach * (M?.partyReach ?? 1), rgb: (warm ?? CRYSTAL)[s.variant % 3], strength: t.lightStrength * (M?.partyStrength ?? 1) * beat * rise * (1 + (1 - p) * 2) });
     }
     return { items, lights, sweeps, playing };
   }
