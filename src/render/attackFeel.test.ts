@@ -31,6 +31,9 @@ describe("attack feel", () => {
   it("tumbles up and over when knocked back hard, and not when barely nudged", () => {
     const thrown = make({ hurtAt: 1, kx: 72 * Math.exp(-10 * 0.25), kz: 0 }), f = attackFeel(thrown, 1.25, T, newFeel());
     expect(f.hop).toBeGreaterThan(0.5);
+    // over once mid-air, not a strobe: on its back for one stretch, upright before and after
+    const flips = Array.from({ length: 50 }, (_, i) => attackFeel(make({ hurtAt: 1, kx: 72 * Math.exp(-10 * i * 0.01), kz: 0 }), 1 + i * 0.01, T, newFeel()).flip);
+    expect(flips.filter((f, i) => i > 0 && f !== flips[i - 1]).length).toBe(2);
     const nudged = make({ hurtAt: 1, kx: 5 * Math.exp(-10 * 0.25), kz: 0 });
     expect(attackFeel(nudged, 1.25, T, newFeel()).hop).toBe(0);
   });

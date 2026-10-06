@@ -1,7 +1,8 @@
 // How an attack feels on screen (Ed, 2026-10-06: "Work on making creature attack visuals better"): the view's part of a
 // blow, read from the rules' state each frame and writing nothing back. A wind-up crouches the attacker (the anticipation),
 // its lunge stretches it (the snappy strike), the blow squashes the one it hits and springs it back past its shape, and a
-// knock-back throws it up in a short tumble that lands with a squash. A party, not a fight to the death: nobody is hurt,
+// knock-back throws it up in a short tumble, over once, landing with a squash. Squash and stretch are drawn in whole art
+// pixels (sprites.ts rounds them: one pixel scale on screen). A party, not a fight to the death: nobody is hurt,
 // they're bowled over and bounce back up. Timings and sizes are the tuning's attackFx knobs. Allocation-free: callers
 // pass a Feel to fill, and the wind-up starts are kept per fight object (a WeakMap, so they go with it).
 import type { Creature } from "../rules/creatures";
@@ -17,7 +18,7 @@ export interface Feel {
 export const newFeel = (): Feel => ({ sx: 1, sy: 1, hop: 0, flip: false, crouch: 0, lunging: false });
 
 export type AttackFx = Tuning["attackFx"];
-export const ATTACK_FX_DEFAULT: AttackFx = { windupSquash: 0.12, windupMax: 0.6, lungeStretch: 0.14, squash: 0.24, squashSecs: 0.34, tumbleKnock: 20, tumbleHeight: 0.9, tumbleSecs: 0.5, spinEvery: 0.08 };
+export const ATTACK_FX_DEFAULT: AttackFx = { windupSquash: 0.12, windupMax: 0.6, lungeStretch: 0.14, squash: 0.24, squashSecs: 0.34, tumbleKnock: 20, tumbleHeight: 0.9, tumbleSecs: 0.5, turnFrom: 0.3, turnTo: 0.7 };
 
 const windups = new WeakMap<object, { until: number; from: number }>();
 
@@ -47,7 +48,7 @@ export function attackFeel(c: Creature, time: number, T: AttackFx | undefined, o
   if (c.hurtAt !== undefined && knock > k.tumbleKnock && time - c.hurtAt < k.tumbleSecs) {
     const t = (time - c.hurtAt) / k.tumbleSecs;
     out.hop = Math.sin(t * Math.PI) * k.tumbleHeight * Math.min(1.5, knock / 60);
-    out.flip = Math.floor((time - c.hurtAt) / k.spinEvery) % 2 === 1 && t < 0.85;
+    out.flip = t > k.turnFrom && t < k.turnTo; // over once, on its back mid-air: one slow beat, never a strobe (the art director, #193)
     if (t > 0.85) { const l = (t - 0.85) / 0.15; out.sy *= 1 - 0.25 * Math.sin(l * Math.PI); out.sx *= 1 + 0.2 * Math.sin(l * Math.PI); }
   }
   return out;

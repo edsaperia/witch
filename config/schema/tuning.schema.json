@@ -3606,7 +3606,11 @@
           "type": "number",
           "minimum": 0
         },
-        "spinEvery": {
+        "turnFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnTo": {
           "type": "number",
           "minimum": 0
         }
@@ -3620,7 +3624,8 @@
         "tumbleKnock",
         "tumbleHeight",
         "tumbleSecs",
-        "spinEvery"
+        "turnFrom",
+        "turnTo"
       ],
       "additionalProperties": false
     },
