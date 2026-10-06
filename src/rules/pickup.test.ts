@@ -1,7 +1,7 @@
 // Leashing a happy creature by picking up its sigil rune (Ed, 2026-10-06; states.leash "pickup"): its 💌 ring full, it's
 // happy and its sigil lies as a rune at its feet, moving with it; on the ground within leash.pickRadius, E picks it up
 // and it's leashed at the bottom of her stack. 💌s no longer fill a second meter. Her hat comes first, then a placed
-// sigil of hers, then the nearest rune. Guards, happy legends and legends have none; pickupDelay holds it back.
+// sigil of hers, then the nearest rune. Only happy legends (and legends) have none; pickupDelay holds it back.
 import { afterEach, describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { affectionOf, newGame, stepGame, type Game } from "./game";
@@ -92,13 +92,10 @@ describe("leashing a happy creature by its sigil rune", () => {
     expect(farther.leashed).toBe(true);
   }, 60000);
 
-  it("guards, happy legends and legends carry no rune", () => {
+  it("only happy legends carry no rune (Ed, 2026-10-06: no more guards; a circle's baby has one like any other)", () => {
     const g = game(), c = happyAt(g, g.witch.x + 5, g.witch.z);
     expect(hasRune(c)).toBe(true);
-    c.guard = true;
-    expect(hasRune(c)).toBe(false);
-    expect(runeNear(g.creatures, c.x, c.z, 3, g.clock.time)).toBeNull();
-    c.guard = undefined;
+    expect(runeNear(g.creatures, c.x, c.z, 3, g.clock.time)).toBe(c);
     const L = g.creatures.find(k => k.boss)!;
     L.legendState = "happy";
     expect(stateOf(L)).toBe("happy");

@@ -56,10 +56,11 @@ export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
 
 /** Its sigil rune (Ed, 2026-10-06; states.leash "pickup"): a happy one carries its sigil as a rune on the ground at its
  *  feet, moving with it, from its hearts on; she leashes it by picking that up (E within leash.pickRadius: rules/leash.ts).
- *  None for those that can't be leashed: guards, happy legends and legends. `time` given: whether it's ready yet
+ *  None for those that can't be leashed: happy legends (and legends) only (Ed, 2026-10-06: "There are no more guards"; a
+ *  legend circle's baby, once happy, carries one like any other). `time` given: whether it's ready yet
  *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
 export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
-  if (data.leash !== "pickup" || c.gone || c.leashed || c.boss || c.level === LEGEND || c.guard || c.legendState === "happy" || stateOf(c) !== "happy") return false;
+  if (data.leash !== "pickup" || c.gone || c.leashed || c.boss || c.level === LEGEND || c.legendState === "happy" || stateOf(c) !== "happy") return false;
   return time === undefined || time >= (c.happyAt ?? -Infinity) + (data.pickupDelay ?? 0);
 }
 
