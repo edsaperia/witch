@@ -21,7 +21,7 @@ import { waveCountdown } from "./rules/party";
 import { awaitingSpell, clockSeconds, clockText } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
-import { ACTION_BAR, Input } from "./platform/input";
+import { Input } from "./platform/input";
 import { View } from "./render/view";
 import { bendPoint, groundHeight, placed } from "./render/height";
 import { Vector3 } from "three";
@@ -177,6 +177,9 @@ const propsGen = params.get("props") !== "hand";
 if (propsGen) tuning.paths = { ...tuning.paths, fingerposts: true }; // ?props=gen: fingerposts where footpaths come into a clearing (placed with the map, so set before it is made)
 applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
 const game = newGame(seed, tuning);
+// The party spell (Ed, 2026-10-06): she stands behind her decks until it's cast (the button, or Enter). ?creator=0 (the
+// tools and smoke runs) starts at once, as before, unless ?spell=wait; ?spell=auto starts at once anywhere.
+if (params.get("spell") !== "auto" && !(params.get("creator") === "0" && params.get("spell") !== "wait")) game.party.spellAt = null;
 // ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
 // species twice stacks it). ?buffs=all: every one.
 const buffsParam = params.get("buffs");
@@ -346,9 +349,15 @@ const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
-const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!, clockAsk = clockEl.querySelector<HTMLElement>(".ask")!;
-/** The prompt to cast the party spell, with its key on this device (the spell's binding: R, gamepad B, the touch spell button). */
-const spellPrompt = () => document.body.classList.contains("touch") ? "tap spell to cast the party spell and start" : `press ${ACTION_BAR.find(s => s.action === "spell")?.key ?? "R"} to cast the party spell and start`;
+const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!;
+/** The party spell's button (Ed, 2026-10-06: "a button on the screen that says "CAST THE PARTY SPELL""): a click or a tap,
+ *  or Enter (once play has begun, so the start screen's Enter isn't it), casts it on the next step. */
+const castBtn = document.getElementById("cast")!;
+let castQueued = false;
+const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
+for (const ev of ["pointerdown", "pointerup", "touchstart"]) castBtn.addEventListener(ev, e => e.stopPropagation()); // (not the game's input)
+castBtn.addEventListener("click", e => { e.stopPropagation(); queueCast(); });
+window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
 /** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
  *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
 function waveHud(): void {
@@ -356,10 +365,9 @@ function waveHud(): void {
   clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
   const now = clockText(clockSeconds(game.party, game.clock.time));
   if (clockT.textContent !== now) clockT.textContent = now;
-  // before the party spell (Ed, 2026-10-06: the game starts when she casts it), a prompt to cast it, with its key
-  const ask = awaitingSpell(game.party) && !game.clock.paused;
-  clockEl.classList.toggle("waiting", ask);
-  if (ask && clockAsk.textContent !== spellPrompt()) clockAsk.textContent = spellPrompt();
+  // before the party spell (Ed, 2026-10-06: the game starts when she casts it), its button in the middle of the screen
+  const ask = awaitingSpell(game.party) && !game.clock.paused && !creator.open;
+  castBtn.classList.toggle("on", ask);
   clockEl.classList.toggle("paused", game.clock.paused);
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
@@ -565,6 +573,7 @@ function frame(now: number): void {
   frameStats.frame(dt * 1000);
   freeze.pollPad();
   const c = input.read();
+  if (castQueued) { c.castParty = true; castQueued = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
