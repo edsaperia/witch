@@ -5285,9 +5285,6 @@
           "type": "number",
           "minimum": 0
         },
-        "spell": {
-          "type": "boolean"
-        },
         "transform": {
           "type": "number",
           "minimum": 0
@@ -5295,7 +5292,6 @@
       },
       "required": [
         "time",
-        "spell",
         "transform"
       ],
       "additionalProperties": false
