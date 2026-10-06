@@ -5,6 +5,7 @@ import { Shake } from "./render/shake";
 import { Music } from "./platform/audio/music";
 import { Sfx } from "./platform/audio/sfx";
 import { SfxCues } from "./platform/audio/sfxCues";
+import { AudioWatchdog } from "./platform/audio/watchdog";
 import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
@@ -121,6 +122,7 @@ const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
 // ?ley=0: no ley lines through the runestones.
 if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
+if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };
 if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
 // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
 // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
@@ -451,6 +453,23 @@ function start(): boolean {
   return true;
 }
 input.onAny = start;
+// The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second,
+// a context suspended is resumed, and music gone silent (or anything non-finite in the music or the
+// sound effects) is rebuilt afresh; each mend goes in the playtest log (L).
+const watchdog = new AudioWatchdog(
+  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden }),
+  what => {
+    playtest.audio(what);
+    console.warn(`audio watchdog: ${what}`);
+    if (!audio) return;
+    if ((what === "music-silent" || what === "music-nonfinite") && music) { music.dispose(); music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); }
+    if (what === "sfx-nonfinite" && sfx) { sfx.dispose(); sfx = null; sfxCues = null; ensureSfx(); }
+  },
+);
+setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
+let lastMix: ReturnType<typeof musicMix> | null = null;
+const r2 = (x: number) => Math.round(x * 100) / 100;
+playtest.audioState = () => ({ state: audio?.state ?? "none", volume: music ? r2((music.output as GainNode).gain.value) : 0, distort: r2(lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, lastMix?.distance ?? 9999)), mends: watchdog.mends.length });
 freeze.onToggle = on => { try { void (on ? audio?.suspend() : audio?.resume()); } catch { /* no sound */ } };
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The wave selector on the start screen: picking one doesn't start the game.
@@ -548,7 +567,8 @@ function frame(now: number): void {
   const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
-  music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
+  lastMix = musicMix(game, game.witch);
+  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
   const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
@@ -611,6 +631,8 @@ function powerLines(): string[] {
   /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
   lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
+  /** A debug hook (tools/sfx/live.cjs): the audio context, the music and the sound effects. */
+  get audio() { return { ctx: audio, music, sfx, mends: watchdog.mends }; },
   /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
    *  fixed steps, the render eased between the last two, the camera's sub-pixel glide), then where
    *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):

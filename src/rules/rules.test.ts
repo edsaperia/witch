@@ -1089,7 +1089,7 @@ describe("paths, roads and railways", () => {
     expect(trunk.length).toBeGreaterThanOrEqual(T.rails[0]);
     expect(of("rail").length).toBeLessThanOrEqual(T.rails[1] + 1); // plus a branch line
     for (const l of trunk) expect(new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size).toBeGreaterThan(5);
-    expect(of("road").length).toBeGreaterThanOrEqual(T.roads[0]);
+    expect(of("road").length).toBe(0); // no roads cars could drive on (Ed, round 13: footpaths, railways and streams only)
     expect(of("path").length).toBeGreaterThan(20);
     expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(T.streams[0]);
   });
@@ -1134,9 +1134,10 @@ describe("paths, roads and railways", () => {
     expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
     for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
   }, 60000); // (it builds the forest for 600 m round home)
-  it("carry 3D pieces: railway landmarks and signals, bridges over streams, verge posts; trees keep clear of them", () => {
+  it("carry 3D pieces: railway landmarks and signals, bridges over streams; trees keep clear of them", () => {
     const ids = new Set(P.pieces.map(p => p.id));
-    for (const id of ["signal-post", "verge-post"]) expect(ids.has(id)).toBe(true);
+    expect(ids.has("signal-post")).toBe(true);
+    for (const id of ["verge-post", "level-crossing"]) expect(ids.has(id)).toBe(false); // the roads' own pieces went with them (Ed, round 13)
     expect(P.pieces.some(p => ["goods-wagon", "carriage", "platform", "signal-gantry"].includes(p.id))).toBe(true);
     let bridges = 0;
     for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;

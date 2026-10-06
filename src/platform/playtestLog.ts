@@ -24,9 +24,11 @@ export interface PlaytestSample {
   marching: number;
   /** The witch's hits left. */
   hits: number;
+  /** The sound (round 13: the music stopping): the context's state, the music's volume now, the damage heard, metres to the music. */
+  audio?: { state: string; volume: number; distort: number; distance: number; mends: number };
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[] }
+export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -37,7 +39,9 @@ function readRuns(): PlaytestRun[] {
 
 export class PlaytestLog {
   private run: PlaytestRun;
-  private next = EVERY; // (nothing before the first 10 s: a page opened and never played keeps no run)
+  private next = EVERY;
+  /** The sound as it is now, for each sample (main.ts sets it). */
+  audioState?: () => PlaytestSample["audio"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
   constructor(private game: Game, build: string) {
     this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.party.interval, samples: [] };
   }
@@ -54,6 +58,7 @@ export class PlaytestLog {
       berries: g.tally.berries, invites: g.tally.invites, evolved: g.tally.evolved,
       sieges: p.sieges.map(s => ({ key: s.key, value: round(s.value), count: s.count, hp: Math.round(s.hp) })), marching: round(p.marching),
       hits: g.witches[0].health.hp,
+      audio: this.audioState?.(),
     });
     this.save();
   }
@@ -75,6 +80,12 @@ export class PlaytestLog {
   /** Area size, treetop speed or the map's size set (the link, or the debug overlay's slider): noted, with the game time. */
   world(areaSize: number, treetopSpeed: number, mapAreas: number): void {
     (this.run.world ??= []).push({ t: Math.round(this.game.clock.time * 10) / 10, areaSize, treetopSpeed, mapAreas });
+    this.save();
+  }
+  /** The audio watchdog mended something (a context resumed, the music or sound effects rebuilt): noted, with the game time. */
+  audio(what: string): void {
+    const a = (this.run.audio ??= []);
+    if (a.length < 200) a.push({ t: Math.round(this.game.clock.time * 10) / 10, what });
     this.save();
   }
   /** Every run kept on this browser (this one included), as a JSON file to save. */
