@@ -15,6 +15,10 @@ import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS } from "./treehous
 import { PROP_GENOMES, PROP_KINDS } from "./props/genomes.js";
 import { propPiece, propVariant, propFor } from "./props/generator.js";
 export { PROP_GENOMES, PROP_KINDS, propPiece, propVariant, propFor };
+import { BRIDGE_GENOMES, BRIDGE_IDS, BRIDGE_VARIANTS, PATH_GEN_IDS, bridgeVariant } from "./props/bridges.js";
+export { BRIDGE_GENOMES, BRIDGE_IDS, BRIDGE_VARIANTS, PATH_GEN_IDS, bridgeVariant };
+import { SET_PROP_GENOMES, SET_PROP_KINDS, setPropVariant, genSetPiece } from "./props/sets.js";
+export { SET_PROP_GENOMES, SET_PROP_KINDS, setPropVariant, genSetPiece };
 import { WITCH_GENOME, WITCH_AXES, WITCH_RANDOM, witchGenome, genomeLook, witchGenomeProblems, upgradeGenome } from "./witchGenome.js";
 import { bedroomSprite, bedroomColours, BEDROOM_PROPS, BANNER_FONT, ROOM } from "./bedroom.js";
 export { bedroomSprite, bedroomColours, BEDROOM_PROPS, BANNER_FONT, ROOM };
@@ -30,7 +34,7 @@ import { TALL_KINDS, tallPiece } from "./tall.js";
 export { TALL_KINDS, tallPiece };
 import { EFFECTS, EFFECT_BY_ID, ATTACK_EFFECTS, STATE_EFFECTS, TRAIT_TINTS, SPECIES_PROJECTILE, EFFECT_PPM, EFFECT_TREETOP_SCALE, EFFECT_TREETOP_SHRINK, effectSprite, effectColours } from "./effects.js";
 export { EFFECTS, EFFECT_BY_ID, ATTACK_EFFECTS, STATE_EFFECTS, TRAIT_TINTS, SPECIES_PROJECTILE, EFFECT_PPM, EFFECT_TREETOP_SCALE, EFFECT_TREETOP_SHRINK, effectSprite, effectColours };
-import { NEW_SET_PIECES, SET_PIECE_KINDS } from "./setpieces.js";
+import { NEW_SET_PIECES, SET_PIECE_KINDS, setPiece3d } from "./setpieces.js";
 import { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset } from "./relics.js";
 import { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint } from "./decor.js";
 import { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours } from "./country.js";
@@ -50,19 +54,21 @@ export { SILHOUETTE_SIZE, silhouette, silhouetteDistance, silhouetteMirror, silh
 import { LEGEND_STATES, LEGEND_FRAMES, LEGEND_POSES, LEGEND_IDS, legendForm, legendColours, legendSprites } from "./legends.js";
 export { LEGEND_STATES, LEGEND_FRAMES, LEGEND_POSES, LEGEND_IDS, legendForm, legendColours, legendSprites };
 import { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists } from "./scenes.js";
-import { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, areaPathKinds } from "./paths.js";
+import { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, pathKindsByArea } from "./paths.js";
 import { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
 export { LIMBO_BAR, WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks };
 export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS };
-export { NEW_SET_PIECES, SET_PIECE_KINDS };
+export { NEW_SET_PIECES, SET_PIECE_KINDS, setPiece3d };
 export { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset };
 export { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint };
 export { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours };
 export { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours, witchPixelsPerUnit };
 export { PARTY_OBJECTS, PARTY_BY_ID, PARTY_CLASSES, PARTY_LIGHT_NEONS, PARTY_WARM, PARTY_CLUSTERS, PARTY_CLUSTER_BY_ID, partySprite, partyColours, partyPatch, BALLOON_PALETTES };
 export { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists };
-export { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, areaPathKinds };
+export { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite };
+// The path kinds each area suits, its own extra kinds (stairs, bridges) included.
+export function areaPathKinds() { return pathKindsByArea(AREAS); }
 export { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
 import { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown } from "./sigils.js";
 export { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown };
@@ -102,7 +108,7 @@ export const KNOBS = [
   { k: "clearing", g: "Trees", label: "Clearing size", min: 0, max: 1, step: 0.05, v: 0.55 },
   { k: "depth", g: "Map", label: "Border detail (fractal layers)", min: 0, max: 6, step: 1, v: 4 },
   { k: "areaScale", g: "Map", label: "Area size (screens)", min: 0.6, max: 2, step: 0.05, v: 1 },
-  { k: "areaTypes", g: "Map", label: "Area types", min: 4, max: 30, step: 1, v: 30 },
+  { k: "areaTypes", g: "Map", label: "Area types", min: 4, max: AREAS.length, step: 1, v: AREAS.length }, // (every one, recipes too)
   { k: "density", g: "Trees", label: "Foliage density", min: 0.2, max: 1, step: 0.05, v: 0.55 },
   { k: "clump", g: "Trees", label: "Clumpiness", min: 0, max: 1, step: 0.05, v: 0.6 },
   { k: "gnarl", g: "Trees", label: "Gnarliness", min: 0, max: 1, step: 0.05, v: 0.5 },

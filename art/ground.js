@@ -85,7 +85,11 @@ export function groundTile(def, st, variant = 0, W = 64, H = 48) {
   // the base: noise that wraps at the tile's edges, so tiles repeat without a seam
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const f = (a, b) => vnoise(a / B.scale[0], b / B.scale[1], seed);
-    const n = (f(x, y) * (W - x) * (H - y) + f(x - W, y) * x * (H - y) + f(x, y - H) * (W - x) * y + f(x - W, y - H) * x * y) / (W * H);
+    let n = (f(x, y) * (W - x) * (H - y) + f(x - W, y) * x * (H - y) + f(x, y - H) * (W - x) * y + f(x - W, y - H) * x * y) / (W * H);
+    if (variant) { // a variant's own blotches in the middle, fading to the shared base at the edges, so every variant meets every other
+      const e = Math.min(x, W - 1 - x, y, H - 1 - y) / 8, k = e >= 1 ? 1 : e * e * (3 - 2 * e);
+      n += (vnoise(x / B.scale[0], y / B.scale[1], seed + variant * 977) - vnoise(x / B.scale[0], y / B.scale[1], seed + 3301)) * k;
+    }
     sp.px(x, y, n < B.cuts[0] ? M.BODY2 : n > B.cuts[1] ? M.BELLY : M.BODY, ...up);
   }
   if (sty) grCluster(sp, [M.BODY2, M.BODY, M.BELLY]);
@@ -119,7 +123,7 @@ export function groundColours(def, st) {
     [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower,
     [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03 - .05 * sh, .5 * st.sat * (1 - .2 * sh), .62 + .06 * sh), [M.LEAF3]: hsv2rgb(def.leaf + .03 + .05 * sh, .6 * st.sat, .3),
     [M.MOSS]: hsv2rgb(def.leaf + .02, .5 * st.sat, .36), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .35, .48),
-    [M.STONE]: hsv2rgb(.1, .07, .6), [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
+    [M.STONE]: hsv2rgb(.58, .06, .54), /* cool grey, never brighter than the witch in her own light (art director, round 1) */ [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
   };
   return colours;
 }

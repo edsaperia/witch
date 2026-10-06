@@ -1,8 +1,7 @@
 // The 💌 invite (issue #87): bursts and cooldowns from data, letters that fly, home, land, and are
-// blocked by enraged creatures and legends, and the stand-in affection that invites at full.
+// blocked by enraged creatures and legends. (The meter itself: rules/affection.ts, creatureStates.test.ts.)
 import { describe, expect, it } from "vitest";
-import { hitsNeeded, newInvites, standInAffection, stepInvites, type Affection } from "./invites";
-import { newLeash } from "./leash";
+import { newInvites, stepInvites, type Affection } from "./invites";
 import { TUNING, withTuning } from "./tuning";
 import { STEP, newGame, stepGame } from "./game";
 import type { Creature } from "./creatures";
@@ -64,22 +63,6 @@ describe("the 💌 invite (issue #87)", () => {
     const { ev } = fly([critter(1, 9, 2.2)], B, [1, 0], 2, none);
     expect(B.hits.get(1)).toBeUndefined();
     expect(ev).toContain("fizzled");
-  });
-
-  it("fills a stand-in meter by level, drains it slowly, and invites at full", () => {
-    const s = newInvites(), leash = newLeash(), A = standInAffection(s, leash, TUNING), c = critter(0, 0, 0, { level: 0 });
-    const need = hitsNeeded(c, TUNING);
-    for (let i = 0; i < need - 1; i++) A.hit(c, 1, 0);
-    expect(A.affection(c)).toBeCloseTo((need - 1) / need);
-    expect(c.leashed).toBe(false);
-    A.hit(c, 1, 0);
-    expect(c.leashed).toBe(true);
-    expect(leash.stack).toContain(0);
-    const d = critter(1, 0, 0);
-    A.hit(d, 1, 0);
-    const before = A.affection(d)!;
-    stepInvites(s, {}, her, true, [c, d], A, 1, 1, TUNING);
-    expect(A.affection(d)!).toBeCloseTo(before - TUNING.invites.drain);
   });
 
   it("in the game: only on the ground and off her seat, and no proximity chat when on", () => {

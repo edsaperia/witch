@@ -21,6 +21,8 @@ import { Ride } from "./ride";
 import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
+import { AreaMoods, hsvInto, moodOf } from "./mood";
+import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
@@ -71,9 +73,11 @@ void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(positio
 /** A point light: where, how far it reaches, its colour and strength. */
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
-/** A frame's CPU budget (ms) for the view, of which the work done ahead (the forest, the hills,
- *  ground tiles, art) gets whatever the frame's own work has left, each at least its floor. */
-const BACKGROUND_MS = 9;
+/** A frame's CPU budget (ms) for the view, drawing included, of which the work done ahead (the
+ *  forest, the hills, ground tiles, art) gets whatever the frame's own work and its drawing (as
+ *  the last frames' took) leave, each at least its floor. (It was 9 ms before the drawing: with
+ *  the drawing's few ms on top, a frame with work ahead ran long. Ed, 2026-10-05: spiky late in a run.) */
+const FRAME_MS = 11;
 
 export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number; heightMoves?: number }
 
@@ -136,6 +140,8 @@ export class View {
   private lasers: Lasers;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   private ley: LeyLines;
+  /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
+  private leyRgb: THREE.Vector3 | null;
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
   /** The 💌s, their bubbles and meters (render/invites.ts). */
@@ -175,6 +181,11 @@ export class View {
   ghosts: { x: number; z: number; h: number; until: number }[] = [];
   ghostLines: THREE.LineSegments | null = null;
   now = 0;
+  /** The area moods (render/mood.ts), if the mood is spooky; the area she's in, when it's next looked up, and when they were last eased. */
+  private areaMoods: AreaMoods | null = null;
+  private moodArea = "";
+  private moodAt = -Infinity;
+  private moodTime = NaN;
   stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
@@ -190,7 +201,16 @@ export class View {
     this.scene.background = new THREE.Color(0x0b0a16);
     // With find on (Ed, v244), a touch more ambient and a cooler, more coloured moonlight.
     const moonLook: Record<string, number> = t.find.on ? { moonHue: t.find.moonHue, moonSat: t.find.moonSat } : {};
-    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook }, t.glowReach, this.mpp, t.find.on ? t.find.ambient : t.tone.ambient, t.glowFalloff, t.tone.moon);
+    // The mood (render/mood.ts): the spooky grade over the style's light, or the plain light.
+    const M = moodOf(t), moodLook: Record<string, number> = M ? { ambientHue: M.ambientHue, moonHue: M.moonHue, moonSat: M.moonSat, glowHue: M.glowHue, glowSat: M.glowSat } : {};
+    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook, ...moodLook }, t.glowReach, this.mpp, (t.find.on ? t.find.ambient : t.tone.ambient) * (M?.ambient ?? 1), t.glowFalloff, t.tone.moon * (M?.moon ?? 1));
+    this.areaMoods = M ? new AreaMoods(M) : null;
+    // The characters' moonlight rim and her own glow on her (the art director's round 1), the mood's.
+    { const rgb = new THREE.Vector3(); hsvInto(rgb, M?.rimHue ?? 0.66, M?.rimSat ?? 0.4, 1); SPRITE_UNIFORMS.uMoodRim.value.set(rgb.x, rgb.y, rgb.z, M?.rim ?? 0); }
+    SPRITE_UNIFORMS.uWitchGlow.value = M?.witchGlow ?? 0;
+    SPRITE_UNIFORMS.uRimInset.value = (style as { artStyle?: string }).artStyle === "bold" || (style as { artStyle?: string }).artStyle === "ref" ? 1 : 0;
+    LIGHT_UNIFORMS.uMoonUp.value = M?.moonUp ?? 0; // the moon's fill on upward faces (the art director's round 2)
+    if (M) LIGHT_UNIFORMS.uHazeColour.value.fromArray(hsv2rgb(M.hazeHue, M.hazeSat, 1).map((c: number) => (c / 255) * M.haze));
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     LIGHT_UNIFORMS.uGlowNear.value = Math.max(0.05, Math.min(1, t.glowNear ?? 1));
     if (t.bare) {
@@ -224,11 +244,12 @@ export class View {
     const smooth = t.fx === "smooth";
     LIGHT_UNIFORMS.uSmooth.value = smooth ? 1 : 0;
     if (t.mist.on && t.mist.strength > 0) {
-      this.mist = new Mist(t.mist.strength, t.mist.height, t.mist.wind, this.mpp, smooth, this.post.scene.depthTexture, this.post.lowSize);
+      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.mpp, smooth, this.post.scene.depthTexture, this.post.lowSize);
       if (smooth) { this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh); }
       else this.scene.add(this.mist.mesh);
     }
-    LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : t.haze.near, t.bare ? 2e5 : t.haze.far); // (no haze in the bare view)
+    // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
+    LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.scene.add(this.ground.mesh);
     this.scene.add(new PathView(game.map, style, this.mpp, t.pathFade.metres).group);
@@ -268,6 +289,8 @@ export class View {
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
+    this.ley.scale(M?.leyBright ?? 1);
+    this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
@@ -456,7 +479,7 @@ export class View {
 
   /** Her sprite batch, from the assets' witch frames. */
   private makeWitchBatch(): SpriteBatch {
-    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, rim: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
     b.mesh.renderOrder = 10;
     this.scene.add(...b.meshes);
     return b;
@@ -480,6 +503,8 @@ export class View {
     return at ? { x: at.x - w.x, z: at.z - w.z } : null;
   }
   private aimRay = new THREE.Raycaster();
+  /** The drawing's CPU time (ms), eased over the last frames: the work ahead leaves room for it. */
+  private drawEst = 0;
 
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
@@ -583,6 +608,17 @@ export class View {
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + this.rideOff + h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
+    // The mood where she is (render/mood.ts): each area's own fog, grade tint and mist, eased across;
+    // which area, looked up four times a second.
+    if (this.areaMoods) {
+      if (!(time < this.moodAt) || time < this.moodAt - 1) {
+        this.moodAt = time + 0.25;
+        const d = g.map.dancefloor;
+        this.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
+      }
+      this.areaMoods.update(this.moodArea, Number.isNaN(this.moodTime) ? 0 : time - this.moodTime, LIGHT_UNIFORMS.uHazeColour.value, this.post.gradeTint, this.mist);
+      this.moodTime = time;
+    }
     this.time("uniforms");
     updateSources(this, time);
     this.time("sources");
@@ -597,6 +633,7 @@ export class View {
       // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
       this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.ahead, t.leyLines.behind), s => {
+        if (this.leyRgb) return this.leyRgb; // the mood's: a guide in the HUD's amber, not a light source (the art director's round 2)
         return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
       }, time, canopyShown(w));
     }
@@ -631,12 +668,20 @@ export class View {
     this.actionBar.update(g, time);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
-    const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: Math.max(0.8, (this.leashView.tops.get(c.id) ?? 1.6) * 0.75), d: Math.hypot(c.x - w.x, c.z - w.z) })) /* parting by its drawn size (#47) */.filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
+    // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
+    const near: { x: number; z: number; r: number; d: number }[] = [], GR = t.groundCover.radius;
+    for (const c of g.creatures) {
+      const dx = c.x - w.x, dz = c.z - w.z;
+      if (Math.abs(dx) >= GR || Math.abs(dz) >= GR) continue;
+      const d = Math.sqrt(dx * dx + dz * dz);
+      if (d < GR) near.push({ x: c.x, z: c.z, r: Math.max(0.8, (this.leashView.tops.get(c.id) ?? 1.6) * 0.75), d }); // parting by its drawn size (#47)
+    }
+    const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...near.sort((a, b) => a.d - b.d).slice(0, 3)];
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
-    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires);
+    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
     if (t.bare) { this.dancefloor.update(time, this.ground, g); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time;
@@ -723,6 +768,11 @@ export class View {
       const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
       SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h + this.rideOff, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
+      // Her pool on screen, for the grade to spare (render/post.ts: on a dark floor her light sits among the tones the
+      // spooky grade drains to blue, and it vanished: the art director's round 3, the fern forest): its centre under her
+      // feet and its half-widths across and up the screen, out to half her light's reach.
+      const R = LIGHT_UNIFORMS.uGlowR.value * LIGHT_UNIFORMS.uGlowNear.value * 0.5, foot = px(wx, 0, wz), across = px(wx + R, 0, wz), down = px(wx, 0, wz + R);
+      this.post.pool.set(foot[0] / this.width, foot[1] / this.height, Math.max(1e-3, Math.abs(across[0] - foot[0]) / this.width), Math.max(1e-3, Math.abs(down[1] - foot[1]) / this.height));
     }
     this.clouds.update(time, this.camera, SPRITE_UNIFORMS.uWitch.value, this.width, this.height);
     this.shadow.position.set(wx, 0.08, wz);
@@ -754,7 +804,7 @@ export class View {
         });
       };
       // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
-      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
+      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
     }
     this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
@@ -762,7 +812,7 @@ export class View {
     // Work done ahead, a little each frame, out of what's left of the frame's budget (Ed, v256:
     // boosting over the treetops dropped frames when a rebuild, the hills' window moving and
     // these all fell in one frame). Each gets at least its floor, so all keep up at full boost.
-    let spare = BACKGROUND_MS - (performance.now() - this.frameStart);
+    let spare = FRAME_MS - (performance.now() - this.frameStart) - this.drawEst;
     const give = (most: number, floor: number) => Math.max(floor, Math.min(most, spare));
     const took = (from: number) => { spare -= performance.now() - from; };
     let t0 = performance.now();
@@ -789,6 +839,7 @@ export class View {
     if (t.bare) this.hideForBare();
     this.post.render(this.scene, this.camera);
     this.time("draw");
+    this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     let dropped = 0;
     for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch, ...(this.speakerBatch ? [this.speakerBatch] : [])]) dropped += b.dropped;

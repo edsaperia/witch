@@ -112,10 +112,10 @@ export class InviteView {
         this.lastHers = time;
         this.show(this.hers, pick(HERS, e.n ?? 0, 1), 0, 0, 0, time + 0.8);
       } else if (e.kind === "fizzled") {
-        this.pop("💨", e.x, 0.15, e.z, time); // (landed on the ground at its range: a puff)
+        // (landed on the ground at its range: a soft rose puff, render/leash.ts drawLetters)
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
         // Every letter that lands pops; one inside the creature's gap (spent) adds nothing, and gets no reply.
-        if (e.kind !== "happy") this.pop(e.kind === "blocked" ? "💢" : e.spent ? "✨" : "💖", e.x, head(e.id) * 0.6, e.z, time);
+        if (e.kind === "blocked" || (e.kind === "hit" && !e.spent)) this.pop(e.kind === "blocked" ? "💢" : "💖", e.x, head(e.id) * 0.6, e.z, time); // (a spent one: only its ring, render/leash.ts; no white ✨)
         if (e.spent) continue;
         let b = this.replies.get(e.id);
         if (!b) { b = this.bubble(e.id); this.replies.set(e.id, b); }
@@ -146,7 +146,7 @@ export class InviteView {
     const n = Math.round(t.bubbles.emojiPixels * 0.8), k = t.pixelSize * t.bubbles.scale, src = pixelEmoji("💌", n);
     while (this.letters.length < I.letters.length) {
       const im = document.createElement("img");
-      Object.assign(im.style, { position: "absolute", imageRendering: "pixelated", width: `${n * k}px`, height: `${n * k}px`, marginLeft: `${(-n * k) / 2}px`, marginTop: `${(-n * k) / 2}px`, filter: "drop-shadow(0 0 3px rgba(255,120,200,.8))" });
+      Object.assign(im.style, { position: "absolute", imageRendering: "pixelated", width: `${n * k}px`, height: `${n * k}px`, marginLeft: `${(-n * k) / 2}px`, marginTop: `${(-n * k) / 2}px`, filter: "drop-shadow(0 0 2px rgba(232,180,106,.75))" });
       im.src = src;
       this.root.append(im);
       this.letters.push(im);
@@ -166,7 +166,7 @@ export class InviteView {
     // Lanterns (Glow-worm): little glowing hearts where the letters flew, fading out.
     while (this.lanterns.length < I.lanterns.length) {
       const d = document.createElement("div");
-      Object.assign(d.style, { position: "absolute", width: `${k * 2}px`, height: `${k * 2}px`, marginLeft: `${-k}px`, marginTop: `${-k}px`, background: "#ffd2f0", boxShadow: "0 0 6px 2px rgba(255,110,200,.85)" });
+      Object.assign(d.style, { position: "absolute", width: `${k * 2}px`, height: `${k * 2}px`, marginLeft: `${-k}px`, marginTop: `${-k}px`, background: "#f3cf9a", boxShadow: "0 0 6px 2px rgba(217,120,158,.7)" });
       this.root.append(d);
       this.lanterns.push(d);
     }
@@ -189,7 +189,7 @@ export class InviteView {
       let el = this.meters.get(id);
       if (!el) {
         el = document.createElement("div");
-        Object.assign(el.style, { position: "absolute", transform: "translate(-50%, -100%)", display: "flex", gap: "1px", padding: "2px", background: "rgba(14,11,28,.7)", border: "1px solid rgba(255,140,200,.8)", borderRadius: "3px", imageRendering: "pixelated" });
+        Object.assign(el.style, { position: "absolute", transform: "translate(-50%, -100%)", display: "flex", gap: "1px", padding: "2px", background: "rgba(14,11,28,.7)", border: "1px solid rgba(217,120,158,.6)", borderRadius: "3px", imageRendering: "pixelated" });
         this.root.append(el);
         this.meters.set(id, el);
       }
@@ -199,7 +199,7 @@ export class InviteView {
         el.dataset.k = String(key);
         el.innerHTML = Array.from({ length: hearts }, (_, i) => {
           const f = Math.max(0, Math.min(1, full - i));
-          return `<i style="display:block;width:5px;height:5px;background:linear-gradient(90deg,#ff5fb4 ${f * 100}%,rgba(255,180,220,.25) ${f * 100}%)"></i>`;
+          return `<i style="display:block;width:5px;height:5px;background:linear-gradient(90deg,#d9789e ${f * 100}%,rgba(217,120,158,.2) ${f * 100}%)"></i>`;
         }).join("");
       }
       place(el, c.x, head(id) + 0.15, c.z);

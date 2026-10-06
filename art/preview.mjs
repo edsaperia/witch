@@ -389,6 +389,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "props") { // the prop generator (art/props/): each kind (all, or listed), a row of variants (PER, default 8) from seeds 0.., the witch closing each row; AREA=moor for its grass
     const kinds = list === "all" ? G.PROP_KINDS : list.split(","), per = window.PER || 8, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "moor"];
     for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.propPiece(kind, { seed, ...(window.BOG ? { bog: true } : {}) }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);
+  } else if (what === "setgen") { // the set-piece generator (art/props/sets.js): each kind (all, or listed), a row of variants (PER, default 4) from seeds 0.., the witch closing each row; AREA=fen for its ground
+    const kinds = list === "all" ? G.SET_PROP_KINDS : list.split(","), per = window.PER || 4, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "muddy-forest"];
+    for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.genSetPiece(kind, { seed }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);
   } else if (what === "areaprops") { // each listed area's props (walls, small, big but trees) as hand-made, then under ?props=gen (the prop generator's shapes), the witch closing each row
     const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of list.split(",")) for (const g of [0, 1]) { const a = G.areaAssets(id, { ...st, propGen: g }); rows.push([...a.walls, ...a.small, ...a.big.filter(b => b.kind !== "tree" && b.kind !== "mound")].map(b => b.sp).concat([wit])); }

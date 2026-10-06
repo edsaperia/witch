@@ -4,7 +4,7 @@
 // stack comes down from the bottom up, one every releaseEach seconds, each sigil put down where
 // its animal stands (#87, Ed 2026-10-05: leashed is for good, so they stay hers as a parked
 // group); then she sparkles out and back in at the treehouse. No drawing here.
-import { AREA_TYPES, type ForestMap } from "./map";
+import type { ForestMap } from "./map";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
 import type { LeashState } from "./leash";
 import type { Tuning } from "./tuning";
@@ -58,26 +58,6 @@ export function knockOut(leash: LeashState, creatures: Creature[], time: number,
   const times = order.map((_, i) => time + (i + 1) * each);
   const teleportAt = order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat;
   return { at: time, order, times, released: 0, teleportAt, backAt: teleportAt + K.teleport, out: false, moved: false };
-}
-
-/** Where a creature let go walks to: the nearest area whose wild kind is its own, else the nearest
- *  area the party hasn't reached. */
-type Spot = { x: number; z: number; cell: [number, number] };
-export function kindHome(map: ForestMap, species: string, x: number, z: number, partified: (key: string) => boolean): Spot | null {
-  let best: Spot | null = null, fallback: Spot | null = null, bd = Infinity, fd = Infinity;
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
-    const s = map.siteOf(cx, cy), d = Math.hypot(s.x - x, s.z - z), here: Spot = { x: s.x, z: s.z, cell: [cx, cy] };
-    if (AREA_TYPES[map.typeOf(cx, cy)].creature === species && d < bd) { bd = d; best = here; }
-    if (!partified(`${cx},${cy}`) && d < fd) { fd = d; fallback = here; }
-  }
-  return best ?? fallback;
-}
-
-/** Let one creature go: off the leash, neutral, heading for its kind's home. */
-export function letGo(c: Creature, leash: LeashState, map: ForestMap, partified: (key: string) => boolean): void {
-  leash.stack = leash.stack.filter(id => id !== c.id);
-  c.leashed = false; c.fight = undefined; c.siege = undefined; c.rest = 0;
-  c.wanderTo = kindHome(map, c.species, c.x, c.z, partified) ?? undefined;
 }
 
 /** Put a carried sigil down where its animal stands (a little aside if another sigil is there): it stays hers, parked. */

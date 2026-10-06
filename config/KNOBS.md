@@ -250,6 +250,127 @@ How far (reach, metres) and how strongly each kind of light lights its surroundi
 | `lights.stone.strength` | number | 0 to … |
 | `glowPower` | number | 0 to … |
 
+## `light`
+
+The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow.
+
+| knob | type | range |
+|---|---|---|
+| `light.mood` | string |  |
+| `light.spooky.ambientHue` | number | 0 to … |
+| `light.spooky.ambient` | number | 0 to … |
+| `light.spooky.moonHue` | number | 0 to … |
+| `light.spooky.moonSat` | number | 0 to … |
+| `light.spooky.moon` | number | 0 to … |
+| `light.spooky.hazeHue` | number | 0 to … |
+| `light.spooky.hazeSat` | number | 0 to … |
+| `light.spooky.haze` | number | 0 to … |
+| `light.spooky.hazeNear` | number | 0 to … |
+| `light.spooky.hazeFar` | number | 0 to … |
+| `light.spooky.mist` | number | 0 to … |
+| `light.spooky.glowHue` | number | 0 to … |
+| `light.spooky.glowSat` | number | 0 to … |
+| `light.spooky.grade` | number | 0 to … |
+| `light.spooky.gradeDesat` | number | 0 to … |
+| `light.spooky.gradePivot` | number | 0 to … |
+| `light.spooky.gradeHue` | number | 0 to … |
+| `light.spooky.gradeSat` | number | 0 to … |
+| `light.spooky.partyWarm` | array of array |  |
+| `light.spooky.partyReach` | number | 0 to … |
+| `light.spooky.partyStrength` | number | 0 to … |
+| `light.spooky.decorLights` | number | 0 to … |
+| `light.spooky.decorReach` | number | 0 to … |
+| `light.spooky.decorStrength` | number | 0 to … |
+| `light.spooky.rimHue` | number | 0 to … |
+| `light.spooky.rimSat` | number | 0 to … |
+| `light.spooky.rim` | number | 0 to … |
+| `light.spooky.witchGlow` | number | 0 to … |
+| `light.spooky.moonUp` | number | 0 to … |
+| `light.spooky.leyRgb` | string |  |
+| `light.spooky.leyBright` | number | 0 to … |
+| `light.spooky.berryHalo` | number | 0 to … |
+| `light.spooky.berryGlow` | number | 0 to … |
+| `light.spooky.areaEase` | number | 0 to … |
+| `light.spooky.areas.bog.hazeHue` | number | 0 to … |
+| `light.spooky.areas.bog.hazeSat` | number | 0 to … |
+| `light.spooky.areas.bog.haze` | number | 0 to … |
+| `light.spooky.areas.bog.mist` | number | 0 to … |
+| `light.spooky.areas.bog.gradeHue` | number | 0 to … |
+| `light.spooky.areas.wetland.hazeHue` | number | 0 to … |
+| `light.spooky.areas.wetland.hazeSat` | number | 0 to … |
+| `light.spooky.areas.wetland.haze` | number | 0 to … |
+| `light.spooky.areas.wetland.mist` | number | 0 to … |
+| `light.spooky.areas.wetland.gradeHue` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.hazeHue` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.hazeSat` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.haze` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.mist` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.gradeHue` | number | 0 to … |
+| `light.spooky.areas.stream.hazeHue` | number | 0 to … |
+| `light.spooky.areas.stream.hazeSat` | number | 0 to … |
+| `light.spooky.areas.stream.haze` | number | 0 to … |
+| `light.spooky.areas.stream.mist` | number | 0 to … |
+| `light.spooky.areas.stream.gradeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.hazeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.hazeSat` | number | 0 to … |
+| `light.spooky.areas.deadwood.haze` | number | 0 to … |
+| `light.spooky.areas.deadwood.gradeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.gradeSat` | number | 0 to … |
+| `light.spooky.areas.ancient.hazeHue` | number | 0 to … |
+| `light.spooky.areas.ancient.hazeSat` | number | 0 to … |
+| `light.spooky.areas.ancient.haze` | number | 0 to … |
+| `light.spooky.areas.ancient.gradeHue` | number | 0 to … |
+| `light.spooky.areas.ancient.gradeSat` | number | 0 to … |
+| `light.spooky.areas.log-pile.hazeHue` | number | 0 to … |
+| `light.spooky.areas.log-pile.hazeSat` | number | 0 to … |
+| `light.spooky.areas.log-pile.haze` | number | 0 to … |
+| `light.spooky.areas.log-pile.gradeHue` | number | 0 to … |
+| `light.spooky.areas.log-pile.gradeSat` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.hazeHue` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.gradeHue` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.mist` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.hazeHue` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.gradeHue` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.mist` | number | 0 to … |
+| `light.spooky.areas.moor.hazeHue` | number | 0 to … |
+| `light.spooky.areas.moor.hazeSat` | number | 0 to … |
+| `light.spooky.areas.moor.haze` | number | 0 to … |
+| `light.spooky.areas.moor.mist` | number | 0 to … |
+| `light.spooky.areas.heath.hazeHue` | number | 0 to … |
+| `light.spooky.areas.heath.hazeSat` | number | 0 to … |
+| `light.spooky.areas.heath.haze` | number | 0 to … |
+| `light.spooky.areas.heath.mist` | number | 0 to … |
+| `light.spooky.areas.grassland.hazeHue` | number | 0 to … |
+| `light.spooky.areas.grassland.hazeSat` | number | 0 to … |
+| `light.spooky.areas.grassland.haze` | number | 0 to … |
+| `light.spooky.areas.grassland.mist` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.haze` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.gradeHue` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.gradeSat` | number | 0 to … |
+| `light.spooky.areas.ravine.haze` | number | 0 to … |
+| `light.spooky.areas.ravine.gradeHue` | number | 0 to … |
+| `light.spooky.areas.ravine.gradeSat` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.haze` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.gradeHue` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.gradeSat` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.hazeHue` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.hazeSat` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.haze` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.gradeHue` | number | 0 to … |
+| `light.spooky.areas.norway.hazeHue` | number | 0 to … |
+| `light.spooky.areas.norway.hazeSat` | number | 0 to … |
+| `light.spooky.areas.norway.haze` | number | 0 to … |
+| `light.spooky.areas.norway.gradeHue` | number | 0 to … |
+| `light.spooky.areas.honeysuckle-tangle.hazeHue` | number | 0 to … |
+| `light.spooky.areas.honeysuckle-tangle.hazeSat` | number | 0 to … |
+| `light.spooky.areas.garden.hazeHue` | number | 0 to … |
+| `light.spooky.areas.garden.hazeSat` | number | 0 to … |
+| `light.spooky.areas.berry-thicket.hazeHue` | number | 0 to … |
+| `light.spooky.areas.berry-thicket.hazeSat` | number | 0 to … |
+| `light.spooky.areas.home.gradeHue` | number | 0 to … |
+| `light.spooky.areas.home.gradeSat` | number | 0 to … |
+| `light.spooky.areas.home.mist` | number | 0 to … |
+
 ## `beat`
 
 The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.
@@ -351,7 +472,7 @@ The sigil stack above the witch's hat: scale (of the sigils' size), offset (the 
 
 ## `partyObjects`, `partyWitches`, `speakerLasers`, `lasers`
 
-Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"): its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object).
+Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"): its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object). generated: the prop generator's seeded bunting, balloon bunches and paper lanterns (art/party.js gen-*) in place of the hand-made ones they replace (?props=gen turns it on).
 
 | knob | type | range |
 |---|---|---|
@@ -371,6 +492,7 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyObjects.home.reach` | number | 0 to … |
 | `partyObjects.home.lights` | number | 0 to … |
 | `partyObjects.exclude` | array of string |  |
+| `partyObjects.generated` | boolean |  |
 | `partyWitches.max` | number | 0 to … |
 | `partyWitches.idleAfter` | number | 0 to … |
 | `partyWitches.idleReach` | number | 0 to … |
@@ -639,7 +761,7 @@ Decorations scattered as discoveries: one chance per spacing-metre cell, of a ru
 
 ## `paths`
 
-Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).
+Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; fingerposts: a fingerpost by each footpath where it comes into a clearing (the prop generator's; ?props=gen turns it on); the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).
 
 | knob | type | range |
 |---|---|---|
@@ -657,6 +779,7 @@ Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wi
 | `paths.landmarkChance` | number | 0 to … |
 | `paths.vergeSpacing` | number | 0 to … |
 | `paths.pieceGap` | number | 0 to … |
+| `paths.fingerposts` | boolean |  |
 | `paths.treesOnBroken` | number | 0 to … |
 | `paths.edgeBushes` | number | 0 to … |
 | `paths.bushBoost` | number | 0 to … |
@@ -704,7 +827,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 
 ## `sfx`, `music`
 
-The sound effects, all synthesised in the music's key (2026-10-05): volume over the music's, hear metres (a sound fades to nothing that far from her). voice: the babble (Ed, 2026-10-05: 💌s are her speech, attacks the animals'). witch: each 💌 a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase); animals: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way, duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share). hit: a 💌 landing (a spent one a faint tick); fill: the affection tick, climbing octaves as the meter fills; invited: the flourish (fuller by level); enraged: the growl when one turns (gap: at most one every gap seconds, a crowd turning at once one heavier growl); happy: the pop; snore: a sleeping legend within range metres moaning softly in its dreams (volume); nightmare: its moans when restless (volume); windup: a legend's attack winding up, its whale song swelling for length seconds before it fires; lost: a soundsystem lost, the sting heard anywhere (volume); land: a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds); stir: the boot-up over, the first wave's countdown begun, things stirring (volume); impact: a lobbed shot landing, a thud (small times volume) or a legend's boom (volume), heard from the lob's landing spot (a legend's twice as far); knock: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle); charge: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres; relic: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach; meadow: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres; ouch: the witch hurt, her cry and a thump (volume; knocked down, her "whoa-oh" at knockdown times that), the music dipped by duck for duckTime seconds (twice that knocked down); whale: the legends' voice (Ed, 2026-10-05: "whale song; deep and slow"): volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless).
+The sound effects, all synthesised in the music's key (2026-10-05): volume over the music's, hear metres (a sound fades to nothing that far from her). voice: the babble (Ed, 2026-10-05: 💌s are her speech, attacks the animals'). witch: each 💌 a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase); animals: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way, duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share). hit: a 💌 landing (a spent one a faint tick); fill: the affection tick, climbing octaves as the meter fills; invited: the flourish (fuller by level); enraged: the growl when one turns (gap: at most one every gap seconds, a crowd turning at once one heavier growl); happy: the pop; snore: a sleeping legend within range metres moaning softly in its dreams (volume); nightmare: its moans when restless (volume); windup: a legend's attack winding up, its whale song swelling for length seconds before it fires; lost: a soundsystem lost, the sting heard anywhere (volume); land: a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds); stir: the boot-up over, the first wave's countdown begun, things stirring (volume); roar: a legend turning angry, its roar (heard twice as far); shoes: dancers within range metres tapping their party shoes on the beat, at most max at once; pond: by a pond within range metres, water lapping (lap), a frog every frogEvery seconds or so (frogs), a drip every dripEvery (drips); picnic: by a picnic in a partified area within range metres, its party-goers' murmur and cups clinking every clinkEvery seconds or so; room: the creator's room in the treehouse while it's open, its hum, a record's crackle, the timber creaking every creakEvery seconds or so; impact: a lobbed shot landing, a thud (small times volume) or a legend's boom (volume), heard from the lob's landing spot (a legend's twice as far); knock: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle); charge: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres; relic: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach; meadow: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres; ouch: the witch hurt, her cry and a thump (volume; knocked down, her "whoa-oh" at knockdown times that), the music dipped by duck for duckTime seconds (twice that knocked down); whale: the legends' voice (Ed, 2026-10-05: "whale song; deep and slow"): volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless).
 
 | knob | type | range |
 |---|---|---|
@@ -745,6 +868,27 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.ouch.duckTime` | number | 0 to … |
 | `sfx.impact.volume` | number | 0 to … |
 | `sfx.impact.small` | number | 0 to … |
+| `sfx.roar.volume` | number | 0 to … |
+| `sfx.shoes.volume` | number | 0 to … |
+| `sfx.shoes.range` | number | 0 to … |
+| `sfx.shoes.max` | number | 0 to … |
+| `sfx.pond.volume` | number | 0 to … |
+| `sfx.pond.lap` | number | 0 to … |
+| `sfx.pond.frogs` | number | 0 to … |
+| `sfx.pond.frogEvery` | number | 0 to … |
+| `sfx.pond.drips` | number | 0 to … |
+| `sfx.pond.dripEvery` | number | 0 to … |
+| `sfx.pond.range` | number | 0 to … |
+| `sfx.picnic.volume` | number | 0 to … |
+| `sfx.picnic.murmur` | number | 0 to … |
+| `sfx.picnic.clinks` | number | 0 to … |
+| `sfx.picnic.clinkEvery` | number | 0 to … |
+| `sfx.picnic.range` | number | 0 to … |
+| `sfx.room.volume` | number | 0 to … |
+| `sfx.room.hum` | number | 0 to … |
+| `sfx.room.crackle` | number | 0 to … |
+| `sfx.room.creak` | number | 0 to … |
+| `sfx.room.creakEvery` | number | 0 to … |
 | `sfx.land.volume` | number | 0 to … |
 | `sfx.land.gap` | number | 0 to … |
 | `sfx.stir.volume` | number | 0 to … |
@@ -859,12 +1003,13 @@ Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they 
 
 ## `witchHealth`
 
-The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight.
+The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight. grace: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three (balance, 2026-10-06: DECISION FOR ED, 0.5).
 
 | knob | type | range |
 |---|---|---|
 | `witchHealth.hits` | number | 0 to … |
 | `witchHealth.repairTime` | number | 0 to … |
+| `witchHealth.grace` | number | 0 to … |
 
 ## `knockout`
 
@@ -880,13 +1025,14 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 
 ## `dash`, `spells`
 
-The dash, a blink (Ed, 2026-10-04, 2026-10-05; W, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's steering (or flying, or facing) in one step, then cooldown seconds before the next. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.
+The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click or Space, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's steering (or flying, or facing) in one step, then cooldown seconds before the next. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.
 
 | knob | type | range |
 |---|---|---|
 | `dash.distance` | number | 0 to … |
 | `dash.gone` | number | 0 to … |
 | `dash.cooldown` | number | 0 to … |
+| `dash.buffer` | number | 0 to … |
 | `dash.clear.tree` | number | 0 to … |
 | `dash.clear.decor` | number | 0 to … |
 | `dash.clear.sound` | number | 0 to … |
@@ -934,7 +1080,7 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 
 ## `stringLights`
 
-Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours, twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
+Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours (areaNeon: warm white, the palette's first, two bulbs in three and the area's own neon the third, home's cyan; the art director, round 2: one neon an area plus the warm light), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
 
 | knob | type | range |
 |---|---|---|
@@ -950,6 +1096,7 @@ Colourful string lights in every partified area, as long garlands: runsPerArea r
 | `stringLights.sag` | number | 0 to … |
 | `stringLights.bulbSpacing` | number | 0 to … |
 | `stringLights.palette` | array of string |  |
+| `stringLights.areaNeon` | boolean |  |
 | `stringLights.twinkle` | number | 0 to … |
 | `stringLights.chaseSpeed` | number | 0 to … |
 
@@ -1034,16 +1181,16 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `bloom.threshold` | number | 0 to … |
 | `tiltShift.on` | boolean |  |
 | `tiltShift.where` | string | "before" / "after" |
+| `tiltShift.sky` | boolean |  |
 | `tiltShift.strength` | number | 0 to … |
 | `tiltShift.band` | number | 0 to … |
 | `tiltShift.centre` | number | 0 to … |
 | `tiltShift.treetop.strength` | number | 0 to … |
 | `tiltShift.treetop.band` | number | 0 to … |
-| `tiltShift.sky` | boolean |  |
 
 ## `population`
 
-Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more, each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
+Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more (a fraction carries over: 0.5 is one every other wave; balance, 2026-10-06, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters), each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 
 | knob | type | range |
 |---|---|---|
@@ -1065,7 +1212,7 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.nightmare.at` | array of number |  |
 | `dreams.nightmare.faces` | array of string |  |
 
-## `wildLegends`, `creatureSimRadius`, `creatureSpeed`
+## `wildLegends`, `creatureSimRadius`
 
 Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one legend of its kind, sleeping, sunk into the ground like scenery (no AI, no glow, no health bar; sink: the share of it under the ground, moss: how far its colours go toward moss). When its area's wave comes it wakes, angry: wake seconds of heaving out of the ground (untouchable), then a mini-boss guarding its own area with its move set (movement.json legends). Beaten, it sinks back to sleep for good. A happy legend (home's from the start; others by their quest, or the debug key O) guards its area for her like a parked party animal, anything in its area within guard metres of where it stands, with its move set, and heals heal hp a second while no enemy is near; beaten, it sleeps for good and its buff ends. Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
 
@@ -1082,6 +1229,18 @@ Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one
 | `wildLegends.aura` | number | 0 to … |
 | `wildLegends.glow` | number | 0 to … |
 | `creatureSimRadius` | number | 0 to … |
+
+## `simLod`, `creatureSpeed`
+
+The simulation's level of detail (Ed, 2026-10-05: creatures far from the action frozen until she comes closer; rules/simLod.ts). Wild creatures roaming are simulated every step within full.ground metres of the witch on the ground, full.treetop over the treetops (each a little past the most the view shows from there at any zoom: 178 and 262 m in a 1900 by 1240 window); beyond, coarsely: once every `every` steps (60 a second), by that many steps' time at once, taking turns; past creatureSimRadius not at all. Besiegers marching on a soundsystem are simulated every step within full of her or within action metres of a soundsystem, a party animal or a happy legend's guard; elsewhere coarsely, marching `every` steps at a time. Going out, one stays in full until band metres past the line, so none flickers. The debug overlay's sim line counts them.
+
+| knob | type | range |
+|---|---|---|
+| `simLod.full.ground` | number | 0 to … |
+| `simLod.full.treetop` | number | 0 to … |
+| `simLod.action` | number | 0 to … |
+| `simLod.band` | number | 0 to … |
+| `simLod.every` | number | 0 to … |
 | `creatureSpeed` | number | 0 to … |
 
 ## `setPieceChance`, `setPieceScale`, `setPieceClear`
