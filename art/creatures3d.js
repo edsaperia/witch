@@ -113,7 +113,10 @@ function gearUp(m) {
 //   mane: { from, to (along the back, 0 rump to 1 head), height, count, lean, mat, belly (along the underside instead) }
 //   eyeglint: { size }: its eyes' glint brought out to the surface, where its body hides its face.
 //   wisps: { at: "tusks" | "horns" | "mane", size, mat, (mane: count, from, to) }: flames off its tusks' or horns' tips, or rising along its spine (glowing).
-export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint"];
+//   stones: { from, to, count, height, mat }: standing stones growing out of its back, each with a moonlit rune on its face (RUNE).
+//   claws: { size, mat, fore (default true), hind }: long claws curving down and forward from its feet.
+//   moss: { count, size }: moss and heather clumps along its flanks, low.
+export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss"];
 function evolve3d(m, feats, c) {
   for (const f of feats) {
     if (f.kind === "mane") {
@@ -135,6 +138,36 @@ function evolve3d(m, feats, c) {
         const d = v3.norm([.49, .5, .72]); let last = e, inside = true;
         for (let k = 1; k <= 300; k++) { const q = v3.add(e, v3.mul(d, k * .01)), now = m.field(q) < 0; if (inside && !now) last = q; inside = now; }
         m.ell(last, [r, r * .8, r], M.MAGIC2, { group: 120, extra: true }); m.ell(v3.add(last, v3.mul(d, r * .6)), [r * .55, r * .45, r * .55], M.MAGIC, { group: 121, extra: true }); } // a bright core in its glowing rim
+    }
+    if (f.kind === "stones") { // standing stones out of its back, tallest at the middle, leaning a little apart, each with a rune facing us
+      m.part = "body";
+      const n = f.count ?? 5, H0 = f.height ?? .32, mat = M[f.mat || "STONE"];
+      for (let i = 0; i < n; i++) {
+        const t = (f.from ?? .2) + ((f.to ?? .85) - (f.from ?? .2)) * (n > 1 ? i / (n - 1) : .5), b = c.backAt(t), k = (.7 + .3 * Math.sin(Math.PI * (i + .5) / n)) * (.85 + .3 * Math.abs(Math.sin(i * 3.7 + 1.1)));
+        const h = H0 * k, w = h * .32, z = ((i % 2) * 2 - 1) * c.bw * .12, up = v3.norm([(i - (n - 1) / 2) * -.08, 1, z * 1.5]), base = [b[0], b[1] - h * .15, z], mid = v3.add(base, v3.mul(up, h * .5));
+        m.box(mid, [h * .5, w * .5, w * .38], mat, { group: 130 + i, extra: true, dir: up, up: [1, 0, 0], round: w * .12, rough: w * .06, paint: p => spotty(p, 22, .22) ? M.MOSS : spotty(p, 34, .12) ? M.STONED : undefined });
+        // its rune: a glowing mark on the face towards us (a vertical stroke with two branches)
+        const face = v3.add(mid, [0, 0, w * .4]), R = (a, b2) => v3.add(face, v3.add(v3.mul(up, b2 * h), [a * w, 0, 0]));
+        m.seg(R(0, -.24), R(0, .24), w * .11, w * .11, M.RUNE, { group: 140 + i, extra: true });
+        m.seg(R(0, .05), R(.24, .22), w * .09, w * .09, M.RUNE, { group: 140 + i, extra: true });
+        m.seg(R(0, -.08), R(-.24, .09), w * .09, w * .09, M.RUNE, { group: 140 + i, extra: true });
+      }
+    }
+    if (f.kind === "claws" && m.rig?.legs) { // long claws off its feet, curving down and forward (a digger's, or stone blades)
+      const s2 = f.size ?? .12, mat = M[f.mat || "ACCENT"];
+      for (const L of m.rig.legs) { if (L.fore ? f.fore === false : !f.hind) continue; m.part = L.name;
+        for (const dz of [-1, 0, 1]) { const b = v3.add(L.foot, [L.fl * .9, .02, dz * L.fl * .45]); m.chain([[...b, s2 * .2], [...v3.add(b, [s2 * .55, -.01, dz * s2 * .1]), s2 * .13], [...v3.add(b, [s2, -.05, dz * s2 * .15]), s2 * .03]], mat, { group: L.side > 0 ? 6 + (L.fore ? 1 : 0) : 2, extra: true }); } }
+    }
+    if (f.kind === "moss") { // moss and heather along its flanks, low, on both sides
+      m.part = "body";
+      const n = f.count ?? 8, s2 = f.size ?? .1;
+      for (let i = 0; i < n; i++) for (const side of [-1, 1]) {
+        const t = (i + .5) / n, x = -c.len * .8 + t * c.len * 1.5, y = c.chest + (c.top - c.chest) * (.3 + .25 * Math.abs(Math.sin(i * 2.3 + side))), k = s2 * (.7 + .5 * Math.abs(Math.sin(i * 1.7 + side)));
+        let p = [x, y, 0]; for (let j = 0; j < 120 && m.field(p) < -k * .2; j++) p = [x, y, p[2] + side * .01]; // out to its flank's surface
+        if (m.field(p) > k) continue; // nothing there
+        m.ell(p, [k * 1.2, k * .55, k * .7], M.MOSS, { group: 150 + (side > 0 ? 0 : 1), extra: true, rough: k * .15 });
+        if (i % 2) m.ell(v3.add(p, [0, k * .45, side * k * .2]), [k * .35, k * .3, k * .35], M.FLOWER, { group: 152, extra: true }); // a sprig of heather
+      }
     }
     if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
       m.part = "body";
@@ -202,7 +235,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
   m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
   const headPaint = p => {
-    if (q.face === "badger") return Math.abs(p[2]) < hr * .22 + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? M.BELLY : M.BODY3;
+    if (q.face === "badger") return Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? (q.blazeGlow && Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) && p[1] > H[1] - hr * .1 ? M.RUNE : M.BELLY) : M.BODY3; // blaze: the stripe's width; blazeGlow: it glows in moonlight
     if (q.face === "dark") return M.BODY2;
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
     return undefined;

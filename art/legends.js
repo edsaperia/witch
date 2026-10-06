@@ -154,6 +154,7 @@ function lgForm(S, { breath }) {
     const eyeMats = [M.EYE, M.IRIS, M.PUPIL, M.GLINT], lid = pose.lid ?? M.BODY;
     const remap = (mat, g) => {
       if (eyeMats.includes(mat) || (mat === M.MAGIC2 && (pose.eyes || [1]).includes(g))) return mat === M.IRIS ? lid : M.BODY2; // shut: a lid
+      if (mat === M.RUNE) return M.STONED; // its runes go dark while it sleeps
       if (mat === M.MAGIC || mat === M.MAGIC2) return pose.wood?.includes(g) ? (mat === M.MAGIC ? M.TRUNK : M.BARKL) : (mat === M.MAGIC ? M.STONE : M.STONED);
       return mat;
     };
