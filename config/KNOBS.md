@@ -555,7 +555,15 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyObjects.home.lights` | number | 0 to … |
 | `partyObjects.exclude` | array of string |  |
 | `partyObjects.generated` | boolean |  |
-| `partyWitches.max` | number | 0 to … |
+| `partyWitches.roam` | number | 0 to … |
+| `partyWitches.centreBias` | number | 0 to … |
+| `partyWitches.swoopTime` | number | 0 to … |
+| `partyWitches.swoopHeight` | number | 0 to … |
+| `partyWitches.swoopMin` | number | 0 to … |
+| `partyWitches.swoopMax` | number | 0 to … |
+| `partyWitches.treetopBoost` | number | 0 to … |
+| `partyWitches.simRange` | number | 0 to … |
+| `partyWitches.simRangeTreetop` | number | 0 to … |
 | `partyWitches.idleAfter` | number | 0 to … |
 | `partyWitches.idleReach` | number | 0 to … |
 | `partyWitches.activityMin` | number | 0 to … |
