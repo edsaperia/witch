@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "posse": {
+      "type": "number",
+      "minimum": 0
+    },
+    "leave": {
+      "type": "number",
+      "minimum": 0
+    },
+    "engaged": {
+      "type": "number",
+      "minimum": 0
+    },
+    "speed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "clear": {
+      "type": "number",
+      "minimum": 0
+    },
+    "step": {
+      "type": "number",
+      "minimum": 0
+    },
+    "replan": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "posse",
+    "leave",
+    "engaged",
+    "speed",
+    "clear",
+    "step",
+    "replan"
+  ],
+  "additionalProperties": false
+}

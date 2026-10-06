@@ -57,6 +57,28 @@ let FORM = null;
 export function withForm(form, f) { const was = FORM; FORM = form; try { return f(); } finally { FORM = was; } }
 const drawForm = (m, o, S, level) => FORM ? FORM(m, o, S, level) : render(m, o).sp, formMotes = () => !FORM || FORM.motes;
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
+// A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
+// (SHOE_STYLES: sneakers, glitter, platform, heels, boots, lightup), fitted to the foot: "hoof" (narrow and
+// upright, a cuff over the hoof), "paw" (round, the toes filling its front) or "claw" (an open toe, the talons
+// poking out). The shoe is SHOE, its sole SOLE (a light-up sole glows in the animal's neon: COLLAR). The live
+// rig bakes the same shoe as a piece at each heading (genome/parts.js), so it steps and lifts with the leg.
+export const SHOE_FITS = ["hoof", "paw", "claw"];
+export function shoe3d(m, f, style, o = {}) {
+  const r = f.r, fit = f.fit || "paw", group = f.group, ex = { group, extra: true, ...o };
+  const hoof = fit === "hoof", claw = fit === "claw", plat = style === "platform", heels = style === "heels";
+  const soleH = r * (plat ? .55 : heels ? .2 : .28), lift = (heels ? r * .35 : 0) + (plat ? soleH * .5 : 0);
+  const c = v3.add(f.c, [r * .25, r * .15 + lift, 0]), L = r * (hoof ? 1.2 : claw ? 1.5 : 1.45), W = r * (hoof ? .95 : 1.15), H = r * (hoof ? 1 : .85);
+  const solePaint = p => style === "lightup" ? M.COLLAR : M.SOLE;
+  // the upper: tipped toe-down on heels, a glitter fleck here and there, a white flash on trainers
+  m.ell(c, [L, H, W], M.SHOE, { ...ex, dir: heels ? [1, -.35, 0] : [1, 0, 0], paint: p => p[1] < c[1] - H * .45 ? solePaint(p) : style === "glitter" && spotty(p, 60, .28) ? M.GLINT : style === "sneakers" && Math.abs(p[0] - c[0] - L * .1) < r * .12 && p[1] > c[1] ? M.SOLE : undefined });
+  // the sole: a slab under it (thick on platforms)
+  m.ell(v3.add(c, [0, -H * .55 - (plat ? soleH * .3 : 0), 0]), [L * 1.02, soleH, W * 1.02], style === "lightup" ? M.COLLAR : M.SOLE, ex);
+  if (heels) m.seg(v3.add(c, [-L * .7, -H * .2, 0]), v3.add(f.c, [-L * .45, -r * .05, 0]), r * .14, r * .1, M.SOLE, ex); // the heel: a thin post at the back
+  if (style === "boots") m.seg(v3.add(c, [-r * .2, H * .2, 0]), v3.add(c, [-r * .3, H + r * 1.3, 0]), W * .85, W * .8, M.SHOE, { ...ex, paint: p => p[1] > c[1] + H + r * 1.05 ? M.SOLE : undefined }); // a cuff up the leg, its top trimmed
+  if (hoof) m.ell(v3.add(c, [-r * .15, H * .75, 0]), [L * .7, r * .25, W * .9], M.SOLE, ex); // the cuff's trim round the pastern
+  if (claw) for (const dz of [-.45, 0, .45]) m.seg(v3.add(c, [L * .75, -H * .2, dz * W]), v3.add(c, [L * 1.25, -H * .45, dz * W * 1.2]), r * .14, r * .05, M.ACCENT, ex); // talons out of the open toe
+}
+
 const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
@@ -100,11 +122,8 @@ function gearUp(m) {
     }
   }
   m.part = was;
-  // fancy shoes on each foot (or, for the snake, one tiny shoe on its tail tip)
-  if (g.shoes) for (const f of A.feet) {
-    const plat = g.shoes === "platform", r = f.r, c = v3.add(f.c, [r * .25, r * (plat ? .35 : .15), 0]);
-    m.ell(c, [r * 1.45, r * (plat ? 1.2 : .85), r * 1.15], M.SHOE, { group: f.group, extra: true, paint: p => p[1] < c[1] - r * (plat ? .45 : .4) ? M.SOLE : g.shoes === "glitter" && spotty(p, 60, .28) ? M.GLINT : undefined });
-  }
+  // little party shoes on each foot (or, for the snake, one tiny shoe on its tail tip)
+  if (g.shoes) for (const f of A.feet) shoe3d(m, f, g.shoes);
 }
 
 // ================= the evolution kit =================
@@ -248,7 +267,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.socks || q.beads ? p => q.beads && p[1] > .12 && p[1] < (q.socks ?? 0) + .45 && Math.floor(p[1] * 16) % 3 === 0 && spotty(p, 30, .55) ? M.STONE : q.socks && p[1] < q.socks ? M.BODY3 : undefined : undefined }); // beads: stone-grey prayer beads round its legs
     const fl = (q.paw === "hoof" ? .07 : .09) * (q.legW ** .5) * (!fore ? (q.hindFoot || 1) : 1);
     m.ell(v3.add(foot, [fl * .5, -.01, 0]), [fl, lw * .9, lw * 1.1], q.paw === "hoof" ? M.NOSE : mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
-    m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
+    m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2, fit: q.paw === "hoof" ? "hoof" : "paw" });
     m.rig.legs.push({ name: m.part, fore, side, hip: hipTop, knee: fore ? knee : v3.add(knee, [-.12, .06, 0]), foot, r: [pts[0][3], pts[1][3], lw * .9], fl, mat, hoof: q.paw === "hoof" });
     m.part = "body";
   };
@@ -381,7 +400,7 @@ export function owl3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = false, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
   const bob = frame ? .03 : 0, hr = S.sizes.head[level], hy = S.sizes.headY[level] + bob; // its template's size curves (art/genome/templates.js)
   // feet and a short tail
-  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2 }); }
+  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2, fit: "claw" }); }
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
   // body: an upright egg, pale breast streaked
   m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { paint: p => p[0] > .12 && p[1] < hy - hr * .5 ? ((Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
