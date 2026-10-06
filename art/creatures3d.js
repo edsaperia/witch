@@ -418,29 +418,36 @@ function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at
 }
 
 // ================= owl =================
+// The owl. Its genome levels shape it (docs/art-guide/EVOLUTIONS.md): body.down (an owlet's fluffy down), head.tufts (ear tufts'
+// length, 0 none) and tuftsBack (swept back like horns), head.discRim (a dark rim round the facial disc), body.bars (a barred
+// chest), body.wingTips (patterned tips), body.cloak (wings half spread like a cloak, its feathers edged in moonlight), head.eyesRing
+// (a ring of glowing eyes in the disc's rim). Without levels, as it was.
 export function owl3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, young = false, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
+  const legend = level === 3, young = false, baby = level === 0, has = f => legend && !S.levelFeatures?.[3] && S.legend.includes(f), m = new Model(), q = { ...(S.levelQ?.[level] || {}) };
   const bob = frame ? .03 : 0, hr = S.sizes.head[level], hy = S.sizes.headY[level] + bob; // its template's size curves (art/genome/templates.js)
   // feet and a short tail
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2, fit: "claw" }); }
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
-  // body: an upright egg, pale breast streaked
-  m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { paint: p => p[0] > .12 && p[1] < hy - hr * .5 ? ((Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
-  // folded wings, unless the spirit wings spread
-  if (!has("wings")) for (const side of [-1, 1]) m.ell([-.06, .58 + bob, side * .3], [.4, .3, .08], M.BODY2, { dir: [-.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: p => spotty(p, 12, .15) ? M.BODY3 : undefined });
+  // body: an upright egg, pale breast streaked (barred, an adult's; all down, an owlet's)
+  m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { rough: q.down ? .03 : undefined, paint: p => q.down ? (spotty(p, 14, .3) ? M.BODY : M.BELLY) : p[0] > .12 && p[1] < hy - hr * .5 ? (q.bars ? (Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY) : (Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
+  // wings: folded (their tips patterned, an adult's), spread like a cloak and edged in moonlight (a legend's), or the old spirit wings
+  if (q.cloak) for (const side of [-1, 1]) wing3d(m, [-.05, .78 + bob, side * .3], side, 1.25, frame ? .08 : -.05, M.BODY2, M.WEB, side > 0 ? 40 : 50); // half spread like a cloak, its feathers edged in moonlight
+  else if (!has("wings")) for (const side of [-1, 1]) m.ell([-.06, .58 + bob, side * .3], [.4, .3, .08], M.BODY2, { dir: [-.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: p => q.wingTips && p[1] < .42 + bob ? (Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY) : spotty(p, 12, .15) ? M.BODY3 : undefined });
   // head: big and round, sunk into the shoulders
-  m.ell([0, hy, 0], [hr, hr * .9, hr], M.BODY);
+  m.ell([0, hy, 0], [hr, hr * .9, hr], M.BODY, { rough: q.down ? .02 : undefined });
   // facial disc: two pale bowls facing forward, with huge eyes
+  const tl = q.tufts ?? (baby ? 0 : 1);
   for (const side of [-1, 1]) {
     // the face looks out between forward and the near side, as owls turn their heads to us
     const fd = v3.norm([.75, -.05, side * .4 + .35]), c = v3.add(Model.surface([0, hy, 0], [hr, hr * .9, hr], fd), v3.mul(fd, -hr * .05));
-    m.ell(c, [hr * .22, hr * .46, hr * .4], M.BELLY, { group: 1, dir: fd });
+    m.ell(c, [hr * .22, hr * .46, hr * .4], M.BELLY, { group: 1, dir: fd, paint: q.discRim ? p => { const d = v3.sub(p, c), r = Math.hypot(...v3.sub(d, v3.mul(fd, v3.dot(d, fd)))); return r > hr * .34 ? M.BODY3 : undefined; } : undefined });
     const ec = v3.add(c, v3.mul(fd, hr * .14));
     m.ell(ec, [hr * .1, hr * .26, hr * .24].map(v => v * (baby ? 1.15 : 1)), legend ? M.MAGIC : M.IRIS, { group: 1, dir: fd });
     m.ell(v3.add(ec, v3.mul(fd, hr * .07)), [hr * .08, hr * .14, hr * .13].map(v => v * (baby ? 1.15 : 1)), legend ? M.MAGIC2 : M.EYE, { group: 1, dir: fd });
     (m.anchors.eyes ||= { pts: [], size: hr * .22 }).pts.push(v3.add(ec, v3.mul(fd, hr * .07)));
-    // ear tufts
-    if (!baby) m.ell([hr * .05, hy + hr * .8, side * hr * .6], [hr * .32, hr * .12, hr * .08], M.BODY2, { dir: [-.1, 1, side * .7], up: [1, 0, 0], group: 1 });
+    if (q.eyesRing) { const a1 = v3.norm(v3.cross(fd, [0, 1, 0])), a2 = v3.cross(a1, fd); for (let k = 0; k < 5; k++) { const a = Math.PI * (.15 + k * .175) * (side > 0 ? 1 : -1) + (side > 0 ? 0 : Math.PI), p = v3.add(v3.add(c, v3.mul(fd, hr * .12)), v3.add(v3.mul(a1, Math.cos(a) * hr * .42), v3.mul(a2, Math.sin(a) * hr * .48))); m.ell(p, [hr * .07, hr * .07, hr * .07], M.MAGIC2, { group: 96, extra: true }); } } // a ring of glowing eyes round the disc's rim
+    // ear tufts (swept back like horns, a legend's)
+    if (tl) m.ell([hr * (q.tuftsBack ? -.15 : .05), hy + hr * (.8 + .15 * (tl - 1)), side * hr * .6], [hr * .32 * tl, hr * .12, hr * .08], M.BODY2, { dir: q.tuftsBack ? [-.8, .8, side * .5] : [-.1, 1, side * .7], up: [1, 0, 0], group: 1 });
   }
   m.ell(Model.surface([0, hy, 0], [hr, hr * .9, hr], v3.norm([.75, -.35, .35])), [hr * .2, hr * .12, hr * .1], M.ACCENT, { dir: [.6, -1, .3], group: 1 }); // beak
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [-.05, .8 + bob, side * .3], side, 1.3, frame ? .12 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));

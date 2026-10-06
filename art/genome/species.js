@@ -73,7 +73,16 @@ export const GENOMES = [
     ] },
   { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .5, val: .7 }, body: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, legW: .75 }, head: { snout: 1.15, snoutD: .6, snoutTaper: .65 }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"] },
   { id: "hare", name: "Hare", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .4, val: .72 }, body: { hgt: .72, len: .5, chest: .4, tuck: .45, neck: .2, neckAng: .9, neckW: .35, hr: .27, legW: .85, haunch: 1.35, hindFoot: 1.6, back: "arch" }, head: { snout: .65, snoutD: .7, whiskers: true }, parts: { ears: { kind: "long", size: 2.4 }, tail: "puff", feet: "paw" }, coat: { belly: true }, legend: ["jackalope"] },
-  { id: "owl", name: "Owl", template: "avian", builder: "owl", palette: { hue: .08, sat: .5, val: .55 }, legend: ["eyesRing", "wings"] },
+  { id: "owl", name: "Owl", template: "avian", builder: "owl", palette: { hue: .08, sat: .5, val: .55 }, legend: ["eyesRing", "wings"],
+    // its evolution (docs/art-guide/EVOLUTIONS.md): a downy owlet with huge eyes and no tufts, a smooth young with short tufts, an
+    // adult with a dark-rimmed disc, long tufts, a barred chest and patterned wing tips, and the legend: wings half spread like a
+    // cloak edged in moonlight, tufts swept back like horns, a ring of glowing eyes round its disc
+    levels: [
+      { body: { down: true }, head: { tufts: 0 } },
+      { head: { tufts: .7 } },
+      { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
+      { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, eyesRing: true } },
+    ] },
   { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.15, len: .72, chest: .38, tuck: .4, neck: .25, neckAng: .3, neckW: .55, hr: .28, legW: 1.55, back: "hump" }, head: { snout: .7, snoutD: .62, snoutTaper: .7, muzzle: true }, parts: { ears: { kind: "round", size: .8 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
   { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] , texture: { kind: "bristles" } },
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
