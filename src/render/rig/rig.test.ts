@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { ik2, followChain, footCycle, dutyFactor, rigDirection, rigWorld, RigBody } from "./rig";
+import { ik2, followChain, footCycle, dutyFactor, rigDirection, rigWorld, RigBody, RigOut } from "./rig";
+import type { RigMeta } from "./rigBuild";
+
+// A four-legged body in model units: torso at the origin, legs 0.6 long, a disc of every radius.
+const piece = (frame: number) => ({ frame, px: 0, py: 0 }), five = (f: number) => [0, 1, 2, 3, 4].map(i => piece(f + i));
+const leg = (name: string, fore: boolean, side: number) => ({ name, fore, side, hip: [fore ? 0.4 : -0.4, 0, side * 0.15], knee: [fore ? 0.42 : -0.35, -0.3, side * 0.15], foot: [fore ? 0.4 : -0.4, -0.6, side * 0.15], r: [0.08, 0.06, 0.05], fl: 0.06, mat: 1, hoof: false }) as RigMeta["legs"][number];
+const META: RigMeta = { template: "quadruped", s: 40, torso: five(0), head: five(10), tail: five(20), faces: {}, discs: { 1: Object.fromEntries([1, 2, 3, 4].map(r => [r, piece(30 + r)])) }, legs: [leg("legFN", true, 1), leg("legFF", true, -1), leg("legHN", false, 1), leg("legHF", false, -1)], neck: [0.55, 0.15, 0], headAt: [0.6, 0.2, 0], tailAt: [-0.5, 0.05, 0], top: 0.4, len: 0.5, spine: [] };
+const lay = (sleep: number, droop = sleep) => { const b = new RigBody(), out = new RigOut(); b.update(0, 0, 0, 1, 0); b.quadruped(META, 1, 1 / 60, { crouch: 0, charging: false, air: 0, sleep, droop }, out); return out.items.slice(0, out.n).map(it => ({ f: it.piece.frame, y: it.y })); };
 
 describe("the live rig (#79 stage 5)", () => {
   it("solves a two-bone leg exactly: the bones keep their lengths and the foot reaches its target", () => {
@@ -46,5 +53,13 @@ describe("the live rig (#79 stage 5)", () => {
     for (let i = 0; i < 60; i++) { x += 0.05; r.update(x, 0, 1 / 60, 3, 0); }
     expect(Math.abs(r.heading)).toBeLessThan(0.05);
     expect(r.speed).toBeGreaterThan(2.5);
+  });
+  it("lies a sleeping legend down: its body on the ground, its head down, its feet where they were", () => {
+    const up = lay(0), down = lay(1);
+    const y = (items: { f: number; y: number }[], lo: number) => items.find(i => i.f >= lo && i.f < lo + 5)!.y;
+    expect(y(down, 0)).toBeLessThan(y(up, 0) - 0.3); // the torso, most of a leg lower
+    expect(y(down, 10) - y(down, 0)).toBeLessThan(y(up, 10) - y(up, 0)); // the head down, by its body
+    const low = (items: { f: number; y: number }[]) => Math.min(...items.filter(i => i.f >= 30).map(i => i.y));
+    expect(low(down)).toBeCloseTo(low(up), 1); // feet still on the ground
   });
 });
