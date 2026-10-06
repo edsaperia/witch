@@ -144,6 +144,17 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 
   Every batch should be checked in the review set (`node tools/art-review/capture.cjs`) as well as on its lit sheet.
 - **A style is judged where there is light.** At the night's light level, `?style=bold`, `ref` and `now` look almost the same (round 1). Compare styles in a party pool or under the witch's light, not in the dark moor.
+- **Dark, but legible.** A spooky night still reads its forms. Round 2's cold wood was right in mood, but from the treetops the forest's shape was lost at 5% value. Upward faces should catch moonlight at 15 to 25%. Lift the moon's fill, not the ambient, so the shadows stay cold.
+- **One light source per idea.**
+  - The party is warm amber pools.
+  - The moon is a cool rim and fill.
+  - Each area has one neon.
+  - The HUD is amber, quieter than the party.
+  - Hits are white, for a frame only.
+
+  Anything else that glows (a guide line, sparkles, eyeshine) is dimmer than these, or it competes. Round 2's ley line outshone the party, and white party sparkles looked like hits.
+- **Light the silhouette, not the normals, for anything that must read.** The styles flatten sprite normals, so a rim from the normals disappears under `?style=bold|ref` (round 2). A rim from the alpha edge works in every style.
+- **Motion keeps the pixel grid.** Squash, stretch and tumbles change a sprite's size by whole art pixels and turn in 90° steps. A flip faster than about 4 times a second reads as strobing (#193).
 - **Colour per material, not one ramp.** A species' whole ramp derives from one hue. Use `palette.over` for parts that differ in nature: membranes, dark legs, horns, caps and the glow.
 
 ## 4. Silhouette rules
