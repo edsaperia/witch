@@ -4,7 +4,7 @@
     {
       "id": "style", "label": "Pixel style", "note": "How every sprite is baked: as before, bold (3 hue-shifted tones, a selective outline) or ref (one tone family, a near-black outline).",
       "control": { "type": "choice", "options": [{ "value": "now", "label": "As now" }, { "value": "bold", "label": "Bold" }, { "value": "ref", "label": "Ref" }] },
-      "default": "now", "apply": { "param": "style", "reload": true }
+      "default": "bold", "apply": { "param": "style", "reload": true }
     },
     {
       "id": "glide", "label": "Camera glide", "note": "What holds still on screen as she flies: the witch (the world lands within half a pixel) or the camera (the world exact, her a pixel either way).",
