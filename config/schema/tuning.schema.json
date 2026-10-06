@@ -107,6 +107,14 @@
           "type": "number",
           "minimum": 0
         },
+        "letterLinger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "letterFade": {
+          "type": "number",
+          "minimum": 0
+        },
         "hearts": {
           "type": "object",
           "properties": {
@@ -182,6 +190,8 @@
         "restAfter",
         "stargazeCurve",
         "gazeEase",
+        "letterLinger",
+        "letterFade",
         "hearts",
         "shown",
         "witchChance",
