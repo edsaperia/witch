@@ -180,14 +180,16 @@ export class InviteView {
 
     // The meters: a pill of hearts over each creature with some affection.
     const live = new Set<number>();
-    for (const [id, v] of I.meter) {
-      const c = g.creatures[id];
-      if (!c || c.gone || Math.abs(c.x - w.x) > 60 || Math.abs(c.z - w.z) > 60) continue;
+    // (Each creature's own meter, rules/affection.ts since #96: draining when it isn't being hit.)
+    for (const c of g.creatures) {
+      if (c.gone || !c.affection || Math.abs(c.x - w.x) > 60 || Math.abs(c.z - w.z) > 60) continue;
+      const v = A.affection(c), id = c.id;
+      if (v === null) continue;
       live.add(id);
       let el = this.meters.get(id);
       if (!el) {
         el = document.createElement("div");
-        Object.assign(el.style, { position: "absolute", transform: "translate(-50%, -100%)", display: "flex", gap: "1px", padding: "2px", background: "rgba(14,11,28,.7)", border: "1px solid rgba(255,140,200,.8)", borderRadius: "3px", imageRendering: "pixelated" });
+        Object.assign(el.style, { position: "absolute", transform: "translate(-50%, -100%)", display: "flex", gap: "1px", padding: "2px", background: "rgba(14,11,28,.7)", border: "1px solid rgba(217,120,158,.6)", borderRadius: "3px", imageRendering: "pixelated" });
         this.root.append(el);
         this.meters.set(id, el);
       }
@@ -197,7 +199,7 @@ export class InviteView {
         el.dataset.k = String(key);
         el.innerHTML = Array.from({ length: hearts }, (_, i) => {
           const f = Math.max(0, Math.min(1, full - i));
-          return `<i style="display:block;width:5px;height:5px;background:linear-gradient(90deg,#ff5fb4 ${f * 100}%,rgba(255,180,220,.25) ${f * 100}%)"></i>`;
+          return `<i style="display:block;width:5px;height:5px;background:linear-gradient(90deg,#d9789e ${f * 100}%,rgba(217,120,158,.2) ${f * 100}%)"></i>`;
         }).join("");
       }
       place(el, c.x, head(id) + 0.15, c.z);
