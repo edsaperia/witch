@@ -34,20 +34,22 @@ const jobs = new WeakMap<View, { run: Generator<void, void, void>; frames: numbe
  *  for: slow frames, like the software renderer's, cover a lot of ground each) or after MAX_FRAMES,
  *  so what it lists is never older than an unsliced rebuild's would be by much. `force`: all of it now. */
 export function refresh(v: View, force = false): void {
-  const job = jobs.get(v);
+  // Below SLICE_FPS a frame covers so much flight that a rebuild spread over frames would be
+  // stale when handed over (pops): then it's done whole, as it always was.
+  const whole = force || (v.budget.fps > 0 && v.budget.fps < SLICE_FPS), job = jobs.get(v);
   if (job) {
-    if (!force && !due(v) && ++job.frames < MAX_FRAMES) { if (job.run.next().done) jobs.delete(v); return; }
+    if (!whole && !due(v) && ++job.frames < MAX_FRAMES) { if (job.run.next().done) jobs.delete(v); return; }
     while (!job.run.next().done);
     jobs.delete(v);
   }
   const d = due(v);
   if (!d && !force) return;
   const run = rebuild(v, d ?? due(v, true)!, force);
-  if (force) { while (!run.next().done); return; }
+  if (whole) { while (!run.next().done); return; }
   if (!run.next().done) jobs.set(v, { run, frames: 1 });
 }
 
-const SLICE_MS = 2.5, MAX_FRAMES = 4;
+const SLICE_MS = 2.5, MAX_FRAMES = 4, SLICE_FPS = 30;
 
 /** What a rebuild needs, if one is due now (she has moved, turned or zoomed, the scenery's radius has grown, or new art is in), else null; `force`: anyway. */
 function due(v: View, force = false) {
