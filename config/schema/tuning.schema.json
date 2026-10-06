@@ -368,6 +368,10 @@
           "type": "number",
           "minimum": 0
         },
+        "bloodTint": {
+          "type": "number",
+          "minimum": 0
+        },
         "floor": {
           "type": "object",
           "properties": {
@@ -418,6 +422,7 @@
         "colourFade",
         "colours",
         "tint",
+        "bloodTint",
         "floor"
       ],
       "additionalProperties": false

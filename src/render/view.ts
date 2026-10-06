@@ -505,7 +505,7 @@ export class View {
   private heightsReady = true;
   /** The moon now (one moon: rules/moon.ts), and the moonlight tinted a little with its colour (moon.tint). */
   private updateMoon(g: Game): MoonState {
-    const m = moonState(g.clock.time + this.moonShift, g.seed, g.tuning), k = g.tuning.moon.tint, P = [0.92, 0.94, 0.86];
+    const m = moonState(g.clock.time + this.moonShift, g.seed, g.tuning), k = m.kind === "red" ? g.tuning.moon.bloodTint : g.tuning.moon.tint, P = [0.92, 0.94, 0.86];
     const r = 1 + (m.rgb[0] / P[0] - 1) * k, gr = 1 + (m.rgb[1] / P[1] - 1) * k, b = 1 + (m.rgb[2] / P[2] - 1) * k, n = 3 / (r + gr + b); // its hue, not its brightness
     LIGHT_UNIFORMS.uMoon.value.set(this.moonBase.x * r * n, this.moonBase.y * gr * n, this.moonBase.z * b * n);
     const U = LIGHT_UNIFORMS.uMoonUp.value;
