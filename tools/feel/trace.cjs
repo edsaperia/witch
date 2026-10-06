@@ -118,7 +118,7 @@ async function main() {
       const wd = []; for (let i = 1; i < m.length; i++) wd.push(Math.hypot(m[i].witch[0] - m[i - 1].witch[0], m[i].witch[1] - m[i - 1].witch[1]));
       const r = { steps, groundPerFrame60: +g.m.toFixed(2), groundSpread: +(g.sd / Math.max(1e-6, Math.abs(g.m))).toFixed(3), groundHeld: +held.toFixed(3), groundWorst: +worst.toFixed(2), witchWobble: +Math.hypot(wx.sd, wy.sd).toFixed(2), witchStep: +stats(wd).m.toFixed(2), witchJumps: wd.filter(x => x >= 2).length, speed: +stats(m.map(f => f.speed)).m.toFixed(1) };
       results[`${mode} · ${label}`] = r;
-      fs.writeFileSync(path.join(out, `trace-${mode}-${label.replace(/[^a-z0-9]+/gi, "-")}.json`), JSON.stringify(frames));
+      fs.writeFileSync(path.join(out, `frames-${mode}-${label.replace(/[^a-z0-9]+/gi, "-")}.json`), JSON.stringify(frames));
       log(`${mode.padEnd(8)} ${label.padEnd(28)} ${r.speed} m/s  steps 0/1/2: ${steps[0]}/${steps[1]}/${steps[2] + steps.more}  ground ${r.groundPerFrame60} px a 60th, spread ${(r.groundSpread * 100).toFixed(1)}%, held ${(r.groundHeld * 100).toFixed(1)}%, worst ±${r.groundWorst}  witch wobble ${r.witchWobble} px (moves ${r.witchStep} px a frame, ${r.witchJumps} jumps ≥2 px)`);
     }
   }
