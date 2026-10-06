@@ -1,5 +1,5 @@
-// The ground's sheet (#119): a row per area, its floor tile repeated 3 x 2 (so seams show), a column per style; with
-// --variants, its first four variants side by side instead, each once.
+// The ground's sheet (#119): a row per area, its floor laid 4 x 2 as the game lays it (a variant picked for each repeat, so
+// seams and repeats would show), a column per style; with --variants, its four variants side by side instead, each once.
 //   node tools/ground/ground-sheet.mjs <out.png> [area,...|all] [column,...] [scale] [--variants]
 // A column is "<artStyle or ->" ("-" today's art, "bold" or "ref" stylised, the game's ?style=).
 import { writeFileSync } from "node:fs";
@@ -16,12 +16,12 @@ const url = await b.page.evaluate(async ({ list, cols, scale, variants }) => {
   const columns = cols.split(",").map(c => ({ label: c === "-" ? "today" : c, st: { ...base, ...(c !== "-" ? { artStyle: c } : {}) } }));
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
   const tiles = (id, st) => variants ? [0, 1, 2, 3].map(v => { const t = G.groundTile(G.AREA_BY_ID[id], st, v); return G.bake(t.sp, t.colours, st, "none").A; }) : [G.areaAssets(id, st).floor.sp.A];
-  const TW = 64, TH = 48, gap = 8, lab = 14, cell = variants ? [TW * 4 + 3 * 2, TH] : [TW * 3, TH * 2], W = 70 + columns.length * (cell[0] + gap), H = lab + ids.length * (cell[1] + gap);
+  const TW = 64, TH = 48, gap = 8, lab = 14, cell = variants ? [TW * 4 + 3 * 2, TH] : [TW * 4, TH * 2], W = 70 + columns.length * (cell[0] + gap), H = lab + ids.length * (cell[1] + gap);
   const c = mk(W, H), g = c.getContext("2d"); g.fillStyle = "#222"; g.fillRect(0, 0, W, H);
   ids.forEach((id, ri) => columns.forEach((col, ci) => {
     const ts = tiles(id, col.st), x0 = 70 + ci * (cell[0] + gap), y0 = lab + ri * (cell[1] + gap);
     if (variants) ts.forEach((t, k) => g.drawImage(t, x0 + k * (TW + 2), y0));
-    else for (let ty = 0; ty < 2; ty++) for (let tx = 0; tx < 3; tx++) g.drawImage(ts[0], x0 + tx * TW, y0 + ty * TH);
+    else { const n = Math.max(1, Math.round(ts[0].width / TW)); for (let ty = 0; ty < 2; ty++) for (let tx = 0; tx < 4; tx++) { const v = (tx * 7 + ty * 13 + ri * 3) % n; g.drawImage(ts[0], v * TW, 0, TW, TH, x0 + tx * TW, y0 + ty * TH, TW, TH); } }
   }));
   const big = mk(W * scale, H * scale), bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
   bg.font = `${7 * scale}px monospace`; bg.textBaseline = "top"; bg.fillStyle = "#f4ecd8";

@@ -39,7 +39,8 @@ export function befriend(c: Creature, time: number): void {
 
 /** A wave put a soundsystem in its area: enraged (its invite meter lost). Happy ones, leashed ones and babies never are. */
 export function enrage(c: Creature): boolean {
-  if (c.leashed || c.level === 0 || stateOf(c) === "happy") return false;
+  // (Never a legend: soundsystems don't wake them (#87); they turn angry by their own rules, legends.ts.)
+  if (c.leashed || c.level === 0 || c.boss || stateOf(c) === "happy") return false;
   c.enraged = true; c.state = "enraged"; c.affection = undefined; c.dazedUntil = undefined;
   return true;
 }

@@ -82,6 +82,8 @@ const SCENES: Scene[] = [
       { at: 10, g: "knocked down (whoa-oh)", play: (s, duck) => { s.knockdown(); duck(ouch.duck, ouch.duckTime * 2); } },
       { at: 13.5, g: "soundsystem lost", play: s => s.lost(false) },
       { at: 16.2, g: "a lob landing nearby", play: s => s.impact(false, 0.3, 0.8) },
+      ...series(1, 36, 0.5, "dancers' shoes on the beat", s => s.taps(4, 0.2, 0.8)),
+      ...series(10, 90, 0.1, "a picnic nearby", (s, i) => s.picnic(Math.min(1, i / 15), -0.3)),
       { at: 17, g: "one turns enraged, 20 m off", play: s => { s.enraged(-0.4, 0.7); s.speak(v("boar", 2), "enraged", -0.4, 0.7, 1); } },
     ],
     sounds: [
@@ -98,11 +100,13 @@ const SCENES: Scene[] = [
       { g: "soundsystem lost", kind: "sting", at: 13.5, len: 3 },
       { g: "a lob landing nearby", kind: "body", at: 16.2, len: 0.4 },
       { g: "one turns enraged, 20 m off", kind: "state", at: 17, len: 0.8 },
+      { g: "dancers' shoes on the beat", kind: "feedback", at: 1, len: 17 },
+      { g: "a picnic nearby", kind: "ambience", at: 12, len: 7 },
     ],
   },
   {
     // the deep forest, the music far off and muffled: a sleeping legend's moans and nightmare, a legend's wind-up, a charge
-    name: "forest", seconds: 24, section: "deep", wave: 2, distance: 170,
+    name: "forest", seconds: 27, section: "deep", wave: 2, distance: 170,
     // (a sleeper 4 m off; a moment away resets its clock, so the nightmare's first moan comes 1.5 s on)
     frame: (s, t) => s.legends(t < 5 || (t >= 5.2 && t < 11) ? 0.9 : 0, 0.5, t < 5 ? 0 : 0.8, -0.2), frameG: "legend moans",
     cues: [
@@ -113,6 +117,8 @@ const SCENES: Scene[] = [
       ...series(17.8, 12, 0.22, "the charge's hooves", s => s.hoof(0, 1)),
       ...series(17.8, 12, 0.22, "the charge's rumble", (s, i) => s.charge(Math.min(1, (i + 2) / 10), 0, 0)),
       ...series(20.5, 10, 0.1, "its braking skid", (s, i) => s.charge(0, Math.max(0, 1 - i / 9), 0)),
+      { at: 23, g: "a legend turns angry (roar)", play: s => s.roar(0.2, 1) },
+      ...series(0, 270, 0.1, "by a pond", (s, i) => s.pond(Math.min(1, i / 20), -0.4)),
     ],
     sounds: [
       { g: "legend moans", kind: "ambience", at: 0, len: 4 },
@@ -124,6 +130,8 @@ const SCENES: Scene[] = [
       { g: "the charge's hooves", kind: "body", at: 17.8, len: 2.6 },
       { g: "the charge's rumble", kind: "body", at: 17.8, len: 2.6 },
       { g: "its braking skid", kind: "body", at: 20.5, len: 1 },
+      { g: "a legend turns angry (roar)", kind: "telegraph", at: 23, len: 2.2 },
+      { g: "by a pond", kind: "ambience", at: 3, len: 20 },
     ],
   },
 ];

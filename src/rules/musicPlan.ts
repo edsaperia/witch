@@ -25,6 +25,8 @@ export interface MusicCue {
   siege: number;
   /** How near a woken area that has joined the party is (0-1): its soundsystem on, its happy animals dancing. */
   party?: number;
+  /** How near an angry legend is (0-1): charging, or shooting from afar. */
+  legend?: number;
   /** ?music= previews: always this section; or this wave's arc step whatever the wave. */
   forceSection?: string;
   forceWave?: number;
@@ -45,7 +47,7 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
   }
   return {
     waves, nextAt: g.tuning.party.interval >= 1e9 ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
-    knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
+    knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), legend: legendNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
   };
 }
 
@@ -63,6 +65,20 @@ export function siegeNear(g: Game, at: { x: number; z: number }): number {
       const c = g.creatures[id];
       if (!c.gone && !c.leashed && !c.fleeUntil && !c.wanderTo && Math.hypot(c.x - h.x, c.z - h.z) < h.radius + 15) { best = near; break; }
     }
+  }
+  return best;
+}
+
+/** How near an angry legend is to `at` (0-1, the music's nearDist to farDist): one shooting from
+ *  afar, or charging (the legends' long charge). Adds the style's legend parts: the mood darkens. */
+export function legendNear(g: Game, at: { x: number; z: number }): number {
+  const M = g.tuning.music;
+  let best = 0;
+  for (const c of g.creatures) {
+    if (!c.boss || c.gone || c.leashed) continue;
+    if (c.legendState !== "angry" && !(c as { run?: unknown }).run) continue;
+    const d = Math.hypot(c.x - at.x, c.z - at.z), near = 1 - Math.min(1, Math.max(0, (d - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
+    if (near > best) best = near;
   }
   return best;
 }
@@ -123,9 +139,15 @@ export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockP
   }
   // the wave's own sections: its arrival, then its loop
   const k = Math.max(0, bar - blockAfter(arrival, B));
-  const arrive = step.arrive.reduce((n, [, b]) => n + b, 0), loop = step.loop.reduce((n, [, b]) => n + b, 0);
-  const hit = walk(step.arrive, k) ?? walk(step.loop, (k - arrive) % Math.max(1, loop))!;
-  return plan(hit.section, bar - hit.offset, hit.bars);
+  const arrive = step.arrive.reduce((n, [, b]) => n + b, 0);
+  const first = walk(step.arrive, k);
+  if (first) return plan(first.section, bar - first.offset, first.bars);
+  // then round the loop, a variant each pass (overnight, 2026-10-06: a long wave mustn't loop audibly)
+  const loops = [step.loop, ...(step.variants ?? [])], len = (l: [string, number][]) => Math.max(1, l.reduce((n, [, b]) => n + b, 0));
+  let j = k - arrive, pass = 0;
+  while (j >= len(loops[pass % loops.length])) { j -= len(loops[pass % loops.length]); pass++; }
+  const hit = walk(loops[pass % loops.length], j)!;
+  return { ...plan(hit.section, bar - hit.offset, hit.bars), pass };
 }
 
 /** Plans blocks once and keeps them, so a block never changes once it has started sounding. */
