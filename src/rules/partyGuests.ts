@@ -23,7 +23,7 @@ export const AT_SOUNDSYSTEM = 0.35;
 const SOCIABLE = new Set(["picnic", "furniture", "balloon"]);
 const sociable = (id: string) => ((PARTY_CLUSTER_BY_ID as unknown as Record<string, { pieces: [string][] }>)[id]?.pieces ?? []).some(([ref]) => SOCIABLE.has(partyDef(ref)?.cls ?? "") || isLit(ref));
 /** At most this many party places an area (its sociable clusters first, then picnics and tables, balloons and lights). */
-const MAX_SPOTS = 8;
+const MAX_SPOTS = 8, ROOM = 6;
 
 const cache = new WeakMap<ForestMap, Map<string, PartySpot[]>>();
 /** The party places in an area (not its soundsystem): its sociable clusters, then its loose picnics and tables, balloons and lights. */
@@ -39,24 +39,33 @@ export function partySpots(map: ForestMap, cell: Cell, t: Tuning): PartySpot[] {
     loose("picnic", cls => cls === "picnic" || cls === "furniture");
     loose("balloons", cls => cls === "balloon");
     loose("light", (cls, ref) => isLit(ref) && cls !== "picnic" && cls !== "furniture");
-    spots = all.slice(0, MAX_SPOTS);
+    // (only places with room round them for their guests' arc: 6 m of their own area each way)
+    const own = (x: number, z: number) => { const c = map.cellSafe(x, z).cell; return c[0] === cell[0] && c[1] === cell[1]; };
+    spots = all.filter(s => own(s.x, s.z - ROOM) && own(s.x - ROOM, s.z) && own(s.x + ROOM, s.z) && own(s.x, s.z + ROOM)).slice(0, MAX_SPOTS);
     byCell.set(key, spots);
   }
   return spots;
 }
 
-/** Guests stand round a party place (the art director, #200: "they pile up"): each its own slot on an arc behind it (the
- *  far side, -z, so the side towards the camera stays open and none stands in front of another), a body's width or more
- *  apart, the small ones on the inside (nearer the front) and the big ones on the outside (at the back); past
- *  `ARC_SLOTS` a second, wider arc (`front`: the arc on the near side, for a place whose far side is over its area's edge). Each keeps to its slot, shuffling within `SLOT_RANGE` metres. */
-export const ARC_SLOTS = 5, SLOT_RANGE = 0.5;
-const ARC_ORDER = [0.5, 0.25, 0.75, 0, 1]; // (the middle first, then either side, then the ends)
-export function guestSlot(spot: PartySpot, slot: number, level: number, front = false): { x: number; z: number; r: number } {
+/** Guests stand round a party place (the art director, #200: "they pile up"): in a shallow arc behind it (the far side,
+ *  -z, so the side towards the camera stays open and none stands in front of another), side by side across the screen
+ *  (the camera looks along z, so depth barely parts two silhouettes: only x does), the big ones further back; a second
+ *  row behind when the first is full (`front`: the row on the near side, for a place whose far side is over its area's
+ *  edge). `u`: its offset across (metres), `body`: its body radius (rules/spacing.ts). Each keeps to its slot,
+ *  shuffling within `SLOT_RANGE` metres. */
+export const SLOT_RANGE = 0.5, ROW_HALF = 10, ROW_STEP = 0.5;
+export function guestSlot(spot: PartySpot, u: number, body: number, row = 0, front = false): { x: number; z: number; r: number } {
   if (spot.kind === "soundsystem") return spot;
-  const t = ARC_ORDER[slot % ARC_SLOTS], a = Math.PI + 0.35 + t * (Math.PI - 0.7);
-  const ring = spot.r * 0.7 + 0.5 * Math.min(3, level) + Math.floor(slot / ARC_SLOTS) * 1.3;
-  return { x: spot.x + Math.cos(a) * ring, z: spot.z + (front ? -1 : 1) * Math.sin(a) * ring, r: SLOT_RANGE };
+  const back = spot.r * 0.6 + body * 1.5 + row * 3.5 + 0.06 * u * u;
+  return { x: spot.x + u, z: spot.z + (front ? back : -back), r: SLOT_RANGE };
 }
+/** How far apart across the screen two guests stand (metres), by their body radii: their sprites stand wider than their
+ *  bodies, so this is roomier than spacing.ts keeps them; each reads as its own silhouette. Two further apart in depth
+ *  than `GUEST_DEPTH` don't overlap whatever their x. */
+export const guestGap = (a: number, b: number) => (a + b) * 4 + 0.8, GUEST_DEPTH = 3;
+/** Its offsets across, in the order tried: the middle first, then out either side. */
+export const ROW_OFFSETS: number[] = [0];
+for (let d = ROW_STEP; d <= ROW_HALF; d += ROW_STEP) ROW_OFFSETS.push(-d, d);
 
 /** Where this guest gathers: by its soundsystem (a share of them) or at one of the area's party places, dealt by its id. */
 export function guestSpot(c: Pick<Creature, "id">, soundsystem: { x: number; z: number }, spots: PartySpot[]): PartySpot {

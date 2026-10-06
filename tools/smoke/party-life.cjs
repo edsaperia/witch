@@ -43,11 +43,12 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     });
     console.log(JSON.stringify(spots));
     const fly = async ([x, z], name, frames) => {
-      await page.evaluate(([x, z]) => { const g = window.witch.game; g.witch = { ...g.witch, x: x + 1, z: z + 6, seated: false, mode: "ground", lift: 0 }; }, [x, z]);
+      await page.evaluate(([x, z]) => { const g = window.witch.game; g.witch = { ...g.witch, x: x - 7, z: z + 5, seated: false, mode: "ground", lift: 0 }; }, [x, z]);
       await page.waitForTimeout(3000);
       await page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + 3, { timeout: 600000, polling: 500 }); // (game time: the decorations pop up a couple of seconds after the party)
       await page.screenshot({ path: path.join(outDir, `${name}.png`) });
       console.log(name, "party objects drawn:", await page.evaluate(() => window.witch.view.partyObjects.count));
+      if (process.env.LOG) console.log(await page.evaluate(n => window.witch.game.creatures.slice(-n).map(c => `${c.species} ${c.x.toFixed(1)},${c.z.toFixed(1)} anchor ${c.anchorX.toFixed(1)},${c.anchorZ.toFixed(1)} r${c.range}`).join("\n"), spots.guests));
       for (let i = 0; i < frames; i++) { await page.waitForTimeout(160); await page.screenshot({ path: path.join(outDir, `${name}-${i}.png`) }); }
     };
     await fly(process.env.PARTY_AT ? process.env.PARTY_AT.split(",").map(Number) : spots.party, "party-place", 6); // (PARTY_AT=x,z: the same place for a before-and-after)

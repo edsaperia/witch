@@ -1,6 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { MOVEMENT } from "./movement";
-import { spaceOut } from "./spacing";
+import { bodyRadius, spaceOut } from "./spacing";
 import { onAreaDone } from "./leylines";
 import { questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
@@ -12,7 +12,7 @@ import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, ty
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
 import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
-import { ARC_SLOTS, guestSlot, guestSpot, partySpots, SLOT_RANGE } from "./partyGuests";
+import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
@@ -535,20 +535,21 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
  *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps
  *  in view. */
 /** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and
- *  dances there, at a party place in the next free slot round it (guestSlot: the guests already there counted). */
+ *  dances there, at a party place in the first free slot round it (guestSlot, guestGap: by the guests already there). */
 export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
   const spot = guestSpot(c, soundsystem, partySpots(g.map, cell, g.tuning));
   if (spot.kind === "soundsystem") { danceAt(c, spot, spot.r); return; }
   // the guests already round this place, and their slots
-  const taken: Creature[] = [];
-  for (const o of g.creatures) if (o !== c && o.dancing && !o.gone && o.range <= SLOT_RANGE && o.cell[0] === cell[0] && o.cell[1] === cell[1] && Math.hypot(o.anchorX - spot.x, o.anchorZ - spot.z) < spot.r * 0.7 + 4) taken.push(o);
-  // the first free slot in its area (the far arc's, then the near arc's, for a place by its area's edge); else round the place itself
-  const free = (p: { x: number; z: number }) => { const cl = g.map.cellSafe(p.x, p.z).cell; return cl[0] === cell[0] && cl[1] === cell[1] && taken.every(o => Math.hypot(o.anchorX - p.x, o.anchorZ - p.z) > 1); };
-  for (const front of [false, true]) for (let k = 0; k < ARC_SLOTS * 3; k++) {
-    const at = guestSlot(spot, k, c.level, front);
+  const taken: Creature[] = [], body = bodyRadius(c);
+  for (const o of g.creatures) if (o !== c && o.dancing && !o.gone && o.range <= SLOT_RANGE && o.cell[0] === cell[0] && o.cell[1] === cell[1] && Math.hypot(o.anchorX - spot.x, o.anchorZ - spot.z) < spot.r + 12) taken.push(o);
+  // the first free slot in its area (the far row's, a second row, then the near row's, for a place by its area's edge);
+  // else (the place full) by the soundsystem, never piled up
+  const free = (p: { x: number; z: number }) => { const cl = g.map.cellSafe(p.x, p.z).cell; return cl[0] === cell[0] && cl[1] === cell[1] && taken.every(o => Math.abs(o.anchorX - p.x) > guestGap(bodyRadius(o), body) || Math.abs(o.anchorZ - p.z) > GUEST_DEPTH); };
+  for (const front of [false, true]) for (let row = 0; row < 2; row++) for (const u of ROW_OFFSETS) {
+    const at = guestSlot(spot, u, body, row, front);
     if (free(at)) { danceAt(c, at, at.r); return; }
   }
-  danceAt(c, spot, spot.r);
+  danceAt(c, soundsystem, SPOT_RANGE.soundsystem);
 }
 
 export const simRadius = (g: Game) => Math.max(g.tuning.creatureSimRadius, g.tuning.haze.far + 20 + wanderRange(g.map) * 2.5);
