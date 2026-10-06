@@ -59,7 +59,7 @@ export interface Tuning {
   legendCircle?: { slow: { on?: boolean; scale: number; ease: number } };
   mapAreas: number;
   /** The map's shape (Ed, 2026-10-06: "circular rather than square, with a buffer zone with no runestones around the edge"): circle: the playable areas those within radius areas of home, a buffer ring buffer areas deep past them (forest she can fly over, nothing in it), her flight's edge soft over its last push metres (her outward speed easing to nothing, a drift of drift m/s back in), and the forest going on edge areas past it; square: mapAreas x mapAreas as before (?shape=square). */
-  map?: { shape: "circle" | "square"; radius: number; buffer: number; push: number; drift: number; edge?: number };
+  map?: { shape: "circle" | "square"; radius: number; buffer: number; push: number; drift: number; edge?: number; /** the coast's wobble (Ed, 2026-10-06: "slightly irregular"): rules/mapShape.ts makeCoast */ coast?: { amp: number; harmonics: number; detail: number } };
   areaSize: number;
   areaScale: number;
   /** Each area's fighting arena: mostly open within radius metres of its centre and soundsystem, the woods thickening smoothly over a band band metres wide (both times fight.scale), its edge wobbled by noise (a share of the band); bushes and tufts: the share of the undergrowth and ground cover left in its open middle. */
