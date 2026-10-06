@@ -40,12 +40,16 @@ async function session(browser, port, v, fight) {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   const shot = async name => { const f = path.join(outDir, `${v.name}-${name}.png`); await page.screenshot({ path: f }); shrink(f); log(v.name, name); };
-  const q = [`seed=${seed}`, "wave=off", v.query, fight ? `arena=${FIGHT}` : "", v.creator && !fight ? "" : "creator=0"].filter(Boolean).join("&");
+  // The creator room is shot in a load of its own (with it open, the forest grows slowly in software GL), the rest with ?creator=0.
+  if (v.creator && !fight) {
+    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&wave=off${v.query ? "&" + v.query : ""}`);
+    await page.waitForFunction(() => window.witch, null, { timeout: 120000, polling: 500 });
+    await page.waitForTimeout(30000); await shot("creator");
+  }
+  const q = [`seed=${seed}`, "wave=off", v.query, fight ? `arena=${FIGHT}` : "", "creator=0"].filter(Boolean).join("&");
   await page.goto(`http://127.0.0.1:${port}/?${q}`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 400000, polling: 500 });
-  if (v.creator && !fight) { await page.waitForTimeout(4000); await shot("creator"); }
   await page.keyboard.press("Enter");
-  if (v.creator && !fight) await page.keyboard.press("Enter").catch(() => {});
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 });
   await page.evaluate(() => setInterval(() => { for (const w of window.witch.game.witches || []) { w.health.hp = Math.max(w.health.hp, 99); w.ko = null; } }, 50));
   const wait = s => page.evaluate(s => new Promise(ok => { const t = window.witch.game.clock.time + s; const f = () => window.witch.game.clock.time >= t ? ok() : setTimeout(f, 100); f(); }), s);
