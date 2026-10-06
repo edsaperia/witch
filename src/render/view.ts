@@ -5,7 +5,7 @@ import { RigView, rigOn } from "./rig/rigView";
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
-import { beatTime } from "../rules/beat";
+import { beatAt, beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
@@ -76,7 +76,7 @@ import { inView, overBulge, updateFrustum, viewRect } from "./view/culling";
 import { checkPops, drawGhosts } from "./view/pops";
 import { refresh } from "./view/scenery";
 import { drawBerries, drawCreatures } from "./view/creatures";
-import { drawMarkers, drawSpeakers, placeTreehouse } from "./view/home";
+import { DJ_DEPTH, drawMarkers, drawSpeakers, nearerCamera, placeTreehouse } from "./view/home";
 import { setLights, updateSources } from "./view/lights";
 import { setOverlayTilt } from "./overlayTilt";
 
@@ -861,7 +861,7 @@ export class View {
     this.strings.update();
     this.borders.update();
     // A point on the treehouse's sprite (its pixels) in the world, standing on its spot.
-    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle), U2 = SPRITE_UNIFORMS;
+    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle, time), U2 = SPRITE_UNIFORMS;
     const onTreehouse = (px: number, py: number) => {
       const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
       return { x: at.x + r.x * dx + u.x * dy, y: at.y + r.y * dx + u.y * dy, z: at.z + r.z * dx + u.z * dy };
@@ -957,22 +957,24 @@ export class View {
     const sdt = Math.min(0.1, Math.max(0, ht - this.seatTime));
     this.seatTime = ht;
     this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
-    let wx = w.x, wz = w.z, wyy = wy;
+    let wx = w.x, wz = w.z, wyy = wy, djUpper = -1;
     // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
     { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
       const cam = onTreehouse(T.camera.x, T.camera.y);
       g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
-      const fwd = this.camera.getWorldDirection(this.v3);
-      wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
+      // (a touch nearer the camera than the house, along the ray to it, so she lands on the seat's own pixel: render/view/home.ts)
+      const near = nearerCamera(this, seat, DJ_DEPTH.her);
+      wx += (near.x - wx) * k; wyy += (near.y - wyy) * k; wz += (near.z - wz) * k;
       if (w.seated) {
-        // Behind the decks (Ed, 2026-10-06): standing, waiting for the party spell; casting it, her arms up over her hat
-        // (the liftSigil pose, through once over the cast) in a burst of sparkles; in a game without the spell, sitting.
-        const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST;
-        if (casting) { const n = F.liftSigil.towards.length; wf = F.liftSigil.towards[Math.min(n - 1, Math.floor(((time - sp!) / PARTY_CAST) * n))]; }
-        else if (sp === undefined) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
-        else wf = F.stand.towards[Math.floor(time * F.stand.fps) % F.stand.towards.length];
+        // Behind the decks (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"):
+        // facing us, DJing on the beat clock (a gesture a bar: art/witch.js djFrame), her upper half drawn again over the DJ
+        // table so her hands are on the decks; casting the party spell, both hands up in a burst of sparkles; in a game
+        // without the spell, sitting.
+        const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST, Dj = this.assets.witchDj;
+        if (sp === undefined || !Dj.full.length) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
+        else { const j = this.assets.djFrame(beatAt(g.beat, time), casting); wf = Dj.full[j]; djUpper = Dj.upper[j]; }
         if (typeof sp === "number" && sp !== this.castSeen) { this.castSeen = sp; this.spellFx.partyBurst(wx, wyy, wz, sp); }
       }
     }
@@ -1008,7 +1010,11 @@ export class View {
     this.stateMarks.update(g, time, this.leashView.tops);
     this.inviteView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
-    const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink, y: wyy + groundHeight(wx, wz) - U.y * wsink, z: wz - U.z * wsink, frame: wframe, flip: wflip }];
+    // Behind the decks her frame stands with its ground anchor on the seat (not its box's middle), so her hands land on the decks;
+    // her upper layer goes over the DJ table, nearer the camera along the same ray.
+    const wcen = djUpper >= 0 && wg ? (wg.x - wframe.w / 2) * this.mpp : 0;
+    const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink - R.x * wcen, y: wyy + groundHeight(wx, wz) - U.y * wsink - R.y * wcen, z: wz - U.z * wsink - R.z * wcen, frame: wframe, flip: wflip }];
+    if (djUpper >= 0 && her.length) { const b = her[0], up = nearerCamera(this, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
     const hatFrame = bare ? this.assets.witchBare().frames[this.assets.witchHatFrame] : undefined;
     { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
       const LV = this.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && this.foot < 0.05 && !this.partyWitchView.herIdle;

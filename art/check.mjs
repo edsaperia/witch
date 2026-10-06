@@ -308,6 +308,27 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "treehouse: towards and away, 28 to 40 m, its top storey above the 24 m treetops; its giant tree's trunk 5 m+ across and crown 11 m+; fore (the DJ table) part of the whole; top + bottom = whole, the studio below the split; windows glow; anchors inside; the seat on the studio floor, the camera over it", good: !bad.length, info: bad.join("; ") || info });
   }
+  { // the DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): the DJ
+    // table's fore frames (DJ_FRAMES of them, one size, each different: the platters turning, the LEDs chasing; the first is the
+    // whole's own table); her DJ frames, facing us, every gesture's frames different, each with an upper layer (what's over the
+    // decks: her head and arms, none of her legs); stood with her ground anchor on the seat, every hand meant for the decks lands
+    // on the decks' pixels (not the desk's front or the room behind); djFrame plays every gesture over the set, two frames a beat
+    const bad = [], T = G.treehouseSprite(st), FF = T.foreFrames, key = sp => Array.from(sp.m).join(), seat = T.anchors.seat;
+    if (FF.length !== G.DJ_FRAMES || new Set(FF.map(f => f.w + "x" + f.h)).size !== 1 || new Set(FF.map(key)).size !== FF.length) bad.push("fore frames");
+    { const f0 = FF[0]; for (let y = 0; y < f0.h; y++) for (let x = 0; x < f0.w; x++) { const v = f0.m[y * f0.w + x]; if (v && T.fore.m[(y + T.foreBox.y) * T.fore.w + x + T.foreBox.x] !== v) { bad.push("fore frame 0 not the table"); y = f0.h; break; } } }
+    const DECK = new Set([G.M.SHADES, G.M.BODY3, G.M.COLLAR, G.M.RUNE, G.M.BELLY, G.M.FRAME, G.M.WOKEN]), onDeck = (x, y) => { const f0 = FF[0]; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = Math.round(x) - T.foreBox.x + dx, Y = Math.round(y) - T.foreBox.y + dy; if (X >= 0 && Y >= 0 && X < f0.w && Y < f0.h && DECK.has(f0.m[Y * f0.w + X])) return true; } return false; };
+    const P = G.WITCH_FOOT_POSES.dj, frames = [], deckHands = [0, 1, 4, 5, 6, 7, 8, 9];
+    for (let f = 0; f < P.frames; f++) {
+      const sp = G.witchSprite(st, { pose: "dj", frame: f }), up = sp.upper, n = sp.m.filter(Boolean).length, nu = up ? up.reduce((a, v) => a + v, 0) : 0; frames.push(key(sp));
+      let lowUp = 0; if (up) for (let i = 0; i < up.length; i++) if (up[i]) lowUp = Math.max(lowUp, Math.floor(i / sp.w));
+      if (!up || nu < n * .3 || nu > n * .9 || lowUp > sp.anchors.ground[1] - 8) bad.push(`dj ${f}: upper ${nu} of ${n}, lowest row ${lowUp}`);
+      if (deckHands.includes(f)) { const hx = seat.x - sp.anchors.ground[0] + sp.anchors.hand[0], hy = seat.y - sp.anchors.ground[1] + sp.anchors.hand[1]; if (!onDeck(hx, hy)) bad.push(`dj ${f}: hand off the decks (${hx.toFixed(1)}, ${hy.toFixed(1)})`); }
+    }
+    for (const fr of Object.values(G.DJ_GESTURES)) if (frames[fr[0]] === frames[fr[1]]) bad.push(`dj ${fr}: frames alike`);
+    const played = new Set(); for (let b = 0; b < 48 * 4; b += .25) played.add(G.djFrame(b)); for (const [gname, fr] of Object.entries(G.DJ_GESTURES)) if (gname !== "cast" && !fr.every(f => played.has(f))) bad.push(`djFrame never plays ${gname}`);
+    if (!G.DJ_GESTURES.cast.includes(G.djFrame(3.2, { cast: true }))) bad.push("djFrame cast");
+    res.push({ what: "DJ booth: the table's fore frames turn (one size, each different, the first the whole's table); her DJ frames facing us, every gesture's frames different, each with an upper layer (head and arms, no legs); her deck hands on the decks' pixels; djFrame plays every gesture", good: !bad.length, info: bad.join("; ") || `${FF.length} fore frames ${FF[0].w}x${FF[0].h}, ${P.frames} DJ frames` });
+  }
   { const H = G.soundsystemHeight(st), ws = G.witchSprite(st);
     for (let v = 0; v < G.SOUNDSYSTEMS.length; v++) {
       const play = [0, 1, 2].map(frame => stats(G.soundsystemSprite(st, { variant: v, frame }))), dmg = [0, 1].map(frame => stats(G.soundsystemSprite(st, { variant: v, frame, state: "damaged" }))), dead = stats(G.soundsystemSprite(st, { variant: v, state: "destroyed" }));
