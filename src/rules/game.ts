@@ -628,11 +628,12 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
 /** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and
  *  dances there, at a party place in the first free slot round it (guestSlot, guestGap: by the guests already there). */
 export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
+  c.circle = undefined; // (a legend's clearing's baby at the party: it keeps to its circle no more)
   const spot = guestSpot(c, soundsystem, partySpots(g.map, cell, g.tuning));
   if (spot.kind === "soundsystem") { danceAt(c, spot, spot.r); return; }
-  // the guests already round this place, and their slots
+  // the guests already dancing in this area, and their slots (any place's: two places' rows can meet)
   const taken: Creature[] = [], body = bodyRadius(c);
-  for (const o of g.creatures) if (o !== c && o.dancing && !o.gone && o.range <= SLOT_RANGE && o.cell[0] === cell[0] && o.cell[1] === cell[1] && Math.hypot(o.anchorX - spot.x, o.anchorZ - spot.z) < spot.r + 12) taken.push(o);
+  for (const o of g.creatures) if (o !== c && o.dancing && !o.gone && o.range <= SLOT_RANGE && o.cell[0] === cell[0] && o.cell[1] === cell[1]) taken.push(o);
   // the first free slot in its area (the far row's, a second row, then the near row's, for a place by its area's edge);
   // else (the place full) by the soundsystem, never piled up
   const free = (p: { x: number; z: number }) => { const cl = g.map.cellSafe(p.x, p.z).cell; return cl[0] === cell[0] && cl[1] === cell[1] && taken.every(o => Math.abs(o.anchorX - p.x) > guestGap(bodyRadius(o), body) || Math.abs(o.anchorZ - p.z) > GUEST_DEPTH); };
