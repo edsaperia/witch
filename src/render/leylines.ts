@@ -130,6 +130,9 @@ export class LeyLines {
     this.meshes = [...this.cur.meshes, ...this.old.meshes];
   }
 
+  /** The line's brightness times k (the mood's leyBright). */
+  scale(k: number): void { this.u.uBright.value = this.T.brightness * BRIGHT * k; }
+
   private makeSet(): LeySet {
     const geo = new THREE.BufferGeometry(), reveal = new THREE.Vector4(0, 1, -1, 1), current = { value: 0 }, onlyFirst = { value: 0 };
     const make = (glow: boolean, order: number) => {

@@ -23,6 +23,7 @@ import { Input } from "./platform/input";
 import { View } from "./render/view";
 import { groundHeight } from "./render/height";
 import { SPRITE_UNIFORMS } from "./render/sprites";
+import { LIGHT_UNIFORMS } from "./render/lighting";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
 import { CHANGELOG_VERSIONS } from "./changelog";
@@ -165,6 +166,7 @@ const world = { ...WORLD_DEFAULT };
   try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
 }
 
+if (params.get("props") === "gen") tuning.paths = { ...tuning.paths, fingerposts: true }; // ?props=gen: fingerposts where footpaths come into a clearing (placed with the map, so set before it is made)
 const game = newGame(seed, tuning);
 // ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
 // species twice stacks it). ?buffs=all: every one.
@@ -586,4 +588,4 @@ function powerLines(): string[] {
   /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
   lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
-  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };
+  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };

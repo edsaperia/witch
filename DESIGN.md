@@ -145,6 +145,14 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 | Holly thicket | dead leaves | holly hedges | cobwebs | hollies | a web-hung dead tree | Spider | draft |
 | Honeysuckle tangle | grass and clover | bramble | honeysuckle | hazel coppice | | Dormouse | draft |
 
+### Area types from recipes (#119)
+
+Area types after the first 30 are written as **recipes**: one object of data each (`art/recipes/`), with no code (see the glossary in CLAUDE.md). The first, the proof that the tools are enough:
+
+| Area | Floor | Wall | Small | Big | Set piece | Creature | By |
+|---|---|---|---|---|---|---|---|
+| Fen | peat moss and sedge | black pools | sedge and reeds | aspen and alder carr | a punt sunk among the sedge | Newt | recipe |
+
 ## Combat, pacing and forecasting (Ed, 2026-10-04)
 
 Decided in a long design session with the coordinator; built in stages, with a playable release after each (quick, easy things first, the creature menagerie last).

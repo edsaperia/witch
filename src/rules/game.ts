@@ -8,7 +8,7 @@ import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } 
 import { MAX_STEP, newClock, type Clock } from "./clock";
 import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
-import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
+import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
 import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
@@ -94,6 +94,8 @@ export interface Game {
   /** This frame's wave events (several steps' worth, or none): a soundsystem lost brings the next
    *  wave sooner (Ed, 2026-10-05), with the countdown it leaves, for the HUD and the music. */
   waveEvents: WaveEvent[];
+  /** This frame's leash events (several steps' worth, or none), for the view: `leash.events` holds only the last step's. */
+  leashEvents: LeashEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
   /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
@@ -166,7 +168,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
     acc: 0, alpha: 1, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   const d = map.dancefloor, C = tuning.combat;
@@ -187,7 +189,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.zoom) P.zoom = c.zoom;
   if (g.clock.paused || !(realDt > 0)) return;
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
-  g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = [];
+  g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = []; g.leashEvents = [];
   for (const w of g.witches) w.invites.events = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
   while (g.acc >= STEP - 1e-9) {
@@ -368,6 +370,7 @@ function fixedStep(g: Game, controls: Controls): void {
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
   // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
   for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }
+  g.leashEvents.push(...g.leash.events);
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
