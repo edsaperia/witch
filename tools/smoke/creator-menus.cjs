@@ -4,7 +4,7 @@
 // the broom...) checking each opens its box; screenshots and a GIF. Run after `npm run build`; writes previews/menus/.
 const { spawn, execFileSync } = require("child_process"), path = require("path"), fs = require("fs");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
-const root = path.join(__dirname, "../.."), out = path.join(root, "previews/menus"), frames = path.join(out, "frames");
+const root = path.join(__dirname, "../.."), out = path.join(root, "previews/menus"), frames = path.join(require("os").tmpdir(), "witch-menus-frames"); // (the GIF's frames, outside the repository)
 (async () => {
   fs.rmSync(frames, { recursive: true, force: true }); fs.mkdirSync(frames, { recursive: true });
   const server = spawn("npx", ["vite", "preview", "--port", "4183", "--strictPort"], { cwd: root, stdio: "ignore" });
