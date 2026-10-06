@@ -60,6 +60,9 @@ export class Mist {
     this.mesh.renderOrder = 2;
   }
 
+  /** Its strength now (the mood's, area by area: render/mood.ts AreaMoods). */
+  setStrength(s: number): void { this.mat.uniforms.uStrength.value = s; }
+
   /** Keep the mist round the camera's view. */
   follow(x: number, z: number): void { this.mesh.position.set(x, this.height, z - 150); }
 }
