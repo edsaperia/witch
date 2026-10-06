@@ -12,16 +12,16 @@ export const PROP_GENOMES = {
     lean: [-.2, .2], tilt: [-.08, .08], // radians: sideways (in the picture) and towards us
     top: [["slant", 3], ["round", 1], ["notch", 2], ["flat", 2], ["broken", 2]], // its top: cut on a slant (a third of its width or more), rounded, a deep V notch, flat (a square slab), or snapped off (a piece lying beside it)
     shape: [["tall", 3], ["squat", 1]], // a squat slab: about .7 as tall, 1.45 times as wide (up to about 1.8 m wide at 3 m tall), so a ring of them has rhythm
-    lichen: [0, 3], lichenSize: [.1, .2], moss: [.06, .16], // big lichen patches, not speckle; moss up its foot (a share of its height)
+    lichen: [0, 2], lichenSize: [.1, .18], moss: [.06, .16], // big lichen patches, not speckle; moss up its foot (a share of its height)
     rough: 0, // smooth faces: Ed's notes said "much less textured"
-    colour: { stone: [.6, .12, .66], dark: [.65, .14, .4], lichen: [[.22, .14, .76, 4], [.1, .4, .7, 1]], moss: [.24, .45, .38], spread: .06 },
+    colour: { stone: [.61, .16, .66], dark: [.65, .18, .4], lichen: [[.2, .08, .78, 4], [.1, .35, .7, 1]], moss: [.24, .45, .38], spread: .06 }, // a touch of blue against the warm key light (the art director, #142)
   },
   cairn: {
     stones: [7, 11], spread: [1.2, 1.7], height: [.85, 1.3], size: [.3, .44], flat: [.5, .7], // stacked as a cone (spread under twice its height); stone radius (m), how flat each is
     slab: [["none", 2], ["one", 3], ["two", 1]], // leaning slabs against it
     rubble: [3, 7], moss: [.15, .4], // loose stones round its foot; the share of stones mossed on top
     rough: .03,
-    colour: { stone: [.6, .12, .64], dark: [.65, .14, .4], lichen: [[.22, .14, .76, 1]], moss: [.24, .45, .38], spread: .07 },
+    colour: { stone: [.61, .16, .64], dark: [.65, .18, .4], lichen: [[.2, .08, .78, 1]], moss: [.24, .45, .38], spread: .07 },
   },
   pool: {
     radius: [.7, 1.35], aspect: [.5, .85], // across (m); how deep it reaches into the picture, times across

@@ -9,6 +9,7 @@ import { M, Sprite, hsv2rgb, hash2, rng } from "../core.js";
 import { Model, render, v3 } from "../model3d.js";
 import { witchPixelsPerUnit, cleanFlecks } from "../witch.js";
 import { PROP_GENOMES } from "./genomes.js";
+import { groundColours } from "../ground.js";
 
 const PR_U = 1 / 1.9; // model units a metre (the witch's model is about 1.9 m a unit)
 const prPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
@@ -93,7 +94,7 @@ function prPool(m, v) {
   const mask = (s, t) => { // s across, t into the picture, both -1..1 over the prPool and its rim
     const a = Math.atan2(t, s), d = Math.hypot(s, t) / (1 + v.wobble + rimW), e = shore(a) / (1 + v.wobble + rimW);
     if (d > e + rimW / (1 + v.wobble + rimW)) return undefined;
-    if (d > e) return v.rimKind === "moss" ? M.MOSS : M.BARK2;
+    if (d > e) return v.rimKind === "moss" ? M.MOSS : d > e + rimW / (1 + v.wobble + rimW) * .5 ? M.BODY : M.BARK2; // mud: the ground's darker tone inside, its own tone outside
     if (glints.some(([gx, gy, gr]) => Math.abs(s - gx) < gr * 1.4 && Math.abs(t - gy) < gr * .5)) return M.GLINT; // glowing, so the stylisation leaves them be
     return d < e * .55 ? M.BODY2 : M.WATER;
   };
@@ -153,11 +154,14 @@ function prCrop(sp) {
 }
 // A colour from the genome: [h, s, v] jittered by the variant's spread (a list of [h, s, v, weight] picks one).
 function prTone(c, r, k) { if (Array.isArray(c[0])) c = prPick(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
-function prColours(kind, v, def, o) {
+function prColours(kind, v, def, o, st = {}) {
   const G = PROP_GENOMES[kind], C = { ...G.colour, ...(o.bog && G.bog ? G.bog : {}) }, r = rng((v.seed * 7919 + 13) >>> 0), k = C.spread, leaf = def?.leaf ?? .26;
   const grass = { [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.LEAF3]: hsv2rgb(leaf + .02, .5, .4), [M.LINE]: [24, 22, 30] };
   if (kind === "standingStone" || kind === "cairn") { const dark = prTone(C.dark, r, k); return { ...grass, [M.STONE]: prTone(C.stone, r, k), [M.STONED]: dark, [M.BELLY]: prTone(C.lichen, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), ...(kind === "cairn" ? { [M.LINE]: dark.map(c => c * .75) } : {}) }; } // a cairn's cracks in its stones' own dark
-  if (kind === "pool") return { ...grass, [M.WATER]: prTone(C.water, r, k), [M.BODY2]: prTone(C.deep, r, k), [M.GLINT]: prTone(C.glint, r, k * .5), [M.BARK2]: prTone(C.mud, r, k), [M.MOSS]: prTone(C.moss, r, k), [M.LEAF]: prTone(C.reed, r, k), [M.LEAF2]: prTone(C.reed2, r, k), [M.TRUNK]: prTone(C.cattail, r, k), [M.STONE]: prTone(C.stone, r, k), [M.LEAF3]: prTone(C.pad, r, k) };
+  if (kind === "pool") { // its shore in the area's own ground (art/ground.js: the mud its darker and own tones, the moss its moss), so it meets the floor tile
+    const g = def?.floor ? groundColours(def, st) : null;
+    return { ...grass, [M.WATER]: prTone(C.water, r, k), [M.BODY2]: prTone(C.deep, r, k), [M.GLINT]: prTone(C.glint, r, k * .5), [M.BARK2]: prTone(C.mud, r, k), [M.MOSS]: prTone(C.moss, r, k), [M.LEAF]: prTone(C.reed, r, k), [M.LEAF2]: prTone(C.reed2, r, k), [M.TRUNK]: prTone(C.cattail, r, k), [M.STONE]: prTone(C.stone, r, k), [M.LEAF3]: prTone(C.pad, r, k), ...(g ? { [M.BARK2]: g[M.BODY2], [M.BODY]: g[M.BODY], [M.MOSS]: g[M.MOSS] } : { [M.BODY]: prTone(C.mud, r, k).map(c => Math.min(255, c * 1.15)) }) };
+  }
   return { ...grass, [M.TRUNK]: prTone(C.wood, r, k), [M.BARKD]: prTone(C.dark, r, k), [M.BARKL]: prTone(C.light, r, k), [M.BELLY]: prTone(C.pale, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.FLOWER]: prTone(C.fungus, r, k) };
 }
 // One generated prop. o: { seed, bog (a pool's), and any of its genome's numbers to fix }; def: the area (its leaf hue for grass).
@@ -166,13 +170,19 @@ export function propPiece(kind, o = {}, def = null, st = {}, ppm = 16) {
   if (kind === "standingStone") { v.lichenMat = M.BELLY; if (o.lead) { v.shape = "tall"; v.height = Math.max(v.height, 5.2); v.lean *= .5; if (v.top === "broken" || v.top === "notch") v.top = "flat"; } } // lead: an area's first stone stands tall and whole (the moor's something 4 m tall)
   const m = new Model({ blend: kind === "brokenTrunk" ? .06 : .035 });
   PR_BUILD[kind](m, v);
-  const sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp);
+  let sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp);
+  if (kind === "pool") { // its shore breaks into the floor: the outermost rim pixels (touching nothing) dropped in 2 x 1 clusters, by hash (agreed with art builder 1, #156)
+    const rim = new Set([M.BODY, M.BARK2, M.MOSS]), at = (x, y) => x < 0 || y < 0 || x >= sp.w || y >= sp.h ? 0 : sp.m[y * sp.w + x], drop = [];
+    for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const m0 = at(x, y); if (!rim.has(m0) || (at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1))) continue; if (hash2(x >> 1, y, v.seed + 77) < .5) drop.push(y * sp.w + x, y * sp.w + (x ^ 1)); }
+    for (const i of drop) if (rim.has(sp.m[i])) sp.m[i] = 0;
+    sp = prCrop(sp); // (thinned, it may have lost its bottom row)
+  }
   cleanFlecks(sp); // no lone pixels or stray line dots (docs/ART-GUIDE.md: clusters, not noise)
   // a pool's water lit as a level surface at a grazing light, so every style gives it its base tone (the light tone's shift toward
   // yellow turned the teal moss-green in bold and ref: the art director, #142) and its value stays well apart from its rim
   if (kind === "pool") { const wn = [.3, .2, .93], l = Math.hypot(...wn); for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.WATER || sp.m[i] === M.BODY2) sp.n.set(wn.map(c => c / l), i * 3); }
   const { r, ...variant } = v;
-  return { sp, colours: prColours(kind, v, def, o), metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) }, variant };
+  return { sp, colours: prColours(kind, v, def, o, st), metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) }, variant };
 }
 // Which generated kind (and fixed numbers) stands in for one of the areas' hand-made props under ?props=gen, or null.
 export function propFor(kind, o = {}) {
