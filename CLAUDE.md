@@ -11,6 +11,7 @@ The playable game is a static site on GitHub Pages, served from the `gh-pages` b
 - a push or merge to `main` builds the game and publishes it at the site's root, https://edsaperia.github.io/witch/ — **merging to `main` deploys**;
 - each pull request from this repository is built and published under `/pr-<number>/` (https://edsaperia.github.io/witch/pr-<number>/), and the workflow comments that link on the PR; closing the PR removes it;
 - documents-only changes still rebuild and republish the same game (no `docs` lane yet).
+- many deploys at once are fine: each writes only its own folder (main the root, a PR its `pr-<number>/`), and one whose push to `gh-pages` is beaten fetches the newer branch and tries again (up to ten times).
 
 Pages must be switched on once in the repository's settings (Source: *Deploy from a branch*, `gh-pages`, `/ (root)`); until then the links return 404. A deploy is verified by opening the link and checking the seed and the game load.
 
