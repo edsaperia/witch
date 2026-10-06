@@ -101,7 +101,7 @@ export const PITCH = .52;                       // the camera looks down about 3
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
 // With `measure`, it only works out the scale (pixels per unit) `height` would give: { s }.
-export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false } = {}) {
+export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
   if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true }).s); }
@@ -212,7 +212,13 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   sp.bodyH = Math.round((u1b - u0b) * s); // the body's height, without parts marked extra (antlers, wings)
   // where a point of the model lands on the sprite, in pixels from its top-left (for anchors: a hand, a hat tip)
   const project = p => { const w = toWorld(p); return [+(((w[0] - X0) * s + 1).toFixed(1)), +(((U1 - dot(w, U)) * s + drop).toFixed(1))]; };
-  return { sp, s, project };
+  if (!keepDepth) return { sp, s, project };
+  // keepDepth (the bedroom, for whatever walks in it): each pixel's distance along the view (moved down with the rows, Infinity
+  // where empty), and depthOf, the same distance for a point of the model, to compare with it
+  const zbuf = new Float32Array(W * H).fill(Infinity);
+  for (let y = H - 1; y >= drop; y--) zbuf.set(depth.subarray((y - drop) * W, (y - drop + 1) * W), y * W);
+  const depthOf = p => 50 - dot(toWorld(p), B);
+  return { sp, s, project, depth: zbuf, depthOf };
 }
 
 // Paint helpers: a pattern from model coordinates.

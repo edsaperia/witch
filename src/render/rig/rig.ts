@@ -88,6 +88,10 @@ export class RigBody {
   private init = false;
   x = 0; z = 0; heading = 0; speed = 0; accel = 0; turn = 0; phase = 0;
   private headOff = 0; private sway = 0; private weave = 0; private laid = false;
+  /** Each leg's foot where it was put down (world x, z from the creature's place's origin), while it's planted. */
+  private plant = new Float32Array(8); private planted = new Uint8Array(4);
+  /** Each foot as drawn this frame: world x, z, and 1 while it's planted (for measuring slide). */
+  readonly feet = new Float32Array(12);
   readonly tail = new Float32Array(9);
   readonly spine = new Float32Array(N_SPINE * 3);
   // the point last put in the world (world()): metres from the creature's place
@@ -121,8 +125,10 @@ export class RigBody {
     const { i, flip, a } = rigDirection(this.heading), len = Math.max(0.3, m.len) * 2, legLen = m.legs.length ? Math.hypot(m.legs[0].hip[0] - m.legs[0].foot[0], m.legs[0].hip[1] - m.legs[0].foot[1]) : 0.6;
     // the gait: the cycle's clock by stride, its duty factor by speed (body lengths a second)
     const v = this.speed / u2m, bodies = v / len, duty = drive.charging ? 0.3 : dutyFactor(bodies), stride = Math.min(legLen * 0.9, 0.25 + v * 0.18);
-    if (v > 0.05) this.phase += (dt * v * duty) / Math.max(0.05, stride) / 2;
     const go = Math.min(1, v / 0.4); // how much it's walking (feet step) vs standing (feet under the hips)
+    // the cycle runs by distance, not time: a planted foot sweeps back one stride (stride × go) in the share `duty` of a cycle,
+    // as far as the body goes in that time, so the stride matches its speed over the ground and stops when it stops
+    if (v > 0.05) this.phase += (dt * v * duty) / Math.max(0.05, stride * Math.max(0.25, go));
     // lean, crouch, stretch: the head runs ahead into acceleration and the body sinks when braking or crouching
     const acc = Math.max(-1, Math.min(1, this.accel / u2m / 6));
     this.headOff += ((drive.charging ? 0.14 : 0) + acc * 0.08 - this.headOff) * Math.min(1, dt * 8);
@@ -135,30 +141,45 @@ export class RigBody {
     this.sway += (Math.max(-1, Math.min(1, -this.turn * 0.35)) * (drive.charging ? 0.3 : 1) - this.sway) * Math.min(1, dt * 5);
     at(m.tail[i], m.tailAt[0], m.tailAt[1] + bodyY, m.tailAt[2] + this.sway * 0.25 * (flip ? -1 : 1), a > 0.1 ? -0.05 : 0.05); // behind, unless walking away
     // the legs: each foot on its own phase (a trot: diagonal pairs together), IK to the knee, bones as discs
-    for (const L of m.legs) {
-      const [fwd, lift] = footCycle(this.phase + (TROT[L.name] ?? 0), duty);
+    for (let k = 0; k < m.legs.length; k++) {
+      const L = m.legs[k], [fwd, lift] = footCycle(this.phase + (TROT[L.name] ?? 0), duty);
       const hipY = L.hip[1] + bodyY, tuck = drive.air * legLen * 0.45;
       const tapping = L.fore && drive.tap ? (drive.tap > 0) === (L.side > 0) ? Math.abs(drive.tap) * (1 - go) : 0 : 0; // its shoe tapping while it stands
-      const fx = L.foot[0] + fwd * stride * go + (drive.charging && !L.fore ? -0.08 : 0), fy = L.foot[1] + lift * 0.14 * go + tuck + tapping * 0.09;
+      let fx = L.foot[0] + fwd * stride * go + (drive.charging && !L.fore ? -0.08 : 0), fy = L.foot[1] + lift * 0.14 * go + tuck + tapping * 0.09;
+      const z = L.hip[2]; let fz = z;
+      // planted: a foot on the ground stays where it was put down (in the world) while the body goes on over it; lifted, it swings
+      // to its next place. (Not in the air or tapping, and only while walking: standing, the feet settle under the hips.)
+      const stance = k < 4 && lift === 0 && go > 0.05 && !drive.air && !tapping;
+      if (stance) {
+        if (!this.planted[k]) { this.world(fx, 0, z, a, flip, u2m); this.plant[k * 2] = this.x + this.wx; this.plant[k * 2 + 1] = this.z + this.wz; this.planted[k] = 1; }
+        else { // the planted spot back in model space for the drawn heading (rigWorld undone): along it and across it
+          const ca = Math.cos(a), sa = Math.sin(a), X = ((flip ? -1 : 1) * (this.plant[k * 2] - this.x)) / u2m, W = (this.plant[k * 2 + 1] - this.z) / u2m;
+          const px = X * ca + W * sa, pz = -X * sa + W * ca;
+          if (Math.abs(px - L.foot[0]) > stride + 0.05 || Math.abs(pz - z) > stride * 0.6 + 0.05) this.planted[k] = 0; // left far behind (a sharp turn, a jump): it lets go and steps
+          else { fx = px; fz = pz; }
+        }
+      } else if (k < 4) this.planted[k] = 0;
+      if (k < 4) { this.world(fx, 0, fz, a, flip, u2m); this.feet[k * 3] = this.x + this.wx; this.feet[k * 3 + 1] = this.z + this.wz; this.feet[k * 3 + 2] = this.planted[k]; }
       const l1 = Math.hypot(L.hip[0] - L.knee[0], L.hip[1] - L.knee[1]), l2 = Math.hypot(L.knee[0] - L.foot[0], L.knee[1] - L.foot[1]);
       const restBend = Math.sign((L.knee[0] - L.hip[0]) * (L.foot[1] - L.hip[1]) - (L.knee[1] - L.hip[1]) * (L.foot[0] - L.hip[0])) || (L.fore ? -1 : 1);
       const [kx, ky, ex, ey] = ik2(L.hip[0], hipY, fx, fy, l1, l2, -restBend);
-      const z = L.hip[2], near = L.side > 0, discs = discLut(m, L.mat);
+      const near = L.side > 0, discs = discLut(m, L.mat);
       const bias = near ? 0.02 : -0.02;
-      this.bone(discs, L.hip[0], hipY, kx, ky, z, L.r[0] * 0.8, L.r[1], a, flip, u2m, m.s, bias, out);
-      this.bone(discs, kx, ky, ex, ey, z, L.r[1], L.r[2], a, flip, u2m, m.s, bias, out);
+      const kz = (z + fz) / 2; // (the knee halfway across to a foot planted off the hip's line)
+      this.bone(discs, L.hip[0], hipY, kx, ky, z, L.r[0] * 0.8, L.r[1], a, flip, u2m, m.s, bias, out, kz);
+      this.bone(discs, kx, ky, ex, ey, kz, L.r[1], L.r[2], a, flip, u2m, m.s, bias, out, fz);
       const fp = m.shoe?.[i] ?? pickDisc(L.hoof && m.discs[HOOF] ? discLut(m, HOOF) : discs, L.fl * 0.9 * m.s); // a party animal's shoe, else its hoof or paw
-      if (fp) { this.world(ex + L.fl * 0.5, ey, z, a, flip, u2m); out.push(fp, this.wx, this.wy, this.wz, flip, bias + (m.shoe ? 0.01 : 0)); }
+      if (fp) { this.world(ex + L.fl * 0.5, ey, fz, a, flip, u2m); out.push(fp, this.wx, this.wy, this.wz, flip, bias + (m.shoe ? 0.01 : 0)); }
     }
   }
 
   /** A bone from (x0, y0) to (x1, y1) at side z, as discs from radius r0 to r1 (model units). */
-  private bone(discs: (RigPiece | undefined)[], x0: number, y0: number, x1: number, y1: number, z: number, r0: number, r1: number, a: number, flip: boolean, u2m: number, s: number, bias: number, out: RigOut): void {
+  private bone(discs: (RigPiece | undefined)[], x0: number, y0: number, x1: number, y1: number, z: number, r0: number, r1: number, a: number, flip: boolean, u2m: number, s: number, bias: number, out: RigOut, z1 = z): void {
     const len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(2, Math.min(5, Math.ceil((len * s) / Math.max(2, Math.min(r0, r1) * s * 1.1)))); // close enough (in pixels) to read as one limb, no closer, five at most
     for (let k = 0; k <= n; k++) {
       const t = k / n, r = r0 + (r1 - r0) * t, d = pickDisc(discs, r * s);
       if (!d) continue;
-      this.world(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z, a, flip, u2m);
+      this.world(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z + (z1 - z) * t, a, flip, u2m);
       out.push(d, this.wx, this.wy, this.wz, flip, bias);
     }
   }
