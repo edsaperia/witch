@@ -4,7 +4,7 @@
     {
       "id": "style", "label": "Pixel style", "note": "How every sprite is baked: as before, bold (3 hue-shifted tones, a selective outline) or ref (one tone family, a near-black outline).",
       "control": { "type": "choice", "options": [{ "value": "now", "label": "As now" }, { "value": "bold", "label": "Bold" }, { "value": "ref", "label": "Ref" }] },
-      "default": "now", "apply": { "param": "style", "reload": true }
+      "default": "bold", "apply": { "param": "style", "reload": true }
     },
     {
       "id": "glide", "label": "Camera glide", "note": "What holds still on screen as she flies: the witch (the world lands within half a pixel) or the camera (the world exact, her a pixel either way).",
@@ -30,6 +30,46 @@
       "id": "legendFlash", "label": "Legend hit flash", "note": "How big and long a legend's blow flashes (0: like anyone's, 0.5: twice, 1: three times).",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
       "default": 0.5, "apply": { "knob": "attackFx.legendFlash" }
+    },
+    {
+      "id": "chargeReach", "label": "Charge length", "note": "How far charges run (their time and overshoot past her), times each species' own: 1 as before round 13, 2 now.",
+      "control": { "type": "slider", "min": 1, "max": 3, "step": 0.25 },
+      "default": 2, "apply": { "knob": "fight.charge.reach" }
+    },
+    {
+      "id": "chargeTurn", "label": "Charge turning", "note": "How fast a charger turns as it brakes, times each species' own: lower is wider arcs (1 as before, 0.4 now).",
+      "control": { "type": "slider", "min": 0.2, "max": 1, "step": 0.1 },
+      "default": 0.4, "apply": { "knob": "fight.charge.turn" }
+    },
+    {
+      "id": "chargeBrake", "label": "Charge momentum", "note": "How hard a charger brakes after its run, times each species' own: lower carries more momentum (1 as before, 0.5 now).",
+      "control": { "type": "slider", "min": 0.2, "max": 1, "step": 0.1 },
+      "default": 0.5, "apply": { "knob": "fight.charge.brake" }
+    },
+    {
+      "id": "chargeContact", "label": "Charges hurt on touch", "note": "A charging creature hurts every foe it touches on the way (once each), not only its target as it reaches it.",
+      "control": { "type": "toggle" },
+      "default": true, "apply": { "knob": "fight.charge.contact" }
+    },
+    {
+      "id": "leapReach", "label": "Leap length", "note": "How far off a creature leaps from, times its own (1 as before, 1.5 now); pounces land through metres past her.",
+      "control": { "type": "slider", "min": 1, "max": 2.5, "step": 0.25 },
+      "default": 1.5, "apply": { "knob": "fight.leap.reach" }
+    },
+    {
+      "id": "leapThrough", "label": "Pounce carry-through (m)", "note": "Metres past her a pounce lands (the lynx's); less than 0, short of her (-1.5 before round 13).",
+      "control": { "type": "slider", "min": -1.5, "max": 10, "step": 0.5 },
+      "default": 5, "apply": { "knob": "fight.leap.through" }
+    },
+    {
+      "id": "daze", "label": "Downed stun (s)", "note": "Seconds a wild creature knocked down in a fight lies stunned (she can still invite it) before it runs off home (8 before round 13; Ed: 20).",
+      "control": { "type": "slider", "min": 4, "max": 30, "step": 1 },
+      "default": 20, "apply": { "knob": "combat.daze" }
+    },
+    {
+      "id": "pursue", "label": "Chase past their area (m)", "note": "How far past its area's edge a wild animal chases her (or her party) before it gives up and retreats home (10 before round 13; Ed: 30).",
+      "control": { "type": "slider", "min": 0, "max": 80, "step": 5 },
+      "default": 30, "apply": { "knob": "combat.leaveArea" }
     }
   ]
 }

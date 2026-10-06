@@ -65,6 +65,7 @@ export interface Tuning {
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
   /** ?bare=1 or 2 (not in the file): the terrain on its own (render/view.ts). */
   bare?: number;
+  smoke: { on: boolean; rate: number; life: number; rise: number; speed: number; size: number; grow: number; drift: number; opacity: number; warm: number; pixel: boolean; perFire: number; maxFires: number; range: number };
   sky: { on: boolean; stars: number; moon: number;
     /** Real clouds over the forest (render/clouds.ts): how many (about, per screenful of sky), altitude (m over the ground), speed (m/s drift), opacity, partyGlow (their undersides in the party's colours). */
     clouds: { count: number; altitude: number; speed: number; opacity: number; partyGlow: number };
@@ -76,10 +77,14 @@ export interface Tuning {
   /** Spells (Ed, 2026-10-04): the one equipped this run, and each spell's numbers. speed: her speed times mult for duration seconds, then cooldown seconds to recharge. */
   /** Combat (Stage 4; the attacks are data in config/combat.json): see config/tuning.json's _combat. */
   /** The fight's scale and speed (Ed's motion scale pass): lengths and speeds in a fight times these. */
-  fight: { scale: number; speed: number; momentum: number };
+  fight: { scale: number; speed: number; momentum: number;
+    /** Every charge scaled (Ed, 2026-10-06): its run's time and overshoot, its turn rate, its braking; contact: it hurts whoever it touches on the way, once each. */
+    charge: { reach: number; turn: number; brake: number; contact: boolean };
+    /** Every leap: from how far off (times its `to`), landing through metres past its target; contact: a low pounce hurts whoever it touches in the air. */
+    leap: { reach: number; through: number; contact: boolean } };
   /** How attacks feel on screen (render/attackFeel.ts): the wind-up's crouch, the lunge's stretch, a hit's squash and bounce, a knock-back's tumble. */
   attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number; legendFlash: number };
-  combat: { aggro: number; witchLose: number; leaveArea: number; engage: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number };
+  combat: { aggro: number; witchLose: number; leaveArea: number; engage: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number; /** a retreating wild creature roams again once it's back in its area within this many metres of home */ retreatHome: number; /** seconds a knocked-down wild creature lies stunned before it runs off (Ed, 2026-10-06: 20) */ daze: number };
   /** Parked party animals (at a sigil) guard within radius metres of it (Ed, 2026-10-04). */
   guard: { radius: number };
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
@@ -90,8 +95,9 @@ export interface Tuning {
   knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean };
   /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
    *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
-  dash: { distance: number; gone: number; cooldown: number; buffer: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
+  dash: { distance: number; gone: number; cooldown: number; buffer: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
   spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
+  trail: { on: boolean; ground: number; treetops: number; from: number; curve: number; width: number[]; bright: number; fade: number; grow: number; shrink: number; colourEase: number; sparks: boolean };
   /** Forecasting (Ed, 2026-10-04): symbols round each stone (12 = next; the after-next stone fills afterNext[0]..[1] over the countdown; probable ones flicker 1..probableMax); probable: how many probable stones; radius (m), size (m) of each symbol, height above the canopy in treetop mode. */
   forecast: { symbols: number; probable: number; probableMax: number; afterNext: number[]; radius: number; size: number; flare: number };
   /** Music by proximity (Ed, 2026-10-04): full and clear within nearDist metres of a playing soundsystem, down to floor volume and a muffle Hz low-pass by farDist; clear: the cutoff when near; distort: how much a damaged one nearby is heard; volume: the master; src: an audio file to play, or empty for the built-in loop. */
@@ -122,7 +128,7 @@ export interface Tuning {
     meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; fade: number; murmur: number; clinks: number; clinkEvery: number; balloons: number; squeakEvery: number };
     whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
-  music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; /** The most (dB, as a laptop plays it) the music may fall from by a soundsystem to anywhere far off: checked by tools/music-lab/check.cjs. */ audible: number; clear: number; distort: number; src: string };
+  music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; /** The most (dB, as a laptop plays it) the music may fall from by a soundsystem to anywhere far off: checked by tools/music-lab/check.cjs. */ audible: number; /** A sleeping legend's clearing on the ground (Ed, 2026-10-06): the muffle (Hz), quiet (its share of the volume), ease (seconds), the layer's level, and the clearing's radius where the map has none. */ circle: { muffle: number; quiet: number; ease: number; level: number; radius: number }; clear: number; distort: number; src: string };
   /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): seconds before the first wave's countdown begins. */
   boot: { time: number };
   groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number; sigilClear: number };
@@ -218,6 +224,9 @@ export interface Tuning {
   runeMarkers: { awakeStyle: string; laser: { opacity: number; width: number; length: number }; scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number }; flare: { time: number; light: number } };
   walls: { runs: number[]; runLength: number[]; gateChance: number; rings: number[]; ringStones: number[]; ringRadius: number[]; avenueChance: number; loneChance: number; clumps: number[]; clumpSize: number[]; clumpRadius: number };
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
+  /** Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06): radius metres (or its species' own,
+   *  sized to the legend), a soft edge ring edge metres wide, the legend lying top of the radius toward its far (north) side. */
+  legendClearing: { radius: number; edge: number; top: number; species: Record<string, number> };
   /** Scenes (art/scenes.js): the share of areas that get one (if an unused scene suits them); footprint = farthest piece's authored offset times scale, plus pad metres. */
   scenes: { chance: number; scale: number; pad: number };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };

@@ -22,8 +22,37 @@ function pickWeighted(w: number[], seed: number): number {
   return Math.max(0, w.length - 1);
 }
 
-/** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed. */
+/** A rebuild under way, for each view: the rest of it, a part each frame. */
+const jobs = new WeakMap<View, { run: Generator<void, void, void>; frames: number }>();
+
+/** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed: a slice of
+ *  at most SLICE_MS a frame (the trees, then the undergrowth, walls, set pieces and the rest, then
+ *  each kind's batch handed its list, nearest first), so no frame takes the whole of it (Ed,
+ *  2026-10-06: a rebuild was 5 ms on average and up to 11, the biggest spike left late in a run).
+ *  Each batch keeps its old list until its new one is ready. A rebuild under way is finished at
+ *  once when another is already due (she has flown, turned or zoomed on past what it was listed
+ *  for: slow frames, like the software renderer's, cover a lot of ground each) or after MAX_FRAMES,
+ *  so what it lists is never older than an unsliced rebuild's would be by much. `force`: all of it now. */
 export function refresh(v: View, force = false): void {
+  // Below SLICE_FPS a frame covers so much flight that a rebuild spread over frames would be
+  // stale when handed over (pops): then it's done whole, as it always was.
+  const whole = force || (v.budget.fps > 0 && v.budget.fps < SLICE_FPS), job = jobs.get(v);
+  if (job) {
+    if (!whole && !due(v) && ++job.frames < MAX_FRAMES) { if (job.run.next().done) jobs.delete(v); return; }
+    while (!job.run.next().done);
+    jobs.delete(v);
+  }
+  const d = due(v);
+  if (!d && !force) return;
+  const run = rebuild(v, d ?? due(v, true)!, force);
+  if (whole) { while (!run.next().done); return; }
+  if (!run.next().done) jobs.set(v, { run, frames: 1 });
+}
+
+const SLICE_MS = 2.5, MAX_FRAMES = 4, SLICE_FPS = 30;
+
+/** What a rebuild needs, if one is due now (she has moved, turned or zoomed, the scenery's radius has grown, or new art is in), else null; `force`: anyway. */
+function due(v: View, force = false) {
   // The margin grows with her speed (a quarter second's flight), so at full boost the batches are
   // rebuilt every 10 m or so rather than every 4 (Ed, v256: dropped frames boosting over the treetops).
   const g = v.game, t = g.tuning, cam = v.camera, margin = Math.max(t.viewMargin, Math.hypot(g.witch.vx, g.witch.vz) * 0.25), pose = poseOf(g);
@@ -35,7 +64,14 @@ export function refresh(v: View, force = false): void {
   const radius = v.budget.radius, reach = Math.min(t.haze.far, radius + margin / 2);
   const regrown = Math.abs(radius - v.lastBuild.radius) >= margin / 3;
   const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift;
-  if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version) return;
+  if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version) return null;
+  return { margin, pose, key, lift, radius, reach };
+}
+
+function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullable<ReturnType<typeof due>>, force: boolean): Generator<void, void, void> {
+  let t0 = performance.now();
+  const sliceDone = () => performance.now() - t0 > SLICE_MS, resume = () => { t0 = performance.now(); };
+  const g = v.game, t = g.tuning;
   v.lastBuild = { ...key, version: v.assets.version, radius };
   v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift };
   const r = viewRect(v, reach, margin), cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, half = Math.max(r.maxX - r.minX, r.maxZ - r.minZ) / 2;
@@ -70,8 +106,9 @@ export function refresh(v: View, force = false): void {
     const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
     if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
     nt++;
+    if (sliceDone()) { yield; resume(); }
   }
-  const scatter = (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]) => {
+  const scatter = function* (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]): Generator<void, void, void> {
     for (const p of list) {
       const art = v.assets.typeArt(p.type);
       if (!art) continue;
@@ -100,14 +137,15 @@ export function refresh(v: View, force = false): void {
       const sd = frame.w * m * 0.3;
       if (kind !== "setpiece") shadows.push({ x: p.x, z: p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
       nb++;
+      if (sliceDone()) { yield; resume(); }
     }
   };
-  scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
-  scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
+  yield* scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
+  yield* scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
   // Berry bushes (rules/berries.ts): normal bushes of their area, a berry on some of them.
-  scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
-  scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
-  scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
+  yield* scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
+  yield* scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
+  yield* scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
   // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
   const decor = v.assets.decorArt(), dl: SpriteInstance[] = [];
   if (decor) for (const d of g.forest.decorNear(cx, cz, half)) {
@@ -202,6 +240,7 @@ export function refresh(v: View, force = false): void {
       return b;
     })?.set(flat);
   }
+  if (sliceDone()) { yield; resume(); }
   dl.sort((a, b) => b.z - a.z); // nearest first, as the trees below
   if (decor) v.batchFor(v.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
   for (const [type, b] of v.typeBatches) if (!per.has(type)) b.set([]);
@@ -212,6 +251,7 @@ export function refresh(v: View, force = false): void {
   for (const [type, list] of per) {
     const b = v.batchFor(v.typeBatches, type, () => { const a = v.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true, fade: true }); });
     b?.set(list);
+    if (sliceDone()) { yield; resume(); }
   }
   { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: 7, d: 3.5, scenery: false }); } // soft, under the treehouse
   checkPops(v, "placed", !force);
