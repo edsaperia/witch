@@ -1115,7 +1115,7 @@ At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power
 
 ## `party`
 
-lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all never crosses itself (as far as it can): a spiral out from the dancefloor, route.spacing areas between its turns, untangled; noisy (?picker=noisy, the picker before it), near3, near3touch and nearest choose among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
+lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all never crosses itself: the noisy picker's order, untangled; noisy (?picker=noisy, the picker before it), near3, near3touch and nearest choose among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
 
 | knob | type | range |
 |---|---|---|
@@ -1132,7 +1132,6 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 | `party.areasPerWave` | number | 0 to … |
 | `party.maxPerWave` | number | 0 to … |
 | `party.picker` | string |  |
-| `party.route.spacing` | number | 0 to … |
 | `party.noisy.wobble` | number | 0 to … |
 | `party.noisy.lobeSize` | number | 0 to … |
 | `party.noisy.candidates` | number | 0 to … |

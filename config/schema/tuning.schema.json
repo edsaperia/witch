@@ -5056,19 +5056,6 @@
         "picker": {
           "type": "string"
         },
-        "route": {
-          "type": "object",
-          "properties": {
-            "spacing": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "spacing"
-          ],
-          "additionalProperties": false
-        },
         "noisy": {
           "type": "object",
           "properties": {
@@ -5118,7 +5105,6 @@
         "areasPerWave",
         "maxPerWave",
         "picker",
-        "route",
         "noisy",
         "transition",
         "lightReach",

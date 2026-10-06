@@ -5,8 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
-import { newParty, spreadWave, wavePlan, cellKey } from "./party";
-import { leyRoute } from "./leyroute";
+import { newParty, spreadWave, wavePlan, cellKey, routeOf } from "./party";
 import { polylinesMeet, segmentsMeet, crossings } from "./crossing";
 
 describe("lines meeting", () => {
@@ -25,7 +24,7 @@ describe("lines meeting", () => {
 describe("the ley line's route (Ed, 2026-10-06)", () => {
   const SEEDS = Array.from({ length: 30 }, (_, i) => i + 1);
   it("runs through every area once, home first, and the waves wake them in its order", () => {
-    const map = generateMap(7, TUNING), r = leyRoute(map), p = newParty(map);
+    const map = generateMap(7, TUNING), r = routeOf(map), p = newParty(map);
     expect(r.order.length).toBe(map.n * map.n - 1);
     expect(new Set(r.order).size).toBe(r.order.length);
     expect(r.order).not.toContain(cellKey(map.centreCell));
@@ -33,29 +32,33 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
     for (let w = 0; w < 5; w++) expect(spreadWave(p, map, (w + 1) * 300).map(a => cellKey(a.cell))).toEqual([r.order[w]]);
   });
   it("is the same for a seed every time", () => {
-    const a = leyRoute(generateMap(11, TUNING)), b = leyRoute(generateMap(11, TUNING));
+    const a = routeOf(generateMap(11, TUNING)), b = routeOf(generateMap(11, TUNING));
     expect(b.order).toEqual(a.order);
   });
-  it("doesn't cross itself: none on most of 30 seeds (a strong wish, not a rule: never more than once)", () => {
-    let clean = 0;
-    for (const seed of SEEDS) {
-      const c = crossings(leyRoute(generateMap(seed, TUNING)).links);
-      expect(c, `seed ${seed}`).toBeLessThanOrEqual(1);
-      if (c === 0) clean++;
-    }
-    expect(clean).toBeGreaterThanOrEqual(28);
+  it("never crosses itself, the whole route, on any of 30 seeds (Ed: \"I thought the idea was to have no crossings?\")", () => {
+    for (const seed of SEEDS) expect(crossings(routeOf(generateMap(seed, TUNING)).links), `seed ${seed}`).toBe(0);
   }, 120_000);
+  it("differs from map to map: not one shape (Ed: \"ideally it shouldn't be just spirals\")", () => {
+    // How far round the dancefloor the first ten stones go, and which way: the noisy picker's lobes, not one spiral.
+    const turns = SEEDS.slice(0, 12).map(seed => {
+      const map = generateMap(seed, TUNING), d = map.dancefloor, r = routeOf(map);
+      let turn = 0;
+      for (let i = 1; i < 10; i++) { const a = Math.atan2(r.stones[i - 1][0] - d.x, r.stones[i - 1][1] - d.z), b = Math.atan2(r.stones[i][0] - d.x, r.stones[i][1] - d.z); turn += Math.atan2(Math.sin(b - a), Math.cos(b - a)); }
+      return turn;
+    });
+    expect(turns.some(t => t > 0.5) && turns.some(t => t < -0.5)).toBe(true); // (some wind one way round home, some the other)
+  }, 60_000);
   it("(the noisy picker before it crossed itself thousands of times a run)", () => {
     const t = structuredClone(TUNING) as Tuning;
     t.party.picker = "noisy";
-    const map = generateMap(1, t), p = newParty(map), order = [...wavePlan(p, map).keys()], r = leyRoute(map);
+    const map = generateMap(1, t), p = newParty(map), order = [...wavePlan(p, map).keys()], r = routeOf(map);
     const st = order.map(k => r.stones[r.order.indexOf(k)]), links = [r.links[0]];
     for (let i = 1; i < st.length; i++) links.push([st[i - 1], st[i]]);
     expect(crossings(links)).toBeGreaterThan(1000);
   }, 60_000);
   it("starts about the ring round home, and keeps the waves near each other", () => {
     for (const seed of SEEDS.slice(0, 10)) {
-      const map = generateMap(seed, TUNING), r = leyRoute(map), d = map.dancefloor, far = (q: readonly number[]) => Math.hypot(q[0] - d.x, q[1] - d.z);
+      const map = generateMap(seed, TUNING), r = routeOf(map), d = map.dancefloor, far = (q: readonly number[]) => Math.hypot(q[0] - d.x, q[1] - d.z);
       const ring = Math.max(...[...(map.neighbours.get(cellKey(map.centreCell)) ?? [])].map(k => far(r.stones[r.order.indexOf(k)])));
       expect(far(r.stones[0]), `seed ${seed}`).toBeLessThan(ring * 1.3);
       const steps = r.stones.slice(1, 40).map((q, i) => Math.hypot(q[0] - r.stones[i][0], q[1] - r.stones[i][1]));

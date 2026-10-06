@@ -6,7 +6,7 @@ import type { Tuning } from "./tuning";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
-import { leyRoute } from "./leyroute";
+import { leyRoute, type LeyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -84,8 +84,8 @@ export type Picker = "route" | "noisy" | "near3" | "near3touch" | "nearest";
 
 /** Choose the area the next wave wakes, by the tuning's picker (?picker= in the URL):
  *  - route (default; Ed, 2026-10-06: the ley line "should cover the entire set of waves the whole
- *    time, but ideally it shouldn't cross itself"): the next area in the map's planned order
- *    (rules/leyroute.ts) the party hasn't, or whose soundsystem fell;
+ *    time" and have "no crossings"): the next area in the map's planned order the party hasn't
+ *    (routeOf: the noisy picker's order, untangled, rules/leyroute.ts);
  *  - noisy: of the dormant areas bordering the party (no islands), the `candidates`
  *    cheapest by distance to the dancefloor times a smooth seeded wobble (lobes, not a disc),
  *    not beside the last pick if there's another, one at random;
@@ -94,7 +94,7 @@ export type Picker = "route" | "noisy" | "near3" | "near3touch" | "nearest";
  *  - nearest: the nearest dormant area bordering the party. */
 export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0, border?: Set<string>): Cell | null {
   if (picker === "route") {
-    for (const key of leyRoute(map).order) if (!p.areas.has(key) && !p.ruined?.has(key)) { const c = key.split(",").map(Number) as unknown as Cell; candidates?.push(c); return c; }
+    for (const key of routeOf(map).order) if (!p.areas.has(key) && !p.ruined?.has(key)) { const c = key.split(",").map(Number) as unknown as Cell; candidates?.push(c); return c; }
     return null;
   }
   const N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3 + salt * 104729);
@@ -285,4 +285,13 @@ export function symbolCount(stage: SpawnMarker["stage"], gone: number, flicker: 
   if (stage === "afterNext") return Math.round(F.afterNext[0] + (F.afterNext[1] - F.afterNext[0]) * Math.max(0, Math.min(1, gone)));
   if (stage === "probable") return 1 + Math.min(F.probableMax - 1, Math.floor(Math.max(0, Math.min(0.999, flicker)) * F.probableMax));
   return 0;
+}
+
+/** The ley line's route for this map (rules/leyroute.ts): the order the noisy picker would wake the
+ *  areas in, untangled so the line through them all never crosses itself. Worked out once a map. */
+export function routeOf(map: ForestMap): LeyRoute {
+  return leyRoute(map, () => {
+    const m: ForestMap = { ...map, tuning: { ...map.tuning, party: { ...map.tuning.party, picker: "noisy" } } };
+    return [...wavePlan(newParty(m), m).keys()];
+  });
 }

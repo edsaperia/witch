@@ -1,18 +1,18 @@
 // The ley line's route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves
-// the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"; before it,
-// "Is it possible for the leylines to never have to cross? even if it means the route they describe
-// is much longer"). With the route picker (party.picker "route", the default) the waves wake the
+// the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"; then "I
+// thought the idea was to have no crossings?", and "Long spirals are okay, but ideally it shouldn't
+// be just spirals"). With the route picker (party.picker "route", the default) the waves wake the
 // areas in one order worked out once per map, here, and the line runs through all of them, home
 // first: its first link the treehouse's departure curve (rules/departure.ts), the rest straight
-// from stone to stone. The order: a spiral out from the dancefloor (party.route.spacing times the
-// ring round home between its turns, starting at one of the ring's stones, due south first, where
-// the departure curve heads), then untangled: any two links that cross have the stones between them
-// reversed (2-opt), and a stone whose links still meet another's is moved to wherever its links
-// cross fewest; of the starts, the one that crosses least (none, on every seed tried: a strong
-// wish, not a rule). Seeded only by the map; no drawing here.
+// from stone to stone (drawn wandering a little, render/leylines.ts). The order starts as the noisy
+// picker's (its lobes and wanderings, so no two maps' routes look alike) and is untangled: any two
+// links that cross have the stones between them reversed (2-opt), and a stone whose links still
+// meet another's is moved to wherever they cross fewest; nudged and untangled again until none
+// cross. Seeded only by the map; no drawing here.
 import type { ForestMap } from "./map";
 import { departureRoute } from "./departure";
 import { polylinesMeet, segmentsMeet, type P2 } from "./crossing";
+import { rng } from "./random";
 
 export type { P2 };
 
@@ -27,24 +27,28 @@ export interface LeyRoute {
 
 const ROUTES = new WeakMap<ForestMap, LeyRoute>();
 
-/** The map's route, worked out once. */
-export function leyRoute(map: ForestMap): LeyRoute {
+/** The map's route, worked out once: from `initial`, the order the waves would wake the areas in
+ *  without it (the noisy picker's: its lobes and wanderings, so every map's differs), untangled;
+ *  if it still crosses itself, the order nudged a little (a few neighbouring stones swapped, seeded)
+ *  and untangled again, up to TRIES times, the least crossed kept (none, on every seed tried). */
+export function leyRoute(map: ForestMap, initial: () => string[]): LeyRoute {
   let r = ROUTES.get(map);
-  if (!r) ROUTES.set(map, (r = planRoute(map)));
+  if (!r) ROUTES.set(map, (r = planRoute(map, initial())));
   return r;
 }
 
-function planRoute(map: ForestMap): LeyRoute {
-  // The spiral may start at any of the stones round home (due south first, where the departure
-  // curve heads): the one whose route crosses itself least, untangled.
-  let best: LeyRoute | null = null, bestC = Infinity;
-  for (let start = 0; start < 12 && bestC > 0; start++) {
-    const r = planFrom(map, start);
-    if (!r) break;
-    const c = crossingsOf(r.links);
-    if (c < bestC) { best = r; bestC = c; }
+const TRIES = 30;
+
+function planRoute(map: ForestMap, order: string[]): LeyRoute {
+  let best = untangle(map, order) ?? { order: [], stones: [], links: [] }, bestC = crossingsOf(best.links);
+  const R = rng(map.seed * 4099 + 17);
+  for (let t = 1; t <= TRIES && bestC > 0; t++) {
+    const o = [...order];
+    for (let k = 0; k < 3 + t; k++) { const i = 1 + Math.floor(R() * (o.length - 2)); [o[i], o[i + 1]] = [o[i + 1], o[i]]; }
+    const r = untangle(map, o), c = r ? crossingsOf(r.links) : Infinity;
+    if (r && c < bestC) { best = r; bestC = c; }
   }
-  return best ?? { order: [], stones: [], links: [] };
+  return best;
 }
 
 const crossingsOf = (links: readonly (readonly P2[])[]) => {
@@ -53,27 +57,11 @@ const crossingsOf = (links: readonly (readonly P2[])[]) => {
   return c;
 };
 
-/** The route with the spiral starting at the `start`-th stone round home (by how far round from
- *  due south), or null if there's no such stone. */
-function planFrom(map: ForestMap, start: number): LeyRoute | null {
-  const home = `${map.centreCell[0]},${map.centreCell[1]}`, d = map.dancefloor;
-  // A turn's spacing: the ring of areas round home's (their stones' distance from the dancefloor, on average).
-  const ring = [...(map.neighbours.get(home) ?? [])].map(k => { const [x, y] = k.split(",").map(Number), q = map.soundsystemSpot(x, y); return Math.hypot(q.x - d.x, q.z - d.z); });
-  const w = Math.max(1, (ring.length ? ring.reduce((a, b) => a + b, 0) / ring.length : map.areaSize) * (map.tuning.party.route?.spacing ?? 1));
-  // The spiral: each stone's turn (its distance out, less how far round it is from due south, half a
-  // turn in, so the ring round home is the first) and how far round.
-  const all: { key: string; p: P2; s: number; round: number; r: number }[] = [];
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
-    const key = `${cx},${cy}`;
-    if (key === home) continue;
-    const q = map.soundsystemSpot(cx, cy), r = Math.hypot(q.x - d.x, q.z - d.z), round = (((Math.atan2(q.x - d.x, q.z - d.z) / (2 * Math.PI)) % 1) + 1) % 1;
-    all.push({ key, p: [q.x, q.z], s: 0, round, r });
-  }
-  const first = all.filter(a => Math.floor(a.r / w - a.round - 0.5) <= 0).sort((a, b) => a.round - b.round)[start];
-  if (!first) return null;
-  for (const a of all) { const round = (a.round - first.round + 1) % 1; a.s = Math.max(0, Math.floor(a.r / w - round - 0.5)) + round; }
-  all.sort((a, b) => a.s - b.s || (a.key < b.key ? -1 : 1));
-  const st = all.map(a => a.p), keys = all.map(a => a.key), n = st.length;
+/** A route through these areas in this order (home's not among them, the first kept first: the
+ *  departure curve leads to it), untangled: wherever two links cross, the stones between them
+ *  reversed (2-opt), then a stone at a crossing moved to wherever its links cross fewest. */
+export function untangle(map: ForestMap, order: readonly string[]): LeyRoute | null {
+  const keys = [...order], st = keys.map(k => { const [x, y] = k.split(",").map(Number), q = map.soundsystemSpot(x, y); return [q.x, q.z] as P2; }), n = st.length;
   if (!n) return null;
   const D = map.tuning.leyLines.depart, depart = departureRoute(map, { x: st[0][0], z: st[0][1] }, D.past, D.avoid, 4) as P2[];
   // (The first stone stays first: the departure curve leads to it.)
