@@ -36,6 +36,17 @@ describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {
     expect(legendCircleAt(g, { x: ring.x, z: ring.z + 17, mode: "ground" })).toBeNull();
   });
 
+  it("is heard at the middle of every clearing the map draws (#235), from its own legend", () => {
+    const { g } = setup(), clearings = g.map.legendClearings ?? [];
+    expect(clearings.length).toBeGreaterThan(5);
+    for (const k of clearings) {
+      const L = legendCircleAt(g, { x: k.x, z: k.z, mode: "ground" });
+      expect(L, `the clearing at ${k.x.toFixed(0)}, ${k.z.toFixed(0)}`).not.toBeNull();
+      expect(Math.hypot(L!.x - k.legend.x, L!.z - k.legend.z)).toBeLessThan(k.r);
+      expect(legendCircleAt(g, { x: k.x, z: k.z + k.r + 3, mode: "ground" })).not.toBe(L);
+    }
+  });
+
   it("muffles the music by how far in she is: unchanged outside, steeply low-passed and quieter fully in", () => {
     const M = TUNING.music, mix = mixAt(M, 1, 0, 10);
     expect(muffled(M, mix, 0)).toEqual(mix);

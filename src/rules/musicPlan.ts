@@ -61,7 +61,7 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
  *  where the map has them, else a circle of `music.circle.radius` metres round the legend. */
 export function legendCircleAt(g: Game, at: { x: number; z: number; mode?: string }): Creature | null {
   if (at.mode !== "ground") return null;
-  const R = g.tuning.music.circle.radius, clearings = (g.map as { legendClearings?: { x: number; z: number; r: number; legend: { x: number; z: number } }[] }).legendClearings;
+  const R = g.tuning.music.circle.radius, clearings = (g.map as { legendClearings?: readonly { x: number; z: number; r: number; legend: { x: number; z: number } }[] }).legendClearings;
   let best: Creature | null = null, bd = Infinity;
   for (const c of g.creatures) {
     if (!c.boss || c.gone || c.leashed || (c.legendState !== "asleep" && c.legendState !== "restless")) continue;
