@@ -115,6 +115,22 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(near.hp).toBe(hp1);
   }), 60000);
 
+  it("with the stomp on, a legend turning angry stamps on its own area's standing soundsystem, after the stomp's longer restless time (Ed, 2026-10-06)", () => {
+    const { g, L, mate } = beside();
+    (g as { tuning: unknown }).tuning = withTuning({ legends: { ...TUNING.legends, stomp: { on: true, angryAfter: 3 } } });
+    const key = cellKey(L.cell), at = { x: L.x + 30, z: L.z };
+    g.party.areas.set(key, { cell: [L.cell[0], L.cell[1]], wave: 1, at: g.clock.time, soundsystem: at } as never);
+    g.combat.sounds.set(key, { hp: 4000, max: 4000, x: at.x, z: at.z, radius: 2 });
+    mate!.gone = true; // (none of its kind left: restless)
+    run(g, 2);
+    expect(L.legendState).toBe("restless"); // (the stomp's 3 s, not legends.json's)
+    run(g, 2);
+    expect(L.legendState).toBe("angry");
+    expect(g.combat.sounds.get(key)!.hp).toBe(0);
+    expect(g.party.areas.has(key)).toBe(false); // (ruined, as any fallen one)
+    expect(g.tally.stomps).toBe(1);
+  }, 60000);
+
   it("fire each volley at up to attack.targets of the nearest (balance builder's values: 10 a hit, every 15 s)", () => withAngryAfter(0.5, () => {
     const { g, L, mate } = beside();
     mate!.gone = true;

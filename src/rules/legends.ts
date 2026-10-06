@@ -129,7 +129,9 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
 
 /** A sleeping legend's restlessness 0..1 (the music builder's nightmare reads c.restlessness), and
  *  whether its dream quest is still open (c.questOpen: it can still be done, so its dream shows). */
-export interface LegendWorld { creatures: Creature[]; map: ForestMap; time: number; dt: number; partified: (key: string) => boolean; /** where a creature is bound to now (a leashed one at a sigil: there; else its own area) */ areaOf: (c: Creature) => string }
+export interface LegendWorld {
+  /** Seconds restless before angry, if not legends.json angryAfter (with the stomp on: tuning legends.stomp.angryAfter). */
+  angryAfter?: number; creatures: Creature[]; map: ForestMap; time: number; dt: number; partified: (key: string) => boolean; /** where a creature is bound to now (a leashed one at a sigil: there; else its own area) */ areaOf: (c: Creature) => string }
 
 /** One step of every legend's state. */
 export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsData = LEGENDS): void {
@@ -158,7 +160,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
       else if (c.legendState === "asleep") { c.legendState = "restless"; c.stateAt = w.time; c.restlessness = c.restlessness ?? 0; }
     }
     if (c.legendState === "restless") {
-      c.restlessness = Math.min(1, (c.restlessness ?? 0) + w.dt / Math.max(1e-6, data.angryAfter));
+      c.restlessness = Math.min(1, (c.restlessness ?? 0) + w.dt / Math.max(1e-6, w.angryAfter ?? data.angryAfter));
       if (c.restlessness >= 1) anger(c, w.time);
     }
   }

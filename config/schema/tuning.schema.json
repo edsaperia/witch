@@ -6128,13 +6128,31 @@
             "damage"
           ],
           "additionalProperties": false
+        },
+        "stomp": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "angryAfter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "angryAfter"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "share",
         "buffPower",
         "happyRange",
-        "bombard"
+        "bombard",
+        "stomp"
       ],
       "additionalProperties": false
     },

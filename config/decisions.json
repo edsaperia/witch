@@ -32,6 +32,16 @@
       "default": 300, "apply": { "knob": "legends.bombard.damage" }
     },
     {
+      "id": "stomp", "label": "Legend stomp", "note": "A legend turning angry stamps on its own area's soundsystem at once (Ed's 'perhaps'): it only bites if you empty a partying area of the legend's kind.",
+      "control": { "type": "toggle" },
+      "default": false, "apply": { "knob": "legends.stomp.on" }
+    },
+    {
+      "id": "stompAngryAfter", "label": "Restless time with the stomp (s)", "note": "With the stomp on: seconds a legend with none of its kind about stays restless before it angers (the time to bring one back).",
+      "control": { "type": "slider", "min": 60, "max": 240, "step": 15 },
+      "default": 120, "apply": { "knob": "legends.stomp.angryAfter" }
+    },
+    {
       "id": "buffPower", "label": "Legend buff strength", "note": "How strong every legend's buff is, from quests and relics (1: as written, 2: twice the effect, a Fan two fans).",
       "control": { "type": "slider", "min": 1, "max": 4, "step": 0.25 },
       "default": 1, "apply": { "knob": "legends.buffPower" }
