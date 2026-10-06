@@ -2,6 +2,7 @@
 // numbers, the dancefloor's ring of speakers, and the treehouse stood on its spot.
 import * as Art from "../../../art/generator.js";
 import * as THREE from "three";
+import { LIGHT_UNIFORMS } from "../lighting";
 import { AREA_TYPES } from "../../rules/map";
 import { type Beacon, type Laser, MARKER_LEVELS, type Mote } from "../markers";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
@@ -18,6 +19,9 @@ import { mark } from "./pops";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
+
+/** A 💌's sparkle as it vanishes at a slowed circle's edge: pink-white. */
+const SPARKLE_RGB = new THREE.Vector3(1, 0.75, 0.9);
 
 /** The spawn markers (rune stones where soundsystems will come): their sprites, beacons and
  *  motes; returns the lights of the nearest. */
@@ -86,6 +90,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   near.sort((p, q) => p.d - q.d);
   for (const n of near.slice(0, 8)) lights.push(n.l);
   v.markerBatch.set(inst);
+  // A 💌 that left a slowed circle outward vanishes in a small sparkle at its edge (render/slowtime.ts): 8 motes bursting
+  // out and fading over SPARKLE seconds of real time.
+  const now = LIGHT_UNIFORMS.uRealTime.value, SPARKLE = 0.45;
+  v.edgeSparkles = v.edgeSparkles.filter(s => now - s.at < SPARKLE);
+  for (const s of v.edgeSparkles) {
+    const k = (now - s.at) / SPARKLE;
+    for (let i = 0; i < 8; i++) { const a = i * 0.785 + s.at * 3, r = 0.2 + k * 1.1; motes.push({ x: s.x + Math.cos(a) * r, y: 1 + Math.sin(a * 2) * 0.4 * k + k * 0.6, z: s.z + Math.sin(a) * r, colour: SPARKLE_RGB, alpha: (1 - k) * (i % 2 ? 1 : 0.6) }); }
+  }
   v.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes.concat(v.fireSparks), lasers);
   const up = canopyShown(w);
   // Wave numbers over the stones (Ed, 2026-10-04, a design aid): above the stone on the ground,

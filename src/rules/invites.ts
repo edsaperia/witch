@@ -58,7 +58,7 @@ export interface Lantern { x: number; z: number; until: number; n: number; /** T
  *  since the per-creature gap went, 2026-10-06: every hit counts) or stopped by one; or a creature won over (happy). */
 interface InviteEventAt { x: number; z: number; at: number }
 export type InviteEvent =
-  | (InviteEventAt & { kind: "shot" | "fizzled"; n: number; id?: undefined; spent?: undefined })
+  | (InviteEventAt & { kind: "shot" | "fizzled" | "vanished"; n: number; id?: undefined; spent?: undefined })
   | (InviteEventAt & { kind: "hit"; id: number; n: number; spent: boolean })
   | (InviteEventAt & { kind: "blocked"; id: number; n: number; spent?: undefined })
   | (InviteEventAt & { kind: "happy"; id: number; n?: undefined; spent?: undefined });
@@ -138,7 +138,7 @@ export function dropCache(s: Invites, x: number, z: number, time: number, t: Tun
 
 /** One step: start or carry on a burst, fly the letters, and land them. `canFire`: on the ground,
  *  off her seat, not knocked out. `M`: the buffs' behaviours on now (rules/buffs.ts). */
-export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z: number; facing: number; vx?: number; vz?: number }, canFire: boolean, creatures: Creature[], A: Affection, time: number, dt: number, t: Tuning, M: BuffMods = NO_MODS, H: BuffHow = LEGEND_BUFFS.how): void {
+export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z: number; facing: number; vx?: number; vz?: number }, canFire: boolean, creatures: Creature[], A: Affection, time: number, dt: number, t: Tuning, M: BuffMods = NO_MODS, H: BuffHow = LEGEND_BUFFS.how, leaves?: (x0: number, z0: number, x1: number, z1: number) => boolean): void {
   const I = t.invites;
   const ax = c.aimX ?? 0, az = c.aimZ ?? 0, al = Math.hypot(ax, az);
   const mainLeft = () => s.queue.filter(q => !q.echo).length;
@@ -255,6 +255,8 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     }
     const step = sp * dt, px = L.x, pz = L.z;
     L.x += L.vx * dt; L.z += L.vz * dt; L.flown += step;
+    // Out of a sleeping legend's circle (Ed, 2026-10-06: "Your invitations disappear if they go outside the circle from inside"): gone in a sparkle.
+    if (leaves?.(px, pz, L.x, L.z)) { s.events.push({ kind: "vanished", x: L.x, z: L.z, at: time, n: L.n }); return false; }
     // Lanterns (Glow-worm): one dropped every every seconds where it flies.
     if (L.trailAt !== undefined && time >= L.trailAt) { s.lanterns.push({ x: L.x, z: L.z, until: time + H.trail.life, n: L.n }); L.trailAt = time + H.trail.every; }
     // The first creature its path this step passes within reach of: a hit, a block, or nothing (it passes through).
