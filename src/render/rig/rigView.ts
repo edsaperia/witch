@@ -28,7 +28,7 @@ export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
   let by = faceMetas.get(meta); if (!by) faceMetas.set(meta, (by = {}));
   return (by[face!] ??= { ...meta, head });
 }
-export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear }
+export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean }
 
 export class RigView {
   private bodies = new Map<number, RigBody>();
@@ -64,7 +64,7 @@ export class RigView {
     if (!body) this.bodies.set(c.id, (body = new RigBody()));
     this.seen.add(c.id);
     body.update(c.x, c.z, this.dt, c.charge ? c.charge.dx * c.charge.speed : c.vx, c.charge ? c.charge.dz * c.charge.speed : c.vz);
-    const drive = this.drive(c, this.time), u2m = this.mpp * art.meta.s * look.scale; // metres per model unit
+    const drive = this.drive(c, this.time, look), u2m = this.mpp * art.meta.s * look.scale; // metres per model unit
     this.out.reset();
     const meta = withFace(art.meta, look.face);
     if (meta.template === "quadruped") body.quadruped(meta, u2m, this.dt, drive, this.out);
@@ -74,14 +74,15 @@ export class RigView {
     return true;
   }
 
-  /** How the creature's state drives its body: crouching before a charge or a leap, charging, in the air. */
-  private drive(c: Creature, time: number): RigDrive {
+  /** How the creature's state drives its body: crouching before a charge, a leap or a blow, charging (or lunging), in the air. */
+  private drive(c: Creature, time: number, look: RigLook): RigDrive {
     const ch = c.charge, lp = c.leap;
     const winding = ch && ch.from !== undefined && time < ch.from ? 1 - Math.max(0, (ch.from - time) / 0.5) : 0;
     const charging = !!ch && (ch.from === undefined || time >= ch.from) && time < ch.until;
     let air = 0, crouch = winding;
     if (lp) { const k = (time - lp.at) / Math.max(0.01, lp.lands - lp.at); if (k < 0) crouch = Math.max(crouch, 1 + k * 3); else if (k <= 1) air = Math.sin(k * Math.PI); else crouch = Math.max(crouch, Math.max(0, 1 - (k - 1) * 4)); }
-    return { crouch: Math.max(0, Math.min(1, crouch)), charging, air };
+    crouch = Math.max(crouch, (look.crouch ?? 0) * 0.8); // an attack's wind-up crouches it too (render/attackFeel.ts)
+    return { crouch: Math.max(0, Math.min(1, crouch)), charging: charging || !!look.lunging, air };
   }
 
   /** Each item as an instance: the sprite placed so its pivot pixel lands on the item's world point. */
@@ -91,7 +92,7 @@ export class RigView {
     if (!pool) { this.pool.set(key, (pool = [])); this.used.set(key, 0); }
     let n = this.used.get(key)!;
     if (!this.batches.has(key)) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined }); this.batches.set(key, b); this.scene.add(...b.meshes); }
-    const m = this.mpp * look.scale, R = this.R, U = this.U, F = this.F;
+    const m = this.mpp * look.scale, R = this.R, U = this.U, F = this.F, sx = look.sx ?? 1, sy = look.sy ?? 1;
     for (let k = 0; k < this.out.n; k++) {
       const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];
       if (!f) continue;
@@ -99,7 +100,8 @@ export class RigView {
       let s = pool[n];
       if (!s) pool[n] = s = { x: 0, y: 0, z: 0, frame: f, flip: false };
       s.x = c.x + it.x - R.x * dx - U.x * dy + F.x * b; s.y = look.y + it.y - R.y * dx - U.y * dy + F.y * b; s.z = c.z + it.z - R.z * dx - U.z * dy + F.z * b;
-      s.frame = f; s.flip = it.flip; s.fresh = look.fresh; s.glow = look.glow; s.scale = look.scale;
+      if (sx !== 1 || sy !== 1) { s.x = c.x + (s.x - c.x) * sx; s.z = c.z + (s.z - c.z) * sx; s.y = look.y + (s.y - look.y) * sy; } // squashed or stretched about its feet
+      s.frame = f; s.flip = it.flip; s.fresh = look.fresh; s.glow = look.glow; s.scale = look.scale; s.sx = sx; s.sy = sy;
       n++;
     }
     this.used.set(key, n);

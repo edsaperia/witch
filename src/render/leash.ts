@@ -136,6 +136,12 @@ const PARTY = ["🎉", "🎈", "💃", "🎊", "🥳", "😛", "🍉", "🍒", "
 // at the last, and the conversation warms them up toward delighted.
 const MOODS = [["😴", "🫩", "🥱", "💼"], ["😐", "😐", "🥱"], ["😮", "🤭", "🫢", "😛"], ["🙂", "🍷", "🍺", "😁"], ["🥳", "🎉", "🎈", "😆", "🥂", "💃"]];
 
+/** What a hit throws off a creature (render: the contact's bits): feathers off birds, chips off a shell or plates, tufts of fur
+ *  off the rest; confetti (in its neon) off a party animal. */
+const HIT_BITS = { feather: { r: 0.95, g: 0.95, b: 0.9 }, chip: { r: 0.72, g: 0.78, b: 0.86 }, fur: { r: 0.85, g: 0.7, b: 0.52 }, confetti: { r: 1, g: 1, b: 1 } };
+const FEATHERED = new Set(["owl", "raven", "heron"]), SHELLED = new Set(["beetle", "spider", "woodlouse", "snail", "glowworm", "moth", "hedgehog"]);
+const hitBits = (species: string, party: boolean) => party ? HIT_BITS.confetti : FEATHERED.has(species) ? HIT_BITS.feather : SHELLED.has(species) ? HIT_BITS.chip : HIT_BITS.fur;
+
 export class LeashView {
   private canvas = document.createElement("canvas");
   private tex: THREE.CanvasTexture;
@@ -434,8 +440,15 @@ export class LeashView {
         if (e.counter === 1) { const top = (c && this.tops.get(c.id)) ?? 1.8; this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.5, r: 1, g: 0.8, b: 0.2, seed: e.at * 97 + (e.id ?? 0), size: 1.8 }); this.fx.push({ kind: "bang", x: e.x, y: top + 0.4, z: e.z, at: time, life: 0.8, r: 1, g: 0.85, b: 0.25, seed: 0 }); }
         else if (e.counter === -1) this.fx.push({ kind: "tink", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 0.7, g: 0.72, b: 0.78, seed: e.at * 97 + (e.id ?? 0), size: 0.7 });
         else this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 1, g: 0.95, b: 0.7, seed: e.at * 97 + (e.id ?? 0) });
+        // The contact (Ed, 2026-10-06: attacks that read): a white star at its chest, a puff of dust at its feet, and bits of it
+        // thrown up: feathers off a bird, tufts off fur, chips off a shell, confetti in its neon off a party animal (a party,
+        // nobody hurt). A legend's blow, all bigger.
+        const top = (c && this.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : bits;
+        this.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * big, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * big });
+        this.fx.push({ kind: "puff", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.85, g: 0.8, b: 0.72, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
+        this.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
       }
-      if (e.kind === "witchHit") this.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 });
+      if (e.kind === "witchHit") { this.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); this.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
       if (e.kind === "fled" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
       if (e.kind === "lost" && c) { const col = neon(c.species); this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
       if ((e.kind === "quake" || e.kind === "phase") && close(e.x, e.z, 150)) {
@@ -485,9 +498,9 @@ export class LeashView {
       }
       if (e.kind === "sparkleOut" || e.kind === "sparkleIn") this.fx.push({ kind: "teleport", x: e.x, y: 0, z: e.z, at: time, life: t.knockout.teleport * 0.6, r: 0.75, g: 0.6, b: 1, seed: e.at });
     }
-    this.fx = this.fx.filter(f => time - f.at < f.life);
+    { let j = 0; for (const f of this.fx) if (time - f.at < f.life) this.fx[j++] = f; this.fx.length = j; } // (in place: no new array a frame)
     for (const f of this.fx) {
-      const k = (time - f.at) / f.life, n = f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : 14, sz = f.size ?? 1;
+      const k = (time - f.at) / f.life, n = f.kind === "flash" ? 13 : f.kind === "bits" ? f.n ?? 8 : f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : 14, sz = f.size ?? 1;
       for (let i = 0; i < n; i++) {
         const a = hash2(f.seed, i, 3) * Math.PI * 2, r1 = hash2(f.seed, i, 5), r2 = hash2(f.seed, i, 7);
         if (f.kind === "spark") this.standing.add(f.x + Math.cos(a) * sz * k * (0.5 + r1), f.y + sz * k * r2, f.z + Math.sin(a) * sz * k * (0.5 + r1), 0.22 * Math.sqrt(sz), dot, f.r, f.g, f.b, 1 - k);
@@ -497,6 +510,15 @@ export class LeashView {
         else if (f.kind === "teleport") this.standing.add(f.x + Math.cos(a + k * 6) * (0.4 + r1), r2 * 3 + k * 2, f.z + Math.sin(a + k * 6) * (0.4 + r1), 0.25, dot, f.r * 1.3, f.g * 1.3, f.b * 1.3, Math.sin(k * Math.PI));
         else if (f.kind === "bang") { if (i < 8) { const col = i < 4 ? -1 : 1, row = i % 4, R = SPRITE_UNIFORMS.uRight.value; if (row !== 2) this.over.add(f.x + R.x * col * 0.22, f.y + k * 0.6 + (3 - row) * 0.17, f.z + R.z * col * 0.22, 0.2, sq, f.r, f.g, f.b, 1 - k * k); } }
         else if (f.kind === "tink") { const aa = (i / n) * Math.PI * 2, R = sz * (0.4 + 0.6 * k); this.standing.add(f.x + Math.cos(aa) * R, f.y + Math.sin(aa) * R * 0.6, f.z, 0.16, dot, f.r, f.g, f.b, 1 - k); }
+        else if (f.kind === "flash") { // a four-pointed star snapping out and gone: the core, then dots along each ray
+          const R = SPRITE_UNIFORMS.uRight.value, ray = i === 0 ? -1 : (i - 1) % 4, step = Math.floor((i - 1) / 4) + 1, L = sz * (0.25 + 0.9 * k) * step / 3;
+          const ox = ray === 0 ? L : ray === 2 ? -L : 0, oy = ray === 1 ? L : ray === 3 ? -L : 0;
+          this.over.add(f.x + R.x * ox, f.y + oy, f.z + R.z * ox, (i === 0 ? 0.55 * sz * (1 - k * 0.5) : 0.2 * sz * (1 - k)), dot, f.r, f.g, f.b, 1 - k * k);
+        }
+        else if (f.kind === "bits") { // thrown up and out, falling, twinkling as they turn
+          const sp = (0.8 + r1 * 1.4) * sz, up = (2 + r2 * 2.5) * sz, tw = 0.6 + 0.4 * Math.abs(Math.sin(k * 18 + i));
+          this.standing.add(f.x + Math.cos(a) * sp * k, Math.max(0.05, f.y + up * k - 6 * k * k), f.z + Math.sin(a) * sp * k, 0.16 * Math.sqrt(sz), dot, f.r * tw, f.g * tw, f.b * tw, 1 - k * k);
+        }
         else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); this.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, f.dot ?? 0.7, dot, f.r, f.g, f.b, 1 - k); }
       }
     }
