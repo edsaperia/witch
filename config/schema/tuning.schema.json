@@ -5,6 +5,47 @@
       "type": "number",
       "minimum": 0
     },
+    "map": {
+      "type": "object",
+      "properties": {
+        "shape": {
+          "type": "string",
+          "enum": [
+            "circle",
+            "square"
+          ]
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "buffer": {
+          "type": "number",
+          "minimum": 0
+        },
+        "push": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "shape",
+        "radius",
+        "buffer",
+        "push",
+        "drift",
+        "edge"
+      ],
+      "additionalProperties": false
+    },
     "areaSize": {
       "type": "number",
       "minimum": 0
@@ -2447,7 +2488,39 @@
     "partyWitches": {
       "type": "object",
       "properties": {
-        "max": {
+        "roam": {
+          "type": "number",
+          "minimum": 0
+        },
+        "centreBias": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopMin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopBoost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "simRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "simRangeTreetop": {
           "type": "number",
           "minimum": 0
         },
@@ -2520,7 +2593,15 @@
         }
       },
       "required": [
-        "max",
+        "roam",
+        "centreBias",
+        "swoopTime",
+        "swoopHeight",
+        "swoopMin",
+        "swoopMax",
+        "treetopBoost",
+        "simRange",
+        "simRangeTreetop",
         "idleAfter",
         "idleReach",
         "activityMin",
@@ -3711,10 +3792,6 @@
           "type": "number",
           "minimum": 0
         },
-        "perAnimalHitGap": {
-          "type": "number",
-          "minimum": 0
-        },
         "fireSlow": {
           "type": "number",
           "minimum": 0,
@@ -3754,7 +3831,6 @@
         "amount",
         "hits",
         "drain",
-        "perAnimalHitGap",
         "fireSlow",
         "linger",
         "lingerFade",
@@ -6277,6 +6353,7 @@
   },
   "required": [
     "mapAreas",
+    "map",
     "areaSize",
     "areaScale",
     "arena",

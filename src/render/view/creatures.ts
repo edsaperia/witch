@@ -85,7 +85,8 @@ export function drawCreatures(v: View, time = 0): void {
     // with no find-in-the-dark look. Woken, it gets up drowsily and heaves itself out of the ground;
     // lulled, it settles back down (render/legendSleep.ts: how far asleep it is, 0..1, as `lying`).
     const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
-    const sleeping = st === "asleep" || st === "restless";
+    // (Walking home to lie down, Ed 2026-10-06: awake till it gets there, then it settles: c.homing.)
+    const sleeping = (st === "asleep" || st === "restless") && !c.homing;
     let lying = 0, droop = 0;
     if (st) {
       let tr = v.legendSleeps.get(c.id);

@@ -71,7 +71,7 @@ else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(
 if (params.get("bloom") === "off") tuning.bloom.on = false;
 if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
 const witchesParam = Number(params.get("witches")); // debug: this many more party witches
-if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(48, Math.floor(witchesParam)) };
+if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(500, Math.floor(witchesParam)) };
 if (params.get("find") === "0") tuning.find = { ...tuning.find, on: false }; // Ed, v244: compare without the find-in-the-dark looks
 // ?rune=beam|column|both: how an awake rune stone shows above it.
 const runeParam = params.get("rune");
@@ -149,6 +149,9 @@ if (curveParam !== null && !isNaN(Number(curveParam))) tuning.camera = { ...tuni
 // ?light=spooky|plain: the lighting's mood (render/mood.ts), to compare.
 const lightParam = params.get("light");
 if ((lightParam === "spooky" || lightParam === "plain") && tuning.light) tuning.light = { ...tuning.light, mood: lightParam };
+// The map's shape (Ed, 2026-10-06: circular, with a buffer ring): ?shape=square brings back the old square map to compare.
+const shapeParam = params.get("shape");
+if ((shapeParam === "square" || shapeParam === "circle") && tuning.map) tuning.map = { ...tuning.map, shape: shapeParam };
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
@@ -169,6 +172,8 @@ const world = { ...WORLD_DEFAULT };
   world.treetopSpeed = Math.round(Math.min(300, Math.max(8, world.treetopSpeed)));
   world.mapAreas = Math.round(Math.min(30, Math.max(6, world.mapAreas)));
   tuning.areaScale = world.areaSize / tuning.areaSize; tuning.treetopSpeed = world.treetopSpeed; tuning.mapAreas = world.mapAreas;
+  // (the circular map: about mapAreas x mapAreas areas in its circle, when that's been changed)
+  if (tuning.map && world.mapAreas !== WORLD_DEFAULT.mapAreas) tuning.map = { ...tuning.map, radius: world.mapAreas / Math.sqrt(Math.PI) };
   try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
 }
 
