@@ -57,6 +57,7 @@ import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
 import { LeyLines, leyReveal, shaderPulse } from "./leylines";
 import { bootLineAt, bootPath, bootPulseAt, bootShare } from "../rules/bootRing";
+import { Glades } from "./glades";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
 import type { Style } from "./style";
@@ -170,6 +171,9 @@ export class View {
   private lasers: Lasers;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   private ley: LeyLines;
+  /** The sleeping legends' clearings: their twilight and rising motes. */
+  private glades: Glades;
+  private gladeTime = 0;
   /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
   private leyRgb: THREE.Vector3 | null;
   /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
@@ -348,6 +352,8 @@ export class View {
     this.ley.scale(M?.leyBright ?? 1);
     this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
+    this.glades = new Glades(t.glades);
+    this.scene.add(this.glades.points);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.inviteView = new InviteView(game);
@@ -732,6 +738,8 @@ export class View {
         this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, g.party.spellAt === null ? 0 : live ? 1 : 0.35, this.leyRgb ?? undefined);
       }
     }
+    // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
+    { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt, w.mode === "ground"); }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
