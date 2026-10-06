@@ -5133,6 +5133,9 @@
         },
         "legendsLoyal": {
           "type": "boolean"
+        },
+        "dropHat": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -5140,7 +5143,8 @@
         "releaseMax",
         "emptyBeat",
         "teleport",
-        "legendsLoyal"
+        "legendsLoyal",
+        "dropHat"
       ],
       "additionalProperties": false
     },

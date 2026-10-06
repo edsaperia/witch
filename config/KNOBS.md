@@ -1115,7 +1115,7 @@ The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) b
 
 ## `knockout`
 
-Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this').
+Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this'). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this.
 
 | knob | type | range |
 |---|---|---|
@@ -1124,6 +1124,7 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 | `knockout.emptyBeat` | number | 0 to … |
 | `knockout.teleport` | number | 0 to … |
 | `knockout.legendsLoyal` | boolean |  |
+| `knockout.dropHat` | boolean |  |
 
 ## `dash`, `spells`
 
