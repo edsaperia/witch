@@ -12,6 +12,9 @@
 //    circle"): the same ring and arrow, a 🎶 in the middle (NOTES), pointing at the ley line's pulse (rules/leypulse.ts).
 //    The music-this-way cue toward the dancefloor is no longer shown (Ed: "You can remove the UI icon that points towards
 //    the dancefloor").
+//  - Her hat (Ed, 2026-10-06: "when you are killed, you drop your hat, and there's a direction marker for it, so you can
+//    go back and find it"): the same ring, whole, a 🎩 in the middle (HAT), pointing at it while it lies on the ground
+//    (rules/hat.ts), hovering over it once it's on screen.
 // Directions are in screen space, y down: an angle a points along (cos a, sin a) on the canvas.
 import * as THREE from "three";
 import { sigilGlyph } from "../../art/generator.js";
@@ -118,6 +121,22 @@ export const NOTES = [
 
 const PARTY: number[][] = [[232, 180, 106], [232, 180, 106], [232, 180, 106]]; // the HUD's one accent (art review round 1: the UI in the art's palette)
 
+/** 🎩 in pixels: her hat, a tall crown leaning back over a wide brim, its band (`+`) a lighter line (the dropped hat's pointer, rules/hat.ts). */
+export const HAT = [
+  ".........###...",
+  "........####...",
+  ".......####....",
+  "......#####....",
+  "......#####....",
+  ".....######....",
+  ".....######....",
+  "....#######....",
+  "....+++++++....",
+  "..###########..",
+  "###############",
+  ".#############.",
+];
+
 export class MusicIndicator {
   private cue: PixelCue;
   private v = new THREE.Vector3();
@@ -167,7 +186,7 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[] } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -197,9 +216,9 @@ export class StoneIndicator {
       else c.dot(x, y, neon.map(v => v * 0.55), 0.9); // the rest of the ring: dimmer, but still there on dark grass
     }
     // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
-    if (at.notes) {
-      const ox = Math.floor((N - NOTES[0].length) / 2), oy = Math.floor((N - NOTES.length) / 2);
-      NOTES.forEach((row, y) => [...row].forEach((on, x) => { if (on === "#") c.dot(ox + x, oy + y, bright, 1); }));
+    if (at.notes || at.glyph) {
+      const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = bright.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
+      G.forEach((row, y) => [...row].forEach((on, x) => { if (on === "#") c.dot(ox + x, oy + y, bright, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); }));
     } else {
       let g = this.glyphs.get(at.species);
       if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
