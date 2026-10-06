@@ -42,7 +42,7 @@ describe("the decisions panel", () => {
     expect(parseValue(growth, "x")).toBe(growth.default);
     const style = DECISION_LIST.find(d => d.id === "style")!;
     expect(parseValue(style, "bold")).toBe("bold");
-    expect(parseValue(style, "nonsense")).toBe("now");
+    expect(parseValue(style, "nonsense")).toBe("bold");
     expect(currentValue(style, t, new URLSearchParams("style=ref"))).toBe("ref");
     expect(currentValue(growth, t, new URLSearchParams(""))).toBe(0.75);
   });
