@@ -1435,13 +1435,15 @@ Off (Ed, 2026-10-06: "Remove the floating numbers above the runestones."); set o
 
 ## `canopyCutout`
 
-In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. whole: how much the fade goes by each crown's middle rather than by each pixel (Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode... If these had softer edges, it would be fine"): by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it.
+In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. whole: how much the fade goes by each crown's middle rather than by each pixel (Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode... If these had softer edges, it would be fine"): by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it. Round 14 (Ed: "canopy cut-out circle is still very sharp"): by the crown's middle, a big crown near the camera (its middle far off) stood whole right up to her and its edge read as a hard ring, so whole 0.75 -> 0.25 (mostly by pixel again) and the rings are broken another way: wobble, how far the hole's line wanders (a share of edge) by a slow noise on the ground, so the fade's lines aren't circles; outer, how far past the radius the fade reaches (a share of edge; 0.35 before), with edge 0.3 -> 0.5, so the canopy thins over a band several crowns deep. A trunk cut from its crown now fades its top in alpha too (smooth effects; the dither stays with ?fx=pixel).
 
 | knob | type | range |
 |---|---|---|
 | `canopyCutout.screenFraction` | number | 0 to … |
 | `canopyCutout.edge` | number | 0 to … |
 | `canopyCutout.whole` | number | 0 to … |
+| `canopyCutout.wobble` | number | 0 to … |
+| `canopyCutout.outer` | number | 0 to … |
 
 ## `find`, `tone`, `bloom`, `tiltShift`
 
@@ -1504,7 +1506,7 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.sleepy.faces` | array of string |  |
 | `dreams.sleepy.fallback` | string |  |
 
-## `legends`, `wildLegends`, `creatureSimRadius`
+## `legends`
 
 Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands.
 
@@ -1515,6 +1517,16 @@ Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test 
 | `legends.partyHits` | number | 1 to … |
 | `legends.partyDrain` | number | 0 to … |
 | `legends.partyReach` | number | 0 to … |
+
+## `partyOver`, `wildLegends`, `creatureSimRadius`
+
+The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little 😴 speech bubbles, and you can walk the map safely"; rules/partyOver.ts): once every soundsystem and the home ring's speakers are down, the afterparty: the waves stop, nothing fights, and every creature walks home and sleeps. walk: their pace home, times their roaming speed (they walk, not run: a stroll home after the party). ease: seconds it eases in over (g.partyOver.ease, 0 to 1: the lights going out, the music winding down, the ley line fading to leyFloor of its brightness). ?partyover=1 starts it at once.
+
+| knob | type | range |
+|---|---|---|
+| `partyOver.ease` | number | 0 to … |
+| `partyOver.leyFloor` | number | 0 to 1 |
+| `partyOver.walk` | number | 0 to … |
 | `wildLegends.wake` | number | 0 to … |
 | `wildLegends.sink` | number | 0 to … |
 | `wildLegends.moss` | number | 0 to … |
