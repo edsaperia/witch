@@ -312,24 +312,29 @@ async function main() {
     check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
   });
 
-  // The ley lines (Ed, 2026-10-04): the tuning's links (leyLines.links, 1 since 2026-10-05) through the runestones in wave order, drawn on the
-  // ground and over the treetops; a wave moves the chain on a link (the stone after the current
-  // one is the one the wave wakes). Shots of both.
+  // The ley lines (Ed, 2026-10-04; 2026-10-05: "six sections long, showing the next three and the past three
+  // runestones"): from the last stone reached on through leyLines.ahead stones in wave order and back through up to
+  // leyLines.behind reached before it, drawn on the ground and over the treetops; a wave moves the chain on (its last
+  // reached is then a stone the old chain led to next), and the ones left behind stay drawn behind it. Only the next
+  // stone has a HUD indicator ("not the next two"). Shots of both.
   await run("ley", { width: 960, height: 600 }, async page => {
     await page.keyboard.press("Enter");
-    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley; return { visible: L.meshes[0].visible, links: L.chain.length - 1, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, first: L.chain[0]?.cell.join(","), second: L.chain[1]?.cell.join(","), third: L.chain[2]?.cell.join(",") }; });
+    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
     await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 120000, polling: 200 });
     const a = await drawn();
-    const LINKS = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "../../config/tuning.json"), "utf8")).leyLines.links;
-    check(a.visible && a.links === LINKS && a.tris > 20 * LINKS, `the ley lines are drawn: ${a.links} links of the tuning's ${LINKS} (${a.tris} triangles)`);
+    const L = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "../../config/tuning.json"), "utf8")).leyLines, AHEAD = L.ahead, BEHIND = L.behind;
+    check(a.visible && a.current === 0 && a.links === AHEAD && a.tris > 20 * AHEAD, `the ley lines are drawn from home on through the next ${AHEAD} stones, nothing behind yet: ${a.links} sections, the last reached at ${a.current} (${a.tris} triangles)`);
+    check(a.cues <= Math.max(1, a.waking) && !a.after2, `only the next stone has a HUD indicator (${a.cues} for the ${a.waking} waking next${a.after2 ? "; an after-next one is still there" : ""})`);
     await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
     await sleep(2500);
     await shot(page, "62-ley-ground.png");
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(600); }
-    await page.waitForFunction(k => window.witch.view.ley.chain[0]?.cell.join(",") !== k, a.first, { timeout: 120000, polling: 200 }).catch(() => {});
+    await page.waitForFunction(k => { const L = window.witch.view.ley; return L.chain[L.current]?.cell.join(",") !== k; }, a.here, { timeout: 120000, polling: 200 }).catch(() => {});
     const b = await drawn();
-    // Two waves wake one or two stones, so the chain's start moves on past one link or two.
-    check(b.first !== a.first && (b.first === a.second || b.first === a.third || a.third === undefined) && b.links === LINKS, `two waves on, the chain has moved on (${a.first} → ${a.second} → ${a.third}, now ${b.first} → ${b.second})`);
+    // Two waves wake one or two stones each, so the last reached is now one the chain led to next, or after;
+    // the stones before it stay drawn behind (up to leyLines.behind), the next leyLines.ahead on ahead.
+    check(b.here !== a.here && (b.here === a.next || b.here === a.after) && b.current >= 1 && b.current <= BEHIND && b.links === b.current + AHEAD && b.stones.includes(a.here),
+      `two waves on, the chain has moved on and keeps the way it came (${a.here} → ${a.next} → ${a.after}, now ${b.stones.slice(0, b.current).join(" → ")} → [${b.here}] → ${b.next}: ${b.current} behind, ${b.links - b.current} ahead)`);
     await page.keyboard.press("KeyQ");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);

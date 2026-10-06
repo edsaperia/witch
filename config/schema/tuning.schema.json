@@ -2560,6 +2560,10 @@
           "type": "number",
           "minimum": 0
         },
+        "arc": {
+          "type": "number",
+          "minimum": 0
+        },
         "homing": {
           "type": "number",
           "minimum": 0
@@ -2616,6 +2620,7 @@
         "cooldown",
         "range",
         "speed",
+        "arc",
         "homing",
         "homingCone",
         "homingRange",
