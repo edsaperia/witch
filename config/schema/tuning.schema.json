@@ -3715,11 +3715,16 @@
         "repairTime": {
           "type": "number",
           "minimum": 0
+        },
+        "grace": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "hits",
-        "repairTime"
+        "repairTime",
+        "grace"
       ],
       "additionalProperties": false
     },
@@ -4483,6 +4488,9 @@
             "after"
           ]
         },
+        "sky": {
+          "type": "boolean"
+        },
         "strength": {
           "type": "number",
           "minimum": 0
@@ -4512,9 +4520,6 @@
             "band"
           ],
           "additionalProperties": false
-        },
-        "sky": {
-          "type": "boolean"
         }
       },
       "required": [

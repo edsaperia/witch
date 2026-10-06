@@ -880,12 +880,13 @@ Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they 
 
 ## `witchHealth`
 
-The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight.
+The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight. grace: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three (balance, 2026-10-06: DECISION FOR ED, 0.5).
 
 | knob | type | range |
 |---|---|---|
 | `witchHealth.hits` | number | 0 to … |
 | `witchHealth.repairTime` | number | 0 to … |
+| `witchHealth.grace` | number | 0 to … |
 
 ## `knockout`
 
@@ -1056,12 +1057,12 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `bloom.threshold` | number | 0 to … |
 | `tiltShift.on` | boolean |  |
 | `tiltShift.where` | string | "before" / "after" |
+| `tiltShift.sky` | boolean |  |
 | `tiltShift.strength` | number | 0 to … |
 | `tiltShift.band` | number | 0 to … |
 | `tiltShift.centre` | number | 0 to … |
 | `tiltShift.treetop.strength` | number | 0 to … |
 | `tiltShift.treetop.band` | number | 0 to … |
-| `tiltShift.sky` | boolean |  |
 
 ## `population`
 
