@@ -289,7 +289,13 @@ function fixedStep(g: Game, controls: Controls): void {
   const was = W.body;
   rechargeDash(W.dash, g.clock.time, charges, t.dash.cooldown);
   // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
-  if (c.dash && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain) && M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
+  // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
+  if (c.dash) W.dash.bufferUntil = g.clock.time + t.dash.buffer;
+  if (g.clock.time <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, g.clock.time)
+    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain)) {
+    W.dash.bufferUntil = undefined;
+    if (M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
+  }
   W.body = applyDash(W.dash, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds));
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, dt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
@@ -398,6 +404,8 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   // A new soundsystem: its area's wild creatures are enraged and march on it (#87: its quest done or not).
   for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) {
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
+    // Its besiegers march wherever she is (stepped from now on as busy, not only once she comes near).
+    for (const c of g.creatures) if (c.siege === key && !c.gone) S.busy.add(c.id);
     // Its happy ones (#87) come and dance round it.
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) danceAt(c, a.soundsystem);
   }
@@ -504,7 +512,7 @@ function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefi
 
 /** An area legend that isn't up and about (asleep, waking, or asleep for good): no roaming, no
  *  fighting, nothing to invite (DESIGN.md, "Sleeping legends"). */
-export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless" || c.legendState === "waking" || c.legendState === "slept"); // (asleep or restless: scenery, untouchable)
+export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless"); // (asleep or restless: scenery, untouchable)
 
 /** The legends' states (Ed, 2026-10-05, #87; rules/legends.ts): asleep, dreaming; restless while
  *  its area has none of its kind, angry once that's run its course; happy by a relic. Angry and
