@@ -19,7 +19,7 @@ export interface LegendsData {
   /** Going back to sleep away from where it lay (Ed, 2026-10-06): it walks home at homeSpeed m/s first. */
   homeSpeed: number;
   relics: { kinds: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number };
-  attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
+  attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[]; };
   healTime: number;
   charge: { species: string[]; windup: number; laneShown: number; speed: number; accel: number; turn: number; brake: number; arc: number; laneWidth: number; damage: number; knockback: number; returnSpeed: number; rest: number };
   closeMoves: boolean;
@@ -132,7 +132,9 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
 
 /** A sleeping legend's restlessness 0..1 (the music builder's nightmare reads c.restlessness), and
  *  whether its dream quest is still open (c.questOpen: it can still be done, so its dream shows). */
-export interface LegendWorld { creatures: Creature[]; map: ForestMap; time: number; dt: number; partified: (key: string) => boolean; /** where a creature is bound to now (a leashed one at a sigil: there; else its own area) */ areaOf: (c: Creature) => string }
+export interface LegendWorld {
+  /** Seconds restless before angry, if not legends.json angryAfter (with the stomp on: tuning legends.stomp.angryAfter). */
+  angryAfter?: number; creatures: Creature[]; map: ForestMap; time: number; dt: number; partified: (key: string) => boolean; /** where a creature is bound to now (a leashed one at a sigil: there; else its own area) */ areaOf: (c: Creature) => string }
 
 /** One step of every legend's state. */
 export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsData = LEGENDS): void {
@@ -158,7 +160,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
       }
     }
     if (c.legendState === "restless") {
-      c.restlessness = Math.min(1, (c.restlessness ?? 0) + w.dt / Math.max(1e-6, data.angryAfter));
+      c.restlessness = Math.min(1, (c.restlessness ?? 0) + w.dt / Math.max(1e-6, w.angryAfter ?? data.angryAfter));
       if (c.restlessness >= 1) anger(c, w.time);
     }
   }

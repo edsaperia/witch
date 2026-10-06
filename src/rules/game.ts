@@ -147,7 +147,7 @@ export interface Game {
   /** The spots of witches round the beach (rules/beach.ts), or null (no beach). */
   beach: BeachWitches[] | null;
   /** Running totals for the playtest log (src/platform/playtestLog.ts): berries eaten, creatures invited, evolutions. */
-  tally: { berries: number; invites: number; evolved: number };
+  tally: { berries: number; invites: number; evolved: number; /** soundsystems a legend stamped on as it turned angry (legends.stomp) */ stomps?: number };
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
 }
@@ -722,10 +722,23 @@ export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashe
 function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const time = g.clock.time;
   // Asleep, restless (no kin in its area), angry; happy by a relic (rules/legends.ts, #87).
+  const stomp = g.tuning.legends?.stomp, was = stomp?.on ? ids.map(id => g.creatures[id].legendState) : null;
   stepLegendStates({
-    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k),
+    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined,
     areaOf: c => { if (c.leashed) { const p = g.leash.placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
   }, ids);
+  // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,
+  // destroying immediately. The angry legend waking timer may have to be longer"): a legend turning
+  // angry with its own area's soundsystem standing destroys it at once (lost as any fallen one is).
+  if (was) ids.forEach((id, i) => {
+    const c = g.creatures[id];
+    if (was[i] === "angry" || c.legendState !== "angry") return;
+    const key = cellKey(c.cell), h = g.combat.sounds.get(key);
+    if (!g.party.areas.has(key) || !h || h.hp <= 0) return;
+    h.hp = 0;
+    g.combat.events.push({ kind: "soundDestroyed", x: h.x, z: h.z, at: time, key }); // (lost with the rest this step: stepGame's fallen soundsystems)
+    g.tally.stomps = (g.tally.stomps ?? 0) + 1;
+  });
   // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
   for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += (maxHp(c.level) / LEGENDS.healTime) * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
   if (happyNearest) {

@@ -61,6 +61,8 @@ export interface BuffState {
   tuning: Tuning;
   /** Buffs gained or lost in the latest step, for the view's flash and line. */
   events: BuffEvent[];
+  /** The legends.buffPower they were last worked out with. */
+  power?: number;
   /** The tuning file `tuning` was worked out from. */
   base: Tuning;
   /** Debug (?buffs=fox,toad,stag): these species' buffs on whatever the legends do. */
@@ -83,9 +85,9 @@ export function partyLegends(creatures: readonly Creature[], partyIds: Iterable<
 const hold = (v: number, lim: [number, number] | undefined) => (lim ? Math.min(lim[1], Math.max(lim[0], v)) : v);
 
 /** The behaviours these buffs count, each held inside its limits. */
-export function modsOf(defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS): BuffMods {
+export function modsOf(defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS, power = 1): BuffMods {
   const M = noMods();
-  for (const d of defs) for (const [k, v] of Object.entries(d.mods ?? {})) M[k as ModKind] += v ?? 0;
+  for (const d of defs) for (const [k, v] of Object.entries(d.mods ?? {})) M[k as ModKind] += Math.max(v ?? 0, Math.round((v ?? 0) * power));
   for (const k of MOD_KINDS) M[k] = hold(M[k], table.limits[`mods.${k}`]);
   return M;
 }
@@ -102,11 +104,11 @@ function set<T extends object>(o: T, path: string, v: number): T {
 
 /** The tuning with these buffs' numbers applied: scales multiply and adds add (on the file's
  *  value), then each is held inside its limits. Untouched numbers are the file's own. */
-export function buffedTuning(t: Tuning, defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS): Tuning {
+export function buffedTuning(t: Tuning, defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS, power = 1): Tuning {
   const scale = new Map<string, number>(), add = new Map<string, number>();
   for (const d of defs) {
-    for (const [p, v] of Object.entries(d.scale ?? {})) scale.set(p, (scale.get(p) ?? 1) * v);
-    for (const [p, v] of Object.entries(d.add ?? {})) add.set(p, (add.get(p) ?? 0) + v);
+    for (const [p, v] of Object.entries(d.scale ?? {})) scale.set(p, (scale.get(p) ?? 1) * Math.max(0.05, 1 + (v - 1) * power));
+    for (const [p, v] of Object.entries(d.add ?? {})) add.set(p, (add.get(p) ?? 0) + v * power);
   }
   let out = t;
   for (const p of new Set([...scale.keys(), ...add.keys()])) out = set(out, p, hold(get(t, p) * (scale.get(p) ?? 1) + (add.get(p) ?? 0), table.limits[p]));
@@ -129,6 +131,9 @@ export function stepBuffs(s: BuffState, creatures: readonly Creature[], partyIds
     s.events.push({ kind: "gained", id: c.id, species: c.species, label: def.label });
     changed = true;
   }
-  if (changed) { s.active = active; s.mods = modsOf(active.map(a => a.def), table); }
-  if (changed || s.base !== t) { s.tuning = s.active.length ? buffedTuning(t, s.active.map(a => a.def), table) : t; s.base = t; }
+  // Their strength (Ed, 2026-10-06, on quests: "Bigger buffs"): legends.buffPower, 1 as each is written.
+  const power = t.legends?.buffPower ?? 1;
+  if (changed || s.power !== power) { s.active = active; s.mods = modsOf(active.map(a => a.def), table, power); }
+  if (changed || s.base !== t || s.power !== power) { s.tuning = s.active.length ? buffedTuning(t, s.active.map(a => a.def), table, power) : t; s.base = t; }
+  s.power = power;
 }

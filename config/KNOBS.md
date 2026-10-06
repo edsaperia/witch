@@ -537,6 +537,7 @@ The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in 
 | `leyLines.fade` | number | 0 to … |
 | `leyLines.brightness` | number | 0 to … |
 | `leyLines.width` | array of number |  |
+| `leyLines.core` | array of number |  |
 | `leyLines.height` | array of number |  |
 | `leyLines.valley` | number | 0 to … |
 | `leyLines.flow` | array of number |  |
@@ -1544,11 +1545,18 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 
 ## `legends`
 
-Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands.
+Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 (2026-10-06): buffPower, every legend's buff's strength ("Bigger buffs", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); bombard ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge. stomp (Ed, 2026-10-06, a "perhaps": "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer"): on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands.
 
 | knob | type | range |
 |---|---|---|
 | `legends.share` | number | 0 to … |
+| `legends.buffPower` | number | 0 to … |
+| `legends.happyRange` | number | 0 to … |
+| `legends.bombard.on` | boolean |  |
+| `legends.bombard.range` | number | 0 to … |
+| `legends.bombard.damage` | number | 0 to … |
+| `legends.stomp.on` | boolean |  |
+| `legends.stomp.angryAfter` | number | 0 to … |
 | `legends.partyEgg` | boolean |  |
 | `legends.partyHits` | number | 1 to … |
 | `legends.partyDrain` | number | 0 to … |
