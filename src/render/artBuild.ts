@@ -333,8 +333,8 @@ function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas, genom
 
 /** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in
  *  `colour`. Happy (colour null): the gear without the collar, always at least a hat so it reads as
- *  dressed up. The party bake and the live rig's party pages (shoes aside) both wear it. */
-export function partyGearOf(seed: number, colour: number[] | null): RigGear & { shoes: string | null } {
+ *  dressed up. The party bake and the live rig's party pages both wear it. */
+export function partyGearOf(seed: number, colour: number[] | null): RigGear {
   const g = Art.partyGear(seed) as { hat: number | null; glasses: string | null; shoes: string | null };
   return { collar: colour ?? null, hat: !colour && g.hat === null ? seed % 3 : g.hat, glasses: g.glasses, shoes: g.shoes };
 }

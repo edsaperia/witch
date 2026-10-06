@@ -70,6 +70,11 @@ export interface Tuning {
     lost: { volume: number };
     ouch: { volume: number; knockdown: number; duck: number; duckTime: number };
     impact: { volume: number; small: number };
+    roar: { volume: number };
+    shoes: { volume: number; range: number; max: number };
+    pond: { volume: number; lap: number; frogs: number; frogEvery: number; drips: number; dripEvery: number; range: number };
+    picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
+    room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number };
     land: { volume: number; gap: number };
     stir: { volume: number };
     knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
@@ -118,6 +123,8 @@ export interface Tuning {
   pixelSize: number;
   glowReach: number;
   glowFalloff: number;
+  /** The share of the glow's reach where it has fallen to dark (Ed, round 11: "it should fall off closer"); 1 out to the reach. */
+  glowNear: number;
   /** The glow reaches the canopy hole's edge times this (Ed, v149); off when ?glow= fixes the reach. */
   glowToCutout: number;
   /** Set by ?glow=: use glowReach as it is. */
@@ -202,14 +209,14 @@ export interface Tuning {
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
   /** The 💌 invite (issue #87): rules/invites.ts. on: 💌s instead of the proximity chat. */
-  invites: { on: boolean; burst: number; burstGap: number; cooldown: number; range: number; speed: number; homing: number; homingCone: number; homingRange: number; multiShot: number; spread: number; radius: number; amount: number; hits: number[]; drain: number; perAnimalHitGap: number; /** Her ground speed while firing, times (Ram's Steady takes it away). */ fireSlow?: number };
+  invites: { on: boolean; burst: number; burstGap: number; cooldown: number; range: number; speed: number; /** The lob's rise (m) over the line from her hand down to the ground at the range (drawn only). */ arc?: number; homing: number; homingCone: number; homingRange: number; multiShot: number; spread: number; radius: number; amount: number; hits: number[]; drain: number; perAnimalHitGap: number; /** Her ground speed while firing, times (Ram's Steady takes it away). */ fireSlow?: number };
   invite: { talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
   /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
-  tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
+  tiltShift: { on: boolean; where: "before" | "after"; /** Whether the sky over the bend is blurred too (Ed, round 12); false leaves it sharp. */ sky?: boolean; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
   /** Wild creatures (Ed, 2026-10-04): every area starts with `start`; while wild it gains
    *  growth.perWave a wave at a random level by growth.weights (baby, young, adult); new ones
    *  appear beyond the haze's far edge plus growth.hide metres from every witch (rules/growth.ts). */

@@ -808,6 +808,10 @@
       "type": "number",
       "minimum": 0
     },
+    "glowNear": {
+      "type": "number",
+      "minimum": 0
+    },
     "glowToCutout": {
       "type": "number",
       "minimum": 0
@@ -2560,6 +2564,10 @@
           "type": "number",
           "minimum": 0
         },
+        "arc": {
+          "type": "number",
+          "minimum": 0
+        },
         "homing": {
           "type": "number",
           "minimum": 0
@@ -2616,6 +2624,7 @@
         "cooldown",
         "range",
         "speed",
+        "arc",
         "homing",
         "homingCone",
         "homingRange",
@@ -3038,6 +3047,151 @@
           ],
           "additionalProperties": false
         },
+        "roar": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
+          ],
+          "additionalProperties": false
+        },
+        "shoes": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "range",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        "pond": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "frogs": {
+              "type": "number",
+              "minimum": 0
+            },
+            "frogEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "drips": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dripEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "lap",
+            "frogs",
+            "frogEvery",
+            "drips",
+            "dripEvery",
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "picnic": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "murmur": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clinks": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clinkEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "murmur",
+            "clinks",
+            "clinkEvery",
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "room": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hum": {
+              "type": "number",
+              "minimum": 0
+            },
+            "crackle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "creak": {
+              "type": "number",
+              "minimum": 0
+            },
+            "creakEvery": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "hum",
+            "crackle",
+            "creak",
+            "creakEvery"
+          ],
+          "additionalProperties": false
+        },
         "land": {
           "type": "object",
           "properties": {
@@ -3281,6 +3435,11 @@
         "lost",
         "ouch",
         "impact",
+        "roar",
+        "shoes",
+        "pond",
+        "picnic",
+        "room",
         "land",
         "stir",
         "knock",
@@ -4352,11 +4511,15 @@
             "band"
           ],
           "additionalProperties": false
+        },
+        "sky": {
+          "type": "boolean"
         }
       },
       "required": [
         "on",
         "where",
+        "sky",
         "strength",
         "band",
         "centre",
@@ -4632,6 +4795,7 @@
     "pixelSize",
     "glowReach",
     "glowFalloff",
+    "glowNear",
     "glowToCutout",
     "glowHeight",
     "spriteTilt",
