@@ -22,8 +22,30 @@ function pickWeighted(w: number[], seed: number): number {
   return Math.max(0, w.length - 1);
 }
 
-/** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed. */
+/** A rebuild under way, for each view: the rest of it, a part each frame. */
+const jobs = new WeakMap<View, Generator<void, void, void>>();
+
+/** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed: a slice of
+ *  at most SLICE_MS a frame (the trees, then the undergrowth, walls, set pieces and the rest, then
+ *  each kind's batch handed its list, nearest first), so no frame takes the whole of it (Ed,
+ *  2026-10-06: a rebuild was 5 ms on average and up to 11, the biggest spike left late in a run).
+ *  Each batch keeps its old list until its new one is ready; the margin they're listed with leaves
+ *  room for a few frames' flight even at full boost. `force`: all of it now (no rebuild under
+ *  way is left half done). */
 export function refresh(v: View, force = false): void {
+  let job = jobs.get(v);
+  if (job && !force) { if (job.next().done) jobs.delete(v); return; }
+  if (job) { while (!job.next().done); jobs.delete(v); }
+  job = rebuild(v, force);
+  if (force) { while (!job.next().done); return; }
+  if (!job.next().done) jobs.set(v, job);
+}
+
+const SLICE_MS = 2.5;
+
+function* rebuild(v: View, force: boolean): Generator<void, void, void> {
+  let t0 = performance.now();
+  const due = () => performance.now() - t0 > SLICE_MS, resume = () => { t0 = performance.now(); };
   // The margin grows with her speed (a quarter second's flight), so at full boost the batches are
   // rebuilt every 10 m or so rather than every 4 (Ed, v256: dropped frames boosting over the treetops).
   const g = v.game, t = g.tuning, cam = v.camera, margin = Math.max(t.viewMargin, Math.hypot(g.witch.vx, g.witch.vz) * 0.25), pose = poseOf(g);
@@ -70,8 +92,9 @@ export function refresh(v: View, force = false): void {
     const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
     if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
     nt++;
+    if (due()) { yield; resume(); }
   }
-  const scatter = (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]) => {
+  const scatter = function* (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]): Generator<void, void, void> {
     for (const p of list) {
       const art = v.assets.typeArt(p.type);
       if (!art) continue;
@@ -100,14 +123,15 @@ export function refresh(v: View, force = false): void {
       const sd = frame.w * m * 0.3;
       if (kind !== "setpiece") shadows.push({ x: p.x, z: p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
       nb++;
+      if (due()) { yield; resume(); }
     }
   };
-  scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
-  scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
+  yield* scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
+  yield* scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
   // Berry bushes (rules/berries.ts): normal bushes of their area, a berry on some of them.
-  scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
-  scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
-  scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
+  yield* scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
+  yield* scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
+  yield* scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
   // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
   const decor = v.assets.decorArt(), dl: SpriteInstance[] = [];
   if (decor) for (const d of g.forest.decorNear(cx, cz, half)) {
@@ -202,6 +226,7 @@ export function refresh(v: View, force = false): void {
       return b;
     })?.set(flat);
   }
+  if (due()) { yield; resume(); }
   dl.sort((a, b) => b.z - a.z); // nearest first, as the trees below
   if (decor) v.batchFor(v.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
   for (const [type, b] of v.typeBatches) if (!per.has(type)) b.set([]);
@@ -212,6 +237,7 @@ export function refresh(v: View, force = false): void {
   for (const [type, list] of per) {
     const b = v.batchFor(v.typeBatches, type, () => { const a = v.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true, fade: true }); });
     b?.set(list);
+    if (due()) { yield; resume(); }
   }
   { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: 7, d: 3.5, scenery: false }); } // soft, under the treehouse
   checkPops(v, "placed", !force);
