@@ -24,8 +24,10 @@ import { M, hsv2rgb, runeGlyph, hash2 } from "./core.js";
 import { Model, render } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 
-// The room's size in model units: the floor S across each way, the walls H tall.
-export const ROOM = { S: 3, H: 1.75, deck: .16, wall: .08 };
+// The room's size in model units: the floor S across each way, the walls H tall. (Ed, 2026-10-06: "twice as large, and you
+// should be able to walk around in it": S 3 to 4.25, twice the floor; the first room's things keep their places in its far
+// corner, and the new floor has more of her mess. DECISION FOR ED: twice the floor, not twice each way; `?room=6` tries that.)
+export const ROOM = { S: 4.25, H: 1.75, deck: .16, wall: .08 };
 // Seen from the room's open corner: turned 45°, looked down on at the isometric angle.
 export const ROOM_VIEW = { yaw: Math.PI / 4, pitch: .6 };
 
@@ -153,8 +155,8 @@ export const BEDROOM_PROPS = {
     const foot = bP3(at), lean = o.lean || [0, 0, -1], back = .18, top = [foot[0] + lean[0] * back, .9, foot[2] + lean[2] * back];
     const along = (t) => [foot[0] + (top[0] - foot[0]) * t, foot[1] + (top[1] - foot[1]) * t, foot[2] + (top[2] - foot[2]) * t];
     const across = o.across || [1, 0, 0];
-    m.ell(along(.12), [.15, .12, .045], M.EAR, { dir: across, up: [0, 1, 0], group: 140 });
-    m.ell(along(.3), [.12, .1, .045], M.EAR, { dir: across, up: [0, 1, 0], group: 140 });
+    m.ell(along(.12), [.15, .12, .045], o.mat ?? M.EAR, { dir: across, up: [0, 1, 0], group: 140 });
+    m.ell(along(.3), [.12, .1, .045], o.mat ?? M.EAR, { dir: across, up: [0, 1, 0], group: 140 });
     m.ell(along(.24), [.035, .035, .02], M.NOSE, { group: 141, extra: true });
     m.seg(along(.35), along(.9), .025, .022, M.BARKD, { group: 142 });
     m.box(along(.95), [.03, .055, .02], M.BARKD, { dir: across, group: 142 });
@@ -248,6 +250,51 @@ export const BEDROOM_PROPS = {
     for (const sx of [-1, 1]) m.seg(r([sx * .15, .32, -.16]), r([sx * .15, .72, -.17]), .02, .018, M.BARKL, { group: 240 });
     m.box(r([0, .62, -.17]), [.17, .07, .018], M.WOOD, { axes, group: 240, round: .012 });
   },
+  // a clothes rail along a wall (o.len long, along x unless o.turn), its garments hanging, a hanger or two empty
+  rail(m, at, o = {}) {
+    const c = bP3(at), a = o.turn || 0, L = o.len || .7, y = 1.02, r = p => bOff(c, p, a), k = o.k || 0;
+    for (const sx of [-1, 1]) { m.seg(r([sx * L / 2, 0, 0]), r([sx * L / 2, y, 0]), .02, .018, M.FRAME, { group: 250 }); m.seg(r([sx * L / 2, .01, -.12]), r([sx * L / 2, .01, .12]), .02, .02, M.FRAME, { group: 250 }); }
+    m.seg(r([-L / 2 - .02, y, 0]), r([L / 2 + .02, y, 0]), .014, .014, M.FRAME, { group: 250 });
+    const mats = [M.JACKET, M.TOP, M.EYE, M.SHOES, M.CLOTH, M.JEANS, M.POM, M.HAT];
+    const n = Math.max(3, Math.round(L / .1));
+    for (let i = 0; i < n; i++) {
+      const x = -L / 2 + .06 + (L - .12) * i / (n - 1), mat = mats[(i * 3 + k) % mats.length], h = .2 + .14 * hash2(i, k, 4), g = 251 + (i % 12);
+      m.seg(r([x, y, 0]), r([x, y - .06, 0]), .006, .006, M.FRAME, { group: g });
+      if (hash2(i, k, 7) < .15) continue; // an empty hanger
+      m.box(r([x, y - .06 - h, 0]), [.025, h, .13 + .03 * hash2(i, k, 2)], mat, { axes: [bRotY(bX, a), bUP, bRotY(bZ, a)], group: g, round: .02, rough: .004 });
+    }
+  },
+  // a bookcase against the left wall (its back on x = 0, o.len along z, o.h tall), its shelves full of book spines, a rune
+  // book open on top
+  bookcase(m, at, o = {}) {
+    const [x0, z] = at, L = o.len || .7, h = o.h || 1.2, D = .28, k = o.k || 0, covers = [M.BODY, M.BODY3, M.IRIS, M.CLOTH, M.EAR, M.ACCENT, M.HAT];
+    m.box([x0 + D / 2, h / 2, z], [D / 2, h / 2, L / 2], M.WOOD, { group: 260, round: .015, paint: p => p[0] > x0 + D - .025 || Math.abs(p[2] - z) > L / 2 - .03 || p[1] > h - .03 ? M.WOOD : M.BARKD });
+    const shelves = 4, gap = (h - .04) / shelves;
+    for (let si = 0; si < shelves; si++) {
+      const y0 = .03 + si * gap;
+      let zz = z - L / 2 + .04, i = 0;
+      while (zz < z + L / 2 - .06) {
+        const w = .025 + .02 * hash2(i, si + k, 3), bh = gap * (.55 + .35 * hash2(i, si + k, 5)), mat = covers[(i + si * 3 + k) % covers.length], lean = hash2(i, si, 9) < .1;
+        m.box([x0 + D * .55, y0 + bh / 2, zz + w / 2], [D * .38, bh / 2, w / 2 - .002], mat, { group: 261 + ((i + si) % 10), round: .004, dir: lean ? [Math.cos(.3), Math.sin(.3), 0] : bX, paint: p => Math.abs(p[1] - y0 - bh * .75) < .008 ? M.BODY2 : undefined });
+        zz += w + .004; i++;
+      }
+      m.box([x0 + D / 2, y0 - .005, z], [D / 2 - .01, .012, L / 2 - .02], M.BARKL, { group: 271, round: .005 });
+    }
+    BEDROOM_PROPS.openBook(m, [x0 + D / 2, h + .012, z], { turn: Math.PI / 2 + .2, k: k + 3, cover: M.BODY });
+  },
+  // a beanbag slumped on the floor
+  beanbag(m, at, o = {}) {
+    const c = bP3(at), r = o.r || .32;
+    m.ell([c[0], r * .55, c[2]], [r, r * .55, r * .92], o.mat ?? M.ACCENT, { group: 280, rough: .015 });
+    m.ell([c[0] - r * .25, r * .95, c[2] - r * .25], [r * .6, r * .3, r * .55], o.mat ?? M.ACCENT, { group: 280, rough: .012 });
+  },
+  // a crate of records, a couple out on the floor
+  records(m, at, o = {}) {
+    const c = bP3(at), a = o.turn || 0, r = p => bOff(c, p, a), axes = [bRotY(bX, a), bUP, bRotY(bZ, a)], sleeves = [M.POM, M.FLOWER, M.EYE, M.JACKET, M.SHOES, M.IRIS, M.BELLY];
+    m.box(r([0, .1, 0]), [.17, .1, .13], M.BARKL, { axes, group: 290, round: .01, paint: p => Math.abs(p[1] - .1) < .03 ? M.WOOD : undefined });
+    for (let i = 0; i < 7; i++) m.box(r([-.13 + i * .043, .19, 0]), [.012, .085, .12], sleeves[i % sleeves.length], { axes: [bRotY([Math.cos(.15 * (i % 3 - 1)), Math.sin(.15 * (i % 3 - 1)), 0], a), bUP, bRotY(bZ, a)], group: 291 + (i % 4), round: .004 });
+    for (const [dx, dz, mat] of [[.34, .1, M.SHOES], [.2, .32, M.IRIS]]) { const p = r([dx, .006, dz]); m.ell(p, [.15, .006, .15], M.SHADES, { group: 296 }); m.ell([p[0], .012, p[2]], [.05, .004, .05], mat, { group: 297 }); }
+  },
   // a rug, patterned
   rug(m, at, o = {}) {
     const c = bP3(at, .016), r = o.r || .7;
@@ -257,10 +304,12 @@ export const BEDROOM_PROPS = {
 
 // The room: the deck, the floor's boards, the two far walls of boards, the window, the tree's bough and root, the
 // fairy lights and the banner; then the furniture and the mess.
-export function bedroomModel() {
-  const { S, H, deck, wall } = ROOM, m = new Model({ blend: .02 }), K = S / 3.4; // (the furniture is placed for a room 3.4 across; K fits it)
+export function bedroomModel({ S = ROOM.S } = {}) {
+  const { H, deck, wall } = ROOM, m = new Model({ blend: .02 }), K = 3 / 3.4; // (the first room's furniture is placed for a room 3.4 across; K fits it to the 3 it was)
   const B = Object.fromEntries(Object.entries(BEDROOM_PROPS).map(([id, f]) => [id, (mm, at, o) => f(mm, at.length === 3 ? [at[0] * K, at[1], at[2] * K] : [at[0] * K, at[1] * K], o)]));
   m.anchors.runes = []; m.anchors.flames = []; m.anchors.fairy = []; m.anchors.letters = [];
+  // where she can't walk (x0, z0, x1, z1 on the floor): the furniture's footprints (the things lying flat she steps over)
+  const blocks = m.anchors.blocks = [], block = (x, z, hx, hz) => blocks.push([x - hx, z - hz, x + hx, z + hz]);
   // the deck under the floor, and the floor's boards (running along x, their seams dark, a knot here and there)
   m.box([S / 2, -deck / 2, S / 2], [S / 2 + .04, deck / 2, S / 2 + .04], M.BARKL, { group: 2, round: .02, paint: p => p[1] > -.02 ? (Math.floor(p[2] * 4.5) % 2 ? M.WOOD : M.HAIR) : M.HAT1 });
   // the far walls: boards running up, seams dark, a sill and a top rail
@@ -285,7 +334,8 @@ export function bedroomModel() {
   m.chain([[.05, .05, 2.0, .14], [.3, .06, 2.1, .1], [.55, .03, 1.95, .06], [.75, 0, 2.0, .03]], M.TRUNK, { group: 9, rough: .012, paint: p => p[1] > .1 && hash2(Math.floor(p[0] * 16), Math.floor(p[2] * 16), 2) > .6 ? M.MOSS : undefined });
   // fairy lights along the tops of the walls, in sags between pins
   const fairy = (a, b, n) => { for (let i = 0; i <= n; i++) { const t = i / n, sag = Math.sin(t * Math.PI * 4) ** 2 * .08, p = [a[0] + (b[0] - a[0]) * t, a[1] - sag, a[2] + (b[2] - a[2]) * t]; m.ell(p, [.018, .018, .018], i % 3 ? M.COLLAR : M.MAGIC2, { group: 10 }); m.anchors.fairy.push(p); } };
-  fairy([.25, H - .06, .06], [S - .1, H - .06, .06], 24); fairy([.06, H - .06, .25], [.06, H - .06, S - .1], 24);
+  const nf = Math.round(24 * S / 3);
+  fairy([.25, H - .06, .06], [S - .1, H - .06, .06], nf); fairy([.06, H - .06, .25], [.06, H - .06, S - .1], nf);
   // the banner: PARTY on the left wall, TONIGHT on the right, a pennant a letter, on a string
   const flags = (word, start, dir, along, n) => { [...word].forEach((ch, i) => { const t = (i + .5) / n, sag = Math.sin(t * Math.PI) * .06, c = [start[0] + dir[0] * along * t, H - .36 - sag, start[2] + dir[2] * along * t], nrm = dir[0] ? [0, 0, 1] : [1, 0, 0];
         m.anchors.letters.push([ch, [c[0] + nrm[0] * .03, c[1], c[2] + nrm[2] * .03], dir]); });
@@ -324,19 +374,47 @@ export function bedroomModel() {
   B.openBook(m, [1.0, .03, .35], { turn: 1.2, k: 7, cover: M.IRIS });
   B.rug(m, [2.8, 1.95], { r: .78 });
   m.anchors.stand = [2.8 * K, 0, 1.95 * K];
+  block(.55, 1.4, .56, .88); block(.27, .27, .13, .13); block(.53, .31, .1, .09); block(1.24, 2.6, .22, .22); // the bed, the books, the chair
+  block(1.81, .27, .5, .22); block(2.6, .2, .16, .16); block(2.73, .55, .17, .17); block(2.6, .93, .14, .27); // the decks, the guitar, the drum, the synth
+  // The room's new floor (Ed, 2026-10-06: "twice as large"), placed in its own units: more of her mess.
+  if (S >= 3.6) {
+    const R = S - 3; // (what's new past the first room, along each wall)
+    // along the right-hand wall: a clothes rail, the long mirror by it, a bass against the wall; a heap at the rail's foot
+    const rx = 3 + R * .55;
+    BEDROOM_PROPS.rail(m, [rx, .3], { len: Math.min(1.1, R * .75), k: 2 }); block(rx, .3, Math.min(1.1, R * .75) / 2 + .04, .16);
+    BEDROOM_PROPS.guitar(m, [3.06, .18], { lean: [0, 0, -1], across: [1, 0, 0], mat: M.SHOES }); block(3.06, .2, .15, .14);
+    BEDROOM_PROPS.mirror(m, [S - .3, .85]); block(S - .3, .85, .2, .2);
+    BEDROOM_PROPS.clothes(m, [rx - .2, .75], { kind: "top", turn: 2.1, k: 7, mat: M.POM }); BEDROOM_PROPS.clothes(m, [rx + .15, .95], { kind: "jeans", turn: -1.1, k: 8 });
+    BEDROOM_PROPS.hat(m, [rx - .45, .9], { kind: "cowboy", turn: 1.4, k: 5 }); BEDROOM_PROPS.sneaker(m, [rx + .4, .62], { turn: 2.6, k: 3, mat: M.JACKET }); BEDROOM_PROPS.sneaker(m, [rx + .52, .7], { turn: .4, k: 4, mat: M.JACKET });
+    // along the left-hand wall: the broom by the bed, a bookcase full of spines, rune books open on the floor before it, a candle
+    BEDROOM_PROPS.broom(m, [.1, 2.68], { lean: [-1, 0, 0] }); block(.12, 2.68, .12, .12);
+    const bz = 3 + R * .55;
+    BEDROOM_PROPS.bookcase(m, [0, bz], { len: Math.min(1, R * .75), k: 1 }); block(.15, bz, .2, Math.min(1, R * .75) / 2 + .03);
+    BEDROOM_PROPS.openBook(m, [.62, bz - .35], { turn: .6, k: 11, cover: M.BODY3 }); BEDROOM_PROPS.openBook(m, [.85, bz + .2], { turn: -.4, k: 12, cover: M.IRIS }); BEDROOM_PROPS.openBook(m, [.5, bz + .55], { turn: 1.9, k: 13, cover: M.EAR });
+    const top = BEDROOM_PROPS.bookPile(m, [.45, 3.05], { n: 4, k: 6 }); BEDROOM_PROPS.candle(m, [.45, top, 3.05], { h: .1, k: 6 }); block(.45, 3.05, .1, .1);
+    // in the middle of the new floor: a beanbag with headphones on it, the records out of their crate, a party hat, a sock
+    BEDROOM_PROPS.beanbag(m, [1.75, S - .9], { mat: M.JEANS }); block(1.75, S - .9, .32, .3);
+    BEDROOM_PROPS.headphones(m, [1.65, .4, S - .95], { turn: .3 });
+    BEDROOM_PROPS.records(m, [2.55, S - .55], { turn: .25 }); block(2.55, S - .55, .2, .16);
+    BEDROOM_PROPS.hat(m, [3.3, 2.75], { kind: "party", k: 6 }); BEDROOM_PROPS.clothes(m, [3.1, 3.3], { kind: "sock", turn: 2.2, k: 9, mat: M.EYE });
+    BEDROOM_PROPS.clothes(m, [1.2, S - .45], { kind: "scarf", turn: -.3, k: 10, mat: M.FLOWER });
+  }
+  m.anchors.floor = { S, wall, blocks };
   return m;
 }
 
 // The room rendered at the witch's own art pixel: its sprite and its anchors, in pixels from the top-left: stand (where
 // her feet go), letters (the banner's), mirror ({ x, y, rx, ry }, its glass, if one is placed), and the glowing things (runes, flames, fairy, screen, lantern,
 // potions, decks), for the room's lights and its animated glows.
-export function bedroomSprite(st = {}) {
-  const m = bedroomModel(), { sp, project, s } = render(m, { scale: witchPixelsPerUnit(st), yaw: ROOM_VIEW.yaw, pitch: ROOM_VIEW.pitch, lineGap: .12 });
+export function bedroomSprite(st = {}, { S } = {}) {
+  const m = bedroomModel({ S }), { sp, project, s, depth, depthOf } = render(m, { scale: witchPixelsPerUnit(st), yaw: ROOM_VIEW.yaw, pitch: ROOM_VIEW.pitch, lineGap: .12, keepDepth: true });
   const A = m.anchors, pt = p => project(p), anchors = {};
   for (const k of ["runes", "flames", "fairy"]) anchors[k] = A[k].map(pt);
   for (const k of ["screen", "lantern", "potions", "decks", "stand"]) anchors[k] = pt(A[k]);
   anchors.letters = A.letters.map(([ch, p, dir]) => { const a = pt(p), b = pt([p[0] + dir[0] * .1, p[1], p[2] + dir[2] * .1]); return [ch, a, (b[1] - a[1]) / (b[0] - a[0] || 1)]; }); // each letter, where its pennant hangs and the wall's slope on screen
   if (A.mirror) { const mr = A.mirror, c = pt(mr.c), e = pt([mr.c[0] + mr.u[0] * mr.ru, mr.c[1] + mr.rv, mr.c[2] + mr.u[2] * mr.ru]); anchors.mirror = { x: c[0], y: c[1], rx: Math.abs(e[0] - c[0]), ry: Math.abs(e[1] - c[1]) }; }
   sp.anchors = anchors; sp.scale = s;
+  // to walk in it (src/ui/roomWalk.ts): its floor (size, walls, footprints), where a floor point lands, and how far each pixel is
+  sp.walk = { ...A.floor, start: [A.stand[0], A.stand[2]], project, depth, depthOf, pitch: ROOM_VIEW.pitch };
   return sp;
 }
