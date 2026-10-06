@@ -42,6 +42,9 @@ const SOUNDS: [string, number, Play][] = [
   ["happy", 0.6, s => s.happy(0)],
   ["lob-landing", 2.8, () => {}],
   ["legend-roar", 2.8, s => s.roar()],
+  ["stone-power", 2, s => s.power(4, 0, 1)],
+  ["stone-power-soundsystem", 3, s => s.power(7, 0, 1, true)],
+  ["stone-boot-12", 9.5, () => {}],
   ["legend-lament-elk", 8, s => s.lament(v("elk", 3), 0.15)],
   ["legend-lament-owl", 8, s => s.lament(v("owl", 3), 0.55)],
   ["legend-lament-wolf-urgent", 8, s => s.lament(v("wolf", 3), 1)],
@@ -90,6 +93,9 @@ async function render(name: string, seconds: number, play: Play) {
     for (let k = 0; k <= 12; k++) { const sp = 14 * (1 - k / 12); at(4.2 + k * 0.1, () => s.charge(0, Math.min(1, sp / 10))); }
     at(5.5, () => s.charge(0, 0));
     for (let i = 0; i < 9; i++) at(5.7 + i * 0.34, () => s.hoof(0, 1, true));
+  } else if (name === "stone-boot-12") {
+    // the home ring's 12 runestones powering on round the ring, sped up (0.6 s apart), the last a chord
+    for (let i = 0; i < 12; i++) void oc.suspend(Math.round(i * 0.6 * rate) / rate).then(() => { s.power(i, Math.sin((i / 12) * Math.PI * 2) * 0.8, 1, i === 11); return oc.resume(); });
   } else if (name === "home-meadow") {
     // walking in from home's edge to the dancefloor and out again: the meadow's level each 0.1 s
     for (let k = 0; k <= 115; k++) { const sec = k * 0.1, L = Math.min(1, sec / 3, Math.max(0, (11.5 - sec) / 3)); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.meadow(L); return oc.resume(); }); }

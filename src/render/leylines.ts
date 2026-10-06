@@ -125,6 +125,12 @@ export class LeyLines {
     this.meshes = [...this.cur.meshes];
   }
 
+  /** The drawn route of the line's links (each from one stone to the next). */
+  private routes: [number, number][][] = [];
+  /** The link from the last stone reached on to the next, as drawn (the wave pointer follows its pulse along it:
+   *  rules/leypulse.ts); null before the line is routed. */
+  currentLink(): readonly (readonly [number, number])[] | null { return this.T.on ? this.routes[this.current] ?? null : null; }
+
   /** The line's brightness times k (the mood's leyBright). */
   scale(k: number): void { this.u.uBright.value = this.T.brightness * BRIGHT * k; }
 
@@ -161,6 +167,7 @@ export class LeyLines {
         const was = this.chain[this.current + 1];
         if (was && P.chain[P.current] && P.chain[P.current].cell.join() === was.cell.join()) this.shiftFrom = time; // (moved on)
         this.build(this.cur.geo, P.colours, P.routes);
+        this.routes = P.routes;
         this.cur.current.value = P.current;
         this.key = P.key; this.chain = P.chain; this.current = P.current; this.pending = null;
       }

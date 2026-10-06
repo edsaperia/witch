@@ -53,7 +53,9 @@ export function leyChain(p: PartyState, map: ForestMap, ahead = Infinity, behind
   const back = order.slice(Math.max(0, order.length - 1 - Math.max(0, behind))), last = back[back.length - 1];
   // The waves to come, in the order the picker will choose them (wavePlan: next, after-next and on).
   const out: LeyStone[] = [];
-  if (ahead > 0) for (const [key, wave] of wavePlan(p, map)) {
+  // (One or two ahead, as the pulse asks every frame: the next and after-next as planned, without planning on.)
+  const plan: Iterable<[string, number]> = ahead <= 2 ? [...p.next.map(c => [cellKey(c), p.wave + 1] as [string, number]), ...p.afterNext.map(c => [cellKey(c), p.wave + 2] as [string, number])] : wavePlan(p, map);
+  if (ahead > 0) for (const [key, wave] of plan) {
     if (out.length >= ahead) break;
     if (!reached(key) && key !== cellKey(last.cell)) { const [x, y] = key.split(",").map(Number); out.push(stoneOf(map, [x, y], wave)); }
   }
