@@ -6,6 +6,7 @@ import { LEGEND_BUFFS } from "./buffs";
 import { LEGENDS, anger, canopyOver, lull, relicGlints, stepLegendStates } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
+import { inLegendClearing } from "./map";
 import { stateOf } from "./creatureStates";
 
 // Legends, redesigned (Ed, 2026-10-05; issue #87).
@@ -31,7 +32,7 @@ const used = new Set<number>();
 function put(g: Game, species: string, level: Level, x: number, z: number, cell = g.map.cellSafe(x, z).cell as [number, number]): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !used.has(k.id) && Math.hypot(k.x - x, k.z - z) > 300)!;
   used.add(c.id);
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0 });
   g.byArea = null;
   return c;
 }
@@ -139,6 +140,51 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(g.buffs.active.map(b => b.id)).toContain(L.id);
   }, 60000);
 
+  // Ed (2026-10-06): "Quest sigils and relics need to be placed in the circle to have their effect."
+  it("take a relic only inside their clearing: put down outside it, nothing happens but a cue (the circle flashes)", () => {
+    const { g, L } = beside(), lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+    expect(lc).not.toBeNull();
+    const r = g.relics[0];
+    g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil)
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(g.leash.relics).toEqual([r.id]);
+    // just outside the ring, on its open (south) side
+    g.witch = { ...g.witch, x: lc.x, z: lc.z + lc.r + 3 };
+    let cued = false;
+    run(g, 0.2, { ...idle, sigil: true }, () => { cued ||= g.leashEvents.some(e => e.kind === "outsideCircle" && e.id === L.id); });
+    expect(L.legendState).not.toBe("happy");
+    expect(g.leash.relics).toEqual([r.id]);
+    expect(cued).toBe(true);
+    // inside it
+    g.witch = { ...g.witch, x: lc.x, z: lc.z + lc.r * 0.5 };
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(L.legendState).toBe("happy");
+    expect(r.state).toBe("used");
+  }, 60000);
+
+  it("take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue", () => {
+    for (const inside of [false, true]) {
+      const g = newGame(123, TUNING);
+      g.clock.paused = false; g.party.paused = true;
+      const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
+      g.witches[0].health.hp = 1e6;
+      const lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+      if (!inside) {
+        // a spot in its area, out of its circle
+        let spot: [number, number] | null = null;
+        for (let d = lc.r + 4; d < lc.r + 60 && !spot; d += 4) for (let k = 0; k < 16 && !spot; k++) { const a = (k / 16) * Math.PI * 2, x = lc.x + Math.cos(a) * d, z = lc.z + Math.sin(a) * d, c = g.map.cellSafe(x, z).cell; if (c[0] === L.cell[0] && c[1] === L.cell[1]) spot = [x, z]; }
+        expect(spot).not.toBeNull();
+        g.witch = { ...g.witch, x: spot![0], z: spot![1] };
+        expect(inLegendClearing(g.map, L.cell, g.witch.x, g.witch.z, L, LEGENDS.placeRadius)).toBe(false);
+      } else expect(inLegendClearing(g.map, L.cell, g.witch.x, g.witch.z, L, LEGENDS.placeRadius)).toBe(true);
+      let cued = false;
+      run(g, 0.1);
+      run(g, 0.2, { ...idle, sigil: true }, () => { cued ||= g.leashEvents.some(e => e.kind === "outsideCircle" && e.id === L.id); });
+      expect(L.quest!.done !== undefined).toBe(inside);
+      expect(cued).toBe(!inside);
+    }
+  }, 60000);
+
   it("when happy, shoot the enraged from afar; worn down by them, sleep again, her buff kept", () => {
     const { g, L } = beside();
     run(g, 0.2, { ...idle, happyNearest: true });
@@ -226,7 +272,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
       if (L.run?.phase === "home" && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
       for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
       if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
-        if (e.kind === "hit" && e.id !== undefined) hits.set(e.id, (hits.get(e.id) ?? 0) + 1);
+        if (e.kind === "hit" && e.id !== undefined && (e.id !== target.id || e.big)) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (its target: only the legend's own hits; the trampled wild may go for it after)
         if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; }
       }
       if (L.run?.phase === "run") ran = true;

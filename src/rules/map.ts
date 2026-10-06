@@ -400,7 +400,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     const lc = clearings.get(cellKey(cell[0], cell[1]));
-    if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r) return true; // a sleeping legend's clearing
+    if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + (vnoise(x / 4, z / 4, seed + 93) - 0.5) * 3) return true; // a sleeping legend's clearing (its edge ragged by a metre and a half either way: the art director on #235)
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
     for (const c of scenes) if (Math.abs(x - c.x) < c.r && Math.abs(z - c.z) < c.r && Math.hypot(x - c.x, z - c.z) < c.r * 0.85) return true; // a scene's ground is clear of trees
@@ -526,6 +526,14 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   map.legendClearings = [...clearings.values()];
   map.paths.placePieces();
   return map;
+}
+
+/** Whether (x, z) is inside the legend's clearing of the area at cell (Ed, 2026-10-06: "Quest sigils and relics
+ *  need to be placed in the circle to have their effect"); where an area has no clearing (no room for one),
+ *  within fallback metres of its legend at legendAt. */
+export function inLegendClearing(map: ForestMap, cell: Cell, x: number, z: number, legendAt: { x: number; z: number }, fallback: number): boolean {
+  const c = map.legendClearing(cell[0], cell[1]);
+  return c ? Math.hypot(x - c.x, z - c.z) <= c.r : Math.hypot(x - legendAt.x, z - legendAt.z) <= fallback;
 }
 
 /** The legends' clearings nearest (x, z), up to out's length or 6, nearest first, into out (reused, so no
