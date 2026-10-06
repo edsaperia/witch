@@ -45,6 +45,7 @@ import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
+import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { HAT, StoneIndicator } from "./indicator";
@@ -189,6 +190,8 @@ export class View {
   };
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
+  /** The beach round the circular map: nothing made until she's near it. */
+  private beachView: BeachView;
   /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */
   private swoopTrails: SwoopTrails;
   /** The 💌s, their bubbles and rings (render/invites.ts). */
@@ -361,6 +364,7 @@ export class View {
     this.scene.add(this.glades.points);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
+    this.beachView = new BeachView(this.scene, this.assets, this.ground, this.mpp, t.witch);
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
     this.inviteView = new InviteView(game);
@@ -882,7 +886,7 @@ export class View {
     const actLen = this.footAct ? F[this.footAct.pose].towards.length / F[this.footAct.pose].fps : 0;
     const acting = !!this.footAct && time - this.footAct.at < actLen + 0.3;
     const still = Math.hypot(w.vx, w.vz) < 0.6;
-    const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting) ? 1 : 0;
+    const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting || !!w.stargazing) ? 1 : 0;
     const fdt = Math.min(0.1, Math.max(0, time - this.footTime)), prevFoot = this.foot;
     this.footTime = time;
     this.foot += (wantFoot - this.foot) * Math.min(1, fdt * 8);
@@ -939,10 +943,11 @@ export class View {
     this.partyWitchView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4));
     this.swoopTrails.update(g.partyWitches.list, time);
     this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
+    const onBeach = this.beachView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     this.stateMarks.update(g, time, this.leashView.tops);
     this.inviteView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
-    const her = this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }];
+    const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }];
     const hatFrame = bare ? this.assets.witchBare().frames[this.assets.witchHatFrame] : undefined;
     this.witchBatch.set(bare ? [] : her);
     this.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
@@ -950,7 +955,7 @@ export class View {
     // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
     // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
     this.witchBase.x = wx; this.witchBase.y = wyy + groundHeight(wx, wz); this.witchBase.z = wz;
-    if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle) {
+    if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle && !onBeach) {
       const b = bendPoint(this.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(this.camera);
       const X = (b.x * 0.5 + 0.5) * this.width, Y = (b.y * 0.5 + 0.5) * this.height;
       // (Her place under the camera before its snap: what her own snap takes off, and what the camera's did.)

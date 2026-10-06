@@ -158,8 +158,6 @@ export interface Creature {
   quest?: Quest;
   /** Of an area whose legend's quest is done, still wild: it leaves her and her party be. */
   friendly?: boolean;
-  /** Of a friendly area the party has reached: a party animal guarding its area (not on her leash). */
-  guard?: boolean;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
   safeX?: number;
   safeZ?: number;

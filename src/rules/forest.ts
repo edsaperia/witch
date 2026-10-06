@@ -7,6 +7,7 @@ import { wallFeatures, bedsInRows, type WallFeatures } from "./walls";
 import { AREA_TYPES, HOME_LOOK, type AreaLayout, type ForestMap, type LegendClearing } from "./map";
 import { DECOR } from "../../art/decor.js";
 import { floorClearing } from "./speakers";
+import { beachOf } from "./mapShape";
 import { RELICS } from "../../art/relics.js";
 import { COUNTRY } from "../../art/country.js";
 
@@ -364,12 +365,13 @@ export type LightKind = "campfire" | "stone" | "pond";
 export interface LightSource { x: number; z: number; kind: LightKind; size: number }
 
 function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
-  const L = map.tuning.lightSources, sp = L.spacing, s = map.seed, out: LightSource[] = [];
+  const L = map.tuning.lightSources, sp = L.spacing, s = map.seed, out: LightSource[] = [], B = beachOf(map.bounds, map.tuning);
   const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
   const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
     const x = (i + (hash2(i, j, s + 401) - 0.5) * 0.7) * sp, z = (j + (hash2(i, j, s + 402) - 0.5) * 0.7) * sp;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 4) continue;
+    if (B && B.intoSand(x, z) > -6) continue; // (none on the beach or in the sea)
     const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
     if (homeGround(map, x, z, a.look)) continue; // (home's lights are its party decorations)
     const lc = map.legendClearing(a.cell[0], a.cell[1]); // (none in a legend's circle: its floor is carved stone, and level)
@@ -418,11 +420,13 @@ export class Forest {
     if (!c) { const t0 = performance.now(); c = make(ci, cj); this.buildMs += performance.now() - t0; cache.set(k, c); }
     return c;
   }
-  private gather<T extends { x: number; z: number }>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], x: number, z: number, radius: number): T[] {
+  /** What's within `radius` (a box) of (x, z); `reach`: how far a chunk's things can stray out of it
+   *  (a jittered candidate belongs to its grid point's chunk), so the chunks just beyond are asked too. */
+  private gather<T extends { x: number; z: number }>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], x: number, z: number, radius: number, reach = 0): T[] {
     this.centre = { x, z };
     this.evict(cache);
     const out: T[] = [];
-    for (const [ci, cj] of this.chunks(x, z, radius))
+    for (const [ci, cj] of this.chunks(x, z, radius + reach))
       for (const p of this.chunk(cache, make, ci, cj)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
     return out;
   }
@@ -482,10 +486,10 @@ export class Forest {
     return this.gather(this.lights, (i, j) => lightsInChunk(this.map, i, j), x, z, radius);
   }
   decorNear(x: number, z: number, radius: number): Decor[] {
-    return this.gather(this.decor, (i, j) => decorInChunk(this.map, i, j), x, z, radius);
+    return this.gather(this.decor, (i, j) => decorInChunk(this.map, i, j), x, z, radius, this.map.tuning.decor.spacing * 0.4); // (decorCandidate's jitter)
   }
   relicsNear(x: number, z: number, radius: number): Relic[] {
-    return this.gather(this.relics, (i, j) => relicsInChunk(this.map, i, j), x, z, radius);
+    return this.gather(this.relics, (i, j) => relicsInChunk(this.map, i, j), x, z, radius, this.map.tuning.relics.spacing * 0.4); // (relicCandidate's jitter)
   }
   /** Each area's wall-object features (runs, rings, clumps; see walls.ts), remembered per area. */
   private features(x: number, z: number, radius: number, pick: (f: WallFeatures) => Plant[]): Plant[] {

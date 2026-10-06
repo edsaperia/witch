@@ -39,7 +39,7 @@ describe("party objects (Ed, 2026-10-04)", () => {
   it("each area gets 2-4 clusters, 20-40 loose pieces (a set piece at most), lights capped, nothing on paths or the dancefloor; the same each time", () => {
     let areas = 0;
     for (let cy = 0; cy < map.n; cy += 2) for (let cx = 0; cx < map.n; cx += 2) {
-      if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue;
+      if ((cx === map.centreCell[0] && cy === map.centreCell[1]) || !map.playable(cx, cy)) continue; // (only playable areas are ever partified)
       const d = dressingOf(map, [cx, cy], t);
       areas++;
       expect(d.clusters.length).toBeLessThanOrEqual(P.clusters[1]);
@@ -58,7 +58,7 @@ describe("party objects (Ed, 2026-10-04)", () => {
     }
     expect(areas).toBeGreaterThan(5);
     // Most areas get the full numbers.
-    const sample = dressingOf(map, [1, 1], t);
+    const sample = dressingOf(map, [map.centreCell[0] + 1, map.centreCell[1] + 1], t); // (a playable area: the grid's corner is the sea)
     expect(sample.clusters.length).toBeGreaterThanOrEqual(P.clusters[0] - 1);
     expect(sample.loose.length).toBeGreaterThanOrEqual(P.loose[0] * 0.75);
   });

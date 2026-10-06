@@ -30,7 +30,7 @@ export function hit(g: AffectionWorld, c: Creature, amount: number, time: number
  *  holdTime seconds of it, it's leashed. Let go (a step without this call), it starts over.
  *  Returns whether it was leashed. */
 export function hold(g: AffectionWorld, c: Creature, dt: number, time: number = g.time, data: StatesData = STATES): boolean {
-  if (data.leash !== "hold" || c.leashed || c.gone || stateOf(c) !== "happy" || c.guard || c.boss) return false;
+  if (data.leash !== "hold" || c.leashed || c.gone || stateOf(c) !== "happy" || c.boss) return false;
   c.holdT = (c.holdAt !== undefined && time - c.holdAt <= dt * 1.5 ? c.holdT ?? 0 : 0) + dt;
   c.holdAt = time;
   if (c.holdT < data.holdTime) return false;
