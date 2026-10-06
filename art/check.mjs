@@ -353,6 +353,27 @@ const report = await b.page.evaluate(async () => {
     const fl = G.floatSigil(id, { level: 3 });
     res.push({ what: `sigil ${id}: vector, 12 px glyph, inside the box, ground draw-on, four levels grow (no ring, a dotted ring, a full ring, then a banded double ring with rays; the dotted and full rings tell apart at 14 px), floating form`, good: inside && /<(polyline|circle)/.test(svg) && ink > 40 && gn > 8 && done > 60 && early < done && grows && ringsRead && pixels(fl) > 20, info: `${strokes.length} strokes, ${ink} px at 48, ${gn} px at 12, ground ${gr.map(g => g.w + "x" + g.h).join(" < ")}` });
   }
+  // legendary sigils (Ed, 2026-10-06: "huge, twice as wide and more detailed than the normal ones, with a decorative border"): every
+  // species' has detail of its own (inside its unit box), its mark twice as wide with everything inside it, a gold border, and every
+  // form (SVG, glyph, ground rune, floating) twice as wide as tall, the rune and the floating form wider and inkier than a legend's
+  { const bad = [];
+    for (const S of G.SPECIES) {
+      const id = S.id, det = G.LEGEND_DETAIL[id] || [], M = G.sigilMark(id, 3, true), m = G.SIGIL_STROKE;
+      if (!det.length) bad.push(`${id}: no detail`);
+      if (det.some(k => (k.l || (k.d ? [k.d] : [])).some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1))) bad.push(`${id}: detail outside its box`);
+      if (M.aspect !== 2 || !M.strokes.every(k => k.pts.every(([x, y]) => x >= m / 2 - 1e-9 && x <= 2 - m / 2 + 1e-9 && y >= 0 && y <= 1))) bad.push(`${id}: mark outside 2×1`);
+      if (!M.strokes.some(k => k.part === "gold")) bad.push(`${id}: no border`);
+      if (!/width="128" height="64"/.test(G.sigilSVG(id, { size: 64, legendary: true }))) bad.push(`${id}: SVG not twice as wide`);
+      const g = G.sigilGlyph(id, 32, { legendary: true }), animal = g.m.reduce((a, v, i) => a + (v && !g.gold[i] ? 1 : 0), 0), rim = g.gold.reduce((a, v) => a + v, 0);
+      if (g.w !== 64 || g.h !== 32 || animal < 40 || rim < 60) bad.push(`${id}: glyph ${g.w}x${g.h} ${animal}/${rim}`);
+      const r = G.groundSigil(id, { legendary: true }), r3 = G.groundSigil(id, { level: 3 }), f = G.floatSigil(id, { legendary: true }), f3 = G.floatSigil(id, { level: 3 });
+      if (r.w < r3.w * 1.8 || Math.abs(r.h - r3.h) > 1 || pixels(r) <= pixels(r3)) bad.push(`${id}: ground rune ${r.w}x${r.h} vs ${r3.w}x${r3.h}`);
+      if (f.w < f3.w * 1.7 || pixels(f) <= pixels(f3)) bad.push(`${id}: floating ${f.w}x${f.h}`);
+    }
+    const st = new G.SigilStack(), it = st.push("wolf", 3, null, { legendary: true }); st.update(0, { head: [0, 0, 0] }); const lay = st.layout()[0];
+    if (!(lay.legendary && Math.abs(lay.width - 2 * lay.size) < 1e-9 && Math.abs(it.size - G.floatSize(3)) < 1e-9)) bad.push("the stack's legendary sigil not a legend's height and twice as wide");
+    res.push({ what: "legendary sigils: every species' with its own detail, twice as wide, inside its 2×1 box, a gold border, its glyph, ground rune and floating form twice as wide and inkier than a legend's; the stack carries one", good: !bad.length, info: bad.slice(0, 6).join(", ") || `${G.SPECIES.length} species` });
+  }
   { // the leash stack: still, it stands over her head, newest at the bottom; flying right, it trails left, higher sigils further; stopped, it settles back
     const s = new G.SigilStack(); ["wolf", "owl", "stag"].forEach(id => s.push(id, 1));
     for (let i = 0; i < 240; i++) s.update(1 / 60);

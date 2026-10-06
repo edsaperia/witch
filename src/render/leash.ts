@@ -14,7 +14,7 @@ import { dreamStone, questOpen, restlessness } from "../rules/dream";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { drawSigil, sigilColour, speciesColours, defaultStyle, M } from "../../art/generator.js";
+import { drawSigil, sigilColour, speciesColours, defaultStyle, M, LEGEND_ASPECT } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 import { attackNamed, attackOf, creatureMaxHp, traitsOf, type Trait } from "../rules/combat";
@@ -57,12 +57,16 @@ const RUTS = 12;
 
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 const SQ = SLOTS * SLOTS - 1; // and the last a solid square
+const LEGEND_LEVEL = 3;
+/** Whether a creature's sigil in the stack, as a leash point and its ghost, is the legendary one (art/sigils.js `legendary`):
+ *  every legend's (in the stack only once she can carry one: a party legend, or a legend let go and invited). */
+export const legendarySigil = (c: Pick<Creature, "level">): boolean => c.level >= LEGEND_LEVEL;
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
 uniform float uFlat;
 attribute vec3 iPos;
-attribute float iSize;
+attribute vec2 iSize; // width, height
 attribute vec4 iUv;
 attribute vec4 iCol;
 attribute float iDraw;
@@ -74,7 +78,7 @@ ${HEIGHT_VERT_GLSL}
 void main() {
   vec2 p = position.xy;
   // On the rolling ground: a rune lying flat follows it corner by corner; the rest stand above it.
-  vec3 w = uFlat > 0.5 ? onGround(iPos + vec3(p.x * iSize, 0.04, -p.y * iSize)) : onGround(iPos) + uRight * (p.x * iSize) + uUp * (p.y * iSize);
+  vec3 w = uFlat > 0.5 ? onGround(iPos + vec3(p.x * iSize.x, 0.04, -p.y * iSize.y)) : onGround(iPos) + uRight * (p.x * iSize.x) + uUp * (p.y * iSize.y);
   vUv = vec2(mix(iUv.x, iUv.z, uv.x), mix(iUv.w, iUv.y, uv.y));
   vP = p; vCol = iCol; vDraw = iDraw; vWorld = w;
   gl_Position = clipOf(w);
@@ -117,18 +121,19 @@ class Instances {
 
   private grow(cap: number): void {
     const keep = (a: Float32Array | undefined, k: number) => { const b = new Float32Array(cap * k); if (a) b.set(a); return b; };
-    this.pos = keep(this.pos, 3); this.size = keep(this.size, 1); this.uv = keep(this.uv, 4); this.col = keep(this.col, 4); this.draw = keep(this.draw, 1);
+    this.pos = keep(this.pos, 3); this.size = keep(this.size, 2); this.uv = keep(this.uv, 4); this.col = keep(this.col, 4); this.draw = keep(this.draw, 1);
     this.cap = cap;
     this.geo.dispose(); // or three.js keeps drawing only the old capacity (see SpriteBatch.grow)
     const at = (name: string, a: Float32Array, k: number) => this.geo.setAttribute(name, new THREE.InstancedBufferAttribute(a, k).setUsage(THREE.DynamicDrawUsage));
-    at("iPos", this.pos, 3); at("iSize", this.size, 1); at("iUv", this.uv, 4); at("iCol", this.col, 4); at("iDraw", this.draw, 1);
+    at("iPos", this.pos, 3); at("iSize", this.size, 2); at("iUv", this.uv, 4); at("iCol", this.col, 4); at("iDraw", this.draw, 1);
   }
 
   begin(): void { this.n = 0; }
-  add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1): void {
+  /** aspect: its width over its height (a legendary sigil's 2). */
+  add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1, aspect = 1): void {
     if (this.n >= this.cap) this.grow(this.cap * 2);
     const i = this.n++;
-    this.pos.set([x, y, z], i * 3); this.size[i] = size; this.uv.set(uv, i * 4); this.col.set([r, g, b, a], i * 4); this.draw[i] = draw;
+    this.pos.set([x, y, z], i * 3); this.size[i * 2] = size * aspect; this.size[i * 2 + 1] = size; this.uv.set(uv, i * 4); this.col.set([r, g, b, a], i * 4); this.draw[i] = draw;
   }
   end(): void {
     this.geo.instanceCount = this.n;
@@ -165,6 +170,7 @@ export class LeashView {
   private canvas = document.createElement("canvas");
   private tex: THREE.CanvasTexture;
   private slots = new Map<string, number>();
+  private nextSlot = 1; // the next free atlas slot (a legendary sigil takes two side by side)
   private colours = new Map<string, THREE.Color>();
   private standing: Instances;
   private flat: Instances;
@@ -228,17 +234,19 @@ export class LeashView {
 
   /** A species' sigil at a level (it grows more ornate with level), white in the atlas, tinted
    *  by its neon colour when drawn. */
-  private slotOf(species: string, level = 0): number {
-    const key = `${species}:${level}`;
+  private slotOf(species: string, level = 0, legendary = false): number {
+    const key = `${species}:${legendary ? "legendary" : level}`;
     let s = this.slots.get(key);
     if (s !== undefined) return s;
-    s = this.slots.size + 1;
+    s = this.nextSlot++;
+    if (legendary && s % SLOTS === SLOTS - 1) s = this.nextSlot++; // two slots side by side, in one row
+    if (legendary) this.nextSlot++;
     this.slots.set(key, s);
-    const g = this.canvas.getContext("2d")!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT;
-    g.clearRect(ox, oy, SLOT, SLOT);
-    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: SLOT - 2, level: level as unknown as null, colour: [255, 255, 255], glow: false });
+    const g = this.canvas.getContext("2d")!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT, W = legendary ? SLOT * 2 : SLOT;
+    g.clearRect(ox, oy, W, SLOT);
+    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: SLOT - 2, level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary });
     // Crisp: no soft edges, so it reads as pixel art.
-    const img = g.getImageData(ox, oy, SLOT, SLOT);
+    const img = g.getImageData(ox, oy, W, SLOT);
     for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 90 ? 255 : 0;
     g.putImageData(img, ox, oy);
     const c = sigilColour(species);
@@ -780,10 +788,17 @@ export class LeashView {
     el.style.top = `${((1 - this.v.y) / 2) * height}px`;
   }
 
-  private uv(slot: number): number[] {
+  private uv(slot: number, wide = 1): number[] {
     const N = SLOT * SLOTS, x = (slot % SLOTS) * SLOT, y = Math.floor(slot / SLOTS) * SLOT;
     // u0, v0 (top), u1, v1 (bottom); the canvas texture is flipped in v.
-    return [x / N, 1 - y / N, (x + SLOT) / N, 1 - (y + SLOT) / N];
+    return [x / N, 1 - y / N, (x + SLOT * wide) / N, 1 - (y + SLOT) / N];
+  }
+
+  /** A creature's sigil in the stack and on the ground: a legend's is its legendary sigil (Ed, 2026-10-06: "huge, twice as
+   *  wide and more detailed ... with a decorative border"), a legend's height and twice as wide; aspect is its width over its height. */
+  private sigilOf(c: Creature): { uv: number[]; aspect: number } {
+    if (legendarySigil(c)) return { uv: this.uv(this.slotOf(c.species, LEGEND_LEVEL, true), LEGEND_ASPECT), aspect: LEGEND_ASPECT };
+    return { uv: this.uv(this.slotOf(c.species, c.level)), aspect: 1 };
   }
 
   /** hatTop: the height of the tip of her hat this frame (the stack floats above it). */
@@ -868,7 +883,8 @@ export class LeashView {
       const col = (this.slotOf(c.species, c.level), this.colours.get(c.species)!);
       // Down to her last hit, the leash frays: the stack flickers (Ed, 2026-10-04).
       const fray = g.witches[0].health.hp === 1 && !g.witches[0].ko ? (Math.sin(time * 23 + j * 3.1) > 0.2 ? 1 : 0.25) : 1;
-      this.standing.add(pos.x, pos.y, pos.z, size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, fray);
+      const sg = this.sigilOf(c);
+      this.standing.add(pos.x, pos.y, pos.z, size, sg.uv, col.r, col.g, col.b, fray, 1, sg.aspect);
       const cyc = this.cycledAt.get(id);
       if (cyc !== undefined) {
         const k = (time - cyc) / 0.45;
@@ -881,9 +897,9 @@ export class LeashView {
     // Placed sigils, written on the ground, a little brighter than they were so they read in the
     // grass (Ed, v233; the grass is trampled clear round them, grass.ts).
     for (const p of s.placed) {
-      const c = g.creatures[p.id], slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!;
+      const c = g.creatures[p.id], sg = this.sigilOf(c), col = this.colours.get(c.species)!;
       const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
-      this.flat.add(p.x, 0.02, p.z, 3 + c.level * 0.8, this.uv(slot), col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
+      this.flat.add(p.x, 0.02, p.z, 3 + c.level * 0.8, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8), sg.aspect);
       this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
@@ -894,7 +910,8 @@ export class LeashView {
     if (up > 0.01) for (const p of s.placed) {
       const c = g.creatures[p.id], col = this.colours.get(c.species)!, top = t.treetopHeight - 4 + P.height;
       const pulse = 0.85 + 0.15 * Math.sin(time * 1.3 + p.id);
-      this.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, P.opacity * up * pulse);
+      const sg = this.sigilOf(c);
+      this.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size, sg.uv, col.r, col.g, col.b, P.opacity * up * pulse, 1, sg.aspect);
       for (let y = 1; y < top; y += 1.5) this.standing.add(p.x, y, p.z, 0.3, dot, col.r, col.g, col.b, P.beam * up * pulse * (0.6 + 0.4 * Math.sin(y * 0.8 - time * 3)));
     }
 
@@ -902,7 +919,8 @@ export class LeashView {
     if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.pickRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const no = blocked(s, w.x, w.z, t);
-      this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, this.uv(this.slotOf(c.species, c.level)), no ? 0.85 : col.r, no ? 0.38 : col.g, no ? 0.43 : col.b, 0.22); // (can't: the HUD's loss red, #188)
+      const sg = this.sigilOf(c);
+      this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, sg.uv, no ? 0.85 : col.r, no ? 0.38 : col.g, no ? 0.43 : col.b, 0.22, 1, sg.aspect); // (can't: the HUD's loss red, #188)
     }
     for (const f of this.fizzles) {
       const k = 1 - (time - f.at) / 0.7;
