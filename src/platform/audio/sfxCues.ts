@@ -25,7 +25,7 @@ import type { Sfx } from "./sfx";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
 import { beatAt } from "../../rules/beat";
-import { cellKey, speakersOn } from "../../rules/party";
+import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
@@ -47,6 +47,7 @@ export class SfxCues {
   private boot = false;
   /** The home speakers on, and the areas with a soundsystem, last frame (each new one powers up). */
   private speakersOn = -1;
+  private stonesOn = new Set<number>();
   private soundsystemsUp = new Set<string>();
   /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
   private hp = -1;
@@ -177,18 +178,22 @@ export class SfxCues {
     if (over) this.boot = true;
   }
 
-  /** Runestones crackling into life (Ed, 2026-10-06): each home speaker as the boot turns it on, a
+  /** Runestones crackling into life (Ed, 2026-10-06): each home speaker as the boot pulse turns it, a
    *  step up the scale round the ring, the last a chord; and each wave's soundsystem as it appears.
    *  Heard from where it stands, within power.range metres. */
   private powered({ g, pan }: Here): void {
     const P = g.tuning.sfx.power, w = g.witch, ring = g.map.dancefloor.speakers, n = ring.length;
     const near = (x: number, z: number) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / Math.max(1, P.range));
-    const on = speakersOn(g.party, g.map, g.clock.time, n);
-    if (this.primed && this.speakersOn >= 0 && on > this.speakersOn) {
-      const i = on - 1, s = ring[i] ?? g.map.dancefloor, k = near(s.x, s.z); // (the newest: frames are far shorter than the gaps between them)
-      if (k > 0) this.sfx.power(i, pan(s.x), Math.max(0.35, k), i === n - 1);
+    // each stone the boot pulse has reached (g.speakerBoot: its game time), in the order they turn: a step up the scale each
+    const booted = g.speakerBoot.filter(t => t !== null).length;
+    if (this.primed && this.speakersOn >= 0) for (let i = 0; i < n; i++) {
+      if (g.speakerBoot[i] === null || this.stonesOn.has(i)) continue;
+      const step = this.stonesOn.size, s = ring[i] ?? g.map.dancefloor, k = near(s.x, s.z);
+      if (k > 0) this.sfx.power(step, pan(s.x), Math.max(0.35, k), step === n - 1);
+      this.stonesOn.add(i);
     }
-    this.speakersOn = on;
+    else for (let i = 0; i < n; i++) if (g.speakerBoot[i] !== null) this.stonesOn.add(i); // (on the first frame: already speakers)
+    this.speakersOn = booted;
     for (const [key, a] of g.party.areas) {
       if (!a.soundsystem || this.soundsystemsUp.has(key)) continue;
       this.soundsystemsUp.add(key);

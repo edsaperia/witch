@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newGame } from "../../rules/game";
+import { bootSpeaker, newGame } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";
 import { SfxCues } from "./sfxCues";
@@ -56,11 +56,13 @@ describe("restless legends calling out sadly (Ed, 2026-10-06)", () => {
 });
 
 describe("runestones crackling into life (Ed, 2026-10-06)", () => {
-  it("powers up each home speaker as the boot turns it on, a step up the scale round the ring, the last a chord", () => {
+  it("powers up each home speaker as the boot pulse turns it (g.speakerBoot), a step up the scale round the ring, the last a chord", () => {
     const g = newGame(123, TUNING), n = g.map.dancefloor.speakers.length;
-    g.party.bootUntil = g.tuning.boot.time; // (the boot running from her first step at 0)
+    g.speakerBoot = g.speakerBoot.map(() => null); // (every stone still a stone)
     const { sfx, powers } = fakeSfx(), cues = new SfxCues(sfx);
-    for (let t = 0; t <= g.tuning.boot.time + 1; t += 0.25) { g.clock.time = t; cues.update(g, t); }
+    cues.update(g, 0);
+    // the boot pulse going round the ring, clockwise, a stone every half second
+    for (let i = 0; i < n; i++) { const t = 1 + i * 0.5; g.clock.time = t; bootSpeaker(g, i); cues.update(g, t); cues.update(g, t + 0.1); }
     expect(powers.map(p => p.step)).toEqual(Array.from({ length: n }, (_, i) => i));
     expect(powers.map(p => p.full)).toEqual(Array.from({ length: n }, (_, i) => i === n - 1));
     expect(Math.min(...powers.map(p => p.near))).toBeGreaterThan(0);
