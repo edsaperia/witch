@@ -32,7 +32,8 @@ function styleTone(r, g, b, t, mode) {
 
 // Stylise a baked sprite's pixels in place: a (RGBA albedo, alpha 254 = glowing), n and nf (RGBA normal maps, as bake writes
 // them), w x h. The sprite must have been baked without an outline (this draws its own).
-export function stylisePixels(a, n, nf, w, h, mode) {
+// opts.interior: false leaves out ref's interior lines (a busy scene, such as the creator's bedroom, keeps just its outline).
+export function stylisePixels(a, n, nf, w, h, mode, { interior = true } = {}) {
   if (mode !== "bold" && mode !== "ref") return;
   const T = 3, N = w * h, band = new Int8Array(N).fill(-1), key = new Int32Array(N).fill(-1), glow = new Uint8Array(N), nrm = new Float32Array(N * 3);
   const keyOf = o => (a[o] << 16) | (a[o + 1] << 8) | a[o + 2];
@@ -85,7 +86,7 @@ export function stylisePixels(a, n, nf, w, h, mode) {
     out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255;
   }
   // interior lines (ref): where the surface turns sharply, the darker side gets a line
-  if (strong) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+  if (strong && interior) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = y * w + x; if (key[i] < 0 || glow[i]) continue;
     for (const j of [x + 1 < w ? i + 1 : -1, y + 1 < h ? i + w : -1]) {
       if (j < 0 || key[j] < 0 || glow[j]) continue;

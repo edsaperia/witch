@@ -55,6 +55,8 @@ if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
 if (params.get("mist") === "off") tuning.mist.on = false;
 const tilt = params.get("tilt");
 if (tilt === "off") tuning.tiltShift.on = false;
+// ?tiltsky=0: the sky over the bend left sharp by the tilt-shift, as it was before round 12.
+if (params.get("tiltsky") === "0") tuning.tiltShift.sky = false;
 else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
 // ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).
 else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
@@ -69,10 +71,11 @@ if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMark
 // ?picker=noisy|near3|near3touch|nearest: how the party picks the next area to wake.
 const pickerParam = params.get("picker");
 if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
-// ?glow=<reach>,<falloff>: the witch's glow, to tune live (e.g. ?glow=50,2.5).
+// ?glow=<reach>,<falloff>,<near>: the witch's glow, to tune live (e.g. ?glow=50,2.5,0.7; 0 keeps a value).
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
 if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
+if (glowParam && glowParam[2] > 0) tuning.glowNear = glowParam[2];
 // The music's style (config/music-style.json) sets the beat everything pulses to.
 const musicStyle = musicStyleJson as unknown as MusicStyle;
 // The beat's base tempo is the style's; each wave's tempo is its arc step's (Ed: 120 rising to about 140).
@@ -408,7 +411,7 @@ let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | nu
 // ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
 // It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
 // Start waits ("getting ready") until play can begin.
-const creator = new Creator(style, savedLook);
+const creator = new Creator(style, savedLook, tuning.pixelSize);
 let lookNow = JSON.stringify(savedLook);
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
 /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */

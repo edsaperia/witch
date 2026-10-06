@@ -808,6 +808,10 @@
       "type": "number",
       "minimum": 0
     },
+    "glowNear": {
+      "type": "number",
+      "minimum": 0
+    },
     "glowToCutout": {
       "type": "number",
       "minimum": 0
@@ -2556,6 +2560,10 @@
           "type": "number",
           "minimum": 0
         },
+        "arc": {
+          "type": "number",
+          "minimum": 0
+        },
         "homing": {
           "type": "number",
           "minimum": 0
@@ -2612,6 +2620,7 @@
         "cooldown",
         "range",
         "speed",
+        "arc",
         "homing",
         "homingCone",
         "homingRange",
@@ -4498,11 +4507,15 @@
             "band"
           ],
           "additionalProperties": false
+        },
+        "sky": {
+          "type": "boolean"
         }
       },
       "required": [
         "on",
         "where",
+        "sky",
         "strength",
         "band",
         "centre",
@@ -4778,6 +4791,7 @@
     "pixelSize",
     "glowReach",
     "glowFalloff",
+    "glowNear",
     "glowToCutout",
     "glowHeight",
     "spriteTilt",

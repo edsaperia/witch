@@ -139,7 +139,7 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Power meter**: the debug overlay's two lines: the party's F (leashed + parked, by level, berries and invites) and the enemy's (every marcher, and each siege with its count and its soundsystem's health).
 - **Playtest log**: `src/platform/playtestLog.ts`: a sample every 10 s of play on this browser (localStorage `witch.playtest`, the last 8 runs); L or `?playtest=download` saves it as JSON.
 - **Balance simulator**: `rules/balance.ts` and `tools/balance/sim.mjs` (see Testing). The opening bot, `tools/balance/opening.mjs`, plays the real rules from her first step to wave 1, recruiting the nearest areas three ways, and counts the legends it angers.
-- **Sky**: the night sky over the bend (`src/render/sky.ts`): gradient, stars, the moon, and clouds lit from below by the party (`sky`); left sharp by the tilt-shift.
+- **Sky**: the night sky over the bend (`src/render/sky.ts`): gradient, stars, the moon, and clouds lit from below by the party (`sky`); blurred by the tilt-shift with everything else, the last pass over the bent picture (`tiltShift.sky`; Ed, round 12).
 - **Area legend / sleeping legend**: the one legend of its kind in every area, asleep (sunk and mossed over, scenery) until its area's wave wakes it, angry, to guard its area; beaten, it sleeps for good (DESIGN.md, "Sleeping legends").
 - **Happy legend**: an area legend at peace, its buff on (by its quest: rules/quest.ts; or the debug key O). Home has no legend (Ed, 2026-10-05), so no buff at the start.
 - **Debug arena**: `?arena=wolf*4@2,beetle*3`, hers against the wild below the dancefloor; J sets it up again.
