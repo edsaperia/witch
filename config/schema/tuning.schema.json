@@ -4920,6 +4920,39 @@
           ],
           "additionalProperties": false
         },
+        "spell": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hum": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rustle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "crackle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "burst": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "hum",
+            "rustle",
+            "crackle",
+            "burst"
+          ],
+          "additionalProperties": false
+        },
         "land": {
           "type": "object",
           "properties": {
@@ -5198,6 +5231,7 @@
         "pond",
         "picnic",
         "room",
+        "spell",
         "land",
         "stir",
         "knock",
@@ -6728,10 +6762,29 @@
         "share": {
           "type": "number",
           "minimum": 0
+        },
+        "partyEgg": {
+          "type": "boolean"
+        },
+        "partyHits": {
+          "type": "number",
+          "minimum": 1
+        },
+        "partyDrain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyReach": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "share"
+        "share",
+        "partyEgg",
+        "partyHits",
+        "partyDrain",
+        "partyReach"
       ],
       "additionalProperties": false
     },
