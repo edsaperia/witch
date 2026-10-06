@@ -61,7 +61,7 @@ class PixelCue {
     this.canvas.width = this.canvas.height = N;
     Object.assign(this.canvas.style, { position: "fixed", width: `${N * scale}px`, height: `${N * scale}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none", opacity: `${opacity}` });
     this.label.style.opacity = `${opacity}`;
-    Object.assign(this.label.style, { position: "fixed", pointerEvents: "none", zIndex: "2", display: "none", font: "bold 12px monospace", color: "#fff", textShadow: "0 1px 0 #000, 1px 0 0 #000", transform: "translate(-50%, 0)" });
+    Object.assign(this.label.style, { position: "fixed", pointerEvents: "none", zIndex: "2", display: "none", font: "bold 12px monospace", color: "#e8e2f4", textShadow: "0 1px 0 #000, 1px 0 0 #000, 0 0 3px #000", transform: "translate(-50%, 0)" });
     parent.append(this.canvas, this.label);
     this.g = this.canvas.getContext("2d")!;
     this.img = this.g.createImageData(N, N);
@@ -86,7 +86,15 @@ class PixelCue {
   flush(): void { this.g.putImageData(this.img, 0, 0); }
 }
 
-const PARTY: number[][] = [[255, 111, 207], [95, 232, 255], [255, 226, 92]];
+/** An area's neon calmed for the HUD: a little less saturated and bright, so it sits on the dark forest. */
+export const calm = (c: number[]) => {
+  // by saturation, not value (the art director, #188: "keep its value up … take the calm from lower saturation"): half way to
+  // its grey, then lifted back so its lightest channel is near the neon's own
+  const m = (c[0] + c[1] + c[2]) / 3, d = c.map(v => v * .55 + m * .45), k = Math.max(...c) * .95 / Math.max(1, ...d);
+  return d.map(v => Math.min(255, v * k));
+};
+
+const PARTY: number[][] = [[232, 180, 106], [232, 180, 106], [232, 180, 106]]; // the HUD's one accent (art review round 1: the UI in the art's palette)
 
 export class MusicIndicator {
   private cue: PixelCue;
@@ -147,15 +155,16 @@ export class StoneIndicator {
     c.clear();
     const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
     const flash = Math.max(0, 1 - (time - this.flashAt) / 0.5);
-    const neon = [at.colour.x * 255, at.colour.y * 255, at.colour.z * 255], bright = neon.map(v => Math.min(255, v * (0.8 + 0.4 * pulse) + 255 * flash * 0.6));
+    // in the area's colour, calmed toward the night (art review round 1: the UI's yellow and magenta shouted over the art)
+    const neon = calm([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), bright = neon.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4));
     // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
     const R = 13;
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
       const px = x + 0.5 - N / 2, py = y + 0.5 - N / 2, r = Math.hypot(px, py);
-      if (Math.abs(r - R) > 1.05) continue;
+      if (Math.abs(r - R) > 0.7) continue; // a thin stroke (calm by line, not by dimming)
       const turn = ((Math.atan2(px, -py) / (Math.PI * 2)) + 1) % 1; // 0 at 12 o'clock, clockwise
       if (turn <= fill || flash > 0) c.dot(x, y, bright, 1);
-      else c.dot(x, y, neon.map(v => v * 0.35), 0.8);
+      else c.dot(x, y, neon.map(v => v * 0.55), 0.9); // the rest of the ring: dimmer, but still there on dark grass
     }
     // The rune in the middle: the area's creature's sigil, in its neon.
     let g = this.glyphs.get(at.species);
