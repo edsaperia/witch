@@ -1,7 +1,7 @@
 // The party spell's scroll (ui/spellScroll.ts; Ed, 2026-10-06): the built game (DIST, default dist/) at 1280×720 on a seed, the
 // creator open, the forest grown; the cursor comes in from the far side to the scroll (its 🎶 glowing, the paper rippling, the
 // screen darkening), drifts off and back, then clicks: the scroll grows, crackles, bursts, and the game runs with the spell
-// cast. Fails on a page error, or if play hasn't started with the spell cast. Writes scroll.gif and the stills far.png,
+// cast (the click filmed at a tenth of its speed). Fails on a page error, or if play hasn't started with the spell cast. Writes scroll.gif and the stills far.png,
 // near.png, grow.png, burst.png, after.png.
 //   npm run build && node tools/smoke/spell-scroll.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), { execFileSync } = require("child_process");
@@ -32,10 +32,12 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     for (const [i, [x, y]] of path0.entries()) { await page.mouse.move(x, y); await page.waitForTimeout(60); await shot(i === 0 ? "far.png" : i === 24 ? "near.png" : null); }
     for (let i = 0; i < 6; i++) { await page.waitForTimeout(60); await shot(); }
     // the click: grow, crackle, burst, clear
+    // (filmed at a tenth of its speed, window.__spellSlow, so the slow headless screenshots catch it)
+    await page.evaluate(() => { window.__spellSlow = 0.1; });
     await page.mouse.click(sx, sy);
     const t0 = Date.now();
     let grew = false, burst = false;
-    while (Date.now() - t0 < 2600) { const dt = Date.now() - t0, name = !grew && dt > 300 ? (grew = true, "grow.png") : !burst && dt > 1000 ? (burst = true, "burst.png") : null; await shot(name); await page.waitForTimeout(20); }
+    while (Date.now() - t0 < 21000) { const dt = Date.now() - t0, name = !grew && dt > 4000 ? (grew = true, "grow.png") : !burst && dt > 10500 ? (burst = true, "burst.png") : null; await shot(name); await page.waitForTimeout(150); }
     await page.waitForTimeout(500); await shot("after.png");
     const st = await page.evaluate(() => { const g = window.witch.game; return { paused: g.clock.paused, spellAt: g.party.spellAt, creator: window.__creator.open }; });
     console.log("after", JSON.stringify(st), "frames", n);

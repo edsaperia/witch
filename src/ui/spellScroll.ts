@@ -56,6 +56,8 @@ export class SpellScroll {
   private art = paintScroll();
   private near = 0; private target = 0; private focused = false;
   private castAt = -1; private burstAt = -1; private raf = 0; private last = 0;
+  /** Its own clock (seconds): real time, or slowed for filming (window.__spellSlow, e.g. 0.1). */
+  private vt = 0;
   private shake: [number, number] = [0, 0]; private shakeAt = 0; private stirred = 0;
   private sparks: { x: number; y: number; vx: number; vy: number; life: number; age: number; col: string; size: number; shard?: boolean }[] = [];
   private reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -105,7 +107,7 @@ export class SpellScroll {
   /** Cast it: grow, crackle, burst (the burst waits for the world to be ready). */
   cast(): void {
     if (this.casting) return;
-    this.castAt = performance.now() / 1000; this.burstAt = -1;
+    this.castAt = this.vt; this.burstAt = -1;
     this.onCast();
     this.sound("crackle", 1);
     this.fx.style.display = "block";
@@ -114,7 +116,8 @@ export class SpellScroll {
   }
 
   private frame(): void {
-    const now = performance.now(), dt = Math.min(.1, (now - this.last) / 1000), t = now / 1000; this.last = now;
+    const now = performance.now(), slow = (window as unknown as { __spellSlow?: number }).__spellSlow ?? 1, dt = Math.min(.1, (now - this.last) / 1000 * slow); this.last = now;
+    const t = this.vt += dt;
     const want = this.casting ? 1 : Math.max(this.target, this.focused ? 1 : 0);
     this.near += (want - this.near) * (1 - Math.exp(-dt / .14));
     const p = this.near, ready = this.ready();
@@ -152,9 +155,9 @@ export class SpellScroll {
     g.save(); g.imageSmoothingEnabled = false;
     // its glow behind it, golden, by p
     const cx = x0 + sw / 2, cy = y0 + sh / 2;
-    const halo = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(sw, sh) * .75);
+    const hr = box ? Math.max(sw, sh) * .75 : Math.min(W, H) * .5, halo = g.createRadialGradient(cx, cy, 0, cx, cy, hr); // (on its own canvas: inside it, so no edge shows)
     halo.addColorStop(0, `rgba(255,214,140,${(.12 + .4 * p).toFixed(3)})`); halo.addColorStop(1, "rgba(255,214,140,0)");
-    g.fillStyle = halo; g.fillRect(ox, oy, box ? W : W, box ? H : H);
+    g.fillStyle = halo; g.fillRect(cx - hr, cy - hr, hr * 2, hr * 2);
     // the paper, a row of its pixels at a time, each shifted by the wave
     const amp = (.25 + 1.6 * p) * mo * k * .6, sp = 7 + 5 * p;
     for (let y = 0; y < ART_H; y++) {
