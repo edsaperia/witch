@@ -480,7 +480,7 @@ function buildRoom(st: Style): Room {
   const colours = (Art.bedroomColours as (st: Style) => Record<number, number[]>)(st);
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline); // (ref: its outline, not its interior lines, which turn the clutter to noise)
   const a = sp.anchors, warm = [255, 176, 92], light = (p: [number, number], R: number, rgb: number[], power: number, z = 10): Light => ({ x: p[0], y: p[1], z, R, rgb, power });
-  const lights: Light[] = [light(a.lantern, 70, warm, 1.1, 14), light(a.screen, 56, [150, 214, 255], 1.6, 12), light(a.decks, 30, [255, 110, 210], .9), light(a.potions, 34, [196, 120, 255], .9),
+  const lights: Light[] = [light(a.lantern, 56, warm, .75, 14), light(a.screen, 56, [150, 214, 255], 1.6, 12), light(a.decks, 30, [255, 110, 210], .9), light(a.potions, 34, [196, 120, 255], .9),
     ...a.flames.map(f => light(f, 26, warm, 1)), ...a.runes.map(r => light(r, 14, [110, 255, 196], .5, 6))];
   const lit = document.createElement("canvas");
   lit.width = b.w; lit.height = b.h;
@@ -567,7 +567,7 @@ function drawGlows(x: CanvasRenderingContext2D, room: Room, t: number): void {
   const a = room.a;
   a.runes.forEach((r, i) => halo(x, [r[0], r[1] - 1], 4, [110, 255, 196], .08 + .06 * Math.sin(t * 2.2 + i * 1.7)));
   a.flames.forEach((f, i) => halo(x, f, 4, [255, 190, 100], .12 + .06 * Math.sin(t * 9 + i * 2.1)));
-  halo(x, a.lantern, 9, [255, 176, 92], .1 + .03 * Math.sin(t * 5));
+  halo(x, a.lantern, 6, [255, 176, 92], .06 + .02 * Math.sin(t * 5));
   halo(x, a.screen, 10, [150, 214, 255], .16 + .04 * Math.sin(t * 3));
   halo(x, a.potions, 6, [196, 120, 255], .08 + .05 * Math.sin(t * 1.1));
   x.restore();
