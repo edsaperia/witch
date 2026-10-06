@@ -931,6 +931,16 @@ describe("inviting and leashing", () => {
     expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
     expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    // The keyboard's own buttons (Ed, 2026-10-06: "E for place, Q for cycle"): Q cycles on the ground
+    // too, and E does nothing in the treetops.
+    stepLeash(s, all, { sigil: false, cycle: true }, { x: 700, z: 700 }, true, 106, 0.1, TUNING);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    stepLeash(s, all, { sigil: false, place: true }, { x: 700, z: 700 }, false, 107, 0.1, TUNING);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events).toEqual([]);
+    stepLeash(s, all, { sigil: false, place: true }, { x: 700, z: 700 }, true, 108, 0.1, TUNING);
+    expect(s.placed.map(p => p.id)).toEqual([b.c.id, a.c.id]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
@@ -1090,7 +1100,7 @@ describe("paths, roads and railways", () => {
     expect(trunk.length).toBeGreaterThanOrEqual(T.rails[0]);
     expect(of("rail").length).toBeLessThanOrEqual(T.rails[1] + 1); // plus a branch line
     for (const l of trunk) expect(new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size).toBeGreaterThan(5);
-    expect(of("road").length).toBeGreaterThanOrEqual(T.roads[0]);
+    expect(of("road").length).toBe(0); // no roads cars could drive on (Ed, round 13: footpaths, railways and streams only)
     expect(of("path").length).toBeGreaterThan(20);
     expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(T.streams[0]);
   });
@@ -1135,9 +1145,10 @@ describe("paths, roads and railways", () => {
     expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
     for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
   }, 60000); // (it builds the forest for 600 m round home)
-  it("carry 3D pieces: railway landmarks and signals, bridges over streams, verge posts; trees keep clear of them", () => {
+  it("carry 3D pieces: railway landmarks and signals, bridges over streams; trees keep clear of them", () => {
     const ids = new Set(P.pieces.map(p => p.id));
-    for (const id of ["signal-post", "verge-post"]) expect(ids.has(id)).toBe(true);
+    expect(ids.has("signal-post")).toBe(true);
+    for (const id of ["verge-post", "level-crossing"]) expect(ids.has(id)).toBe(false); // the roads' own pieces went with them (Ed, round 13)
     expect(P.pieces.some(p => ["goods-wagon", "carriage", "platform", "signal-gantry"].includes(p.id))).toBe(true);
     let bridges = 0;
     for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
@@ -1673,6 +1684,22 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     while (g.clock.time < D.readyAt + 2 * STEP) run(g, 1);
     expect(D.at).toBeGreaterThan(second);
+  });
+
+  it("goes toward the cursor (Ed, 2026-10-06), the way she faces with the cursor on her, and the way she steers with none", () => {
+    const B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }, w = { ...newWitch(0, 0), facing: -1 as const };
+    const d = newDash();
+    startDash(d, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0, 30); // steering east, the cursor 30 m south
+    expect(d.toX).toBeCloseTo(0); expect(d.toZ).toBeCloseTo(TUNING.dash.distance);
+    const d2 = newDash();
+    startDash(d2, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0.3, 0.2); // the cursor on her: the way she faces
+    expect(d2.toX).toBeCloseTo(-TUNING.dash.distance); expect(d2.toZ).toBeCloseTo(0);
+    const d3 = newDash();
+    startDash(d3, w, 0, 1, 1, TUNING, B); // no cursor (touch): the way she steers
+    expect(d3.toZ).toBeCloseTo(TUNING.dash.distance);
+    const d4 = newDash();
+    startDash(d4, w, 1, 0, 1, { ...TUNING, dash: { ...TUNING.dash, toCursor: false } }, B, undefined, 1, 0, 0, 30); // off: the way she steers
+    expect(d4.toX).toBeCloseTo(TUNING.dash.distance);
   });
 
   it("goes the way she faces when she's still, and stops short of anything in the way", () => {

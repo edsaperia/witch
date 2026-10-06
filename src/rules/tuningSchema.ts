@@ -11,4 +11,5 @@ export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "partyObjects.home.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "partyWitches.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "grounds.radius": { additionalProperties: { type: "number", minimum: 0 } },
+  "legendClearing.species": { additionalProperties: { type: "number", minimum: 0 } },
 };

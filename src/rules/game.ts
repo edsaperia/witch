@@ -178,7 +178,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
 }
 
 /** The presses that happen once (not held): kept for the next step if a frame runs none. */
-const ONE_SHOT = ["toggleMode", "sigil", "spell", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
+const ONE_SHOT = ["toggleMode", "sigil", "place", "cycle", "spell", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
 
 /** Advance the game by one real frame of `realDt` seconds: as many fixed STEPs as that makes up
  *  (at most a few, so a hitch doesn't run away), with the held controls each step and each
@@ -323,14 +323,14 @@ function fixedStep(g: Game, controls: Controls): void {
   // Knocked out: no input but the camera's zoom while it plays out.
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
-  else if (stunned(W.knock, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil };
+  else if (stunned(W.knock, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle };
   const was = W.body;
   rechargeDash(W.dash, g.clock.time, charges, t.dash.cooldown);
   // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
   // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
   if (c.dash) W.dash.bufferUntil = g.clock.time + t.dash.buffer;
   if (g.clock.time <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, g.clock.time)
-    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain)) {
+    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0)) {
     W.dash.bufferUntil = undefined;
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
   }
@@ -370,16 +370,16 @@ function fixedStep(g: Game, controls: Controls): void {
   // Far from her on the ground, or from its sigil, a party animal travels (rules/travel.ts): quiet, along area borders.
   stepTravel(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
-  let sigil = !!c.sigil && !W.ko;
-  if (sigil && g.witch.mode === "ground") {
+  let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
+  if ((sigil || place) && g.witch.mode === "ground") {
     const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time);
     if (r) {
-      sigil = false;
+      sigil = false; place = false;
       if ("picked" in r) g.leash.events.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: g.clock.time });
       else g.leash.events.push({ kind: "relicPlaced", id: r.placed.id, x: r.legend.x, z: r.legend.z, at: g.clock.time });
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), g.clock.time, dt, t, M);
   // Frenzy (Stoat): an animal won over gives back a blink.
@@ -488,7 +488,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
       g.creatures[id].leashed = false;
     },
   }, COMBAT);
-  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed)) S.busy.add(c.id); // carried on wherever she is
+  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed || c.retreat)) S.busy.add(c.id); // carried on wherever she is
   for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
   // The home ring shows its damage speaker by speaker.
   const home = S.sounds.get("home");
@@ -552,7 +552,7 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   areas.sort((a, b) => a.at - b.at);
   // Debug (?witches=N): N more, as if from soundsystems round the floor.
   for (let i = 0; i < t.partyWitches.debugExtra; i++) areas.push({ key: `debug-${i}`, x: d.x + Math.cos(i * 2.4) * 100, z: d.z + Math.sin(i * 2.4) * 100, at: 0 });
-  const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.spell);
+  const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell);
   stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving }], g.clock.time, dt, t);
 }
 
@@ -627,7 +627,7 @@ export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: num
   if (spot.kind === "soundsystem") { danceAt(c, spot, spot.r); return; }
   // the guests already round this place, and their slots
   const taken: Creature[] = [], body = bodyRadius(c);
-  for (const o of g.creatures) if (o !== c && o.dancing && !o.gone && o.range <= SLOT_RANGE && o.cell[0] === cell[0] && o.cell[1] === cell[1] && Math.hypot(o.anchorX - spot.x, o.anchorZ - spot.z) < spot.r + 12) taken.push(o);
+  for (const o of g.creatures) if (o !== c && o.dancing && !o.gone && o.range <= SLOT_RANGE && o.cell[0] === cell[0] && o.cell[1] === cell[1]) taken.push(o); // every guest's slot in its area, not only this place's: two places close together share their rows' ends
   // the first free slot in its area (the far row's, a second row, then the near row's, for a place by its area's edge);
   // else (the place full) by the soundsystem, never piled up
   const free = (p: { x: number; z: number }) => { const cl = g.map.cellSafe(p.x, p.z).cell; return cl[0] === cell[0] && cl[1] === cell[1] && taken.every(o => Math.abs(o.anchorX - p.x) > guestGap(bodyRadius(o), body) || Math.abs(o.anchorZ - p.z) > GUEST_DEPTH); };
