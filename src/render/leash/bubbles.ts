@@ -102,7 +102,7 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
       const cv = document.createElement("canvas"), n = 44;
       cv.width = cv.height = n;
       cv.style.width = cv.style.height = `calc(var(--px) * ${(n / BUBBLE_PX).toFixed(2)})`;
-      const x = cv.getContext("2d");
+      const x = cv.getContext("2d", { willReadFrequently: true });
       if (x) {
         drawSigil(x, q.species, { x: 1, y: 1, size: n - 2, level: q.level as unknown as null, colour: sigilColour(q.species), glow: false });
         const d = x.getImageData(0, 0, n, n);
@@ -190,7 +190,7 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
     const icon = (id: string, level: number | null, colour: number[]) => {
       const cv = document.createElement("canvas"), n = 40;
       cv.width = cv.height = n; cv.className = "icon";
-      const x2 = cv.getContext("2d");
+      const x2 = cv.getContext("2d", { willReadFrequently: true });
       if (x2) drawSigil(x2, id, { x: 1, y: 1, size: n - 2, level: level as unknown as null, colour, glow: false });
       return cv;
     };
@@ -237,7 +237,7 @@ export function pixelEmoji(lv: LeashView, e: string, k = 1, n = lv.game.tuning.b
   const c = document.createElement("canvas");
   c.width = c.height = n;
   c.style.width = c.style.height = `calc(var(--px) * ${size})`;
-  const x = c.getContext("2d");
+  const x = c.getContext("2d", { willReadFrequently: true });
   if (x) {
     x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
     x.fillText(e, n / 2, n / 2 + 0.5);
