@@ -527,11 +527,124 @@
             "shade"
           ],
           "additionalProperties": false
+        },
+        "layout": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dip": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trees": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "rise",
+            "dip",
+            "reach",
+            "trees"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "relief",
-        "hills"
+        "hills",
+        "layout"
+      ],
+      "additionalProperties": false
+    },
+    "wisps": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "cell": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyNear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyFar": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "period": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "halo": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "cell",
+        "reach",
+        "chance",
+        "partyNear",
+        "partyFar",
+        "height",
+        "drift",
+        "period",
+        "size",
+        "halo",
+        "hue",
+        "sat",
+        "bright"
       ],
       "additionalProperties": false
     },
@@ -1718,6 +1831,47 @@
         },
         "dropHat": {
           "type": "boolean"
+        },
+        "hatFloat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dim": {
+          "type": "number",
+          "minimum": 0
+        },
+        "respawn": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 0
+            },
+            "step": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cooldown": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minScratch": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "base",
+            "step",
+            "max",
+            "cooldown",
+            "minScratch"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -1726,7 +1880,10 @@
         "emptyBeat",
         "teleport",
         "legendsLoyal",
-        "dropHat"
+        "dropHat",
+        "hatFloat",
+        "dim",
+        "respawn"
       ],
       "additionalProperties": false
     },
@@ -2677,13 +2834,40 @@
         "wake": {
           "type": "number",
           "minimum": 0
+        },
+        "circle": {
+          "type": "object",
+          "properties": {
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "length": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "chance",
+            "length",
+            "reach"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "on",
         "chance",
         "length",
-        "wake"
+        "wake",
+        "circle"
       ],
       "additionalProperties": false
     },
@@ -2947,6 +3131,9 @@
           "type": "number",
           "minimum": 0
         },
+        "earlyQuest": {
+          "type": "boolean"
+        },
         "buffPower": {
           "type": "number",
           "minimum": 0
@@ -3020,6 +3207,7 @@
       },
       "required": [
         "share",
+        "earlyQuest",
         "buffPower",
         "happyRange",
         "questCap",
@@ -6492,6 +6680,54 @@
       ],
       "additionalProperties": false
     },
+    "combatLight": {
+      "type": "object",
+      "properties": {
+        "wildReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wildGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fall": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "wildReach",
+        "wildGlow",
+        "fightReach",
+        "fightGlow",
+        "range",
+        "hold",
+        "rise",
+        "fall"
+      ],
+      "additionalProperties": false
+    },
     "nightLight": {
       "type": "object",
       "properties": {
@@ -7712,6 +7948,7 @@
     "areaEdgeBlend",
     "groundBlend",
     "ground",
+    "wisps",
     "glades",
     "treehouse",
     "home",
@@ -7821,6 +8058,7 @@
     "moon",
     "glowReach",
     "sigilSpill",
+    "combatLight",
     "nightLight",
     "glowFalloff",
     "glowNear",

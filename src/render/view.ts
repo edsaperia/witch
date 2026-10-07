@@ -45,6 +45,7 @@ import type { SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
+import { CombatLight } from "./combatLight";
 import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
@@ -64,6 +65,7 @@ import { berrySprite } from "./berries";
 import { LeyLines, leyReveal, shaderPulse } from "./leylines";
 import { bootLineAt, bootPath, bootPulseAt, bootShare } from "../rules/bootRing";
 import { Glades } from "./glades";
+import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
 import type { Style } from "./style";
@@ -187,6 +189,8 @@ export class View {
   ley: LeyLines;
   /** The sleeping legends' clearings: their twilight and rising motes. */
   private glades: Glades;
+  /** Will-o'-the-wisps drifting through the wild areas (render/wisps.ts). */
+  private wisps: Wisps | null = null;
   private gladeTime = 0;
   /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
   private leyRgb: THREE.Vector3 | null;
@@ -234,6 +238,8 @@ export class View {
   sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
   forestLights: ForestLight[] = [];
+  /** Her light dimmer in the wild, back up in a fight (render/combatLight.ts). */
+  readonly combatLight = new CombatLight();
   shadows: ShadowBatch;
   /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
   readonly rig: RigView | null;
@@ -310,7 +316,7 @@ export class View {
     }
     useHeightField(this.heights);
     this.heights.follow(game.witch.x, game.witch.z);
-    this.ground = new Ground(game.map, game.forest, style, this.mpp);
+    this.ground = new Ground(game.map, game.forest, style, this.mpp, this.renderer.capabilities.maxTextureSize);
     this.sky = new Sky(t.sky, t.moon.disc);
     this.scene.add(this.sky.mesh);
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
@@ -325,7 +331,7 @@ export class View {
     this.shadows.mesh.visible = t.shadows.on;
     this.scene.add(this.shadows.mesh);
     if (t.mist.on && t.mist.strength > 0) {
-      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.lowSize);
+      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer is half the scene's size: post.ts)
       this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
@@ -377,6 +383,7 @@ export class View {
     this.scene.add(...this.ley.meshes);
     this.glades = new Glades(t.glades);
     this.scene.add(this.glades.points);
+    if (t.wisps?.on) { this.wisps = new Wisps(t.wisps); this.scene.add(this.wisps.points); }
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.beachView = new BeachView(this.scene, this.assets, this.ground, this.mpp, t.witch);
@@ -432,6 +439,7 @@ export class View {
     this.render(0, false);
     drawCreatures(this);
     this.ground.fill(this.renderer, viewRect(this, this.game.tuning.haze.near, 20), this.game.witch.x, this.game.witch.z, Infinity);
+    await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
     await this.assets.whenIdle();
     this.render(0, false);
     refresh(this, true);
@@ -624,10 +632,17 @@ export class View {
   }
   /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
   setWitch(genome: unknown): void {
-    this.assets.rebakeWitch(genome);
-    this.scene.remove(...this.witchBatch.meshes);
-    this.witchBatch = this.makeWitchBatch();
+    this.assets.rebakeWitch(genome); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
     if (this.bareBatch) { this.scene.remove(...this.bareBatch.meshes); this.bareBatch = null; this.bareAsked = false; }
+  }
+  /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
+  private swapHomeArt(): void {
+    const A = this.assets;
+    if (this.witchBatch.atlas !== A.witch) this.witchBatch.setAtlas(A.witch);
+    if (this.bareBatch && this.bareBatch.atlas !== A.witchBare()) this.bareBatch.setAtlas(A.witchBare());
+    if (this.treehouseBatch.atlas !== A.treehouse.atlas) this.treehouseBatch.setAtlas(A.treehouse.atlas);
+    if (this.propBatch.atlas !== A.props) this.propBatch.setAtlas(A.props);
+    if (this.soundBatch.atlas !== A.soundsystems) { this.soundBatch.setAtlas(A.soundsystems); this.partyView.atlas = A.soundsystems; }
   }
 
   /** How much of a thing shows over the bent horizon (culling.ts overBulge): the smoke check reads it. */
@@ -706,6 +721,7 @@ export class View {
     LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
     const up = placeCamera(this, time, pose);
 
+    this.swapHomeArt();
     setFrameUniforms(this, time, up);
     const w = g.witch;
     this.time("uniforms");
@@ -748,6 +764,7 @@ export class View {
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
     { const gdt = Math.min(0.1, Math.max(0, ht - this.gladeTime)); this.gladeTime = ht; // (eased on her clock, so the slowing doesn't slow its own look)
       this.glades.update(g, w.x, w.z, gdt, w.mode === "ground", undefined, slowAmount(g.timeScale, slowest(t))); }
+    this.wisps?.update(g, w.x, w.z, ht); // (the wild areas' wisps round her, render/wisps.ts)
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
