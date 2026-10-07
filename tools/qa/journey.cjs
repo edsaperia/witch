@@ -88,7 +88,8 @@ const pct = (a, p) => { if (!a.length) return 0; const s = [...a].sort((x, y) =>
     };
     await moment("at the decks", "02-decks.png", await run(30, { moveX: 1 }), s => s.seated && s.spellAt === null);
     let ms = await run(1, { castParty: true });
-    ms = ms.concat(await run(150, { moveX: 1, moveZ: 0.3 }));
+    // off the decks: she's held through the cast and the needle-drop routine (Ed, 2026-10-07), so moving until she's left them
+    for (let i = 0; i < 40 && (ms.length < 150 || (await state()).seated); i++) ms = ms.concat(await run(30, { moveX: 1, moveZ: 0.3 }));
     await moment("step-off", "03-step-off.png", ms, s => !s.seated && s.spellAt != null);
     ms = [];
     for (let i = 0; i < 40 && !(await state()).speakersOn; i++) ms = ms.concat(await run(30, i % 2 ? { moveX: -0.2 } : { moveX: 0.2 }));
