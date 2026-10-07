@@ -117,7 +117,7 @@ How neighbouring areas' floor textures meet (Ed, v160): the border is warped by 
 
 ### `ground`
 
-The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises and hollows from noise about relief.scale metres across, tilting the ground's lighting by relief.strength (0 flat) so the witch's light and the campfires pick out the bumps, and hollows shaded darker by relief.shade. ?relief=0 turns it off.
+The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises and hollows from noise about relief.scale metres across, tilting the ground's lighting by relief.strength (0 flat) so the witch's light and the campfires pick out the bumps, and hollows shaded darker by relief.shade. ?relief=0 turns it off. layout (rules/terrain.ts; Ed's idea, relayed by the coordinator 2026-10-07: runestones on high ground, legends in low, trees thicker low down): every area's runestone stands on a rise and every legend clearing lies in a hollow, rise and dip times the hills' amplitude high and deep (0.15 of 40 m: 6 m), each easing out over reach metres (kept short and low: the stones are about 110 m apart, a clearing about 65 m from its stone, and the slopes must stay under the camera's sightline) (the plateaus then level each one, so a stone tops a knoll and a clearing sits in a dell); trees grow up to trees (a share) thicker in the lowest ground and thinner on the highest, by the land's height over half the hills' amplitude (most of it lies within that). Drawing and tree placement only: the rules still move on flat ground.
 
 | knob | type | range |
 |---|---|---|
@@ -129,6 +129,11 @@ The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises 
 | `ground.hills.scale` | number | 0 to … |
 | `ground.hills.octaves` | number | 0 to … |
 | `ground.hills.shade` | number | 0 to … |
+| `ground.layout.on` | boolean |  |
+| `ground.layout.rise` | number | 0 to … |
+| `ground.layout.dip` | number | 0 to … |
+| `ground.layout.reach` | number | 0 to … |
+| `ground.layout.trees` | number | 0 to … |
 
 ### `glades`
 
@@ -719,7 +724,7 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 
 ### `naps`
 
-Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are there in ground mode, but stay asleep if you're in treetop mode, or not in their area (e.g. you see them from an adjacent area)"; "They don't all sleep - but it's one of the things they can do while idling"): a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight. on: false turns naps off.
+Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are there in ground mode, but stay asleep if you're in treetop mode, or not in their area (e.g. you see them from an adjacent area)"; "They don't all sleep - but it's one of the things they can do while idling"): a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight. on: false turns naps off. circle: a legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle") naps at each pause with its own chance, for its own length (seconds), and is woken only by a witch on the ground within reach metres of its circle's edge (so she can still invite it), not anywhere in its area.
 
 | knob | type | range |
 |---|---|---|
@@ -727,6 +732,9 @@ Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling
 | `naps.chance` | number | 0 to … |
 | `naps.length` | array of number |  |
 | `naps.wake` | number | 0 to … |
+| `naps.circle.chance` | number | 0 to … |
+| `naps.circle.length` | array of number |  |
+| `naps.circle.reach` | number | 0 to … |
 
 ### `guard`
 
@@ -1322,7 +1330,7 @@ shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake wh
 
 ### `pixelSize`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`
 
-Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel. The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach × glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. nightLight (Ed, 2026-10-06: "Seems very bright for nighttime"): her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.
+Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel (5, Ed 2026-10-07; ?px=3\|4 to compare). The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach × glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. nightLight (Ed, 2026-10-06: "Seems very bright for nighttime"): her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.
 
 | knob | type | range |
 |---|---|---|
@@ -1506,7 +1514,7 @@ The moon (Ed, 2026-10-06: "The moon should slowly change: occasionally becoming 
 | `moon.floor.flare` | number | 0 to … |
 | `glowReach` | number | 0 to … |
 
-### `sigilSpill`, `nightLight`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `lightBudget`
+### `sigilSpill`
 
 The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it.
 
@@ -1518,6 +1526,21 @@ The sigils' neon spilling onto the world (overnight phase 3, the art pass): each
 | `sigilSpill.stack` | number | 0 to … |
 | `sigilSpill.stackReach` | number | 0 to … |
 | `sigilSpill.stackHeight` | number | 0 to … |
+
+### `combatLight`, `nightLight`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `lightBudget`
+
+Her light in the wild and in a fight (Ed, 2026-10-07: the wild forest darker for exploring; a darker forest makes a fight harder to read, so her light rises during one and settles after, too slowly to notice as an effect; render/combatLight.ts). Exploring an area the party hasn't reached, her light's reach and strength are times wildReach and wildGlow (the forest beyond her small pool darker); with a fight within range metres of her (any blow, wind-up or shot, her posse's or the wild's) in the last hold seconds, times fightReach and fightGlow instead (the fight lit, a little more than on party ground). Each eased: up over rise seconds, back over fall, shaped smooth. Drawing only.
+
+| knob | type | range |
+|---|---|---|
+| `combatLight.wildReach` | number | 0 to … |
+| `combatLight.wildGlow` | number | 0 to … |
+| `combatLight.fightReach` | number | 0 to … |
+| `combatLight.fightGlow` | number | 0 to … |
+| `combatLight.range` | number | 0 to … |
+| `combatLight.hold` | number | 0 to … |
+| `combatLight.rise` | number | 0 to … |
+| `combatLight.fall` | number | 0 to … |
 | `nightLight.maxReach` | number | 0 to … |
 | `nightLight.treetopReach` | number | 0 to … |
 | `nightLight.treetopGlow` | number | 0 to … |

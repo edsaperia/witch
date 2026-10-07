@@ -527,11 +527,44 @@
             "shade"
           ],
           "additionalProperties": false
+        },
+        "layout": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dip": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trees": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "rise",
+            "dip",
+            "reach",
+            "trees"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "relief",
-        "hills"
+        "hills",
+        "layout"
       ],
       "additionalProperties": false
     },
@@ -2716,13 +2749,40 @@
         "wake": {
           "type": "number",
           "minimum": 0
+        },
+        "circle": {
+          "type": "object",
+          "properties": {
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "length": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "chance",
+            "length",
+            "reach"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "on",
         "chance",
         "length",
-        "wake"
+        "wake",
+        "circle"
       ],
       "additionalProperties": false
     },
@@ -6522,6 +6582,54 @@
         "stack",
         "stackReach",
         "stackHeight"
+      ],
+      "additionalProperties": false
+    },
+    "combatLight": {
+      "type": "object",
+      "properties": {
+        "wildReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wildGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fall": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "wildReach",
+        "wildGlow",
+        "fightReach",
+        "fightGlow",
+        "range",
+        "hold",
+        "rise",
+        "fall"
       ],
       "additionalProperties": false
     },
