@@ -1,0 +1,22 @@
+{
+  "builder": "QA",
+  "phase": "Overnight: watching every phase",
+  "slice": "Checked every merge into the prototype overnight, benched the start and the end of the night, and walked a whole run headless after each round (#451, #489)",
+  "prs": [451, 489],
+  "built": [
+    "Every merge from #347 to #449 checked against the commit before it with `bench:quick` (the rules' fingerprint and three scenes, pixel by pixel), so each change in the game is pinned to one PR",
+    "`tools/qa/journey.cjs`: a whole run in headless Chromium, the bedroom to the party's over, a screenshot of each moment, failing on any error, a blank picture or a moment that doesn't happen",
+    "`tools/qa/core.cjs`: Ed's core design checked in the built game: an area cleared transforms, a wave at a transformed stone only celebrates, the boot is 30 s, nothing spawns mid-run",
+    "The full bench at the start and the end of the night, and the late-game probe's heap and draw calls, compared",
+    "`docs/QA-LOG.md`: the night's record, round by round"
+  ],
+  "learned": [
+    "\"The game is unchanged\" is only as good as its fingerprint: a tuning knob held inside the buffs' state turned every new knob into a rules difference, until #420 left it out.",
+    "Check each merge against its own parent, not the tip against the morning: forty intended changes hide the one that wasn't.",
+    "A harness breaks when the game changes on purpose: the boot went from five minutes to thirty seconds, and she now stays at her decks through the needle drop, so the scripts wait for what happens rather than for a time.",
+    "On the cloud's software renderer the frame times are almost all drawing; the game's own work is the number to watch, and it went down overnight."
+  ],
+  "previews": [
+    { "src": "media/builders/qa-journey.webp", "caption": "The journey after the core design (#487): the bedroom to the party's over." }
+  ]
+}
