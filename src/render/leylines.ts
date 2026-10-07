@@ -227,7 +227,7 @@ export class LeyLines {
   private chain: LeyStone[] = [];
   private current = 0;
   /** The routes being worked out for a new chain (a link a frame), then swapped in whole. */
-  private pending: { key: number; chain: LeyStone[]; current: number; colours: THREE.Vector3[]; routes: [number, number][][] } | null = null;
+  private pending: { key: number; chain: LeyStone[]; current: number; colours: THREE.Vector3[]; job: Generator<void, [number, number][][], void>; routes: [number, number][][] | null } | null = null;
   private shiftFrom = -Infinity;
 
   constructor(private T: LeyTuning, private ground: (x: number, z: number) => number, private map?: ForestMap) {
@@ -312,13 +312,14 @@ export class LeyLines {
       if (!this.pending && was.length === c.stones.length && c.stones.every((s, i) => s.cell[0] === was[i].cell[0] && s.cell[1] === was[i].cell[1])) {
         if (c.current !== this.current) this.shiftFrom = time;
         this.key = key; this.current = c.current; this.cur.current.value = c.current;
-      } else this.pending = { key, chain: c.stones, current: c.current, colours: c.stones.map(colourOf), routes: [] };
+      } else this.pending = { key, chain: c.stones, current: c.current, colours: c.stones.map(colourOf), job: this.routeAll(c.stones), routes: null };
     }
-    // Route links for up to ROUTE_MS a frame (each kept from meeting those before it); when all are, swap the new line in.
+    // Route links for up to ROUTE_MS a frame (each kept from meeting those before it), a taming step at a time (a whole link
+    // was up to 60 ms in one frame at a late wave: the hitch hunt); when all are, swap the new line in.
     if (this.pending) {
       const P = this.pending, t0 = performance.now();
-      while (P.routes.length < P.chain.length - 1 && performance.now() - t0 < ROUTE_MS) { const k = P.routes.length; P.routes.push(this.routeTame(P.chain, P.routes, k)); }
-      if (P.routes.length >= P.chain.length - 1) {
+      while (!P.routes && performance.now() - t0 < ROUTE_MS) { const r = P.job.next(); if (r.done) P.routes = r.value; }
+      if (P.routes) {
         const was = this.chain[this.current + 1];
         if (was && P.chain[P.current] && P.chain[P.current].cell.join() === was.cell.join()) this.shiftFrom = time; // (moved on)
         this.build(this.cur.geo, P.colours, P.routes);
@@ -338,14 +339,21 @@ export class LeyLines {
    *  2026-10-06: the line never crosses itself; rules/leyroute.ts keeps the stones' own straight
    *  ways apart, so where wanders would meet, the link is drawn tamer, down to straight, and if it
    *  still meets one, that one is drawn straight too). */
-  private routeTame(chain: LeyStone[], routes: [number, number][][], k: number): [number, number][] {
+  private *routeTame(chain: LeyStone[], routes: [number, number][][], k: number): Generator<void, [number, number][], void> {
     let r: [number, number][] = [];
     for (const wander of TAME) {
-      r = this.route(chain[k], chain[k + 1], k, wander, chain);
+      r = yield* this.routeSteps(chain[k], chain[k + 1], k, wander, chain);
       if (!routes.some(q => polylinesMeet(q, r))) return r;
     }
     routes.forEach((q, j) => { if (!chain[j].depart && polylinesMeet(q, r)) routes[j] = this.route(chain[j], chain[j + 1], j, 0, chain); });
     return r;
+  }
+
+  /** Every link's route in turn (routeTame), a taming step at a time. */
+  private *routeAll(chain: LeyStone[]): Generator<void, [number, number][][], void> {
+    const routes: [number, number][][] = [];
+    for (let k = 0; k < chain.length - 1; k++) routes.push(yield* this.routeTame(chain, routes, k));
+    return routes;
   }
 
   /** A link's way from stone a to b before it wanders: the route's curve through its stones (Ed, 2026-10-06: "can we give
@@ -369,6 +377,11 @@ export class LeyLines {
    *  usual way off it; 0 the curve itself), leaving and reaching its stones along the curve, and never turning tighter
    *  than the curve may (leyLines.minRadius: the wander tamed till it doesn't). */
   private route(a: LeyStone, b: LeyStone, k: number, wander = 1, chain = this.pending?.chain ?? this.chain): [number, number][] {
+    const steps = this.routeSteps(a, b, k, wander, chain);
+    for (;;) { const r = steps.next(); if (r.done) return r.value; }
+  }
+  /** route, yielding after each taming step that didn't settle it. */
+  private *routeSteps(a: LeyStone, b: LeyStone, k: number, wander: number, chain: LeyStone[]): Generator<void, [number, number][], void> {
     // From the treehouse at the start: due south out of its front, then round to the first objective.
     if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.avoid, STEP / 2);
     const base = fine(this.baseOf(chain, k), STEP), n = base.length - 1, R = this.map ? leyRadius(this.map) : 30;
@@ -378,6 +391,7 @@ export class LeyLines {
     for (let tame = wander; ; tame = tame > 0.05 ? tame / 2 : 0) {
       const W = Math.min(80, L * this.T.valley) * tame, off = new Float64Array(n + 1);
       if (W > 0) for (let i = 1; i < n; i++) {
+        if (i % 12 === 0) yield; // (a long late-wave link samples the ground thousands of times a step: a few ms at a time)
         let best = 0, bh = Infinity;
         for (let o = -W; o <= W + 1e-6; o += W / 6) {
           const h = this.ground(base[i][0] + nrm[i][0] * o, base[i][1] + nrm[i][1] * o) + Math.abs(o) * 0.04; // (a little loath to stray)
@@ -393,6 +407,7 @@ export class LeyLines {
         return i === n ? [b.x, b.z] : [q[0] + nrm[i][0] * o, q[1] + nrm[i][1] * o];
       });
       if (W <= 0 || tightestTurn(pts, 6) >= R * 0.95) return pts;
+      yield;
     }
   }
 
