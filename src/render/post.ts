@@ -90,7 +90,7 @@ void main() {
   }
   // A wild area's rising aggro (rules/wildWatch.ts aggroOf, render/aggro.ts): the screen's edges reddening as its animals make up
   // their minds (Ed, 2026-10-07), by whole low-res pixels.
-  if (uAggro > 0.0) { vec2 q = ((floor(vUv * uLow) + 0.5) / uLow - 0.5) * vec2(uLow.x / uLow.y, 1.0); c = mix(c, vec3(0.55, 0.02, 0.03), uAggro * smoothstep(0.38, 0.95, length(q))); }
+  if (uAggro > 0.0) { vec2 q = ((floor(vUv * uLow) + 0.5) / uLow - 0.5) * vec2(uLow.x / uLow.y, 1.0); c += vec3(0.42, 0.03, 0.03) * uAggro * smoothstep(0.38, 0.95, length(q)); } // (added, not mixed: the night's dark edges still redden)
   gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
 }`;
 
