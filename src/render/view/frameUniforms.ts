@@ -45,6 +45,14 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;
   SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);
+  // The trees watching her (Ed, 2026-10-07; render/sprites.ts uWatch): where she was a beat ago, eased lag seconds behind.
+  const Wt = t.watching, at = v.watch;
+  if (Wt?.on) {
+    if (Number.isNaN(at.x)) { at.x = g.witch.x; at.z = g.witch.z; }
+    else { const k = 1 - Math.exp(-Math.min(0.5, Math.max(0, time - at.t)) / Math.max(0.05, Wt.lag)); at.x += (g.witch.x - at.x) * k; at.z += (g.witch.z - at.z) * k; }
+    at.t = time;
+    SPRITE_UNIFORMS.uWatch.value.set(at.x, at.z, Wt.radius, Wt.lean);
+  } else SPRITE_UNIFORMS.uWatch.value.w = 0;
   // The witch's glow reaches as far as the ground-mode canopy hole round her (Ed, v149: "about
   // the width of the canopy hiding circle"): the hole's radius plus its soft edge, in metres at
   // her depth, times glowToCutout; beyond it the forest is dark. ?glow= fixes it instead.
