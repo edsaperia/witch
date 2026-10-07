@@ -281,40 +281,56 @@ export class OutputMeter {
   }
 }
 
+/** The mic check's levels, measured on the audio thread itself (an AudioWorklet, its code here as a string so it needs no
+ *  file of its own): a block's mean square of each of its two channels, the output and the mic, posted every `size` frames.
+ *  (It was a ScriptProcessorNode, run on the page's thread: the audio thread waited on the game's frames, and on Ed's
+ *  machine under-ran nearly all the time, 2026-10-07.) */
+const MIC_WORKLET = `registerProcessor("witch-mic-levels", class extends AudioWorkletProcessor {
+  constructor(o) { super(); this.size = o.processorOptions.size; this.n = 0; this.a = 0; this.b = 0; }
+  process(inputs) {
+    const i = inputs[0], a = i[0], b = i[1] || i[0];
+    if (a) for (let k = 0; k < a.length; k++) { this.a += a[k] * a[k]; this.b += b[k] * b[k]; }
+    this.n += 128;
+    if (this.n >= this.size) { this.port.postMessage([this.a / this.n, this.b / this.n]); this.n = 0; this.a = 0; this.b = 0; }
+    return true;
+  }
+});`;
+
 /** The mic check: the game's output and the microphone, block by block on the audio thread, judged on the page's. */
 export class MicCheck {
   status = "asking for the microphone…";
   private judgeOf: MicJudge;
   private outMono: GainNode;
-  private proc: ScriptProcessorNode;
+  private merge: ChannelMergerNode;
   private blocks: [number, number][] = [];
   private t = 0;
   private lastLag = 0;
   private taps: AudioNode[] = [];
-  private live = false;
   episodes = 0;
   constructor(private ctx: AudioContext, private onEpisode: (e: MicEpisode) => void) {
     const size = 1024;
     this.judgeOf = new MicJudge(size / ctx.sampleRate);
-    // the output, mixed down to one channel, and the mic: side by side into one processor (one clock for both)
+    // the output, mixed down to one channel, and the mic: side by side into one measuring node (one clock for both)
     const mono = (): GainNode => { const g = ctx.createGain(); g.channelCount = 1; g.channelCountMode = "explicit"; g.channelInterpretation = "speakers"; return g; };
     this.outMono = mono();
-    const merge = ctx.createChannelMerger(2);
-    this.outMono.connect(merge, 0, 0);
-    this.proc = ctx.createScriptProcessor(size, 2, 1);
-    merge.connect(this.proc);
-    const silent = ctx.createGain(); silent.gain.value = 0; // (a processor runs only when it's connected on)
-    this.proc.connect(silent); silent.connect(ctx.destination);
-    this.proc.onaudioprocess = ev => {
-      if (!this.live) return; // (nothing to judge till the microphone is there)
-      const a = ev.inputBuffer.getChannelData(0), b = ev.inputBuffer.getChannelData(1);
-      let ea = 0, eb = 0;
-      for (let i = 0; i < a.length; i++) { ea += a[i] * a[i]; eb += b[i] * b[i]; }
-      this.blocks.push([dbfs(Math.sqrt(ea / a.length)), dbfs(Math.sqrt(eb / b.length))]);
-      if (this.blocks.length > 512) this.blocks.shift();
-    };
+    this.merge = ctx.createChannelMerger(2);
+    this.outMono.connect(this.merge, 0, 0);
+    // nothing measured (and nothing on the audio thread) till the microphone is there
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
-      .then(stream => { const src = ctx.createMediaStreamSource(stream), m = mono(); src.connect(m); m.connect(merge, 0, 1); this.live = true; this.status = "listening"; })
+      .then(async stream => {
+        if (!ctx.audioWorklet) throw Object.assign(new Error(), { name: "no AudioWorklet" });
+        const url = URL.createObjectURL(new Blob([MIC_WORKLET], { type: "text/javascript" }));
+        try { await ctx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+        const node = new AudioWorkletNode(ctx, "witch-mic-levels", { numberOfInputs: 1, numberOfOutputs: 0, channelCount: 2, channelCountMode: "explicit", processorOptions: { size } });
+        node.port.onmessage = ev => {
+          const [a, b] = ev.data as [number, number];
+          this.blocks.push([dbfs(Math.sqrt(a)), dbfs(Math.sqrt(b))]);
+          if (this.blocks.length > 512) this.blocks.shift();
+        };
+        const src = ctx.createMediaStreamSource(stream), m = mono(); src.connect(m); m.connect(this.merge, 0, 1);
+        this.merge.connect(node);
+        this.status = "listening";
+      })
       .catch(e => { this.status = `no microphone (${(e as Error).name})`; });
   }
   retap(nodes: AudioNode[]): void {

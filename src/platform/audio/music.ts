@@ -96,6 +96,9 @@ export class Music {
     this.engine?.update(cue, gameTime, clock, on, 0.6, rate, stop > 0 ? Math.max(M?.over?.floor ?? 0.15, rate) : tapePitch(rate, M?.slow)); // (stopping: the pitch falls all the way with it)
   }
 
+  /** Sound shed to spare the audio thread (shed.ts): the engine's own (unison, tails, reverb, delay). */
+  set shed(level: number) { if (this.engine) this.engine.shed = level; }
+
   /** The engine's continuity (tools/music-lab/flight.cjs). */
   get stats() { return this.engine?.stats ?? { resyncs: 0, late: 0, gap: 0, ahead: 0 }; }
 

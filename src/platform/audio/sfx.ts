@@ -47,6 +47,10 @@ export class Sfx {
   private fizz: Sparkler | null = null;
   /** The wild watch's warning: made the first time a watch starts. */
   private watch: Aggro | null = null;
+  /** Sound shed to spare the audio thread (shed.ts): 1+ the beds off (each area's ambience, home's meadow, the pond, the
+   *  picnic, the sea), faded out and not made while it lasts. */
+  shed = 0;
+  private get beds(): number { return this.shed >= 1 ? 0 : 1; }
 
   constructor(ctx: AudioContext | OfflineAudioContext, volume: number, T: SfxTuning, root = 57, dest?: AudioNode) {
     this.k = new SfxKit(ctx, volume, T, root, dest);
@@ -109,14 +113,14 @@ export class Sfx {
   power(step: number, pan = 0, near = 1, full = false): void { powerUp(this.k, step, pan, near, full); }
   /** The boot-up over: things stirring. */
   stir(): void { chimes.stir(this.k); }
-  meadow(level: number): void { this.home.update(level); }
+  meadow(level: number): void { this.home.update(level * this.beds); }
   /** A legend turning angry: its roar. */
   roar(pan = 0, near = 1): void { roar(this.k, pan, near); }
   /** Dancers' party shoes tapping on the beat. */
   taps(n: number, pan = 0, near = 1): void { taps(this.k, n, pan, near); }
   /** By a pond, a picnic in a partified area, in the creator's room: each frame, by how near (0-1). */
-  pond(level: number, pan = 0): void { this.pondBed.update(level, pan); }
-  picnic(level: number, pan = 0): void { this.picnicBed.update(level, pan); }
+  pond(level: number, pan = 0): void { this.pondBed.update(level * this.beds, pan); }
+  picnic(level: number, pan = 0): void { this.picnicBed.update(level * this.beds, pan); }
   room(level: number): void { this.roomBed.update(level); }
   /** The sea's life off the beach (seaLife.ts): a dolphin's leap (its splash `fall` seconds after), the kraken's groan and the water pouring off it. */
   splash(size = 0.5, pan = 0, near = 1, fall = 0.9): void { splash(this.k, size, pan, near, fall); }
@@ -149,7 +153,7 @@ export class Sfx {
     if (cue === "hum") this.spellFx.hum(v); else if (cue === "rustle") this.spellFx.rustle(v); else if (cue === "crackle") this.spellFx.crackle(); else this.spellFx.burst();
   }
   /** By the sea on the beach (0-1 by how near the water): nothing made until she first comes near. */
-  sea(level: number, pan = 0): void { if (level > 0.001 || this.seaBed) (this.seaBed ??= new Sea(this.k)).update(level, pan); }
+  sea(level: number, pan = 0): void { level *= this.beds; if (level > 0.001 || this.seaBed) (this.seaBed ??= new Sea(this.k)).update(level, pan); }
   /** Whether the sea's sounds are built (none in an ordinary run). */
   /** By the ley line's pulse, the sparkler's burning tip (#491): its fizz, by how near (0-1). */
   sparkler(level: number, pan = 0): void { if (level > 0.001 || this.fizz) (this.fizz ??= new Sparkler(this.k)).update(level, pan); }
@@ -169,6 +173,6 @@ export class Sfx {
   get nightBuilt(): boolean { return !!this.nightBed?.built; }
   private nightBed: Night | null = null;
   /** Each area's ambience in play (night.ts layers without their bed): `kind` her area's, at `level` (0-1). Built when first heard. */
-  ambience(kind: NightKind | null, level: number): void { if (level > 0.001 || this.ambienceBed) (this.ambienceBed ??= new Night(this.k, () => this.k.T.ambience)).update(kind, level); }
+  ambience(kind: NightKind | null, level: number): void { level *= this.beds; if (level > 0.001 || this.ambienceBed) (this.ambienceBed ??= new Night(this.k, () => this.k.T.ambience)).update(kind, level); }
   private ambienceBed: Night | null = null;
 }

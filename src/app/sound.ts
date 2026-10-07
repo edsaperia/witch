@@ -7,6 +7,7 @@ import { Music } from "../platform/audio/music";
 import { Sfx } from "../platform/audio/sfx";
 import { OVER_DEBUG, SfxCues } from "../platform/audio/sfxCues";
 import { AudioWatchdog } from "../platform/audio/watchdog";
+import { ShedValve } from "../platform/audio/shed";
 import { musicMix, partyOverEase } from "../rules/music";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
@@ -26,6 +27,8 @@ export class Sound {
   /** The music's last mix (by how near she is to a playing soundsystem): the playtest log reads it. */
   lastMix: ReturnType<typeof musicMix> | null = null;
   watchdog: AudioWatchdog | null = null;
+  /** The safety valve (shed.ts): the sound shed a step at a time while the audio thread under-runs; `?audio=lite|full`. */
+  readonly valve = new ShedValve(audioParam());
 
   constructor(private readonly tuning: Tuning, private readonly style: MusicStyle, private readonly seed: number) {
     try { const v = localStorage.getItem("witch.volume"); if (v !== null && !isNaN(+v)) this.level = Math.min(1, Math.max(0, +v)); } catch { /* storage blocked */ }
@@ -94,7 +97,7 @@ export class Sound {
     );
     setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
-    playtest.audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
+    playtest.audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
   }
 
   private live: () => boolean = () => false;
@@ -106,9 +109,15 @@ export class Sound {
   /** Frozen (platform/freeze.ts): the context suspended, and resumed after. */
   freeze(on: boolean): void { try { void (on ? this.audio?.suspend() : this.audio?.resume()); } catch { /* no sound */ } }
 
+  /** Once a second, from the output meter's ClockWatch: sheds a step if the audio thread is falling behind (the reason, if
+   *  it did, for the playtest log). */
+  shedCheck(t: number, underruns: number | null, drift: number): string | null { return this.valve.feed(t, underruns, drift); }
+
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
     this.lastMix = musicMix(game, game.witch);
+    if (this.music) this.music.shed = this.valve.level; // (the watchdog's rebuilt music too)
+    if (this.sfx) this.sfx.shed = this.valve.level;
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
     if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
@@ -120,3 +129,6 @@ export class Sound {
     this.sfx?.room(roomOpen ? 1 : atDecks ? this.tuning.sfx.room.decks * (dropped ? 1 : 0.3) : 0);
   }
 }
+
+/** `?audio=lite|full` for one load (shed.ts). */
+function audioParam(): string | null { try { return new URLSearchParams(location.search).get("audio"); } catch { return null; } }

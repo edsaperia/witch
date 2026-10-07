@@ -86,6 +86,15 @@ export class MusicEngine {
   private cNext = -1;
   private cAt = 0;
   private reverbTime = 0;
+  /** Sound shed to spare the audio thread (shed.ts; Ed's under-runs, 2026-10-07): 2+ every synth and sung note one
+   *  oscillator (no unison, its first wave only) and shorter tails; 3 the reverbs short and the delay off. */
+  private shedLevel = 0;
+  get shed(): number { return this.shedLevel; }
+  set shed(level: number) {
+    if (level === this.shedLevel) return;
+    const was = this.shedLevel; this.shedLevel = level;
+    if ((was >= 3) !== (level >= 3)) { this.reverbTime = -1; this.setMix(); }
+  }
 
   constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest) {
     this.conductor = new Conductor(style);
@@ -130,13 +139,18 @@ export class MusicEngine {
   setStyle(style: MusicStyle): void {
     this.style = style;
     this.conductor.reset(style);
-    const m = style.mix;
+    this.setMix();
+    this.channels.clear();
+  }
+
+  /** The style's mix on the buses (shed 3: the reverbs cut short, the delay off). */
+  private setMix(): void {
+    const m = this.style.mix, lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
     this.out.gain.value = m.master;
     this.reverbIn.gain.value = m.reverb;
-    this.delayIn.gain.value = m.delay;
-    this.feedback.gain.value = Math.min(0.85, m.feedback);
-    if (m.reverbTime !== this.reverbTime) { this.reverbTime = m.reverbTime; this.reverb.buffer = this.impulse(m.reverbTime); this.circleVerb.buffer = this.impulse(m.reverbTime * 1.6); }
-    this.channels.clear();
+    this.delayIn.gain.value = lite ? 0 : m.delay;
+    this.feedback.gain.value = lite ? 0 : Math.min(0.85, m.feedback);
+    if (time !== this.reverbTime) { this.reverbTime = time; this.reverb.buffer = this.impulse(time); this.circleVerb.buffer = this.impulse(time * 1.6); }
   }
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
@@ -365,9 +379,9 @@ export class MusicEngine {
   }
 
   private synth(t: number, p: Patch, peak: number, freq: number, dur: number, ch: Channel): void {
-    const c = this.ctx, waves = p.waves ?? ["sawtooth"], U = Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
-    const attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
-    const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+    const lite = this.shedLevel >= 2, all = p.waves ?? ["sawtooth"], waves = lite ? all.slice(0, 1) : all, U = lite ? 1 : Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
+    const c = this.ctx, attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
+    const end = t + Math.max(dur, attack), stop = end + release * (lite ? 2 : 4) + 0.02;
     const g = c.createGain();
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(peak / Math.sqrt(n), t + attack);
@@ -412,8 +426,8 @@ export class MusicEngine {
    *  creeps in; unison voices spread wide make a choir. */
   private voice(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, dest: AudioNode): void {
     const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], vowel = VOWELS[vowels[Math.abs(step >> 2) % vowels.length]] ?? VOWELS.ah;
-    const U = Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
-    const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+    const U = this.shedLevel >= 2 ? 1 : Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
+    const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 2 : 4) + 0.02;
     const g = c.createGain(), lvl = peak / Math.sqrt(U);
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + attack);
     if (end > t + attack) g.gain.setTargetAtTime(lvl * sustain, t + attack, decay / 3);
