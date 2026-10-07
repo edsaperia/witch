@@ -229,9 +229,8 @@ export function mistShare(cover: number, threshold: number): number {
 const clumpHash = (x: number, z: number) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
 
 /** A type's canopy cover from above (0 to 1): its trees a square metre times the crown (m²) its trees carry on average
- *  (crownless big objects, stones and logs, carry none). trees: how many of its own stand in a sampled square `side` metres
- *  across. */
-export function coverOf(art: TypeArt, mpp: number, trees: number, side: number): number {
+ *  (crownless big objects, stones and logs, carry none). trees: how many of its own stand in `area` m² of it sampled. */
+export function coverOf(art: TypeArt, mpp: number, trees: number, area: number): number {
   const L = art.layout, f = art.atlas.frames;
   let w = 0, crown = 0;
   for (let i = 0; i < L.big.length; i++) {
@@ -240,5 +239,5 @@ export function coverOf(art: TypeArt, mpp: number, trees: number, side: number):
     if (b.top !== null) { const fr = f[b.top]; crown += k * fr.w * fr.h * mpp * mpp * 0.55; } // (a crown fills about half its box)
   }
   if (w <= 0) return 0;
-  return Math.min(1, (trees / (side * side)) * (crown / w));
+  return area > 0 ? Math.min(1, (trees / area) * (crown / w)) : 0;
 }

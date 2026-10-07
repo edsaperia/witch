@@ -612,7 +612,7 @@ export class View {
 
   /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
   /** The mist at canopy height (render/mistCanopy.ts): one area type's cover measured a frame, as its art arrives (its trees
-   *  in a square 60 m across at one of its areas, times their average crown); then it follows the view, rises with her and
+   *  in small circles across one of its areas, off the clearing, times their average crown); then it follows the view, rises with her and
    *  parts round her and the soundsystems under attack, and the open areas' clumps stand on the forest's big objects. */
   private mistAction: { x: number; z: number }[] = [];
   private updateMistCanopy(x: number, z: number): void {
@@ -621,10 +621,18 @@ export class View {
       if (!M.needs(type)) continue;
       const art = this.assets.typeArt(type);
       if (!art) continue;
-      const side = 60, trees = g.forest.treesNear(site.x, site.z, side / 2);
-      let own = 0;
-      for (let i = 0; i < trees.length; i++) if (trees[i].type === type) own++;
-      M.setCover(type, coverOf(art, this.mpp, own, side));
+      // Small circles in rings round the area's centre, off its clearing, kept to those inside the area.
+      const r = 12, m = g.map;
+      let own = 0, n = 0;
+      for (const d of [45, 70, 95]) for (let k = 0; k < 8; k++) {
+        const a = (k + d / 50) * (Math.PI / 4), px = site.x + Math.cos(a) * d, pz = site.z + Math.sin(a) * d;
+        const at = m.areaAt(px, pz);
+        if (at.type !== type || at.openness < 0.25) continue;
+        n++;
+        const trees = g.forest.treesNear(px, pz, r);
+        for (let i = 0; i < trees.length; i++) if (trees[i].type === type && Math.hypot(trees[i].x - px, trees[i].z - pz) <= r) own++;
+      }
+      M.setCover(type, n ? coverOf(art, this.mpp, own, n * Math.PI * r * r) : null);
       break; // (one a frame)
     }
     const A = this.mistAction;
