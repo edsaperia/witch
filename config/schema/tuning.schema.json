@@ -2814,6 +2814,33 @@
       ],
       "additionalProperties": false
     },
+    "wildWatch": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0
+        },
+        "forget": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hangBack": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "time",
+        "forget",
+        "hangBack"
+      ],
+      "additionalProperties": false
+    },
     "naps": {
       "type": "object",
       "properties": {
@@ -8009,6 +8036,7 @@
     "attackFx",
     "combat",
     "notice",
+    "wildWatch",
     "naps",
     "guard",
     "population",
