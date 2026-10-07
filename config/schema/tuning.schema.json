@@ -6053,6 +6053,29 @@
       ],
       "additionalProperties": false
     },
+    "alarms": {
+      "type": "object",
+      "properties": {
+        "linger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fall": {
+          "type": "number",
+          "minimum": 0
+        },
+        "most": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "linger",
+        "fall",
+        "most"
+      ],
+      "additionalProperties": false
+    },
     "guard": {
       "type": "object",
       "properties": {
@@ -7685,6 +7708,7 @@
     "combat",
     "notice",
     "naps",
+    "alarms",
     "guard",
     "witchHealth",
     "knockout",
