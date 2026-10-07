@@ -460,6 +460,10 @@ export class View {
     }
     for (let t = 0; t < AREA_TYPES.length; t++) if (!near.has(t)) near.set(t, Infinity);
     this.prepared = true;
+    // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
+    // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
+    // In the background where the browser can (KHR_parallel_shader_compile); nothing it draws changes.
+    this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
