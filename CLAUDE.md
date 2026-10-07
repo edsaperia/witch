@@ -15,6 +15,10 @@ The playable game is a static site on GitHub Pages, served from the `gh-pages` b
 
 Pages must be switched on once in the repository's settings (Source: *Deploy from a branch*, `gh-pages`, `/ (root)`); until then the links return 404. A deploy is verified by opening the link and checking the seed and the game load.
 
+## The Making Of
+
+A static site about how the game was made, at https://edsaperia.github.io/witch/making-of/ (and `/pr-<number>/making-of/` on a PR's build): `making-of/` (`site.json` the chapters, `pages/<slug>.html` each page's body, `media/` its pictures listed with captions in `media/media.json`, `assets/` the stylesheet and the game's pixel fonts), built by `tools/making-of/build.mjs` into `dist/making-of/` as the last step of `npm run build`; `node tools/making-of/build.mjs --check` (in `npm test`, `src/makingOf.test.ts`) fails on a malformed builder's note, a missing picture or link, an unlisted picture or a model's name. **Builders' notes**: as you finish a piece of work, add your own `making-of/builders/<name>.json` (what you built, what you learned, your best previews; the format is in `making-of/builders/README.md`); never edit anyone else's.
+
 ## What's new
 
 The start screen shows a **What's new** panel: the last three entries of the changelog, newest first. The changelog is **one small file per change** in `config/changelog/` (Ed, 2026-10-05: so builders working in parallel don't conflict), collected at build time by `src/changelog.ts`:
