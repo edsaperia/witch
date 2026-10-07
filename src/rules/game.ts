@@ -31,7 +31,7 @@ import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, stepSigilButton } from "./sigilButton";
 import { loadOf, type LeashLoad } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
-import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
+import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { dropCache, newInvites, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
@@ -59,6 +59,8 @@ export interface Witch {
   /** Her hits left and repair (rules/knockout.ts), and her knockout while it plays out. */
   health: Health;
   ko: Knockout | null;
+  /** Her last knockdown and how many in a row before it (rules/knockout.ts nextStreak: the respawn wait grows with them). */
+  koStreak?: { n: number; at: number };
   /** Her hat (rules/hat.ts): on her head, or lying where she was knocked out. */
   hat: HatState;
   /** Up against a party legend's leash (rules/partyLegend.ts, the Easter egg): which, and since when; for the view. */
@@ -269,8 +271,10 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
   if (!w || w.ko || dashing(w.dash, at) || g.partyOver) return; // (the afterparty: nothing hurts her)
   if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
   if (hurt(w.health, at, t)) {
-    w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
-    if (dropHat(w.hat, w.body.x, w.body.z, at, t.knockout.dropHat)) g.koEvents.push({ kind: "hatDropped", at, x: w.body.x, z: w.body.z });
+    const hatFloats = dropHat(w.hat, w.body.x, w.body.z, at, t.knockout.dropHat), streak = nextStreak(w.koStreak, at, t);
+    w.koStreak = { n: streak, at };
+    w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
+    if (hatFloats) g.koEvents.push({ kind: "hatDropped", at, x: w.body.x, z: w.body.z });
     return;
   }
   // Thrown and staggered by it (rules/knock.ts); not by the blow that knocks her out.
