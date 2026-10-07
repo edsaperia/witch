@@ -1,19 +1,13 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { FrameStats } from "./platform/frameStats";
-import { Shake } from "./render/shake";
 import { musicCue } from "./rules/musicPlan";
-import { setupArena } from "./rules/arena";
-import { cellKey } from "./rules/party";
-import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, newGame, STEP, stepGame } from "./rules/game";
-import { AREA_TYPES } from "./rules/map";
+import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { awaitingSpell } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
-import { bendPoint, groundHeight, placed } from "./render/height";
+import { placed } from "./render/height";
 import { Vector3 } from "three";
-import { SPRITE_UNIFORMS } from "./render/sprites";
-import { LIGHT_UNIFORMS } from "./render/lighting";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
@@ -34,6 +28,9 @@ import { OutputMeter } from "./platform/audio/outputMeter";
 import { gameFromLink } from "./app/gameParams";
 import { styleFromLink, viewFromLink } from "./app/viewParams";
 import { setupActionBar, setupDebugKeys } from "./app/keys";
+import { ScreenShake } from "./app/shake";
+import { playerPick as makePlayerPick } from "./app/playerPick";
+import { installHooks } from "./app/hooks";
 import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 
@@ -198,21 +195,8 @@ if (lookBtn) {
   lookBtn.addEventListener("click", () => { if (ready && game.clock.paused) creator.show(); });
 }
 // (the bedroom has the dev "Player:" pick above in place of a Bot game button)
-// The dev "Player:" pick (Ed, 2026-10-06: "add the bot game selector ... a dropdown with e.g. human / crude / skilled / champion
-// ... it won't be in the final game so don't worry about making it look nice"): human, then every bot in BOT_KINDS (a new one
-// shows up by itself); casting the scroll with a bot picked starts that bot's game, as ?bot=<kind>. Kept for the session
-// (sessionStorage witch.player); ?dev=0 hides it. Plain and unstyled, in the bedroom's top right corner.
-const playerPick: HTMLSelectElement | null = params.get("dev") === "0" ? null : (() => {
-  const box = document.createElement("label"), sel = document.createElement("select");
-  box.id = "player-pick"; box.textContent = "Player: ";
-  Object.assign(box.style, { position: "absolute", right: "8px", top: "8px", zIndex: "5", font: "12px sans-serif", color: "#ccc" });
-  for (const k of ["human", ...BOT_KINDS]) { const o = document.createElement("option"); o.value = o.textContent = k; sel.append(o); }
-  try { const v = sessionStorage.getItem("witch.player"); if (v && [...sel.options].some(o => o.value === v)) sel.value = v; } catch { /* storage blocked */ }
-  sel.addEventListener("change", () => { try { sessionStorage.setItem("witch.player", sel.value); } catch { /* this load only */ } });
-  for (const ev of ["pointerdown", "click", "keydown"]) sel.addEventListener(ev, e => e.stopPropagation()); // (its own keys, not the room's)
-  box.append(sel); creator.root.append(box);
-  return sel;
-})();
+// The dev "Player:" pick (app/playerPick.ts).
+const playerPick = makePlayerPick(params, creator);
 const botBtn = document.getElementById("bot-btn");
 if (botBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) botBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start of her own)
@@ -244,22 +228,8 @@ wavesEl.addEventListener("pointerdown", e => {
   try { localStorage.setItem("witch.wave", String(sec)); } catch { /* fine */ }
 });
 setWaveInterval(waveChoice);
-// Screen shake when she's hit (Ed, 2026-10-05; render/shake.ts), laid on the canvas as a transform.
-// For comfort it can be turned off: ?shake=0, or the start screen's toggle (remembered here).
-let shakeOn = params.get("shake") !== "0";
-try { if (params.get("shake") === null && localStorage.getItem("witch.shake") === "0") shakeOn = false; } catch { /* fine */ }
-const shake = new Shake(tuning.camera.shake, shakeOn), shakeEl = document.getElementById("shake-opt");
-const showShakeOpt = () => { if (shakeEl) shakeEl.innerHTML = `screen shake <button type="button" data-v="1" class="${shake.on ? "on" : ""}">on</button><button type="button" data-v="0" class="${shake.on ? "" : "on"}">off</button>`; };
-showShakeOpt();
-shakeEl?.addEventListener("pointerdown", e => {
-  e.stopPropagation();
-  const b = (e.target as HTMLElement).closest("button");
-  if (!b) return;
-  shake.on = b.dataset.v === "1";
-  try { localStorage.setItem("witch.shake", shake.on ? "1" : "0"); } catch { /* fine */ }
-  showShakeOpt();
-});
-let shaken = false;
+// Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
+const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = shake.option;
 // No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to
 // the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
 // (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the waves and the screen shake). The card itself shows only for a
@@ -270,31 +240,12 @@ if (params.get("creator") !== "0" && !bot) {
   if (news) creator.addTab("news", "📜 What's new", [news]);
   creator.addTab("options", "⚙ Options", [wavesEl, ...(shakeEl ? [shakeEl] : [])]);
 } else startEl.style.display = "";
-// ?subpixel=0: the camera's old whole-art-pixel steps, to compare (on by default: Ed, 2026-10-05, "it feels low").
-const subpixelOn = params.get("subpixel") !== "0";
 if (params.get("glide") === "camera") view.glide = "camera"; // (?glide=camera: the glide by the camera's snap, as before 2026-10-06)
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it.
 let decide: DecidePanel | null = null;
 const decidePanel = (open: boolean) => decide ??= new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: { glide: v => { view.glide = v === "camera" ? "camera" : "witch"; } } }, open);
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
-function applyShake(): void {
-  const W = game.witches[0];
-  shake.watch(W.health, !!W.ko, tuning.witchHealth.hits, game.clock.time);
-  const o = shake.offset(game.clock.time, tuning.pixelSize);
-  // The camera's sub-pixel glide (view.subpixel): the snap it took off, given back in whole screen pixels.
-  const p = tuning.pixelSize, gx = subpixelOn ? Math.round(view.subpixel.x * p) : 0, gy = subpixelOn ? Math.round(view.subpixel.y * p) : 0;
-  if (o.amount <= 0) {
-    if (gx || gy) { canvas.style.transform = `translate(${gx}px, ${gy}px)`; shaken = true; }
-    else if (shaken) { canvas.style.transform = ""; shaken = false; }
-    return;
-  }
-  // Zoomed in just enough that no edge shows while it's off centre and turned.
-  const w = window.innerWidth, h = window.innerHeight, turn = Math.abs((o.rot * Math.PI) / 180) * 0.5 * Math.hypot(w, h);
-  const zoom = 1 + (2 * (Math.max(Math.abs(o.x), Math.abs(o.y)) + turn)) / Math.min(w, h);
-  canvas.style.transform = `translate(${o.x + gx}px, ${o.y + gy}px) rotate(${o.rot.toFixed(3)}deg) scale(${zoom.toFixed(4)})`;
-  shaken = true;
-}
 document.addEventListener("visibilitychange", () => { if (document.hidden) last = 0; });
 
 let lastDraw = 0;
@@ -322,14 +273,14 @@ meter.onSilence = e => {
 const micWanted = params.get("micCheck") === "1";
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
-let manual = false;
+const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
 let overShown = false;
 document.getElementById("again")?.addEventListener("click", () => location.reload());
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 function frame(now: number): void {
   requestAnimationFrame(frame);
-  if (manual) return;
+  if (loop.manual) return;
   const dt = last ? (now - last) / 1000 : 0;
   last = now;
   const work0 = performance.now();
@@ -386,7 +337,7 @@ function frame(now: number): void {
   aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot, dashLanding());
   frameStats.work(performance.now() - work0);
   if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
-  applyShake();
+  shake.apply();
   freeze.update();
   // The overlay (app/hud.ts), four times a second.
   hud.overlay(now, () => {
@@ -409,39 +360,5 @@ function frame(now: number): void {
 requestAnimationFrame(frame);
 
 
-// For the smoke test and for poking at in the console.
-(window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
-  /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
-  guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
-  /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
-  lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) hud.showLoss(e); return e; },
-  /** A debug hook (the dropped hat's previews): a hit on her now, as a creature's would be (her last one knocks her out). */
-  hit: () => { hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
-  get manual() { return manual; }, set manual(on: boolean) { manual = on; },
-  /** The bot game's bot and its tag (rules/bot.ts, ui/botGame.ts), null in a game of her own: tools drive it a frame at a time. */
-  get bot() { return bot; }, get botTag() { return botTag; },
-  /** A debug hook (tools/sfx/live.cjs): the audio context, the music and the sound effects. */
-  get audio() { return { ctx: sound.audio, music: sound.music, sfx: sound.sfx, mends: sound.watchdog?.mends ?? [], meter }; },
-  /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
-   *  fixed steps, the render eased between the last two, the camera's sub-pixel glide), then where
-   *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):
-   *  the witch, ground points (probes, metres) and creatures (ids). */
-  frameLive: (c: Parameters<typeof stepGame>[1], dt: number, probes: { x: number; z: number }[] = [], ids: number[] = []) => {
-    const t0 = game.clock.time;
-    stepGame(game, c, dt);
-    const steps = Math.round((game.clock.time - t0) / STEP), alpha = game.alpha, P = tuning.pixelSize;
-    const v = new Vector3(), ndc = (x: number, y: number, z: number) => { placed(v.set(x, y, z)).project(view.camera); return v; };
-    const snap = (n: Vector3) => [(Math.floor((n.x * 0.5 + 0.5) * view.width) + 0.5) * P, (Math.floor((-n.y * 0.5 + 0.5) * view.height) + 0.5) * P];
-    let at: { witch: number[]; probes: number[][]; creatures: (number[] | null)[]; witchWorld: number[] } = { witch: [], probes: [], creatures: [], witchWorld: [] };
-    interpolated(game, () => {
-      view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale));
-      const W = game.witch, B = view.witchBase;
-      bendPoint(v.set(B.x, B.y, B.z)).project(view.camera);
-      at = { witch: snap(v), witchWorld: [W.x, W.z], probes: probes.map(p => snap(ndc(p.x, 0, p.z))), creatures: ids.map(id => { const k = game.creatures[id]; return k ? snap(ndc(k.x, 0, k.z)) : null; }) };
-    });
-    applyShake();
-    const P2 = tuning.pixelSize, gx = subpixelOn ? Math.round(view.subpixel.x * P2) : 0, gy = subpixelOn ? Math.round(view.subpixel.y * P2) : 0;
-    const add = (q: number[] | null) => (q ? [q[0] + gx, q[1] + gy] : null);
-    return { steps, alpha, gx, gy, time: game.clock.time, witch: add(at.witch), witchWorld: at.witchWorld, probes: at.probes.map(add), creatures: at.creatures.map(add) };
-  },
-  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };
+// For the smoke test, the tools and for poking at in the console (app/hooks.ts).
+installHooks({ game, view, tuning, hud, sound, meter, shake, loadTimes, loop });
