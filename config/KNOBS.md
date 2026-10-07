@@ -713,7 +713,7 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 
 ### `naps`
 
-Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are there in ground mode, but stay asleep if you're in treetop mode, or not in their area (e.g. you see them from an adjacent area)"; "They don't all sleep - but it's one of the things they can do while idling"): a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight. on: false turns naps off.
+Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are there in ground mode, but stay asleep if you're in treetop mode, or not in their area (e.g. you see them from an adjacent area)"; "They don't all sleep - but it's one of the things they can do while idling"): a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight. on: false turns naps off. circle: a legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle") naps at each pause with its own chance, for its own length (seconds), and is woken only by a witch on the ground within reach metres of its circle's edge (so she can still invite it), not anywhere in its area.
 
 | knob | type | range |
 |---|---|---|
@@ -721,6 +721,9 @@ Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling
 | `naps.chance` | number | 0 to … |
 | `naps.length` | array of number |  |
 | `naps.wake` | number | 0 to … |
+| `naps.circle.chance` | number | 0 to … |
+| `naps.circle.length` | array of number |  |
+| `naps.circle.reach` | number | 0 to … |
 
 ### `guard`
 
