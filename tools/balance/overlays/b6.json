@@ -1,0 +1,201 @@
+{
+ "tuning": {
+  "boot": {
+   "time": 30
+  },
+  "party": {
+   "interval": 180
+  },
+  "legends": {
+   "questFar": 0
+  },
+  "clear": {
+   "on": true,
+   "threat": [
+    [
+     1,
+     0
+    ],
+    [
+     3,
+     10
+    ],
+    [
+     10,
+     55
+    ],
+    [
+     25,
+     130
+    ],
+    [
+     40,
+     180
+    ]
+   ],
+   "profiles": {
+    "default": [
+     0,
+     0.4,
+     0.6
+    ],
+    "bear": [
+     0,
+     0.15,
+     0.85
+    ],
+    "boar": [
+     0,
+     0.15,
+     0.85
+    ],
+    "elk": [
+     0,
+     0.15,
+     0.85
+    ],
+    "stag": [
+     0,
+     0.15,
+     0.85
+    ],
+    "badger": [
+     0,
+     0.15,
+     0.85
+    ],
+    "ram": [
+     0,
+     0.15,
+     0.85
+    ],
+    "beaver": [
+     0,
+     0.15,
+     0.85
+    ],
+    "lynx": [
+     0,
+     0.25,
+     0.75
+    ],
+    "wolf": [
+     0,
+     0.55,
+     0.45
+    ],
+    "fox": [
+     0,
+     0.55,
+     0.45
+    ],
+    "otter": [
+     0,
+     0.55,
+     0.45
+    ],
+    "hedgehog": [
+     0,
+     0.75,
+     0.25
+    ],
+    "beetle": [
+     0,
+     0.75,
+     0.25
+    ],
+    "woodlouse": [
+     0,
+     0.75,
+     0.25
+    ],
+    "spider": [
+     0,
+     0.75,
+     0.25
+    ],
+    "moth": [
+     0,
+     0.75,
+     0.25
+    ],
+    "bat": [
+     0,
+     0.75,
+     0.25
+    ],
+    "glowworm": [
+     0,
+     0.75,
+     0.25
+    ],
+    "mole": [
+     0,
+     0.75,
+     0.25
+    ],
+    "dormouse": [
+     0,
+     0.75,
+     0.25
+    ],
+    "newt": [
+     0,
+     0.75,
+     0.25
+    ],
+    "toad": [
+     0,
+     0.75,
+     0.25
+    ],
+    "snail": [
+     0,
+     0.75,
+     0.25
+    ],
+    "salamander": [
+     0,
+     0.75,
+     0.25
+    ]
+   },
+   "babyCap": 2,
+   "soundHealth": [
+    [
+     1,
+     1
+    ]
+   ],
+   "questAhead": [
+    2,
+    12
+   ],
+   "babies": 2
+  },
+  "population": {
+   "start": {
+    "babies": 1,
+    "young": 0,
+    "adults": 0
+   }
+  }
+ },
+ "botOptions": {
+  "skilled": {
+   "clear": true,
+   "quests": true,
+   "questMax": 3
+  },
+  "champion": {
+   "clear": true,
+   "quests": true,
+   "questMax": 3
+  },
+  "top": {
+   "clear": true,
+   "quests": true,
+   "questMax": 3
+  }
+ }
+}
