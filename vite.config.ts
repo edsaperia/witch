@@ -45,5 +45,5 @@ export default defineConfig({
   // Tests (overnight phase 1, test speed): a worker per core (Vitest leaves one idle by default) and one module load per
   // worker rather than per file (isolate false: no test file leaves module state changed; the few that change it put it
   // back in afterEach). 281 s to 216 s locally on 4 cores, the same 758 tests.
-  test: { include: ["src/**/*.test.ts"], environment: "node", testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
+  test: { include: ["src/**/*.test.ts", "tools/bench/*.test.ts"], environment: "node", testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
 });
