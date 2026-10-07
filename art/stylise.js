@@ -32,7 +32,8 @@ function styleTone(r, g, b, t, mode) {
 // Stylise a baked sprite's pixels in place: a (RGBA albedo, alpha 254 = glowing), n and nf (RGBA normal maps, as bake writes
 // them), w x h. The sprite must have been baked without an outline (this draws its own).
 // opts.interior: false leaves out ref's interior lines (a busy scene, such as the creator's bedroom, keeps just its outline).
-export function stylisePixels(a, n, nf, w, h, mode, { interior = true } = {}) {
+// opts.outline: false leaves out the outline too (the rig's discs, strung into one limb).
+export function stylisePixels(a, n, nf, w, h, mode, { interior = true, outline = true } = {}) {
   if (mode !== "bold" && mode !== "ref") return;
   const T = 3, N = w * h, band = new Int8Array(N).fill(-1), key = new Int32Array(N).fill(-1), glow = new Uint8Array(N), nrm = new Float32Array(N * 3);
   const keyOf = o => (a[o] << 16) | (a[o + 1] << 8) | a[o + 2];
@@ -74,7 +75,7 @@ export function stylisePixels(a, n, nf, w, h, mode, { interior = true } = {}) {
   }
   // the outline, in the empty pixels round the shape
   const strong = mode === "ref";
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+  if (outline) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = y * w + x; if (key[i] >= 0) continue;
     const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => x + dx >= 0 && x + dx < w && y + dy >= 0 && y + dy < h && key[i + dy * w + dx] >= 0).map(([dx, dy]) => [dx, dy, i + dy * w + dx]);
     if (!nb.length) continue;
