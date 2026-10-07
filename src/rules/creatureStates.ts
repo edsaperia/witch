@@ -5,9 +5,10 @@
 // (leashed, enraged, a happy legend) still say the same, and stateOf reads them, so the
 // rest of the rules and the view keep working. No drawing here.
 import raw from "../../config/states.json";
-import { LEGEND, type Creature } from "./creatures";
+import { LEGEND, type Creature, type CreatureState } from "./creatures";
 
-export type State = "wild" | "happy" | "leashed" | "enraged";
+/** A creature's state (its names: CREATURE_STATES, rules/creatures.ts). */
+export type State = CreatureState;
 export interface StatesData { affection: { hits: number[]; drain: number; drainDelay: number; gap: number; /** A legend's meter drains this share a second instead (the party-legend egg). */ legendDrain?: number }; /** The party-legend egg (tuning legends.partyEgg): a happy legend takes 💌s. */ partyEgg?: boolean; leash: "pickup" | "again" | "hold"; /** Seconds after the hearts before a happy one's rune can be picked up (leash "pickup"). */ pickupDelay: number; holdTime: number }
 export const STATES = raw as unknown as StatesData;
 
