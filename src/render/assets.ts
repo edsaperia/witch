@@ -249,10 +249,14 @@ export class AssetLibrary {
   }
   /** A species' live-rig parts at a level (#79 stage 4: one atlas page each, keyed by its genome's
    *  hash so a changed record bakes afresh), or undefined (and asked for). */
+  /** Each species' genome hash (rigArt's page key), worked out once. */
+  private genomeHashes = new Map<string, string>();
   rigArt(species: string, level: number, gear?: RigGear): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
     const g = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
     if (!g) return undefined;
-    const k = `rig-${species}-${level}-${Art.genomeHash(g)}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
+    let h = this.genomeHashes.get(species);
+    if (h === undefined) this.genomeHashes.set(species, (h = Art.genomeHash(g) as string)); // (the genomes are fixed for the run: hashed once, not per creature per frame)
+    const k = `rig-${species}-${level}-${h}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
     if (a) { a.used = performance.now(); return a; }
     this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
