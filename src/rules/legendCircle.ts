@@ -9,14 +9,26 @@ import type { Game } from "./game";
 
 type Clearing = { x: number; z: number; r: number; legend: { x: number; z: number } };
 
+const REACH = new WeakMap<readonly Clearing[], number>();
+/** How far from a legend a point can be and still stand in its circle (legendCircleNear, musicPlan's legendCircleAt): its own
+ *  radius R, or a clearing's (its legend within r of the clearing's legend spot, the point within r of its middle: 2r + that
+ *  spot's way from its middle), plus a metre for rounding; worked out once a map. Legends past it are skipped without the
+ *  search for their clearing (every legend x every clearing, twice a frame, was a frame's biggest allocator). */
+export function circleReach(clearings: readonly Clearing[] | undefined, R: number): number {
+  let b = clearings ? REACH.get(clearings) : 0;
+  if (b === undefined) { b = 0; for (const k of clearings!) b = Math.max(b, 2 * k.r + Math.hypot(k.x - k.legend.x, k.z - k.legend.z)); REACH.set(clearings!, b); }
+  return Math.max(R, b) + 1;
+}
+
 /** The legend whose clearing `at` stands in, on the ground (the treetops never), whatever its state, with its clearing's middle
  *  and radius (the map's `legendClearings`; else a circle of `music.circle.radius` metres round it, as the music's). Null outside them all. */
 export function legendCircleNear(g: Game, at: { x: number; z: number; mode?: string }): { legend: Creature; x: number; z: number; r: number } | null {
   if (at.mode !== "ground") return null;
   const R = g.tuning.music.circle.radius, clearings = (g.map as { legendClearings?: readonly Clearing[] }).legendClearings;
+  const B = circleReach(clearings, R);
   let best: { legend: Creature; x: number; z: number; r: number } | null = null, bd = Infinity;
   for (const c of g.creatures) {
-    if (!c.boss || c.gone || c.leashed) continue;
+    if (!c.boss || c.gone || c.leashed || Math.abs(at.x - c.x) > B || Math.abs(at.z - c.z) > B) continue;
     let cx = c.x, cz = c.z, r = R;
     if (clearings) {
       let ring: Clearing | null = null, rd = Infinity;
