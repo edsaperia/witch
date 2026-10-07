@@ -52,6 +52,13 @@ export class SfxKit {
     o.connect(dest); o.start(at); o.stop(at + dur + 0.05);
     return o;
   }
+  /** The kit's noise looping at `rate` times its speed, not yet connected or started: the bed of wind, water and breath. */
+  loopNoise(rate?: number): AudioBufferSourceNode {
+    const s = this.ctx.createBufferSource();
+    s.buffer = this.noise; s.loop = true;
+    if (rate !== undefined) s.playbackRate.value = rate;
+    return s;
+  }
   noiseBurst(at: number, dur: number, dest: AudioNode, offset = 0): AudioBufferSourceNode {
     const s = this.ctx.createBufferSource();
     s.buffer = this.noise; s.connect(dest); s.start(at, offset % 0.9, dur + 0.02);

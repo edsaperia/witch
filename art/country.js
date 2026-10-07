@@ -11,23 +11,22 @@
 // Mostly unlit; only the flagged pieces glow (the warm lamppost, glowing fungi, glow sticks). Built in
 // 3D (model3d.js) at the witch's scale (she is about 1.3 units tall, so a unit is about 1.3 real metres),
 // turned towards the viewer; the prototype mirrors them.
-import { M, Sprite, hsv2rgb } from "./core.js";
+import { M, Sprite, hsv2rgb, sinHash, glowBall } from "./core.js";
+export const ctHash = sinHash, ctGlow = glowBall; // (their old names here, for the landmarks and party objects; aliases, not a re-export, which the lab's bundler cannot inline)
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 import { carModel } from "./relics.js";
 
-export const ctHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
-export const ctCell = (p, k, s = 0) => ctHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
+export const ctCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 // weathering: rust and moss patches over a material
 export const ctWorn = (rust = .2, moss = .15) => p => { const r = ctCell(p, 16, 3), n = ctCell(p, 6, 5); return n < moss && p[1] > .1 ? M.MOSS : r > 1 - rust * .7 ? M.BODY2 : undefined; };
 // weathered planks: grain along x, dark seams, moss
 export const ctPlank = (k = 7, moss = .15) => p => { const n = ctCell(p, 6, 9); if (n < moss && p[1] > .15) return M.MOSS; if (Math.abs(Math.sin(p[1] * 60 + Math.sin(p[0] * 9) * 1.5)) > .97) return M.BARK2; return ctCell(p, k * 3, 2) > .9 ? M.BARKD : undefined; };
-export const ctTufts = (m, n, R, g, seed, cx = 0, cz = 0) => { for (let i = 0; i < n; i++) { const a = ctHash(seed, i) * 6.283, d = R * Math.sqrt(ctHash(i, seed)); m.ell([cx + Math.cos(a) * d, .07, cz + Math.sin(a) * d * .7], [.07, .1 + ctHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .13 ? M.LEAF : undefined }); } };
+export const ctTufts = (m, n, R, g, seed, cx = 0, cz = 0) => { for (let i = 0; i < n; i++) { const a = sinHash(seed, i) * 6.283, d = R * Math.sqrt(sinHash(i, seed)); m.ell([cx + Math.cos(a) * d, .07, cz + Math.sin(a) * d * .7], [.07, .1 + sinHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .13 ? M.LEAF : undefined }); } };
 export const ctFern = (m, c, g, k = 1) => { for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283 + c[0], d = [Math.cos(a), 0, Math.sin(a)]; m.chain([[...c, .03 * k], [...v3.add(c, v3.add(v3.mul(d, .25 * k), [0, .2 * k, 0])), .025 * k], [...v3.add(c, v3.add(v3.mul(d, .5 * k), [0, .05 * k, 0])), .01 * k]], i % 2 ? M.LEAF : M.LEAF2, { group: g }); } };
-export const ctIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4; k++) pts.push([...v3.add(v3.lerp(from, to, k / 4), [(ctHash(seed, k) - .5) * .12, 0, .02]), .03]); m.chain(pts, M.LEAF, { group: g, paint: p => ctCell(p, 30) < .3 ? M.LEAF2 : undefined }); };
+export const ctIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4; k++) pts.push([...v3.add(v3.lerp(from, to, k / 4), [(sinHash(seed, k) - .5) * .12, 0, .02]), .03]); m.chain(pts, M.LEAF, { group: g, paint: p => ctCell(p, 30) < .3 ? M.LEAF2 : undefined }); };
 export const ctCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: .04, paint: p => { const n = ctCell(p, 10, 2); return p[1] < c[1] - .15 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; } });
 export const ctBar = (m, a, b, g, r = .025, mat = M.FRAME, paint = ctWorn(.35, .05)) => m.seg(a, b, r, r, mat, { group: g, paint });
-export const ctGlow = (m, c, r, g, mat = M.MAGIC) => m.ell(c, [r, r, r], mat, { group: g, extra: true });
 export const ctMoss = (m, c, r, g) => m.ell(c, r, M.MOSS, { group: g, rough: .03, paint: p => ctCell(p, 12, 4) < .25 ? M.LEAF2 : ctCell(p, 9, 6) < .15 ? M.LEAF3 : undefined });
 // A cylinder with flat ends from a to b: a capsule, cut square at both ends (the ends drawn in `end`, a material or a paint).
 export function ctCyl(m, a, b, r, mat, g, o = {}) {
@@ -79,9 +78,9 @@ function ctHaySquare(m, c, g, { mould = false, yaw = 0 } = {}) { // a small squa
 }
 export const ctLog = (m, a, b, r, g) => ctCyl(m, a, b, r, M.TRUNK, g, { paint: p => { const n = ctCell(p, 14, 2); return n < .15 ? M.BARKD : n > .88 ? M.BARKL : ctCell(p, 5, 8) < .12 && p[1] > a[1] ? M.MOSS : undefined; }, end: ctRings(a, v3.sub(b, a).map(Math.abs).indexOf(Math.max(...v3.sub(b, a).map(Math.abs)))) });
 export const ctTyre = (m, c, g, o = {}) => { m.ell(c, [.3, .1, .3], M.BODY3, { group: g, axes: o.axes, paint: p => Math.abs(Math.sin(Math.atan2(p[2] - c[2], p[0] - c[0]) * 16)) < .25 ? M.NOSE : ctCell(p, 9, 4) < .1 ? M.MOSS : undefined }); m.ell(c, [.15, .2, .15], M.NOSE, { group: g, axes: o.axes, cut: true }); };
-export const ctMushrooms = (m, c, n, g, seed, { cap = M.EAR, k = 1 } = {}) => { for (let i = 0; i < n; i++) { const a = ctHash(seed, i) * 6.283, d = .16 * k * Math.sqrt(ctHash(i, seed)), x = c[0] + Math.cos(a) * d, z = c[2] + Math.sin(a) * d, h = (.06 + ctHash(i, 3) * .09) * k; m.seg([x, c[1], z], [x, c[1] + h, z], .012 * k, .01 * k, M.CLOTH, { group: g }); m.ell([x, c[1] + h, z], [.04 * k, .022 * k, .04 * k], cap, { group: g + 1 }); } };
+export const ctMushrooms = (m, c, n, g, seed, { cap = M.EAR, k = 1 } = {}) => { for (let i = 0; i < n; i++) { const a = sinHash(seed, i) * 6.283, d = .16 * k * Math.sqrt(sinHash(i, seed)), x = c[0] + Math.cos(a) * d, z = c[2] + Math.sin(a) * d, h = (.06 + sinHash(i, 3) * .09) * k; m.seg([x, c[1], z], [x, c[1] + h, z], .012 * k, .01 * k, M.CLOTH, { group: g }); m.ell([x, c[1] + h, z], [.04 * k, .022 * k, .04 * k], cap, { group: g + 1 }); } };
 // a flat panel: crossbars FRAME, panes of dark glass, some missing, some cracked (seed picks which)
-export const ctPanes = (cols, rows, seed, missing = .35) => (s, t) => { const u = (s + 1) / 2 * cols, v = (t + 1) / 2 * rows; if (u % 1 < .07 || u % 1 > .93 || v % 1 < .07 || v % 1 > .93) return M.FRAME; const k = Math.floor(u) + Math.floor(v) * 7; if (ctHash(k, seed) < missing) return null; return Math.abs(Math.sin((u + v * .7) * 9 + k)) < .06 ? M.STONED : M.SHADES; };
+export const ctPanes = (cols, rows, seed, missing = .35) => (s, t) => { const u = (s + 1) / 2 * cols, v = (t + 1) / 2 * rows; if (u % 1 < .07 || u % 1 > .93 || v % 1 < .07 || v % 1 > .93) return M.FRAME; const k = Math.floor(u) + Math.floor(v) * 7; if (sinHash(k, seed) < missing) return null; return Math.abs(Math.sin((u + v * .7) * 9 + k)) < .06 ? M.STONED : M.SHADES; };
 // a plate's border (a road sign's)
 const ctTriangle = (border, fill, sym) => (s, t) => { const half = (1 - t) / 2; if (t < -1 || Math.abs(s) > half) return null; const edge = Math.min(half - Math.abs(s), t + 1); if (edge < .17) return border; return sym(s, t) ? M.NOSE : fill; };
 
@@ -125,7 +124,7 @@ const FARM = {
   "hay-square-mouldy": { desc: "a square bale gone soft and mouldy", build(m) { ctHaySquare(m, [0, 0, 0], 1, { mould: true, yaw: .3 }); ctTufts(m, 6, .6, 3, 7); } },
   "hay-stack": { desc: "square bales stacked three high, the stack slumping, one fallen", build(m) {
     const at = [[-.42, 0, -.25], [.42, 0, -.25], [-.42, 0, .25], [.42, 0, .25], [0, .38, -.25], [0, .38, .25], [-.05, .76, 0]];
-    at.forEach(([x, y, z], i) => ctHaySquare(m, [x, y, z], 1 + i, { mould: i === 6 || i === 2, yaw: (ctHash(i, 9) - .5) * .25 }));
+    at.forEach(([x, y, z], i) => ctHaySquare(m, [x, y, z], 1 + i, { mould: i === 6 || i === 2, yaw: (sinHash(i, 9) - .5) * .25 }));
     const n = mark(m); ctHaySquare(m, [0, 0, 0], 10, { mould: true }); place(m, n, { roll: 1.2, yaw: .8, at: [1.1, .15, .45] }); ctTufts(m, 10, 1.4, 12, 8);
   } },
   "fence": { desc: "a post-and-rail fence section, grey with age", build(m) { ctFence(m, 1); ctTufts(m, 6, 1.0, 4, 9); } },
@@ -157,8 +156,8 @@ const FARM = {
   "scarecrow": { desc: "a scarecrow in a ragged coat and straw hat, a crow on its arm", split: 1.6, build(m) {
     m.seg([0, 0, 0], [0, 1.9, 0], .04, .035, M.WOOD, { group: 1 }); m.seg([-.6, 1.48, 0], [.6, 1.5, 0], .03, .03, M.WOOD, { group: 1 });
     m.box([0, 1.25, 0], [.22, .36, .13], M.JACKET, { round: .08, group: 2, rough: .01, paint: p => Math.hypot(p[0] + .08, p[1] - 1.12) < .07 ? M.ACCENT : Math.hypot(p[0] - .1, p[1] - 1.35) < .06 ? M.HAT1 : undefined }); // patched
-    for (const s of [-1, 1]) { m.seg([s * .18, 1.46, 0], [s * .55, 1.47, 0], .085, .07, M.JACKET, { group: 3, rough: .01 }); for (let i = 0; i < 4; i++) m.seg([s * .58, 1.47, 0], [s * (.66 + ctHash(i, s) * .08), 1.4 + i * .04, (ctHash(s, i) - .5) * .1], .015, .005, M.STRAW, { group: 4 }); }
-    for (let i = 0; i < 5; i++) m.seg([(i - 2) * .07, .92, 0], [(i - 2) * .09, .78 - ctHash(i) * .1, .02], .015, .006, M.STRAW, { group: 4 }); // straw out of the coat's hem
+    for (const s of [-1, 1]) { m.seg([s * .18, 1.46, 0], [s * .55, 1.47, 0], .085, .07, M.JACKET, { group: 3, rough: .01 }); for (let i = 0; i < 4; i++) m.seg([s * .58, 1.47, 0], [s * (.66 + sinHash(i, s) * .08), 1.4 + i * .04, (sinHash(s, i) - .5) * .1], .015, .005, M.STRAW, { group: 4 }); }
+    for (let i = 0; i < 5; i++) m.seg([(i - 2) * .07, .92, 0], [(i - 2) * .09, .78 - sinHash(i) * .1, .02], .015, .006, M.STRAW, { group: 4 }); // straw out of the coat's hem
     m.ell([0, 1.78, 0], [.15, .17, .14], M.CLOTH, { group: 5, paint: p => p[2] > .1 && Math.abs(p[1] - 1.8) < .03 && Math.abs(Math.abs(p[0]) - .06) < .03 ? M.NOSE : Math.abs(p[1] - 1.66) < .02 ? M.BARK2 : undefined }); // a sacking head, button eyes
     m.ell([0, 1.9, 0], [.3, .025, .28], M.STRAW, { group: 6, rough: .006 }); m.ell([0, 1.97, 0], [.14, .09, .13], M.STRAW, { group: 6, paint: p => Math.abs(p[1] - 1.93) < .02 ? M.ACCENT : undefined }); // the straw hat
     const b = [.5, 1.6, .02]; m.ell(b, [.1, .06, .05], M.NOSE, { group: 7, dir: [1, .3, 0] }); m.ell(v3.add(b, [.09, .06, 0]), [.045, .045, .04], M.NOSE, { group: 7 }); m.seg(v3.add(b, [.12, .06, 0]), v3.add(b, [.18, .04, 0]), .012, .003, M.STONED, { group: 7 }); m.seg(v3.add(b, [-.06, 0, 0]), v3.add(b, [-.18, -.04, 0]), .03, .01, M.NOSE, { group: 7 }); // a crow
@@ -191,7 +190,7 @@ function ctLamppost(m, lit) {
   m.chain([[0, 3.3, 0, .05], [.12, 3.5, 0, .045], [.45, 3.58, 0, .04], [.68, 3.55, 0, .035]], M.HAT2, { group: 2, paint: ctWorn(.4, 0) });
   m.box([.74, 3.5, 0], [.22, .05, .14], M.HAT2, { round: .04, group: 3, paint: ctWorn(.5, .3) });
   m.ell([.74, 3.42, 0], [.17, .07, .11], lit ? M.GLOW : M.SHADES, { group: 3 });
-  if (lit) ctGlow(m, [.74, 3.38, 0], .07, 4, M.MAGIC2);
+  if (lit) glowBall(m, [.74, 3.38, 0], .07, 4, M.MAGIC2);
   ctIvy(m, [0, 0, .07], [.02, 2.1, .06], 5, lit ? 19 : 20); ctIvy(m, [-.06, 0, 0], [-.05, 1.3, .04], 6, 21); ctTufts(m, 8, .8, 7, 22);
 }
 // a road sign's plate, facing the viewer: a mask over (s, t)
@@ -212,7 +211,7 @@ const STREET = {
   "bin-bags": { desc: "a heap of bin bags, long faded and split, moss creeping over them", build(m) {
     const at = [[-.35, .22, -.1, .3], [.25, .2, -.2, .28], [0, .24, .25, .3], [-.05, .5, -.05, .26], [.5, .16, .25, .22], [-.6, .15, .3, .2]];
     at.forEach(([x, y, z, r], i) => { m.ell([x, y, z], [r * 1.1, r * .9, r], M.JACKET, { group: 1 + i, rough: .015, paint: p => ctCell(p, 7, i) < .18 ? M.MOSS : ctCell(p, 16, i + 3) > .93 ? M.STONED : undefined }); m.ell([x + .05, y + r * .9, z], [.06, .07, .05], M.JACKET, { group: 1 + i }); });
-    for (let i = 0; i < 6; i++) m.box([.8 + ctHash(i) * .5, .02, -.1 + ctHash(i, 2) * .5], [.06, .015, .04], i % 2 ? M.BELLY : M.CLOTH, { dir: [ctHash(i, 3) - .5, 0, ctHash(i, 4) - .5], group: 8 + i }); // litter from a split bag
+    for (let i = 0; i < 6; i++) m.box([.8 + sinHash(i) * .5, .02, -.1 + sinHash(i, 2) * .5], [.06, .015, .04], i % 2 ? M.BELLY : M.CLOTH, { dir: [sinHash(i, 3) - .5, 0, sinHash(i, 4) - .5], group: 8 + i }); // litter from a split bag
     ctTufts(m, 10, 1.2, 15, 27);
   } },
   "bus-shelter": { desc: "a bus shelter, most of its glass gone, ivy over its roof, a bench inside", split: 1.7, build(m) {
@@ -261,14 +260,14 @@ const SCENE_PIECES = {
     m.box([.15, .3, .1], [.12, .02, .08], M.ACCENT, { dir: [1, .5, .5], group: 3 }); ctIvy(m, [-.3, 0, .2], [.1, .32, .2], 4, 37); ctTufts(m, 6, .7, 5, 38);
   } },
   "fungi-glow": { desc: "a clump of tall pale fungi glowing faintly, grown out of a rotted basket", glow: true, build(m) {
-    for (let i = 0; i < 7; i++) { const a = i * 2.4, d = .05 + ctHash(i, 5) * .18, x = Math.cos(a) * d, z = Math.sin(a) * d, h = .2 + ctHash(i, 6) * .3; m.seg([x, 0, z], [x * 1.3, h, z * 1.3], .02, .014, M.CLOTH, { group: 1 + (i % 2) }); m.ell([x * 1.3, h + .02, z * 1.3], [.07, .035, .07], M.MAGIC, { group: 3 + (i % 2), paint: p => p[1] < h + .01 ? M.MAGIC2 : undefined }); }
+    for (let i = 0; i < 7; i++) { const a = i * 2.4, d = .05 + sinHash(i, 5) * .18, x = Math.cos(a) * d, z = Math.sin(a) * d, h = .2 + sinHash(i, 6) * .3; m.seg([x, 0, z], [x * 1.3, h, z * 1.3], .02, .014, M.CLOTH, { group: 1 + (i % 2) }); m.ell([x * 1.3, h + .02, z * 1.3], [.07, .035, .07], M.MAGIC, { group: 3 + (i % 2), paint: p => p[1] < h + .01 ? M.MAGIC2 : undefined }); }
     m.ell([0, .05, 0], [.28, .06, .24], M.BARK2, { group: 6, rough: .02, paint: p => ctCell(p, 9) < .4 ? M.MOSS : undefined }); ctTufts(m, 6, .6, 7, 39);
   } },
   // an allotment gone feral
   "raised-bed": { desc: "a raised bed bolted to seed: leggy kale gone to flower, a cabbage split", build(m) {
     m.box([0, .14, 0], [.8, .14, .4], M.WOOD, { round: .02, group: 1, paint: ctPlank(7, .3) }); m.box([0, .26, 0], [.76, .12, .36], M.BARK2, { round: .02, group: 1, cut: true });
     m.box([0, .2, 0], [.75, .02, .35], M.BARK2, { group: 2 });
-    for (let i = 0; i < 5; i++) { const x = -.6 + i * .3, z = (ctHash(i, 3) - .5) * .3, h = .5 + ctHash(i) * .4; m.seg([x, .2, z], [x + .04, h, z], .025, .015, M.LEAF2, { group: 3 }); m.ell([x + .04, h - .1, z], [.16, .1, .14], M.LEAF, { group: 4 + (i % 2), rough: .02, paint: p => ctCell(p, 16) < .25 ? M.LEAF3 : undefined }); for (let k = 0; k < 4; k++) m.ell([x + .04 + (ctHash(i, k) - .5) * .2, h + .02 + ctHash(k, i) * .08, z + (ctHash(k, i + 4) - .5) * .15], [.025, .025, .025], M.FLOWER, { group: 6 }); }
+    for (let i = 0; i < 5; i++) { const x = -.6 + i * .3, z = (sinHash(i, 3) - .5) * .3, h = .5 + sinHash(i) * .4; m.seg([x, .2, z], [x + .04, h, z], .025, .015, M.LEAF2, { group: 3 }); m.ell([x + .04, h - .1, z], [.16, .1, .14], M.LEAF, { group: 4 + (i % 2), rough: .02, paint: p => ctCell(p, 16) < .25 ? M.LEAF3 : undefined }); for (let k = 0; k < 4; k++) m.ell([x + .04 + (sinHash(i, k) - .5) * .2, h + .02 + sinHash(k, i) * .08, z + (sinHash(k, i + 4) - .5) * .15], [.025, .025, .025], M.FLOWER, { group: 6 }); }
     ctTufts(m, 10, 1.3, 7, 40);
   } },
   "bean-wigwam": { desc: "a wigwam of bean canes buried in runner-bean vines, red flowers in it", split: 1.4, build(m) {
@@ -305,7 +304,7 @@ const SCENE_PIECES = {
   // festival remnants
   "tent-frame": { desc: "a dome tent's bent poles, a few rags of its fabric still caught on them", build(m) {
     for (const a of [.6, -.6]) { const pts = []; for (let k = 0; k <= 10; k++) { const t = k / 10 * Math.PI, r = .85; pts.push([Math.cos(t) * r * Math.cos(a), Math.sin(t) * .95 + (k === 6 ? -.08 : 0), Math.cos(t) * r * Math.sin(a), .02]); } m.chain(pts, M.FRAME, { group: 1 }); }
-    for (const [c, u, v, su, sv, mat] of [[[-.4, .6, .3], [1, .3, 0], [.4, -1, .3], .28, .25, M.HAT1], [[.35, .75, -.3], [1, -.2, 0], [0, -.6, -1], .3, .22, M.ACCENT], [[.05, .9, 0], [1, 0, 0], [0, .2, 1], .2, .25, M.HAT1]]) m.flat(c, u, v, su, sv, (s, t) => t < -1 + .4 * Math.abs(Math.sin(s * 7)) + .3 * ctHash(Math.floor(s * 5)) ? null : mat, { group: 2, bend: .2 });
+    for (const [c, u, v, su, sv, mat] of [[[-.4, .6, .3], [1, .3, 0], [.4, -1, .3], .28, .25, M.HAT1], [[.35, .75, -.3], [1, -.2, 0], [0, -.6, -1], .3, .22, M.ACCENT], [[.05, .9, 0], [1, 0, 0], [0, .2, 1], .2, .25, M.HAT1]]) m.flat(c, u, v, su, sv, (s, t) => t < -1 + .4 * Math.abs(Math.sin(s * 7)) + .3 * sinHash(Math.floor(s * 5)) ? null : mat, { group: 2, bend: .2 });
     for (const [x, z] of [[-.85, .2], [.85, -.2]]) ctBar(m, [x, .02, z], [x * 1.4, 0, z * 1.6], 3, .006, M.CLOTH, undefined); // guy lines
     ctTufts(m, 12, 1.3, 4, 49);
   } },
@@ -313,11 +312,11 @@ const SCENE_PIECES = {
     ctBar(m, [-1.3, 0, 0], [-1.3, 2.0, 0], 1, .03, M.WOOD, ctPlank()); ctBar(m, [1.3, 0, 0], [1.05, 1.75, .15], 1, .03, M.WOOD, ctPlank());
     const at = t => [-1.3 + t * 2.35, 1.95 - Math.sin(t * Math.PI) * .55 - t * .2, t * .15], cols = [M.ACCENT, M.HAT1, M.POM, M.HAT2, M.TOP];
     const pts = []; for (let k = 0; k <= 12; k++) pts.push([...at(k / 12), .01]); m.chain(pts, M.CLOTH, { group: 2 });
-    for (let i = 1; i < 12; i++) { if (ctHash(i, 7) < .2) continue; const c = at(i / 12); m.flat(v3.add(c, [0, -.11, 0]), [1, 0, .1], [0, 1, 0], .08, .11, (s, t) => Math.abs(s) < (t + 1) / 2 ? cols[i % 5] : null, { group: 3, bend: .1 }); }
+    for (let i = 1; i < 12; i++) { if (sinHash(i, 7) < .2) continue; const c = at(i / 12); m.flat(v3.add(c, [0, -.11, 0]), [1, 0, .1], [0, 1, 0], .08, .11, (s, t) => Math.abs(s) < (t + 1) / 2 ? cols[i % 5] : null, { group: 3, bend: .1 }); }
     ctTufts(m, 10, 1.6, 4, 50);
   } },
   "fire-pit": { desc: "a cold fire pit: a ring of stones, charred logs, grey ash", build(m) {
-    for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; m.ell([Math.cos(a) * .5, .08, Math.sin(a) * .42], [.12, .09 + ctHash(i) * .04, .1], M.STONE, { group: 1 + (i % 3), rough: .02, paint: p => ctCell(p, 9, i) < .25 ? M.MOSS : p[1] > .1 && ctCell(p, 14) < .3 ? M.STONED : undefined }); }
+    for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; m.ell([Math.cos(a) * .5, .08, Math.sin(a) * .42], [.12, .09 + sinHash(i) * .04, .1], M.STONE, { group: 1 + (i % 3), rough: .02, paint: p => ctCell(p, 9, i) < .25 ? M.MOSS : p[1] > .1 && ctCell(p, 14) < .3 ? M.STONED : undefined }); }
     m.ell([0, .02, 0], [.38, .025, .32], M.STONED, { group: 5, paint: p => ctCell(p, 18) < .3 ? M.CLOTH : undefined });
     for (const [a, b] of [[[-.25, .05, -.1], [.25, .12, .08]], [[-.1, .05, .2], [.2, .1, -.18]]]) m.seg(a, b, .05, .04, M.BARKD, { group: 6, paint: p => ctCell(p, 20) < .4 ? M.NOSE : undefined });
     ctTufts(m, 8, 1.0, 7, 51);
@@ -327,7 +326,7 @@ const SCENE_PIECES = {
     crate([0, .18, 0], 1); crate([.5, .18, .1], 2); crate([.2, .54, .02], 3); const n = mark(m); crate([0, 0, 0], 4); place(m, n, { roll: .9, yaw: .5, at: [-.5, .2, .35] }); ctTufts(m, 8, 1.0, 6, 52);
   } },
   "glow-sticks": { desc: "glow sticks scattered in the grass, somehow still glowing", glow: true, build(m) {
-    for (let i = 0; i < 7; i++) { const x = (ctHash(i) - .5) * 1.0, z = (ctHash(i, 2) - .5) * .7, a = ctHash(i, 3) * 6.283; m.seg([x, .02, z], [x + Math.cos(a) * .12, .03, z + Math.sin(a) * .12], .014, .014, i % 3 ? M.MAGIC : M.COLLAR, { group: 1 + i }); }
+    for (let i = 0; i < 7; i++) { const x = (sinHash(i) - .5) * 1.0, z = (sinHash(i, 2) - .5) * .7, a = sinHash(i, 3) * 6.283; m.seg([x, .02, z], [x + Math.cos(a) * .12, .03, z + Math.sin(a) * .12], .014, .014, i % 3 ? M.MAGIC : M.COLLAR, { group: 1 + i }); }
     ctBar(m, [.2, .25, -.1], [.2, .02, -.1], 9, .012, M.MAGIC2, undefined); // one hanging from a stalk
     ctTufts(m, 10, .8, 10, 53);
   } },
@@ -338,13 +337,13 @@ const SCENE_PIECES = {
   } },
   // a woodcutter's clearing
   "log-pile": { desc: "a woodpile of cut logs, ends to the viewer, moss on the top ones", build(m) {
-    let g = 1; for (let row = 0; row < 3; row++) for (let i = 0; i < 4 - row; i++) { const x = (i - (3 - row) / 2) * .38, y = .17 + row * .3; ctLog(m, [x, y, -.5], [x, y, .5], .17 + ctHash(i, row) * .02, g++); }
+    let g = 1; for (let row = 0; row < 3; row++) for (let i = 0; i < 4 - row; i++) { const x = (i - (3 - row) / 2) * .38, y = .17 + row * .3; ctLog(m, [x, y, -.5], [x, y, .5], .17 + sinHash(i, row) * .02, g++); }
     ctTufts(m, 10, 1.3, 20, 55);
   } },
   "chopping-block": { desc: "a chopping block with an axe left in it, chips in the grass", build(m) {
     ctCyl(m, [0, 0, 0], [0, .45, 0], .26, M.TRUNK, 1, { paint: p => ctCell(p, 14, 2) < .15 ? M.BARKD : ctCell(p, 5, 3) < .15 ? M.MOSS : undefined, end: ctRings([0, .45, 0], 1) });
     ctBar(m, [.02, .45, .05], [-.35, .95, .2], 2, .025, M.WOOD, undefined); m.box([.04, .47, .04], [.1, .06, .02], M.FRAME, { dir: [1, -.5, 0], up: [0, 1, 0], round: .01, group: 3, paint: ctWorn(.5, 0) });
-    for (let i = 0; i < 8; i++) m.box([(ctHash(i) - .5) * 1.0, .015, (ctHash(i, 2) - .5) * .8], [.05, .012, .025], M.STRAW, { dir: [ctHash(i, 3) - .5, 0, ctHash(i, 4) - .5], group: 4 + (i % 2) });
+    for (let i = 0; i < 8; i++) m.box([(sinHash(i) - .5) * 1.0, .015, (sinHash(i, 2) - .5) * .8], [.05, .012, .025], M.STRAW, { dir: [sinHash(i, 3) - .5, 0, sinHash(i, 4) - .5], group: 4 + (i % 2) });
     ctTufts(m, 8, .9, 6, 56);
   } },
   "sawhorse": { desc: "a sawhorse with a log still across it, a bow saw hung on it", build(m) {
@@ -363,7 +362,7 @@ const SCENE_PIECES = {
     for (let i = 0; i < 3; i++) m.chain([[-.3 + i * .25, .26, .1, .012], [-.28 + i * .25, .34, .12, .012], [-.3 + i * .25, .38, .1, .01]], M.FRAME, { group: 3 }); ctFern(m, [.4, .2, .1], 4, .8); ctTufts(m, 10, 1.2, 5, 59);
   } },
   "tyre-pile": { desc: "a pile of old tyres, one rolled away, rainwater and moss in them", build(m) {
-    for (let i = 0; i < 4; i++) ctTyre(m, [(ctHash(i) - .5) * .06, .1 + i * .2, (ctHash(i, 2) - .5) * .06], 1 + i);
+    for (let i = 0; i < 4; i++) ctTyre(m, [(sinHash(i) - .5) * .06, .1 + i * .2, (sinHash(i, 2) - .5) * .06], 1 + i);
     ctTyre(m, [.65, .1, .3], 6); const n = mark(m); ctTyre(m, [0, 0, 0], 8); place(m, n, { roll: 1.4, yaw: .9, at: [-.6, .3, .35] }); ctTufts(m, 10, 1.1, 10, 60);
   } },
   // an abandoned apiary

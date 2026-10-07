@@ -265,6 +265,44 @@
         "simRange": {
           "type": "number",
           "minimum": 0
+        },
+        "camera": {
+          "type": "object",
+          "properties": {
+            "approach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "curve": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeAngle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeDistance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeLook": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "approach",
+            "angle",
+            "curve",
+            "gazeAngle",
+            "gazeDistance",
+            "gazeLook"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -289,7 +327,8 @@
         "meet",
         "idleAfter",
         "turn",
-        "simRange"
+        "simRange",
+        "camera"
       ],
       "additionalProperties": false
     },
@@ -1318,6 +1357,34 @@
     "glowReach": {
       "type": "number",
       "minimum": 0
+    },
+    "nightLight": {
+      "type": "object",
+      "properties": {
+        "maxReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gazeReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "maxReach",
+        "treetopReach",
+        "treetopGlow",
+        "gazeReach"
+      ],
+      "additionalProperties": false
     },
     "glowFalloff": {
       "type": "number",
@@ -5663,6 +5730,24 @@
             "floor"
           ],
           "additionalProperties": false
+        },
+        "beach": {
+          "type": "object",
+          "properties": {
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "fade",
+            "quiet"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -5678,7 +5763,8 @@
         "clear",
         "distort",
         "src",
-        "over"
+        "over",
+        "beach"
       ],
       "additionalProperties": false
     },
@@ -5992,6 +6078,29 @@
         "chance",
         "length",
         "wake"
+      ],
+      "additionalProperties": false
+    },
+    "alarms": {
+      "type": "object",
+      "properties": {
+        "linger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fall": {
+          "type": "number",
+          "minimum": 0
+        },
+        "most": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "linger",
+        "fall",
+        "most"
       ],
       "additionalProperties": false
     },
@@ -7568,6 +7677,7 @@
     "camera",
     "pixelSize",
     "glowReach",
+    "nightLight",
     "glowFalloff",
     "glowNear",
     "glowToCutout",
@@ -7627,6 +7737,7 @@
     "combat",
     "notice",
     "naps",
+    "alarms",
     "guard",
     "witchHealth",
     "knockout",
