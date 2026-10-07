@@ -69,6 +69,9 @@ export const SPRITE_UNIFORMS = {
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
+  /** The trees watching her (Ed, 2026-10-07): where she was a beat ago (x, z), how near (m) a leafy thing must stand to lean
+   *  her way, and how far its tip leans (m). */
+  uWatch: { value: new THREE.Vector4(0, 0, 9, 0) },
 };
 
 const VERT = /* glsl */ `
@@ -94,6 +97,7 @@ varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 uniform vec4 uWind;
+uniform vec4 uWatch;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
@@ -130,6 +134,16 @@ void main() {
     float gust = windGust(q);
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
     vSwayM = uWind.x * -iFlags.w * (gust * 0.9 + flutter) * min(1.0, iSize.y / 8.0);
+  }
+  // The trees watching her (Ed, 2026-10-07, the wild forest eerier: \"canopy tips within a few metres of her sway a beat late
+  // and slightly towards her, as if the trees lean in to watch\"): a leafy thing near where she was a moment ago (uWatch,
+  // eased behind her) leans its tip that way, across the screen, none at its foot; a nudge, no new objects.
+  if (uWatch.w > 0.0 && iFlags.w != 0.0) {
+    vec2 d = uWatch.xy - iPos.xz;
+    float r = length(d), k = (1.0 - smoothstep(uWatch.z * 0.4, uWatch.z, r)) * smoothstep(0.3, 1.2, r);
+    float lean = uWatch.w * k * dot(d / max(r, 1e-3), normalize(uRight.xz + vec2(1e-6, 0.0))) * abs(iFlags.w) * min(1.0, iSize.y / 8.0);
+    if (iFlags.w > 0.0) w += uRight * (lean * uv.y * uv.y);
+    else vSwayM += lean;
   }
   vFrame = vec4(min(iUv.x, iUv.z), min(iUv.y, iUv.w), max(iUv.x, iUv.z), max(iUv.y, iUv.w));
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
@@ -396,10 +410,12 @@ void main() {
   // A sleeping legend (glow -2 - moss): grown over, its colours gone toward moss and earth, so it
   // reads as a mound of the ground (no eyeshine: below -0.5).
   if (vGlow < -1.5) {
-    float m = clamp(-(vGlow + 2.0), 0.0, 1.0), l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15));
+    // (its glow: -2 - (moss + 2 k), k its outline's steps off, render/legendOutline.ts: shown only while she's in its circle)
+    float gv = -(vGlow + 2.0), gk = floor(gv * 0.5 + 0.0001), m = clamp(gv - 2.0 * gk, 0.0, 1.0), ring = 1.0 - gk / 16.0, l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15));
     gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2, 0.26, 0.14) * (0.45 + 1.1 * l), m);
     // In its circle it must read (Ed's round 14 playtest: "Legends in the circle are not very distinct"): it never sinks into
-    // the dark below a share of its own mossed look, and its outline glows in its sigil's neon, breathing slowly.
+    // the dark below a share of its own mossed look, and its outline glows in its sigil's neon, breathing slowly (only while she's
+    // in its circle: ring, Ed 2026-10-07; outside it, a mossy boulder).
     if (uLegend.w > 0.0 && gl_FragColor.a > 0.5) {
       vec3 own = texture2D(uAlbedo, vUv).rgb, mossed = mix(own, vec3(0.2, 0.26, 0.14) * (0.45 + 1.1 * dot(own, vec3(0.3, 0.55, 0.15))), m);
       gl_FragColor.rgb = max(gl_FragColor.rgb, mossed * uLegendFloor);
@@ -408,9 +424,9 @@ void main() {
       float top = min(rimAlpha(vUv + rdy * 3.0), rimAlpha(vUv - rdy * 3.0)) < 0.5 ? 1.0 : 0.0; // (near its edge, up or down: its foot is in the ground, so this is its back)
       float breath = 0.75 + 0.25 * sin(uTime * 1.4 + vWorld.x * 0.3);
       vec3 neon = min(vec3(1.0), uLegend.rgb * 1.3); // (bright enough for the bloom to take it: it glows)
-      if (e < 0.5) gl_FragColor.rgb = mix(gl_FragColor.rgb, neon, uLegend.w * breath); // its outline, a pixel
-      else if (e2 < 0.5) gl_FragColor.rgb = mix(gl_FragColor.rgb, neon, uLegend.w * 0.55 * breath); // and a softer one inside it
-      else if (top > 0.5) gl_FragColor.rgb = mix(gl_FragColor.rgb, uLegend.rgb, uLegend.w * 0.25 * breath); // its back catching the glow
+      if (e < 0.5) gl_FragColor.rgb = mix(gl_FragColor.rgb, neon, uLegend.w * ring * breath); // its outline, a pixel
+      else if (e2 < 0.5) gl_FragColor.rgb = mix(gl_FragColor.rgb, neon, uLegend.w * ring * 0.55 * breath); // and a softer one inside it
+      else if (top > 0.5) gl_FragColor.rgb = mix(gl_FragColor.rgb, uLegend.rgb, uLegend.w * ring * 0.25 * breath); // its back catching the glow
     }
   }
   // A dark-coated legend awake (Ed, 2026-10-07: lifted only for those dark enough to vanish at night): never below a share of its own colour.

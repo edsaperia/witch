@@ -70,6 +70,9 @@ const SOUNDS: [string, number, Play][] = [
   ["deck-whoop", 0.8, s => s.whoop()],
   ...(["oaks", "ravine", "stones", "cave"] as const).map(k => [`night-${k}`, 16, () => {}] as [string, number, Play]),
   ...(["oaks", "ravine", "stones", "cave", "wet"] as const).map(k => [`ambience-${k}`, 16, () => {}] as [string, number, Play]),
+  ["sad-trumpet", 4, s => s.sadTrumpet(true)],
+  ["sad-trumpet-bare", 2.4, s => s.sadTrumpet(false)],
+  ["sad-trumpet-cut", 4, () => {}],
   ["sparkler", 10, () => {}],
 ];
 
@@ -83,6 +86,10 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "deck-scratch") {
     // her scratch bars at the decks: two bars of strokes on the half-beats at 120 bpm, forward on the beat, back off it
     for (let k = 0; k < 16; k++) void oc.suspend(Math.round(k * 0.25 * rate) / rate).then(() => { s.scratch(k % 2 === 0); return oc.resume(); });
+  } else if (name === "sad-trumpet-cut") {
+    // knocked down with her hat: the trumpet, cut off by the rewind as she's whisked to her decks (3 s on, as hotel's float)
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0, () => s.sadTrumpet(true)); at(3, () => s.rewind());
   } else if (name === "witch-knock") {
     // a bite's small knock (1 m), a knockback attack's (4 m), a charge's big throw (9 m) with its stun's twinkle
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
