@@ -20,9 +20,23 @@ function path(i: number): Controls {
   return { ...idle, moveX: Math.cos(ang), moveZ: Math.sin(ang), toggleMode: i % 600 === 300, sigil: i % 450 === 200 };
 }
 
-/** JSON of a value with Maps, Sets and typed arrays spelled out, functions left out. */
+/** JSON of a value with Maps, Sets and typed arrays spelled out, functions left out; canonical: every object's keys
+ *  sorted, and its "_" notes (string values under "_"-prefixed keys: the tuning file's) dropped. So a note edited, or the
+ *  tuning file's groups reordered, leaves the fingerprint as it was (the game's tuning rides in g.buffs); a value changed
+ *  still changes it. (Maps, Sets and arrays keep their order: that's the state's.) */
 function plain(v: unknown): string {
-  return JSON.stringify(v, (_k, x) => (x instanceof Map ? { map: [...x.entries()] } : x instanceof Set ? { set: [...x] } : ArrayBuffer.isView(x) ? { typed: Array.from(x as unknown as ArrayLike<number>) } : typeof x === "function" ? undefined : x));
+  return JSON.stringify(v, (_k, x) => {
+    if (x instanceof Map) return { map: [...x.entries()] };
+    if (x instanceof Set) return { set: [...x] };
+    if (ArrayBuffer.isView(x)) return { typed: Array.from(x as unknown as ArrayLike<number>) };
+    if (typeof x === "function") return undefined;
+    if (x && typeof x === "object" && !Array.isArray(x)) {
+      const o = x as Record<string, unknown>, out: Record<string, unknown> = {};
+      for (const k of Object.keys(o).sort()) if (!(k.startsWith("_") && typeof o[k] === "string")) out[k] = o[k];
+      return out;
+    }
+    return x;
+  });
 }
 const hash = (s: string) => createHash("sha256").update(s).digest("hex").slice(0, 12);
 
