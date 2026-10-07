@@ -270,6 +270,8 @@
   "_shadows": "shadows: a small contact shadow under the witch, each bush, creature and prop; trees: a crown-sized shadow under every tree too, cast away from the moon (off: Ed, 2026-10-03). canopyShadow: a dappled shadow from the canopy overhead (height in metres), thinner in clearings, drifting with the wind. mist: a low drifting mist (height in metres above the ground). Each has on and strength.",
   "shadows": { "on": true, "strength": 0.7, "trees": false },
   "mist": { "on": true, "strength": 0.12, "height": 3, "wind": 0.8 },
+  "_coldPalette": "Away from the party, colder (Ed, 2026-10-07, making the wild forest eerier: \"a subtle colour shift where areas far from the party read colder, bluer and greyer, and colour returns as you approach the music\"; render/post.ts): a grade of colour only, never darker, the brightest (lights, the party's far glow) and her own light spared. By how far she is from the nearest partified area's middle: none within near metres, all from far; eased over ease seconds. amount: how much of the cold grade at its fullest (0 to 1); desat: how much of the colour it takes at most.",
+  "coldPalette": { "on": true, "amount": 0.55, "desat": 0.6, "near": 140, "far": 520, "ease": 1.5 },
   "_moonbeams": "How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 is off (Ed, v108: they read as stripes over a dense canopy). ?moonbeams=on brings them back at 1.",
   "moonbeams": 0,
   "looks": { "enragedTint": { "colour": "#ff2a2a", "amount": 0.38 }, "anger": { "on": true, "size": 1 }, "partyGlow": { "on": true, "sparkles": 4, "rate": 0.9, "size": 1.4, "strength": 1 } },

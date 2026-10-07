@@ -599,6 +599,23 @@ export class View {
   }
 
   /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
+  /** Away from the party, colder (Ed, 2026-10-07: the wild forest eerier; coldPalette): the grade's cold share by how far
+   *  she is from the nearest partified area (none within near metres, all from far), eased over ease seconds so a wave's
+   *  new area doesn't snap the colour back. A grade of colour only, never darker (render/post.ts). */
+  private coldNow = NaN;
+  private coldAt = 0;
+  private setCold(time: number): void {
+    const C = this.game.tuning.coldPalette, g = this.game, w = g.witch;
+    if (!C?.on) { this.post.cold.set(0, 0, 0, 0); return; }
+    let d2 = Infinity;
+    for (const a of g.party.areas.values()) { const s = g.map.siteOf(a.cell[0], a.cell[1]), dx = s.x - w.x, dz = s.z - w.z; if (dx * dx + dz * dz < d2) d2 = dx * dx + dz * dz; }
+    const t = Math.min(1, Math.max(0, (Math.sqrt(d2) - C.near) / Math.max(1, C.far - C.near))), target = t * t * (3 - 2 * t);
+    const dt = Math.min(0.5, Math.max(0, time - this.coldAt));
+    this.coldAt = time;
+    this.coldNow = Number.isNaN(this.coldNow) ? target : this.coldNow + (target - this.coldNow) * (1 - Math.exp(-dt / Math.max(0.05, C.ease)));
+    this.post.cold.set(this.coldNow * C.amount, C.desat, 0, 0);
+  }
+
   private updateSmoke(g: Game, time: number): void {
     const S = this.smoke, t = g.tuning, w = g.witch, R = t.smoke.range;
     S.begin();
@@ -837,6 +854,7 @@ export class View {
     if (!draw) return;
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
+    this.setCold(time);
     if (t.bare) this.hideForBare();
     this.post.render(this.scene, this.camera);
     this.time("draw");

@@ -7503,6 +7503,43 @@
       ],
       "additionalProperties": false
     },
+    "coldPalette": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "amount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "desat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
+        "far": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ease": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "amount",
+        "desat",
+        "near",
+        "far",
+        "ease"
+      ],
+      "additionalProperties": false
+    },
     "moonbeams": {
       "type": "number",
       "minimum": 0
@@ -7824,6 +7861,7 @@
     "haze",
     "shadows",
     "mist",
+    "coldPalette",
     "moonbeams",
     "looks",
     "tone",

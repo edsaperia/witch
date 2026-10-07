@@ -1682,6 +1682,19 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `coldPalette`
+
+Away from the party, colder (Ed, 2026-10-07, making the wild forest eerier: "a subtle colour shift where areas far from the party read colder, bluer and greyer, and colour returns as you approach the music"; render/post.ts): a grade of colour only, never darker, the brightest (lights, the party's far glow) and her own light spared. By how far she is from the nearest partified area's middle: none within near metres, all from far; eased over ease seconds. amount: how much of the cold grade at its fullest (0 to 1); desat: how much of the colour it takes at most.
+
+| knob | type | range |
+|---|---|---|
+| `coldPalette.on` | boolean |  |
+| `coldPalette.amount` | number | 0 to … |
+| `coldPalette.desat` | number | 0 to … |
+| `coldPalette.near` | number | 0 to … |
+| `coldPalette.far` | number | 0 to … |
+| `coldPalette.ease` | number | 0 to … |
+
 ### `moonbeams`, `looks`, `tone`, `bloom`, `tiltShift`
 
 How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 is off (Ed, v108: they read as stripes over a dense canopy). ?moonbeams=on brings them back at 1.
