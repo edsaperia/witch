@@ -26,10 +26,25 @@ export const MUTED = [
 const INK = [236, 228, 214], RED = [238, 86, 74], DIM = [120, 52, 48], WHITE = [255, 250, 240];
 const SHAKE = 0.35; // seconds a blow shakes it
 const SCALE = 3, TOP = 3; // screen pixels per art pixel (as the wave pointer); the soundsystem's top, metres up
+/** The ring's radius (art pixels); its pixels, worked out once: x, y and how far round from 12 o'clock (0 to 1). */
+const R = 13, RING: number[] = [];
+for (let py = 0; py < N; py++) for (let px = 0; px < N; px++) {
+  const dx = px + 0.5 - N / 2, dy = py + 0.5 - N / 2;
+  if (Math.abs(Math.hypot(dx, dy) - R) > 0.7) continue;
+  RING.push(px, py, ((Math.atan2(dx, -dy) / (Math.PI * 2)) + 1) % 1);
+}
+/** 🔇's pixels, centred: x, y, and 1 for the cross (`+`, in the alarm's red), 0 for the speaker (`#`). */
+const GLYPH: number[] = [];
+{
+  const ox = Math.floor((N - MUTED[0].length) / 2), oy = Math.floor((N - MUTED.length) / 2);
+  MUTED.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch === "#" || ch === "+") GLYPH.push(ox + rx, oy + ry, ch === "+" ? 1 : 0); }));
+}
 
 export class AlarmIndicators {
   private cues: PixelCue[] = [];
   private v = new THREE.Vector3();
+  /** The ring's red this frame (brighter on a blow), reused. */
+  private hot = [0, 0, 0];
   constructor(private parent: HTMLElement) {}
 
   /** Draw `list` (rules/alarms.ts shownAlarms), seen from the witch at (wx, wz); width and height: the screen (CSS pixels). */
@@ -50,15 +65,10 @@ export class AlarmIndicators {
       c.canvas.style.opacity = c.label.style.opacity = `${(e.show * fade).toFixed(2)}`;
       c.clear();
       // The ring: its health, clockwise from 12 o'clock, red; what's lost, dim. Brighter on a blow; white as it falls.
-      const R = 13, left = a.hp / Math.max(1, a.max), hot = RED.map(v => Math.min(255, v + 60 * kick));
-      for (let py = 0; py < N; py++) for (let px = 0; px < N; px++) {
-        const dx = px + 0.5 - N / 2, dy = py + 0.5 - N / 2;
-        if (Math.abs(Math.hypot(dx, dy) - R) > 0.7) continue;
-        const turn = ((Math.atan2(dx, -dy) / (Math.PI * 2)) + 1) % 1;
-        c.dot(px, py, flash ? WHITE : turn <= left ? hot : DIM, 1);
-      }
-      const ox = Math.floor((N - MUTED[0].length) / 2), oy = Math.floor((N - MUTED.length) / 2);
-      MUTED.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch === "#") c.dot(ox + rx, oy + ry, flash ? WHITE : INK, 1); else if (ch === "+") c.dot(ox + rx, oy + ry, flash ? WHITE : hot, 1); }));
+      const left = a.hp / Math.max(1, a.max), hot = this.hot;
+      for (let k = 0; k < 3; k++) hot[k] = Math.min(255, RED[k] + 60 * kick);
+      for (let k = 0; k < RING.length; k += 3) c.dot(RING[k], RING[k + 1], flash ? WHITE : RING[k + 2] <= left ? hot : DIM, 1);
+      for (let k = 0; k < GLYPH.length; k += 3) c.dot(GLYPH[k], GLYPH[k + 1], flash ? WHITE : GLYPH[k + 2] ? hot : INK, 1);
       for (const [px, py] of arrowPixels(e.angle, N, R + 2, R + 7, 3.5)) c.dot(px, py, flash ? WHITE : hot, 1);
       c.flush();
       // Its distance, on the far side from the arrow.

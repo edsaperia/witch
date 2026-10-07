@@ -7,7 +7,7 @@ import { AREA_TYPES } from "../../rules/map";
 import { type Beacon, type Laser, MARKER_LEVELS, type Mote } from "../markers";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import type { WaveNumber } from "../waveNumbers";
-import { beatTime } from "../../rules/beat";
+import { beatAt, beatTime } from "../../rules/beat";
 import { canopyShown } from "../../rules/witch";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
@@ -193,18 +193,33 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   return lights;
 }
 
+/** How far nearer the camera than the treehouse's own plane the booth's layers are drawn (metres, along the ray to the camera, so
+ *  each lands on its own pixels): her, the DJ table over her, then her upper half over the table (her hands on the decks). */
+export const DJ_DEPTH = { her: 0.25, fore: 0.5, upper: 0.75 };
+/** A point `d` metres nearer the camera along the ray from it (so it lands on the same pixel on screen). */
+export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {
+  const c = v.camera.position, dx = p.x - c.x, dy = p.y - c.y, dz = p.z - c.z, l = Math.hypot(dx, dy, dz) || 1;
+  return { x: p.x - (dx / l) * d, y: p.y - (dy / l) * d, z: p.z - (dz / l) * d };
+}
+
 /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
  *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
  *  pixel on the ground. Returns where its sprite stands (the bottom middle of its box). */
-export function placeTreehouse(v: View, angle: number): { x: number; y: number; z: number } {
+export function placeTreehouse(v: View, angle: number, time: number): { x: number; y: number; z: number } {
   const T = v.assets.treehouse, f = T.atlas.frames, th = v.game.map.treehouse, mpp = v.mpp, U = SPRITE_UNIFORMS.uUp.value;
   const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(v.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
   const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
   const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
   const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
   const items: SpriteInstance[] = [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
-  // The studio's DJ table (v2) a little nearer the camera than her stool, so it stands in front of her.
-  if (T.hasFore) { const fwd = v.camera.getWorldDirection(v.v3b); items.push({ x: at.x - fwd.x * 1.2, y: at.y - fwd.y * 1.2, z: at.z - fwd.z * 1.2, frame: f[2], flip: false, overlay: true }); }
+  // The studio's DJ table over her (Ed, 2026-10-06): its crop where it shows in the base, a frame two to a beat (the platters
+  // turning an eighth, the LEDs chasing), nearer the camera than her.
+  if (T.hasFore) {
+    const k = Math.floor(beatAt(v.game.beat, time) * 2) % T.foreFrames, ff = f[2 + Math.max(0, k)], R = SPRITE_UNIFORMS.uRight.value;
+    const dx = (T.foreBox.x + ff.w / 2 - f[0].w / 2) * mpp, dy = (f[0].h - T.foreBox.y - ff.h) * mpp;
+    const p = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.fore);
+    items.push({ ...p, frame: ff, flip: false, overlay: true });
+  }
   v.treehouseBatch.set(items);
   return at;
 }
