@@ -18,8 +18,8 @@ import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
 import type { Cell } from "./partition";
 
-export type BotKind = "skilled" | "crude" | "novice" | "idle" | "hover";
-export const BOT_KINDS: readonly BotKind[] = ["skilled", "crude", "novice", "idle", "hover"];
+export type BotKind = "skilled" | "champion" | "crude" | "novice" | "idle" | "hover";
+export const BOT_KINDS: readonly BotKind[] = ["skilled", "champion", "crude", "novice", "idle", "hover"];
 
 export interface BotOptions {
   /** Parks up to this many at the next soundsystem (skilled)... */
@@ -38,13 +38,46 @@ export interface BotOptions {
   questMax?: number;
   /** At most this many relics brought, then she plays on (each is a long trip). */
   relicMax?: number;
+  /** The careful bots' thresholds (the champion's search space, tools/balance/coach.mjs; each default is the skilled
+   *  bot's own number, so skilled plays exactly as before): see BOT_KNOBS. */
+  knobs?: Partial<BotKnobs>;
 }
+
+/** The careful bots' numbers: the skilled bot plays these; the champion plays the ones its search found. */
+export interface BotKnobs {
+  /** Heads for the next soundsystem this many seconds before its wave... */
+  defendLead: number;
+  /** ...and holds the one the last wave woke this long after it came. */
+  defendHold: number;
+  /** Rises to heal at this many hits left (or fewer). */
+  healAt: number;
+  /** Kites a fighter nearer than this (m)... */
+  kite: number;
+  /** ...dashing away when it's nearer than this. */
+  dashAt: number;
+  /** Fires at a target within this share of a 💌's range... */
+  fireFrac: number;
+  /** ...and walks in when it's beyond this share. */
+  closeFrac: number;
+  /** Recruits only in areas within this far (m). */
+  recruitRange: number;
+  /** Leaves at least this many of an area's own kind wild (so its legend stays asleep). */
+  kinKeep: number;
+  /** Feeds once this many babies and young are on her stack... */
+  feedMin: number;
+  /** ...at berry patches within this far (m)... */
+  feedRange: number;
+  /** ...for this long (s). */
+  feedWait: number;
+}
+export const BOT_KNOBS: BotKnobs = { defendLead: 50, defendHold: 60, healAt: 1, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, recruitRange: 900, kinKeep: 1, feedMin: 3, feedRange: 500, feedWait: 20 };
 
 /** The bot game's choices (Ed, 2026-10-06, watching it: "It's notable that it doesn't seem to get any legend buffs or
  *  feed creatures any berries"): the skilled one does a few quests, brings relics to the legends by the coming waves,
  *  and leads her young to berries, as a good player would. The balance tool's runs keep each to its flag. */
 export const BOT_GAME: Record<BotKind, BotOptions> = {
   skilled: { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true }, // (two relics: all six took her first ten minutes, and halved her army)
+  champion: { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true }, // (the champion: the skilled bot's play with the numbers and tactics its search found; tools/balance/coach.mjs)
   crude: {}, novice: {}, idle: {}, hover: {},
 };
 
@@ -79,7 +112,7 @@ type Target = { cell: Cell; key: string; x: number; z: number };
 type QJob = { L: Creature; want: Creature; phase: "fetch" | "deliver"; since: number };
 
 export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
-  const GUARDS = o.guards ?? 3, KEEP = o.keep ?? 2, careful = kind === "skilled";
+  const GUARDS = o.guards ?? 3, KEEP = o.keep ?? 2, careful = kind === "skilled" || kind === "champion", K = { ...BOT_KNOBS, ...o.knobs };
   let legendOf: Map<string, number> | null = null;
   let qjob = null as QJob | null, questAgain = 0, questCount = 0, relicCount = 0, questTries = 0, relicTries = 0; // (tries, so a quest or relic that keeps failing doesn't eat the run)
   let rjob: { phase: "pick" | "place"; r?: { x: number; z: number; sx?: number; sz?: number; state: string }; since: number; n?: number } | null = null, relicAgain = 0;
@@ -112,7 +145,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       for (const c of g.creatures) if (!c.gone && !c.boss && !c.leashed && c.fleeUntil === undefined && cellKey(c.cell) === key && c.species === sp) kin++;
       for (const c of g.creatures) {
         if (c.gone || c.boss || c.leashed || c.fleeUntil !== undefined || c.enraged || cellKey(c.cell) !== key) continue;
-        if (careful && c.species === sp && kin <= 1) continue;
+        if (careful && c.species === sp && kin <= K.kinKeep) continue;
         out.push(c);
       }
       return out;
@@ -125,7 +158,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         if (g.party.areas.has(key) || g.party.ruined?.has(key)) continue;
         const L = LO.get(key); if (L !== undefined && g.creatures[L].legendState === "angry") continue; // (keep out of an angry legend's area)
         const s = map.siteOf(i, j), d = Math.hypot(s.x - b.x, s.z - b.z);
-        if (d > 900 || !inviteable(key, cell).length) continue;
+        if (d > K.recruitRange || !inviteable(key, cell).length) continue;
         if (d < bs) { bs = d; best = { cell, key, x: s.x, z: s.z }; }
       }
       return best;
@@ -148,7 +181,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     else if (g.party.spellAt === null) bot.doing = "casting the party spell";
     else if (kind === "idle") bot.doing = "waiting at home";
     else if (kind === "hover") { bot.doing = "hovering over home"; if (b.mode === "ground") toggle = true; } // (over the treetops at home all run: out of every fight)
-    else if (careful && (healing || w.health.hp <= 1)) {
+    else if (careful && (healing || w.health.hp <= K.healAt)) {
       // To the treetops to heal, then back to work.
       healing = w.health.hp < H;
       bot.doing = "healing in the treetops";
@@ -158,11 +191,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       if (b.mode === "ground" && healing) toggle = true;
     } else {
       const next = g.party.next[0], left = g.party.nextAt - time;
-      const defending = careful && next && (left < 50 || (landWave === g.party.wave && time - lastWave < 60));
+      const defending = careful && next && (left < K.defendLead || (landWave === g.party.wave && time - lastWave < K.defendHold));
       if (defending) {
-        const cell = left < 50 ? next : lastWoken ?? next, key = cellKey(cell), s = spot(cell);
-        if (left < 50) landWave = g.party.wave + 1;
-        const wave = left < 50 ? g.party.wave + 1 : g.party.wave;
+        const cell = left < K.defendLead ? next : lastWoken ?? next, key = cellKey(cell), s = spot(cell);
+        if (left < K.defendLead) landWave = g.party.wave + 1;
+        const wave = left < K.defendLead ? g.party.wave + 1 : g.party.wave;
         // A quest she can do: the creature this area's legend dreams of, on her stack: put it down in the legend's
         // clearing (Ed, 2026-10-06: quest sigils count only in its circle), on its open floor.
         const L = LO.get(key), q = L !== undefined ? g.creatures[L].quest : null;
@@ -175,7 +208,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           if (qi >= 0) { sigil = true; bot.doing = `doing the ${g.creatures[L!].species} legend's quest`; }
           else if (!parkedAt.has(key) && st.length > KEEP) { sigil = true; bot.doing = `posting guards at wave ${wave}`; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }
           // Then hold the spot, kiting anything that comes for her.
-          for (const c of g.creatures) if (c.enraged && !c.gone && Math.hypot(c.x - b.x, c.z - b.z) < 9) { const d = Math.hypot(c.x - b.x, c.z - b.z) || 1; mx = (b.x - c.x) / d; mz = (b.z - c.z) / d; dash = d < 5; bot.doing = `dodging ${article(c.species)} at wave ${wave}`; break; }
+          for (const c of g.creatures) if (c.enraged && !c.gone && Math.hypot(c.x - b.x, c.z - b.z) < K.kite) { const d = Math.hypot(c.x - b.x, c.z - b.z) || 1; mx = (b.x - c.x) / d; mz = (b.z - c.z) / d; dash = d < K.dashAt; bot.doing = `dodging ${article(c.species)} at wave ${wave}`; break; }
         }
       } else if (o.relics && careful && (rjob || (time >= relicAgain && relicCount < (o.relicMax ?? Infinity) && relicTries < (o.relicMax ?? Infinity) * 3 && g.relics.some(r => r.state === "lying")))) {
         // A lucky find: to the nearest lying relic, pick it up (the sigil button by it), then to the nearest sleeping
@@ -217,20 +250,20 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           if (!L.questOpen || want.gone || time - qjob.since > 180) { if (q?.done !== undefined) { bot.done.quests.push({ at: time, id: L.id }); questCount++; } qjob = null; questAgain = time + (q?.done !== undefined ? 5 : 45); }
           else if (qjob.phase === "fetch") {
             if (want.leashed) qjob.phase = "deliver";
-            else if (goTo(want.x, want.z, true)) { const td = Math.hypot(want.x - b.x, want.z - b.z); aimX = want.x - b.x; aimZ = want.z - b.z; fire = td < R * 0.95; mx = 0; mz = 0; if (td > R * 0.8) { mx = aimX / td; mz = aimZ / td; } }
+            else if (goTo(want.x, want.z, true)) { const td = Math.hypot(want.x - b.x, want.z - b.z); aimX = want.x - b.x; aimZ = want.z - b.z; fire = td < R * K.fireFrac; mx = 0; mz = 0; if (td > R * K.closeFrac) { mx = aimX / td; mz = aimZ / td; } }
           } else if (goTo(...spotBy(L), true, 4)) {
             const st = w.leash.stack, qi = st.indexOf(want.id);
             if (qi < 0) { qjob = null; questAgain = time + 10; }
             else { if (qi !== st.length - 1) st.push(st.splice(qi, 1)[0]); sigil = true; } // (cycling it to the bottom, as the sigil button does in the treetops)
           }
         }
-      } else if (o.feed && careful && (feeding || (time >= feedAgain && w.leash.stack.filter(id => g.creatures[id].level < 2).length >= 3))) {
+      } else if (o.feed && careful && (feeding || (time >= feedAgain && w.leash.stack.filter(id => g.creatures[id].level < 2).length >= K.feedMin))) {
         // Feeding: her young ones to the nearest patch of ripe berries, and wait there while they eat.
         if (!feeding) {
           const B = g.berries, ripe = B.berries.filter(r => r.claimedBy === null).map(r => B.bushes[r.bush]);
           let best: { x: number; z: number } | null = null, bs = -Infinity;
           for (const p of ripe) {
-            const d = Math.hypot(p.x - b.x, p.z - b.z); if (d > 500) continue;
+            const d = Math.hypot(p.x - b.x, p.z - b.z); if (d > K.feedRange) continue;
             const n = ripe.filter(q => Math.hypot(q.x - p.x, q.z - p.z) < 10).length, sc = n * 60 - d;
             if (n >= 3 && sc > bs) { bs = sc; best = p; }
           }
@@ -239,7 +272,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         }
         bot.doing = "feeding the young ones berries";
         if (feeding && goTo(feeding.x, feeding.z, true)) {
-          if (feeding.until === Infinity) feeding.until = time + 20; // (20 s among the bushes)
+          if (feeding.until === Infinity) feeding.until = time + K.feedWait; // (20 s among the bushes)
           if (time >= feeding.until) { feeding = null; feedAgain = time + 60; }
         }
       } else if (b.mode === "ground" && !b.seated && runeNear(g.creatures, b.x, b.z, 25, time)) {
@@ -256,13 +289,13 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           else {
             let tg = open[0], td = Infinity;
             for (const c of open) { const d = Math.hypot(c.x - b.x, c.z - b.z); if (d < td) { td = d; tg = c; } }
-            aimX = tg.x - b.x; aimZ = tg.z - b.z; fire = td < R * 0.95;
+            aimX = tg.x - b.x; aimZ = tg.z - b.z; fire = td < R * K.fireFrac;
             if (tg.species !== species(target.cell)) bot.doing = `inviting ${article(tg.species)}`;
             mx = 0; mz = 0;
             let th: Creature | null = null, hd = Infinity;
             for (const c of g.creatures) if (!c.gone && !c.leashed && !c.boss && c.level > 0 && cellKey(c.cell) === target.key) { const d = Math.hypot(c.x - b.x, c.z - b.z); if (d < hd) { hd = d; th = c; } }
-            if (careful && th && hd < 9) { mx = (b.x - th.x) / hd; mz = (b.z - th.z) / hd; dash = hd < 5; }
-            else if (td > R * 0.8) { mx = aimX / td; mz = aimZ / td; }
+            if (careful && th && hd < K.kite) { mx = (b.x - th.x) / hd; mz = (b.z - th.z) / hd; dash = hd < K.dashAt; }
+            else if (td > R * K.closeFrac) { mx = aimX / td; mz = aimZ / td; }
           }
         }
       }
