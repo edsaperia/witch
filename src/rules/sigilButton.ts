@@ -53,13 +53,34 @@ export function questsFromPlaced(g: Game, ht: number): void {
     const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), L = questPlaced(g.map, g.creatures, ids, g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
     // (the right creature, but outside its legend's clearing: a gentle cue, and nothing happens)
     if (!L) { const O = questOutside(g.map, g.creatures, ids, k => g.party.areas.has(k), e.id, e.x, e.z); if (O) g.leash.events.push(outsideCircle(g, O)); }
-    if (L) {
-      g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
-      if (!g.party.areas.has(cellKey(L.cell))) onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave; after it, the line has moved on already)
-      if (g.friendly.has(cellKey(L.cell))) befriendArea(g, cellKey(L.cell));
-      g.byArea = null;
-    }
+    if (L) questDone(g, L, e.id);
   }
+}
+
+/** Her animals standing in a sleeping legend's clearing finish its quest as putting the sigil down there does (Ed's playtest,
+ *  2026-10-07, via the coordinator: "I brought a quest animal into the legend circle and I wasn't granted the buff"): any of
+ *  hers, following her (on her stack) or parked by its sigil wherever that lies, of the kind and age the legend dreams of,
+ *  standing inside its circle. Every step; cheap (her animals, each against its own area's legend). */
+export function questsFromStanding(g: Game): void {
+  const s = g.leash;
+  if (!s.stack.length && !s.placed.length) return;
+  const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), partified = (k: string) => g.party.areas.has(k);
+  const check = (id: number) => {
+    const c = g.creatures[id];
+    if (!c || c.gone || c.boss) return;
+    const L = questPlaced(g.map, g.creatures, ids, g.friendly, partified, id, c.x, c.z, g.clock.time);
+    if (L) questDone(g, L, id);
+  };
+  for (const id of s.stack) check(id);
+  for (const p of s.placed) check(p.id);
+}
+
+/** A legend's quest just done (questPlaced has marked it): the event, the ley line, the area friendly while wild. */
+function questDone(g: Game, L: Creature, joined: number): void {
+  g.questEvents.push({ kind: "done", id: L.id, joined, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
+  if (!g.party.areas.has(cellKey(L.cell))) onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave; after it, the line has moved on already)
+  if (g.friendly.has(cellKey(L.cell))) befriendArea(g, cellKey(L.cell));
+  g.byArea = null;
 }
 
 /** A legend's quest done while its area is wild (rules/quest.ts): the area friendly, so every wild creature of it living
