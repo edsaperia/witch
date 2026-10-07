@@ -7,7 +7,7 @@ import musicStyleJson from "../../config/music-style.json";
 import { applyKnobParams } from "../ui/decisions";
 
 export function tuningFromLink(params: URLSearchParams) {
-  // Variants as switches in the link: ?tilt=before|after|off, ?bloom=off, ?shadows=off,
+  // Variants as switches in the link: ?tilt=off, ?bloom=off, ?shadows=off,
   // ?canopy=off (the canopy shadow layer), ?mist=off.
   const tuning = {
     ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift, treetop: { ...TUNING.tiltShift.treetop } },
@@ -22,25 +22,12 @@ export function tuningFromLink(params: URLSearchParams) {
   if (params.get("mist") === "off") tuning.mist.on = false;
   const tilt = params.get("tilt");
   if (tilt === "off") tuning.tiltShift.on = false;
-  // ?tiltsky=0: the sky over the bend left sharp by the tilt-shift, as it was before round 12.
-  if (params.get("tiltsky") === "0") tuning.tiltShift.sky = false;
-  else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
   // ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).
   else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
   if (params.get("bloom") === "off") tuning.bloom.on = false;
   if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
   const witchesParam = Number(params.get("witches")); // debug: this many more party witches
   if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(500, Math.floor(witchesParam)) };
-  if (params.get("find") === "0") tuning.find = { ...tuning.find, on: false }; // Ed, v244: compare without the find-in-the-dark looks
-  // ?rune=beam|column|both: how an awake rune stone shows above it.
-  const runeParam = params.get("rune");
-  if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMarkers = { ...tuning.runeMarkers, awakeStyle: runeParam };
-  // ?picker=route|noisy|near3|near3touch|nearest: how the party picks the next area to wake (route, the default: the ley line's planned order; noisy the one before it).
-  const pickerParam = params.get("picker");
-  if (pickerParam && ["route", "noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
-  // ?route=spiral|varied: the route picker's planned order (spiral, the default, Ed 2026-10-06; varied the one before it).
-  const routeParam = params.get("route");
-  if (routeParam && ["spiral", "varied"].includes(routeParam)) tuning.party.route = routeParam;
   // ?glow=<reach>,<falloff>,<near>: the witch's glow, to tune live (e.g. ?glow=50,2.5,0.7; 0 keeps a value).
   const glowParam = params.get("glow")?.split(",").map(Number);
   if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
@@ -116,8 +103,6 @@ export function tuningFromLink(params: URLSearchParams) {
   if ((shapeParam === "square" || shapeParam === "circle") && tuning.map) tuning.map = { ...tuning.map, shape: shapeParam };
   // Legend circles slow time (Ed, 2026-10-06; rules/slowTime.ts): ?slow=0 turns it off, ?slow=<scale> tries another speed.
   { const v = params.get("slow"); if (v !== null && tuning.legendCircle) { const k = Number(v); tuning.legendCircle = { slow: { ...tuning.legendCircle.slow, on: k > 0 && k < 1, scale: k > 0 && k < 1 ? k : tuning.legendCircle.slow.scale } }; } }
-  const fx = params.get("fx");
-  if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
   // Area size and treetop speed, to play with (Ed, 2026-10-05: "compared to now, areas should be
   // fairly large, and treetop mode should be much faster than ground mode"): ?areaSize=<metres> (or
@@ -141,9 +126,9 @@ export function tuningFromLink(params: URLSearchParams) {
     try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
   }
 
-  // The prop generator is the default (DECISION FOR ED, previews/props-default/ on claude/prop-shots); ?props=hand brings back the hand-made props.
-  const propsGen = params.get("props") !== "hand";
-  if (propsGen) tuning.paths = { ...tuning.paths, fingerposts: true }; // ?props=gen: fingerposts where footpaths come into a clearing (placed with the map, so set before it is made)
+  // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
+  // where footpaths come into a clearing (placed with the map, so set before it is made).
+  tuning.paths = { ...tuning.paths, fingerposts: true };
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
-  return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT, propsGen };
+  return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };
 }

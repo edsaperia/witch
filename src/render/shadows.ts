@@ -1,6 +1,6 @@
 // Shadows on the ground: one flat quad per tree, bush or creature, drawn as one instanced batch.
-// With ?fx=smooth (the default) each is a soft ellipse that darkens what's under it (multiply, so
-// a lit pool stays lit, only dimmer, and fading into the haze); with ?fx=pixel a dithered one.
+// Each is a soft ellipse that darkens what's under it (multiply, so a lit pool stays lit, only
+// dimmer, and fading into the haze).
 // A tree's shadow (off by default) is the size of its crown, laid on the ground where the
 // moonlight would throw it. The crown is a camera-facing sprite high up while its shadow lies
 // flat, so the two slide past each other as the camera moves: parallax for nothing.
@@ -32,23 +32,13 @@ varying vec2 vLocal;
 varying vec3 vWorld;
 varying float vScenery;
 ${LIGHT_GLSL}
-float bayer(vec2 p) {
-  int i = int(mod(p.x, 4.0)) + int(mod(p.y, 4.0)) * 4;
-  int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
-  return (float(m[i]) + 0.5) / 16.0;
-}
 void main() {
   float r = dot(vLocal, vLocal);
   if (r > 1.0) discard;
   float a = uStrength * (1.0 - r * r) * (vScenery > 0.5 ? sceneryFade(vWorld) : 1.0); // fading with its scenery
   if (uShadowDebug > 0.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; }
-  if (uSmooth > 0.5) {
-    float h = smoothstep(uHazeRange.x, uHazeRange.y, length(vWorld.xz - uHazeCentre));
-    gl_FragColor = vec4(mix(vec3(1.0 - a * (1.0 - r)), vec3(1.0), h * h), 1.0); // multiplied over the ground
-    return;
-  }
-  if (bayer(gl_FragCoord.xy) >= a) discard;
-  gl_FragColor = vec4(haze(uHazeColour * 0.25, vWorld), 1.0);
+  float h = smoothstep(uHazeRange.x, uHazeRange.y, length(vWorld.xz - uHazeCentre));
+  gl_FragColor = vec4(mix(vec3(1.0 - a * (1.0 - r)), vec3(1.0), h * h), 1.0); // multiplied over the ground
 }`;
 
 /** scenery: a tree's or bush's, fading out with it at the scenery budget's edge. */
@@ -60,13 +50,13 @@ export class ShadowBatch {
   private attr: THREE.InstancedBufferAttribute;
   private capacity = 0;
 
-  constructor(strength: number, smooth = true) {
+  constructor(strength: number) {
     const quad = new THREE.PlaneGeometry(1, 1, 4, 4).rotateX(-Math.PI / 2); // divided, to lie on the slopes
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));
     this.attr = this.grow(1024);
     const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength }, uShadowDebug: SHADOW_DEBUG }, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4,
-      ...(smooth ? { transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor } : {}) });
+      transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor });
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 1;

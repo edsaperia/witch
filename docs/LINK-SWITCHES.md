@@ -6,7 +6,7 @@ read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/ga
 `?seed=123&wave=30&creator=0`.
 
 Survey: every switch below is still read, and every page element it names still exists. None was dead. The ones kept only to
-compare against an older look are listed at the end for Ed to decide on.
+compare against an older look were retired on 2026-10-07 (the list at the end).
 
 ## The run
 
@@ -53,7 +53,7 @@ compare against an older look are listed at the end for Ed to decide on.
 | switch | does | read in |
 |---|---|---|
 | `px=2..6` | the art pixel (screen pixels per art pixel) | app/linkParams.ts |
-| `style=bold\|ref` | the pixel-art treatment (bold, the default) | app/viewParams.ts |
+| `style=ref` | Ed's reference pixel-art treatment (bold, the default, otherwise) | app/viewParams.ts |
 | `flora=new\|fantasy\|all\|<ids>` | every wooded area grows these tree species | app/viewParams.ts |
 | `tilt=off` / `tilt=<strength>,<band>` | the treetops' tilt-shift off, or tried at these values | app/linkParams.ts |
 | `bloom=off`, `shadows=off`, `canopy=off`, `mist=off`, `sky=off` | each effect off | app/linkParams.ts |
@@ -70,25 +70,25 @@ compare against an older look are listed at the end for Ed to decide on.
 | `clouds=<n>` | how many clouds | app/linkParams.ts |
 | `curve=<k>` | the world's bend over the treetops (0 off) | app/linkParams.ts |
 | `light=spooky\|plain` | the lighting's mood | app/linkParams.ts |
+| `moonbeams=on` | the moonbeams (off by default) | app/linkParams.ts |
 
-## DECISION FOR ED: comparison switches to retire?
+## Retired, 2026-10-07 (awaiting Ed)
 
-Each of these brings back an older look or behaviour, to compare against what replaced it. The default has been settled for a
-while in every case. Removing one removes its old code path too (smaller and simpler code, for the Godot port). Nothing
-changes in play unless the link names the switch. Say which to remove (all, none, or some):
+Twelve switches that brought back an older look or behaviour, to compare against what replaced it, are gone with their old
+code paths (the coordinator's recommendation to Ed: all but `moonbeams=on`, which stays above). A link that still names one
+plays as the default does.
 
-| switch | brings back | default since |
+| switch | brought back | what stays |
 |---|---|---|
-| `tilt=before\|after` | the tilt-shift applied before or after the other post-processing | round 12 |
-| `tiltsky=0` | the sky left sharp by the tilt-shift (note: with it, `tilt=…` values are ignored) | round 12 |
-| `moonbeams=on` | the moonbeams | (off by default) |
-| `find=0` | without the find-in-the-dark looks | v244 |
-| `rune=beam\|column\|both` | the other ways an awake runestone shows | — |
-| `picker=…` (not `route`) and `route=varied` | the older ways of picking the next area to wake | 2026-10-06 |
-| `fx=pixel` | mist, haze and dapple as dithered pixel steps | — |
-| `props=hand` | the hand-made props instead of the generator's | the props decision |
-| `texture=0` | creatures without fur, feathers and scales | — |
-| `subpixel=0` | the camera's whole-art-pixel steps | 2026-10-05 |
-| `glide=camera` | the glide by the camera's snap | 2026-10-06 |
-| `style=now` | the art before the pixel-art treatment | 2026-10-06 |
-| `wind=smooth` | the old per-pixel sway instead of the pixel wind | — |
+| `tilt=before\|after` | the tilt-shift applied before or after the upscale | before (at the low resolution); `tiltShift.where` gone |
+| `tiltsky=0` | the sky left sharp by the tilt-shift | `tiltShift.skyBlur` (the decisions panel's slider); `tiltShift.sky` gone |
+| `find=0` | the forest without the find-in-the-dark looks | always on; `find.on` gone |
+| `rune=beam\|column\|both` | one of the ways an awake runestone shows | both; `runeMarkers.awakeStyle` gone |
+| `picker=…` and `route=varied` | the older ways of picking the next area to wake | the spiral route (and the noisy picker as its own fallback); near3, near3touch, nearest, `variedOrder` and `party.route` gone |
+| `fx=pixel` | mist, haze and dapple as dithered pixel steps | smooth; `fx` and the shaders' `uSmooth`, `uBands` and `uDither` paths gone |
+| `props=hand` | the hand-made props | the prop generator (the Art Lab and `art/check.mjs` still draw both) |
+| `texture=0` | creatures without fur, feathers and scales | the Art Lab's own knob, `style.texture` |
+| `subpixel=0` | the camera's whole-art-pixel steps | the glide |
+| `glide=camera` | the glide by the camera's snap | by the witch's; `view.glide` and the decisions panel's choice gone |
+| `style=now` | the art before the pixel-art treatment | bold (and `style=ref`); the decisions panel's "As now" gone |
+| `wind=smooth` | the old per-pixel sway | the pixel wind; `uPixelWind` gone |

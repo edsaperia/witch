@@ -5,7 +5,7 @@ import { type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { heldByCombat, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
+import { heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
 import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
@@ -467,9 +467,11 @@ function stepSpacing(g: Game, dt: number): void {
 function napRules(g: Game): NapRules | undefined {
   const N = g.tuning.naps;
   if (!N?.on) return undefined;
-  const roused = new Set<string>();
-  for (const w of g.witches) if (w.body.mode === "ground" && !w.body.seated && !w.ko) roused.add(cellKey(g.map.cellSafe(w.body.x, w.body.z).cell));
-  return { chance: N.chance, length: N.length, wake: N.wake, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => roused.size > 0 && roused.has(cellKey(c.cell)) };
+  const roused = new Set<string>(), down = g.witches.filter(w => w.body.mode === "ground" && !w.body.seated && !w.ko).map(w => w.body);
+  for (const b of down) roused.add(cellKey(g.map.cellSafe(b.x, b.z).cell));
+  // A legend circle's baby (naps.circle) wakes only for a witch at its circle (so she can still invite it), not anywhere in its area.
+  const C = N.circle, atCircle = (c: Creature) => down.some(b => Math.hypot(b.x - c.circle!.x, b.z - c.circle!.z) <= c.circle!.r + C!.reach);
+  return { chance: N.chance, length: N.length, wake: N.wake, circle: C, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => C && keepsToCircle(c) ? atCircle(c) : roused.size > 0 && roused.has(cellKey(c.cell)) };
 }
 
 /** Wild areas grow (Ed, 2026-10-04): every wave each area still wild (and each one this wave
