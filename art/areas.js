@@ -366,7 +366,9 @@ function prop(kind, o, def, st, r, s) {
 }
 
 // Set pieces: one per area that has one, bigger than the props.
+// st.setPieceScale (the game's tuning setPieceScale): baked that much bigger, at the art pixel, so the game draws it at 1, never stretched.
 function setPiece(kind, o, def, st, r, s) {
+  s *= st.setPieceScale || 1;
   if (o.three) return setPiece3d(kind, def, st);
   if (kind === "tree" || kind === "log") return prop(kind, o, def, st, r, s);
   const W = Math.round(90 * s), H = Math.round(70 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
