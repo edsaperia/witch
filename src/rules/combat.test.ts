@@ -202,7 +202,7 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     }
   }, 120000);
 
-  it("holds her behind her decks knockout.respawn seconds after the sparkle-in, input ignored, then lets her go (0: as before)", () => {
+  it("holds her scratching behind her decks knockout.respawn seconds after the sparkle-in (Ed, 2026-10-07), input ignored, then lets her go (0: as before)", () => {
     for (const respawn of [RESPAWN, 0]) {
       const { g } = setUp(withTuning(t => { t.knockout.respawn = respawn; })), W = g.witches[0], K = W.ko!;
       expect(K.backAt - K.inAt).toBeCloseTo(respawn, 6);
@@ -210,9 +210,10 @@ describe("knocked out (Ed, 2026-10-04)", () => {
       while (!K.moved) stepGame(g, go, STEP);
       const at = { x: g.witch.x, z: g.witch.z };
       expect(Math.hypot(at.x - g.map.start.x, at.z - g.map.start.z), "at the decks from the sparkle-in").toBeLessThan(0.5);
-      let held = 0;
-      while (W.ko) { stepGame(g, go, STEP); held += STEP; if (W.ko) { expect(Math.hypot(g.witch.x - at.x, g.witch.z - at.z), "held while she waits").toBeLessThan(1e-6); expect(g.witch.seated).toBe(true); } }
+      let held = 0, scratches = 0;
+      while (W.ko) { stepGame(g, go, STEP); held += STEP; scratches += g.koEvents.filter(e => e.kind === "scratch").length; if (W.ko) { expect(Math.hypot(g.witch.x - at.x, g.witch.z - at.z), "held while she waits").toBeLessThan(1e-6); expect(g.witch.seated).toBe(true); } }
       expect(held, "the sparkle-in's second half, then the wait").toBeCloseTo((K.inAt - K.teleportAt) / 2 + respawn, 0);
+      expect(scratches, "her scratching starts once (the sound's hook), only if she waits").toBe(respawn > 0 ? 1 : 0);
       expect(W.ko).toBeNull();
       stepGame(g, { ...idle, moveX: 1 }, STEP);
       expect(g.witch.seated, `respawn ${respawn}: up and away once it's over`).toBeFalsy();

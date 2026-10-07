@@ -3,9 +3,9 @@
 // hit. At none she's knocked out: she collapses where she is (no more hits, no input), her sigil
 // stack comes down from the bottom up, one every releaseEach seconds, each sigil put down where
 // its animal stands (#87, Ed 2026-10-05: leashed is for good, so they stay hers as a parked
-// group); then she sparkles out and back in at the treehouse, where she waits knockout.respawn seconds behind her decks
-// before she can move (DECISION FOR ED, the balance builder's option (a): a knockdown costs time, while her army fights on
-// without her). No drawing here.
+// group); then she sparkles out and back in at the treehouse, where she scratches behind her decks for knockout.respawn
+// seconds before she can move (Ed, 2026-10-07: "Every time she respawns she could do a bit of scratching to increase the
+// respawn time": a knockdown costs time, while her army fights on without her). No drawing here.
 import type { ForestMap } from "./map";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
 import { letPartyLegendGo, type LeashState } from "./leash";
@@ -30,14 +30,16 @@ export interface Knockout {
   /** Game time the teleport starts (after the last sigil), and ends (she's in at the treehouse). */
   teleportAt: number;
   inAt: number;
-  /** Game time she can move again: inAt, or after the respawn wait behind her decks (knockout.respawn; DECISION FOR ED). */
+  /** Game time she can move again: after her scratching behind her decks (knockout.respawn seconds from inAt). */
   backAt: number;
   /** She's sparkled out, and been moved to the treehouse, behind her decks (halfway through the teleport). */
   out: boolean;
   moved: boolean;
+  /** Her scratching has started (the "scratch" event: the respawn wait, inAt to backAt). */
+  scratching?: boolean;
 }
 
-export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
+export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | /** her scratching starts behind her decks (the respawn wait: knockout.respawn); "back" ends it */ "scratch" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
 export interface KnockoutEvent { kind: KnockoutEventKind; at: number; x: number; z: number; id?: number }
 
 export const newHealth = (t: Tuning): Health => ({ hp: t.witchHealth.hits, repairAt: Infinity, hurtAt: -Infinity });
@@ -94,6 +96,7 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     // Loyal legends come home with her.
     for (const id of leash.stack) { const c = creatures[id]; c.x = body.x + (c.rand() - 0.5) * 3; c.z = body.z + 2 + c.rand() * 2; c.tx = c.x; c.tz = c.z; }
   }
+  if (!k.scratching && k.backAt > k.inAt && time >= k.inAt) { k.scratching = true; events.push({ kind: "scratch", at: time, x: body.x, z: body.z }); }
   if (time >= k.backAt) { events.push({ kind: "back", at: time, x: body.x, z: body.z }); return { body, done: true }; }
   return { body: { ...body, vx: 0, vz: 0 }, done: false };
 }

@@ -14,6 +14,7 @@ import { SPRITE_UNIFORMS } from "../sprites";
 import { inView } from "./culling";
 import { DJ_DEPTH, nearerCamera } from "./home";
 import { beatAt } from "../../rules/beat";
+import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
 
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
@@ -84,7 +85,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       // without the spell, sitting.
       const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST, Dj = v.assets.witchDj;
       if (sp === undefined || !Dj.full.length) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
-      else { const j = v.assets.djFrame(beatAt(g.beat, time), casting); wf = Dj.full[j]; djUpper = Dj.upper[j]; }
+      else { const j = v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); wf = Dj.full[j]; djUpper = Dj.upper[j]; } // (scratching: the wait after a knockout, rules/knockout.ts)
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
     }
   }
