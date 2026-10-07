@@ -2,7 +2,11 @@
   "builder": "Art builder 2",
   "phase": "Creatures, the leash, the party and the night; overnight phase 1: housekeeping",
   "slice": "The creatures' genomes and live rig, the attack visuals, the party witches, the leash and sigil weight, the Party's Over, the beach's edge and the night's light",
-  "prs": [291, 349, 364],
+  "prs": [
+    291,
+    349,
+    364
+  ],
   "built": [
     "The look of the leash: the sigil stack sways on a chain of springs above her hat, the threads draw taut and bright as the sigils' weight pulls on her, and her broom strains and sheds sparks when she's overloaded",
     "Tonight's phase-1 slice: `render/leash.ts` (1,335 lines) split into glyphs, stack, projection, bubbles and combat, the bench confirming the same game pixel for pixel",
@@ -18,10 +22,25 @@
     "Walk cycles are about the box as much as the legs: the heron's new 4-frame wader walk jittered until every frame shared one crop and one scale (still to come, in phase 3)."
   ],
   "previews": [
-    { "src": "media/art/beach-edge-bay-134m.webp", "caption": "The scalloped edge of the woods on the widest bay." },
-    { "src": "media/builders/art2-swoop-trails-treetop.webp", "caption": "The party witches' rainbow swoops." },
-    { "src": "media/timeline/party-over-party-over-treetops.webp", "caption": "The lights going out in a ripple from home." },
-    { "src": "media/builders/art2-tilt-shift-treetop.webp", "caption": "The gentler tilt-shift, before and after." }
-  ],
-  "notes": "Nominated also previews/night/ed-treetop-before-after.png (daylight spotlight to moonlit canopy, at Ed's own spot), which lands with #364; add it here once that merges."
+    {
+      "src": "media/builders/art2-night-treetop.webp",
+      "caption": "Daylight spotlight to moonlit canopy, at Ed's own spot."
+    },
+    {
+      "src": "media/art/beach-edge-bay-134m.webp",
+      "caption": "The scalloped edge of the woods on the widest bay."
+    },
+    {
+      "src": "media/builders/art2-swoop-trails-treetop.webp",
+      "caption": "The party witches' rainbow swoops."
+    },
+    {
+      "src": "media/timeline/party-over-party-over-treetops.webp",
+      "caption": "The lights going out in a ripple from home."
+    },
+    {
+      "src": "media/builders/art2-tilt-shift-treetop.webp",
+      "caption": "The gentler tilt-shift, before and after."
+    }
+  ]
 }
