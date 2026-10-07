@@ -136,7 +136,8 @@ export class StateMarks {
     setTint(g.tuning);
     const A = g.tuning.looks?.anger ?? { on: true, size: 1 }, P = g.tuning.looks?.partyGlow ?? { on: true, sparkles: 4, rate: 0.9, size: 1.4, strength: 1 };
     const w = g.witch, px = 2; // (each mark pixel two game pixels: readable at a glance)
-    for (const c of g.creatures) {
+    for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
+      const c = g.creatures[i];
       if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R) continue;
       const top = tops.get(c.id);
       if (top === undefined) continue;

@@ -117,7 +117,8 @@ export class PixelCue {
     if (x < 0 || y < 0 || x >= N || y >= N || a <= 0.02) return;
     const i = (y * N + x) * 4;
     if (this.img.data[i + 3] >= a * 255) return;
-    this.img.data.set([rgb[0], rgb[1], rgb[2], Math.round(Math.min(1, a) * 255)], i);
+    const d = this.img.data; // (byte by byte: no array a dot)
+    d[i] = rgb[0]; d[i + 1] = rgb[1]; d[i + 2] = rgb[2]; d[i + 3] = Math.round(Math.min(1, a) * 255);
   }
   flush(): void { this.g.putImageData(this.img, 0, 0); }
 }
