@@ -1,12 +1,14 @@
 // The pointers on the screen's edge (moved out of view.ts's render, unchanged): toward the wave's pulse and the next stones,
-// and toward her hat where it lies.
+// toward her hat where it lies, and toward a soundsystem under attack.
 import type { View } from "../view";
 import { beatTime } from "../../rules/beat";
 import { AREA_TYPES } from "../../rules/map";
 import { waveCountdown } from "../../rules/party";
 import { hatMarker } from "../../rules/hat";
 import { leyPulse, pointerShown } from "../../rules/leypulse";
-import { HAT, StoneIndicator } from "../indicator";
+import { edgeLayout, HAT, StoneIndicator } from "../indicator";
+import { AlarmIndicators } from "../alarm";
+import { ALARM_DEFAULTS, shownAlarms, stepAlarms } from "../../rules/alarms";
 import { HAT_BESIDE, HAT_INK } from "../view";
 
 /** Updates the pointers for this frame. */
@@ -20,6 +22,7 @@ export function drawPointers(v: View, time: number): void {
   {
     const cw = v.canvas.clientWidth || window.innerWidth, ch = v.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
     const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)); // (none once the party's over: rules/partyOver.ts)
+    edgeLayout.reset(); // (no two edge cues on one another: render/indicator.ts)
     const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
       while (list.length < cells.length) list.push(make());
       list.forEach((ind, i) => {
@@ -41,5 +44,9 @@ export function drawPointers(v: View, time: number): void {
       P.fade(H ? 1 : 0);
       P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
+    // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
+    const AT = t.alarms ?? ALARM_DEFAULTS;
+    stepAlarms(v.alarms, g.combat.sounds, g.combat.events, time, AT);
+    if (v.alarms.byKey.size || v.alarmCues) (v.alarmCues ??= new AlarmIndicators(document.body)).update(v.camera, cw, ch, shownAlarms(v.alarms, AT), w.x, w.z, time, AT);
   }
 }

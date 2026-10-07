@@ -51,6 +51,8 @@ import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { StoneIndicator } from "./indicator";
+import type { AlarmIndicators } from "./alarm";
+import { newAlarms } from "../rules/alarms";
 import { hasRune } from "../rules/creatureStates";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
@@ -220,6 +222,9 @@ export class View {
   nextStones: StoneIndicator[] = [];
   /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
   hatPointer: StoneIndicator | null = null;
+  /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
+  alarms = newAlarms();
+  alarmCues: AlarmIndicators | null = null;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
