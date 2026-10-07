@@ -22,13 +22,16 @@ export class MarkerArt {
   readonly colour = new Map<string, THREE.Vector3>();
   /** Per species: how many art pixels the stone stands above its frame's bottom (to its topmost drawn row). */
   readonly height = new Map<string, number>();
+  /** The scale the stones are baked at (runeMarkers.scale): drawn at runeMarkers.scale / this, so 1 (docs/STYLE.md §1). */
+  readonly scale: number;
 
   constructor(style: Style, t: Tuning) {
     const R = t.runeMarkers, sprites: Baked[] = [];
+    this.scale = R.scale;
     const species = [...new Set(AREA_TYPES.map(a => a.creature))];
     const levels = [R.dormant.glow, ...Array.from({ length: MARKER_LEVELS - 1 }, (_, i) => R.awake.glow[0] + ((R.awake.glow[1] - R.awake.glow[0]) * i) / (MARKER_LEVELS - 2))];
     for (const sp of species) {
-      const base = (Art.runeStone as unknown as (st: Style, o: { glow: string; sigil: string }) => Baked & { A: HTMLCanvasElement })(style, { glow: "cyan", sigil: sp });
+      const base = (Art.runeStone as unknown as (st: Style, o: { glow: string; sigil: string; scale: number }) => Baked & { A: HTMLCanvasElement })(style, { glow: "cyan", sigil: sp, scale: R.scale });
       const c = Art.sigilColour(sp) as number[];
       this.index.set(sp, sprites.length);
       this.height.set(sp, drawnHeight(base.A));
