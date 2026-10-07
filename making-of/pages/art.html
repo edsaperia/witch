@@ -1,0 +1,360 @@
+<p>Nothing you see in Coven Rush was painted by hand. Every wolf, oak, cairn, puddle, party witch and paper lantern is generated: a few numbers in a data file go into a generator, and the generator makes the sprite. The game asks for "a young boar facing away, frame 2, in party gear", and the art comes out of code that runs in the browser's art workers while you play.</p>
+
+<p>That wasn't the plan on day one. Ed's first word on the art, on 3 October, was that it was "placeholder just to set the scene". But each placeholder was a small program rather than a picture, so it could always be improved, measured and checked. Over four days the programs became <em>generators driven by data</em>: species, trees, areas, props and witches all written as records. A separate pass, the stylise pass, then turns everything into one pixel-art look. This chapter is about how that happened.</p>
+
+<h2>From flat profiles to little 3D models</h2>
+
+<p>The first art pass {#3} moved the Witch Art Lab's drawing code into a reusable <code>art/generator.js</code> and redrew the animals as smooth 2D outlines in side profile. Ed asked for more:</p>
+
+<blockquote>I think they should be more three-quarter view.<cite>Ed, 2026-10-03, quoted by the coordinator on #3</cite></blockquote>
+
+<p>The builder tilted the profiles, and Ed came back: "I think we disagree on what 'three-quarter' means. They still seem flat, side on. It should be more like the reference." The reference was a sheet of farm animals by another artist, which the builders described in words and never committed. The suggestion was to stop drawing in 2D altogether: build each creature from simple 3D shapes, turn it, and draw one ray per pixel.</p>
+
+<p>Within minutes the wolf, boar, owl and hare were 3D models. <code>art/model3d.js</code> still works that way today. A creature is a handful of ellipsoids, tapered rounded cones and rounded boxes, turned 35° (<code>YAW</code> 0.6 radians) and seen from 30° above (<code>PITCH</code> 0.52). Each pixel is one exact ray against those shapes. The first try read as "strings of balloons", so the shapes became a <em>signed distance field</em>, where parts in the same group melt into one mass, and wings and ears became flat shaped planes. The field gives a true surface direction at every pixel, so the normal map comes free and the game's lights fall on a sprite as if it were solid. Ed then asked for "turned towards" and "turned away" variants. With a 3D model that's just a second render, so every creature has both, mirrored for left and right.</p>
+
+<p>On 4 October Ed found the levels too alike ("babies, youths, and adults look too similar"). {#47} moved the young onto the old adult model and made new adults 1.65 times bigger, with heavier builds, bigger horns and a few glowing motes. A legend is never less than 2.2 times its adult. The art check has enforced those steps ever since: young at least 1.3 times the baby, adult at least 1.55 times the young, legend at least 2.1 times the adult.</p>
+
+<h2>The creature genome</h2>
+
+<p>On the morning of 5 October the creature work became a staged plan, issue #79: procedural creatures. Its first two stages {#83} changed nothing you could see, which was the point. All 30 species were rewritten as <strong>genome records</strong> in <code>art/genome/species.js</code>. Each record holds a template, a builder, a palette, body and head proportions, parts (ears, tail, feet, horns, antlers, tusks), markings and what its legend grows. A tool, <code>tools/genome/compare.mjs</code>, drew every creature with the old code and the new one: 30 species, four levels, two frames, two facings, plain, in party gear and woken. All <strong>1,560 of 1,560</strong> sprites matched pixel for pixel. Since then, changing a species means editing its record, not its builder.</p>
+
+<h3>Templates, sockets and size curves</h3>
+
+<p>A <strong>template</strong> (<code>art/genome/templates.js</code>) is a body plan. There are six: quadruped, avian, flyer, serpent, insectoid and squat. Each names its builders, its sockets and the part tags each socket allows. A quadruped's tail can be a brush, a bob, a squirrel's or a dormouse's; its feet are paws or hooves. Each template also lists tags that can't go together, such as horns with antlers or tusks with antlers. <code>genomeProblems</code> rejects a record that breaks these rules.</p>
+
+<p>The quadruped also carries <strong>size curves</strong>. Every per-level constant that had been written into the builder became four numbers, baby to legend, each multiplying the species' own proportion. A baby's head is 1.75 times the norm and its legs 0.55. A legend's body is 1.14 times as long, with a deeper chest and a head no bigger than its adult's. {#86} tuned them so "babies [are] chunkier, legends grander", so a legend reads as tall and grand rather than as a big cute version.</p>
+
+<!--gallery group=size-curves-->
+
+<h3>Masks and palette rows</h3>
+
+<p>Stage 2 pulled colour out of the shapes. <code>bakeMask</code> records which <em>material</em> each pixel is (body, belly, eye, horn, magic…) and whether it's an outline. A <strong>palette row</strong> gives each material its colour, then its outline colour. <code>paintPixels</code> on the CPU and <code>PALETTE_GLSL</code> on the GPU colour a mask from a row. The check proves that every species, at every level and facing, painted from its own row is exactly its normal bake. Once that held, a new coat cost a palette row rather than a redraw.</p>
+
+<!--figure media/art/genome-palettes.webp-->
+
+<h3>The silhouette check</h3>
+
+<p>Stage 3 added a test for whether you can tell the species apart by shape alone, at the size you see them. <code>art/genome/silhouette.js</code> shrinks each species' young and adult to a 24-pixel square and compares every pair by how little they overlap. Two closer than 0.15 fail the build. The check caught a real clash on its first run: as adults the dormouse and the squirrel were only 0.10 apart, because they shared a tail and a body. The dormouse got its own long, low tail curling up at the tip, and every pair has stayed at least 0.157 apart since.</p>
+
+<!--figure media/art/silhouettes-adult.webp-->
+
+<p>Here is the whole pipeline as it stands in the code, from a record to what the game draws:</p>
+
+<div class="diagram"><svg viewBox="0 0 900 560" role="img" aria-label="The creature pipeline: a genome record goes through speciesOf and its template to a builder that makes a 3D model, which is ray-marched into a sprite of materials and normals, given surface texture, then either baked to albedo and normal maps with the stylise pass or baked to a material mask with a palette row, and finally packed into sprite atlases or rig pieces for the live rig.">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9a93b4"/></marker></defs>
+  <rect x="0" y="0" width="900" height="560" fill="#120f22"/>
+  <!-- row 1 -->
+  <rect x="20" y="24" width="195" height="118" rx="4" fill="#181330" stroke="#f2c46a"/>
+  <text x="32" y="46" fill="#f2c46a" font-size="14">1 Genome record</text>
+  <text x="32" y="66" fill="#9a93b4" font-size="12">genome/species.js</text>
+  <text x="32" y="86" fill="#e8e2f4" font-size="12">template, builder, palette</text>
+  <text x="32" y="102" fill="#e8e2f4" font-size="12">body, head, parts, coat</text>
+  <text x="32" y="118" fill="#e8e2f4" font-size="12">texture, face, levels 0–3</text>
+
+  <rect x="240" y="24" width="195" height="118" rx="4" fill="#181330" stroke="#3a2f5c"/>
+  <text x="252" y="46" fill="#e8e2f4" font-size="14">2 speciesOf + template</text>
+  <text x="252" y="66" fill="#9a93b4" font-size="12">genome/index.js, templates.js</text>
+  <text x="252" y="86" fill="#e8e2f4" font-size="12">size curves (baby…legend)</text>
+  <text x="252" y="102" fill="#e8e2f4" font-size="12">sockets, exclusions, gait</text>
+  <text x="252" y="118" fill="#e8e2f4" font-size="12">per-level overrides</text>
+
+  <rect x="460" y="24" width="195" height="118" rx="4" fill="#181330" stroke="#3a2f5c"/>
+  <text x="472" y="46" fill="#e8e2f4" font-size="14">3 Builder → 3D model</text>
+  <text x="472" y="66" fill="#9a93b4" font-size="12">creatures3d.js: quad3d…</text>
+  <text x="472" y="86" fill="#e8e2f4" font-size="12">ellipsoids, cones, planes</text>
+  <text x="472" y="102" fill="#e8e2f4" font-size="12">evolve3d: manes, wisps…</text>
+  <text x="472" y="118" fill="#e8e2f4" font-size="12">gear, face (expressions)</text>
+
+  <rect x="680" y="24" width="200" height="118" rx="4" fill="#181330" stroke="#3a2f5c"/>
+  <text x="692" y="46" fill="#e8e2f4" font-size="14">4 One ray per pixel</text>
+  <text x="692" y="66" fill="#9a93b4" font-size="12">model3d.js render</text>
+  <text x="692" y="86" fill="#e8e2f4" font-size="12">turned 35°, seen 30° down</text>
+  <text x="692" y="102" fill="#e8e2f4" font-size="12">smooth union by group</text>
+  <text x="692" y="118" fill="#e8e2f4" font-size="12">→ material + normal a pixel</text>
+
+  <line x1="215" y1="83" x2="238" y2="83" stroke="#9a93b4" marker-end="url(#ah)"/>
+  <line x1="435" y1="83" x2="458" y2="83" stroke="#9a93b4" marker-end="url(#ah)"/>
+  <line x1="655" y1="83" x2="678" y2="83" stroke="#9a93b4" marker-end="url(#ah)"/>
+  <path d="M780,142 L780,170 L117,170 L117,194" fill="none" stroke="#9a93b4" marker-end="url(#ah)"/>
+
+  <!-- row 2 -->
+  <rect x="20" y="196" width="195" height="118" rx="4" fill="#181330" stroke="#3a2f5c"/>
+  <text x="32" y="218" fill="#e8e2f4" font-size="14">5 Surface texture</text>
+  <text x="32" y="238" fill="#9a93b4" font-size="12">genome/texture.js</text>
+  <text x="32" y="258" fill="#e8e2f4" font-size="12">fur, feathers, scales…</text>
+  <text x="32" y="274" fill="#e8e2f4" font-size="12">cells share one normal</text>
+  <text x="32" y="290" fill="#e8e2f4" font-size="12">seams, lumps; finer by level</text>
+
+  <rect x="260" y="196" width="290" height="118" rx="4" fill="#181330" stroke="#d9789e"/>
+  <text x="272" y="218" fill="#d9789e" font-size="14">6a bake (what the game uses)</text>
+  <text x="272" y="238" fill="#9a93b4" font-size="12">core.js bake + stylise.js</text>
+  <text x="272" y="258" fill="#e8e2f4" font-size="12">colours from speciesColours</text>
+  <text x="272" y="274" fill="#e8e2f4" font-size="12">→ albedo + normal maps (and mirrored)</text>
+  <text x="272" y="290" fill="#e8e2f4" font-size="12">bold/ref: 3 tones, clusters, outline</text>
+
+  <rect x="580" y="196" width="300" height="118" rx="4" fill="#181330" stroke="#6fd6c8"/>
+  <text x="592" y="218" fill="#6fd6c8" font-size="14">6b material mask + palette row</text>
+  <text x="592" y="238" fill="#9a93b4" font-size="12">genome/palette.js</text>
+  <text x="592" y="258" fill="#e8e2f4" font-size="12">bakeMask: material + outline kind</text>
+  <text x="592" y="274" fill="#e8e2f4" font-size="12">paletteRow: 128 colours a coat</text>
+  <text x="592" y="290" fill="#e8e2f4" font-size="12">painted = bake, pixel for pixel</text>
+
+  <line x1="215" y1="255" x2="258" y2="255" stroke="#9a93b4" marker-end="url(#ah)"/>
+  <path d="M117,314 L117,334 L730,334 L730,316" fill="none" stroke="#9a93b4" stroke-dasharray="4 3" marker-end="url(#ah)"/>
+  <text x="600" y="350" fill="#9a93b4" font-size="12">palette variants, the lab, the check</text>
+
+  <!-- row 3 -->
+  <rect x="20" y="390" width="250" height="140" rx="4" fill="#181330" stroke="#8fcf7a"/>
+  <text x="32" y="412" fill="#8fcf7a" font-size="14">7a Whole frames</text>
+  <text x="32" y="432" fill="#9a93b4" font-size="12">critter() → render/artBuild.ts</text>
+  <text x="32" y="452" fill="#e8e2f4" font-size="12">level × frame × facing × gear</text>
+  <text x="32" y="468" fill="#e8e2f4" font-size="12">woken, faces, naps</text>
+  <text x="32" y="484" fill="#e8e2f4" font-size="12">into the sprite atlas</text>
+  <text x="32" y="512" fill="#9a93b4" font-size="12">unrigged kinds; small or far ones</text>
+
+  <rect x="300" y="390" width="270" height="140" rx="4" fill="#181330" stroke="#8fcf7a"/>
+  <text x="312" y="412" fill="#8fcf7a" font-size="14">7b Rig pieces</text>
+  <text x="312" y="432" fill="#9a93b4" font-size="12">genome/parts.js rigParts</text>
+  <text x="312" y="452" fill="#e8e2f4" font-size="12">torso, head, tail at 5 headings</text>
+  <text x="312" y="468" fill="#e8e2f4" font-size="12">(3 more mirrored), with pivots</text>
+  <text x="312" y="484" fill="#e8e2f4" font-size="12">discs for legs and snake bodies</text>
+  <text x="312" y="512" fill="#9a93b4" font-size="12">one atlas page per species+level</text>
+
+  <rect x="600" y="390" width="280" height="140" rx="4" fill="#181330" stroke="#3a2f5c"/>
+  <text x="612" y="412" fill="#e8e2f4" font-size="14">8 The live rig, each frame</text>
+  <text x="612" y="432" fill="#9a93b4" font-size="12">render/rig/rig.ts</text>
+  <text x="612" y="452" fill="#e8e2f4" font-size="12">two-bone IK legs on a trot</text>
+  <text x="612" y="468" fill="#e8e2f4" font-size="12">serpent follow-the-leader</text>
+  <text x="612" y="484" fill="#e8e2f4" font-size="12">lean, crouch, stretch, tuck</text>
+  <text x="612" y="512" fill="#9a93b4" font-size="12">pages keyed by genomeHash</text>
+
+  <path d="M405,314 L405,372 L145,372 L145,388" fill="none" stroke="#9a93b4" marker-end="url(#ah)"/>
+  <line x1="435" y1="372" x2="435" y2="388" stroke="#9a93b4" marker-end="url(#ah)"/>
+  <line x1="570" y1="460" x2="598" y2="460" stroke="#9a93b4" marker-end="url(#ah)"/>
+  <text x="20" y="552" fill="#9a93b4" font-size="12">Checked along the way: genomeProblems (sockets), the size steps, the silhouette check (24 px, 0.15 apart), mask = bake.</text>
+</svg></div>
+
+<p>One thing the diagram shows that's easy to miss: the material-mask path is a proven twin of the normal bake, not a replacement. The game bakes creatures with <code>bake</code>, which writes an albedo image and normal maps (one for each facing). The mask and palette row are what make cheap recolouring possible, and the check keeps the two identical.</p>
+
+<h2>Faces and fur</h2>
+
+<p>Ed wanted expressions to belong to the creature rather than sit on top of it: "The eyebrows should be with the creature generator." {#110} gave every species four faces at every level: neutral; angry (brows down over narrowed eyes, red when a wave has woken it); happy (eyes closed up into smiling arcs, for party animals and friendly areas); and dazed (crossed-out or odd eyes, worried brows, while stunned). The face is built in 3D from the head and eye positions every builder already records, so a new species gets its expressions free. Strokes are also sized in pixels, so a baby beetle's scowl reads as well as an elk's.</p>
+
+<!--figure media/art/faces-closeup.webp-->
+
+<p>Fur came next, from issue #119, Ed's roadmap for the generators, where he put "best artwork over speed". A big creature had read as a smooth ball with contour lines. <code>art/genome/texture.js</code> gathers a coat's pixels into small cells shaped by its kind: strokes running back and down for fur, scallops for feathers, a diamond lattice for scales, segments for plates, bands round a whorl for a shell, long spines for bristles. Every pixel in a cell shares one normal, so the game's stepped light breaks along tufts instead of smooth rings. A baby's cells are coarse and soft and a legend's fine and rich.</p>
+
+<h2>Evolution, not enlargement</h2>
+
+<p>By the afternoon of 5 October the creatures had the right shapes and sizes, but an adult was still a bigger young. Ed asked for more:</p>
+
+<blockquote>I would emphasise the exaggerated silhouettes and the evolved design per stage (not just being larger) - the creatures, especially adult and legendary, can be quite fantastic with lots of details; not just 'large versions of the creature'.<cite>Ed, 2026-10-05, on #119</cite></blockquote>
+
+<p>The answer was the <strong>evolution kit</strong> {#139}. A genome's <code>levels</code> holds four records, baby to legend. Each can override the species' proportions and add <em>features</em>, which <code>evolve3d</code> draws onto the right part of the model: <code>mane</code> (tapered spikes along the back), <code>wisps</code> (flames off tusks, horns or spine), <code>stones</code> (standing stones with moonlit runes), <code>claws</code>, <code>moss</code>, <code>tails</code> (a kitsune's fan of brushes), <code>ruff</code>, <code>brambles</code> and <code>eyeglint</code>, plus a twisted-horn part with a ram's curl. The art director wrote a brief for each species' four levels in <code>docs/art-guide/EVOLUTIONS.md</code>, and the builders followed them overnight.</p>
+
+<p>The boar was the pilot. The target was a reference Ed shared of "three evolutions of a boar". The art guide describes it only in words: a round piglet with a few dark bands; a stocky adult with a shoulder hump and big curved tusks; and a top-heavy legend, head down as if about to charge, with enormous tusks curling past its head and pale flame-like wisps rising from their tips.</p>
+
+<!--figure media/art/boar-evolution-bold-px4.webp-->
+
+<p>Then, between midnight and half past one on 6 October, the rest followed one after another. The badger {#163} goes from a cub that's all face (its blaze 1.6 times oversized) to "the moor's walking stones". The snail {#167} goes from a near-clear shell to a tower the forest built on its back. The fox {#170} gains a ruff and a second tail as an adult, and becomes a kitsune legend with seven tails rooted along its rump, sweeping up together like flames with fox-fire at their tips. The ram, woodlouse, wolf and owl followed ({#174}, {#175}, {#178}, {#179}). Some first tries failed and went into the art guide's table of failures: kitsune tails splayed evenly from one root read as spokes, and in a neat fan as fingers.</p>
+
+<!--figure media/art/badger-evolution-bold-px4.webp-->
+<!--figure media/art/fox-evolution-bold-px4.webp-->
+<!--figure media/art/owl-evolution-bold-px4.webp-->
+<!--gallery group=evolutions-->
+
+<h2>The live rig</h2>
+
+<p>Baked frames are cheap but stiff: a creature walking in two frames can't lean into a turn. Stages 4 and 5 of #79 {#102} added the <strong>live rig</strong>. <code>rigParts</code> bakes a creature as pieces rather than whole frames. A four-legged animal is a torso, a head and a tail, each at five headings (the other three mirrored), each with its joint's pivot. Legs and snake bodies are chains of discs. The art workers bake one atlas page per species and level, keyed by the genome's hash. Each frame, <code>src/render/rig/rig.ts</code> puts the pieces together. The legs are two-bone chains stepping on a trot, a snake follows its head, and the body leans into acceleration, crouches before a charge, stretches in it and tucks its legs in a leap.</p>
+
+<p>Ed asked for it live, and {#113} turned it on by default the same afternoon. Legends are rigged at any size. Party animals and enraged ones are rigged too, with their gear or their red eyes baked onto the head piece. Anything drawn smaller than 40 art pixels keeps its baked frames. That evening the party animals got little shoes {#149}: trainers, glitter, platforms, heels, boots and light-ups, fitted to hoof, paw or claw, stepping with each leg.</p>
+
+<!--gallery group=live-rig-->
+<!--gallery group=smooth-legs-->
+
+<h2>Growing the trees</h2>
+
+<p>The trees went through the same change from code to data, in step with the creatures. On 3 October Ed noted that "the forest feels like it only has a few kinds of tree … mostly stick to UK kinds of trees", and {#22} added fifteen UK species, from oak and beech to Scots pine, yew and larch, with each wooded area naming a main kind.</p>
+
+<p>On 5 October the flora work landed as four stacked PRs:</p>
+
+<ul>
+  <li><b>Plant genomes</b> {#81}: every tree and bush became a record in <code>art/flora/genomes.js</code>. A fingerprint script hashed 736 drawings before and after, and all 736 matched.</li>
+  <li><b>The genome generator</b> {#85}, <code>art/flora/blob.js</code>: a tree grown from its record alone. Its wood is levels of branches in the Weber–Penn style: a trunk, then each level's children along their parent, sized by the crown's shape (cone, sphere, flame, even or cup). Its crown is 3 to 9 lit <em>blobs</em> at the branch tips, each filled with <em>leaf stamps</em>, little clusters of pixels with a lit and a dark edge, the whole blob lit in three tones from the upper left. Ten new species came with it, three of them fantasy: the glowcap (a mushroom tree with glowing gills), the crystal-leaf tree and the vinewood.</li>
+  <li><b>The pixel wind</b> {#88}: see below.</li>
+  <li><b>Area flora</b> {#95}: each of the 26 wooded areas grows 3 to 6 species in its own palette, main kind first. Fantasy trees grow only as a minority where magic suits: glowcap in the hazel fairy rings, vinewood in the lost garden and holly thicket, crystal-leaf at the cave mouth.</li>
+</ul>
+
+<!--figure media/art/flora-new-species.webp-->
+
+<div class="diagram"><svg viewBox="0 0 900 190" role="img" aria-label="The blob tree generator: a plant genome grows a trunk, then levels of branches, then 3 to 9 blobs at the branch tips filled with leaf stamps lit in three tones; each blob becomes a region in the sway mask with its own phase and stiffness, and the shader shifts each region by whole pixels in the wind.">
+  <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9a93b4"/></marker></defs>
+  <rect x="0" y="0" width="900" height="190" fill="#120f22"/>
+  <rect x="16" y="24" width="155" height="120" rx="4" fill="#181330" stroke="#f2c46a"/>
+  <text x="28" y="46" fill="#f2c46a" font-size="14">Plant genome</text>
+  <text x="28" y="66" fill="#9a93b4" font-size="12">flora/genomes.js</text>
+  <text x="28" y="88" fill="#e8e2f4" font-size="12">form, colours,</text>
+  <text x="28" y="104" fill="#e8e2f4" font-size="12">life below crown,</text>
+  <text x="28" y="120" fill="#e8e2f4" font-size="12">height classes</text>
+  <rect x="193" y="24" width="155" height="120" rx="4" fill="#181330" stroke="#3a2f5c"/>
+  <text x="205" y="46" fill="#e8e2f4" font-size="14">Branches</text>
+  <text x="205" y="66" fill="#9a93b4" font-size="12">Weber–Penn levels</text>
+  <text x="205" y="88" fill="#e8e2f4" font-size="12">trunk, then children:</text>
+  <text x="205" y="104" fill="#e8e2f4" font-size="12">count, place, length</text>
+  <text x="205" y="120" fill="#e8e2f4" font-size="12">by crown shape, angle</text>
+  <rect x="370" y="24" width="155" height="120" rx="4" fill="#181330" stroke="#8fcf7a"/>
+  <text x="382" y="46" fill="#8fcf7a" font-size="14">3–9 blobs</text>
+  <text x="382" y="66" fill="#9a93b4" font-size="12">at tips, or an envelope</text>
+  <text x="382" y="88" fill="#e8e2f4" font-size="12">tiers, cone, column,</text>
+  <text x="382" y="104" fill="#e8e2f4" font-size="12">dome; curtains, fronds</text>
+  <text x="382" y="120" fill="#e8e2f4" font-size="12">back blobs a tone darker</text>
+  <rect x="547" y="24" width="155" height="120" rx="4" fill="#181330" stroke="#8fcf7a"/>
+  <text x="559" y="46" fill="#8fcf7a" font-size="14">Leaf stamps</text>
+  <text x="559" y="66" fill="#9a93b4" font-size="12">leaf, round, needle,</text>
+  <text x="559" y="82" fill="#9a93b4" font-size="12">crystal</text>
+  <text x="559" y="104" fill="#e8e2f4" font-size="12">each blob lit as one</text>
+  <text x="559" y="120" fill="#e8e2f4" font-size="12">shape, 3 tones</text>
+  <rect x="724" y="24" width="160" height="120" rx="4" fill="#181330" stroke="#6fd6c8"/>
+  <text x="736" y="46" fill="#6fd6c8" font-size="14">Pixel wind</text>
+  <text x="736" y="66" fill="#9a93b4" font-size="12">sway mask's green</text>
+  <text x="736" y="88" fill="#e8e2f4" font-size="12">a blob = a region:</text>
+  <text x="736" y="104" fill="#e8e2f4" font-size="12">phase (3 bits) and</text>
+  <text x="736" y="120" fill="#e8e2f4" font-size="12">stiffness (5 bits)</text>
+  <line x1="171" y1="84" x2="191" y2="84" stroke="#9a93b4" marker-end="url(#ah2)"/>
+  <line x1="348" y1="84" x2="368" y2="84" stroke="#9a93b4" marker-end="url(#ah2)"/>
+  <line x1="525" y1="84" x2="545" y2="84" stroke="#9a93b4" marker-end="url(#ah2)"/>
+  <line x1="702" y1="84" x2="722" y2="84" stroke="#9a93b4" marker-end="url(#ah2)"/>
+  <text x="16" y="174" fill="#9a93b4" font-size="12">In the shader each region shifts whole by 0, 1 or 2 art pixels, never a fraction; trunk feet stay still.</text>
+</svg></div>
+
+<h3>The pixel wind</h3>
+
+<p>Trees had swayed since 4 October {#34}, through <em>sway masks</em>: a grey map the size of the sprite, still at the trunk and moving most at the leafy tips. But a smooth per-pixel slide smears pixel art. {#88} made each region of a sprite move <em>whole</em>: one of the generator's blobs, a vine, or, for older art, a cell of about 10 by 8 pixels. The mask's green channel carries each region's phase and stiffness, and the game's sprite shader shifts the region by 0, 1 or 2 whole art pixels, out of step with its neighbours.</p>
+
+<!--figure media/art/flora-wind.webp-->
+
+<h3>Everything onto blobs</h3>
+
+<p>On 5 October {#128} moved the twelve trees that still had their own one-off generators (spruce, willow, birch, tree fern, field maple, alder, pine, yew, holly, weeping birch, larch and the gnarled broadleaf) onto the blob generator, then deleted the old code. To keep each species' character, the blob generator learned to fill crowns through an envelope: a spruce's drooping tiers each with a dark underside, a holly's cone, an alder's column, a yew's dome. The art guide had already recorded why the envelope mattered: an earlier blob holly, with blobs only at its branch tips, came out as topiary.</p>
+
+<!--gallery group=blob-trees-->
+
+<p>Only the nine broadleaf species (oak, beech, ash and six more) kept their own generator. {#155} rebuilt their leaf clumps from the same leaf stamps, along with every tree's life below the crown (ivy, moss, sprigs, low boughs), which is there so that ground mode isn't a forest of bare poles. The bold style then turned their 20 to 40 small clumps into camouflage, so the art director chose option A, and {#159} lit each broadleaf crown as one shape: cream on its top left, shaded to the lower right, its tones clustered.</p>
+
+<!--gallery group=broadleaf-->
+<!--gallery group=bold-crowns-->
+
+<h2>Areas as recipes</h2>
+
+<p>An <strong>area type</strong> started as Ed's table of 30, each with a floor, wall objects, small objects, big objects, a set piece and a creature. On the first evening {#11} gave each one a <em>layout</em>: a pattern (scatter, groves, rows, rings, thicket, lone, stands or edge-only), density, clumping, glades, a height mix, lean, terrain, decorations and a one-line feel. {#156} grew each area's floor from a <em>ground genome</em> in the same stamp language as the plants: 20 floor kinds, each with its own tones, patches and scatter, in several variants so the tile stops visibly repeating.</p>
+
+<!--figure media/art/ground-variants.webp-->
+
+<p>Then {#161} made a whole area type writable as one object of data, an <strong>area recipe</strong> in <code>art/recipes/</code>. The proofs followed. <strong>The fen</strong> {#183} became a 31st area type with its creature, <strong>the newt</strong>, a new species written as data on the existing four-legged builder. No new code draws or runs either. <strong>The heronry</strong> and <strong>the heron</strong> {#222} were the second, on a new heron builder with slender stilt legs {#271}.</p>
+
+<!--figure media/art/fen-area.webp-->
+<!--figure media/art/newt.webp-->
+<!--gallery group=heron-->
+
+<h2>Props and set pieces from seeds</h2>
+
+<p>The art director's review of the first art pass found props that didn't read. The moor's standing stones looked like beige pine cones, its cairns like haystacks, one pool sprite was repeated everywhere, and a broken trunk looked like a stump with a stick laid beside it. The <strong>prop generator</strong> {#142} was the answer. <code>art/props/genomes.js</code> gives each kind its ranges in metres, its weighted choices and its colours, and <code>propPiece(kind, { seed })</code> builds a variant in 3D at the witch's scale. A standing stone became a plain grey slab, 3.4 to 5 m tall, leaning, its top slanted, rounded, notched or snapped off. Fallen logs, mushroom rings and stone circles followed {#180}, then boulders and mounds {#201}, then the party's bunting, balloons and lanterns {#191}, bridges {#207} and fingerposts {#214}.</p>
+
+<!--gallery group=prop-generator-->
+
+<p>For a new area to have a landmark of its own, art builder 1 asked for generated set pieces. {#204} added four kinds, punts, jetties, rings and heaps, each 6 to 12 m across, taking its mud and moss from the area's own ground. The fen's sunken punt and the heronry's jetty are both grown this way. On the morning of 6 October {#221} put the prop generator on by default, labelled "DECISION FOR ED" for his OK; <code>?props=hand</code> still brings the hand-made props back for comparison.</p>
+
+<!--figure media/art/props-set-pieces.webp-->
+<!--figure media/art/props-bridges.webp-->
+
+<h2>The witch genome</h2>
+
+<p>Ed's backlog note on #79 was "As part of the procedural animal generation, we could consider procedural witch generation. Different size hat, broom, cloak, accessories." {#98} made the witch a genome in <code>art/witchGenome.js</code>: her hat (shape, crown height, brim, lean, band), hair, top, cloak, broom (bristle kind, handle length and bend), accessories and a palette per part. <code>WITCH_GENOME</code> is our witch and draws her exactly. <code>witchGenome(seed)</code> makes a new witch within limits that keep her a witch: always a pointed hat with a glowing band broad enough to show, always a broom, and a palette worked from one base hue so the dark hat lets the band shine.</p>
+
+<p>Ed's answers came back quickly: "the generated witches replace the party witches' outfits", "Bigger brims. Longer cloaks." and "Accessories both witchy and modern." {#123} made every party witch a generated witch, with brims up to 1.9 times hers and cloaks up to 1.75 times. For the character creator Ed asked for "the option to have no hat, and some different hats; top hat, cowboy hat, chinese farmer hat, deely boppers, party hat, musketeer hat - be creative": {#134} widened the sliders and art builder 3 drew the hats, a crown and a traffic cone among them. On 6 October Ed asked for "some different kinds of broom; a missile, a curled tip, handlebars, hobby horse, jet bike, oar, mop, pitchfork, canoe, wicker basket, ladder, speeder bike, bicycle, quad drone", later adding a gyrocopter and dropping the basket. {#288} drew all fourteen in every flight pose, with flames that glow and rotors and wheels that turn.</p>
+
+<!--gallery group=witches-->
+<!--figure media/art/brooms-flying.webp-->
+<!--figure media/art/longwear-sheet.webp-->
+
+<h2>The stylise pass</h2>
+
+<p>The generators settled the shapes. The stylise pass settles the pixels. Ed's main art note on 5 October was "everything should look a bit more pixel-art stylised" (about the legends, "the more pixellated version is better"). A role arrived to answer it: the <strong>art director</strong>, a builder session that reviews the whole picture rather than one asset. It started the living style guide, <code>docs/ART-GUIDE.md</code> {#120}, which every builder reads before an art batch.</p>
+
+<p>{#121} turned "more pixel-art" into a <strong>stylisation ladder</strong>: the same set of creatures, trees and props drawn at each rung.</p>
+
+<table>
+  <tr><th>Rung</th><th>What changes</th></tr>
+  <tr><td>0 Now</td><td>3 value bands with a checker dither where bands meet; a dark outline</td></tr>
+  <tr><td>1 Clean</td><td>The same bands, no dither, lone pixels merged</td></tr>
+  <tr><td>2 Stylised</td><td>3 hue-shifted tones per material and a selective outline</td></tr>
+  <tr><td>3 Bold</td><td>Rung 2 with tones grouped into clusters, not noise</td></tr>
+  <tr><td>4 / 5</td><td>Rung 3 at art pixel 4 or 5</td></tr>
+  <tr><td>6 Reference</td><td>Ed's boar reference: one tone family, cream light as a big shape, red-brown shadow, strong near-black outline with interior lines</td></tr>
+</table>
+
+<p>Ed's answer: "4 or 5, but we will decide in playtesting", then "6 is also good". {#127} put both looks into the real game as switches: <code>?style=bold|ref</code> and <code>?px=3|4|5</code>. <code>art/stylise.js</code> runs inside <code>bake</code> on every sprite: trees, tufts, props, creatures, legends, witches and the ground. It takes the light from the sprite's own normals and turns it into three tones per material. Shadows lean blue-violet or red-brown, deeper and more saturated; lights lean cream. It then groups the tones into clusters, merges lone pixels, draws the outline inside the sprite's own size, and flattens the normals, so the game's coloured lights tint the sprite without banding it a second time. Bushes {#147} and tufts {#150} learned to draw in fewer, bolder stamps.</p>
+
+<!--figure media/art/tufts-stamp.webp-->
+
+<p>On 6 October {#253} made bold the default:</p>
+
+<blockquote>I think I prefer bold style, but it's actually quite hard to tell them apart in practice.<cite>Ed, 2026-10-06, on #253</cite></blockquote>
+
+<p>Ed had settled the pixel size on day one ("bigger pixels, babies can be small"): one art pixel of 3 screen pixels for everything, still the default; 4 and 5 are a link parameter away. The rule underneath held throughout: every asset is drawn at the same art pixel and shown at a whole multiple, never resampled, and that held down to small things. {#330} redrew the spinning 💌s and the ley line in whole art pixels instead of rotating them smoothly.</p>
+
+<h2>Lighting the night</h2>
+
+<p>The art builders worked on the night in two halves: lighting it, then making it readable. Much of it was art builder 3's, worked from the art director's overnight review loop {#177}. That loop took the same screenshot set every round (seed 123, the creator room, home, four areas on the ground and from the treetops, a fight), critiqued the whole picture and sent briefs to the builders. It started from Ed's brief: "Look at lighting in different scenes and try and make it a spooky dark forest with a party in it."</p>
+
+<ol class="timeline">
+  <li><time>2026-10-06 01:32</time> <b>A cold dark wood</b> {#184}: blue-green shadows, a colder moon, violet fog from 60 m and a grade draining the darks toward cold blue, so the party is the warm light you fly towards.</li>
+  <li><time>01:46</time> <b>The party's warm pools</b> {#189}: soundsystems in amber, pink and gold instead of cyan and violet, and more lanterns lit.</li>
+  <li><time>02:03</time> <b>Each area its own mood</b> {#195}: misty teal over the bog, violet-grey in the dead woods, rosy in the garden, eased as she flies.</li>
+  <li><time>02:35</time> <b>A moonlight rim</b> {#199}: a one-pixel blue-violet edge on every character, so the witch and the animals read against the dark.</li>
+  <li><time>03:52</time> <b>Moon on the treetops</b> {#208}: the moon's fill on anything facing up. Measured from the treetops over the moor, the middle band's mean value went from 0.05 to 0.11.</li>
+  <li><time>06:14</time> <b>A paler fill</b> {#220}: a pale green-cyan fill so each floor keeps its hue, no checker-dither "screen door", and the witch lit in the bold style. Her own light pool turned amber instead of lime ({#217}, {#260}).</li>
+  <li><time>09:05</time> <b>Smoke</b> {#236}, for Ed's "Fires should produce puffs of smoke that rise high into the sky before dissipating"</li>
+  <li><time>10:02</time> <b>One moon</b> {#252}: the sky, the moonlight and the dancefloor's twilight tiles share one moon, with phases, a way across the sky and now and then a red, blue or gold moon.</li>
+  <li><time>10:34</time> <b>Ponds that read as water</b> {#257}: a moonlit rim, a sheen of sky, a muddy lip and glints. Then the legend circles' rim kit {#262}, where weighted dealing replaced random picks so wooded rims stopped being all stones.</li>
+  <li><time>15:49</time> <b>Slowed time's look</b> {#307}: inside a legend's circle the world outside greys, cools and hangs, and a 💌 that leaves it sparkles out.</li>
+  <li><time>20:11</time> <b>Legends you can find</b> {#334}, for Ed's "Legends in the circle are not very distinct": the sleeping form outlined in its sigil's neon, a light floor, a soft glow on the ground.</li>
+  <li><time>23:33</time> <b>Nothing past the bend</b> {#358}, for Ed's "I shouldn't see anything on the ground that's obscured when it goes past the bend": the farthest overlays no longer fold back down past the horizon.</li>
+</ol>
+<div class="gallery"><!--figure media/art/legends-seen-salamander-same-moment.webp--><!--figure media/art/bend-hides-letters-past-horizon.webp--></div>
+
+<!--gallery group=spooky-lighting-->
+<!--gallery group=moon-treetops-->
+<!--figure media/timeline/slowtime-enter-leave.webp-->
+<!--figure media/timeline/legends-seen-asleep-before-after.webp-->
+
+<p>The legend work was still going as this was written. {#363}, opened in the small hours of 7 October, draws a sleeping legend as the animal itself asleep, using the nap art, at the scene's own pixel size and with stepped light.</p>
+
+<h2>Tilt-shift, and seeing her under the trees</h2>
+
+<p>The tilt-shift was in from the first prototype. DESIGN.md records it: the view is blurred towards the top and bottom of the screen "so the forest looks like a miniature (Ed, 2026-10-03)", citing Octopath Traveler as proof that tilt-shift and pixel art can mix. On the first day the builders offered the blur before or after the pixel upscale and recommended before, so every pixel stays square; the game still blurs before.</p>
+
+<!--gallery group=tilt-shift-->
+
+<p>It kept being tuned. Ed asked to "Lessen the tilt-shift effect until you can see the stars", then corrected it: "The stars don't have to be crisp, just perceptible." {#249} gave the sky only 0.3 of the blur. In round 14 Ed noticed "Invitations are not affected by the tilt shift", because the 💌s, hearts and bubbles are HTML laid over the canvas. {#325} blurs each one by its height on screen. Finally Ed asked to "reduce the intensity of the tilt-shift effect", and {#349} halved it (1.5 pixels on the ground, 3 from the treetops) and widened the sharp band.</p>
+
+<!--figure media/art/lighting-tilt-treetop-before-after.webp-->
+<!--figure media/art/overlay-tilt-before-after.webp-->
+<!--figure media/art/tilt-shift-1-ground-before-after.webp-->
+
+<p>The canopy cut-out, the hole opened in the treetops so you can see her on the ground, took four goes. First Ed saw "concentric circles while moving through dense forests in ground mode" {#258}: every crown carried the same circular fade, and in a thick canopy the fades lined up into rings. Fading each crown by its middle fixed that, until round 14: "canopy cut-out circle is still very sharp" {#326}, answered by a soft, wide, wobbling fade. Then came Ed's screenshot captioned "circle". {#357} fades each crown and its trunk as one, with a ragged outline of bays and points that drifts slowly round her, so nothing is sliced along an arc.</p>
+
+<!--gallery group=soft-reveal-->
+<!--figure media/art/soft-cutout-before-after.webp-->
+<!--figure media/art/canopy-hole-before-after-close.webp-->
+
+<h2>What keeps it honest</h2>
+
+<p>Because everything is generated, everything can be tested. The art check (<code>node art/check.mjs</code>) grew into one of the longest paragraphs in the project's builders' handbook: size steps, silhouettes 0.15 apart, masks equal to their bakes, every tree matching its fingerprint, trunk feet still in the wind, expressions that differ from neutral, only magical materials glowing, no lone flecks on the witch, every party shoe on a hoof, a paw and a claw.</p>
+
+<p>Next to the check sits <code>tools/genome/compare.mjs</code>, which draws every creature sprite against an old checkout of the art. That made the big refactors safe. "No change in the art" was a number, 1,560 of 1,560 or 736 of 736, not a promise.</p>
+
+<p>The art guide's own summary of Ed's direction explains why the effort went into tools: everything will eventually come from generators, aiming at 100 or more area types, so "we should make good and flexible tools now, and learn as much as we can about what looks good."</p>
+
+<h2>More pictures</h2>
+<!--gallery chapter=art rest-->
