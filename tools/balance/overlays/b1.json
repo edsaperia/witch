@@ -1,0 +1,51 @@
+{
+ "tuning": {
+  "boot": {
+   "time": 30
+  },
+  "party": {
+   "interval": 180
+  },
+  "legends": {
+   "questFar": 0
+  },
+  "clear": {
+   "on": true,
+   "populate": [
+    [
+     1,
+     0.167,
+     0.167,
+     0.167
+    ],
+    [
+     40,
+     6.67,
+     6.67,
+     6.67
+    ]
+   ],
+   "soundHealth": [
+    [
+     1,
+     1
+    ]
+   ],
+   "questAhead": [
+    2,
+    12
+   ]
+  }
+ },
+ "botOptions": {
+  "skilled": {
+   "clear": true
+  },
+  "champion": {
+   "clear": true
+  },
+  "top": {
+   "clear": true
+  }
+ }
+}
