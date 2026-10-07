@@ -232,6 +232,10 @@ export class View {
   /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
   alarms = newAlarms();
   alarmCues: AlarmIndicators | null = null;
+  /** Pointers to the last few wild animals holding the area she's in (render/view/hud.ts; rules/clear.ts wildLeft), and that
+   *  list, looked up four times a second. */
+  wildPointers: StoneIndicator[] = [];
+  wildLeftList: { at: number; list: Creature[] } = { at: -Infinity, list: [] };
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);

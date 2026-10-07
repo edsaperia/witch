@@ -2,10 +2,10 @@
 // only celebrate at a stone that already plays; every area is peopled from the start by its place on the route, and
 // nothing grows on a clock.
 import { describe, expect, it } from "vitest";
-import { loseSoundsystem, newGame, stepGame, type Controls, type Game } from "./game";
+import { affectionOf, loseSoundsystem, newGame, stepGame, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { cellKey, routeOf } from "./party";
-import { clearedAreas, holdsArea } from "./clear";
+import { clearCue, clearableAt, clearedAreas, holdsArea, wildLeft } from "./clear";
 import { countScale, routeIndex, routePopulation, threatAt, type ByRoute } from "./growth";
 import { levelValue } from "./power";
 import { spawnCreatures } from "./creatures";
@@ -146,5 +146,45 @@ describe("clearing an area transforms its runestone (Ed, 2026-10-07)", () => {
   it("plays the same from the same seed", () => {
     const play = () => { const g = game(7), key = routeOf(g.map).order[3]; empty(g, key); run(g, 1); stepGame(g, { ...still, nextWave: true }, 1 / 60); return [...g.party.areas.keys(), g.party.wave, g.creatures.length, g.combat.sounds.size]; };
     expect(play()).toEqual(play());
+  }, 60000);
+});
+
+describe("what's left to clear (Ed's playtest, 2026-10-07: the HUD's count, and pointers to the last few)", () => {
+  it("lists the area's own still holding it, the area she's in if it can still be cleared, and says so in words", () => {
+    const g = game(), key = routeOf(g.map).order[3], [cx, cy] = key.split(",").map(Number) as [number, number];
+    const left = wildLeft(g.creatures, [cx, cy]);
+    expect(left.length).toBeGreaterThan(0);
+    expect(left.every(c => holdsArea(c) && !c.boss && !c.circle && cellKey(c.cell) === key)).toBe(true);
+    const one = left[0];
+    expect(clearableAt(g.party, g.map, one.x, one.z) === null || cellKey(clearableAt(g.party, g.map, one.x, one.z)!) === cellKey(g.map.cellSafe(one.x, one.z).cell)).toBe(true);
+    const d = g.map.dancefloor;
+    expect(clearableAt(g.party, g.map, d.x, d.z)).toBeNull(); // (home)
+    one.asleep = true;
+    const cue = clearCue(left);
+    expect(cue.n).toBe(left.length); expect(cue.asleep).toBe(1);
+    expect(cue.text).toContain(`${left.length} wild`); expect(cue.text).toContain("1 asleep");
+    expect(clearCue([]).text).toBe("");
+    empty(g, key);
+    expect(wildLeft(g.creatures, [cx, cy])).toEqual([]);
+    run(g, 0.5);
+    expect(g.party.areas.has(key)).toBe(true);
+    const site = g.map.siteOf(cx, cy);
+    if (cellKey(g.map.cellSafe(site.x, site.z).cell) === key) expect(clearableAt(g.party, g.map, site.x, site.z)).toBeNull(); // (cleared: nothing to say)
+  }, 60000);
+
+  it("a sleeper isn't to be invited from the treetops, and holds its area till she lands in it and wakes it (what Ed met)", () => {
+    const g = game(), key = routeOf(g.map).order[4], [cx, cy] = key.split(",").map(Number) as [number, number];
+    const A = affectionOf(g), left = wildLeft(g.creatures, [cx, cy]);
+    const sleeper = left[0];
+    sleeper.asleep = true; sleeper.napUntil = g.clock.time + 999;
+    for (const c of left) if (c !== sleeper) befriend(c, g.clock.time);
+    expect(A.invitable(sleeper)).toBe(false);
+    run(g, 0.5);
+    expect(g.party.areas.has(key), "the sleeper holds it").toBe(false);
+    expect(clearCue(wildLeft(g.creatures, [cx, cy])).text).toContain("1 asleep");
+    // she lands in its area: it wakes (and can be invited)
+    g.witch = { ...g.witch, x: sleeper.x, z: sleeper.z + 3, mode: "ground", lift: 0 };
+    run(g, 2);
+    expect(sleeper.asleep).toBeFalsy();
   }, 60000);
 });
