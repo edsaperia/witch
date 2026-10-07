@@ -56,9 +56,23 @@ export function questsFromPlaced(g: Game, ht: number): void {
     if (L) {
       g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
       if (!g.party.areas.has(cellKey(L.cell))) onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave; after it, the line has moved on already)
+      if (g.friendly.has(cellKey(L.cell))) befriendArea(g, cellKey(L.cell));
       g.byArea = null;
     }
   }
+}
+
+/** A legend's quest done while its area is wild (rules/quest.ts): the area friendly, so every wild creature of it living
+ *  there now leaves her and her party be, as its newcomers will (before, only creatures grown there afterwards were,
+ *  and the rest kept going for her; art builder 3, 2026-10-07). One mid-attack stops and calms: out of its fight, no
+ *  longer enraged, off any siege. Hers (leashed, or parked by her) and the legend are as they were. */
+export function befriendArea(g: Game, key: string): void {
+  for (const c of g.creatures) {
+    if (c.gone || c.leashed || c.boss || c.partyLegend || cellKey(c.cell) !== key) continue;
+    c.friendly = true;
+    c.enraged = false; c.fight = undefined; c.siege = undefined;
+  }
+  g.byArea = null;
 }
 
 /** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, to leash.runePull.stop from her. */
