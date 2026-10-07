@@ -3732,7 +3732,9 @@ function prStanding(m, v) {
   if (broken) { // snapped off: a jagged top, and the piece lying beside it
     for (let i = 0; i < 3; i++) m.box(v3.add(top, at(.02, w * (i - 1) * .6)), [w * .35, w * .35, d * 1.6], M.STONE, { dir: v3.norm(v3.add(up, v3.mul(side, (i - 1) * .8 + .3))), up: [0, 0, 1], cut: true, group: 1 });
     const L = h * .38, s0 = (r() < .5 ? -1 : 1);
-    m.box([s0 * (w + L * .55), d * .9, (r() - .3) * w], [L * .5, d * .95, w * .8], M.STONE, { dir: [s0, .12, (r() - .5) * .5], up: [0, 1, 0], round: d * .6, rough: v.rough, group: 2, paint: q => q[1] > d * 1.4 && cellHash(q, 7, 9) < .35 ? M.MOSS : undefined });
+    // (stood up, sunk at a lean beside it: lying flat, its rounded slab read as a grey disc on the ground; Ed's notes, 2026-10-07)
+    const lean = v3.norm([s0 * (.25 + r() * .2), 1, (r() - .5) * .3]);
+    m.box([s0 * (w + L * .45), L * .38, (r() - .3) * w], [L * .45, d * .95, w * .7], M.STONE, { dir: lean, up: [0, 0, 1], round: d * .3, rough: v.rough, group: 2, paint: q => q[1] < L * .25 && cellHash(q, 7, 9) < .55 ? M.MOSS : undefined });
   }
   for (let i = 0; i < 5 + Math.floor(r() * 4); i++) { const x = (r() - .5) * w * 3, z = d * (1 + r() * 1.5) * (r() < .7 ? 1 : -1); m.seg([x, 0, z], [x + (r() - .5) * .04, .08 + r() * .14, z], .025, .006, r() < .5 ? M.LEAF : M.LEAF2, { group: 3 }); } // grass round its foot
 }
@@ -3922,7 +3924,7 @@ function propFor(kind, o = {}) {
   // big: the stone shrine's tree-equivalents (Ed, 2026-10-06: "the tree equivalents should just be large standing stones, perhaps quite
   // similar to the runestones"): great plain monoliths, taller and broader than any runestone, no sigil, each its own height, width and lean
   if (kind === "standingstone") return ["standingStone", o.big ? { height: [4.8, 7.2], width: [1.2, 2], depth: [.5, .8], lean: [-.12, .12], moss: [.08, .2] } : o.lean ? { lean: o.lean } : {}];
-  if (kind === "cairn") return ["cairn", o.tall ? { height: 2.6, stones: 15, spread: 1.5, size: .38 } : {}]; // the stone shrine's tall cairn stays a tall cone
+  if (kind === "cairn") return o.tall ? null : ["cairn", {}]; // the stone shrine's tall cairn stays the hand-made tall cone (generated, it came out a low sprawl of flat grey slabs: Ed's notes, 2026-10-07)
   if (kind === "water" && !o.stream) return ["pool", { bog: !!o.bog, ...(o.w ? { radius: .6 * o.w } : {}) }];
   if (kind === "boulder") return ["boulder", { ...(o.big ? { size: 1.3 } : {}), ...(o.moss ? { moss: .45 } : {}) }];
   if (kind === "mound") return ["mound", { skin: o.moss ? "moss" : o.brown ? "earth" : "moss", ...(o.small ? { radius: .45, height: .28, lumps: 2 } : {}) }];
@@ -4850,7 +4852,7 @@ const GENOMES = [
     levels: [
       { body: { len: .58, chest: .22, tuck: .24, hr: .3, legW: 1.1 }, head: { snout: .8, blaze: 1.6 } },
       { body: { len: .9, chest: .18, tuck: .2, neckAng: 0 }, head: { snout: 1.2, snoutTaper: .45, blaze: 1.3 } },
-      { body: { len: .9, bw: .46, chest: .14, tuck: .16, legW: 1.6 }, head: { blaze: 1.45 }, features: [{ kind: "mane", from: .1, to: .85, height: .12, count: 16, lean: .95 }, { kind: "claws", size: .14 }] },
+      { body: { len: 1.6, hgt: .55, bw: .62, chest: .04, tuck: .05, legW: 1.7, hr: .3, neckAng: .12 }, head: { blaze: 1.8 }, features: [{ kind: "mane", from: .1, to: .85, height: .04, count: 16, lean: .95 }, { kind: "claws", size: .14 }] }, // (Ed, 2026-10-07: low, wide and flat-backed on short legs, not a bear: art lint)
       { body: { len: .95, bw: .5, chest: .14, tuck: .16, legW: 1.8, neckAng: -.05 }, head: { blaze: 1.5, blazeGlow: true }, features: [
         { kind: "mane", from: .05, to: .9, height: .12, count: 20, lean: 1 },
         { kind: "stones", from: .15, to: .8, count: 5, height: .62 },
@@ -4887,7 +4889,7 @@ const GENOMES = [
       { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
       { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, eyesRing: true } },
     ] },
-  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.22, len: .74, chest: .36, tuck: .42, neck: .22, neckAng: .05, neckW: .6, hr: .3, legW: 1.75, back: "hump", front: 1.25, humpK: 2.6, bw: .34 }, head: { snout: .62, snoutD: .68, snoutTaper: .75, muzzle: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
+  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
   { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] , texture: { kind: "bristles" } },
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },
@@ -7615,17 +7617,23 @@ function tlPillar(m, r, o) {
   else { m.box(L([0, top + .08, 0]), [.4, .08, .4], M.STONE, { round: .02, group: 3, dir: [Math.cos(o.lean || 0), -Math.sin(o.lean || 0), 0] }); m.box(L([0, top + .22, 0]), [.46, .06, .46], M.STONE, { round: .02, group: 3, dir: [Math.cos(o.lean || 0), -Math.sin(o.lean || 0), 0], paint: () => M.MOSS }); } // its capital, moss on top
 }
 function tlSpire(m, r, o) {
-  // a jagged, layered rock spire (Ed, 2026-10-06: the ravine's column read as camouflage noise): a stack of strata, each a slab of rock
-  // offset and turned a little from the one below, narrowing upward, with flat ledges where moss gathers and crisp edges; no speckle,
-  // its light and shade from the slabs' own faces, a dark seam under each slab and a paler band through the odd one
-  const one = (x, z, h, w, g) => { let y = 0, ox = x, oz = z;
-    for (let k = 0; y < h - .2; k++) { const t = y / h, hh = Math.min(h - y, .38 + r() * .32), ww = w * (1 - .62 * t) * (.88 + r() * .24), a = (r() - .5) * .9, pale = r() < .3, mossy = r() < .45;
-      const c = [ox, y + hh / 2, oz], top = y + hh;
-      m.box(c, [ww, hh / 2, ww * (.7 + r() * .3)], M.STONE, { round: .02, group: g, dir: [Math.cos(a), 0, Math.sin(a)], up: [(r() - .5) * .08, 1, (r() - .5) * .08], paint: p => p[1] > top - .07 ? (mossy ? M.MOSS : M.BELLY) : p[1] < y + .06 ? M.STONED : pale && Math.abs(p[1] - c[1]) < hh * .18 ? M.BELLY : undefined });
-      if (r() < .5) { const b = r() * Math.PI * 2; m.box([ox + Math.cos(b) * ww * .8, y + hh * .35, oz + Math.sin(b) * ww * .8], [ww * .35, hh * .35, ww * .3], M.STONE, { round: .015, group: g, dir: [Math.cos(b + .5), 0, Math.sin(b + .5)], paint: p => p[1] > y + hh * .62 ? M.MOSS : undefined }); } // a broken block jutting from the side
-      y = top; ox += (r() - .5) * ww * .25; oz += (r() - .5) * ww * .2; }
-    for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + r(), c = [ox + Math.cos(a) * .12, y + .05, oz + Math.sin(a) * .12]; m.seg(c, [c[0] + Math.cos(a) * .45, c[1] + .35, c[2] + Math.sin(a) * .45], .06, .01, k % 2 ? M.LEAF2 : M.LEAF, { group: g + 10 }); } // ferns and a tuft on top
-    m.ell([ox, y - .02, oz], [w * .32, .1, w * .28], M.MOSS, { group: g + 10 }); };
+  // a weathered rock spire (Ed, 2026-10-06: the ravine's column read as camouflage noise; 2026-10-07: the stack of square slabs
+  // after it read as "a strange tall column", stacked dark blocks): one rough, tapering column of rock, bending a little as it
+  // rises, its strata as bands across it (a dark seam, a paler band, moss on the ledges) rather than separate slabs, with a few
+  // broken ledges jutting out at odd heights and angles to break its outline
+  const one = (x, z, h, w, g) => {
+    const n = 5, pts = [], band = .42 + r() * .12, tilt = (r() - .5) * .5;
+    let ox = x, oz = z;
+    for (let k = 0; k <= n; k++) { const t = k / n; pts.push([ox, t * h, oz, w * (.82 - .52 * t) * (.9 + r() * .2)]); ox += (r() - .5) * w * .22; oz += (r() - .5) * w * .18; }
+    const strata = p => { const s = (p[1] + Math.sin(Math.atan2(p[2] - z, p[0] - x) * 3 + p[1] * tilt) * .07) / band, f = s - Math.floor(s), i = Math.floor(s);
+      return f < .12 ? M.STONED : f > .9 && tlHash(i, g, 6) < .55 ? M.MOSS : tlHash(i, g, 7) < .3 && f > .35 && f < .65 ? M.BELLY : undefined; };
+    m.chain(pts, M.STONE, { group: g, rough: .025, paint: strata });
+    for (let k = 0; k < 3; k++) { const [px, py, pz, pr] = pts[1 + k], b = r() * Math.PI * 2; m.ell([px + Math.cos(b) * pr * .55, py * (.8 + r() * .3), pz + Math.sin(b) * pr * .5], [pr * (.7 + r() * .3), h * (.12 + r() * .08), pr * (.6 + r() * .25)], M.STONE, { group: g, rough: .03, dir: [Math.cos(b), 0, Math.sin(b)], paint: strata }); } // its bulk: lumps of rock merged into the lower half
+    for (let k = 0; k < 4; k++) { const t = .15 + k * .2 + r() * .08, [px, py, pz, pr] = pts[Math.min(n, Math.round(t * n))], b = r() * Math.PI * 2, s = pr * (.45 + r() * .3);
+      m.box([px + Math.cos(b) * pr * .75, py + (r() - .5) * .3, pz + Math.sin(b) * pr * .7], [s, s * (.35 + r() * .25), s * .8], M.STONE, { round: .03, rough: .03, group: g, dir: [Math.cos(b + r()), (r() - .5) * .3, Math.sin(b + r())], paint: p => p[1] > py + s * .2 ? M.MOSS : undefined }); } // broken ledges
+    const [tx, ty, tz] = pts[n];
+    for (let k = 0; k < 3; k++) { const a = k * 2.1 + r(), c = [tx + Math.cos(a) * w * .15, ty - .1, tz + Math.sin(a) * w * .12]; m.seg(c, [c[0] + Math.cos(a) * .3, c[1] + .22, c[2] + Math.sin(a) * .3], .05, .01, k % 2 ? M.LEAF2 : M.LEAF, { group: g + 10 }); } // a few ferns low on its top (not a crown of fronds: it read as a palm)
+    m.ell([tx, ty - .12, tz], [w * .34, .14, w * .3], M.MOSS, { group: g + 10, rough: .02 }); };
   one(0, 0, 4.4 + r() * .8, .8, 1);
   if (o.twin) one(1.25, -.45, 2.8 + r() * .5, .58, 2);
   for (let k = 0; k < 5; k++) { const a = k * 1.25, s = .2 + r() * .12; m.box([Math.cos(a) * 1.15, s * .6, Math.sin(a) * .95], [s, s * .6, s * .8], M.STONE, { round: .02, group: 5, dir: [Math.cos(a * 3), 0, Math.sin(a * 3)], paint: p => p[1] > s * 1.05 ? M.MOSS : undefined }); } // fallen blocks round its foot
@@ -8119,8 +8127,8 @@ function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanva
   const ft = floorTile(def, st);
   // ?props=gen (st.propGen): each hand-made prop the prop generator stands in for (propFor) becomes `variants` of it (3; a sparse one's
   // share split among them), each its own shape from its own seed, so a pool or a stone isn't one sprite placed again and again
-  const gen = list => !st.propGen ? list : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, o]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
-  const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand
+  const gen = list => !st.propGen ? (list || []).map(([kind, o], i) => [kind, { ...o, from: i }]) : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, { ...o, from: i }]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, from: i, share: 1 / n, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
+  const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; b.from = o.from; if (o.share) b.share = o.share; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand; each its entry in the area's list (from: a generated prop is n variants of one) and its part of that entry's weight (share)
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null, rim: [] };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
   if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres, origin: sp0.origin }; } // the new 3D ones: their size, and where their middle on the ground lands
@@ -8943,7 +8951,8 @@ const PLAYGROUND_AT = [["swings", -2.6, -2.0], ["slide", 2.4, -2.2], ["climbing-
 // ---------------- the sports grounds ----------------
 // A ground decal: a flat, cracked surface with painted lines, seen at the game's angle.
 function rlDecal(m, w, d, surface, lines, g = 1) {
-  m.box([0, .015, 0], [w, .015, d], surface, { round: .01, group: g, paint: p => { if (rlCell(p, 3, 4) < .05 || Math.abs(Math.sin(p[0] * 1.3 + 1) * .5 + Math.sin(p[0] * 4.1) * .08 - p[2] * .3) < .012) return rlCell(p, 18) < .5 ? M.LEAF2 : M.STONED; if (lines(p[0], p[2])) return rlCell(p, 10, 2) < .25 ? surface : M.CLOTH; return rlCell(p, 5, 7) < .07 ? M.MOSS : undefined; } });
+  // paper-thin (Ed's notes, 2026-10-07: a court 3 cm thick showed its near edge as a raised slab's face at the game's camera)
+  m.box([0, .003, 0], [w, .003, d], surface, { round: .002, group: g, paint: p => { if (rlCell(p, 3, 4) < .05 || Math.abs(Math.sin(p[0] * 1.3 + 1) * .5 + Math.sin(p[0] * 4.1) * .08 - p[2] * .3) < .012) return rlCell(p, 18) < .5 ? M.LEAF2 : M.STONED; if (lines(p[0], p[2])) return rlCell(p, 10, 2) < .25 ? surface : M.CLOTH; return rlCell(p, 5, 7) < .07 ? M.MOSS : undefined; } });
 }
 const near = (v, t, w = .045) => Math.abs(v - t) < w;
 const SPORTS = {
