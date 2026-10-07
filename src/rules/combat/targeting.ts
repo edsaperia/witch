@@ -129,7 +129,9 @@ export class Grid {
   constructor(list: Creature[], private size = 16) {
     for (const c of list) { const k = this.key(Math.floor(c.x / size), Math.floor(c.z / size)); let l = this.cells.get(k); if (!l) this.cells.set(k, (l = [])); l.push(c); }
   }
-  private key(i: number, j: number) { return (i + 65536) * 131072 + (j + 65536); }
+  // (small-integer keys: a cell's i, j stay well inside ±16384 of a 16 m grid, so the key fits V8's Smi range and Map
+  // lookups don't box it; the old (i + 65536) * 131072 + ... made a heap number a lookup; phase 2's GC audit)
+  private key(i: number, j: number) { return (i + 16384) * 32768 + (j + 16384); }
   /** Those in the cells round (x, z), in the same order as ever. (An array, not a generator: yielding
    *  each one made an object for every creature looked at, a third of the rules' garbage late in a run.) */
   near(x: number, z: number, r: number): Creature[] {
