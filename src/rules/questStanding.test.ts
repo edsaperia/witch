@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { broughtLine, creatureWords, legendCircleNear } from "./legendCircle";
 import { setupQuestDemo } from "./quest";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, idle, STEP); };
@@ -67,4 +67,31 @@ describe("a quest animal standing in its legend's circle", () => {
     expect(creatureWords("otter", 2)).toBe("an adult otter");
     expect(creatureWords("glowworm", 0)).toBe("a baby glow-worm");
   }, 60000);
+  it("Ed's own case (seed 162218 on his 196-area map): the twiggy forest's wolf legend dreams of a young stag; his parked adult stags are named, a young one finishes it", () => {
+    const T = withTuning({ mapAreas: 14, map: { ...TUNING.map, radius: 14 / Math.sqrt(Math.PI) } } as never), g = newGame(162218, T);
+    g.clock.paused = false; g.party.paused = true; g.witches[0].health.hp = 1e6;
+    const L = g.creatures.filter(c => c.boss).sort((a, b) => Math.hypot(a.x - 2566, a.z - 1923) - Math.hypot(b.x - 2566, b.z - 1923))[0];
+    expect(L.species).toBe("wolf");
+    expect(L.quest).toMatchObject({ species: "stag", level: 1 });
+    const ring = g.map.legendClearing(L.cell[0], L.cell[1])!;
+    g.witch = { ...g.witch, x: ring.x, z: ring.z + ring.r * 0.4, mode: "ground", lift: 0, seated: false };
+    // two of hers, adult stags, parked: their runes just outside, the stags themselves inside (as in his screenshot)
+    const spare = g.creatures.filter(c => !c.boss && !c.gone && !c.leashed && Math.hypot(c.x - ring.x, c.z - ring.z) > 300).slice(0, 3);
+    spare.forEach((c, i) => {
+      Object.assign(c, { species: "stag", level: i < 2 ? 2 : 1, circle: undefined, leashed: true, hp: undefined, siege: undefined, enraged: false, fight: undefined, fleeUntil: undefined, wanderTo: undefined });
+      const x = ring.x - 3 + i * 3, z = ring.z;
+      Object.assign(c, i < 2 ? { x, z, tx: x, tz: z } : { x: ring.x + ring.r + 40, z: ring.z, tx: ring.x + ring.r + 40, tz: ring.z });
+      g.leash.placed.push({ id: c.id, x: ring.x + ring.r + 5 + i, z: ring.z, at: g.clock.time });
+    });
+    g.byArea = null;
+    run(g, 0.2);
+    expect(L.quest!.done).toBeUndefined();
+    const near = legendCircleNear(g, g.witch)!;
+    expect(broughtLine(g, near)!.text).toBe("Not this one: it dreams of a young stag, and you've brought an adult stag.");
+    // a young stag walks into the circle: done
+    Object.assign(spare[2], { x: ring.x, z: ring.z - 2, tx: ring.x, tz: ring.z - 2 });
+    run(g, 0.2);
+    expect(L.quest!.done).toBeDefined();
+    expect(L.buffed).toBe(true);
+  }, 120000);
 });
