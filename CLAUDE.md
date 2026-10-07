@@ -62,6 +62,18 @@ Related commands: `node tools/art-lab/build.mjs` writes the self-contained lab p
 
 Literal, stable names for the parts of the game, as Ed and the builders agree them. The game's own terms are in `DESIGN.md`'s glossary; these are the prototype's.
 
+**The phases of a run** (Ed's names, 2026-10-07), in order, and what marks each in the code:
+
+- **Bedroom**: the character creator (`ui/creator.ts`), open at every load and the loading screen too: she walks her room (WASD, `ui/roomWalk.ts`) and dresses up while the forest grows behind it. `?creator=0` skips it (the tools and smoke runs).
+- **The Cast**: the party spell (`ui/spellScroll.ts`): the scroll, clicked or Enter, casts it; `party.spellAt` turns from null to the time, and its burst (`PARTY_CAST`, 1.2 s) starts play. Until then the game waits (`awaitingSpell`, `heldBySpell`).
+- **At the Decks**: she stands behind the DJ decks in the treehouse's studio (`witch.seated`), the camera in its opening close-up on the studio (`camera.intro`, `g.introFocus`). Nothing can reach her there. After a knockout she comes back here, at the game's own zoom (rules/knockout.ts).
+- **Step-off**: her first move or rise: `seated` goes false (rules/witch.ts), the camera's intro eases out (`camera.intro.ease`), and `party.bootFrom` is set (rules/party.ts `stepParty`), once a run.
+- **First Speaker**: `boot.firstAfter` (3 s) after the step-off, the boot's pulse reaches the home ring's first stone and it turns into a speaker (rules/bootRing.ts `bootPulseAt`); the boot's minutes run from here.
+- **The Boot**: the pulse goes round the home ring over `boot.time` (5 minutes), each stone a speaker as it passes (`bootShare`); no wave comes and no area grows, but the animals still fight (`party.bootUntil`).
+- **First Countdown**: the boot done, the first wave's countdown (`party.interval`, 5 minutes) runs down the clock (`waveCountdown`, `party.nextAt`): wave one lands about ten minutes after the step-off.
+- **Wave One**: the first wave (`party.wave` 1, rules/party.ts `spreadWave`): every area next to home gets its soundsystem and is partified, its creatures wake, and the music moves to the arc's next step.
+- **The Party's Over**: every soundsystem and the home ring down (`g.over`): no end screen, the afterparty (`g.partyOver`, rules/partyOver.ts): the waves stop, nothing fights or hurts her, the creatures go home to sleep, and a small card under the clock says how long she lasted.
+
 - **Area type**: one of the kinds of area: Ed's 30, defined with their art in `art/areas.js` (his columns: floor, wall objects, small objects, big objects, set piece, creature). `config/area-types.json` adds the game's own numbers per type (how thick its big objects stand).
 - **Wall objects, small objects, big objects, set piece**: Ed's columns. Big objects stand like trees (trees split into top and bottom halves; mounds, boulders and logs whole); small objects scatter like undergrowth; wall objects stand where areas meet and block nothing; a set piece shows in a quarter of its type's areas, in the clearing.
 - **Party witches**: the witches who fly in to the dancefloor, one for each active soundsystem (`partyWitch(seed)` in `art/witch.js`): generated witches (Ed, 2026-10-05: "the generated witches replace the party witches' outfits"), `witchGenome(seed, { party: true })` with two party neons for their glow sticks; the old outfits (`PARTY_OUTFITS`) still draw with `partyWitch(seed, { outfit })`. They and our witch share the party poses (dances, pairs, social, running, resting).
