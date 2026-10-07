@@ -19,6 +19,9 @@ import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
 
+/** How much smaller her warm pool is on the open sand than on the forest floor (the beach's: render/ground.ts). */
+const BEACH_POOL = 2.2;
+
 const TEXELS_PER_METRE = 2;
 const TILE = 32; // texels
 const FLOOR_COLS = 8;
@@ -178,7 +181,11 @@ void main() {
       float shade = (1.0 - smoothstep(0.0, 6.0, into)) * (0.7 + 0.3 * vnoise(p / 1.7 + 5.0));
       col *= 1.0 - 0.5 * shade;
       float calm = 0.82 + 0.18 * smoothstep(4.0, 22.0, into);
-      gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), col * lit * 1.25 * calm), vWorld), vWorld), 1.0); // (lit as the forest floor is)
+      // (her warm pool on the open sand a lantern's few metres, not the woods' wide one: no canopy breaks it up out here, Ed:
+      // "a warm pool of a few metres on the sand"; glowPool reads only the distance across the ground, so the sand's is taken
+      // BEACH_POOL times as far)
+      vec3 poolAt = uGlowPos + (vWorld - uGlowPos) * vec3(${BEACH_POOL.toFixed(2)}, 1.0, ${BEACH_POOL.toFixed(2)});
+      gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), col * lit * 1.25 * calm), poolAt), vWorld), 1.0); // (lit as the forest floor is)
       return;
     }
   }
