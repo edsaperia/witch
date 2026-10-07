@@ -166,7 +166,7 @@ export class Fireworks {
       const b = this.bursts[i], k = (time - b.t) / FLASH_S;
       if (k < 0 || k >= 1) continue;
       const L = this.lightPool[out.length];
-      L.x = b.x; L.y = 2; L.z = b.z; // (low: it lights the ground round the soundsystem, not the haze in the sky) L.reach = FLASH_REACH; L.rgb.copy(b.rgb); L.strength = FLASH_I * (1 - k) * (1 - k);
+      L.x = b.x; L.y = 2; L.z = b.z; L.reach = FLASH_REACH; L.rgb.copy(b.rgb); L.strength = FLASH_I * (1 - k) * (1 - k); // (low: it lights the ground round the soundsystem)
       out.push(L);
     }
     return out;
