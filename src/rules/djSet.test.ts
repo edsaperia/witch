@@ -38,17 +38,23 @@ describe("her set at the decks (rules/djSet.ts)", () => {
     expect(mid.every(k => k.at >= s + 2 && k.at < s + 3)).toBe(true);
     expect(djStrokes(game(0, false), 0, 100)).toEqual([]); // stepped off: nothing heard
   });
-  it("fills a respawn wait: the needle and the nod, the scratch and chirp bars round again, the hype on its last beat", () => {
-    const ko = { inAt: 100.2, backAt: 120.2 }, g = game(undefined, true, ko), s = djRoutineStart(g, 101)!; // a 20 s wait
+  it("fills a respawn wait: straight into the scratch and chirp bars, round again, the hype landing on its end", () => {
+    const ko = { inAt: 100.2, backAt: 107.2 }, g = game(undefined, true, ko), s = djRoutineStart(g, 101)!; // a 7 s wait (the longest)
     expect(s).toBeCloseTo(100.5, 6); // the next whole beat
     const at = (b: number) => { const r = djRoutineAt(g, s + b * 0.5); return r && `${r.gesture}${r.frame}`; };
-    expect([at(0.1), at(1.1), at(4.1), at(12.1), at(16.1), at(19.1)]).toEqual(["needle0", "needle1", "scratch1", "scratch1", "chirp0", "spin0"]);
-    expect(at(38.6)).toBe("hype1"); // its last beat
-    expect(djRoutineAt(g, 120.3)).toBeNull(); // free, up and away
+    expect([at(0.1), at(4.1), at(7.1), at(8.1), at(12.1), at(12.6)]).toEqual(["scratch1", "chirp0", "spin0", "scratch1", "hype0", "hype1"]); // 13.4 beats: hype from 12
+    expect(djRoutineAt(g, 107.3)).toBeNull(); // free, up and away
     const st = djStrokes(g, 0, 200);
-    expect(st[0].stroke).toBe("lift"); expect(st.filter(k => k.stroke === "drop").length).toBe(1); // the needle once
-    expect(st.filter(k => k.stroke === "spin").length).toBe(4); // the chirp bar's spin each time round (beats 11, 19, 27, 35)
-    expect(st.every(k => k.at < ko.backAt - 0.5 && k.at + k.len <= ko.backAt - 0.5 + 1e-9)).toBe(true); // nothing in the hype
+    expect(st[0].stroke).toBe("f"); expect(st.some(k => k.stroke === "lift" || k.stroke === "drop")).toBe(false); // the needle's down already
+    expect(st.every(k => k.at + k.len <= s + 6 + 1e-9)).toBe(true); // nothing heard in the hype
+    // the shortest wait (1.5 s): a beat or so of scratching, then the hype to its end
+    const short = game(undefined, true, { inAt: 50, backAt: 51.5 }), s2 = djRoutineStart(short, 50.1)!;
+    expect(djRoutineAt(short, s2 + 0.1)?.gesture).toBe("scratch"); expect(djRoutineAt(short, 51.4)?.gesture).toBe("hype");
     expect(djRoutineStart(game(undefined, true, { inAt: 100, backAt: 100 }), 100.1)).toBeNull(); // no wait, no routine
+  });
+  it("reads the knockout's times on her own clock", () => {
+    const g = { ...game(undefined, true, { inAt: 40, backAt: 46 }), clock: { time: 60 }, herTime: 50 }; // the world 10 s ahead (a slowed circle once)
+    expect(djRoutineStart(g, 45)).toBeNull(); // in her time that's before she's back
+    expect(djRoutineAt(g, 51)?.gesture).toBe("scratch"); expect(djRoutineAt(g, 52)?.gesture).toBe("chirp"); // back at 50 in the world's time
   });
 });

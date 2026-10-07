@@ -6,8 +6,8 @@
 // spin-back, then her hand thrown up; 13 beats, about 6.5 s at 120 bpm.
 // When: from the first whole beat after the party spell's burst (party.spellAt + PARTY_CAST), once through; and through the
 // wait behind her decks after a knockout (the hotel builder's knockout.respawn, rules/knockout.ts: from the first whole beat
-// after she's back, ko.inAt, to ko.backAt): the needle and the nod, then the scratch and chirp bars round and round, her
-// hand thrown up on its last beat. Only while she's at the decks (seated): if she steps off mid-routine it stops. Nothing
+// after she's back, ko.inAt, to ko.backAt, about 1.5 to 7 s): the needle's still down, so straight into the scratch and
+// chirp bars, round again if it's long, cut short to throw her hand up on the beat before it ends. Only while she's at the decks (seated): if she steps off mid-routine it stops. Nothing
 // here holds her (the wait is the rules' own).
 // Pure: game time in, game time out.
 import { beatAt, timeAt, type BeatClock } from "./beat";
@@ -30,14 +30,19 @@ export const DJ_ROUTINE: readonly DjCue[] = [
 /** Its length in beats. */
 export const DJ_ROUTINE_BEATS = 13;
 
-type Game = { beat: BeatClock; party: PartyState; witch: { seated?: boolean }; witches?: { ko: { inAt?: number; backAt: number } | null }[] };
-/** Her wait at the decks after a knockout (rules/knockout.ts: back at inAt, free at backAt), or null. */
+type Game = { beat: BeatClock; party: PartyState; witch: { seated?: boolean }; witches?: { ko: { inAt?: number; backAt: number } | null }[]; clock?: { time: number }; herTime?: number };
+/** Her wait at the decks after a knockout (rules/knockout.ts: back at inAt, free at backAt), or null; in game time (the beat
+ *  clock's: the knockout's times are on her own clock, g.herTime, which a legend's slowed circle sets apart from the world's). */
 export function respawnOf(g: Game): { inAt: number; backAt: number } | null {
   const k = g.witches?.[0]?.ko;
-  return k && typeof k.inAt === "number" && k.backAt > k.inAt ? { inAt: k.inAt, backAt: k.backAt } : null;
+  if (!k || typeof k.inAt !== "number" || !(k.backAt > k.inAt)) return null;
+  const off = g.clock && typeof g.herTime === "number" ? g.clock.time - g.herTime : 0;
+  return { inAt: k.inAt + off, backAt: k.backAt + off };
 }
-/** The respawn's loop: after the needle and the nod (its first LOOP_FROM beats) the scratch and chirp bars repeat. */
+/** The respawn's loop: the table's scratch and chirp bars (its beats LOOP_FROM to LOOP_TO), round and round. */
 const LOOP_FROM = 4, LOOP_TO = 12;
+/** In a respawn run `beats` long, the beat her hand goes up: a whole beat to a beat and a bit before its end (after a beat of scratching at least). */
+const hypeFrom = (beats: number) => Math.max(1, Math.floor(beats - 1));
 
 const nextBeat = (g: Game, t: number) => timeAt(g.beat, Math.ceil(beatAt(g.beat, t) - 1e-6));
 /** The routine's runs: each its start and end (game times), and whether it's a respawn's (looping to fill its wait). */
@@ -62,8 +67,8 @@ export const djRoutineStart = (g: Game, time: number): number | null => runAt(g,
 function cueAt(beat: number, beats: number, loop: boolean): DjCue & { at: number } {
   let b = beat;
   if (loop) {
-    if (beats >= LOOP_FROM + 2 && beat >= Math.floor(beats) - 1) return { at: beat, gesture: "hype", frame: (beat % 1) < 0.5 ? 0 : 1 };
-    if (b >= LOOP_FROM) b = LOOP_FROM + ((b - LOOP_FROM) % (LOOP_TO - LOOP_FROM));
+    if (beat >= hypeFrom(beats)) return { at: beat, gesture: "hype", frame: (beat % 1) < 0.5 ? 0 : 1 };
+    b = LOOP_FROM + (beat % (LOOP_TO - LOOP_FROM));
   }
   let cue = DJ_ROUTINE[0];
   for (const c of DJ_ROUTINE) if (c.at <= b + 1e-9) cue = c; else break;
@@ -84,16 +89,16 @@ export function djStrokes(g: Game, from: number, to: number): { at: number; stro
     const a = Math.max(from, r.start), e = Math.min(to, r.end);
     if (!(e > a) || !g.witch.seated) continue;
     const b0 = beatAt(g.beat, r.start), beats = beatAt(g.beat, r.end) - b0;
-    // every cue time in the run: the table's, and in a loop its repeats
+    // every cue time in the run: the table's once, or in a respawn its scratch and chirp bars from the run's start, round again
     const cues: { at: number; stroke?: DjStroke }[] = [];
-    for (const c of DJ_ROUTINE) if (!r.loop || c.at < LOOP_TO) cues.push(c);
-    if (r.loop) for (let k = 1; LOOP_FROM + k * (LOOP_TO - LOOP_FROM) < beats; k++) for (const c of DJ_ROUTINE) if (c.at >= LOOP_FROM && c.at < LOOP_TO) cues.push({ at: c.at + k * (LOOP_TO - LOOP_FROM), stroke: c.stroke });
-    const lastBeat = r.loop && beats >= LOOP_FROM + 2 ? Math.floor(beats) - 1 : Infinity; // (the hype: nothing heard from the table)
+    if (!r.loop) cues.push(...DJ_ROUTINE);
+    else for (let k = 0; k * (LOOP_TO - LOOP_FROM) < beats; k++) for (const c of DJ_ROUTINE) if (c.at >= LOOP_FROM && c.at < LOOP_TO) cues.push({ at: c.at - LOOP_FROM + k * (LOOP_TO - LOOP_FROM), stroke: c.stroke });
+    const stop = r.loop ? hypeFrom(beats) : DJ_ROUTINE_BEATS; // (the hype: nothing heard from the table)
     cues.forEach((c, i) => {
-      if (!c.stroke || c.at >= lastBeat || c.at >= beats) return;
+      if (!c.stroke || c.at >= stop) return;
       const at = timeAt(g.beat, b0 + c.at);
       if (at < a || at >= e) return;
-      const next = Math.min(cues[i + 1]?.at ?? DJ_ROUTINE_BEATS, lastBeat, beats);
+      const next = Math.min(cues[i + 1]?.at ?? DJ_ROUTINE_BEATS, stop);
       out.push({ at, stroke: c.stroke, len: timeAt(g.beat, b0 + next) - at });
     });
   }
