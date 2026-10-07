@@ -213,7 +213,10 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
   placed(lv.v.set(x + r, 1.5, z)).project(camera);
   const rx = Math.abs(((lv.v.x + 1) / 2) * width - cx);
   el.style.display = behind ? "none" : "";
-  const w = el.offsetWidth, h = el.offsetHeight, gap = 16;
+  // its size read only when its lines or the screen change (a layout forced every frame otherwise, after the frame's style writes)
+  const wh = `${key}:${width}x${height}`;
+  if (!behind && el.dataset.wh !== wh) { el.dataset.wh = wh; el.dataset.w = String(el.offsetWidth); el.dataset.h = String(el.offsetHeight); }
+  const w = Number(el.dataset.w ?? 0), h = Number(el.dataset.h ?? 0), gap = 16;
   let left = cx + rx + gap;
   if (left + w > width - 8) left = cx - rx - gap - w; // (off the right edge: the other side)
   if (left < 8) left = width - w - 24; // (the circle wider than the screen: by its right edge)

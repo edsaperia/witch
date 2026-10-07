@@ -7,6 +7,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
@@ -462,7 +463,21 @@ export class View {
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
     // In the background where the browser can (KHR_parallel_shader_compile); nothing it draws changes.
-    this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
+    // The hidden too (Ed's playtest, 2026-10-07: stalls of 100 ms and more in play): three compiles only what's visible, so
+    // the treetops' crowns, hidden on the ground, and everything not yet showing compiled on its first frame, the driver's
+    // wait inside it (getProgramInfoLog, 0.7-2.6 s a frame in the cloud's renderer, 50-200 ms on a real GPU). Everything is
+    // shown for the call (its programs are made at once, as it's called) and hidden again before anything is drawn; then
+    // play waits for them a few seconds at most, so on a GPU that compiles in parallel they're done in the Bedroom.
+    const hidden: THREE.Object3D[] = [];
+    this.scene.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+    const compiled = this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
+    for (const o of hidden) o.visible = false;
+    await Promise.race([compiled, new Promise(r => setTimeout(r, 4000))]);
+    // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
+    // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
+    for (const p of this.renderer.info.programs ?? []) p.getUniforms();
+    // Each legend's carving (render/legendCarving.ts: 10-80 ms a kind) made in idle time now, not the first time she comes near one.
+    warmCarvings(this.game.map.legendClearings.map(c => AREA_TYPES[this.game.map.typeOf(c.cell[0], c.cell[1])].creature));
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
