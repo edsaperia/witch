@@ -471,7 +471,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     let t = 0;
     for (; t < 10 && Math.hypot(wolf.x - g.witch.x, wolf.z - g.witch.z) > 18; t += STEP) stepGame(g, { ...idle, autoTalk: false }, STEP);
     expect(d0).toBeGreaterThan(20);
-    expect(t).toBeLessThan(0.5 + d0 / 15); // (a moment's reaction, then about 20 m/s)
+    expect(t).toBeLessThan(0.5 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0) + d0 / 15); // (a moment's reaction after its area's watched her come down, rules/wildWatch.ts, then about 20 m/s)
   }, 60000);
 
   it("scales a fight live: lengths with fight.scale, speeds with fight.speed", () => {
@@ -497,7 +497,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     const wolf = place(g, 0, "wolf", 2, site.x, site.z);
     wolf.cell = cell;
     g.witch = { ...g.witch, x: site.x + 8, z: site.z, mode: "ground", lift: 0, seated: false };
-    for (let i = 0; i < 2 / STEP; i++) stepGame(g, { ...idle, autoTalk: false }, STEP);
+    for (let i = 0; i < (2 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0)) / STEP; i++) stepGame(g, { ...idle, autoTalk: false }, STEP); // (after the watch, rules/wildWatch.ts)
     expect(wolf.fight?.target?.kind).toBe("witch");
     // She runs out of its area, far east, and keeps going.
     let maxOut = 0;
