@@ -2995,10 +2995,6 @@
         "tint": {
           "type": "number",
           "minimum": 0
-        },
-        "vignette": {
-          "type": "number",
-          "minimum": 0
         }
       },
       "required": [
@@ -3007,8 +3003,7 @@
         "forget",
         "hangBack",
         "dangerF",
-        "tint",
-        "vignette"
+        "tint"
       ],
       "additionalProperties": false
     },

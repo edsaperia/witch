@@ -88,12 +88,13 @@ const pct = (a, p) => { if (!a.length) return 0; const s = [...a].sort((x, y) =>
     };
     await moment("at the decks", "02-decks.png", await run(30, { moveX: 1 }), s => s.seated && s.spellAt === null);
     let ms = await run(1, { castParty: true });
-    ms = ms.concat(await run(150, { moveX: 1, moveZ: 0.3 }));
+    // off the decks: she's held through the cast and the needle-drop routine (Ed, 2026-10-07), so moving until she's left them
+    for (let i = 0; i < 40 && (ms.length < 150 || (await state()).seated); i++) ms = ms.concat(await run(30, { moveX: 1, moveZ: 0.3 }));
     await moment("step-off", "03-step-off.png", ms, s => !s.seated && s.spellAt != null);
     ms = [];
     for (let i = 0; i < 40 && !(await state()).speakersOn; i++) ms = ms.concat(await run(30, i % 2 ? { moveX: -0.2 } : { moveX: 0.2 }));
     await moment("first speaker", "04-first-speaker.png", ms, s => s.speakersOn >= 1);
-    await run(1200, {}, 1 / 10, false); // two minutes on
+    for (let i = 0; i < 300 && (await state()).speakersOn < 6; i++) await run(30, {}, 1 / 30, false); // on to mid-boot (half the ring turned), however long the boot
     await settle();
     ms = await run(120, i => ({ moveX: Math.cos(i / 30), moveZ: Math.sin(i / 30) }));
     await moment("the boot", "05-boot.png", ms, s => s.speakersOn > 1);
