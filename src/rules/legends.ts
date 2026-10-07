@@ -18,7 +18,7 @@ export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
   /** Going back to sleep away from where it lay (Ed, 2026-10-06): it walks home at homeSpeed m/s first. */
   homeSpeed: number;
-  relics: { kinds: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number };
+  relics: { kinds: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number; clearOfCircle?: number };
   attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[]; };
   healTime: number;
   charge: { species: string[]; windup: number; laneShown: number; speed: number; accel: number; turn: number; brake: number; arc: number; laneWidth: number; damage: number; knockback: number; returnSpeed: number; rest: number };
@@ -92,6 +92,8 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
       for (let k = 0; k < 12 && found < 2; k++) {
         const a = a0 + (k / 12) * Math.PI * 2, px = site.x + Math.cos(a) * r, pz = site.z + Math.sin(a) * r, kc = map.cellSafe(px, pz).cell;
         if (kc[0] !== cell[0] || kc[1] !== cell[1] || !inside(px, pz) || map.hardClear(px, pz)) continue;
+        const lc = map.legendClearing(cell[0], cell[1]); // (the whole bottle off its legend's circle, not just its middle: Ed, v1628)
+        if (lc && Math.hypot(px - lc.x, pz - lc.z) < lc.r + (R.clearOfCircle ?? 0)) continue;
         const inWoods = woods(px, pz), want = inWoods && canopyOver(forest, map, px, pz) !== gap;
         if (want || (inWoods && found < 1) || !best) { best = { x: px, z: pz }; found = want ? 2 : inWoods ? 1 : 0; }
       }

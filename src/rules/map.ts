@@ -287,7 +287,11 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // The playable areas and the buffer ring, by their centres' distance from home's.
   // (each by how far its centre lies out along its own direction, as a share of the coast there)
   const fromHome = (cx: number, cy: number) => { const s = siteOf(cx, cy), dx = s.x - centre.x, dz = s.z - centre.z; return Math.hypot(dx, dz) / coast(Math.atan2(dz, dx)); };
-  const playable = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < n && cy < n && (!round || fromHome(cx, cy) <= R * A);
+  // An area must own some ground: the warped partition can leave a cell with none (every point near its centre another
+  // area's), and such a ghost area put its runestone, its legend and its creatures all on one spot in a neighbour's
+  // ground (Ed, v1628: "Legend and runestone in the same place"). Ground: any of the neighbour scan's samples, 6 a cell.
+  const hasGround = (cx: number, cy: number) => neighbours.has(cellKey(cx, cy));
+  const playable = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < n && cy < n && (!round || fromHome(cx, cy) <= R * A) && hasGround(cx, cy);
   const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && fromHome(cx, cy) <= flightR + A * 0.5;
   const cells: Cell[] = [];
   for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (playable(cx, cy)) cells.push([cx, cy]);
@@ -506,10 +510,13 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     // near its runestone"): its edge at least minFromStone metres off, so the circle, its grove and its rim kit stand
     // clear of the stone's clearing and the party's dance space (and a siege gets no safe spot beside its soundsystem).
     const stone = soundsystemSpot(cx, cy), fromStone = (x: number, z: number) => Math.hypot(x - stone.x, z - stone.z) - r;
+    // (and every neighbouring area's runestone at least minFromOtherStones off its edge, always: none standing over the legend)
+    const others = [...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => k.split(",").map(Number)).filter(([x, y]) => playable(x, y) && !(x === centreCell[0] && y === centreCell[1])).map(([x, y]) => soundsystemSpot(x, y));
+    const clearOfOthers = (x: number, z: number) => others.every(q => Math.hypot(x - q.x, z - q.z) - r >= (LC.minFromOtherStones ?? 0));
     let farEnough = (x: number, z: number) => fromStone(x, z) >= (LC.minFromStone ?? 0);
     const B = map.bounds, fits = (x: number, z: number) => {
       if (!isInside(B, x, z, 15) || !inCell(x, z, cx, cy)) return false; // (its middle where she can fly)
-      if (!farEnough(x, z)) return false;
+      if (!farEnough(x, z) || !clearOfOthers(x, z)) return false;
       for (let k = 0; k < 16; k++) { const b = (k / 16) * Math.PI * 2; if (!inCell(x + Math.cos(b) * r, z + Math.sin(b) * r, cx, cy)) return false; }
       return !reserved(x, z, r) && !map.paths.at(x, z, r * pathK);
     };

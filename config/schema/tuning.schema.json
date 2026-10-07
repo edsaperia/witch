@@ -3681,6 +3681,10 @@
           "type": "number",
           "minimum": 0
         },
+        "minFromOtherStones": {
+          "type": "number",
+          "minimum": 0
+        },
         "floor": {
           "type": "object",
           "properties": {
@@ -3797,6 +3801,7 @@
         "edge",
         "top",
         "minFromStone",
+        "minFromOtherStones",
         "floor",
         "rim",
         "grove",
