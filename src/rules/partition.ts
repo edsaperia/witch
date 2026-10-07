@@ -94,7 +94,11 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
     site: (cx, cy) => site(0, cx, cy),
     partition(px, py) {
       if (home && fromHome(px, py) < home.radius) return home.cell;
-      const c = nearest(depth, px, py); return root(depth, c[0], c[1]);
+      // (nearest(depth, ...) inline, its cell in locals: no tuple a call before root's cached one; phase 2's GC audit)
+      const c = Math.pow(2, -depth), gx = Math.floor(px / c), gy = Math.floor(py / c), xy = ringOf(depth, gx, gy);
+      let bi = 0, bd = Infinity;
+      for (let i = 0; i < 25; i++) { const d = (xy[2 * i] - px) ** 2 + (xy[2 * i + 1] - py) ** 2; if (d < bd) { bd = d; bi = i; } }
+      return root(depth, gx + Math.floor(bi / 5) - 2, gy + (bi % 5) - 2);
     },
     partitionSafe(px, py) {
       const dh = fromHome(px, py);

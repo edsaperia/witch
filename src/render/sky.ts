@@ -26,7 +26,6 @@ uniform vec3 uHazeColour, uMoon, uMoonDir;
 uniform float uTime;
 uniform vec4 uSky;     // stars, moon, the moon's size (times the old)
 uniform vec4 uCam;     // the camera's focus x, z; how far ahead the top of the screen looks (m); width there (m)
-uniform float uShow;   // 0 to 1, with the bend
 uniform vec4 uMoonAt;  // the moon (rules/moon.ts): x, y on the screen (fractions), its phase (0 new, 0.5 full), how much of it is lit
 uniform vec3 uMoonRgb; // its colour (plain, or a red, blue or gold moon)
 varying vec2 vNdc;
@@ -90,7 +89,7 @@ export class Sky {
     this.u = {
       uRes: SPRITE_UNIFORMS.uRes, uHazeColour: LIGHT_UNIFORMS.uHazeColour, uMoon: LIGHT_UNIFORMS.uMoon, uMoonDir: LIGHT_UNIFORMS.uMoonDir, uTime: LIGHT_UNIFORMS.uTime,
       uSky: { value: new THREE.Vector4(T.stars, T.moon, disc, 0) },
-      uCam: { value: new THREE.Vector4() }, uShow: { value: 0 },
+      uCam: { value: new THREE.Vector4() },
       uMoonAt: { value: new THREE.Vector4(0.25, 0.86, 0.5, 1) }, uMoonRgb: { value: new THREE.Vector3(0.92, 0.94, 0.86) },
     };
     this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: this.u, depthTest: true, depthFunc: THREE.LessEqualDepth, depthWrite: false }));

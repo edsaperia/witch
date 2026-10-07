@@ -16,10 +16,11 @@ import { PlaytestLog } from "./platform/playtestLog";
 import { StallLog } from "./platform/stallLog";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
-import { BOT_GAME, BOT_KINDS, newBot, type Bot, type BotKind } from "./rules/bot";
-import { BotTag } from "./ui/botGame";
+import { BOT_KINDS, type BotKind } from "./rules/botKinds";
+import type { Bot } from "./rules/bot";
+import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
-import { DecidePanel } from "./ui/decide";
+import type { DecidePanel } from "./ui/decide";
 import { tuningFromLink } from "./app/linkParams";
 import { Hud } from "./app/hud";
 import { setupKnobs } from "./app/knobs";
@@ -170,22 +171,27 @@ creator.progress = () => { const a = view.assets; return { done: a.done, total: 
 creator.onGesture = () => sound.wake();
 creator.onStart = g => {
   const who = playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
-  if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { botGame(who as BotKind); start(); return; }
+  if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { botGame(who as BotKind); return; }
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); }
   if (start()) queueCast();
 }; // (the scroll's burst: play, and the spell cast)
 creator.spellSound = (cue, v) => sound.sfx?.spell(cue, v);
 // The bot game (Ed, 2026-10-06: "start the game and watch the skilled bot play"; ?bot=skilled|crude, or the start
-// screen's Bot game): rules/bot.ts plays in place of her controls, a seeded witch, no character creation.
+// screen's Bot game): rules/bot.ts plays in place of her controls, a seeded witch, no character creation. The bot's code loads
+// only for a bot game (overnight phase 2: out of the game's bundle); it starts as soon as both it and the forest are ready.
 const botParam = params.get("bot") as BotKind | null;
-let bot: Bot | null = null, botTag: BotTag | null = null;
+let bot: Bot | null = null, botTag: BotTag | null = null, botKind: BotKind | null = null;
 function botGame(kind: BotKind): void {
-  if (bot) return;
-  bot = newBot(kind, BOT_GAME[kind]); // (the skilled one questing, bringing relics and feeding: rules/bot.ts BOT_GAME)
+  if (botKind) return;
+  botKind = kind;
   const look = pleasingWitch(seed!);
   lookNow = JSON.stringify(look); view.setWitch(look); wearHat(look);
-  botTag = new BotTag(kind, () => { const u = new URL(location.href); u.searchParams.delete("bot"); location.href = u.toString(); });
   if (creator.open) creator.hide();
+  void Promise.all([import("./rules/bot"), import("./ui/botGame")]).then(([{ BOT_GAME, newBot }, { BotTag }]) => {
+    bot = newBot(kind, BOT_GAME[kind]); // (the skilled one questing, bringing relics and feeding: rules/bot.ts BOT_GAME)
+    botTag = new BotTag(kind, () => { const u = new URL(location.href); u.searchParams.delete("bot"); location.href = u.toString(); });
+    if (ready) start(); // (else the forest's ready starts it)
+  });
 }
 if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
 else if (params.get("creator") !== "0") creator.show();
@@ -200,7 +206,7 @@ const playerPick = makePlayerPick(params, creator);
 const botBtn = document.getElementById("bot-btn");
 if (botBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) botBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start of her own)
-  botBtn.addEventListener("click", () => { if (!game.clock.paused) return; botGame("skilled"); if (ready) start(); }); // (before the forest's ready, it starts as soon as it is)
+  botBtn.addEventListener("click", () => { if (!game.clock.paused) return; botGame("skilled"); }); // (it starts as soon as it and the forest are ready)
 }
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
@@ -234,16 +240,22 @@ const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = sha
 // the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
 // (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the waves and the screen shake). The card itself shows only for a
 // run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
-if (params.get("creator") !== "0" && !bot) {
+if (params.get("creator") !== "0" && !botKind) {
   const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
   if (keys) creator.addTab("controls", "❔ Controls", [keys]);
   if (news) creator.addTab("news", "📜 What's new", [news]);
   creator.addTab("options", "⚙ Options", [wavesEl, ...(shakeEl ? [shakeEl] : [])]);
 } else startEl.style.display = "";
 if (params.get("glide") === "camera") view.glide = "camera"; // (?glide=camera: the glide by the camera's snap, as before 2026-10-06)
-// Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it.
-let decide: DecidePanel | null = null;
-const decidePanel = (open: boolean) => decide ??= new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: { glide: v => { view.glide = v === "camera" ? "camera" : "witch"; } } }, open);
+// Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
+// only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
+// (ui/decisions.ts, app/linkParams.ts).
+let decide: DecidePanel | null = null, decideLoading = false;
+const decidePanel = (open: boolean) => {
+  if (decide || decideLoading) return;
+  decideLoading = true;
+  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: { glide: v => { view.glide = v === "camera" ? "camera" : "witch"; } } }, open); });
+};
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
 document.addEventListener("visibilitychange", () => { if (document.hidden) last = 0; });
