@@ -43,10 +43,10 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       }
       if (!film) await step({ moveX: 1 }, 30); // off again, into the next knockdown
     }
-    // the booth's place on screen (at the end, she's behind it), the crop round it
-    const at = shotAt.find(([, s]) => s.seated)?.[1] ?? last, x = Math.max(0, Math.min(1280 - 360, Math.round(at.x - 180))), y = Math.max(0, Math.min(720 - 220, Math.round(at.y - 120)));
+        const x = 640 - 180, y = 385 - 130; // (the camera follows her: behind the decks she's in the screen's middle)
     execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "30", "-i", path.join(tmp, "f%04d.png"), "-vf", `crop=360:220:${x}:${y},scale=iw*2:ih*2:flags=neighbor,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=none`, path.join(outDir, "respawn.gif")]);
     const scr = shotAt.filter(([, s]) => s.ko && s.t >= s.ko.inAt), pick = [0, .33, .66, .97].map(q => scr[Math.min(scr.length - 1, Math.floor(q * scr.length))]).filter(Boolean);
+    pick.forEach(([i], k) => fs.copyFileSync(path.join(tmp, `f${String(i).padStart(4, "0")}.png`), path.join(outDir, `respawn-full-${k}.png`)));
     pick.forEach(([i], k) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", path.join(tmp, `f${String(i).padStart(4, "0")}.png`), "-vf", `crop=360:220:${x}:${y},scale=iw*3:ih*3:flags=neighbor`, path.join(outDir, `respawn-${k}.png`)]));
     console.log("frames", n, "saved to", outDir);
   } finally { await browser.close(); server.close(); fs.rmSync(tmp, { recursive: true, force: true }); }
