@@ -1,4 +1,5 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
