@@ -7957,6 +7957,33 @@
       ],
       "additionalProperties": false
     },
+    "watching": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lag": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "radius",
+        "lean",
+        "lag"
+      ],
+      "additionalProperties": false
+    },
     "moonbeams": {
       "type": "number",
       "minimum": 0
@@ -8282,6 +8309,7 @@
     "shadows",
     "mist",
     "mistCanopy",
+    "watching",
     "moonbeams",
     "looks",
     "tone",

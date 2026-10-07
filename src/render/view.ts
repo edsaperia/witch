@@ -255,6 +255,8 @@ export class View {
   /** Mist banks over the open areas (render/mistCanopy.ts), and a place in each area type its cover is measured at. */
   mistCanopy: MistCanopy | null = null;
   private typeSites = new Map<number, { x: number; z: number }>();
+  /** Where she was a beat ago, for the trees watching her (render/view/frameUniforms.ts). */
+  watch = { x: NaN, z: NaN, t: 0 };
   width = 1;
   height = 1;
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
