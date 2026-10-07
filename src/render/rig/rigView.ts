@@ -43,7 +43,7 @@ export class RigView {
   stats = { creatures: 0, instances: 0, ms: 0 };
 
   /** A wild legend's batch look (render/view/creatures.ts legendLook: its sleeping rim and its light in steps), set by the view. */
-  legendLook: ((species: string) => { legend?: THREE.Vector4; legendFloor?: number; steps?: number }) | null = null;
+  legendLook: ((species: string) => { legend?: THREE.Vector4; legendFloor?: number; legendAwake?: number; steps?: number }) | null = null;
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
 

@@ -15,6 +15,7 @@ import { befriend, danceAt, invitableNow, stateOf, STATES } from "./creatureStat
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
+import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { stoneTurned } from "./bootRing";
@@ -378,7 +379,8 @@ function fixedStep(g: Game, controls: Controls): void {
   // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, gamepad B, touch
   // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
   if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
-  if (heldBySpell(g.party, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
+  if (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   if (c.spell) castSpell(g.spells, ht, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
@@ -780,7 +782,9 @@ export function coastOf(g: Game): CoastView | null {
   // the coast's edge her way: intoSea's quick path is only right about which side of the water a point is on, well inland)
   const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) - (g.tuning.map?.push ?? 0) * 0.6 - Math.hypot(dx, dz);
   const gazing = w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
-  return { near: Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach))), gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)) }; // (south of the middle: the sea behind a camera looking north)
+  const near = Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach)));
+  // (her bearing round the coast only by the sea, where the stargazing camera reads it: inland the camera's state is as ever)
+  return { near, gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)), bearing: near > 0 || gazing ? Math.atan2(dx, -dz) : undefined }; // (south of the middle: the sea behind a camera looking north)
 }
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */

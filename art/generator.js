@@ -11,7 +11,7 @@ import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broad
 import { PLANT_GENOMES, BUSH_GENOMES } from "./flora/genomes.js";
 export { PLANT_GENOMES, BUSH_GENOMES };
 import { witchSprite, witchHatSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit , WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks, LIMBO_BAR, DJ_DECKS, DJ_GESTURES, djFrame, djGesture } from "./witch.js";
-import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES } from "./treehouse.js";
+import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES, CANDLE, candleSprite } from "./treehouse.js";
 import { PROP_GENOMES, PROP_KINDS, RIM_GENOMES } from "./props/genomes.js";
 import { propPiece, propVariant, propFor, rimPiece, rimForm, rimSeed } from "./props/generator.js";
 export { PROP_GENOMES, PROP_KINDS, RIM_GENOMES, propPiece, propVariant, propFor, rimPiece, rimForm, rimSeed };
@@ -61,7 +61,7 @@ import { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, ra
 import { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, RIM_PIECES, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, walkGait, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
 export { LIMBO_BAR, DJ_DECKS, DJ_GESTURES, djFrame, djGesture, WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks };
-export { witchSprite, witchHatSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES };
+export { witchSprite, witchHatSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES, CANDLE, candleSprite };
 export { NEW_SET_PIECES, SET_PIECE_KINDS, setPiece3d };
 export { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset };
 export { BEACH_FINDS, BEACH_PRINTS, PRINT_HEADINGS, beachSprite, beachColours };
