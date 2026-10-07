@@ -16,7 +16,8 @@ import { Conductor, bootLayers, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
-interface Channel { in: GainNode; lastFreq: number }
+/** A part's way into the mix; `lfo`: its filter's slow wobble, one for all its notes (made when first wanted). */
+interface Channel { in: GainNode; lastFreq: number; lfo?: { osc: OscillatorNode; depth: GainNode } }
 
 /** Vowels for the synthesised voice: three formants each (Hz) and their levels. */
 const VOWELS: Record<string, [number, number][]> = {
@@ -140,6 +141,7 @@ export class MusicEngine {
     this.style = style;
     this.conductor.reset(style);
     this.setMix();
+    for (const ch of this.channels.values()) if (ch.lfo) try { ch.lfo.osc.stop(); } catch { /* stopped */ }
     this.channels.clear();
   }
 
@@ -388,16 +390,21 @@ export class MusicEngine {
     if (end > t + attack) g.gain.setTargetAtTime((peak / Math.sqrt(n)) * sustain, t + attack, decay / 3);
     g.gain.setTargetAtTime(0, end, release / 3);
     const nodes: AudioNode[] = [];
+    let lfoOf: GainNode | null = null, wobbled: BiquadFilterNode | null = null;
     if (p.filter) {
       const f = c.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q ?? 0.7; kRate(f.frequency);
       const base = p.cutoff ?? 2000, top = Math.min(18000, base + (p.envAmt ?? 0) * peak / Math.max(0.001, p.gain));
       f.frequency.setValueAtTime(top, t);
       if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
-      // a slow wobble of the filter: pads breathe
+      // a slow wobble of the filter: pads breathe (one wobble a part, shared by its notes and let go of each as it ends:
+      // a wobble a note was a fifth of the pads' cost; foxtrot's measure, #523)
       if (p.lfoRate && p.lfoDepth) {
-        const l = c.createOscillator(), lg = c.createGain();
-        l.frequency.value = p.lfoRate; lg.gain.value = p.lfoDepth;
-        l.connect(lg); lg.connect(f.frequency); l.start(t); l.stop(stop);
+        if (!ch.lfo) {
+          const osc = c.createOscillator(), depth = c.createGain();
+          osc.frequency.value = p.lfoRate; depth.gain.value = p.lfoDepth;
+          osc.connect(depth); osc.start(); ch.lfo = { osc, depth };
+        }
+        lfoOf = ch.lfo.depth; lfoOf.connect(f.frequency); wobbled = f;
       }
       nodes.push(f);
     }
@@ -406,7 +413,18 @@ export class MusicEngine {
     this.chain(nodes, ch.in);
     // every wave as `unison` voices, detuned across ±detune cents and spread across ±width in the
     // stereo field (outer voices widest), each starting at its own point in the cycle
-    let v = 0;
+    // the voices spread across ±width: those on each side through one panner at their mean place (a panner a voice was
+    // the gate pad's, stab's and supersaw's biggest cost; foxtrot's measure, #523)
+    const pans: number[] = [];
+    for (let v = 0; v < n; v++) { const x = n > 1 ? (2 * v) / (n - 1) - 1 : 0; pans.push(p.width && n > 1 ? p.width * (v % 2 ? x : -x) : 0); }
+    const side = (sign: number): AudioNode | null => {
+      const on = pans.filter(q => Math.sign(q) === sign);
+      if (!on.length) return null;
+      const s = c.createStereoPanner(); s.pan.value = on.reduce((a, q) => a + q, 0) / on.length; s.connect(nodes[0]);
+      return s;
+    };
+    const left = side(-1), right = side(1);
+    let v = 0, last: OscillatorNode | null = null;
     for (const w of waves) for (let u = 0; u < U; u++, v++) {
       const o = c.createOscillator(), x = n > 1 ? (2 * v) / (n - 1) - 1 : 0;
       o.type = w;
@@ -414,10 +432,10 @@ export class MusicEngine {
       if (p.glide && ch.lastFreq > 0 && ch.lastFreq !== freq) { o.frequency.setValueAtTime(ch.lastFreq, t); o.frequency.exponentialRampToValueAtTime(freq, t + p.glide); }
       else if (p.bend) { o.frequency.setValueAtTime(freq * Math.pow(2, p.bend / 12), t); o.frequency.exponentialRampToValueAtTime(freq, t + (p.bendTime ?? 0.08)); }
       else o.frequency.value = freq;
-      let src: AudioNode = o;
-      if (p.width && n > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * (v % 2 ? x : -x); o.connect(s); src = s; }
-      src.connect(nodes[0]); o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); o.stop(stop);
+      o.connect(pans[v] < 0 ? left! : pans[v] > 0 ? right! : nodes[0]); o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); o.stop(stop);
+      last = o;
     }
+    if (lfoOf && wobbled && last) { const l = lfoOf, f = wobbled; last.onended = () => { try { l.disconnect(f.frequency); } catch { /* gone */ } }; }
     ch.lastFreq = freq;
   }
 
@@ -443,13 +461,18 @@ export class MusicEngine {
     const vib = c.createOscillator(), vg = c.createGain();
     vib.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(p.vibrato ?? 15, t + Math.min(0.6, attack + 0.25));
     vib.connect(vg); vib.start(t); vib.stop(stop);
+    // (the outer voices through a panner a side, the middle one straight in: as synth())
+    const spread = !!p.width && U > 1, xs = Array.from({ length: U }, (_, u) => U > 1 ? (2 * u) / (U - 1) - 1 : 0);
+    const sideOf = (sign: number): AudioNode => {
+      const on = xs.filter(x => Math.sign(x) === sign), s = c.createStereoPanner();
+      s.pan.value = p.width! * on.reduce((a, x) => a + x, 0) / on.length; s.connect(src); return s;
+    };
+    const left = spread ? sideOf(-1) : null, right = spread ? sideOf(1) : null;
     for (let u = 0; u < U; u++) {
       const o = c.createOscillator(), x = U > 1 ? (2 * u) / (U - 1) - 1 : 0;
       o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = (p.detune ?? 0) * x; kRate(o.detune);
       vg.connect(o.detune);
-      let out: AudioNode = o;
-      if (p.width && U > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * x; o.connect(s); out = s; }
-      out.connect(src); o.start(t); o.stop(stop);
+      o.connect(spread && x < 0 ? left! : spread && x > 0 ? right! : src); o.start(t); o.stop(stop);
     }
     if (p.breath) { const h = c.createBiquadFilter(); h.type = "highpass"; h.frequency.value = 2500; this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], src); }
   }
