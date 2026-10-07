@@ -552,6 +552,31 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 
 **Prototype in Three.js in the browser; port to Godot once Ed is happy with it** (Ed, 2026-10-03). The game's state and rules live in modules with no Three.js in them, so the port carries them over. The art is drawn by JavaScript code (the Art Lab's generator), which the prototype uses directly.
 
+### Audio scheduling: how the music keeps playing (Ed's playtests, 2026-10-06: "The music cuts in and out a lot"; round 16: "Music is still starting and stopping unexpectedly")
+
+Every note is synthesised in the browser (Web Audio), scheduled a little ahead of the moment it's heard. The rules say *what* should play (`src/rules/music.ts` the mix by place, `musicPlan.ts` the section by wave, `musicScore.ts` the notes); the engine (`src/platform/audio/musicEngine.ts`) decides *when* it's handed to the audio thread. The two clocks it joins:
+
+- **Game time** advances only in the frame loop, and a frame longer than the rules' `MAX_STEP` (0.1 s) loses the rest: game time stalls with the page.
+- **Audio time** (`AudioContext.currentTime`) runs on its own thread, and keeps running through a page stall.
+
+The model, frame by frame:
+
+1. **A map between the two**: an anchor (`g0`, `a0`): game time g is heard at audio time a0 + (g − g0) / rate, where rate is the world's time scale (about a tenth in a legend's circle, which slows the music like a tape).
+2. **Look-ahead**: each frame it schedules every sixteenth due in the next `ahead` seconds of audio time. 0.6 s normally, so a frame stall shorter than that is never heard.
+3. **Growing after a stall**: after a long frame it schedules further ahead, 1.5 times that frame, up to `MusicEngine.maxAhead` (2 s), shrinking back by `aheadEase` (0.05 s) a second. Stalls come in runs (the art baking, a new place's first frames), so a run of them cuts the music once, not every time.
+4. **Slew, not jumps**: when game time and the map disagree (game time lost to a long frame, the frames' jitter), the anchor is nudged back into step at most `slew` (5%) faster or slower, so the drift is never heard as a skip.
+5. **Held, not dropped**: a sixteenth a stall made late is played as soon as the page is back, shifting the map, and the slew brings it back into step. Nothing is skipped.
+6. **Re-anchoring only on a real jump**: game time going back, a pause, a new run, or more than 0.25 s ahead of the map. A game running far slower than its audio for long (the music up to 6 s ahead of it) is held there.
+7. **Counted**: `musicEngine.stats` counts re-anchorings (`resyncs`), held sixteenths (`late`), audio seconds left with nothing scheduled (`gap`) and the look-ahead now (`ahead`); the playtest log (L) keeps them every 10 s.
+
+Around it:
+
+- **The watchdog** (`platform/audio/watchdog.ts`, once a second) mends what breaks: a context the browser suspended is resumed, music silent for 3 s while it should be heard (or anything not a number in it) is rebuilt afresh, and the sound effects too.
+- **The output meter** (`platform/audio/outputMeter.ts`, about ten times a second) measures what actually leaves the game for the speakers: the level of everything reaching the destination, the context's state, its latencies, and its clock against the page's. Silence while the music should be heard is logged in the playtest log with where she was and the nearest stall. It sees what the game hands the browser, never the device's volume or whether speakers are plugged in.
+- **The mic check** (`?micCheck=1`, debug only) goes one step further: it listens through the microphone beside the output, so a dropout after the game (the OS, the device, Bluetooth) shows as the room going quiet while the game played on.
+
+The checks: `tools/music-lab/flight.cjs` drives the built game's music through real main-thread stalls and fails on gaps; `tools/music-lab/silence.cjs` cuts the sound inside the graph and checks the meter catches it; `src/platform/audio/musicEngine.test.ts` and `src/rules/musicZones.test.ts` cover the rest.
+
 ## Order of work
 
 1. A character the player moves around in 3D space.

@@ -888,8 +888,9 @@ label.check input { accent-color: var(--accent); }
     g0 = NaN;
     a0 = 0;
     rate = 1;
-    /** Continuity, for the checks (tools/music-lab/flight.cjs): times the timeline was re-anchored, sixteenths dropped
-     *  for being late, and audio seconds left with nothing scheduled between one sixteenth and the next. */
+    /** Continuity, for the checks (tools/music-lab/flight.cjs) and the playtest log: times the timeline was re-anchored,
+     *  sixteenths a stall made late (held and played, not dropped), audio seconds left with nothing scheduled between one
+     *  sixteenth and the next, and how far ahead it schedules now (s). */
     stats = { resyncs: 0, late: 0, gap: 0, ahead: 0 };
     heardTo = -1;
     lastNow = -1;
@@ -1455,8 +1456,9 @@ label.check input { accent-color: var(--accent); }
     }
     /** The generative track (none with a recorded one). */
     engine = null;
-    /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. */
-    /** `rate`: the game's time scale (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape. */
+    /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. `rate`: the game's time scale
+     *  (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape;
+     *  `over`: the party's-over ease (0 to 1), winding it down. */
     update(mix0, cue2, gameTime, clock2, on, M, rate = 1, over = 0) {
       const c = this.ctx, now = c.currentTime, k = 0.08;
       const stop = over > 0 ? Math.min(1, over / Math.max(0.05, M?.over?.stop ?? 0.6)) : 0;
@@ -1488,7 +1490,7 @@ label.check input { accent-color: var(--accent); }
     get stats() {
       return this.engine?.stats ?? { resyncs: 0, late: 0, gap: 0, ahead: 0 };
     }
-    /** What reaches the speakers (the audio watchdog taps it). */
+    /** What reaches the speakers (the audio watchdog and the output meter tap it). */
     get output() {
       return this.master;
     }
