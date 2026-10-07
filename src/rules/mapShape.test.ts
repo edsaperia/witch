@@ -1,6 +1,6 @@
 // The circular map (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with
 // a buffer zone with no runestones around the edge"): the playable areas a circle round home, about
-// as many as the old 14 x 14; nothing placed for play in the buffer ring; her flight's edge a soft circle.
+// about 96 (radius 5.6; Ed, 2026-10-07); nothing placed for play in the buffer ring; her flight's edge a soft circle.
 import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { Forest } from "./forest";
@@ -15,12 +15,12 @@ const SEEDS = [1, 123, 4242, 90210, 925469];
 
 describe("the circular map", () => {
   for (const seed of SEEDS) {
-    it(`about 196 playable areas, home among them, everything placed for play inside the buffer (seed ${seed})`, () => {
+    it(`about 96 playable areas, home among them, everything placed for play inside the buffer (seed ${seed})`, () => {
       const map = generateMap(seed, TUNING), M = TUNING.map!, A = map.areaSize, c = map.bounds.circle!;
       expect(map.shape).toBe("circle");
       expect(c).toBeTruthy();
-      expect(map.cells.length).toBeGreaterThanOrEqual(170);
-      expect(map.cells.length).toBeLessThanOrEqual(225);
+      expect(map.cells.length).toBeGreaterThanOrEqual(80);
+      expect(map.cells.length).toBeLessThanOrEqual(115);
       expect(map.playable(map.centreCell[0], map.centreCell[1])).toBe(true);
       expect(Math.hypot(c.x - map.dancefloor.x, c.z - map.dancefloor.z)).toBeLessThan(1); // (centred on home)
       expect(c.r).toBeCloseTo((M.radius + 0.5 + M.buffer) * A, 3); // (round: times the coast at each angle)

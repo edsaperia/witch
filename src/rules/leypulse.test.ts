@@ -94,6 +94,6 @@ describe("a runestone's column of light (Ed, 2026-10-06: \"first appears when th
     for (let k = 1; k < order.length; k++) expect(order[k]).toBeGreaterThan(order[k - 1]);
     expect(columnShown(undefined, 1e6, F)).toBeNull();
     const far = markers.map(m => times.get(m.key)!).filter(t => t !== undefined);
-    expect(far.filter(t => t > 10 + 100 * step).length).toBeGreaterThan(0); // the far ones much later
+    expect(far.filter(t => t > 10 + (g.map.cells.length / 2) * step).length).toBeGreaterThan(0); // the far ones much later (past half the map's stones)
   });
 });

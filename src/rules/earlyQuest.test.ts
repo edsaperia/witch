@@ -25,8 +25,19 @@ describe("the early easy quest", () => {
     expect(L.quest).toMatchObject({ species: E.wants, level: 0 });
   });
 
+  it("forces a legend circle into the first three where the share left them none", () => {
+    const off = withTuning({ legends: { ...TUNING.legends, earlyQuest: false } } as never);
+    for (const seed of [777, 14]) {
+      const bare = generateMap(seed, off);
+      expect(routeOf(bare).order.slice(0, 3).some(k => bare.legendCells.has(k))).toBe(false);
+      const map = generateMap(seed, TUNING), first = routeOf(map).order.slice(0, 3), added = first.filter(k => map.legendCells.has(k));
+      expect(added).toHaveLength(1);
+      expect(earlyQuest(map)!.host).toBe(added[0]);
+    }
+  });
+
   it("plans the same route mid-build (where the map gives the first areas their legend) as on the finished map", () => {
-    for (const seed of [31337, 123]) { const map = generateMap(seed, TUNING); expect(routeOf({ ...map }).order).toEqual(routeOf(map).order); }
+    for (const seed of [31337, 123, 777, 14]) { const map = generateMap(seed, TUNING); expect(routeOf({ ...map }).order).toEqual(routeOf(map).order); }
   });
 
   it("is the same every time for a seed", () => {
