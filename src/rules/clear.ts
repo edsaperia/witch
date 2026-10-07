@@ -28,8 +28,11 @@ export interface ClearRules {
   threat?: [number, number][];
   /** ...the share of its extra creatures at each level [babies, young, adults], by species (default for the rest)... */
   profiles?: Record<string, [number, number, number]>;
-  /** ...and at most this many babies in an area, population.start's included. */
+  /** ...and at most this many babies in an area, population.start's included... */
   babyCap?: number;
+  /** ...and this many babies in every area, start's included (Ed, 2026-10-07: "about a couple of babies per area": quest
+   *  sigils and levelling up), outside the threat (babies are 0 F). */
+  babies?: number;
   /** A new soundsystem's health, times combat.soundsystemHealth, by route position: [position, times], straight lines
    *  between, flat past the ends. */
   soundHealth?: [number, number][];
@@ -96,7 +99,7 @@ function populateByThreat(creatures: Creature[], map: ForestMap, R: ClearRules):
     const n = Math.max(0, Math.round(curveAt(R.threat!, pos, 1) / per)), raw = sh.map(x => x * n), out = raw.map(Math.floor);
     const rest = raw.map((x, i) => [x - Math.floor(x) + hash2(cx * 7 + i, cy * 11, map.seed + 9013) * 1e-6, i] as const).sort((a, b) => b[0] - a[0]);
     for (let k = 0; k < n - out.reduce((a, b) => a + b, 0); k++) out[rest[k][1]]++;
-    out[0] = Math.min(out[0], Math.max(0, cap - startBabies));
+    out[0] = Math.min(out[0] + Math.max(0, (R.babies ?? 0) - startBabies), Math.max(0, cap - startBabies));
     const r = rng(map.seed * 4447 + cx * 211 + cy * 1013 + 5);
     for (let level = 0 as Level; level < 3; level = (level + 1) as Level) for (let i = 0; i < out[level]; i++) { creatures.push(makeCreature(map, cell, level, creatures.length, r)); made++; }
   }
