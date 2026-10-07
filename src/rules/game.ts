@@ -450,13 +450,16 @@ function fixedStep(g: Game, controls: Controls): void {
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
  *  once, after it's done. A sleeping legend (and one waking) holds its ground; one burrowed or in the air is out of it. */
+const spacingList: Creature[] = []; // (kept from step to step: a siege's thousands)
 function stepSpacing(g: Game, dt: number): void {
-  const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list: Creature[] = [];
+  const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list = spacingList;
+  list.length = 0;
   for (const c of g.creatures) {
     if (c.gone || c.burrow || c.leap) continue;
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
   spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
+  list.length = 0; // (let them go)
 }
 
 /** The naps' rules this step (rules/creatures.ts NapRules; tuning naps): an area is rousing while a witch is on the ground
@@ -757,7 +760,7 @@ export function coastOf(g: Game): CoastView | null {
   // the coast's edge her way: intoSea's quick path is only right about which side of the water a point is on, well inland)
   const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) - (g.tuning.map?.push ?? 0) * 0.6 - Math.hypot(dx, dz);
   const gazing = w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
-  return { near: Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach))), gazing };
+  return { near: Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach))), gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)) }; // (south of the middle: the sea behind a camera looking north)
 }
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */

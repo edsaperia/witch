@@ -39,14 +39,22 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // And nearing the sea, on the ground, it bends up toward beach.camera.curve times the treetops' (Ed, 2026-10-06: "gradual as
     // you approach the beach, over 200m"), the camera lowering with it (rules/camera.ts), both eased by the rules' camera.
     const B = t.beach, V = coastView(g.camera);
-    const gk = Math.max(V.gaze * (B?.stargazeCurve ?? 0), V.coast * (B?.camera?.curve ?? 0)) * C.treetop;
+    // Facing out to sea (the north coast: the camera always looks north), the bend would drop the open water out of sight
+    // below a horizon of sand, and the flat sea shows the sky anyway: there it keeps only beach.camera.seaward of itself
+    // (Ed, 2026-10-07: the sea "on the horizon" must read from the stargazing pose), easing round the coast by bearing.
+    const ring = g.map.bounds.circle, wx = ring ? g.witch.x - ring.x : 0, wz = ring ? g.witch.z - ring.z : 0, seaAhead = Math.max(0, -wz / (Math.hypot(wx, wz) || 1)); // (no circle, no coast: 0)
+    const seaKeep = 1 - seaAhead * (1 - (B?.camera?.seaward ?? 1));
+    const gk = Math.max(V.gaze * (B?.stargazeCurve ?? 0), V.coast * (B?.camera?.curve ?? 0)) * C.treetop * seaKeep;
     SPRITE_UNIFORMS.uNearCut.value = V.gaze > 0.01 ? V.gaze * Math.max(0, pose.distance - 12) : 0; // (lying down, the camera low behind her: what's between it and her, from 12 m before her, dithers away)
     const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
     HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
-    v.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, v.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) : 0);
+    v.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, v.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) * seaKeep : 0);
     HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
     const far = t.haze.far;
-    v.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (v.width / v.height), v.updateMoon(g));
+    const moonNow = v.updateMoon(g);
+    v.sky.update(Math.max(k, V.coast + V.gaze > 0.01 ? 1e-5 : 0), pose.tx, pose.tz, far, // (by the sea the sky shows over the flat water even unbent)
+      2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (v.width / v.height), moonNow);
+    v.ground.moonRoad(moonNow.x, v.width, moonNow.lit > 0.02);
   }
   v.time("sky");
   const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;

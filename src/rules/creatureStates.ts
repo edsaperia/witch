@@ -23,9 +23,12 @@ export function stateOf(c: Creature): State {
 /** Whether creatures in these two states fight (both ways): leashed against wild and enraged,
  *  enraged against happy. Wild and happy ignore each other; wild and enraged too. */
 export function foes(a: State, b: State): boolean {
+  // (compared directly, not as a joined "a|b" string: that made a string for every pair looked at, a fight's commonest
+  // garbage; phase 2's GC audit)
   if (a === b) return false;
-  const p = a < b ? `${a}|${b}` : `${b}|${a}`;
-  return p === "leashed|wild" || p === "enraged|leashed" || p === "enraged|happy";
+  if (a === "leashed") return b === "wild" || b === "enraged";
+  if (b === "leashed") return a === "wild" || a === "enraged";
+  return (a === "enraged" && b === "happy") || (a === "happy" && b === "enraged");
 }
 
 /** Whether a creature in this state goes for the witch: the wild (in or near its area) and the enraged. */
