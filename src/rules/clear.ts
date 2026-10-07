@@ -2,7 +2,8 @@
 // them invited, or run off) transforms its runestone at once, as its wave would: its soundsystem rises, its babies turn
 // happy and dance (its legend circle's too), a party witch comes, its music plays and the ley line counts its stone as
 // reached (all of which follow from its being partified: rules/party.ts clearArea, game.ts stepFights). Its sleeping
-// legend and the wild baby in its legend's circle don't count. Its wave, when it comes, changes nothing in the rules: it
+// legend and the wild baby in its legend's circle don't count. Only an area's natives count, wherever they've wandered (Ed, 2026-10-07: visitors from next door
+// "wouldn't get enraged when the runestone transforms"): a creature belongs to its own area (c.cell), never to where it stands. Its wave, when it comes, changes nothing in the rules: it
 // only celebrates (rules/party.ts spreadWave). No drawing here.
 import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
@@ -49,4 +50,30 @@ export function clearedAreas(p: PartyState, map: ForestMap, creatures: readonly 
     out.push(cell);
   }
   return out;
+}
+
+/** An area's own creatures still holding it (holdsArea): what she must yet invite, or see run off, to clear it. */
+export function wildLeft(creatures: readonly Creature[], cell: readonly [number, number]): Creature[] {
+  const out: Creature[] = [];
+  for (const c of creatures) if (c.cell[0] === cell[0] && c.cell[1] === cell[1] && holdsArea(c)) out.push(c);
+  return out;
+}
+
+/** The wild area a witch at (x, z) is in, if clearing it would transform its runestone (not home, not partified or
+ *  ruined): its cell, else null. */
+export function clearableAt(p: PartyState, map: ForestMap, x: number, z: number): [number, number] | null {
+  const cell = map.cellSafe(x, z).cell, key = `${cell[0]},${cell[1]}`, [hx, hy] = map.centreCell;
+  if ((cell[0] === hx && cell[1] === hy) || p.areas.has(key) || p.ruined?.has(key)) return null;
+  return [cell[0], cell[1]];
+}
+
+/** What the HUD says of the wild area she's in (Ed's playtest, 2026-10-07: "When I invite all the animals in an area ... the
+ *  soundsystem doesn't transform": some of its own were out of sight, asleep or lying knocked down): how many of its own
+ *  still hold it, of them asleep and dazed (lying knocked down, still to invite or to run off), and the words. */
+export function clearCue(left: readonly Creature[]): { n: number; asleep: number; dazed: number; text: string } {
+  let asleep = 0, dazed = 0;
+  for (const c of left) { if (c.asleep) asleep++; if (c.dazed) dazed++; }
+  const n = left.length, extra = [asleep ? `${asleep} asleep` : "", dazed ? `${dazed} knocked down` : ""].filter(Boolean).join(", ");
+  const text = n === 0 ? "" : `${n} wild ${n === 1 ? "animal" : "animals"} left here${extra ? ` (${extra})` : ""}`;
+  return { n, asleep, dazed, text };
 }

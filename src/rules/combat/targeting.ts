@@ -71,6 +71,7 @@ export const inviting = (w: CombatWorld, c: Creature, o: Creature) => !huntsWitc
 /** Why a wild one lost its target, if it's a chase it gives up (not one she's inviting, a fall, a knockout):
  *  she's risen to the treetops, or it (her or a party animal) is past its band beyond its area's edge. */
 export function gaveUp(w: CombatWorld, c: Creature, tg: Target): boolean {
+  if (tg.kind === "witch" && c.hunting === tg.id) return false; // (a hunter never gives her up: rules/hunt.ts)
   if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || sheltered(v, c) || pastEdge(w, c, v.x, v.z)); }
   if (tg.kind === "creature") { const o = w.creatures[tg.id]; return !!o && !o.gone && pastEdge(w, c, o.x, o.z); }
   return false;
@@ -89,6 +90,7 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
     // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
     if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
+    if (c.hunting === tg.id) return true; // (hunting her: however far past its area's edge, rules/hunt.ts)
     if (!c.siege) return !pastEdge(w, c, v.x, v.z);
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
     return !(d > range && d >= w.t.combat.witchLose * FIGHT.scale && !w.inArea(c, v.x, v.z));
@@ -102,6 +104,12 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
  *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
  *  parked one, anything within guard.radius of its sigil. */
 export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean): Target | null {
+  // A hunter goes for her and nothing else, wherever she is (rules/hunt.ts): none while she's out of its reach (over the
+  // treetops, knocked out, sheltered in a calm circle) or inviting it.
+  if (c.hunting !== undefined && huntsWitch(sideOf(c))) {
+    const v = w.witches[c.hunting];
+    return v && v.onGround && !v.down && !sheltered(v, c) && w.talkingTo(c.id) !== v.id ? { kind: "witch", id: v.id } : null;
+  }
   // (an enraged one goes for a happy legend within legends.attack.wornReach: it wears it down)
   const legReach = sideOf(c) === "enraged" ? LEGENDS.attack.wornReach * FIGHT.scale : 0;
   let best: Target | null = null, bd = Math.max(range, legReach);

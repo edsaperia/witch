@@ -3012,6 +3012,18 @@
       ],
       "additionalProperties": false
     },
+    "hunt": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on"
+      ],
+      "additionalProperties": false
+    },
     "naps": {
       "type": "object",
       "properties": {
@@ -3119,6 +3131,10 @@
               "type": "number",
               "minimum": 0
             },
+            "minHostile": {
+              "type": "number",
+              "minimum": 0
+            },
             "threat": {
               "type": "array",
               "items": {
@@ -3145,6 +3161,7 @@
           "required": [
             "babies",
             "babyCap",
+            "minHostile",
             "threat",
             "profiles"
           ],
@@ -8589,6 +8606,7 @@
     "combat",
     "notice",
     "wildWatch",
+    "hunt",
     "naps",
     "guard",
     "population",

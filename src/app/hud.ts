@@ -4,6 +4,7 @@ import { leashLoad, type Game, type WaveEvent } from "../rules/game";
 import { waveCountdown } from "../rules/party";
 import { clockSeconds, clockText } from "../rules/leypulse";
 import { powerReport } from "../rules/power";
+import { clearCue, clearableAt, wildLeft } from "../rules/clear";
 
 export class Hud {
   debugOn = false;
@@ -16,6 +17,8 @@ export class Hud {
   private readonly clockEl = document.getElementById("clock")!;
   private readonly clockT = this.clockEl.querySelector<HTMLElement>(".t")!;
   private readonly clockLabel = this.clockEl.querySelector<HTMLElement>(".label")!;
+  private readonly wildEl = document.getElementById("wild-left");
+  private lastWild = -Infinity;
 
   constructor(private readonly game: Game, private readonly tuning: { party: { interval: number } }, private readonly knobs: HTMLElement) {}
 
@@ -47,6 +50,18 @@ export class Hud {
       clockEl.append(pop);
       setTimeout(() => pop.remove(), 4000);
     }
+  }
+
+  /** How many of the wild area's own animals still hold it, under the clock, four times a second, while she's in a wild
+   *  area its clearing would transform (rules/clear.ts); hidden elsewhere, and once the party's over. */
+  wildLeft(now: number): void {
+    const el = this.wildEl, game = this.game;
+    if (!el || now - this.lastWild <= 250) return;
+    this.lastWild = now;
+    const w = game.witch, cell = game.partyOver || w.seated ? null : clearableAt(game.party, game.map, w.x, w.z);
+    const text = cell ? clearCue(wildLeft(game.creatures, cell)).text : "";
+    if (el.textContent !== text) el.textContent = text;
+    el.classList.toggle("on", !!text);
   }
 
   /** Every soundsystem lost since the last shown. */
