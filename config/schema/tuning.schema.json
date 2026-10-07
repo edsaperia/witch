@@ -1986,6 +1986,10 @@
           "type": "number",
           "minimum": 0
         },
+        "seekRadius": {
+          "type": "number",
+          "minimum": 0
+        },
         "eatTime": {
           "type": "number",
           "minimum": 0
@@ -2024,6 +2028,7 @@
         "bushesPerArea",
         "patch",
         "detour",
+        "seekRadius",
         "eatTime",
         "cost",
         "colour",
@@ -2545,6 +2550,10 @@
           "type": "number",
           "minimum": 0
         },
+        "engage": {
+          "type": "number",
+          "minimum": 0
+        },
         "pursuit": {
           "type": "number",
           "minimum": 0
@@ -2562,6 +2571,14 @@
           "minimum": 0
         },
         "reaction": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chaseMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyChaseMult": {
           "type": "number",
           "minimum": 0
         },
@@ -2606,11 +2623,14 @@
         "aggro",
         "witchLose",
         "leaveArea",
+        "engage",
         "pursuit",
         "pursuitRun",
         "fightRun",
         "legendRun",
         "reaction",
+        "chaseMult",
+        "partyChaseMult",
         "marchMult",
         "fleeMult",
         "soundsystemHealth",
@@ -5004,6 +5024,10 @@
           "type": "number",
           "minimum": 0
         },
+        "maxPerWave": {
+          "type": "number",
+          "minimum": 0
+        },
         "picker": {
           "type": "string"
         },
@@ -5057,6 +5081,7 @@
         "lossPenalty",
         "startDelay",
         "areasPerWave",
+        "maxPerWave",
         "picker",
         "route",
         "noisy",
