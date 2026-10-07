@@ -16,6 +16,7 @@ import { DJ_DEPTH, nearerCamera } from "./home";
 import { beatAt } from "../../rules/beat";
 import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
+import { hatFlight } from "../hatFlight";
 
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
  *  the treehouse's sprite (its pixels) in the world. */
@@ -135,10 +136,19 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   }
   v.witchBatch.set(bare ? [] : her);
   v.witchBatch.silhouette = djUpper < 0; if (v.bareBatch) v.bareBatch.silhouette = djUpper < 0;
-  v.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
-  // The party's and the beach's witches' shadows, and a small one under her hat where it lies.
+  // Knocked off, her hat floats down (Ed, 2026-10-07: "the hat slowly floats to the floor over about 4 seconds"): from her head
+  // to where it lies over the knockout's float (ko.at to ko.floatUntil, knockout.hatFloat: rules/knockout.ts), drifting over as it goes, swaying side to
+  // side less as it settles and rocking with each swing (the sprite turned as it swings back), its shadow gathering under it.
+  const fk = bare && hatFrame && KO && KO.floatUntil > KO.at ? Math.max(0, Math.min(1, (ht - KO.at) / (KO.floatUntil - KO.at))) : 1;
+  const hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
+  v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
+  // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];
-  if (bare && hatFrame) v.witchShadows.push({ x: Hat.down!.x + HAT_BESIDE, z: Hat.down!.z, w: hatFrame.w * v.mpp * 0.9, d: hatFrame.w * v.mpp * 0.35 });
+  if (hat) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
+  // The rest of the screen dims while she's down with her hat floating off (render/post.ts uKoDim): in over half a second from
+  // the knockdown, held till she sparkles away, out as she goes. No hat to lose, no dim.
+  const KD = t.knockout.dim ?? 0;
+  v.post.koDim = KO && hat && KD > 0 ? KD * Math.min(1, Math.max(0, (ht - KO.at) / 0.5)) * (1 - Math.min(1, Math.max(0, (ht - KO.teleportAt) / 0.6))) : 0;
   // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
   // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
   // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).

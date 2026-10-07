@@ -305,7 +305,7 @@ export class HeightField {
     if (cs) for (let q = 0; q < cs.length; q++) {
       const c = cs[q];
       if (c.pond && !ponds) continue; // (a pond's own level: the fixed plateaus only)
-      const d = Math.hypot(x - c.x, z - c.z);
+      const dx = x - c.x, dz = z - c.z, d = Math.sqrt(dx * dx + dz * dz); // (not Math.hypot: its result is boxed, thousands of times a frame while the ley line routes)
       if (d < c.r + this.PLATEAU_FADE) { this.platPulls = HeightField.pull(this.platPulls, n, 1 - smoothstep((d - c.r) / this.PLATEAU_FADE), c.h, 1e6); n += 3; }
     }
     return blend(h, this.platPulls, n);
@@ -346,7 +346,7 @@ export class HeightField {
     let n = 0;
     for (let q = 0; q < list.length; q++) {
       const id = list[q], o = id * SEG, ax = S[o], az = S[o + 1], ex = S[o + 2], ez = S[o + 3], half = S[o + 5];
-      const u = Math.min(1, Math.max(0, ((x - ax) * ex + (z - az) * ez) / S[o + 4])), d = Math.hypot(x - ax - ex * u, z - az - ez * u);
+      const u = Math.min(1, Math.max(0, ((x - ax) * ex + (z - az) * ez) / S[o + 4])), qx = x - ax - ex * u, qz = z - az - ez * u, d = Math.sqrt(qx * qx + qz * qz);
       if (d > half + this.PATH_EDGE) continue;
       const line = S[o + 6], w = 1 - smoothstep((d - half) / this.PATH_EDGE), k = w * w * w * w + 1e-9;
       if (Number.isNaN(this.segH[id * 2])) { this.segH[id * 2] = this.plateaued(ax, az); this.segH[id * 2 + 1] = this.plateaued(ax + ex, az + ez); }
@@ -362,7 +362,7 @@ export class HeightField {
     // A plateau's level core still wins over a path's (eased back over PATH_EDGE at its edge).
     const cs = this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET)));
     if (cs) for (let q = 0; q < cs.length; q++) {
-      const c = cs[q], d = Math.hypot(x - c.x, z - c.z);
+      const c = cs[q], dx = x - c.x, dz = z - c.z, d = Math.sqrt(dx * dx + dz * dz);
       if (d < c.r + this.PATH_EDGE) { this.srcPulls = HeightField.pull(this.srcPulls, p, 1 - smoothstep((d - c.r) / this.PATH_EDGE), c.h, 1e6); p += 3; }
     }
     return blend(h, this.srcPulls, p);

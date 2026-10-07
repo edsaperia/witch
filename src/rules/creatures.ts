@@ -4,6 +4,7 @@
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
+import { watchStep } from "./wildWatch";
 import { coarseTurn, inFull, type LodCounts } from "./simLod";
 import { earlyQuest, questFor, type Quest } from "./quest";
 import { rng } from "./random";
@@ -171,6 +172,8 @@ export interface Creature {
   napUntil?: number;
   /** Getting up (a stretch, a yawn) till this game time: still out of fights, its roam not yet resumed. */
   wakeUntil?: number;
+  /** Holding off and watching her till then (world clock): just come down in its wild area (rules/wildWatch.ts). */
+  watchUntil?: number;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
   safeX?: number;
   safeZ?: number;
@@ -218,7 +221,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature sets them (one shape for all). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "wakeUntil", "safeX", "safeZ", "safeR"] as const satisfies readonly (keyof Creature)[];
+const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -387,7 +390,7 @@ export function wakeUp(c: Creature, time: number, wake: number): void {
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and
  *  the time), rather than where it was left. A `dormant` one (a wild legend still asleep) stays
  *  where it lies. */
-export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules): void {
+export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules, watch?: { hangBack: number }): void {
   // In full within lod.full of her (what the view can show); beyond, coarsely (rules/simLod.ts):
   // once every lod.every steps, by that many steps at once, taking turns by id; past `radius`
   // (by its home) not at all.
@@ -405,6 +408,8 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
     // Asleep or getting up: lying where it is, no roam (and no AI: combat leaves it out too).
     if (napping(c, time)) { c.seen = time; c.moving = false; c.away = false; continue; }
+    // Watching her, just come down in its wild area (rules/wildWatch.ts): still, turned to her, backing off if she's close.
+    if (watch && c.watchUntil !== undefined && time < c.watchUntil) { c.seen = time; watchStep(c, x, z, dt, watch.hangBack); continue; }
     c.wakeUntil = undefined;
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);
