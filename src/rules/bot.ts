@@ -19,8 +19,8 @@ import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
 import type { Cell } from "./partition";
 
-export type BotKind = "skilled" | "champion" | "crude" | "novice" | "idle" | "hover";
-export const BOT_KINDS: readonly BotKind[] = ["skilled", "champion", "crude", "novice", "idle", "hover"];
+import { BOT_KINDS, type BotKind } from "./botKinds";
+export { BOT_KINDS, type BotKind };
 
 export interface BotOptions {
   /** Parks up to this many at the next soundsystem (skilled)... */

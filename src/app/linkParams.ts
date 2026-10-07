@@ -4,7 +4,7 @@ import { TUNING } from "../rules/tuning";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
-import { applyKnobParams } from "../ui/decide";
+import { applyKnobParams } from "../ui/decisions";
 
 export function tuningFromLink(params: URLSearchParams) {
   // Variants as switches in the link: ?tilt=before|after|off, ?bloom=off, ?shadows=off,
