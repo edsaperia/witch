@@ -67,7 +67,9 @@ export class AssetLibrary {
    *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
   readonly treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
     /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
-    foreFrames: number; foreBox: { x: number; y: number } };
+    foreFrames: number; foreBox: { x: number; y: number };
+    /** The knockdown candles (Art.candleSprite: level × flicker, from frame candle0) and their row along the desk's front (its ends, in the base's pixels). */
+    candle0: number; candleLevels: number; candleFlicker: number; candleRow: { x: number; y: number }[] };
   /** Style scale: the lab's K, 2 / pixel size. */
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
@@ -93,7 +95,7 @@ export class AssetLibrary {
     const ss: Baked[] = [];
     for (let v = 0; v < 3; v++) for (let f = 0; f < 3; f++) ss.push(Art.bake(Art.soundsystemSprite(style, { variant: v, frame: f, state: "playing" }), Art.soundsystemColours(v), style, style.cOutline) as Baked);
     this.soundsystems = packAtlas(ss, 2048);
-    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; foreFrames?: unknown[]; foreBox?: { x: number; y: number }; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; camera?: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
+    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; foreFrames?: unknown[]; foreBox?: { x: number; y: number }; candles?: { x: number; y: number }[]; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; camera?: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
     const thc = Art.treehouseColours(style);
     // Its model draws a hard dark shadow ellipse on the ground round the trunk's foot: drop it (a
     // soft contact shadow goes there instead), as Ed asked for set pieces.
@@ -101,7 +103,11 @@ export class AssetLibrary {
       for (let y = Math.max(0, Math.floor(th.anchors.base.y - 14)); y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === Art.M.NOSE) sp.m[y * sp.w + x] = 0;
     // Frames: 0 its base, 1 its top (treetop mode), 2 on the studio's DJ table alone, turning (drawn over her).
     const fores = th.foreFrames ?? [];
-    this.treehouse = { atlas: packAtlas([th.bot, th.top, ...fores].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors, camera: th.anchors.camera ?? th.anchors.seat, hasFore: fores.length > 0, foreFrames: fores.length, foreBox: th.foreBox ?? { x: 0, y: 0 } };
+    // then the knockdown candles, each melt level in each flicker, outlined like her (they stand in front of everything there)
+    const CN = Art.CANDLE as { levels: number; frames: number }, candles: Baked[] = [];
+    for (let level = 0; level < CN.levels; level++) for (let frame = 0; frame < CN.frames; frame++) candles.push(Art.bake((Art.candleSprite as (st: Style, o: object) => never)(style, { level, frame }), thc, style, style.cOutline) as Baked);
+    this.treehouse = { atlas: packAtlas([...[th.bot, th.top, ...fores].map(sp => Art.bake(sp, thc, style, "none") as Baked), ...candles], 2048), ...th.anchors, camera: th.anchors.camera ?? th.anchors.seat, hasFore: fores.length > 0, foreFrames: fores.length, foreBox: th.foreBox ?? { x: 0, y: 0 },
+      candle0: 2 + fores.length, candleLevels: CN.levels, candleFlicker: CN.frames, candleRow: th.candles ?? [] };
     this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
     if (this.useWorkers) {
       // One worker per core but the page's own, up to six: the area types' trees are most of the work.

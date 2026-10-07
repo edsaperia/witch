@@ -30,7 +30,7 @@ export const DJ_ROUTINE: readonly DjCue[] = [
 /** Its length in beats. */
 export const DJ_ROUTINE_BEATS = 13;
 
-type Game = { beat: BeatClock; party: PartyState; witch: { seated?: boolean }; witches?: { ko: { inAt?: number; backAt: number } | null }[]; clock?: { time: number }; herTime?: number };
+type Game = { beat: BeatClock; party: PartyState; witch: { seated?: boolean }; witches?: { ko: { at?: number; inAt?: number; backAt: number } | null }[]; clock?: { time: number }; herTime?: number };
 /** Her wait at the decks after a knockout (rules/knockout.ts: back at inAt, free at backAt), or null; in game time (the beat
  *  clock's: the knockout's times are on her own clock, g.herTime, which a legend's slowed circle sets apart from the world's). */
 export function respawnOf(g: Game): { inAt: number; backAt: number } | null {
@@ -103,4 +103,16 @@ export function djStrokes(g: Game, from: number, to: number): { at: number; stro
     });
   }
   return out.sort((x, y) => x.at - y.at);
+}
+
+/** The knockdown candles along her desk's front (Ed, 2026-10-07): one for every 2 s of the whole wait (knocked down to free,
+ *  ko.at to ko.backAt; 6 s three, at most six), whole when she's back at the decks and melting one after another from the
+ *  right across her scratching (ko.inAt to backAt), the last guttering out as she's free; shown from a moment before she's
+ *  back to a second after (their smoke). Each melt 0 (whole) to 1 (out). On her clock, as the knockout's. */
+export function koCandles(g: Game): { n: number; melt: number[] } | null {
+  const k = g.witches?.[0]?.ko, t = g.herTime;
+  if (!k || typeof k.inAt !== "number" || typeof k.at !== "number" || typeof t !== "number" || !(k.backAt > k.inAt)) return null;
+  if (t < k.inAt - 0.4 || t > k.backAt + 1) return null;
+  const n = Math.max(1, Math.min(6, Math.round((k.backAt - k.at) / 2))), p = Math.max(0, Math.min(1, (t - k.inAt) / (k.backAt - k.inAt)));
+  return { n, melt: [...Array(n).keys()].map(i => Math.max(0, Math.min(1, p * n - (n - 1 - i)))) };
 }

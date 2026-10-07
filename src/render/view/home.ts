@@ -8,6 +8,7 @@ import { type Beacon, type Laser, MARKER_LEVELS, type Mote } from "../markers";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import type { WaveNumber } from "../waveNumbers";
 import { beatAt, beatTime } from "../../rules/beat";
+import { koCandles } from "../../rules/djSet";
 import { canopyShown } from "../../rules/witch";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
@@ -194,7 +195,7 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
 
 /** How far nearer the camera than the treehouse's own plane the booth's layers are drawn (metres, along the ray to the camera, so
  *  each lands on its own pixels): her, the DJ table over her, then her upper half over the table (her hands on the decks). */
-export const DJ_DEPTH = { her: 0.25, fore: 0.5, upper: 0.75 };
+export const DJ_DEPTH = { her: 0.25, fore: 0.5, upper: 0.75, candles: 1 };
 /** A point `d` metres nearer the camera along the ray from it (so it lands on the same pixel on screen). */
 export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {
   const c = v.camera.position, dx = p.x - c.x, dy = p.y - c.y, dz = p.z - c.z, l = Math.hypot(dx, dy, dz) || 1;
@@ -219,6 +220,20 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const p = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.fore);
     items.push({ ...p, frame: ff, flip: false, overlay: true });
   }
+  // The knockdown candles along the desk's front (rules/djSet.ts koCandles), melting as her wait runs down, nearest of all.
+  const C = koCandles(v.game);
+  if (C && T.candleRow.length === 2) {
+    const [L, Rr] = T.candleRow, R = SPRITE_UNIFORMS.uRight.value;
+    C.melt.forEach((m, i) => {
+      const k = C.n === 1 ? 0.5 : i / (C.n - 1), px = L.x + (Rr.x - L.x) * k, py = L.y + (Rr.y - L.y) * k;
+      const level = m >= 1 ? T.candleLevels - 1 : Math.min(T.candleLevels - 2, Math.floor(m * (T.candleLevels - 1)));
+      const fr = f[T.candle0 + level * T.candleFlicker + (Math.floor(time * 7 + i * 1.7) % T.candleFlicker)]; if (!fr) return;
+      const dx = (px - f[0].w / 2) * mpp, dy = (f[0].h - py) * mpp; // (the candle's foot on the row, in the base's pixels: its sprite's bottom middle there)
+      const base = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.candles);
+      items.push({ ...base, frame: fr, flip: false, overlay: true });
+    });
+  }
   v.treehouseBatch.set(items);
   return at;
 }
+
