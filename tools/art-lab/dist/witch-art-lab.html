@@ -1425,6 +1425,40 @@ function lowLife(t, r, st, s, P) {
       clump(sp, lerp2([x, y], b.end, .6), L * .5, 3.5 * s, st, r, { mat: r() < .5 ? M.LEAF3 : M.LEAF, ragged: 1.2 });
     });
   }
+  // hanging moss and vines (Ed, 2026-10-07, the eerie forest: "moss and vines only", nothing else hangs): pale beards of
+  // moss and dark vine ropes hanging from the underside of the crown and from the low boughs, in the areas that ask for
+  // them (st.treeHang, 0 to 1: their layout's hang). Only onto empty pixels below the crown's underside, so the crown
+  // (the top half) is untouched; listed in sp.low like the rest, so they hang in the bottom half, under the canopy.
+  const hang = st.treeHang || 0;
+  if (hang > 0) {
+    const under = new Int16Array(W).fill(-1); // each column's lowest leaf above the crown line
+    for (let x = 0; x < W; x++) for (let y = Math.min(H - 1, y0); y >= 0; y--) { const v = sp.m[y * W + x]; if (v && !WOOD.has(v)) { under[x] = y; break; } }
+    const cols = []; for (let x = 0; x < W; x++) if (under[x] >= 0) cols.push(x);
+    const strand = (x0, ya, L, mat, mat2, wave) => { // one strand, a pixel wide, swaying a little as it falls; its own end thinning
+      let x = x0;
+      for (let k = 0; k < L; k++) { const y = ya + k; if (y >= H - 2) break; x = x0 + Math.round(Math.sin(k * .35 + wave) * (k / L) * 1.5); const i = y * W + x;
+        if (x < 0 || x >= W || (sp.m[i] && !WOOD.has(sp.m[i]) && !low[i])) continue;
+        sp.px(x, y, k > L * .7 && k % 2 ? mat2 : mat, 0, 0, 1); low[i] = 1; }
+    };
+    const nMoss = cols.length ? Math.round(hang * (6 + cols.length / (2.5 * s))) : 0, nVine = cols.length ? Math.round(hang * (2 + cols.length / (7 * s))) : 0;
+    for (let k = 0; k < nMoss; k++) { // beards of moss: short, pale, in tufts of two or three strands
+      const x = pick(r, cols), L = Math.round(uni(r, 8, 20) * s * (.6 + hang * .6)), n = 2 + (r() < .5 ? 1 : 0), w = r() * 6;
+      for (let j = 0; j < n; j++) strand(x + j - 1, under[Math.max(0, Math.min(W - 1, x + j - 1))] + 1 || under[x] + 1, Math.round(L * (1 - j * .25)), M.MOSS, M.LEAF2, w + j);
+    }
+    for (let k = 0; k < nVine; k++) { // vines: long dark ropes, one strand, a leaf now and then
+      const x = pick(r, cols), L = Math.round(uni(r, 20, 42) * s * (.6 + hang * .6)), w = r() * 6;
+      strand(x, under[x] + 1, L, M.LEAF3, M.LEAF3, w);
+      for (let y = under[x] + 3; y < under[x] + L - 2; y += Math.max(3, Math.round(4 * s))) { const xx = x + Math.round(Math.sin((y - under[x]) * .35 + w) * ((y - under[x]) / L) * 1.5) + (hash2(x, y, 21) < .5 ? -1 : 1), i = y * W + xx;
+        if (y < H - 2 && xx >= 0 && xx < W && !sp.m[i]) { sp.px(xx, y, M.LEAF, 0, 0, .8); low[i] = 1; } }
+    }
+    // and on the trunk and its low boughs, where she sees them from the ground (the crown's underside is cut away round her
+    // there): beards of moss draped off the bark's edges, and vines trailing down the trunk's side
+    const nDrape = Math.round(hang * (6 + (H - y0) / (5 * s)));
+    for (let k = 0; k < nDrape; k++) { const p = spot(); if (!p || p.y > y0 + (H - y0) * .8) continue; const L = Math.round(uni(r, 6, 14) * s * (.6 + hang * .5)), w = r() * 6;
+      strand(p.x + p.side, p.y, L, M.MOSS, M.LEAF2, w); if (r() < .5) strand(p.x + p.side * 2, p.y + 1, Math.round(L * .7), M.MOSS, M.LEAF2, w + 1); }
+    const nTrail = Math.round(hang * (2 + (H - y0) / (14 * s)));
+    for (let k = 0; k < nTrail; k++) { const p = spot(); if (!p || p.y > y0 + (H - y0) * .5) continue; strand(p.x + p.side, p.y, Math.round(uni(r, 12, 24) * s * (.6 + hang * .5)), M.LEAF3, M.LEAF, r() * 6); }
+  }
   clusterClumps(sp);
   return t;
 }
@@ -1497,7 +1531,7 @@ function treeColours(r, st, type, blob = false) {
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
   const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = nightGreen((S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh); // hueAbs: a hue of its own, whatever the area's; never lime (nightGreen)
   const c = {
-    [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
+    [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212], [M.MOSS]: hsv2rgb(.24, .22 * st.sat, .6), // (hanging beard moss: pale grey-green)
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .46 * st.sat * sa), Math.min(1, .68 * va)), /* (the night palette: the lit tone quieter, so a lit crown never glows) */ [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
   if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
@@ -3443,8 +3477,35 @@ function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
   for (const fs of frames) for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (fs.m[y * sp.w + x]) { fx0 = Math.min(fx0, x); fx1 = Math.max(fx1, x); fy0 = Math.min(fy0, y); fy1 = Math.max(fy1, y); }
   const foreFrames = frames.map(fs => { const c = new Sprite(fx1 - fx0 + 1, fy1 - fy0 + 1); for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) { const i = (y + fy0) * sp.w + x + fx0; if (fs.m[i]) c.put(x, y, fs.m[i], fs.n[i * 3], fs.n[i * 3 + 1], fs.n[i * 3 + 2]); } return c; });
   const S = TREEHOUSE_STOREYS;
-  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
+  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, candles: [at(T.dj.to([DJ_DECKS.depth[1] + CANDLE.ahead, 0, DJ_DECKS.width - .1])), at(T.dj.to([DJ_DECKS.depth[1] + CANDLE.ahead, 0, -DJ_DECKS.width + .1]))], crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
     metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), towerFloor: um(S.tower.y), roofTip: um(S.tower.y + S.tower.h + 3.3 + .3), footprint: um(T.footprint), overhang: um(S.studio.deck), trunk: um(T.trunkR * 2), crown: um(T.crownR) } };
+}
+
+// The knockdown candles (Ed, 2026-10-07, via the coordinator: "a LOADING BAR ... many candles, one per second, or even one
+// per ½ second, of respawn wait ... the base cooldown WHITE candles, the extra from repeat knockdowns RED"): a slim taper on a
+// little pewter drip-cup, standing on the studio's floor in a neat row along the desk's front (treehouseSprite's `candles`:
+// the row's two ends, screen left to right, the game spacing them between), at the house's scale; thin enough that 12 stand
+// apart along the desk at px 5 and 24 close up into one bar of wax and flame. white: the base wait's (white wax, cream where
+// it's melted), else the extra's (red, pink where it's melted). level 0 whole to CANDLE.levels - 2 a stub, its wax running
+// down more as it goes; the last level out, a stub with a curl of smoke. frame: the flame's flicker (CANDLE.frames), leaning
+// and stretching; the flame two warm glowing tones, a dark wick.
+const CANDLE = { levels: 5, frames: 3, colours: 2, ahead: .1, height: .24, r: .022 };
+function candleSprite(st = {}, { level = 0, frame = 0, white = false } = {}) {
+  const m = new Model({ blend: .02 }), out = level >= CANDLE.levels - 1, h = [1, .74, .5, .28, .14][Math.min(level, 4)] * CANDLE.height, r = CANDLE.r;
+  const wax = white ? M.BELLY : M.CLOTH, melted = white ? M.BODY2 : M.EAR;
+  m.ell([0, .01, 0], [r * 1.7, .01, r * 1.7], M.FRAME, { group: 1 }); // the drip-cup
+  m.seg([0, .016, 0], [0, .016 + h, 0], r, r * .9, wax, { group: 3, paint: p => p[1] > .016 + h - .01 ? melted : undefined }); // the wax, its melted top paler
+  for (let k = 0; k < Math.min(level, 2); k++) { const a = 1.1 + k * 2.6, dl = h * (.35 + .2 * k); m.seg([Math.cos(a) * r, .016 + h - .008, Math.sin(a) * r], [Math.cos(a) * r * 1.1, .016 + h - dl, Math.sin(a) * r * 1.1], .008, .011, melted, { group: 4 + k }); } // runs of wax
+  const top = [0, .016 + h, 0];
+  m.seg(top, v3.add(top, [0, .022, 0]), .005, .004, M.LINE, { group: 8 }); // the wick
+  if (!out) { // the flame: an outer glow round a bright core, leaning and stretching with the flicker
+    const lean = [0, .01, -.008][frame % 3], tall = [1, .8, 1.15][frame % 3], f = v3.add(top, [lean, .05 * tall, 0]);
+    m.ell(f, [.02, .048 * tall, .02], M.GLOW, { group: 9 });
+    m.ell(v3.add(f, [0, -.012, .01]), [.01, .026 * tall, .01], M.MAGIC2, { group: 10 });
+  } else for (let k = 0; k < 4; k++) m.ell(v3.add(top, [Math.sin(k * 1.7 + frame) * .015, .04 + k * .035, 0]), [.009 + k * .003, .009, .009 + k * .003], M.STONE, { group: 11 + k, extra: true }); // a curl of smoke
+  const { sp, s } = render(m, { scale: witchPixelsPerUnit(st), facing: "towards" });
+  sp.scale = s;
+  return sp;
 }
 
 
@@ -7934,6 +7995,10 @@ const AREA_LAYOUTS = {
     "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
 };
 Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS); // the recipes' own
+// Hanging moss and vines in the eerie woods (Ed, 2026-10-07: "moss and vines only"): how much hangs from their trees'
+// crowns and low boughs, 0 to 1 (art/trees.js lowLife, st.treeHang): the wet, old and tangled woods.
+const HANG = { "wispy-forest": .9, "tangly-forest": .7, "muddy-forest": .55, "ancient": .7, "old-oaks": .5, "alder-forest": .6, "wetland": .7, "bog": .8, "deadwood": .45, "honeysuckle-tangle": .6, "beaver-pond": .5, "stream": .4 };
+for (const [id, h] of Object.entries(HANG)) if (AREA_LAYOUTS[id]) AREA_LAYOUTS[id].hang = h;
 for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
 // Checks a layout's shape; returns a list of problems (empty when it's sound).
 function layoutProblems(a) {
@@ -7991,7 +8056,7 @@ function prop(kind, o, def, st, r, s) {
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
     const f = treeSpecies(o.type).fn;
-    const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs };
+    const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: def.layout?.hang ?? 0 };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
     c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
@@ -8189,7 +8254,7 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
   const slots = flora?.length ? null : floraSlots(id, total)?.map((o, i) => [o, i]).sort((a, b) => stature(a[0]) - stature(b[0]) || a[1] - b[1]).map(([o]) => o);
   const character = (({ type, minor, bare, dark, ...rest }) => rest)(mains[0] || {}), own = type => recipes.find(o => o.type === type);
   if (!recipes.length) return [];
-  const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];
+  const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [], raw = [];
   let n = 0;
   for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
     const o = slots ? { ...character, ...own(slots[n].type), ...slots[n], minor: undefined } : minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
@@ -8202,15 +8267,57 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
     const scale = willow ? 1 + (h - 1) * .45 : small ? 1 + (h - 1) * .5 : wide ? 1 + (h - 1) * .75 : h;
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
-      treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs };
+      treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs, treeHang: def.layout?.hang ?? 0 };
     const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
     c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
     const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), sw = sp => bakeSway(sp, makeCanvas), m = px => +(px / ppm).toFixed(2);
     out.push({ heightClass: cls.id, species: o.type, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), sway: { whole: sw(t.sp), top: sw(parts.top), bot: sw(parts.bot) }, crownY: t.crownY,
       metres: { height: m(t.sp.h), crownBase: m(t.sp.h - t.crownY), crownHeight: m(t.crownY), crownRadius: m(t.sp.w / 2) } });
+    raw.push({ t, c, cls: cls.id });
+  }
+  // A bark face (Ed, 2026-10-07, the eerie forest): one more variant, a copy of the area's first tall tree (or mature, failing
+  // that) with a face half-seen in its bark, weight 0: the view puts it on at most two trees an area (render/view/scenery.ts
+  // barkFaces), never more. Easy to miss: the bark's own dark tones only, two uneven knot-holes and a drooping split.
+  const order = ["giant", "tall", "mature"].flatMap(cl => raw.flatMap((q, k) => (q.cls === cl ? [k] : [])));
+  for (const fi of order) { // the first that takes one (a trunk thick enough)
+    const { t, c } = raw[fi], sp = t.sp, faced = Object.assign(Object.create(Object.getPrototypeOf(sp)), sp, { m: sp.m.slice(), n: sp.n.slice(), ...(sp.blob ? { blob: sp.blob.slice() } : {}), ...(sp.low ? { low: sp.low.slice() } : {}) });
+    if (barkFace(faced, t.crownY, rng(seed + 977))) {
+      const ft = { ...t, sp: faced }, parts = splitTree(ft), bk = q => bake(q, c, st, "none", makeCanvas), sw = q => bakeSway(q, makeCanvas), m = px => +(px / ppm).toFixed(2), o = out[fi];
+      out.push({ ...o, face: true, weight: 0, whole: bk(faced), top: bk(parts.top), bot: bk(parts.bot), sway: { whole: sw(faced), top: sw(parts.top), bot: sw(parts.bot) } });
+      break;
+    }
   }
   return out;
+}
+// A face in a trunk's bark, as a tree's knots and splits happen to make one: two knot-holes a little uneven (one higher,
+// one bigger), a faint ridge between them, and a split below drooping at its ends. Only the bark's dark tones (BARKD, its
+// darkest LINE), no whites, no pupils, nothing cartoon. On the trunk where it's one stem, at least 8 pixels wide and mostly bare bark, from 40% of the
+// way down from the crown line, below its fork and above its flaring foot (in the bottom half, so it shows from the ground). False if the trunk is too thin for one.
+function barkFace(sp, crownY, r) {
+  const W = sp.w, H = sp.h, WOODS = new Set([M.TRUNK, M.BARKD, M.BARKL, M.BARK2]);
+  let best = null; // the highest row from a quarter of the way down where the trunk is one stem, wide enough, with bare bark
+  for (let y = Math.round(crownY + (H - crownY) * .25); y <= Math.round(crownY + (H - crownY) * .8) && !best; y++) { // round the face (above its ivy and sprigs)
+    const runs = []; let a = -1;
+    for (let x = 0; x <= W; x++) { const w = x < W && WOODS.has(sp.m[y * W + x]); if (w && a < 0) a = x; if (!w && a >= 0) { runs.push({ x: a, y, w: x - a }); a = -1; } }
+    const wide = runs.filter(q => q.w >= 8);
+    if (wide.length !== 1 || wide[0].w > 26) continue;
+    const q = wide[0], x0 = Math.round(q.x + q.w * .15), x1 = Math.round(q.x + q.w * .85); let bark = 0, all = 0;
+    for (let yy = y; yy < Math.min(H, y + 9); yy++) for (let x = x0; x <= x1; x++) { all++; if (WOODS.has(sp.m[yy * W + x])) bark++; }
+    if (bark >= all * .7) best = q;
+  }
+  if (!best) return false;
+  const cx = best.x + best.w / 2 + (r() - .5) * best.w * .1, y = best.y, gap = Math.max(2, Math.round(best.w * .2)), big = r() < .5 ? -1 : 1;
+  const dark = (x, yy, v = M.LINE) => { x = Math.round(x); if (WOODS.has(sp.m[yy * W + x]) || sp.m[yy * W + x] === M.LINE) sp.px(x, yy, v, 0, 0, 1); };
+  for (const side of [-1, 1]) { // the knot-holes: a dark core, a BARKD rim on their lower side; the bigger one a pixel lower
+    const ex = cx + side * gap, ey = y + (side === big ? 1 : 0), rr = side === big && best.w >= 13 ? 1 : 0;
+    for (let dx = -rr; dx <= 1; dx++) for (let dy = 0; dy <= 1 + rr; dy++) dark(ex + dx - .5, ey + dy);
+    dark(ex - .5, ey + 2 + rr, M.BARKD); dark(ex + .5, ey + 2 + rr, M.BARKD);
+  }
+  dark(cx, y + 2, M.BARKL); dark(cx, y + 3, M.BARKL); // the ridge between them, a little lit
+  const my = y + 5 + Math.round(best.w / 10), half = Math.max(2, Math.round(best.w * .22)); // the split below, drooping at its ends
+  for (let dx = -half; dx <= half; dx++) dark(cx + dx, my + (Math.abs(dx) >= half - 1 ? 1 : 0), Math.abs(dx) === half ? M.BARKD : M.LINE);
+  return true;
 }
 
 // ================= light sources (campfires, magic stones, ponds) =================
