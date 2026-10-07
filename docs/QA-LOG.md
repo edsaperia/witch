@@ -88,3 +88,27 @@ The tip benched is 11 merges before the frozen ship tip 0ab00110 (#448): #437–
 - **To check**: the `party` lap's p99 19.7 → 52.4 ms on the ground flight (8.7 → 14.9 in the treetops), median unchanged (0.1 → 0.2): a spike, not a steady cost. The lap (`render/view.ts`, up to `this.time("party")`) covers soundsystems, lasers, the ley lines (update, grow, ring, the ley head's front) and the glades: likely the ley-line work (#351, #381), unconfirmed, one run. `heights` p99 in the treetops 15.9 → 24.9.
 
 **Pixels**: all seven scenes differ from the baseline, as expected after the night's intended visual merges; every refactor and optimisation merge through #404 matched its own parent (rounds 1–3).
+
+**Late game** (`tools/bench/late.cjs`: seed 871136, wave 28, over the treetops, 600 frames at 1280×720; the same tool on both, 818c7aec → 31d1905c; the same state, 1632 creatures):
+
+| | baseline | tip |
+|---|---|---|
+| JS heap, start / end / max | 635 / 639 / 674 MB | 649 / 656 / 665 MB |
+| draw calls, p50 / max | 150 / 157 | 154 / 159 |
+| trees drawn | 954 | 780 |
+| rules step, p50 / p95 | 4.4 / 8.9 ms | 4.7 / 9.2 ms |
+| the view's own parts (not `draw`), mean | 9.7 ms | 11.1 ms |
+
+The heap is flat over the frames in both (no leak). Down: `refresh` 1.87 → 0.76, `grass+lights` 0.66 → 0.30. **To check**: `groundTiles` 1.84 → 3.59 ms, `hud` 0.05 → 0.92 ms (the perf HUD, #419? check it isn't on by default), `leash` 0.84 → 1.38. One run each.
+
+## Round 4: 893849d2 → 31d1905c (#398–#435), 08:30–10:52
+
+27 merges, each against its first parent (in two halves, each commit with its own bench). Tests and typecheck green at both ends. Journey on 31d1905c ok: every moment reached, no errors, draw calls 49–90, `dropped` 0.
+
+- **Same** (22), every optimisation among them: #410 gc-pool, #413 audio-cpu, #414 shader-warmup, #415 perf-baseline, #416 disco-warm, #419 perf-hud, #421 perf-baseline-fix, #429 gc-glyphs, #430 swoop-upload, #431 gl-stats; and #363, #377, #411, #423, #424, #425, #426, #428, #432, #434, #435, #436.
+- **Differ, on purpose** (5):
+  - #398 creature-character-1, #417 banded-legs (360 px), #418 creature-big4: the wave fight's creatures only; the wolves redrawn, bigger and bulkier after #418, collars, hats and glow intact.
+  - #420 bench-buffs: the bench's own fingerprint (the fix for the knob false positive).
+  - #422 balance: the combat state only, 0 pixels.
+
+Not checked: 31d1905c → the frozen ship tip 0ab00110 (#427–#449, 11 merges).
