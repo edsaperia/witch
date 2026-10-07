@@ -45,6 +45,7 @@ compare against an older look are listed at the end for Ed to decide on.
 | `decide` | opens Ed's decisions panel (F2 too) | main.ts |
 | `micCheck=1` | also listens to the microphone for dropouts after the game (debug only) | main.ts |
 | `music=off\|<section>\|wave<N>` | no music, one section on a loop, or wave N's music | app/linkParams.ts |
+| `perf=1` | the performance panel, always on: frames, hitches, the rules' step, the view's parts (draw split into the scene and the post passes), GL calls, the JS heap and its collections, the crowd and its level of detail | app/perfHud.ts |
 | `rig=0` | creatures as baked sprites, without the live rig | render/rig/rigView.ts |
 
 ## Looks and their costs (to try values live, or to measure)

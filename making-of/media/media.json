@@ -1934,5 +1934,107 @@
   "chapter": "timeline",
   "from": "previews/respawn/respawn.gif",
   "pr": 362
+ },
+ {
+  "src": "media/builders/art1-runestone-sigils.webp",
+  "caption": "Every species' runestone, by day and by night, before and after: the sigils stamped as crisp neon-inlaid pixel glyphs with a carved shadow.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art1-stone-shrine-legend.webp",
+  "caption": "A legend circle in the treeless Stone Shrine, before (open) and after (ringed by great standing stones), from the treetops and the ground.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art1-ravine-spire.webp",
+  "caption": "The ravine's spire, from a speckled column to layered rock, beside the shrine's new stones.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art1-henge-ring.webp",
+  "caption": "The \"circle of stone circles\" (a henge whose every stone had become a whole stone circle), fixed.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art1-naps-game-treetops.webp",
+  "caption": "Creatures asleep in the forest at night, seen from the treetops.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art2-swoop-trails-treetop.webp",
+  "caption": "The party witches' rainbow swoops over the dancefloor, from the treetops.",
+  "chapter": "builders",
+  "pr": 291
+ },
+ {
+  "src": "media/builders/art2-tilt-shift-treetop.webp",
+  "caption": "The gentler tilt-shift from the treetops, before and after: half the blur and a wider sharp band.",
+  "chapter": "builders",
+  "pr": 349
+ },
+ {
+  "src": "media/builders/art2-night-treetop.webp",
+  "caption": "Daylight spotlight to moonlit canopy, at Ed's own spot in the treetops: her light's reach had been 169 m from up there.",
+  "chapter": "builders",
+  "pr": 364
+ },
+ {
+  "src": "media/builders/music-beach-gaze-horizon.webp",
+  "caption": "The stargazing horizon before and after: from a hard edge of sand against black to the island's treeline on the horizon.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/proto-map-shape-925469.webp",
+  "caption": "The circular map with its irregular coast (seed 925469).",
+  "chapter": "builders",
+  "pr": 293
+ },
+ {
+  "src": "media/builders/proto-slowtime-edge-sparkle.webp",
+  "caption": "The edge of a legend's circle: a 💌 that leaves it vanishes in a sparkle.",
+  "chapter": "builders",
+  "pr": 307
+ },
+ {
+  "src": "media/builders/golf-norway-treetops.webp",
+  "caption": "Norway's crowns, before and after: straight-line gaps where half-faded crowns wrote depth, then whole.",
+  "chapter": "builders",
+  "pr": 373
+ },
+ {
+  "src": "media/builders/golf-norway-ground.webp",
+  "caption": "The Norway forest's firs, before (no trunks) and after.",
+  "chapter": "builders",
+  "pr": 373
+ },
+ {
+  "src": "media/builders/golf-canopy-hole-walk.webp",
+  "caption": "The canopy's hole round the witch, ragged, drifting and organic, following her through the treetops.",
+  "chapter": "builders",
+  "pr": 357
+ },
+ {
+  "src": "media/builders/golf-test-wolves.webp",
+  "caption": "A slot for hand-drawn sprites, proved with a herd of deliberately silly blue test wolves among the rigged foxes.",
+  "chapter": "builders",
+  "pr": 400
+ },
+ {
+  "src": "media/builders/foxtrot-ley-curve.webp",
+  "caption": "The ley line before and after a minimum turning radius: Dubins curves of 25 m through every runestone, the hairpins gone.",
+  "chapter": "builders",
+  "pr": 381
+ },
+ {
+  "src": "media/builders/foxtrot-alarm-two.webp",
+  "caption": "The soundsystem alarm: two edge cues on screen at once, each pointing at a soundsystem under attack and showing how hard it's being hit.",
+  "chapter": "builders",
+  "pr": 361
+ },
+ {
+  "src": "media/builders/foxtrot-alarm-treetops.webp",
+  "caption": "A soundsystem alarm seen from the treetops.",
+  "chapter": "builders",
+  "pr": 361
  }
 ]

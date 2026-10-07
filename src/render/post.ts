@@ -152,10 +152,16 @@ export class Post {
     this.renderer.render(this.quad, this.cam);
   }
 
+  /** The last frame's scene render on the CPU (ms): three.js walking the scene, its uploads and GL calls; the rest of the
+   *  view's "draw" part is these passes after it (the ?perf=1 HUD: app/perfHud.ts). */
+  sceneMs = 0;
+
   render(scene: THREE.Scene, camera: THREE.Camera): void {
     const r = this.renderer, t = this.tuning;
     r.setRenderTarget(this.scene);
+    const t0 = performance.now();
     r.render(scene, camera);
+    this.sceneMs = performance.now() - t0;
 
     // Bloom: the bright parts, at half resolution, blurred twice each way.
     const bloomOn = t.bloom.on && t.bloom.strength > 0;

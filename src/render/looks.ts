@@ -111,6 +111,11 @@ export class StateMarks {
     this.star = mat(STAR()); this.anger = mat(angerMark(11));
     this.sparkle = new THREE.SpriteMaterial({ map: SPARKLE(), transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending });
     this.group.renderOrder = 12;
+    // One sprite never shown, so the Bedroom's shader warm-up (View.prepare) compiles the marks' shader too; the pool's own
+    // sprites are made only as they are first needed (the first mark came at the second wave: a hitch).
+    const warm = new THREE.Sprite(this.star);
+    warm.visible = false;
+    this.group.add(warm);
     scene.add(this.group);
   }
 
