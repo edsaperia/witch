@@ -45,7 +45,7 @@ void main() {
   // Its light: a white flash as it bursts, then its colour; the last third fading in steps; a crackle's glitter flickering.
   vec3 c = aLook.rgb;
   float a = mode < 0.5 ? 0.8 : 0.8 * (1.0 - floor(max(0.0, k - 0.6) / 0.4 * 3.0) / 3.0);
-  if (mode > 0.5 && k < 0.05) c = mix(vec3(1.0), c, k / 0.05);
+  if (mode > 0.5 && k < 0.05) c = mix(mix(c, vec3(1.0), 0.55), c, k / 0.05); // (a touch of white as it bursts: the finale's many together never blow out)
   if (mode > 2.5 && k > 0.45) a *= step(0.45, fh(floor(uNow * 18.0), aFrom.x * 3.1 + aVel.x * 7.7 + aLag)) * 1.4;
   if (aLag > 0.5) a *= aLag > 1.5 ? 0.35 : 0.6; // (the streak's tail)
   vCol = vec4(c * a, 1.0);
