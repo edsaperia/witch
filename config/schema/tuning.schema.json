@@ -1694,6 +1694,24 @@
       ],
       "additionalProperties": false
     },
+    "dj": {
+      "type": "object",
+      "properties": {
+        "needleBeats": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scratchBeats": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "needleBeats",
+        "scratchBeats"
+      ],
+      "additionalProperties": false
+    },
     "knockout": {
       "type": "object",
       "properties": {
@@ -7779,6 +7797,7 @@
     "witch",
     "stack",
     "witchHealth",
+    "dj",
     "knockout",
     "dash",
     "spells",
@@ -7841,6 +7860,7 @@
     "sky",
     "moon",
     "glowReach",
+    "sigilSpill",
     "nightLight",
     "glowFalloff",
     "glowNear",
@@ -7859,8 +7879,7 @@
     "looks",
     "tone",
     "bloom",
-    "tiltShift",
-    "sigilSpill"
+    "tiltShift"
   ],
   "additionalProperties": false
 }

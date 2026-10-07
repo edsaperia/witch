@@ -390,6 +390,7 @@ export class AssetLibrary {
     return { ...packAtlas(sprites, 2048), grounds };
   }
   /** Her frame behind the decks at `beat` (rules/beat.ts beatAt): its index in witchDj (Art.djFrame: a gesture a bar, nodding on the beat). */
+  djRoutineFrame(step: string, o: { beat?: number; dir?: number; open?: boolean }): number { return (Art.djRoutineFrame as (s: string, o: object) => number)(step, o); }
   djFrame(beat: number, cast = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast }); }
   /** The character creator changed her look: her frames again (the view swaps its batch). */
   rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.bare = null; this.version++; }

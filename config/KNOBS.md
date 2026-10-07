@@ -475,12 +475,14 @@ The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) b
 | `witchHealth.repairTime` | number | 0 to … |
 | `witchHealth.grace` | number | 0 to … |
 
-### `knockout`
+### `dj`, `knockout`
 
-Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each sigil put down where its animal stands, so it stays hers, parked (#87, 2026-10-05; at first each creature turned neutral as its sigil went and walked to the nearest area of its own kind, where it turned wild again); then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this.
+Her set at the decks (Ed, 2026-10-07; rules/djSet.ts): after the party spell's burst, on the next beat, she lifts the tonearm and puts the needle down over needleBeats beats, then scratches scratchBeats beats, held at the decks till it ends; the sound and the animation both follow its strokes.
 
 | knob | type | range |
 |---|---|---|
+| `dj.needleBeats` | number | 0 to … |
+| `dj.scratchBeats` | number | 0 to … |
 | `knockout.releaseEach` | number | 0 to … |
 | `knockout.releaseMax` | number | 0 to … |
 | `knockout.emptyBeat` | number | 0 to … |

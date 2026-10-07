@@ -2,18 +2,32 @@
 // anchor on the seat anchor, the DJ table's fore frame over her, then her frame's upper layer (art/witch.js aboveDecks) over
 // that; one cell per gesture frame, at scale 4, the platters turning and the LEDs chasing with the cells. Also the gestures
 // as a GIF's frames (frames written as PNGs to <out>-gif/, for ffmpeg).
-//   node tools/dj/booth-sheet.mjs <out.png> [seed: a generated witch instead of ours] [--gif]
+// --needle: the needle drop after the party spell (rules/djSet.ts, Ed 2026-10-07), frame by frame at 30 fps as the game
+// picks them (the rules loaded through Vite), into <out>-gif/ like --gif.
+//   node tools/dj/booth-sheet.mjs <out.png> [seed: a generated witch instead of ours] [--gif | --needle]
 import { openBrowser } from "../../art/headless.mjs";
 import { writeFileSync, mkdirSync } from "node:fs";
-const args = process.argv.slice(2), gif = args.includes("--gif"), [out = "previews/dj/booth.png", seed] = args.filter(a => !a.startsWith("--"));
+const args = process.argv.slice(2), needle = args.includes("--needle"), gif = args.includes("--gif") || needle, [out = "previews/dj/booth.png", seed] = args.filter(a => !a.startsWith("--"));
+let given = null;
+if (needle) { // the game's own choice of frame, step by step: the rules' routine over a beat clock at 120 bpm, the cast at 0
+  const { openRules } = await import("../balance/lib.mjs"), R = await openRules();
+  const D = await R.load("/src/rules/djSet.ts"), B = await R.load("/src/rules/beat.ts"), P = await R.load("/src/rules/party.ts"), W = await R.load("/art/witch.js");
+  const tuning = JSON.parse((await import("node:fs")).readFileSync("config/tuning.json", "utf8")), g = { beat: B.newBeatClock(120), party: { spellAt: 0 }, tuning };
+  const w = D.needleWindow(g); given = [];
+  for (let t = P.PARTY_CAST; t < w.end + 1; t += 1 / 30) {
+    const r = D.djRoutine(g, t), b = B.beatAt(g.beat, t), sc = r && r.step === "scratch" ? D.scratchAt(g, w.needleAt, t) : null;
+    given.push({ f: r ? W.djRoutineFrame(r.step, { beat: r.beat, dir: sc?.dir, open: sc?.open }) : W.djFrame(b), k: Math.floor(b * 2) % 8 });
+  }
+  await R.close();
+}
 const b = await openBrowser();
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
-const res = await b.page.evaluate(async ({ seed, gif }) => {
+const res = await b.page.evaluate(async ({ seed, gif, given }) => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), K = 4;
   const her = seed ? (() => { const pw = G.partyWitch(seed); return { look: pw.look, col: pw.colours(st) }; })() : { look: G.genomeLook(G.WITCH_GENOME).look, col: G.witchColours(st) };
   const T = G.treehouseSprite(st), tc = G.treehouseColours(st), seat = T.anchors.seat, house = G.bake(T.bot, tc, st, "none"), fores = T.foreFrames.map(f => G.bake(f, tc, st, "none"));
   const cropW = 120, cropH = 90, cx = Math.round(seat.x - cropW / 2), cy = Math.round(seat.y - cropH * .72);
-  const P = G.WITCH_FOOT_POSES.dj, seq = gif ? [...Array(64).keys()].map(i => ({ f: G.djFrame(i / 4, { offset: Math.floor(i / 16) * 2 }), k: Math.floor(i / 2) % G.DJ_FRAMES })) : [...Array(P.frames).keys()].map(f => ({ f, k: f % G.DJ_FRAMES }));
+  const P = G.WITCH_FOOT_POSES.dj, seq = given ?? (gif ? [...Array(64).keys()].map(i => ({ f: G.djFrame(i / 4, { offset: Math.floor(i / 16) * 2 }), k: Math.floor(i / 2) % G.DJ_FRAMES })) : [...Array(P.frames).keys()].map(f => ({ f, k: f % G.DJ_FRAMES })));
   const cells = [], cache = new Map();
   const frameArt = f => { if (!cache.has(f)) { const sp = G.witchSprite(st, { look: her.look, pose: "dj", frame: f }), up = Object.assign(Object.create(Object.getPrototypeOf(sp)), sp, { m: sp.m.map((v, i) => sp.upper[i] ? v : 0) }); cache.set(f, { sp, full: G.bake(sp, her.col, st, st.cOutline), up: G.bake(up, her.col, st, st.cOutline), g: sp.anchors.ground }); } return cache.get(f); };
   for (const { f, k } of seq) {
@@ -32,7 +46,7 @@ const res = await b.page.evaluate(async ({ seed, gif }) => {
   const per = 7, W = per * cropW * K, H = Math.ceil(cells.length / per) * cropH * K, S = document.createElement("canvas"); S.width = W; S.height = H; const sg = S.getContext("2d");
   cells.forEach((c, i) => sg.drawImage(c, (i % per) * cropW * K, Math.floor(i / per) * cropH * K));
   return { sheet: S.toDataURL() };
-}, { seed: seed ? +seed : 0, gif });
+}, { seed: seed ? +seed : 0, gif, given });
 if (res.sheet) writeFileSync(out, Buffer.from(res.sheet.split(",")[1], "base64"));
 else { const dir = out.replace(/\.\w+$/, "") + "-gif"; mkdirSync(dir, { recursive: true }); res.frames.forEach((u, i) => writeFileSync(`${dir}/f${String(i).padStart(3, "0")}.png`, Buffer.from(u.split(",")[1], "base64"))); console.log("frames in", dir); }
 await b.close(); console.log("wrote", out);
