@@ -3,15 +3,19 @@
 //   idle, novice, crude, skilled: rules/bot.ts's kinds with no options (runbot's defaults: guards 3, keep 2);
 //   top: the skilled bot with the bot game's choices (rules/bot.ts BOT_GAME.skilled: a few quests, two relics to the
 //     front, feeding her young), the best player we have;
+//   champion: the bot game's champion (rules/bot.ts BOT_GAME.champion);
 //   skilled:<strategy> (skilled:invite, skilled:mixed...): the skilled bot leaning one way (rules/bot.ts STRATEGIES).
 // A run ends when the party's over or at --time. Each row: waves reached, when the first soundsystem fell, the first
-// knockout, knockouts, 💌s thrown, 💌 hits, invites, evolutions, berries, quests and relics done, sigils placed.
+// knockout, knockouts, 💌s thrown, 💌 hits, invites, evolutions, berries, quests and relics done, sigils placed, and for
+// clearing ahead of the pulse: areas cleared before their wave (party.ahead), how many their wave then reached, the median
+// lead (s), and the most and mean ahead at once.
 // The summary: medians and means by bot, and the curve (the share of runs whose party is still on as each wave lands).
 //   node tools/balance/sweep.mjs [--bots idle,novice,crude,skilled,top] [--seeds 20 (seeds 1000 + 7919 i, as runbot)]
 //     [--skip K] [--time 4200] [--overlay knobs.json] [--set path=value;...] [--jobs 4] [--out dir] [--label name] [--fresh]
 // Runs are kept as they land in <out>/<label>.jsonl, and the same command again picks up where it stopped (--fresh: start over).
 //   node tools/balance/sweep.mjs --report a.csv,b.csv   (the summaries of earlier sweeps, side by side)
-// The overlay: { "tuning": {...config/tuning.json's shape, merged deep}, "combat": {...config/combat.json's} }
+// The overlay: { "tuning": {...config/tuning.json's shape, merged deep}, "combat": {...config/combat.json's},
+// "botOptions": { "*": {...every bot's options}, "<bot>": {...that bot's} } }
 // (a file with neither key is all tuning). Arrays are replaced whole. Writes <out>/<label>.csv and <label>.md.
 import { fork } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -19,7 +23,7 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { arg, list, mean, median, openRules } from "./lib.mjs";
 
-const COLS = ["bot", "seed", "label", "end", "over", "wave", "firstLost", "lostWave", "firstKo", "koWave", "kos", "lost", "standing", "letters", "hits", "invites", "pickups", "evolved", "berries", "quests", "relics", "placed", "posse", "angry", "happy", "areas", "woken", "wokenFar", "wokenRemote", "witchFar", "witchRemote", "secs"];
+const COLS = ["bot", "seed", "label", "end", "over", "wave", "firstLost", "lostWave", "firstKo", "koWave", "kos", "lost", "standing", "letters", "hits", "invites", "pickups", "evolved", "berries", "quests", "relics", "placed", "posse", "angry", "happy", "areas", "woken", "wokenFar", "wokenRemote", "witchFar", "witchRemote", "cleared", "passed", "lead", "aheadMax", "aheadMean", "questsDone", "secs"];
 const deep = (a, b) => { for (const [k, v] of Object.entries(b)) { if (v && typeof v === "object" && !Array.isArray(v) && a[k] && typeof a[k] === "object" && !Array.isArray(a[k])) deep(a[k], v); else a[k] = v; } return a; };
 
 // ---- a worker: runs its jobs and sends each row back ----
@@ -35,7 +39,12 @@ if (process.argv.includes("--worker")) {
   for (const [path, v] of sets) { let o = tun; for (const k of path.slice(0, -1)) o = o[k] ??= {}; o[path[path.length - 1]] = v; }
   // withTuning merges one level deep: hand it whole sections, the overlay merged into each.
   const over = Object.fromEntries(Object.entries(tun).map(([k, v]) => [k, v && typeof v === "object" && !Array.isArray(v) ? deep(structuredClone(TUNING[k] ?? {}), v) : v]));
-  const optionsOf = bot => { const [kind, strat] = bot.split(":"); return kind === "top" ? ["skilled", BOT_GAME.skilled] : kind === "champion" && !strat ? ["champion", BOT_GAME.champion ?? {}] : [kind, strat ? STRATEGIES[strat] : {}]; };
+  const optionsOf0 = bot => { const [kind, strat] = bot.split(":"); return kind === "top" ? ["skilled", BOT_GAME.skilled] : kind === "champion" && !strat ? ["champion", BOT_GAME.champion ?? {}] : [kind, strat ? STRATEGIES[strat] : {}]; };
+  // The overlay's botOptions: { "*": {...}, "<bot>": {...} } over each bot's own (e.g. clear: true for every careful bot).
+  const optionsOf = bot => { const [kind, o] = optionsOf0(bot), B = overlay.botOptions ?? {}; return [kind, { ...o, ...(B["*"] ?? {}), ...(B[bot] ?? {}) }]; };
+  // Route positions (1 = the first wave's stone), from the party's route (both the study branch and the built design have it).
+  const { routeOf } = await load("/src/rules/party.ts");
+  const POS = new WeakMap(), routePos = map => { let m = POS.get(map); if (!m) { m = new Map(routeOf(map).order.map((k, i) => [k, i + 1])); POS.set(map, m); } return m; };
 
   function run(bot, seed) {
     const T0 = Date.now(), t = withTuning(over), g = newGame(seed, t), w = g.witches[0], dt = 1 / 60;
@@ -43,7 +52,8 @@ if (process.argv.includes("--worker")) {
     w.body = { ...w.body, seated: false };
     const [kind, opts] = optionsOf(bot), brain = newBot(kind, opts);
     const home = g.map.dancefloor, M = g.map, R = Math.max(...M.cells.map(([cx, cy]) => Math.hypot(M.siteOf(cx, cy).x - home.x, M.siteOf(cx, cy).z - home.z)));
-    let witchFar = 0;
+    let witchFar = 0, aheadMax = 0, aheadSum = 0, aheadN = 0;
+    const earlyAt = new Map(), passedAt = new Map(); // (the built design: each area cleared ahead of its wave, when, and when its wave came)
     const wokenAt = new Map(); // (every area woken, kept: a ruined one leaves party.areas)
     let firstKo = null, koWave = null, kos = 0, wasKo = false, firstLost = null, lostWave = null, hits = 0, placed = 0;
     const invited = new Set(); // (made happy by her 💌s; tally.invites counts only talk and pickups)
@@ -58,6 +68,13 @@ if (process.argv.includes("--worker")) {
       if (step % 30 === 0) for (const a of g.party.areas.values()) if (a.wave > 0) wokenAt.set(`${a.cell[0]},${a.cell[1]}`, a.cell);
       if (firstLost === null && step % 30 === 0 && [...g.combat.sounds.values()].some(h => h.hp <= 0)) { firstLost = now; lostWave = g.party.wave; }
       if (step % 30 === 0) witchFar = Math.max(witchFar, Math.hypot(w.body.x - home.x, w.body.z - home.z));
+      if (!g.clear && step % 30 === 0) {
+        const A = g.party.ahead ?? new Set();
+        for (const k of A) if (!earlyAt.has(k)) earlyAt.set(k, g.party.areas.get(k)?.at ?? now);
+        for (const k of earlyAt.keys()) if (!A.has(k) && !passedAt.has(k)) passedAt.set(k, now);
+        if (step % 60 === 0) { aheadMax = Math.max(aheadMax, A.size); aheadSum += A.size; aheadN++; }
+      }
+      if (g.clear && step % 60 === 0) { const P = routePos(g.map); let n = 0; for (const k of g.clear.cleared.keys()) if ((P.get(k) ?? 0) > g.party.wave) n++; aheadMax = Math.max(aheadMax, n); aheadSum += n; aheadN++; }
       if (g.partyOver) break;
     }
     // How far the party got: the areas woken (home aside), the farthest of them from home (m, and as remoteness: 0 home, 1 the playable edge).
@@ -69,7 +86,20 @@ if (process.argv.includes("--worker")) {
       standing: g.combat.sounds.size - lost, letters: w.invites.next, hits, invites: invited.size, pickups: g.tally.invites, evolved: g.tally.evolved, berries: g.tally.berries,
       quests: brain.done.quests.length, relics: brain.done.relics.length, placed, posse: w.leash.stack.length + w.leash.placed.length,
       angry: L.filter(c => c.legendState === "angry").length, happy: L.filter(c => c.legendState === "happy").length, areas: M.cells.length, woken: woken.length, wokenFar: Math.max(0, ...far), wokenRemote: Math.max(0, ...woken.map(a => M.remoteness(a.cell[0], a.cell[1]))),
-      witchFar, witchRemote: witchFar / R, secs: (Date.now() - T0) / 1000,
+      witchFar, witchRemote: witchFar / R,
+      // Clear to transform (rules/clear.ts): areas cleared ahead of the pulse, the waves that found theirs already turned and by how
+      // long, the most turned ahead of it at once and on average, and every legend's quest done (by any bot).
+      ...(g.clear ? {
+        cleared: g.clear.cleared.size, passed: g.clear.waves.filter(x => x.already !== null).length,
+        lead: (() => { const l = g.clear.waves.filter(x => x.already !== null).map(x => x.at - x.already); return l.length ? l.sort((a, b) => a - b)[l.length >> 1] : null; })(),
+      } : (() => {
+        // The built design (rules/party.ts): an area cleared before its wave sits in party.ahead until its wave comes (watched
+        // above, every half second): how many ever did, how many of those its wave then reached, and the median lead (s).
+        const l = [...passedAt].map(([k, t]) => t - earlyAt.get(k)).sort((x, y) => x - y);
+        return { cleared: earlyAt.size, passed: passedAt.size, lead: l.length ? l[l.length >> 1] : null };
+      })()),
+      aheadMax, aheadMean: aheadN ? aheadSum / aheadN : 0, questsDone: L.filter(c => c.quest?.done !== undefined).length,
+      secs: (Date.now() - T0) / 1000,
     };
   }
   process.on("message", async m => {
@@ -106,6 +136,13 @@ if (process.argv.includes("--worker")) {
       o("|---|---|---|---|---|---|---|---|");
       const r2 = x => +x.toFixed(2), r0 = x => Math.round(x);
       for (const b of BOTS) o(`| ${b} | ${pp("wave")(b)} | ${pp("end", x => +(x / 60).toFixed(1))(b)} | ${pp("woken")(b)} | ${pp("wokenFar", r0)(b)} | ${pp("wokenRemote", r2)(b)} | ${pp("witchFar", r0)(b)} | ${pp("witchRemote", r2)(b)} |`);
+    }
+    // Clear to transform (rules/clear.ts): how far ahead of the pulse she got.
+    if (rows.some(r => (r.cleared ?? 0) > 0)) {
+      o(`\n**Clear to transform** (median / 90th percentile)\n`);
+      o("| bot | areas cleared early | waves that found their stone turned | lead when the wave came (min) | most turned ahead at once | mean turned ahead | quests done | knockdowns |");
+      o("|---|---|---|---|---|---|---|---|");
+      for (const b of BOTS) o(`| ${b} | ${pp("cleared")(b)} | ${pp("passed")(b)} | ${pp("lead", x => +(x / 60).toFixed(1))(b)} | ${pp("aheadMax")(b)} | ${pp("aheadMean", x => +x.toFixed(1))(b)} | ${pp("questsDone")(b)} | ${pp("kos")(b)} |`);
     }
     // The curve: as each wave lands, the share of runs whose party's still on (a run cut off by --time before that wave counts as unknown).
     const W = Math.max(...rows.map(r => r.wave));
