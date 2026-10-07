@@ -238,7 +238,13 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   };
   const toWorld = (u: number, v: number): [number, number] => {
     let x = u * A, z = v * A;
-    for (let i = 0; i < 30; i++) { const [pu, pv] = toPart(x, z); x += (u - pu) * A; z += (v - pv) * A; }
+    // (toPart inline, its pair in locals: 30 rounds made 30 tuples a call, a frame's commonest garbage; phase 2's GC
+    // audit. The same sums in the same order.)
+    for (let i = 0; i < 30; i++) {
+      const uu = x / A, vv = z / A;
+      const pu = uu + V * (vnoise(uu / L, vv / L, seed + 91) - 0.5) * 2, pv = vv + V * (vnoise(uu / L, vv / L, seed + 92) - 0.5) * 2;
+      x += (u - pu) * A; z += (v - pv) * A;
+    }
     return [x, z];
   };
   // Home first (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the
@@ -282,7 +288,14 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   }
   const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, seed + 17) * typeCount);
 
-  const siteOf = (cx: number, cy: number) => { const s = partition.site(cx, cy), w = toWorld(s[0], s[1]); return { x: w[0], z: w[1] }; };
+  // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
+  const SITES = new Map<number, [number, number]>();
+  const siteOf = (cx: number, cy: number) => {
+    const k = (cx + 32768) * 65536 + (cy + 32768);
+    let w = SITES.get(k);
+    if (!w) { const s = partition.site(cx, cy); w = toWorld(s[0], s[1]); SITES.set(k, w); }
+    return { x: w[0], z: w[1] };
+  };
   const centre = siteOf(centreCell[0], centreCell[1]);
   // The playable areas and the buffer ring, by their centres' distance from home's.
   // (each by how far its centre lies out along its own direction, as a share of the coast there)
