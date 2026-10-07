@@ -2,6 +2,7 @@
 // the sound effects and their cues, the volume slider in the corner, and the audio watchdog. One a page.
 import { beatAt, timeAt } from "../rules/beat";
 import { PARTY_CAST } from "../rules/party";
+import { djIntroEnd } from "../rules/djSet";
 import { Music } from "../platform/audio/music";
 import { Sfx } from "../platform/audio/sfx";
 import { OVER_DEBUG, SfxCues } from "../platform/audio/sfxCues";
@@ -103,7 +104,7 @@ export class Sound {
     // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
     // crackling under her hands (quieter: room.decks) once her routine has dropped the needle (rules/djSet.ts; the room quieter
     // still before), till the boot's first speaker brings the music in
-    const atDecks = game.witch.seated && typeof game.party.spellAt === "number" && !game.speakerBoot.some(t => t !== null);
+    const end = djIntroEnd(game), atDecks = game.witch.seated && typeof game.party.spellAt === "number" && !game.speakerBoot.some(t => t !== null) && (end === null || game.clock.time < end); // (her routine done, the record becomes the music: rules/musicPlan.ts dropBar)
     const sp = game.party.spellAt, dropped = atDecks && typeof sp === "number" && game.clock.time >= timeAt(game.beat, Math.ceil(beatAt(game.beat, sp + PARTY_CAST) - 1e-6) + 1); // (her routine's needle down: rules/djSet.ts, its beat 1)
     this.sfx?.room(roomOpen ? 1 : atDecks ? this.tuning.sfx.room.decks * (dropped ? 1 : 0.3) : 0);
   }
