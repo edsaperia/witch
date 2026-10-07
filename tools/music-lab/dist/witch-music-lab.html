@@ -9157,8 +9157,8 @@ label.check input { accent-color: var(--accent); }
       this.style = style2;
       this.conductor.reset(style2);
       this.setMix();
-      for (const ch of this.channels.values()) if (ch.lfo) try {
-        ch.lfo.osc.stop();
+      for (const ch of this.channels.values()) for (const n of [ch.lfo?.osc, ...ch.running ?? []]) if (n) try {
+        n.stop();
       } catch {
       }
       this.channels.clear();
@@ -9250,7 +9250,7 @@ label.check input { accent-color: var(--accent); }
           const main = Math.floor(beatAt(clock2, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue2, Math.floor(main / 16));
           const events = notesAt(this.style, plan, null, main, { seed: this.seed, siege: 0, circle: cue2.circle, only: "circle", circleStep: this.cNext });
           const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
-          for (const e of events) this.play(e, this.cAt + swing + e.offset * sps, e.dur * sps, sps);
+          this.playAll(events, (e) => this.cAt + swing + e.offset * sps, sps);
         }
         this.cNext++;
         this.cAt += sps;
@@ -9287,7 +9287,7 @@ label.check input { accent-color: var(--accent); }
       }
       const events = notesAt(S, plan, next, step2, { seed: this.seed, siege: cue2.siege, party: cue2.party, legend: cue2.legend, only: "main", build: cue2.speakerBars !== void 0 ? bootLayers(cue2, bar2) : void 0 });
       const swing = step2 % 2 === 1 ? S.swing * sps : 0;
-      for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
+      this.playAll(events, (e) => t + swing + e.offset * sps, sps);
     }
     channel(part, p, circle = false) {
       const key = circle ? `circle:${part}` : part;
@@ -9326,7 +9326,27 @@ label.check input { accent-color: var(--accent); }
       }
       return ch;
     }
-    play(e, t, dur, sps) {
+    /** A step's notes. A synth part's chord, its notes struck together (the same time, length and velocity), shares one
+     *  filter, envelope and pair of panners: a filter's the same on their sum as on each (not with drive, a waveshaper, or
+     *  glide). A note each was the gate pad's and the stabs' cost; foxtrot's measure, #523. */
+    playAll(events, at2, sps) {
+      const taken = /* @__PURE__ */ new Set();
+      for (let i = 0; i < events.length; i++) {
+        const e = events[i];
+        if (taken.has(e)) continue;
+        const p = this.style.patches[e.patch];
+        if (p?.kind === "synth" && !p.drive && !p.glide && e.midi !== null) {
+          const mates = events.filter((f, j) => j > i && !taken.has(f) && f.part === e.part && f.patch === e.patch && f.layer === e.layer && f.offset === e.offset && f.dur === e.dur && f.vel === e.vel && f.midi !== null);
+          if (mates.length) {
+            for (const f of mates) taken.add(f);
+            this.play(e, at2(e), e.dur * sps, sps, mates.map((f) => f.midi));
+            continue;
+          }
+        }
+        this.play(e, at2(e), e.dur * sps, sps);
+      }
+    }
+    play(e, t, dur, sps, chord = []) {
       const p = this.style.patches[e.patch];
       if (!p || this.solo && !this.solo.has(e.part)) return;
       const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
@@ -9337,19 +9357,19 @@ label.check input { accent-color: var(--accent); }
           this.duck(t, e.vel, sps);
           break;
         case "noise":
-          this.noiseHit(t, p, peak, ch.in);
+          this.noiseHit(t, p, peak, ch);
           break;
         case "snare":
-          this.snare(t, p, peak, ch.in);
+          this.snare(t, p, peak, ch);
           break;
         case "bell":
           this.bell(t, p, peak, mtof(e.midi ?? 69) * pf, ch.in);
           break;
         case "synth":
-          this.synth(t, p, peak, mtof(e.midi ?? 45) * pf, dur, ch);
+          this.synth(t, p, peak, chord.length ? [e.midi ?? 45, ...chord].map((m) => mtof(m) * pf) : mtof(e.midi ?? 45) * pf, dur, ch);
           break;
         case "voice":
-          this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch.in);
+          this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch);
           break;
         case "riser":
           this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in);
@@ -9420,12 +9440,18 @@ label.check input { accent-color: var(--accent); }
       s.stop(t + length);
       return s;
     }
-    noiseHit(t, p, peak, dest) {
+    /** A drum part's filters, which never move, made once and shared by its hits (each hit's envelope goes in before them:
+     *  the same sound, a filter or two fewer a hit; foxtrot's measure, #523). */
+    hitFilters(ch, make) {
+      if (!ch.hitIn) {
+        const f = make();
+        this.chain(f, ch.in);
+        ch.hitIn = f[0];
+      }
+      return ch.hitIn;
+    }
+    noiseHit(t, p, peak, ch) {
       const c = this.ctx, decay = p.decay ?? 0.05, bursts = p.bursts ?? 1, gap = 0.011;
-      const f = c.createBiquadFilter();
-      f.type = p.filter ?? "highpass";
-      f.frequency.value = p.cutoff ?? 8e3;
-      f.Q.value = p.q ?? 0.7;
       const g = c.createGain(), t0 = t + (bursts - 1) * gap, metal = p.source === "metal";
       g.gain.setValueAtTime(0, t);
       for (let i = 0; i < bursts - 1; i++) {
@@ -9434,23 +9460,30 @@ label.check input { accent-color: var(--accent); }
       }
       g.gain.linearRampToValueAtTime(peak, t0 + Math.max(1e-3, p.attack ?? 1e-3));
       g.gain.exponentialRampToValueAtTime(5e-4, t0 + (p.attack ?? 1e-3) + decay);
-      const nodes = [this.noiseSource(t, t0 - t + decay + 0.06, metal), f];
-      if (metal) {
+      const filters = this.hitFilters(ch, () => {
+        const f = c.createBiquadFilter();
+        f.type = p.filter ?? "highpass";
+        f.frequency.value = p.cutoff ?? 8e3;
+        f.Q.value = p.q ?? 0.7;
+        if (!metal) return [f];
         const b = c.createBiquadFilter();
         b.type = "bandpass";
         b.frequency.value = 1e4;
         b.Q.value = 0.6;
-        nodes.splice(1, 0, b);
-      }
-      this.chain([...nodes, g], dest);
+        return [b, f];
+      });
+      this.chain([this.noiseSource(t, t0 - t + decay + 0.06, metal), g], filters);
     }
-    snare(t, p, peak, dest) {
-      const c = this.ctx, decay = p.decay ?? 0.14;
-      const f = c.createBiquadFilter();
-      f.type = "highpass";
-      f.frequency.value = p.cutoff ?? 1800;
-      f.Q.value = p.q ?? 0.7;
-      this.chain([this.noiseSource(t, decay + 0.05), f, this.env(t, peak, 1e-3, decay)], dest);
+    snare(t, p, peak, ch) {
+      const c = this.ctx, decay = p.decay ?? 0.14, dest = ch.in;
+      const hp = this.hitFilters(ch, () => {
+        const f = c.createBiquadFilter();
+        f.type = "highpass";
+        f.frequency.value = p.cutoff ?? 1800;
+        f.Q.value = p.q ?? 0.7;
+        return [f];
+      });
+      this.chain([this.noiseSource(t, decay + 0.05), this.env(t, peak, 1e-3, decay)], hp);
       for (const [k, lvl] of [[1, 0.7], [1.85, 0.35]]) {
         const o = c.createOscillator();
         o.type = "triangle";
@@ -9480,7 +9513,8 @@ label.check input { accent-color: var(--accent); }
         o.stop(t + decay + 0.05);
       }
     }
-    synth(t, p, peak, freq, dur, ch) {
+    synth(t, p, peak, freqOrChord, dur, ch) {
+      const freqs = Array.isArray(freqOrChord) ? freqOrChord : [freqOrChord], freq = freqs[freqs.length - 1];
       const lite = this.shedLevel >= 2, all = p.waves ?? ["sawtooth"], waves = lite ? all.slice(0, 1) : all, U = lite ? 1 : Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
       const c = this.ctx, attack = Math.max(2e-3, p.attack ?? 5e-3), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
       const end = t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02;
@@ -9518,9 +9552,9 @@ label.check input { accent-color: var(--accent); }
       nodes.push(g);
       this.chain(nodes, ch.in);
       const pans = [];
-      for (let v2 = 0; v2 < n; v2++) {
-        const x = n > 1 ? 2 * v2 / (n - 1) - 1 : 0;
-        pans.push(p.width && n > 1 ? p.width * (v2 % 2 ? x : -x) : 0);
+      for (let v = 0; v < n; v++) {
+        const x = n > 1 ? 2 * v / (n - 1) - 1 : 0;
+        pans.push(p.width && n > 1 ? p.width * (v % 2 ? x : -x) : 0);
       }
       const side = (sign) => {
         const on = pans.filter((q) => Math.sign(q) === sign);
@@ -9531,22 +9565,31 @@ label.check input { accent-color: var(--accent); }
         return s;
       };
       const left = side(-1), right = side(1);
-      let v = 0, last = null;
-      for (const w of waves) for (let u = 0; u < U; u++, v++) {
-        const o = c.createOscillator(), x = n > 1 ? 2 * v / (n - 1) - 1 : 0;
-        o.type = w;
-        o.detune.value = (p.detune ?? 0) * x;
-        if (p.glide && ch.lastFreq > 0 && ch.lastFreq !== freq) {
-          o.frequency.setValueAtTime(ch.lastFreq, t);
-          o.frequency.exponentialRampToValueAtTime(freq, t + p.glide);
-        } else if (p.bend) {
-          o.frequency.setValueAtTime(freq * Math.pow(2, p.bend / 12), t);
-          o.frequency.exponentialRampToValueAtTime(freq, t + (p.bendTime ?? 0.08));
-        } else o.frequency.value = freq;
-        o.connect(pans[v] < 0 ? left : pans[v] > 0 ? right : nodes[0]);
-        o.start(t + (U > 1 ? u * 7e-4 % 4e-3 : 0));
-        o.stop(stop);
-        last = o;
+      const mid = (left || right) && pans.some((q) => q === 0) ? (() => {
+        const m = c.createGain();
+        m.gain.value = Math.SQRT1_2;
+        m.connect(nodes[0]);
+        return m;
+      })() : nodes[0];
+      let last = null;
+      for (const freq2 of freqs) {
+        let v = 0;
+        for (const w of waves) for (let u = 0; u < U; u++, v++) {
+          const o = c.createOscillator(), x = n > 1 ? 2 * v / (n - 1) - 1 : 0;
+          o.type = w;
+          o.detune.value = (p.detune ?? 0) * x;
+          if (p.glide && freqs.length === 1 && ch.lastFreq > 0 && ch.lastFreq !== freq2) {
+            o.frequency.setValueAtTime(ch.lastFreq, t);
+            o.frequency.exponentialRampToValueAtTime(freq2, t + p.glide);
+          } else if (p.bend) {
+            o.frequency.setValueAtTime(freq2 * Math.pow(2, p.bend / 12), t);
+            o.frequency.exponentialRampToValueAtTime(freq2, t + (p.bendTime ?? 0.08));
+          } else o.frequency.value = freq2;
+          o.connect(pans[v] < 0 ? left : pans[v] > 0 ? right : mid);
+          o.start(t + (U > 1 ? u * 7e-4 % 4e-3 : 0));
+          o.stop(stop);
+          last = o;
+        }
       }
       if (lfoOf && wobbled && last) {
         const l = lfoOf, f = wobbled;
@@ -9562,58 +9605,82 @@ label.check input { accent-color: var(--accent); }
     /** A sung note, synthesised: a buzzy source (saws, a touch of breath) through three formant
      *  band-passes for its vowel (chosen by the note, from the patch's vowels), with a vibrato that
      *  creeps in; unison voices spread wide make a choir. */
-    voice(t, p, peak, freq, dur, step2, dest) {
-      const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], vowel = VOWELS[vowels[Math.abs(step2 >> 2) % vowels.length]] ?? VOWELS.ah;
+    voice(t, p, peak, freq, dur, step2, ch) {
+      const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], name = vowels[Math.abs(step2 >> 2) % vowels.length], vowel = VOWELS[name] ? name : "ah";
       const U = this.shedLevel >= 2 ? 1 : Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(5e-3, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
       const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 1.5 : 2) + 0.02;
+      const bank = (ch.banks ??= /* @__PURE__ */ new Map()).get(vowel) ?? (() => {
+        const into = c.createGain();
+        for (const [f, a] of VOWELS[vowel]) {
+          const bp = c.createBiquadFilter(), bg = c.createGain();
+          bp.type = "bandpass";
+          bp.frequency.value = f * (p.formantShift ?? 1);
+          bp.Q.value = p.q ?? 8;
+          bg.gain.value = a * 3;
+          into.connect(bp);
+          bp.connect(bg);
+          bg.connect(ch.in);
+        }
+        ch.banks.set(vowel, into);
+        return into;
+      })();
+      if (!ch.vib) {
+        ch.vib = c.createOscillator();
+        ch.vib.frequency.value = 5.2;
+        ch.vib.start();
+        (ch.running ??= []).push(ch.vib);
+      }
       const g = c.createGain(), lvl = peak / Math.sqrt(U);
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(lvl, t + attack);
       if (end > t + attack) g.gain.setTargetAtTime(lvl * sustain, t + attack, decay / 3);
       g.gain.setTargetAtTime(0, end, release / 3);
-      g.connect(dest);
-      const src = c.createGain();
-      for (const [f, a] of vowel) {
-        const b = c.createBiquadFilter(), bg = c.createGain();
-        b.type = "bandpass";
-        b.frequency.value = f * (p.formantShift ?? 1);
-        b.Q.value = p.q ?? 8;
-        bg.gain.value = a * 3;
-        src.connect(b);
-        b.connect(bg);
-        bg.connect(g);
-      }
-      const vib = c.createOscillator(), vg = c.createGain();
-      vib.frequency.value = 5.2;
+      g.connect(bank);
+      const vg = c.createGain();
       vg.gain.setValueAtTime(0, t);
       vg.gain.linearRampToValueAtTime(p.vibrato ?? 15, t + Math.min(0.6, attack + 0.25));
-      vib.connect(vg);
-      vib.start(t);
-      vib.stop(stop);
+      ch.vib.connect(vg);
       const spread2 = !!p.width && U > 1, xs = Array.from({ length: U }, (_, u) => U > 1 ? 2 * u / (U - 1) - 1 : 0);
       const sideOf2 = (sign) => {
-        const on = xs.filter((x) => Math.sign(x) === sign), s = c.createStereoPanner();
-        s.pan.value = p.width * on.reduce((a, x) => a + x, 0) / on.length;
-        s.connect(src);
-        return s;
+        const on = xs.filter((x) => Math.sign(x) === sign), sp = c.createStereoPanner();
+        sp.pan.value = p.width * on.reduce((a, x) => a + x, 0) / on.length;
+        sp.connect(g);
+        return sp;
       };
       const left = spread2 ? sideOf2(-1) : null, right = spread2 ? sideOf2(1) : null;
+      const mid = spread2 && xs.includes(0) ? (() => {
+        const m = c.createGain();
+        m.gain.value = Math.SQRT1_2;
+        m.connect(g);
+        return m;
+      })() : g;
+      let last = null;
       for (let u = 0; u < U; u++) {
-        const o = c.createOscillator(), x = U > 1 ? 2 * u / (U - 1) - 1 : 0;
+        const o = c.createOscillator(), x = xs[u];
         o.type = "sawtooth";
         o.frequency.value = freq;
         o.detune.value = (p.detune ?? 0) * x;
         kRate(o.detune);
         vg.connect(o.detune);
-        o.connect(spread2 && x < 0 ? left : spread2 && x > 0 ? right : src);
+        o.connect(spread2 && x < 0 ? left : spread2 && x > 0 ? right : mid);
         o.start(t);
         o.stop(stop);
+        last = o;
       }
       if (p.breath) {
         const h = c.createBiquadFilter();
         h.type = "highpass";
         h.frequency.value = 2500;
-        this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], src);
+        this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], bank);
+      }
+      if (last) {
+        const v = ch.vib;
+        last.onended = () => {
+          try {
+            v.disconnect(vg);
+          } catch {
+          }
+        };
       }
     }
     riser(t, p, dur, from, to, dest) {
@@ -9949,9 +10016,9 @@ label.check input { accent-color: var(--accent); }
     _notice: "Creatures notice the witch on the ground within radius metres (Ed's playtest: a larger responsive area makes them feel alive): resting ones turn to look at her; babies of a curious kind come up to about curious metres from her, skittish ones keep about skittish metres off (config/combat.json temperament).",
     notice: { radius: 30, curious: 4, skittish: 12 },
     _naps: `Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are there in ground mode, but stay asleep if you're in treetop mode, or not in their area (e.g. you see them from an adjacent area)"; "They don't all sleep - but it's one of the things they can do while idling"): a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight. on: false turns naps off. circle: a legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle") naps at each pause with its own chance, for its own length (seconds), and is woken only by a witch on the ground within reach metres of its circle's edge (so she can still invite it), not anywhere in its area.`,
-    _wildWatch: `The wild watch (Ed, 2026-10-07: when she enters a dormant area its animals nap, then "stir, evade and hang back, turning to LOOK at her", then attack; every creature looks, no special art): on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. on: false: they attack at once, as before. Slower, with a warning (Ed, 2026-10-07: "make the dormant-to-attacking choreography slower, with a visible sign of aggro (e.g. red tint) rising that lets a player who wanders into a dangerous area understand what's happening and have time to run away"): time is 5.5 s (DECISION FOR ED, from 2); leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint, and the screen edges reddening up to vignette, both times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one.`,
-    wildWatch: { on: true, time: 5.5, forget: 20, hangBack: 4, dangerF: 90, tint: 0.8, vignette: 0.45 },
-    _hunt: `The hunt (Ed, 2026-10-07: "When I go to a wild area, after they are awoken all of the wild creatures from that area should fight with me until either I die or they are invited. When they are all invited, the runestone transforms into a soundsystem. The legend and the circle baby are the exceptions"; rules/hunt.ts): once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her wherever she goes, past its area's edge (combat.leaveArea no longer lets it give up), never napping; over the treetops it holds and comes on again when she lands. It ends for one when it's invited, enraged, or knocked down and run off; for all of hers when she's knocked out: they give up, walk home and roam (DECISION FOR ED), and the area's watch plays again on her next visit. Babies don't fight. on: false: the old rule (they give up combat.leaveArea metres past their area's edge).`,
+    _wildWatch: `The wild watch (Ed, 2026-10-07: when she enters a dormant area its animals nap, then "stir, evade and hang back, turning to LOOK at her", then attack; every creature looks, no special art): on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. on: false: they attack at once, as before. Slower, with a warning (Ed, 2026-10-07: "make the dormant-to-attacking choreography slower, with a visible sign of aggro (e.g. red tint) rising that lets a player who wanders into a dangerous area understand what's happening and have time to run away"): time is 5.5 s (DECISION FOR ED, from 2); leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint (Ed, 2026-10-07: the screen edges' red that went with it is gone: "remove the wild area aggro red glow"), times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one.`,
+    wildWatch: { on: true, time: 5.5, forget: 20, hangBack: 4, dangerF: 90, tint: 0.8 },
+    _hunt: `The hunt (Ed, 2026-10-07: "When I go to a wild area, after they are awoken all of the wild creatures from that area should fight with me until either I die or they are invited. When they are all invited, the runestone transforms into a soundsystem. The legend and the circle baby are the exceptions"; and "they should lose interest and go home if you leave their area, as they did before"; rules/hunt.ts): once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her while she's in the area, wherever in it they are, never giving up or napping; over the treetops there they hold and come on again when she lands. It ends for one when it's invited, enraged, or knocked down and run off; for all of an area's when she leaves the area (they're ordinary wild creatures again: they give up combat.leaveArea metres past their edge and walk home, as before); for all of hers when she's knocked out (they give up, walk home and roam, DECISION FOR ED, and the area's watch plays again on her next visit). Back in an area she left, it hunts her again at once while it's remembered (wildWatch.forget seconds after she was last on the ground in it), else its watch plays again. Babies don't fight. on: false: the old rule (only those near her attack).`,
     hunt: { on: true },
     naps: { on: true, chance: 0.3, length: [20, 60], wake: 1.2, circle: { chance: 0.85, length: [30, 80], reach: 4 } },
     _guard: "Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it.",
