@@ -1,7 +1,7 @@
 // The game's sound on the page: the AudioContext (made at the first press: browsers keep sound off till then), the music,
 // the sound effects and their cues, the volume slider in the corner, and the audio watchdog. One a page.
-import { djRoutineFrom } from "../rules/dj";
-import { beatAt } from "../rules/beat";
+import { beatAt, timeAt } from "../rules/beat";
+import { PARTY_CAST } from "../rules/party";
 import { Music } from "../platform/audio/music";
 import { Sfx } from "../platform/audio/sfx";
 import { OVER_DEBUG, SfxCues } from "../platform/audio/sfxCues";
@@ -101,10 +101,10 @@ export class Sound {
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
     // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
-    // crackling under her hands (quieter: room.decks) once her routine has dropped the needle (rules/dj.ts; the room quieter
+    // crackling under her hands (quieter: room.decks) once her routine has dropped the needle (rules/djSet.ts; the room quieter
     // still before), till the boot's first speaker brings the music in
     const atDecks = game.witch.seated && typeof game.party.spellAt === "number" && !game.speakerBoot.some(t => t !== null);
-    const from = atDecks ? djRoutineFrom(game) : null, dropped = from !== null && beatAt(game.beat, game.clock.time) >= from + 1;
+    const sp = game.party.spellAt, dropped = atDecks && typeof sp === "number" && game.clock.time >= timeAt(game.beat, Math.ceil(beatAt(game.beat, sp + PARTY_CAST) - 1e-6) + 1); // (her routine's needle down: rules/djSet.ts, its beat 1)
     this.sfx?.room(roomOpen ? 1 : atDecks ? this.tuning.sfx.room.decks * (dropped ? 1 : 0.3) : 0);
   }
 }

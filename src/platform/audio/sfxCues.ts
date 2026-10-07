@@ -30,8 +30,8 @@ import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { partyOverEase } from "../../rules/music";
 import { PARTY_CAST } from "../../rules/party";
-import { djGesture, DJ_ROUTINE, DJ_ROUTINE_BEATS } from "../../../art/witch.js";
-import { djRoutineFrom } from "../../rules/dj";
+import { djGesture } from "../../../art/witch.js";
+import { djRoutineAt, djStrokes } from "../../rules/djSet";
 
 /** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -66,8 +66,9 @@ export class SfxCues {
   private stonesOn = new Set<number>();
   /** The last half-beat heard at her decks (decks). */
   private deckHalf = -1;
-  /** Where in her routine the last frame was (beats from its start; NaN outside it). */
-  private deckRoutine = NaN;
+  /** The game time her routine's strokes were heard up to (NaN outside it), and whether her hand was up (its hype). */
+  private deckUpTo = NaN;
+  private deckHype = false;
   private soundsystemsUp = new Set<string>();
   /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
   private hp = -1;
@@ -297,20 +298,25 @@ export class SfxCues {
 
   /** Her decks (the DJ witch, #356): while she stands behind them, the spell cast, her hands heard as the picture plays
    *  them (art/witch.js djGesture, on the beat clock): a stroke of the record on each half-beat of a scratch bar, and her
-   *  "woo-hoo!" on the first beat of a hype bar; and her routine's strokes while it plays (rules/dj.ts). */
+   *  "woo-hoo!" on the first beat of a hype bar; and her routine's strokes while it plays (rules/djSet.ts). */
   private decks({ g, time }: Here): void {
-    const sp = g.party.spellAt;
-    if (!g.witch.seated || g.witches[0]?.ko || typeof sp !== "number" || time < sp + PARTY_CAST) { this.deckHalf = -1; this.deckRoutine = NaN; return; }
-    const b = beatAt(g.beat, time), half = Math.floor(b * 2), from = djRoutineFrom(g);
-    // her routine (the needle dropped, a little scratching: art/witch.js DJ_ROUTINE): each stroke as the beat passes it, this
-    // frame's slice of beats; come into it already well under way (a load, a frame stalled long), only from here on
-    if (from !== null && b >= from && b < from + DJ_ROUTINE_BEATS) {
-      const rb = b - from, last = Number.isNaN(this.deckRoutine) ? (rb < 0.25 ? -1e-6 : rb) : this.deckRoutine;
-      this.deckRoutine = rb; this.deckHalf = half;
-      if (this.primed) for (const e of DJ_ROUTINE) if (e.stroke && e.at > last && e.at <= rb) this.sfx.deck(e.stroke as Parameters<Sfx["deck"]>[0], 0.1);
+    // her routine (art builder 4's rules/djSet.ts: the needle dropped and a little scratching after the spell, and the
+    // scratching through the wait behind her decks after a knockout): each of its strokes as this frame passes it, her
+    // woo-hoo as her hand goes up; come into it already well under way (a load, a long stall), only from here on
+    const r = djRoutineAt(g, time);
+    if (r) {
+      const from = Number.isNaN(this.deckUpTo) ? (time - r.start < 0.15 ? r.start - 1e-6 : time) : this.deckUpTo;
+      this.deckUpTo = time; this.deckHalf = Math.floor(beatAt(g.beat, time) * 2);
+      if (this.primed) for (const s of djStrokes(g, from + 1e-9, time + 1e-9)) this.sfx.deck(s.stroke, 0.1);
+      const hype = r.gesture === "hype";
+      if (hype && !this.deckHype && this.primed) this.sfx.whoop(0.1);
+      this.deckHype = hype;
       return;
     }
-    this.deckRoutine = NaN;
+    this.deckUpTo = NaN; this.deckHype = false;
+    const sp = g.party.spellAt;
+    if (!g.witch.seated || g.witches[0]?.ko || typeof sp !== "number" || time < sp + PARTY_CAST) { this.deckHalf = -1; return; }
+    const b = beatAt(g.beat, time), half = Math.floor(b * 2);
     if (half === this.deckHalf) return;
     const first = this.deckHalf < 0;
     this.deckHalf = half;
