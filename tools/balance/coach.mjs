@@ -4,7 +4,7 @@
 // and the best scored again on held-out seeds it never trained on. Runs in parallel: one worker process a core, each
 // loading the rules once.
 //   node tools/balance/coach.mjs search [--gens 8] [--pop 8] [--seeds 4 (training seeds 0..N-1)] [--time 2700] [--workers 4] [--from best.json] [--out dir]
-//   node tools/balance/coach.mjs score [--bots skilled,champion,crude] [--opts file.json (the champion's options)] [--held 8 (held-out seeds 100..)] [--time 5400] [--json out.json]
+//   node tools/balance/coach.mjs score [--bots skilled,champion,crude (also skilled-game: the bot game's skilled; champion-start: the search's starting point)] [--opts file.json (the champion's options)] [--held 8 (held-out seeds 100..)] [--time 5400] [--json out.json]
 // Fitness (one run): the waves her soundsystems stood through (×10), less 4 a soundsystem lost, 3 an angry legend, 1 a
 // knockout, plus a little for a late first knockout and for the home soundsystem's health; a run that's over scores the
 // wave it ended on. Seeds as runbot.mjs: 1000 + i × 7919.
@@ -129,9 +129,9 @@ async function main() {
   } else if (mode === "score") {
     const BOTS = list(arg("bots", "skilled,champion,crude")), HELD = Array.from({ length: +arg("held", 8) }, (_, i) => 100 + i), TIME = +arg("time", 5400);
     const champ = arg("opts") ? JSON.parse(readFileSync(arg("opts"), "utf8")) : null;
-    const optsFor = b => b === "champion" ? (champ ? (champ.x ? optsOf(champ.x) : champ) : optsOf(START)) : b === "skilled-game" ? { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true } : {};
+    const optsFor = b => b === "champion-start" ? optsOf(START) : b === "champion" ? (champ ? (champ.x ? optsOf(champ.x) : champ) : optsOf(START)) : b === "skilled-game" ? { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true } : {};
     const rows = [];
-    await Promise.all(BOTS.map(async b => { const rs = await evalOn(b === "skilled-game" ? "skilled" : b, optsFor(b), HELD, TIME); for (const r of rs) rows.push({ ...r, bot: b, fit: fitness(r) }); }));
+    await Promise.all(BOTS.map(async b => { const rs = await evalOn(b === "skilled-game" ? "skilled" : b.startsWith("champion") ? "champion" : b, optsFor(b), HELD, TIME); for (const r of rs) rows.push({ ...r, bot: b, fit: fitness(r) }); }));
     if (arg("json")) writeFileSync(arg("json"), JSON.stringify(rows));
     console.log(`Held-out seeds ${HELD[0]}–${HELD[HELD.length - 1]}, ${TIME / 60} min each.\n`);
     console.log("| bot | fitness | waves (mean) | runs over | first knockout (min, median) | knockouts | soundsystems lost | angry legends | quests | relics |");
