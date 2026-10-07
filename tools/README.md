@@ -26,7 +26,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`props/`](props/README.md): 1 script — ingame.cjs
 - [`relics/`](relics/README.md): 1 script — map.mjs
 - [`rig/`](rig/README.md): 4 scripts — demo.cjs, legends.cjs, perf.cjs, strip.mjs
-- [`sfx/`](sfx/README.md): 8 scripts — check.mjs, compare.mjs, live.cjs, mix.mjs, mix.ts, render.ts, run.mjs, run.ts
+- [`sfx/`](sfx/README.md): 9 scripts — audit.cjs, check.mjs, compare.mjs, live.cjs, mix.mjs, mix.ts, render.ts, run.mjs, run.ts
 - [`sigils/`](sigils/README.md): 2 scripts — legendary-sheet.mjs, sheet.mjs
 - [`smoke/`](smoke/README.md): 27 scripts — alarm.cjs, bedroom.cjs, canopy-hole.cjs, creator-menus.cjs, creator.cjs, decide.cjs, dream-way.cjs, dreams.cjs, hud.cjs, legend-attack.cjs, legend-panel.cjs, legendary-sigil.cjs, looks.cjs, magic-dodge.cjs, magic-letters.cjs, magic-sigils.cjs, party-join.cjs, party-life.cjs, partyspell.cjs, quick.cjs, room-walk.cjs, smoke.cjs, spell-scroll.cjs, start-screen.cjs, trail.cjs, treetop-sigils.cjs, witch-pool.cjs
 - [`witch/`](witch/README.md): 7 scripts — brooms-gif.mjs, brooms-sheet.mjs, hats-sheet.mjs, longwear-sheet.mjs, slider-audit.mjs, sliders-sheet.mjs, thickness-sheet.mjs

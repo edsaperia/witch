@@ -8,6 +8,7 @@ import type { Atlas, Frame } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { Dirty } from "./dirty";
 
 /** One art pixel's size in the world (metres): the sprites' scale at the tuning's pixel size. */
 export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: number }): number {
@@ -202,6 +203,7 @@ uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts
 uniform float uRimInset; // 1: stylised sprites, the rim one pixel in from the edge (inside the style's outline)
 float rimAlpha(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : texture2D(uAlbedo, q).a; }
 uniform vec4 uTint; // this batch's tint: colour and how much (enraged creatures' red, Ed 2026-10-05)
+uniform float uSteps; // a legend's batch: its light in this many steps of brightness (0: smooth; Ed's round 14 playtest: "same pixel density and palette discipline")
 uniform vec4 uLegend; // a sleeping legend's batch: its sigil's neon and the rim's strength (0: none; Ed's round 14 playtest)
 uniform float uLegendFloor; // and the share of its own (mossed) look it never drops below
 uniform vec4 uFindLook;
@@ -398,6 +400,9 @@ void shade() {
     float under = clamp(0.45 - N.y * 0.75, 0.0, 1.0);
     col += up * uUplight.x * (1.0 + uUplight.y * sin(uUplight.w)) * under;
   }
+  // A legend's light in a few steps (Ed's round 14 playtest: a legend at its size read airbrushed, "smooth gradients, glossy
+  // highlights", beside the pixel art round it): banded by brightness, its hue kept, so its shading is a short ramp of tones.
+  if (uSteps > 0.5) { float l = max(1e-3, dot(col, vec3(0.3, 0.55, 0.15))), q = (floor(l * uSteps) + 0.6) / uSteps; col *= min(q / l, 3.0); }
   gl_FragColor = vec4(haze(min(vec3(1.0), col), vWorld), alpha);
 }
 void main() {
@@ -457,6 +462,18 @@ void main() {
 
 export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Squashed or stretched: its width and height times these, about its feet, rounded to whole art pixels (an attack's feel: render/attackFeel.ts). */ sx?: number; sy?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean }
 
+/** Where a floor draws: right after the ground (-1) and before anything standing (creatures 0, scenery 0.5, shadows 1), and
+ *  writing no depth, so it can never hide an actor, a prop or a shadow on it or at its edge (Ed's playtest, 2026-10-06: "the sports
+ *  field isn't sitting flat on the ground properly"; a pitch's decal is an upright sprite at its near edge, nearer the camera than
+ *  anything on the pitch). */
+export const FLOOR_ORDER = -0.5;
+
+/** A floor's batch (a court, a pitch, the beach's and the party's decals): drawn as FLOOR_ORDER says, under everything. */
+export function asFloor<B extends { meshes: THREE.Mesh[] }>(b: B): B {
+  for (const m of b.meshes) { m.renderOrder = FLOOR_ORDER; (m.material as THREE.Material).depthWrite = false; }
+  return b;
+}
+
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
   /** Every mesh to add to the scene: the batch itself, plus its see-through pass (things in
@@ -469,10 +486,12 @@ export class SpriteBatch {
   private flags: THREE.InstancedBufferAttribute;
   private glow: THREE.InstancedBufferAttribute;
   private capacity = 0;
+  /** What changed this set, per attribute: pos, size, uvs, flags, glow (dirty.ts). */
+  private dirty = [new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty()];
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Characters (the witch, creatures): the mood's moonlight rim. */ rim?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 }; /** A sleeping legend's batch: its sigil's neon and its rim's strength, and its light floor (Ed's round 14 playtest). */ legend?: THREE.Vector4; legendFloor?: number } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Characters (the witch, creatures): the mood's moonlight rim. */ rim?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 }; /** A sleeping legend's batch: its sigil's neon and its rim's strength, and its light floor (Ed's round 14 playtest). */ legend?: THREE.Vector4; legendFloor?: number; /** A legend's batch: its light banded into this many steps of brightness (0 smooth). */ steps?: number } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -481,7 +500,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -542,19 +561,27 @@ export class SpriteBatch {
     this.items = items;
     if (items.length > this.capacity) this.grow(items.length);
     const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array, G = this.glow.array as Float32Array;
-    // (a plain loop, the uv's four numbers written straight in: thousands of instances a frame, every batch, every frame)
+    const dP = this.dirty[0], dS = this.dirty[1], dU = this.dirty[2], dF = this.dirty[3], dG = this.dirty[4];
+    // (a plain loop, the numbers written straight in: thousands of instances a frame, every batch, every frame; each
+    // attribute written, and sent, only where it changed: dirty.ts)
     const mpp = this.metresPerPixel;
     for (let i = 0, n = items.length; i < n; i++) {
       const it = items[i], fr = it.frame, uv = fr.uv, k = it.scale ?? 1;
-      P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
-      S[i * 2] = (it.sx === undefined ? fr.w : Math.max(1, Math.round(fr.w * it.sx))) * mpp * k; S[i * 2 + 1] = (it.sy === undefined ? fr.h : Math.max(1, Math.round(fr.h * it.sy))) * mpp * k; // (a squash in whole art pixels: one pixel scale on screen)
-      U[i * 4] = uv[0]; U[i * 4 + 1] = uv[1]; U[i * 4 + 2] = uv[2]; U[i * 4 + 3] = uv[3];
-      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = (fr.masked ? -1 : 1) * (it.sway ?? 0);
-      G[i] = it.glow ?? 0;
+      let j = i * 3;
+      if (P[j] !== it.x || P[j + 1] !== it.y || P[j + 2] !== it.z) { P[j] = it.x; P[j + 1] = it.y; P[j + 2] = it.z; dP.touch(i); }
+      const w = (it.sx === undefined ? fr.w : Math.max(1, Math.round(fr.w * it.sx))) * mpp * k, h = (it.sy === undefined ? fr.h : Math.max(1, Math.round(fr.h * it.sy))) * mpp * k; // (a squash in whole art pixels: one pixel scale on screen)
+      j = i * 2;
+      if (S[j] !== w || S[j + 1] !== h) { S[j] = w; S[j + 1] = h; dS.touch(i); }
+      j = i * 4;
+      if (U[j] !== uv[0] || U[j + 1] !== uv[1] || U[j + 2] !== uv[2] || U[j + 3] !== uv[3]) { U[j] = uv[0]; U[j + 1] = uv[1]; U[j + 2] = uv[2]; U[j + 3] = uv[3]; dU.touch(i); }
+      const f0 = it.flip ? 1 : 0, f1 = it.top ? 1 : it.cut ? -it.cut : 0, f2 = it.fresh ? 1 : 0, f3 = (fr.masked ? -1 : 1) * (it.sway ?? 0);
+      if (F[j] !== f0 || F[j + 1] !== f1 || F[j + 2] !== f2 || F[j + 3] !== f3) { F[j] = f0; F[j + 1] = f1; F[j + 2] = f2; F[j + 3] = f3; dF.touch(i); }
+      const gl = it.glow ?? 0;
+      if (G[i] !== gl) { G[i] = gl; dG.touch(i); }
     }
-    // Only the instances in use go to the GPU (the buffers keep their largest size, often twice
-    // what's drawn: a whole one every frame was much of the frame's uploading). Nothing set, nothing sent.
-    if (items.length) for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) { a.clearUpdateRanges(); a.addUpdateRange(0, items.length * a.itemSize); a.needsUpdate = true; }
+    // Only the instances in use that changed go to the GPU (the buffers keep their largest size, often twice what's
+    // drawn, and most instances are as they were last frame). Nothing changed, nothing sent.
+    dP.flush(this.pos); dS.flush(this.size); dU.flush(this.uvs); dF.flush(this.flags); dG.flush(this.glow);
     this.count = items.length;
     this.geo.instanceCount = items.length;
     for (const m of this.meshes) m.visible = items.length > 0;

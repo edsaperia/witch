@@ -76,7 +76,7 @@ import { checkPops, drawGhosts } from "./view/pops";
 import { refresh } from "./view/scenery";
 import { drawBerries, drawCreatures } from "./view/creatures";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./view/home";
-import { setLights, updateSources } from "./view/lights";
+import { setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
 import { drawWitch } from "./view/witch";
@@ -460,6 +460,10 @@ export class View {
     }
     for (let t = 0; t < AREA_TYPES.length; t++) if (!near.has(t)) near.set(t, Infinity);
     this.prepared = true;
+    // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
+    // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
+    // In the background where the browser can (KHR_parallel_shader_compile); nothing it draws changes.
+    this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
@@ -824,7 +828,7 @@ export class View {
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
-    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
+    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);

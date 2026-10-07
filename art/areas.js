@@ -366,7 +366,9 @@ function prop(kind, o, def, st, r, s) {
 }
 
 // Set pieces: one per area that has one, bigger than the props.
+// st.setPieceScale (the game's tuning setPieceScale): baked that much bigger, at the art pixel, so the game draws it at 1, never stretched.
 function setPiece(kind, o, def, st, r, s) {
+  s *= st.setPieceScale || 1;
   if (o.three) return setPiece3d(kind, def, st);
   if (kind === "tree" || kind === "log") return prop(kind, o, def, st, r, s);
   const W = Math.round(90 * s), H = Math.round(70 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
@@ -518,9 +520,10 @@ function carveSigil(sp, sigil) {
   for (let y = -1; y <= n; y++) for (let x = -1; x <= n; x++) {
     if (ink(x, y)) sp.recolour(ox + x, oy + y, M.RUNE);
     else if (ink(x - 1, y) || ink(x, y - 1) || ink(x - 1, y - 1)) sp.recolour(ox + x, oy + y, M.LINE); // the groove's shadow side
+    else if (ink(x + 1, y) || ink(x, y + 1) || ink(x + 1, y + 1)) sp.recolour(ox + x, oy + y, M.MAGIC); // its lit rim (up and left), catching the inlay's light: a dim glow, so the carving reads from mid-distance at night (Ed's note #1)
   }
 }
-function magicStone(variant, sigil) {
+function magicStone(variant, sigil, size = 1) { // size: baked that much bigger (the game's runeMarkers.scale), never stretched
   const m = new Model({ blend: .04 }), k = Math.max(0, Object.keys(STONE_GLOW).indexOf(variant)), glow = Array.isArray(variant) ? [variant, variant.map(c => Math.round(c + (255 - c) * .7))] : STONE_GLOW[variant], fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
   // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
   const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
@@ -547,8 +550,8 @@ function magicStone(variant, sigil) {
   // moss and grass at its foot
   for (const [x, z, r] of [[-.24, .14, .08], [.2, .02, .07], [.0, .12, .07]]) m.ell([x, .015, z], [r, r * .4, r], M.MOSS, { group: 2 });
   for (let i = 0; i < 9; i++) { const x = -.3 + i * .07, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
-  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: glow[0], [M.MAGIC2]: glow[1], [M.LINE]: [40, 40, 50] };
-  const sp = render(m, { height: 44 }).sp;
+  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: glow[0], [M.MAGIC2]: glow[1], [M.MAGIC]: glow[0].map(c => Math.round(c * .5)), [M.LINE]: [40, 40, 50] };
+  const sp = render(m, { height: Math.round(44 * size) }).sp;
   if (sigil) carveSigil(sp, sigil);
   // a few motes drifting round it
   let n = 0;
@@ -571,7 +574,8 @@ function pond() {
 // The pond's mask is a canvas, white where its pixels are water.
 // A rune stone in one glow ("cyan", "violet" or "green", or an [r, g, b] neon), carved with a creature's sigil (an
 // area's stones can carry the area creature's sigil) or, without one, a generic rune. Baked.
-export function runeStone(st, { glow = "cyan", sigil, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil); return bake(s.sp, s.colours, st, "none", makeCanvas); }
+// scale: baked that much bigger (the game draws it at 1: docs/STYLE.md §1).
+export function runeStone(st, { glow = "cyan", sigil, scale = 1, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil, scale); return bake(s.sp, s.colours, st, "none", makeCanvas); }
 export function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
   const bk = (sp, col) => bake(sp, col, st, "none", makeCanvas);
   const out = { campfire: [0, 1, 2].map(f => bk(campfire(f), fireCol)), stones: {}, pond: null };

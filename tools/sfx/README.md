@@ -2,6 +2,14 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `audit.cjs`
+
+The sound's CPU audit: Loads the built game in headless Chromium with sound, in a big debug arena on seed 871136, casts the spell and starts the sound, then drives it a frame at a time: the rules' step without the picture, then the sound's own work for…
+
+```
+node tools/sfx/audit.cjs [dist dir] [game seconds] [out.json]
+```
+
 ## `check.mjs`
 
 The sound effects' check: Bundles tools/sfx/render.ts, renders every effect offline in headless Chromium, and fails on a script error, silence, NaN or clipping; writes each as a WAV to previews/sfx/ to listen to.

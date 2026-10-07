@@ -225,7 +225,7 @@ export function genSetPiece(kind, o = {}, def = null, st = {}, size = 1, ppm = 1
   m.clipY = 0; // a sunk punt's keel, a buried stone: cut away under the ground
   GS_BUILD[kind](m, v);
   m.ell([0, .004, 0], [.01, .004, .01], M.STONE, { group: 0, extra: true });
-  const rr = render(m, { scale: witchPixelsPerUnit(st) * size });
+  const rr = render(m, { scale: witchPixelsPerUnit(st) * size * (st.setPieceScale || 1) }); // (st.setPieceScale: baked at the size the game draws it)
   let { sp, x0, y0 } = cropTight(rr.sp);
   if (kind === "punt" || kind === "jetty") { // the shore breaks into the floor: its outermost rim pixels dropped in 2 x 1 clusters by hash (as the props' pools, #142)
     const rim = new Set([M.BODY, M.BARK2]), at = (x, y) => x < 0 || y < 0 || x >= sp.w || y >= sp.h ? 0 : sp.m[y * sp.w + x], drop = [];

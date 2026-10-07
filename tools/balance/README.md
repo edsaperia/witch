@@ -24,7 +24,7 @@ The coach: a search over the careful bot's options and numbers by a simple evolu
 
 ```
 node tools/balance/coach.mjs search [--gens 8] [--pop 8] [--seeds 4 (training seeds 0..N-1)] [--time 2700] [--workers 4] [--from best.json] [--out dir]
-node tools/balance/coach.mjs score [--bots skilled,champion,crude] [--opts file.json (the champion's options)] [--held 8 (held-out seeds 100..)] [--time 5400] [--json out.json]
+node tools/balance/coach.mjs score [--bots skilled,champion,crude (also skilled-game: the bot game's skilled; champion-start: the search's starting point)] [--opts file.json (the champion's options)] [--held 8 (held-out seeds 100..)] [--time 5400] [--json out.json]
 ```
 
 ## `coachwatch.mjs`
