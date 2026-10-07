@@ -110,6 +110,8 @@ export class Post {
   private mats: Record<string, THREE.ShaderMaterial>;
   private low = new THREE.Vector2(1, 1);
   private out = new THREE.Vector2(1, 1);
+  /** The smooth effects layer's size: half the scene's (it is blurred and scaled up linearly anyway: overnight phase 2). */
+  private fxRes = new THREE.Vector2(1, 1);
 
   constructor(private renderer: THREE.WebGLRenderer, readonly tuning: PostTuning) {
     this.scene = target(1, 1, THREE.LinearFilter, true);
@@ -139,10 +141,14 @@ export class Post {
   /** lowW x lowH: the scene; outW x outH: the canvas. */
   /** The low resolution, shared with shaders that read the scene's depth. */
   get lowSize(): THREE.Vector2 { return this.low; }
+  /** The smooth effects layer's size, for its shaders' depth lookups (render/mist.ts). */
+  get fxSize(): THREE.Vector2 { return this.fxRes; }
 
   resize(lowW: number, lowH: number, outW: number, outH: number): void {
     this.low.set(lowW, lowH);
-    this.fx.setSize(lowW, lowH); this.fxB.setSize(lowW, lowH);
+    const fw = Math.max(1, Math.round(lowW / 2)), fh = Math.max(1, Math.round(lowH / 2));
+    this.fxRes.set(fw, fh);
+    this.fx.setSize(fw, fh); this.fxB.setSize(fw, fh);
     this.out.set(outW, outH);
     this.scene.setSize(lowW, lowH);
     const bw = Math.max(1, Math.round(lowW / 2)), bh = Math.max(1, Math.round(lowH / 2));
@@ -188,9 +194,9 @@ export class Post {
       r.clear();
       r.render(this.fxScene, camera);
       r.setClearColor(col, alpha);
-      const fw = this.fx.width, fh = this.fx.height;
-      this.pass("blur", this.fxB, u => { u.uSrc.value = this.fx.texture; u.uStep.value.set(0.6 / fw, 0); });
-      this.pass("blur", this.fx, u => { u.uSrc.value = this.fxB.texture; u.uStep.value.set(0, 0.6 / fh); });
+      const lw = this.low.x, lh = this.low.y; // (its blur as wide on screen as before, at the scene's resolution)
+      this.pass("blur", this.fxB, u => { u.uSrc.value = this.fx.texture; u.uStep.value.set(0.6 / lw, 0); });
+      this.pass("blur", this.fx, u => { u.uSrc.value = this.fxB.texture; u.uStep.value.set(0, 0.6 / lh); });
     }
     const tilt = t.tiltShift.on && t.tiltShift.strength > 0;
     this.pass("composite", tilt ? this.a : null, u => {
