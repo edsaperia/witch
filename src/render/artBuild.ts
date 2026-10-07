@@ -91,6 +91,12 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
     const sparse = (assets.big[i] as { sparse?: number }).sparse;
     layout.bigWeight.push(variants.length ? 0.1 : sparse ?? 1);
   });
+  // An area with no trees (Ed, 2026-10-06: "Legend with no tall trees around it"): its legends' groves grow its two tallest big
+  // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring.
+  if (!variants.length && def.big.length) {
+    const hOf = (i: number) => assets.big[i].sp.h, byH = def.big.map((_, i) => i).filter(i => hOf(i) >= 48).sort((a, b) => hOf(b) - hOf(a)); // (as tall as she is or more, in art pixels: no boulders or mounds)
+    if (byH.length) { layout.grove.giant = [byH[0]]; layout.grove.tall = [byH[1] ?? byH[0]]; }
+  }
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(withSway(assets.small[i].sp, (assets.small[i] as { sway?: unknown }).sway)), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));
   for (const a of assets.rim) layout.rim.push({ frame: add(a.sp), form: a.kind, height: a.metres.height });

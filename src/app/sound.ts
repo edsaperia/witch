@@ -68,8 +68,9 @@ export class Sound {
    *  expected.) `live`: whether the game is being played now (not paused, frozen or hidden); `booted`: a home speaker up. */
   watch(live: () => boolean, booted: () => boolean, playtest: PlaytestLog): void {
     const { tuning } = this;
+    this.live = live; this.booted = booted;
     const watchdog = this.watchdog = new AudioWatchdog(
-      () => ({ ctx: this.audio, music: this.music, sfx: this.sfx, wanted: !!this.audio && live(), musicExpected: !!this.music && this.level > 0 && this.music.audible && live() && booted() }),
+      () => ({ ctx: this.audio, music: this.music, sfx: this.sfx, wanted: !!this.audio && live(), musicExpected: this.musicExpected() }),
       what => {
         playtest.audio(what);
         console.warn(`audio watchdog: ${what}`);
@@ -80,8 +81,14 @@ export class Sound {
     );
     setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
-    playtest.audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length });
+    playtest.audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
   }
+
+  private live: () => boolean = () => false;
+  private booted: () => boolean = () => false;
+  /** Whether the music should be heard now: playing, its volume up, the game running and shown, the home speakers booting
+   *  (the watchdog's and the output meter's test). */
+  musicExpected(): boolean { return !!this.music && this.level > 0 && this.music.audible && this.live() && this.booted(); }
 
   /** Frozen (platform/freeze.ts): the context suspended, and resumed after. */
   freeze(on: boolean): void { try { void (on ? this.audio?.suspend() : this.audio?.resume()); } catch { /* no sound */ } }
