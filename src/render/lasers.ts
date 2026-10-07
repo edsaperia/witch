@@ -70,7 +70,9 @@ export class Lasers {
       const show = laserShow(bt, s.seed, 1, t), since = time - s.ready;
       // The reveal: a newly partified area's lasers come on as its soundsystem finishes rising.
       const reveal = since >= 0 && since < blockLen ? Math.min(1, since / L.fadeIn) * Math.min(1, (blockLen - since) / L.fadeOut) : 0;
-      const on = Math.max(show.on, reveal), n = reveal > show.on ? L.maxCount : show.count;
+      // Full party (a wave celebrated it: Ed, 2026-10-07): fully on for good, every beam, eased in as the fireworks start.
+      const full = s.full !== undefined && time >= s.full ? Math.min(1, (time - s.full) / Math.max(0.5, L.fadeIn * 8)) : 0;
+      const on = Math.max(show.on, reveal, full), n = full > 0 || reveal > show.on ? L.maxCount : show.count;
       if (on <= 0.01) continue;
       const spread = (L.spread * Math.PI / 180) * show.open;
       for (let i = 0; i < n; i++) {

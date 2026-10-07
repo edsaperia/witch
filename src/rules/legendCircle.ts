@@ -56,12 +56,20 @@ export function boonWords(species: string): string | null {
   return `${def.name}, ${what}`;
 }
 
-/** What the panel says for a legend in its state (keeping Ed's words where they hold; party tone). */
+const AGES = ["baby", "young", "adult"], NAMES: Record<string, string> = { glowworm: "glow-worm", beetle: "stag beetle" };
+/** A creature in words, its age first: "a young elk", "an adult otter". */
+export function creatureWords(species: string, level: number): string {
+  const w = `${AGES[level] ?? ""} ${NAMES[species] ?? species}`.trim();
+  return `${/^[aeiou]/.test(w) ? "an" : "a"} ${w}`;
+}
+
+/** What the panel says for a legend in its state (keeping Ed's words where they hold; party tone). The dream is named in words
+ *  beside its sigil (Ed's playtest, 2026-10-07: a look-alike kind or the wrong age was easy to bring). */
 export function circleLines(c: Creature): CircleLine[] {
   const st = c.legendState ?? "asleep", q = c.quest, done = q?.done !== undefined;
-  const words = boonWords(c.species);
+  const words = boonWords(c.species), wants = q ? creatureWords(q.species, q.level) : "";
   const boon: CircleLine | null = q ? (done ? { text: words ? `Its boon is yours: {boon} ${words}.` : "Its boon is yours.", done: true }
-    : { text: words ? `If you bring a {sigil} and place it in this circle, it will grant you its boon for the rest of the night: {boon} ${words}.` : "If you bring a {sigil} and place it in this circle, it will grant you a boon." }) : null;
+    : { text: words ? `If you bring {sigil} ${wants} into this circle, it will grant you its boon for the rest of the night: {boon} ${words}.` : `If you bring {sigil} ${wants} into this circle, it will grant you a boon.` }) : null;
   const ally: CircleLine = { text: "If you bring a {relic} and place it in this circle, you will gain a powerful ally." };
   if (st === "happy") return [{ text: "This elder is your ally now." }, { text: "It guards its area and anyone partying in it." }, ...(boon?.done ? [boon] : [])];
   if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its kin back, and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
@@ -73,4 +81,25 @@ export function circleLines(c: Creature): CircleLine[] {
 export function circleShown(prev: number, inside: boolean, dt: number, fade = 0.4): number {
   const step = fade > 0 ? dt / fade : 1;
   return inside ? Math.min(1, prev + step) : Math.max(0, prev - step);
+}
+
+/** Her sigils put down in this legend's circle, and her animals standing in it, that aren't what it dreams of (Ed's playtest, 2026-10-07: "I brought a quest
+ *  animal into the legend circle and I wasn't granted the buff"): a line saying so, naming both, so a look-alike kind or the
+ *  wrong age reads at once; null when none of hers is in it, or its quest is done or gone. The right one finishes the quest by
+ *  standing there (rules/sigilButton.ts questsFromStanding), so never lingers to be named. */
+export function broughtLine(g: Game, near: { legend: Creature; x: number; z: number; r: number }): CircleLine | null {
+  const q = near.legend.quest, st = near.legend.legendState ?? "asleep";
+  if (!q || q.done !== undefined || (st !== "asleep" && st !== "restless")) return null;
+  const wrong = new Set<string>(), inside = (x: number, z: number) => Math.hypot(x - near.x, z - near.z) <= near.r;
+  const check = (id: number, sigilIn = false) => {
+    const c = g.creatures[id];
+    if (!c || c.gone || c.boss || !(sigilIn || inside(c.x, c.z))) return;
+    if (c.species !== q.species || c.level !== q.level) wrong.add(creatureWords(c.species, c.level));
+  };
+  // her animals standing in it, and (Ed, 2026-10-07: the drop is the moment) her sigils put down in it, their animals anywhere
+  for (const id of g.leash.stack) check(id);
+  for (const p of g.leash.placed) check(p.id, inside(p.x, p.z));
+  if (!wrong.size) return null;
+  const list = [...wrong].sort(), brought = list.length > 2 ? `${list.slice(0, 2).join(", ")} and others` : list.join(" and ");
+  return { text: `Not this one: it dreams of ${creatureWords(q.species, q.level)}, and you've brought ${brought}.` };
 }

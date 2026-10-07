@@ -2,6 +2,9 @@
 // leashed or happy creature's near her, moving with it.
 import { hasRune } from "../../rules/creatureStates";
 import type { LeashView } from "../leash";
+import type { PlacedSigil } from "../../rules/leash";
+
+const STACKED = new Set<number>(), PLACED = new Map<number, PlacedSigil>(); // (filled each frame, never kept)
 
 /** From the treetops, each placed sigil is projected up above the canopy over its spot, flat and glowing, joined to its rune by
  *  a faint pulsing column of light (Ed, 2026-10-03), fading in as she rises; and over every leashed or happy creature near her,
@@ -20,12 +23,22 @@ export function drawProjection(lv: LeashView, time: number, dot: number[]): void
   // 2026-10-06: "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"): smaller and
   // without a beam, the nearest few only, fading out toward the edge of their range; a happy one's dimmer, as on the ground.
   if (up > 0.01) {
-    const C = P.creatures, near = lv.projected; near.length = 0;
-    for (const c of g.creatures) {
-      if (c.gone || !(c.leashed || hasRune(c)) || s.stack.includes(c.id) || s.placed.some(p => p.id === c.id && Math.hypot(p.x - c.x, p.z - c.z) < 6)) continue;
+    // (every creature a frame, a thousand and more late on: her stack and the placed sigils looked up once, not per creature,
+    // a box test before the distance, and the list's records kept from frame to frame)
+    const C = P.creatures, near = lv.projected, pool = lv.projectedPool, R = C.range;
+    STACKED.clear(); for (const id of s.stack) STACKED.add(id);
+    PLACED.clear(); for (const p of s.placed) PLACED.set(p.id, p);
+    let n = 0;
+    for (let i = 0; i < g.creatures.length; i++) {
+      const c = g.creatures[i];
+      if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R || !(c.leashed || hasRune(c)) || STACKED.has(c.id)) continue;
+      const p = PLACED.get(c.id);
+      if (p && Math.hypot(p.x - c.x, p.z - c.z) < 6) continue;
       const d = Math.hypot(c.x - w.x, c.z - w.z);
-      if (d <= C.range) near.push({ c, d });
+      if (d > R) continue;
+      const r = pool[n] ?? (pool[n] = { c, d }); r.c = c; r.d = d; n++;
     }
+    near.length = 0; for (let i = 0; i < n; i++) near.push(pool[i]);
     near.sort((a, b) => a.d - b.d);
     const top = t.treetopHeight - 4 + P.height;
     for (let i = 0; i < Math.min(near.length, C.max); i++) {

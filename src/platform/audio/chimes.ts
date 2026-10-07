@@ -142,6 +142,21 @@ export function land(K: SfxKit, pan = 0, near = 1): void {
   const o = K.osc("sine", 240, at + 0.01, 0.07, p); o.frequency.exponentialRampToValueAtTime(140, at + 0.06);
 }
 
+/** A sigil she can't put down (the leash's "fizzled": too near one already down; Ed, 2026-10-07: the refusal's only
+ *  feedback now the red disc is gone): a soft, muted "uh-uh", two short low notes stepping down a semitone, a little
+ *  hollow, like a tongue's click against a closed door. Cheap: two oscillators through one low-pass. */
+export function nope(K: SfxKit, pan = 0): void {
+  const N = K.T.nope;
+  if (!N || !K.ready("nope", N.gap)) return;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), lp = c.createBiquadFilter();
+  lp.type = "lowpass"; lp.frequency.value = 1400; lp.Q.value = 2; lp.connect(out);
+  const f = mtof(K.root - 9);
+  for (const [dt, r, l] of [[0, 1, 1], [0.13, 2 ** (-1 / 12), 0.85]] as const) {
+    const g = c.createGain(); g.connect(lp); K.env(g, at + dt, N.volume * l, 0.004, 0.09);
+    const o = K.osc("triangle", f * r * 1.02, at + dt, 0.12, g); o.frequency.exponentialRampToValueAtTime(f * r, at + dt + 0.03);
+  }
+}
+
 /** The boot-up over (home's speakers all on, the first wave's countdown begun): things stirring. A
  *  low drone breathing in under the music, the key's chord opening above it, and a few far bells
  *  waking one by one, rising, in the legends' big space: the forest waking up, gently. */

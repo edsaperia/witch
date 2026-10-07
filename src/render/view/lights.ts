@@ -39,7 +39,7 @@ export function updateSources(v: View, time: number): void {
       // box and scale, where these old ones changed scale every frame and jittered (Ed).
       if (v.partyObjects.ready) { v.worldFires.push({ x: src.x, z: src.z, scale: grow, flip: k < 0.5 }); continue; }
       const fr = f[Math.floor(time * 8 + k * 10) % 3];
-      if (inView(v, src.x, src.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, scale: grow, fresh: mark(v, "prop", src.x, src.z, 2) });
+      if (inView(v, src.x, src.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, ...(grow < 1 ? { sx: grow, sy: grow } : {}), fresh: mark(v, "prop", src.x, src.z, 2) });
     } else {
       const kind = k < 0.33 ? 1 : k < 0.66 ? 0 : 2, pulse = 0.7 + 0.3 * Math.sin(time * 0.9 + k * 20), fr = f[3 + kind];
       lights.push({ x: src.x, y: 2, z: src.z, reach: v.game.tuning.lights.stone.reach * src.size, rgb: [v.runeCyan, v.runeViolet, v.runeGreen][kind], strength: v.game.tuning.lights.stone.strength * pulse });

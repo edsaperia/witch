@@ -45,6 +45,14 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;
   SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);
+  // The trees watching her (Ed, 2026-10-07; render/sprites.ts uWatch): where she was a beat ago, eased lag seconds behind.
+  const Wt = t.watching, at = v.watch;
+  if (Wt?.on) {
+    if (Number.isNaN(at.x)) { at.x = g.witch.x; at.z = g.witch.z; }
+    else { const k = 1 - Math.exp(-Math.min(0.5, Math.max(0, time - at.t)) / Math.max(0.05, Wt.lag)); at.x += (g.witch.x - at.x) * k; at.z += (g.witch.z - at.z) * k; }
+    at.t = time;
+    SPRITE_UNIFORMS.uWatch.value.set(at.x, at.z, Wt.radius, Wt.lean);
+  } else SPRITE_UNIFORMS.uWatch.value.w = 0;
   // The witch's glow reaches as far as the ground-mode canopy hole round her (Ed, v149: "about
   // the width of the canopy hiding circle"): the hole's radius plus its soft edge, in metres at
   // her depth, times glowToCutout; beyond it the forest is dark. ?glow= fixes it instead.
@@ -64,6 +72,15 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
     const R1 = R0 + (Math.min(R0, NL.treetopReach) - R0) * rise;
     LIGHT_UNIFORMS.uGlowR.value = R1 + (Math.min(R1, NL.gazeReach ?? R1) - R1) * coastView(g.camera).gaze; // (lying on the sand to stargaze, the camera low and far: her own small pool, eased with the bend)
     LIGHT_UNIFORMS.uGlowDim.value = 1 + (NL.treetopGlow - 1) * rise;
+  }
+  // In the wild, dimmer; in a fight, back up (render/combatLight.ts: eased over seconds, so it isn't seen to change).
+  const CL = t.combatLight;
+  if (CL) {
+    v.combatLight.update(g, CL, g.clock.time);
+    const f = v.combatLight.factors(CL);
+    // (from a base each frame: a fixed reach, ?glow=, isn't worked out again each frame, and neither is the dimming without nightLight)
+    const R = t.glowFixed ? (v.combatLight.fixedReach ??= LIGHT_UNIFORMS.uGlowR.value) : LIGHT_UNIFORMS.uGlowR.value;
+    LIGHT_UNIFORMS.uGlowR.value = R * f.reach; LIGHT_UNIFORMS.uGlowDim.value = (NL ? LIGHT_UNIFORMS.uGlowDim.value : 1) * f.glow;
   }
   SPRITE_UNIFORMS.uDebugCull.value = v.debugCull ? 1 : 0;
 

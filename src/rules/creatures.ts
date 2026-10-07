@@ -4,10 +4,12 @@
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
+import { watchStep } from "./wildWatch";
 import { coarseTurn, inFull, type LodCounts } from "./simLod";
-import { questFor, type Quest } from "./quest";
+import { earlyQuest, questFor, type Quest } from "./quest";
 import { rng } from "./random";
-import { countScale, startCount } from "./growth";
+import { countScale, routeIndex, routePopulation } from "./growth";
+import { routeOf } from "./party";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import { facingAway } from "./witch";
@@ -171,6 +173,11 @@ export interface Creature {
   napUntil?: number;
   /** Getting up (a stretch, a yawn) till this game time: still out of fights, its roam not yet resumed. */
   wakeUntil?: number;
+  /** Holding off and watching her till then (world clock): just come down in its wild area (rules/wildWatch.ts). */
+  watchUntil?: number;
+  /** Hunting her (Ed, 2026-10-07: woken, "all of the wild creatures from that area should fight with me until either I die or
+   *  they are invited"): the witch it's after, wherever she goes; set and ended in rules/hunt.ts. */
+  hunting?: number;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
   safeX?: number;
   safeZ?: number;
@@ -202,23 +209,35 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
   const range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, home.x, home.z, range);
   const base = { cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ };
   const [x, z] = at ?? pointInArea(map, base, r);
+  // One shape for every creature, built as one literal (every field, in CREATURE_OPTIONAL's order after the required ones):
+  // phase 2's GC churn wanted one shape (35 shapes among a late game's creatures made each c.x read allocate); setting the
+  // optional fields one by one after the fact did that but tipped V8 into dictionary mode (86 fields added by keyed
+  // stores), every field read a hash lookup, most of a step's work with every area peopled. A literal stays fast.
   const c: Creature = {
-    id, species: type.creature, level, ...base, x, z, tx: x, tz: z,
+    id, species: type.creature, level, cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ, x, z, tx: x, tz: z,
     rest: r() * 3, speed: (level === LEGEND ? t.legendSpeed : t.creatureSpeed * speedFactor(type.creature, level, t)) * (0.7 + r() * 0.6),
     facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false,
     rand: rng(map.seed * 31 + (id + 1) * 7 + 11),
+    lod: undefined, hp: undefined, hurtAt: undefined, kx: undefined, kz: undefined, slowUntil: undefined,
+    stunUntil: undefined, burrow: undefined, leap: undefined, fight: undefined, fleeUntil: undefined,
+    retreat: undefined, retreatFrom: undefined, fleeX: undefined, fleeZ: undefined, vx: undefined, vz: undefined,
+    run: undefined, lairX: undefined, lairZ: undefined, homing: undefined, charge: undefined, dug: undefined,
+    travelling: undefined, state: undefined, happyAt: undefined, partyLegend: undefined, dazed: undefined,
+    dancing: undefined, restlessness: undefined, questOpen: undefined, buffed: undefined, aims: undefined,
+    dazedUntil: undefined, affection: undefined, affectionAt: undefined, holdT: undefined, holdAt: undefined,
+    route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
+    sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, siege: undefined,
+    wanderTo: undefined, circle: undefined, healedAt: undefined, boss: undefined, legendState: undefined,
+    stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined,
+    wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined,
   };
-  // One shape for every creature (phase 2, GC churn): every optional field set, in one order, before any is used, so the
-  // rules' reads of a creature stay monomorphic rather than boxing every number through a generic lookup (35 shapes
-  // among a late game's creatures made each c.x read allocate). Undefined is what an unset field reads as anyway.
-  for (const k of CREATURE_OPTIONAL) (c as unknown as Record<string, unknown>)[k] = undefined;
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
   return c;
 }
 
-/** Every optional field of a Creature, in the order makeCreature sets them (one shape for all). A field added to
+/** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "wakeUntil", "safeX", "safeZ", "safeR"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -297,23 +316,26 @@ export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
   // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
-  const [hx, hy] = map.centreCell;
+  const [hx, hy] = map.centreCell, early = earlyQuest(map), route = routeIndex(routeOf(map).order);
   for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (home) continue;
     {
-      // Weaker species come in larger numbers, stronger fewer (Ed, 2026-10-05): 1 / their strength times as many.
-      const k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
-      for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
-      for (let i = 0; i < startCount(pop.young, k); i++) make(1);
-      for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
+      // Every area peopled from the start by its place on the waves' route (Ed, 2026-10-07: no growth on a clock; the
+      // later its wave, the more), its kind spending the route's threat by its profile, weaker kinds in larger numbers
+      // (Ed, 2026-10-05: 1 / their strength times as many): rules/growth.ts routePopulation.
+      const species = AREA_TYPES[map.typeOf(cx, cy)].creature, k = countScale(species), at = route.get(`${cx},${cy}`) ?? route.size + 1;
+      const [babies, young, adults] = routePopulation(at, map.tuning.population.byRoute, pop, species, k, map.seed, cell);
+      for (let i = 0; i < babies; i++) make(0);
+      for (let i = 0; i < young; i++) make(1);
+      for (let i = 0; i < adults; i++) make(2);
     }
     if (map.hasLegend && !map.hasLegend(cx, cy)) continue; // (legends in legends.share of the areas: Ed, 2026-10-06)
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = "asleep"; L.stateAt = 0;
     L.lairX = L.x; L.lairZ = L.z; // (where it lies: home, which it goes back to before it sleeps again; Ed, 2026-10-06)
-    L.quest = questFor(map, cell, L.species);
+    L.quest = questFor(map, cell, L.species, early?.host === `${cx},${cy}` ? early.wants : undefined); // (one of the first areas' legends wants a creature from another of them: quest.ts earlyQuest)
     out.push(L);
     // A wild baby of its own kind in its clearing (Ed, 2026-10-06), keeping to it: so the legend starts with kin. Like any
     // baby: happy once its area's soundsystem comes (it dances, in its circle), off home for good once that falls (game.ts).
@@ -365,7 +387,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
 
 /** A creature moved by combat (rules/combat.ts) or a knockout (rules/knockout.ts) this step,
  *  not by its roam or its leash. */
-export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed));
+export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed) || c.hunting !== undefined); // (a hunter: moved by combat, wherever she is: rules/hunt.ts)
 
 /** Wild idlers' naps (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are
  *  there in ground mode, but stay asleep if you're in treetop mode, or not in their area"; "They don't all sleep - but it's
@@ -373,7 +395,7 @@ export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wande
  *  `chance`, for `length` seconds (a range); it gets up when that's over, when a witch is on the ground in its area
  *  (`roused`; none start a nap then either), or when it no longer may (its area partified, it enraged, taken, fleeing...),
  *  over `wake` seconds (a stretch, so landing isn't an instant pounce). Tuning: naps. */
-export interface NapRules { chance: number; length: readonly number[]; wake: number; /** its area still wild (no soundsystem yet) */ wild: (c: Creature) => boolean; /** a witch on the ground in its area */ roused: (c: Creature) => boolean }
+export interface NapRules { chance: number; length: readonly number[]; wake: number; /** a legend circle's baby's own chance and length (tuning naps.circle) */ circle?: { chance: number; length: readonly number[] }; /** its area still wild (no soundsystem yet) */ wild: (c: Creature) => boolean; /** a witch on the ground in its area */ roused: (c: Creature) => boolean }
 /** May nap at all: a wild idler, not a legend, besieging, fleeing, dazed, marching, fighting or happy. */
 export const napper = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss && !c.enraged && c.state !== "happy" && !c.siege && !c.fleeUntil && !c.dazedUntil && !c.wanderTo && !c.fight?.target && !c.retreat;
 /** Asleep or still getting up: out of fights. */
@@ -387,7 +409,7 @@ export function wakeUp(c: Creature, time: number, wake: number): void {
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and
  *  the time), rather than where it was left. A `dormant` one (a wild legend still asleep) stays
  *  where it lies. */
-export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules): void {
+export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules, watch?: { hangBack: number }): void {
   // In full within lod.full of her (what the view can show); beyond, coarsely (rules/simLod.ts):
   // once every lod.every steps, by that many steps at once, taking turns by id; past `radius`
   // (by its home) not at all.
@@ -405,6 +427,8 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
     // Asleep or getting up: lying where it is, no roam (and no AI: combat leaves it out too).
     if (napping(c, time)) { c.seen = time; c.moving = false; c.away = false; continue; }
+    // Watching her, just come down in its wild area (rules/wildWatch.ts): still, turned to her, backing off if she's close.
+    if (watch && c.watchUntil !== undefined && time < c.watchUntil) { c.seen = time; watchStep(c, x, z, dt, watch.hangBack); continue; }
     c.wakeUntil = undefined;
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);
@@ -416,8 +440,9 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     const paused = c.rest > 0;
     stepCreature(c, full ? dt : dt * lod.every, map);
     // Just paused: now and then it lies down for a nap instead (never with her on the ground in its area).
-    if (naps && !paused && c.rest > 0 && napper(c) && naps.wild(c) && !naps.roused(c) && c.rand() < naps.chance) {
-      c.asleep = true; c.napUntil = time + naps.length[0] + c.rand() * (naps.length[1] - naps.length[0]); c.rest = 0;
+    const nr = naps && keepsToCircle(c) && naps.circle ? naps.circle : naps; // (a legend circle's baby: mostly asleep)
+    if (naps && nr && !paused && c.rest > 0 && napper(c) && naps.wild(c) && !naps.roused(c) && c.rand() < nr.chance) {
+      c.asleep = true; c.napUntil = time + nr.length[0] + c.rand() * (nr.length[1] - nr.length[0]); c.rest = 0;
     }
   }
 }

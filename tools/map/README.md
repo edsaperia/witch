@@ -2,6 +2,14 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `leycurve.mjs`
+
+The ley line's curvature, before and after: for each seed, the whole route from above, then close-ups at the stones where the straight line turned sharpest: straight against curved, the stone white, the minimum radius as a dashed circle for scale.
+
+```
+node tools/map/leycurve.mjs [--seeds 1,2,3,123,4242,925469] [--out previews/ley-curve] [--close 4] [--at k,...]
+```
+
 ## `leydepart.mjs`
 
 The ley line leaving home, close up: for each seed, the 360 m round home from above: the dancefloor, its ring of speakers and the line's clearance round them, the treehouse, the first link and the next few in wave order, each stone a dot.

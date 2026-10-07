@@ -110,8 +110,8 @@ export class RigBody {
   }
 
   /** Moves the rig on to the creature's place (x, z) after dt seconds; heading from its velocity
-   *  if it has one (vx, vz) or from how it moved. */
-  update(x: number, z: number, dt: number, vx?: number, vz?: number): void {
+   *  if it has one (vx, vz) or from how it moved; towards `look` if it's given. */
+  update(x: number, z: number, dt: number, vx?: number, vz?: number, look?: { x: number; z: number }): void {
     if (!this.init || dt <= 0 || dt > 0.5) {
       if (!this.init) { this.heading = vx || vz ? Math.atan2(vz ?? 0, vx ?? 0) : 0; this.init = true; }
       this.x = x; this.z = z; return;
@@ -120,8 +120,10 @@ export class RigBody {
     const k = 1 - Math.exp(-dt * 10), was = this.speed;
     this.speed += (sp - this.speed) * k;
     this.accel += ((this.speed - was) / dt - this.accel) * (1 - Math.exp(-dt * 6));
-    if (sp > 0.15) {
-      const want = Math.atan2(uz, ux), d = Math.atan2(Math.sin(want - this.heading), Math.cos(want - this.heading)), turn = d * Math.min(1, dt * 8);
+    // looking (rules/wildWatch.ts), it keeps its face to her even backing off; else it heads where it goes
+    const lk = look && Math.hypot(look.x - x, look.z - z) > 0.5;
+    if (lk || sp > 0.15) {
+      const want = lk ? Math.atan2(look!.z - z, look!.x - x) : Math.atan2(uz, ux), d = Math.atan2(Math.sin(want - this.heading), Math.cos(want - this.heading)), turn = d * Math.min(1, dt * (lk ? 5 : 8));
       this.heading += turn;
       this.turn += (turn / dt - this.turn) * k;
     } else this.turn *= 1 - k;

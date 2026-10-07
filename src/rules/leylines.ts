@@ -66,7 +66,7 @@ export function leyChain(p: PartyState, map: ForestMap, ahead = Infinity, behind
 /** A key that changes whenever the chain would (a wave, the plan, a quest done): to know when to redraw it. */
 export function leyKey(p: PartyState): number {
   // (A number, worked out every frame without allocating: Ed, 2026-10-06, the whole line must stay cheap.)
-  let h = p.wave * 131 + p.areasPerWave * 7 + (p.ruined?.size ?? 0) * 1009 + (p.leyDone?.size ?? 0) * 7919;
+  let h = p.wave * 131 + p.areasPerWave * 7 + (p.ruined?.size ?? 0) * 1009 + (p.leyDone?.size ?? 0) * 7919 + p.areas.size * 50021; // (areas: one cleared before its wave is reached at once)
   for (const c of p.next) h = (Math.imul(h, 31) + c[0] * 97 + c[1]) | 0;
   for (const c of p.afterNext) h = (Math.imul(h, 31) + c[0] * 97 + c[1]) | 0;
   return h;

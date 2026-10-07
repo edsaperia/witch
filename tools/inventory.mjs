@@ -8,7 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = "tools", check = process.argv.includes("--check"), MARK = "<!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->";
-const SCRIPT = /\.(mjs|cjs|js|ts)$/;
+const SCRIPT = /^(?!.*\.test\.ts$).*\.(mjs|cjs|js|ts)$/; // (test files are tests, not tools)
 let stale = 0;
 const header = file => {
   const lines = fs.readFileSync(file, "utf8").split("\n"), out = [];

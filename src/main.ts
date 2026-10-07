@@ -157,6 +157,7 @@ requestAnimationFrame(() => setTimeout(async () => {
 // The sound: the volume slider in the corner, then the context, music and sound effects at the first press (app/sound.ts).
 const sound = new Sound(tuning, musicStyle, seed!);
 sound.volumeSlider();
+sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
 freeze.started = () => startEl.style.display === "none";
@@ -341,6 +342,7 @@ function frame(now: number): void {
   if (!ready) return;
   hud.losses();
   hud.clock();
+  hud.wildLeft(now);
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;

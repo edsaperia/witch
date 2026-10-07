@@ -82,6 +82,8 @@ const SCENES: Scene[] = [
       ...series(5.8, 8, 0.13, "stunned (twinkles)", (s, i) => s.twinkle(i)),
       { at: 7.4, g: "ouch (near knocked out)", play: (s, duck) => { s.ouch(0.85); duck(ouch.duck, ouch.duckTime); } },
       { at: 10, g: "knocked down (whoa-oh)", play: (s, duck) => { s.knockdown(); duck(ouch.duck, ouch.duckTime * 2); } },
+      { at: 10, g: "the sad trumpet (her hat drops)", play: (s, duck) => { s.sadTrumpet(true); duck(TUNING.sfx.sadTrumpet.duck, 3.6); } },
+      { at: 13, g: "the rewind (cutting the trumpet off)", play: s => s.rewind() },
       { at: 13.5, g: "soundsystem lost", play: s => s.lost(false) },
       { at: 16.2, g: "a lob landing nearby", play: s => s.impact(false, 0.3, 0.8) },
       ...series(1, 36, 0.5, "dancers' shoes on the beat", s => s.taps(4, 0.2, 0.8)),
@@ -99,6 +101,8 @@ const SCENES: Scene[] = [
       { g: "stunned (twinkles)", kind: "feedback", at: 5.8, len: 1.1 },
       { g: "ouch (near knocked out)", kind: "hurt", at: 7.4, len: 0.5 },
       { g: "knocked down (whoa-oh)", kind: "hurt", at: 10, len: 1.2 },
+      { g: "the sad trumpet (her hat drops)", kind: "sting", at: 10, len: 3.4 },
+      { g: "the rewind (cutting the trumpet off)", kind: "sting", at: 13, len: 0.5 },
       { g: "soundsystem lost", kind: "sting", at: 13.5, len: 3 },
       { g: "a lob landing nearby", kind: "body", at: 16.2, len: 0.4 },
       { g: "one turns enraged, 20 m off", kind: "state", at: 17, len: 0.8 },
@@ -123,6 +127,9 @@ const SCENES: Scene[] = [
       { at: 26, g: "a restless legend calls (near)", play: s => s.lament(v("elk", 3), 0.3, -0.5, 1) },
       { at: 32, g: "a restless legend calls (far, urgent)", play: s => s.lament(v("owl", 3), 0.9, 0.8, 0.35) },
       ...series(0, 270, 0.1, "by a pond", (s, i) => s.pond(Math.min(1, i / 20), -0.4)),
+      ...series(0, 120, 0.1, "the area's ambience (old oaks)", (s, i) => s.ambience("oaks", Math.min(1, i / 20))),
+      ...series(12, 120, 0.1, "the area's ambience (standing stones)", (s, i) => s.ambience(i < 118 ? "stones" : null, i < 118 ? 1 : 0)),
+      ...series(24, 140, 0.1, "the ley pulse's sparkler (5 m off)", (s, i) => s.sparkler(Math.min(0.79, i / 25), 0.3)),
     ],
     sounds: [
       { g: "legend moans", kind: "ambience", at: 0, len: 4 },
@@ -138,6 +145,9 @@ const SCENES: Scene[] = [
       { g: "a restless legend calls (near)", kind: "call", at: 26, len: 4 },
       { g: "a restless legend calls (far, urgent)", kind: "call", at: 32, len: 4 },
       { g: "by a pond", kind: "ambience", at: 3, len: 20 },
+      { g: "the area's ambience (old oaks)", kind: "ambience", at: 3, len: 8 },
+      { g: "the area's ambience (standing stones)", kind: "ambience", at: 14, len: 9 },
+      { g: "the ley pulse's sparkler (5 m off)", kind: "ambience", at: 27, len: 10 },
     ],
   },
   {
@@ -151,6 +161,36 @@ const SCENES: Scene[] = [
     sounds: [
       { g: "her scratch (two bars)", kind: "feedback", at: 1, len: 4 },
       { g: "her hype (woo-hoo!)", kind: "voice", at: 6, len: 0.5 },
+    ],
+  },
+  {
+    // coming down into a dangerous wild area: its watchers stand and stare for 5.5 s, then attack (the music far off);
+    // then a mild area she lands in and leaves again at 3 s
+    name: "watch", seconds: 14, section: "deep", wave: 2, distance: 170,
+    cues: [
+      ...series(0.5, 120, 0.05, "the wild watch rising (dangerous)", (s, i) => s.aggro(Math.min(1, i * 0.05 / 5.5), 0.85, 0.1)),
+      { at: 6.6, g: "the wild watch rising (dangerous)", play: s => s.aggro(null) },
+      ...series(8, 54, 0.05, "the wild watch rising (mild, called off)", (s, i) => s.aggro(i * 0.05 / 5.5, 0.3, -0.2)),
+      { at: 10.75, g: "the wild watch rising (mild, called off)", play: s => s.aggro(null) },
+    ],
+    sounds: [
+      { g: "the wild watch rising (dangerous)", kind: "telegraph", at: 3.5, len: 2.5 },
+      { g: "the wild watch rising (mild, called off)", kind: "telegraph", at: 9, len: 1.7 },
+    ],
+  },
+  {
+    // a wave come to an area she'd already cleared: fireworks over its soundsystem 60 m off (a shell every half second,
+    // each bursting 1.2 s after its launch, the sound 0.2 s late), the party under them cheering
+    name: "fireworks", seconds: 10, section: "drop", wave: 3, distance: 40,
+    cues: [
+      ...series(1, 7, 0.5, "a shell's whoosh", (s, i) => s.fireworkWhoosh(1.2, i % 3 === 1, (i % 3 - 1) * 0.3, 0.84)),
+      ...series(2.4, 7, 0.5, "a shell's burst", (s, i) => s.fireworkBurst(0.6 + (i % 4) * 0.25, (i % 3 - 1) * 0.3, 0.84)),
+      { at: 2.5, g: "the party cheering", play: s => s.fireworkCheer(0, 0.6) },
+    ],
+    sounds: [
+      { g: "a shell's whoosh", kind: "feedback", at: 1, len: 1 },
+      { g: "a shell's burst", kind: "sting", at: 2.4, len: 3.5 },
+      { g: "the party cheering", kind: "voice", at: 2.5, len: 2.5 },
     ],
   },
 ];

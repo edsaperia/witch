@@ -12,7 +12,8 @@ import { newCamera, stepCamera, cameraPose } from "./camera";
 import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
+import { newParty, routeOf, spreadWave, stepParty, spawnMarkers, nextWave, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
+import { countScale, routeIndex, routePopulation, startCount } from "./growth";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -493,18 +494,23 @@ describe("creatures", () => {
     expect(new Set(own.map(t => t.creature)).size).toBe(own.length);
   });
 
-  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each that has one (legends.share: Ed, 2026-10-06)", () => {
+  it("start with population.start in every area and more by its place on the route (Ed, 2026-10-07: pre-populated, no growth on a clock): none at home, and one legend in each that has one (legends.share: Ed, 2026-10-06)", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
-    const S = TUNING.population.start;
+    const S = TUNING.population.start, R = TUNING.population.byRoute, at = routeIndex(routeOf(map).order);
+    let more = 0;
     for (const [cx, cy] of map.cells.filter((_, i) => i % 9 === 0)) {
       if (cx === mx && cy === my) continue;
-      const here = inCell(cx, cy);
-      expect(here.filter(c => c.level === 0 && !c.circle).length).toBe(S.babies); // (and its legend's clearing's baby: below)
-      expect(here.filter(c => c.level === 1).length).toBe(S.young);
-      expect(here.filter(c => c.level === 2).length).toBe(S.adults);
+      const here = inCell(cx, cy), species = AREA_TYPES[map.typeOf(cx, cy)].creature, k = countScale(species);
+      const want = routePopulation(at.get(`${cx},${cy}`)!, R, S, species, k, map.seed, [cx, cy]);
+      const n = (l: number) => here.filter(c => c.level === l && !c.circle).length; // (not its legend's clearing's baby: below)
+      expect([n(0), n(1), n(2)]).toEqual(want);
+      expect(n(0)).toBeLessThanOrEqual(R.babyCap);
+      expect(n(1)).toBeGreaterThanOrEqual(startCount(S.young, k));
+      more += n(1) + n(2) - startCount(S.young, k) - startCount(S.adults, k);
       expect(here.filter(c => c.level === 3 && c.boss).length).toBe(map.hasLegend(cx, cy) ? 1 : 0);
     }
     expect(population(map)).toEqual(S);
+    expect(more).toBeGreaterThan(0); // (the later areas hold more)
   });
 
   it("have one legend in each area map.hasLegend picks, never home (Ed, 2026-10-05, 2026-10-06), each a boss, asleep, out of their clearings (Ed, 2026-10-04)", () => {
@@ -628,8 +634,8 @@ describe("the party", () => {
     // Pausing during the boot holds it too.
     p.paused = true; stepParty(p, map, B / 2, 5); expect(p.bootUntil).toBe(F + B + 5);
   });
-  it("waits for her to get up from the decks: the first speaker 3 s after her first step, then five minutes (Ed, 2026-10-05, 2026-10-06)", () => {
-    expect(TUNING.boot.time).toBe(300);
+  it("waits for her to get up from the decks: the first speaker 3 s after her first step, then boot.time (30 s: Ed, 2026-10-07; it was five minutes)", () => {
+    expect(TUNING.boot.time).toBe(30);
     const p = newParty(map), B = TUNING.boot.time, F = TUNING.boot.firstAfter, due = p.nextAt, n = map.dancefloor.speakers.length;
     for (let s = 0; s < 40; s++) stepParty(p, map, s, 1, true); // (40 s sitting behind the decks)
     expect(p.bootFrom).toBeUndefined(); expect(speakersOn(p, map, 40, n)).toBe(0);
@@ -1344,7 +1350,7 @@ describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
     const order = ringOrder(g.map), half = g.speakerBoot.filter(b => b !== null).length; // (rules/bootRing.ts: clockwise from the top)
     expect(half).toBeGreaterThan(3); expect(half).toBeLessThan(9);
     const i = order[half - 1], at = g.speakerBoot[i]!; // the latest one, turning
-    expect(speakerBoot(g, i, at)).toBe(0); expect(speakerBoot(g, i, at + T / 2)).toBeCloseTo(0.5); expect(speakerBoot(g, i, at + T)).toBe(1);
+    expect(speakerBoot(g, i, at)).toBe(0); expect(speakerBoot(g, i, at + T / 2)).toBeCloseTo(0.5); expect(speakerBoot(g, i, at + T)).toBeCloseTo(1, 9);
     expect(speakerBoot(g, order[half], g.clock.time)).toBe(0); // the next still a stone
     for (let k = 1; k < half; k++) expect(g.speakerBoot[order[k]]!).toBeGreaterThanOrEqual(g.speakerBoot[order[k - 1]]!); // round the ring in order
     to(g.party.bootUntil + T + 0.1);
