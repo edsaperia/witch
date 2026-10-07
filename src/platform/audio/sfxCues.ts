@@ -38,6 +38,8 @@ import { djRoutineAt, djStrokes } from "../../rules/djSet";
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
 import { nightKind } from "./night";
 import { AREA_TYPES } from "../../rules/map";
+import { leyPulse, pointerShown, type P2 } from "../../rules/leypulse";
+import { fireworkShells, type Shell } from "../../rules/fireworks";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind>(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash"]);
@@ -116,6 +118,8 @@ export class SfxCues {
     this.pond(h);
     this.picnic(h);
     this.sea(h);
+    this.sparkler(h);
+    this.fireworks(h);
     this.night(h);
     this.ambience(h);
     this.primed = true;
@@ -442,6 +446,53 @@ export class SfxCues {
     this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
   }
   private beach: { map: Game["map"]; at: Beach | null } | null = null;
+
+  /** The ley line's drawn route of its current link (render/leylines.ts currentLink), when the game has a view: the
+   *  pulse's tip is heard where it's drawn. Without it, the straight link (rules/leypulse.ts). */
+  leyLink: (() => readonly P2[] | null) | null = null;
+
+  /** By the ley line's pulse, the sparkler's burning tip (art builder 2's #491): its fizz, while the pointer to it shows
+   *  (none while home boots up, nor once the party's over). */
+  private sparkler({ g, time, pan }: Here): void {
+    const P = g.tuning.sfx.sparkler, w = g.witch;
+    let level = 0, px = 0;
+    if (P && g.tuning.leyLines.on) {
+      const shown = pointerShown(g.party, g.map, time) * (1 - partyOverEase(g));
+      const tip = shown > 0 ? leyPulse(g.party, g.map, time, this.leyLink?.()) : null;
+      if (tip) { level = shown * Math.max(0, 1 - Math.hypot(tip.x - w.x, tip.z - w.z) / Math.max(1, P.range)) ** 2; px = tip.x; }
+    }
+    this.sfx.sparkler(level, pan(px));
+  }
+
+  /** Fireworks over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate; art builder
+   *  2's show, rules/fireworks.ts, the same shells the picture draws): each shell's whoosh as it launches (now and then
+   *  whistling), its burst when the sound of it reaches her (sound being slower than light; a crackle shell's glitter
+   *  crackling on), and the party cheering as the finale bursts. */
+  private fireworks({ g, time, pan }: Here): void {
+    const F = g.tuning.sfx.fireworks;
+    if (!F) return;
+    for (const e of g.waveEvents) {
+      if (e.kind !== "waveCelebrate" || this.shows.some(s => s.x === e.x && s.z === e.z && s.at === e.at)) continue;
+      const shells = fireworkShells(e.x, e.z, e.at, g.tuning);
+      if (shells.length) this.shows.push({ at: e.at, x: e.x, z: e.z, cheered: false, cheerAt: shells[shells.length - 1].burst, shells: shells.map(s => ({ ...s, launched: false, popped: false })) });
+    }
+    if (!this.shows.length) return;
+    const w = g.witch, S = this.sfx;
+    for (const show of this.shows) {
+      show.shells.forEach((s, i) => {
+        const d = Math.hypot(s.x - w.x, s.height, s.z - w.z), near = Math.max(0, 1 - d / F.range);
+        if (!s.launched && time >= s.launch) { s.launched = true; if (near > 0) S.fireworkWhoosh(s.burst - s.launch, (Math.floor(s.hue * 97) + i) % 3 === 0, pan(s.x), near); }
+        if (!s.popped && time >= s.burst + d / F.speed) { s.popped = true; if (near > 0) S.fireworkBurst(Math.min(1.5, s.radius / 9), pan(s.x), near, s.kind === "crackle"); }
+      });
+      if (!show.cheered && time >= show.cheerAt + 0.3) {
+        show.cheered = true;
+        const near = Math.max(0, 1 - Math.hypot(show.x - w.x, show.z - w.z) / F.cheerRange);
+        if (near > 0) S.fireworkCheer(pan(show.x), near);
+      }
+    }
+    this.shows = this.shows.filter(s => !s.cheered || s.shells.some(x => !x.popped));
+  }
+  private shows: { at: number; x: number; z: number; cheered: boolean; cheerAt: number; shells: (Shell & { launched: boolean; popped: boolean })[] }[] = [];
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {

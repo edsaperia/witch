@@ -68,8 +68,8 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
   const p = g.party, bar = (time: number) => barAt(g.beat, time);
   let waves = prev?.waves;
   if (!waves || waves.length !== p.wave) {
-    const times: number[] = [];
-    for (const a of p.areas.values()) if (a.wave > 0) times[a.wave - 1] = Math.min(times[a.wave - 1] ?? Infinity, a.at);
+    const times: number[] = p.waveAt ? p.waveAt.slice(0, p.wave) : []; // (each wave's own time: an area cleared before its wave has an earlier one)
+    if (!p.waveAt) for (const a of p.areas.values()) if (a.wave > 0) times[a.wave - 1] = Math.min(times[a.wave - 1] ?? Infinity, a.at);
     for (let i = 0; i < p.wave; i++) times[i] ??= i > 0 ? times[i - 1] : 0;
     waves = times.map(bar);
   }

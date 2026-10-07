@@ -129,6 +129,7 @@ const SCENES: Scene[] = [
       ...series(0, 270, 0.1, "by a pond", (s, i) => s.pond(Math.min(1, i / 20), -0.4)),
       ...series(0, 120, 0.1, "the area's ambience (old oaks)", (s, i) => s.ambience("oaks", Math.min(1, i / 20))),
       ...series(12, 120, 0.1, "the area's ambience (standing stones)", (s, i) => s.ambience(i < 118 ? "stones" : null, i < 118 ? 1 : 0)),
+      ...series(24, 140, 0.1, "the ley pulse's sparkler (5 m off)", (s, i) => s.sparkler(Math.min(0.79, i / 25), 0.3)),
     ],
     sounds: [
       { g: "legend moans", kind: "ambience", at: 0, len: 4 },
@@ -146,6 +147,7 @@ const SCENES: Scene[] = [
       { g: "by a pond", kind: "ambience", at: 3, len: 20 },
       { g: "the area's ambience (old oaks)", kind: "ambience", at: 3, len: 8 },
       { g: "the area's ambience (standing stones)", kind: "ambience", at: 14, len: 9 },
+      { g: "the ley pulse's sparkler (5 m off)", kind: "ambience", at: 27, len: 10 },
     ],
   },
   {
@@ -159,6 +161,21 @@ const SCENES: Scene[] = [
     sounds: [
       { g: "her scratch (two bars)", kind: "feedback", at: 1, len: 4 },
       { g: "her hype (woo-hoo!)", kind: "voice", at: 6, len: 0.5 },
+    ],
+  },
+  {
+    // a wave come to an area she'd already cleared: fireworks over its soundsystem 60 m off (a shell every half second,
+    // each bursting 1.2 s after its launch, the sound 0.2 s late), the party under them cheering
+    name: "fireworks", seconds: 10, section: "drop", wave: 3, distance: 40,
+    cues: [
+      ...series(1, 7, 0.5, "a shell's whoosh", (s, i) => s.fireworkWhoosh(1.2, i % 3 === 1, (i % 3 - 1) * 0.3, 0.84)),
+      ...series(2.4, 7, 0.5, "a shell's burst", (s, i) => s.fireworkBurst(0.6 + (i % 4) * 0.25, (i % 3 - 1) * 0.3, 0.84)),
+      { at: 2.5, g: "the party cheering", play: s => s.fireworkCheer(0, 0.6) },
+    ],
+    sounds: [
+      { g: "a shell's whoosh", kind: "feedback", at: 1, len: 1 },
+      { g: "a shell's burst", kind: "sting", at: 2.4, len: 3.5 },
+      { g: "the party cheering", kind: "voice", at: 2.5, len: 2.5 },
     ],
   },
 ];
