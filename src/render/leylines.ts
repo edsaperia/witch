@@ -72,6 +72,8 @@ export function fine(pts: [number, number][], step: number): [number, number][] 
 const ROUTE_MS = 2;
 /** How tame a link is drawn when its wander would meet another's (a share of its usual wander; 0 its own way). */
 const TAME = [1, 0.5, 0.2, 0];
+/** The offsets a route samples each side of its curve at a point, looking for the low ground: every sixth of its wander (as before, so each link keeps its taming; 3 was 2.3 times cheaper but moved a few links tens of metres). */
+const SAMPLES = 6;
 /** leyLines.brightness 1: the first look (v395); Ed, 2026-10-05: "about 30% as bright" (0.3). */
 const BRIGHT = 4;
 
@@ -390,14 +392,19 @@ export class LeyLines {
     const nrm = base.map((_, i) => { const q0 = base[Math.max(0, i - 1)], q1 = base[Math.min(n, i + 1)], l = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]) || 1; return [-(q1[1] - q0[1]) / l, (q1[0] - q0[0]) / l]; });
     for (let tame = wander; ; tame = tame > 0.05 ? tame / 2 : 0) {
       const W = Math.min(80, L * this.T.valley) * tame, off = new Float64Array(n + 1);
-      if (W > 0) for (let i = 1; i < n; i++) {
-        if (i % 12 === 0) yield; // (a long late-wave link samples the ground thousands of times a step: a few ms at a time)
-        let best = 0, bh = Infinity;
-        for (let o = -W; o <= W + 1e-6; o += W / 6) {
-          const h = this.ground(base[i][0] + nrm[i][0] * o, base[i][1] + nrm[i][1] * o) + Math.abs(o) * 0.04; // (a little loath to stray)
-          if (h < bh) { bh = h; best = o; }
+      // The lowest ground across the link at every other point, SAMPLES offsets each side, the points between halfway (the
+      // smoothing below evens them; the whole line's routing was 1.5 s of height sampling at a run's start: the hitch hunt).
+      if (W > 0) {
+        for (let i = 1; i < n; i += 2) {
+          if (i % 24 === 1) yield; // (a long late-wave link samples the ground thousands of times a step: a few ms at a time)
+          let best = 0, bh = Infinity;
+          for (let s = -SAMPLES; s <= SAMPLES; s++) {
+            const o = (s / SAMPLES) * W, h = this.ground(base[i][0] + nrm[i][0] * o, base[i][1] + nrm[i][1] * o) + Math.abs(o) * 0.04; // (a little loath to stray)
+            if (h < bh) { bh = h; best = o; }
+          }
+          off[i] = best;
         }
-        off[i] = best;
+        for (let i = 2; i < n; i += 2) off[i] = (off[i - 1] + (i + 1 < n ? off[i + 1] : 0)) / 2;
       }
       // Smoothed into a gentle curve, held to its stones at the ends (along the curve there: sin², so it leaves and
       // reaches each stone the way the curve does, no corner), with a little wander of its own.
