@@ -1,7 +1,7 @@
 import { partySpots } from "./partyGuests";
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { affectionOf, newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { foes, stateOf, STATES, type State } from "./creatureStates";
 import { affection, blocksLetters, hit, hold, invitable } from "./affection";
@@ -121,6 +121,17 @@ describe("creature states (#87)", () => {
     expect(stateOf(b)).toBe("wild");
     expect(invitable(w)).toBe(false);
     expect(blocksLetters(w)).toBe(true);
+  });
+
+  it("the game's 💌 meter drains slowly (Ed, 2026-10-06: \"the invitation dropoff rate ... is too fast\"): held drainDelay seconds, then invites.drain of a full meter a second", () => {
+    const g = quiet(), A = affectionOf(g), c = place(g, "hare", 1, 5, 0), t0 = g.clock.time;
+    for (let i = 0; i < 4; i++) A.hit(c, 1, t0);
+    const m0 = A.affection(c)!, at = (s: number) => { g.clock.time = t0 + s; return A.affection(c)!; };
+    expect(STATES.affection.drainDelay).toBeGreaterThanOrEqual(3);
+    expect(TUNING.invites.drain).toBeLessThanOrEqual(0.04);
+    expect(at(STATES.affection.drainDelay - 0.1)).toBeCloseTo(m0, 5); // (held a moment after the last hit)
+    expect(at(STATES.affection.drainDelay + 5)).toBeCloseTo(m0 - 5 * TUNING.invites.drain, 4); // (the tuning's knob drives it)
+    g.clock.time = t0;
   });
 
   it("fills the 💌 meter: more hits at higher levels, one counted per creature every gap, draining slowly; full, it's happy, and full again (states.leash 'again') it's leashed", () => {
