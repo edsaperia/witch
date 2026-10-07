@@ -481,6 +481,17 @@ export class View {
   /** Sets fading in since they were drawn, and when they arrived (real ms). */
   appearing = new Map<SpriteBatch, number>();
   private prepared = false;
+  /** The party's next areas whose art has been asked for ahead (prefetchWave). */
+  private prefetched = "";
+  /** The next wave's art, asked for as soon as its areas are chosen (a whole countdown ahead), so a woken area's
+   *  creatures and legend are drawn enraged the moment it wakes rather than seconds later (overnight phase 2: the
+   *  woken looks arrived 2 to 7 s after their wave on a fresh browser). The workers draw them between the scenery. */
+  private prefetchWave(): void {
+    const g = this.game, key = g.party.next.map(c => c.join(",")).join(";");
+    if (!this.prepared || this.quick || key === this.prefetched) return;
+    this.prefetched = key;
+    for (const c of g.party.next) { const sp = AREA_TYPES[g.map.typeOf(c[0], c[1])]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.wokenArt(sp); } }
+  }
   private easeAppearing(): void {
     const now = performance.now();
     for (const [b, at] of this.appearing) {
@@ -693,6 +704,7 @@ export class View {
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
+    this.prefetchWave();
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
@@ -809,6 +821,17 @@ export class View {
       const a = placed(this.v3.set(wx, 0, wz)).project(this.camera).x, b = placed(this.v3.set(wx + R.x * 10, 0, wz + R.z * 10)).project(this.camera).x;
       const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
       LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
+    }
+    // At night (Ed, 2026-10-06: "Seems very bright for nighttime"): the hole's share of the screen is many more metres from a far
+    // camera, so her light is held to nightLight.maxReach metres anywhere (the ground camera's own, about), and over the treetops
+    // to a lantern's few metres (treetopReach), dimmed (treetopGlow), eased in as she rises; the canopy stays moonlit, warm
+    // only close round her.
+    const NL = t.nightLight, rise = Math.max(0, Math.min(1, g.witch.lift));
+    if (NL) {
+      const R0 = Math.min(LIGHT_UNIFORMS.uGlowR.value, NL.maxReach); // (never more than a lantern's metres, however far the camera: stargazing, zoomed out)
+      const R1 = R0 + (Math.min(R0, NL.treetopReach) - R0) * rise;
+      LIGHT_UNIFORMS.uGlowR.value = R1 + (Math.min(R1, NL.gazeReach ?? R1) - R1) * coastView(g.camera).gaze; // (lying on the sand to stargaze, the camera low and far: her own small pool, eased with the bend)
+      LIGHT_UNIFORMS.uGlowDim.value = 1 + (NL.treetopGlow - 1) * rise;
     }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
