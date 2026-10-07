@@ -56,6 +56,7 @@ uniform vec4 uCircle;
 uniform vec4 uBeach; // the beach round the circular map: its centre x, z, how far in from the edge the sand starts, out past it the sea (metres); off while .z is 0
 uniform float uCoast[${COAST_SAMPLES}]; // the edge's radius round (rules/mapShape.ts beachOf: from angle -pi, eased between)
 uniform float uSand[${COAST_SAMPLES}]; // the sand's width round, likewise (its bays and narrows)
+uniform vec3 uMoonRoad; // the sky's moon on the screen (its x, a fraction from the left), the picture's width (px), 1 while it's up
 uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
 // The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
@@ -151,8 +152,19 @@ void main() {
         if (spec > 0.993) col = mix(col, uMoon + vec3(0.25), 0.8);
         else if (spec > 0.975) col = mix(col, uMoon * 0.7, 0.3);
         else if (mod(px.y, 6.0) < 1.0 && vnoise(px / vec2(9.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.75) col += vec3(0.09, 0.13, 0.15); // a swell catching the light
+        // The moon's road (Ed, 2026-10-07: "glints as small bright pixel sparkles in a moon path"): straight down the water
+        // under the moon the sky draws, narrow far off and widening toward her, single art pixels sparkle and go out,
+        // thickest on its line and thinning off it, each lit for a moment at its own time; warm white with the moon's
+        // colour in it. By the screen, not the grazing reflection: a stargazer's camera sits a few metres over the water.
+        float far = length(p - cameraPosition.xz), off = (gl_FragCoord.x / max(1.0, uMoonRoad.y) - uMoonRoad.x) / (0.02 + 3.0 / max(8.0, far));
+        float road = uMoonRoad.z * exp(-off * off * 2.0);
+        float gh = fract(sin(dot(px, vec2(27.17, 113.9))) * 43758.5453), tw = fract(gh * 7.0 + uTime * (0.6 + gh * 0.9));
+        float glint = gh > 0.995 - road * 0.3 && tw < 0.45 ? (tw < 0.15 ? 1.0 : 0.65) : 0.0; // (put on after the haze: a spark punches through)
+        if (glint == 0.0 && road > 0.25 && mod(px.y, 3.0) < 1.0 && vnoise(px / vec2(5.0, 1.0) + vec2(uTime * 0.5, 0.0)) > 0.65) col += uMoon * 0.22 * road; // the road's broken shimmer
         if (bd < front + 1.0 + lap) col = mix(col, vec3(0.42, 0.66, 0.7), 0.4); // the shallows over the sand
-        gl_FragColor = vec4(haze(col, vWorld), 1.0);
+        // Over the water the far haze is thinner (the north beach's sea reads on the horizon, its road with it, rather than
+        // fading into the sky's glow).
+        gl_FragColor = vec4(mix(mix(col, haze(col, vWorld), 0.45), uMoon * 0.35 + vec3(0.85, 0.86, 0.82), glint), 1.0);
         return;
       }
       // The sand: pale in the moonlight, grains and drifts; dark where the waves have wet it, with the
@@ -162,7 +174,14 @@ void main() {
       if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 0.94; // ripples the wind left
       float wet = shore - 6.0 + vnoise(vec2(arc / 20.0, 1.0)) * 1.5;
       if (bd > wet) col = mix(col, vec3(0.42, 0.4, 0.36), smoothstep(wet, wet + 1.5, bd));
-      if (bd > front - uPixel * 1.5) col = vec3(0.8, 0.84, 0.88);
+      // The wave's edge (Ed, 2026-10-07: "a soft foamy pixel line that laps in and out on the sand"): a broken crest of foam
+      // pixels at the front, bubbles thinning behind it, and as the wave draws back a lace of foam left on the wet sand.
+      float fd = front - bd, ebb = cos(uTime * 0.9 + vnoise(vec2(arc / 60.0, 7.0)) * 6.0); // (ebb > 0: running up; < 0: drawing back)
+      float froth = vnoise(px / vec2(2.0, 1.0) + vec2(uTime * 0.7, 0.0)) * 0.65 + vnoise(px / 0.9 + 3.0) * 0.35;
+      if (fd < uPixel * 1.5 && froth > 0.32) col = vec3(0.86, 0.9, 0.93); // the crest
+      else if (fd < uPixel * 1.5) col = mix(col, vec3(0.62, 0.7, 0.74), 0.6);
+      else if (fd < 1.2 && froth > 0.55 + fd * 0.25) col = mix(col, vec3(0.8, 0.85, 0.88), 0.75); // bubbles behind it
+      else if (ebb < 0.0 && fd < 2.2 + 2.5 * lap && abs(fract(fd * 0.9 - lap * 2.0) - 0.5) < 0.08 && froth > 0.5) col = mix(col, vec3(0.74, 0.78, 0.8), 0.5); // the lace left as it draws back
       float sh = fract(sin(dot(floor(px / 2.0), vec2(41.3, 289.1))) * 43758.5453);
       if (sh > 0.993) col = mix(vec3(0.82, 0.78, 0.72), vec3(0.45, 0.43, 0.42), fract(sh * 13.0));
       vec3 lit = max(nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0), vec3(0.3, 0.31, 0.36)); // (pale sand: it holds what light there is)
@@ -471,6 +490,7 @@ export class Ground {
         uBeach: { value: new THREE.Vector4() },
         uCoast: { value: new Array(COAST_SAMPLES).fill(0) },
         uSand: { value: new Array(COAST_SAMPLES).fill(0) },
+        uMoonRoad: { value: new THREE.Vector3() },
         uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uSweepCount: { value: 0 },
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
@@ -548,6 +568,8 @@ export class Ground {
 
   /** The magic circle: its two hues, brightness now, and the rune band's turn. */
   /** The beach and the sea (render/beach.ts): drawn only while given one (she's near the edge). */
+  /** Where the sky draws the moon (rules/moon.ts x, a fraction across) and the picture's width (px): the sea's moon road under it. */
+  moonRoad(x: number, widthPx: number, up: boolean): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uMoonRoad.value as THREE.Vector3).set(x, widthPx, up ? 1 : 0); }
   setBeach(b: Beach | null): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
     if (b) { v.set(b.x, b.z, b.width, b.out); u.uCoast.value = Array.from(b.coast); u.uSand.value = Array.from(b.sand); } else v.set(0, 0, 0, 0);

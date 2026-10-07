@@ -281,6 +281,11 @@
               "type": "number",
               "minimum": 0
             },
+            "seaward": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
             "gazeAngle": {
               "type": "number",
               "minimum": 0
@@ -298,6 +303,7 @@
             "approach",
             "angle",
             "curve",
+            "seaward",
             "gazeAngle",
             "gazeDistance",
             "gazeLook"

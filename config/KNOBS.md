@@ -69,6 +69,7 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 | `beach.camera.approach` | number | 0 to … |
 | `beach.camera.angle` | number | 0 to … |
 | `beach.camera.curve` | number | 0 to … |
+| `beach.camera.seaward` | number | 0 to 1 |
 | `beach.camera.gazeAngle` | number | 0 to … |
 | `beach.camera.gazeDistance` | number | 0 to … |
 | `beach.camera.gazeLook` | number | 0 to … |
