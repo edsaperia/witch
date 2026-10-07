@@ -43,6 +43,7 @@ if (process.argv.includes("--worker")) {
     const [kind, opts] = optionsOf(bot), brain = newBot(kind, opts);
     const home = g.map.dancefloor, M = g.map, R = Math.max(...M.cells.map(([cx, cy]) => Math.hypot(M.siteOf(cx, cy).x - home.x, M.siteOf(cx, cy).z - home.z)));
     let witchFar = 0;
+    const wokenAt = new Map(); // (every area woken, kept: a ruined one leaves party.areas)
     let firstKo = null, koWave = null, kos = 0, wasKo = false, firstLost = null, lostWave = null, hits = 0, placed = 0;
     const invited = new Set(); // (made happy by her 💌s; tally.invites counts only talk and pickups)
     for (let step = 0; step * dt < time; step++) {
@@ -52,13 +53,15 @@ if (process.argv.includes("--worker")) {
       if (w.ko && !wasKo) { kos++; if (firstKo === null) { firstKo = now; koWave = g.party.wave; } }
       wasKo = !!w.ko;
       for (const e of w.invites.events) if (e.kind === "hit") hits++; else if (e.kind === "happy") invited.add(e.id);
-      for (const e of w.leash.events) if (e.kind === "placed") placed++;
+      for (const e of g.leashEvents) if (e.kind === "placed") placed++; // (the frame's, from every step in it: her own leash.events are only the last step's, and stay put through a frame with none)
+      if (step % 30 === 0) for (const a of g.party.areas.values()) if (a.wave > 0) wokenAt.set(`${a.cell[0]},${a.cell[1]}`, a.cell);
       if (firstLost === null && step % 30 === 0 && [...g.combat.sounds.values()].some(h => h.hp <= 0)) { firstLost = now; lostWave = g.party.wave; }
       if (step % 30 === 0) witchFar = Math.max(witchFar, Math.hypot(w.body.x - home.x, w.body.z - home.z));
       if (g.partyOver) break;
     }
     // How far the party got: the areas woken (home aside), the farthest of them from home (m, and as remoteness: 0 home, 1 the playable edge).
-    const woken = [...g.party.areas.values()].filter(a => a.wave > 0), far = woken.map(a => { const s = M.siteOf(a.cell[0], a.cell[1]); return Math.hypot(s.x - home.x, s.z - home.z); });
+    for (const a of g.party.areas.values()) if (a.wave > 0) wokenAt.set(`${a.cell[0]},${a.cell[1]}`, a.cell);
+    const woken = [...wokenAt.values()].map(cell => ({ cell })), far = woken.map(a => { const s = M.siteOf(a.cell[0], a.cell[1]); return Math.hypot(s.x - home.x, s.z - home.z); });
     const L = g.creatures.filter(c => c.boss), lost = [...g.combat.sounds.values()].filter(h => h.hp <= 0).length;
     return {
       bot, seed, end: g.clock.time, over: g.partyOver?.at ?? null, wave: g.party.wave, firstLost, lostWave, firstKo, koWave, kos, lost,
