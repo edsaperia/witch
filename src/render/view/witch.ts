@@ -54,7 +54,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // liftSigil pose, and back up into the air when she's done. Talking (by herself, Ed v244), she
   // chats on the fly while moving and settles into the talk pose when she comes to rest.
   const L = g.leash, F = v.assets.witchFoot, side = w.away ? "away" : "towards";
-  for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") v.footAct = { pose: "placeSigil", at: ht }; else if (e.kind === "picked" || e.kind === "hatPicked") v.footAct = { pose: "liftSigil", at: ht };
+  for (const e of L.events) if (e.kind === "placed") v.footAct = { pose: "placeSigil", at: ht }; else if (e.kind === "picked" || e.kind === "hatPicked") v.footAct = { pose: "liftSigil", at: ht };
   const actLen = v.footAct ? F[v.footAct.pose].towards.length / F[v.footAct.pose].fps : 0;
   const acting = !!v.footAct && ht - v.footAct.at < actLen + 0.3;
   const still = Math.hypot(w.vx, w.vz) < 0.6;
