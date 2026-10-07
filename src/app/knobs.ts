@@ -1,5 +1,6 @@
 // The debug knobs in the overlay (~): the fight's scale, speed and momentum, and the treetop speed, live, with sliders,
-// keys and resets, remembered on this browser; every change goes in the playtest log. Set up once, at the start.
+// keys and resets, for this load only (they change the balance: the link's ?fightScale= and the like set them for a run);
+// every change goes in the playtest log. Set up once, at the start.
 import type { Game } from "../rules/game";
 import { TUNING, type Tuning } from "../rules/tuning";
 import type { PlaytestLog } from "../platform/playtestLog";
@@ -9,14 +10,13 @@ type World = { areaSize: number; treetopSpeed: number; mapAreas: number };
 /** Wires the knobs up and sets where they start; returns their panel (shown with the debug overlay). */
 export function setupKnobs(tuning: Tuning, game: Game, world: World, WORLD_DEFAULT: World, params: URLSearchParams, playtest: PlaytestLog): HTMLElement {
   // The fight's scale and speed (Ed's motion scale pass): live in the debug overlay (~), [ and ] for
-  // scale, ; and ' for speed, with sliders and a reset; remembered on this browser; ?fightScale= and
+  // scale, ; and ' for speed, with sliders and a reset; this load only; ?fightScale= and
   // ?fightSpeed= set where they start. Every change goes in the playtest log.
   const FIGHT_DEFAULT = { ...TUNING.fight };
   const knobs = document.getElementById("fight-knobs")!;
   const setFight = (scale: number, speed: number, log = true, momentum = tuning.fight.momentum) => {
     const clamp = (x: number) => Math.round(Math.min(3, Math.max(0.25, x)) * 100) / 100;
     tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); tuning.fight.momentum = clamp(momentum); // (shared with the buffed tuning: live mid-fight)
-    try { localStorage.setItem("witch.fight", JSON.stringify(tuning.fight)); } catch { /* fine */ }
     for (const [k, v] of [["scale", tuning.fight.scale], ["speed", tuning.fight.speed], ["momentum", tuning.fight.momentum]] as const) {
       (knobs.querySelector(`input[name=${k}]`) as HTMLInputElement).value = String(v);
       knobs.querySelector(`.${k}`)!.textContent = v.toFixed(2);
@@ -24,8 +24,7 @@ export function setupKnobs(tuning: Tuning, game: Game, world: World, WORLD_DEFAU
     if (log) playtest.fight(tuning.fight.scale, tuning.fight.speed, tuning.fight.momentum);
   };
   {
-    let start = { ...FIGHT_DEFAULT };
-    try { const v = localStorage.getItem("witch.fight"); if (v) start = { ...start, ...JSON.parse(v) }; } catch { /* storage blocked */ }
+    const start = { ...FIGHT_DEFAULT };
     const fs = Number(params.get("fightScale")), fv = Number(params.get("fightSpeed"));
     if (fs > 0) start.scale = fs;
     if (fv > 0) start.speed = fv;
@@ -38,7 +37,6 @@ export function setupKnobs(tuning: Tuning, game: Game, world: World, WORLD_DEFAU
     world.treetopSpeed = Math.round(Math.min(300, Math.max(8, speed)));
     tuning.treetopSpeed = world.treetopSpeed;
     (game.buffs as { base?: unknown }).base = undefined; // (a legend's buffed copy is made afresh with it)
-    try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
     (knobs.querySelector("input[name=treetop]") as HTMLInputElement).value = String(world.treetopSpeed);
     knobs.querySelector(".treetop")!.textContent = String(world.treetopSpeed);
     knobs.querySelector(".area")!.textContent = `${world.areaSize} m, ${world.mapAreas} x ${world.mapAreas}`;
@@ -46,7 +44,6 @@ export function setupKnobs(tuning: Tuning, game: Game, world: World, WORLD_DEFAU
   };
   setTreetop(world.treetopSpeed, world.areaSize !== WORLD_DEFAULT.areaSize || world.treetopSpeed !== WORLD_DEFAULT.treetopSpeed || world.mapAreas !== WORLD_DEFAULT.mapAreas);
   knobs.querySelector(".world-reset")!.addEventListener("click", () => {
-    try { localStorage.removeItem("witch.world"); } catch { /* fine */ }
     for (const k of ["areaSize", "areaScale", "treetopSpeed", "mapAreas"]) params.delete(k);
     location.search = params.toString(); // (a new map: area size and the map's are made with it)
   });

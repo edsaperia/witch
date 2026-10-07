@@ -5,7 +5,7 @@ The rules every piece of art in Witch follows, so that the whole scene reads as 
 **Ed's rulings it rests on**
 - "Everything should look a bit more pixel-art stylised" (2026-10-05), and "everything should be pixellated to the same level (including the menu)" (2026-10-06).
 - "I think I prefer bold style" (2026-10-06): **bold is the game's default** (`?style=bold`; `ref` and `now` stay selectable).
-- Art pixel: **4** (Ed, 2026-10-07, after playtesting px 5: "pixels are too large, let's try one step smaller"). Before that it was 5, chosen from the px 3/4/5 comparison of seven scenes, and before that "4 or 5, but we will decide in playtesting" (2026-10-05), running at 3 until then. `?px=3` or `?px=5` still switches it for one load.
+- Art pixel: **3** (Ed, 2026-10-07, after playtesting 5 and 4: "pixel level 3 is better. The large pixels look cute but it's impossible to see what's going on at all"). It was briefly 5, then 4, the same day. `?px=4` or `?px=5` still switches it for one load.
 - "Light and glow stay smooth"; "creature projectiles and the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they should be lighting objects that are pixels" (round 14). "No dithering" (the canopy and trunk fades).
 - "Animal legs have outlines on them; they'd look better without" (2026-10-06).
 
