@@ -263,27 +263,28 @@ export function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) 
     metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), towerFloor: um(S.tower.y), roofTip: um(S.tower.y + S.tower.h + 3.3 + .3), footprint: um(T.footprint), overhang: um(S.studio.deck), trunk: um(T.trunkR * 2), crown: um(T.crownR) } };
 }
 
-// The knockdown candles (Ed, 2026-10-07, via the coordinator: "candles in a row along the FRONT of the DJ desk, one candle per
-// 2 s of respawn wait ... You watch them melt down as the respawn counts down while she scratches, and the last one gutters
-// out as she comes back"): a deep red church candle (red, so it reads against the desk's wood at a glance) on a little pewter saucer, standing on the studio's floor along the desk's
-// front (treehouseSprite's `candles`: the row's two ends, screen left to right, the game spacing them between), at the
-// house's scale. level 0 whole to CANDLE.levels - 2 a stub, its wax running down and pooling more as it goes; the last level
-// out, a stub with a curl of smoke. frame: the flame's flicker (CANDLE.frames), leaning and stretching; the flame two
-// warm glowing tones, a dark wick.
-export const CANDLE = { levels: 5, frames: 3, ahead: .1, height: .36, r: .05 };
-export function candleSprite(st = {}, { level = 0, frame = 0 } = {}) {
-  const m = new Model({ blend: .02 }), out = level >= CANDLE.levels - 1, h = [1, .74, .5, .28, .16][Math.min(level, 4)] * CANDLE.height, r = CANDLE.r;
-  m.ell([0, .012, 0], [r * 1.8, .012, r * 1.8], M.FRAME, { group: 1 }); // the saucer
-  m.ell([0, .026, 0], [r * (1.2 + level * .15), .008, r * (1.2 + level * .15)], M.EAR, { group: 2 }); // the wax pooled in it, more as it melts
-  m.seg([0, .02, 0], [0, .02 + h, 0], r, r * .92, M.CLOTH, { group: 3, paint: p => p[1] > .02 + h - .012 ? M.EAR : undefined }); // the wax, its melted top paler
-  for (let k = 0; k < 1 + Math.min(level, 2); k++) { const a = 1.1 + k * 2.1, dl = h * (.3 + .15 * k); m.seg([Math.cos(a) * r, .02 + h - .01, Math.sin(a) * r], [Math.cos(a) * r * 1.05, .02 + h - dl, Math.sin(a) * r * 1.05], .014, .019, M.EAR, { group: 4 + k }); } // runs of wax
-  const top = [0, .02 + h, 0];
-  m.seg(top, v3.add(top, [0, .03, 0]), .006, .005, M.LINE, { group: 8 }); // the wick
+// The knockdown candles (Ed, 2026-10-07, via the coordinator: "a LOADING BAR ... many candles, one per second, or even one
+// per ½ second, of respawn wait ... the base cooldown WHITE candles, the extra from repeat knockdowns RED"): a slim taper on a
+// little pewter drip-cup, standing on the studio's floor in a neat row along the desk's front (treehouseSprite's `candles`:
+// the row's two ends, screen left to right, the game spacing them between), at the house's scale; thin enough that 12 stand
+// apart along the desk at px 5 and 24 close up into one bar of wax and flame. white: the base wait's (white wax, cream where
+// it's melted), else the extra's (red, pink where it's melted). level 0 whole to CANDLE.levels - 2 a stub, its wax running
+// down more as it goes; the last level out, a stub with a curl of smoke. frame: the flame's flicker (CANDLE.frames), leaning
+// and stretching; the flame two warm glowing tones, a dark wick.
+export const CANDLE = { levels: 5, frames: 3, colours: 2, ahead: .1, height: .24, r: .022 };
+export function candleSprite(st = {}, { level = 0, frame = 0, white = false } = {}) {
+  const m = new Model({ blend: .02 }), out = level >= CANDLE.levels - 1, h = [1, .74, .5, .28, .14][Math.min(level, 4)] * CANDLE.height, r = CANDLE.r;
+  const wax = white ? M.BELLY : M.CLOTH, melted = white ? M.BODY2 : M.EAR;
+  m.ell([0, .01, 0], [r * 1.7, .01, r * 1.7], M.FRAME, { group: 1 }); // the drip-cup
+  m.seg([0, .016, 0], [0, .016 + h, 0], r, r * .9, wax, { group: 3, paint: p => p[1] > .016 + h - .01 ? melted : undefined }); // the wax, its melted top paler
+  for (let k = 0; k < Math.min(level, 2); k++) { const a = 1.1 + k * 2.6, dl = h * (.35 + .2 * k); m.seg([Math.cos(a) * r, .016 + h - .008, Math.sin(a) * r], [Math.cos(a) * r * 1.1, .016 + h - dl, Math.sin(a) * r * 1.1], .008, .011, melted, { group: 4 + k }); } // runs of wax
+  const top = [0, .016 + h, 0];
+  m.seg(top, v3.add(top, [0, .022, 0]), .005, .004, M.LINE, { group: 8 }); // the wick
   if (!out) { // the flame: an outer glow round a bright core, leaning and stretching with the flicker
-    const lean = [0, .015, -.012][frame % 3], tall = [1, .82, 1.15][frame % 3], f = v3.add(top, [lean, .07 * tall, 0]);
-    m.ell(f, [.032, .066 * tall, .032], M.GLOW, { group: 9 });
-    m.ell(v3.add(f, [0, -.016, .014]), [.016, .036 * tall, .016], M.MAGIC2, { group: 10 });
-  } else for (let k = 0; k < 4; k++) m.ell(v3.add(top, [Math.sin(k * 1.7 + frame) * .02, .05 + k * .045, 0]), [.012 + k * .004, .012, .012 + k * .004], M.STONE, { group: 11 + k, extra: true }); // a curl of smoke
+    const lean = [0, .01, -.008][frame % 3], tall = [1, .8, 1.15][frame % 3], f = v3.add(top, [lean, .05 * tall, 0]);
+    m.ell(f, [.02, .048 * tall, .02], M.GLOW, { group: 9 });
+    m.ell(v3.add(f, [0, -.012, .01]), [.01, .026 * tall, .01], M.MAGIC2, { group: 10 });
+  } else for (let k = 0; k < 4; k++) m.ell(v3.add(top, [Math.sin(k * 1.7 + frame) * .015, .04 + k * .035, 0]), [.009 + k * .003, .009, .009 + k * .003], M.STONE, { group: 11 + k, extra: true }); // a curl of smoke
   const { sp, s } = render(m, { scale: witchPixelsPerUnit(st), facing: "towards" });
   sp.scale = s;
   return sp;

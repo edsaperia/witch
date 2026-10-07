@@ -3443,8 +3443,35 @@ function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
   for (const fs of frames) for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (fs.m[y * sp.w + x]) { fx0 = Math.min(fx0, x); fx1 = Math.max(fx1, x); fy0 = Math.min(fy0, y); fy1 = Math.max(fy1, y); }
   const foreFrames = frames.map(fs => { const c = new Sprite(fx1 - fx0 + 1, fy1 - fy0 + 1); for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) { const i = (y + fy0) * sp.w + x + fx0; if (fs.m[i]) c.put(x, y, fs.m[i], fs.n[i * 3], fs.n[i * 3 + 1], fs.n[i * 3 + 2]); } return c; });
   const S = TREEHOUSE_STOREYS;
-  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
+  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, candles: [at(T.dj.to([DJ_DECKS.depth[1] + CANDLE.ahead, 0, DJ_DECKS.width - .1])), at(T.dj.to([DJ_DECKS.depth[1] + CANDLE.ahead, 0, -DJ_DECKS.width + .1]))], crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
     metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), towerFloor: um(S.tower.y), roofTip: um(S.tower.y + S.tower.h + 3.3 + .3), footprint: um(T.footprint), overhang: um(S.studio.deck), trunk: um(T.trunkR * 2), crown: um(T.crownR) } };
+}
+
+// The knockdown candles (Ed, 2026-10-07, via the coordinator: "a LOADING BAR ... many candles, one per second, or even one
+// per ½ second, of respawn wait ... the base cooldown WHITE candles, the extra from repeat knockdowns RED"): a slim taper on a
+// little pewter drip-cup, standing on the studio's floor in a neat row along the desk's front (treehouseSprite's `candles`:
+// the row's two ends, screen left to right, the game spacing them between), at the house's scale; thin enough that 12 stand
+// apart along the desk at px 5 and 24 close up into one bar of wax and flame. white: the base wait's (white wax, cream where
+// it's melted), else the extra's (red, pink where it's melted). level 0 whole to CANDLE.levels - 2 a stub, its wax running
+// down more as it goes; the last level out, a stub with a curl of smoke. frame: the flame's flicker (CANDLE.frames), leaning
+// and stretching; the flame two warm glowing tones, a dark wick.
+const CANDLE = { levels: 5, frames: 3, colours: 2, ahead: .1, height: .24, r: .022 };
+function candleSprite(st = {}, { level = 0, frame = 0, white = false } = {}) {
+  const m = new Model({ blend: .02 }), out = level >= CANDLE.levels - 1, h = [1, .74, .5, .28, .14][Math.min(level, 4)] * CANDLE.height, r = CANDLE.r;
+  const wax = white ? M.BELLY : M.CLOTH, melted = white ? M.BODY2 : M.EAR;
+  m.ell([0, .01, 0], [r * 1.7, .01, r * 1.7], M.FRAME, { group: 1 }); // the drip-cup
+  m.seg([0, .016, 0], [0, .016 + h, 0], r, r * .9, wax, { group: 3, paint: p => p[1] > .016 + h - .01 ? melted : undefined }); // the wax, its melted top paler
+  for (let k = 0; k < Math.min(level, 2); k++) { const a = 1.1 + k * 2.6, dl = h * (.35 + .2 * k); m.seg([Math.cos(a) * r, .016 + h - .008, Math.sin(a) * r], [Math.cos(a) * r * 1.1, .016 + h - dl, Math.sin(a) * r * 1.1], .008, .011, melted, { group: 4 + k }); } // runs of wax
+  const top = [0, .016 + h, 0];
+  m.seg(top, v3.add(top, [0, .022, 0]), .005, .004, M.LINE, { group: 8 }); // the wick
+  if (!out) { // the flame: an outer glow round a bright core, leaning and stretching with the flicker
+    const lean = [0, .01, -.008][frame % 3], tall = [1, .8, 1.15][frame % 3], f = v3.add(top, [lean, .05 * tall, 0]);
+    m.ell(f, [.02, .048 * tall, .02], M.GLOW, { group: 9 });
+    m.ell(v3.add(f, [0, -.012, .01]), [.01, .026 * tall, .01], M.MAGIC2, { group: 10 });
+  } else for (let k = 0; k < 4; k++) m.ell(v3.add(top, [Math.sin(k * 1.7 + frame) * .015, .04 + k * .035, 0]), [.009 + k * .003, .009, .009 + k * .003], M.STONE, { group: 11 + k, extra: true }); // a curl of smoke
+  const { sp, s } = render(m, { scale: witchPixelsPerUnit(st), facing: "towards" });
+  sp.scale = s;
+  return sp;
 }
 
 

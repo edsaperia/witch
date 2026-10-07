@@ -1788,6 +1788,10 @@
             "minScratch"
           ],
           "additionalProperties": false
+        },
+        "candleStep": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -1798,7 +1802,8 @@
         "legendsLoyal",
         "dropHat",
         "hatFloat",
-        "respawn"
+        "respawn",
+        "candleStep"
       ],
       "additionalProperties": false
     },
@@ -7962,6 +7967,7 @@
     "moon",
     "glowReach",
     "sigilSpill",
+    "combatLight",
     "nightLight",
     "glowFalloff",
     "glowNear",

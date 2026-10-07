@@ -8,7 +8,7 @@ import { type Beacon, type Laser, MARKER_LEVELS, type Mote } from "../markers";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import type { WaveNumber } from "../waveNumbers";
 import { beatAt, beatTime } from "../../rules/beat";
-import { candleCount, candleMelt } from "../../rules/knockout";
+import { candleCount, candleMelt, candleRed } from "../../rules/knockout";
 import { canopyShown } from "../../rules/witch";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
@@ -202,8 +202,8 @@ export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d:
   return { x: p.x - (dx / l) * d, y: p.y - (dy / l) * d, z: p.z - (dz / l) * d };
 }
 
-/** The knockdown candles last shown, per view: their count, and (once she's free) when their smoke is done. */
-const candlesSeen = new WeakMap<View, { n: number; until: number }>();
+/** The knockdown candles last shown, per view: their count, how many red, and (once she's free) when their smoke is done. */
+const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>();
 
 /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
  *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
@@ -223,18 +223,19 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const p = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.fore);
     items.push({ ...p, frame: ff, flip: false, overlay: true });
   }
-  // The knockdown candles along the desk's front (the hotel builder's candleCount and candleMelt, rules/knockout.ts: one for
-  // every 2 s of her wait, burning down one after another as she scratches, on her clock), the first to go at the right; nearest of all.
+  // The knockdown candles along the desk's front, a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
+  // seconds of her wait; candleRed of them red, the wait past the base; candleMelt, burning down one after another as she
+  // scratches, on her clock): white at the left, red at the right, the bar emptying from its right end; nearest of all.
   // (the rules clear her knockout the moment she's free: the last count kept here, the stubs smoking out for a second after)
-  const ko = v.game.witches[0]?.ko, live = candleCount(ko), ht = v.game.herTime, was = candlesSeen.get(v);
-  if (live > 0) candlesSeen.set(v, { n: live, until: Infinity }); else if (was && was.until === Infinity) was.until = ht + 1; else if (was && ht > was.until) candlesSeen.delete(v);
-  const n = live || (candlesSeen.get(v)?.n ?? 0);
+  const tu = v.game.tuning, ko = v.game.witches[0]?.ko, live = candleCount(ko, tu), ht = v.game.herTime, was = candlesSeen.get(v);
+  if (live > 0) candlesSeen.set(v, { n: live, red: candleRed(ko, tu), until: Infinity }); else if (was && was.until === Infinity) was.until = ht + 1; else if (was && ht > was.until) candlesSeen.delete(v);
+  const n = live || (candlesSeen.get(v)?.n ?? 0), red = candlesSeen.get(v)?.red ?? 0;
   if (n > 0 && T.candleRow.length === 2) {
     const [L, Rr] = T.candleRow, R = SPRITE_UNIFORMS.uRight.value;
     for (let i = 0; i < n; i++) {
-      const m = live ? candleMelt(ko, ht, n - 1 - i) : 1, k = n === 1 ? 0.5 : i / (n - 1), px = L.x + (Rr.x - L.x) * k, py = L.y + (Rr.y - L.y) * k;
+      const j = n - 1 - i, m = live ? candleMelt(ko, ht, j, tu) : 1, k = n === 1 ? 0.5 : i / (n - 1), px = L.x + (Rr.x - L.x) * k, py = L.y + (Rr.y - L.y) * k;
       const level = m >= 1 ? T.candleLevels - 1 : Math.min(T.candleLevels - 2, Math.floor(m * (T.candleLevels - 1)));
-      const fr = f[T.candle0 + level * T.candleFlicker + (Math.floor(time * 7 + i * 1.7) % T.candleFlicker)]; if (!fr) continue;
+      const fr = f[T.candle0 + (j < red ? T.candleRed : 0) + level * T.candleFlicker + (Math.floor(time * 7 + i * 1.7) % T.candleFlicker)]; if (!fr) continue;
       const dx = (px - f[0].w / 2) * mpp, dy = (f[0].h - py) * mpp; // (the candle's foot on the row, in the base's pixels: its sprite's bottom middle there)
       const base = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.candles);
       items.push({ ...base, frame: fr, flip: false, overlay: true });
