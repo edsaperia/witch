@@ -12,8 +12,6 @@ const v = (species: string, level: number) => voiceOf({ species, level, boss: le
 type Play = (s: Sfx) => void;
 const SOUNDS: [string, number, Play][] = [
   ["witch-chatter", 2.4, () => {}],
-  ["deck-scratch", 4.2, () => {}],
-  ["deck-whoop", 0.8, s => s.whoop()],
   ["species-calls", 21, () => {}],
   ["reply-baby", 0.4, s => s.reply(v("hare", 0), 0.5)],
   ["speak-baby-happy", 0.8, s => s.speak(v("hare", 0), "happy")],
@@ -68,6 +66,8 @@ const SOUNDS: [string, number, Play][] = [
   ["boot-stir", 6, s => s.stir()],
   ["legend-sleep", 5, s => s.legends(1, 1, 0)],
   ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
+  ["deck-scratch", 4.2, () => {}],
+  ["deck-whoop", 0.8, s => s.whoop()],
 ];
 
 async function render(name: string, seconds: number, play: Play) {
