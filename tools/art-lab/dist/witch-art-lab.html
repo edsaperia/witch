@@ -4812,14 +4812,14 @@ function bedroomSprite(st = {}, { S } = {}) {
 //   coat: markings: belly, saddle, spots, spotMat, socks, shaggy, wool, ridge, rump, legMat.
 //   legend: what the legendary form grows (FEATURE_NAMES in creatures.js).
 const GENOMES = [
-  { id: "wolf", name: "Wolf", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .2, val: .72 }, body: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, legW: 1.25 }, head: { snout: .82, snoutD: .7 }, parts: { ears: { kind: "point", size: .82 }, tail: "brush", feet: "paw" }, coat: { belly: true, saddle: true }, legend: ["wings", "mane"],
+  { id: "wolf", name: "Wolf", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .2, val: .72 }, body: { hgt: 1.12, len: .66, chest: .46, tuck: .66, neck: .34, neckAng: .62, neckW: .4, hr: .25, legW: 1.05 }, head: { snout: .9, snoutD: .65 }, parts: { ears: { kind: "point", size: 1.05 }, tail: "brush", feet: "paw" }, coat: { belly: true, saddle: true }, legend: ["wings", "mane"],
     // its evolution (docs/art-guide/EVOLUTIONS.md): a round pup with big paws and floppy ears, a lanky young, an adult with a heavy
     // shaggy mane over its shoulders, and the legend: shoulders twice its hips, a mane of spiky locks, pale spirit-fire along its
     // spine, glowing eyes and frost on its muzzle
     levels: [
       { body: { len: .5, hr: .29, legW: 1.5 }, head: { snout: .6 }, parts: { ears: { kind: "small", size: 1.2 }, tail: "stub" } },
-      { body: { len: .72, chest: .5, tuck: .66, legW: 1.05, neckW: .36 }, head: { snout: .95 } },
-      { body: { front: 1.12, humpK: .5, back: "hump", legW: 1.25, bw: .27 }, head: { snout: 1 }, features: [{ kind: "mane", from: .45, to: 1, height: .26, count: 16, lean: .5, mat: "BODY2" }] },
+      { body: { len: .74, chest: .52, tuck: .72, legW: .95, neckW: .34 }, head: { snout: 1 } },
+      { body: { front: 1.08, legW: 1.05, bw: .25, hgt: 1.2, tuck: .72 }, head: { snout: 1.05 }, features: [{ kind: "mane", from: .6, to: 1, height: .26, count: 14, lean: .5, mat: "BODY2" }] },
       { body: { front: 1.22, humpK: .8, back: "hump", legW: 1.35, bw: .26, len: .72, tuck: .66 }, head: { snout: 1.1, eyeGlow: true, frost: true }, features: [
         { kind: "mane", from: .3, to: 1, height: .5, count: 26, lean: .35, mat: "BODY" },
         { kind: "mane", belly: true, from: .55, to: 1, height: .22, count: 10, lean: .3, mat: "BODY2" },
@@ -4839,13 +4839,13 @@ const GENOMES = [
         { kind: "tails", count: 7, length: 1.1, spread: .38, tip: "MAGIC2", replace: true, width: 1.15 },
       ] },
     ] },
-  { id: "badger", name: "Badger", template: "quadruped", builder: "quad", palette: { hue: .65, sat: .08, val: .45 }, body: { hgt: .62, len: .78, chest: .2, tuck: .22, neck: .18, neckAng: .1, neckW: .5, hr: .26, legW: 1.35 }, head: { snout: 1, snoutD: .55, snoutTaper: .55, face: "badger" }, parts: { ears: { kind: "round", size: .7 }, tail: "stub", feet: "paw" }, coat: { shaggy: true, legMat: "BODY3" }, legend: ["crystals"],
+  { id: "badger", name: "Badger", template: "quadruped", builder: "quad", palette: { hue: .65, sat: .08, val: .45 }, body: { hgt: .5, len: .82, chest: .18, tuck: .2, neck: .16, neckAng: 0, neckW: .55, hr: .26, legW: 1.4, bw: .38 }, head: { snout: 1.05, snoutD: .5, snoutTaper: .5, face: "badger" }, parts: { ears: { kind: "round", size: .7 }, tail: "stub", feet: "paw" }, coat: { shaggy: true, legMat: "BODY3" }, legend: ["crystals"],
     // its evolution (docs/art-guide/EVOLUTIONS.md): a round fluffy cub that's all face, a low wedge of a young, a broad shaggy-plated
     // digger with pale claws, and the moor's legend: low as a boulder, standing stones walking on its back, their runes moonlit
     levels: [
       { body: { len: .58, chest: .22, tuck: .24, hr: .3, legW: 1.1 }, head: { snout: .8, blaze: 1.6 } },
       { body: { len: .9, chest: .18, tuck: .2, neckAng: 0 }, head: { snout: 1.2, snoutTaper: .45, blaze: 1.3 } },
-      { body: { len: .86, bw: .42, chest: .16, tuck: .18, legW: 1.6 }, head: { blaze: 1.45 }, features: [{ kind: "mane", from: .1, to: .85, height: .12, count: 16, lean: .95 }, { kind: "claws", size: .14 }] },
+      { body: { len: .9, bw: .46, chest: .14, tuck: .16, legW: 1.6 }, head: { blaze: 1.45 }, features: [{ kind: "mane", from: .1, to: .85, height: .12, count: 16, lean: .95 }, { kind: "claws", size: .14 }] },
       { body: { len: .95, bw: .5, chest: .14, tuck: .16, legW: 1.8, neckAng: -.05 }, head: { blaze: 1.5, blazeGlow: true }, features: [
         { kind: "mane", from: .05, to: .9, height: .12, count: 20, lean: 1 },
         { kind: "stones", from: .15, to: .8, count: 5, height: .62 },
@@ -4853,14 +4853,14 @@ const GENOMES = [
         { kind: "moss", count: 9, size: .1 },
       ] },
     ] },
-  { id: "boar", name: "Boar", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .62, val: .5 }, body: { len: .72, chest: .34, tuck: .42, neck: .2, neckAng: -.15, neckW: .55, hr: .27, legW: 1.15, back: "hump" }, head: { snout: 1.25, snoutD: .62, snoutTaper: .55, disc: true }, parts: { ears: { kind: "small", size: .8 }, tail: "thin", feet: "hoof", tusks: true }, coat: { ridge: true }, texture: { kind: "bristles" },
+  { id: "boar", name: "Boar", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .62, val: .5 }, body: { len: .72, chest: .38, tuck: .5, neck: .2, neckAng: -.2, neckW: .55, hr: .27, legW: .9, back: "hump", front: 1.18, humpK: 1.6 }, head: { snout: 1.25, snoutD: .62, snoutTaper: .55, disc: true }, parts: { ears: { kind: "small", size: .8 }, tail: "thin", feet: "hoof", tusks: true }, coat: { ridge: true }, texture: { kind: "bristles" },
     // its evolution (the pilot of the evolution kit): a round, stubby, banded piglet; the young as it is; a heavy-fronted adult with a
     // shoulder hump, its head low and its tusks curving; a massive, top-heavy legend charging head-down with huge curling tusks, pale
     // flames off their tips and a dark shaggy mane along its spine and belly
     levels: [
       { body: { len: .6, chest: .3, tuck: .34, back: "arch" }, coat: { ridge: false, bands: { n: 2, mat: "BELLY" } } },
       null,
-      { body: { humpK: 2.2, neckAng: -.42, front: 1.18, legW: 1.3 }, head: { tuskSize: 1.15, tuskCurl: .75, horn: { length: .75, r: .3, curl: .12, twist: .5, ridges: 2, segs: 6, out: .3, mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [{ kind: "mane", from: .45, to: .98, height: .14, count: 10, lean: .45 }] },
+      { body: { humpK: 2.4, neckAng: -.42, front: 1.25, legW: 1.0, hgt: 1.05 }, head: { tuskSize: 1.15, tuskCurl: .75, horn: { length: .75, r: .3, curl: .12, twist: .5, ridges: 2, segs: 6, out: .3, mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [{ kind: "mane", from: .45, to: .98, height: .14, count: 10, lean: .45 }] },
       { body: { humpK: 2.8, neckAng: -.45, front: 1.36, legW: 1.45, chest: .3 }, head: { tuskSize: 1.7, tuskCurl: 1.25, eyeGlow: true, horn: { length: 5.2, r: .46, curl: .9, twist: 2.5, ridges: 3, segs: 24, out: .3, tip: "MAGIC2", mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [ // (Ed, 2026-10-05: head down to charge, a battering ram; its eye glints under the hump, flames rise over it)
         { kind: "mane", from: .15, to: 1, height: .3, count: 18, lean: .55 },
         { kind: "mane", belly: true, from: .3, to: .95, height: .16, count: 10, lean: .4 },
@@ -4882,7 +4882,7 @@ const GENOMES = [
       { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
       { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, eyesRing: true } },
     ] },
-  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.15, len: .72, chest: .38, tuck: .4, neck: .25, neckAng: .3, neckW: .55, hr: .28, legW: 1.55, back: "hump" }, head: { snout: .7, snoutD: .62, snoutTaper: .7, muzzle: true }, parts: { ears: { kind: "round", size: .8 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
+  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.22, len: .74, chest: .36, tuck: .42, neck: .22, neckAng: .05, neckW: .6, hr: .3, legW: 1.75, back: "hump", front: 1.25, humpK: 2.6, bw: .34 }, head: { snout: .62, snoutD: .68, snoutTaper: .75, muzzle: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
   { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] , texture: { kind: "bristles" } },
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },
@@ -5925,7 +5925,7 @@ function owl3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = false, baby = level === 0, has = f => legend && !S.levelFeatures?.[3] && S.legend.includes(f), m = new Model(), q = { ...(S.levelQ?.[level] || {}) };
   const bob = frame ? .03 : 0, hr = S.sizes.head[level], hy = S.sizes.headY[level] + bob; // its template's size curves (art/genome/templates.js)
   // feet and a short tail
-  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2, fit: "claw" }); }
+  for (const side of [-1, 1]) { const f = (frame ? -1 : 1) * side * .07; m.seg([.05, .2, side * .14], [.08 + f, .05, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16 + f, .03, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13 + f, .04, side * .15], r: .08, group: side > 0 ? 6 : 2, fit: "claw" }); } // (each frame a step: one foot ahead, the other behind, in turn)
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
   // body: an upright egg, pale breast streaked (barred, an adult's; all down, an owlet's)
   m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { rough: q.down ? .03 : undefined, paint: p => q.down ? (spotty(p, 14, .3) ? M.BODY : M.BELLY) : p[0] > .12 && p[1] < hy - hr * .5 ? (q.bars ? (Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY) : (Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
@@ -5966,10 +5966,13 @@ const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
   m.anchors.head ||= { c, r }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size };
 };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
-function finish(m, S, level, st, k, facing) {
+function finish(m, S, level, st, k, facing, ref = null) {
   if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]); // the adult's and legend's heavier build (its template's size curve)
   gearUp(m);
-  const sp = drawForm(m, { height: drawHeight(level, st, k), facing }, S, level);
+  // ref: a model in the walk's first pose, its scale taken for every frame (a cycle's frames at one scale, not each fitted to its own height)
+  let scale;
+  if (ref) { if (S.sizes.build[level] !== 1) beef(ref, S.sizes.build[level]); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
+  const sp = drawForm(m, { height: drawHeight(level, st, k), facing, scale }, S, level);
   if (formMotes() && S.sizes.motes[level]) glowMotes(sp, S.id.length * 131, S.sizes.motes[level]);
   return sp;
 }
@@ -5978,7 +5981,7 @@ const crystals3d = (m, pts) => pts.forEach(([b, h], i) => m.ell(v3.add(b, [0, h 
 
 function hedgehog3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
-  for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) { m.seg([x, .15, z], [x + (z > 0 ? f : -f), .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + (z > 0 ? f : -f), .03, z], r: .065, group: z > 0 ? 6 : 2 }); }
+  for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .08; m.seg([x, .15, z], [x + d, .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); } // (a trot: diagonal pairs ahead, then behind)
   const c = [0, .32, 0], r = [.5, .32, .38];
   m.ell(c, r, M.BODY2, { paint: p => spotty(p, 22, .3) ? M.BODY3 : spotty(p, 19, .12) ? M.BELLY : undefined });
   for (let i = 0; i < 64; i++) { const a = (i * 2.399) % (Math.PI * 2), t = (i / 64) * .9 + .05, d = v3.norm([Math.cos(a) * Math.sin(t * Math.PI * .5) - .25, Math.cos(t * Math.PI * .5) * .9 + .1, Math.sin(a) * Math.sin(t * Math.PI * .5)]); if (d[0] > .55) continue; m.ell(v3.add(Model.surface(c, r, d), v3.mul(d, .08)), [.17, .028, .028], i % 4 ? M.BODY2 : M.BODY3, { dir: v3.add(d, [-.3, .05, 0]), group: 1 }); } // signature: long spines bristling past the outline
@@ -6010,7 +6013,7 @@ function toad3d(S, level, frame, st, facing = "towards") {
 
 function raven3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = false, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
-  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([0, .3, side * .08], [.03, .03 + f, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08, .02 + f, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); m.anchors.feet.push({ c: [.07, .03 + f, side * .08], r: .06, group: side > 0 ? 7 : 2 }); }
+  for (const side of [-1, 1]) { const f = (frame ? -1 : 1) * side * .07; m.seg([0, .3, side * .08], [.03 + f, .03, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08 + f, .02, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); m.anchors.feet.push({ c: [.07 + f, .03, side * .08], r: .06, group: side > 0 ? 7 : 2 }); } // (each frame a step: one foot ahead, the other behind, in turn)
   m.ell([-.55, .42, 0], [.32, .035, .12], M.BODY2, { dir: [-1, -.25, 0], group: 3 });
   m.ell([0, .52 + bob, 0], [.42, .26, .24], M.BODY, { dir: [1, .45, 0] });
   if (!has("wings")) for (const side of [-1, 1]) m.ell([-.1, .55 + bob, side * .2], [.45, .17, .05], M.BODY2, { dir: [-1, -.25, 0], group: side > 0 ? 4 : 2 });
@@ -6025,14 +6028,26 @@ function raven3d(S, level, frame, st, facing = "towards") {
 
 // The heron: a tall wading bird, on long legs kneed backwards, its neck in an S, a dagger beak and a plume off the back of its head.
 // For the area recipes' new species (Ed, 2026-10-06); its genome's levels can lengthen it (body.legs, body.neck, head.beak, head.crest).
+/** The heron's walk: how many frames its cycle bakes (two steps), and how far (model units) each foot reaches ahead of and
+ *  behind its hip; render/view/creatures.ts steps the cycle by the distance a planted foot slides, so its feet stay put. */
+const HERON_GAIT = { frames: 4, reach: .13 };
+
 function heron3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model(), q = { ...(S.levelQ?.[level] || {}) }, bob = frame ? .02 : 0, lk = q.legs ?? 1, nk = q.neck ?? 1.45, bk = q.beak ?? 1;
-  const hip = .52 * lk + .25, by = hip + .18 + bob;
+  const F = HERON_GAIT.frames, f0 = ((frame % F) + F) % F;
+  return finish(heronModel(S, level, f0), S, level, st, 1.25, facing, !FORM && f0 ? heronModel(S, level, 0) : null);
+}
+
+function heronModel(S, level, frame) {
+  const legend = level === 3, m = new Model(), q = { ...(S.levelQ?.[level] || {}) }, lk = q.legs ?? 1, nk = q.neck ?? 1.45, bk = q.beak ?? 1;
+  // Its walk (Ed, 2026-10-06: "The herons don't move their legs when they walk"): a wader's stilted, deliberate gait in
+  // HERON_GAIT.frames frames, the body level: one foot planted, sliding back under it as it passes over (stance), the other
+  // lifted high, knee up, and set down ahead (swing); the neck reaching forward as each foot lands, drawn back as it passes.
+  const F = HERON_GAIT.frames, hip = .52 * lk + .25, by = hip + .18, f0 = frame;
   // legs: hip, knee (bending back), foot; long thin toes splayed forward
-  const legs0 = m.parts.length;
+  const legs0 = m.parts.length, pose = heronLegs(f0 / F, hip);
   for (const side of [-1, 1]) {
-    const f = frame && side > 0 ? .05 : 0, z = side * .07, knee = [-.06, hip * .5 + f, z], foot = [.02 + f * .6, .03 + f * .4, z];
-    m.chain([[.0, hip, z, .024], [...knee, .015], [...foot, .013]], M.ACCENT, { group: side > 0 ? 7 : 2 });
+    const { foot, knee } = pose[side > 0 ? 1 : 0];
+    m.chain([[.0, hip, foot[2], .024], [...knee, .015], [...foot, .013]], M.ACCENT, { group: side > 0 ? 7 : 2 });
     [[.13, -.045], [.15, 0], [.13, .045], [-.07, 0]].forEach(([dx, dz], t) => m.seg(foot, v3.add(foot, [dx, -.01, dz]), .007, .003, M.ACCENT, { group: 20 + (side > 0 ? 4 : 0) + t })); // each toe its own group: not blended into a slab
     m.anchors.feet.push({ c: v3.add(foot, [.04, 0, 0]), r: .05, group: side > 0 ? 7 : 2, fit: "claw" });
   }
@@ -6044,7 +6059,7 @@ function heron3d(S, level, frame, st, facing = "towards") {
   // the neck in an S, pale with a dark streak down its front
   // asleep (a sleeping form's fold, art/legends.js), the neck folds down and back, the head laid on its shoulders, bill along its breast
   const fd = FORM?.fold ?? 0, mix = (u, v) => u.map((x, i) => x + (v[i] - x) * fd);
-  const n0 = [.22, by + .06, 0], n1 = mix([.34, by + .22 * nk, 0], [.3, by + .14, 0]), n2 = mix([.24, by + .42 * nk, 0], [.14, by + .2, 0]), hc = mix([.32, by + .58 * nk, 0], [.08, by + .2, 0]);
+  const nb = (1 - fd) * heronNeck(f0 / F), n0 = [.22, by + .06, 0], n1 = mix([.34 + nb * .5, by + .22 * nk, 0], [.3, by + .14, 0]), n2 = mix([.24 + nb, by + .42 * nk, 0], [.14, by + .2, 0]), hc = mix([.32 + nb * 1.6, by + .58 * nk, 0], [.08, by + .2, 0]); // (the neck reaches forward and back only: its height sets the sprite's scale)
   m.chain([[...n0, .055], [...n1, .038], [...n2, .034], [...hc, .036]], M.BELLY, { paint: p => p[0] > (p[1] < n1[1] ? n0[0] + (p[1] - n0[1]) / (n1[1] - n0[1]) * (n1[0] - n0[0]) : n2[0]) + .03 && spotty(p, 30, .6) ? M.BODY3 : undefined });
   // head, a black plume off its back, a dagger beak
   const hr = .075;
@@ -6053,8 +6068,40 @@ function heron3d(S, level, frame, st, facing = "towards") {
   m.seg(v3.add(hc, [hr * .8, -hr * .15, 0]), v3.add(hc, [hr * (.8 + 3.6 * bk), -hr * (.6 + 1.6 * fd), 0]), hr * .3, hr * .05, M.ACCENT, { group: 1 });
   eyesOn(m, hc, [hr * 1.15, hr * .9, hr * .85], [[.5, .3, .7], [.5, .3, -.7]], hr * .2, legend ? M.MAGIC2 : M.EYE);
   m.anchors.neck = { c: v3.lerp(n0, n1, .5), r: .06, dir: v3.norm(v3.sub(n1, n0)) };
-  return finish(m, S, level, st, 1.25, facing);
+  // Every walk frame in the same box (the sprite stands on its bottom middle, so a frame cropped narrower would shift the bird):
+  // invisible marks (hollows in a group of their own, carving nothing) where the other frames' feet, head and bill reach.
+  // (each mark the very shape of a part in another frame, so its bounds are the part's own: legs, toes, neck, head, crest, bill)
+  if (!FORM) for (let g = 0; g < F; g++) {
+    if (g === f0) continue;
+    const H = { cut: true, group: 98 };
+    const l0 = m.parts.length;
+    for (const { foot, knee } of heronLegs(g / F, hip)) {
+      m.chain([[.0, hip, foot[2], .024], [...knee, .015], [...foot, .013]], M.ACCENT, H);
+      for (const [dx, dz] of [[.13, -.045], [.15, 0], [.13, .045], [-.07, 0]]) m.seg(foot, v3.add(foot, [dx, -.01, dz]), .007, .003, M.ACCENT, H);
+    }
+    for (let i = l0; i < m.parts.length; i++) m.parts[i].lean = true; // (as the legs themselves)
+    const gb = heronNeck(g / F), g1 = [.34 + gb * .5, by + .22 * nk, 0], g2 = [.24 + gb, by + .42 * nk, 0], gh = [.32 + gb * 1.6, by + .58 * nk, 0];
+    m.chain([[...n0, .055], [...g1, .038], [...g2, .034], [...gh, .036]], M.BELLY, H);
+    m.ell(gh, [hr * 1.15, hr * .9, hr * .85], M.BELLY, H);
+    if (ck) m.chain([[gh[0] - hr * .6, gh[1] + hr * .4, 0, .016], [gh[0] - hr * 2.2 * ck, gh[1] + hr * .7, 0, .01], [gh[0] - hr * 3.6 * ck, gh[1] + hr * .2, 0, .004]], M.BODY3, H);
+    m.seg(v3.add(gh, [hr * .8, -hr * .15, 0]), v3.add(gh, [hr * (.8 + 3.6 * bk), -hr * .6, 0]), hr * .3, hr * .05, M.ACCENT, H);
+  }
+  return m;
 }
+
+/** The heron's legs at phase ph (0 to 1 over its two steps): each foot planted and sliding back under the hip (stance) or
+ *  lifted high, knee up, and swung ahead to land (swing), half a cycle apart. */
+function heronLegs(ph, hip) {
+  const A = HERON_GAIT.reach;
+  return [-1, 1].map(side => {
+    const p = (ph + (side > 0 ? .5 : 0)) % 1, stance = p < .5, u = stance ? p / .5 : (p - .5) / .5;
+    const fx = stance ? A - 2 * A * u : -A + 2 * A * (u * u * (3 - 2 * u)), lift = stance ? 0 : Math.sin(u * Math.PI) * hip * .42;
+    const z = side * .07, foot = [.02 + fx, .03 + lift, z], knee = [foot[0] / 2 - .06 + lift * .55, (hip + foot[1]) / 2 + lift * .3, z];
+    return { foot, knee };
+  });
+}
+/** How far forward its neck reaches at phase ph: furthest as each foot lands, drawn back as it passes. */
+const heronNeck = ph => Math.cos(ph * Math.PI * 4) * .035;
 
 function bat3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.5 : 1;
@@ -6080,12 +6127,12 @@ function bat3d(S, level, frame, st, facing = "towards") {
 function mole3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
   m.seg([-.58, .16, 0], [-.7, .1, 0], .04, .02, M.SKIN, { group: 3 });
-  for (const side of [-1, 1]) { m.ell([-.3, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [-.3, .05, side * .2], r: .07, group: side > 0 ? 6 : 2 }); }
-  m.ell([0, .26, 0], [.6, .25, .33], M.BODY, { paint: p => p[1] > .4 ? M.BODY2 : undefined });
+  for (const side of [-1, 1]) { const d = (frame ? 1 : -1) * side * .06; m.ell([-.3 + d, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [-.3 + d, .05, side * .2], r: .07, group: side > 0 ? 6 : 2 }); } // (its back feet stepping, against its hands)
+  m.ell([0, .26, 0], [.6, .25, .33], M.BODY, { paint: p => p[1] > .4 ? M.BODY2 : undefined }); // signature: a long low barrel with huge spade hands
   m.ell([.64, .22, 0], [.26, .07, .07], M.SKIN, { dir: [1, -.15, 0], group: 1 });
   m.ell([.89, .18, 0], [.04, .05, .06], M.NOSE, { group: 1 });
   for (const side of [-1, 1]) { // spade hands, turned out, clawed
-    const h = [.38, .12 - (side > 0 ? f : 0), side * .42];
+    const h = [.38 + (frame ? -1 : 1) * side * .06, .12 - (side > 0 ? f : 0), side * .42]; // (its spade hands paddling, one ahead, then the other)
     m.ell(h, [.19, .05, .17], M.SKIN, { group: side > 0 ? 7 : 2, axes: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] });
     for (let k = 0; k < 4; k++) m.ell(v3.add(h, [.2, -.01, side * (k - 1.5) * .07]), [.07, .02, .02], M.ACCENT, { group: side > 0 ? 7 : 2 });
   }
@@ -6341,6 +6388,11 @@ const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "
 //   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true;
 //   face: "neutral" | "angry" | "happy" | "dazed" (genome/expressions.js, drawn as part of the face).
 // Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
+/** A species' walk as baked (render/artBuild.ts, render/view/creatures.ts): frames in its cycle (2 unless it has its own), and
+ *  step, how far (a share of its sprite's width) it moves between frames so a planted foot stays put on the ground. */
+const GAITS = { heron: { frames: HERON_GAIT.frames, step: 0.08 } }; // (the heron's planted foot slides about 8% of its width a frame)
+function walkGait(id) { return GAITS[id] ?? { frames: 2, step: 0.3 }; }
+
 function critter(spId, level, frame, st, facing = "towards", gear = null) {
   if (facing === "away" && gear?.face) gear = { ...gear, face: null }; // (its face can't be seen from behind)
   const S = (typeof spId === "object" ? spId : SPECIES_BY_ID[spId]) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
@@ -10578,7 +10630,10 @@ function rigPiece(m, labels, pivot, s, tex = null) {
 function rigDisc(r, mat, s, paint, rod = false) {
   const m = new Model(); m.ell([0, 0, 0], [r / s, r / s, r / s], mat, { paint });
   const res = render(m, { scale: s }), [px, py] = res.project([0, 0, 0]);
-  if (rod) { const n = res.sp.n; for (let i = 0; i < n.length; i += 3) { const x = n[i], z = n[i + 2], l = Math.hypot(x, z); if (l > 1e-6) { n[i] = x / l; n[i + 1] = 0; n[i + 2] = z / l; } } }
+  // (a rod's normal by its column alone, as a cylinder's: the sphere's own, flattened, swung sideways at each disc's top and
+  // bottom, so a leg of overlapping discs shaded in dark bands at every disc: Ed's banded legs in the twiggy forest), jittered a
+  // little pixel by pixel so the shading's steps break up like a coat rather than run down the leg in lines
+  if (rod) { const { n, m: mk, w } = res.sp; for (let i = 0; i < mk.length; i++) if (mk[i]) { const h = Math.sin((i % w) * 12.9898 + ((i / w) | 0) * 78.233) * 43758.5453, x = Math.max(-1, Math.min(1, ((i % w) + 0.5 - px) / (r * (res.sp.sx ?? 1)) + (h - Math.floor(h) - 0.5) * 0.24)), j = i * 3; n[j] = x; n[j + 1] = 0; n[j + 2] = Math.sqrt(1 - x * x) * (n[j + 2] < 0 ? -1 : 1); } }
   return rigCropped(res.sp, px, py);
 }
 
