@@ -2937,6 +2937,31 @@
           ],
           "additionalProperties": false
         },
+        "byRoute": {
+          "type": "object",
+          "properties": {
+            "per": {
+              "type": "number",
+              "minimum": 0
+            },
+            "table": {
+              "type": "array"
+            },
+            "weights": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "per",
+            "table",
+            "weights"
+          ],
+          "additionalProperties": false
+        },
         "growth": {
           "type": "object",
           "properties": {
@@ -2970,6 +2995,7 @@
       },
       "required": [
         "start",
+        "byRoute",
         "growth"
       ],
       "additionalProperties": false

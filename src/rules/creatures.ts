@@ -8,7 +8,8 @@ import { watchStep } from "./wildWatch";
 import { coarseTurn, inFull, type LodCounts } from "./simLod";
 import { earlyQuest, questFor, type Quest } from "./quest";
 import { rng } from "./random";
-import { countScale, startCount } from "./growth";
+import { countScale, growthLevel, routeExtra, routeIndex, startCount } from "./growth";
+import { routeOf } from "./party";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import { facingAway } from "./witch";
@@ -300,7 +301,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
   // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
-  const [hx, hy] = map.centreCell, early = earlyQuest(map);
+  const [hx, hy] = map.centreCell, early = earlyQuest(map), route = routeIndex(routeOf(map).order);
   for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
@@ -311,6 +312,10 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
       for (let i = 0; i < startCount(pop.young, k); i++) make(1);
       for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
+      // And, from the start, more by its place on the waves' route (Ed, 2026-10-07: no growth on a clock; the later its
+      // wave, the more), each at a level by byRoute.weights.
+      const R = map.tuning.population.byRoute, at = route.get(`${cx},${cy}`) ?? route.size + 1;
+      for (let i = 0, n = routeExtra(at, R, k); i < n; i++) make(growthLevel(map.seed, cell, at, i, R.weights));
     }
     if (map.hasLegend && !map.hasLegend(cx, cy)) continue; // (legends in legends.share of the areas: Ed, 2026-10-06)
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));

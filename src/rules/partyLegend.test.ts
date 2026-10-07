@@ -15,7 +15,10 @@ const E = TUNING.legends;
 function game(t = TUNING): { g: Game; L: Creature } {
   const g = newGame(123, t);
   g.clock.paused = false; g.party.spellAt = undefined;
+  g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
   const L = g.creatures.find(c => c.boss)!;
+  for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - L.x, c.z - L.z) < 60) c.gone = true; // (no wild crowd round it to jostle her)
+  g.byArea = null;
   g.witch = { ...g.witch, x: L.x + 4, z: L.z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
   return { g, L };
 }

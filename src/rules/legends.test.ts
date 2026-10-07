@@ -18,6 +18,7 @@ const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) =
 function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: Creature | null } {
   const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;
+  g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
   const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
   const site = g.map.siteOf(L.cell[0], L.cell[1]), d = Math.hypot(site.x - L.x, site.z - L.z) || 1;
   g.witch = { ...g.witch, seated: false, x: L.x + ((site.x - L.x) / d) * 4, z: L.z + ((site.z - L.z) / d) * 4, mode: "ground", lift: 0 };

@@ -52,6 +52,20 @@ export const startCount = (base: number, scale: number) => (base > 0 ? Math.max(
  *  wave to wave (a loner's half a creature a wave is one every other wave). */
 export const grownAt = (wave: number, perWave: number, scale: number) => { const k = perWave * scale; return Math.floor(wave * k + 1e-9) - Math.floor((wave - 1) * k + 1e-9); };
 
+/** How many more than population.start an area holds from the start (Ed, 2026-10-07: "pre-populate every area by its
+ *  route position"; no growth on a clock): by its place on the waves' route, `index` (1 the first wave's area, 2 the
+ *  second's...), table[index - 1] if the table is given (its last entry for the areas past its end), else per × index;
+ *  times the area's count scale, rounded down. With per 0.5 it is what an area woken at that wave grew to before. */
+export function routeExtra(index: number, R: { per: number; table: readonly number[] }, scale: number): number {
+  const base = R.table.length ? R.table[Math.max(0, Math.min(index, R.table.length) - 1)] : R.per * index;
+  return Math.max(0, Math.floor(Math.max(0, base) * scale + 1e-9));
+}
+
+/** Each area's place on the waves' route (1 the first wave's area; rules/party.ts routeOf), by area key. */
+export function routeIndex(order: readonly string[]): Map<string, number> {
+  return new Map(order.map((k, i) => [k, i + 1]));
+}
+
 export function growWave(s: GrowthState, map: ForestMap, wave: number, wild: (key: string, cell: [number, number]) => boolean): void {
   const G = map.tuning.population.growth;
   if (wave <= s.wave) return;

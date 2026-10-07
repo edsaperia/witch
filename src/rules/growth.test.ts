@@ -60,22 +60,14 @@ describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () =>
     expect(s.pending.has(key)).toBe(false);
   }, 30000);
 
-  it("in a game: a woken area marches with what it grew, and areas far off stay counts", () => {
+  it("in a game: nothing grows any more (Ed, 2026-10-07: the areas are peopled from the start, rules/clear.test.ts)", () => {
     const g = newGame(123, T1), start = g.creatures.length;
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
-    let woke: string | null = null;
-    for (let wave = 1; wave <= 3; wave++) {
-      woke = cellKey(g.party.next[0]);
-      stepGame(g, { ...still, nextWave: true }, 1 / 60);
-      stepGame(g, still, 1 / 60);
-    }
-    expect(g.growth.grown).toBeGreaterThan((g.map.cells.length - 10) * 3); // (every wild area, a creature a wave)
-    expect(g.creatures.length - start).toBeLessThan(g.growth.grown); // most still counts
-    const mine = g.creatures.filter(c => cellKey(c.cell) === woke);
-    expect(mine.length).toBe(T1.population.start.babies + T1.population.start.young + T1.population.start.adults + 3 + (mine.some(c => c.boss) ? 1 : 0) + (mine.some(c => c.circle) ? 1 : 0)); // (and its legend and its clearing's baby)
-    for (const c of mine) if (c.level > 0 && !c.boss) expect(c.siege).toBe(woke); // they march on its new soundsystem (its legend sleeps on)
-    expect(g.growth.pending.has(woke!)).toBe(false);
+    for (let wave = 1; wave <= 3; wave++) { stepGame(g, { ...still, nextWave: true }, 1 / 60); stepGame(g, still, 1 / 60); }
+    expect(g.party.wave).toBe(3);
+    expect(g.growth.grown).toBe(0);
+    expect(g.creatures.length).toBe(start);
     expect(simRadius(g)).toBeGreaterThan(T1.haze.far);
   }, 60000);
 });
