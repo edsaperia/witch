@@ -39,22 +39,26 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
     for (const c of g.creatures) if (cellKey(c.cell) === key && (c.level === 0 || c.boss || c.circle)) expect(c.hunting).toBeUndefined();
   }, 120000);
 
-  it("they keep after her 200 m and more beyond their area, never giving up or going home", () => {
-    const { g, natives } = landed();
+  it("she leaves their area: they lose interest and go home, as before (Ed: 'as they did before')", () => {
+    const { g, key, natives } = landed();
     run(g, (W.on ? W.time : 0) + 1);
     const hunters = natives().filter(c => c.hunting === 0);
     expect(hunters.length).toBeGreaterThan(0);
     const d0 = g.map.dancefloor, away = { x: g.witch.x - d0.x, z: g.witch.z - d0.z }, n = Math.hypot(away.x, away.z) || 1;
     // she walks 220 m straight on, away from home (and out of the area), then stands
     const start = { x: g.witch.x, z: g.witch.z };
-    run(g, 20, () => {
-      const k = Math.min(1, g.clock.time > 0 ? 1 : 0), w = g.witch, gone = Math.hypot(w.x - start.x, w.z - start.z);
-      if (gone < 220 * k) g.witch = { ...w, x: w.x + (away.x / n) * 0.2, z: w.z + (away.z / n) * 0.2 };
-      for (const c of hunters) if (!c.gone && c.state !== "happy") { expect(c.retreat, `${c.id} gave up`).toBeFalsy(); expect(c.hunting).toBe(0); }
+    let left = false, wasOut = false;
+    run(g, 30, () => {
+      // out of their area since the step before, no creature of it hunts her
+      if (wasOut) for (const c of hunters) expect(c.hunting, `${c.id} still hunting`).toBeUndefined();
+      const w = g.witch;
+      if (Math.hypot(w.x - start.x, w.z - start.z) < 220) g.witch = { ...w, x: w.x + (away.x / n) * 0.2, z: w.z + (away.z / n) * 0.2 };
+      wasOut = cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key;
+      left ||= wasOut;
     });
-    expect(Math.hypot(g.witch.x - start.x, g.witch.z - start.z)).toBeGreaterThan(200);
-    const near = hunters.filter(c => !c.gone && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 40);
-    expect(near.length, "they've followed her").toBeGreaterThan(0);
+    expect(left, "she left the area").toBe(true);
+    const near = hunters.filter(c => !c.gone && c.state !== "happy" && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 40);
+    expect(near.length, "they've turned back").toBe(0);
   }, 180000);
 
   it("all of the area's own invited, its stone transforms", () => {
