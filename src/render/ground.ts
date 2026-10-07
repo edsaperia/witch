@@ -654,6 +654,12 @@ export class Ground {
     this.filled[j * this.tilesX + i] = 1;
   }
 
+  /** The area texture and its extent, for other layers that read the areas (render/mistCanopy.ts). */
+  get areaUniforms(): { uAreas: { value: THREE.Texture }; uExtent: { value: THREE.Vector4 } } {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
+    return { uAreas: u.uAreas as { value: THREE.Texture }, uExtent: u.uExtent as { value: THREE.Vector4 } };
+  }
+
   dispose(): void { this.texture.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
 }
 

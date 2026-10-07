@@ -1682,6 +1682,27 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `mistCanopy`
+
+Mist banks over the open areas (Ed, 2026-10-07: "In areas with few tall objects, or objects without canopies like standing stones or ravine, when flying over in treetop mode the area looks very bare, and you can see too much of what's happening on the ground... have these areas have mist clouds that act as their 'tall objects', like a canopy"; render/mistCanopy.ts). Each area type's canopy cover from above is measured (its trees a square metre times the crown they carry on average; stones and logs carry none): under cover, it gets banks, full at half of it and less. Ed, the same morning: "The rocky area mist can also literally be the tall objects for those areas": in those areas a clump of mist stands at canopy height on each of their big objects' places (the forest's own, the slots a crowned tree fills in a wooded area), breathing slowly; clumps: how thick (0 to 1); clumpSize: how wide (m); reach: how far round her they're placed (m). density: the thinner bank between them over the treetops (0 to 1); ground: on the ground, low wisps instead; low, high: their height (m) on the ground and over the treetops, eased as she rises. And: "more mist patches scattered across the map, perhaps they move around with the wind, to make the forest generally spookier and harder to parse in treetop view, and make the rocky areas stand out less": patches over the whole map, the treetops only (the ground view stays clear); patches: how much of the sky they cover (0 to 1); patchSize: how big (m); drift: how fast they drift, times the wind's speed. part, partAction: how far round her and round a soundsystem under attack (m) all of it parts.
+
+| knob | type | range |
+|---|---|---|
+| `mistCanopy.on` | boolean |  |
+| `mistCanopy.cover` | number | 0 to … |
+| `mistCanopy.density` | number | 0 to … |
+| `mistCanopy.ground` | number | 0 to … |
+| `mistCanopy.low` | number | 0 to … |
+| `mistCanopy.high` | number | 0 to … |
+| `mistCanopy.part` | number | 0 to … |
+| `mistCanopy.partAction` | number | 0 to … |
+| `mistCanopy.clumps` | number | 0 to … |
+| `mistCanopy.clumpSize` | number | 0 to … |
+| `mistCanopy.patches` | number | 0 to … |
+| `mistCanopy.patchSize` | number | 0 to … |
+| `mistCanopy.drift` | number | 0 to … |
+| `mistCanopy.reach` | number | 0 to … |
+
 ### `moonbeams`, `looks`, `tone`, `bloom`, `tiltShift`
 
 How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 is off (Ed, v108: they read as stripes over a dense canopy). ?moonbeams=on brings them back at 1.
