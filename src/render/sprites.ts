@@ -69,6 +69,9 @@ export const SPRITE_UNIFORMS = {
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
+  /** The trees watching her (Ed, 2026-10-07): where she was a beat ago (x, z), how near (m) a leafy thing must stand to lean
+   *  her way, and how far its tip leans (m). */
+  uWatch: { value: new THREE.Vector4(0, 0, 9, 0) },
 };
 
 const VERT = /* glsl */ `
@@ -94,6 +97,7 @@ varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 uniform vec4 uWind;
+uniform vec4 uWatch;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
@@ -130,6 +134,16 @@ void main() {
     float gust = windGust(q);
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
     vSwayM = uWind.x * -iFlags.w * (gust * 0.9 + flutter) * min(1.0, iSize.y / 8.0);
+  }
+  // The trees watching her (Ed, 2026-10-07, the wild forest eerier: \"canopy tips within a few metres of her sway a beat late
+  // and slightly towards her, as if the trees lean in to watch\"): a leafy thing near where she was a moment ago (uWatch,
+  // eased behind her) leans its tip that way, across the screen, none at its foot; a nudge, no new objects.
+  if (uWatch.w > 0.0 && iFlags.w != 0.0) {
+    vec2 d = uWatch.xy - iPos.xz;
+    float r = length(d), k = (1.0 - smoothstep(uWatch.z * 0.4, uWatch.z, r)) * smoothstep(0.3, 1.2, r);
+    float lean = uWatch.w * k * dot(d / max(r, 1e-3), normalize(uRight.xz + vec2(1e-6, 0.0))) * abs(iFlags.w) * min(1.0, iSize.y / 8.0);
+    if (iFlags.w > 0.0) w += uRight * (lean * uv.y * uv.y);
+    else vSwayM += lean;
   }
   vFrame = vec4(min(iUv.x, iUv.z), min(iUv.y, iUv.w), max(iUv.x, iUv.z), max(iUv.y, iUv.w));
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
