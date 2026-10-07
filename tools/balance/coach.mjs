@@ -81,13 +81,13 @@ export const SPACE = [
   ["fireFrac", 0.6, 1], ["closeFrac", 0.4, 0.95], ["recruitRange", 300, 1500], ["kinKeep", 1, 3, true],
   ["feedMin", 1, 8, true], ["feedRange", 150, 900], ["feedWait", 5, 45],
   // (the champion's own tactics' numbers)
-  ["siegeNear", 40, 250], ["siegeMin", 0, 60], ["concede", 0, 6], ["siegeStand", 0, 30], ["homeWeight", 0.5, 4], ["strandFar", 40, 200], ["lead", 0, 1.5],
+  ["siegeNear", 40, 250], ["siegeMin", 0, 60], ["concede", 0, 6], ["siegeStand", 0, 30], ["homeWeight", 0.5, 4], ["strandFar", 40, 200], ["lead", 0, 1.5], ["blinkLead", 0.1, 0.8],
 ];
 const OPT_KEYS = new Set(["guards", "keep", "questMax", "relicMax"]);
-const START = { guards: 3, keep: 2, questMax: 0, relicMax: 0, defendLead: 50, defendHold: 60, healAt: 1, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, recruitRange: 900, kinKeep: 1, feedMin: 3, feedRange: 500, feedWait: 20, siegeNear: 120, siegeMin: 10, concede: 1.5, siegeStand: 8, homeWeight: 1.5, strandFar: 80, lead: 0.8 };
+const START = { guards: 3, keep: 2, questMax: 0, relicMax: 0, defendLead: 50, defendHold: 60, healAt: 1, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, recruitRange: 900, kinKeep: 1, feedMin: 3, feedRange: 500, feedWait: 20, siegeNear: 120, siegeMin: 10, concede: 1.5, siegeStand: 8, homeWeight: 1.5, strandFar: 80, lead: 0.8, blinkLead: 0.3 };
 /** A point in the search space as the bot's options. */
 export function optsOf(x) {
-  const o = { quests: true, relics: true, relicPolicy: x.relicPolicy ?? "front", feed: x.feedMin < 8, siege: x.siege ?? true, regroup: x.regroup ?? true, knobs: {} };
+  const o = { quests: true, relics: true, relicPolicy: x.relicPolicy ?? "front", feed: x.feedMin < 8, siege: x.siege ?? true, regroup: x.regroup ?? true, blink: x.blink ?? true, knobs: {} };
   for (const [k] of SPACE) (OPT_KEYS.has(k) ? o : o.knobs)[k] = x[k];
   return o;
 }

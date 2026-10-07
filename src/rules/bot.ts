@@ -47,6 +47,9 @@ export interface BotOptions {
   siege?: boolean;
   /** ...and picks up guards left by a fallen soundsystem, to bring them where they're needed. */
   regroup?: boolean;
+  /** Blinks sideways out of a charge's line, a pounce's landing or a blow about to land, and always away (the
+   *  dodge goes toward the cursor: the others' kiting blink goes toward what she's aiming at). */
+  blink?: boolean;
 }
 
 /** The careful bots' numbers: the skilled bot plays these; the champion plays the ones its search found. */
@@ -89,15 +92,17 @@ export interface BotKnobs {
   strandFar: number;
   /** Leads a moving target by this share of where it'll be when the 💌 arrives (0: aims where it is). */
   lead: number;
+  /** Blinks when a blow aimed at her lands within this (s). */
+  blinkLead: number;
 }
-export const BOT_KNOBS: BotKnobs = { defendLead: 50, defendHold: 60, healAt: 1, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, recruitRange: 900, kinKeep: 1, feedMin: 3, feedRange: 500, feedWait: 20, siegeNear: 120, siegeMin: 10, siegeStand: 8, homeWeight: 1.5, strandFar: 80, lead: 0, concede: 1.5 };
+export const BOT_KNOBS: BotKnobs = { defendLead: 50, defendHold: 60, healAt: 1, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, recruitRange: 900, kinKeep: 1, feedMin: 3, feedRange: 500, feedWait: 20, siegeNear: 120, siegeMin: 10, siegeStand: 8, homeWeight: 1.5, strandFar: 80, lead: 0, concede: 1.5, blinkLead: 0.3 };
 
 /** The bot game's choices (Ed, 2026-10-06, watching it: "It's notable that it doesn't seem to get any legend buffs or
  *  feed creatures any berries"): the skilled one does a few quests, brings relics to the legends by the coming waves,
  *  and leads her young to berries, as a good player would. The balance tool's runs keep each to its flag. */
 export const BOT_GAME: Record<BotKind, BotOptions> = {
   skilled: { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true }, // (two relics: all six took her first ten minutes, and halved her army)
-  champion: { feed: true, siege: true, regroup: true, knobs: { lead: 0.8 } }, // (no quest or relic trips: they cost her army in the first ten minutes; the search's numbers go here) // (the champion: the skilled bot's play with the numbers and tactics its search found; tools/balance/coach.mjs)
+  champion: { feed: true, siege: true, regroup: true, blink: true, knobs: { lead: 0.8 } }, // (no quest or relic trips: they cost her army in the first ten minutes; the search's numbers go here) // (the champion: the skilled bot's play with the numbers and tactics its search found; tools/balance/coach.mjs)
   crude: {}, novice: {}, idle: {}, hover: {},
 };
 
@@ -224,6 +229,25 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       const dt = was ? time - was.at : 0, vx = dt > 0 && dt < 0.5 ? (c.x - was!.x) / dt : 0, vz = dt > 0 && dt < 0.5 ? (c.z - was!.z) / dt : 0;
       return [c.x + vx * k - b.x, c.z + vz * k - b.z];
     };
+    /** The way out of a blow about to land on her: sideways off a charge's line, away from a pounce's landing, or
+     *  across a winding-up attacker's line; null if nothing's about to land. */
+    function threatDodge(): { x: number; z: number } | null {
+      for (const c of g.creatures) {
+        if (c.gone || c.leashed || c.level === 0 || c.state === "happy" || c.fleeUntil !== undefined || c.dazed) continue;
+        const rx = b.x - c.x, rz = b.z - c.z, d = Math.hypot(rx, rz);
+        if (d > 25) continue;
+        const ch = c.charge;
+        if (ch && !ch.struck && !ch.braking) {
+          const l = Math.hypot(ch.dx, ch.dz) || 1, ux = ch.dx / l, uz = ch.dz / l, along = rx * ux + rz * uz, side = -rx * uz + rz * ux;
+          if (along > 0 && Math.abs(side) < 3) { const s = side >= 0 ? 1 : -1; return { x: -uz * s, z: ux * s }; }
+          continue;
+        }
+        if (c.leap && Math.hypot(c.leap.tx - b.x, c.leap.tz - b.z) < 3.5) { const lx = b.x - c.leap.tx, lz = b.z - c.leap.tz, l = Math.hypot(lx, lz); return l > 0.3 ? { x: lx / l, z: lz / l } : { x: -rz / (d || 1), z: rx / (d || 1) }; }
+        const f = c.fight;
+        if (f?.target?.kind === "witch" && f.windupUntil > time && f.windupUntil - time < K.blinkLead && d < 12) { const s = (c.id & 1) ? 1 : -1; return { x: (-rz / (d || 1)) * s, z: (rx / (d || 1)) * s }; }
+      }
+      return null;
+    }
     let front = null as ReturnType<typeof siegeFront>, stray = null as ReturnType<typeof strandedGuard>;
     let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false, place = false;
     /** Toward (x, z): over the treetops when far, landing there if `land`; true once on the ground within `within` m. */
@@ -378,6 +402,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     // The novice (Ed, 2026-10-06: "most human players are much worse than the skilled bot (or even the crude bot)"):
     // the crude one's play, but firing only every other second, its aim wobbling a metre, and never blinking.
     if (kind === "novice") { fire = fire && Math.floor(time) % 2 === 0; aimX += Math.sin(time * 2.3); aimZ += Math.cos(time * 1.7); dash = false; }
+    if (o.blink && careful && b.mode === "ground" && !w.ko) {
+      const dd = threatDodge();
+      if (dd) { dash = true; mx = dd.x; mz = dd.z; aimX = dd.x * 10; aimZ = dd.z * 10; fire = false; }
+      else if (dash) { const l = Math.hypot(mx, mz) || 1; aimX = (mx / l) * 10; aimZ = (mz / l) * 10; fire = false; } // (a kiting blink: away, the way she's going)
+    }
     return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, castParty: g.party.spellAt === null };
   }
 }
