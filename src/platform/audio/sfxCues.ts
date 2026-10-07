@@ -13,7 +13,7 @@
 //  - Attacks are speech (Ed, 2026-10-05): an attacker's burst of babble in its own voice, by mood;
 //    a legend winding up, one long building swell of its whale song; a lob landing, a thud (a legend's, a boom).
 //  - A soundsystem lost; the boot-up over (things stirring); the witch hurt and knocked down (the sad trumpet as her hat
-//    drops, a candle snuffed as each sigil comes off).
+//    drops, a candle snuffed as each one on her desk goes out through her wait).
 //  - Features still open, each read loosely until it lands: the witch knocked back and stunned
 //    (#108), a legend's long charge (#114), a relic bottle found (#99).
 //  - Home's meadow.
@@ -30,6 +30,7 @@ import { beatAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { partyOverEase } from "../../rules/music";
+import { candleCount, candleMelt } from "../../rules/knockout";
 import { PARTY_CAST } from "../../rules/party";
 import { djGesture } from "../../../art/witch.js";
 
@@ -64,6 +65,9 @@ export class SfxCues {
   /** The home speakers on, and the areas with a soundsystem, last frame (each new one powers up). */
   private speakersOn = -1;
   private stonesOn = new Set<number>();
+  /** Her knockout's candles out so far (its ko.at, and how many). */
+  private candlesOf: number | null = null;
+  private candlesOut = 0;
   /** The last half-beat heard at her decks (decks). */
   private deckHalf = -1;
   private soundsystemsUp = new Set<string>();
@@ -238,11 +242,17 @@ export class SfxCues {
     const hp = me.health.hp, down = !!me.ko;
     if (down && !this.down && this.primed) { this.sfx.knockdown(); this.duck(O.duck, O.duckTime * 2); }
     // the sad trumpet as her hat drops (Ed, 2026-10-07; hotel's knockout timeline), the music dipped under it; no hat to drop,
-    // its shorter "wah-waaah" (sadTrumpet.bare); and a candle snuffed as each sigil comes off her stack
+    // its shorter "wah-waaah" (sadTrumpet.bare); and a candle snuffed as each one on her DJ desk goes out
     if (this.primed) {
       const T = g.tuning.sfx.sadTrumpet, ev = g.koEvents, hat = ev.some(e => e.kind === "hatDropped");
       if (hat || (T.bare > 0 && ev.some(e => e.kind === "down"))) { this.sfx.sadTrumpet(hat); this.duck(T.duck, hat ? 3.6 : 2); }
-      for (const e of ev) if (e.kind === "released") this.sfx.snuff();
+      // (one as each candle on her desk gutters out through her wait behind the decks: rules/knockout.ts candleMelt reaching 1,
+      // one after another from ko.inAt to ko.backAt, on her clock)
+      const ko = me.ko, n = candleCount(ko);
+      let out = 0;
+      for (let i = 0; i < n; i++) if (candleMelt(ko, g.herTime, i) >= 1) out++;
+      if (ko && ko.at === this.candlesOf) { for (let i = this.candlesOut; i < out; i++) this.sfx.snuff((i / Math.max(1, n - 1) - 0.5) * 0.6); }
+      this.candlesOf = ko ? ko.at : null; this.candlesOut = out;
     }
     else if (this.primed && hp < this.hp && !down) { this.sfx.ouch(1 - Math.max(0, hp - 1) / Math.max(1, g.tuning.witchHealth.hits - 1)); this.duck(O.duck, O.duckTime); }
     this.hp = hp; this.down = down;

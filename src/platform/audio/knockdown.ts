@@ -4,8 +4,8 @@
 //               each "wah" a plunger mute opening and closing (a lowpass swept up and back), the last one wobbling (the
 //               mute and the pitch shaking) and sagging at its end. Played as her hat drops (hotel's knockout timeline,
 //               "hatDropped"); with no hat to drop, a shorter "wah-waaah" (sfx.sadTrumpet.bare: DECISION FOR ED).
-//   snuff       a candle guttering out as each sigil comes off her stack (art builder 4's candles on the DJ desk; the
-//               knockout's "released"): a tiny puff of breath, falling, and nothing else. Subtle.
+//   snuff       a candle guttering out on her DJ desk (art builder 4's candles), one after another through her wait behind
+//               the decks (hotel's rules/knockout.ts candleMelt reaching 1): a tiny puff of breath, falling. Subtle.
 // Knobs: the tuning's sfx.sadTrumpet and sfx.snuff. Cued by sfxCues.ts (hurt).
 import type { SfxKit } from "./sfxKit";
 import { mtof } from "./dsp";
