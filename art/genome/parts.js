@@ -85,7 +85,10 @@ function rigPiece(m, labels, pivot, s, tex = null) {
 function rigDisc(r, mat, s, paint, rod = false) {
   const m = new Model(); m.ell([0, 0, 0], [r / s, r / s, r / s], mat, { paint });
   const res = render(m, { scale: s }), [px, py] = res.project([0, 0, 0]);
-  if (rod) { const n = res.sp.n; for (let i = 0; i < n.length; i += 3) { const x = n[i], z = n[i + 2], l = Math.hypot(x, z); if (l > 1e-6) { n[i] = x / l; n[i + 1] = 0; n[i + 2] = z / l; } } }
+  // (a rod's normal by its column alone, as a cylinder's: the sphere's own, flattened, swung sideways at each disc's top and
+  // bottom, so a leg of overlapping discs shaded in dark bands at every disc: Ed's banded legs in the twiggy forest), jittered a
+  // little pixel by pixel so the shading's steps break up like a coat rather than run down the leg in lines
+  if (rod) { const { n, m: mk, w } = res.sp; for (let i = 0; i < mk.length; i++) if (mk[i]) { const h = Math.sin((i % w) * 12.9898 + ((i / w) | 0) * 78.233) * 43758.5453, x = Math.max(-1, Math.min(1, ((i % w) + 0.5 - px) / (r * (res.sp.sx ?? 1)) + (h - Math.floor(h) - 0.5) * 0.24)), j = i * 3; n[j] = x; n[j + 1] = 0; n[j + 2] = Math.sqrt(1 - x * x) * (n[j + 2] < 0 ? -1 : 1); } }
   return rigCropped(res.sp, px, py);
 }
 
