@@ -63,3 +63,28 @@ The flights' frame work is nearly all `draw` (the software renderer); the bench 
   - #381 ley-curvature, #406 balance: "buffs" in the rules only, 0 pixels: the tuning-in-buffs false positive (fixed since by #420 bench-buffs).
   - #407 sea-glints: a new camera field (`seaBehind`, 0 inland) and its knob; 0 pixels.
 - Journey ok: no errors, every moment reached, draw calls 49–89, `dropped` 0.
+
+## Morning: full bench 818c7aec → 31d1905c (#435), 06:11–07:25
+
+The tip benched is 11 merges before the frozen ship tip 0ab00110 (#448): #437–#449 aren't in these numbers. At 31d1905c: tests (105 files, 780), typecheck, build green. One run each, same machine.
+
+**Rules** (headless, wave 30, 1800 steps, ~2,030 creatures), step ms, flat within noise:
+
+| seed | median | p99 | worst |
+|---|---|---|---|
+| 123 | 3.61 → 3.85 | 9.29 → 8.95 | 15.3 → 16.5 |
+| 165272 | 4.30 → 4.26 | 8.64 → 10.04 | 15.6 → 16.3 |
+
+**Frames** (600 at 1/60 s, frame work ms; >95% is the software renderer's `draw`, of a richer scene, so it says nothing of a real GPU):
+
+| flight | median | p99 | worst |
+|---|---|---|---|
+| ground, 10 s | 434 → 522 | 5671 → 7025 | 21752 → 18752 |
+| treetop boost, 10 s | 1150 → 1138 | 9586 → 11014 | 20866 → 22991 |
+
+**The game's own CPU work** (everything but `draw`):
+
+- Treetop boost: the view's other parts, summed medians 10.1 → 7.8 ms (`refresh` 2.6 → 0.1, `prefetch` 2.9 → 2.1); rules p99 9.0 → 5.7. Ground flight: 4.1 → 3.9; `leash` p99 6.4 → 3.4. The phase-2 work shows.
+- **To check**: the `party` lap's p99 19.7 → 52.4 ms on the ground flight (8.7 → 14.9 in the treetops), median unchanged (0.1 → 0.2): a spike, not a steady cost. The lap (`render/view.ts`, up to `this.time("party")`) covers soundsystems, lasers, the ley lines (update, grow, ring, the ley head's front) and the glades: likely the ley-line work (#351, #381), unconfirmed, one run. `heights` p99 in the treetops 15.9 → 24.9.
+
+**Pixels**: all seven scenes differ from the baseline, as expected after the night's intended visual merges; every refactor and optimisation merge through #404 matched its own parent (rounds 1–3).
