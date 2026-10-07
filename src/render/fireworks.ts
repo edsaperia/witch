@@ -2,7 +2,7 @@
 // rules/fireworks.ts, started by the rules' waveCelebrate). Each shell climbs from the soundsystem's top as a gold spark
 // trailing a few pixels, then bursts: a round peony, a tilted ring, a willow drooping gold, or a crackle of glitter, in the
 // party's neons (some two-colour), each star a short streak of art pixels flashing white, then its colour, fading in steps
-// at the end; seen from far off and from the treetops (never smaller than two screen pixels an art pixel).
+// at the end; seen from far off and from the treetops (never smaller than one of the canvas's pixels).
 // Cheap: a fixed pool on the GPU. A show is written once, when its event comes (every rocket and star with its start, its
 // velocity and its life; the vertex shader flies them, with drag and gravity), and nothing more until the next; a frame
 // does no work and allocates nothing.
@@ -19,7 +19,7 @@ const POOL = 6144, TRAIL = 3, LAG = 0.028;
 /** Where a rocket leaves from (m over the ground: the soundsystem's top). */
 const FROM_Y = 7;
 /** Bursts lighting the ground at once (the latest kept), how long a flash lasts (s), its reach (m) and strength. */
-const FLASHES = 12, FLASH_S = 0.9, FLASH_REACH = 55, FLASH_I = 2.2;
+const FLASHES = 12, FLASH_S = 0.9, FLASH_REACH = 40, FLASH_I = 1.6;
 
 /** The party's neons for a burst (cyan, blue, violet, magenta, pink, gold, green), along a hue 0-1. */
 const NEONS = [[0.3, 1, 1], [0.35, 0.55, 1], [0.7, 0.4, 1], [1, 0.3, 0.9], [1, 0.45, 0.6], [1, 0.82, 0.3], [0.45, 1, 0.5]];
@@ -44,8 +44,9 @@ void main() {
   vec3 p = aFrom.xyz + aVel.xyz * d; p.y -= 0.5 * grav * t * t;
   // Its light: a white flash as it bursts, then its colour; the last third fading in steps; a crackle's glitter flickering.
   vec3 c = aLook.rgb;
-  float a = mode < 0.5 ? 0.8 : 0.8 * (1.0 - floor(max(0.0, k - 0.6) / 0.4 * 3.0) / 3.0);
-  if (mode > 0.5 && k < 0.05) c = mix(mix(c, vec3(1.0), 0.55), c, k / 0.05); // (a touch of white as it bursts: the finale's many together never blow out)
+  float a = mode < 0.5 ? 0.8 : 1.0 * (1.0 - floor(max(0.0, k - 0.6) / 0.4 * 3.0) / 3.0);
+  if (mode > 0.5 && k < 0.05) c = mix(mix(c, vec3(1.0), 0.55), c, k / 0.05); // (a touch of white as it bursts)
+  if (mode > 0.5) { float r = min(1.0, k / 0.04); a *= r; } // (faint while they're all still together at the burst's heart: a shell's stars, added up, never bloom into one white blob)
   if (mode > 2.5 && k > 0.45) a *= step(0.45, fh(floor(uNow * 18.0), aFrom.x * 3.1 + aVel.x * 7.7 + aLag)) * 1.4;
   if (aLag > 0.5) a *= aLag > 1.5 ? 0.35 : 0.6; // (the streak's tail)
   vCol = vec4(c * a, 1.0);
@@ -54,7 +55,7 @@ void main() {
   vec4 c0 = clipOf(g);
   vec3 right = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
   vec4 c1 = clipOf(g + right * uMpp);
-  gl_PointSize = max(2.0, floor(length((c1.xy / c1.w - c0.xy / c0.w) * 0.5 * uRes) + 0.5)); // (at least two screen pixels: seen from afar)
+  gl_PointSize = max(1.0, floor(length((c1.xy / c1.w - c0.xy / c0.w) * 0.5 * uRes) + 0.5)); // (at least one of the canvas's pixels, px screen pixels across: from afar a burst stays separate stars, not a solid disc)
   gl_Position = c0;
   gl_Position.xy += pixelSnap(c0) * c0.w;
   if (mod(gl_PointSize, 2.0) < 0.5) gl_Position.xy += c0.w / uRes;
@@ -118,7 +119,8 @@ export class Fireworks {
     const rise = s.burst - s.launch, c = this.rgb;
     { const b = this.bursts[this.nextBurst]; this.nextBurst = (this.nextBurst + 1) % FLASHES; neon(s.hue, c); if (s.kind === "willow") { c[0] = 1; c[1] = 0.72; c[2] = 0.3; } b.t = s.burst; b.x = s.x; b.z = s.z; b.rgb.set(c[0], c[1], c[2]); }
     this.put(sx, FROM_Y, sz, s.launch, (s.x - sx) / rise, (s.height - FROM_Y) / rise, (s.z - sz) / rise, rise, 1, 0.8, 0.45, 0);
-    const n = s.kind === "ring" ? 44 : s.kind === "crackle" ? 40 : s.kind === "willow" ? 54 : 64;
+    // (Fewer when the finale's go up together: so many add up to a white blob from afar.)
+    const n = Math.round((s.kind === "ring" ? 40 : s.kind === "crackle" ? 36 : s.kind === "willow" ? 48 : 54) * (s.finale ? 0.8 : 1));
     // A ring lies tilted: its plane's normal.
     const ta = this.rand() * Math.PI * 2, tilt = 0.5 + this.rand() * 0.6, nx = Math.sin(tilt) * Math.cos(ta), ny = Math.cos(tilt), nz = Math.sin(tilt) * Math.sin(ta);
     for (let i = 0; i < n; i++) {
@@ -164,7 +166,7 @@ export class Fireworks {
       const b = this.bursts[i], k = (time - b.t) / FLASH_S;
       if (k < 0 || k >= 1) continue;
       const L = this.lightPool[out.length];
-      L.x = b.x; L.y = 10; L.z = b.z; L.reach = FLASH_REACH; L.rgb.copy(b.rgb); L.strength = FLASH_I * (1 - k) * (1 - k);
+      L.x = b.x; L.y = 2; L.z = b.z; // (low: it lights the ground round the soundsystem, not the haze in the sky) L.reach = FLASH_REACH; L.rgb.copy(b.rgb); L.strength = FLASH_I * (1 - k) * (1 - k);
       out.push(L);
     }
     return out;

@@ -23,6 +23,8 @@ export interface Shell {
   radius: number;
   hue: number;
   hue2: number;
+  /** One of the finale's, going up together at the end. */
+  finale: boolean;
 }
 
 type FireworksTuning = NonNullable<Tuning["fireworks"]>;
@@ -45,7 +47,7 @@ export function fireworkShells(x: number, z: number, at: number, t?: Tuning): Sh
     out.push({
       launch, burst: launch + lerp(F.rise, r(i, 5)), x: x + Math.cos(a) * d, z: z + Math.sin(a) * d, height: lerp(F.height, r(i, 6)) + (finale ? 6 : 0),
       kind, radius: lerp(F.radius, r(i, 7)) * (finale ? 1.25 : 1) * (kind === "willow" ? 1.2 : kind === "crackle" ? 0.8 : 1),
-      hue: r(i, 8), hue2: r(i, 9) < 0.4 ? (r(i, 8) + 0.35 + r(i, 10) * 0.3) % 1 : -1,
+      hue: r(i, 8), hue2: r(i, 9) < 0.4 ? (r(i, 8) + 0.35 + r(i, 10) * 0.3) % 1 : -1, finale,
     });
   }
   return out;
