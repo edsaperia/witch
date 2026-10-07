@@ -57,7 +57,7 @@ export const SPRITE_UNIFORMS = {
   uUplight: { value: new THREE.Vector4() },
   /** The trunk fade: metres covered (0 off), metres per art pixel. */
   uTrunkFade: { value: new THREE.Vector3(0, 0.125, 0.3) },
-  /** Finding wild creatures in the dark (Ed, v244; tuning find, off with ?find=0), for wild
+  /** Finding wild creatures in the dark (Ed, v244; tuning find), for wild
    *  creatures' batches only: their light floor (a share of their unlit look), a rim from her
    *  glow, their eyeshine's strength (0 off) and the share of the time they blink; uEyeRgb its colour, uEyeRange its reach (m). */
   uFindLook: { value: new THREE.Vector4() },
@@ -69,9 +69,6 @@ export const SPRITE_UNIFORMS = {
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
-  /** Pixel wind (stage 8 of #79): 1, a masked sprite's regions (a crown's blobs) each move whole, a whole art pixel at a time, with
-   *  their own phase and stiffness; 0 (?wind=smooth), every pixel slides by its own sway, as before. */
-  uPixelWind: { value: typeof location !== "undefined" && new URLSearchParams(location.search).get("wind") === "smooth" ? 0 : 1 },
 };
 
 const VERT = /* glsl */ `
@@ -213,7 +210,6 @@ uniform vec3 uEyeRgb;
 uniform float uEyeRange;
 uniform vec3 uTrunkFade; // metres of trunk the fade covers at most, metres per art pixel, its most share of the visible trunk
 uniform vec4 uWind;      // the wind: its time (w) sets the regions' flutter
-uniform float uPixelWind; // 1: pixel wind (regions move whole, by whole pixels); 0: the smooth sway
 ${LIGHT_GLSL}
 ${WITCH_LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
@@ -222,14 +218,6 @@ float bayer(vec2 p) {
   int i = x + y * 4;
   int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
   return (float(m[i]) + 0.5) / 16.0;
-}
-// 4x4 clustered-dot ordered dither: as it fills, its pixels gather into dots round each cell's middle instead of
-// spreading out, so a half-faded trunk reads as clusters, not a one-pixel checker (the art director's round 3:
-// "a screen door at 1280x720").
-float cluster4(vec2 p) {
-  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
-  int m[16] = int[16](12, 5, 6, 13, 4, 0, 1, 7, 11, 3, 2, 8, 15, 10, 9, 14);
-  return (float(m[x + y * 4]) + 0.5) / 16.0;
 }
 // A slow value noise (0-1) for the hole's wobbly edge.
 float cutHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -264,22 +252,16 @@ void shade() {
   }
   if (vSwayM != 0.0) {
     float tw = float(textureSize(uAlbedo, 0).x), dir = vFlags.x > 0.5 ? -1.0 : 1.0, px = vSwayM / uTrunkFade.y;
-    if (uPixelWind > 0.5) {
-      bool hit = false;
-      for (int i = 1; i <= 5; i++) {
-        float d = i == 5 ? 0.0 : (i == 1 ? 1.0 : i == 2 ? -1.0 : i == 3 ? 2.0 : -2.0);
-        vec2 q = vUv - vec2(d * dir / tw, 0.0);
-        if (q.x < vFrame.x || q.x > vFrame.z) continue;
-        float c = floor(texture2D(uNormal, q).a * 255.0 + 0.5);
-        float off = c < 0.5 ? 0.0 : clamp(floor((mod(c, 32.0) / 31.0) * px * (0.8 + 0.35 * sin(uWind.w * 2.3 + floor(c / 32.0) * 0.785)) + 0.5), -2.0, 2.0);
-        if (off == d) { uvS = q; hit = true; break; }
-      }
-      if (!hit) discard;
-    } else {
-      float k = px / tw * dir, m0 = mod(floor(texture2D(uNormal, vUv).a * 255.0 + 0.5), 32.0) / 31.0;
-      float m1 = mod(floor(texture2D(uNormal, clamp(vUv - vec2(k * max(m0, 0.5), 0.0), vFrame.xy, vFrame.zw)).a * 255.0 + 0.5), 32.0) / 31.0;
-      uvS = clamp(vUv - vec2(k * max(m0, m1), 0.0), vFrame.xy, vFrame.zw);
+    bool hit = false;
+    for (int i = 1; i <= 5; i++) {
+      float d = i == 5 ? 0.0 : (i == 1 ? 1.0 : i == 2 ? -1.0 : i == 3 ? 2.0 : -2.0);
+      vec2 q = vUv - vec2(d * dir / tw, 0.0);
+      if (q.x < vFrame.x || q.x > vFrame.z) continue;
+      float c = floor(texture2D(uNormal, q).a * 255.0 + 0.5);
+      float off = c < 0.5 ? 0.0 : clamp(floor((mod(c, 32.0) / 31.0) * px * (0.8 + 0.35 * sin(uWind.w * 2.3 + floor(c / 32.0) * 0.785)) + 0.5), -2.0, 2.0);
+      if (off == d) { uvS = q; hit = true; break; }
     }
+    if (!hit) discard;
   }
   vec4 a = texture2D(uAlbedo, uvS);
   if (a.a < 0.5) discard;
@@ -297,7 +279,7 @@ void shade() {
   float e = length(gl_FragCoord.xy - uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
   float occl = uFlat > 0.5 ? 0.0 : uOcc.w * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
   // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
-  // (Ed: no dithering), or dithered steps with ?fx=pixel. Smooth, a crown partly shown in the hole
+  // (Ed: no dithering). A crown partly shown in the hole
   // is drawn see-through in the second pass where it's over her, after her, like whatever stands
   // in front of her: in the opaque pass it hid her (Ed, v289: she showed only as her silhouette inside a crisp disc).
   // The hole: a wide soft band at this tree's own radius (vHole); the pass by the whole crown (vOverHer).
@@ -313,24 +295,21 @@ void shade() {
   float shown = 1.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
-    if (uSmooth < 0.5) { if (bayer(gl_FragCoord.xy) >= shown) discard; shown = 1.0; }
-    else if (shown < 0.004) discard;
+    if (shown < 0.004) discard;
   }
   // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
   // hidden, its top fades out over uTrunkFade.x metres in a clustered ordered dither on the art's own
   // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
   // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
-  // all), so every trunk keeps a solid base. Smooth (Ed: no dithering), its top fades out in alpha (trunkA);
-  // ?fx=pixel, in the clustered dither as before.
+  // all), so every trunk keeps a solid base. Smooth (Ed: no dithering), its top fades out in alpha (trunkA).
   float trunkA = 1.0;
   if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
     float crown = max(hole, uTopFade);
     float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
-    vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));
     float keep = max(t, crown);
-    if (uSmooth > 0.5) { if (keep < 0.004) discard; trunkA = keep * keep * (3.0 - 2.0 * keep); }
-    else if (cluster4(artPx) >= keep) discard;
+    if (keep < 0.004) discard;
+    trunkA = keep * keep * (3.0 - 2.0 * keep);
   }
   // Which pass draws it. Anything partly see-through (a crown fading in the hole, a trunk's top fading, scenery fading at the
   // budget's edge) goes in the see-through pass, after everything solid and writing no depth (Ed, 2026-10-06: "no tree

@@ -68,7 +68,7 @@ export function refFor(d: PartyDef, r: () => number, neons: string[] = PARTY_LIG
 /** The hand-made pieces the prop generator's variants replace (art/party.js PARTY_GEN, "gen-*", each with its `replaces`). */
 const REPLACED = new Set(DEFS.flatMap(d => (d as PartyDef & { replaces?: string[] }).replaces ?? []));
 /** Whether a piece is left out: partyObjects.exclude (Ed, v271: "the glowing party cubes look too much like game objects"); the
- *  generated variants unless partyObjects.generated (?props=gen), and the hand-made ones they replace when it is. */
+ *  generated variants unless partyObjects.generated (the game always sets it), and the hand-made ones they replace when it is. */
 export const leftOut = (id: string, t: Tuning) => t.partyObjects.exclude.includes(id) || (id.startsWith("gen-") ? !t.partyObjects.generated : t.partyObjects.generated && REPLACED.has(id));
 export const excluded = (ref: string, t: Tuning) => leftOut(pieceId(ref), t);
 

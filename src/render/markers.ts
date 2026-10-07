@@ -46,7 +46,7 @@ export class MarkerArt {
 
 // Rows from the topmost drawn pixel to the lowest (sprites stand on their lowest drawn pixel).
 function drawnHeight(c: HTMLCanvasElement): number {
-  const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+  const d = c.getContext("2d", { willReadFrequently: true })!.getImageData(0, 0, c.width, c.height).data;
   let top = -1, bottom = -1;
   for (let i = 3; i < d.length; i += 4) if (d[i] > 0) { const y = Math.floor((i >> 2) / c.width); if (top < 0) top = y; bottom = y; }
   return top < 0 ? 0 : bottom - top + 1;
@@ -56,7 +56,7 @@ function drawnHeight(c: HTMLCanvasElement): number {
 function recolour(b: Baked & { A: HTMLCanvasElement }, rgb: number[], k: number): Baked {
   const c = document.createElement("canvas");
   c.width = b.w; c.height = b.h;
-  const g = c.getContext("2d")!;
+  const g = c.getContext("2d", { willReadFrequently: true })!;
   g.drawImage(b.A, 0, 0);
   const img = g.getImageData(0, 0, b.w, b.h), d = img.data;
   for (let i = 0; i < d.length; i += 4) {

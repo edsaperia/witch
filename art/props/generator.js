@@ -59,7 +59,9 @@ function prStanding(m, v) {
   if (broken) { // snapped off: a jagged top, and the piece lying beside it
     for (let i = 0; i < 3; i++) m.box(v3.add(top, at(.02, w * (i - 1) * .6)), [w * .35, w * .35, d * 1.6], M.STONE, { dir: v3.norm(v3.add(up, v3.mul(side, (i - 1) * .8 + .3))), up: [0, 0, 1], cut: true, group: 1 });
     const L = h * .38, s0 = (r() < .5 ? -1 : 1);
-    m.box([s0 * (w + L * .55), d * .9, (r() - .3) * w], [L * .5, d * .95, w * .8], M.STONE, { dir: [s0, .12, (r() - .5) * .5], up: [0, 1, 0], round: d * .6, rough: v.rough, group: 2, paint: q => q[1] > d * 1.4 && cellHash(q, 7, 9) < .35 ? M.MOSS : undefined });
+    // (stood up, sunk at a lean beside it: lying flat, its rounded slab read as a grey disc on the ground; Ed's notes, 2026-10-07)
+    const lean = v3.norm([s0 * (.25 + r() * .2), 1, (r() - .5) * .3]);
+    m.box([s0 * (w + L * .45), L * .38, (r() - .3) * w], [L * .45, d * .95, w * .7], M.STONE, { dir: lean, up: [0, 0, 1], round: d * .3, rough: v.rough, group: 2, paint: q => q[1] < L * .25 && cellHash(q, 7, 9) < .55 ? M.MOSS : undefined });
   }
   for (let i = 0; i < 5 + Math.floor(r() * 4); i++) { const x = (r() - .5) * w * 3, z = d * (1 + r() * 1.5) * (r() < .7 ? 1 : -1); m.seg([x, 0, z], [x + (r() - .5) * .04, .08 + r() * .14, z], .025, .006, r() < .5 ? M.LEAF : M.LEAF2, { group: 3 }); } // grass round its foot
 }
@@ -249,7 +251,7 @@ export function propFor(kind, o = {}) {
   // big: the stone shrine's tree-equivalents (Ed, 2026-10-06: "the tree equivalents should just be large standing stones, perhaps quite
   // similar to the runestones"): great plain monoliths, taller and broader than any runestone, no sigil, each its own height, width and lean
   if (kind === "standingstone") return ["standingStone", o.big ? { height: [4.8, 7.2], width: [1.2, 2], depth: [.5, .8], lean: [-.12, .12], moss: [.08, .2] } : o.lean ? { lean: o.lean } : {}];
-  if (kind === "cairn") return ["cairn", o.tall ? { height: 2.6, stones: 15, spread: 1.5, size: .38 } : {}]; // the stone shrine's tall cairn stays a tall cone
+  if (kind === "cairn") return o.tall ? null : ["cairn", {}]; // the stone shrine's tall cairn stays the hand-made tall cone (generated, it came out a low sprawl of flat grey slabs: Ed's notes, 2026-10-07)
   if (kind === "water" && !o.stream) return ["pool", { bog: !!o.bog, ...(o.w ? { radius: .6 * o.w } : {}) }];
   if (kind === "boulder") return ["boulder", { ...(o.big ? { size: 1.3 } : {}), ...(o.moss ? { moss: .45 } : {}) }];
   if (kind === "mound") return ["mound", { skin: o.moss ? "moss" : o.brown ? "earth" : "moss", ...(o.small ? { radius: .45, height: .28, lumps: 2 } : {}) }];
