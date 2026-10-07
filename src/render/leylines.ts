@@ -20,6 +20,9 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { departureRoute, type LeyStone } from "../rules/leylines";
 import { polylinesMeet } from "../rules/crossing";
+import { curveLink, stoneWays, tightestTurn, wayThrough } from "../rules/leycurve";
+import { routeOf } from "../rules/party";
+import { leyRadius } from "../rules/leyroute";
 import type { ForestMap } from "../rules/map";
 
 export interface LeyTuning {
@@ -293,37 +296,59 @@ export class LeyLines {
   private routeTame(chain: LeyStone[], routes: [number, number][][], k: number): [number, number][] {
     let r: [number, number][] = [];
     for (const wander of TAME) {
-      r = this.route(chain[k], chain[k + 1], k, wander);
+      r = this.route(chain[k], chain[k + 1], k, wander, chain);
       if (!routes.some(q => polylinesMeet(q, r))) return r;
     }
-    routes.forEach((q, j) => { if (!chain[j].depart && polylinesMeet(q, r)) routes[j] = this.route(chain[j], chain[j + 1], j, 0); });
+    routes.forEach((q, j) => { if (!chain[j].depart && polylinesMeet(q, r)) routes[j] = this.route(chain[j], chain[j + 1], j, 0, chain); });
     return r;
   }
 
-  /** A link's route from stone a to b: a gently wandering line along the low ground between them
-   *  (`wander` of its usual way off the straight; 0 straight). */
-  private route(a: LeyStone, b: LeyStone, k: number, wander = 1): [number, number][] {
+  /** A link's way from stone a to b before it wanders: the route's curve through its stones (Ed, 2026-10-06: "can we give
+   *  leylines a maximum curvature so they don't kink like this?"; rules/leycurve.ts, rules/leyroute.ts), or, for a chain
+   *  off the route, a curve of the same kind through them. */
+  private baseOf(chain: LeyStone[], k: number): [number, number][] {
+    const a = chain[k], b = chain[k + 1], R = this.map ? leyRadius(this.map) : 30;
+    if (this.map) {
+      this.routeLinks ??= new Map((routeOf(this.map).links.slice(1)).map(l => [`${l[0][0]},${l[0][1]}>${l[l.length - 1][0]},${l[l.length - 1][1]}`, l as [number, number][]]));
+      const l = this.routeLinks.get(`${a.x},${a.z}>${b.x},${b.z}`);
+      if (l) return l;
+    }
+    const p = (s: LeyStone | undefined): [number, number] | null => (s ? [s.x, s.z] : null);
+    const depart = k === 1 && chain[0].depart && this.map ? departureRoute(this.map, b, this.T.depart.avoid, STEP / 2) : null;
+    const ha = depart ? stoneWays(depart, [[a.x, a.z]])[0] : wayThrough(p(chain[k - 1]), [a.x, a.z], [b.x, b.z]);
+    return curveLink([a.x, a.z], ha, [b.x, b.z], wayThrough([a.x, a.z], [b.x, b.z], p(chain[k + 2])), R, 4);
+  }
+  private routeLinks: Map<string, [number, number][]> | null = null;
+
+  /** A link's route from stone a to b: a gently wandering line along the low ground beside its curve (`wander` of its
+   *  usual way off it; 0 the curve itself), leaving and reaching its stones along the curve, and never turning tighter
+   *  than the curve may (leyLines.minRadius: the wander tamed till it doesn't). */
+  private route(a: LeyStone, b: LeyStone, k: number, wander = 1, chain = this.pending?.chain ?? this.chain): [number, number][] {
     // From the treehouse at the start: due south out of its front, then round to the first objective.
     if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.avoid, STEP / 2);
-    const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
-    const n = Math.max(2, Math.ceil(L / STEP)), W = Math.min(80, L * this.T.valley) * wander, off = new Float64Array(n + 1);
-    if (W > 0) for (let i = 1; i < n; i++) {
-      const t = i / n, bx = a.x + dx * t, bz = a.z + dz * t;
-      let best = 0, bh = Infinity;
-      for (let o = -W; o <= W + 1e-6; o += W / 6) {
-        const h = this.ground(bx + px * o, bz + pz * o) + Math.abs(o) * 0.04; // (a little loath to stray)
-        if (h < bh) { bh = h; best = o; }
+    const base = fine(this.baseOf(chain, k), STEP), n = base.length - 1, R = this.map ? leyRadius(this.map) : 30;
+    let L = 0;
+    for (let i = 1; i <= n; i++) L += Math.hypot(base[i][0] - base[i - 1][0], base[i][1] - base[i - 1][1]);
+    const nrm = base.map((_, i) => { const q0 = base[Math.max(0, i - 1)], q1 = base[Math.min(n, i + 1)], l = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]) || 1; return [-(q1[1] - q0[1]) / l, (q1[0] - q0[0]) / l]; });
+    for (let tame = wander; ; tame = tame > 0.05 ? tame / 2 : 0) {
+      const W = Math.min(80, L * this.T.valley) * tame, off = new Float64Array(n + 1);
+      if (W > 0) for (let i = 1; i < n; i++) {
+        let best = 0, bh = Infinity;
+        for (let o = -W; o <= W + 1e-6; o += W / 6) {
+          const h = this.ground(base[i][0] + nrm[i][0] * o, base[i][1] + nrm[i][1] * o) + Math.abs(o) * 0.04; // (a little loath to stray)
+          if (h < bh) { bh = h; best = o; }
+        }
+        off[i] = best;
       }
-      off[i] = best;
+      // Smoothed into a gentle curve, held to its stones at the ends (along the curve there: sin², so it leaves and
+      // reaches each stone the way the curve does, no corner), with a little wander of its own.
+      for (let pass = 0; pass < 4; pass++) for (let i = 1; i < n; i++) off[i] = (off[i - 1] + 2 * off[i] + off[i + 1]) / 4;
+      const pts: [number, number][] = base.map((q, i) => {
+        const t = i / n, env = Math.sin(Math.PI * t) ** 2, o = off[i] * env + Math.sin(t * Math.PI * 2.3 + k * 1.9 + a.x * 0.01) * W * 0.12 * env;
+        return i === n ? [b.x, b.z] : [q[0] + nrm[i][0] * o, q[1] + nrm[i][1] * o];
+      });
+      if (W <= 0 || tightestTurn(pts, 6) >= R * 0.95) return pts;
     }
-    // Smoothed into a gentle curve, held to its stones at the ends, with a little wander of its own.
-    for (let pass = 0; pass < 4; pass++) for (let i = 1; i < n; i++) off[i] = (off[i - 1] + 2 * off[i] + off[i + 1]) / 4;
-    const pts: [number, number][] = [];
-    for (let i = 0; i <= n; i++) {
-      const t = i / n, env = Math.sin(Math.PI * t), o = off[i] * env + Math.sin(t * Math.PI * 2.3 + k * 1.9 + a.x * 0.01) * W * 0.12 * env;
-      pts.push(i === n ? [b.x, b.z] : [a.x + dx * t + px * o, a.z + dz * t + pz * o]);
-    }
-    return pts;
   }
 
   private build(g: THREE.BufferGeometry, colours: THREE.Vector3[], routes: [number, number][][]): void {

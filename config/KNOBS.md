@@ -548,6 +548,7 @@ The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in 
 | `leyLines.valley` | number | 0 to … |
 | `leyLines.flow` | array of number |  |
 | `leyLines.depart.avoid` | number | 0 to … |
+| `leyLines.minRadius` | number | 0 to … |
 
 ## `witch`
 
