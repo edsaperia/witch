@@ -39,8 +39,8 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, v.mpp, t.trunkFade.share);
   SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
   SPRITE_UNIFORMS.uDebugTrunks.value = v.debugTrunks ? 1 : 0;
-  const Fd = t.find; // finding wild creatures in the dark (Ed, v244; ?find=0 turns it off)
-  SPRITE_UNIFORMS.uFindLook.value.set(Fd.on ? Fd.lightFloor : 0, Fd.on ? Fd.rim : 0, Fd.on ? Fd.eyeshine.strength : 0, Fd.eyeshine.blink);
+  const Fd = t.find; // finding wild creatures in the dark (Ed, v244)
+  SPRITE_UNIFORMS.uFindLook.value.set(Fd.lightFloor, Fd.rim, Fd.eyeshine.strength, Fd.eyeshine.blink);
   SPRITE_UNIFORMS.uEyeRange.value = Fd.eyeshine.range;
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;

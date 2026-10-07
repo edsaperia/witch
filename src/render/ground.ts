@@ -423,9 +423,7 @@ void main() {
     vec2 q = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
     float leaves = vnoise(q / 2.6) * 0.6 + vnoise(q / 1.1 + 31.0) * 0.4;
     float cover = uCanopy.z * smoothstep(0.0, 1.0, (open - uClearing.x) / max(0.01, uClearing.y));
-    float edge = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.03 : -0.03;
-    if (uSmooth > 0.5) moonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
-    else if (leaves + edge < cover) moonK = 1.0 - uCanopy.x;
+    moonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
   }
   // Fake relief (Ed, v171): two octaves of noise as a height; its slope tilts the ground's normal
   // so lights pick out rises and hollows, and the hollows are a little darker. Shading only.

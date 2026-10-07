@@ -5,7 +5,7 @@ import { TUNING } from "../rules/tuning";
 import { applyKnobParams, currentValue, decisionLine, DECISION_LIST, issueUrl, knobAt, knobParam, parseValue, setKnob } from "./decide";
 
 /** The URL switches the game reads (src/main.ts), and their values. */
-const PARAMS: Record<string, string[]> = { style: ["now", "bold", "ref"], glide: ["witch", "camera"], props: ["gen", "hand"] };
+const PARAMS: Record<string, string[]> = { style: ["bold", "ref"] };
 
 describe("the decisions panel", () => {
   it("has sound entries: unique ids, 2 to 4 options, a default inside its control, a real knob or switch", () => {

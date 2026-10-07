@@ -2,19 +2,9 @@
   "_note": "Ed's decisions panel (src/ui/decide.ts; ?decide or F2 in the game). Each entry: id, label, a one-line note, a control (toggle, choice of 2 to 4 options, or slider with min, max and step), the shipped default, and what it changes: a tuning knob by its path (applied live to the running game) or a URL switch (param; reload: true when the game reads it only as it loads). Confirm opens a new GitHub issue labelled decision with the choice; the coordinator acts on those.",
   "decisions": [
     {
-      "id": "style", "label": "Pixel style", "note": "How every sprite is baked: as before, bold (3 hue-shifted tones, a selective outline) or ref (one tone family, a near-black outline).",
-      "control": { "type": "choice", "options": [{ "value": "now", "label": "As now" }, { "value": "bold", "label": "Bold" }, { "value": "ref", "label": "Ref" }] },
+      "id": "style", "label": "Pixel style", "note": "How every sprite is baked: bold (3 hue-shifted tones, a selective outline) or ref (one tone family, a near-black outline).",
+      "control": { "type": "choice", "options": [{ "value": "bold", "label": "Bold" }, { "value": "ref", "label": "Ref" }] },
       "default": "bold", "apply": { "param": "style", "reload": true }
-    },
-    {
-      "id": "glide", "label": "Camera glide", "note": "What holds still on screen as she flies: the witch (the world lands within half a pixel) or the camera (the world exact, her a pixel either way).",
-      "control": { "type": "choice", "options": [{ "value": "witch", "label": "Witch" }, { "value": "camera", "label": "Camera" }] },
-      "default": "witch", "apply": { "param": "glide" }
-    },
-    {
-      "id": "props", "label": "Props", "note": "Stones, cairns, pools, logs, bridges and party bunting from the prop generator (seeded variants) or the hand-made ones.",
-      "control": { "type": "choice", "options": [{ "value": "gen", "label": "Generated" }, { "value": "hand", "label": "Hand-made" }] },
-      "default": "gen", "apply": { "param": "props", "reload": true }
     },
     {
       "id": "skyBlur", "label": "Stars through the blur", "note": "How much of the tilt-shift blur the night sky takes: 0 leaves the stars sharp, 1 blurs them like the ground.",
