@@ -177,7 +177,7 @@ void main() {
   // still (no shimmer), dim but whole, so the way home still reads; just behind the tip an ember, orange cooling to red over
   // a few metres, and a few pixels still smouldering further back, flickering. From the treetops, a faint grey glow and the
   // ember's.
-  if (uSpent > 0.5 && uPulse.y > 0.5 && uSketch.y < 0.5) {
+  if (uSpent > 0.5 && uPulse.y > 0.5) { // (the sketch never gets here: all of it is ahead)
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11)), ember = exp(-litD / 4.5), warm = exp(-litD / 12.0);
     vec3 ash = mix(vec3(grey), vCol, 0.2) * vec3(1.0, 0.9, 0.8) * 0.55 + vec3(0.05, 0.045, 0.04);
     vec3 hot = mix(vec3(1.0, 0.55, 0.15), vec3(0.75, 0.16, 0.05), smoothstep(0.0, 8.0, litD));
