@@ -389,9 +389,9 @@ export class AssetLibrary {
     } else this.witchGenome = genome;
     return { ...packAtlas(sprites, 2048), grounds };
   }
-  /** Her frame behind the decks at `beat` (rules/beat.ts beatAt): its index in witchDj (Art.djFrame: a gesture a bar, nodding on the beat). */
   /** A gesture's frame (0 or 1 of its pair in Art.DJ_GESTURES: her set's routine, rules/djSet.ts) as its index in witchDj. */
   djGestureFrame(gesture: string, frame: number): number { return (Art.DJ_GESTURES as Record<string, number[]>)[gesture]?.[frame] ?? 0; }
+  /** Her frame behind the decks at `beat` (rules/beat.ts beatAt): its index in witchDj (Art.djFrame: a gesture a bar, nodding on the beat). */
   djFrame(beat: number, cast = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast }); }
   /** The character creator changed her look: her frames again (the view swaps its batch). */
   rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.bare = null; this.version++; }
