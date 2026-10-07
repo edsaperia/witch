@@ -1982,5 +1982,17 @@
   "src": "media/builders/music-beach-gaze-horizon.webp",
   "caption": "The stargazing horizon before and after: from a hard edge of sand against black to the island's treeline on the horizon.",
   "chapter": "builders"
+ },
+ {
+  "src": "media/builders/proto-map-shape-925469.webp",
+  "caption": "The circular map with its irregular coast (seed 925469).",
+  "chapter": "builders",
+  "pr": 293
+ },
+ {
+  "src": "media/builders/proto-slowtime-edge-sparkle.webp",
+  "caption": "The edge of a legend's circle: a 💌 that leaves it vanishes in a sparkle.",
+  "chapter": "builders",
+  "pr": 307
  }
 ]
