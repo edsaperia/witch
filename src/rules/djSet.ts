@@ -4,9 +4,11 @@
 // sfxCues.ts: its strokes), on the beat clock (rules/beat.ts), so both land on the same sixteenths. Agreed with the music
 // builder: the needle lifted and dropped, a nod, a bar of baby scratches, a bar of chirps (each stroke cut by the fader) and a
 // spin-back, then her hand thrown up; 13 beats, about 6.5 s at 120 bpm.
-// When: from the first whole beat after the party spell's burst (party.spellAt + PARTY_CAST), and from the first whole beat
-// after she's back at the decks in a respawn wait (respawnOf: the hotel builder's knockout.respawn); only while she's still
-// at the decks (seated): if she steps off mid-routine it stops. Nothing holds her there.
+// When: from the first whole beat after the party spell's burst (party.spellAt + PARTY_CAST), once through; and through the
+// wait behind her decks after a knockout (the hotel builder's knockout.respawn, rules/knockout.ts: from the first whole beat
+// after she's back, ko.inAt, to ko.backAt): the needle and the nod, then the scratch and chirp bars round and round, her
+// hand thrown up on its last beat. Only while she's at the decks (seated): if she steps off mid-routine it stops. Nothing
+// here holds her (the wait is the rules' own).
 // Pure: game time in, game time out.
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { PARTY_CAST, type PartyState } from "./party";
@@ -28,48 +30,72 @@ export const DJ_ROUTINE: readonly DjCue[] = [
 /** Its length in beats. */
 export const DJ_ROUTINE_BEATS = 13;
 
-type Game = { beat: BeatClock; party: PartyState; witch: { seated?: boolean } };
-/** Her respawn at the decks, for the routine: when she was back. None until the respawn wait is in the rules (the hotel
- *  builder's knockout.respawn). */
-export function respawnOf(_g: Game): { backAt: number } | null { return null; }
+type Game = { beat: BeatClock; party: PartyState; witch: { seated?: boolean }; witches?: { ko: { inAt?: number; backAt: number } | null }[] };
+/** Her wait at the decks after a knockout (rules/knockout.ts: back at inAt, free at backAt), or null. */
+export function respawnOf(g: Game): { inAt: number; backAt: number } | null {
+  const k = g.witches?.[0]?.ko;
+  return k && typeof k.inAt === "number" && k.backAt > k.inAt ? { inAt: k.inAt, backAt: k.backAt } : null;
+}
+/** The respawn's loop: after the needle and the nod (its first LOOP_FROM beats) the scratch and chirp bars repeat. */
+const LOOP_FROM = 4, LOOP_TO = 12;
 
 const nextBeat = (g: Game, t: number) => timeAt(g.beat, Math.ceil(beatAt(g.beat, t) - 1e-6));
-/** The routine's starts (game times): after the party spell, and after her respawn (when there is one). */
-function starts(g: Game): number[] {
-  const out: number[] = [], sp = g.party.spellAt, r = respawnOf(g);
-  if (typeof sp === "number") out.push(nextBeat(g, sp + PARTY_CAST));
-  if (r) out.push(nextBeat(g, r.backAt));
+/** The routine's runs: each its start and end (game times), and whether it's a respawn's (looping to fill its wait). */
+function runs(g: Game): { start: number; end: number; loop: boolean }[] {
+  const out: { start: number; end: number; loop: boolean }[] = [], sp = g.party.spellAt, r = respawnOf(g);
+  const span = (s: number, beats: number) => timeAt(g.beat, beatAt(g.beat, s) + beats);
+  if (typeof sp === "number") { const s = nextBeat(g, sp + PARTY_CAST); out.push({ start: s, end: span(s, DJ_ROUTINE_BEATS), loop: false }); }
+  if (r) { const s = nextBeat(g, r.inAt); if (s < r.backAt) out.push({ start: s, end: r.backAt, loop: true }); }
   return out;
 }
-/** The start of the routine she's in at `time` (a game time), or null: not at the decks, or not in one. */
-export function djRoutineStart(g: Game, time: number): number | null {
+/** The run she's in at `time`, or null: not at the decks, or not in one (a respawn's over the intro's). */
+function runAt(g: Game, time: number): { start: number; end: number; loop: boolean } | null {
   if (!g.witch.seated) return null;
-  let best: number | null = null;
-  for (const s of starts(g)) if (time >= s && time < timeAt(g.beat, beatAt(g.beat, s) + DJ_ROUTINE_BEATS) && (best === null || s > best)) best = s;
+  let best: { start: number; end: number; loop: boolean } | null = null;
+  for (const r of runs(g)) if (time >= r.start && time < r.end && (!best || r.start > best.start)) best = r;
   return best;
+}
+/** The start of the routine she's in at `time` (a game time), or null: not at the decks, or not in one. */
+export const djRoutineStart = (g: Game, time: number): number | null => runAt(g, time)?.start ?? null;
+/** The table's cue at `beat` of a run `beats` long: a looping run (a respawn's) repeats the scratch and chirp bars past
+ *  LOOP_FROM, and throws her hand up for its last beat. */
+function cueAt(beat: number, beats: number, loop: boolean): DjCue & { at: number } {
+  let b = beat;
+  if (loop) {
+    if (beats >= LOOP_FROM + 2 && beat >= Math.floor(beats) - 1) return { at: beat, gesture: "hype", frame: (beat % 1) < 0.5 ? 0 : 1 };
+    if (b >= LOOP_FROM) b = LOOP_FROM + ((b - LOOP_FROM) % (LOOP_TO - LOOP_FROM));
+  }
+  let cue = DJ_ROUTINE[0];
+  for (const c of DJ_ROUTINE) if (c.at <= b + 1e-9) cue = c; else break;
+  return cue;
 }
 /** Where she is in the routine at `time`: its gesture and frame, the beats in and its start; null outside one. */
 export function djRoutineAt(g: Game, time: number): { gesture: string; frame: 0 | 1; beat: number; start: number } | null {
-  const s = djRoutineStart(g, time);
-  if (s === null) return null;
-  const beat = beatAt(g.beat, time) - beatAt(g.beat, s);
-  let cue = DJ_ROUTINE[0];
-  for (const c of DJ_ROUTINE) if (c.at <= beat + 1e-9) cue = c; else break;
-  return { gesture: cue.gesture, frame: cue.frame, beat, start: s };
+  const r = runAt(g, time);
+  if (!r) return null;
+  const b0 = beatAt(g.beat, r.start), beat = beatAt(g.beat, time) - b0, cue = cueAt(beat, beatAt(g.beat, r.end) - b0, r.loop);
+  return { gesture: cue.gesture, frame: cue.frame, beat, start: r.start };
 }
 /** The strokes heard in [from, to) (game times), for the sound to schedule ahead: each its time, kind and length (to the next
- *  cue, in seconds). Only in a routine she's in at its start (seated), as the picture plays it. */
+ *  cue, in seconds). Only in a run she's in at the stroke (seated), as the picture plays it. */
 export function djStrokes(g: Game, from: number, to: number): { at: number; stroke: DjStroke; len: number }[] {
   const out: { at: number; stroke: DjStroke; len: number }[] = [];
-  for (const s of starts(g)) {
-    const b0 = beatAt(g.beat, s);
-    DJ_ROUTINE.forEach((c, i) => {
-      if (!c.stroke) return;
+  for (const r of runs(g)) {
+    const a = Math.max(from, r.start), e = Math.min(to, r.end);
+    if (!(e > a) || !g.witch.seated) continue;
+    const b0 = beatAt(g.beat, r.start), beats = beatAt(g.beat, r.end) - b0;
+    // every cue time in the run: the table's, and in a loop its repeats
+    const cues: { at: number; stroke?: DjStroke }[] = [];
+    for (const c of DJ_ROUTINE) if (!r.loop || c.at < LOOP_TO) cues.push(c);
+    if (r.loop) for (let k = 1; LOOP_FROM + k * (LOOP_TO - LOOP_FROM) < beats; k++) for (const c of DJ_ROUTINE) if (c.at >= LOOP_FROM && c.at < LOOP_TO) cues.push({ at: c.at + k * (LOOP_TO - LOOP_FROM), stroke: c.stroke });
+    const lastBeat = r.loop && beats >= LOOP_FROM + 2 ? Math.floor(beats) - 1 : Infinity; // (the hype: nothing heard from the table)
+    cues.forEach((c, i) => {
+      if (!c.stroke || c.at >= lastBeat || c.at >= beats) return;
       const at = timeAt(g.beat, b0 + c.at);
-      if (at < from || at >= to || djRoutineStart(g, at) !== s) return;
-      const next = DJ_ROUTINE[i + 1]?.at ?? DJ_ROUTINE_BEATS;
+      if (at < a || at >= e) return;
+      const next = Math.min(cues[i + 1]?.at ?? DJ_ROUTINE_BEATS, lastBeat, beats);
       out.push({ at, stroke: c.stroke, len: timeAt(g.beat, b0 + next) - at });
     });
   }
-  return out.sort((a, b) => a.at - b.at);
+  return out.sort((x, y) => x.at - y.at);
 }

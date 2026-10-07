@@ -634,12 +634,16 @@ export const DJ_GESTURES = { groove: [0, 1], cue: [2, 3], scratch: [4, 5], fader
 const DJ_SET = ["groove", "groove", "cue", "scratch", "groove", "fader", "knob", "cue", "groove", "scratch", "fader", "hype"];
 // The frame behind the decks at `beat` (beats on the game's beat clock, rules/beat.ts: beatAt): the gesture by the bar
 // (4 beats; `offset` bars along the set), its first frame for the first half of each beat; `cast`, the spell's gesture.
-export function djFrame(beat, { cast = false, offset = 0 } = {}) {
-  return DJ_GESTURES[djGesture(beat, { cast, offset })][(Math.max(0, beat) % 1) < .5 ? 0 : 1];
+// `scratch` (her wait behind the decks after a knockout, the hotel builder's hook): scratching, a bar of scratches and a bar of
+// chirps by turns, a stroke a half-beat. (The game plays its timed routine there instead, rules/djSet.ts; this is its fallback.)
+export function djFrame(beat, { cast = false, offset = 0, scratch = false } = {}) {
+  return DJ_GESTURES[djGesture(beat, { cast, offset, scratch })][(Math.max(0, beat) % 1) < .5 ? 0 : 1];
 }
 /** The gesture she plays at `beat` (a DJ_GESTURES key): the picture's djFrame and the sound's cues (platform/audio/deck.ts) read the same set. */
-export function djGesture(beat, { cast = false, offset = 0 } = {}) {
-  return cast ? "cast" : DJ_SET[(Math.floor(Math.max(0, beat) / 4) + offset) % DJ_SET.length];
+export function djGesture(beat, { cast = false, offset = 0, scratch = false } = {}) {
+  if (cast) return "cast";
+  if (scratch) return Math.floor(Math.max(0, beat) / 4) % 2 ? "chirp" : "scratch";
+  return DJ_SET[(Math.floor(Math.max(0, beat) / 4) + offset) % DJ_SET.length];
 }
 const DJ_BROOM = { binding: [-.08, .31, -.42], dir: [-.06, 1, -.16] };
 const djOn = (K) => ({ broom: DJ_BROOM, dj: true, farHand: "down", hand: "down", sway: .015, ...K });

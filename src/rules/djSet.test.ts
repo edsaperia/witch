@@ -4,7 +4,8 @@ import { PARTY_CAST, type PartyState } from "./party";
 import { DJ_ROUTINE, DJ_ROUTINE_BEATS, djRoutineAt, djRoutineStart, djStrokes } from "./djSet";
 import { DJ_GESTURES } from "../../art/witch.js";
 
-const game = (spellAt: number | null | undefined, seated = true) => ({ beat: newBeatClock(120), party: { spellAt } as PartyState, witch: { seated } });
+const game = (spellAt: number | null | undefined, seated = true, ko: { inAt: number; backAt: number } | null = null) =>
+  ({ beat: newBeatClock(120), party: { spellAt } as PartyState, witch: { seated }, witches: [{ ko }] });
 
 describe("her set at the decks (rules/djSet.ts)", () => {
   it("starts on the first whole beat after the cast's burst, only while she's at the decks", () => {
@@ -36,5 +37,18 @@ describe("her set at the decks (rules/djSet.ts)", () => {
     const mid = djStrokes(g, s + 2, s + 3);
     expect(mid.every(k => k.at >= s + 2 && k.at < s + 3)).toBe(true);
     expect(djStrokes(game(0, false), 0, 100)).toEqual([]); // stepped off: nothing heard
+  });
+  it("fills a respawn wait: the needle and the nod, the scratch and chirp bars round again, the hype on its last beat", () => {
+    const ko = { inAt: 100.2, backAt: 120.2 }, g = game(undefined, true, ko), s = djRoutineStart(g, 101)!; // a 20 s wait
+    expect(s).toBeCloseTo(100.5, 6); // the next whole beat
+    const at = (b: number) => { const r = djRoutineAt(g, s + b * 0.5); return r && `${r.gesture}${r.frame}`; };
+    expect([at(0.1), at(1.1), at(4.1), at(12.1), at(16.1), at(19.1)]).toEqual(["needle0", "needle1", "scratch1", "scratch1", "chirp0", "spin0"]);
+    expect(at(38.6)).toBe("hype1"); // its last beat
+    expect(djRoutineAt(g, 120.3)).toBeNull(); // free, up and away
+    const st = djStrokes(g, 0, 200);
+    expect(st[0].stroke).toBe("lift"); expect(st.filter(k => k.stroke === "drop").length).toBe(1); // the needle once
+    expect(st.filter(k => k.stroke === "spin").length).toBe(4); // the chirp bar's spin each time round (beats 11, 19, 27, 35)
+    expect(st.every(k => k.at < ko.backAt - 0.5 && k.at + k.len <= ko.backAt - 0.5 + 1e-9)).toBe(true); // nothing in the hype
+    expect(djRoutineStart(game(undefined, true, { inAt: 100, backAt: 100 }), 100.1)).toBeNull(); // no wait, no routine
   });
 });
