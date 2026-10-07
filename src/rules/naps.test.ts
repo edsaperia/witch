@@ -24,6 +24,7 @@ function overWild(t: Tuning = TUNING): { g: Game; key: string; at: { x: number; 
   return { g, key: cellKey(cell.c), at };
 }
 const wildHere = (g: Game, key: string) => g.creatures.filter(c => cellKey(c.cell) === key && !c.gone && !c.leashed && !c.boss && !c.enraged);
+const notBaby = (c: Creature) => !c.circle; // (a legend circle's baby has its own naps, woken only at its circle: below)
 const land = (g: Game, x: number, z: number) => { g.witch = { ...g.witch, x, z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false }; };
 
 describe("wild idlers nap (Ed, 2026-10-06)", () => {
@@ -44,7 +45,8 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
   it("wakes them gently when she lands in their area: up over naps.wake, out of fights meanwhile, and no new naps while she's there", () => {
     const { g, key, at } = overWild();
     run(g, 90);
-    const sleepers = wildHere(g, key).filter(c => c.asleep);
+    for (let t = 0; t < 150 && !wildHere(g, key).some(c => c.asleep && notBaby(c)); t++) run(g, 1); // (until an ordinary idler sleeps)
+    const sleepers = wildHere(g, key).filter(c => c.asleep && notBaby(c));
     expect(sleepers.length).toBeGreaterThan(0);
     land(g, at.x, at.z);
     run(g, 2 * STEP);
@@ -52,7 +54,7 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
     // getting up: no fight taken up before wake is over
     const wake = TUNING.naps!.wake;
     run(g, wake * 0.6, () => { for (const c of sleepers) expect(c.fight?.target ?? null).toBeNull(); });
-    run(g, 20, () => { for (const c of wildHere(g, key)) expect(c.asleep, "no new nap with her on the ground here").toBeFalsy(); });
+    run(g, 20, () => { for (const c of wildHere(g, key).filter(notBaby)) expect(c.asleep, "no new nap with her on the ground here").toBeFalsy(); });
   }, 120_000);
 
   it("keeps them asleep with her in the treetops right over them, or on the ground in the next area, close to the border", () => {
@@ -95,3 +97,39 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
     expect(c.fight?.target ?? null).toBeNull();
   }, 60_000);
 });
+
+describe("a legend circle's baby naps most of the time (Ed, 2026-10-07)", () => {
+  /** The wild circle baby nearest home, the witch high over it in the treetops. */
+  function overBaby(): { g: Game; c: Creature } {
+    const g = newGame(77, TUNING), d = g.map.dancefloor;
+    g.clock.paused = false;
+    g.witches[0].health.hp = 1e6;
+    const c = g.creatures.filter(c => c.circle && !c.boss && !c.leashed && !c.gone && !g.party.areas.has(cellKey(c.cell)))
+      .sort((a, b) => Math.hypot(a.x - d.x, a.z - d.z) - Math.hypot(b.x - d.x, b.z - d.z))[0];
+    g.witch = { ...g.witch, seated: false, x: c.circle!.x, z: c.circle!.z, vx: 0, vz: 0, mode: "treetop", lift: 1 };
+    return { g, c };
+  }
+
+  it("is asleep most of the time, getting up now and then, with her away from its circle", () => {
+    const { g, c } = overBaby();
+    let asleep = 0, all = 0, stirs = 0, was = false;
+    run(g, 300, () => { all++; if (c.asleep) asleep++; if (was && !c.asleep) stirs++; was = !!c.asleep; });
+    expect(asleep / all, "mostly asleep").toBeGreaterThan(0.6);
+    expect(stirs, "a stir now and then").toBeGreaterThan(0);
+  }, 120_000);
+
+  it("sleeps on with her on the ground elsewhere in its area, and wakes when she comes to its circle (so she can invite it)", () => {
+    const { g, c } = overBaby();
+    run(g, 120, () => { if (c.asleep && c.napUntil! - g.clock.time > 20) return; });
+    for (let i = 0; i < 2000 && !(c.asleep && c.napUntil! - g.clock.time > 15); i++) run(g, STEP);
+    expect(c.asleep, "asleep to begin with").toBeTruthy();
+    // on the ground in its area, but well away from its circle
+    const C = c.circle!, far = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dz]) => ({ x: C.x + dx * (C.r + TUNING.naps!.circle!.reach + 12), z: C.z + dz * (C.r + TUNING.naps!.circle!.reach + 12) }))
+      .find(p => cellKey(g.map.cellSafe(p.x, p.z).cell) === cellKey(c.cell));
+    if (far) { land(g, far.x, far.z); run(g, 3); expect(c.asleep, "asleep with her elsewhere in its area").toBeTruthy(); }
+    land(g, C.x, C.z);
+    run(g, 2 * STEP);
+    expect(c.asleep, "woken at its circle").toBeFalsy();
+  }, 120_000);
+});
+

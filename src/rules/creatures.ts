@@ -373,7 +373,7 @@ export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wande
  *  `chance`, for `length` seconds (a range); it gets up when that's over, when a witch is on the ground in its area
  *  (`roused`; none start a nap then either), or when it no longer may (its area partified, it enraged, taken, fleeing...),
  *  over `wake` seconds (a stretch, so landing isn't an instant pounce). Tuning: naps. */
-export interface NapRules { chance: number; length: readonly number[]; wake: number; /** its area still wild (no soundsystem yet) */ wild: (c: Creature) => boolean; /** a witch on the ground in its area */ roused: (c: Creature) => boolean }
+export interface NapRules { chance: number; length: readonly number[]; wake: number; /** a legend circle's baby's own chance and length (tuning naps.circle) */ circle?: { chance: number; length: readonly number[] }; /** its area still wild (no soundsystem yet) */ wild: (c: Creature) => boolean; /** a witch on the ground in its area */ roused: (c: Creature) => boolean }
 /** May nap at all: a wild idler, not a legend, besieging, fleeing, dazed, marching, fighting or happy. */
 export const napper = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss && !c.enraged && c.state !== "happy" && !c.siege && !c.fleeUntil && !c.dazedUntil && !c.wanderTo && !c.fight?.target && !c.retreat;
 /** Asleep or still getting up: out of fights. */
@@ -416,8 +416,9 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     const paused = c.rest > 0;
     stepCreature(c, full ? dt : dt * lod.every, map);
     // Just paused: now and then it lies down for a nap instead (never with her on the ground in its area).
-    if (naps && !paused && c.rest > 0 && napper(c) && naps.wild(c) && !naps.roused(c) && c.rand() < naps.chance) {
-      c.asleep = true; c.napUntil = time + naps.length[0] + c.rand() * (naps.length[1] - naps.length[0]); c.rest = 0;
+    const nr = naps && keepsToCircle(c) && naps.circle ? naps.circle : naps; // (a legend circle's baby: mostly asleep)
+    if (naps && nr && !paused && c.rest > 0 && napper(c) && naps.wild(c) && !naps.roused(c) && c.rand() < nr.chance) {
+      c.asleep = true; c.napUntil = time + nr.length[0] + c.rand() * (nr.length[1] - nr.length[0]); c.rest = 0;
     }
   }
 }
