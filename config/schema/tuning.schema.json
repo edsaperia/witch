@@ -1369,6 +1369,34 @@
       "type": "number",
       "minimum": 0
     },
+    "nightLight": {
+      "type": "object",
+      "properties": {
+        "maxReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gazeReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "maxReach",
+        "treetopReach",
+        "treetopGlow",
+        "gazeReach"
+      ],
+      "additionalProperties": false
+    },
     "glowFalloff": {
       "type": "number",
       "minimum": 0
@@ -6064,6 +6092,29 @@
       ],
       "additionalProperties": false
     },
+    "alarms": {
+      "type": "object",
+      "properties": {
+        "linger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fall": {
+          "type": "number",
+          "minimum": 0
+        },
+        "most": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "linger",
+        "fall",
+        "most"
+      ],
+      "additionalProperties": false
+    },
     "guard": {
       "type": "object",
       "properties": {
@@ -7637,6 +7688,7 @@
     "camera",
     "pixelSize",
     "glowReach",
+    "nightLight",
     "glowFalloff",
     "glowNear",
     "glowToCutout",
@@ -7696,6 +7748,7 @@
     "combat",
     "notice",
     "naps",
+    "alarms",
     "guard",
     "witchHealth",
     "knockout",

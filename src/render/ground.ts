@@ -19,6 +19,9 @@ import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
 
+/** How much smaller her warm pool is on the open sand than on the forest floor (the beach's: render/ground.ts). */
+const BEACH_POOL = 2.2;
+
 const TEXELS_PER_METRE = 2;
 const TILE = 32; // texels
 const FLOOR_COLS = 8;
@@ -104,6 +107,9 @@ ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
 }
 void main() {
   vec2 px = floor(vWorld.xz / uPixel);           // the art pixel this fragment is in
+  // How many art pixels one screen pixel spans (taken here, in uniform flow): over 1 at a low, squashed angle (stargazing, the
+  // bend's far edge), where pixel-fine patterns alias into stripes; the sand fades its fine detail by it (fine, 1 to 0).
+  float squash = max(fwidth(vWorld.x), fwidth(vWorld.z)) / uPixel, fine = 1.0 - smoothstep(0.75, 1.6, squash);
   vec2 p = (px + 0.5) * uPixel;                   // its centre, in metres
   // Wobble the lookup a little so area borders read as ragged, not as the texture's grid.
   vec2 j = vec2(vnoise(px / 5.0) - 0.5, vnoise(px / 5.0 + 17.0) - 0.5) * 0.9;
@@ -125,7 +131,7 @@ void main() {
       vec2 bp = floor(px / vec2(1.0, 2.0));
       float hb = fract(sin(dot(bp, vec2(12.9898, 78.233))) * 43758.5453), tuft = vnoise(p / 1.3 + 41.0);
       vec3 gcol = mix(vec3(0.2, 0.31, 0.2), vec3(0.34, 0.45, 0.27), step(0.62, hb)) * (0.85 + 0.3 * tuft);
-      if (into > -0.9 && tuft < 0.45 + into * 0.4) gcol = vec3(0.62, 0.58, 0.46); // (the sand between the outer tussocks)
+      if (into > -0.9 && tuft < 0.45 + into * 0.4) gcol = vec3(0.45, 0.44, 0.4); // (the sand between the outer tussocks)
       vec3 glit = max(nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0), vec3(0.24, 0.26, 0.3));
       gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), gcol * glit * 1.2), vWorld), vWorld), 1.0);
       return;
@@ -167,31 +173,39 @@ void main() {
         gl_FragColor = vec4(mix(mix(col, haze(col, vWorld), 0.45), uMoon * 0.35 + vec3(0.85, 0.86, 0.82), glint), 1.0);
         return;
       }
-      // The sand: pale in the moonlight, grains and drifts; dark where the waves have wet it, with the
-      // moon's sheen on it; a line of foam at the water's edge; shells and pebbles here and there.
+      // The sand: moonlit, not sunlit (Ed, 2026-10-06: "The beach is very bright for nighttime"): a muted, cool, pale grey-beige
+      // about as bright as the lighter forest floors, grains and drifts; dark where the waves have wet it, with the moon's sheen
+      // on it, and a touch brighter toward the water, catching the moonlight off it; a line of foam at the water's edge; shells
+      // and pebbles here and there. Her warm pool on it (glowPool) keeps the sand's own brightness, so it never blows it out.
       float g = vnoise(px / vec2(8.0, 5.0)) * 0.6 + vnoise(px / 1.7) * 0.4;
-      col = vec3(0.95, 0.87, 0.68) * (g < 0.35 ? 0.93 : g > 0.68 ? 1.04 : 1.0);
-      if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 0.94; // ripples the wind left
+      col = vec3(0.6, 0.58, 0.54) * mix(1.0, g < 0.35 ? 0.93 : g > 0.68 ? 1.04 : 1.0, fine);
+      if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 1.0 - 0.06 * fine; // ripples the wind left
       float wet = shore - 6.0 + vnoise(vec2(arc / 20.0, 1.0)) * 1.5;
-      if (bd > wet) col = mix(col, vec3(0.42, 0.4, 0.36), smoothstep(wet, wet + 1.5, bd));
+      if (bd > wet) col = mix(col, vec3(0.3, 0.31, 0.32), smoothstep(wet, wet + 1.5, bd));
       // The wave's edge (Ed, 2026-10-07: "a soft foamy pixel line that laps in and out on the sand"): a broken crest of foam
-      // pixels at the front, bubbles thinning behind it, and as the wave draws back a lace of foam left on the wet sand.
+      // pixels at the front, bubbles thinning behind it, and as the wave draws back a lace of foam left on the wet sand; in
+      // the night's own foam colour (art2's #364), the bubbles and lace smoothed where the pixels squash (fine).
       float fd = front - bd, ebb = cos(uTime * 0.9 + vnoise(vec2(arc / 60.0, 7.0)) * 6.0); // (ebb > 0: running up; < 0: drawing back)
       float froth = vnoise(px / vec2(2.0, 1.0) + vec2(uTime * 0.7, 0.0)) * 0.65 + vnoise(px / 0.9 + 3.0) * 0.35;
-      if (fd < uPixel * 1.5 && froth > 0.32) col = vec3(0.86, 0.9, 0.93); // the crest
-      else if (fd < uPixel * 1.5) col = mix(col, vec3(0.62, 0.7, 0.74), 0.6);
-      else if (fd < 1.2 && froth > 0.55 + fd * 0.25) col = mix(col, vec3(0.8, 0.85, 0.88), 0.75); // bubbles behind it
-      else if (ebb < 0.0 && fd < 2.2 + 2.5 * lap && abs(fract(fd * 0.9 - lap * 2.0) - 0.5) < 0.08 && froth > 0.5) col = mix(col, vec3(0.74, 0.78, 0.8), 0.5); // the lace left as it draws back
+      if (fd < uPixel * 1.5 && froth > 0.32) col = vec3(0.62, 0.68, 0.74); // the crest
+      else if (fd < uPixel * 1.5) col = mix(col, vec3(0.62, 0.68, 0.74), 0.55);
+      else if (fd < 1.2 && froth > 0.55 + fd * 0.25) col = mix(col, vec3(0.58, 0.63, 0.68), 0.7 * fine); // bubbles behind it
+      else if (ebb < 0.0 && fd < 2.2 + 2.5 * lap && abs(fract(fd * 0.9 - lap * 2.0) - 0.5) < 0.08 && froth > 0.5) col = mix(col, vec3(0.5, 0.54, 0.58), 0.5 * fine); // the lace left as it draws back
       float sh = fract(sin(dot(floor(px / 2.0), vec2(41.3, 289.1))) * 43758.5453);
-      if (sh > 0.993) col = mix(vec3(0.82, 0.78, 0.72), vec3(0.45, 0.43, 0.42), fract(sh * 13.0));
-      vec3 lit = max(nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0), vec3(0.3, 0.31, 0.36)); // (pale sand: it holds what light there is)
-      if (bd > wet && bd < front && mod(px.x + px.y, 3.0) < 1.0) lit += uMoon * 0.12; // the wet sand's sheen
+      if (sh > 0.993) col = mix(col, mix(vec3(0.62, 0.6, 0.57), vec3(0.34, 0.33, 0.33), fract(sh * 13.0)), fine);
+      vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
+      lit += uMoon * 0.14 * smoothstep(wet - 18.0, wet, bd); // (toward the water, the moonlight off it)
+      if (bd > wet && bd < front) lit += uMoon * (mod(px.x + px.y, 3.0) < 1.0 ? 0.12 * fine : 0.0) + uMoon * 0.04 * (1.0 - fine); // the wet sand's sheen (smooth where the pixels squash)
       // Under the bushes at the woods' edge, a soft dappled shadow (light can be smooth: Ed), and the sand's glow calmer near the
       // dark woods, so the step from sand to forest isn't harsh.
       float shade = (1.0 - smoothstep(0.0, 6.0, into)) * (0.7 + 0.3 * vnoise(p / 1.7 + 5.0));
       col *= 1.0 - 0.5 * shade;
       float calm = 0.82 + 0.18 * smoothstep(4.0, 22.0, into);
-      gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), col * lit * 1.12 * calm), vWorld), vWorld), 1.0);
+      // (her warm pool on the open sand a lantern's few metres, not the woods' wide one: no canopy breaks it up out here, Ed:
+      // "a warm pool of a few metres on the sand"; glowPool reads only the distance across the ground, so the sand's is taken
+      // BEACH_POOL times as far)
+      vec3 poolAt = uGlowPos + (vWorld - uGlowPos) * vec3(${BEACH_POOL.toFixed(2)}, 1.0, ${BEACH_POOL.toFixed(2)});
+      gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), col * lit * 1.25 * calm), poolAt), vWorld), 1.0); // (lit as the forest floor is)
       return;
     }
   }
