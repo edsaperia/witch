@@ -137,9 +137,9 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   v.witchBatch.set(bare ? [] : her);
   v.witchBatch.silhouette = djUpper < 0; if (v.bareBatch) v.bareBatch.silhouette = djUpper < 0;
   // Knocked off, her hat floats down (Ed, 2026-10-07: "the hat slowly floats to the floor over about 4 seconds"): from her head
-  // to where it lies over knockout.hatFloat seconds (her clock, from the knockdown), drifting over as it goes, swaying side to
+  // to where it lies over the knockout's float (ko.at to ko.floatUntil, knockout.hatFloat: rules/knockout.ts), drifting over as it goes, swaying side to
   // side less as it settles and rocking with each swing (the sprite turned as it swings back), its shadow gathering under it.
-  const HF = t.knockout.hatFloat ?? 0, fk = bare && hatFrame && HF > 0 ? Math.max(0, Math.min(1, (ht - Hat.down!.at) / HF)) : 1;
+  const fk = bare && hatFrame && KO && KO.floatUntil > KO.at ? Math.max(0, Math.min(1, (ht - KO.at) / (KO.floatUntil - KO.at))) : 1;
   const hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
   v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
   // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).

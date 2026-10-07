@@ -60,7 +60,7 @@ void main() {
   c += texture2D(uBloom, vUv).rgb * uBloomStrength;
   // Knocked down with her hat on (Ed, 2026-10-07): the rest of the screen dims, her spot and her hat floating down left lit
   // (round her light's pool, uPool, and well above it, where the hat starts).
-  if (uKoDim > 0.0) { vec2 q = uPool.z > 0.0 ? (vUv - uPool.xy - vec2(0.0, uPool.w * 1.2)) / (uPool.zw * vec2(1.0, 2.2)) : vec2(9.0); c *= 1.0 - uKoDim * smoothstep(0.7, 1.9, length(q)); }
+  if (uKoDim > 0.0) { vec2 q = (vUv - uPool.xy - vec2(0.0, 0.06)) * vec2(uLow.x / uLow.y, 1.0); c *= 1.0 - uKoDim * smoothstep(0.12, 0.32, uPool.z > 0.0 ? length(q) : 9.0); } // (her spot lit: about a tenth of the screen's height round her, a little above her feet)
   gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
 }`;
 
