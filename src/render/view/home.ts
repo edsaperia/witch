@@ -8,6 +8,7 @@ import { type Beacon, type Laser, MARKER_LEVELS, type Mote } from "../markers";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import type { WaveNumber } from "../waveNumbers";
 import { beatAt, beatTime } from "../../rules/beat";
+import { candleCount, candleMelt, candleRed } from "../../rules/knockout";
 import { canopyShown } from "../../rules/witch";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
@@ -146,8 +147,9 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
  *  Each shows its front to the camera, the far half facing in and the near half out, so its
  *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
  *  cones pump on the beat. Anchored by its ground point, like a path piece. */
-/** A home speaker's runestone, times the speaker's size (Ed: "smaller runestones"); the share of its turn spent as the stone (glowing, stretching) before the speaker springs up. */
-const STONE = 0.55, TURN = 0.4;
+/** The share of a home speaker's turn spent as its runestone (glowing, stretching) before the speaker springs up. (The stone's
+ *  baked at its own small size, render/artBuild.ts SPEAKER_STONE, and drawn at 1.) */
+const TURN = 0.4;
 export function drawSpeakers(v: View, time: number, angle: number): ForestLight[] {
   const A = v.assets.speakerArt(), g = v.game, lights: ForestLight[] = [];
   if (!A) return lights;
@@ -165,11 +167,11 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   g.map.dancefloor.speakers.forEach((sp, i) => {
     const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", k = speakerBoot(g, i, time), powered = k >= TURN;
     if (!powered && A.stone !== undefined) { // still its runestone (charging once the pulse has reached it)
-      const f = A.atlas.frames[A.stone], o = A.stoneOrigin!, c = k / TURN, d = (f.pad ?? 0) * mpp * STONE;
-      v.speakerTops[i] = { x: sp.x, y: o.y * mpp * STONE * (1 + 0.6 * c), z: sp.z, state, powered: false };
+      const f = A.atlas.frames[A.stone], o = A.stoneOrigin!, c = k / TURN, d = (f.pad ?? 0) * mpp;
+      v.speakerTops[i] = { x: sp.x, y: o.y * mpp * (1 + 0.6 * c), z: sp.z, state, powered: false };
       if (!inView(v, sp.x, sp.z, f.w * mpp, f.h * mpp, 6)) return;
       if (c > 0) lights.push({ x: sp.x, y: 1.5, z: sp.z, reach: 8, rgb: new THREE.Vector3(0.3, 0.9, 1), strength: 1.5 * c });
-      list.push({ x: sp.x - U.x * d, y: -U.y * d, z: sp.z - U.z * d, frame: f, flip: face.flip, scale: STONE, sx: 1 - 0.2 * c, sy: 1 + 0.6 * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
+      list.push({ x: sp.x - U.x * d, y: -U.y * d, z: sp.z - U.z * d, frame: f, flip: face.flip, sx: 1 - 0.2 * c, sy: 1 + 0.6 * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
       return;
     }
     const u = A.stone === undefined ? 1 : Math.min(1, (k - TURN) / (1 - TURN)), rise = u >= 1 ? 1 : 1 - Math.pow(1 - u, 3) * Math.cos(u * 4.2); // springs up, past full, settles
@@ -194,12 +196,15 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
 
 /** How far nearer the camera than the treehouse's own plane the booth's layers are drawn (metres, along the ray to the camera, so
  *  each lands on its own pixels): her, the DJ table over her, then her upper half over the table (her hands on the decks). */
-export const DJ_DEPTH = { her: 0.25, fore: 0.5, upper: 0.75 };
+export const DJ_DEPTH = { her: 0.25, fore: 0.5, upper: 0.75, candles: 1 };
 /** A point `d` metres nearer the camera along the ray from it (so it lands on the same pixel on screen). */
 export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {
   const c = v.camera.position, dx = p.x - c.x, dy = p.y - c.y, dz = p.z - c.z, l = Math.hypot(dx, dy, dz) || 1;
   return { x: p.x - (dx / l) * d, y: p.y - (dy / l) * d, z: p.z - (dz / l) * d };
 }
+
+/** The knockdown candles last shown, per view: their count, how many red, and (once she's free) when their smoke is done. */
+const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>();
 
 /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
  *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
@@ -219,6 +224,25 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const p = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.fore);
     items.push({ ...p, frame: ff, flip: false, overlay: true });
   }
+  // The knockdown candles along the desk's front, a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
+  // seconds of her wait; candleRed of them red, the wait past the base; candleMelt, burning down one after another as she
+  // scratches, on her clock): white at the left, red at the right, the bar emptying from its right end; nearest of all.
+  // (the rules clear her knockout the moment she's free: the last count kept here, the stubs smoking out for a second after)
+  const tu = v.game.tuning, ko = v.game.witches[0]?.ko, live = candleCount(ko, tu), ht = v.game.herTime, was = candlesSeen.get(v);
+  if (live > 0) candlesSeen.set(v, { n: live, red: candleRed(ko, tu), until: Infinity }); else if (was && was.until === Infinity) was.until = ht + 1; else if (was && ht > was.until) candlesSeen.delete(v);
+  const n = live || (candlesSeen.get(v)?.n ?? 0), red = candlesSeen.get(v)?.red ?? 0;
+  if (n > 0 && T.candleRow.length === 2) {
+    const [L, Rr] = T.candleRow, R = SPRITE_UNIFORMS.uRight.value;
+    for (let i = 0; i < n; i++) {
+      const j = n - 1 - i, m = live ? candleMelt(ko, ht, j, tu) : 1, k = n === 1 ? 0.5 : i / (n - 1), px = L.x + (Rr.x - L.x) * k, py = L.y + (Rr.y - L.y) * k;
+      const level = m >= 1 ? T.candleLevels - 1 : Math.min(T.candleLevels - 2, Math.floor(m * (T.candleLevels - 1)));
+      const fr = f[T.candle0 + (j < red ? T.candleRed : 0) + level * T.candleFlicker + (Math.floor(time * 7 + i * 1.7) % T.candleFlicker)]; if (!fr) continue;
+      const dx = (px - f[0].w / 2) * mpp, dy = (f[0].h - py) * mpp; // (the candle's foot on the row, in the base's pixels: its sprite's bottom middle there)
+      const base = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.candles);
+      items.push({ ...base, frame: fr, flip: false, overlay: true });
+    }
+  }
   v.treehouseBatch.set(items);
   return at;
 }
+

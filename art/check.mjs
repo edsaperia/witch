@@ -200,7 +200,7 @@ const report = await b.page.evaluate(async () => {
       for (let f = 0; f < P.limbo.frames; f++) { const top = G.witchModel({ pose: "limbo", frame: f }).anchors.top; if (!(top && top[1] < G.LIMBO_BAR - .02)) bad.push(`limbo ${f} top ${top && top[1].toFixed(2)} not under the bar ${G.LIMBO_BAR}`); }
     }
     const counts = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.frames])), want = { stand: 3, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2,
-      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4, dj: 14 };
+      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4, dj: 20 };
     res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), sit (2), and the party's 21 (7 dances with the limbo, dance with a partner, hold hands, hug, high-five, laugh, drink, run, sit on the ground, stargaze, conga, twirl and twirled, the broom limbo's two holders), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors, the limbo dancer under the bar; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
   }
   { // her lean cycle (WITCH_FLIGHT_POSES.lean): 4 frames, both facings and both headings, at her ordinary scale, standing, hand and hat-tip anchors inside; the frames differ (it moves)
@@ -317,7 +317,7 @@ const report = await b.page.evaluate(async () => {
     if (FF.length !== G.DJ_FRAMES || new Set(FF.map(f => f.w + "x" + f.h)).size !== 1 || new Set(FF.map(key)).size !== FF.length) bad.push("fore frames");
     { const f0 = FF[0]; for (let y = 0; y < f0.h; y++) for (let x = 0; x < f0.w; x++) { const v = f0.m[y * f0.w + x]; if (v && T.fore.m[(y + T.foreBox.y) * T.fore.w + x + T.foreBox.x] !== v) { bad.push("fore frame 0 not the table"); y = f0.h; break; } } }
     const DECK = new Set([G.M.SHADES, G.M.BODY3, G.M.COLLAR, G.M.RUNE, G.M.BELLY, G.M.FRAME, G.M.WOKEN]), onDeck = (x, y) => { const f0 = FF[0]; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = Math.round(x) - T.foreBox.x + dx, Y = Math.round(y) - T.foreBox.y + dy; if (X >= 0 && Y >= 0 && X < f0.w && Y < f0.h && DECK.has(f0.m[Y * f0.w + X])) return true; } return false; };
-    const P = G.WITCH_FOOT_POSES.dj, frames = [], deckHands = [0, 1, 4, 5, 6, 7, 8, 9];
+    const P = G.WITCH_FOOT_POSES.dj, frames = [], deckHands = [0, 1, 4, 5, 6, 7, 8, 9, 15, 16, 17, 18];
     for (let f = 0; f < P.frames; f++) {
       const sp = G.witchSprite(st, { pose: "dj", frame: f }), up = sp.upper, n = sp.m.filter(Boolean).length, nu = up ? up.reduce((a, v) => a + v, 0) : 0; frames.push(key(sp));
       let lowUp = 0; if (up) for (let i = 0; i < up.length; i++) if (up[i]) lowUp = Math.max(lowUp, Math.floor(i / sp.w));
@@ -325,7 +325,7 @@ const report = await b.page.evaluate(async () => {
       if (deckHands.includes(f)) { const hx = seat.x - sp.anchors.ground[0] + sp.anchors.hand[0], hy = seat.y - sp.anchors.ground[1] + sp.anchors.hand[1]; if (!onDeck(hx, hy)) bad.push(`dj ${f}: hand off the decks (${hx.toFixed(1)}, ${hy.toFixed(1)})`); }
     }
     for (const fr of Object.values(G.DJ_GESTURES)) if (frames[fr[0]] === frames[fr[1]]) bad.push(`dj ${fr}: frames alike`);
-    const played = new Set(); for (let b = 0; b < 48 * 4; b += .25) played.add(G.djFrame(b)); for (const [gname, fr] of Object.entries(G.DJ_GESTURES)) if (gname !== "cast" && !fr.every(f => played.has(f))) bad.push(`djFrame never plays ${gname}`);
+    const played = new Set(); for (let b = 0; b < 48 * 4; b += .25) played.add(G.djFrame(b)); const ROUTINE = new Set(["cast", "needle", "chirp", "spin"]); for (const [gname, fr] of Object.entries(G.DJ_GESTURES)) if (!ROUTINE.has(gname) && !fr.every(f => played.has(f))) bad.push(`djFrame never plays ${gname}`); // (the routine's: rules/djSet.ts, its test checks every gesture it names is drawn)
     if (!G.DJ_GESTURES.cast.includes(G.djFrame(3.2, { cast: true }))) bad.push("djFrame cast");
     res.push({ what: "DJ booth: the table's fore frames turn (one size, each different, the first the whole's table); her DJ frames facing us, every gesture's frames different, each with an upper layer (head and arms, no legs); her deck hands on the decks' pixels; djFrame plays every gesture", good: !bad.length, info: bad.join("; ") || `${FF.length} fore frames ${FF[0].w}x${FF[0].h}, ${P.frames} DJ frames` });
   }
@@ -658,7 +658,7 @@ const report = await b.page.evaluate(async () => {
     const L = G.relicLayouts(st), arr = Object.entries(L).filter(([, list]) => !list.every(p => G.RELIC_BY_ID[p.id]) || list.filter(p => G.RELIC_BY_ID[p.id].glow).length > 1).map(([n]) => n);
     res.push({ what: "modern relics (15+), the playground (6 pieces) and the sports grounds: standing, decals flat, tennis/baseball/football 15-30 m across, tall ones split, only the flagged ones glow; arrangements name real pieces, one glowing touch at most", good: !bad.length && !arr.length && fam.modern >= 15 && fam.playground === 6 && fam.sports >= 12, info: [...bad, ...arr.map(n => n + " arrangement")].join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
   }
-  { // world decorations: 12 ruins in two conditions, 8 rocks, 8 freak trees, each standing, sized for its family; tall ones split; only the flagged ones glow; the lake kit
+  { // world decorations: 12 ruins in two conditions, 8 rocks, 13 freak trees, each standing, sized for its family; tall ones split; only the flagged ones glow; the lake kit
     const bad = [], fam = { ruins: 0, rocks: 0, freak: 0 }, EM = new Set([...G.EMISSIVE]); let tallRuins = 0, glowing = 0;
     for (const d of G.DECOR) for (let variant = 0; variant < d.variants; variant++) {
       const D = G.decorSprite(d.id, st, { variant }), sp = D.whole, s2 = stats(sp), big = Math.max(D.metres.width, D.metres.height), lit = [...sp.m].some(v => EM.has(v));
@@ -669,7 +669,7 @@ const report = await b.page.evaluate(async () => {
       if (!(s2.n > (d.family === "rocks" ? 30 : 100) && s2.bottom > 0 && size && split && lit === !!d.glow && D.metres.footprint > 0)) bad.push(`${d.id}/${variant} ${D.metres.width}x${D.metres.height} m${split ? "" : " split"}${lit === !!d.glow ? "" : " glow"}`);
     }
     const L = G.lakeKit(st), lake = L.water.w === 64 && L.water.h === 48 && L.shore.w === 64 && L.shore.h === 16 && [...L.reeds, ...L.lilies].every(x => stats(x).n > 20) && [...L.water.m].filter(v => v === G.M.WATER).length > 64 * 48 * .8;
-    res.push({ what: "world decorations: 12 ruins (two conditions), 8 rocks, 8 freak trees; standing; ruins 4-14 m, a few tall enough for the treetops; tall ones split top and bottom; only the flagged ones glow (3+ ruins); the lake kit", good: !bad.length && fam.ruins === 12 && fam.rocks === 8 && fam.freak === 8 && tallRuins >= 2 && glowing >= 3 && lake, info: bad.join(", ") || `${tallRuins} tall ruins, ${glowing} glowing` });
+    res.push({ what: "world decorations: 12 ruins (two conditions), 8 rocks, 13 freak trees; standing; ruins 4-14 m, a few tall enough for the treetops; tall ones split top and bottom; only the flagged ones glow (3+ ruins); the lake kit", good: !bad.length && fam.ruins === 12 && fam.rocks === 8 && fam.freak === 13 && tallRuins >= 2 && glowing >= 3 && lake, info: bad.join(", ") || `${tallRuins} tall ruins, ${glowing} glowing` });
   }
   { // countryside and street pieces: each standing on its bottom row, its origin on it, a sane size and footprint, tall ones split, only the flagged ones glow
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
