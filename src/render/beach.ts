@@ -11,7 +11,7 @@ import type { Ground } from "./ground";
 import { PartyWitchView } from "./partyWitches";
 import type { ShadowInstance } from "./shadows";
 import { pixelEmoji } from "./invites";
-import { groundHeight, placed } from "./height";
+import { groundHeight, placed, shownOverBend } from "./height";
 import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "./sprites";
 import { BeachDecor, type BeachItem } from "../rules/beachDecor";
 import { tiltFilter } from "./overlayTilt";
@@ -124,7 +124,7 @@ export class BeachView {
       h.el.style.left = `${((this.v.x + 1) / 2) * width}px`;
       h.el.style.top = `${((1 - this.v.y) / 2) * height}px`;
       tiltFilter(h.el, ((1 - this.v.y) / 2) * height);
-      h.el.style.visibility = this.v.z < 1 ? "visible" : "hidden";
+      h.el.style.visibility = this.v.z < 1 && shownOverBend(h.x + sx, 0.6 + 2.5 * u, h.z, camera.position) ? "visible" : "hidden"; // (never past the bend)
       h.el.style.opacity = (u < 0.66 ? 1 : (1 - u) / 0.34).toFixed(2);
       return true;
     });

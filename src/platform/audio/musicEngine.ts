@@ -65,11 +65,17 @@ export class MusicEngine {
   private rate = 1;
   /** Continuity, for the checks (tools/music-lab/flight.cjs): times the timeline was re-anchored, sixteenths dropped
    *  for being late, and audio seconds left with nothing scheduled between one sixteenth and the next. */
-  readonly stats = { resyncs: 0, late: 0, gap: 0 };
+  readonly stats = { resyncs: 0, late: 0, gap: 0, ahead: 0 };
   private heardTo = -1;
   private lastNow = -1;
   /** How much faster or slower than the game the music may run while easing back into step (a share). */
   static slew = 0.05;
+  /** After a long frame it schedules further ahead (a stall that long may come again: the art baking, a new place's first
+   *  frames), up to `maxAhead` seconds, easing back down by `aheadEase` seconds a second (Ed, round 16: "Music is still
+   *  starting and stopping unexpectedly"). */
+  static maxAhead = 2;
+  static aheadEase = 0.05;
+  private lagAhead = 0;
   /** Notes' pitch now (the tape slowing with the music: 1 at full speed). */
   private pitch = 1;
   /** The note being played's pitch (the circle's layer never slowed). */
@@ -136,7 +142,7 @@ export class MusicEngine {
    *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
   update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.6, rate = 1, pitch = 1): void {
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
-    if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; return; }
+    if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; this.lastNow = -1; return; }
     // Game time as heard: running on from where it was at the old rate, then at the new one (the
     // world slowing in a legend's circle). The music never waits for the game (Ed's playtest, 2026-10-06:
     // "The music cuts in and out a lot": a frame over the rules' MAX_STEP loses game time, and re-anchoring
@@ -148,6 +154,9 @@ export class MusicEngine {
     this.pitch = pitch;
     const dtA = this.lastNow < 0 ? 0 : Math.max(0, now - this.lastNow);
     this.lastNow = now;
+    this.lagAhead = Math.min(MusicEngine.maxAhead, Math.max(dtA * 1.5, this.lagAhead - dtA * MusicEngine.aheadEase));
+    ahead = Math.max(ahead, this.lagAhead);
+    this.stats.ahead = ahead;
     const err = gameTime - (this.g0 + (now - this.a0) * rate), slew = MusicEngine.slew * Math.min(dtA, 0.05) * rate; // (a long frame no bigger a nudge than an ordinary one)
     if (!Number.isFinite(err) || err > 0.25 * rate) { if (Number.isFinite(this.g0)) this.stats.resyncs++; this.g0 = gameTime; this.a0 = now; this.nextStep = -1; }
     else if (err < -6 * rate) { this.g0 += err + 6 * rate; this.stats.resyncs++; } // (a game running far slower than its audio for long: the music waits, never more than 6 s ahead)

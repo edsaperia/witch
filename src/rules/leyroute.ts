@@ -34,10 +34,17 @@ const ROUTES = new WeakMap<ForestMap, LeyRoute>();
  *  without it (the noisy picker's: its lobes and wanderings, so every map's differs), untangled;
  *  if it still crosses itself, the order nudged a little (a few neighbouring stones swapped, seeded)
  *  and untangled again, up to TRIES times, the least crossed kept (none, on every seed tried). */
-export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () => string[], finish?: (r: LeyRoute) => LeyRoute): LeyRoute {
+export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () => string[], finish?: (r: LeyRoute) => LeyRoute, others?: () => string[][]): LeyRoute {
   let r = ROUTES.get(map);
   if (!r) {
     r = planRoute(map, initial());
+    // A route that turns back toward home late on (untangling can reverse a long run: seed 2 once the ghost areas went,
+    // Ed v1628; seed 32 before): the other orders planned too, the one with the least late dip that keeps Ed's crossing
+    // rules kept. (Most maps' routes are sound: nothing more to plan.)
+    if (others && routeShape(map, r.stones).lateDip > SPIRAL_RULES.maxDip) {
+      let dip = routeShape(map, r.stones).lateDip;
+      for (const o of others()) { const q = planRoute(map, o), d = routeShape(map, q.stones).lateDip; if (d < dip - 1 && withinCrossingRules(q.links)) { r = q; dip = d; } }
+    }
     if (finish && withinCrossingRules(r.links)) r = finish(r);
     if (fallback && !withinCrossingRules(r.links)) r = planRoute(map, fallback());
     ROUTES.set(map, r);
@@ -54,11 +61,12 @@ export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () 
  *  Crossings at least `apart` metres from each other on the map. links[i] runs into the (i + 1)th
  *  wave's stone. */
 export const CROSSING_RULES = { max: 4, pace: 3, margin: 1, apart: 350 };
-/** Adding crossings to the spiral (spiralRoute): each new link at most `stretch` times the mean link;
+/** maxDip: the planned route's late dip (routeShape) past which leyRoute plans the other orders it's given (the spiral's other ring counts).
+ *  Adding crossings to the spiral (spiralRoute): each new link at most `stretch` times the mean link;
  *  no reversal pulling the route's distance from home (smoothed over `smooth` waves) back more than
  *  `dip` metres below the farthest it has been, after the first `dipFrom` waves (or the plain spiral's
  *  own worst, if more). */
-export const SPIRAL_RULES = { stretch: 2, dip: 160, smooth: 9, dipFrom: 24, tries: 600, local: 12 };
+export const SPIRAL_RULES = { stretch: 2, dip: 160, smooth: 9, dipFrom: 24, tries: 600, local: 12, maxDip: 380 };
 export function crossingPairs(links: readonly (readonly P2[])[]): [number, number][] {
   const out: [number, number][] = [];
   for (let i = 0; i < links.length; i++) for (let j = i + 1; j < links.length; j++) if (polylinesMeet(links[i], links[j])) out.push([i, j]);
@@ -136,7 +144,10 @@ function segsMeet(s: Seg, t: Seg): boolean {
  *  alternately (a gentle zigzag); on about half the rings (not the last), one wedge reaches out as a
  *  little lobe through the next ring's stones in it (out along its first half, back along the second;
  *  the next ring skips them). */
-export function spiralOrder(map: ForestMap): string[] {
+export function spiralOrder(map: ForestMap): string[] { return spiralWith(map); }
+
+/** The spiral with its rings: K of them, or the seeded 5 to 7 (spiralOrder). */
+export function spiralWith(map: ForestMap, ringsOver?: number): string[] {
   const R = rng(map.seed * 7919 + 41), d = map.dancefloor, home = `${map.centreCell[0]},${map.centreCell[1]}`, TAU = Math.PI * 2;
   const wrap = (a: number) => ((a % TAU) + TAU) % TAU;
   type Pt = { k: string; r: number; a: number; p: P2 };
@@ -151,7 +162,7 @@ export function spiralOrder(map: ForestMap): string[] {
   // 2026-10-06: "After going around the speaker circle it should go off to the right and loop around to whatever direction
   // it needs to go"; rules/departure.ts): round the speakers from the treehouse and off to the right, so the spiral goes
   // on the way the line came, never folding back. (It was either way round, from anywhere, seeded.)
-  const K = 5 + Math.floor(R() * 3), dir = (R(), -1), seeded = (R(), Math.PI / 2), n = all.length;
+  const K0 = 5 + Math.floor(R() * 3), K = ringsOver ?? K0, dir = (R(), -1), seeded = (R(), Math.PI / 2), n = all.length;
   const byR = [...all].sort((u, v) => u.r - v.r), rings: Pt[][] = [];
   for (let i = 0; i < K; i++) rings.push(byR.slice(Math.round((i * n) / K), Math.round(((i + 1) * n) / K)));
   // The first stone: the innermost of the first ring's just past the line's way out (so the ring's end, coming back round,
@@ -335,7 +346,7 @@ export function variedOrder(map: ForestMap): string[] {
 
 const TRIES = 30;
 
-function planRoute(map: ForestMap, order: string[]): LeyRoute {
+export function planRoute(map: ForestMap, order: string[]): LeyRoute {
   let best = untangle(map, order) ?? { order: [], stones: [], links: [] }, bestC = crossingsOf(best.links);
   const R = rng(map.seed * 4099 + 17);
   for (let t = 1; t <= TRIES && bestC > 0; t++) {

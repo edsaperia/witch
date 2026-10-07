@@ -27,8 +27,9 @@ export const SPRITE_UNIFORMS = {
   uCutout: { value: new THREE.Vector4(0, 0, 0, 1) },
   /** How much the hole goes by each crown's middle rather than each pixel (canopyCutout.whole): 1, whole crowns fade. */
   uCutWhole: { value: 0 },
-  /** The hole's edge (canopyCutout): how far its line wobbles (a share of the edge) and how far past its radius the fade reaches (a share of the edge). */
-  uCutShape: { value: new THREE.Vector2(0, 0.35) },
+  /** The hole's edge (canopyCutout): how far its line wobbles (a share of the edge), how far past its radius the fade reaches (a
+   *  share of the edge), how ragged its outline is round her (a share of the radius) and how far each tree's own radius spreads. */
+  uCutShape: { value: new THREE.Vector4(0, 0.35, 0, 0.2) },
   // ?debug=cull: anything that has just appeared is tinted bright red.
   uDebugCull: { value: 0 },
   // The low-resolution picture's size in pixels: each sprite's base is snapped to its pixel grid.
@@ -39,6 +40,9 @@ export const SPRITE_UNIFORMS = {
   uWitch: { value: new THREE.Vector4(0, 0, 0, 0) },
   uWitchDepth: { value: 0 },
   uOcc: { value: new THREE.Vector4(0.38, 6, 2.5, 1) },
+  // Lying on the beach to stargaze the camera sits low behind her (rules/camera.ts beach.camera): anything nearer it than this
+  // (metres, by its base's depth) dithers away, so trees behind her don't fill the picture (0: off).
+  uNearCut: { value: 0 },
   // The party's canopy uplight: the nearest partified areas (centre x, z, reach, fade-in) and their
   // colours; uUplight: strength, pulse, edge (m), the beat's phase (radians).
   uParty: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) },
@@ -69,11 +73,14 @@ uniform vec3 uRight, uUp;
 uniform vec2 uRes;
 uniform float uWitchDepth;
 uniform vec4 uOcc;
+uniform float uNearCut;
+varying float vNear;
 uniform float uAbsolute; // its y is a world height, not a height over the ground
 uniform vec4 uLean; // the witch under a load (render/load.ts): sheared forward (m per m up), tilted nose-up (m per m across), her broom bowed (art pixels)
 uniform vec4 uCutout, uWitch;
 varying float vHole;   // crowns and cut trunks: the radius of the hole round her (pixels) for this tree
-varying float vCrownD; // and how far its crown's middle is from her on screen (pixels)
+varying float vCrownD; // and how far the nearest of its crown is from the hole's middle on screen (pixels)
+uniform vec4 uCutShape;
 varying float vOverHer; // over her on screen and nearer the camera: it could hide her
 attribute vec3 iPos;
 attribute vec2 iSize;
@@ -130,6 +137,7 @@ void main() {
   vSizeY = iSize.y;
   vWorld = w;
   gl_Position = clipOf(w);
+  vNear = uNearCut > 0.0 ? smoothstep(uNearCut * 0.75, uNearCut, -(viewMatrix * vec4(base, 1.0)).z) : 1.0;
   // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
   // its small bright details (flowers, eyes) don't shimmer in and out as the camera glides.
   gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;
@@ -140,13 +148,17 @@ void main() {
   if (abs(iFlags.y) > 0.001) {
     vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
     vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
-    // Its own radius for the hole (vHole here: in pixels), each tree a little nearer or further.
-    float j = fract(sin(dot(floor(iPos.xz * 2.0), vec2(12.9898, 78.233))) * 43758.5453);
-    vHole = uCutout.z * (0.8 + 0.4 * j);
-    vCrownD = length((s0 + s1) * 0.5 - uCutout.xy);
-    // Whether it could hide her: over her sprite on screen and nearer the camera than her.
+    // Its own radius for the hole (vHole here: in pixels): each tree's own, spread round the hole's (uCutShape.w), and the
+    // outline ragged round her, its bays and points drifting slowly round (uCutShape.z: Ed, 2026-10-06, "circle": no round line).
     float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
-    vec2 cc = (s0 + s1) * 0.5;
+    vec2 cc = (s0 + s1) * 0.5, off = cc - uCutout.xy;
+    float j = fract(sin(dot(floor(iPos.xz * 2.0), vec2(12.9898, 78.233))) * 43758.5453), ang = atan(off.y, off.x), tw = uWind.w;
+    float rag = 0.5 * sin(ang * 3.0 + tw * 0.07 + 1.3) + 0.3 * sin(ang * 5.0 - tw * 0.05 + 4.1) + 0.2 * sin(ang * 7.0 + tw * 0.11 + 2.2);
+    vHole = uCutout.z * (1.0 + uCutShape.w * (j - 0.5) * 2.0) * (1.0 + uCutShape.z * rag);
+    // How far it is: from its middle less half its half-size (its rectangle on screen shrunk by half), so a big crown over her
+    // goes as a whole, not stood whole by its far middle, while the canopy's big crowns at the screen's edges stay its roof.
+    vCrownD = length(max(abs(off) - vec2(hw, hh) * 0.5, 0.0));
+    // Whether it could hide her: over her sprite on screen and nearer the camera than her.
     vOverHer = abs(cc.x - uWitch.x) < hw + uWitch.z && abs(cc.y - uWitch.y) < hh + uWitch.w && uWitchDepth + (viewMatrix * vec4(base, 1.0)).z > 0.0 ? 1.0 : 0.0;
   }
 }
@@ -160,6 +172,7 @@ uniform vec4 uCutout;
 uniform float uDebugCull, uIsScenery, uAppear;
 uniform vec4 uLean;
 uniform vec4 uWitch, uOcc, uSilhouette;
+varying float vNear;
 uniform float uFadePass;
 uniform float uFlat; // lies flat on the ground (a court's decal), or gameplay that stays solid: never cut away round her
 uniform vec4 uParty[16];
@@ -175,7 +188,7 @@ varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sw
 varying float vFront;
 varying float vHole, vOverHer, vCrownD;
 uniform float uCutWhole;
-uniform vec2 uCutShape;
+uniform vec4 uCutShape;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
@@ -248,6 +261,7 @@ void shade() {
   }
   vec4 a = texture2D(uAlbedo, uvS);
   if (a.a < 0.5) discard;
+  if (vNear < 1.0 && bayer(gl_FragCoord.xy) >= vNear) discard; // (near the low stargazing camera: dithered away)
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
   // Things standing in front of the witch fade (smoothly) where they cover her: left out of the
