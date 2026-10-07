@@ -146,6 +146,7 @@ describe("the witch's health (Ed, 2026-10-04)", () => {
 });
 
 describe("knocked out (Ed, 2026-10-04)", () => {
+  const RESPAWN = TUNING.knockout.respawn ?? 0; // (the wait behind her decks: DECISION FOR ED)
   const withTuning = (patch: (t: Tuning) => void): Tuning => { const t = JSON.parse(JSON.stringify(TUNING)) as Tuning; patch(t); return t; };
   /** Three on her leash (a legend among them, bottom of the stack last) and one parked at a sigil; down to her last hit, an owl in range. */
   function setUp(t: Tuning = TUNING) {
@@ -165,7 +166,7 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     expect(W.ko).not.toBeNull();
     const down = g.clock.time, bottomFirst = [l.id, b.id, a.id]; // stack order a, b, l: l is the bottom
     const put = new Map<number, number>();
-    for (let i = 0; i < 10 / STEP && W.ko; i++) {
+    for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) {
       stepGame(g, { moveX: 1, moveZ: 0, toggleMode: true, zoom: 0, dash: true }, STEP); // input is ignored meanwhile
       for (const c of [a, b, l]) if (!g.leash.stack.includes(c.id) && !put.has(c.id)) put.set(c.id, g.clock.time - down);
     }
@@ -188,7 +189,7 @@ describe("knocked out (Ed, 2026-10-04)", () => {
       const { g } = setUp(), W = g.witches[0];
       if (far) W.body = { ...W.body, x: W.body.x + 900, z: W.body.z + 400 }; // (knocked down far from home)
       const intro0 = g.camera.intro ?? 0;
-      for (let i = 0; i < 30 / STEP && W.ko; i++) stepGame(g, idle, STEP);
+      for (let i = 0; i < (30 + RESPAWN) / STEP && W.ko; i++) stepGame(g, idle, STEP);
       expect(W.ko).toBeNull();
       expect(g.witch.seated, `far ${far}: behind her decks`).toBe(true);
       expect(Math.hypot(g.witch.x - g.map.start.x, g.witch.z - g.map.start.z)).toBeLessThan(0.5);
@@ -198,6 +199,23 @@ describe("knocked out (Ed, 2026-10-04)", () => {
       expect(g.camera.intro ?? 0).toBe(0);
       stepGame(g, { ...idle, moveX: 1 }, STEP);
       expect(g.witch.seated, "up and away").toBeFalsy();
+    }
+  }, 120000);
+
+  it("holds her behind her decks knockout.respawn seconds after the sparkle-in, input ignored, then lets her go (0: as before)", () => {
+    for (const respawn of [RESPAWN, 0]) {
+      const { g } = setUp(withTuning(t => { t.knockout.respawn = respawn; })), W = g.witches[0], K = W.ko!;
+      expect(K.backAt - K.inAt).toBeCloseTo(respawn, 6);
+      const go = { ...idle, moveX: 1, toggleMode: true, dash: true };
+      while (!K.moved) stepGame(g, go, STEP);
+      const at = { x: g.witch.x, z: g.witch.z };
+      expect(Math.hypot(at.x - g.map.start.x, at.z - g.map.start.z), "at the decks from the sparkle-in").toBeLessThan(0.5);
+      let held = 0;
+      while (W.ko) { stepGame(g, go, STEP); held += STEP; if (W.ko) { expect(Math.hypot(g.witch.x - at.x, g.witch.z - at.z), "held while she waits").toBeLessThan(1e-6); expect(g.witch.seated).toBe(true); } }
+      expect(held, "the sparkle-in's second half, then the wait").toBeCloseTo((K.inAt - K.teleportAt) / 2 + respawn, 0);
+      expect(W.ko).toBeNull();
+      stepGame(g, { ...idle, moveX: 1 }, STEP);
+      expect(g.witch.seated, `respawn ${respawn}: up and away once it's over`).toBeFalsy();
     }
   }, 120000);
 

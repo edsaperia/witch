@@ -96,7 +96,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   let hidden = ht >= D.at - STEP && ht < D.until;
   if (KO) {
     if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
-    else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
+    else hidden = ht < KO.inAt - (KO.inAt - KO.teleportAt) * 0.25;
   }
   // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
   // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").

@@ -1718,6 +1718,10 @@
         },
         "dropHat": {
           "type": "boolean"
+        },
+        "respawn": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -1726,7 +1730,8 @@
         "emptyBeat",
         "teleport",
         "legendsLoyal",
-        "dropHat"
+        "dropHat",
+        "respawn"
       ],
       "additionalProperties": false
     },
@@ -7841,6 +7846,7 @@
     "sky",
     "moon",
     "glowReach",
+    "sigilSpill",
     "nightLight",
     "glowFalloff",
     "glowNear",
@@ -7859,8 +7865,7 @@
     "looks",
     "tone",
     "bloom",
-    "tiltShift",
-    "sigilSpill"
+    "tiltShift"
   ],
   "additionalProperties": false
 }

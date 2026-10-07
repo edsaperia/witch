@@ -3,7 +3,9 @@
 // hit. At none she's knocked out: she collapses where she is (no more hits, no input), her sigil
 // stack comes down from the bottom up, one every releaseEach seconds, each sigil put down where
 // its animal stands (#87, Ed 2026-10-05: leashed is for good, so they stay hers as a parked
-// group); then she sparkles out and back in at the treehouse. No drawing here.
+// group); then she sparkles out and back in at the treehouse, where she waits knockout.respawn seconds behind her decks
+// before she can move (DECISION FOR ED, the balance builder's option (a): a knockdown costs time, while her army fights on
+// without her). No drawing here.
 import type { ForestMap } from "./map";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
 import { letPartyLegendGo, type LeashState } from "./leash";
@@ -25,8 +27,10 @@ export interface Knockout {
   order: number[];
   times: number[];
   released: number;
-  /** Game time the teleport starts (after the last sigil), and ends. */
+  /** Game time the teleport starts (after the last sigil), and ends (she's in at the treehouse). */
   teleportAt: number;
+  inAt: number;
+  /** Game time she can move again: inAt, or after the respawn wait behind her decks (knockout.respawn; DECISION FOR ED). */
   backAt: number;
   /** She's sparkled out, and been moved to the treehouse, behind her decks (halfway through the teleport). */
   out: boolean;
@@ -57,7 +61,8 @@ export function knockOut(leash: LeashState, creatures: Creature[], time: number,
   const each = K.releaseMax > 0 && order.length * K.releaseEach > K.releaseMax ? K.releaseMax / order.length : K.releaseEach;
   const times = order.map((_, i) => time + (i + 1) * each);
   const teleportAt = order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat;
-  return { at: time, order, times, released: 0, teleportAt, backAt: teleportAt + K.teleport, out: false, moved: false };
+  const inAt = teleportAt + K.teleport;
+  return { at: time, order, times, released: 0, teleportAt, inAt, backAt: inAt + Math.max(0, K.respawn ?? 0), out: false, moved: false };
 }
 
 /** Put a carried sigil down where its animal stands (a little aside if another sigil is there): it stays hers, parked. */
@@ -77,7 +82,7 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     else if (c && c.leashed && leash.stack.includes(c.id)) { parkWhere(c, leash, time); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
   }
   if (time >= k.teleportAt && !k.out) { k.out = true; events.push({ kind: "sparkleOut", at: time, x: body.x, z: body.z }); }
-  const mid = (k.teleportAt + k.backAt) / 2;
+  const mid = (k.teleportAt + k.inAt) / 2;
   if (!k.moved && time >= mid) {
     k.moved = true;
     // Back behind her decks in the treehouse, as at the start (Ed, 2026-10-06: "When you die and respawn, you should appear
@@ -116,3 +121,7 @@ export function stepWanderers(creatures: Creature[], map: ForestMap, dt: number)
   }
   return settled;
 }
+
+/** Seconds left of her wait behind her decks after a knockout (knockout.respawn), or null when she isn't waiting: for the
+ *  countdown at the decks (render/leash/respawn.ts). */
+export const respawnLeft = (k: Knockout | null | undefined, time: number): number | null => (k && time >= k.inAt && time < k.backAt ? k.backAt - time : null);
