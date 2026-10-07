@@ -45,6 +45,7 @@ import type { SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
+import { CombatLight } from "./combatLight";
 import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
@@ -234,15 +235,13 @@ export class View {
   sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
   forestLights: ForestLight[] = [];
+  /** Her light dimmer in the wild, back up in a fight (render/combatLight.ts). */
+  readonly combatLight = new CombatLight();
   shadows: ShadowBatch;
   /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
   readonly rig: RigView | null;
   /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
   readonly subpixel = { x: 0, y: 0 };
-  /** What the canvas's glide follows: "witch" (her own snap, so she holds still on screen while the
-   *  world glides: Ed's 2026-10-06 playtest, "it feels low") or "camera" (the camera's snap: the world
-   *  exact, her a pixel either way from frame to frame). ?glide= picks one. */
-  glide: "witch" | "camera" = "witch";
   /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
   readonly witchBase = { x: 0, y: 0, z: 0 };
   shadowList: ShadowInstance[] = [];
@@ -278,10 +277,10 @@ export class View {
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
     // With find on (Ed, v244), a touch more ambient and a cooler, more coloured moonlight.
-    const moonLook: Record<string, number> = t.find.on ? { moonHue: t.find.moonHue, moonSat: t.find.moonSat } : {};
+    const moonLook: Record<string, number> = { moonHue: t.find.moonHue, moonSat: t.find.moonSat };
     // The mood (render/mood.ts): the spooky grade over the style's light, or the plain light.
     const M = moodOf(t), moodLook: Record<string, number> = M ? { ambientHue: M.ambientHue, moonHue: M.moonHue, moonSat: M.moonSat, glowHue: M.glowHue, glowSat: M.glowSat } : {};
-    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook, ...moodLook }, t.glowReach, this.mpp, (t.find.on ? t.find.ambient : t.tone.ambient) * (M?.ambient ?? 1), t.glowFalloff, t.tone.moon * (M?.moon ?? 1));
+    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook, ...moodLook }, t.glowReach, this.mpp, t.find.ambient * (M?.ambient ?? 1), t.glowFalloff, t.tone.moon * (M?.moon ?? 1));
     this.areaMoods = M ? new AreaMoods(M) : null;
     // The characters' moonlight rim and her own glow on her (the art director's round 1), the mood's.
     // A stylised art style (?style=bold|ref) bakes its light into dark tones with flat normals, so it takes its own,
@@ -325,15 +324,12 @@ export class View {
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
     const cs = t.canopyShadow;
     this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
-    this.shadows = new ShadowBatch(t.shadows.strength, t.fx === "smooth");
+    this.shadows = new ShadowBatch(t.shadows.strength);
     this.shadows.mesh.visible = t.shadows.on;
     this.scene.add(this.shadows.mesh);
-    const smooth = t.fx === "smooth";
-    LIGHT_UNIFORMS.uSmooth.value = smooth ? 1 : 0;
     if (t.mist.on && t.mist.strength > 0) {
-      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.mpp, smooth, this.post.scene.depthTexture, this.post.lowSize);
-      if (smooth) { this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh); }
-      else this.scene.add(this.mist.mesh);
+      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.lowSize);
+      this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
     LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
@@ -398,19 +394,12 @@ export class View {
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
 
-    // A shadow under the witch, so her height reads: soft (multiplied over the ground), or
-    // dithered with ?fx=pixel.
-    const sm = t.fx === "smooth"
-      ? new THREE.ShaderMaterial({
-        transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor,
-        vertexShader: SHADOW_VERT, uniforms: { ...HEIGHT_UNIFORMS, uShadowDebug: SHADOW_DEBUG },
-        fragmentShader: "uniform float uShadowDebug; varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; float r = dot(p, p); if (r > 1.0) discard; gl_FragColor = uShadowDebug > 0.5 ? vec4(1.0, 0.0, 1.0, 1.0) : vec4(vec3(1.0 - 0.75 * (1.0 - r) * (1.0 - r)), 1.0); }",
-      })
-      : new THREE.ShaderMaterial({
-        transparent: false, depthWrite: false,
-        vertexShader: SHADOW_VERT, uniforms: { ...HEIGHT_UNIFORMS },
-        fragmentShader: "varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; if (dot(p, p) > 1.0 || mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5) discard; gl_FragColor = vec4(0.02, 0.02, 0.05, 1.0); }",
-      });
+    // A shadow under the witch, so her height reads: soft (multiplied over the ground).
+    const sm = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor,
+      vertexShader: SHADOW_VERT, uniforms: { ...HEIGHT_UNIFORMS, uShadowDebug: SHADOW_DEBUG },
+      fragmentShader: "uniform float uShadowDebug; varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; float r = dot(p, p); if (r > 1.0) discard; gl_FragColor = uShadowDebug > 0.5 ? vec4(1.0, 0.0, 1.0, 1.0) : vec4(vec3(1.0 - 0.75 * (1.0 - r) * (1.0 - r)), 1.0); }",
+    });
     // Finely divided, each point laid on the rolling ground, and drawn a little toward the camera: one
     // flat quad on a slope (Ed, v289) sank into the ground's coarser grid in places, a ragged blob.
     sm.polygonOffset = true; sm.polygonOffsetFactor = -2; sm.polygonOffsetUnits = -4;
@@ -431,11 +420,9 @@ export class View {
     const p = this.game.tuning.pixelSize;
     this.width = Math.max(1, Math.ceil(cssW / p));
     this.height = Math.max(1, Math.ceil(cssH / p));
-    // With the tilt-shift after the upscale, the canvas holds the full-size image; otherwise the
-    // low-resolution one, which the browser scales up with nearest-neighbour.
-    const k = this.post.fullResolution ? p : 1;
-    this.renderer.setSize(this.width * k, this.height * k, false);
-    this.post.resize(this.width, this.height, this.width * k, this.height * k);
+    // The canvas holds the low-resolution picture, which the browser scales up with nearest-neighbour.
+    this.renderer.setSize(this.width, this.height, false);
+    this.post.resize(this.width, this.height, this.width, this.height);
     this.canvas.style.width = this.width * p + "px";
     this.canvas.style.height = this.height * p + "px";
     this.camera.aspect = this.width / this.height;
@@ -448,6 +435,7 @@ export class View {
     this.render(0, false);
     drawCreatures(this);
     this.ground.fill(this.renderer, viewRect(this, this.game.tuning.haze.near, 20), this.game.witch.x, this.game.witch.z, Infinity);
+    await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
     await this.assets.whenIdle();
     this.render(0, false);
     refresh(this, true);
@@ -640,10 +628,17 @@ export class View {
   }
   /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
   setWitch(genome: unknown): void {
-    this.assets.rebakeWitch(genome);
-    this.scene.remove(...this.witchBatch.meshes);
-    this.witchBatch = this.makeWitchBatch();
+    this.assets.rebakeWitch(genome); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
     if (this.bareBatch) { this.scene.remove(...this.bareBatch.meshes); this.bareBatch = null; this.bareAsked = false; }
+  }
+  /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
+  private swapHomeArt(): void {
+    const A = this.assets;
+    if (this.witchBatch.atlas !== A.witch) this.witchBatch.setAtlas(A.witch);
+    if (this.bareBatch && this.bareBatch.atlas !== A.witchBare()) this.bareBatch.setAtlas(A.witchBare());
+    if (this.treehouseBatch.atlas !== A.treehouse.atlas) this.treehouseBatch.setAtlas(A.treehouse.atlas);
+    if (this.propBatch.atlas !== A.props) this.propBatch.setAtlas(A.props);
+    if (this.soundBatch.atlas !== A.soundsystems) { this.soundBatch.setAtlas(A.soundsystems); this.partyView.atlas = A.soundsystems; }
   }
 
   /** How much of a thing shows over the bent horizon (culling.ts overBulge): the smoke check reads it. */
@@ -722,6 +717,7 @@ export class View {
     LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
     const up = placeCamera(this, time, pose);
 
+    this.swapHomeArt();
     setFrameUniforms(this, time, up);
     const w = g.witch;
     this.time("uniforms");

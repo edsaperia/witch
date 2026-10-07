@@ -2677,13 +2677,40 @@
         "wake": {
           "type": "number",
           "minimum": 0
+        },
+        "circle": {
+          "type": "object",
+          "properties": {
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "length": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "chance",
+            "length",
+            "reach"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "on",
         "chance",
         "length",
-        "wake"
+        "wake",
+        "circle"
       ],
       "additionalProperties": false
     },
@@ -2947,6 +2974,9 @@
           "type": "number",
           "minimum": 0
         },
+        "earlyQuest": {
+          "type": "boolean"
+        },
         "buffPower": {
           "type": "number",
           "minimum": 0
@@ -3020,6 +3050,7 @@
       },
       "required": [
         "share",
+        "earlyQuest",
         "buffPower",
         "happyRange",
         "questCap",
@@ -3691,9 +3722,6 @@
     "runeMarkers": {
       "type": "object",
       "properties": {
-        "awakeStyle": {
-          "type": "string"
-        },
         "laser": {
           "type": "object",
           "properties": {
@@ -3823,7 +3851,6 @@
         }
       },
       "required": [
-        "awakeStyle",
         "laser",
         "scale",
         "beamHeight",
@@ -5081,9 +5108,6 @@
         "picker": {
           "type": "string"
         },
-        "route": {
-          "type": "string"
-        },
         "noisy": {
           "type": "object",
           "properties": {
@@ -5132,7 +5156,6 @@
         "startDelay",
         "areasPerWave",
         "picker",
-        "route",
         "noisy",
         "transition",
         "lightReach",
@@ -6087,9 +6110,6 @@
     "find": {
       "type": "object",
       "properties": {
-        "on": {
-          "type": "boolean"
-        },
         "eyeshine": {
           "type": "object",
           "properties": {
@@ -6135,7 +6155,6 @@
         }
       },
       "required": [
-        "on",
         "eyeshine",
         "lightFloor",
         "rim",
@@ -6491,6 +6510,54 @@
         "stack",
         "stackReach",
         "stackHeight"
+      ],
+      "additionalProperties": false
+    },
+    "combatLight": {
+      "type": "object",
+      "properties": {
+        "wildReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wildGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fall": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "wildReach",
+        "wildGlow",
+        "fightReach",
+        "fightGlow",
+        "range",
+        "hold",
+        "rise",
+        "fall"
       ],
       "additionalProperties": false
     },
@@ -7515,13 +7582,6 @@
       ],
       "additionalProperties": false
     },
-    "fx": {
-      "type": "string",
-      "enum": [
-        "smooth",
-        "pixel"
-      ]
-    },
     "moonbeams": {
       "type": "number",
       "minimum": 0
@@ -7659,16 +7719,6 @@
         "on": {
           "type": "boolean"
         },
-        "where": {
-          "type": "string",
-          "enum": [
-            "before",
-            "after"
-          ]
-        },
-        "sky": {
-          "type": "boolean"
-        },
         "skyBlur": {
           "type": "number",
           "minimum": 0
@@ -7706,8 +7756,6 @@
       },
       "required": [
         "on",
-        "where",
-        "sky",
         "skyBlur",
         "strength",
         "band",
@@ -7841,6 +7889,7 @@
     "sky",
     "moon",
     "glowReach",
+    "sigilSpill",
     "nightLight",
     "glowFalloff",
     "glowNear",
@@ -7854,13 +7903,11 @@
     "haze",
     "shadows",
     "mist",
-    "fx",
     "moonbeams",
     "looks",
     "tone",
     "bloom",
-    "tiltShift",
-    "sigilSpill"
+    "tiltShift"
   ],
   "additionalProperties": false
 }

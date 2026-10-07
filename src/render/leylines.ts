@@ -72,6 +72,8 @@ export function fine(pts: [number, number][], step: number): [number, number][] 
 const ROUTE_MS = 2;
 /** How tame a link is drawn when its wander would meet another's (a share of its usual wander; 0 its own way). */
 const TAME = [1, 0.5, 0.2, 0];
+/** The offsets a route samples each side of its curve at a point, looking for the low ground: every sixth of its wander (as before, so each link keeps its taming; 3 was 2.3 times cheaper but moved a few links tens of metres). */
+const SAMPLES = 6;
 /** leyLines.brightness 1: the first look (v395); Ed, 2026-10-05: "about 30% as bright" (0.3). */
 const BRIGHT = 4;
 
@@ -227,7 +229,7 @@ export class LeyLines {
   private chain: LeyStone[] = [];
   private current = 0;
   /** The routes being worked out for a new chain (a link a frame), then swapped in whole. */
-  private pending: { key: number; chain: LeyStone[]; current: number; colours: THREE.Vector3[]; routes: [number, number][][] } | null = null;
+  private pending: { key: number; chain: LeyStone[]; current: number; colours: THREE.Vector3[]; job: Generator<void, [number, number][][], void>; routes: [number, number][][] | null } | null = null;
   private shiftFrom = -Infinity;
 
   constructor(private T: LeyTuning, private ground: (x: number, z: number) => number, private map?: ForestMap) {
@@ -312,13 +314,14 @@ export class LeyLines {
       if (!this.pending && was.length === c.stones.length && c.stones.every((s, i) => s.cell[0] === was[i].cell[0] && s.cell[1] === was[i].cell[1])) {
         if (c.current !== this.current) this.shiftFrom = time;
         this.key = key; this.current = c.current; this.cur.current.value = c.current;
-      } else this.pending = { key, chain: c.stones, current: c.current, colours: c.stones.map(colourOf), routes: [] };
+      } else this.pending = { key, chain: c.stones, current: c.current, colours: c.stones.map(colourOf), job: this.routeAll(c.stones), routes: null };
     }
-    // Route links for up to ROUTE_MS a frame (each kept from meeting those before it); when all are, swap the new line in.
+    // Route links for up to ROUTE_MS a frame (each kept from meeting those before it), a taming step at a time (a whole link
+    // was up to 60 ms in one frame at a late wave: the hitch hunt); when all are, swap the new line in.
     if (this.pending) {
       const P = this.pending, t0 = performance.now();
-      while (P.routes.length < P.chain.length - 1 && performance.now() - t0 < ROUTE_MS) { const k = P.routes.length; P.routes.push(this.routeTame(P.chain, P.routes, k)); }
-      if (P.routes.length >= P.chain.length - 1) {
+      while (!P.routes && performance.now() - t0 < ROUTE_MS) { const r = P.job.next(); if (r.done) P.routes = r.value; }
+      if (P.routes) {
         const was = this.chain[this.current + 1];
         if (was && P.chain[P.current] && P.chain[P.current].cell.join() === was.cell.join()) this.shiftFrom = time; // (moved on)
         this.build(this.cur.geo, P.colours, P.routes);
@@ -338,14 +341,21 @@ export class LeyLines {
    *  2026-10-06: the line never crosses itself; rules/leyroute.ts keeps the stones' own straight
    *  ways apart, so where wanders would meet, the link is drawn tamer, down to straight, and if it
    *  still meets one, that one is drawn straight too). */
-  private routeTame(chain: LeyStone[], routes: [number, number][][], k: number): [number, number][] {
+  private *routeTame(chain: LeyStone[], routes: [number, number][][], k: number): Generator<void, [number, number][], void> {
     let r: [number, number][] = [];
     for (const wander of TAME) {
-      r = this.route(chain[k], chain[k + 1], k, wander, chain);
+      r = yield* this.routeSteps(chain[k], chain[k + 1], k, wander, chain);
       if (!routes.some(q => polylinesMeet(q, r))) return r;
     }
     routes.forEach((q, j) => { if (!chain[j].depart && polylinesMeet(q, r)) routes[j] = this.route(chain[j], chain[j + 1], j, 0, chain); });
     return r;
+  }
+
+  /** Every link's route in turn (routeTame), a taming step at a time. */
+  private *routeAll(chain: LeyStone[]): Generator<void, [number, number][][], void> {
+    const routes: [number, number][][] = [];
+    for (let k = 0; k < chain.length - 1; k++) routes.push(yield* this.routeTame(chain, routes, k));
+    return routes;
   }
 
   /** A link's way from stone a to b before it wanders: the route's curve through its stones (Ed, 2026-10-06: "can we give
@@ -369,6 +379,11 @@ export class LeyLines {
    *  usual way off it; 0 the curve itself), leaving and reaching its stones along the curve, and never turning tighter
    *  than the curve may (leyLines.minRadius: the wander tamed till it doesn't). */
   private route(a: LeyStone, b: LeyStone, k: number, wander = 1, chain = this.pending?.chain ?? this.chain): [number, number][] {
+    const steps = this.routeSteps(a, b, k, wander, chain);
+    for (;;) { const r = steps.next(); if (r.done) return r.value; }
+  }
+  /** route, yielding after each taming step that didn't settle it. */
+  private *routeSteps(a: LeyStone, b: LeyStone, k: number, wander: number, chain: LeyStone[]): Generator<void, [number, number][], void> {
     // From the treehouse at the start: due south out of its front, then round to the first objective.
     if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.avoid, STEP / 2);
     const base = fine(this.baseOf(chain, k), STEP), n = base.length - 1, R = this.map ? leyRadius(this.map) : 30;
@@ -377,13 +392,19 @@ export class LeyLines {
     const nrm = base.map((_, i) => { const q0 = base[Math.max(0, i - 1)], q1 = base[Math.min(n, i + 1)], l = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]) || 1; return [-(q1[1] - q0[1]) / l, (q1[0] - q0[0]) / l]; });
     for (let tame = wander; ; tame = tame > 0.05 ? tame / 2 : 0) {
       const W = Math.min(80, L * this.T.valley) * tame, off = new Float64Array(n + 1);
-      if (W > 0) for (let i = 1; i < n; i++) {
-        let best = 0, bh = Infinity;
-        for (let o = -W; o <= W + 1e-6; o += W / 6) {
-          const h = this.ground(base[i][0] + nrm[i][0] * o, base[i][1] + nrm[i][1] * o) + Math.abs(o) * 0.04; // (a little loath to stray)
-          if (h < bh) { bh = h; best = o; }
+      // The lowest ground across the link at every other point, SAMPLES offsets each side, the points between halfway (the
+      // smoothing below evens them; the whole line's routing was 1.5 s of height sampling at a run's start: the hitch hunt).
+      if (W > 0) {
+        for (let i = 1; i < n; i += 2) {
+          if (i % 24 === 1) yield; // (a long late-wave link samples the ground thousands of times a step: a few ms at a time)
+          let best = 0, bh = Infinity;
+          for (let s = -SAMPLES; s <= SAMPLES; s++) {
+            const o = (s / SAMPLES) * W, h = this.ground(base[i][0] + nrm[i][0] * o, base[i][1] + nrm[i][1] * o) + Math.abs(o) * 0.04; // (a little loath to stray)
+            if (h < bh) { bh = h; best = o; }
+          }
+          off[i] = best;
         }
-        off[i] = best;
+        for (let i = 2; i < n; i += 2) off[i] = (off[i - 1] + (i + 1 < n ? off[i + 1] : 0)) / 2;
       }
       // Smoothed into a gentle curve, held to its stones at the ends (along the curve there: sin², so it leaves and
       // reaches each stone the way the curve does, no corner), with a little wander of its own.
@@ -393,6 +414,7 @@ export class LeyLines {
         return i === n ? [b.x, b.z] : [q[0] + nrm[i][0] * o, q[1] + nrm[i][1] * o];
       });
       if (W <= 0 || tightestTurn(pts, 6) >= R * 0.95) return pts;
+      yield;
     }
   }
 

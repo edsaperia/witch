@@ -4,9 +4,7 @@
 import type { Schema } from "./schema";
 
 export const TUNING_OVER: Record<string, Partial<Schema>> = {
-  fx: { enum: ["smooth", "pixel"] },
   "map.shape": { enum: ["circle", "square"] },
-  "tiltShift.where": { enum: ["before", "after"] },
   "berries.cost.by": { enum: ["power", "value"] },
   "arena.curve": { enum: ["linear", "smooth"] },
   "partyObjects.home.weights": { additionalProperties: { type: "number", minimum: 0 } },

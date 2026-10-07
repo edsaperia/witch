@@ -7,6 +7,7 @@ import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
 import { overrideFor, poseName, type Override } from "./overrides";
+import { propSprites, soundsystemSprites, treehouseSprites, witchSprites, type TreehouseArt, type WitchArt } from "./homeArt";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
@@ -17,6 +18,15 @@ export interface Frame { uv: [number, number, number, number]; w: number; h: num
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
+
+/** Where a witch frame's ground is (the art's `ground` and `shadow` anchors, art/witch.js liftShadow): the point under her on the
+ *  model's ground and her shadow's size there, in the sprite's pixels. */
+export interface FrameGround { x: number; y: number; w: number; d: number }
+/** A witch sprite's ground from its anchors (art/witch.js liftShadow), or null. */
+export function groundOf(anchors?: Record<string, number[]> | null): FrameGround | null {
+  const g = anchors?.ground, s = anchors?.shadow;
+  return g ? { x: g[0], y: g[1], w: s?.[0] ?? 0, d: s?.[1] ?? 0 } : null;
+}
 
 /** Where each of an area type's sprites sits in its atlas. A big object with a top half (a
  *  tree's crown) has `top`; one without (a mound, a boulder, a log) is drawn whole, always. */
@@ -212,6 +222,12 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "decor"; id: string; style: Style }
   /** The beach's edge of the woods (render/beach.ts): palms (split as trees are), beach shrubs and grass clumps, each with its sway mask. */
   | { kind: "beachEdge"; id: string; style: Style; K: number }
+  /** The start's own art (render/homeArt.ts, fast start (b)): our witch's frames from her genome (id: its hash, and bare), the
+   *  light props, the soundsystems and the treehouse. */
+  | { kind: "witch"; id: string; style: Style; genome: unknown; bare: boolean }
+  | { kind: "props"; id: string; style: Style }
+  | { kind: "soundsystems"; id: string; style: Style }
+  | { kind: "treehouse"; id: string; style: Style }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
   | { kind: "pathPieces"; id: string; style: Style }
   /** Modern relics, playground and sports pieces, with the art's arrangements. */
@@ -260,7 +276,7 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
+export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt }
 
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
@@ -326,7 +342,7 @@ function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces
     const r = Art.pathPieceSprite(d.id, st) as { sp: unknown; origin: { x: number; y: number } };
     pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
-  // Under ?props=gen, each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
+  // With the prop generator (the game always has it on), each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
   if ((st as { propGen?: number }).propGen) for (const id of Art.PATH_GEN_IDS as string[]) for (let k = 0; k < (Art.BRIDGE_VARIANTS as number); k++) {
     const r = Art.pathPieceSprite(`${id}~${k}`, st) as { sp: unknown; origin: { x: number; y: number } };
     pieces.push({ id: `${id}~${k}`, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
@@ -371,7 +387,7 @@ function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; part
   type Def = { id: string; cls: string; light: string | null; frames: number; hang?: boolean };
   const refs = new Set<string>(), palettes = ["neon", "pastel", "metallic", "mixed"];
   for (const d of Art.PARTY_OBJECTS as Def[]) {
-    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only under ?props=gen
+    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only with it (the game always has it on)
     const neons = d.light === "neon" ? (Art.PARTY_LIGHT_NEONS as string[]).map(n => "@" + n) : [""];
     for (const n of neons) for (const p of d.cls === "balloon" ? palettes.map(q => "~" + q) : [""]) refs.add(`party:${d.id}${n}${p}`);
   }
@@ -444,6 +460,10 @@ export function partyGearOf(seed: number, colour: number[] | null): RigGear {
 }
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
+  if (job.kind === "witch") { const { sprites, witch } = witchSprites(job.style, job.genome, job.bare, mk); return { px: packPixels(sprites, 2048), ours: witch }; }
+  if (job.kind === "props") return { px: packPixels(propSprites(job.style, mk), 1024) };
+  if (job.kind === "soundsystems") return { px: packPixels(soundsystemSprites(job.style, mk), 2048) };
+  if (job.kind === "treehouse") { const { sprites, treehouse } = treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
