@@ -52,9 +52,14 @@
       "default": 6, "apply": { "knob": "legends.questCap", "reload": true }
     },
     {
-      "id": "questFar", "label": "Far dream bonus", "note": "How much stronger a quest's buff rolls the farther its dream creature lived: 1 + this × its distance over the cap (0.5: the farthest half again as strong).",
-      "control": { "type": "slider", "min": 0, "max": 2, "step": 0.25 },
-      "default": 0.5, "apply": { "knob": "legends.questFar", "reload": true }
+      "id": "questRoll", "label": "Quest buff strength", "note": "Every done quest's buff, this many times as strong as written, however far its dream creature lived (the encounter is the gamble, not the reward). A relic's stays as written.",
+      "control": { "type": "slider", "min": 1, "max": 2, "step": 0.05 },
+      "default": 1.25, "apply": { "knob": "legends.questRoll", "reload": true }
+    },
+    {
+      "id": "questLater", "label": "Dreams from later areas", "note": "On: a legend dreams of a kind living in an area later on the route than its own (deeper in). Off: any kind on the map, as before.",
+      "control": { "type": "toggle" },
+      "default": true, "apply": { "knob": "legends.questLater", "reload": true }
     },
     {
       "id": "happyRange", "label": "Happy legend reach (m)", "note": "How far a happy legend (a relic's ally) reaches from its lair to hit the enraged: about 2 areas at 420.",
