@@ -142,6 +142,11 @@ export interface Tuning {
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
   /** Wild idlers' naps (rules/creatures.ts NapRules). */
+  /** The wild watch (Ed, 2026-10-07: a dormant area's animals "stir, evade and hang back, turning to LOOK at her", then attack):
+   *  on her first coming down in a wild area, its wild young and adults hold off for `time` seconds, standing and staring at her
+   *  (any within hangBack metres backing off), then fight as ever; an area is forgotten `forget` seconds after the last witch was
+   *  on the ground in it, so a later visit plays it again (rules/wildWatch.ts). */
+  wildWatch?: { on: boolean; time: number; forget: number; hangBack: number };
   naps?: { on: boolean; chance: number; length: number[]; wake: number; /** A legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"): its own chance and length, roused only by a witch on the ground within reach metres of its circle's edge. */ circle?: { chance: number; length: number[]; reach: number } };
   /** The soundsystem alarm (rules/alarms.ts, render/alarm.ts). */
   alarms?: { linger: number; fall: number; most: number };
