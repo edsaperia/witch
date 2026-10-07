@@ -359,9 +359,9 @@ export class SfxCues {
     if (this.beach?.map !== g.map) this.beach = { map: g.map, at: beachOf(g.map.bounds, g.tuning) };
     const P = g.tuning.sfx.waves, B = this.beach.at;
     if (!P || !B) return;
-    const w = g.witch, off = -B.intoSea(w.x, w.z); // (metres from the water)
+    // (metres from the water, by the coast's own edge that way: intoSea's quick path is only right about the side, well inland)
+    const w = g.witch, d = Math.hypot(w.x - B.x, w.z - B.z) || 1, off = B.edge(Math.atan2(w.z - B.z, w.x - B.x)) + B.out - d;
     if (off >= P.range) { this.sfx.sea(0); return; } // (Sfx.sea: nothing unless already made)
-    const d = Math.hypot(w.x - B.x, w.z - B.z) || 1;
     this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
   }
   private beach: { map: Game["map"]; at: Beach | null } | null = null;

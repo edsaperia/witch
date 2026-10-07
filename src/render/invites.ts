@@ -11,7 +11,7 @@ import type { Game } from "../rules/game";
 import { affectionOf, meterHits } from "../rules/game";
 import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
-import { placed } from "./height";
+import { placed, shownOverBend } from "./height";
 import { sizeBubble } from "./bubbles";
 import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
@@ -182,7 +182,7 @@ export class InviteView {
     const kp = t.pixelSize * t.bubbles.scale;
     const place = (el: HTMLElement, x: number, y: number, z: number, grid = el.tagName === "IMG") => {
       placed(this.v.set(x, y, z)).project(camera);
-      const vis = this.v.z < 1 && Math.abs(this.v.x) < 1.2 && Math.abs(this.v.y) < 1.2;
+      const vis = this.v.z < 1 && Math.abs(this.v.x) < 1.2 && Math.abs(this.v.y) < 1.2 && shownOverBend(x, y, z, camera.position); // (never past the bend)
       let sx = ((this.v.x + 1) / 2) * width, sy = ((1 - this.v.y) / 2) * height;
       if (grid) { sx = Math.round(sx / kp) * kp; sy = Math.round(sy / kp) * kp; }
       el.style.left = `${sx}px`;

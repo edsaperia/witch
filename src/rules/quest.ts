@@ -11,14 +11,33 @@ import type { Creature, Level } from "./creatures";
 import { cellKey } from "./party";
 import { rng } from "./random";
 
-export interface Quest { species: string; level: Level; /** game time it was done */ done?: number }
+export interface Quest { species: string; level: Level; /** game time it was done */ done?: number;
+  /** How far its creature lives: its nearest area's distance over the cap (legends.questCap areas, else the map's
+   *  farthest), 0 to 1. A far dream's buff is the stronger (legends.questFar). */
+  far?: number }
 
 /** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed. */
 export function questFor(map: ForestMap, cell: [number, number], own: string): Quest | undefined {
-  const kinds = [...new Set(map.cells.map(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature))].filter(s => s !== own).sort();
+  // A gamble (Ed, 2026-10-06: "you don't know how hard the quest will be before you go off to try and find the
+  // creature"): any other kind on the map, equally likely, near or far; only the truly far go (balance, 2026-10-06:
+  // a kind whose nearest area lies over legends.questCap areas away, about the farthest tenth, could eat a run), unless
+  // that leaves none. Its distance makes the buff stronger (Quest.far).
+  const cap = (map.tuning.legends?.questCap ?? 0) * map.areaSize, site = map.siteOf(cell[0], cell[1]);
+  const nearest = new Map<string, number>();
+  for (const [cx, cy] of map.cells) {
+    if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue;
+    const sp = AREA_TYPES[map.typeOf(cx, cy)].creature;
+    if (sp === own) continue;
+    const s = map.siteOf(cx, cy), d = Math.hypot(s.x - site.x, s.z - site.z);
+    if (d < (nearest.get(sp) ?? Infinity)) nearest.set(sp, d);
+  }
+  const all = [...nearest.keys()].sort(), inReach = cap > 0 ? all.filter(sp => nearest.get(sp)! <= cap) : all;
+  const kinds = inReach.length ? inReach : all;
   if (!kinds.length) return undefined;
   const r = rng(map.seed * 6151 + cell[0] * 389 + cell[1] * 1031 + 17);
-  return { species: kinds[Math.floor(r() * kinds.length)], level: Math.floor(r() * 3) as Level };
+  const species = kinds[Math.floor(r() * kinds.length)], level = Math.floor(r() * 3) as Level;
+  const far = Math.min(1, nearest.get(species)! / (cap > 0 ? cap : Math.max(...all.map(sp => nearest.get(sp)!))));
+  return { species, level, far };
 }
 
 export interface QuestEvent { kind: "done"; id: number; joined: number; /** the area's cell and key */ cell: [number, number]; key: string; x: number; z: number; at: number }

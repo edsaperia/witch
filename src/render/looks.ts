@@ -9,7 +9,7 @@ import type { Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 import { LEGEND } from "../rules/creatures";
 import { cellKey } from "../rules/party";
-import { placed } from "./height";
+import { placed, shownOverBend } from "./height";
 import { stunned } from "../rules/knock";
 import { witchHeight } from "../rules/witch";
 import type { Tuning } from "../rules/tuning";
@@ -114,7 +114,11 @@ export class StateMarks {
     scene.add(this.group);
   }
 
+  /** The camera's position this frame: a mark past the bent horizon isn't drawn (they're drawn with no depth test). */
+  private eye: { x: number; y: number; z: number } | null = null;
+
   private put(m: THREE.SpriteMaterial, x: number, y: number, z: number, wpx: number, hpx: number, opacity = 1): void {
+    if (this.eye && !shownOverBend(x, y, z, this.eye)) return; // (nothing past the bend: Ed, 2026-10-06)
     let s = this.pool[this.used];
     if (!s) { s = new THREE.Sprite(m.clone()); s.renderOrder = 12; this.pool.push(s); this.group.add(s); }
     this.used++;
@@ -127,8 +131,8 @@ export class StateMarks {
   }
 
   /** The 💢 by the enraged, stars round the dazed, sparkles round party animals (their faces are the art's): those within `R` metres of her. `tops`: each creature's drawn height. */
-  update(g: Game, time: number, tops: Map<number, number>, R = 70): void {
-    this.used = 0;
+  update(g: Game, time: number, tops: Map<number, number>, R = 70, eye?: { x: number; y: number; z: number }): void {
+    this.used = 0; this.eye = eye ?? null;
     setTint(g.tuning);
     const A = g.tuning.looks?.anger ?? { on: true, size: 1 }, P = g.tuning.looks?.partyGlow ?? { on: true, sparkles: 4, rate: 0.9, size: 1.4, strength: 1 };
     const w = g.witch, px = 2; // (each mark pixel two game pixels: readable at a glance)

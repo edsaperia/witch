@@ -204,6 +204,8 @@ function coatOf(species: string, tone: number): { r: number; g: number; b: numbe
 }
 
 export class LeashView {
+  /** Her seat behind the decks, as drawn (the view sets it): where she sparkles back in after a knockout. */
+  seatAt: { x: number; y: number; z: number } | null = null;
   private canvas = document.createElement("canvas");
   private tex: THREE.CanvasTexture;
   private slots = new Map<string, number>();
@@ -676,7 +678,10 @@ export class LeashView {
         this.fx.push({ kind: "snap", x: fx, y: fy, z: fz, at: time, life: 0.9, r: col.r, g: col.g, b: col.b, seed: e.id, tx: c.x, tz: c.z });
         this.fx.push({ kind: "puff", x: c.x, y: 0.6, z: c.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.id * 5 });
       }
-      if (e.kind === "sparkleOut" || e.kind === "sparkleIn") this.fx.push({ kind: "teleport", x: e.x, y: 0, z: e.z, at: time, life: t.knockout.teleport * 0.6, r: 0.75, g: 0.6, b: 1, seed: e.at });
+      if (e.kind === "sparkleOut" || e.kind === "sparkleIn") {
+        const at = e.kind === "sparkleIn" && this.seatAt ? this.seatAt : { x: e.x, y: 0, z: e.z }; // (back behind her decks: there)
+        this.fx.push({ kind: "teleport", x: at.x, y: at.y, z: at.z, at: time, life: t.knockout.teleport * 0.6, r: 0.75, g: 0.6, b: 1, seed: e.at });
+      }
     }
     { let j = 0; for (const f of this.fx) if (time - f.at < f.life) this.fx[j++] = f; this.fx.length = j; } // (in place: no new array a frame)
     for (const f of this.fx) {
