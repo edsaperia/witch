@@ -194,6 +194,7 @@ export interface Tuning {
     /** Fireworks over a soundsystem when a wave reaches an area she'd cleared (waveCelebrate). */
     fireworks?: { volume: number; whoosh: number; boom: number; echo: number; crackle: number; cheer: number; range: number; cheerRange: number; speed: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
+    sadTrumpet: { volume: number; duck: number; bare: number; rewind: number; cutAfter: number };
     deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
     spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
@@ -298,6 +299,8 @@ export interface Tuning {
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
+  /** The trees watching her (render/sprites.ts uWatch; Ed, 2026-10-07). */
+  watching?: { on: boolean; radius: number; lean: number; lag: number };
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   moonbeams: number;
   partyObjects: { on: boolean; clusters: number[]; loose: number[]; setChance: number; caughtChance: number; hanging: number[]; lightsPerArea: number; lanternReach: number; arch: string; /** Home's meadow, strewn all over (rules/partyDressing.ts homeDressing). */ home: { clusters: number[]; loose: number[]; weights: Record<string, number>; gap: number; reach: number; lights: number }; exclude: string[]; /** The prop generator's party pieces (art/party.js gen-*) in place of the hand-made ones they replace (?props=gen). */ generated: boolean };
