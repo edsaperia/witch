@@ -251,7 +251,7 @@
   "moon": { "phasePeriod": 360, "phaseStart": 0.1, "orbit": 1500, "arcStart": 0.2, "left": 0.08, "right": 0.92, "low": 0.82, "high": 0.93, "colourEvery": 300, "colourChance": 0.35, "colourTime": 120, "colourFade": 25, "colours": { "red": [0.86, 0.44, 0.38], "blue": [0.6, 0.72, 0.94], "gold": [0.95, 0.83, 0.52] }, "tint": 0.3, "bloodTint": 0.4, "disc": 1.5, "floor": { "palette": [[92, 70, 128], [70, 94, 138], [196, 200, 218]], "size": 0.62, "stars": 0.05, "flare": 2 } },
   "glowReach": 50,
   "_sigilSpill": "The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it.",
-  "sigilSpill": { "strength": 0.9, "reach": 7, "height": 0.8, "stack": 0.35, "stackReach": 6, "stackHeight": 2.6 },
+  "sigilSpill": { "strength": 0.6, "reach": 6, "height": 0.8, "stack": 0.35, "stackReach": 6, "stackHeight": 2.6 },
   "nightLight": { "maxReach": 64, "treetopReach": 24, "treetopGlow": 0.6, "gazeReach": 16 },
   "glowFalloff": 1.8,
   "glowNear": 0.7,
