@@ -810,6 +810,17 @@ export class View {
       const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
       LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
     }
+    // At night (Ed, 2026-10-06: "Seems very bright for nighttime"): the hole's share of the screen is many more metres from a far
+    // camera, so her light is held to nightLight.maxReach metres anywhere (the ground camera's own, about), and over the treetops
+    // to a lantern's few metres (treetopReach), dimmed (treetopGlow), eased in as she rises; the canopy stays moonlit, warm
+    // only close round her.
+    const NL = t.nightLight, rise = Math.max(0, Math.min(1, g.witch.lift));
+    if (NL) {
+      const R0 = Math.min(LIGHT_UNIFORMS.uGlowR.value, NL.maxReach); // (never more than a lantern's metres, however far the camera: stargazing, zoomed out)
+      const R1 = R0 + (Math.min(R0, NL.treetopReach) - R0) * rise;
+      LIGHT_UNIFORMS.uGlowR.value = R1 + (Math.min(R1, NL.gazeReach ?? R1) - R1) * coastView(g.camera).gaze; // (lying on the sand to stargaze, the camera low and far: her own small pool, eased with the bend)
+      LIGHT_UNIFORMS.uGlowDim.value = 1 + (NL.treetopGlow - 1) * rise;
+    }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
     const w = g.witch, h = witchHeight(w, t);
