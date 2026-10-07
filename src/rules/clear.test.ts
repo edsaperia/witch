@@ -188,3 +188,29 @@ describe("what's left to clear (Ed's playtest, 2026-10-07: the HUD's count, and 
     expect(sleeper.asleep).toBeFalsy();
   }, 60000);
 });
+
+describe("only an area's natives count (Ed, 2026-10-07: visitors from next door 'wouldn't get enraged when the runestone transforms')", () => {
+  it("a visitor standing in a cleared area doesn't block it, isn't counted, and isn't touched when its stone transforms; a native wandered off still holds it", () => {
+    const g = game(), order = routeOf(g.map).order, key = order[3], other = order[6];
+    const [cx, cy] = key.split(",").map(Number) as [number, number];
+    // a wild visitor from another area, standing in this one
+    const visitor = g.creatures.find(c => cellKey(c.cell) === other && holdsArea(c) && c.level > 0)!;
+    const inside = wildLeft(g.creatures, [cx, cy])[0];
+    Object.assign(visitor, { x: inside.x + 1, z: inside.z + 1, tx: inside.x + 1, tz: inside.z + 1 });
+    // a native that has wandered out of it
+    const native = wildLeft(g.creatures, [cx, cy]).find(c => c !== inside)!;
+    const far = g.map.siteOf(...(other.split(",").map(Number) as [number, number]));
+    expect(wildLeft(g.creatures, [cx, cy])).not.toContain(visitor);
+    empty(g, key);
+    Object.assign(native, { gone: false, state: undefined, x: far.x, z: far.z, tx: far.x, tz: far.z });
+    expect(wildLeft(g.creatures, [cx, cy])).toEqual([native]); // (the native, wherever it is; never the visitor)
+    run(g, 0.5);
+    expect(g.party.areas.has(key), "the native away still holds it").toBe(false);
+    native.state = "happy";
+    run(g, 0.5);
+    expect(g.party.areas.has(key), "cleared with the visitor in it").toBe(true);
+    expect(visitor.enraged, "the visitor isn't enraged").toBeFalsy();
+    expect(visitor.siege).toBeUndefined();
+    expect(visitor.state).toBeUndefined();
+  }, 60000);
+});
