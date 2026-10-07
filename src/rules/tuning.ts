@@ -161,6 +161,7 @@ export interface Tuning {
     waves?: { volume: number; every: number; wash: number; range: number };
     /** The afterparty's night (Ed, 2026-10-06: "nice environmental music and sounds that match each area"; platform/audio/night.ts): its volume, the bed's (pad and bells), the noise bed's and the night sounds' shares, when it comes in (from `from` of the party-over ease), and the sleeping animals' snores (volume, the gap between them, heard within range metres, at most max at once). */
     night?: { volume: number; bed: number; noise: number; sounds: number; from: number; snore: { volume: number; gap: number; range: number; max: number } };
+    ambience?: { volume: number; bed: number; noise: number; sounds: number; quiet: number };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
     deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number };

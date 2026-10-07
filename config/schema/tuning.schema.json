@@ -4771,6 +4771,39 @@
           ],
           "additionalProperties": false
         },
+        "ambience": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "noise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sounds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "bed",
+            "noise",
+            "sounds",
+            "quiet"
+          ],
+          "additionalProperties": false
+        },
         "night": {
           "type": "object",
           "properties": {
@@ -4867,6 +4900,7 @@
         "meadow",
         "whale",
         "waves",
+        "ambience",
         "night"
       ],
       "additionalProperties": false
@@ -7923,6 +7957,7 @@
     "moon",
     "glowReach",
     "sigilSpill",
+    "combatLight",
     "nightLight",
     "glowFalloff",
     "glowNear",
