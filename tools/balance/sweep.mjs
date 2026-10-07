@@ -8,12 +8,13 @@
 // knockout, knockouts, 💌s thrown, 💌 hits, invites, evolutions, berries, quests and relics done, sigils placed.
 // The summary: medians and means by bot, and the curve (the share of runs whose party is still on as each wave lands).
 //   node tools/balance/sweep.mjs [--bots idle,novice,crude,skilled,top] [--seeds 20 (seeds 1000 + 7919 i, as runbot)]
-//     [--skip K] [--time 4200] [--overlay knobs.json] [--set path=value;...] [--jobs 4] [--out dir] [--label name]
+//     [--skip K] [--time 4200] [--overlay knobs.json] [--set path=value;...] [--jobs 4] [--out dir] [--label name] [--fresh]
+// Runs are kept as they land in <out>/<label>.jsonl, and the same command again picks up where it stopped (--fresh: start over).
 //   node tools/balance/sweep.mjs --report a.csv,b.csv   (the summaries of earlier sweeps, side by side)
 // The overlay: { "tuning": {...config/tuning.json's shape, merged deep}, "combat": {...config/combat.json's} }
 // (a file with neither key is all tuning). Arrays are replaced whole. Writes <out>/<label>.csv and <label>.md.
 import { fork } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { arg, list, mean, median, openRules } from "./lib.mjs";
@@ -137,17 +138,25 @@ if (process.argv.includes("--worker")) {
     const sets = String(arg("set", "")).split(";").filter(Boolean).map(kv => { const [k, v] = kv.split("="); return [k.trim().split("."), JSON.parse(v)]; });
     const label = String(arg("label", file ? basename(file, ".json") : "baseline")), out = String(arg("out", "previews/sweeps"));
     mkdirSync(out, { recursive: true });
-    const jobs = BOTS.flatMap(bot => Array.from({ length: SEEDS - SKIP }, (_, i) => ({ bot, seed: 1000 + (SKIP + i) * 7919 })));
+    // Each run is kept in <label>.jsonl as it lands: run it again with the same label and only the runs not there yet go
+    // (a container restart costs only the runs in flight); --fresh starts over.
+    const kept = join(out, `${label}.jsonl`);
+    if (process.argv.includes("--fresh") && existsSync(kept)) writeFileSync(kept, "");
+    const before = existsSync(kept) ? readFileSync(kept, "utf8").split("\n").filter(Boolean).map(l => JSON.parse(l)).filter(r => BOTS.includes(r.bot)) : [];
+    const done = new Set(before.map(r => `${r.bot} ${r.seed}`));
+    const jobs = BOTS.flatMap(bot => Array.from({ length: SEEDS - SKIP }, (_, i) => ({ bot, seed: 1000 + (SKIP + i) * 7919 }))).filter(j => !done.has(`${j.bot} ${j.seed}`));
+    if (before.length) process.stderr.write(`${before.length} runs kept from ${kept}; ${jobs.length} to go\n`);
     // Longest first (the strong bots' runs last longest), so the workers finish together.
     const weight = b => (b.startsWith("top") ? 4 : b.startsWith("skilled") ? 3 : b === "crude" ? 2 : 1);
     jobs.sort((a, b) => weight(b.bot) - weight(a.bot));
-    const rows = [], T0 = Date.now(), me = fileURLToPath(import.meta.url);
-    await Promise.all(Array.from({ length: Math.min(JOBS, jobs.length) }, () => new Promise((done, fail) => {
+    const rows = [...before], T0 = Date.now(), me = fileURLToPath(import.meta.url);
+    if (jobs.length) await Promise.all(Array.from({ length: Math.min(JOBS, jobs.length) }, () => new Promise((done, fail) => {
       const p = fork(me, ["--worker"], { env: { ...process.env, SWEEP: JSON.stringify({ overlay, time: TIME, sets }) } });
       const next = () => { const j = jobs.shift(); if (j) p.send(j); else p.send("done"); };
       p.on("message", m => {
         if (m !== "ready") {
           rows.push({ ...m, label });
+          appendFileSync(kept, JSON.stringify({ ...m, label }) + "\n");
           process.stderr.write(`[${rows.length}] ${m.bot} ${m.seed}: wave ${m.wave}${m.over !== null ? `, over at ${(m.over / 60).toFixed(1)} min` : ""}, 1st lost ${m.firstLost === null ? "–" : `w${m.lostWave}`}, KOs ${m.kos}, 💌 ${m.letters}, invites ${m.invites}, evolved ${m.evolved} (${m.secs.toFixed(0)} s)\n`);
         }
         next();
