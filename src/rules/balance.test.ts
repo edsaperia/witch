@@ -6,10 +6,10 @@ import { newGame } from "./game";
 import { TUNING } from "./tuning";
 
 describe("fighting value (rules/power.ts)", () => {
-  it("is √(hp × dps) by level: babies 0, young 15.5, adults 29, legends 76", () => {
+  it("is √(hp × dps) by level: babies 0, young 11.6, adults 40, legends 76 (the level gap, 2026-10-07)", () => {
     expect(levelValue(0)).toBe(0);
-    expect(levelValue(1)).toBeCloseTo(15.5, 1);
-    expect(levelValue(2)).toBeCloseTo(29, 0);
+    expect(levelValue(1)).toBeCloseTo(11.6, 1);
+    expect(levelValue(2)).toBeCloseTo(40, 0);
     expect(levelValue(3)).toBeCloseTo(76, 0);
     expect(lanchester(50, 30)).toBeCloseTo(40, 9);
     expect(lanchester(30, 50)).toBe(0);
