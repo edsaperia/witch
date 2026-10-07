@@ -39,6 +39,24 @@ export interface Mood {
   areas?: Record<string, Partial<{ hazeHue: number; hazeSat: number; haze: number; gradeHue: number; gradeSat: number; mist: number }>>; areaEase?: number;
 }
 
+/** Will-o'-the-wisps: faint slow lights drifting between the trees of the wild areas (render/wisps.ts, Ed 2026-10-07). */
+export interface WispTuning {
+  on: boolean;
+  /** The ground is split into squares this wide (m); each may hold a wisp, by a seeded chance. */
+  cell: number;
+  /** Only squares within this (m) of her hold wisps. */
+  reach: number;
+  /** A wild square's chance of a wisp, far from the party. */
+  chance: number;
+  /** None within partyNear (m) of a partified area's middle, the full chance from partyFar (m) on. */
+  partyNear: number; partyFar: number;
+  /** How high a wisp floats (m, its lowest and highest), how far it wanders from its spot (m), and its cycle: seconds to
+   *  fade in, linger and fade out. */
+  height: number[]; drift: number; period: number;
+  /** Its core's and halo's size (art pixels), colour and brightness. */
+  size: number; halo: number; hue: number; sat: number; bright: number;
+}
+
 /** The sleeping legends' clearings' light (render/glades.ts). */
 export interface GladeTuning {
   on: boolean;
@@ -55,6 +73,8 @@ export interface GladeTuning {
 }
 
 export interface Tuning {
+  /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
+  wisps?: WispTuning;
   /** A legend's circle (Ed, 2026-10-06): slow, the world slowed to scale of its speed (eased over ease seconds) while she stands on the ground in the circle of a legend asleep or restless; on false (?slow=0) for none. */
   legendCircle?: { slow: { on?: boolean; scale: number; ease: number } };
   mapAreas: number;
@@ -82,7 +102,9 @@ export interface Tuning {
   groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
   /** The ground's fake relief: rises and hollows from noise (scale metres across) tilting the ground's normal by strength, so lights pick out the bumps, and shading hollows darker by shade. */
   /** relief: the fake bumps in the ground's shading; hills: the rolling ground, drawn only (render/height.ts): amplitude (m), scale (m across a swell), octaves. */
-  ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number; /** The light reads the hills' slopes this many times steeper (relief shading). */ shade: number } };
+  ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number; /** The light reads the hills' slopes this many times steeper (relief shading). */ shade: number };
+    /** The lie of the land in the layout (rules/terrain.ts; Ed's idea, relayed 2026-10-07): every runestone on a rise and every legend clearing in a hollow, rise and dip times the hills' amplitude, easing out over reach metres; trees thicker in low ground and sparser on high by up to trees (a share). */
+    layout?: { on: boolean; rise: number; dip: number; reach: number; trees: number } };
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
   /** ?bare=1 or 2 (not in the file): the terrain on its own (render/view.ts). */
   bare?: number;
@@ -126,7 +148,7 @@ export interface Tuning {
   /** The witch's health (Ed, 2026-10-04): hits she takes before she's knocked out; one comes back every repairTime seconds out of the fight. */
   witchHealth: { hits: number; repairTime: number; /** seconds after a hit in which no other blow lands (0: none) */ grace: number };
   /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
-  knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean; dropHat: boolean };
+  knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean; dropHat: boolean; /** Her hat's float to the ground (s), the knockout's first phase. */ hatFloat?: number; /** The wait from going down to moving again (rules/knockout.ts respawnWait). */ respawn?: { base: number; step: number; max: number; cooldown: number; minScratch: number }; /** Drawing only (Ed, 2026-10-07): how much the screen dims round her from the knockdown to her sparkle away, her hat floating off (0 none; no hat, no dim). */ dim?: number };
   /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
    *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
   dash: { distance: number; gone: number; cooldown: number; buffer: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
