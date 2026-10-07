@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coverOf } from "./mistCanopy";
+import { coverOf, mistShare } from "./mistCanopy";
 import type { TypeArt } from "./assets";
 
 // A type's art as coverOf reads it: its big objects (a crown or none) and their weights, and the frames' sizes.
@@ -21,5 +21,12 @@ describe("the open areas' canopy cover (render/mistCanopy.ts)", () => {
   it("counts only the crowned share of a mix (a shrine's stones among a few trees)", () => {
     const all = coverOf(art([{ top: 1, w: 1 }], frames), mpp, 40, 60), half = coverOf(art([{ top: 1, w: 1 }, { top: null, w: 1 }], frames), mpp, 40, 60);
     expect(half).toBeCloseTo(all / 2, 6);
+  });
+  it("gives no mist at the threshold's cover and over, and all at half of it and under", () => {
+    expect(mistShare(0.45, 0.45)).toBe(0);
+    expect(mistShare(0.9, 0.45)).toBe(0);
+    expect(mistShare(0.2, 0.45)).toBe(1);
+    expect(mistShare(0.34, 0.45)).toBeGreaterThan(0);
+    expect(mistShare(0.34, 0.45)).toBeLessThan(1);
   });
 });
