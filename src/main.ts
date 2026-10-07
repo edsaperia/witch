@@ -6,6 +6,7 @@ import { Music } from "./platform/audio/music";
 import { Sfx } from "./platform/audio/sfx";
 import { OVER_DEBUG, SfxCues } from "./platform/audio/sfxCues";
 import { AudioWatchdog } from "./platform/audio/watchdog";
+import { OutputMeter } from "./platform/audio/outputMeter";
 import { musicMix, partyOverEase } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
@@ -545,8 +546,10 @@ input.onAny = start;
 // a context suspended is resumed, and music gone silent (or anything non-finite in the music or the
 // sound effects) is rebuilt afresh; each mend goes in the playtest log (L). (Before the first home speaker
 // boots, the music is silent on purpose: not expected.)
+/** Whether the music should be heard now: playing, its volume up, the game running and shown, the home speakers booting. */
+function musicExpected(): boolean { return !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden && game.speakerBoot.some(t => t !== null); }
 const watchdog = new AudioWatchdog(
-  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden && game.speakerBoot.some(t => t !== null) }),
+  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: musicExpected() }),
   what => {
     playtest.audio(what);
     console.warn(`audio watchdog: ${what}`);
@@ -558,7 +561,7 @@ const watchdog = new AudioWatchdog(
 setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
 let lastMix: ReturnType<typeof musicMix> | null = null;
 const r2 = (x: number) => Math.round(x * 100) / 100;
-playtest.audioState = () => ({ state: audio?.state ?? "none", volume: music ? r2((music.output as GainNode).gain.value) : 0, distort: r2(lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, lastMix?.distance ?? 9999)), mends: watchdog.mends.length });
+playtest.audioState = () => ({ state: audio?.state ?? "none", volume: music ? r2((music.output as GainNode).gain.value) : 0, distort: r2(lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, lastMix?.distance ?? 9999)), mends: watchdog.mends.length, ...(music ? { gap: r2(music.stats.gap), resyncs: music.stats.resyncs, late: music.stats.late, ahead: r2(music.stats.ahead ?? 0) } : {}) });
 freeze.onToggle = on => { try { void (on ? audio?.suspend() : audio?.resume()); } catch { /* no sound */ } };
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The wave selector on the start screen: picking one doesn't start the game.
@@ -632,6 +635,22 @@ const frameStats = new FrameStats(view.renderer.getContext());
 // Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
 const stallLog = new StallLog();
 playtest.stalls = () => stallLog.stalls;
+// The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
+// platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music
+// should be heard goes in the playtest log (L) with where she was and the nearest stall. ?micCheck=1 (debug only) also
+// listens to the microphone for dropouts after the game. It measures what the game sends: not the device's volume.
+const meter = new OutputMeter();
+const nearestStall = (pageS: number): { off: number; ms: number } | undefined => {
+  let best: { off: number; ms: number } | undefined;
+  for (const st of stallLog.stalls) { const off = Math.round((st.at - pageS) * 10) / 10; if (!best || Math.abs(off) < Math.abs(best.off)) best = { off, ms: Math.max(st.gap, st.work) }; }
+  return best;
+};
+meter.onSilence = e => {
+  const w = game.witch, ago = performance.now() / 1000 - e.start;
+  playtest.silence({ t: Math.round((game.clock.time - ago) * 10) / 10, dur: Math.round(e.dur * 100) / 100, x: Math.round(w.x), z: Math.round(w.z), area: areaUnderWitch(game), mode: w.mode, mix: r2(lastMix?.volume ?? 0), gain: music ? r2((music.output as GainNode).gain.value) : 0, state: audio?.state ?? "none", clock: meter.reading.clock, back: e.db, stall: nearestStall(e.start) });
+  console.warn(`audio: the output silent for ${e.dur.toFixed(2)} s while the music should be heard`);
+};
+const micWanted = params.get("micCheck") === "1";
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
@@ -678,6 +697,14 @@ function frame(now: number): void {
   music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused, tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
+  if (audio) {
+    meter.tap(audio, [music?.output, music?.circleOutput, sfx?.output]);
+    meter.read(performance.now(), musicExpected());
+    if (micWanted && !meter.mic && startEl.style.display === "none") meter.startMic(e => {
+      const pageS = performance.now() / 1000;
+      playtest.mic({ kind: e.kind, t: Math.round(game.clock.time * 10) / 10, dur: Math.round(e.dur * 100) / 100, outDb: e.outDb, micDb: e.micDb, lag: Math.round(e.lag * 1000), stall: nearestStall(pageS) });
+    });
+  }
   const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
   if (!ready) return;
   for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
@@ -703,6 +730,7 @@ function frame(now: number): void {
     debugEl.textContent = [
       ...frameStats.lines(),
       stallLog.line(),
+      meter.line(),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,
@@ -744,7 +772,7 @@ function powerLines(): string[] {
   /** The bot game's bot and its tag (rules/bot.ts, ui/botGame.ts), null in a game of her own: tools drive it a frame at a time. */
   get bot() { return bot; }, get botTag() { return botTag; },
   /** A debug hook (tools/sfx/live.cjs): the audio context, the music and the sound effects. */
-  get audio() { return { ctx: audio, music, sfx, mends: watchdog.mends }; },
+  get audio() { return { ctx: audio, music, sfx, mends: watchdog.mends, meter }; },
   /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
    *  fixed steps, the render eased between the last two, the camera's sub-pixel glide), then where
    *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):

@@ -66,6 +66,12 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 | `beach.idleAfter` | number | 0 to … |
 | `beach.turn` | number | 0 to … |
 | `beach.simRange` | number | 0 to … |
+| `beach.camera.approach` | number | 0 to … |
+| `beach.camera.angle` | number | 0 to … |
+| `beach.camera.curve` | number | 0 to … |
+| `beach.camera.gazeAngle` | number | 0 to … |
+| `beach.camera.gazeDistance` | number | 0 to … |
+| `beach.camera.gazeLook` | number | 0 to … |
 | `areaSize` | number | 0 to … |
 | `areaScale` | number | 0 to … |
 | `arena.radius` | number | 0 to … |
@@ -1188,6 +1194,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.src` | string |  |
 | `music.over.stop` | number | 0 to … |
 | `music.over.floor` | number | 0 to … |
+| `music.beach.fade` | number | 0 to … |
+| `music.beach.quiet` | number | 0 to … |
 
 ## `fight`
 

@@ -82,6 +82,13 @@ describe("the music plays on through the frames' hitches (Ed's playtest, 2026-10
     }
   });
 
+  it("after one long stall it schedules further ahead, so the next like it leaves no gap (Ed, round 16: \"Music is still starting and stopping\")", () => {
+    const s = fly(60, 1.2, 10); // (five stalls of 1.2 s, 10 s apart)
+    expect(s.gap).toBeLessThan(1.2 - 0.6 + 0.05); // (only the first's excess over the 0.6 s scheduled ahead)
+    expect(s.resyncs).toBe(0);
+    expect(Math.abs(s.behind)).toBeLessThan(6); // (each stall loses the game ~1.1 s; the 5% slew wins back ~0.5 s in 10 s: never past the 6 s cap)
+  });
+
   it("a longer stall only holds the music for the stall, then it plays on from where it was", () => {
     const s = fly(40, 1.2, 15);
     expect(s.gap).toBeLessThan(2 * (1.2 - 0.6) + 0.05); // (two stalls, each past the 0.6 s scheduled ahead)
