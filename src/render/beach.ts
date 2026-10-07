@@ -12,7 +12,7 @@ import { PartyWitchView } from "./partyWitches";
 import type { ShadowInstance } from "./shadows";
 import { pixelEmoji } from "./invites";
 import { groundHeight, placed } from "./height";
-import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
+import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "./sprites";
 import { BeachDecor, type BeachItem } from "../rules/beachDecor";
 import { tiltFilter } from "./overlayTilt";
 import { BeachEdgeView } from "./beachEdge";
@@ -80,7 +80,7 @@ export class BeachView {
     if (!this.upright) {
       this.upright = new SpriteBatch(art.atlas, this.mpp, { scenery: true, fade: true });
       this.flat = new SpriteBatch(art.atlas, this.mpp, { scenery: true, flat: true });
-      for (const m of this.flat.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; } // (right after the ground, under everything standing)
+      asFloor(this.flat); // (right after the ground, under everything standing)
       this.scene.add(...this.upright.meshes, ...this.flat.meshes);
     }
     this.decor ??= new BeachDecor(b, g.seed, K, art.headings);

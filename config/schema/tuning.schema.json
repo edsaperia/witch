@@ -7358,12 +7358,21 @@
             "floor": {
               "type": "number",
               "minimum": 0
+            },
+            "nap": {
+              "type": "boolean"
+            },
+            "steps": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "aura",
             "rim",
-            "floor"
+            "floor",
+            "nap",
+            "steps"
           ],
           "additionalProperties": false
         }

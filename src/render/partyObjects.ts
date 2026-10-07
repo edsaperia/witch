@@ -10,7 +10,7 @@ import { dressingOf, excluded, isLit, lightOf, partyDef, type Dressing } from ".
 import { hash2 } from "../rules/random";
 import type { AssetLibrary } from "./assets";
 import type { ForestLight } from "./view";
-import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
+import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "./sprites";
 import { moodOf, type Mood } from "./mood";
 
 export class PartyObjectsView {
@@ -70,7 +70,7 @@ export class PartyObjectsView {
     if (!this.upright) {
       this.upright = new SpriteBatch(art.atlas, this.mpp, { scenery: true, fade: true });
       this.flat = new SpriteBatch(art.atlas, this.mpp, { scenery: true, flat: true });
-      for (const m of this.flat.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; } // right after the ground, under everything standing
+      asFloor(this.flat); // right after the ground, under everything standing
       this.scene.add(...this.upright.meshes, ...this.flat.meshes);
     }
     const mpp = this.mpp, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, w = g.witch;
