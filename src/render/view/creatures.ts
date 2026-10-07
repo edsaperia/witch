@@ -18,6 +18,8 @@ import { hash2 } from "../../rules/random";
 import { restlessness } from "../../rules/dream";
 import { sigilColour } from "../../../art/generator.js";
 import type { View } from "../view";
+import type { Style } from "../style";
+import { coatLuminance, legendFloor } from "../legendLight";
 import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
@@ -76,7 +78,7 @@ export function drawCreatures(v: View, time = 0): void {
   const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
   let n = 0;
   v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
-  if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning);
+  if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning, v.style);
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
     const c = g.creatures[i];
     if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
@@ -174,9 +176,10 @@ export function drawCreatures(v: View, time = 0): void {
     // Its character (render/character.ts, config/character.json): the posture it holds, its idle quirk while it stands about (not
     // fighting, dancing or asleep), and a happy creature's bounce now and then (a party or happy one not dancing).
     const ch = characterOf(c.species), standing = !c.moving && !c.charge && !c.leap && lying <= 0 && !party2 && !feel.crouch && !feel.lunging;
-    const quirkK = standing ? quirkAt(c.id, ch, time) : -1;
+    const watching = c.watchUntil !== undefined && g.clock.time < c.watchUntil; // (a wild area watching her come down, rules/wildWatch.ts: still, no idle quirk, turned to her)
+    const quirkK = standing && !watching ? quirkAt(c.id, ch, time) : -1;
     if (standing && (look === "leashed" || look === "happy") && !c.boss) hop += bounceAt(c.id, time);
-    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy * breathY, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK }))) // the rig draws it, if it can
+    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy * breathY, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined }))) // the rig draws it, if it can
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
       spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
       const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip !== SQ.turned, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1) + SQ.x * fh;
@@ -193,7 +196,7 @@ export function drawCreatures(v: View, time = 0): void {
   for (const [s, b] of v.creatureBatches) if (!per.has(s)) b.set([]);
   for (const [s, list] of per) {
     const k = legendKeys.has(s) ? s.slice(7) : s; // (a legend's batch: as its own key's, plus its look)
-    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning, v.style) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
     b?.set(list);
   }
   v.stats.creatures = n;
@@ -203,8 +206,9 @@ export function drawCreatures(v: View, time = 0): void {
 /** A wild legend's batch (Ed's round 14 playtest: "Legends in the circle are not very distinct"; "the same pixel density and palette
  *  discipline as the rest of the scene"): its sleeping outline in its sigil's neon (a little toward white, so a deep colour still shows
  *  at night) and a light floor (render/sprites.ts uLegend: on instances drawn asleep, glow -2), and its light in steps of brightness. */
-export function legendLook(species: string, t: Tuning): { legend?: THREE.Vector4; legendFloor?: number; steps?: number } {
+export function legendLook(species: string, t: Tuning, style: Style): { legend?: THREE.Vector4; legendFloor?: number; legendAwake?: number; steps?: number } {
   const S = t.wildLegends.seen;
   if (!S) return {};
-  return { legend: new THREE.Vector4(...legendNeon(species), S.rim), legendFloor: S.floor, steps: S.steps ?? 0 };
+  const floor = legendFloor(S.floor, coatLuminance(species, style), S.dark, S.liftMax); // (a dark coat's floor raised: render/legendLight.ts)
+  return { legend: new THREE.Vector4(...legendNeon(species), S.rim), legendFloor: floor, legendAwake: floor > S.floor ? floor : 0, steps: S.steps ?? 0 }; // (and awake too, only for those raised)
 }

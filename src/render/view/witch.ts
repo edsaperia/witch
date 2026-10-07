@@ -14,7 +14,10 @@ import { SPRITE_UNIFORMS } from "../sprites";
 import { inView } from "./culling";
 import { DJ_DEPTH, nearerCamera } from "./home";
 import { beatAt } from "../../rules/beat";
+import { djRoutineAt } from "../../rules/djSet";
+import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
+import { hatFlight } from "../hatFlight";
 
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
  *  the treehouse's sprite (its pixels) in the world. */
@@ -84,7 +87,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       // without the spell, sitting.
       const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST, Dj = v.assets.witchDj;
       if (sp === undefined || !Dj.full.length) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
-      else { const j = v.assets.djFrame(beatAt(g.beat, time), casting); wf = Dj.full[j]; djUpper = Dj.upper[j]; }
+      else {
+        // Her set's routine (rules/djSet.ts: the needle drop after the cast, the scratching after a respawn) over her ordinary set.
+        const R = djRoutineAt(g, time);
+        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
+        wf = Dj.full[j]; djUpper = Dj.upper[j];
+      }
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
     }
   }
@@ -96,7 +104,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   let hidden = ht >= D.at - STEP && ht < D.until;
   if (KO) {
     if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
-    else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
+    else hidden = ht < KO.inAt - (KO.inAt - KO.teleportAt) * 0.25;
   }
   // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
   // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").
@@ -134,10 +142,19 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   }
   v.witchBatch.set(bare ? [] : her);
   v.witchBatch.silhouette = djUpper < 0; if (v.bareBatch) v.bareBatch.silhouette = djUpper < 0;
-  v.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
-  // The party's and the beach's witches' shadows, and a small one under her hat where it lies.
+  // Knocked off, her hat floats down (Ed, 2026-10-07: "the hat slowly floats to the floor over about 4 seconds"): from her head
+  // to where it lies over the knockout's float (ko.at to ko.floatUntil, knockout.hatFloat: rules/knockout.ts), drifting over as it goes, swaying side to
+  // side less as it settles and rocking with each swing (the sprite turned as it swings back), its shadow gathering under it.
+  const fk = bare && hatFrame && KO && KO.floatUntil > KO.at ? Math.max(0, Math.min(1, (ht - KO.at) / (KO.floatUntil - KO.at))) : 1;
+  const hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
+  v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
+  // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];
-  if (bare && hatFrame) v.witchShadows.push({ x: Hat.down!.x + HAT_BESIDE, z: Hat.down!.z, w: hatFrame.w * v.mpp * 0.9, d: hatFrame.w * v.mpp * 0.35 });
+  if (hat) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
+  // The rest of the screen dims while she's down with her hat floating off (render/post.ts uKoDim): in over half a second from
+  // the knockdown, held till she sparkles away, out as she goes. No hat to lose, no dim.
+  const KD = t.knockout.dim ?? 0;
+  v.post.koDim = KO && hat && KD > 0 ? KD * Math.min(1, Math.max(0, (ht - KO.at) / 0.5)) * (1 - Math.min(1, Math.max(0, (ht - KO.teleportAt) / 0.6))) : 0;
   // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
   // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
   // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
