@@ -927,6 +927,70 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   }
   ok(!bad.length, `area flora: ${wooded} wooded areas each grow 3 to 6 species in their own palette, main kind first, fantasy only as a minority${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
+// The art lint (overnight phase 3), on the sprites as the game bakes them (style.json, the bold style): no anti-aliased pixels
+// (alpha only 0, 254 for what glows, or 255); on the pixel grid (whole-pixel sizes and anchors); within its palette (at most
+// LINT_TONES colours a material: the bold style's three tones, its outline and a glint, so a gradient or a stray colour
+// fails); and a silhouette contact sheet (art/out/silhouettes.png, every species' adult squared to its box), warning of
+// look-alikes: overlap at least LINT_LOOKALIKE and about the same proportions.
+{
+  const LINT_TONES = 5, LINT_LOOKALIKE = .8, SIL = 24;
+  await b.page.goto(b.base + "/art/headless-blank.html");
+  const r = await b.page.evaluate(async ({ LINT_TONES, SIL }) => {
+    const G = await import("/art/generator.js"), { AREAS } = await import("/art/areas.js"), style = await (await fetch("/config/style.json")).json();
+    const st = { ...G.defaultStyle(), ...style, artStyle: "bold" }, aa = [], grid = [], pal = [];
+    let n = 0;
+    const lint = (what, A, w, h, sp) => {
+      n++;
+      if (![w, h].every(Number.isInteger)) grid.push(`${what} ${w}x${h}`);
+      for (const [k, v] of Object.entries(sp?.anchors ?? {})) if (Array.isArray(v) && v.some(x => typeof x === "number" && !Number.isInteger(x))) grid.push(`${what} anchor ${k}`);
+      const d = A.getContext("2d").getImageData(0, 0, w, h).data, cols = new Set();
+      let odd = 0;
+      for (let k = 0; k < d.length; k += 4) { const a = d[k + 3]; if (a && a !== 254 && a !== 255) odd++; if (a) cols.add((d[k] << 16) | (d[k + 1] << 8) | d[k + 2]); }
+      if (odd) aa.push(`${what} ${odd} px`);
+      if (sp?.m) { const mats = new Set(); for (const m of sp.m) if (m) mats.add(m); if (cols.size > LINT_TONES * mats.size + 2) pal.push(`${what} ${cols.size} colours, ${mats.size} materials`); }
+    };
+    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) for (const [frame, away] of [[0, false], [1, false], [0, true]]) {
+      const sp = G.critter(S.id, level, frame, st, away ? "away" : undefined), bk = G.bake(sp, G.speciesColours(S.id, st), st);
+      lint(`${S.id} level ${level} frame ${frame}${away ? " away" : ""}`, bk.A, bk.w, bk.h, sp);
+    }
+    for (const A of AREAS) { const a = G.areaAssets(A.id, st); for (const x of [a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])]) if (x?.sp?.A) lint(`${A.id} asset`, x.sp.A, x.sp.w, x.sp.h, x.sp); }
+    // The silhouettes: each species' adult, its drawn box squared to SIL × SIL.
+    const sil = G.SPECIES.map(S => {
+      const sp = G.critter(S.id, 2, 0, st);
+      let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
+      for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+      const bw = x1 - x0 + 1, bh = y1 - y0 + 1, m = new Uint8Array(SIL * SIL);
+      for (let j = 0; j < SIL; j++) for (let i = 0; i < SIL; i++) m[j * SIL + i] = sp.m[(y0 + Math.floor((j + .5) * bh / SIL)) * sp.w + x0 + Math.floor((i + .5) * bw / SIL)] ? 1 : 0;
+      return { id: S.id, m: Array.from(m), aspect: bw / bh };
+    });
+    return { n, aa, grid, pal, sil };
+  }, { LINT_TONES, SIL });
+  ok(!r.aa.length, `art lint, anti-aliasing: ${r.n} baked sprites (every species at every level, both frames and turned away; every area type's assets) have no half-transparent pixels${r.aa.length ? " — " + r.aa.slice(0, 6).join("; ") : ""}`);
+  ok(!r.grid.length, `art lint, the pixel grid: every sprite's size and anchors are whole pixels${r.grid.length ? " — " + r.grid.slice(0, 6).join("; ") : ""}`);
+  ok(!r.pal.length, `art lint, palette: no sprite has more than ${LINT_TONES} colours a material (+2)${r.pal.length ? " — " + r.pal.slice(0, 6).join("; ") : ""}`);
+  const alike = [];
+  for (let a = 0; a < r.sil.length; a++) for (let c = a + 1; c < r.sil.length; c++) {
+    const A = r.sil[a], B = r.sil[c]; let i = 0, u = 0;
+    for (let k = 0; k < A.m.length; k++) { i += A.m[k] & B.m[k]; u += A.m[k] | B.m[k]; }
+    if (i / u >= LINT_LOOKALIKE && Math.min(A.aspect, B.aspect) / Math.max(A.aspect, B.aspect) >= .85) alike.push(`${A.id} ~ ${B.id} (${(i / u).toFixed(2)})`);
+  }
+  // The contact sheet, the look-alikes framed in red.
+  const { mkdirSync, writeFileSync } = await import("node:fs"), cols = 8, cell = SIL * 3 + 8, sheet = await b.page.evaluate(({ sil, alike, cols, cell, SIL }) => {
+    const rows = Math.ceil(sil.length / cols), c = document.createElement("canvas"); c.width = cols * cell; c.height = rows * (cell + 10);
+    const g = c.getContext("2d"), flagged = new Set(alike.flatMap(s => s.split(" (")[0].split(" ~ ")));
+    g.fillStyle = "#1b1726"; g.fillRect(0, 0, c.width, c.height); g.font = "9px monospace";
+    sil.forEach((s, k) => {
+      const ox = (k % cols) * cell + 4, oy = Math.floor(k / cols) * (cell + 10) + 4;
+      g.fillStyle = "#e8e0ff"; for (let j = 0; j < SIL; j++) for (let i = 0; i < SIL; i++) if (s.m[j * SIL + i]) g.fillRect(ox + i * 3, oy + j * 3, 3, 3);
+      if (flagged.has(s.id)) { g.strokeStyle = "#ff4040"; g.strokeRect(ox - 2, oy - 2, SIL * 3 + 4, SIL * 3 + 4); }
+      g.fillStyle = "#a89cc0"; g.fillText(s.id, ox, oy + SIL * 3 + 10);
+    });
+    return c.toDataURL("image/png").split(",")[1];
+  }, { sil: r.sil, alike, cols, cell, SIL });
+  mkdirSync(new URL("./out/", import.meta.url), { recursive: true });
+  writeFileSync(new URL("./out/silhouettes.png", import.meta.url), Buffer.from(sheet, "base64"));
+  console.log(`${alike.length ? "WARN" : "ok  "} art lint, silhouettes: ${r.sil.length} adults on art/out/silhouettes.png${alike.length ? "; look alike: " + alike.join(", ") : ", none alike"}`);
+}
 await b.close();
 console.log(failed ? `${failed} check(s) failed` : "all checks passed");
 process.exit(failed ? 1 : 0);
