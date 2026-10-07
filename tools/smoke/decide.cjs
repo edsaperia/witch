@@ -21,12 +21,11 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 600000, polling: 500 });
     await page.screenshot({ path: path.join(outDir, "panel.png") });
-    // a slider and a live switch changed
+    // a slider changed
     await page.evaluate(() => { const r = document.querySelector('#decide .d[data-id="growth"] input'); r.value = "0.75"; r.dispatchEvent(new Event("input", { bubbles: true })); });
-    await page.click('#decide .d[data-id="glide"] .opt[data-v="camera"]');
     const got = await page.evaluate(() => ({ perWave: window.witch.game.tuning.population.growth.perWave, url: location.search }));
     console.log("after change:", JSON.stringify(got));
-    if (got.perWave !== 0.75 || !/d_growth=0.75/.test(got.url) || !/glide=camera/.test(got.url)) throw new Error("a change didn't apply");
+    if (got.perWave !== 0.75 || !/d_growth=0.75/.test(got.url)) throw new Error("a change didn't apply");
     await page.screenshot({ path: path.join(outDir, "changed.png") });
     // Confirm: a new tab on GitHub's new-issue page, labelled decision
     // (window.open recorded rather than followed: a headless run may not reach GitHub)

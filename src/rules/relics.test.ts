@@ -24,7 +24,7 @@ describe("legend relics on the map", () => {
       // Near its edge: within homeInset (and a step) of leaving it, out past home's circle.
       const h = inHome[0], d = Math.hypot(h.x - home.x, h.z - home.z), dx = (h.x - home.x) / d, dz = (h.z - home.z) / d;
       const out = (k: number) => { const c = map.cellSafe(h.x + dx * k, h.z + dz * k).cell; return c[0] !== C[0] || c[1] !== C[1]; };
-      expect(out(R.homeInset + 5), `seed ${seed}: near home's edge`).toBe(true);
+      expect(Array.from({ length: R.homeInset + 5 }, (_, k) => out(k + 1)).some(Boolean), `seed ${seed}: near home's edge`).toBe(true); // (leaving it somewhere along the way: a wiggly border may come back in)
       expect(d, `seed ${seed}: past home's circle`).toBeGreaterThan(map.homeRadius);
       expect(Math.hypot(h.x - map.treehouse.x, h.z - map.treehouse.z), `seed ${seed}: clear of the treehouse`).toBeGreaterThanOrEqual(R.clearOfTreehouse);
       for (const r of relics) {

@@ -244,11 +244,11 @@ async function main() {
     await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor, x = d.x + d.radius + 5, z = d.z + 3 - 2.5; g.witch = { ...g.witch, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z }; });
     await sleep(1500);
     await shot(page, "43-behind-soundsystem.png");
-  }, "&tilt=before");
+  }, "");
 
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
   // short recording in motion with them on.
-  for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""], ["fx-pixel", "&fx=pixel"]]) {
+  for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
       await hold(page, "ArrowRight", 1.5);
@@ -258,7 +258,7 @@ async function main() {
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
       await sleep(600);
       await shot(page, `31-treetop-${name}.png`);
-    }, q + "&tilt=before");
+    }, q);
   }
   // The party spreading: one area partifying (shots through its transition, from the treetops),
   // its string lights from the ground, then the party after four waves from high up.
@@ -302,7 +302,7 @@ async function main() {
     const n = await page.evaluate(() => window.witch.game.party.areas.size);
     check(n > 1, `after four waves ${n} areas are partified`);
     await shot(page, "57-party-four-waves.png");
-  }, "&debug&tilt=before");
+  }, "&debug");
 
   // Nothing through the earth (Ed, v256: "due to the bend, I can see string lights through the
   // earth"): in treetop mode with the bend on and the party's lights out, every layer in the scene
@@ -427,7 +427,7 @@ async function main() {
       check(r.readable > 0.15, `the ${id}'s trunks are readable, not black on black (${(r.readable * 100).toFixed(0)}% of their pixels)`);
       check(r.across > TRUNK_ROUND, `the ${id}'s trunks are shaded round, not flat slabs: one side over the other ${r.across.toFixed(2)}x (over ${TRUNK_ROUND}x)`);
     }
-  }, "&tilt=before");
+  }, "");
 
   // Inviting and leashing: 💌s at a creature until it joins her (issue #87), gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
@@ -489,7 +489,7 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.leash.placed.length === 0, null, { timeout: 30000 });
     // (Back on her stack: she may have talked another creature in by herself meanwhile, Ed v244, so not by the count.)
     check(await page.evaluate(id => window.witch.game.leash.stack.includes(id), placedId), "over a placed sigil, the button picks it up again");
-  }, "&tilt=before");
+  }, "");
 
   // ?debug=cull: anything that changed visibility this frame is tinted red. A strip of frames
   // flying and zooming through every step in both modes.
@@ -506,7 +506,7 @@ async function main() {
         await page.keyboard.up("ArrowRight");
       }
     }
-  }, "&debug=cull&tilt=before");
+  }, "&debug=cull");
 
   // No stutter flying into new forest: full treetop boost straight across fresh ground, timing the
   // forest's chunk building each frame (view.stats.forestMs: the rebuilds' share plus the
