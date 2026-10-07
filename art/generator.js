@@ -37,6 +37,8 @@ export { EFFECTS, EFFECT_BY_ID, ATTACK_EFFECTS, STATE_EFFECTS, TRAIT_TINTS, SPEC
 import { NEW_SET_PIECES, SET_PIECE_KINDS, setPiece3d } from "./setpieces.js";
 import { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset } from "./relics.js";
 import { BEACH_FINDS, BEACH_PRINTS, PRINT_HEADINGS, beachSprite, beachColours } from "./beach.js";
+import { DOLPHIN, dolphinColours, dolphinSprite, dolphinSplash } from "./dolphins.js";
+import { KRAKEN, krakenColours, krakenTentacle, krakenHead } from "./kraken.js";
 import { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint } from "./decor.js";
 import { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours } from "./country.js";
 import { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours } from "./landmarks.js";
@@ -220,3 +222,4 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   return out;
 }
 
+export { DOLPHIN, dolphinColours, dolphinSprite, dolphinSplash, KRAKEN, krakenColours, krakenTentacle, krakenHead }; // (imported above, so the lab's inliner sees them)
