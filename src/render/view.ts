@@ -337,7 +337,7 @@ export class View {
     }
     if (t.mistCanopy?.on) {
       const A = this.ground.areaUniforms;
-      this.mistCanopy = new MistCanopy(t.mistCanopy, A.uAreas, A.uExtent, this.post.scene.depthTexture, this.post.lowSize);
+      this.mistCanopy = new MistCanopy(t.mistCanopy, A.uAreas, A.uExtent, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer's size: post.ts)
       (this.post.fxScene ??= new THREE.Scene()).add(...this.mistCanopy.meshes);
       this.mistCanopy.setCover(HOME_LOOK, null); // (none over the dancefloor)
       const m = game.map;
