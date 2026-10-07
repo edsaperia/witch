@@ -147,9 +147,9 @@ export interface Tuning {
    *  on her first coming down in a wild area, its wild young and adults hold off for `time` seconds, standing and staring at her
    *  (any within hangBack metres backing off), then fight as ever; an area is forgotten `forget` seconds after the last witch was
    *  on the ground in it, so a later visit plays it again (rules/wildWatch.ts). */
-  /** The hunt (Ed, 2026-10-07; rules/hunt.ts): a woken wild area's own young and adults go for her till she's knocked out or they're invited; off, they give up past combat.leaveArea. */
+  /** The hunt (Ed, 2026-10-07; rules/hunt.ts): a woken wild area's own young and adults go for her while she's in the area, till she's knocked out or they're invited; she leaves, they lose interest as before. */
   hunt?: { on: boolean };
-  wildWatch?: { on: boolean; time: number; forget: number; hangBack: number; /** an area with watchers worth this much in a fight (F) or more is fully dangerous: its red at its fullest */ dangerF?: number; /** the red on a watching creature at full aggro in the most dangerous area (render/view/creatures.ts) */ tint?: number; /** the screen edges' red at full aggro there (render/post.ts) */ vignette?: number };
+  wildWatch?: { on: boolean; time: number; forget: number; hangBack: number; /** an area with watchers worth this much in a fight (F) or more is fully dangerous: its red at its fullest */ dangerF?: number; /** the red on a watching creature at full aggro in the most dangerous area (render/view/creatures.ts) */ tint?: number };
   naps?: { on: boolean; chance: number; length: number[]; wake: number; /** A legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"): its own chance and length, roused only by a witch on the ground within reach metres of its circle's edge. */ circle?: { chance: number; length: number[]; reach: number } };
   /** The soundsystem alarm (rules/alarms.ts, render/alarm.ts). */
   alarms?: { linger: number; fall: number; most: number };
@@ -204,6 +204,8 @@ export interface Tuning {
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
     spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
     land: { volume: number; gap: number };
+    /** A sigil refused (put down too near another): a soft two-note "nope" (chimes.ts nope). */
+    nope: { volume: number; gap: number };
     stir: { volume: number };
     knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
     charge: { volume: number; bellow: number; hooves: number; rumble: number; skid: number; trot: number; range: number };

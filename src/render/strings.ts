@@ -107,6 +107,8 @@ interface Built { lines: StringLine[]; group: THREE.Group; on: number }
 
 export class StringLightsView {
   private built = new Map<string, Built>();
+  /** The next waves' areas whose forest is made ahead (update). */
+  private warmed = new Set<string>();
   private palette: THREE.Color[];
   private bulbMat: THREE.ShaderMaterial;
   private wireMat: THREE.ShaderMaterial;
@@ -190,8 +192,18 @@ export class StringLightsView {
         this.built.set(k, b);
       }
     }
+    // The next wave's areas' forest made ahead, about a millisecond a frame while nothing's being built: their lines need
+    // its trees, and making them on the wave's own frame was most of a 65 ms stall there (the wave 4 hitch bench).
+    // (Each area once: asking again would undo the forest's note that the window round her is done.)
+    if (!builds) for (const c of g.party.next) {
+      const k = `${c[0]},${c[1]}`;
+      if (this.built.has(k) || this.warmed.has(k)) continue;
+      const s = g.map.siteOf(c[0], c[1]);
+      if (g.forest.prefetch(s.x, s.z, g.map.areaSize * 1.3, 1) > 0) break;
+      this.warmed.add(k);
+    }
   }
 
   /** Forget everything (a new game). */
-  clear(): void { for (const [, b] of this.built) this.scene.remove(b.group); this.built.clear(); }
+  clear(): void { for (const [, b] of this.built) this.scene.remove(b.group); this.built.clear(); this.warmed.clear(); }
 }
