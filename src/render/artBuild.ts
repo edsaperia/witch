@@ -265,6 +265,8 @@ export interface SceneArt { pieces: Record<string, { frame: number; originX: num
 export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean }
 
 /** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
+/** A home speaker's runestone, times an area's rune stone (Ed: "smaller runestones"): baked at that size. */
+export const SPEAKER_STONE = 0.55;
 export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The small runestone each home speaker starts as (Ed, 2026-10-06), and its ground point. */ stone?: number; stoneOrigin?: { x: number; y: number } }
 
 /** The beach's edge of the woods in its atlas (render/beach.ts): palms as crown and trunk frames, shrubs and grass clumps whole. */
@@ -308,8 +310,8 @@ function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers
         speakers.frames[`${angle}:${state}:${frame}`] = sprites.push(Art.bake(r.sp, colours, st, st.cOutline, mk) as Baked) - 1;
         if (!speakers.origin[angle]) speakers.origin[angle] = r.origin;
       }
-  // the runestone it starts as (the areas' rune stone, cyan, its home rune): drawn small by the view
-  const stone = (Art.runeStone as unknown as (st: Style, o: { glow: string; makeCanvas: MakeCanvas }) => Baked)(st, { glow: "cyan", makeCanvas: mk });
+  // the runestone it starts as (the areas' rune stone, cyan, its home rune): baked small, at SPEAKER_STONE of a rune stone's size, drawn at 1 (docs/STYLE.md rule 1)
+  const stone = (Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; makeCanvas: MakeCanvas }) => Baked)(st, { glow: "cyan", scale: SPEAKER_STONE, makeCanvas: mk });
   speakers.stone = sprites.push(stone) - 1; speakers.stoneOrigin = { x: stone.w / 2, y: stone.h };
   return { sprites, speakers };
 }

@@ -139,4 +139,7 @@ export class Sfx {
   /** Whether the night's sounds are built. */
   get nightBuilt(): boolean { return !!this.nightBed?.built; }
   private nightBed: Night | null = null;
+  /** Each area's ambience in play (night.ts layers without their bed): `kind` her area's, at `level` (0-1). Built when first heard. */
+  ambience(kind: NightKind | null, level: number): void { if (level > 0.001 || this.ambienceBed) (this.ambienceBed ??= new Night(this.k, () => this.k.T.ambience)).update(kind, level); }
+  private ambienceBed: Night | null = null;
 }
