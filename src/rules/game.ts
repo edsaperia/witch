@@ -1,5 +1,5 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
-import { stepWildWatch } from "./wildWatch";
+import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { MOVEMENT } from "./movement";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
@@ -113,7 +113,7 @@ export interface Game {
   /** Areas whose legend's quest is done (rules/quest.ts): friendly while wild. */
   friendly: Set<string>;
   /** The wild areas a witch has come down in lately (rules/wildWatch.ts): when, and when one was last on the ground there. */
-  wildEntry: Map<string, { at: number; last: number }>;
+  wildEntry: Map<string, WildEntry>;
   /** Quests done in this frame's steps (for the view). */
   questEvents: QuestEvent[];
   /** The map's relics (rules/legends.ts): lying half buried, carried, or put down by a legend. */
