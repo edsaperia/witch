@@ -23,6 +23,12 @@ import type { Style } from "./style";
 const BEACH_POOL = 2.2;
 
 const TEXELS_PER_METRE = 2;
+/** The area texture's largest side (texels): GPUs commonly stop at 8192 (some at 4096), and the map at 2 a metre was 8352. */
+export const AREA_TEXTURE_MAX = 8192;
+/** Texels a metre for a map `size` metres across that fit in `max` texels a side (whole tiles): 2, or a little under on the biggest maps. */
+export function areaTexelsPerMetre(size: number, max = AREA_TEXTURE_MAX): number {
+  return Math.min(TEXELS_PER_METRE, ((Math.floor(max / TILE) - 1) * TILE) / Math.max(1, size));
+}
 const TILE = 32; // texels
 const FLOOR_COLS = 8;
 const TYPE_SLOTS = Math.max(32, LOOKS.length); // a slot per area type and home's look (area recipes can add types)
@@ -465,6 +471,8 @@ export class Ground {
   private filled: Uint8Array;
   private tilesX: number;
   private tilesZ: number;
+  /** The area texture's texels a metre (areaTexelsPerMetre). */
+  private tpm: number;
   private initialised = false;
   private floorReady = new Array(TYPE_SLOTS).fill(0);
   private floors: THREE.DataTexture;
@@ -474,13 +482,18 @@ export class Ground {
   private carve = (t => { t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(CARVING_SIZE * 6 * CARVING_SIZE * 4), CARVING_SIZE * 6, CARVING_SIZE));
   private carveSlots: (string | null)[] = new Array(6).fill(null);
 
-  constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number) {
+  /** maxTexture: the GPU's largest texture side (renderer.capabilities.maxTextureSize), held to AREA_TEXTURE_MAX. */
+  constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number, maxTexture = AREA_TEXTURE_MAX) {
     const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ;
-    const W = Math.ceil((w * TEXELS_PER_METRE) / TILE) * TILE, H = Math.ceil((d * TEXELS_PER_METRE) / TILE) * TILE;
+    const tpm = (this.tpm = areaTexelsPerMetre(Math.max(w, d), Math.min(maxTexture, AREA_TEXTURE_MAX)));
+    const W = Math.ceil((w * tpm) / TILE) * TILE, H = Math.ceil((d * tpm) / TILE) * TILE;
     this.tilesX = W / TILE; this.tilesZ = H / TILE;
     this.filled = new Uint8Array(this.tilesX * this.tilesZ);
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
-    this.texture = nearest(new THREE.DataTexture(new Uint8Array(W * H * 4), W, H));
+    // Made on the GPU only, never as one array here (it was W x H x 4 bytes: 279 MB on the biggest map): the tiles are
+    // copied into it as they're filled, and WebGL starts every texture at zero.
+    this.texture = nearest(new THREE.DataTexture(null, W, H));
+    this.texture.source.dataReady = false;
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(st, map.dancefloor.radius);
@@ -489,7 +502,7 @@ export class Ground {
       uniforms: {
         ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
         uAreas: { value: this.texture },
-        uExtent: { value: new THREE.Vector4(e.minX, e.minZ, W / TEXELS_PER_METRE, H / TEXELS_PER_METRE) },
+        uExtent: { value: new THREE.Vector4(e.minX, e.minZ, W / tpm, H / tpm) },
         uPixel: { value: metresPerPixel },
         uTypeFloor: { value: floors },
         uFloorReady: { value: this.floorReady },
@@ -620,7 +633,7 @@ export class Ground {
   fill(renderer: THREE.WebGLRenderer, rect: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number, budgetMs: number): number {
     if (!this.initialised) { renderer.initTexture(this.texture); renderer.initTexture(this.floors); this.initialised = true; }
     if (this.pendingFloors.length) this.placeFloors(renderer);
-    const e = this.map.extent, tm = TILE / TEXELS_PER_METRE;
+    const e = this.map.extent, tm = TILE / this.tpm;
     const i0 = Math.max(0, Math.floor((rect.minX - e.minX) / tm)), i1 = Math.min(this.tilesX - 1, Math.floor((rect.maxX - e.minX) / tm));
     const j0 = Math.max(0, Math.floor((rect.minZ - e.minZ) / tm)), j1 = Math.min(this.tilesZ - 1, Math.floor((rect.maxZ - e.minZ) / tm));
     const cx = (x - e.minX) / tm, cz = (z - e.minZ) / tm, todo: [number, number, number][] = [];
@@ -638,12 +651,12 @@ export class Ground {
   }
 
   private fillTile(renderer: THREE.WebGLRenderer, i: number, j: number): void {
-    const e = this.map.extent, data = this.tile, tm = TILE / TEXELS_PER_METRE;
+    const e = this.map.extent, data = this.tile, tm = TILE / this.tpm, tpm = this.tpm;
     const x0 = e.minX + i * tm, z0 = e.minZ + j * tm;
     // Ponds are part of the ground: every one is marked in the tile, so none can pop.
     const ponds = this.forest.lightsNear(x0 + tm / 2, z0 + tm / 2, tm / 2 + 6).filter(l => l.kind === "pond");
     for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) {
-      const wx = x0 + (x + 0.5) / TEXELS_PER_METRE, wz = z0 + (y + 0.5) / TEXELS_PER_METRE;
+      const wx = x0 + (x + 0.5) / tpm, wz = z0 + (y + 0.5) / tpm;
       const a = this.map.areaAt(wx, wz), o = (y * TILE + x) * 4;
       let pond = 0;
       for (const p of ponds) if (Math.hypot(wx - p.x, wz - p.z) < 3 * p.size) pond = 255;
