@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { newBeatClock, beatAt } from "./beat";
 import { PARTY_CAST, type PartyState } from "./party";
-import { DJ_ROUTINE, DJ_ROUTINE_BEATS, djRoutineAt, djRoutineStart, djStrokes } from "./djSet";
+import { DJ_ROUTINE, DJ_ROUTINE_BEATS, djIntroEnd, djRoutineAt, djRoutineStart, djStrokes, heldByRoutine } from "./djSet";
 import { DJ_GESTURES } from "../../art/witch.js";
 
 const game = (spellAt: number | null | undefined, seated = true, ko: { inAt: number; backAt: number } | null = null) =>
@@ -56,5 +56,11 @@ describe("her set at the decks (rules/djSet.ts)", () => {
     const g = { ...game(undefined, true, { inAt: 40, backAt: 46 }), clock: { time: 60 }, herTime: 50 }; // the world 10 s ahead (a slowed circle once)
     expect(djRoutineStart(g, 45)).toBeNull(); // in her time that's before she's back
     expect(djRoutineAt(g, 51)?.gesture).toBe("scratch"); expect(djRoutineAt(g, 52)?.gesture).toBe("chirp"); // back at 50 in the world's time
+  });
+  it("holds her at the decks from the party spell to the routine's end, when the first music drops", () => {
+    const g = game(10), end = djIntroEnd(g)!, s = djRoutineStart(g, 12)!;
+    expect(end - s).toBeCloseTo(DJ_ROUTINE_BEATS * 0.5, 6); // 13 beats at 120 bpm
+    expect(heldByRoutine(g, 9.9)).toBe(false); expect(heldByRoutine(g, 10.5)).toBe(true); expect(heldByRoutine(g, end - 0.01)).toBe(true); expect(heldByRoutine(g, end)).toBe(false);
+    for (const sp of [undefined, null]) { expect(djIntroEnd(game(sp))).toBeNull(); expect(heldByRoutine(game(sp), 20)).toBe(false); }
   });
 });
