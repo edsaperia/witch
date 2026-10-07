@@ -64,6 +64,7 @@ const SOUNDS: [string, number, Play][] = [
   ["picnic", 10, () => {}],
   ["creator-room", 12, () => {}],
   ["letter-land", 1.6, () => {}],
+  ["sigil-nope", 1.4, () => {}],
   ["boot-stir", 6, s => s.stir()],
   ["legend-sleep", 5, s => s.legends(1, 1, 0)],
   ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
@@ -114,6 +115,8 @@ async function render(name: string, seconds: number, play: Play) {
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
     at(0, () => s.knock(1)); at(1.2, () => s.knock(4)); at(2.6, () => s.knock(9));
     for (let i = 0; i < 14; i++) at(2.75 + i * 0.13, () => s.twinkle(i));
+  } else if (name === "sigil-nope") {
+    for (let i = 0; i < 2; i++) void oc.suspend(Math.round((0.1 + i * 0.6) * rate) / rate).then(() => { s.nope(i ? 0.4 : -0.4); return oc.resume(); });
   } else if (name === "letter-land") {
     // three 💌s that met no one coming down, a quarter second apart
     for (let i = 0; i < 3; i++) void oc.suspend(Math.round((0.1 + i * 0.4) * rate) / rate).then(() => { s.land(i - 1); return oc.resume(); });

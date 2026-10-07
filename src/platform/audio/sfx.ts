@@ -77,6 +77,8 @@ export class Sfx {
   invited(level: number, pan = 0, near = 1): void { chimes.invited(this.k, level, pan, near); }
   /** A 💌 coming down on the ground, having met no one. */
   land(pan = 0, near = 1): void { chimes.land(this.k, pan, near); }
+  /** A sigil refused (too near one already down). */
+  nope(pan = 0): void { chimes.nope(this.k, pan); }
   reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void { this.babble.reply(v, amount, pan, near); }
 
   // ——— creatures ———
