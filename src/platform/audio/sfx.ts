@@ -140,7 +140,7 @@ export class Sfx {
   /** Fireworks over a soundsystem (a wave come to an area she'd cleared): a shell's climb (`dur` seconds), its burst
    *  (`size` 0.5-1.5), the party cheering; each by how near (0-1). */
   fireworkWhoosh(dur: number, whistle: boolean, pan = 0, near = 1): void { fireworks.whoosh(this.k, dur, whistle, pan, near); }
-  fireworkBurst(size: number, pan = 0, near = 1): void { fireworks.burst(this.k, size, pan, near); }
+  fireworkBurst(size: number, pan = 0, near = 1, glitter = false): void { fireworks.burst(this.k, size, pan, near, glitter); }
   fireworkCheer(pan = 0, near = 1): void { fireworks.cheer(this.k, pan, near); }
   get seaBuilt(): boolean { return !!this.seaBed?.built; }
   /** The party's over: the area's night (`kind`, at `level` 0-1), made the first time it's heard (most runs, never). */

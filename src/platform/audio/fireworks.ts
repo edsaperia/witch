@@ -22,8 +22,9 @@ export function whoosh(K: SfxKit, dur: number, whistle: boolean, pan = 0, near =
   const o = K.osc("sine", 900 + Math.random() * 300, at, dur, wg); o.frequency.exponentialRampToValueAtTime(2600 + Math.random() * 800, at + dur);
 }
 
-/** A shell bursting: a boom (bigger with `size`, 0.5-1.5) rolling off into the night, and its stars crackling down. */
-export function burst(K: SfxKit, size: number, pan = 0, near = 1): void {
+/** A shell bursting: a boom (bigger with `size`, 0.5-1.5) rolling off into the night, and its stars crackling down
+ *  (`glitter`: a crackle shell's, louder and on for a second longer). */
+export function burst(K: SfxKit, size: number, pan = 0, near = 1, glitter = false): void {
   const F = K.T.fireworks, c = K.ctx, at = c.currentTime + 0.005, vol = (F?.volume ?? 0) * near;
   if (vol <= 0.0005) return;
   const out = K.voice(pan), boom = c.createGain();
@@ -35,9 +36,9 @@ export function burst(K: SfxKit, size: number, pan = 0, near = 1): void {
   const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 300 + 1500 * near; lp.connect(boom);
   K.noiseBurst(at, 0.4, lp, Math.random());
   // its stars: a crackle falling away over a second or two
-  const cg = c.createGain(), hp = c.createBiquadFilter(), len = 1.2 + Math.random() * 0.8;
+  const cg = c.createGain(), hp = c.createBiquadFilter(), len = 1.2 + Math.random() * 0.8 + (glitter ? 1 : 0);
   hp.type = "highpass"; hp.frequency.value = 1200; hp.connect(cg); cg.connect(out);
-  cg.gain.setValueAtTime(0.0001, at + 0.08); cg.gain.exponentialRampToValueAtTime(vol * F!.crackle, at + 0.2); cg.gain.exponentialRampToValueAtTime(0.0001, at + 0.2 + len);
+  cg.gain.setValueAtTime(0.0001, at + 0.08); cg.gain.exponentialRampToValueAtTime(vol * F!.crackle * (glitter ? 1.6 : 1), at + 0.2); cg.gain.exponentialRampToValueAtTime(0.0001, at + 0.2 + len);
   const s = c.createBufferSource();
   s.buffer = crackles(c); s.playbackRate.value = 0.8 + 0.4 * Math.random();
   s.connect(hp); s.start(at + 0.08, Math.random() * 2, len + 0.2);

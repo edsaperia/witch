@@ -38,7 +38,7 @@ export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(
 import { nightKind } from "./night";
 import { AREA_TYPES } from "../../rules/map";
 import { leyPulse, pointerShown, type P2 } from "../../rules/leypulse";
-import { fireworkShells, type FireworkShell } from "./fireworkShells";
+import { fireworkShells, type Shell } from "../../rules/fireworks";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind>(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash"]);
@@ -447,25 +447,26 @@ export class SfxCues {
   }
 
   /** Fireworks over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate; art builder
-   *  2 draws the shells): each shell's whoosh as it launches, its burst when the sound of it reaches her (sound being
-   *  slower than light), and the party cheering after the first burst. */
+   *  2's show, rules/fireworks.ts, the same shells the picture draws): each shell's whoosh as it launches (now and then
+   *  whistling), its burst when the sound of it reaches her (sound being slower than light; a crackle shell's glitter
+   *  crackling on), and the party cheering as the finale bursts. */
   private fireworks({ g, time, pan }: Here): void {
     const F = g.tuning.sfx.fireworks;
     if (!F) return;
     for (const e of g.waveEvents) {
-      if (e.kind !== "waveCelebrate" || this.shows.some(s => s.key === e.key && s.at === e.at)) continue;
-      this.shows.push({ key: e.key, at: e.at, x: e.x, z: e.z, cheered: false, shells: fireworkShells(e).map(s => ({ ...s, launched: false, popped: false })) });
+      if (e.kind !== "waveCelebrate" || this.shows.some(s => s.x === e.x && s.z === e.z && s.at === e.at)) continue;
+      const shells = fireworkShells(e.x, e.z, e.at, g.tuning);
+      if (shells.length) this.shows.push({ at: e.at, x: e.x, z: e.z, cheered: false, cheerAt: shells[shells.length - 1].burst, shells: shells.map(s => ({ ...s, launched: false, popped: false })) });
     }
     if (!this.shows.length) return;
     const w = g.witch, S = this.sfx;
     for (const show of this.shows) {
-      for (const s of show.shells) {
+      show.shells.forEach((s, i) => {
         const d = Math.hypot(s.x - w.x, s.height, s.z - w.z), near = Math.max(0, 1 - d / F.range);
-        if (!s.launched && time >= s.launch) { s.launched = true; if (near > 0) S.fireworkWhoosh(s.burst - s.launch, s.whistle, pan(s.x), near); }
-        if (!s.popped && time >= s.burst + d / F.speed) { s.popped = true; if (near > 0) S.fireworkBurst(s.size, pan(s.x), near); }
-      }
-      const first = show.shells[0];
-      if (!show.cheered && first && time >= first.burst + 0.3) {
+        if (!s.launched && time >= s.launch) { s.launched = true; if (near > 0) S.fireworkWhoosh(s.burst - s.launch, (Math.floor(s.hue * 97) + i) % 3 === 0, pan(s.x), near); }
+        if (!s.popped && time >= s.burst + d / F.speed) { s.popped = true; if (near > 0) S.fireworkBurst(Math.min(1.5, s.radius / 9), pan(s.x), near, s.kind === "crackle"); }
+      });
+      if (!show.cheered && time >= show.cheerAt + 0.3) {
         show.cheered = true;
         const near = Math.max(0, 1 - Math.hypot(show.x - w.x, show.z - w.z) / F.cheerRange);
         if (near > 0) S.fireworkCheer(pan(show.x), near);
@@ -473,7 +474,7 @@ export class SfxCues {
     }
     this.shows = this.shows.filter(s => !s.cheered || s.shells.some(x => !x.popped));
   }
-  private shows: { key: string; at: number; x: number; z: number; cheered: boolean; shells: (FireworkShell & { launched: boolean; popped: boolean })[] }[] = [];
+  private shows: { at: number; x: number; z: number; cheered: boolean; cheerAt: number; shells: (Shell & { launched: boolean; popped: boolean })[] }[] = [];
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {
