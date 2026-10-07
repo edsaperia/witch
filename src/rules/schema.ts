@@ -123,15 +123,19 @@ export function knobsMarkdown(file: Record<string, unknown>, schema: Schema, tit
     return [`| \`${path}\` | ${type} | ${esc([s ? range(s) : "", s?.unit ?? ""].filter(Boolean).join(", "))} |`];
   };
   // Groups: a note and the knobs after it (the file's first knobs may have none).
-  const groups: { note: string | null; keys: string[] }[] = [];
+  // A "__name" note opens a section (config/tuning.json's, housekeeping 2026-10-07): a heading of its own.
+  const groups: { note: string | null; keys: string[]; section?: string }[] = [];
   for (const k of Object.keys(file)) {
+    if (k.startsWith("__")) { groups.push({ note: file[k] as string, keys: [], section: k.slice(2) }); continue; }
     if (k.startsWith("_")) { groups.push({ note: file[k] as string, keys: [] }); continue; }
     if (!groups.length) groups.push({ note: null, keys: [] });
     groups[groups.length - 1].keys.push(k);
   }
+  const sections = groups.some(g => g.section);
   for (const g of groups) {
+    if (g.section) { lines.push(`## ${g.section[0].toUpperCase()}${g.section.slice(1)}`, "", esc(g.note ?? ""), ""); continue; }
     if (!g.keys.length) continue;
-    lines.push(`## ${g.keys.map(k => `\`${k}\``).join(", ")}`, "");
+    lines.push(`${sections ? "###" : "##"} ${g.keys.map(k => `\`${k}\``).join(", ")}`, "");
     if (g.note) lines.push(esc(g.note), "");
     lines.push("| knob | type | range |", "|---|---|---|", ...g.keys.flatMap(k => rows(file[k], schema.properties?.[k], k)), "");
   }

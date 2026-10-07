@@ -1,8 +1,6 @@
 // Edge indicators: when something that matters is off screen, a cue at the screen's edge in its
 // direction, fading out as it comes into view. Drawn as pixel art (Ed, v149: "larger and
 // pixellated"): plotted pixel by pixel on a small canvas, scaled up without smoothing.
-//  - "Music this way" (Ed, 2026-10-03): sound-wave arcs pulsing outward on the beat, in the party
-//    colours, toward home's dancefloor; bigger and brighter when near.
 //  - "Next stone" (Ed, v149; redrawn v183): the next waking area's rune (its creature's sigil) in
 //    its neon, in a ring that fills clockwise from 12 o'clock as the countdown to the next wave
 //    runs, flashing when the party spreads; an arrowhead toward the stone and its distance in
@@ -147,8 +145,6 @@ export const NOTES = [
   ".###.....####..",
 ];
 
-const PARTY: number[][] = [[232, 180, 106], [232, 180, 106], [232, 180, 106]]; // the HUD's one accent (art review round 1: the UI in the art's palette)
-
 /** 🎩 in pixels: her hat, a tall crown leaning back over a wide brim, its band (`+`) a lighter line (the dropped hat's pointer, rules/hat.ts). */
 export const HAT = [
   ".........###...",
@@ -164,36 +160,6 @@ export const HAT = [
   "###############",
   ".#############.",
 ];
-
-export class MusicIndicator {
-  private cue: PixelCue;
-  private v = new THREE.Vector3();
-  constructor(parent: HTMLElement) { this.cue = new PixelCue(parent); }
-
-  /** Point at (x, z) on the ground; width and height: the screen's size (CSS pixels). */
-  update(camera: THREE.Camera, width: number, height: number, x: number, z: number, wx: number, wz: number, time: number, bpm: number, debug: boolean): void {
-    const e = edgeSpot(this.v, camera, width, height, x, z, wx, wz), c = this.cue;
-    if (e.show <= 0.01) { c.hide(); return; }
-    const dist = Math.hypot(x - wx, z - wz), near = Math.max(0.35, Math.min(1, 1 - dist / 900));
-    c.place(e.ex, e.ey);
-    c.clear();
-    const beat = (time * bpm) / 60, ph = beat - Math.floor(beat), ca = Math.cos(-e.angle), sa = Math.sin(-e.angle);
-    // Three arcs centred off toward the music, bulging back toward the middle of the screen,
-    // plotted one art pixel thick.
-    for (let y = 0; y < N; y++) for (let x2 = 0; x2 < N; x2++) {
-      const lx = (x2 - N / 2 + 0.5) * ca - (y - N / 2 + 0.5) * sa, ly = (x2 - N / 2 + 0.5) * sa + (y - N / 2 + 0.5) * ca;
-      const qx = lx - 11, r = Math.hypot(qx, ly), ang = Math.abs(Math.atan2(ly, -qx));
-      if (ang > 0.75) continue;
-      for (let i = 0; i < 3; i++) {
-        const R = (4 + i * 4 + ph * 4) * (0.75 + 0.25 * near);
-        if (Math.abs(r - R) < 0.62) c.dot(x2, y, PARTY[i], e.show * near * (1 - (i + ph) / 3.2));
-      }
-    }
-    c.flush();
-    c.label.style.display = debug ? "block" : "none";
-    if (debug) { c.label.textContent = `${Math.round(dist)} m`; c.label.style.left = `${e.ex}px`; c.label.style.top = `${e.ey + (N * SCALE) / 2 - 18}px`; }
-  }
-}
 
 export class StoneIndicator {
   private cue: PixelCue;
