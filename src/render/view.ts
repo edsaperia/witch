@@ -570,6 +570,8 @@ export class View {
   readonly evolvedAt = new Map<number, number>();
   /** Each area legend's lying down and getting up, as the view has seen its state change (render/legendSleep.ts). */
   readonly legendSleeps = new Map<number, import("./legendSleep").SleepTrack>();
+  /** Each watching creature's aggro red as last drawn and when (view/creatures.ts), so it eases out when the watch ends. */
+  readonly aggroLast = new Map<number, { a: number; at: number }>();
   /** Each creature's distance walked as drawn, for its baked walk's frames (view/creatures.ts strideFrame). */
   readonly strides = new Map<number, { x: number; z: number; d: number; at: number }>();
   /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */

@@ -2995,6 +2995,10 @@
         "tint": {
           "type": "number",
           "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -3003,7 +3007,8 @@
         "forget",
         "hangBack",
         "dangerF",
-        "tint"
+        "tint",
+        "fade"
       ],
       "additionalProperties": false
     },

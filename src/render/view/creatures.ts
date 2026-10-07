@@ -21,7 +21,7 @@ import type { View } from "../view";
 import type { Style } from "../style";
 import { coatLuminance, legendFloor } from "../legendLight";
 import { legendGlow, outlineIn } from "../legendOutline";
-import { aggroAmount, aggroGlow } from "../aggro";
+import { aggroAmount, aggroFadeOut, aggroGlow } from "../aggro";
 import { cellKey } from "../../rules/party";
 import { legendRings } from "../../rules/slowTime";
 import { inView } from "./culling";
@@ -164,7 +164,12 @@ export function drawCreatures(v: View, time = 0): void {
     // and springing back when hit, tumbling when knocked back.
     if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) glow = Math.max(glow, (1 - (time - c.hurtAt) / 0.25) * (c.level === 3 ? 0.5 : 1)); // (a legend's at half: whole, it whites out the screen; the contact star marks the blow)
     // A wild area watching her come down (rules/wildWatch.ts): its watchers redden together as their minds make up (render/aggro.ts).
-    if (glow <= 0 && c.watchUntil !== undefined && g.clock.time < c.watchUntil && WW) { const e = g.wildEntry.get(cellKey(c.cell)); if (e) glow = aggroGlow(aggroAmount(1 - (c.watchUntil - g.clock.time) / Math.max(1e-6, WW.time), e.danger, WW.tint)); }
+    // When it ends (it attacks, is invited, gives up, she leaves), the red eases out from where it was (v.aggroLast).
+    if (glow <= 0 && WW) {
+      const e = c.watchUntil !== undefined && g.clock.time < c.watchUntil ? g.wildEntry.get(cellKey(c.cell)) : undefined;
+      if (e) { const a = aggroAmount(1 - (c.watchUntil! - g.clock.time) / Math.max(1e-6, WW.time), e.danger, WW.tint); v.aggroLast.set(c.id, { a, at: time }); glow = aggroGlow(a); }
+      else { const l = v.aggroLast.get(c.id); if (l) { const a = aggroFadeOut(l.a, time - l.at, WW.fade); if (a > 0.005) glow = aggroGlow(a); else v.aggroLast.delete(c.id); } }
+    }
     const feel = attackFeel(c, time, g.tuning.attackFx, FEEL);
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
     let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
