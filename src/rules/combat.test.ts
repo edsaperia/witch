@@ -183,6 +183,24 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     expect(W.health.hp).toBe(TUNING.witchHealth.hits);
   }, 120000);
 
+  it("brings her back behind her decks, seated as at the start but at the game's zoom, near home or far off; her first move gets her up", () => {
+    for (const far of [false, true]) {
+      const { g } = setUp(), W = g.witches[0];
+      if (far) W.body = { ...W.body, x: W.body.x + 900, z: W.body.z + 400 }; // (knocked down far from home)
+      const intro0 = g.camera.intro ?? 0;
+      for (let i = 0; i < 30 / STEP && W.ko; i++) stepGame(g, idle, STEP);
+      expect(W.ko).toBeNull();
+      expect(g.witch.seated, `far ${far}: behind her decks`).toBe(true);
+      expect(Math.hypot(g.witch.x - g.map.start.x, g.witch.z - g.map.start.z)).toBeLessThan(0.5);
+      run(g, 2); // (sitting there: she waits)
+      expect(g.witch.seated).toBe(true);
+      expect(g.camera.intro ?? 0, "not the opening close-up").toBeLessThanOrEqual(intro0);
+      expect(g.camera.intro ?? 0).toBe(0);
+      stepGame(g, { ...idle, moveX: 1 }, STEP);
+      expect(g.witch.seated, "up and away").toBeFalsy();
+    }
+  }, 120000);
+
   it("keeps her legends if knockout.legendsLoyal: they come home with her", () => {
     const { g, l } = setUp(withTuning(t => { t.knockout.legendsLoyal = true; })), W = g.witches[0];
     for (let i = 0; i < 30 / STEP && (W.ko || g.clock.time < 1); i++) stepGame(g, idle, STEP);
