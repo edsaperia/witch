@@ -66,6 +66,12 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 | `beach.idleAfter` | number | 0 to … |
 | `beach.turn` | number | 0 to … |
 | `beach.simRange` | number | 0 to … |
+| `beach.camera.approach` | number | 0 to … |
+| `beach.camera.angle` | number | 0 to … |
+| `beach.camera.curve` | number | 0 to … |
+| `beach.camera.gazeAngle` | number | 0 to … |
+| `beach.camera.gazeDistance` | number | 0 to … |
+| `beach.camera.gazeLook` | number | 0 to … |
 | `areaSize` | number | 0 to … |
 | `areaScale` | number | 0 to … |
 | `arena.radius` | number | 0 to … |
@@ -1188,6 +1194,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.src` | string |  |
 | `music.over.stop` | number | 0 to … |
 | `music.over.floor` | number | 0 to … |
+| `music.beach.fade` | number | 0 to … |
+| `music.beach.quiet` | number | 0 to … |
 
 ## `fight`
 
@@ -1267,6 +1275,16 @@ Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling
 | `naps.chance` | number | 0 to … |
 | `naps.length` | array of number |  |
 | `naps.wake` | number | 0 to … |
+
+## `alarms`
+
+The soundsystem alarm (Ed, 2026-10-06: "We should have an indicator for when a soundsystem or speaker is being attacked offscreen. It can look like the 🎶 indicator, but with 🔇"): a soundsystem (or the home ring's speakers) hit while off screen shows a 🔇 at the screen's edge toward it, its ring its health, shaking at each blow. linger: seconds it stays after the last blow; fall: seconds a fallen one stays, flashing then fading; most: how many show at once (the most recently hit).
+
+| knob | type | range |
+|---|---|---|
+| `alarms.linger` | number | 0 to … |
+| `alarms.fall` | number | 0 to … |
+| `alarms.most` | number | 0 to … |
 
 ## `guard`
 
