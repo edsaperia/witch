@@ -32,6 +32,7 @@ import { HEIGHT_UNIFORMS } from "./height";
 import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
 import { drawCombat } from "./leash/combat";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
+import { drawRespawn } from "./leash/respawn";
 import { drawBond, drawStack, drawStrain } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
@@ -486,6 +487,7 @@ export class LeashView {
     drawDreams(this, camera, width, height);
     drawSnores(this, camera, width, height);
     drawCirclePanel(this, camera, width, height);
+    drawRespawn(this, camera, width, height); // (the wait behind her decks after a knockout: render/leash/respawn.ts)
   }
 
   /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
@@ -493,6 +495,8 @@ export class LeashView {
    *  in (on the ground), on its right on screen, or its left if that would run off; fading in and out (circleShown). Its icons:
    *  the sigil the legend dreams of, at its level, and a relic sigil in gold. */
   circlePanel: HTMLElement | null = null;
+  /** The countdown at her decks after a knockout (render/leash/respawn.ts). */
+  respawnEl: HTMLElement | null = null;
   circleFade = 0;
   circleAt = 0;
   circleLast: { legend: Creature; x: number; z: number; r: number } | null = null;
