@@ -29,6 +29,8 @@ export const LIGHT_UNIFORMS = {
   /** The share of uGlowR where the glow has fallen to dark (tuning glowNear). */
   uGlowNear: { value: 1 },
   uGlowPower: { value: 1.4 },
+  /** Her glow's strength by height (tuning nightLight.treetopGlow, eased in as she rises): 1 on the ground. */
+  uGlowDim: { value: 1 },
   // The twilight haze: the forest fades into it from near to far metres from the witch.
   uHazeCentre: { value: new THREE.Vector2() },
   uHazeRange: { value: new THREE.Vector2(70, 200) },
@@ -97,7 +99,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
 uniform vec4 uMoonUp;
-uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uTime, uSmooth;
+uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uGlowDim, uTime, uSmooth;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
 uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
@@ -195,7 +197,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   if (dg < gr) {
     float ndl = max(0.0, dot(N, normalize(v + vec3(0.0, 1e-4, 0.0)))) * 0.35 + 0.65;
     float fall = pow(1.0 - dg / gr, uGlowFalloff);
-    l += uGlowRgb * min(1.0, ndl * fall * uGlowPower);
+    l += uGlowRgb * min(1.0, ndl * fall * uGlowPower) * uGlowDim;
   }
   for (int i = 0; i < ${MAX_LIGHTS}; i++) {
     if (i >= uLightCount) break;
@@ -234,7 +236,7 @@ vec3 glowPool(vec3 col, vec3 P) {
   float dg = length(v.xz), gr = uGlowR * uGlowNear;
   if (dg >= gr || uGlowPower <= 0.0) return col;
   vec3 Y = vec3(0.3, 0.55, 0.15);
-  float fall = pow(1.0 - dg / gr, uGlowFalloff) * min(1.0, uGlowPower);
+  float fall = pow(1.0 - dg / gr, uGlowFalloff) * min(1.0, uGlowPower) * uGlowDim;
   vec3 warm = max(min(dot(col, Y), ${POOL_CAP.toFixed(3)}), ${POOL_LIFT.toFixed(3)} * fall) * uGlowRgb / max(1e-3, dot(uGlowRgb, Y));
   return mix(col, min(vec3(1.0), warm), ${POOL_WARMTH.toFixed(2)} * fall);
 }

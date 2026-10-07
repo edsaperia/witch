@@ -12,7 +12,7 @@
 // on the real map, its creatures, growth and wave order, like rules/balance.ts, with the witch's
 // time spent flying, landing and talking. Read by tools/balance/states.mjs and states.test.ts.
 import { attackOf, COMBAT, strengthOf } from "./combat";
-import { spawnCreatures, speedFactor, LEGEND, type Level } from "./creatures";
+import { spawnCreatures, speedFactor, LEGEND, type CreatureState, type LegendState, type Level } from "./creatures";
 import { countScale, grownAt, growthLevel } from "./growth";
 import { toEvolve } from "./berries";
 import { AREA_TYPES, type ForestMap } from "./map";
@@ -166,8 +166,9 @@ export interface StatesResult {
   legends: { angry: number; angryAreas: { wave: number; key: string; woken: boolean }[]; happy: number; relicsUsed: number; hazardTime: number; armyLost: number; /** Happy legends worn down, back to sleep. */ beaten: number };
 }
 
-type State = "wild" | "happy" | "leashed" | "enraged" | "dazed" | "gone";
-interface Unit { id: number; species: string; cell: string; x: number; z: number; level: Level; m: number; hp: number; dps: number; reach: number; speed: number; state: State; target: string | null; legend: boolean; until?: number; /** A legend's mood while it isn't happy. */ mood?: "asleep" | "restless" | "angry"; since?: number }
+/** The game's creature states (CREATURE_STATES), and the model's own two: knocked down (dazed) and gone. */
+type State = CreatureState | "dazed" | "gone";
+interface Unit { id: number; species: string; cell: string; x: number; z: number; level: Level; m: number; hp: number; dps: number; reach: number; speed: number; state: State; target: string | null; legend: boolean; until?: number; /** A legend's mood while it isn't happy. */ mood?: Exclude<LegendState, "happy">; since?: number }
 interface Sound { key: string; x: number; z: number; hp: number; radius: number; wave: number; at: number }
 
 const valueOf = (u: Unit) => Math.sqrt(Math.max(0, u.hp) * u.dps);

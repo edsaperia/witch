@@ -6,12 +6,11 @@
 //            rocks of the beach's rocky stretches;
 //   prints   one footprint each (a bare human foot, a paw, a cloven hoof, a bird's three toes), pressed into the sand,
 //            baked at PRINT_HEADINGS headings so a trail can wander any way (the game draws a left foot mirrored).
-import { M, Sprite, hsv2rgb } from "./core.js";
+import { M, Sprite, hsv2rgb, sinHash } from "./core.js";
 import { Model, render } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 
-const bHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
-const bCell = (p, k, s = 0) => bHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
+const bCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 
 // ---------------- the finds ----------------
 const FINDS = {
@@ -21,10 +20,10 @@ const FINDS = {
   "starfish": { desc: "a five-armed starfish, sunset orange", size: 1.2, build(m) { for (let k = 0; k < 5; k++) { const a = k / 5 * 6.283 + .3; m.seg([0, .02, 0], [Math.cos(a) * .2, .015, Math.sin(a) * .2], .055, .015, M.BODY, { group: 1, paint: p => bCell(p, 30) < .2 ? M.BELLY : undefined }); } m.ell([0, .025, 0], [.06, .025, .06], M.BODY, { group: 1 }); } },
   "starfish-violet": { desc: "a five-armed starfish, deep violet", size: .9, build(m) { for (let k = 0; k < 5; k++) { const a = k / 5 * 6.283 + 1.1; m.seg([0, .02, 0], [Math.cos(a) * .19, .015, Math.sin(a) * .19], .05, .014, M.BODY2, { group: 1, paint: p => bCell(p, 30) < .2 ? M.ACCENT : undefined }); } m.ell([0, .025, 0], [.055, .025, .055], M.BODY2, { group: 1 }); } },
   "conch": { desc: "a conch shell, its lip flared pink", size: 1.2, build(m) { m.chain([[-.2, .07, 0, .1], [-.05, .09, 0, .11], [.1, .07, 0, .07], [.22, .05, 0, .02]], M.BELLY, { group: 1, paint: p => ((p[0] * 10 + 9) % 1) < .25 ? M.BODY3 : bCell(p, 24) < .15 ? M.CLOTH : undefined }); m.ell([-.06, .07, .08], [.11, .06, .05], M.ACCENT, { group: 2 }); for (let k = 0; k < 4; k++) m.ell([-.15 + k * .08, .17 - k * .02, -.02], [.025, .03, .025], M.BELLY, { group: 3 }); } },
-  "seaweed": { desc: "a tangle of dark seaweed washed up", size: 1, build(m) { for (let k = 0; k < 4; k++) { const a = bHash(k, 3) * 6.283, l = .18 + bHash(k, 5) * .14; m.chain([[0, .015, 0, .03], [Math.cos(a) * l * .5, .015, Math.sin(a) * l * .5 + .03, .025], [Math.cos(a + .5) * l, .012, Math.sin(a + .5) * l, .012]], k % 2 ? M.LEAF3 : M.BARK2, { group: 1 + k }); } } },
-  "pebbles": { desc: "a few smooth pebbles", size: 1, build(m) { for (let k = 0; k < 4; k++) m.ell([(bHash(k) - .5) * .3, .025, (bHash(k, 2) - .5) * .2], [.05 + bHash(k, 4) * .03, .03, .04], k % 2 ? M.STONE : M.STONED, { group: 1 + k }); } },
+  "seaweed": { desc: "a tangle of dark seaweed washed up", size: 1, build(m) { for (let k = 0; k < 4; k++) { const a = sinHash(k, 3) * 6.283, l = .18 + sinHash(k, 5) * .14; m.chain([[0, .015, 0, .03], [Math.cos(a) * l * .5, .015, Math.sin(a) * l * .5 + .03, .025], [Math.cos(a + .5) * l, .012, Math.sin(a + .5) * l, .012]], k % 2 ? M.LEAF3 : M.BARK2, { group: 1 + k }); } } },
+  "pebbles": { desc: "a few smooth pebbles", size: 1, build(m) { for (let k = 0; k < 4; k++) m.ell([(sinHash(k) - .5) * .3, .025, (sinHash(k, 2) - .5) * .2], [.05 + sinHash(k, 4) * .03, .03, .04], k % 2 ? M.STONE : M.STONED, { group: 1 + k }); } },
   "rock": { desc: "a rock on a rocky stretch, wet at its foot, weed on it", size: 1, build(m) { m.ell([0, .16, 0], [.42, .24, .32], M.STONE, { group: 1, rough: .05, paint: p => p[1] < .06 ? M.STONED : p[1] > .3 && bCell(p, 8) < .3 ? M.LEAF3 : bCell(p, 12) < .12 ? M.STONED : undefined }); m.ell([.3, .08, .15], [.18, .1, .14], M.STONE, { group: 2, rough: .04, paint: p => p[1] < .04 ? M.STONED : undefined }); } },
-  "rocks": { desc: "a low spread of rocks on a rocky stretch", size: 1, build(m) { for (let k = 0; k < 3; k++) m.ell([(k - 1) * .3 + (bHash(k) - .5) * .1, .08 + bHash(k, 3) * .05, (bHash(k, 2) - .5) * .25], [.18 + bHash(k, 4) * .1, .1 + bHash(k, 5) * .06, .15], k % 2 ? M.STONE : M.STONED, { group: 1 + k, rough: .04, paint: p => p[1] > .14 && bCell(p, 9) < .25 ? M.LEAF3 : undefined }); } },
+  "rocks": { desc: "a low spread of rocks on a rocky stretch", size: 1, build(m) { for (let k = 0; k < 3; k++) m.ell([(k - 1) * .3 + (sinHash(k) - .5) * .1, .08 + sinHash(k, 3) * .05, (sinHash(k, 2) - .5) * .25], [.18 + sinHash(k, 4) * .1, .1 + sinHash(k, 5) * .06, .15], k % 2 ? M.STONE : M.STONED, { group: 1 + k, rough: .04, paint: p => p[1] > .14 && bCell(p, 9) < .25 ? M.LEAF3 : undefined }); } },
 };
 
 // ---------------- the prints ----------------
