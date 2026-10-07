@@ -2018,5 +2018,23 @@
   "caption": "A slot for hand-drawn sprites, proved with a herd of deliberately silly blue test wolves among the rigged foxes.",
   "chapter": "builders",
   "pr": 400
+ },
+ {
+  "src": "media/builders/foxtrot-ley-curve.webp",
+  "caption": "The ley line before and after a minimum turning radius: Dubins curves of 25 m through every runestone, the hairpins gone.",
+  "chapter": "builders",
+  "pr": 381
+ },
+ {
+  "src": "media/builders/foxtrot-alarm-two.webp",
+  "caption": "The soundsystem alarm: two edge cues on screen at once, each pointing at a soundsystem under attack and showing how hard it's being hit.",
+  "chapter": "builders",
+  "pr": 361
+ },
+ {
+  "src": "media/builders/foxtrot-alarm-treetops.webp",
+  "caption": "A soundsystem alarm seen from the treetops.",
+  "chapter": "builders",
+  "pr": 361
  }
 ]
