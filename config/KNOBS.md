@@ -1580,6 +1580,21 @@ The sigils' neon spilling onto the world (overnight phase 3, the art pass): each
 | `sigilSpill.stackReach` | number | 0 to … |
 | `sigilSpill.stackHeight` | number | 0 to … |
 
+### `fireworks`
+
+The wave's celebration (Ed, 2026-10-07: when the wave reaches an area already cleared, its soundsystem already up, celebrate it: fireworks over that soundsystem, and its lasers on for good, its full party): the rules' waveCelebrate (game.ts) starts a show of shells[0] to shells[1] shells over `over` seconds, the last `finale` going up together at the end, each rising rise[0] to rise[1] seconds from the soundsystem's top to height[0] to height[1] metres, up to drift metres off it, and bursting radius[0] to radius[1] metres across: round peonies, rings, drooping gold willows and crackling glitter, in the party's neons (rules/fireworks.ts: its schedule, from the event alone, so the sound's pops land on the bursts; render/fireworks.ts: the picture, a fixed pool of sparks the GPU flies). From then on that soundsystem's lasers stay fully on, every beam (render/lasers.ts). on: false turns the show off.
+
+| knob | type | range |
+|---|---|---|
+| `fireworks.on` | boolean |  |
+| `fireworks.shells` | array of number |  |
+| `fireworks.over` | number | 0 to … |
+| `fireworks.rise` | array of number |  |
+| `fireworks.height` | array of number |  |
+| `fireworks.radius` | array of number |  |
+| `fireworks.drift` | number | 0 to … |
+| `fireworks.finale` | number | 0 to … |
+
 ### `combatLight`, `nightLight`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `lightBudget`
 
 Her light in the wild and in a fight (Ed, 2026-10-07: the wild forest darker for exploring; a darker forest makes a fight harder to read, so her light rises during one and settles after, too slowly to notice as an effect; render/combatLight.ts). Exploring an area the party hasn't reached, her light's reach and strength are times wildReach and wildGlow (the forest beyond her small pool darker); with a fight within range metres of her (any blow, wind-up or shot, her posse's or the wild's) in the last hold seconds, times fightReach and fightGlow instead (the fight lit, a little more than on party ground). Each eased: up over rise seconds, back over fall, shaped smooth. Drawing only.
