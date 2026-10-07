@@ -18,7 +18,7 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { arg, list, mean, median, openRules } from "./lib.mjs";
 
-const COLS = ["bot", "seed", "label", "end", "over", "wave", "firstLost", "lostWave", "firstKo", "koWave", "kos", "lost", "standing", "letters", "hits", "invites", "pickups", "evolved", "berries", "quests", "relics", "placed", "posse", "angry", "happy", "secs"];
+const COLS = ["bot", "seed", "label", "end", "over", "wave", "firstLost", "lostWave", "firstKo", "koWave", "kos", "lost", "standing", "letters", "hits", "invites", "pickups", "evolved", "berries", "quests", "relics", "placed", "posse", "angry", "happy", "areas", "woken", "wokenFar", "wokenRemote", "witchFar", "witchRemote", "secs"];
 const deep = (a, b) => { for (const [k, v] of Object.entries(b)) { if (v && typeof v === "object" && !Array.isArray(v) && a[k] && typeof a[k] === "object" && !Array.isArray(a[k])) deep(a[k], v); else a[k] = v; } return a; };
 
 // ---- a worker: runs its jobs and sends each row back ----
@@ -34,13 +34,15 @@ if (process.argv.includes("--worker")) {
   for (const [path, v] of sets) { let o = tun; for (const k of path.slice(0, -1)) o = o[k] ??= {}; o[path[path.length - 1]] = v; }
   // withTuning merges one level deep: hand it whole sections, the overlay merged into each.
   const over = Object.fromEntries(Object.entries(tun).map(([k, v]) => [k, v && typeof v === "object" && !Array.isArray(v) ? deep(structuredClone(TUNING[k] ?? {}), v) : v]));
-  const optionsOf = bot => { const [kind, strat] = bot.split(":"); return kind === "top" ? ["skilled", BOT_GAME.skilled] : [kind, strat ? STRATEGIES[strat] : {}]; };
+  const optionsOf = bot => { const [kind, strat] = bot.split(":"); return kind === "top" ? ["skilled", BOT_GAME.skilled] : kind === "champion" && !strat ? ["champion", BOT_GAME.champion ?? {}] : [kind, strat ? STRATEGIES[strat] : {}]; };
 
   function run(bot, seed) {
     const T0 = Date.now(), t = withTuning(over), g = newGame(seed, t), w = g.witches[0], dt = 1 / 60;
     g.clock.paused = false;
     w.body = { ...w.body, seated: false };
     const [kind, opts] = optionsOf(bot), brain = newBot(kind, opts);
+    const home = g.map.dancefloor, M = g.map, R = Math.max(...M.cells.map(([cx, cy]) => Math.hypot(M.siteOf(cx, cy).x - home.x, M.siteOf(cx, cy).z - home.z)));
+    let witchFar = 0;
     let firstKo = null, koWave = null, kos = 0, wasKo = false, firstLost = null, lostWave = null, hits = 0, placed = 0;
     const invited = new Set(); // (made happy by her 💌s; tally.invites counts only talk and pickups)
     for (let step = 0; step * dt < time; step++) {
@@ -52,14 +54,18 @@ if (process.argv.includes("--worker")) {
       for (const e of w.invites.events) if (e.kind === "hit") hits++; else if (e.kind === "happy") invited.add(e.id);
       for (const e of w.leash.events) if (e.kind === "placed") placed++;
       if (firstLost === null && step % 30 === 0 && [...g.combat.sounds.values()].some(h => h.hp <= 0)) { firstLost = now; lostWave = g.party.wave; }
+      if (step % 30 === 0) witchFar = Math.max(witchFar, Math.hypot(w.body.x - home.x, w.body.z - home.z));
       if (g.partyOver) break;
     }
+    // How far the party got: the areas woken (home aside), the farthest of them from home (m, and as remoteness: 0 home, 1 the playable edge).
+    const woken = [...g.party.areas.values()].filter(a => a.wave > 0), far = woken.map(a => { const s = M.siteOf(a.cell[0], a.cell[1]); return Math.hypot(s.x - home.x, s.z - home.z); });
     const L = g.creatures.filter(c => c.boss), lost = [...g.combat.sounds.values()].filter(h => h.hp <= 0).length;
     return {
       bot, seed, end: g.clock.time, over: g.partyOver?.at ?? null, wave: g.party.wave, firstLost, lostWave, firstKo, koWave, kos, lost,
       standing: g.combat.sounds.size - lost, letters: w.invites.next, hits, invites: invited.size, pickups: g.tally.invites, evolved: g.tally.evolved, berries: g.tally.berries,
       quests: brain.done.quests.length, relics: brain.done.relics.length, placed, posse: w.leash.stack.length + w.leash.placed.length,
-      angry: L.filter(c => c.legendState === "angry").length, happy: L.filter(c => c.legendState === "happy").length, secs: (Date.now() - T0) / 1000,
+      angry: L.filter(c => c.legendState === "angry").length, happy: L.filter(c => c.legendState === "happy").length, areas: M.cells.length, woken: woken.length, wokenFar: Math.max(0, ...far), wokenRemote: Math.max(0, ...woken.map(a => M.remoteness(a.cell[0], a.cell[1]))),
+      witchFar, witchRemote: witchFar / R, secs: (Date.now() - T0) / 1000,
     };
   }
   process.on("message", async m => {
@@ -87,6 +93,15 @@ if (process.argv.includes("--worker")) {
       const md = k => { const xs = rs.map(r => r[k]); return `${+median(xs).toFixed(1)}`; };
       const ov = rs.filter(r => r.over !== null);
       o(`| ${b} | ${md("wave")} [${q(rs.map(r => r.wave), 0.1)}–${q(rs.map(r => r.wave), 0.9)}] | ${ov.length}/${n}${ov.length ? ` (median ${m(median(ov.map(r => r.over)))} min)` : ""} | ${when("firstLost", "lostWave")} | ${when("firstKo", "koWave")} | ${md("kos")} | ${md("letters")} | ${md("hits")} | ${md("invites")} | ${md("evolved")} | ${md("berries")} | ${+mean(rs.map(r => r.quests)).toFixed(1)} | ${+mean(rs.map(r => r.relics)).toFixed(1)} | ${md("placed")} | ${md("posse")} | ${+mean(rs.map(r => r.angry)).toFixed(1)} |`);
+    }
+    // How far the party got (Ed, 2026-10-07: a smaller map?): waves, minutes, areas woken, the farthest woken area and her farthest flight (remoteness: 0 home, 1 the playable edge).
+    const pp = (k, f = x => x) => { const xs = rs => rs.map(r => r[k]).filter(x => x !== null && x !== undefined); return b => { const v = xs(rows.filter(r => r.bot === b)); return v.length ? `${f(median(v))} / ${f(q(v, 0.9))}` : "–"; }; };
+    if (rows[0]?.woken !== undefined) {
+      o(`\n**How far the party got** (median / 90th percentile; ${rows[0].areas} playable areas on the first seed's map)\n`);
+      o("| bot | waves | game min | areas woken | farthest woken area (m) | its remoteness | her farthest (m) | its remoteness |");
+      o("|---|---|---|---|---|---|---|---|");
+      const r2 = x => +x.toFixed(2), r0 = x => Math.round(x);
+      for (const b of BOTS) o(`| ${b} | ${pp("wave")(b)} | ${pp("end", x => +(x / 60).toFixed(1))(b)} | ${pp("woken")(b)} | ${pp("wokenFar", r0)(b)} | ${pp("wokenRemote", r2)(b)} | ${pp("witchFar", r0)(b)} | ${pp("witchRemote", r2)(b)} |`);
     }
     // The curve: as each wave lands, the share of runs whose party's still on (a run cut off by --time before that wave counts as unknown).
     const W = Math.max(...rows.map(r => r.wave));
