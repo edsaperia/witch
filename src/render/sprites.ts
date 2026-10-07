@@ -9,6 +9,11 @@ import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
+/** One art pixel's size in the world (metres): the sprites' scale at the tuning's pixel size. */
+export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: number }): number {
+  return 1 / (t.artPixelsPerMetre * (2 / t.pixelSize));
+}
+
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
   /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */

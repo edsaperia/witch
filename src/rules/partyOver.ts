@@ -127,5 +127,3 @@ export function endParty(g: Game): void {
   startPartyOver(g, g.clock.time);
 }
 
-/** Whether it's the afterparty (for the view and the music; and the rules: nothing fights, the waves have stopped). */
-export const partyIsOver = (g: Pick<Game, "partyOver">): boolean => !!g.partyOver;
