@@ -46,7 +46,8 @@ if (SPREAD) {
 }
 const G0 = TUNING.population.growth, growth = { ...G0, ...(WEIGHTS ? { weights: list(WEIGHTS) } : {}), ...(PER_WAVE ? { perWave: +PER_WAVE } : {}) };
 const start = START ? (([babies, young, adults]) => ({ babies, young, adults }))(list(START)) : TUNING.population.start;
-const tuning = { ...TUNING, ...(AREAS ? { mapAreas: +AREAS } : {}), ...(AREA_SCALE ? { areaScale: +AREA_SCALE } : {}), population: { ...TUNING.population, start, growth }, combat: { ...TUNING.combat, ...(HEALTH ? { soundsystemHealth: +HEALTH } : {}), ...(HOME ? { homeHealth: +HOME } : {}) } };
+const tuning = { ...TUNING, ...(AREAS ? { mapAreas: +AREAS, map: { ...TUNING.map, radius: +AREAS / Math.sqrt(Math.PI) } } : {}), // (the circular map, #281: N areas across sizes its radius, N / √π areas)
+  ...(AREA_SCALE ? { areaScale: +AREA_SCALE } : {}), population: { ...TUNING.population, start, growth }, combat: { ...TUNING.combat, ...(HEALTH ? { soundsystemHealth: +HEALTH } : {}), ...(HOME ? { homeHealth: +HOME } : {}) } };
 
 const mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
 const f0 = x => (x === null || x === undefined || Number.isNaN(x) ? "–" : Math.round(x).toString());
@@ -71,7 +72,7 @@ const VARIANTS = HAPPY.length ? [
 const LEGENDS = !flag("no-area-legends"), runAll = o => maps.map(m => simulate(m, { areaLegends: LEGENDS, ...o }));
 const lastTime = r => (r.lost ? r.lost.time : r.waves[r.waves.length - 1]?.time ?? 0);
 
-say(`Balance simulator: ${SEEDS} seeds (${seeds[0]}, ${seeds[1]}, …), a map of ${tuning.mapAreas} × ${tuning.mapAreas} areas about ${tuning.areaSize * tuning.areaScale} m across; ${mixNote}; every area starting with ${JSON.stringify(tuning.population.start)} and growing ${growth.on ? `${growth.perWave} a wave while wild (baby, young, adult weights ${growth.weights.join(" : ")})` : "not at all"}, soundsystems ${tuning.combat.soundsystemHealth} hp, home ${tuning.combat.homeHealth} hp.`);
+say(`Balance simulator: ${SEEDS} seeds (${seeds[0]}, ${seeds[1]}, …), a ${tuning.map?.shape === "circle" ? `circular map ${tuning.map.radius.toFixed(1)} areas in radius` : `map of ${tuning.mapAreas} × ${tuning.mapAreas} areas`}, each about ${tuning.areaSize * tuning.areaScale} m across; ${mixNote}; every area starting with ${JSON.stringify(tuning.population.start)} and growing ${growth.on ? `${growth.perWave} a wave while wild (baby, young, adult weights ${growth.weights.join(" : ")})` : "not at all"}, soundsystems ${tuning.combat.soundsystemHealth} hp, home ${tuning.combat.homeHealth} hp.`);
 say(`${LEGENDS ? "Every woken area's own legend (Ed, 2026-10-04: 480 hp, 12 dps, F 76) besieges its own soundsystem and never marches on; no other legends" : "The map's wild legends as today (--no-area-legends)"}. Evolution stops at adult (Ed, 2026-10-04), so the player's F is adults' worth at most: 29 each, so g F a minute is about g / 29 adults a minute.\n`);
 say(`Player model (a guess): their party's F grows by g a minute from the wave they start; whenever free they fight the biggest siege they can beat (square law: they keep √(theirs² − its²)), then are busy ${FIGHT} s. Director (a guess): reinforcements (adults) for the next wave's areas worth (${DBASE} + ${DPER} × ${BY_WAVE ? "wave" : "minute"}${DPOW !== 1 ? `^${DPOW}` : ""}) F ${BY_WAVE ? "a wave" : "a minute (by time, the same whatever the gap)"} × max(0, 1 + α(player F / expected − 1)), expected ${EXPECTED} F a minute.\n`);
 
