@@ -14,6 +14,7 @@ import { SPRITE_UNIFORMS } from "../sprites";
 import { inView } from "./culling";
 import { DJ_DEPTH, nearerCamera } from "./home";
 import { beatAt } from "../../rules/beat";
+import { djRoutineAt } from "../../rules/djSet";
 import { HAT_BESIDE } from "../view";
 
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
@@ -84,7 +85,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       // without the spell, sitting.
       const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST, Dj = v.assets.witchDj;
       if (sp === undefined || !Dj.full.length) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
-      else { const j = v.assets.djFrame(beatAt(g.beat, time), casting); wf = Dj.full[j]; djUpper = Dj.upper[j]; }
+      else {
+        // Her set's routine (rules/djSet.ts: the needle drop after the cast, the scratching after a respawn) over her ordinary set.
+        const R = djRoutineAt(g, time);
+        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : v.assets.djFrame(beatAt(g.beat, time), casting);
+        wf = Dj.full[j]; djUpper = Dj.upper[j];
+      }
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
     }
   }
