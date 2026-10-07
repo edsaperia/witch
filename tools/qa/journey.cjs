@@ -94,7 +94,7 @@ const pct = (a, p) => { if (!a.length) return 0; const s = [...a].sort((x, y) =>
     ms = [];
     for (let i = 0; i < 40 && !(await state()).speakersOn; i++) ms = ms.concat(await run(30, i % 2 ? { moveX: -0.2 } : { moveX: 0.2 }));
     await moment("first speaker", "04-first-speaker.png", ms, s => s.speakersOn >= 1);
-    await run(1200, {}, 1 / 10, false); // two minutes on
+    for (let i = 0; i < 300 && (await state()).speakersOn < 6; i++) await run(30, {}, 1 / 30, false); // on to mid-boot (half the ring turned), however long the boot
     await settle();
     ms = await run(120, i => ({ moveX: Math.cos(i / 30), moveZ: Math.sin(i / 30) }));
     await moment("the boot", "05-boot.png", ms, s => s.speakersOn > 1);
