@@ -22,7 +22,7 @@ export class DolphinView {
   update(g: Game, b: Beach, time: number): void {
     const leaps = dolphinLeaps(g, b, time);
     if (!leaps.length) { this.batch?.set([]); return; }
-    const A = this.ensure(), U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, sea = (g.tuning.beach as { sea?: number } | undefined)?.sea ?? 0;
+    const A = this.ensure(), U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, sea = 0; // (heights over the ground: out there it's the sea's surface)
     this.list.length = 0;
     for (const L of leaps) this.leap(A, L, (time - L.start) / L.dur, sea, U, R);
     this.batch!.set(this.list);
@@ -48,7 +48,7 @@ export class DolphinView {
     for (let frame = 0; frame < D.splashFrames; frame++) sprites.push(Art.bake((Art.dolphinSplash as unknown as (s: never, o: object) => never)(st, { frame }), col, st, "none") as Baked);
     const atlas = packAtlas(sprites, 512);
     this.art = { atlas, leap: 0, splash: D.frames, frames: D.frames, splashes: D.splashFrames, origins };
-    this.batch = new SpriteBatch(atlas, this.mpp, { absolute: true });
+    this.batch = new SpriteBatch(atlas, this.mpp);
     this.scene.add(...this.batch.meshes);
     return this.art;
   }
