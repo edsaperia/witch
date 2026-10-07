@@ -5663,6 +5663,24 @@
             "floor"
           ],
           "additionalProperties": false
+        },
+        "beach": {
+          "type": "object",
+          "properties": {
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "fade",
+            "quiet"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -5678,7 +5696,8 @@
         "clear",
         "distort",
         "src",
-        "over"
+        "over",
+        "beach"
       ],
       "additionalProperties": false
     },

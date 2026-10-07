@@ -1188,6 +1188,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.src` | string |  |
 | `music.over.stop` | number | 0 to … |
 | `music.over.floor` | number | 0 to … |
+| `music.beach.fade` | number | 0 to … |
+| `music.beach.quiet` | number | 0 to … |
 
 ## `fight`
 
