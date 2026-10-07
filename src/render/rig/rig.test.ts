@@ -67,6 +67,15 @@ describe("the live rig (#79 stage 5)", () => {
     expect(Math.abs(r.heading)).toBeLessThan(0.05);
     expect(r.speed).toBeGreaterThan(2.5);
   });
+  it("turns to look at her while it watches (rules/wildWatch.ts), standing or backing off, and keeps its face to her", () => {
+    const r = new RigBody();
+    r.update(0, 0, 0, 1, 0);
+    for (let i = 0; i < 60; i++) r.update(0, 0, 1 / 60, undefined, undefined, { x: 0, z: 10 });
+    expect(r.heading).toBeCloseTo(Math.PI / 2, 1);
+    let z = 0;
+    for (let i = 0; i < 30; i++) { z -= 0.03; r.update(0, z, 1 / 60, undefined, undefined, { x: 0, z: 10 }); }
+    expect(r.heading, "backing away, not turning tail").toBeCloseTo(Math.PI / 2, 1);
+  });
   it("lies a sleeping legend down: its body on the ground, its head down, its feet where they were", () => {
     const up = lay(0), down = lay(1);
     const y = (items: { f: number; y: number }[], lo: number) => items.find(i => i.f >= lo && i.f < lo + 5)!.y;
