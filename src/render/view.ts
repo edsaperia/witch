@@ -568,6 +568,8 @@ export class View {
   edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
   /** The world's campfires showing this frame, for the party objects to draw. */
   worldFires: { x: number; z: number; scale: number; flip: boolean }[] = [];
+  /** Where her fallen hat was on screen as the knockout's iris closed on it (render/koIris.ts), for the record to stay put across the cut. */
+  irisHat: [number, number] | null = null;
   /** Each light source's area (a campfire's party), worked out once. */
   sourceCell = new WeakMap<object, string>();
   /** ?bare: hide everything but the ground, the witch, soundsystems, the dancefloor and its

@@ -107,13 +107,13 @@ export function soundsystemSprites(style: Style, mk: MakeCanvas): Baked[] {
 
 /** The treehouse's anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, the opening shot's camera, its lights;
  *  and the DJ table's frames (cropped to the box whose top-left is foreBox in the base's pixels). */
-export interface TreehouseArt { base: { x: number; y: number }; seat: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[]; foreFrames: number; foreBox: { x: number; y: number };
+export interface TreehouseArt { base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[]; foreFrames: number; foreBox: { x: number; y: number };
   /** The knockdown candles: their first frame (white, then red from candleRed on; level × flicker), levels, flickers, and their row along the desk's front (its ends, base pixels). */
   candle0: number; candleRed: number; candleLevels: number; candleFlicker: number; candleRow: { x: number; y: number }[] }
 
 /** The witch's treehouse: frames 0 its base, 1 its top (treetop mode), 2 on the studio's DJ table alone, turning (drawn over her). */
 export function treehouseSprites(style: Style, mk: MakeCanvas): { sprites: Baked[]; treehouse: TreehouseArt } {
-  const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; foreFrames?: unknown[]; foreBox?: { x: number; y: number }; candles?: { x: number; y: number }[]; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; camera?: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
+  const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; foreFrames?: unknown[]; foreBox?: { x: number; y: number }; candles?: { x: number; y: number }[]; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera?: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
   const thc = Art.treehouseColours(style);
   // Its model draws a hard dark shadow ellipse on the ground round the trunk's foot: drop it (a
   // soft contact shadow goes there instead), as Ed asked for set pieces.
