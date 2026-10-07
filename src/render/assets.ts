@@ -123,10 +123,16 @@ export class AssetLibrary {
   private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
+  /** Waiting jobs already moved to the front of the queue by an urgent ask. */
+  private promoted = new Set<string>();
   private ask(job: ArtJob, urgent = false): void {
     const k = this.key(job);
     if (this.inFlight.has(k)) {
-      const i = urgent ? this.queue.findIndex(q => this.key(q) === k) : -1;
+      // (an urgent job asked for again while waiting is moved to the front once: asked for every creature every frame, searching
+      // the queue each time cost creatures x queue while new art was baking)
+      if (!urgent || this.promoted.has(k)) return;
+      this.promoted.add(k);
+      const i = this.queue.findIndex(q => this.key(q) === k);
       if (i > 0) this.queue.unshift(...this.queue.splice(i, 1));
       return;
     }
@@ -202,7 +208,7 @@ export class AssetLibrary {
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
-    this.inFlight.delete(this.key(r.job));
+    this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job));
     this.version++;
   }
 
