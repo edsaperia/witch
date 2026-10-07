@@ -73,6 +73,9 @@ export interface FloorState {
 }
 
 export function newFloor(): FloorState {
+  // The pattern library made now, as the game loads (overnight phase 2): made lazily, it fell inside the fixed step the
+  // home ring boots on, the party's start, as a 0.4 s stall (docs/perf/BASELINE-2026-10-07.md). The same patterns either way.
+  floorPatterns();
   return { on: null, pattern: 0, from: 0, next: null, transition: null, played: 0, ripples: [], trail: [], events: [], last: null };
 }
 

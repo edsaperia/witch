@@ -65,7 +65,9 @@ function expand(body, page) {
       if (!list.length && !("rest" in kv)) fail(`${page}: <!--gallery ${args}--> matches no media`);
       list.forEach(m => shown.add(m.src));
       return list.length ? `<div class="gallery">${list.map(figure).join("")}</div>` : "";
-    });
+    })
+    // A "More pictures" heading with nothing left to show goes too.
+    .replace(/<h2>More pictures<\/h2>\s*(?=<h2|$)/g, "");
 }
 
 const BUILDER_KEYS = { builder: "string", phase: "string", slice: "string", prs: "array", built: "array", learned: "array", previews: "array" };

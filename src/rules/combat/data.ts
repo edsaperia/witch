@@ -164,6 +164,10 @@ export function attackOf(species: string, level: Level, data: CombatData = COMBA
 export const SCALED = new Map<string, Attack>();
 export function scaled(name: string, A: Attack): Attack {
   if (!A) return A;
+  // (the last scaling of each attack, by name, kept while the fight's scale and speed stay: no key string a call; phase
+  // 2's GC audit. SCALED still holds every scaling made, as before.)
+  const last = LAST_SCALED.get(name);
+  if (last && last.A === A && last.scale === FIGHT.scale && last.speed === FIGHT.speed) return last.out;
   const key = `${name}|${FIGHT.scale}|${FIGHT.speed}`;
   let out = SCALED.get(key);
   if (!out) {
@@ -172,8 +176,10 @@ export function scaled(name: string, A: Attack): Attack {
     if (SCALED.size > 2000) SCALED.clear();
     SCALED.set(key, out);
   }
+  LAST_SCALED.set(name, { A, scale: FIGHT.scale, speed: FIGHT.speed, out });
   return out;
 }
+const LAST_SCALED = new Map<string, { A: Attack; scale: number; speed: number; out: Attack }>();
 /** An attack by its name, at the fight's scale (for the view, and data lookups). */
 export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => scaled(name, data.attacks[name]);
 

@@ -1,5 +1,6 @@
 // The creatures and berries (from render/view.ts, issue #122): each creature's look, dance, glow and
 // shadow every frame, and the berries growing back and nibbled.
+import { characterOf, quirkAt, bounceAt } from "../character";
 import * as THREE from "three";
 import type { Tuning } from "../../rules/tuning";
 import type { CreatureArt } from "../assets";
@@ -75,7 +76,8 @@ export function drawCreatures(v: View, time = 0): void {
   let n = 0;
   v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
   if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning);
-  for (const c of g.creatures) {
+  for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
+    const c = g.creatures[i];
     if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
     if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
     // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
@@ -168,7 +170,12 @@ export function drawCreatures(v: View, time = 0): void {
     if (form && st) glow = -2; else if (lying > 0 && st) glow = -2 - W.moss * lying; // (a legend's moss; a napping creature is itself)
     // Restless in its sleep (#87, a nightmare): it tosses in bursts, and turns over when it's bad (on the rig, its legs paddle and its head jerks).
     const toss = sleeping ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy * breathY, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
+    // Its character (render/character.ts, config/character.json): the posture it holds, its idle quirk while it stands about (not
+    // fighting, dancing or asleep), and a happy creature's bounce now and then (a party or happy one not dancing).
+    const ch = characterOf(c.species), standing = !c.moving && !c.charge && !c.leap && lying <= 0 && !party2 && !feel.crouch && !feel.lunging;
+    const quirkK = standing ? quirkAt(c.id, ch, time) : -1;
+    if (standing && (look === "leashed" || look === "happy") && !c.boss) hop += bounceAt(c.id, time);
+    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy * breathY, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK }))) // the rig draws it, if it can
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
       const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1);
       l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k, y: dance + hop + sunk, z: c.z + R.z * k, frame, flip, fresh, glow, scale, sx: feel.sx, sy: feel.sy * breathY });
