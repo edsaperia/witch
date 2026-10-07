@@ -144,8 +144,9 @@ export class Creator {
   private held = new Set<string>();
   private walker: Walker | null = null;
   private lastT = 0;
-  /** A scratch canvas to hide her behind nearer things. */
-  private scratch = document.createElement("canvas");
+  /** Her cut-outs (behind): her pool of light and her frame, hidden behind nearer things, each kept until what it was cut
+   *  from changes (the bedroom's first paint, overnight: cut each frame, it cost a second there). */
+  private cuts = new Map<string, { canvas: HTMLCanvasElement; key: unknown[] }>();
   /** The room's size (`?room=`: its floor across, in its units; art/bedroom.js ROOM.S otherwise). */
   private roomS = Number(new URLSearchParams(location.search).get("room")) || undefined;
   private panel = document.createElement("div");
@@ -161,6 +162,8 @@ export class Creator {
   private idle = new Map<string, HTMLCanvasElement[]>();
   private idleQueue: string[] = [];
   private idleAt = 0;
+  /** Frames the room has drawn (her idle poses wait for the first few: the room's first paint first). */
+  private framesDrawn = 0;
   private bakeFrame: ((o: object) => HTMLCanvasElement) | null = null;
   /** What she's doing now, if not just standing: an idle moment, or showing off a change. */
   private act: { pose: string; start: number; fps: number; loops: number; flip: boolean } | null = null;
@@ -548,7 +551,7 @@ export class Creator {
     fairyProgress(x, room, pr.ready ? 1 : Math.min(.97, built), this.readyAt ? t - this.readyAt : -1);
     x.drawImage(room.banner, 0, 0);
     const queued = this.idleQueue.length;
-    this.bakeIdle(t);
+    if (++this.framesDrawn > PAINT_FIRST) this.bakeIdle(t); // (her idle poses only once the room is up: its first paint first)
     if (this.idleQueue.length !== queued) this.afterDraw = false; // (nor a pose's bake)
     // her: in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing, walking about
     // the room, or hovering on her broom, bobbing; hidden behind whatever in the room stands nearer the view
@@ -559,19 +562,23 @@ export class Creator {
     if (!fr) return;
     const feet = [w.x, 0, w.z], [sx, sy] = room.walk.project(feet), feetT = room.walk.depthOf(feet), bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
     const pw = this.frames.stand[0]?.width ?? fr.width; // (her pool as wide as she stands, whatever she's doing)
-    this.behind(x, room, Math.round(sx - pw * 1.2), Math.round(sy) - Math.ceil(pw * .6), Math.ceil(pw * 2.4), Math.ceil(pw * 1.2), sy, feetT, true, c => pool(c, pw * 1.2, pw * .6, pw), "lighter");
+    this.behind("pool", [pw], x, room, Math.round(sx - pw * 1.2), Math.round(sy) - Math.ceil(pw * .6), Math.ceil(pw * 2.4), Math.ceil(pw * 1.2), sy, feetT, true, c => pool(c, pw * 1.2, pw * .6, pw), "lighter");
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
     // the walking keys, on the floor in front of where she starts (under her, should she walk over them)
     const st0 = room.a.stand; this.keyHint.draw(x, Math.round(st0[0] - KeyHint.W / 2), Math.round(st0[1] + 6), this.held);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
-    this.behind(x, room, fx, fy, fr.width, fr.height, sy, feetT, false, c => { if (now.flip) { c.translate(fr.width, 0); c.scale(-1, 1); } c.drawImage(fr, 0, 0); });
+    this.behind("her", [fr, now.flip], x, room, fx, fy, fr.width, fr.height, sy, feetT, false, c => { if (now.flip) { c.translate(fr.width, 0); c.scale(-1, 1); } c.drawImage(fr, 0, 0); });
   };
 
   /** Draws something of hers (by `paint`, into a w × h box at ox, oy on the room) with every pixel the room has nearer the view
    *  taken out: she's an upright card at her feet (feetY on the room's picture, feetT their depth), each row of her that much
-   *  higher and nearer; `flat`, it lies on the floor at her feet (her pool of light). */
-  private behind(x: CanvasRenderingContext2D, room: Room, ox: number, oy: number, w: number, h: number, feetY: number, feetT: number, flat: boolean, paint: (c: CanvasRenderingContext2D) => void, op: GlobalCompositeOperation = "source-over"): void {
-    const c = this.scratch;
+   *  higher and nearer; `flat`, it lies on the floor at her feet (her pool of light). Cut once and kept (as `slot`) while what
+   *  it's painted from (`what`), the room and the box stay the same. */
+  private behind(slot: string, what: unknown[], x: CanvasRenderingContext2D, room: Room, ox: number, oy: number, w: number, h: number, feetY: number, feetT: number, flat: boolean, paint: (c: CanvasRenderingContext2D) => void, op: GlobalCompositeOperation = "source-over"): void {
+    const key = [...what, room, ox, oy, w, h, feetY, feetT, flat], cut = this.cuts.get(slot);
+    if (cut && cut.key.length === key.length && cut.key.every((v, i) => v === key[i])) { x.save(); x.globalCompositeOperation = op; x.drawImage(cut.canvas, 0, 0, w, h, ox, oy, w, h); x.restore(); return; }
+    const c = cut?.canvas ?? document.createElement("canvas");
+    this.cuts.set(slot, { canvas: c, key });
     if (c.width < w || c.height < h) { c.width = Math.max(c.width, w); c.height = Math.max(c.height, h); }
     const k = c.getContext("2d", { willReadFrequently: true })!;
     k.setTransform(1, 0, 0, 1, 0, 0); k.clearRect(0, 0, c.width, c.height); k.imageSmoothingEnabled = false;
@@ -638,7 +645,9 @@ const PANEL = 196, PANEL_MIN = 184, MARGIN = 8, GAP = 10;
 
 /** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready
  *  (and this seldom while she walks). */
-const SLOW_FRAME = 120, SLOW_DRAW = 600, SLOW_WALK = 120;
+const SLOW_FRAME = 50, SLOW_DRAW = 600, SLOW_WALK = 120;
+/** Frames the room draws before it bakes her idle poses (one a frame): the room shows first. */
+const PAINT_FIRST = 3;
 /** The keys that walk her about the room (the game's own). */
 const WALK_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 /** How much nearer (in the room's units along the view) a pixel of the room must be to hide her: the floor's clutter, a rug or
