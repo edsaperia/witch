@@ -19,7 +19,7 @@ import { powerUp } from "./power";
 import { Spell } from "./spell";
 import { rewind, sadTrumpet } from "./knockdown";
 import { Sparkler } from "./sparkler";
-import { scratch } from "./deck";
+import { chirp, needle, scratch, spinBack } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
 import { SfxKit, type SfxTuning } from "./sfxKit";
@@ -125,6 +125,14 @@ export class Sfx {
   private trumpet: { gain: GainNode; lastAt: number } | null = null;
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
+  /** Her routine's strokes (art/witch.js DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
+  deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype", pan = 0, near = 1): void {
+    if (stroke === "hype") this.babble.whoop(pan, near);
+    else if (stroke === "lift" || stroke === "drop") needle(this.k, stroke, pan, near);
+    else if (stroke === "chirp") chirp(this.k, pan, near);
+    else if (stroke === "spin") spinBack(this.k, pan, near);
+    else scratch(this.k, stroke === "f", pan, near);
+  }
   whoop(pan = 0, near = 1): void { this.babble.whoop(pan, near); }
   /** The party spell's scroll (ui/spellScroll.ts): "hum" its level every frame, "rustle" the ripple stirring, "crackle" the
    *  grow, "burst" the burst. */

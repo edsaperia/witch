@@ -4708,6 +4708,10 @@
             "hype": {
               "type": "number",
               "minimum": 0
+            },
+            "needle": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -4715,7 +4719,8 @@
             "scratch",
             "hiss",
             "stroke",
-            "hype"
+            "hype",
+            "needle"
           ],
           "additionalProperties": false
         },
@@ -5185,6 +5190,10 @@
           "type": "number",
           "minimum": 0
         },
+        "dropLayers": {
+          "type": "number",
+          "minimum": 0
+        },
         "nearDist": {
           "type": "number",
           "minimum": 0
@@ -5311,6 +5320,7 @@
       "required": [
         "on",
         "volume",
+        "dropLayers",
         "nearDist",
         "farDist",
         "floor",
