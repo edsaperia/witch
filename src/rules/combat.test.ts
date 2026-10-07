@@ -8,6 +8,7 @@ import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
 import { hasRune } from "./creatureStates";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, c, STEP); };
@@ -584,7 +585,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
 
 describe("sieges far from her (found by the overnight playthrough)", () => {
   it("march from the wave on, wherever she is: their besiegers are stepped, not only once she comes near", () => {
-    const g = newGame(7, TUNING);
+    const g = newGame(7, PEOPLED);
     g.clock.paused = false;
     const B = g.map.bounds;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: B.minX + 5, z: B.minZ + 5 }; // (far off, in a corner)

@@ -3,7 +3,8 @@ import { simulate } from "./balance";
 import { generateMap } from "./map";
 import { lanchester, levelValue, powerReport } from "./power";
 import { newGame } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 describe("fighting value (rules/power.ts)", () => {
   it("is √(hp × dps) by level: babies 0, young 11.6, adults 40, legends 76 (the level gap, 2026-10-07)", () => {
@@ -29,7 +30,7 @@ describe("fighting value (rules/power.ts)", () => {
 });
 
 describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () => {
-  const map = generateMap(1000, TUNING);
+  const map = generateMap(1000, PEOPLED);
 
   it("runs a quick idle run: sieges grow wave by wave, soundsystems fall, the same every time", () => {
     const t0 = Date.now(), a = simulate(map, { interval: 60, maxWaves: 12 });

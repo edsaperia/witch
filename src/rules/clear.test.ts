@@ -136,8 +136,8 @@ describe("clearing an area transforms its runestone (Ed, 2026-10-07)", () => {
     expect(holders.length).toBeGreaterThan(0);
     expect(holders.some(c => c.boss || c.circle)).toBe(false);
     empty(g, key);
-    const last = own(g, key).find(c => c.level > 0)!;
-    last.gone = false; // one left
+    const last = own(g, key).find(c => !c.boss && !c.circle)!;
+    last.gone = false; last.state = undefined; // one left, wild (a baby, where the route's curve gives the area no more)
     expect(clearedAreas(g.party, g.map, g.creatures).map(cellKey)).not.toContain(key);
     last.leashed = true; // invited and leashed
     expect(clearedAreas(g.party, g.map, g.creatures).map(cellKey)).toContain(key);
