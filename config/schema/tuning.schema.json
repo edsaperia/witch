@@ -1756,6 +1756,10 @@
           "type": "number",
           "minimum": 0
         },
+        "dim": {
+          "type": "number",
+          "minimum": 0
+        },
         "respawn": {
           "type": "object",
           "properties": {
@@ -1798,6 +1802,7 @@
         "legendsLoyal",
         "dropHat",
         "hatFloat",
+        "dim",
         "respawn"
       ],
       "additionalProperties": false
