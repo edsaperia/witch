@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music &amp; Sound · The Making of Coven Rush</title>
+<meta name="description" content="A soundtrack synthesised live from a seed, sound effects tuned in the music's key, and the hunt for why the music kept cutting out.">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top"><a class="brand" href="./">The Making of Coven Rush</a><nav><a href="./">Start</a><a href="timeline.html">1. Timeline</a><a href="art.html">2. Art</a><a href="music.html" aria-current="page">3. Music</a><a href="balance.html">4. Balance</a><a href="systems.html">5. Systems</a><a href="architecture.html">6. Code</a><a href="how.html">7. How</a><a href="builders.html">8. Builders</a></nav></header>
+<main>
+<p class="kicker">Chapter 3</p><h1>Music &amp; Sound</h1><p class="lede">A soundtrack synthesised live from a seed, sound effects tuned in the music's key, and the hunt for why the music kept cutting out.</p>
+<p>Coven Rush has no sound files. Every kick, choir, frog and snore is synthesised in the browser as you play, and every tune is written from the run's seed. The music is data, like the art's style file. The first music arrived on the afternoon of 4 October, and builder sessions kept reworking it until the last night. Along the way they met one of the most persistent problems of the project, one Ed kept reporting from his playtests: the music cutting out.</p>
+
+<h2>A score made of data</h2>
+
+<p>The first generative engine landed on 4 October <a class="pr" href="https://github.com/edsaperia/witch/pull/45">#45</a>. It replaced a placeholder loop with three layers. The first two are pure rules code with no audio in them, so they can be tested like everything else in <code>src/rules/</code>:</p>
+
+<ul>
+<li><b>The conductor</b> (<code>src/rules/musicPlan.ts</code>) picks a section for each 4-bar block from the waves. Sections only ever change on those block lines, so every change lands on a phrase. The home speakers' boot plays the <b>intro</b>. Each wave has a step in the <b>arc</b>: the sections it plays when it arrives, then the ones it loops. Before the next wave comes a <b>build</b> (a riser, a filter sweep, a snare roll) that ends as the wave lands.</li>
+<li><b>The score</b> (<code>src/rules/musicScore.ts</code>) turns a section into notes: drum and bass patterns, chord progressions, arpeggios, and melodies seeded from the run's seed, so every run has its own tunes.</li>
+<li><b>The engine</b> (<code>src/platform/audio/musicEngine.ts</code>) schedules those notes a fraction of a second ahead on the audio clock, locked to the game's beat. It has its own voices (kick, snare, the 808's six square-wave hat tones, synths with up to seven detuned unison voices, a sung voice built from vowel formants) and shared effects: a generated reverb, a dotted delay, the kick's sidechain pump, a low-pass filter and a limiter.</li>
+</ul>
+
+<p>Everything a composer would touch lives in <code>config/music-style.json</code>: the tempo, swing, key (A minor, aeolian), six scales, six progressions, synth patches, parts, sections and the arc. A new style is mostly new data. By the end the file held 40 patches, 38 parts and 29 sections.</p>
+
+<div class="diagram"><svg viewBox="0 0 820 370" role="img" aria-label="How the music is made: the game state becomes a music cue; the conductor picks a section for each four-bar block from the style file; the score turns it into notes, seeded by the run; the engine synthesises them on the audio clock, a fraction of a second ahead; the proximity mix muffles and crunches them on the way to the speakers.">
+<defs><marker id="mu-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9a93b4"/></marker></defs>
+<text x="14" y="22" fill="#8fcf7a" font-size="13">THE RULES: no audio, seeded, tested</text>
+<text x="640" y="22" fill="#6fd6c8" font-size="13">WEB AUDIO</text>
+<rect x="10" y="32" width="190" height="118" rx="4" fill="#181330" stroke="#8fcf7a"/>
+<text x="20" y="52" fill="#8fcf7a" font-size="15">The game</text>
+<text x="20" y="68" fill="#9a93b4" font-size="12">rules/game.ts</text>
+<text x="20" y="88" fill="#e8e2f4" font-size="12">waves, boot, sieges,</text>
+<text x="20" y="104" fill="#e8e2f4" font-size="12">knockouts, legends,</text>
+<text x="20" y="120" fill="#e8e2f4" font-size="12">her place, time scale</text>
+<rect x="220" y="32" width="190" height="118" rx="4" fill="#181330" stroke="#8fcf7a"/>
+<text x="230" y="52" fill="#8fcf7a" font-size="15">Conductor</text>
+<text x="230" y="68" fill="#9a93b4" font-size="12">rules/musicPlan.ts</text>
+<text x="230" y="88" fill="#e8e2f4" font-size="12">a section for each</text>
+<text x="230" y="104" fill="#e8e2f4" font-size="12">4-bar block, from the</text>
+<text x="230" y="120" fill="#e8e2f4" font-size="12">arc; builds; boot</text>
+<rect x="430" y="32" width="190" height="118" rx="4" fill="#181330" stroke="#8fcf7a"/>
+<text x="440" y="52" fill="#8fcf7a" font-size="15">Score</text>
+<text x="440" y="68" fill="#9a93b4" font-size="12">rules/musicScore.ts</text>
+<text x="440" y="88" fill="#e8e2f4" font-size="12">each sixteenth's notes;</text>
+<text x="440" y="104" fill="#e8e2f4" font-size="12">melodies from the run's</text>
+<text x="440" y="120" fill="#e8e2f4" font-size="12">seed, new each pass</text>
+<rect x="640" y="32" width="170" height="118" rx="4" fill="#181330" stroke="#6fd6c8"/>
+<text x="650" y="52" fill="#6fd6c8" font-size="15">Engine</text>
+<text x="650" y="68" fill="#9a93b4" font-size="12">audio/musicEngine.ts</text>
+<text x="650" y="88" fill="#e8e2f4" font-size="12">synthesised voices,</text>
+<text x="650" y="104" fill="#e8e2f4" font-size="12">scheduled 0.6 s</text>
+<text x="650" y="120" fill="#e8e2f4" font-size="12">ahead</text>
+<line x1="410" y1="80" x2="428" y2="80" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#mu-ar)"/>
+<line x1="620" y1="80" x2="638" y2="80" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#mu-ar)"/>
+<rect x="10" y="190" width="190" height="100" rx="4" fill="#181330" stroke="#8fcf7a"/>
+<text x="20" y="210" fill="#8fcf7a" font-size="15">Beat clock</text>
+<text x="20" y="226" fill="#9a93b4" font-size="12">rules/beat.ts</text>
+<text x="20" y="246" fill="#e8e2f4" font-size="12">120 to 140 bpm, each</text>
+<text x="20" y="262" fill="#e8e2f4" font-size="12">ramp over 8 bars</text>
+<line x1="150" y1="190" x2="240" y2="152" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#mu-ar)"/>
+<rect x="220" y="190" width="400" height="100" rx="4" fill="#181330" stroke="#f2c46a"/>
+<text x="230" y="210" fill="#f2c46a" font-size="15">config/music-style.json</text>
+<text x="230" y="226" fill="#9a93b4" font-size="12">the music as data</text>
+<text x="230" y="246" fill="#e8e2f4" font-size="12">40 patches, 38 parts, 29 sections,</text>
+<text x="230" y="262" fill="#e8e2f4" font-size="12">a 9-step arc, key and progressions</text>
+<line x1="315" y1="190" x2="315" y2="152" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#mu-ar)"/>
+<line x1="525" y1="190" x2="525" y2="152" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#mu-ar)"/>
+<rect x="640" y="190" width="170" height="100" rx="4" fill="#181330" stroke="#6fd6c8"/>
+<text x="650" y="210" fill="#6fd6c8" font-size="15">Music</text>
+<text x="650" y="226" fill="#9a93b4" font-size="12">audio/music.ts</text>
+<text x="650" y="246" fill="#e8e2f4" font-size="12">near or far, muffled,</text>
+<text x="650" y="262" fill="#e8e2f4" font-size="12">crunched by damage</text>
+<line x1="725" y1="150" x2="725" y2="188" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#mu-ar)"/>
+<rect x="640" y="320" width="170" height="40" rx="4" fill="#181330" stroke="#d9789e"/>
+<text x="650" y="340" fill="#d9789e" font-size="15">Speakers</text>
+<text x="650" y="356" fill="#9a93b4" font-size="12"></text>
+<line x1="725" y1="290" x2="725" y2="318" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#mu-ar)"/>
+</svg></div>
+
+<p>The proximity mix came along too: the music is louder near a playing soundsystem, muffled in the deep forest, and crunched and wobbling near damage. <code>?music=drop</code> loops any one section in the game, and <code>?music=wave7</code> plays wave 7's music.</p>
+
+<h3>Ed's playlist</h3>
+
+<p>The style wasn't a guess. Ed sent a screenshot of a playlist into the music builder's session: Caramelldansen, Perturbator, Justice, Billie Eilish, Nitro Fun, Christian Löffler, Worakls, a couple of phonk tracks, and two by Grimes. The builder took only the genres and recorded where each one sits in the run <a class="pr" href="https://github.com/edsaperia/witch/pull/45">#45</a>: organic melodic house and techno for the forest and clearings, dark synth and French electro for the night drive, chiptune and bubblegum electro, phonk for the finale, and Billie Eilish's dark minimal pop for the whispered breakdowns. Nothing is taken from any track.</p>
+
+<p>The same afternoon, Ed named the two tracks that best set the overall mood: Grimes' "4ÆM" and Grimes and Janelle Monáe's "Venus Fly". The style file's note sums them up as dreamy, ethereal layers crashing into hard, distorted, industrial drums with breakbeat energy. <a class="pr" href="https://github.com/edsaperia/witch/pull/56">#56</a> went after that sound in two rounds. It started by measuring. A new tool, <code>tools/music-lab/analyse.cjs</code>, renders every section offline and reports loudness, six frequency bands, each part soloed, and a spectrogram. The first measurement found a dull, bass-heavy mix, with about 70% of the energy between 60 and 250 Hz and the hats about 25 dB under the kick. The usual figure is 12 to 15 dB. The mix was rebalanced by the numbers (hats about 18 dB under the kick, claps 11, leads 9, pads 12), and every section came to within about 4 dB of the others.</p>
+
+<p>The second round added the mood: a synthesised choir and sung chops, a distorted kick, metal clanks, a reese bass, string stabs and breakbeats, and three new sections (industrial, breaks, and ether, a dreamy breakdown). The arc became:</p>
+
+<table>
+<tr><th>Wave</th><th>Step</th><th>Sound</th><th>bpm</th></tr>
+<tr><td>0</td><td>Forest</td><td>Choir over marimba and a heartbeat kick</td><td>120</td></tr>
+<tr><td>1</td><td>Clearing</td><td>Deep house</td><td>122</td></tr>
+<tr><td>2</td><td>Lanterns</td><td>Melodic techno with strings</td><td>124</td></tr>
+<tr><td>3</td><td>Night drive</td><td>Dark synth</td><td>126</td></tr>
+<tr><td>4</td><td>Industrial</td><td>Distorted kick, clanks, reese, stabs</td><td>128</td></tr>
+<tr><td>5</td><td>Breakbeat</td><td>Broken drums, reese, voices</td><td>131</td></tr>
+<tr><td>6</td><td>Frenzy</td><td>Breaks, a flash of chiptune</td><td>134</td></tr>
+<tr><td>7</td><td>Phonk</td><td>Sliding 808, cowbell</td><td>137</td></tr>
+<tr><td>8</td><td>Finale</td><td>Phonk, breaks and industrial</td><td>140</td></tr>
+</table>
+
+<p>The builder was frank about its limits. It could measure levels and read spectrograms, but it couldn't hear. So it ended with a seven-question listening checklist for Ed: does the forest choir feel ethereal or cheesy, are the industrial drums hard enough, are the sung chops charming or annoying?</p>
+
+<h2>The beat clock</h2>
+
+<p>The first engine ran at a fixed 120 bpm, because the visuals pulsed to the same beat. The builder asked Ed whether it should speed up through the run. His answers came back in <a class="pr" href="https://github.com/edsaperia/witch/pull/49">#49</a>: one arc step per wave, a tempo rising from 120 to about 140 bpm, and the game's beat following the music, changing on phrase boundaries, easing smoothly and never skipping.</p>
+
+<p>So the beat became a clock of its own, <code>g.beat</code> (<code>src/rules/beat.ts</code>), kept as tempo segments, each one a linear ramp. When a wave arrives, its arc step's tempo eases in over 8 bars (<code>tempoRampBars</code>), starting on the 4-bar line where that wave's music drops. Every ramp begins exactly where the old tempo has got to, so the beat count never jumps. Then everything that pulses was moved onto <b>beat-time</b>, <code>beatTime(g.beat, time)</code>: game time as it would run at the base tempo. That covers the dancefloor tiles, the lasers, the dancing party animals, the party witches, the rune pulses and the border's sparkle. When the finale is pushing 140 bpm, the forest dances at 140 too.</p>
+
+<h2>Never the same pass twice</h2>
+
+<p>A wave lasts five minutes, about 150 bars, but each wave's loop was only 40 to 56 bars long. It played note for note two or three times. The overnight brief of 5 to 6 October asked for a 30-minute run that doesn't loop audibly. <a class="pr" href="https://github.com/edsaperia/witch/pull/162">#162</a> made the conductor count its passes round the loop. Each new pass seeds its melodies afresh, starts its chords a step further on, and lets its "?" hits fall differently. Each arc step also gained variants, eight new sections built on the old ones (<code>forestArp</code>, <code>deepWalk</code>, <code>darkBreaks</code>, <code>phonkGlide</code> and others), taken in turn on later passes.</p>
+
+<p>To check any of this, a builder needed to hear a whole run without playing one. <a class="pr" href="https://github.com/edsaperia/witch/pull/185">#185</a> added <code>tools/sfx/run.mjs</code>, which renders ten minutes of a scripted playthrough offline: the boot at home, a pond, an angry legend, three waves, a partified area, a siege lost, a knockout. It reports loudness minute by minute, and how much of the music repeats itself, measured as 4-second stretches within 1 dB of an earlier one. Over the whole run, the variety work brought that from 19% to 12%. In wave 2 it went from 16% to 8%.</p>
+
+<div class="gallery"><figure class="sound"><audio controls preload="none" src="media/music/sfx-run-boot-after.mp3"></audio><figcaption>Thirty seconds of a scripted run: the boot at home. <a class="pr" href="https://github.com/edsaperia/witch/pull/185">#185</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-run-wave3-after.mp3"></audio><figcaption>Wave three: the arc has moved on through its sections. <a class="pr" href="https://github.com/edsaperia/witch/pull/185">#185</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-run-siege-after.mp3"></audio><figcaption>A siege: the siege parts come in by how near the fight at the soundsystem is. <a class="pr" href="https://github.com/edsaperia/witch/pull/185">#185</a></figcaption></figure></div>
+
+<p>The same run check found the next problem. The boot played its intro as one block for up to five minutes, and its pluck melody was 96% the same every 16 bars. <a class="pr" href="https://github.com/edsaperia/witch/pull/186">#186</a> made any block longer than 32 bars turn a new phrase every 16 bars. That brought the repetition down to about 20%.</p>
+
+<h2>The Boot: twelve speakers, twelve layers</h2>
+
+<p>A run starts with the home speaker ring powering on one stone at a time. On 6 October Ed asked for two things about how that should sound:</p>
+
+<blockquote>There be a cool 'electronic item crackling into life' sound when a runestone becomes a speaker/soundsystem.<cite>Ed, 2026-10-06</cite></blockquote>
+
+<blockquote>The music first starts when the first speaker appears, sounding incomplete, and becomes gradually more complete until the last of the 12 appears.<cite>Ed, 2026-10-06</cite></blockquote>
+
+<p><a class="pr" href="https://github.com/edsaperia/witch/pull/273">#273</a> built the crackle (<code>src/platform/audio/power.ts</code>, about 1.2 s): static and pops, a capacitor's whine sliding up, a mains buzz swelling and flickering, then the buzz drops out, the cone thumps and a clean tone in the music's key rings out. The twelve stones climb the pentatonic scale in turn, so the boot plays as a phrase. The twelfth, like every wave's soundsystem, gets a fuller chord.</p>
+
+<p><a class="pr" href="https://github.com/edsaperia/witch/pull/277">#277</a> made the music follow the boot. It stays silent until the first stone turns. Each speaker then brings in one of the intro's twelve layers on the bar line after it turns, so its crackle leads into its layer. The order is pad, choir, sub, heartbeat kick, plucks, shaker, strings, offbeat hat, snaps, voice chops, a soft lead and gated stabs. The low-pass filter opens as they arrive. Each layer is just a <code>from</code> value (n/12) on a part of the style's intro, so changing the order is one line. By the twelfth speaker the music is 8 dB fuller than with one.</p>
+
+<div class="gallery"><figure class="sound"><audio controls preload="none" src="media/music/music-boot-build.mp3"></audio><figcaption>The Boot, sped up: the home speakers turn on one by one and each brings in one of the intro's twelve layers on the next bar line. <a class="pr" href="https://github.com/edsaperia/witch/pull/277">#277</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-stone-boot-12.mp3"></audio><figcaption>All twelve runestones crackling into life as speakers, one after another. <a class="pr" href="https://github.com/edsaperia/witch/pull/273">#273</a></figcaption></figure></div>
+
+<h2>Legend circles: the music under water</h2>
+
+<p>Every area has a legend sleeping in a small clearing. Ed wanted stepping into one to sound like stepping somewhere else:</p>
+
+<blockquote>The music should change when you go into a legend circle in ground mode - the current music becomes very muffled, and there's a new mysterious legend music that layers in (harmoniously) on top of it. Different species have different legend music.<cite>Ed, 2026-10-06</cite></blockquote>
+
+<p><a class="pr" href="https://github.com/edsaperia/witch/pull/255">#255</a> did it in two parts. The muffle (<code>muffled</code> in <code>rules/music.ts</code>) closes the music's low-pass and drops its volume, easing in and out over about a second. The legend's own layer is written as data in the style's <code>circle</code> section. Every legend gets a low drone. Each voice family adds its own instruments: deep horns and a purr for the big beasts, flute hoots and bells for birds, a howling choir for canids, a hiss and a horn for the snake, croaks and a whistle for amphibians. Each species then picks its own patterns, melody, rhythm phase, starting chord tone and octave, and a test checks that all 30 sound different. The layer plays in the music's key and chords, on the engine's second output with its own long reverb, so it isn't muffled along with the rest.</p>
+
+<p>Later that afternoon the legend circles began to slow time: the world outside runs at about a tenth of its speed while the witch moves at full speed. Ed wanted the music to go with it:</p>
+
+<blockquote>the music and countdown get ~10x slower ... the music audibly slows down (this is a good audio cue for the transition), the legend circle music is re-written to fit with that.<cite>Ed, 2026-10-06</cite></blockquote>
+
+<p><a class="pr" href="https://github.com/edsaperia/witch/pull/304">#304</a> put the engine on game time at the game's time scale, so the bars and the wave countdown stay in step through the slowdown with no separate sync. The notes drop in pitch like a slowing tape: <code>tapePitch</code> is the rate raised to a power, floored so that a tenth of the speed is an octave down. Through the half-second ease, tempo and pitch fall together like a turntable braking. The legend's layer runs on its own clock at full speed, starting in step with the music and taking its chords, and it was rewritten as slow, spacious four-bar phrases of long notes. You can hear it in these: the music winding down, the layer coming in over it, and the music winding back up as she steps out.</p>
+
+<div class="gallery"><figure class="sound"><audio controls preload="none" src="media/music/music-circles-wolf.mp3"></audio><figcaption>Walking into the wolf legend's circle: the music muffles and slows like a tape winding down, while the legend's own layer plays on at full speed. <a class="pr" href="https://github.com/edsaperia/witch/pull/255">#255</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/music-circles-owl.mp3"></audio><figcaption>The owl's circle: every legend has its own patterns, melody and octave in the music's key. <a class="pr" href="https://github.com/edsaperia/witch/pull/255">#255</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/music-circles-moth.mp3"></audio><figcaption>The moth's circle. <a class="pr" href="https://github.com/edsaperia/witch/pull/255">#255</a></figcaption></figure></div>
+
+<h2>Voices without words</h2>
+
+<p>The sound effects started on 5 October with <a class="pr" href="https://github.com/edsaperia/witch/pull/94">#94</a>, all made in the music's key and cued from the rules' events by <code>sfxCues.ts</code>, so the rules know nothing about sound. That same morning Ed gave two directions that set how the game talks:</p>
+
+<blockquote>rapid fire sounds like talking: you are inviting<cite>Ed, 2026-10-05</cite></blockquote>
+
+<blockquote>animal attacks also sound like animal speech, higher pitched for smaller animals / levels; happy speech from happy animals, angry speech from enraged animals<cite>Ed, 2026-10-05</cite></blockquote>
+
+<p>The answer was <b>babble</b> (<code>platform/audio/babble.ts</code>): a voiced source through a vowel's three formant filters, the mouth opening into the vowel over 25 ms, with a breath of consonant before it. Each 💌 is one syllable in the witch's voice, and each burst of three is a phrase that lifts at the end like an invitation, so holding the button sounds like happy chatter rather than a beeping weapon. Every animal attack is a burst of two to four syllables in the attacker's own voice: higher the smaller and younger it is, each species with its own pitch, formants and source wave, and the mood setting the delivery. Happy is bright and bouncy, enraged is clipped and falling with grit, wild is a grumble. At most four voices speak at once and the farthest gives way, so a fight stays readable.</p>
+
+<p>Within the hour Ed asked whether you could tell <i>what</i> was talking. Each species' call was blended into its babble, driven by data in <code>config/creature-voices.json</code>. There are ten families: birds chirp and trill, canids bark and howl when they turn enraged, big beasts grunt and bellow, small ones squeak and chitter, bugs click and buzz, the snake hisses, amphibians croak, bats squeak high, whistlers whistle, and the lynx yowls. Individual species add touches of their own: the owl hoots, the raven croaks.</p>
+
+<p>Legends got something else:</p>
+
+<blockquote>The legends should sound like whale song; deep and slow.<cite>Ed, 2026-10-05</cite></blockquote>
+
+<p>So a legend's voice is a long moan gliding over seconds, a sine and its overtones through a resonant throat that rides the pitch, in a long generated reverb. Happy rises, enraged groans down, and a sleeper moans softly now and then. A day later Ed added "During the restless period, the legend should call out sadly", and <a class="pr" href="https://github.com/edsaperia/witch/pull/239">#239</a> wrote the lament: the legend's own species call, lowered and slowed, two to four falling syllables with a sobbing vibrato. It comes more often as the legend nears anger, and it can be heard 160 m away, panned toward its clearing so it draws her there.</p>
+
+<div class="gallery"><figure class="sound"><audio controls preload="none" src="media/music/sfx-species-calls.mp3"></audio><figcaption>Every species' call in turn: speech without words, a voice through vowel formants, each family with its own call style. <a class="pr" href="https://github.com/edsaperia/witch/pull/94">#94</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-witch-chatter.mp3"></audio><figcaption>The witch's babble: each 💌 is a syllable, each burst a phrase lifting at the end. <a class="pr" href="https://github.com/edsaperia/witch/pull/94">#94</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-legend-lament-elk.mp3"></audio><figcaption>A sleeping elk legend's lament: whale song, long gliding moans in a big reverb. <a class="pr" href="https://github.com/edsaperia/witch/pull/239">#239</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-invited-legend.mp3"></audio><figcaption>The flourish when a legend is invited (each level has its own). <a class="pr" href="https://github.com/edsaperia/witch/pull/94">#94</a></figcaption></figure></div>
+
+<h2>The mix pass</h2>
+
+<p>By the evening of 5 October there were 32 effects and no agreed idea of how loud any of them should be. The housekeeping round tidied them into one audio folder, split by kind <a class="pr" href="https://github.com/edsaperia/witch/pull/125">#125</a>, then measured them <a class="pr" href="https://github.com/edsaperia/witch/pull/126">#126</a>. A new tool, <code>tools/sfx/mix.mjs</code>, renders three scenes exactly as the game mixes them: home, a fight by a soundsystem, and the deep forest with the music far off. It renders the music alone and each sound alone, then prints each sound's short-term loudness over the music under it. The targets it set are still the rule for any change to a volume:</p>
+
+<table>
+<tr><th>Kind</th><th>dB over the music</th></tr>
+<tr><td>Stings (a soundsystem lost, a relic found)</td><td>0 to +4</td></tr>
+<tr><td>Telegraphs (a legend's wind-up)</td><td>+3 to +6</td></tr>
+<tr><td>Her cries ("ouch!")</td><td>−2 to +4</td></tr>
+<tr><td>💌 chimes</td><td>−2 to +1</td></tr>
+<tr><td>Voices</td><td>−5 to 0</td></tr>
+<tr><td>State turns (enraged, happy)</td><td>−4 to +4</td></tr>
+<tr><td>A charge</td><td>−4 to −3</td></tr>
+<tr><td>A stun's twinkles</td><td>about −10</td></tr>
+<tr><td>Ambience</td><td>−12 to −5</td></tr>
+</table>
+
+<p>Most of the changes were small, but a few were large. Being knocked back went from −12 to −5.7 dB, a stun's twinkles from −18 to about −10, and the knocked-down cry from a startling +8.7 to +3.8. The planned shared master limiter was dropped once the busiest scene peaked at 0.55, well under full scale.</p>
+
+<div class="gallery"><figure class="sound"><audio controls preload="none" src="media/music/sfx-mix-forest-before.mp3"></audio><figcaption>The deep forest scene before the mix pass: the music far off, a sleeping legend's moans, a wind-up, a charge. <a class="pr" href="https://github.com/edsaperia/witch/pull/126">#126</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-mix-forest-after.mp3"></audio><figcaption>The same scene after the mix pass, every sound set to its target loudness over the music. <a class="pr" href="https://github.com/edsaperia/witch/pull/126">#126</a></figcaption></figure></div>
+
+<p>The overnight round filled in what was still silent <a class="pr" href="https://github.com/edsaperia/witch/pull/171">#171</a>: a legend's roar, the dancers' little party shoes tapping on the beat, a pond's lapping and frogs, a picnic's murmur and clinking cups, and the creak and record crackle of the character creator's room. Later came the party spell's scroll bursting <a class="pr" href="https://github.com/edsaperia/witch/pull/315">#315</a> and the sea, heard as she nears the beach <a class="pr" href="https://github.com/edsaperia/witch/pull/301">#301</a>.</p>
+
+<div class="gallery"><figure class="sound"><audio controls preload="none" src="media/music/sfx-spell-burst.mp3"></audio><figcaption>The party spell's scroll bursting. <a class="pr" href="https://github.com/edsaperia/witch/pull/315">#315</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-pond.mp3"></audio><figcaption>A pond at night. <a class="pr" href="https://github.com/edsaperia/witch/pull/171">#171</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-sea.mp3"></audio><figcaption>The sea, heard as she nears the beach. <a class="pr" href="https://github.com/edsaperia/witch/pull/301">#301</a></figcaption></figure></div>
+
+<h2>The afterparty</h2>
+
+<p>When the last soundsystem falls, there is no game-over screen. The party's over, and Ed asked for it to sound that way:</p>
+
+<blockquote>when the soundsystems and speakers are all destroyed, the dance music stops … all the animals go to sleep … We can have nice environmental music and sounds that match each area.<cite>Ed, 2026-10-06</cite></blockquote>
+
+<p><a class="pr" href="https://github.com/edsaperia/witch/pull/320">#320</a> winds the music down like a stopped record: over the first 60% of the ease the engine slows and its pitch sinks toward 0.15, then the last stretch fades out and it stops scheduling. Then each area's <b>night</b> comes in (<code>platform/audio/night.ts</code>). There are seven kinds, each a soft bed in the music's key with a few sounds of its own: owls and rustling in the pines, frogs and reeds in the wet places, crickets, moths and chimes in the meadow, the sea far off at home. They crossfade over about 1.5 s at the borders. Near her the sleepers snore, a nasal rasp in and a soft whoosh out, bigger and slower for bigger animals.</p>
+
+<div class="gallery"><figure class="sound"><audio controls preload="none" src="media/music/sfx-afterparty-night-wood.mp3"></audio><figcaption>After the Party's Over: the wood's night sounds. <a class="pr" href="https://github.com/edsaperia/witch/pull/320">#320</a></figcaption></figure><figure class="sound"><audio controls preload="none" src="media/music/sfx-afterparty-wood-snores.mp3"></audio><figcaption>...and the sleepers' snores. <a class="pr" href="https://github.com/edsaperia/witch/pull/320">#320</a></figcaption></figure></div>
+
+<h2>The music cutting out</h2>
+
+<p>Nothing came back from Ed's playtests more often than this. It came back in four different forms, and each turned out to have a different cause.</p>
+
+<ol class="timeline">
+<li><time>2026-10-05</time> <b>"The music stops playing after about 20 seconds."</b> It hadn't stopped. Flying 20 s from home took her past <code>music.farDist</code> (260 m), where the proximity mix dropped the track to 8% through a 380 Hz low-pass. On a laptop's speakers that is 21.9 dB down, which sounds like silence. <a class="pr" href="https://github.com/edsaperia/witch/pull/151">#151</a> raised the floor to 0.3 and the muffle to 1000 Hz (−10 dB as heard), and the Music Lab's CI check now fails if the far mix falls more than 15 dB below the near one.</li>
+<li><time>2026-10-06</time> <b>"The music stops after about two minutes ... It crackles a little and then goes quiet."</b> When the game ran slower than the audio, the engine re-anchored every frame and scheduled the same notes again. At half speed it scheduled 680 sixteenths for 122 distinct ones, each note played about 5.6 times, until the audio thread choked. <a class="pr" href="https://github.com/edsaperia/witch/pull/246">#246</a> made it remember the last step scheduled and never schedule it again. It also added a watchdog that resumes a suspended audio context and rebuilds the music after 3 s of unexpected silence.</li>
+<li><time>2026-10-06</time> <b>"smooth most of the time, with occasional freezes of about 0.5 seconds"</b>, from a different playtest note. <a class="pr" href="https://github.com/edsaperia/witch/pull/250">#250</a> added a stall log, recording every frame of 100 ms or more with its cause. That turned out to matter for the music too.</li>
+<li><time>2026-10-06</time> <b>"The music cuts in and out a lot."</b> The round-14 playtest, and the real diagnosis, below <a class="pr" href="https://github.com/edsaperia/witch/pull/331">#331</a>.</li>
+<li><time>2026-10-07</time> <b>"Music is still starting and stopping unexpectedly."</b> The last pass, <a class="pr" href="https://github.com/edsaperia/witch/pull/352">#352</a>: the engine looks further ahead after a long stall, and the game can measure what it sends to the speakers.</li>
+</ol>
+
+<h3>The diagnosis</h3>
+
+<p>The rules advance in fixed steps, and their clock gains at most <code>MAX_STEP</code> (0.1 s) in a frame. A frame that takes half a second, because of baking art, garbage collection or a new place streaming in, moves the game on by only 0.1 s. The other 0.4 s is simply lost. That's deliberate: the world shouldn't leap forward after a hitch.</p>
+
+<p>The music, though, followed game time. The engine kept its own idea of where game time should be on the audio clock and compared the two every frame. If they drifted more than 0.06 s apart, it re-anchored: it snapped its timeline to the game's clock, which pushed its next notes later. It also only ever scheduled 0.3 s ahead. So a half-second hitch went like this. The notes already scheduled played for 0.3 s. Then nothing was scheduled. When the frame finally ended, the engine saw the game 0.4 s behind, re-anchored, and its next note landed 0.4 s further on. Every hitch left a silence about as long as the game time it had lost, and long flights were full of hitches.</p>
+
+<p>There was a second cause hiding behind the first. Near a damaged soundsystem or damaged home speakers, the music deliberately cut out completely for 0.08 to 0.38 s at random. At half damage and 60 fps that happened about once every 3 seconds.</p>
+
+<div class="diagram"><svg viewBox="0 0 820 612" role="img" aria-label="Two timelines of audio time across a half-second frame hitch. Before the fix the music engine re-anchors to the game clock and leaves a 0.4 second silence; after it, the notes already scheduled 0.6 seconds ahead cover the hitch and the music eases back into step at 5 percent over about eight seconds.">
+<rect x="8" y="10" width="804" height="290" fill="#181330" stroke="#3a2f5c"/>
+<text x="20" y="34" fill="#f2c46a" font-size="15">Before #331: re-anchor on every hitch</text>
+<text x="20" y="52" fill="#9a93b4" font-size="12">the engine snapped to game time whenever the two drifted 0.06 s apart; 0.3 s scheduled ahead</text>
+<text x="20" y="95" fill="#e8e2f4" font-size="12">frames</text>
+<line x1="110.0" y1="85" x2="110.0" y2="95" stroke="#3a2f5c"/>
+<line x1="115.7" y1="85" x2="115.7" y2="95" stroke="#3a2f5c"/>
+<line x1="121.3" y1="85" x2="121.3" y2="95" stroke="#3a2f5c"/>
+<line x1="127.0" y1="85" x2="127.0" y2="95" stroke="#3a2f5c"/>
+<line x1="132.7" y1="85" x2="132.7" y2="95" stroke="#3a2f5c"/>
+<line x1="138.3" y1="85" x2="138.3" y2="95" stroke="#3a2f5c"/>
+<line x1="144.0" y1="85" x2="144.0" y2="95" stroke="#3a2f5c"/>
+<line x1="149.7" y1="85" x2="149.7" y2="95" stroke="#3a2f5c"/>
+<line x1="155.3" y1="85" x2="155.3" y2="95" stroke="#3a2f5c"/>
+<line x1="161.0" y1="85" x2="161.0" y2="95" stroke="#3a2f5c"/>
+<line x1="166.7" y1="85" x2="166.7" y2="95" stroke="#3a2f5c"/>
+<line x1="172.3" y1="85" x2="172.3" y2="95" stroke="#3a2f5c"/>
+<line x1="178.0" y1="85" x2="178.0" y2="95" stroke="#3a2f5c"/>
+<line x1="183.7" y1="85" x2="183.7" y2="95" stroke="#3a2f5c"/>
+<line x1="189.3" y1="85" x2="189.3" y2="95" stroke="#3a2f5c"/>
+<line x1="195.0" y1="85" x2="195.0" y2="95" stroke="#3a2f5c"/>
+<line x1="200.7" y1="85" x2="200.7" y2="95" stroke="#3a2f5c"/>
+<line x1="206.3" y1="85" x2="206.3" y2="95" stroke="#3a2f5c"/>
+<line x1="212.0" y1="85" x2="212.0" y2="95" stroke="#3a2f5c"/>
+<rect x="212.0" y="83" width="34.0" height="14" fill="#f2c46a"/>
+<line x1="246.0" y1="85" x2="246.0" y2="95" stroke="#3a2f5c"/>
+<line x1="251.7" y1="85" x2="251.7" y2="95" stroke="#3a2f5c"/>
+<line x1="257.3" y1="85" x2="257.3" y2="95" stroke="#3a2f5c"/>
+<line x1="263.0" y1="85" x2="263.0" y2="95" stroke="#3a2f5c"/>
+<line x1="268.7" y1="85" x2="268.7" y2="95" stroke="#3a2f5c"/>
+<line x1="274.3" y1="85" x2="274.3" y2="95" stroke="#3a2f5c"/>
+<line x1="280.0" y1="85" x2="280.0" y2="95" stroke="#3a2f5c"/>
+<line x1="285.7" y1="85" x2="285.7" y2="95" stroke="#3a2f5c"/>
+<line x1="291.3" y1="85" x2="291.3" y2="95" stroke="#3a2f5c"/>
+<line x1="297.0" y1="85" x2="297.0" y2="95" stroke="#3a2f5c"/>
+<line x1="302.7" y1="85" x2="302.7" y2="95" stroke="#3a2f5c"/>
+<line x1="308.3" y1="85" x2="308.3" y2="95" stroke="#3a2f5c"/>
+<line x1="314.0" y1="85" x2="314.0" y2="95" stroke="#3a2f5c"/>
+<line x1="319.7" y1="85" x2="319.7" y2="95" stroke="#3a2f5c"/>
+<line x1="325.3" y1="85" x2="325.3" y2="95" stroke="#3a2f5c"/>
+<line x1="331.0" y1="85" x2="331.0" y2="95" stroke="#3a2f5c"/>
+<line x1="336.7" y1="85" x2="336.7" y2="95" stroke="#3a2f5c"/>
+<line x1="342.3" y1="85" x2="342.3" y2="95" stroke="#3a2f5c"/>
+<line x1="348.0" y1="85" x2="348.0" y2="95" stroke="#3a2f5c"/>
+<line x1="353.7" y1="85" x2="353.7" y2="95" stroke="#3a2f5c"/>
+<line x1="359.3" y1="85" x2="359.3" y2="95" stroke="#3a2f5c"/>
+<line x1="365.0" y1="85" x2="365.0" y2="95" stroke="#3a2f5c"/>
+<line x1="370.7" y1="85" x2="370.7" y2="95" stroke="#3a2f5c"/>
+<line x1="376.3" y1="85" x2="376.3" y2="95" stroke="#3a2f5c"/>
+<line x1="382.0" y1="85" x2="382.0" y2="95" stroke="#3a2f5c"/>
+<line x1="387.7" y1="85" x2="387.7" y2="95" stroke="#3a2f5c"/>
+<line x1="393.3" y1="85" x2="393.3" y2="95" stroke="#3a2f5c"/>
+<line x1="399.0" y1="85" x2="399.0" y2="95" stroke="#3a2f5c"/>
+<line x1="404.7" y1="85" x2="404.7" y2="95" stroke="#3a2f5c"/>
+<line x1="410.3" y1="85" x2="410.3" y2="95" stroke="#3a2f5c"/>
+<line x1="416.0" y1="85" x2="416.0" y2="95" stroke="#3a2f5c"/>
+<line x1="421.7" y1="85" x2="421.7" y2="95" stroke="#3a2f5c"/>
+<line x1="427.3" y1="85" x2="427.3" y2="95" stroke="#3a2f5c"/>
+<line x1="433.0" y1="85" x2="433.0" y2="95" stroke="#3a2f5c"/>
+<line x1="438.7" y1="85" x2="438.7" y2="95" stroke="#3a2f5c"/>
+<line x1="444.3" y1="85" x2="444.3" y2="95" stroke="#3a2f5c"/>
+<line x1="450.0" y1="85" x2="450.0" y2="95" stroke="#3a2f5c"/>
+<line x1="455.7" y1="85" x2="455.7" y2="95" stroke="#3a2f5c"/>
+<line x1="461.3" y1="85" x2="461.3" y2="95" stroke="#3a2f5c"/>
+<line x1="467.0" y1="85" x2="467.0" y2="95" stroke="#3a2f5c"/>
+<line x1="472.7" y1="85" x2="472.7" y2="95" stroke="#3a2f5c"/>
+<line x1="478.3" y1="85" x2="478.3" y2="95" stroke="#3a2f5c"/>
+<line x1="484.0" y1="85" x2="484.0" y2="95" stroke="#3a2f5c"/>
+<line x1="489.7" y1="85" x2="489.7" y2="95" stroke="#3a2f5c"/>
+<line x1="495.3" y1="85" x2="495.3" y2="95" stroke="#3a2f5c"/>
+<line x1="501.0" y1="85" x2="501.0" y2="95" stroke="#3a2f5c"/>
+<line x1="506.7" y1="85" x2="506.7" y2="95" stroke="#3a2f5c"/>
+<line x1="512.3" y1="85" x2="512.3" y2="95" stroke="#3a2f5c"/>
+<line x1="518.0" y1="85" x2="518.0" y2="95" stroke="#3a2f5c"/>
+<line x1="523.7" y1="85" x2="523.7" y2="95" stroke="#3a2f5c"/>
+<line x1="529.3" y1="85" x2="529.3" y2="95" stroke="#3a2f5c"/>
+<line x1="535.0" y1="85" x2="535.0" y2="95" stroke="#3a2f5c"/>
+<line x1="540.7" y1="85" x2="540.7" y2="95" stroke="#3a2f5c"/>
+<line x1="546.3" y1="85" x2="546.3" y2="95" stroke="#3a2f5c"/>
+<line x1="552.0" y1="85" x2="552.0" y2="95" stroke="#3a2f5c"/>
+<line x1="557.7" y1="85" x2="557.7" y2="95" stroke="#3a2f5c"/>
+<line x1="563.3" y1="85" x2="563.3" y2="95" stroke="#3a2f5c"/>
+<line x1="569.0" y1="85" x2="569.0" y2="95" stroke="#3a2f5c"/>
+<line x1="574.7" y1="85" x2="574.7" y2="95" stroke="#3a2f5c"/>
+<line x1="580.3" y1="85" x2="580.3" y2="95" stroke="#3a2f5c"/>
+<line x1="586.0" y1="85" x2="586.0" y2="95" stroke="#3a2f5c"/>
+<line x1="591.7" y1="85" x2="591.7" y2="95" stroke="#3a2f5c"/>
+<line x1="597.3" y1="85" x2="597.3" y2="95" stroke="#3a2f5c"/>
+<line x1="603.0" y1="85" x2="603.0" y2="95" stroke="#3a2f5c"/>
+<line x1="608.7" y1="85" x2="608.7" y2="95" stroke="#3a2f5c"/>
+<line x1="614.3" y1="85" x2="614.3" y2="95" stroke="#3a2f5c"/>
+<line x1="620.0" y1="85" x2="620.0" y2="95" stroke="#3a2f5c"/>
+<line x1="625.7" y1="85" x2="625.7" y2="95" stroke="#3a2f5c"/>
+<line x1="631.3" y1="85" x2="631.3" y2="95" stroke="#3a2f5c"/>
+<line x1="637.0" y1="85" x2="637.0" y2="95" stroke="#3a2f5c"/>
+<line x1="642.7" y1="85" x2="642.7" y2="95" stroke="#3a2f5c"/>
+<line x1="648.3" y1="85" x2="648.3" y2="95" stroke="#3a2f5c"/>
+<line x1="654.0" y1="85" x2="654.0" y2="95" stroke="#3a2f5c"/>
+<line x1="659.7" y1="85" x2="659.7" y2="95" stroke="#3a2f5c"/>
+<line x1="665.3" y1="85" x2="665.3" y2="95" stroke="#3a2f5c"/>
+<line x1="671.0" y1="85" x2="671.0" y2="95" stroke="#3a2f5c"/>
+<line x1="676.7" y1="85" x2="676.7" y2="95" stroke="#3a2f5c"/>
+<line x1="682.3" y1="85" x2="682.3" y2="95" stroke="#3a2f5c"/>
+<line x1="688.0" y1="85" x2="688.0" y2="95" stroke="#3a2f5c"/>
+<line x1="693.7" y1="85" x2="693.7" y2="95" stroke="#3a2f5c"/>
+<line x1="699.3" y1="85" x2="699.3" y2="95" stroke="#3a2f5c"/>
+<line x1="705.0" y1="85" x2="705.0" y2="95" stroke="#3a2f5c"/>
+<line x1="710.7" y1="85" x2="710.7" y2="95" stroke="#3a2f5c"/>
+<line x1="716.3" y1="85" x2="716.3" y2="95" stroke="#3a2f5c"/>
+<line x1="722.0" y1="85" x2="722.0" y2="95" stroke="#3a2f5c"/>
+<line x1="727.7" y1="85" x2="727.7" y2="95" stroke="#3a2f5c"/>
+<line x1="733.3" y1="85" x2="733.3" y2="95" stroke="#3a2f5c"/>
+<line x1="739.0" y1="85" x2="739.0" y2="95" stroke="#3a2f5c"/>
+<line x1="744.7" y1="85" x2="744.7" y2="95" stroke="#3a2f5c"/>
+<line x1="750.3" y1="85" x2="750.3" y2="95" stroke="#3a2f5c"/>
+<line x1="756.0" y1="85" x2="756.0" y2="95" stroke="#3a2f5c"/>
+<line x1="761.7" y1="85" x2="761.7" y2="95" stroke="#3a2f5c"/>
+<line x1="767.3" y1="85" x2="767.3" y2="95" stroke="#3a2f5c"/>
+<line x1="773.0" y1="85" x2="773.0" y2="95" stroke="#3a2f5c"/>
+<line x1="778.7" y1="85" x2="778.7" y2="95" stroke="#3a2f5c"/>
+<line x1="784.3" y1="85" x2="784.3" y2="95" stroke="#3a2f5c"/>
+<text x="254.0" y="81" fill="#f2c46a" font-size="12">one 0.5 s frame: the game clock gains only 0.1 s (MAX_STEP)</text>
+<text x="20" y="143" fill="#e8e2f4" font-size="12">notes heard</text>
+<line x1="110.0" y1="130" x2="110.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="118.5" y1="130" x2="118.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="127.0" y1="130" x2="127.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="135.5" y1="130" x2="135.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="144.0" y1="130" x2="144.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="152.5" y1="130" x2="152.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="161.0" y1="130" x2="161.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="169.5" y1="130" x2="169.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="178.0" y1="130" x2="178.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="186.5" y1="130" x2="186.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="195.0" y1="130" x2="195.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="203.5" y1="130" x2="203.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="212.0" y1="130" x2="212.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="220.5" y1="130" x2="220.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="229.0" y1="130" x2="229.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="263.0" y1="130" x2="263.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="271.5" y1="130" x2="271.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="280.0" y1="130" x2="280.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="288.5" y1="130" x2="288.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="297.0" y1="130" x2="297.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="305.5" y1="130" x2="305.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="314.0" y1="130" x2="314.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="322.5" y1="130" x2="322.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="331.0" y1="130" x2="331.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="339.5" y1="130" x2="339.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="348.0" y1="130" x2="348.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="356.5" y1="130" x2="356.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="365.0" y1="130" x2="365.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="373.5" y1="130" x2="373.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="382.0" y1="130" x2="382.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="390.5" y1="130" x2="390.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="399.0" y1="130" x2="399.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="407.5" y1="130" x2="407.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="416.0" y1="130" x2="416.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="424.5" y1="130" x2="424.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="433.0" y1="130" x2="433.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="441.5" y1="130" x2="441.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="450.0" y1="130" x2="450.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="458.5" y1="130" x2="458.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="467.0" y1="130" x2="467.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="475.5" y1="130" x2="475.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="484.0" y1="130" x2="484.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="492.5" y1="130" x2="492.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="501.0" y1="130" x2="501.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="509.5" y1="130" x2="509.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="518.0" y1="130" x2="518.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="526.5" y1="130" x2="526.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="535.0" y1="130" x2="535.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="543.5" y1="130" x2="543.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="552.0" y1="130" x2="552.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="560.5" y1="130" x2="560.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="569.0" y1="130" x2="569.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="577.5" y1="130" x2="577.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="586.0" y1="130" x2="586.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="594.5" y1="130" x2="594.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="603.0" y1="130" x2="603.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="611.5" y1="130" x2="611.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="620.0" y1="130" x2="620.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="628.5" y1="130" x2="628.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="637.0" y1="130" x2="637.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="645.5" y1="130" x2="645.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="654.0" y1="130" x2="654.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="662.5" y1="130" x2="662.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="671.0" y1="130" x2="671.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="679.5" y1="130" x2="679.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="688.0" y1="130" x2="688.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="696.5" y1="130" x2="696.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="705.0" y1="130" x2="705.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="713.5" y1="130" x2="713.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="722.0" y1="130" x2="722.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="730.5" y1="130" x2="730.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="739.0" y1="130" x2="739.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="747.5" y1="130" x2="747.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="756.0" y1="130" x2="756.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="764.5" y1="130" x2="764.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="773.0" y1="130" x2="773.0" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="781.5" y1="130" x2="781.5" y2="146" stroke="#6fd6c8" stroke-width="2"/>
+<rect x="232.4" y="127" width="27.2" height="22" fill="none" stroke="#d9789e" stroke-width="2"/>
+<line x1="212.0" y1="118" x2="232.4" y2="118" stroke="#9a93b4"/>
+<text x="212.0" y="113" fill="#9a93b4" font-size="12">0.3 s already scheduled</text>
+<text x="263.0" y="164" fill="#d9789e" font-size="12">silence 0.4 s: the game time lost, re-anchored on</text>
+<text x="20" y="212" fill="#e8e2f4" font-size="12">music ahead</text>
+<text x="20" y="226" fill="#e8e2f4" font-size="12">of the game</text>
+<line x1="110" y1="236" x2="790" y2="236" stroke="#3a2f5c"/>
+<text x="104" y="240" fill="#9a93b4" font-size="12" text-anchor="end">0</text>
+<text x="104" y="192" fill="#9a93b4" font-size="12" text-anchor="end">0.4 s</text>
+<line x1="110" y1="188" x2="790" y2="188" stroke="#3a2f5c" stroke-dasharray="2 4"/>
+<path d="M110.0,236.0 L790.0,236.0" fill="none" stroke="#8fcf7a" stroke-width="2"/>
+<text x="314.0" y="226" fill="#8fcf7a" font-size="12">always 0: the music jumps to wherever the game clock is</text>
+<rect x="8" y="312" width="804" height="290" fill="#181330" stroke="#3a2f5c"/>
+<text x="20" y="336" fill="#f2c46a" font-size="15">After #331: play on, ease back</text>
+<text x="20" y="354" fill="#9a93b4" font-size="12">0.6 s scheduled ahead; re-anchor only on a real jump (time going back, a pause, 6 s out of step)</text>
+<text x="20" y="397" fill="#e8e2f4" font-size="12">frames</text>
+<line x1="110.0" y1="387" x2="110.0" y2="397" stroke="#3a2f5c"/>
+<line x1="115.7" y1="387" x2="115.7" y2="397" stroke="#3a2f5c"/>
+<line x1="121.3" y1="387" x2="121.3" y2="397" stroke="#3a2f5c"/>
+<line x1="127.0" y1="387" x2="127.0" y2="397" stroke="#3a2f5c"/>
+<line x1="132.7" y1="387" x2="132.7" y2="397" stroke="#3a2f5c"/>
+<line x1="138.3" y1="387" x2="138.3" y2="397" stroke="#3a2f5c"/>
+<line x1="144.0" y1="387" x2="144.0" y2="397" stroke="#3a2f5c"/>
+<line x1="149.7" y1="387" x2="149.7" y2="397" stroke="#3a2f5c"/>
+<line x1="155.3" y1="387" x2="155.3" y2="397" stroke="#3a2f5c"/>
+<line x1="161.0" y1="387" x2="161.0" y2="397" stroke="#3a2f5c"/>
+<line x1="166.7" y1="387" x2="166.7" y2="397" stroke="#3a2f5c"/>
+<line x1="172.3" y1="387" x2="172.3" y2="397" stroke="#3a2f5c"/>
+<line x1="178.0" y1="387" x2="178.0" y2="397" stroke="#3a2f5c"/>
+<line x1="183.7" y1="387" x2="183.7" y2="397" stroke="#3a2f5c"/>
+<line x1="189.3" y1="387" x2="189.3" y2="397" stroke="#3a2f5c"/>
+<line x1="195.0" y1="387" x2="195.0" y2="397" stroke="#3a2f5c"/>
+<line x1="200.7" y1="387" x2="200.7" y2="397" stroke="#3a2f5c"/>
+<line x1="206.3" y1="387" x2="206.3" y2="397" stroke="#3a2f5c"/>
+<line x1="212.0" y1="387" x2="212.0" y2="397" stroke="#3a2f5c"/>
+<rect x="212.0" y="385" width="34.0" height="14" fill="#f2c46a"/>
+<line x1="246.0" y1="387" x2="246.0" y2="397" stroke="#3a2f5c"/>
+<line x1="251.7" y1="387" x2="251.7" y2="397" stroke="#3a2f5c"/>
+<line x1="257.3" y1="387" x2="257.3" y2="397" stroke="#3a2f5c"/>
+<line x1="263.0" y1="387" x2="263.0" y2="397" stroke="#3a2f5c"/>
+<line x1="268.7" y1="387" x2="268.7" y2="397" stroke="#3a2f5c"/>
+<line x1="274.3" y1="387" x2="274.3" y2="397" stroke="#3a2f5c"/>
+<line x1="280.0" y1="387" x2="280.0" y2="397" stroke="#3a2f5c"/>
+<line x1="285.7" y1="387" x2="285.7" y2="397" stroke="#3a2f5c"/>
+<line x1="291.3" y1="387" x2="291.3" y2="397" stroke="#3a2f5c"/>
+<line x1="297.0" y1="387" x2="297.0" y2="397" stroke="#3a2f5c"/>
+<line x1="302.7" y1="387" x2="302.7" y2="397" stroke="#3a2f5c"/>
+<line x1="308.3" y1="387" x2="308.3" y2="397" stroke="#3a2f5c"/>
+<line x1="314.0" y1="387" x2="314.0" y2="397" stroke="#3a2f5c"/>
+<line x1="319.7" y1="387" x2="319.7" y2="397" stroke="#3a2f5c"/>
+<line x1="325.3" y1="387" x2="325.3" y2="397" stroke="#3a2f5c"/>
+<line x1="331.0" y1="387" x2="331.0" y2="397" stroke="#3a2f5c"/>
+<line x1="336.7" y1="387" x2="336.7" y2="397" stroke="#3a2f5c"/>
+<line x1="342.3" y1="387" x2="342.3" y2="397" stroke="#3a2f5c"/>
+<line x1="348.0" y1="387" x2="348.0" y2="397" stroke="#3a2f5c"/>
+<line x1="353.7" y1="387" x2="353.7" y2="397" stroke="#3a2f5c"/>
+<line x1="359.3" y1="387" x2="359.3" y2="397" stroke="#3a2f5c"/>
+<line x1="365.0" y1="387" x2="365.0" y2="397" stroke="#3a2f5c"/>
+<line x1="370.7" y1="387" x2="370.7" y2="397" stroke="#3a2f5c"/>
+<line x1="376.3" y1="387" x2="376.3" y2="397" stroke="#3a2f5c"/>
+<line x1="382.0" y1="387" x2="382.0" y2="397" stroke="#3a2f5c"/>
+<line x1="387.7" y1="387" x2="387.7" y2="397" stroke="#3a2f5c"/>
+<line x1="393.3" y1="387" x2="393.3" y2="397" stroke="#3a2f5c"/>
+<line x1="399.0" y1="387" x2="399.0" y2="397" stroke="#3a2f5c"/>
+<line x1="404.7" y1="387" x2="404.7" y2="397" stroke="#3a2f5c"/>
+<line x1="410.3" y1="387" x2="410.3" y2="397" stroke="#3a2f5c"/>
+<line x1="416.0" y1="387" x2="416.0" y2="397" stroke="#3a2f5c"/>
+<line x1="421.7" y1="387" x2="421.7" y2="397" stroke="#3a2f5c"/>
+<line x1="427.3" y1="387" x2="427.3" y2="397" stroke="#3a2f5c"/>
+<line x1="433.0" y1="387" x2="433.0" y2="397" stroke="#3a2f5c"/>
+<line x1="438.7" y1="387" x2="438.7" y2="397" stroke="#3a2f5c"/>
+<line x1="444.3" y1="387" x2="444.3" y2="397" stroke="#3a2f5c"/>
+<line x1="450.0" y1="387" x2="450.0" y2="397" stroke="#3a2f5c"/>
+<line x1="455.7" y1="387" x2="455.7" y2="397" stroke="#3a2f5c"/>
+<line x1="461.3" y1="387" x2="461.3" y2="397" stroke="#3a2f5c"/>
+<line x1="467.0" y1="387" x2="467.0" y2="397" stroke="#3a2f5c"/>
+<line x1="472.7" y1="387" x2="472.7" y2="397" stroke="#3a2f5c"/>
+<line x1="478.3" y1="387" x2="478.3" y2="397" stroke="#3a2f5c"/>
+<line x1="484.0" y1="387" x2="484.0" y2="397" stroke="#3a2f5c"/>
+<line x1="489.7" y1="387" x2="489.7" y2="397" stroke="#3a2f5c"/>
+<line x1="495.3" y1="387" x2="495.3" y2="397" stroke="#3a2f5c"/>
+<line x1="501.0" y1="387" x2="501.0" y2="397" stroke="#3a2f5c"/>
+<line x1="506.7" y1="387" x2="506.7" y2="397" stroke="#3a2f5c"/>
+<line x1="512.3" y1="387" x2="512.3" y2="397" stroke="#3a2f5c"/>
+<line x1="518.0" y1="387" x2="518.0" y2="397" stroke="#3a2f5c"/>
+<line x1="523.7" y1="387" x2="523.7" y2="397" stroke="#3a2f5c"/>
+<line x1="529.3" y1="387" x2="529.3" y2="397" stroke="#3a2f5c"/>
+<line x1="535.0" y1="387" x2="535.0" y2="397" stroke="#3a2f5c"/>
+<line x1="540.7" y1="387" x2="540.7" y2="397" stroke="#3a2f5c"/>
+<line x1="546.3" y1="387" x2="546.3" y2="397" stroke="#3a2f5c"/>
+<line x1="552.0" y1="387" x2="552.0" y2="397" stroke="#3a2f5c"/>
+<line x1="557.7" y1="387" x2="557.7" y2="397" stroke="#3a2f5c"/>
+<line x1="563.3" y1="387" x2="563.3" y2="397" stroke="#3a2f5c"/>
+<line x1="569.0" y1="387" x2="569.0" y2="397" stroke="#3a2f5c"/>
+<line x1="574.7" y1="387" x2="574.7" y2="397" stroke="#3a2f5c"/>
+<line x1="580.3" y1="387" x2="580.3" y2="397" stroke="#3a2f5c"/>
+<line x1="586.0" y1="387" x2="586.0" y2="397" stroke="#3a2f5c"/>
+<line x1="591.7" y1="387" x2="591.7" y2="397" stroke="#3a2f5c"/>
+<line x1="597.3" y1="387" x2="597.3" y2="397" stroke="#3a2f5c"/>
+<line x1="603.0" y1="387" x2="603.0" y2="397" stroke="#3a2f5c"/>
+<line x1="608.7" y1="387" x2="608.7" y2="397" stroke="#3a2f5c"/>
+<line x1="614.3" y1="387" x2="614.3" y2="397" stroke="#3a2f5c"/>
+<line x1="620.0" y1="387" x2="620.0" y2="397" stroke="#3a2f5c"/>
+<line x1="625.7" y1="387" x2="625.7" y2="397" stroke="#3a2f5c"/>
+<line x1="631.3" y1="387" x2="631.3" y2="397" stroke="#3a2f5c"/>
+<line x1="637.0" y1="387" x2="637.0" y2="397" stroke="#3a2f5c"/>
+<line x1="642.7" y1="387" x2="642.7" y2="397" stroke="#3a2f5c"/>
+<line x1="648.3" y1="387" x2="648.3" y2="397" stroke="#3a2f5c"/>
+<line x1="654.0" y1="387" x2="654.0" y2="397" stroke="#3a2f5c"/>
+<line x1="659.7" y1="387" x2="659.7" y2="397" stroke="#3a2f5c"/>
+<line x1="665.3" y1="387" x2="665.3" y2="397" stroke="#3a2f5c"/>
+<line x1="671.0" y1="387" x2="671.0" y2="397" stroke="#3a2f5c"/>
+<line x1="676.7" y1="387" x2="676.7" y2="397" stroke="#3a2f5c"/>
+<line x1="682.3" y1="387" x2="682.3" y2="397" stroke="#3a2f5c"/>
+<line x1="688.0" y1="387" x2="688.0" y2="397" stroke="#3a2f5c"/>
+<line x1="693.7" y1="387" x2="693.7" y2="397" stroke="#3a2f5c"/>
+<line x1="699.3" y1="387" x2="699.3" y2="397" stroke="#3a2f5c"/>
+<line x1="705.0" y1="387" x2="705.0" y2="397" stroke="#3a2f5c"/>
+<line x1="710.7" y1="387" x2="710.7" y2="397" stroke="#3a2f5c"/>
+<line x1="716.3" y1="387" x2="716.3" y2="397" stroke="#3a2f5c"/>
+<line x1="722.0" y1="387" x2="722.0" y2="397" stroke="#3a2f5c"/>
+<line x1="727.7" y1="387" x2="727.7" y2="397" stroke="#3a2f5c"/>
+<line x1="733.3" y1="387" x2="733.3" y2="397" stroke="#3a2f5c"/>
+<line x1="739.0" y1="387" x2="739.0" y2="397" stroke="#3a2f5c"/>
+<line x1="744.7" y1="387" x2="744.7" y2="397" stroke="#3a2f5c"/>
+<line x1="750.3" y1="387" x2="750.3" y2="397" stroke="#3a2f5c"/>
+<line x1="756.0" y1="387" x2="756.0" y2="397" stroke="#3a2f5c"/>
+<line x1="761.7" y1="387" x2="761.7" y2="397" stroke="#3a2f5c"/>
+<line x1="767.3" y1="387" x2="767.3" y2="397" stroke="#3a2f5c"/>
+<line x1="773.0" y1="387" x2="773.0" y2="397" stroke="#3a2f5c"/>
+<line x1="778.7" y1="387" x2="778.7" y2="397" stroke="#3a2f5c"/>
+<line x1="784.3" y1="387" x2="784.3" y2="397" stroke="#3a2f5c"/>
+<text x="254.0" y="383" fill="#f2c46a" font-size="12">one 0.5 s frame: the game clock gains only 0.1 s (MAX_STEP)</text>
+<text x="20" y="445" fill="#e8e2f4" font-size="12">notes heard</text>
+<line x1="110.0" y1="432" x2="110.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="118.5" y1="432" x2="118.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="127.0" y1="432" x2="127.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="135.5" y1="432" x2="135.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="144.0" y1="432" x2="144.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="152.5" y1="432" x2="152.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="161.0" y1="432" x2="161.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="169.5" y1="432" x2="169.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="178.0" y1="432" x2="178.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="186.5" y1="432" x2="186.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="195.0" y1="432" x2="195.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="203.5" y1="432" x2="203.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="212.0" y1="432" x2="212.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="220.5" y1="432" x2="220.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="229.0" y1="432" x2="229.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="237.5" y1="432" x2="237.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="246.0" y1="432" x2="246.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="254.5" y1="432" x2="254.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="263.0" y1="432" x2="263.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="271.5" y1="432" x2="271.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="280.0" y1="432" x2="280.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="288.5" y1="432" x2="288.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="297.0" y1="432" x2="297.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="305.5" y1="432" x2="305.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="314.0" y1="432" x2="314.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="322.5" y1="432" x2="322.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="331.0" y1="432" x2="331.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="339.5" y1="432" x2="339.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="348.0" y1="432" x2="348.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="356.5" y1="432" x2="356.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="365.0" y1="432" x2="365.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="373.5" y1="432" x2="373.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="382.0" y1="432" x2="382.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="390.5" y1="432" x2="390.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="399.0" y1="432" x2="399.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="407.5" y1="432" x2="407.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="416.0" y1="432" x2="416.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="424.5" y1="432" x2="424.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="433.0" y1="432" x2="433.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="441.5" y1="432" x2="441.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="450.0" y1="432" x2="450.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="458.5" y1="432" x2="458.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="467.0" y1="432" x2="467.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="475.5" y1="432" x2="475.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="484.0" y1="432" x2="484.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="492.5" y1="432" x2="492.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="501.0" y1="432" x2="501.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="509.5" y1="432" x2="509.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="518.0" y1="432" x2="518.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="526.5" y1="432" x2="526.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="535.0" y1="432" x2="535.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="543.5" y1="432" x2="543.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="552.0" y1="432" x2="552.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="560.5" y1="432" x2="560.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="569.0" y1="432" x2="569.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="577.5" y1="432" x2="577.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="586.0" y1="432" x2="586.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="594.5" y1="432" x2="594.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="603.0" y1="432" x2="603.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="611.5" y1="432" x2="611.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="620.0" y1="432" x2="620.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="628.5" y1="432" x2="628.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="637.0" y1="432" x2="637.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="645.5" y1="432" x2="645.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="654.0" y1="432" x2="654.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="662.5" y1="432" x2="662.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="671.0" y1="432" x2="671.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="679.5" y1="432" x2="679.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="688.0" y1="432" x2="688.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="696.5" y1="432" x2="696.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="705.0" y1="432" x2="705.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="713.5" y1="432" x2="713.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="722.0" y1="432" x2="722.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="730.5" y1="432" x2="730.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="739.0" y1="432" x2="739.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="747.5" y1="432" x2="747.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="756.0" y1="432" x2="756.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="764.5" y1="432" x2="764.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="773.0" y1="432" x2="773.0" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="781.5" y1="432" x2="781.5" y2="448" stroke="#6fd6c8" stroke-width="2"/>
+<line x1="212.0" y1="420" x2="252.8" y2="420" stroke="#9a93b4"/>
+<text x="212.0" y="415" fill="#9a93b4" font-size="12">0.6 s already scheduled: the hitch is covered</text>
+<text x="263.0" y="466" fill="#6fd6c8" font-size="12">no gap; afterwards each sixteenth runs up to 5% long (MusicEngine.slew)</text>
+<text x="20" y="514" fill="#e8e2f4" font-size="12">music ahead</text>
+<text x="20" y="528" fill="#e8e2f4" font-size="12">of the game</text>
+<line x1="110" y1="538" x2="790" y2="538" stroke="#3a2f5c"/>
+<text x="104" y="542" fill="#9a93b4" font-size="12" text-anchor="end">0</text>
+<text x="104" y="494" fill="#9a93b4" font-size="12" text-anchor="end">0.4 s</text>
+<line x1="110" y1="490" x2="790" y2="490" stroke="#3a2f5c" stroke-dasharray="2 4"/>
+<path d="M110.0,538.0 L212.0,538.0 L246.0,490.0 L790.0,538.0" fill="none" stroke="#8fcf7a" stroke-width="2"/>
+<text x="269.8" y="533" fill="#8fcf7a" font-size="12">closing 0.05 s a second: in step after 8 s</text>
+<line x1="110" y1="260" x2="790" y2="260" stroke="#3a2f5c" stroke-width="1"/>
+<line x1="110" y1="260" x2="110" y2="265" stroke="#9a93b4"/>
+<text x="110" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">0s</text>
+<line x1="178" y1="260" x2="178" y2="265" stroke="#9a93b4"/>
+<text x="178" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">1s</text>
+<line x1="246" y1="260" x2="246" y2="265" stroke="#9a93b4"/>
+<text x="246" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">2s</text>
+<line x1="314" y1="260" x2="314" y2="265" stroke="#9a93b4"/>
+<text x="314" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">3s</text>
+<line x1="382" y1="260" x2="382" y2="265" stroke="#9a93b4"/>
+<text x="382" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">4s</text>
+<line x1="450" y1="260" x2="450" y2="265" stroke="#9a93b4"/>
+<text x="450" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">5s</text>
+<line x1="518" y1="260" x2="518" y2="265" stroke="#9a93b4"/>
+<text x="518" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">6s</text>
+<line x1="586" y1="260" x2="586" y2="265" stroke="#9a93b4"/>
+<text x="586" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">7s</text>
+<line x1="654" y1="260" x2="654" y2="265" stroke="#9a93b4"/>
+<text x="654" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">8s</text>
+<line x1="722" y1="260" x2="722" y2="265" stroke="#9a93b4"/>
+<text x="722" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">9s</text>
+<line x1="790" y1="260" x2="790" y2="265" stroke="#9a93b4"/>
+<text x="790" y="278" fill="#9a93b4" font-size="12" text-anchor="middle">10s</text>
+<line x1="110" y1="562" x2="790" y2="562" stroke="#3a2f5c" stroke-width="1"/>
+<line x1="110" y1="562" x2="110" y2="567" stroke="#9a93b4"/>
+<text x="110" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">0s</text>
+<line x1="178" y1="562" x2="178" y2="567" stroke="#9a93b4"/>
+<text x="178" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">1s</text>
+<line x1="246" y1="562" x2="246" y2="567" stroke="#9a93b4"/>
+<text x="246" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">2s</text>
+<line x1="314" y1="562" x2="314" y2="567" stroke="#9a93b4"/>
+<text x="314" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">3s</text>
+<line x1="382" y1="562" x2="382" y2="567" stroke="#9a93b4"/>
+<text x="382" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">4s</text>
+<line x1="450" y1="562" x2="450" y2="567" stroke="#9a93b4"/>
+<text x="450" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">5s</text>
+<line x1="518" y1="562" x2="518" y2="567" stroke="#9a93b4"/>
+<text x="518" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">6s</text>
+<line x1="586" y1="562" x2="586" y2="567" stroke="#9a93b4"/>
+<text x="586" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">7s</text>
+<line x1="654" y1="562" x2="654" y2="567" stroke="#9a93b4"/>
+<text x="654" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">8s</text>
+<line x1="722" y1="562" x2="722" y2="567" stroke="#9a93b4"/>
+<text x="722" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">9s</text>
+<line x1="790" y1="562" x2="790" y2="567" stroke="#9a93b4"/>
+<text x="790" y="580" fill="#9a93b4" font-size="12" text-anchor="middle">10s</text>
+<text x="790" y="596" fill="#9a93b4" font-size="12" text-anchor="end">audio time</text>
+</svg></div>
+
+<h3>The fix</h3>
+
+<p>The change in <a class="pr" href="https://github.com/edsaperia/witch/pull/331">#331</a> was to stop the music waiting for the game:</p>
+
+<ul>
+<li><b>Schedule 0.6 s ahead</b> instead of 0.3, so an ordinary hitch is already covered by notes the audio thread holds.</li>
+<li><b>Play on, then ease back.</b> After a hitch the music is ahead of the game. Instead of jumping, it closes the gap at most 5% faster or slower (<code>MusicEngine.slew</code>), and a long frame gets no bigger a nudge than an ordinary one. A 0.4 s gap closes in about eight seconds, with nothing anyone can hear.</li>
+<li><b>Hold, don't drop.</b> If a stall runs past everything scheduled, the next sixteenth is already late. It now plays at once rather than being skipped: the music holds for the hitch, then carries on from where it was.</li>
+<li><b>Re-anchor only on a real jump</b>: time going backwards, a pause, a new run, or the music more than 6 s out of step. If the game runs far slower than its audio for a long time, the music waits rather than replaying notes.</li>
+<li><b>No more damage drop-outs.</b> Damage is still heard, through the crunch, the wobble and the crackle.</li>
+</ul>
+
+<p>The builder couldn't test this by flying in the cloud, where the software renderer's frames take one to two seconds each. So it wrote <code>tools/music-lab/flight.cjs</code>. It loads the built game in headless Chromium with sound, stops the game's own loop, and drives the game's real music on the real audio context at 60 frames a second. The game clock loses whatever passes <code>MAX_STEP</code>, as the rules do, and every 4 seconds the tool busy-waits the main thread for 0.15, 0.3, 0.5 or 1.2 s in turn. Eight stalls in 40 seconds:</p>
+
+<table>
+<tr><th>Build</th><th>Seconds with nothing scheduled</th><th>Re-anchorings</th></tr>
+<tr><td>Before <a class="pr" href="https://github.com/edsaperia/witch/pull/331">#331</a></td><td>4.02</td><td>13, a gap at every stall</td></tr>
+<tr><td>After <a class="pr" href="https://github.com/edsaperia/witch/pull/331">#331</a></td><td>1.11</td><td>0</td></tr>
+<tr><td>After <a class="pr" href="https://github.com/edsaperia/witch/pull/352">#352</a></td><td>0.71 (the first 1.2 s stall's excess; the second covered)</td><td></td></tr>
+</table>
+
+<p>Everything left after <a class="pr" href="https://github.com/edsaperia/witch/pull/331">#331</a> came from the 1.2 s stalls running past the 0.6 s scheduled ahead, which nothing short of scheduling further ahead could avoid. The changelog put it in player words: "The music no longer cuts in and out: it plays straight through hitches and only crossfades."</p>
+
+<h3>The last pass</h3>
+
+<p>Two playtests later, Ed heard it again:</p>
+
+<blockquote>Music is still starting and stopping unexpectedly. I heard it on the beach. I hear it stop on the dancefloor.<cite>Ed, round 16 playtest</cite></blockquote>
+
+<p><a class="pr" href="https://github.com/edsaperia/witch/pull/352">#352</a> checked each layer in turn. The rules asked for the music without a break: a simulated 14 minutes on the dancefloor kept the volume at 1.0 throughout. The engine played it without a break: those same cues fed into the real engine gave 6,724 sixteenths with nothing unscheduled. What was left were stalls longer than 0.6 s, and arriving on the beach or the busy dancefloor is exactly where long stalls happen. Since stalls come in runs, the engine now schedules further ahead after a long frame, 1.5 times that frame and up to 2 s, then eases back down. A run of long stalls now cuts the music once rather than every time. On the beach, the party music now fades to make way for the waves.</p>
+
+<p>Ed also asked a sharper question: "Is there a way for the game to know if anything is being sent to the speakers or not?" The answer was an output meter (<code>src/platform/audio/outputMeter.ts</code>), an analyser on everything that reaches the destination. When the output is under −60 dBFS while the mix says the music should be heard, the debug overlay shows <code>SILENT</code>, and the playtest log records the silence with her place, the mix, the audio context's state and the nearest main-thread stall. If Ed hears it cut again, his log will say where.</p>
+
+<h2>The Music Lab and the checks</h2>
+
+<p>The Music Lab (<code>tools/music-lab/</code>) has been there since <a class="pr" href="https://github.com/edsaperia/witch/pull/45">#45</a>: one self-contained page that plays the engine through the game's own mix: a pretend run, any section on a loop, distance and damage sliders, the hooks, and knobs for the style whose JSON can be copied out. It fetches nothing, so it can be published as it is. It is rebuilt with every music change.</p>
+
+<p>The checks never listen; they measure. Each one exists because something went wrong once:</p>
+
+<ul>
+<li><code>tools/music-lab/check.cjs</code> runs in CI after the quick smoke test. It renders every section offline in headless Chromium, plus a build into a wave under siege and the game's mix far off and damaged. It fails on a script error, a fetch, silence, NaN or clipping, and on far-off music falling more than 15 dB below near music <a class="pr" href="https://github.com/edsaperia/witch/pull/151">#151</a>. Then it plays live and jumps to a wave.</li>
+<li><code>tools/sfx/check.mjs</code> renders every effect offline, failing on silence, NaN or clipping, and writes them out to listen to: 15 effects in <a class="pr" href="https://github.com/edsaperia/witch/pull/94">#94</a>, 57 renders by <a class="pr" href="https://github.com/edsaperia/witch/pull/320">#320</a>.</li>
+<li><code>tools/sfx/mix.mjs</code> measures each sound over the music against the targets, and <code>tools/sfx/run.mjs</code> renders ten minutes of a run.</li>
+<li><code>tools/music-lab/circles.mjs</code> and <code>boot.mjs</code> render the legend circles and the boot. <code>flight.cjs</code> stalls the main thread for real. <code>silence.cjs</code> cuts the sound inside the game and checks the meter notices.</li>
+<li><code>tools/sfx/live.cjs</code> plays the real game headless with its audio graph instrumented every second (nodes made, sources playing, the context's state, the output's level), failing on 5 s of silence or sources piling up <a class="pr" href="https://github.com/edsaperia/witch/pull/246">#246</a>.</li>
+</ul>
+
+
+</main>
+<footer><div class="steps"><a rel="prev" href="art.html">← Growing the Art</a><a rel="next" href="balance.html">Balancing the Party →</a></div><p class="dim">Coven Rush is a game by Ed Saperia, in progress. <a href="../">Play the latest build</a> · <a href="https://github.com/edsaperia/witch">Source</a></p></footer>
+</body>
+</html>
