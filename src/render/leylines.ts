@@ -18,6 +18,7 @@ import { bootPath } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LeyHead, type LeyTip } from "./leyHead";
+import { Sparkler } from "./sparkler";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "./sprites";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { departureRoute, type LeyStone } from "../rules/leylines";
@@ -113,6 +114,7 @@ void main() {
 
 const FRAG = /* glsl */ `
 uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uStrength;
+uniform float uSpent; // 1: behind the wave's pulse the line is spent, a burnt fuse (the route, not the boot's ring)
 uniform vec2 uFar; // the faintest a section gets, ahead and behind (the whole route always shows)
 uniform vec2 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1: Ed's reveal, growing out from the treehouse
 uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
@@ -123,6 +125,7 @@ uniform float uMpp; // metres per art pixel
 varying float vSide, vS, vT, vLink, vSeen, vW, vLen;
 varying vec3 vCol;
 float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
+float soft0(float d) { return smoothstep(0.0, 8.0, d); }
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
 void main() {
   if (vSeen < 0.5) discard;
@@ -169,6 +172,24 @@ void main() {
     return;
   }
   float litD = pAlong > 1e5 ? 1e6 : (pAlong - along) * vLen; // metres behind the pulse (on its own link)
+  // Spent (Ed, 2026-10-07: "the pulse should look like the flame on a sparkler"; its burning tip is render/sparkler.ts): ahead
+  // of the pulse the fuse, as above; behind it the line has burnt: ash, a dull warm grey with a trace of its colour, solid and
+  // still (no shimmer), dim but whole, so the way home still reads; just behind the tip an ember, orange cooling to red over
+  // a few metres, and a few pixels still smouldering further back, flickering. From the treetops, a faint grey glow and the
+  // ember's.
+  if (uSpent > 0.5 && uPulse.y > 0.5 && uSketch.y < 0.5) {
+    float grey = dot(vCol, vec3(0.3, 0.59, 0.11)), ember = exp(-litD / 4.5), warm = exp(-litD / 12.0);
+    vec3 ash = mix(vec3(grey), vCol, 0.2) * vec3(1.0, 0.9, 0.8) * 0.55 + vec3(0.05, 0.045, 0.04);
+    vec3 hot = mix(vec3(1.0, 0.55, 0.15), vec3(0.75, 0.16, 0.05), smoothstep(0.0, 8.0, litD));
+    if (uGlowPass > 0.5) { gl_FragColor = vec4((ash * 0.1 + hot * 0.7 * ember) * halo * soft0(tipD) * uLift * uStrength, 1.0); return; }
+    float pix = floor(vS / uMpp), cell = floor(uTime * 6.0);
+    float smoulder = lh(pix * 3.7 + cell * 17.3 + vLink * 91.0) > 1.0 - 0.18 * warm ? warm : 0.0;
+    float heat = floor(max(ember, 0.7 * smoulder) * 4.0 + 0.5) / 4.0;   // (in quarter steps: pixels)
+    float coreA = solid * (0.6 + 0.9 * heat);
+    vec3 c = mix(ash, hot, heat) * coreA + hot * halo * 0.25 * ember;  // (the ember's own small glow; the ash none)
+    gl_FragColor = vec4(min(c * uBright * 2.0 * uStrength, vec3(0.9)), 1.0);
+    return;
+  }
   // The core's own brightness, the same all along it but for the shimmer's heads, in flat steps (a quarter at a time);
   // the glow it casts, smooth and wispy.
   float lvl = floor((1.0 + 1.4 * pulse) * 4.0 + 0.5) / 4.0;
@@ -242,12 +263,13 @@ export class LeyLines {
       uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? metresPerArtPixel(map.tuning) : 0.1 },
     };
     this.cur = this.makeSet();
-    this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength, uSketch: { value: new THREE.Vector2() } }); // (never the sketch: lit behind its own pulse)
+    this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength, uSketch: { value: new THREE.Vector2() }, uSpent: { value: 0 } }); // (never the sketch: lit behind its own pulse)
     if (map) this.build(this.ringSet.geo, [new THREE.Vector3(1, 0.7, 0.42), new THREE.Vector3(1, 0.7, 0.42)], [bootPath(map).path]);
     const mpp = this.u.uMpp.value as number;
     this.head = new LeyHead(SPRITE_UNIFORMS.uRes, mpp);
-    this.heads = [this.head, new LeyHead(SPRITE_UNIFORMS.uRes, mpp, 5, 0.6), new LeyHead(SPRITE_UNIFORMS.uRes, mpp), new LeyHead(SPRITE_UNIFORMS.uRes, mpp, 5, 0.6)];
-    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.heads.flatMap(h => h.meshes)];
+    this.heads = [this.head, new LeyHead(SPRITE_UNIFORMS.uRes, mpp), new LeyHead(SPRITE_UNIFORMS.uRes, mpp, 5, 0.6)];
+    this.sparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
+    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.heads.flatMap(h => h.meshes), ...this.sparkler.meshes];
   }
 
   /** The drawn route of the line's links (each from one stone to the next). */
@@ -294,7 +316,7 @@ export class LeyLines {
     // a creature or a hill; and, from the treetops, its wide glow through the crowns.
     const make = (glow: boolean, order: number, through = false) => {
       const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
-        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uThrough: { value: through ? 1 : 0 }, uCurrent: current, uStrength: { value: 1 }, ...extra },
+        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uThrough: { value: through ? 1 : 0 }, uCurrent: current, uStrength: { value: 1 }, uSpent: { value: 1 }, ...extra },
         transparent: true, depthWrite: false, depthTest: !glow, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         ...(through ? { depthFunc: THREE.GreaterDepth, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.EqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp } : {}),
       }));
@@ -456,10 +478,13 @@ export class LeyLines {
   private drawn: DrawnLink[] = [];
   /** How far the line is drawn (links), as last given to grow(); null for all of it. */
   private growTo: number | null = null;
-  /** Its front, a pixel spark (render/leyHead.ts); and the heads of its pulse, and the boot ring's front and pulse. */
+  /** Its front, a pixel spark (render/leyHead.ts); and the boot ring's front and pulse. */
   readonly head: LeyHead;
   private heads: LeyHead[];
+  /** The wave's pulse: a sparkler's burning tip (render/sparkler.ts). */
+  private sparkler: Sparkler;
   private tipColours = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+  private tipPoints: LeyTip[] = this.tipColours.map(colour => ({ x: 0, z: 0, colour, links: 0 }));
   /** The front as last drawn (for tools), or null. */
   tip: LeyTip | null = null;
 
@@ -474,7 +499,9 @@ export class LeyLines {
     const R = this.ringLive, ringOn = !!R && R.pulse !== null;
     const ringTip = ringOn && R!.line < 1 ? this.pointAt(this.ringDrawn, R!.line, time, 2) : null;
     const ringPulse = ringOn ? this.pointAt(this.ringDrawn, R!.pulse!, time, 3) : null;
-    [tip, pulse, ringTip, ringPulse].forEach((t, i) => this.heads[i].update(t, time, beats, i >= 2 ? strength * (R?.strength ?? 0) : strength));
+    const H = this.heads, ringK = strength * (R?.strength ?? 0);
+    H[0].update(tip, time, beats, strength); this.sparkler.update(pulse, time, strength);
+    H[1].update(ringTip, time, beats, ringK); H[2].update(ringPulse, time, beats, ringK);
     this.tip = tip;
     return tip;
   }
@@ -490,7 +517,9 @@ export class LeyLines {
     const dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, d = leyDrift(want, f, k, time);
     const c = this.tipColours[slot].copy(L.from).lerp(L.to, 0.4 + 0.6 * f);
     if (slot % 2 === 1) c.lerp(WHITE, 0.35);
-    return { x: a[0] + dx * u + (-dz / dl) * d, z: a[1] + dz * u + (dx / dl) * d, colour: c, links };
+    const tip = this.tipPoints[slot]; // (one each, filled in place: nothing allocated a frame)
+    tip.x = a[0] + dx * u + (-dz / dl) * d; tip.z = a[1] + dz * u + (dx / dl) * d; tip.colour = c; tip.links = links;
+    return tip;
   }
 }
 
