@@ -16,13 +16,13 @@ export class DolphinView {
   private batch: SpriteBatch | null = null;
   private art: { atlas: Atlas; leap: number; splash: number; frames: number; splashes: number; origins: { x: number; y: number }[] } | null = null;
   private list: SpriteInstance[] = [];
-  constructor(private scene: THREE.Scene, private mpp: number, private style: object) {}
+  constructor(private scene: THREE.Scene, private mpp: number, private style: object, private light?: { lightFloor: number; lightTint: number; lightRim: number }) {}
 
   /** This frame's leaps off the east coast near her (none elsewhere; their timetable: rules/seaLife.ts). `time` is the world's. */
   update(g: Game, b: Beach, time: number): void {
     const leaps = dolphinLeaps(g, b, time);
-    if (!leaps.length) { this.batch?.set([]); return; }
-    const A = this.ensure(), U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, sea = 0; // (heights over the ground: out there it's the sea's surface)
+    if (!leaps.length) { this.list.length = 0; this.batch?.set([]); return; }
+    const A = this.ensure(), U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, sea = (g.tuning.beach as { sea?: number } | undefined)?.sea ?? 0; // (world heights: the ground's height map only covers round her, and these are far out)
     this.list.length = 0;
     for (const L of leaps) this.leap(A, L, (time - L.start) / L.dur, sea, U, R);
     this.batch!.set(this.list);
@@ -48,7 +48,7 @@ export class DolphinView {
     for (let frame = 0; frame < D.splashFrames; frame++) sprites.push(Art.bake((Art.dolphinSplash as unknown as (s: never, o: object) => never)(st, { frame }), col, st, "none") as Baked);
     const atlas = packAtlas(sprites, 512);
     this.art = { atlas, leap: 0, splash: D.frames, frames: D.frames, splashes: D.splashFrames, origins };
-    this.batch = new SpriteBatch(atlas, this.mpp);
+    this.batch = new SpriteBatch(atlas, this.mpp, { absolute: true, rim: true, witchLight: this.light }) // (lit like the beach's witches, a light floor and the moon's rim: far out at sea there's only the moon);
     this.scene.add(...this.batch.meshes);
     return this.art;
   }

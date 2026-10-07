@@ -63,8 +63,8 @@ export class BeachView {
     if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
     this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);
     this.drawDecor(g, b, visible, camera);
-    (this.dolphins ??= new DolphinView(this.scene, this.mpp, this.assets.style)).update(g, b, time); // (off the east coast: render/dolphins.ts)
-    (this.kraken ??= new KrakenView(this.scene, this.mpp, this.assets.style)).update(g, b, time); // (off the west coast: render/kraken.ts)
+    (this.dolphins ??= new DolphinView(this.scene, this.mpp, this.assets.style, this.light)).update(g, b, time); // (off the east coast: render/dolphins.ts)
+    (this.kraken ??= new KrakenView(this.scene, this.mpp, this.assets.style, this.light)).update(g, b, time); // (off the west coast: render/kraken.ts)
     // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
     let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
     for (const s of g.beach ?? []) { const d = (s.x - w.x) ** 2 + (s.z - w.z) ** 2; if (d < sd) { sd = d; spot = s; } }

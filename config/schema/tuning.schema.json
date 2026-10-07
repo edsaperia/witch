@@ -401,7 +401,14 @@
                 "minimum": 0
               }
             },
-            "far": {
+            "ahead": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "out": {
               "type": "array",
               "items": {
                 "type": "number",
@@ -423,7 +430,8 @@
             "every",
             "chance",
             "tentacles",
-            "far",
+            "ahead",
+            "out",
             "time",
             "head"
           ],

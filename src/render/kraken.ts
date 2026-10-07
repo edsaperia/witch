@@ -15,7 +15,7 @@ export class KrakenView {
   private batch: SpriteBatch | null = null;
   private art: { atlas: Atlas; frames: number; heads: number; origins: { x: number; y: number }[] } | null = null;
   private list: SpriteInstance[] = [];
-  constructor(private scene: THREE.Scene, private mpp: number, private style: object) {}
+  constructor(private scene: THREE.Scene, private mpp: number, private style: object, private light?: { lightFloor: number; lightTint: number; lightRim: number }) {}
 
   /** This frame's tentacles off the west coast near her (none elsewhere, and none most of the time; their timetable:
    *  rules/seaLife.ts). `time` is the world's. */
@@ -23,7 +23,7 @@ export class KrakenView {
     const K = krakenRising(g, b, time);
     this.list.length = 0;
     if (K) {
-      const A = this.ensure(), R = SPRITE_UNIFORMS.uRight.value, sea = 0; // (heights over the ground: out there it's the sea's surface)
+      const A = this.ensure(), R = SPRITE_UNIFORMS.uRight.value, sea = (g.tuning.beach as { sea?: number } | undefined)?.sea ?? 0; // (world heights: the ground's height map only covers round her, and these are far out)
       for (const t of K.tentacles) { // each curling away from the middle (mirrored as the screen has it)
         const s = (time - t.start) / t.dur, k = Math.floor(s * A.frames), tx = -(t.z - b.z), tz = t.x - b.x;
         if (s >= 0 && s < 1) this.put(A.atlas.frames[k], A.origins[k], t.x, sea, t.z, t.side < 0 !== (tx * R.x + tz * R.z < 0));
@@ -51,7 +51,7 @@ export class KrakenView {
     for (let frame = 0; frame < D.headFrames; frame++) bakeOf((Art.krakenHead as unknown as (s: never, o: object) => { origin: { x: number; y: number } })(st, { frame }));
     const atlas = packAtlas(sprites, 1024);
     this.art = { atlas, frames: D.frames, heads: D.headFrames, origins };
-    this.batch = new SpriteBatch(atlas, this.mpp);
+    this.batch = new SpriteBatch(atlas, this.mpp, { absolute: true, rim: true, witchLight: this.light }) // (lit like the beach's witches, a light floor and the moon's rim: far out at sea there's only the moon);
     this.scene.add(...this.batch.meshes);
     return this.art;
   }
