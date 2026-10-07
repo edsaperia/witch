@@ -63,7 +63,7 @@ class Layer {
       o.start(now); lfo.start(now); this.nodes.push(o, lfo);
     }
     // the noise bed: wind, water lapping, a stream, the sea far off, or still night air
-    const s = c.createBufferSource(); s.buffer = K.noise; s.loop = true; s.playbackRate.value = N.noise === "stream" ? 1.1 : 0.6;
+    const s = K.loopNoise(N.noise === "stream" ? 1.1 : 0.6);
     this.noiseF = c.createBiquadFilter(); this.noiseG = c.createGain(); this.noiseG.gain.value = 0;
     this.noiseF.type = N.noise === "sea" || N.noise === "air" ? "lowpass" : "bandpass";
     this.noiseF.frequency.value = { wind: 600, water: 450, stream: 1400, sea: 300, air: 900 }[N.noise]; this.noiseF.Q.value = N.noise === "stream" ? 1.4 : 0.6;
@@ -195,9 +195,9 @@ export class Night {
     const am = c.createGain(), lfo = c.createOscillator(), d = c.createGain(); am.gain.value = 0.6; d.gain.value = 0.4;
     lfo.frequency.value = 26 - size * 12; lfo.connect(d); d.connect(am.gain); lfo.start(at); lfo.stop(at + inhale + 0.2);
     bp.connect(am); am.connect(g);
-    const s = c.createBufferSource(); s.buffer = K.noise; s.loop = true; s.connect(bp); s.start(at, Math.random() * 0.5); s.stop(at + inhale + 0.2);
+    const s = K.loopNoise(); s.connect(bp); s.start(at, Math.random() * 0.5); s.stop(at + inhale + 0.2);
     const lp = c.createBiquadFilter(), g2 = c.createGain(); lp.type = "lowpass"; lp.frequency.value = 900 - size * 400;
     g2.gain.value = 0.0001; g2.connect(out); K.env(g2, at + inhale + 0.1, vol * 0.6, 0.15, 1 + size); // (silent until its breath out)
-    const s2 = c.createBufferSource(); s2.buffer = K.noise; s2.loop = true; s2.connect(lp); lp.connect(g2); s2.start(at + inhale, Math.random() * 0.5); s2.stop(at + inhale + 1.4 + size);
+    const s2 = K.loopNoise(); s2.connect(lp); lp.connect(g2); s2.start(at + inhale, Math.random() * 0.5); s2.stop(at + inhale + 1.4 + size);
   }
 }
