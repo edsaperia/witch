@@ -326,7 +326,7 @@ function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces
     const r = Art.pathPieceSprite(d.id, st) as { sp: unknown; origin: { x: number; y: number } };
     pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
-  // Under ?props=gen, each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
+  // With the prop generator (the game always has it on), each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
   if ((st as { propGen?: number }).propGen) for (const id of Art.PATH_GEN_IDS as string[]) for (let k = 0; k < (Art.BRIDGE_VARIANTS as number); k++) {
     const r = Art.pathPieceSprite(`${id}~${k}`, st) as { sp: unknown; origin: { x: number; y: number } };
     pieces.push({ id: `${id}~${k}`, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
@@ -371,7 +371,7 @@ function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; part
   type Def = { id: string; cls: string; light: string | null; frames: number; hang?: boolean };
   const refs = new Set<string>(), palettes = ["neon", "pastel", "metallic", "mixed"];
   for (const d of Art.PARTY_OBJECTS as Def[]) {
-    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only under ?props=gen
+    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only with it (the game always has it on)
     const neons = d.light === "neon" ? (Art.PARTY_LIGHT_NEONS as string[]).map(n => "@" + n) : [""];
     for (const n of neons) for (const p of d.cls === "balloon" ? palettes.map(q => "~" + q) : [""]) refs.add(`party:${d.id}${n}${p}`);
   }

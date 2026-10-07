@@ -325,7 +325,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     for (const c of inLane) expect(hits.get(c.id), c.species).toBe(1);
     expect(hits.get(target.id) ?? 0).toBeLessThanOrEqual(1);
     expect(witchHits).toBe(1);
-    expect(Math.abs(g.witch.z - z0)).toBeGreaterThan(LEGENDS.charge.knockback * 0.3); // (knocked aside, off its lane)
+    expect(Math.hypot(g.witch.x - x0, g.witch.z - z0)).toBeGreaterThan(LEGENDS.charge.knockback * 0.3); // (thrown, away from it: aside or on along its lane, by where it caught her)
   }, 120000);
   it("curves toward its target, brakes in a wide arc past it, walks home, and charges again only once it's back", () => {
     const { g, L, target } = angryBoar(70);

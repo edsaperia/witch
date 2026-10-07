@@ -31,7 +31,6 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
-  const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
   const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
   const stone = (x: number, z: number, species: string, level: number, y = 0) => {
     const frame = v.markerArt.atlas.frames[v.markerArt.frame(species, level)];
@@ -57,8 +56,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     const A = R.awake, D = R.dormant;
     const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
     if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
-    // Awake: a column of light (column), a thin laser straight up (beam), or both (Ed, v149: "let's
-    // see both"); dormant: only the faint column above the canopy. The beams grow as the
+    // Awake: a column of light and a thin laser straight up (Ed, v149: "let's see both"); dormant:
+    // only the faint column above the canopy. The beams grow as the
     // countdown to the stone's wake runs (Ed, 2026-10-04): the next stone's from half to full,
     // the after-next's up to half.
     const grow = m.stage === "next" ? 0.5 + 0.5 * build : m.stage === "afterNext" ? 0.15 + 0.35 * build : 1;
@@ -68,8 +67,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     if (!shown) continue;
     const { up, flare } = shown;
     if (flare > 0) near.push({ d: d - 1e3, l: { x: m.x, y: 3, z: m.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * flare } });
-    if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: (m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam) * (1 + 2 * flare), base: top, height: R.beamHeight * grow * up });
-    if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow * up, base: top });
+    beacons.push({ x: m.x, z: m.z, colour: col, strength: (m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam) * (1 + 2 * flare), base: top, height: R.beamHeight * grow * up });
+    if (m.awake) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow * up, base: top });
     if (m.awake) {
       const n = Math.round(A.motes + A.moteBuild * build);
       for (let i = 0; i < n; i++) {

@@ -9,8 +9,7 @@
 // the stones between them reversed, 2-opt, and a stone whose links still meet another's moved to
 // wherever they cross fewest); then a few crossings added (addCrossings) within Ed's rules
 // (CROSSING_RULES: at most 4, none the pulse would pass over already drawn ahead of it, 350 m apart).
-// ?route=varied gives the order before it (variedOrder: petals round home, then sweeps, lobes or
-// combs). Past the rules, the noisy picker's order untangled instead. Seeded only by the map; no
+// Past the rules, the noisy picker's order untangled instead. Seeded only by the map; no
 // drawing here.
 import type { ForestMap } from "./map";
 import { departureClear, departureRoute } from "./departure";
@@ -49,6 +48,10 @@ export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () 
       let dip = routeShape(map, r.stones).lateDip;
       for (const o of others()) { const q = planRoute(map, o), d = routeShape(map, q.stones).lateDip; if (d < dip - 1 && withinCrossingRules(q.links)) { r = q; dip = d; } }
     }
+    // A link straight over the dancefloor (Ed, 2026-10-06: never; a smaller map's first ring can leave a gap round home
+    // that the spiral jumps across): the other orders planned, the first that keeps clear of it and Ed's crossing rules kept.
+    const overIt = (q: LeyRoute) => q.stones.some((s, i) => i > 0 && overHome(map, q.stones[i - 1], s));
+    if (others && overIt(r)) for (const o of others()) { const q = planRoute(map, o); if (!overIt(q) && withinCrossingRules(q.links) && routeShape(map, q.stones).lateDip <= SPIRAL_RULES.maxDip) { r = q; break; } }
     if (finish && withinCrossingRules(r.links)) r = finish(r);
     if (fallback && !withinCrossingRules(r.links)) r = planRoute(map, fallback());
     r = curved(map, r);
@@ -358,65 +361,6 @@ export function addCrossings(map: ForestMap, route: LeyRoute): LeyRoute {
     if (!kept) break;
   }
   return { order: keys, stones: st, links: linksOf(st) };
-}
-
-/** A varied order to start from (Ed, 2026-10-06: "mix in back-and-forth sweeps and lobes so maps aren't
- *  all spirals"), seeded by the map: first petals round home (lobes: wedges of random width, out along
- *  one half and back along the other, to a random reach), then the rest of the map in a few sectors
- *  round it, each filled one of three ways: sweeps (back and forth round in bands, each band the other
- *  way), lobes (narrower petals), or a comb (out and back in, stepping round); which way round home it
- *  goes and where it starts, seeded too. */
-export function variedOrder(map: ForestMap): string[] {
-  const R = rng(map.seed * 6151 + 29), d = map.dancefloor, home = `${map.centreCell[0]},${map.centreCell[1]}`, TAU = Math.PI * 2;
-  const wrap = (a: number) => ((a % TAU) + TAU) % TAU;
-  type Pt = { k: string; r: number; a: number };
-  const all: Pt[] = [];
-  for (const [x, y] of map.cells) { // (the playable areas: never the circular map's buffer ring)
-    const k = `${x},${y}`;
-    if (k === home) continue;
-    const q = map.soundsystemSpot(x, y);
-    all.push({ k, r: Math.hypot(q.x - d.x, q.z - d.z), a: Math.atan2(q.x - d.x, q.z - d.z) });
-  }
-  const near = all.filter(p => map.neighbours.get(home)?.has(p.k)), ring = near.length ? near.reduce((t, p) => t + p.r, 0) / near.length : map.areaSize;
-  const seeded = R() * TAU, dir = R() < 0.5 ? 1 : -1;
-  // (the first petal starts just before the first of home's neighbours round from the seeded angle, so the route always leaves from beside home)
-  const first = near.length ? near.reduce((m, p) => (wrap(dir * (p.a - seeded)) < wrap(dir * (m.a - seeded)) ? p : m)) : null;
-  const a0 = first ? first.a - dir * 1e-3 : seeded, rel = (p: Pt) => (dir > 0 ? wrap(p.a - a0) : wrap(a0 - p.a));
-  const out: string[] = [], used = new Set<string>();
-  const take = (list: Pt[]) => { for (const p of list) if (!used.has(p.k)) { used.add(p.k); out.push(p.k); } };
-  const petal = (ps: Pt[], from: number, w: number) => {
-    const mid = from + w / 2, q = ps.filter(p => !used.has(p.k) && rel(p) >= from && rel(p) < from + w);
-    take(q.filter(p => rel(p) < mid).sort((u, v) => u.r - v.r));
-    take(q.filter(p => rel(p) >= mid).sort((u, v) => v.r - u.r));
-  };
-  // Petals round home.
-  const inner = 1.4 + R() * 1.4;
-  for (let at = 0; at < TAU - 0.3; ) {
-    const w = Math.min(TAU - at, 0.6 + R() * 1.2), reach = ring * (inner + R() * 2.2);
-    petal(all.filter(p => p.r <= reach), at, w);
-    at += w;
-  }
-  // The rest, sector by sector.
-  const sectors = 2 + Math.floor(R() * 3), bounds: number[] = [];
-  for (let i = 0; i < sectors; i++) bounds.push((i / sectors) * TAU + (R() - 0.5) * 0.6);
-  bounds.push(TAU);
-  for (let i = 0; i < sectors; i++) {
-    const lo = Math.max(0, bounds[i]), hi = bounds[i + 1], ps = all.filter(p => !used.has(p.k) && rel(p) >= lo && rel(p) < hi);
-    if (!ps.length) continue;
-    const kind = Math.floor(R() * 3);
-    if (kind === 0) { // sweeps
-      const band = ring * (0.9 + R() * 0.6), rmin = Math.min(...ps.map(p => p.r)), bands = new Map<number, Pt[]>();
-      for (const p of ps) { const b = Math.floor((p.r - rmin) / band); let l = bands.get(b); if (!l) bands.set(b, (l = [])); l.push(p); }
-      [...bands.keys()].sort((u, v) => u - v).forEach((b, j) => take(bands.get(b)!.sort((u, v) => (j % 2 ? rel(v) - rel(u) : rel(u) - rel(v)))));
-    } else if (kind === 1) { // lobes
-      for (let s = lo; s < hi - 1e-6; ) { const w = Math.min(hi - s, 0.3 + R() * 0.5); petal(ps, s, w); s += w; }
-    } else { // a comb
-      const step = 0.12 + R() * 0.12;
-      for (let s = lo, j = 0; s < hi - 1e-6; s += step, j++) take(ps.filter(p => !used.has(p.k) && rel(p) >= s && rel(p) < s + step).sort((u, v) => (j % 2 ? v.r - u.r : u.r - v.r)));
-    }
-  }
-  take(all.filter(p => !used.has(p.k)).sort((u, v) => rel(u) - rel(v)));
-  return out;
 }
 
 const TRIES = 30;

@@ -261,7 +261,7 @@ export class PathNetwork {
         }
       }
     });
-    // Fingerposts (the prop generator's, under ?props=gen): where a footpath comes into an area's clearing, by its side (a dead
+    // Fingerposts (the prop generator's, paths.fingerposts: the game always has it on): where a footpath comes into an area's clearing, by its side (a dead
     // end's far end leads nowhere, so none there). Last, so they never take another piece's place.
     if (T.fingerposts) this.lines.forEach(l => {
       if (l.kind !== "path" || l.pts.length < 3) return;
