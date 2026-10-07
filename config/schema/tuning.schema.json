@@ -6880,6 +6880,18 @@
         "outer": {
           "type": "number",
           "minimum": 0
+        },
+        "ragged": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lead": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -6887,7 +6899,10 @@
         "edge",
         "whole",
         "wobble",
-        "outer"
+        "outer",
+        "ragged",
+        "spread",
+        "lead"
       ],
       "additionalProperties": false
     },
