@@ -1,10 +1,9 @@
 // The scenery rebuild (from render/view.ts, issue #122): trees, undergrowth, walls, set pieces, decor,
 // path pieces, relics, grounds and scenes round the camera, rebuilt once it has moved, turned or zoomed.
-import * as THREE from "three";
 import type { Frame, Piece, RelicArt } from "../artBuild";
 import { LIGHT_UNIFORMS } from "../lighting";
 import type { Plant } from "../../rules/forest";
-import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
+import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "../sprites";
 import type { ShadowInstance } from "../shadows";
 import type { TypeArt } from "../assets";
 import { hash2 } from "../../rules/random";
@@ -216,9 +215,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     }
     v.batchFor(v.decorBatches, "relics", () => new SpriteBatch(ra.atlas, mpp, { scenery: true, fade: true }))?.set(upright);
     v.batchFor(v.decorBatches, "decals", () => {
-      const b = new SpriteBatch(ra.atlas, mpp, { scenery: true, flat: true });
-      for (const m of b.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; } // right after the ground, under everything standing
-      return b;
+      return asFloor(new SpriteBatch(ra.atlas, mpp, { scenery: true, flat: true })); // right after the ground, under everything standing
     })?.set(flat);
   }
   // Scenes (Ed, 2026-10-04): each a few pieces standing round its middle, as authored or
@@ -247,9 +244,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     }
     v.batchFor(v.decorBatches, "scenes", () => new SpriteBatch(sa.atlas, mpp, { scenery: true, fade: true }))?.set(upright);
     v.batchFor(v.decorBatches, "sceneDecals", () => {
-      const b = new SpriteBatch(sa.atlas, mpp, { scenery: true, flat: true });
-      for (const m of b.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; }
-      return b;
+      return asFloor(new SpriteBatch(sa.atlas, mpp, { scenery: true, flat: true }));
     })?.set(flat);
   }
   if (sliceDone()) { yield; resume(); }

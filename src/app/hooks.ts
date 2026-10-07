@@ -5,6 +5,7 @@ import { setupArena } from "../rules/arena";
 import { cellKey } from "../rules/party";
 import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STEP, stepGame, type Game } from "../rules/game";
 import { AREA_TYPES } from "../rules/map";
+import { musicCue, type MusicCue } from "../rules/musicPlan";
 import type { Tuning } from "../rules/tuning";
 import type { Bot } from "../rules/bot";
 import type { View } from "../render/view";
@@ -25,6 +26,7 @@ export interface HookDeps {
 }
 
 export function installHooks({ game, view, tuning, hud, sound, meter, shake, loadTimes, loop }: HookDeps): void {
+  let soundCue: MusicCue | undefined; // (the audit's own: the loop keeps its own cue)
   const applyShake = () => shake.apply();
   (window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
@@ -37,7 +39,10 @@ export function installHooks({ game, view, tuning, hud, sound, meter, shake, loa
     /** The bot game's bot and its tag (rules/bot.ts, ui/botGame.ts), null in a game of her own: tools drive it a frame at a time. */
     get bot() { return loop.bot; }, get botTag() { return loop.botTag; },
     /** A debug hook (tools/sfx/live.cjs): the audio context, the music and the sound effects. */
-    get audio() { return { ctx: sound.audio, music: sound.music, sfx: sound.sfx, mends: sound.watchdog?.mends ?? [], meter }; },
+    get audio() { return { ctx: sound.audio, music: sound.music, sfx: sound.sfx, cues: sound.sfxCues, mends: sound.watchdog?.mends ?? [], meter }; },
+    /** A debug hook (tools/sfx/audit.cjs): the sound's own work for one frame as the real loop does it (the music's cue,
+     *  the mix, the music and the cues), for a tool driving the rules a frame at a time (manual) with no picture. */
+    soundFrame: () => { soundCue = musicCue(game, soundCue); sound.update(game, soundCue, false); },
     /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
      *  fixed steps, the render eased between the last two, the camera's sub-pixel glide), then where
      *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):
