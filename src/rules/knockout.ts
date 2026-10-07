@@ -3,9 +3,11 @@
 // hit. At none she's knocked out: she collapses where she is (no more hits, no input), her sigil
 // stack comes down from the bottom up, one every releaseEach seconds, each sigil put down where
 // its animal stands (#87, Ed 2026-10-05: leashed is for good, so they stay hers as a parked
-// group); then she sparkles out and back in at the treehouse, where she scratches behind her decks for knockout.respawn
-// seconds before she can move (Ed, 2026-10-07: "Every time she respawns she could do a bit of scratching to increase the
-// respawn time": a knockdown costs time, while her army fights on without her). No drawing here.
+// group). One timeline (Ed, 2026-10-07), the whole wait counted from her going down (knockout.respawn: short, longer for
+// knockdowns close together, back to base after a cooldown): her hat floats to the ground (knockout.hatFloat, the screen
+// dimmed, a sad trumpet; if she had one to drop), she sparkles out and back in behind her decks, and scratches there for the
+// rest of the wait ("Every time she respawns she could do a bit of scratching to increase the respawn time"), her army
+// fighting on without her; then she can move. No drawing here.
 import type { ForestMap } from "./map";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
 import { letPartyLegendGo, type LeashState } from "./leash";
@@ -27,11 +29,17 @@ export interface Knockout {
   order: number[];
   times: number[];
   released: number;
-  /** Game time the teleport starts (after the last sigil), and ends (she's in at the treehouse). */
+  /** Game time her hat has floated to the ground (Ed, 2026-10-07: the screen dimmed, a sad trumpet; knockout.hatFloat), or `at`
+   *  if she had no hat to drop. */
+  floatUntil: number;
+  /** Game time the teleport starts (after the hat's float and the last sigil), and ends (she's in at the treehouse). */
   teleportAt: number;
   inAt: number;
-  /** Game time she can move again: after her scratching behind her decks (knockout.respawn seconds from inAt). */
+  /** Game time she can move again: after her scratching behind her decks, the whole wait (knockout.respawn: base, a step
+   *  more for each knockdown within cooldown of the last, to max) counted from `at`, and at least minScratch of scratching. */
   backAt: number;
+  /** Knockdowns in a row, each within knockout.respawn.cooldown of the last (0 the first). */
+  streak: number;
   /** She's sparkled out, and been moved to the treehouse, behind her decks (halfway through the teleport). */
   out: boolean;
   moved: boolean;
@@ -57,14 +65,32 @@ export function repair(h: Health, time: number, t: Tuning): void {
   if (time >= h.repairAt) { h.hp += 1; h.repairAt = h.hp >= t.witchHealth.hits ? Infinity : time + t.witchHealth.repairTime; }
 }
 
-/** She goes down: plan the release of her stack, bottom first (legends kept if they're loyal). */
-export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning): Knockout {
-  const K = t.knockout, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND && !creatures[id].partyLegend)); // (a party legend is always let go: it doesn't move)
+/** The respawn wait's knobs (knockout.respawn), none: no wait. */
+const RESPAWN_NONE = { base: 0, step: 0, max: 0, cooldown: 0, minScratch: 0 };
+
+/** Knockdowns in a row at `time`: one more than the last if it was within the cooldown, else 0. */
+export const nextStreak = (last: { n: number; at: number } | null | undefined, time: number, t: Tuning): number =>
+  last && time - last.at < (t.knockout.respawn ?? RESPAWN_NONE).cooldown ? last.n + 1 : 0;
+
+/** The whole wait (s) from going down to moving again, for a knockdown with `streak` before it (Ed, 2026-10-07: "any more than
+ *  about six seconds to wait will be frustrating. We could alternatively make each successive death a bit longer, with a
+ *  cooldown, to punish rapid dying"). */
+export function respawnWait(streak: number, t: Tuning): number {
+  const R = t.knockout.respawn ?? RESPAWN_NONE;
+  return Math.min(Math.max(R.base, R.max), R.base + R.step * streak);
+}
+
+/** She goes down: her hat floats down if it dropped (hatFloats), then her stack is let go, bottom first (legends kept if
+ *  they're loyal), then the teleport home and her scratching behind her decks for the rest of the wait. */
+export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning, o: { hatFloats?: boolean; streak?: number } = {}): Knockout {
+  const K = t.knockout, R = K.respawn ?? RESPAWN_NONE, streak = o.streak ?? 0, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND && !creatures[id].partyLegend)); // (a party legend is always let go: it doesn't move)
   const each = K.releaseMax > 0 && order.length * K.releaseEach > K.releaseMax ? K.releaseMax / order.length : K.releaseEach;
   const times = order.map((_, i) => time + (i + 1) * each);
-  const teleportAt = order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat;
+  const floatUntil = time + (o.hatFloats ? K.hatFloat ?? 0 : 0);
+  const teleportAt = Math.max(floatUntil, order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat);
   const inAt = teleportAt + K.teleport;
-  return { at: time, order, times, released: 0, teleportAt, inAt, backAt: inAt + Math.max(0, K.respawn ?? 0), out: false, moved: false };
+  const backAt = Math.max(inAt + R.minScratch, time + respawnWait(streak, t));
+  return { at: time, order, times, released: 0, floatUntil, teleportAt, inAt, backAt, streak, out: false, moved: false };
 }
 
 /** Put a carried sigil down where its animal stands (a little aside if another sigil is there): it stays hers, parked. */

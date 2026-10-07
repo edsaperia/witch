@@ -1719,9 +1719,42 @@
         "dropHat": {
           "type": "boolean"
         },
-        "respawn": {
+        "hatFloat": {
           "type": "number",
           "minimum": 0
+        },
+        "respawn": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 0
+            },
+            "step": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cooldown": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minScratch": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "base",
+            "step",
+            "max",
+            "cooldown",
+            "minScratch"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -1731,6 +1764,7 @@
         "teleport",
         "legendsLoyal",
         "dropHat",
+        "hatFloat",
         "respawn"
       ],
       "additionalProperties": false
