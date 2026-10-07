@@ -33,8 +33,6 @@ const CSS = `
 #creator .px-panel::-webkit-scrollbar { width: ${u(3)}; }
 #creator .px-panel::-webkit-scrollbar-track { background: #1d1229; }
 #creator .px-panel::-webkit-scrollbar-thumb { background: ${GOLD_D}; }
-#creator .px-head { font-size: ${u(8)} !important; line-height: ${u(10)}; color: ${GOLD}; margin: 0 0 ${u(1)} !important; }
-#creator .px-intro { opacity: .75; margin: 0 0 ${u(4)}; line-height: ${u(9)}; }
 #creator fieldset { border: ${u(1)} solid ${GOLD_D} !important; margin: 0 0 ${u(3)} !important; padding: ${u(1)} ${u(4)} ${u(3)} !important; }
 #creator legend { padding: 0 ${u(2)} !important; display: flex; align-items: center; gap: ${u(2)}; color: ${GOLD} !important; }
 #creator legend .px-icon { width: ${u(11)}; height: ${u(11)}; }

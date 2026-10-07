@@ -595,6 +595,86 @@
       ],
       "additionalProperties": false
     },
+    "wisps": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "cell": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyNear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyFar": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "period": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "halo": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "cell",
+        "reach",
+        "chance",
+        "partyNear",
+        "partyFar",
+        "height",
+        "drift",
+        "period",
+        "size",
+        "halo",
+        "hue",
+        "sat",
+        "bright"
+      ],
+      "additionalProperties": false
+    },
     "glades": {
       "type": "object",
       "properties": {
@@ -1819,6 +1899,10 @@
             "minScratch"
           ],
           "additionalProperties": false
+        },
+        "candleStep": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -1830,7 +1914,8 @@
         "dropHat",
         "hatFloat",
         "dim",
-        "respawn"
+        "respawn",
+        "candleStep"
       ],
       "additionalProperties": false
     },
@@ -2758,6 +2843,33 @@
         "radius",
         "curious",
         "skittish"
+      ],
+      "additionalProperties": false
+    },
+    "wildWatch": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0
+        },
+        "forget": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hangBack": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "time",
+        "forget",
+        "hangBack"
       ],
       "additionalProperties": false
     },
@@ -7885,6 +7997,7 @@
     "areaEdgeBlend",
     "groundBlend",
     "ground",
+    "wisps",
     "glades",
     "treehouse",
     "home",
@@ -7945,6 +8058,7 @@
     "attackFx",
     "combat",
     "notice",
+    "wildWatch",
     "naps",
     "guard",
     "population",
@@ -7994,6 +8108,7 @@
     "moon",
     "glowReach",
     "sigilSpill",
+    "combatLight",
     "nightLight",
     "glowFalloff",
     "glowNear",
