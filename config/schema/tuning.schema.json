@@ -6903,6 +6903,65 @@
       ],
       "additionalProperties": false
     },
+    "fireworks": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "shells": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "over": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "height": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "radius": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "finale": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "shells",
+        "over",
+        "rise",
+        "height",
+        "radius",
+        "drift",
+        "finale"
+      ],
+      "additionalProperties": false
+    },
     "combatLight": {
       "type": "object",
       "properties": {
@@ -8309,6 +8368,7 @@
     "moon",
     "glowReach",
     "sigilSpill",
+    "fireworks",
     "combatLight",
     "nightLight",
     "glowFalloff",
