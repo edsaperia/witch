@@ -7,8 +7,10 @@
 // When: from the first whole beat after the party spell's burst (party.spellAt + PARTY_CAST), once through; and through the
 // wait behind her decks after a knockout (the hotel builder's knockout.respawn, rules/knockout.ts: from the first whole beat
 // after she's back, ko.inAt, to ko.backAt, about 1.5 to 7 s): the needle's still down, so straight into the scratch and
-// chirp bars, round again if it's long, cut short to throw her hand up on the beat before it ends. Only while she's at the decks (seated): if she steps off mid-routine it stops. Nothing
-// here holds her (the wait is the rules' own).
+// chirp bars, round again if it's long, cut short to throw her hand up on the beat before it ends. Only while she's at the
+// decks (seated): if she steps off mid-routine it stops. After the party spell she's held at the decks till its end (Ed,
+// 2026-10-07: "the first music starts straight after the needle-drop routine ... She IS held at the decks until it ends";
+// heldByRoutine, rules/game.ts), the music dropping then (djIntroEnd: the music builder's); a knockdown's wait is the rules' own.
 // Pure: game time in, game time out.
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { PARTY_CAST, type PartyState } from "./party";
@@ -59,6 +61,16 @@ function runAt(g: Game, time: number): { start: number; end: number; loop: boole
   let best: { start: number; end: number; loop: boolean } | null = null;
   for (const r of runs(g)) if (time >= r.start && time < r.end && (!best || r.start > best.start)) best = r;
   return best;
+}
+/** When the routine after the party spell ends (a game time; the first music drops then), or null without the spell. */
+export function djIntroEnd(g: Game): number | null {
+  const r = runs(g).find(x => !x.loop);
+  return r ? r.end : null;
+}
+/** Held at the decks from the party spell to its routine's end (the spell's own hold covers its burst: rules/party.ts). */
+export function heldByRoutine(g: Game, time: number): boolean {
+  const sp = g.party.spellAt, end = djIntroEnd(g);
+  return typeof sp === "number" && end !== null && time >= sp && time < end;
 }
 /** The start of the routine she's in at `time` (a game time), or null: not at the decks, or not in one. */
 export const djRoutineStart = (g: Game, time: number): number | null => runAt(g, time)?.start ?? null;

@@ -527,11 +527,44 @@
             "shade"
           ],
           "additionalProperties": false
+        },
+        "layout": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dip": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trees": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "rise",
+            "dip",
+            "reach",
+            "trees"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "relief",
-        "hills"
+        "hills",
+        "layout"
       ],
       "additionalProperties": false
     },

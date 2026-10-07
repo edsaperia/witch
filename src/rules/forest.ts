@@ -8,6 +8,7 @@ import { AREA_TYPES, HOME_LOOK, type AreaLayout, type ForestMap, type LegendClea
 import { DECOR } from "../../art/decor.js";
 import { floorClearing } from "./speakers";
 import { beachOf } from "./mapShape";
+import { lowlandDensity } from "./terrain";
 import { RELICS } from "../../art/relics.js";
 import { COUNTRY } from "../../art/country.js";
 
@@ -67,7 +68,7 @@ export function treeChance(map: ForestMap, x: number, z: number, type: number): 
   if (along === 0) return 0;
   const n = vnoise(x / D.patchScale, z / D.patchScale, s + 91);
   const patch = D.patchMin + (D.patchMax - D.patchMin) * smoothstep((n - 0.25) / 0.5);
-  const w = map.treeWeight(x, z) * L.density * patch * patternMask(map, x, z, L) * t.treeDensity;
+  const w = map.treeWeight(x, z) * L.density * patch * patternMask(map, x, z, L) * t.treeDensity * lowlandDensity(map, x, z); // (thicker in the hollows: rules/terrain.ts)
   return (w >= D.lone ? w : Math.max(w, D.lone * map.arenaOpen(x, z))) * along; // (no lone trees in an area's arena)
 }
 
