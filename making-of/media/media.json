@@ -1994,5 +1994,29 @@
   "caption": "The edge of a legend's circle: a 💌 that leaves it vanishes in a sparkle.",
   "chapter": "builders",
   "pr": 307
+ },
+ {
+  "src": "media/builders/golf-norway-treetops.webp",
+  "caption": "Norway's crowns, before and after: straight-line gaps where half-faded crowns wrote depth, then whole.",
+  "chapter": "builders",
+  "pr": 373
+ },
+ {
+  "src": "media/builders/golf-norway-ground.webp",
+  "caption": "The Norway forest's firs, before (no trunks) and after.",
+  "chapter": "builders",
+  "pr": 373
+ },
+ {
+  "src": "media/builders/golf-canopy-hole-walk.webp",
+  "caption": "The canopy's hole round the witch, ragged, drifting and organic, following her through the treetops.",
+  "chapter": "builders",
+  "pr": 357
+ },
+ {
+  "src": "media/builders/golf-test-wolves.webp",
+  "caption": "A slot for hand-drawn sprites, proved with a herd of deliberately silly blue test wolves among the rigged foxes.",
+  "chapter": "builders",
+  "pr": 400
  }
 ]
