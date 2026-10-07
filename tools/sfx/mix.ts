@@ -123,6 +123,8 @@ const SCENES: Scene[] = [
       { at: 26, g: "a restless legend calls (near)", play: s => s.lament(v("elk", 3), 0.3, -0.5, 1) },
       { at: 32, g: "a restless legend calls (far, urgent)", play: s => s.lament(v("owl", 3), 0.9, 0.8, 0.35) },
       ...series(0, 270, 0.1, "by a pond", (s, i) => s.pond(Math.min(1, i / 20), -0.4)),
+      ...series(0, 120, 0.1, "the area's ambience (old oaks)", (s, i) => s.ambience("oaks", Math.min(1, i / 20))),
+      ...series(12, 120, 0.1, "the area's ambience (standing stones)", (s, i) => s.ambience(i < 118 ? "stones" : null, i < 118 ? 1 : 0)),
     ],
     sounds: [
       { g: "legend moans", kind: "ambience", at: 0, len: 4 },
@@ -138,6 +140,8 @@ const SCENES: Scene[] = [
       { g: "a restless legend calls (near)", kind: "call", at: 26, len: 4 },
       { g: "a restless legend calls (far, urgent)", kind: "call", at: 32, len: 4 },
       { g: "by a pond", kind: "ambience", at: 3, len: 20 },
+      { g: "the area's ambience (old oaks)", kind: "ambience", at: 3, len: 8 },
+      { g: "the area's ambience (standing stones)", kind: "ambience", at: 14, len: 9 },
     ],
   },
   {
