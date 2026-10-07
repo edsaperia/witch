@@ -31,6 +31,8 @@ export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
   private rigs = new Map<string, RigArt>();
+  /** Each species' genome hash, once a load (the records don't change in the game; hashing one every rigged creature's every frame was a top allocator). */
+  private rigHashes = new Map<string, string>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
   private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
@@ -252,7 +254,9 @@ export class AssetLibrary {
   rigArt(species: string, level: number, gear?: RigGear): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
     const g = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
     if (!g) return undefined;
-    const k = `rig-${species}-${level}-${Art.genomeHash(g)}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
+    let hash = this.rigHashes.get(species);
+    if (hash === undefined) this.rigHashes.set(species, (hash = Art.genomeHash(g)));
+    const k = `rig-${species}-${level}-${hash}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
     if (a) { a.used = performance.now(); return a; }
     this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
