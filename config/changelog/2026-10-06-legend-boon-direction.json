@@ -1,4 +1,4 @@
-{ "version": null, "items": [
+{ "version": 1633, "items": [
   "A legend's circle now tells you what its boon is (its name, what it does, and its sigil, as on the buff bar)",
   "A dreaming legend's bubble points the way to the nearest area where the animal it dreams of lives: a pixel arrow on its edge and the direction and distance under the sigil, kept up as you move"
 ] }
