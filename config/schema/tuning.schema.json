@@ -4440,6 +4440,10 @@
             "hype": {
               "type": "number",
               "minimum": 0
+            },
+            "needle": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -4447,7 +4451,8 @@
             "scratch",
             "hiss",
             "stroke",
-            "hype"
+            "hype",
+            "needle"
           ],
           "additionalProperties": false
         },
@@ -7890,6 +7895,7 @@
     "moon",
     "glowReach",
     "sigilSpill",
+    "combatLight",
     "nightLight",
     "glowFalloff",
     "glowNear",
