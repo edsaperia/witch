@@ -10,17 +10,12 @@
 //   pillar:        a carved stone pillar on a plinth, fluted, lichen-covered (o.broken: snapped off, a drum fallen beside it; o.lean)
 //   spire:         a natural rock pillar, a sea-stack in the woods: banded rock, mossy ledges, ferns on top (o.twin: two)
 //   stalagmite:    a great dripping stalagmite with smaller ones round its foot
-import { M, Sprite, hsv2rgb, hash2 } from "./core.js";
+import { M, Sprite, hsv2rgb, hash2, cropKeepBottom } from "./core.js";
 import { Model, render } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 
 export const TALL_KINDS = ["snag", "cairn", "standingstone", "pillar", "spire", "stalagmite"];
 const tlHash = (a, b = 0, c = 0) => hash2(Math.floor(a * 1000), Math.floor(b * 1000), 4401 + c);
-function tlCrop(sp) {
-  let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
-  const out = new Sprite(x1 - x0 + 1, sp.h - y0); for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) { const i = (y + y0) * sp.w + x + x0; if (sp.m[i]) out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
-  return out;
-}
 // lean a point about the foot (radians, towards +x)
 const tlLean = (a) => p => [p[0] * Math.cos(a) + p[1] * Math.sin(a), -p[0] * Math.sin(a) + p[1] * Math.cos(a), p[2]];
 
@@ -78,7 +73,7 @@ const TL_DRAW = { snag: tlSnag, cairn: tlCairn, standingstone: tlStanding, pilla
 // One tall piece: { sp, colours, metres: { height, width } }. r: the area's random stream (variants); def: the area (its leaf hue).
 export function tallPiece(kind, o, def, st, r, ppm = 16) {
   const m = new Model({ blend: .05 }); TL_DRAW[kind](m, r, o);
-  const sp = tlCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp), leaf = def.leaf ?? .28;
+  const sp = cropKeepBottom(render(m, { scale: witchPixelsPerUnit(st) }).sp).sp, leaf = def.leaf ?? .28;
   const colours = { [M.STONE]: hsv2rgb(.09, .07, .58), [M.STONED]: hsv2rgb(.62, .1, .34), [M.BELLY]: hsv2rgb(.14, .15, .78), [M.MOSS]: hsv2rgb(leaf, .5, .4), [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .6),
     [M.TRUNK]: hsv2rgb(.07, .2, .36), [M.BARKD]: hsv2rgb(.06, .25, .18), [M.BARKL]: hsv2rgb(.08, .15, .52), [M.FLOWER]: [196, 150, 96], [M.BODY2]: [52, 70, 86], [M.NOSE]: [20, 16, 24], [M.LINE]: [24, 22, 30] };
   if (kind === "snag") colours[M.BELLY] = [214, 196, 160]; // its pale splintered wood and the fungi's rims

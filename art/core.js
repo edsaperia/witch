@@ -17,6 +17,14 @@ export const uni = (r, a, b) => a + (b - a) * r();
 export const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
 export function gauss(r) { return Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r()); }
 export function hash2(x, y, s) { let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(s | 0, 2147483647); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+// A quick hash of one or two numbers to [0, 1) (the sine trick), for seeded detail in the generators.
+export const sinHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+// One of a list of [value, weight] pairs, picked by weight.
+export const pickByWeight = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
+// The hash of the k-to-a-metre cell a 3D point is in, for blotchy paint (lichen, moss, rust).
+export const cellHash = (p, k, seed) => hash2(Math.floor(p[0] * k + 500), Math.floor(p[1] * k + 500) + Math.floor(p[2] * k + 500) * 131, seed);
+// A vector scaled to length 1 (left as it is if it has none).
+export const unitVec = v => { const l = Math.hypot(...v) || 1; return v.map(x => x / l); };
 export function vnoise(x, y, s) { // smooth value noise, for clumpy foliage
   const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
   const a = hash2(xi, yi, s), b = hash2(xi + 1, yi, s), c = hash2(xi, yi + 1, s), d = hash2(xi + 1, yi + 1, s);
@@ -81,6 +89,10 @@ export function runeGlyph(u, v, k, w = .12) {
 }
 // Glowing materials (alpha 254, drawn unlit): only magical light. Flowers, webs and cotton are lit like
 // the rest of a plant (Ed's playtest: glowing gorse flowers floated over bushes the night hid).
+// A material by its name or number.
+export const matOf = name => (typeof name === "number" ? name : M[name]);
+// A glowing ball (an extra, drawn over the model): lamps, sparks, magic.
+export const glowBall = (m, c, r, g, mat = M.MAGIC) => m.ell(c, [r, r, r], mat, { group: g, extra: true });
 export const EMISSIVE = new Set([M.GLINT, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW, M.COLLAR, M.WOKEN]);
 
 // ================= geometry: smooth outlines =================
@@ -301,6 +313,22 @@ export class Sprite {
     this.fillMask(mask, M.BODY, { round, depth: 2.5 });
     for (const [i, m] of mats) this.m[i] = m;
   }
+}
+
+// A sprite cropped to its drawn pixels, keeping its bottom rows (it stands on its frame's bottom): { sp, x0, y0 }, where it was cut.
+export function cropKeepBottom(sp) {
+  let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+  const out = new Sprite(x1 - x0 + 1, sp.h - y0); for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) { const i = (y + y0) * sp.w + x + x0; if (sp.m[i]) out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
+  return { sp: out, x0, y0 };
+}
+// A sprite cropped tight to its drawn pixels on every side, groups kept: { sp, x0, y0 } (an empty one as it is, at 0, 0).
+export function cropTight(sp) {
+  let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < 0) return { sp, x0: 0, y0: 0 };
+  const out = new Sprite(x1 - x0 + 1, y1 - y0 + 1);
+  for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) { const i = (y + y0) * sp.w + x + x0; if (sp.m[i]) { out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); out.g[y * out.w + x] = sp.g[i]; } }
+  return { sp: out, x0, y0 };
 }
 
 // ================= sprite -> albedo + normal images =================

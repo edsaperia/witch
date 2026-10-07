@@ -10,7 +10,7 @@
 // And the fingerposts where a footpath comes into an area's clearing (rules/paths.ts, under ?props=gen: paths.fingerposts):
 //   fingerpost:  an old wooden post, 1 to 4 blank arms pointing different ways (pointed, swallowtailed or square-ended; no words),
 //                a cap, a ball or a plain top, leaning a little, an arm sometimes snapped or hanging, moss up its foot, ivy now and then
-import { M, rng } from "../core.js";
+import { M, rng, pickByWeight } from "../core.js";
 import { v3 } from "../model3d.js";
 
 export const BRIDGE_VARIANTS = 3;
@@ -20,11 +20,10 @@ export const BRIDGE_GENOMES = {
   fingerpost: { height: [.85, 1.2], girth: [.035, .055], lean: [-.08, .08], arms: [1, 4], armLen: [.28, .42], arm: [["point", 3], ["swallow", 2], ["square", 1]], top: [["cap", 2], ["ball", 1], ["plain", 2]], broken: [0, 1], ivy: [0, 1], moss: [.1, .3] },
   "root-bridge": { span: [1.5, 2], width: [.28, .48], arch: [.32, .6], roots: [3, 6], twist: [.05, .2], moss: [.2, .55], crown: [["start", 2], ["both", 1], ["none", 1]], ferns: [2, 6] },
 };
-const brPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
 export function bridgeVariant(id, seed = 0) {
   const G = BRIDGE_GENOMES[id]; if (!G) throw new Error(`no bridge "${id}"`);
   const r = rng(((seed + 5) * 2654435761 + id.length * 61) >>> 0), v = { seed, r };
-  for (const [k, g] of Object.entries(G)) { if (Array.isArray(g[0])) v[k] = brPick(r, g); else { const x = g[0] + (g[1] - g[0]) * r(); v[k] = Number.isInteger(g[0]) && Number.isInteger(g[1]) ? Math.round(x) : x; } }
+  for (const [k, g] of Object.entries(G)) { if (Array.isArray(g[0])) v[k] = pickByWeight(r, g); else { const x = g[0] + (g[1] - g[0]) * r(); v[k] = Number.isInteger(g[0]) && Number.isInteger(g[1]) ? Math.round(x) : x; } }
   return v;
 }
 const brCell = (p, k, s) => { const x = Math.sin(Math.floor(p[0] * k) * 127.1 + Math.floor(p[1] * k) * 311.7 + Math.floor(p[2] * k) * 74.7 + s * 19.3) * 43758.5453; return x - Math.floor(x); };
