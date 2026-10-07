@@ -20,7 +20,7 @@ export function drawRespawn(lv: LeashView, camera: THREE.Camera, width: number, 
   const n = String(Math.ceil(left)), num = el.querySelector(".n") as HTMLElement;
   if (num.textContent !== n) num.textContent = n;
   const seat = lv.seatAt; // (her seat behind the decks, a storey up in the treehouse: view/witch.ts)
-  placed(seat ? v.set(seat.x, seat.y + 2.6, seat.z) : v.set(g.witch.x, 3.4, g.witch.z)).project(camera); // (over her head)
+  placed(seat ? v.set(seat.x, seat.y + 3.4, seat.z) : v.set(g.witch.x, 3.4, g.witch.z)).project(camera); // (over her head, clear of her hand thrown up on the last beat: art builder 4's hype frames)
   el.style.display = v.z > 1 ? "none" : "";
   el.style.left = `${((v.x + 1) / 2) * width}px`;
   el.style.top = `${((1 - v.y) / 2) * height}px`;
