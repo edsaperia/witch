@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { simulateStates } from "./states";
 import { generateMap } from "./map";
 import { TUNING, withTuning } from "./tuning";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // The creature-state model (issue #87): invite only, happy defenders, leashed army, enraged sieges.
 describe("the creature-state model (rules/states.ts, tools/balance/states.mjs)", () => {
-  const map = generateMap(1000, TUNING);
+  const map = generateMap(1000, PEOPLED);
 
   it("runs the same every time, and inviting makes happy creatures (or leashed, by the policy)", () => {
     const o = { interval: 60, maxWaves: 8, policy: "defend" as const, skill: 1 };
@@ -39,7 +40,7 @@ describe("the creature-state model (rules/states.ts, tools/balance/states.mjs)",
   }, 60000);
 
   it("wakes no legends with soundsystems; one turns angry only once its area has none of its kind", () => {
-    const map = generateMap(1000, withTuning({ legends: { ...TUNING.legends, share: 1 } })); // (a legend in every area, as this was written: with legends.share 0.5 the first waves' areas may have none)
+    const map = generateMap(1000, withTuning({ ...PEOPLED, legends: { ...TUNING.legends, share: 1 } })); // (a legend in every area, as this was written: with legends.share 0.5 the first waves' areas may have none)
     const a = simulateStates(map, { interval: 300, maxWaves: 8, policy: "leash", skill: 1, dt: 1, relics: 0 });
     const d = simulateStates(map, { interval: 300, maxWaves: 8, policy: "defend", skill: 1, dt: 1, relics: 0 });
     expect(a.legends.angry).toBeGreaterThan(d.legends.angry); // leashing everything empties areas of their kind
