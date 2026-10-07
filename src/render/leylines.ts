@@ -391,6 +391,7 @@ export class LeyLines {
     for (let tame = wander; ; tame = tame > 0.05 ? tame / 2 : 0) {
       const W = Math.min(80, L * this.T.valley) * tame, off = new Float64Array(n + 1);
       if (W > 0) for (let i = 1; i < n; i++) {
+        if (i % 12 === 0) yield; // (a long late-wave link samples the ground thousands of times a step: a few ms at a time)
         let best = 0, bh = Infinity;
         for (let o = -W; o <= W + 1e-6; o += W / 6) {
           const h = this.ground(base[i][0] + nrm[i][0] * o, base[i][1] + nrm[i][1] * o) + Math.abs(o) * 0.04; // (a little loath to stray)
