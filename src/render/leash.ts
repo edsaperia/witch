@@ -43,7 +43,7 @@ import { LOAD_DEFAULT, newLoadView, type LoadView } from "./load";
 import { LEGENDS, relicGlints } from "../rules/legends";
 import { circleLines, circleShown, legendCircleNear } from "../rules/legendCircle";
 import { witchHeight } from "../rules/witch";
-import { SPRITE_UNIFORMS } from "./sprites";
+import { SPRITE_UNIFORMS, metresPerArtPixel } from "./sprites";
 import { PIXEL_SNAP_GLSL } from "./shaders";
 import { lobHeight } from "./invites";
 
@@ -264,7 +264,7 @@ export class LeashView {
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number, depthTest = true, solid = false) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: 1 / (game.tuning.artPixelsPerMetre * (2 / game.tuning.pixelSize)) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uSolid: { value: solid ? 1 : 0 } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uSolid: { value: solid ? 1 : 0 } },
       transparent: true, depthWrite: false, depthTest, blending: solid ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
     this.standing = new Instances(mat(0));
@@ -603,7 +603,7 @@ export class LeashView {
    *  and teleport, the marker on creatures walking home, and the witch's hit pips. */
   private drawCombat(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
     const g = this.game, w = g.witch, W = g.witches[0], dot = this.uv(0), sq = this.uv(SQ), near = 90, t = g.tuning;
-    const artPx = 1 / (t.artPixelsPerMetre * (2 / t.pixelSize)); // one art pixel, in metres (the pixel star and bits sit on it)
+    const artPx = metresPerArtPixel(t); // one art pixel, in metres (the pixel star and bits sit on it)
     const close = (x: number, z: number, r = near) => Math.abs(x - w.x) < r && Math.abs(z - w.z) < r;
     const neon = (sp: string) => this.colours.get(sp) ?? (this.slotOf(sp, 0), this.colours.get(sp)!);
     // New happenings become effects.

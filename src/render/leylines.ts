@@ -18,6 +18,7 @@ import { bootPath } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
+import { metresPerArtPixel } from "./sprites";
 import { departureRoute, type LeyStone } from "../rules/leylines";
 import { polylinesMeet } from "../rules/crossing";
 import type { ForestMap } from "../rules/map";
@@ -201,7 +202,7 @@ export class LeyLines {
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
       uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() },
-      uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? 1 / (map.tuning.artPixelsPerMetre * (2 / map.tuning.pixelSize)) : 0.1 },
+      uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? metresPerArtPixel(map.tuning) : 0.1 },
     };
     this.cur = this.makeSet();
     this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength });

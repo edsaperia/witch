@@ -67,7 +67,7 @@ import { LeyLines, leyReveal, shaderPulse } from "./leylines";
 import { bootLineAt, bootPath, bootPulseAt, bootShare } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { leyChain, leyKey } from "../rules/leylines";
-import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
+import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
 import type { Style } from "./style";
 
 // The view's parts, each in its own module under view/ (issue #122), as functions of the View:
@@ -268,7 +268,7 @@ export class View {
     this.renderer.setPixelRatio(1);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
-    this.mpp = 1 / (t.artPixelsPerMetre * (2 / t.pixelSize));
+    this.mpp = metresPerArtPixel(t);
     this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
