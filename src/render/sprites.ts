@@ -40,6 +40,9 @@ export const SPRITE_UNIFORMS = {
   uWitch: { value: new THREE.Vector4(0, 0, 0, 0) },
   uWitchDepth: { value: 0 },
   uOcc: { value: new THREE.Vector4(0.38, 6, 2.5, 1) },
+  // Lying on the beach to stargaze the camera sits low behind her (rules/camera.ts beach.camera): anything nearer it than this
+  // (metres, by its base's depth) dithers away, so trees behind her don't fill the picture (0: off).
+  uNearCut: { value: 0 },
   // The party's canopy uplight: the nearest partified areas (centre x, z, reach, fade-in) and their
   // colours; uUplight: strength, pulse, edge (m), the beat's phase (radians).
   uParty: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) },
@@ -70,6 +73,8 @@ uniform vec3 uRight, uUp;
 uniform vec2 uRes;
 uniform float uWitchDepth;
 uniform vec4 uOcc;
+uniform float uNearCut;
+varying float vNear;
 uniform float uAbsolute; // its y is a world height, not a height over the ground
 uniform vec4 uLean; // the witch under a load (render/load.ts): sheared forward (m per m up), tilted nose-up (m per m across), her broom bowed (art pixels)
 uniform vec4 uCutout, uWitch;
@@ -132,6 +137,7 @@ void main() {
   vSizeY = iSize.y;
   vWorld = w;
   gl_Position = clipOf(w);
+  vNear = uNearCut > 0.0 ? smoothstep(uNearCut * 0.75, uNearCut, -(viewMatrix * vec4(base, 1.0)).z) : 1.0;
   // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
   // its small bright details (flowers, eyes) don't shimmer in and out as the camera glides.
   gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;
@@ -166,6 +172,7 @@ uniform vec4 uCutout;
 uniform float uDebugCull, uIsScenery, uAppear;
 uniform vec4 uLean;
 uniform vec4 uWitch, uOcc, uSilhouette;
+varying float vNear;
 uniform float uFadePass, uHasFade;
 uniform float uFlat; // lies flat on the ground (a court's decal), or gameplay that stays solid: never cut away round her
 uniform vec4 uParty[16];
@@ -269,6 +276,7 @@ void shade() {
   }
   vec4 a = texture2D(uAlbedo, uvS);
   if (a.a < 0.5) discard;
+  if (vNear < 1.0 && bayer(gl_FragCoord.xy) >= vNear) discard; // (near the low stargazing camera: dithered away)
   if (uIsScenery > 0.5) {
     vec2 ts = vec2(textureSize(uAlbedo, 0)), fp = vec2(length(vec2(uvDx.x, uvDy.x)), length(vec2(uvDx.y, uvDy.y))) * ts;
     if (max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(uAlbedo, uvS, a); }
