@@ -17,7 +17,7 @@ export interface Sweep { x: number; z: number; radius: number; strength: number 
 export interface Playing { x: number; y: number; z: number; seed: number; ready: number }
 
 export class PartyView {
-  constructor(private atlas: Atlas, private metresPerPixel: number) {}
+  constructor(public atlas: Atlas, private metresPerPixel: number) {}
 
   /** The mood's warm light colours as vectors, made once (not every frame). */
   private warm: { from: number[][]; rgb: THREE.Vector3[] } | null = null;
