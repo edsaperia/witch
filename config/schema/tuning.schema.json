@@ -2947,6 +2947,9 @@
           "type": "number",
           "minimum": 0
         },
+        "earlyQuest": {
+          "type": "boolean"
+        },
         "buffPower": {
           "type": "number",
           "minimum": 0
@@ -3020,6 +3023,7 @@
       },
       "required": [
         "share",
+        "earlyQuest",
         "buffPower",
         "happyRange",
         "questCap",
