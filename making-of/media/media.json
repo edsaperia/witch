@@ -1,5 +1,14 @@
 [
  {
+  "src": "media/art/bend-hides-letters-past-horizon.webp",
+  "caption": "An invisible bug made visible: before the fix, the farthest rows of 💌 letters folded back down past the horizon of the bent world. Now nothing past the bend is drawn.",
+  "chapter": "art",
+  "from": "previews/bend-hides/letters-past-horizon.png",
+  "group": "bend",
+  "order": 1,
+  "pr": 358
+ },
+ {
   "src": "media/art/trees-before-1.webp",
   "caption": "Trees before: the twelve species that each had their own hand-written generator.",
   "chapter": "art",
@@ -166,6 +175,15 @@
   "group": "heron",
   "order": 2,
   "pr": 222
+ },
+ {
+  "src": "media/art/legends-seen-salamander-same-moment.webp",
+  "caption": "The salamander legend at the same moment, before and after: a neon outline in its sigil's colour and a soft glow on the ground under it, so a sleeping legend reads at a glance in its circle.",
+  "chapter": "art",
+  "from": "previews/legends-seen/salamander-same-moment.png",
+  "group": "legends-seen",
+  "order": 1,
+  "pr": 334
  },
  {
   "src": "media/art/magic-letters-before.webp",
