@@ -123,10 +123,16 @@ export class AssetLibrary {
   private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
+  /** Waiting jobs already moved to the front of the queue by an urgent ask. */
+  private promoted = new Set<string>();
   private ask(job: ArtJob, urgent = false): void {
     const k = this.key(job);
     if (this.inFlight.has(k)) {
-      const i = urgent ? this.queue.findIndex(q => this.key(q) === k) : -1;
+      // (an urgent job asked for again while waiting is moved to the front once: asked for every creature every frame, searching
+      // the queue each time cost creatures x queue while new art was baking)
+      if (!urgent || this.promoted.has(k)) return;
+      this.promoted.add(k);
+      const i = this.queue.findIndex(q => this.key(q) === k);
       if (i > 0) this.queue.unshift(...this.queue.splice(i, 1));
       return;
     }
@@ -202,7 +208,7 @@ export class AssetLibrary {
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
-    this.inFlight.delete(this.key(r.job));
+    this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job));
     this.version++;
   }
 
@@ -249,10 +255,14 @@ export class AssetLibrary {
   }
   /** A species' live-rig parts at a level (#79 stage 4: one atlas page each, keyed by its genome's
    *  hash so a changed record bakes afresh), or undefined (and asked for). */
+  /** Each species' genome hash (rigArt's page key), worked out once. */
+  private genomeHashes = new Map<string, string>();
   rigArt(species: string, level: number, gear?: RigGear): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
     const g = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
     if (!g) return undefined;
-    const k = `rig-${species}-${level}-${Art.genomeHash(g)}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
+    let h = this.genomeHashes.get(species);
+    if (h === undefined) this.genomeHashes.set(species, (h = Art.genomeHash(g) as string)); // (the genomes are fixed for the run: hashed once, not per creature per frame)
+    const k = `rig-${species}-${level}-${h}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
     if (a) { a.used = performance.now(); return a; }
     this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
