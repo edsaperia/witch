@@ -481,6 +481,17 @@ export class View {
   /** Sets fading in since they were drawn, and when they arrived (real ms). */
   appearing = new Map<SpriteBatch, number>();
   private prepared = false;
+  /** The party's next areas whose art has been asked for ahead (prefetchWave). */
+  private prefetched = "";
+  /** The next wave's art, asked for as soon as its areas are chosen (a whole countdown ahead), so a woken area's
+   *  creatures and legend are drawn enraged the moment it wakes rather than seconds later (overnight phase 2: the
+   *  woken looks arrived 2 to 7 s after their wave on a fresh browser). The workers draw them between the scenery. */
+  private prefetchWave(): void {
+    const g = this.game, key = g.party.next.map(c => c.join(",")).join(";");
+    if (!this.prepared || this.quick || key === this.prefetched) return;
+    this.prefetched = key;
+    for (const c of g.party.next) { const sp = AREA_TYPES[g.map.typeOf(c[0], c[1])]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.wokenArt(sp); } }
+  }
   private easeAppearing(): void {
     const now = performance.now();
     for (const [b, at] of this.appearing) {
@@ -693,6 +704,7 @@ export class View {
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
+    this.prefetchWave();
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
