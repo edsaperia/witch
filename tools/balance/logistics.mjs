@@ -37,7 +37,7 @@ const cells = {};
 say(`Logistics sweep: ${SEEDS} seeds, ${AREAS} × ${AREAS} areas, waves every ${GAP} s, ground speed ${GROUND} m/s; party animals walk at ${TUNING.leash.runSpeed} m/s × travel boost ${BOOST} = ${POSSE.toFixed(1)} m/s along routes ${ROUTE}× the straight line; wild creatures march at ${TUNING.creatureSpeed} × ${TUNING.combat.marchMult} m/s. Every visit and every sigil placed costs a landing (Ed: "You have to land to place sigils"): descend ${TUNING.descendTime} s + place ${PLACE} s (a guess) + rise ${TUNING.riseTime} s = ${SIGIL.toFixed(2)} s. Guesses: ground time a visit ${GROUND_BASE} s + crossing the area on foot; a player grows ${GROWTH} F/min at 112 m and 32 m/s (${V0.toFixed(2)} visits a wave), in proportion to visits a wave elsewhere; every fight waits for the witch and her posse to arrive.${MARCH_ON < 1 ? ` Attrition: ${Math.round(MARCH_ON * 100)}% of a won siege march on.` : ""}\n`);
 
 for (const size of SIZES) {
-  const t = { ...TUNING, mapAreas: AREAS, areaScale: size / TUNING.areaSize };
+  const t = { ...TUNING, mapAreas: AREAS, map: { ...TUNING.map, radius: AREAS / Math.sqrt(Math.PI) }, areaScale: size / TUNING.areaSize }; // (the circular map, #281: its radius, not mapAreas)
   const maps = seeds.map(s => generateMap(s, t));
   for (const treetop of TREETOPS) {
     const lg = { witchSpeed: treetop, groundTime: GROUND_BASE + (1.5 * size) / GROUND, posseSpeed: POSSE, route: ROUTE, sigilTime: SIGIL };
