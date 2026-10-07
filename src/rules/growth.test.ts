@@ -49,7 +49,7 @@ describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () =>
       expect(creatures[c.id]).toBe(c); // ids are their places
     }
     // Standing in an area, none of its own appear in sight... unless it wakes.
-    const [cx, cy] = [9, 9], inside = map.siteOf(cx, cy), key = `${cx},${cy}`;
+    const [cx, cy] = [map.centreCell[0] - 3, map.centreCell[1] - 2], inside = map.siteOf(cx, cy), key = `${cx},${cy}`;
     const waiting = pendingCounts(s, key).reduce((a, b) => a + b, 0);
     expect(waiting).toBe(3);
     materialize(s, creatures, map, [inside], 600, 30);

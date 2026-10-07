@@ -1223,7 +1223,7 @@ describe("finds, each at most once per map (Ed, v160)", () => {
       const grounds = m.grounds.map(g => g.kind), stairs = m.paths.pieces.filter(p => p.id.startsWith("stairs")).map(p => p.id);
       for (const list of [ruins, freaks, relics, pieces, grounds, stairs] as unknown[][]) expect(new Set(list).size).toBe(list.length);
       expect(ruins.length + freaks.length).toBeGreaterThan(5);
-      expect(decor.filter(d => d.family === "rocks").length).toBeGreaterThan(50); // rocks are generic scatter
+      expect(decor.filter(d => d.family === "rocks").length).toBeGreaterThan(m.cells.length / 4); // rocks are generic scatter (about one an area or more)
     }
   }, 30000); // five whole maps
   it("places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)", () => {
@@ -1728,7 +1728,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
 
   it("never lands in a tree trunk", () => {
     const g = ready();
-    const out = g.map.homeRadius + 60, trees = g.forest.treesNear(g.witch.x + out, g.witch.z + out, 40); // (beyond home's meadow, where trees grow)
+    const out = g.map.homeRadius + 60, trees = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([sx, sz]) => g.forest.treesNear(g.witch.x + sx * out, g.witch.z + sz * out, 40)).find(t => t.length > 0) ?? []; // (beyond home's meadow, where trees grow: the first way off it with some)
     expect(trees.length).toBeGreaterThan(0);
     let tried = 0;
     for (const tr of trees.slice(0, 12)) {
