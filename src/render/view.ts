@@ -777,7 +777,7 @@ export class View {
     this.strings.update();
     this.borders.update();
     // A point on the treehouse's sprite (its pixels) in the world, standing on its spot.
-    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle), U2 = SPRITE_UNIFORMS;
+    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle, time), U2 = SPRITE_UNIFORMS;
     const onTreehouse = (px: number, py: number) => {
       const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
       return { x: at.x + r.x * dx + u.x * dy, y: at.y + r.y * dx + u.y * dy, z: at.z + r.z * dx + u.z * dy };
