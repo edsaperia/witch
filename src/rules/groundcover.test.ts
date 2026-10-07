@@ -42,12 +42,12 @@ describe("ground cover cells far from the origin", () => {
   // The view asks for the cells round her by tuftSpan (a cell's true size, whole tufts across):
   // indexed by G.cell instead (8 m, against 8.1 m), the tufts came about 18 m off, 1500 m out.
   it("has the cell the view asks for at a point hold the tufts round that point", () => {
-    const C = tuftSpan(G.cell, G.spacing);
+    const C = tuftSpan(G.cell, G.spacing), d = map.dancefloor; // (a line through the woods round home, well over 1000 m from the origin and short of the coast at any map size)
     let checked = 0;
     for (let i = 0; i < 40; i++) {
-      const x = 1400 + i * 37.3, z = 1600 + i * 23.9, ci = Math.floor(x / C), cj = Math.floor(z / C);
+      const x = d.x - 750 + i * 37.3, z = d.z - 450 + i * 23.9, ci = Math.floor(x / C), cj = Math.floor(z / C);
       const t = tuftsInCell(map, ci, cj, G.cell, G.spacing, 1);
-      if (t.length < 10) continue; // (a path, a pond or a clearing there)
+      if (t.length < 0.6 * (C / G.spacing) ** 2) continue; // (a path, a pond or a clearing over much of it, so its tufts needn't span it)
       checked++;
       const xs = t.map(p => p.x), zs = t.map(p => p.z);
       expect(x, `cell ${ci},${cj}`).toBeGreaterThanOrEqual(Math.min(...xs) - G.spacing * 1.5);

@@ -268,7 +268,7 @@ export function setPiece3d(kind, def, st, ppm = 16) {
   const m = new Model({ blend: .05 }); spSETS[kind](m);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // so every piece stands on the same ground line
   const size = (Object.values(NEW_SET_PIECES).find(([k]) => k === kind) || [, , 1])[2];
-  const r = render(m, { scale: witchPixelsPerUnit(st) * size }), { sp, x0, y0 } = cropKeepBottom(r.sp); // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
+  const r = render(m, { scale: witchPixelsPerUnit(st) * size * (st.setPieceScale || 1) }), { sp, x0, y0 } = cropKeepBottom(r.sp); // (st.setPieceScale: baked at the size the game draws it) // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
   const [ox, oy] = r.project([0, 0, 0]); // origin: where its middle on the ground lands, in the cropped sprite
   return { sp, colours: setPieceColours(def, st), origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }

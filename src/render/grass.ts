@@ -33,7 +33,7 @@ attribute float iOpen;      // how open the ground is there: where the canopy is
 uniform vec4 uCanopy;       // the ground's canopy shadow: strength (0 off), height, cover, wind speed
 uniform vec2 uClearing;     // clearingSize, clearingFalloff
 uniform vec3 uMoonDir;
-uniform float uTime, uSmooth;
+uniform float uTime;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying float vMoonK;
@@ -69,7 +69,7 @@ ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
     vec2 p = vec2(iTuft.x, iTuft.y), cq = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
     float leaves = vnoise(cq / 2.6) * 0.6 + vnoise(cq / 1.1 + 31.0) * 0.4;
     float cover = uCanopy.z * smoothstep(0.0, 1.0, (iOpen - uClearing.x) / max(0.01, uClearing.y));
-    vMoonK = 1.0 - uCanopy.x * (uSmooth > 0.5 ? smoothstep(-0.07, 0.07, cover - leaves) : step(leaves, cover));
+    vMoonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
   }
   gl_Position = clipOf(w);
   gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;
@@ -96,6 +96,8 @@ ${BAYER_GLSL}void main() {
 
 /** A cell's key in GrassView's cells: a small integer (cells within CELL0 of the origin, far beyond any map). */
 const CELL0 = 16384, CELLS = 32768;
+/** Tufts a block: each cell in reach holds whole blocks of the buffers (one or two: a cell is at most 81 tufts, more by a pond). */
+const BLOCK = 32;
 const cellKey = (ci: number, cj: number) => (ci + CELL0) * CELLS + (cj + CELL0);
 
 export class GrassView {
@@ -111,6 +113,11 @@ export class GrassView {
   private rushes: ({ frame: number; sway: number } | undefined)[] = [];
   private open!: THREE.InstancedBufferAttribute;
   private cells = new Map<number, Tuft[]>(); // (by cellKey: a small integer, no string a cell a frame)
+  /** The blocks of the buffers each cell in reach holds (BLOCK tufts each), the free ones, the most ever used, and how many fit. */
+  private held = new Map<number, number[]>();
+  private free: number[] = [];
+  private top = 0;
+  private maxBlocks: number;
   private mat: THREE.ShaderMaterial;
   private lastCi = NaN; private lastCj = NaN;
   /** Tufts drawn, and milliseconds spent working out cells, this frame (for the debug overlay and perf). */
@@ -119,6 +126,7 @@ export class GrassView {
   /** forest: for the tufts round trunks, rocks and ponds; ground: the ground material's uniforms, for its canopy shade. */
   constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number, style: object, private forest?: Forest, ground?: Record<string, THREE.IUniform>) {
     const cap = t.groundCover.cap, sprites: Baked[] = [];
+    this.maxBlocks = Math.floor(cap / BLOCK);
     // The art's tufts for every area type (#34), with how much each sways: the mean of its sway
     // mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes).
     for (const type of LOOKS) { // (the area types and home's meadow)
@@ -200,29 +208,66 @@ export class GrassView {
     this.lastCi = ci0; this.lastCj = cj0;
     // Forget cells well out of reach.
     if (this.cells.size > want.length * 3) for (const k of this.cells.keys()) { const a = Math.floor(k / CELLS) - CELL0, b = (k % CELLS) - CELL0; if (Math.hypot((a + 0.5) * C - x, (b + 0.5) * C - z) > G.radius * 2 + C) this.cells.delete(k); }
-    const T = this.tuft.array as Float32Array, U = this.uvA.array as Float32Array, P = this.pxA.array as Float32Array, cap = G.cap, F = this.atlas.frames;
+    // Each cell's tufts keep their own blocks of the buffers while it's in reach (phase 2: the cover was rewritten and sent
+    // whole, nearest first, every time she crossed a cell): a cell newly in reach is written into free blocks and only those
+    // go to the GPU; one gone out of reach has its blocks emptied (size 0) and freed. Nearest cells first: when the buffers
+    // are full, a nearer cell takes the farthest one's blocks. (The tufts are cut out, not blended: their order draws the same.)
+    const dist = new Map<number, number>();
+    for (const [ci, cj, d] of want) dist.set(cellKey(ci, cj), d);
+    for (const k of [...this.held.keys()]) if (!dist.has(k)) this.release(k);
+    for (const [ci, cj, d] of want) {
+      const k = cellKey(ci, cj), list = this.cells.get(k);
+      if (!list || this.held.has(k)) continue;
+      const need = Math.max(1, Math.ceil(list.length / BLOCK));
+      while (this.free.length + (this.maxBlocks - this.top) < need) { // full: the farthest held cell, if farther, gives way
+        let far = -1, fd = d;
+        for (const h of this.held.keys()) { const hd = dist.get(h) ?? Infinity; if (hd > fd) { fd = hd; far = h; } }
+        if (far < 0) break;
+        this.release(far);
+      }
+      if (this.free.length + (this.maxBlocks - this.top) < need) continue;
+      const blocks: number[] = [];
+      for (let i = 0; i < need; i++) blocks.push(this.free.length ? this.free.pop()! : this.top++);
+      this.held.set(k, blocks);
+      this.write(list, blocks);
+    }
+    this.geo.instanceCount = this.top * BLOCK;
     let n = 0;
-    for (const [ci, cj] of want) {
-      const list = this.cells.get(cellKey(ci, cj));
-      if (!list) continue;
-      for (const f of list) {
-        if (n >= cap) break;
-        if (Math.hypot(f.x - x, f.z - z) > G.radius + C) continue; // a cell's slack: it's rebuilt as she crosses cells
-        // Which of its area's tufts, by their shares, seeded from where it stands.
-        const ks = this.kinds[f.type], roll = hash2(Math.round(f.x * 64), Math.round(f.z * 64), 1107) * (ks[ks.length - 1]?.upTo ?? 1);
-        // (Reeds ringing a pond: the area's rushes, or any area's.)
-        const kd = (TUFT_KINDS[f.kind] === "reeds" ? this.rushes[f.type] : undefined) ?? ks.find(k => roll <= k.upTo) ?? ks[ks.length - 1];
-        if (!kd) continue;
+    for (const k of this.held.keys()) n += this.cells.get(k)?.length ?? 0;
+    this.stats.tufts = n;
+  }
+
+  /** A cell's tufts into its blocks (the rest of its last block emptied), those blocks marked to send. */
+  private write(list: Tuft[], blocks: number[]): void {
+    const T = this.tuft.array as Float32Array, U = this.uvA.array as Float32Array, P = this.pxA.array as Float32Array, O = this.open.array as Float32Array, F = this.atlas.frames;
+    for (let b = 0; b < blocks.length; b++) {
+      const at = blocks[b] * BLOCK;
+      for (let i = 0; i < BLOCK; i++) {
+        const n = at + i, f = list[b * BLOCK + i];
+        // Which of its area's tufts, by their shares, seeded from where it stands. (Reeds ringing a pond: the area's rushes, or any area's.)
+        const ks = f && this.kinds[f.type], roll = f ? hash2(Math.round(f.x * 64), Math.round(f.z * 64), 1107) * (ks[ks.length - 1]?.upTo ?? 1) : 0;
+        const kd = f && ((TUFT_KINDS[f.kind] === "reeds" ? this.rushes[f.type] : undefined) ?? ks.find(k => roll <= k.upTo) ?? ks[ks.length - 1]);
+        if (!f || !kd) { T[n * 4 + 2] = 0; continue; } // (an empty slot: no size, nothing drawn)
         const fr = F[kd.frame];
         T[n * 4] = f.x; T[n * 4 + 1] = f.z; T[n * 4 + 2] = f.size; T[n * 4 + 3] = f.flip ? 1 : 0;
-        U.set(fr.uv, n * 4);
+        U[n * 4] = fr.uv[0]; U[n * 4 + 1] = fr.uv[1]; U[n * 4 + 2] = fr.uv[2]; U[n * 4 + 3] = fr.uv[3];
         P[n * 3] = fr.w; P[n * 3 + 1] = fr.h; P[n * 3 + 2] = kd.sway;
-        (this.open.array as Float32Array)[n] = f.open;
-        n++;
+        O[n] = f.open;
       }
+      for (const a of [this.tuft, this.uvA, this.pxA, this.open]) { a.addUpdateRange(at * a.itemSize, BLOCK * a.itemSize); a.needsUpdate = true; }
     }
-    this.geo.instanceCount = n;
-    this.stats.tufts = n;
-    for (const a of [this.tuft, this.uvA, this.pxA, this.open]) { a.needsUpdate = true; a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); }
+  }
+
+  /** A cell out of reach (or giving way): its blocks emptied, sent (sizes only) and freed. */
+  private release(k: number): void {
+    const blocks = this.held.get(k);
+    if (!blocks) return;
+    const T = this.tuft.array as Float32Array;
+    for (const b of blocks) {
+      for (let i = 0; i < BLOCK; i++) T[(b * BLOCK + i) * 4 + 2] = 0;
+      this.tuft.addUpdateRange(b * BLOCK * 4, BLOCK * 4); this.tuft.needsUpdate = true;
+      this.free.push(b);
+    }
+    this.held.delete(k);
   }
 }

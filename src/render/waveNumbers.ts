@@ -12,7 +12,7 @@ const CW = 10, CH = 14;
 function digitAtlas(): THREE.DataTexture {
   const c = document.createElement("canvas");
   c.width = CW * 10; c.height = CH;
-  const x = c.getContext("2d")!;
+  const x = c.getContext("2d", { willReadFrequently: true })!;
   x.fillStyle = "#fff"; x.textAlign = "center"; x.textBaseline = "middle"; x.font = "bold 13px monospace";
   for (let d = 0; d < 10; d++) x.fillText(String(d), d * CW + CW / 2, CH / 2 + 1);
   const src = x.getImageData(0, 0, c.width, c.height).data, W = c.width, data = new Uint8Array(W * CH * 4);

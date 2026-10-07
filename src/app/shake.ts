@@ -9,8 +9,6 @@ export class ScreenShake {
   readonly shake: Shake;
   /** The start screen's on/off toggle (null when the page has none). */
   readonly option: HTMLElement | null;
-  /** ?subpixel=0: the camera's old whole-art-pixel steps, to compare (on by default: Ed, 2026-10-05, "it feels low"). */
-  readonly subpixelOn: boolean;
   private shaken = false;
 
   constructor(private game: Game, private tuning: Tuning, private view: View, private canvas: HTMLCanvasElement, params: URLSearchParams) {
@@ -27,7 +25,6 @@ export class ScreenShake {
       try { localStorage.setItem("witch.shake", this.shake.on ? "1" : "0"); } catch { /* fine */ }
       this.showOption();
     });
-    this.subpixelOn = params.get("subpixel") !== "0";
   }
 
   private showOption(): void {
@@ -38,7 +35,7 @@ export class ScreenShake {
   /** The camera's sub-pixel glide (view.subpixel): the snap it took off, given back in whole screen pixels. */
   glide(): { gx: number; gy: number } {
     const p = this.tuning.pixelSize, s = this.view.subpixel;
-    return { gx: this.subpixelOn ? Math.round(s.x * p) : 0, gy: this.subpixelOn ? Math.round(s.y * p) : 0 };
+    return { gx: Math.round(s.x * p), gy: Math.round(s.y * p) };
   }
 
   apply(): void {
