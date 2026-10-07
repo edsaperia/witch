@@ -17,6 +17,7 @@ import { Picnic, Pond, Room, Sea } from "./places";
 import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
+import { rewind, sadTrumpet } from "./knockdown";
 import { chirp, needle, scratch, spinBack } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
@@ -109,6 +110,16 @@ export class Sfx {
   pond(level: number, pan = 0): void { this.pondBed.update(level, pan); }
   picnic(level: number, pan = 0): void { this.picnicBed.update(level, pan); }
   room(level: number): void { this.roomBed.update(level); }
+  /** Knocked down (knockdown.ts): the sad trumpet as her hat drops (`full`; with no hat, its shorter "wah-waaah"); then the
+   *  rewind as she's whisked to her decks, a backwards scratch cutting the trumpet off (never before its last note has had
+   *  sadTrumpet.cutAfter seconds). */
+  sadTrumpet(full = true, pan = 0): void { this.trumpet = sadTrumpet(this.k, full, pan); }
+  rewind(pan = 0): void {
+    const t = this.trumpet, now = this.k.ctx.currentTime + 0.01;
+    rewind(this.k, t ? Math.max(now, t.lastAt + this.k.T.sadTrumpet.cutAfter) : now, t ? t.gain : null, pan);
+    this.trumpet = null;
+  }
+  private trumpet: { gain: GainNode; lastAt: number } | null = null;
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
   /** Her routine's strokes (art/witch.js DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
