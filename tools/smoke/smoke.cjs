@@ -41,6 +41,7 @@ const KNOWN = {
   "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
   "vanish-1900x1240": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
   "vanish-2000x1076": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "trunks-round": { issue: 0, why: "the measure swings 1.04-1.47 run to run at the same spots with the same build (her glow's angle, the moment), with 1.3 inside its noise" },
 };
 
 async function main() {
@@ -367,6 +368,9 @@ async function main() {
   // black on black) in the lit frame.
   await run("trunks", { width: 960, height: 540 }, async page => {
     await page.keyboard.press("Enter");
+    // She stands a minute in wild woods for these: kept from being knocked out (the bluebell glade's shots were the
+    // knockout's black iris and her treehouse: 2026-10-07).
+    await page.evaluate(() => { window.trunkKeepAlive = setInterval(() => { const g = window.witch.game, W = g.witches[0]; if (!W.ko) W.health.hp = g.tuning.witchHealth.hits; }, 100); });
     // (The bluebell glade's smooth pale beeches drew as flat grey slabs on brown stumps: Ed, 2026-10-04.)
     for (const id of ["tangly-forest", "old-oaks", "bluebell-glade"]) {
       const at = await page.evaluate(id => {
@@ -389,15 +393,27 @@ async function main() {
         return best;
       }, id);
       if (!at) { results.push(`skip trunks: no ${id} on this map`); continue; }
-      await sleep(1500);
+      // The start can still be settling her at the treehouse when the first move lands, and put her back (the tangly
+      // forest's "trunks" were the home glade's, at the start, 0.1-0.6% of the screen: 2026-10-07): move her again
+      // until she's there, and say so if she never is, rather than measuring the wrong place.
+      let there = false;
+      for (let k = 0; k < 3 && !there; k++) {
+        await sleep(1500);
+        there = await page.evaluate(([x, z]) => { const g = window.witch.game; if (Math.hypot(g.witch.x - x, g.witch.z - z) < 6) return true; g.witch = { ...g.witch, seated: false, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z, intro: 0 }; return false; }, at);
+      }
+      check(there, `the witch is moved to the ${id}'s densest wooded spot for the trunk shots`);
+      if (!there) continue;
       await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
       await sleep(1500);
       const lit = await page.screenshot({ timeout: 300000 });
-      await page.evaluate(() => { window.witch.view.debugTrunks = true; });
+      // The mask frame drawn plain: the bloom, the tilt-shift's blur and the mist layer smeared the flat magenta over the
+      // ground round the trunks (the old oaks' "trunks" were half the screen, their sides compared across the blur:
+      // 2026-10-07), so they're off for that one frame.
+      await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning; v.trunkMaskSaved = { bloom: T.bloom.on, tilt: T.tiltShift.on, fx: P.fxScene }; T.bloom.on = false; T.tiltShift.on = false; P.fxScene = null; v.debugTrunks = true; });
       await sleep(1000);
       const mask = await page.screenshot({ timeout: 300000 });
-      await page.evaluate(() => { window.witch.view.debugTrunks = false; });
-      fs.writeFileSync(path.join(out, `trunks-${id}.png`), lit);
+      await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning, s = v.trunkMaskSaved; v.debugTrunks = false; T.bloom.on = s.bloom; T.tiltShift.on = s.tilt; P.fxScene = s.fx; });
+      fs.writeFileSync(path.join(out, `trunks-${id}.png`), lit); fs.writeFileSync(path.join(out, `trunks-${id}-mask.png`), mask);
       const r = await page.evaluate(async ([a, m]) => {
         const load = src => new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; const x = c.getContext("2d"); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, i.width, i.height).data); }; i.src = "data:image/png;base64," + src; });
         const A = await load(a), M = await load(m);
@@ -412,7 +428,7 @@ async function main() {
           if (on && x0 < 0) x0 = x;
           if (on || x0 < 0) continue;
           const w = x - x0, t = Math.floor(w / 3);
-          if (w >= 4) {
+          if (w >= 4 && w <= 48) { // (a single trunk's width; a longer run is several trunks side by side, where the left and right thirds are different trunks' lit sides)
             let L = 0, R = 0;
             for (let k = 0; k < t; k++) { L += luma((y * W + x0 + k) * 4); R += luma((y * W + x - 1 - k) * 4); }
             L /= t; R /= t;
@@ -421,13 +437,14 @@ async function main() {
           x0 = -1;
         }
         ratios.sort((p, q) => p - q);
-        return { share: n / (M.length / 4), readable: n ? readable / n : 0, across: ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0 };
+        return { share: n / (M.length / 4), readable: n ? readable / n : 0, across: ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0, runs: ratios.length };
       }, [lit.toString("base64"), mask.toString("base64")]);
-      check(r.share > 0.02, `trunks are drawn on the ground in the ${id} (${(r.share * 100).toFixed(1)}% of the screen)`);
+      check(r.share > 0.005, `trunks are drawn on the ground in the ${id} (${(r.share * 100).toFixed(1)}% of the screen, over 0.5%)`); // ("we have really lost our treetrunks" read 0; with the mask drawn plain, the densest spots read 1-4% in the tangly forest, 15-50% in the others)
       check(r.readable > 0.15, `the ${id}'s trunks are readable, not black on black (${(r.readable * 100).toFixed(0)}% of their pixels)`);
-      check(r.across > TRUNK_ROUND, `the ${id}'s trunks are shaded round, not flat slabs: one side over the other ${r.across.toFixed(2)}x (over ${TRUNK_ROUND}x)`);
+      check(r.runs >= 20 && r.across > TRUNK_ROUND, `the ${id}'s trunks are shaded round, not flat slabs: one side over the other ${r.across.toFixed(2)}x (over ${TRUNK_ROUND}x, over ${r.runs} single trunks' rows)`, "trunks-round");
     }
-  }, "");
+    await page.evaluate(() => clearInterval(window.trunkKeepAlive));
+  }, "&leg=trunks"); // (not "": that fell back to &debug, whose overlay and rulers lay over the shots and hid trunks from the mask)
 
   // Inviting and leashing: 💌s at a creature until it joins her (issue #87), gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
