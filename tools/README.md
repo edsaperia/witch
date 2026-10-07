@@ -10,7 +10,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`attacks/`](attacks/README.md): 1 script — strip.cjs
 - [`balance/`](balance/README.md): 16 scripts — buffs.mjs, charges.mjs, coach.mjs, coachwatch.mjs, endgame.mjs, fight.mjs, fightbot.mjs, leycross.mjs, lib.mjs, logistics.mjs, opening.mjs, playthrough.mjs, runbot.mjs, sim.mjs, states.mjs, waves.mjs
 - [`beach/`](beach/README.md): 5 scripts — approach.cjs, check.cjs, gaze-gif.cjs, map.mjs, spot.cjs
-- [`bench/`](bench/README.md): 4 scripts — compare.cjs, frames.cjs, rules.ts, run.mjs
+- [`bench/`](bench/README.md): 6 scripts — alloc.mjs, alloc.ts, compare.cjs, frames.cjs, rules.ts, run.mjs
 - [`config/`](config/README.md): 1 script — schema.mjs
 - [`feel/`](feel/README.md): 1 script — trace.cjs
 - [`flora/`](flora/README.md): 3 scripts — bush-sheet.mjs, species-sheet.mjs, tuft-sheet.mjs
