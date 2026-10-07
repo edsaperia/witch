@@ -40,6 +40,8 @@ export interface Knockout {
   backAt: number;
   /** Knockdowns in a row, each within knockout.respawn.cooldown of the last (0 the first). */
   streak: number;
+  /** The whole wait (s) this knockdown costs (respawnWait), from `at`. */
+  wait: number;
   /** She's sparkled out, and been moved to the treehouse, behind her decks (halfway through the teleport). */
   out: boolean;
   moved: boolean;
@@ -90,7 +92,7 @@ export function knockOut(leash: LeashState, creatures: Creature[], time: number,
   const teleportAt = Math.max(floatUntil, order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat);
   const inAt = teleportAt + K.teleport;
   const backAt = Math.max(inAt + R.minScratch, time + respawnWait(streak, t));
-  return { at: time, order, times, released: 0, floatUntil, teleportAt, inAt, backAt, streak, out: false, moved: false };
+  return { at: time, order, times, released: 0, floatUntil, teleportAt, inAt, backAt, streak, wait: respawnWait(streak, t), out: false, moved: false };
 }
 
 /** Put a carried sigil down where its animal stands (a little aside if another sigil is there): it stays hers, parked. */
@@ -154,3 +156,16 @@ export function stepWanderers(creatures: Creature[], map: ForestMap, dt: number)
 /** Seconds left of her wait behind her decks after a knockout (knockout.respawn), or null when she isn't waiting: for the
  *  countdown at the decks (render/leash/respawn.ts). */
 export const respawnLeft = (k: Knockout | null | undefined, time: number): number | null => (k && time >= k.inAt && time < k.backAt ? k.backAt - time : null);
+
+/** The candles along the front of her DJ desk while she scratches (Ed, 2026-10-07; art builder 4 draws them): one for every
+ *  two seconds of the wait (3 for the first knockdown's 6 s, up to 6 for 12), 0 with no wait. */
+export const candleCount = (k: Knockout | null | undefined): number => (k && k.backAt > k.inAt ? Math.max(1, Math.round(k.wait / 2)) : 0);
+
+/** How far candle i (0 the first to go) has melted at `time`, 0 whole to 1 gone: they burn down one after another over her
+ *  scratching (inAt to backAt), so the last is gone as respawnLeft reaches 0; all whole before it. */
+export function candleMelt(k: Knockout | null | undefined, time: number, i: number): number {
+  const n = candleCount(k);
+  if (!k || !n) return 0;
+  const p = Math.min(1, Math.max(0, (time - k.inAt) / (k.backAt - k.inAt))) * n - i;
+  return Math.min(1, Math.max(0, p));
+}
