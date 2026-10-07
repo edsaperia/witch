@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import type { ForestMap } from "../rules/map";
 import type { PartyState } from "../rules/party";
 import { leyReveal, shaderPulse } from "./leylines";
+import { newGame } from "../rules/game";
+import { TUNING } from "../rules/tuning";
+import { castPartySpell } from "../rules/party";
+import { bootPath } from "../rules/bootRing";
 
 const interval = 60, map = { tuning: { party: { interval }, boot: { time: 10 } } } as unknown as ForestMap;
 // Home boots until 10 s; the first wave's countdown runs 10 to 70 s (no start delay here).
@@ -106,4 +110,33 @@ describe("the line's front (Ed, 2026-10-06: \"Please come up with a better desig
     ley.grow(2.02); ley.front(2.05, 2.1);
     expect(embers()).toBeGreaterThanOrEqual(before + 18);
   }, 30000);
+});
+
+describe("the first line branching off the boot ring (Ed, v2001 and 2026-10-07)", () => {
+  // A real map: the boot's pulse goes round the home ring; the first link leaves the ring at `branch` (a share of it, and
+  // the boot path's metres there, part way round).
+  const g = newGame(123, TUNING), p = g.party, map = g.map, P = bootPath(map), first = P.stoneAt[P.order[0]], last = P.stoneAt[P.order[P.order.length - 1]];
+  const branch = { share: 0.3, at: first + (last - first) / 3 }, B = TUNING.boot.time, F = TUNING.boot.firstAfter ?? 0, reveal = TUNING.leyLines.reveal ?? 3;
+  castPartySpell(p, map, 0); p.bootFrom = 0; p.bootUntil = F + B; p.nextAt = p.bootUntil + TUNING.party.interval;
+  const when = (m: number) => F + ((m - first) / (last - first)) * B; // (the time the boot's pulse passes m along its path)
+  it("isn't there before the boot's pulse reaches where it leaves the ring", () => {
+    expect(leyReveal(p, map, 1, reveal, branch)).toBe(0);
+    expect(leyReveal(p, map, when(branch.at) - 0.5, reveal, branch)).toBe(0);
+  });
+  it("branches off there as the pulse passes, and reaches the first stone as the boot ends", () => {
+    expect(leyReveal(p, map, when(branch.at) + 1e-6, reveal, branch)!).toBeCloseTo(0.3, 3);
+    expect(leyReveal(p, map, when((branch.at + last) / 2), reveal, branch)!).toBeCloseTo(0.65, 3);
+    expect(leyReveal(p, map, p.bootUntil - 1e-6, reveal, branch)!).toBeCloseTo(1, 3);
+  });
+  it("goes on from the first stone without a pause, reaching the third as the first wave lands", () => {
+    expect(leyReveal(p, map, p.bootUntil, reveal, branch)).toBeCloseTo(1);
+    expect(leyReveal(p, map, p.bootUntil + TUNING.party.interval / 2, reveal, branch)).toBeCloseTo(1 + (reveal - 1) / 2);
+    expect(leyReveal(p, map, p.nextAt, reveal, branch)).toBeCloseTo(reveal);
+  });
+  it("keeps to the boot pulse's progress, not the clock: a shorter boot branches as early in it", () => {
+    const short = { ...p, bootUntil: F + B / 10 } as typeof p, shortMap = { ...map, tuning: { ...map.tuning, boot: { ...map.tuning.boot, time: B / 10 } } } as typeof map;
+    const at = F + ((branch.at - first) / (last - first)) * (B / 10);
+    expect(leyReveal(short, shortMap, at - 0.05, reveal, branch)).toBe(0);
+    expect(leyReveal(short, shortMap, at + 0.05, reveal, branch)!).toBeGreaterThan(0.3);
+  });
 });

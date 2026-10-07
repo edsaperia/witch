@@ -34,10 +34,10 @@ export const ringRadius = (map: Floor): number => {
 /** The stones in the order the pulse turns them: indices into dancefloor.speakers, the first clockwise from the top. */
 export function ringOrder(map: Floor): number[] { return bootPath(map).order; }
 
-const cache = new WeakMap<object, { path: P2[]; length: number; stoneAt: number[]; order: number[] }>();
+const cache = new WeakMap<object, { path: P2[]; length: number; stoneAt: number[]; order: number[]; ringFrom: number; a0: number }>();
 /** The boot path (the treehouse's front, the ring's top, round clockwise to the top again), its length, and where along it
  *  (m) each stone is passed, by speaker index. */
-export function bootPath(map: Floor): { path: P2[]; length: number; stoneAt: number[]; order: number[] } {
+export function bootPath(map: Floor): { path: P2[]; length: number; stoneAt: number[]; order: number[]; ringFrom: number; a0: number } {
   const hit = cache.get(map.dancefloor);
   if (hit) return hit;
   const d = map.dancefloor, R = ringRadius(map), TAU = Math.PI * 2;
@@ -47,7 +47,7 @@ export function bootPath(map: Floor): { path: P2[]; length: number; stoneAt: num
   const stoneAt: number[] = [];
   d.speakers.forEach((s, i) => { stoneAt[i] = ap.length + R * ((((a0 - Math.atan2(s.x - d.x, s.z - d.z)) % TAU) + TAU) % TAU); });
   const order = d.speakers.map((_, i) => i).sort((a, b) => stoneAt[a] - stoneAt[b]);
-  const out = { path, length: ap.length + R * TAU, stoneAt, order };
+  const out = { path, length: ap.length + R * TAU, stoneAt, order, ringFrom: ap.length, a0 };
   cache.set(map.dancefloor, out);
   return out;
 }
@@ -91,4 +91,11 @@ export function stonesTurned(p: PartyState, map: Floor, time: number): number {
   let n = 0;
   for (let i = 0; i < map.dancefloor.speakers.length; i++) if (stoneTurned(p, map, time, i)) n++;
   return n;
+}
+
+/** How far along the boot path (m) the pulse passes the point of the ring nearest (x, z): round it clockwise from where the
+ *  path meets it (as each stone's stoneAt). The first ley line leaves the ring at one such point (render/leylines.ts). */
+export function ringAlong(map: Floor, x: number, z: number): number {
+  const P = bootPath(map), d = map.dancefloor, R = ringRadius(map), TAU = Math.PI * 2;
+  return P.ringFrom + R * ((((P.a0 - Math.atan2(x - d.x, z - d.z)) % TAU) + TAU) % TAU);
 }
