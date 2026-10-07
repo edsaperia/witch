@@ -94,6 +94,10 @@ ${BAYER_GLSL}void main() {
   gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), m.rgb * nightLightShaded(N, vWorld, vMoonK) * 1.25), vWorld), vWorld), 1.0);
 }`;
 
+/** A cell's key in GrassView's cells: a small integer (cells within CELL0 of the origin, far beyond any map). */
+const CELL0 = 16384, CELLS = 32768;
+const cellKey = (ci: number, cj: number) => (ci + CELL0) * CELLS + (cj + CELL0);
+
 export class GrassView {
   readonly mesh: THREE.Mesh;
   private geo: THREE.InstancedBufferGeometry;
@@ -106,9 +110,9 @@ export class GrassView {
   /** Each area's rushes (or any area's), for the reeds that ring ponds. */
   private rushes: ({ frame: number; sway: number } | undefined)[] = [];
   private open!: THREE.InstancedBufferAttribute;
-  private cells = new Map<string, Tuft[]>();
+  private cells = new Map<number, Tuft[]>(); // (by cellKey: a small integer, no string a cell a frame)
   private mat: THREE.ShaderMaterial;
-  private lastKey = "";
+  private lastCi = NaN; private lastCj = NaN;
   /** Tufts drawn, and milliseconds spent working out cells, this frame (for the debug overlay and perf). */
   stats = { tufts: 0, buildMs: 0 };
 
@@ -169,6 +173,13 @@ export class GrassView {
     (u.uClear.value as THREE.Vector4[]).forEach((v, i) => { const p = near[i]; if (p) v.set(p.x, p.z, p.r, 1); else v.set(0, 0, 0, 0); });
     // Work out the cells in reach, nearest first, within a time budget; rebuild when she moves a cell.
     const C = tuftSpan(G.cell, G.spacing), ci0 = Math.floor((x - G.radius) / C), ci1 = Math.floor((x + G.radius) / C), cj0 = Math.floor((z - G.radius) / C), cj1 = Math.floor((z + G.radius) / C);
+    // Nothing to do while every cell in reach is made and she is in the same cell (most frames): no list, no sort.
+    if (ci0 === this.lastCi && cj0 === this.lastCj) {
+      let missing = false;
+      for (let cj = cj0; cj <= cj1 && !missing; cj++) for (let ci = ci0; ci <= ci1; ci++)
+        if (Math.hypot((ci + 0.5) * C - x, (cj + 0.5) * C - z) < G.radius + C && !this.cells.has(cellKey(ci, cj))) { missing = true; break; }
+      if (!missing) { this.stats.buildMs = 0; return; }
+    }
     const want: [number, number, number][] = [];
     for (let cj = cj0; cj <= cj1; cj++) for (let ci = ci0; ci <= ci1; ci++) {
       const d = Math.hypot((ci + 0.5) * C - x, (cj + 0.5) * C - z);
@@ -178,22 +189,21 @@ export class GrassView {
     const t0 = performance.now();
     let built = false;
     for (const [ci, cj] of want) {
-      const k = ci + "," + cj;
+      const k = cellKey(ci, cj);
       if (this.cells.has(k)) continue;
       if (performance.now() - t0 > G.budgetMs) break;
       this.cells.set(k, tuftsInCell(this.map, ci, cj, G.cell, G.spacing, G.density, this.forest));
       built = true;
     }
     this.stats.buildMs = performance.now() - t0;
-    const key = `${ci0},${cj0}`;
-    if (!built && key === this.lastKey) return;
-    this.lastKey = key;
+    if (!built && ci0 === this.lastCi && cj0 === this.lastCj) return;
+    this.lastCi = ci0; this.lastCj = cj0;
     // Forget cells well out of reach.
-    if (this.cells.size > want.length * 3) for (const k of this.cells.keys()) { const [a, b] = k.split(",").map(Number); if (Math.hypot((a + 0.5) * C - x, (b + 0.5) * C - z) > G.radius * 2 + C) this.cells.delete(k); }
+    if (this.cells.size > want.length * 3) for (const k of this.cells.keys()) { const a = Math.floor(k / CELLS) - CELL0, b = (k % CELLS) - CELL0; if (Math.hypot((a + 0.5) * C - x, (b + 0.5) * C - z) > G.radius * 2 + C) this.cells.delete(k); }
     const T = this.tuft.array as Float32Array, U = this.uvA.array as Float32Array, P = this.pxA.array as Float32Array, cap = G.cap, F = this.atlas.frames;
     let n = 0;
     for (const [ci, cj] of want) {
-      const list = this.cells.get(ci + "," + cj);
+      const list = this.cells.get(cellKey(ci, cj));
       if (!list) continue;
       for (const f of list) {
         if (n >= cap) break;
@@ -204,9 +214,9 @@ export class GrassView {
         const kd = (TUFT_KINDS[f.kind] === "reeds" ? this.rushes[f.type] : undefined) ?? ks.find(k => roll <= k.upTo) ?? ks[ks.length - 1];
         if (!kd) continue;
         const fr = F[kd.frame];
-        T.set([f.x, f.z, f.size, f.flip ? 1 : 0], n * 4);
+        T[n * 4] = f.x; T[n * 4 + 1] = f.z; T[n * 4 + 2] = f.size; T[n * 4 + 3] = f.flip ? 1 : 0;
         U.set(fr.uv, n * 4);
-        P.set([fr.w, fr.h, kd.sway], n * 3);
+        P[n * 3] = fr.w; P[n * 3 + 1] = fr.h; P[n * 3 + 2] = kd.sway;
         (this.open.array as Float32Array)[n] = f.open;
         n++;
       }
