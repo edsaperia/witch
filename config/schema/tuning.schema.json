@@ -3681,6 +3681,10 @@
           "type": "number",
           "minimum": 0
         },
+        "minFromOtherStones": {
+          "type": "number",
+          "minimum": 0
+        },
         "floor": {
           "type": "object",
           "properties": {
@@ -3797,6 +3801,7 @@
         "edge",
         "top",
         "minFromStone",
+        "minFromOtherStones",
         "floor",
         "rim",
         "grove",
@@ -6898,6 +6903,18 @@
         "outer": {
           "type": "number",
           "minimum": 0
+        },
+        "ragged": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lead": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -6905,7 +6922,10 @@
         "edge",
         "whole",
         "wobble",
-        "outer"
+        "outer",
+        "ragged",
+        "spread",
+        "lead"
       ],
       "additionalProperties": false
     },
@@ -7232,6 +7252,14 @@
           "type": "number",
           "minimum": 0
         },
+        "questCap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "questFar": {
+          "type": "number",
+          "minimum": 0
+        },
         "bombard": {
           "type": "object",
           "properties": {
@@ -7291,6 +7319,8 @@
         "share",
         "buffPower",
         "happyRange",
+        "questCap",
+        "questFar",
         "bombard",
         "stomp",
         "partyEgg",

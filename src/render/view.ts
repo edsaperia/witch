@@ -107,6 +107,9 @@ export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   camera: THREE.PerspectiveCamera;
+  /** The canopy hole's lead ahead of her on screen (pixels, eased) and when it was last moved. */
+  private holeLead = { x: 0, y: 0 };
+  private holeAt = 0;
   private ground: Ground;
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
   private heights: HeightField;
@@ -777,9 +780,19 @@ export class View {
     this.camera.updateMatrixWorld();
     const ws = placed(this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5 + this.rideOff, g.witch.z)).project(this.camera);
     // (The edge stays its full softness as the hole closes: shrunk with it, a small hole's edge was crisp, Ed v289.)
-    SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
+    // (its middle a little ahead of her the way she's going, canopyCutout.lead seconds, eased: the opening leans into her path)
+    const lead = cut.lead ?? 0, lx = (ws.x * 0.5 + 0.5) * this.width, ly = (ws.y * 0.5 + 0.5) * this.height;
+    let hx = lx, hy = ly;
+    if (lead > 0) {
+      const ah = placed(this.v3.set(g.witch.x + g.witch.vx * lead, witchHeight(g.witch, t) * 0.5 + this.rideOff, g.witch.z + g.witch.vz * lead)).project(this.camera);
+      const tx = (ah.x * 0.5 + 0.5) * this.width, ty = (ah.y * 0.5 + 0.5) * this.height, k = 1 - Math.exp(-Math.min(0.1, Math.max(0, time - this.holeAt)) / 0.6);
+      this.holeLead.x += (tx - lx - this.holeLead.x) * k; this.holeLead.y += (ty - ly - this.holeLead.y) * k;
+      hx += this.holeLead.x; hy += this.holeLead.y;
+    }
+    this.holeAt = time;
+    SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
     SPRITE_UNIFORMS.uCutWhole.value = cut.whole ?? 0;
-    SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35);
+    SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
     SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
@@ -967,6 +980,7 @@ export class View {
     { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
+      this.leashView.seatAt = seat; // (where she sparkles back in after a knockout)
       const cam = onTreehouse(T.camera.x, T.camera.y);
       g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
       const fwd = this.camera.getWorldDirection(this.v3);
@@ -1010,7 +1024,7 @@ export class View {
     setOverlayTilt(t.tiltShift, w.lift, this.canvas.clientHeight || window.innerHeight, this.height); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
     this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     const onBeach = this.beachView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
-    this.stateMarks.update(g, time, this.leashView.tops);
+    this.stateMarks.update(g, time, this.leashView.tops, 70, this.camera.position);
     this.inviteView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
     const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink, y: wyy + groundHeight(wx, wz) - U.y * wsink, z: wz - U.z * wsink, frame: wframe, flip: wflip }];
