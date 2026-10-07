@@ -83,22 +83,36 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // The grove's trees (a legend's ring of old giants, Ed 2026-10-06): the two tallest classes it has.
   const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => variants.some(v => v.heightClass === c)), of = (c?: string) => variants.flatMap((v, i) => (v.heightClass === c ? [i] : []));
   layout.grove.giant = of(have[have.length - 1]); layout.grove.tall = have.length > 1 ? of(have[have.length - 2]) : layout.grove.giant;
-  def.big.forEach(([kind], i) => {
-    if (kind === "tree" && variants.length) return;
-    layout.big.push({ bot: add(withSway(assets.big[i].sp, (assets.big[i] as { sway?: unknown }).sway)), top: null });
+  // The baked pieces stand for the area's list entries (a.from): one each, or under the prop generator (?props=gen) n variants of
+  // one, each a share of that entry's weight (a.share). Walked by piece, not by entry, so each entry is its own art.
+  type Asset = { sp: Baked; sway?: unknown; sparse?: number; from: number; share?: number };
+  const bigs = assets.big as Asset[], smalls = assets.small as Asset[];
+  const firstBig = layout.big.length;
+  bigs.forEach(a => {
+    if (def.big[a.from][0] === "tree" && variants.length) return;
+    layout.big.push({ bot: add(withSway(a.sp, a.sway)), top: null });
     // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
     // sparsely: their art's own sparse share as their weight among the area's big objects (about
     // a fifth of them all), the mounds, boulders and logs at 1.
-    const sparse = (assets.big[i] as { sparse?: number }).sparse;
-    layout.bigWeight.push(variants.length ? 0.1 : sparse ?? 1);
+    layout.bigWeight.push(variants.length ? 0.1 * (a.share ?? 1) : a.sparse ?? a.share ?? 1);
   });
   // An area with no trees (Ed, 2026-10-06: "Legend with no tall trees around it"): its legends' groves grow its two tallest big
-  // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring.
-  if (!variants.length && def.big.length) {
-    const hOf = (i: number) => assets.big[i].sp.h, byH = def.big.map((_, i) => i).filter(i => hOf(i) >= 48).sort((a, b) => hOf(b) - hOf(a)); // (as tall as she is or more, in art pixels: no boulders or mounds)
-    if (byH.length) { layout.grove.giant = [byH[0]]; layout.grove.tall = [byH[1] ?? byH[0]]; }
+  // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring;
+  // every variant of each.
+  if (!variants.length && bigs.length) {
+    const tallest = new Map<number, number>(); // (an entry's tallest piece, in art pixels)
+    bigs.forEach(a => tallest.set(a.from, Math.max(tallest.get(a.from) ?? 0, a.sp.h)));
+    const byH = [...tallest].filter(([, h]) => h >= 48).sort((a, b) => b[1] - a[1]).map(([from]) => from); // (as tall as she is or more: no boulders or mounds)
+    const of = (from: number) => bigs.flatMap((a, j) => (a.from === from ? [firstBig + j] : []));
+    if (byH.length) { layout.grove.giant = of(byH[0]); layout.grove.tall = of(byH[1] ?? byH[0]); }
   }
-  def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(withSway(assets.small[i].sp, (assets.small[i] as { sway?: unknown }).sway)), top: null }));
+  // The small objects are picked evenly, so each entry gets as many slots as the most variants any has (a plain one repeated).
+  const slots = Math.max(1, ...def.small.map((_, i) => smalls.filter(a => a.from === i).length));
+  def.small.forEach(([kind, o], i) => {
+    const mine = smalls.filter(a => a.from === i);
+    const pieces = kind === "tree" ? [tree(o as TreeOpts, 500 + i)] : mine.map(a => ({ bot: add(withSway(a.sp, a.sway)), top: null }));
+    for (let k = 0; k < slots && pieces.length; k++) layout.small.push(pieces[k % pieces.length]);
+  });
   for (const a of assets.walls) layout.walls.push(add(a.sp));
   for (const a of assets.rim) layout.rim.push({ frame: add(a.sp), form: a.kind, height: a.metres.height });
   if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null, origin: assets.setPiece.origin };

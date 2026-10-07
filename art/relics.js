@@ -183,7 +183,8 @@ const PLAYGROUND_AT = [["swings", -2.6, -2.0], ["slide", 2.4, -2.2], ["climbing-
 // ---------------- the sports grounds ----------------
 // A ground decal: a flat, cracked surface with painted lines, seen at the game's angle.
 function rlDecal(m, w, d, surface, lines, g = 1) {
-  m.box([0, .015, 0], [w, .015, d], surface, { round: .01, group: g, paint: p => { if (rlCell(p, 3, 4) < .05 || Math.abs(Math.sin(p[0] * 1.3 + 1) * .5 + Math.sin(p[0] * 4.1) * .08 - p[2] * .3) < .012) return rlCell(p, 18) < .5 ? M.LEAF2 : M.STONED; if (lines(p[0], p[2])) return rlCell(p, 10, 2) < .25 ? surface : M.CLOTH; return rlCell(p, 5, 7) < .07 ? M.MOSS : undefined; } });
+  // paper-thin (Ed's notes, 2026-10-07: a court 3 cm thick showed its near edge as a raised slab's face at the game's camera)
+  m.box([0, .003, 0], [w, .003, d], surface, { round: .002, group: g, paint: p => { if (rlCell(p, 3, 4) < .05 || Math.abs(Math.sin(p[0] * 1.3 + 1) * .5 + Math.sin(p[0] * 4.1) * .08 - p[2] * .3) < .012) return rlCell(p, 18) < .5 ? M.LEAF2 : M.STONED; if (lines(p[0], p[2])) return rlCell(p, 10, 2) < .25 ? surface : M.CLOTH; return rlCell(p, 5, 7) < .07 ? M.MOSS : undefined; } });
 }
 const near = (v, t, w = .045) => Math.abs(v - t) < w;
 const SPORTS = {

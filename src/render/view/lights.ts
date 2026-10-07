@@ -1,5 +1,6 @@
 // The lights (from render/view.ts, issue #122): campfires and magic stones lit each frame, and the
 // shader's light budget filled with the nearest.
+import * as THREE from "three";
 import { partyOff } from "../partyOver";
 import { LIGHT_UNIFORMS, MAX_LIGHTS } from "../lighting";
 import type { SpriteInstance } from "../sprites";
@@ -67,3 +68,29 @@ export function setLights(v: View, all: ForestLight[], x: number, z: number): vo
   U.uLightCount.value = n;
   v.stats.lights = n;
 }
+
+/** The sigils' neon spilling onto the world (overnight phase 3: tuning sigilSpill): each placed sigil a small light in its
+ *  creature's neon over the rune, eased in as it's written and breathing with its pulse, and the bottom of her stack a
+ *  fainter one above her hat, so the ground, the grass and whoever stands by them take its colour. */
+export function sigilLights(v: View, time: number, hatY: number): ForestLight[] {
+  const S = v.game.tuning.sigilSpill, g = v.game, out: ForestLight[] = [];
+  if (!S || S.strength <= 0) return out;
+  const neon = (species: string): THREE.Vector3 | null => {
+    let c = spillRgb.get(species);
+    if (!c) { const col = v.leashView.colours.get(species); if (!col) return null; c = new THREE.Vector3(col.r, col.g, col.b); spillRgb.set(species, c); }
+    return c;
+  };
+  for (const p of g.leash.placed) {
+    const c = g.creatures[p.id], rgb = c && neon(c.species);
+    if (!rgb) continue;
+    const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id); // (the rune's own pulse: leash.ts)
+    out.push({ x: p.x, y: S.height, z: p.z, reach: S.reach * (1 + c.level * 0.15), rgb, strength: S.strength * Math.min(1, (time - p.at) / 0.8) * pulse });
+  }
+  const s = g.leash.stack, w = g.witch;
+  if (S.stack > 0 && s.length) {
+    const c = g.creatures[s[s.length - 1]], rgb = c && neon(c.species);
+    if (rgb) out.push({ x: w.x, y: hatY, z: w.z, reach: S.stackReach, rgb, strength: S.stack });
+  }
+  return out;
+}
+const spillRgb = new Map<string, THREE.Vector3>();

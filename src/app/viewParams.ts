@@ -8,6 +8,7 @@ export function styleFromLink(params: URLSearchParams, tuning: Tuning) {
   const style = loadStyle();
   style.artStyle = params.get("style") === "ref" ? "ref" : "bold"; // bold (Ed, 2026-10-06: "I think I prefer bold style"); ?style=ref: Ed's reference treatment (art/stylise.js) baked into every sprite, carried to the art worker in the style
   style.propGen = 1; tuning.partyObjects.generated = true; // the prop generator (art/props/) stands in for the areas' stones, cairns, pools, stumps, logs, fungi and henges, several shapes of each, and the party's generated bunting, balloons and lanterns for the hand-made ones (carried to the art worker in the style, to the rules in the tuning)
+  style.setPieceScale = tuning.setPieceScale; // set pieces baked at the size they're drawn, never stretched (docs/STYLE.md §1: everything at the art pixel)
   if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
   return style;
 }
