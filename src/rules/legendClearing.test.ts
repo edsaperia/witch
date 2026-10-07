@@ -9,6 +9,7 @@ import { TUNING, withTuning } from "./tuning";
 import { joinParty, loseSoundsystem, newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { befriend } from "./creatureStates";
 import { inviteCreature } from "./leash";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
 describe("legend clearings", () => {
@@ -78,7 +79,7 @@ describe("legend clearings", () => {
   it("its baby, invited, stays in the circle when she leaves, and dances there when its area's party comes; only leashed does it follow her", () => {
     const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
     const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
-    const g = newGame(123, TUNING);
+    const g = newGame(123, PEOPLED);
     g.clock.paused = false;
     g.witches[0].health.hp = 1e6;
     const B = g.creatures.find(o => o.circle)!, k = B.circle!, dist = () => Math.hypot(B.x - k.x, B.z - k.z);

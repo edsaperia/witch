@@ -87,16 +87,19 @@ export const TIP_PACE = 3;
 /** When the drawn ley line's growing tip reaches each stone on the route (Ed, 2026-10-06: "The column of light above a
  *  runestone first appears when the leyline meets it"): stone key → game time; null before the party spell (the tip
  *  hasn't set off). The shared seam for the line's reveal (render/leylines.ts leyReveal) and the stones' beacons
- *  (render/view/home.ts). The tip leaves the treehouse as home's boot ends and runs at `leyLines.reveal` (TIP_PACE) links
- *  a wave, so the k-th stone along the route is reached k × party.interval / reveal seconds after the boot (the third as
- *  the first wave lands); a stone its wave (or quest) has already reached counts as reached then, if sooner. */
+ *  (render/view/home.ts). The tip branches off the boot ring as the boot's pulse goes round it and reaches the first stone
+ *  as the boot ends (Ed, 2026-10-07); then the `reveal`th (TIP_PACE) stone as the first wave lands, the k-th of those
+ *  between (k - 1) / (reveal - 1) of the countdown after the boot; then on at `reveal` links a wave, the k-th stone along
+ *  the route k × party.interval / reveal seconds after the boot. A stone its wave (or quest) has already reached counts as
+ *  reached then, if sooner. */
 export function leyReachTimes(p: PartyState, map: ForestMap): Map<string, number> | null {
   if (clockStart(p) === null) return null;
   const pace = map.tuning.leyLines.reveal ?? TIP_PACE, { stones } = leyChain(p, map), step = map.tuning.party.interval / pace, out = new Map<string, number>();
   const done = p.leyDone ?? new Map<string, number>();
   stones.forEach((s, k) => {
     const key = cellKey(s.cell), a = p.areas.get(key), was = Math.min(a ? (key === cellKey(map.centreCell) ? -Infinity : a.at) : Infinity, done.get(key) ?? Infinity);
-    out.set(key, Math.min(p.bootUntil + k * step, was));
+    const tip = k >= 1 && k <= pace && pace > 1 ? p.bootUntil + ((k - 1) / (pace - 1)) * map.tuning.party.interval : p.bootUntil + k * step;
+    out.set(key, Math.min(tip, was));
   });
   return out;
 }

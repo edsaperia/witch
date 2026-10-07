@@ -5,7 +5,7 @@ The rules every piece of art in Witch follows, so that the whole scene reads as 
 **Ed's rulings it rests on**
 - "Everything should look a bit more pixel-art stylised" (2026-10-05), and "everything should be pixellated to the same level (including the menu)" (2026-10-06).
 - "I think I prefer bold style" (2026-10-06): **bold is the game's default** (`?style=bold`; `ref` and `now` stay selectable).
-- Art pixel: "4 or 5, but we will decide in playtesting" (2026-10-05). The game still runs at **3** (`pixelSize`). **DECISION FOR ED:** pick 4 or 5 (try `?px=4`, `?px=5`). Until then every rule below holds at any pixel size.
+- Art pixel: **3** (Ed, 2026-10-07, after playtesting 5 and 4: "pixel level 3 is better. The large pixels look cute but it's impossible to see what's going on at all"). It was briefly 5, then 4, the same day. `?px=4` or `?px=5` still switches it for one load.
 - "Light and glow stay smooth"; "creature projectiles and the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they should be lighting objects that are pixels" (round 14). "No dithering" (the canopy and trunk fades).
 - "Animal legs have outlines on them; they'd look better without" (2026-10-06).
 
@@ -27,9 +27,10 @@ Where the game breaks rule 1 today (each is a ticket for the builder who owns it
 | Wild legends | 1.35, breathing ±4% (**fixed by #363**: 1, breath as a whole-pixel squash) | legends |
 | Set pieces | `setPieceScale` 1.8 | scenery |
 | Rune markers | `runeMarkers.scale` 2.25 | markers |
-| Home speaker boot stones, speaker tops | 0.55, 0.96 | home |
+| Home speaker boot stones | 0.55 (**fixed**: baked at 0.55 of a rune stone, `SPEAKER_STONE`, drawn at 1; the speaker tops' 0.96 is only its laser's height, not a draw scale) | home |
 | Tall trees | squeezed by `treeCap` past 20 m | trees |
-| Party objects, beach plants, fires, an evolving pop | per-instance `scale` | party, beach |
+| Party objects and their campfires | their pop-in `scale` (**fixed**: they pop and grow by `sx`/`sy`, whole art pixels) | party |
+| Beach plants, berries (their regrowth and the nibble's sparkles), an evolving pop | per-instance `scale` | beach, berries |
 
 The camera is a perspective camera, so an art pixel is about 1.1 screen pixels at Ed's 1240-high window at the starting zoom (0.64 at 720 high, 0.43 from the treetops). That resampling is accepted: the rule is about what we bake and draw, not the camera.
 

@@ -1,5 +1,6 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
+import type { ByRoute } from "./growth";
 
 export interface CameraModeTuning { angleIn: number; angleOut: number; distanceIn: number; distanceOut: number }
 
@@ -39,6 +40,24 @@ export interface Mood {
   areas?: Record<string, Partial<{ hazeHue: number; hazeSat: number; haze: number; gradeHue: number; gradeSat: number; mist: number }>>; areaEase?: number;
 }
 
+/** Will-o'-the-wisps: faint slow lights drifting between the trees of the wild areas (render/wisps.ts, Ed 2026-10-07). */
+export interface WispTuning {
+  on: boolean;
+  /** The ground is split into squares this wide (m); each may hold a wisp, by a seeded chance. */
+  cell: number;
+  /** Only squares within this (m) of her hold wisps. */
+  reach: number;
+  /** A wild square's chance of a wisp, far from the party. */
+  chance: number;
+  /** None within partyNear (m) of a partified area's middle, the full chance from partyFar (m) on. */
+  partyNear: number; partyFar: number;
+  /** How high a wisp floats (m, its lowest and highest), how far it wanders from its spot (m), and its cycle: seconds to
+   *  fade in, linger and fade out. */
+  height: number[]; drift: number; period: number;
+  /** Its core's and halo's size (art pixels), colour and brightness. */
+  size: number; halo: number; hue: number; sat: number; bright: number;
+}
+
 /** The sleeping legends' clearings' light (render/glades.ts). */
 export interface GladeTuning {
   on: boolean;
@@ -55,13 +74,15 @@ export interface GladeTuning {
 }
 
 export interface Tuning {
+  /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
+  wisps?: WispTuning;
   /** A legend's circle (Ed, 2026-10-06): slow, the world slowed to scale of its speed (eased over ease seconds) while she stands on the ground in the circle of a legend asleep or restless; on false (?slow=0) for none. */
   legendCircle?: { slow: { on?: boolean; scale: number; ease: number } };
   mapAreas: number;
   /** The map's shape (Ed, 2026-10-06: "circular rather than square, with a buffer zone with no runestones around the edge"): circle: the playable areas those within radius areas of home, a buffer ring buffer areas deep past them (forest she can fly over, nothing in it), her flight's edge soft over its last push metres (her outward speed easing to nothing, a drift of drift m/s back in), and the forest going on edge areas past it; square: mapAreas x mapAreas as before (?shape=square). */
   map?: { shape: "circle" | "square"; radius: number; buffer: number; push: number; drift: number; edge?: number; /** the coast's wobble (Ed, 2026-10-06: "slightly irregular"): rules/mapShape.ts makeCoast */ coast?: { amp: number; harmonics: number; detail: number } };
   /** The beach round the circular map (Ed, 2026-10-06: an Easter egg): sand the last width metres inside her flight's edge, the sea from shore metres past it; the hills eased over ease metres to sand metres high at the sand, down to sea at the water. Flying on out over the beach for restAfter seconds she lands and lies down to stargaze. witchChance of runs (every run) have spots[0] to spots[1] spots of witches (witches[0] to [1] each) spread round the beach; landing within meet metres of them and keeping still idleAfter seconds she chats, holds hands, hugs and stargazes with one, turn seconds each. Nothing of it is drawn, heard or stepped unless she's within shown metres of the sand (simRange of the witches). */
-  beach?: { on: boolean; width: number; shore: number; /** Its width round the coast (rules/mapShape.ts BeachVary). */ vary?: import("./mapShape").BeachVary; /** Its decorations (rules/beachDecor.ts). */ decor?: import("./beachDecor").BeachDecorKnobs; ease: number; sand: number; sea: number; restAfter: number; shown: number; /** lying down to stargaze, the world bends stargazeCurve times the treetops' curve (stronger: the sky fills more of the screen), eased in over gazeEase seconds */ stargazeCurve?: number; gazeEase?: number; /** the camera by the sea (Ed, 2026-10-06): from approach metres off the water to its edge, on the ground, the camera lowers to `angle` degrees and the world bends `curve` times the treetops' curve; lying down to stargaze, to gazeAngle degrees and gazeDistance metres, aimed gazeLook metres over her (and stargazeCurve's bend) */ camera?: { approach: number; angle: number; curve: number; /** facing out to sea, the share of the beach's bend kept (the north coast's open water stays in view) */ seaward?: number; gazeAngle: number; gazeDistance: number; /** lying down with the open sea behind the camera (the south coast), its distance instead, so the sea shows under her */ gazeDistanceSeaBehind?: number; gazeLook?: number }; /** a 💌 come down on the sand or the sea rests letterLinger seconds (not invites.linger), fading over the last letterFade, bobbing on the water */ letterLinger?: number; letterFade?: number; /** stargazing with a beach witch: little hearts rising off them both, after `after` seconds, one every every[0] to every[1] seconds, each rising for life seconds */ hearts?: { after: number; every: number[]; life: number }; witchChance: number; /** how many spots of witches round the coast (from, to), spread evenly with a seeded jitter */ spots?: number[]; witches: number[]; meet: number; idleAfter: number; turn: number; simRange: number };
+  beach?: { on: boolean; width: number; shore: number; /** Its width round the coast (rules/mapShape.ts BeachVary). */ vary?: import("./mapShape").BeachVary; /** Its decorations (rules/beachDecor.ts). */ decor?: import("./beachDecor").BeachDecorKnobs; ease: number; sand: number; sea: number; restAfter: number; shown: number; /** lying down to stargaze, the world bends stargazeCurve times the treetops' curve (stronger: the sky fills more of the screen), eased in over gazeEase seconds */ stargazeCurve?: number; gazeEase?: number; /** the camera by the sea (Ed, 2026-10-06): from approach metres off the water to its edge, on the ground, the camera lowers to `angle` degrees and the world bends `curve` times the treetops' curve; lying down to stargaze, to the angle, distance and look in `bearings` for her bearing round the coast (and stargazeCurve's bend) */ camera?: { approach: number; angle: number; curve: number; /** facing out to sea, the share of the beach's bend kept (the north coast's open water stays in view) */ seaward?: number; /** lying down to stargaze, by her bearing round the coast (12 entries, every 30 degrees from the north, clockwise; rules/camera.ts gazeAt): degrees below the horizon, metres back, metres over her it looks at, metres east it stands and aims (out over the water on the east and west coasts), the share of the stargazing bend kept */ bearings: { angle: number[]; distance: number[]; look: number[]; side?: number[]; bend?: number[] } }; /** a 💌 come down on the sand or the sea rests letterLinger seconds (not invites.linger), fading over the last letterFade, bobbing on the water */ letterLinger?: number; letterFade?: number; /** stargazing with a beach witch: little hearts rising off them both, after `after` seconds, one every every[0] to every[1] seconds, each rising for life seconds */ hearts?: { after: number; every: number[]; life: number }; witchChance: number; /** how many spots of witches round the coast (from, to), spread evenly with a seeded jitter */ spots?: number[]; witches: number[]; meet: number; idleAfter: number; turn: number; simRange: number };
   areaSize: number;
   areaScale: number;
   /** Each area's fighting arena: mostly open within radius metres of its centre and soundsystem, the woods thickening smoothly over a band band metres wide (both times fight.scale), its edge wobbled by noise (a share of the band); bushes and tufts: the share of the undergrowth and ground cover left in its open middle. */
@@ -82,7 +103,9 @@ export interface Tuning {
   groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
   /** The ground's fake relief: rises and hollows from noise (scale metres across) tilting the ground's normal by strength, so lights pick out the bumps, and shading hollows darker by shade. */
   /** relief: the fake bumps in the ground's shading; hills: the rolling ground, drawn only (render/height.ts): amplitude (m), scale (m across a swell), octaves. */
-  ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number; /** The light reads the hills' slopes this many times steeper (relief shading). */ shade: number } };
+  ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number; /** The light reads the hills' slopes this many times steeper (relief shading). */ shade: number };
+    /** The lie of the land in the layout (rules/terrain.ts; Ed's idea, relayed 2026-10-07): every runestone on a rise and every legend clearing in a hollow, rise and dip times the hills' amplitude, easing out over reach metres; trees thicker in low ground and sparser on high by up to trees (a share). */
+    layout?: { on: boolean; rise: number; dip: number; reach: number; trees: number } };
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
   /** ?bare=1 or 2 (not in the file): the terrain on its own (render/view.ts). */
   bare?: number;
@@ -120,13 +143,20 @@ export interface Tuning {
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
   /** Wild idlers' naps (rules/creatures.ts NapRules). */
-  naps?: { on: boolean; chance: number; length: number[]; wake: number };
+  /** The wild watch (Ed, 2026-10-07: a dormant area's animals "stir, evade and hang back, turning to LOOK at her", then attack):
+   *  on her first coming down in a wild area, its wild young and adults hold off for `time` seconds, standing and staring at her
+   *  (any within hangBack metres backing off), then fight as ever; an area is forgotten `forget` seconds after the last witch was
+   *  on the ground in it, so a later visit plays it again (rules/wildWatch.ts). */
+  /** The hunt (Ed, 2026-10-07; rules/hunt.ts): a woken wild area's own young and adults go for her while she's in the area, till she's knocked out or they're invited; she leaves, they lose interest as before. */
+  hunt?: { on: boolean };
+  wildWatch?: { on: boolean; time: number; forget: number; hangBack: number; /** an area with watchers worth this much in a fight (F) or more is fully dangerous: its red at its fullest */ dangerF?: number; /** the red on a watching creature at full aggro in the most dangerous area (render/view/creatures.ts) */ tint?: number; /** seconds its red takes to ease out when the watch ends (render/aggro.ts aggroFadeOut) */ fade?: number };
+  naps?: { on: boolean; chance: number; length: number[]; wake: number; /** A legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"): its own chance and length, roused only by a witch on the ground within reach metres of its circle's edge. */ circle?: { chance: number; length: number[]; reach: number } };
   /** The soundsystem alarm (rules/alarms.ts, render/alarm.ts). */
   alarms?: { linger: number; fall: number; most: number };
   /** The witch's health (Ed, 2026-10-04): hits she takes before she's knocked out; one comes back every repairTime seconds out of the fight. */
   witchHealth: { hits: number; repairTime: number; /** seconds after a hit in which no other blow lands (0: none) */ grace: number };
   /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
-  knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean; dropHat: boolean };
+  knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean; dropHat: boolean; /** Her hat's float to the ground (s), the knockout's first phase. */ hatFloat?: number; /** The wait from going down to moving again (rules/knockout.ts respawnWait). */ respawn?: { base: number; step: number; max: number; cooldown: number; minScratch: number }; /** Drawing only (Ed, 2026-10-07): how much the screen dims round her from the knockdown to her sparkle away, her hat floating off (0 none; no hat, no dim). */ dim?: number; /** Seconds of the wait a candle on her desk (rules/knockout.ts candleCount), 1 by default. */ candleStep?: number };
   /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
    *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
   dash: { distance: number; gone: number; cooldown: number; buffer: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
@@ -159,12 +189,23 @@ export interface Tuning {
     waves?: { volume: number; every: number; wash: number; range: number };
     /** The afterparty's night (Ed, 2026-10-06: "nice environmental music and sounds that match each area"; platform/audio/night.ts): its volume, the bed's (pad and bells), the noise bed's and the night sounds' shares, when it comes in (from `from` of the party-over ease), and the sleeping animals' snores (volume, the gap between them, heard within range metres, at most max at once). */
     night?: { volume: number; bed: number; noise: number; sounds: number; from: number; snore: { volume: number; gap: number; range: number; max: number } };
+    ambience?: { volume: number; bed: number; noise: number; sounds: number; quiet: number };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
+    /** By the ley line's pulse, its tip a burning sparkler (#491): its fizz. */
+    /** The wild watch's warning (aggro.ts, on rules/wildWatch.ts aggroOf). */
+    aggro?: { volume: number; swell: number; riser: number; hit: number; fall: number };
+    sparkler?: { volume: number; hiss: number; pops: number; rate: number; fork: number; range: number };
+    /** Fireworks over a soundsystem when a wave reaches an area she'd cleared (waveCelebrate). */
+    fireworks?: { volume: number; whoosh: number; boom: number; echo: number; crackle: number; cheer: number; range: number; cheerRange: number; speed: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
-    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number };
+    seaLife: { volume: number; splash: number; groan: number; pour: number; range: number };
+    sadTrumpet: { volume: number; duck: number; bare: number; rewind: number; cutAfter: number };
+    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number; needle: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
     spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
     land: { volume: number; gap: number };
+    /** A sigil refused (put down too near another): a soft two-note "nope" (chimes.ts nope). */
+    nope: { volume: number; gap: number };
     stir: { volume: number };
     knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
     charge: { volume: number; bellow: number; hooves: number; rumble: number; skid: number; trot: number; range: number };
@@ -172,7 +213,7 @@ export interface Tuning {
     meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; fade: number; murmur: number; clinks: number; clinkEvery: number; balloons: number; squeakEvery: number };
     whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
-  music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; /** The most (dB, as a laptop plays it) the music may fall from by a soundsystem to anywhere far off: checked by tools/music-lab/check.cjs. */ audible: number; /** A sleeping legend's clearing on the ground (Ed, 2026-10-06): the muffle (Hz), quiet (its share of the volume), ease (seconds), the layer's level, and the clearing's radius where the map has none. */ circle: { muffle: number; quiet: number; ease: number; level: number; radius: number }; /** The world slowed in a legend's circle (Ed, 2026-10-06: "the music audibly slows down"): the music follows the game's time scale, its notes' pitch dropping with it as a tape slows (the time scale to the power pitch, never under floor of it); on false, the tempo still follows (it must, to keep in step with the waves) but the pitch doesn't drop. */ slow?: { on: boolean; pitch: number; floor: number }; /** The party's over (Ed, 2026-10-06: "the dance music stops"): the music winds down like a tape stopping over the first `stop` of the party-over ease, its pitch falling with it to `floor`, then is silent. */ over?: { stop: number; floor: number }; /** by the sea the party gives way to the waves: within `fade` metres of the water, down to `quiet` of its volume at the water's edge */ beach?: { fade: number; quiet: number }; clear: number; distort: number; src: string };
+  music: { on: boolean; volume: number; /** The audio context's latencyHint (Ed, 2026-10-07: "the music is still cutting out"): "interactive" the smallest output buffer, "balanced" more room for the audio thread, "playback" the most (under-runs least likely, sound effects latest); ?latency= tries one for a load. */ latency?: "interactive" | "balanced" | "playback"; /** the intro's layers that drop as her needle-drop routine ends (Ed, 2026-10-07), before any speaker: rules/musicPlan.ts bootLayers */ dropLayers?: number; nearDist: number; farDist: number; floor: number; muffle: number; /** The most (dB, as a laptop plays it) the music may fall from by a soundsystem to anywhere far off: checked by tools/music-lab/check.cjs. */ audible: number; /** A sleeping legend's clearing on the ground (Ed, 2026-10-06): the muffle (Hz), quiet (its share of the volume), ease (seconds), the layer's level, and the clearing's radius where the map has none. */ circle: { muffle: number; quiet: number; ease: number; level: number; radius: number }; /** The world slowed in a legend's circle (Ed, 2026-10-06: "the music audibly slows down"): the music follows the game's time scale, its notes' pitch dropping with it as a tape slows (the time scale to the power pitch, never under floor of it); on false, the tempo still follows (it must, to keep in step with the waves) but the pitch doesn't drop. */ slow?: { on: boolean; pitch: number; floor: number }; /** The party's over (Ed, 2026-10-06: "the dance music stops"): the music winds down like a tape stopping over the first `stop` of the party-over ease, its pitch falling with it to `floor`, then is silent. */ over?: { stop: number; floor: number }; /** by the sea the party gives way to the waves: within `fade` metres of the water, down to `quiet` of its volume at the water's edge */ beach?: { fade: number; quiet: number }; clear: number; distort: number; src: string };
   /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): seconds before the first wave's countdown begins. */
   boot: { time: number; /** Seconds from her leaving the decks to the first home speaker turning (Ed, 2026-10-06: "about three seconds"); the boot's `time` runs from then. */ firstAfter: number; /** Seconds a home speaker takes to turn from its runestone into the speaker when the boot pulse reaches it. */ transform: number };
   groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number; sigilClear: number };
@@ -223,6 +264,10 @@ export interface Tuning {
    *  eased in by her lift, and never more than maxReach anywhere (a far camera: stargazing, zoomed out). The beach's sand is lit as the forest floor is (render/ground.ts). */
   /** The sigils' neon on the world (render/view/lights.ts sigilLights): each placed sigil a light at height metres over its rune, reaching reach metres (more by level) at strength (0 off); the bottom of her stack one at stack strength, stackReach metres, stackHeight over her. */
   sigilSpill: { strength: number; reach: number; height: number; stack: number; stackReach: number; stackHeight: number };
+  /** Her light in the wild and in a fight (render/combatLight.ts): exploring an area the party hasn't reached, its reach and strength times wildReach and wildGlow; with a fight within range metres in the last hold seconds, times fightReach and fightGlow instead; eased up over rise seconds and back over fall. Drawing only. */
+  /** The wave's celebration at an area already cleared (rules/fireworks.ts, render/fireworks.ts; Ed, 2026-10-07): shells[0] to shells[1] shells over `over` seconds from the soundsystem (the last `finale` together at the end), each rising for rise[0] to rise[1] seconds to height[0] to height[1] metres and bursting radius[0] to radius[1] metres across, drifting up to `drift` metres off its top; then its lasers stay fully on. Drawing (and sound) only. */
+  fireworks?: { on: boolean; shells: number[]; over: number; rise: number[]; height: number[]; radius: number[]; drift: number; finale: number };
+  combatLight?: { wildReach: number; wildGlow: number; fightReach: number; fightGlow: number; range: number; hold: number; rise: number; fall: number };
   nightLight?: { maxReach: number; treetopReach: number; treetopGlow: number; /** lying on the beach stargazing, at most gazeReach metres */ gazeReach?: number };
   glowHeight: number;
   /** The witch lit by the world's lights (not her own glow): never darker than lightFloor times her unlit look; coloured lights tint her (lightTint) and rim her edge facing them (lightRim). */
@@ -263,6 +308,8 @@ export interface Tuning {
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
+  /** The trees watching her (render/sprites.ts uWatch; Ed, 2026-10-07). */
+  watching?: { on: boolean; radius: number; lean: number; lag: number };
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   moonbeams: number;
   partyObjects: { on: boolean; clusters: number[]; loose: number[]; setChance: number; caughtChance: number; hanging: number[]; lightsPerArea: number; lanternReach: number; arch: string; /** Home's meadow, strewn all over (rules/partyDressing.ts homeDressing). */ home: { clusters: number[]; loose: number[]; weights: Record<string, number>; gap: number; reach: number; lights: number }; exclude: string[]; /** The prop generator's party pieces (art/party.js gen-*) in place of the hand-made ones they replace (?props=gen). */ generated: boolean };
@@ -319,10 +366,10 @@ export interface Tuning {
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; /** The share of the blur the sky takes, so the stars stay perceptible (Ed, 2026-10-06); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
-  /** Wild creatures (Ed, 2026-10-04): every area starts with `start`; while wild it gains
-   *  growth.perWave a wave at a random level by growth.weights (baby, young, adult); new ones
-   *  appear beyond the haze's far edge plus growth.hide metres from every witch (rules/growth.ts). */
-  population: { start: { babies: number; young: number; adults: number }; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
+  /** Wild creatures: every area starts with `start` and, from the first frame (Ed, 2026-10-07: no growth on a clock),
+   *  byRoute's extra by its place on the waves' route (rules/growth.ts routePopulation: a threat curve spent by each
+   *  kind's profile, and a fixed number of babies). `growth` is the old per-wave growth: the game no longer reads it (the balance simulators do). */
+  population: { start: { babies: number; young: number; adults: number }; byRoute: ByRoute; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
   /** Area legends (Ed, 2026-10-04): one an area, asleep till its area's wave, then a mini-boss guarding it. */
   /** A sleeping legend's dream bubble (Ed, 2026-10-05): shown only to a witch on the ground within range metres of it. */
   dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string } };
@@ -332,8 +379,12 @@ export interface Tuning {
     happyRange: number;
     /** A legend dreams of any other kind on the map, equally likely, but none whose nearest area lies over questCap areas away (about the farthest tenth at 5; 0: no cap). */
     questCap: number;
-    /** A done quest's buff is 1 + questFar × its dream's distance (Quest.far, 0 to 1 at the cap) times as strong: the far ones pay more. */
-    questFar: number;
+    /** A done quest's buff is questRoll times as strong as written, whatever its dream's distance (a relic's as written). */
+    questRoll: number;
+    /** A legend dreams only of a kind living in an area later on the route than its own (else the nearest later area's, else any). */
+    questLater?: boolean;
+    /** The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a legend, dreams of the baby of another of those three's kind. */
+    earlyQuest: boolean;
     /** An angry legend bombarding soundsystems (Ed, 2026-10-06: "Legend bombards, but prioritises you"): with no witch in its reach, the first lob or beam of its volley goes at the nearest standing soundsystem within range metres, doing damage to it (of combat.soundsystemHealth). */
     bombard: { on: boolean; range: number; damage: number };
     /** The stomp (Ed, 2026-10-06, a "perhaps"): a legend turning angry with its own area's soundsystem standing destroys it at once; with it on, legends stay restless angryAfter seconds (not legends.json's) before they anger. */
@@ -341,7 +392,7 @@ export interface Tuning {
     /** The party-legend Easter egg (rules/partyLegend.ts): on, 💌s to fill a happy legend's meter, its drain (share a second), how far (m) she can go from it leashed. */ partyEgg: boolean; partyHits: number; partyDrain: number; partyReach: number };
   /** The party's over (rules/partyOver.ts): seconds it eases in over, the ley line's brightness at its end, the creatures' pace home (times their roaming speed). */
   partyOver: { ease: number; leyFloor: number; walk: number };
-  wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number; /** How a legend reads in its circle (Ed's round 14 playtest: "Legends in the circle are not very distinct"): its sigil neon's glow on the ground under it asleep or happy (alpha), the neon rim round a sleeping form (0 none to 1), and its light floor (a share of its unlit look it never drops below). */ seen?: { aura: number; rim: number; floor: number; /** asleep, its nap (art/naps.js: the animal itself lying asleep) for its mound (art/legends.js) */ nap?: boolean; /** its light in this many steps of brightness (0 smooth) */ steps?: number } };
+  wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number; /** How a legend reads in its circle (Ed's round 14 playtest: "Legends in the circle are not very distinct"): its sigil neon's glow on the ground under it asleep or happy (alpha), the neon rim round a sleeping form (0 none to 1), and its light floor (a share of its unlit look it never drops below). */ seen?: { aura: number; rim: number; floor: number; /** asleep, its nap (art/naps.js: the animal itself lying asleep) for its mound (art/legends.js) */ nap?: boolean; /** its light in this many steps of brightness (0 smooth) */ steps?: number; /** Dark coats (Ed, 2026-10-07: lift only the legends dark enough to vanish at night): a legend whose floored look (floor times its coat's luminance) is under dark has its floor raised to dark over its coat's luminance, at most liftMax; lighter legends as they are. */ dark?: number; liftMax?: number } };
   creatureSimRadius: number;
   /** The simulation's level of detail (rules/simLod.ts): creatures in full near her and the action, coarse beyond, frozen past creatureSimRadius. */
   simLod: import("./simLod").SimLod;

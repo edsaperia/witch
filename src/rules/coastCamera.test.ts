@@ -1,7 +1,7 @@
 // The camera by the sea (Ed, 2026-10-06: "The transition to a lower angle and higher bend should be gradual as you approach the
 // beach, over 200m until you're at stargazing at the edge of the sea"; lying down, the sky well over half the screen).
 import { describe, expect, it } from "vitest";
-import { cameraPose, coastView, newCamera, stepCamera, type CameraState } from "./camera";
+import { cameraPose, coastView, gazeAt, newCamera, stepCamera, type CameraState } from "./camera";
 import { TUNING } from "./tuning";
 
 const T = TUNING, BC = T.beach!.camera!, STEP = 1 / 60;
@@ -27,8 +27,8 @@ describe("the camera by the sea", () => {
 
   it("lying down to stargaze, lower and closer still; getting up and walking off, back the same way", () => {
     const lying = settle(settle(start, 1, false), 1, true), p = cameraPose(lying, 0, T);
-    expect(p.angle).toBeCloseTo(BC.gazeAngle, 1);
-    expect(p.distance).toBeCloseTo(BC.gazeDistance, 1);
+    expect(p.angle).toBeCloseTo(BC.bearings.angle[0], 1);
+    expect(p.distance).toBeCloseTo(BC.bearings.distance[0], 1);
     expect(coastView(lying).gaze).toBeCloseTo(1, 3);
     const away = settle(settle(lying, 1, false), 0, false, 0, 12);
     expect(cameraPose(away, 0, T).angle).toBeCloseTo(normal, 2);
@@ -39,6 +39,22 @@ describe("the camera by the sea", () => {
     let c = start, prev = cameraPose(c, 0, T).angle, worst = 0;
     for (let k = 0; k < 6 / STEP; k++) { c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, STEP, T, false, null, { near: 1, gazing: k > 120 }); const a = cameraPose(c, 0, T).angle; worst = Math.max(worst, Math.abs(a - prev)); prev = a; }
     expect(worst).toBeLessThan(0.5);
+  });
+
+  it("lying down, the camera by her bearing round the coast: each of the twelve entries exactly, smoothly between", () => {
+    const B = BC.bearings, n = B.angle.length;
+    expect(n).toBe(12);
+    expect(B.distance.length).toBe(n); expect(B.look.length).toBe(n);
+    for (let i = 0; i < n; i++) {
+      const g = gazeAt(BC, (i / n) * 2 * Math.PI);
+      expect(g.angle).toBeCloseTo(B.angle[i], 6); expect(g.distance).toBeCloseTo(B.distance[i], 6); expect(g.look).toBeCloseTo(B.look[i], 6);
+    }
+    // all the way round in small steps: no jump anywhere, through north too
+    let prev = gazeAt(BC, -0.01), worst = 0;
+    for (let k = 0; k <= 720; k++) { const g = gazeAt(BC, (k / 720) * 2 * Math.PI); worst = Math.max(worst, Math.abs(g.distance - prev.distance), Math.abs(g.angle - prev.angle)); prev = g; }
+    expect(worst).toBeLessThan(2);
+    const lying = settle(settle({ ...start, bearing: Math.PI }, 1, false), 1, true);
+    expect(cameraPose(lying, 0, T).distance).toBeCloseTo(B.distance[6], 1);
   });
 
   it("over the treetops the coast leaves the camera alone", () => {

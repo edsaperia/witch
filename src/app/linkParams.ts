@@ -6,6 +6,29 @@ import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
 import { applyKnobParams } from "../ui/decisions";
 
+/** The browser keys that once remembered knobs which change the world or the balance: the world's shape and travel speed
+ *  (witch.world: area size, map areas, treetop speed) and the fight's scale, speed and momentum (witch.fight). They're the
+ *  link's alone now (2026-10-07: a 14 x 14 map left in Ed's browser gave every PR build 196 areas and threw off each
+ *  playtest's balance), so a load forgets them. */
+export const FORGOTTEN_KEYS = ["witch.world", "witch.fight"];
+export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined = globalThis.localStorage): void {
+  for (const k of FORGOTTEN_KEYS) try { storage?.removeItem(k); } catch { /* storage blocked */ }
+}
+
+/** The world's shape and travel speed for this load: the tuning's, unless the link says otherwise (?areaSize= or ?areaScale=,
+ *  ?treetopSpeed=, ?mapAreas=), clamped. Never from what an earlier load saw. */
+export function worldFromLink(params: URLSearchParams, defaults = { areaSize: TUNING.areaSize * TUNING.areaScale, treetopSpeed: TUNING.treetopSpeed, mapAreas: TUNING.mapAreas }) {
+  const world = { ...defaults };
+  const size = Number(params.get("areaSize")), scale = Number(params.get("areaScale")), speed = Number(params.get("treetopSpeed")), n = Number(params.get("mapAreas"));
+  if (size > 0) world.areaSize = size; else if (scale > 0) world.areaSize = TUNING.areaSize * scale;
+  if (speed > 0) world.treetopSpeed = speed;
+  if (n > 0) world.mapAreas = n;
+  world.areaSize = Math.round(Math.min(560, Math.max(56, world.areaSize)));
+  world.treetopSpeed = Math.round(Math.min(300, Math.max(8, world.treetopSpeed)));
+  world.mapAreas = Math.round(Math.min(30, Math.max(6, world.mapAreas)));
+  return world;
+}
+
 export function tuningFromLink(params: URLSearchParams) {
   // Variants as switches in the link: ?tilt=off, ?bloom=off, ?shadows=off,
   // ?canopy=off (the canopy shadow layer), ?mist=off.
@@ -106,24 +129,15 @@ export function tuningFromLink(params: URLSearchParams) {
 
   // Area size and treetop speed, to play with (Ed, 2026-10-05: "compared to now, areas should be
   // fairly large, and treetop mode should be much faster than ground mode"): ?areaSize=<metres> (or
-  // ?areaScale=), ?treetopSpeed=<m/s> and ?mapAreas=<n>, remembered on this browser till changed or
-  // reset (in the debug overlay, ~, where treetop speed also has a live slider). Area size makes the
-  // map, so it's set by the link alone. Every change goes in the playtest log.
-  const WORLD_DEFAULT = { areaSize: TUNING.areaSize * TUNING.areaScale, treetopSpeed: TUNING.treetopSpeed, mapAreas: TUNING.mapAreas };
-  const world = { ...WORLD_DEFAULT };
+  // ?areaScale=), ?treetopSpeed=<m/s> and ?mapAreas=<n>, by the link alone, never remembered on this browser (the debug
+  // overlay, ~, has a live treetop slider for this load). Every change goes in the playtest log.
+  forgetRuleKnobs();
+  const WORLD_DEFAULT = worldFromLink(new URLSearchParams());
+  const world = worldFromLink(params, WORLD_DEFAULT);
   {
-    try { const v = localStorage.getItem("witch.world"); if (v) Object.assign(world, JSON.parse(v)); } catch { /* storage blocked */ }
-    const size = Number(params.get("areaSize")), scale = Number(params.get("areaScale")), speed = Number(params.get("treetopSpeed")), n = Number(params.get("mapAreas"));
-    if (size > 0) world.areaSize = size; else if (scale > 0) world.areaSize = TUNING.areaSize * scale;
-    if (speed > 0) world.treetopSpeed = speed;
-    if (n > 0) world.mapAreas = n;
-    world.areaSize = Math.round(Math.min(560, Math.max(56, world.areaSize)));
-    world.treetopSpeed = Math.round(Math.min(300, Math.max(8, world.treetopSpeed)));
-    world.mapAreas = Math.round(Math.min(30, Math.max(6, world.mapAreas)));
     tuning.areaScale = world.areaSize / tuning.areaSize; tuning.treetopSpeed = world.treetopSpeed; tuning.mapAreas = world.mapAreas;
     // (the circular map: about mapAreas x mapAreas areas in its circle, when that's been changed)
     if (tuning.map && world.mapAreas !== WORLD_DEFAULT.mapAreas) tuning.map = { ...tuning.map, radius: world.mapAreas / Math.sqrt(Math.PI) };
-    try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
   }
 
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts

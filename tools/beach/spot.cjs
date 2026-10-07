@@ -26,7 +26,7 @@ server.listen(0, "127.0.0.1", async () => {
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
   if (process.env.CURVE) await page.evaluate(k => { window.witch.game.tuning.beach.stargazeCurve = k; }, Number(process.env.CURVE)); // (to try a bend)
   if (process.env.COAST) await page.evaluate(k => { window.witch.game.tuning.beach.camera.curve = k; }, Number(process.env.COAST)); // (the coast camera's own bend: the view takes the larger)
-  // SET="beach.camera.gazeAngle=6;beach.camera.gazeDistance=70": any tuning numbers, set on the running game
+  // SET="beach.stargazeCurve=6;beach.camera.curve=4": any tuning numbers, set on the running game
   if (process.env.SET) await page.evaluate(set => { for (const kv of set.split(";").filter(Boolean)) { const [path, v] = kv.split("="), keys = path.split("."); let o = window.witch.game.tuning; for (const k of keys.slice(0, -1)) o = o[k]; o[keys[keys.length - 1]] = Number(v); } }, process.env.SET);
   const out0 = await page.evaluate(([x, z]) => { const g = window.witch.game, c = g.map.bounds.circle; g.witch = { ...g.witch, x, z, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 }; const d = Math.hypot(x - c.x, z - c.z) || 1; return { nx: (x - c.x) / d, nz: (z - c.z) / d }; }, [Number(X), Number(Z)]);
   const step = (n, o = {}) => page.evaluate(([n, o]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60, i === n - 1); return !!w.game.witch.stargazing; }, [n, o]);

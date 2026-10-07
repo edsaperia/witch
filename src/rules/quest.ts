@@ -8,35 +8,69 @@
 import { AREA_TYPES, inLegendClearing, type ForestMap } from "./map";
 import { LEGENDS } from "./legends";
 import type { Creature, Level } from "./creatures";
-import { cellKey } from "./party";
+import { cellKey, routeOf } from "./party";
 import { rng } from "./random";
 
 export interface Quest { species: string; level: Level; /** game time it was done */ done?: number;
-  /** How far its creature lives: its nearest area's distance over the cap (legends.questCap areas, else the map's
-   *  farthest), 0 to 1. A far dream's buff is the stronger (legends.questFar). */
+  /** How far its creature lives: its nearest (later) area's distance over the cap (legends.questCap areas, else the map's
+   *  farthest), 0 to 1. For telling only: every quest's buff is the same strength (legends.questRoll). */
   far?: number }
 
-/** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed. */
-export function questFor(map: ForestMap, cell: [number, number], own: string): Quest | undefined {
+/** The early easy quest (Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants
+ *  one of the first three [not itself] so there's always an easy quest to do in the first third"): of the first three areas
+ *  the waves wake (the planned route, rules/party.ts routeOf), one with a legend, seeded, dreams of the creature of another of
+ *  those three (a kind not its own). The map makes sure one of the three has a legend (map.ts, before its clearings: Ed,
+ *  2026-10-07, "force a circle into the first three"); only should that fail, the first legend area further along takes it. Null when legends.earlyQuest is off or no area fits. */
+export interface EarlyQuest { host: string; wants: string; first: string[] }
+const EARLY = new WeakMap<ForestMap, EarlyQuest | null>();
+export function earlyQuest(map: ForestMap): EarlyQuest | null {
+  if (EARLY.has(map)) return EARLY.get(map)!;
+  let out: EarlyQuest | null = null;
+  if (map.tuning.legends?.earlyQuest !== false) {
+    const order = routeOf(map).order, first = order.slice(0, 3), r = rng(map.seed * 7477 + 29);
+    const kind = (k: string) => { const [cx, cy] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(cx, cy)].creature; };
+    const shuffled = [...first]; for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+    for (const host of [...shuffled, ...order.slice(3)]) {
+      if (!map.legendCells.has(host)) continue;
+      const wants = [...new Set(first.filter(k => k !== host).map(kind))].filter(sp => sp !== kind(host)).sort();
+      if (wants.length) { out = { host, wants: wants[Math.floor(r() * wants.length)], first }; break; }
+    }
+  }
+  EARLY.set(map, out);
+  return out;
+}
+
+/** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed; `want`, that
+ *  species' baby (the early easy quest, earlyQuest). */
+export function questFor(map: ForestMap, cell: [number, number], own: string, want?: string): Quest | undefined {
   // A gamble (Ed, 2026-10-06: "you don't know how hard the quest will be before you go off to try and find the
-  // creature"): any other kind on the map, equally likely, near or far; only the truly far go (balance, 2026-10-06:
-  // a kind whose nearest area lies over legends.questCap areas away, about the farthest tenth, could eat a run), unless
-  // that leaves none. Its distance makes the buff stronger (Quest.far).
+  // creature"); only the truly far go (balance, 2026-10-06: a kind whose nearest area lies over legends.questCap areas
+  // away, about the farthest tenth, could eat a run), unless that leaves none. With legends.questLater (Ed's core design,
+  // relayed 2026-10-07): only a kind living in an area LATER on the route than the legend's own (deeper in, and wilder
+  // now the forest is grown before the waves), within the cap; failing that, the kind of the nearest later area; with
+  // no later area at all, any kind as before.
   const cap = (map.tuning.legends?.questCap ?? 0) * map.areaSize, site = map.siteOf(cell[0], cell[1]);
-  const nearest = new Map<string, number>();
+  const later = map.tuning.legends?.questLater !== false, order = later ? routeOf(map).order : [], mine = order.indexOf(cellKey(cell));
+  const after = new Set(later && mine >= 0 ? order.slice(mine + 1) : []);
+  const nearest = new Map<string, number>(), nearestLater = new Map<string, number>();
   for (const [cx, cy] of map.cells) {
     if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue;
     const sp = AREA_TYPES[map.typeOf(cx, cy)].creature;
     if (sp === own) continue;
     const s = map.siteOf(cx, cy), d = Math.hypot(s.x - site.x, s.z - site.z);
     if (d < (nearest.get(sp) ?? Infinity)) nearest.set(sp, d);
+    if (after.has(cellKey([cx, cy])) && d < (nearestLater.get(sp) ?? Infinity)) nearestLater.set(sp, d);
   }
   const all = [...nearest.keys()].sort(), inReach = cap > 0 ? all.filter(sp => nearest.get(sp)! <= cap) : all;
-  const kinds = inReach.length ? inReach : all;
+  const lat = [...nearestLater.keys()].sort(), latIn = cap > 0 ? lat.filter(sp => nearestLater.get(sp)! <= cap) : lat;
+  const dist = lat.length ? nearestLater : nearest;
+  const kinds = latIn.length ? latIn : lat.length ? [lat.reduce((a, b) => (nearestLater.get(b)! < nearestLater.get(a)! ? b : a))] : inReach.length ? inReach : all;
   if (!kinds.length) return undefined;
   const r = rng(map.seed * 6151 + cell[0] * 389 + cell[1] * 1031 + 17);
-  const species = kinds[Math.floor(r() * kinds.length)], level = Math.floor(r() * 3) as Level;
-  const far = Math.min(1, nearest.get(species)! / (cap > 0 ? cap : Math.max(...all.map(sp => nearest.get(sp)!))));
+  let species = kinds[Math.floor(r() * kinds.length)], level = Math.floor(r() * 3) as Level;
+  if (want && nearest.has(want)) { species = want; level = 0; }
+  const d = (want === species ? nearest : dist).get(species)!;
+  const far = Math.min(1, d / (cap > 0 ? cap : Math.max(...all.map(sp => nearest.get(sp)!))));
   return { species, level, far };
 }
 

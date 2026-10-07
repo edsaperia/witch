@@ -284,6 +284,15 @@ describe("the music building with the home speakers' boot (Ed, 2026-10-06)", () 
     expect(bootLayers(cue, 6)).toBeCloseTo(3 / 12);
   });
 
+  it("drops dropLayers of the intro on the bar line after her needle-drop routine, before any speaker (Ed, 2026-10-07)", () => {
+    const none = { speakerBars: [] as number[], speakers: 12, dropBar: 4.3, dropLayers: 3 };
+    expect(bootLayers(none, 4)).toBe(0);
+    expect(bootLayers(none, 5)).toBeCloseTo(3 / 12);
+    expect(bootLayers({ ...none, speakerBars: [6.2, 7] }, 7)).toBeCloseTo(5 / 12); // (each speaker adds its own on top)
+    expect(bootLayers({ ...none, speakerBars: Array(12).fill(1) }, 7)).toBe(1);
+    expect(bootLayers({ speakerBars: [], speakers: 12 }, 50)).toBe(0); // (no routine: silent till a speaker)
+  });
+
   it("follows the game's speakers: none booted, silent; each the pulse reaches, a layer", () => {
     const g = newGame(123, TUNING);
     g.speakerBoot = g.speakerBoot.map(() => null);

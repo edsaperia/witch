@@ -88,7 +88,7 @@ export class PartyObjectsView {
       const fi = fire.frames[Math.floor(time * 8 + i) % fire.frames.length], frame = art.atlas.frames[fi], pad = art.atlas.frames[fire.frames[0]].pad ?? 0;
       const dx = (fire.originX - frame.w / 2) * mpp * (c.flip ? -1 : 1), toward = Math.max(0, frame.h - pad - fire.originY) * mpp * rise;
       const x = c.x - R.x * dx, z = c.z - R.z * dx + toward, d0 = pad * mpp;
-      if (visible(x, z, frame.w * mpp, frame.h * mpp)) upright.push({ x: x - U.x * d0, y: -U.y * d0, z: z - U.z * d0, frame, flip: c.flip, scale: c.scale });
+      if (visible(x, z, frame.w * mpp, frame.h * mpp)) upright.push({ x: x - U.x * d0, y: -U.y * d0, z: z - U.z * d0, frame, flip: c.flip, ...(c.scale < 1 ? { sx: c.scale, sy: c.scale } : {}) }); // (growing in whole art pixels, docs/STYLE.md rule 1)
     });
     for (const [key, area] of g.party.areas) {
       const site = g.map.siteOf(area.cell[0], area.cell[1]);
@@ -118,7 +118,7 @@ export class PartyObjectsView {
         const bob = def.bob ? def.bob.amplitude * Math.sin(((time / def.bob.period) + def.bob.phase + i * 0.17) * Math.PI * 2) : 0;
         const x = gx - R.x * dx, z = gz - R.z * dx + toward;
         if (!visible(x, z, frame.w * mpp, frame.h * mpp + hang)) return;
-        const d0 = pad * mpp, inst: SpriteInstance = a.decal ? { x, y: 0, z, frame, flip, scale: k } : { x: x - U.x * d0, y: -U.y * d0 + hang + bob, z: z - U.z * d0, frame, flip, scale: k, sway: def.bob ? 1 : 0 };
+        const d0 = pad * mpp, pop = k === 1 ? {} : { sx: k, sy: k }, inst: SpriteInstance = a.decal ? { x, y: 0, z, frame, flip, ...pop } : { x: x - U.x * d0, y: -U.y * d0 + hang + bob, z: z - U.z * d0, frame, flip, ...pop, sway: def.bob ? 1 : 0 }; // (its pop in whole art pixels, docs/STYLE.md rule 1)
         (a.decal ? flat : upright).push(inst);
         this.count++;
       };

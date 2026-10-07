@@ -46,7 +46,7 @@ export const GENOMES = [
     levels: [
       { body: { len: .58, chest: .22, tuck: .24, hr: .3, legW: 1.1 }, head: { snout: .8, blaze: 1.6 } },
       { body: { len: .9, chest: .18, tuck: .2, neckAng: 0 }, head: { snout: 1.2, snoutTaper: .45, blaze: 1.3 } },
-      { body: { len: .9, bw: .46, chest: .14, tuck: .16, legW: 1.6 }, head: { blaze: 1.45 }, features: [{ kind: "mane", from: .1, to: .85, height: .12, count: 16, lean: .95 }, { kind: "claws", size: .14 }] },
+      { body: { len: 1.6, hgt: .55, bw: .62, chest: .04, tuck: .05, legW: 1.7, hr: .3, neckAng: .12 }, head: { blaze: 1.8 }, features: [{ kind: "mane", from: .1, to: .85, height: .04, count: 16, lean: .95 }, { kind: "claws", size: .14 }] }, // (Ed, 2026-10-07: low, wide and flat-backed on short legs, not a bear: art lint)
       { body: { len: .95, bw: .5, chest: .14, tuck: .16, legW: 1.8, neckAng: -.05 }, head: { blaze: 1.5, blazeGlow: true }, features: [
         { kind: "mane", from: .05, to: .9, height: .12, count: 20, lean: 1 },
         { kind: "stones", from: .15, to: .8, count: 5, height: .62 },
@@ -83,7 +83,7 @@ export const GENOMES = [
       { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
       { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, eyesRing: true } },
     ] },
-  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.22, len: .74, chest: .36, tuck: .42, neck: .22, neckAng: .05, neckW: .6, hr: .3, legW: 1.75, back: "hump", front: 1.25, humpK: 2.6, bw: .34 }, head: { snout: .62, snoutD: .68, snoutTaper: .75, muzzle: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
+  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
   { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] , texture: { kind: "bristles" } },
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },

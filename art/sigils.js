@@ -430,9 +430,17 @@ export function sigilGlyph(id, size = 16, { progress = 1, legendary = false } = 
     }
     return { w: n, h: n, m, frame };
   }
-  const strokes = sigilStrokes(id), m = new Uint8Array(size * size), half = Math.max(SIGIL_STROKE / 2, .62 / size);
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (inkAt(strokes, (x + .5) / size, (y + .5) / size, half) <= progress) m[y * size + x] = 1;
+  const at = sigilArrival(id, size), m = new Uint8Array(size * size);
+  for (let i = 0; i < at.length; i++) if (at[i] <= progress) m[i] = 1;
   return { w: size, h: size, m };
+}
+// When the draw-on reaches each pixel of the bare sigil's `size` px glyph (0 to 1; Infinity: no ink): sigilGlyph at any
+// progress is this at most that progress. Worked out once, a draw-on's steps are cheap (the dancefloor's area patterns
+// made all eight from scratch, most of the game's start-up after the map: overnight start-up pass).
+export function sigilArrival(id, size = 16) {
+  const strokes = sigilStrokes(id), at = new Float64Array(size * size), half = Math.max(SIGIL_STROKE / 2, .62 / size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) at[y * size + x] = inkAt(strokes, (x + .5) / size, (y + .5) / size, half);
+  return at;
 }
 
 // ---- the neon pixel field: on the ground, or floating upright ----

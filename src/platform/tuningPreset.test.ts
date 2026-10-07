@@ -17,7 +17,7 @@ describe("?tuning=pre-overnight: the old balance written over the config as it l
     const into = { tuning: copy(tuning), combat: copy(combat), states: copy(states) };
     expect(applyPreset("pre-overnight", into)).toBe(true);
     const P = preOvernight as unknown as { tuning: { population: unknown; invites: { hits: number[] }; party: { interval: number } }; combat: { levels: unknown } };
-    expect(into.tuning.population).toEqual(P.tuning.population);
+    expect(into.tuning.population).toMatchObject(P.tuning.population as object); // (keeping what it doesn't hold: population.byRoute, 2026-10-07)
     expect(into.tuning.invites.hits).toEqual(P.tuning.invites.hits);
     expect(into.tuning.party.interval).toBe(P.tuning.party.interval);
     expect(into.combat.levels).toEqual(P.combat.levels);

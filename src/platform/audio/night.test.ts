@@ -8,7 +8,7 @@ import { AREA_NIGHTS, nightKind } from "./night";
 describe("the afterparty's nights", () => {
   it("every area type has its night named, and a wet one unnamed is a wet night", () => {
     for (const a of AREA_TYPES) expect(AREA_NIGHTS[a.id], a.id).toBeDefined();
-    for (const a of AREA_TYPES) if (a.wet) expect(["wet", "stream"], a.id).toContain(nightKind(a.id, true));
+    for (const a of AREA_TYPES) if (a.wet) expect(["wet", "stream", "ravine"], a.id).toContain(nightKind(a.id, true));
     expect(nightKind("somewhere-new", true)).toBe("wet");
     expect(nightKind("somewhere-new")).toBe("wood");
     expect(nightKind("home")).toBe("home");

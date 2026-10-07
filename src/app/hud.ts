@@ -4,6 +4,7 @@ import { leashLoad, type Game, type WaveEvent } from "../rules/game";
 import { waveCountdown } from "../rules/party";
 import { clockSeconds, clockText } from "../rules/leypulse";
 import { powerReport } from "../rules/power";
+import { clearCue, clearableAt, wildLeft } from "../rules/clear";
 
 export class Hud {
   debugOn = false;
@@ -16,6 +17,8 @@ export class Hud {
   private readonly clockEl = document.getElementById("clock")!;
   private readonly clockT = this.clockEl.querySelector<HTMLElement>(".t")!;
   private readonly clockLabel = this.clockEl.querySelector<HTMLElement>(".label")!;
+  private readonly wildEl = document.getElementById("wild-left");
+  private lastWild = -Infinity;
 
   constructor(private readonly game: Game, private readonly tuning: { party: { interval: number } }, private readonly knobs: HTMLElement) {}
 
@@ -49,12 +52,24 @@ export class Hud {
     }
   }
 
+  /** How many of the wild area's own animals still hold it, under the clock, four times a second, while she's in a wild
+   *  area its clearing would transform (rules/clear.ts); hidden elsewhere, and once the party's over. */
+  wildLeft(now: number): void {
+    const el = this.wildEl, game = this.game;
+    if (!el || now - this.lastWild <= 250) return;
+    this.lastWild = now;
+    const w = game.witch, cell = game.partyOver || w.seated ? null : clearableAt(game.party, game.map, w.x, w.z);
+    const text = cell ? clearCue(wildLeft(game.creatures, cell)).text : "";
+    if (el.textContent !== text) el.textContent = text;
+    el.classList.toggle("on", !!text);
+  }
+
   /** Every soundsystem lost since the last shown. */
-  losses(): void { for (const e of this.game.waveEvents) if (e.at > this.lossShown) this.showLoss(e); }
+  losses(): void { for (const e of this.game.waveEvents) if (e.kind === "soundsystemLost" && e.at > this.lossShown) this.showLoss(e); }
 
   /** A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner; the clock flashes and the seconds taken off pop out
    *  under it ("−60 s", "wave now!"), and the wave pointer's ring jumps on. */
-  showLoss(e: WaveEvent): void {
+  showLoss(e: Extract<WaveEvent, { kind: "soundsystemLost" }>): void {
     const clockEl = this.clockEl;
     this.lossShown = e.at;
     clockEl.classList.remove("lost"); void clockEl.offsetWidth; clockEl.classList.add("lost"); // (restart the animation)
@@ -83,7 +98,7 @@ function powerLines(game: Game): string[] {
   const sieges = p.sieges.slice(0, 4).map(s => `${s.key} ${f(s.value)} (${s.count}, ${f(s.hp)} hp)`).join("  ");
   return [
     `power  party ${f(p.leashed + p.parked)} = leashed ${f(p.leashed)} + parked ${f(p.parked)}   ${n[0]}b ${n[1]}y ${n[2]}a ${n[3]}L   berries ${game.tally.berries} invites ${game.tally.invites}`,
-    `wild   grown ${game.growth.grown} a wave at a time, ${game.growth.made} come out, ${game.growth.grown - game.growth.made} waiting as counts   creatures ${game.creatures.length}`,
+    `wild   peopled from the start by route (no growth)   creatures ${game.creatures.length}   cleared early ${game.party.ahead?.size ?? 0}`,
     (() => { const L = leashLoad(game), W = game.tuning.leash.weight; return `load   ${L.total.toFixed(2)} pull, ${L.over.toFixed(2)} over the free ${W.free}${L.extreme ? " EXTREME" : ""}${L.total ? `  toward ${Math.round((Math.atan2(L.x, -L.z) * 180) / Math.PI + 360) % 360}°` : ""}   stack ${game.leash.stack.length}   lift ${game.witch.lift.toFixed(2)}`; })(),
     `enemy  marching ${f(p.marching)}${p.sieges.length ? `   ${sieges}${p.sieges.length > 4 ? ` +${p.sieges.length - 4} more` : ""}` : ""}   (L saves the playtest log)`,
   ];
