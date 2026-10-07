@@ -18,6 +18,8 @@ import { djRoutineAt } from "../../rules/djSet";
 import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
 import { hatFlight } from "../hatFlight";
+import { aggroOf } from "../../rules/wildWatch";
+import { aggroAmount } from "../aggro";
 import { atDecksFrom, koIris } from "../koIris";
 
 /** The player asked for less motion (the knockout's iris then a plain cut: render/koIris.ts). */
@@ -159,6 +161,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   if (hat) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
   // The rest of the screen dims while she's down with her hat floating off (render/post.ts uKoDim): in over half a second from
   // the knockdown, held till she sparkles away, out as she goes. No hat to lose, no dim.
+  // A wild area's rising aggro round her (rules/wildWatch.ts): the screen's edges reddening with its animals (render/aggro.ts).
+  { const A = aggroOf(g), WW = t.wildWatch; v.post.aggro = A && WW?.vignette ? WW.vignette * aggroAmount(A.k, A.danger, WW.tint) : 0; }
   const KD = t.knockout.dim ?? 0;
   // Then the iris (render/koIris.ts): it closes onto the hat, which turns into a spinning record; the cut, a rewind smear; it
   // opens on her at her decks. The dim holds till the cut, the iris's dark outside over it.

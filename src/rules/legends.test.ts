@@ -213,6 +213,9 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
       const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
       g.witches[0].health.hp = 1e6;
       const lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+      // (the gift starts out of the circle: standing in it would finish the quest by itself, rules/sigilButton.ts questsFromStanding)
+      const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]];
+      Object.assign(gift, { x: lc.x + lc.r + 30, z: lc.z, tx: lc.x + lc.r + 30, tz: lc.z });
       if (!inside) {
         // a spot in its area, out of its circle
         let spot: [number, number] | null = null;
@@ -254,7 +257,8 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     g.clock.paused = false; g.party.paused = true;
     const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
     g.witches[0].health.hp = 1e6;
-    const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]];
+    const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]], lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+    Object.assign(gift, { x: lc.x + lc.r + 30, z: lc.z, tx: lc.x + lc.r + 30, tz: lc.z }); // (out of the circle until its sigil goes down)
     run(g, 0.1);
     expect(L.questOpen).toBe(true);
     run(g, 0.2, { ...idle, sigil: true });

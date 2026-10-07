@@ -342,6 +342,7 @@ function frame(now: number): void {
   if (!ready) return;
   hud.losses();
   hud.clock();
+  hud.wildLeft(now);
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;

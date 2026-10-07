@@ -164,6 +164,21 @@ const SCENES: Scene[] = [
     ],
   },
   {
+    // coming down into a dangerous wild area: its watchers stand and stare for 5.5 s, then attack (the music far off);
+    // then a mild area she lands in and leaves again at 3 s
+    name: "watch", seconds: 14, section: "deep", wave: 2, distance: 170,
+    cues: [
+      ...series(0.5, 120, 0.05, "the wild watch rising (dangerous)", (s, i) => s.aggro(Math.min(1, i * 0.05 / 5.5), 0.85, 0.1)),
+      { at: 6.6, g: "the wild watch rising (dangerous)", play: s => s.aggro(null) },
+      ...series(8, 54, 0.05, "the wild watch rising (mild, called off)", (s, i) => s.aggro(i * 0.05 / 5.5, 0.3, -0.2)),
+      { at: 10.75, g: "the wild watch rising (mild, called off)", play: s => s.aggro(null) },
+    ],
+    sounds: [
+      { g: "the wild watch rising (dangerous)", kind: "telegraph", at: 3.5, len: 2.5 },
+      { g: "the wild watch rising (mild, called off)", kind: "telegraph", at: 9, len: 1.7 },
+    ],
+  },
+  {
     // a wave come to an area she'd already cleared: fireworks over its soundsystem 60 m off (a shell every half second,
     // each bursting 1.2 s after its launch, the sound 0.2 s late), the party under them cheering
     name: "fireworks", seconds: 10, section: "drop", wave: 3, distance: 40,
