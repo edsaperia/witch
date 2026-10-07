@@ -206,14 +206,16 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Where an area's legend lies (Ed, 2026-10-04): out of its clearing, but well inside the map (where she can fly). */
 function legendSpot(map: ForestMap, cell: [number, number], r: () => number): [number, number] {
-  // In its clearing, near the top (Ed, 2026-10-06); else, where none fit, as before.
+  // In its clearing, near the top (Ed, 2026-10-06); else, where none fit, somewhere in its area away from its stone.
   const lc = map.legendClearing(cell[0], cell[1]);
   if (lc) return [lc.legend.x, lc.legend.z];
   const site = map.siteOf(cell[0], cell[1]), range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, site.x, site.z, range);
   const base = { cell, homeX: site.x, homeZ: site.z, range, anchorX, anchorZ }, B = map.bounds;
   const inside = (px: number, pz: number) => isInside(B, px, pz, 15);
   let best = -1, at: [number, number] = [anchorX, anchorZ];
-  for (let i = 0; i < 9; i++) { const [px, pz] = pointInArea(map, base, r), dd = Math.hypot(px - site.x, pz - site.z); if (inside(px, pz) && dd > best) { best = dd; at = [px, pz]; } }
+  // (as far from its area's runestone as the tries find: never lying on it; Ed, v1628)
+  const stone = map.soundsystemSpot(cell[0], cell[1]);
+  for (let i = 0; i < 9; i++) { const [px, pz] = pointInArea(map, base, r), dd = Math.hypot(px - stone.x, pz - stone.z); if (inside(px, pz) && dd > best) { best = dd; at = [px, pz]; } }
   return at;
 }
 

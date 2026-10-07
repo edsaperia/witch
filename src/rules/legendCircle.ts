@@ -1,7 +1,7 @@
 // The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of the
 // circle explaining mechanics to do with legends. Something like: "This is a slumbering elder. If you bring a [sigil] and place it
 // in this circle, it will grant you a boon. If you bring a [relic sigil] and place it in this circle, you will gain a powerful
-// ally. It becomes angered if none of its children are nearby.""): which legend's clearing she stands in (any state), what the
+// ally. It becomes angered if none of its kin are nearby."" ("kin", not "children": Ed, 2026-10-06)): which legend's clearing she stands in (any state), what the
 // panel says for its state, and how far it has faded in. No drawing here (render/leash.ts draws it).
 import { LEGEND_BUFFS } from "./buffs";
 import type { Creature } from "./creatures";
@@ -52,9 +52,9 @@ export function circleLines(c: Creature): CircleLine[] {
     : { text: words ? `If you bring a {sigil} and place it in this circle, it will grant you its boon for the rest of the night: {boon} ${words}.` : "If you bring a {sigil} and place it in this circle, it will grant you a boon." }) : null;
   const ally: CircleLine = { text: "If you bring a {relic} and place it in this circle, you will gain a powerful ally." };
   if (st === "happy") return [{ text: "This elder is your ally now." }, { text: "It guards its area and anyone partying in it." }, ...(boon?.done ? [boon] : [])];
-  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its children back, and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
-  if (st === "restless") return [{ text: "This elder is restless." }, ...(boon ? [boon] : []), ally, { text: "Bring one of its children back here to calm it." }];
-  return [{ text: "This is a slumbering elder." }, ...(boon ? [boon] : []), ally, { text: "It becomes angered if none of its children are nearby." }];
+  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its kin back, and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
+  if (st === "restless") return [{ text: "This elder is restless." }, ...(boon ? [boon] : []), ally, { text: "Bring one of its kin back here to calm it." }];
+  return [{ text: "This is a slumbering elder." }, ...(boon ? [boon] : []), ally, { text: "It becomes angered if none of its kin are nearby." }];
 }
 
 /** The panel's fade: towards 1 inside a circle and 0 outside, over `fade` seconds. */
