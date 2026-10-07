@@ -16,7 +16,8 @@ import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, S
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { heldByRoutine } from "./djSet";
-import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
+import { castPartySpell, cellKey, clearArea, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type Partified, type PartyState } from "./party";
+import { clearedAreas } from "./clear";
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { beachOf, exitPoint } from "./mapShape";
@@ -40,7 +41,7 @@ import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type 
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
-import { growWave, materialize, newGrowth, type GrowthState } from "./growth";
+import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 import { startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
@@ -124,6 +125,8 @@ export interface Game {
   leashEvents: LeashEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
+  /** Game time of the last look for cleared areas (rules/clear.ts; game.ts stepClear). */
+  clearedAt?: number;
   /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
   legendIds?: number[];
   /** This step's simulation level of detail (rules/simLod.ts): how many creatures in each, for the debug overlay. */
@@ -160,7 +163,13 @@ export interface Game {
 
 /** A soundsystem destroyed ("home" for the dancefloor's ring): the next wave `cut` seconds sooner,
  *  `left` seconds away now (0: it comes at once). */
-export interface WaveEvent { kind: "soundsystemLost"; key: string; x: number; z: number; at: number; cut: number; left: number }
+/** The waves' events: a soundsystem lost (cut: seconds it took off the countdown; left: seconds then left); an area cleared
+ *  of its wild creatures, its soundsystem rising (rules/clear.ts); a wave come to an area whose soundsystem stands already
+ *  (cleared before it, Ed 2026-10-07: it changes nothing in the rules; the view's fireworks and lasers). */
+export type WaveEvent =
+  | { kind: "soundsystemLost"; key: string; x: number; z: number; at: number; cut: number; left: number }
+  | { kind: "areaCleared"; key: string; x: number; z: number; at: number }
+  | { kind: "waveCelebrate"; key: string; x: number; z: number; at: number; wave: number };
 
 export interface Controls extends Intent, Partial<LeashControls>, InviteControls {
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
@@ -403,8 +412,9 @@ function fixedStep(g: Game, controls: Controls): void {
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
   const over = !!g.partyOver;
   if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
-  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
-  if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated);
+  const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
+  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time, celebrate); g.party.nextAt = g.clock.time + t.party.interval; }
+  if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate);
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (!over) stepLegends(g, legends, !!c.happyNearest);
@@ -417,9 +427,8 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   repair(W.health, ht, t);
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
-  const grown = g.creatures.length;
-  if (!over) stepGrowth(g, wave);
-  for (let i = grown; i < g.creatures.length; i++) { const c = g.creatures[i]; if (g.friendly.has(cellKey(c.cell)) && !g.party.areas.has(cellKey(c.cell))) c.friendly = true; } // (a friendly area's newcomers are friendly too)
+  // (No growth on a clock: every area is peopled from the start by its place on the route, Ed 2026-10-07; rules/creatures.ts.)
+  if (!over) stepClear(g);
   updateModes(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
   g.lod = newLodCounts();
   if (!over) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
@@ -486,16 +495,17 @@ function napRules(g: Game): NapRules | undefined {
   return { chance: N.chance, length: N.length, wake: N.wake, circle: C, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => C && keepsToCircle(c) ? atCircle(c) : roused.size > 0 && roused.has(cellKey(c.cell)) };
 }
 
-/** Wild areas grow (Ed, 2026-10-04): every wave each area still wild (and each one this wave
- *  woke) gains its creatures, as counts; those near a witch are made where she can't see them
- *  come, and a woken area's at once, to march on its new soundsystem. */
-function stepGrowth(g: Game, waveBefore: number): void {
-  const p = g.party, woken = new Set<string>();
-  for (let w = waveBefore + 1; w <= p.wave; w++) {
-    growWave(g.growth, g.map, w, key => { const a = p.areas.get(key); return (!a || a.wave >= w) && !p.ruined?.has(key); });
-    for (const [key, a] of p.areas) if (a.wave >= w) woken.add(key);
+/** Areas cleared (Ed, 2026-10-07; rules/clear.ts): a few times a second (game time), any area none of whose own wild
+ *  creatures is left is partified at once, as its wave would; stepFights then raises its soundsystem, turns its babies
+ *  happy and sets its besiegers (none) on it, this same step. */
+function stepClear(g: Game): void {
+  const time = g.clock.time;
+  if (g.clearedAt !== undefined && time < g.clearedAt + 0.25) return;
+  g.clearedAt = time;
+  for (const cell of clearedAreas(g.party, g.map, g.creatures)) {
+    const a = clearArea(g.party, g.map, cell, time);
+    if (a?.soundsystem) g.waveEvents.push({ kind: "areaCleared", key: cellKey(cell), x: a.soundsystem.x, z: a.soundsystem.z, at: time });
   }
-  if (materialize(g.growth, g.creatures, g.map, g.witches.map(w => w.body), simRadius(g), g.clock.time, woken)) g.byArea = null;
 }
 
 /** The wild creatures by the area they live in (its key). */
