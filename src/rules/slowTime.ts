@@ -55,10 +55,13 @@ export function stepTimeScale(g: Game, dt: number): void {
 export function keepEnragedOut(g: Game): void {
   const rings = legendRings(g).filter(r => calm(g.creatures[r.id]));
   if (!rings.length) return;
-  for (const c of g.creatures) {
+  const cs = g.creatures, n = rings.length;
+  for (let i = 0; i < cs.length; i++) {
+    const c = cs[i];
     if (!c.enraged || c.gone || c.boss) continue;
-    for (const r of rings) {
-      const dx = c.x - r.x, dz = c.z - r.z, R = r.r + bodyRadius(c);
+    const body = bodyRadius(c); // (once a creature, not once a ring: phase 2's GC audit)
+    for (let j = 0; j < n; j++) {
+      const r = rings[j], dx = c.x - r.x, dz = c.z - r.z, R = r.r + body;
       if (Math.abs(dx) >= R || Math.abs(dz) >= R) continue;
       const d = Math.hypot(dx, dz);
       if (d >= R) continue;
