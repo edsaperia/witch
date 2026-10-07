@@ -129,6 +129,7 @@ const SCENES: Scene[] = [
       ...series(0, 270, 0.1, "by a pond", (s, i) => s.pond(Math.min(1, i / 20), -0.4)),
       ...series(0, 120, 0.1, "the area's ambience (old oaks)", (s, i) => s.ambience("oaks", Math.min(1, i / 20))),
       ...series(12, 120, 0.1, "the area's ambience (standing stones)", (s, i) => s.ambience(i < 118 ? "stones" : null, i < 118 ? 1 : 0)),
+      ...series(24, 140, 0.1, "the ley pulse's sparkler (5 m off)", (s, i) => s.sparkler(Math.min(0.79, i / 25), 0.3)),
     ],
     sounds: [
       { g: "legend moans", kind: "ambience", at: 0, len: 4 },
@@ -146,6 +147,7 @@ const SCENES: Scene[] = [
       { g: "by a pond", kind: "ambience", at: 3, len: 20 },
       { g: "the area's ambience (old oaks)", kind: "ambience", at: 3, len: 8 },
       { g: "the area's ambience (standing stones)", kind: "ambience", at: 14, len: 9 },
+      { g: "the ley pulse's sparkler (5 m off)", kind: "ambience", at: 27, len: 10 },
     ],
   },
   {

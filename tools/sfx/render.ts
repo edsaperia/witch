@@ -75,6 +75,7 @@ const SOUNDS: [string, number, Play][] = [
   ["sad-trumpet-bare", 2.4, s => s.sadTrumpet(false)],
   ["sad-trumpet-cut", 4, () => {}],
   ["deck-routine", 9, () => {}],
+  ["sparkler", 10, () => {}],
 ];
 
 async function render(name: string, seconds: number, play: Play) {
@@ -120,6 +121,9 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "sea") {
     // walking down the beach to the water (two waves or so), then away up it until it's let go
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 11 ? 1 : Math.max(0, 1 - (sec - 11) / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sea(L, 0.3); return oc.resume(); }); }
+  } else if (name === "sparkler") {
+    // walking up to the ley pulse's tip, standing by it, and away until it's let go
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 7 ? 1 : Math.max(0, 1 - (sec - 7) / 1.5); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sparkler(L, -0.2); return oc.resume(); }); }
   } else if (name === "pond" || name === "picnic" || name === "creator-room") {
     // walking up to it and standing by it: its level each 0.1 s
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = Math.min(1, sec / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { if (name === "pond") s.pond(L, -0.2); else if (name === "picnic") s.picnic(L, 0.2); else s.room(L); return oc.resume(); }); }
