@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import type { ForestMap } from "./map";
 import { castPartySpell, newParty, stepParty, type PartyState } from "./party";
-import { bootLineAt, bootPath, bootPulseAt, ringOrder, stoneTurned, stonesTurned } from "./bootRing";
+import { bootLineAt, bootPath, bootPulseAt, ringOrder, ringRadius, stoneTurned, stonesTurned } from "./bootRing";
 
 // The real ring's layout: 12 stones at ring angles 15, 45, ... 345 (0 due south, as map.ts places them), 27 m out.
 const B = 300, F = 3, cx = 100, cz = 100, R = 27;
@@ -83,4 +83,36 @@ describe("the party spell", () => {
     expect(castPartySpell(p, fakeMap, 120)).toBe(false); // (once)
   });
   void newParty;
+});
+
+/** The sharpest turn (degrees) between successive steps of a polyline (steps under half a metre skipped). */
+function maxTurn(pts: [number, number][]): number {
+  const steps = pts.slice(1).map((p, i) => [p[0] - pts[i][0], p[1] - pts[i][1]]).filter(v => Math.hypot(v[0], v[1]) > 0.5);
+  let most = 0;
+  for (let i = 1; i < steps.length; i++) {
+    const a = steps[i - 1], b = steps[i], c = (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]));
+    most = Math.max(most, (Math.acos(Math.max(-1, Math.min(1, c))) * 180) / Math.PI);
+  }
+  return most;
+}
+
+describe("the ring and the way out are one path (Ed, 2026-10-06: \"it doesn't connect with the leyline around the dancefloor\")", () => {
+  it("the first line's way out runs on the boot ring's circle from the treehouse and leaves it from a point on it", async () => {
+    const { newGame } = await import("./game");
+    const { TUNING } = await import("./tuning");
+    const { departureRoute } = await import("./departure");
+    const g = newGame(123, TUNING), d = g.map.dancefloor, R = ringRadius(g.map), P = bootPath(g.map);
+    for (const to of [{ x: d.x + 400, z: d.z + 300 }, { x: d.x - 500, z: d.z - 100 }]) {
+      const route = departureRoute(g.map, to, TUNING.leyLines.depart.avoid, 4), r = (p: [number, number]) => Math.hypot(p[0] - d.x, p[1] - d.z);
+      expect(route[0]).toEqual(P.path[0]); // (both from the treehouse's front)
+      // Never inside the ring, and its first stretch on it (within the smoothing's half metre or so) before it heads out.
+      expect(Math.min(...route.map(r))).toBeGreaterThan(R - 0.6);
+      const onRing = route.slice(1).findIndex(p => r(p) > R + 1.5);
+      expect(onRing).toBeGreaterThan(2);
+      for (const p of route.slice(1, onRing)) expect(Math.abs(r(p) - R)).toBeLessThan(1.5);
+      // No right angle (Ed's second shot): onto the ring, round it and off it, each step turns gently.
+      expect(maxTurn(route.slice(0, onRing + 12))).toBeLessThan(35);
+    }
+    expect(maxTurn(P.path.slice(0, 30))).toBeLessThan(35); // (the boot ring's way on, the same curve)
+  }, 30000);
 });
