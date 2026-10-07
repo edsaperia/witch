@@ -85,6 +85,24 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     expect(aggroOf(g)!.k).toBeLessThan(0.05);
   }, 120_000);
 
+  it("lets her walk out on foot before they make up their minds, and nobody follows (Ed: time to run away)", () => {
+    const { g, key, at } = overWild(), W = TUNING.wildWatch!;
+    // the area's edge due east of her landing spot: she lands 4 m inside it, by its watchers
+    let ex = at.x; while (cellKey(g.map.cellSafe(ex + 1, at.z).cell) === key && ex - at.x < 400) ex += 1;
+    for (const c of here(g, key)) { c.x = ex - 4 - 1 - (c.id % 3) * 0.5; c.z = at.z + (c.id % 2 ? 1 : -1); c.tx = c.x; c.tz = c.z; } // (right by her: within any attack's reach of the edge)
+    land(g, ex - 4, at.z); run(g, STEP);
+    expect(aggroOf(g)).not.toBeNull();
+    let chased = false, out = -1;
+    const walk: Controls = { ...idle, moveX: 1 };
+    for (let i = 0; i < 8 / STEP; i++) {
+      stepGame(g, g.clock.time - g.wildEntry.get(key)?.at! < 1 || out < 0 ? walk : idle, STEP);
+      if (out < 0 && cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key) out = g.clock.time;
+      chased ||= onHer(g, key);
+    }
+    expect(out, "she got out").toBeGreaterThan(0);
+    expect(chased, "nobody follows her out").toBe(false);
+  }, 120_000);
+
   it("doesn't start over when a second witch lands in the area while it plays: they go for her as for the first", () => {
     const { g, key, at } = overWild(), W = TUNING.wildWatch!;
     land(g, at.x, at.z); run(g, STEP);
