@@ -62,6 +62,14 @@ The HUD's top and edges: the built game at 1600×900 on a seed, out of the boot 
 npm run build && node tools/smoke/hud.cjs [out dir] [seed]
 ```
 
+## `legend-attack.cjs`
+
+An angry legend's long-range attack seen from the treetops: the built game at 1280×720, a lobbing legend made angry, the witch in the treetops LEGEND_DIST metres south and 40 m west of it, stepped frame by frame through its wind-up, throw and landing;…
+
+```
+npm run build && node tools/smoke/legend-attack.cjs [out dir] [seed]   (DIST=..., LEGEND_DIST=60, EVERY=20, SHOTS=14)
+```
+
 ## `legend-panel.cjs`
 
 The legend circle's explainer: the built game at 1600×900 on a seed, the witch on the ground inside two legends' clearings in turn, each asleep, its boon already hers, restless, angry and happy, and once just outside.
