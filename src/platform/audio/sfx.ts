@@ -17,6 +17,7 @@ import { Picnic, Pond, Room, Sea } from "./places";
 import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
+import { groan, pour, splash } from "./seaLife";
 import { scratch } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
@@ -109,6 +110,10 @@ export class Sfx {
   pond(level: number, pan = 0): void { this.pondBed.update(level, pan); }
   picnic(level: number, pan = 0): void { this.picnicBed.update(level, pan); }
   room(level: number): void { this.roomBed.update(level); }
+  /** The sea's life off the beach (seaLife.ts): a dolphin's leap (its splash `fall` seconds after), the kraken's groan and the water pouring off it. */
+  splash(size = 0.5, pan = 0, near = 1, fall = 0.9): void { splash(this.k, size, pan, near, fall); }
+  krakenGroan(pan = 0, near = 1): void { groan(this.k, pan, near); }
+  krakenPour(dur = 4, pan = 0, near = 1): void { pour(this.k, dur, pan, near); }
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
   whoop(pan = 0, near = 1): void { this.babble.whoop(pan, near); }
