@@ -159,6 +159,21 @@ const SCENES: Scene[] = [
       { g: "her hype (woo-hoo!)", kind: "voice", at: 6, len: 0.5 },
     ],
   },
+  {
+    // a wave come to an area she'd already cleared: fireworks over its soundsystem 60 m off (a shell every half second,
+    // each bursting 1.2 s after its launch, the sound 0.2 s late), the party under them cheering
+    name: "fireworks", seconds: 10, section: "drop", wave: 3, distance: 40,
+    cues: [
+      ...series(1, 7, 0.5, "a shell's whoosh", (s, i) => s.fireworkWhoosh(1.2, i % 3 === 1, (i % 3 - 1) * 0.3, 0.84)),
+      ...series(2.4, 7, 0.5, "a shell's burst", (s, i) => s.fireworkBurst(0.6 + (i % 4) * 0.25, (i % 3 - 1) * 0.3, 0.84)),
+      { at: 2.5, g: "the party cheering", play: s => s.fireworkCheer(0, 0.6) },
+    ],
+    sounds: [
+      { g: "a shell's whoosh", kind: "feedback", at: 1, len: 1 },
+      { g: "a shell's burst", kind: "sting", at: 2.4, len: 3.5 },
+      { g: "the party cheering", kind: "voice", at: 2.5, len: 2.5 },
+    ],
+  },
 ];
 
 /** Short-term loudness (dB, 200 ms windows every 50 ms: short enough that a quick pop or knock counts as heard) of a stereo render, roughly K-weighted (a

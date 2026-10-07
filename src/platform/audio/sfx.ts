@@ -18,6 +18,7 @@ import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
 import { Sparkler } from "./sparkler";
+import * as fireworks from "./fireworks";
 import { scratch } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
@@ -125,6 +126,11 @@ export class Sfx {
   /** Whether the sea's sounds are built (none in an ordinary run). */
   /** By the ley line's pulse, the sparkler's burning tip (#491): its fizz, by how near (0-1). */
   sparkler(level: number, pan = 0): void { if (level > 0.001 || this.fizz) (this.fizz ??= new Sparkler(this.k)).update(level, pan); }
+  /** Fireworks over a soundsystem (a wave come to an area she'd cleared): a shell's climb (`dur` seconds), its burst
+   *  (`size` 0.5-1.5), the party cheering; each by how near (0-1). */
+  fireworkWhoosh(dur: number, whistle: boolean, pan = 0, near = 1): void { fireworks.whoosh(this.k, dur, whistle, pan, near); }
+  fireworkBurst(size: number, pan = 0, near = 1): void { fireworks.burst(this.k, size, pan, near); }
+  fireworkCheer(pan = 0, near = 1): void { fireworks.cheer(this.k, pan, near); }
   get seaBuilt(): boolean { return !!this.seaBed?.built; }
   /** The party's over: the area's night (`kind`, at `level` 0-1), made the first time it's heard (most runs, never). */
   night(kind: NightKind | null, level: number): void { if (level > 0.001 || this.nightBed) (this.nightBed ??= new Night(this.k)).update(kind, level); }
