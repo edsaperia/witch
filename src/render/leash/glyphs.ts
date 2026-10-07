@@ -5,6 +5,7 @@ import type { Creature } from "../../rules/creatures";
 import { PIXEL_SNAP_GLSL } from "../shaders";
 import { LIGHT_GLSL } from "../lighting";
 import { HEIGHT_VERT_GLSL } from "../height";
+import { Dirty } from "../dirty";
 
 /** The join burst's colours (the art director, #188 and #200): the lanterns' amber, light and deep, with the creature's own
  *  neon; nothing white (white is a hit's). */
@@ -80,11 +81,14 @@ void main() {
   gl_FragColor = uSolid > 0.5 ? vec4(haze(vCol.rgb, vWorld), a) : vec4(haze(vCol.rgb * a, vWorld), 1.0); // (solid: dust and bits, blended, not glowing)
 }`;
 
+const INSTANCE_ATTRS = ["iPos", "iSize", "iUv", "iCol", "iDraw"];
+
 export class Instances {
   readonly mesh: THREE.Mesh;
   private geo = new THREE.InstancedBufferGeometry();
   private cap = 0;
   private n = 0;
+  private dirty = [new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty()];
   private pos!: Float32Array; private size!: Float32Array; private uv!: Float32Array; private col!: Float32Array; private draw!: Float32Array;
 
   constructor(mat: THREE.ShaderMaterial) {
@@ -111,12 +115,19 @@ export class Instances {
   /** glow: drawn as light, smooth (a soft dot otherwise draws as an object, in art pixels, up to PIXEL_DOT_MAX metres). */
   add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1, glow = false): void {
     if (this.n >= this.cap) this.grow(this.cap * 2);
-    const i = this.n++;
-    const p = this.pos, c = this.col, j = i * 3, k = i * 4; // (written in place: two arrays a dot were a fight frame's top allocator)
-    p[j] = x; p[j + 1] = y; p[j + 2] = z; this.size[i] = size; this.uv.set(uv, k); c[k] = r; c[k + 1] = g; c[k + 2] = b; c[k + 3] = a; this.draw[i] = draw + (glow ? 2 : 0);
+    // (each attribute written, and sent, only where it changed: dirty.ts; no arrays made per instance)
+    const i = this.n++, P = this.pos, U = this.uv, C = this.col, d = this.dirty, dr = draw + (glow ? 2 : 0);
+    let j = i * 3;
+    if (P[j] !== x || P[j + 1] !== y || P[j + 2] !== z) { P[j] = x; P[j + 1] = y; P[j + 2] = z; d[0].touch(i); }
+    if (this.size[i] !== size) { this.size[i] = size; d[1].touch(i); }
+    j = i * 4;
+    if (U[j] !== uv[0] || U[j + 1] !== uv[1] || U[j + 2] !== uv[2] || U[j + 3] !== uv[3]) { U[j] = uv[0]; U[j + 1] = uv[1]; U[j + 2] = uv[2]; U[j + 3] = uv[3]; d[2].touch(i); }
+    if (C[j] !== r || C[j + 1] !== g || C[j + 2] !== b || C[j + 3] !== a) { C[j] = r; C[j + 1] = g; C[j + 2] = b; C[j + 3] = a; d[3].touch(i); }
+    if (this.draw[i] !== dr) { this.draw[i] = dr; d[4].touch(i); }
   }
   end(): void {
     this.geo.instanceCount = this.n;
-    for (const k of ["iPos", "iSize", "iUv", "iCol", "iDraw"]) (this.geo.getAttribute(k) as THREE.InstancedBufferAttribute).needsUpdate = true;
+    // only the instances in use that changed go up (it sent its whole buffer, in use or not, every frame)
+    INSTANCE_ATTRS.forEach((k, m) => this.dirty[m].flush(this.geo.getAttribute(k) as THREE.InstancedBufferAttribute));
   }
 }

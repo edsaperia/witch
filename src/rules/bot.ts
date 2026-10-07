@@ -279,6 +279,15 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     let calm = null as ReturnType<typeof calmJob>, cycle = false;
     let front = null as ReturnType<typeof siegeFront>, stray = null as ReturnType<typeof strandedGuard>;
     let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false, place = false;
+    // Putting one down: the button picks up a sigil of hers she's standing on before it puts one down (rules/leash.ts), so a
+    // bot pressing it every step put one down and picked it straight back up (Balance 2, 2026-10-07: 3,760 a run); she steps
+    // off her own first, clear of leash.spacing.
+    const putDown = () => {
+      let near: { x: number; z: number } | null = null, nd = Math.max(t.leash.pickRadius, t.leash.spacing) * 1.1; // (and far enough that the next isn't blocked by it)
+      for (const p of w.leash.placed) { const d = Math.hypot(p.x - b.x, p.z - b.z); if (d < nd) { nd = d; near = p; } }
+      if (!near) { sigil = true; return; }
+      if (nd > 0.01) { mx = (b.x - near.x) / nd; mz = (b.z - near.z) / nd; } else { mx = 1; mz = 0; }
+    };
     /** Toward (x, z): over the treetops when far, landing there if `land`; true once on the ground within `within` m. */
     const NEAR = 45, FAR = 60;
     const goTo = (x: number, z: number, land: boolean, within = 45) => {
@@ -308,7 +317,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       // a press of the cycle button a step, as a player would).
       const { L, id } = calm, at = map.siteOf(L.cell[0], L.cell[1]);
       bot.doing = `bringing ${article(L.species)} home to the ${L.legendState} ${L.species} legend`;
-      if (goTo(at.x, at.z, true, 6)) { const st = w.leash.stack, qi = st.indexOf(id); if (qi === st.length - 1) sigil = true; else if (qi >= 0) cycle = true; }
+      if (goTo(at.x, at.z, true, 6)) { const st = w.leash.stack, qi = st.indexOf(id); if (qi === st.length - 1) putDown(); else if (qi >= 0) cycle = true; }
     } else if (o.siege && careful && (front = siegeFront())) {
       // The champion's siege response: to the soundsystem with the most marching on it, standing between it and the
       // nearest of them, so her posse meets them there; kiting what comes for her.
@@ -339,14 +348,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         bot.doing = there(at.x, at.z) ? `defending wave ${wave}` : `flying to defend wave ${wave}`;
         if (goTo(at.x, at.z, true)) {
           if (qi >= 0 && qi !== st.length - 1) { st.push(st.splice(qi, 1)[0]); } // (cycling the stack, as the sigil button does in the treetops)
-          if (qi >= 0) { sigil = true; bot.doing = `doing the ${g.creatures[L!].species} legend's quest`; }
+          if (qi >= 0) { putDown(); bot.doing = `doing the ${g.creatures[L!].species} legend's quest`; }
           else if (!parkedAt.has(key) && st.length > KEEP) {
             // (not the creature a quest she's on wants: it goes to the top of the stack, out of the way)
             if (qjob && st[st.length - 1] === qjob.want.id && st.length > 1) st.unshift(st.pop()!);
-            // (the champion steps clear of a sigil she's just put down before the next: pressed over it, the button picks it up again)
-            const over = kind === "champion" ? w.leash.placed.find(p => Math.hypot(p.x - b.x, p.z - b.z) <= Math.max(t.leash.pickRadius, t.leash.spacing) + 0.5) : undefined; // (or close enough to fizzle)
-            if (over) { const a = w.leash.placed.length * 2.4; mx = Math.cos(a); mz = Math.sin(a); } else sigil = true;
-            bot.doing = `posting guards at wave ${wave}`; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }
+            putDown(); bot.doing = `posting guards at wave ${wave}`; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }
           // Then hold the spot, kiting anything that comes for her.
           for (const c of g.creatures) if (c.enraged && !c.gone && Math.hypot(c.x - b.x, c.z - b.z) < K.kite) { const d = Math.hypot(c.x - b.x, c.z - b.z) || 1; mx = (b.x - c.x) / d; mz = (b.z - c.z) / d; dash = d < K.dashAt; bot.doing = `dodging ${article(c.species)} at wave ${wave}`; break; }
         }
@@ -394,7 +400,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           } else if (goTo(...spotBy(L), true, 4)) {
             const st = w.leash.stack, qi = st.indexOf(want.id);
             if (qi < 0) { qjob = null; questAgain = time + 10; }
-            else { if (qi !== st.length - 1) st.push(st.splice(qi, 1)[0]); sigil = true; } // (cycling it to the bottom, as the sigil button does in the treetops)
+            else { if (qi !== st.length - 1) st.push(st.splice(qi, 1)[0]); putDown(); } // (cycling it to the bottom, as the sigil button does in the treetops)
           }
         }
       } else if (o.feed && careful && (feeding || (time >= feedAgain && w.leash.stack.filter(id => g.creatures[id].level < 2).length >= K.feedMin))) {

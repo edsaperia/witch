@@ -160,7 +160,8 @@ export interface Tuning {
     /** The afterparty's night (Ed, 2026-10-06: "nice environmental music and sounds that match each area"; platform/audio/night.ts): its volume, the bed's (pad and bells), the noise bed's and the night sounds' shares, when it comes in (from `from` of the party-over ease), and the sleeping animals' snores (volume, the gap between them, heard within range metres, at most max at once). */
     night?: { volume: number; bed: number; noise: number; sounds: number; from: number; snore: { volume: number; gap: number; range: number; max: number } };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
-    room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number };
+    room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
+    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
     spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
     land: { volume: number; gap: number };
@@ -220,6 +221,8 @@ export interface Tuning {
   /** Night's brightness (Ed, 2026-10-06: "The beach is very bright for nighttime", "Seems very bright for nighttime"): over the
    *  treetops her light reaches at most treetopReach metres (its reach to dark: times glowNear) at treetopGlow of its strength,
    *  eased in by her lift, and never more than maxReach anywhere (a far camera: stargazing, zoomed out). The beach's sand is lit as the forest floor is (render/ground.ts). */
+  /** The sigils' neon on the world (render/view/lights.ts sigilLights): each placed sigil a light at height metres over its rune, reaching reach metres (more by level) at strength (0 off); the bottom of her stack one at stack strength, stackReach metres, stackHeight over her. */
+  sigilSpill: { strength: number; reach: number; height: number; stack: number; stackReach: number; stackHeight: number };
   nightLight?: { maxReach: number; treetopReach: number; treetopGlow: number; /** lying on the beach stargazing, at most gazeReach metres */ gazeReach?: number };
   glowHeight: number;
   /** The witch lit by the world's lights (not her own glow): never darker than lightFloor times her unlit look; coloured lights tint her (lightTint) and rim her edge facing them (lightRim). */

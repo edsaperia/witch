@@ -29,6 +29,8 @@ import { beatAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { partyOverEase } from "../../rules/music";
+import { PARTY_CAST } from "../../rules/party";
+import { djGesture } from "../../../art/witch.js";
 
 /** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -61,6 +63,8 @@ export class SfxCues {
   /** The home speakers on, and the areas with a soundsystem, last frame (each new one powers up). */
   private speakersOn = -1;
   private stonesOn = new Set<number>();
+  /** The last half-beat heard at her decks (decks). */
+  private deckHalf = -1;
   private soundsystemsUp = new Set<string>();
   /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
   private hp = -1;
@@ -98,6 +102,7 @@ export class SfxCues {
     this.charges(h);
     this.relics(h);
     this.meadow(h);
+    this.decks(h);
     this.roars(h, hear);
     this.laments(h);
     this.shoes(h);
@@ -285,6 +290,22 @@ export class SfxCues {
   private meadow({ g }: Here): void {
     const w = g.witch, home = g.map.dancefloor;
     this.sfx.meadow(Math.max(0, Math.min(1, (g.map.homeRadius - Math.hypot(w.x - home.x, w.z - home.z)) / Math.max(1, g.tuning.sfx.meadow.fade))));
+  }
+
+  /** Her decks (the DJ witch, #356): while she stands behind them, the spell cast, her hands heard as the picture plays
+   *  them (art/witch.js djGesture, on the beat clock): a stroke of the record on each half-beat of a scratch bar, and her
+   *  "woo-hoo!" on the first beat of a hype bar. */
+  private decks({ g, time }: Here): void {
+    const sp = g.party.spellAt;
+    if (!g.witch.seated || g.witches[0]?.ko || typeof sp !== "number" || time < sp + PARTY_CAST) { this.deckHalf = -1; return; }
+    const b = beatAt(g.beat, time), half = Math.floor(b * 2);
+    if (half === this.deckHalf) return;
+    const first = this.deckHalf < 0;
+    this.deckHalf = half;
+    if (first || !this.primed) return; // (from the next half-beat: never one already under way)
+    const gesture = djGesture(b);
+    if (gesture === "scratch") this.sfx.scratch(half % 2 === 0, 0.1);
+    else if (gesture === "hype" && half % 8 === 0) this.sfx.whoop(0.1);
   }
 
   /** A legend turning angry (its restlessness run out, #87): its roar, heard twice as far. */

@@ -32,7 +32,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
   const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
-  const scale = R.scale;
+  const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
   const stone = (x: number, z: number, species: string, level: number, y = 0) => {
     const frame = v.markerArt.atlas.frames[v.markerArt.frame(species, level)];
     if (!inView(v, x, z, frame.w * v.mpp * scale, frame.h * v.mpp * scale, 6)) return false;
