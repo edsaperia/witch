@@ -202,13 +202,27 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
   const range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, home.x, home.z, range);
   const base = { cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ };
   const [x, z] = at ?? pointInArea(map, base, r);
-  return {
+  const c: Creature = {
     id, species: type.creature, level, ...base, x, z, tx: x, tz: z,
     rest: r() * 3, speed: (level === LEGEND ? t.legendSpeed : t.creatureSpeed * speedFactor(type.creature, level, t)) * (0.7 + r() * 0.6),
-    facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false, ...(level === LEGEND ? { boss: true, legendState: "asleep" as const, stateAt: 0 } : {}),
+    facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false,
     rand: rng(map.seed * 31 + (id + 1) * 7 + 11),
   };
+  // One shape for every creature (phase 2, GC churn): every optional field set, in one order, before any is used, so the
+  // rules' reads of a creature stay monomorphic rather than boxing every number through a generic lookup (35 shapes
+  // among a late game's creatures made each c.x read allocate). Undefined is what an unset field reads as anyway.
+  for (const k of CREATURE_OPTIONAL) (c as unknown as Record<string, unknown>)[k] = undefined;
+  if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
+  return c;
 }
+
+/** Every optional field of a Creature, in the order makeCreature sets them (one shape for all). A field added to
+ *  Creature and not here fails the typecheck (OptionalMissing). */
+const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "wakeUntil", "safeX", "safeZ", "safeR"] as const satisfies readonly (keyof Creature)[];
+type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
+type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
+const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
+void _everyField;
 
 /** Where an area's legend lies (Ed, 2026-10-04): out of its clearing, but well inside the map (where she can fly). */
 function legendSpot(map: ForestMap, cell: [number, number], r: () => number): [number, number] {
