@@ -41,7 +41,7 @@ const KNOWN = {
   "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
   "vanish-1900x1240": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
   "vanish-2000x1076": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
-  "trunks-round": { issue: 0, why: "the measure swings 1.04-1.47 run to run at the same spots with the same build (her glow's angle, the moment), with 1.3 inside its noise" },
+  "trunks-round": { issue: 509, why: "the measure swings 1.04-1.47 run to run at the same spots with the same build (her glow's angle, the moment), with 1.3 inside its noise" },
 };
 
 async function main() {
