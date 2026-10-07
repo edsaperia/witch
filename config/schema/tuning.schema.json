@@ -1358,6 +1358,34 @@
       "type": "number",
       "minimum": 0
     },
+    "nightLight": {
+      "type": "object",
+      "properties": {
+        "maxReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gazeReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "maxReach",
+        "treetopReach",
+        "treetopGlow",
+        "gazeReach"
+      ],
+      "additionalProperties": false
+    },
     "glowFalloff": {
       "type": "number",
       "minimum": 0
@@ -7654,6 +7682,7 @@
     "camera",
     "pixelSize",
     "glowReach",
+    "nightLight",
     "glowFalloff",
     "glowNear",
     "glowToCutout",
