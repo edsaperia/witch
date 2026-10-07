@@ -52,7 +52,9 @@ import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
-import { HAT, StoneIndicator } from "./indicator";
+import { edgeLayout, HAT, StoneIndicator } from "./indicator";
+import { AlarmIndicators } from "./alarm";
+import { ALARM_DEFAULTS, newAlarms, shownAlarms, stepAlarms } from "../rules/alarms";
 import { hatMarker } from "../rules/hat";
 import { hasRune } from "../rules/creatureStates";
 import { leyPulse, pointerShown } from "../rules/leypulse";
@@ -220,6 +222,9 @@ export class View {
   private nextStones: StoneIndicator[] = [];
   /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
   private hatPointer: StoneIndicator | null = null;
+  /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
+  private alarms = newAlarms();
+  private alarmCues: AlarmIndicators | null = null;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -846,10 +851,16 @@ export class View {
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
       this.ley.pulse(g.partyOver ? null : shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
-      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
+      // None till the party spell; while home boots, its first link as the sketch (the way out of the ring: Ed, 2026-10-06), then
+      // the line grows out from the treehouse along the route (Ed).
+      const booting = g.party.spellAt !== null && time < g.party.bootUntil;
+      this.ley.sketch(booting);
+      this.ley.near(w.x, w.z);
+      this.ley.grow(booting ? 1 : leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
         this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
+        this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
@@ -1082,6 +1093,7 @@ export class View {
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
       const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)); // (none once the party's over: rules/partyOver.ts)
+      edgeLayout.reset(); // (no two edge cues on one another: render/indicator.ts)
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
         while (list.length < cells.length) list.push(make());
         list.forEach((ind, i) => {
@@ -1103,6 +1115,10 @@ export class View {
         P.fade(H ? 1 : 0);
         P.update(this.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
       }
+      // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
+      const AT = t.alarms ?? ALARM_DEFAULTS;
+      stepAlarms(this.alarms, g.combat.sounds, g.combat.events, time, AT);
+      if (this.alarms.byKey.size || this.alarmCues) (this.alarmCues ??= new AlarmIndicators(document.body)).update(this.camera, cw, ch, shownAlarms(this.alarms, AT), w.x, w.z, time, AT);
     }
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);

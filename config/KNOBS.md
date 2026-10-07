@@ -1277,6 +1277,16 @@ Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling
 | `naps.length` | array of number |  |
 | `naps.wake` | number | 0 to … |
 
+## `alarms`
+
+The soundsystem alarm (Ed, 2026-10-06: "We should have an indicator for when a soundsystem or speaker is being attacked offscreen. It can look like the 🎶 indicator, but with 🔇"): a soundsystem (or the home ring's speakers) hit while off screen shows a 🔇 at the screen's edge toward it, its ring its health, shaking at each blow. linger: seconds it stays after the last blow; fall: seconds a fallen one stays, flashing then fading; most: how many show at once (the most recently hit).
+
+| knob | type | range |
+|---|---|---|
+| `alarms.linger` | number | 0 to … |
+| `alarms.fall` | number | 0 to … |
+| `alarms.most` | number | 0 to … |
+
 ## `guard`
 
 Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it.
