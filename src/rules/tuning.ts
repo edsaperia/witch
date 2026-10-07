@@ -191,6 +191,8 @@ export interface Tuning {
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
     /** By the ley line's pulse, its tip a burning sparkler (#491): its fizz. */
     sparkler?: { volume: number; hiss: number; pops: number; rate: number; fork: number; range: number };
+    /** Fireworks over a soundsystem when a wave reaches an area she'd cleared (waveCelebrate). */
+    fireworks?: { volume: number; whoosh: number; boom: number; echo: number; crackle: number; cheer: number; range: number; cheerRange: number; speed: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
     seaLife: { volume: number; splash: number; groan: number; pour: number; range: number };
     sadTrumpet: { volume: number; duck: number; bare: number; rewind: number; cutAfter: number };
