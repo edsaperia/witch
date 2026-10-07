@@ -6,7 +6,7 @@ import { stonesTurned } from "./bootRing";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
-import { addCrossings, leyRoute, spiralOrder, variedOrder, type LeyRoute } from "./leyroute";
+import { addCrossings, leyRoute, spiralOrder, spiralWith, variedOrder, type LeyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -302,5 +302,5 @@ export function routeOf(map: ForestMap): LeyRoute {
   return leyRoute(map, () => (varied ? variedOrder(map) : spiralOrder(map)), () => {
     const m: ForestMap = { ...map, tuning: { ...map.tuning, party: { ...map.tuning.party, picker: "noisy" } } };
     return [...wavePlan(newParty(m), m).keys()];
-  }, varied ? undefined : r => addCrossings(map, r));
+  }, varied ? undefined : r => addCrossings(map, r), varied ? undefined : () => [4, 5, 6, 7, 8, 9].map(K => spiralWith(map, K)));
 }
