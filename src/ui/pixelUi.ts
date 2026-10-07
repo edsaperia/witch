@@ -147,12 +147,16 @@ export function tapestry(w: number, h: number): string {
     if (j >= h - R) { const cx = Math.floor(i / P) * P + R, dy = j - (h - R - 1); return (i - cx) ** 2 + dy * dy <= R * R + 1; }
     return true;
   };
+  // (written as pixels, not a fillRect each: the whole panel, every layout; the bedroom's first paint, overnight)
+  const img = x.createImageData(w, h), d = img.data, rgb = (hex: string) => [1, 3, 5].map(k => parseInt(hex.slice(k, k + 2), 16));
+  const ink = rgb(INK), light = rgb("#2c1c3c"), dark = rgb("#24162f");
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
     if (!inside(i, j)) continue;
     const edge = !inside(i - 1, j) || !inside(i + 1, j) || !inside(i, j - 1) || !inside(i, j + 1) || i === 0 || i === w - 1;
-    x.fillStyle = edge ? INK : (j % 3 === 0 ? "#2c1c3c" : "#24162f");
-    x.fillRect(i, j, 1, 1);
+    const c = edge ? ink : (j % 3 === 0 ? light : dark), o = (j * w + i) * 4;
+    d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
   }
+  x.putImageData(img, 0, 0);
   // the gold trim, two lines in from the sides, and along under the scallops
   x.fillStyle = GOLD_D;
   x.fillRect(2, R + 2, 1, h - 2 * R - 4); x.fillRect(w - 3, R + 2, 1, h - 2 * R - 4); x.fillRect(2, R + 2, w - 4, 1); x.fillRect(2, h - R - 3, w - 4, 1);
