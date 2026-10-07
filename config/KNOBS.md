@@ -118,7 +118,7 @@ How neighbouring areas' floor textures meet (Ed, v160): the border is warped by 
 
 ### `ground`
 
-The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises and hollows from noise about relief.scale metres across, tilting the ground's lighting by relief.strength (0 flat) so the witch's light and the campfires pick out the bumps, and hollows shaded darker by relief.shade. ?relief=0 turns it off.
+The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises and hollows from noise about relief.scale metres across, tilting the ground's lighting by relief.strength (0 flat) so the witch's light and the campfires pick out the bumps, and hollows shaded darker by relief.shade. ?relief=0 turns it off. layout (rules/terrain.ts; Ed's idea, relayed by the coordinator 2026-10-07: runestones on high ground, legends in low, trees thicker low down): every area's runestone stands on a rise and every legend clearing lies in a hollow, rise and dip times the hills' amplitude high and deep (0.15 of 40 m: 6 m), each easing out over reach metres (kept short and low: the stones are about 110 m apart, a clearing about 65 m from its stone, and the slopes must stay under the camera's sightline) (the plateaus then level each one, so a stone tops a knoll and a clearing sits in a dell); trees grow up to trees (a share) thicker in the lowest ground and thinner on the highest, by the land's height over half the hills' amplitude (most of it lies within that). Drawing and tree placement only: the rules still move on flat ground.
 
 | knob | type | range |
 |---|---|---|
@@ -130,6 +130,11 @@ The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises 
 | `ground.hills.scale` | number | 0 to … |
 | `ground.hills.octaves` | number | 0 to … |
 | `ground.hills.shade` | number | 0 to … |
+| `ground.layout.on` | boolean |  |
+| `ground.layout.rise` | number | 0 to … |
+| `ground.layout.dip` | number | 0 to … |
+| `ground.layout.reach` | number | 0 to … |
+| `ground.layout.trees` | number | 0 to … |
 
 ### `glades`
 
@@ -478,7 +483,7 @@ The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) b
 
 ### `knockout`
 
-Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each sigil put down where its animal stands, so it stays hers, parked (#87, 2026-10-05; at first each creature turned neutral as its sigil went and walked to the nearest area of its own kind, where it turned wild again); then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this.
+Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each sigil put down where its animal stands, so it stays hers, parked (#87, 2026-10-05; at first each creature turned neutral as its sigil went and walked to the nearest area of its own kind, where it turned wild again); then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this. One timeline (Ed, 2026-10-07), the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max (Ed, 2026-10-07: 6, 8, 10, 12). releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. dim (drawing only; Ed, 2026-10-07: "the rest of the screen darkened"): how much the screen dims round her while her hat floats off, from the knockdown to her sparkle away (her spot and the hat left lit); no hat, no dim.
 
 | knob | type | range |
 |---|---|---|
@@ -488,6 +493,13 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 | `knockout.teleport` | number | 0 to … |
 | `knockout.legendsLoyal` | boolean |  |
 | `knockout.dropHat` | boolean |  |
+| `knockout.hatFloat` | number | 0 to … |
+| `knockout.dim` | number | 0 to … |
+| `knockout.respawn.base` | number | 0 to … |
+| `knockout.respawn.step` | number | 0 to … |
+| `knockout.respawn.max` | number | 0 to … |
+| `knockout.respawn.cooldown` | number | 0 to … |
+| `knockout.respawn.minScratch` | number | 0 to … |
 
 ### `dash`, `spells`
 
@@ -1504,7 +1516,7 @@ The moon (Ed, 2026-10-06: "The moon should slowly change: occasionally becoming 
 | `moon.floor.flare` | number | 0 to … |
 | `glowReach` | number | 0 to … |
 
-### `sigilSpill`, `nightLight`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `lightBudget`
+### `sigilSpill`
 
 The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it.
 
@@ -1516,6 +1528,21 @@ The sigils' neon spilling onto the world (overnight phase 3, the art pass): each
 | `sigilSpill.stack` | number | 0 to … |
 | `sigilSpill.stackReach` | number | 0 to … |
 | `sigilSpill.stackHeight` | number | 0 to … |
+
+### `combatLight`, `nightLight`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `lightBudget`
+
+Her light in the wild and in a fight (Ed, 2026-10-07: the wild forest darker for exploring; a darker forest makes a fight harder to read, so her light rises during one and settles after, too slowly to notice as an effect; render/combatLight.ts). Exploring an area the party hasn't reached, her light's reach and strength are times wildReach and wildGlow (the forest beyond her small pool darker); with a fight within range metres of her (any blow, wind-up or shot, her posse's or the wild's) in the last hold seconds, times fightReach and fightGlow instead (the fight lit, a little more than on party ground). Each eased: up over rise seconds, back over fall, shaped smooth. Drawing only.
+
+| knob | type | range |
+|---|---|---|
+| `combatLight.wildReach` | number | 0 to … |
+| `combatLight.wildGlow` | number | 0 to … |
+| `combatLight.fightReach` | number | 0 to … |
+| `combatLight.fightGlow` | number | 0 to … |
+| `combatLight.range` | number | 0 to … |
+| `combatLight.hold` | number | 0 to … |
+| `combatLight.rise` | number | 0 to … |
+| `combatLight.fall` | number | 0 to … |
 | `nightLight.maxReach` | number | 0 to … |
 | `nightLight.treetopReach` | number | 0 to … |
 | `nightLight.treetopGlow` | number | 0 to … |
