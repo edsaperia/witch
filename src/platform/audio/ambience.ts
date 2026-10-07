@@ -70,9 +70,9 @@ export class Charge {
     if (!this.rumbleGain && rumble <= 0.001 && skid <= 0.001) return;
     if (!this.rumbleGain) {
       this.chargePan = c.createStereoPanner(); this.chargePan.connect(K.out);
-      const rs = c.createBufferSource(), rl = c.createBiquadFilter(); rs.buffer = K.noise; rs.loop = true; rl.type = "lowpass"; rl.frequency.value = 110; rl.Q.value = 0.7;
+      const rs = K.loopNoise(), rl = c.createBiquadFilter(); rl.type = "lowpass"; rl.frequency.value = 110; rl.Q.value = 0.7;
       this.rumbleGain = c.createGain(); this.rumbleGain.gain.value = 0; rs.connect(rl); rl.connect(this.rumbleGain); this.rumbleGain.connect(this.chargePan); rs.start(now);
-      const ks = c.createBufferSource(); ks.buffer = K.noise; ks.loop = true; ks.playbackRate.value = 0.7;
+      const ks = K.loopNoise(0.7);
       this.skidBand = c.createBiquadFilter(); this.skidBand.type = "bandpass"; this.skidBand.Q.value = 1.5; this.skidBand.frequency.value = 900;
       this.skidGain = c.createGain(); this.skidGain.gain.value = 0; ks.connect(this.skidBand); this.skidBand.connect(this.skidGain); this.skidGain.connect(this.chargePan); ks.start(now);
     }
@@ -104,7 +104,7 @@ export class Meadow {
     const K = this.k, M = K.T.meadow, c = K.ctx, now = c.currentTime;
     if (!this.breezeGain && level <= 0.001) return;
     if (!this.breezeGain) {
-      const bs = c.createBufferSource(); bs.buffer = K.noise; bs.loop = true;
+      const bs = K.loopNoise();
       this.breezeLp = c.createBiquadFilter(); this.breezeLp.type = "lowpass"; this.breezeLp.frequency.value = 700;
       this.breezeGain = c.createGain(); this.breezeGain.gain.value = 0; bs.connect(this.breezeLp); this.breezeLp.connect(this.breezeGain); this.breezeGain.connect(K.out); bs.start(now);
       this.beePan = c.createStereoPanner(); this.beePan.connect(K.out);
@@ -112,7 +112,7 @@ export class Meadow {
       const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 600; bp.Q.value = 1.5; bp.connect(this.beeGain);
       for (const [f, d] of [[196, 0], [203, 7]]) { const o = c.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(bp); o.start(now); }
       // the picnic's murmur: far-off voices, breath through a talker's two formant bands, rising and falling
-      const ms = c.createBufferSource(); ms.buffer = K.noise; ms.loop = true; ms.playbackRate.value = 0.83;
+      const ms = K.loopNoise(0.83);
       this.murmurGain = c.createGain(); this.murmurGain.gain.value = 0; this.murmurGain.connect(K.voice(-0.3));
       for (const [f, q] of [[480, 3], [1350, 4]]) { const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = f; b.Q.value = q; ms.connect(b); b.connect(this.murmurGain); }
       ms.start(now);
