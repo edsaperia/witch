@@ -1,6 +1,7 @@
 // A quest animal standing in its legend's circle finishes the quest (Ed's playtest, 2026-10-07, via the coordinator: "I brought
 // a quest animal into the legend circle and I wasn't granted the buff"): following her or parked, wherever its sigil lies; the
-// wrong kind or age is named on the circle's panel instead.
+// wrong kind or age is named on the circle's panel instead. And (Ed, 2026-10-07: "Quests should be completed as soon as you place
+// the correct sigil in the circle, not when the animal itself arrives there") the drop itself finishes it, its animal anywhere.
 import { describe, expect, it } from "vitest";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { broughtLine, creatureWords, legendCircleNear } from "./legendCircle";
@@ -94,4 +95,27 @@ describe("a quest animal standing in its legend's circle", () => {
     expect(L.quest!.done).toBeDefined();
     expect(L.buffed).toBe(true);
   }, 120000);
+  it("completes on the very step its sigil is put down in the circle, its animal still far away (Ed: the drop is the moment)", () => {
+    const { g, L, gift, ring } = demo();
+    Object.assign(gift, { x: ring.x + 200, z: ring.z, tx: ring.x + 200, tz: ring.z }); // (far off, still on her stack)
+    expect(g.leash.stack[g.leash.stack.length - 1]).toBe(gift.id);
+    stepGame(g, { ...idle, sigil: true }, STEP);
+    expect(L.quest!.done).toBeDefined();
+    expect(L.buffed).toBe(true);
+    expect(g.questEvents.some(e => e.kind === "done" && e.id === L.id && e.joined === gift.id)).toBe(true);
+    expect(Math.hypot(gift.x - ring.x, gift.z - ring.z)).toBeGreaterThan(150); // (it hasn't arrived: it travels to its sigil after)
+    expect(g.leash.placed.map(p => p.id)).toContain(gift.id);
+  }, 60000);
+
+  it("names a wrong sigil the moment it's dropped in the circle, its animal far away", () => {
+    const { g, L, gift, ring } = demo();
+    const want = { ...L.quest! };
+    gift.level = ((want.level + 1) % 3) as typeof gift.level;
+    Object.assign(gift, { x: ring.x + 200, z: ring.z, tx: ring.x + 200, tz: ring.z });
+    stepGame(g, { ...idle, sigil: true }, STEP);
+    expect(L.quest!.done).toBeUndefined();
+    expect(g.leash.placed.map(p => p.id)).toContain(gift.id);
+    const near = legendCircleNear(g, g.witch)!;
+    expect(broughtLine(g, near)!.text).toBe(`Not this one: it dreams of ${creatureWords(want.species, want.level)}, and you've brought ${creatureWords(gift.species, gift.level)}.`);
+  }, 60000);
 });
