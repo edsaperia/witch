@@ -42,6 +42,9 @@ export class RigView {
   /** Creatures drawn with the rig this frame, its instances, and its own time (ms). */
   stats = { creatures: 0, instances: 0, ms: 0 };
 
+  /** A wild legend's batch look (render/view/creatures.ts legendLook: its sleeping rim and its light in steps), set by the view. */
+  legendLook: ((species: string) => { legend?: THREE.Vector4; legendFloor?: number; steps?: number }) | null = null;
+
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
 
   private time = 0; private dt = 0; private minPx = RIG_MIN_PX; private always = [3]; private ground = true;
@@ -95,7 +98,7 @@ export class RigView {
   private place(c: Creature, art: RigArt, look: RigLook, u2m: number): void {
     const key = art.atlas.albedo.uuid, dkey = key + "|discs", discs = discFrames(art.meta);
     for (const k of [key, dkey]) if (!this.pool.has(k)) { this.pool.set(k, []); this.used.set(k, 0); }
-    if (!this.batches.has(key)) for (const [k, rim] of [[key, true], [dkey, false]] as const) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined }); this.batches.set(k, b); this.scene.add(...b.meshes); }
+    if (!this.batches.has(key)) for (const [k, rim] of [[key, true], [dkey, false]] as const) { const L = c.boss && !c.leashed && this.legendLook ? this.legendLook(c.species) : {}, b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined, ...(rim ? L : { steps: L.steps }) }); this.batches.set(k, b); this.scene.add(...b.meshes); } // (a legend's look: its rim on its body, not its legs' discs)
     const pools = [this.pool.get(key)!, this.pool.get(dkey)!], ns = [this.used.get(key)!, this.used.get(dkey)!];
     const m = this.mpp * look.scale, R = this.R, U = this.U, F = this.F, sx = look.sx ?? 1, sy = look.sy ?? 1;
     for (let k = 0; k < this.out.n; k++) {

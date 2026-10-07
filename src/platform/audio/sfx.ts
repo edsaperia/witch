@@ -54,6 +54,9 @@ export class Sfx {
   /** What reaches the speakers (the audio watchdog taps it). */
   get output(): AudioNode { return this.k.final; }
   /** Silenced for good and let go (the watchdog building afresh). */
+  /** Build ahead what is slow to build the first time (the legends' long reverb: tens of milliseconds on the main thread, once
+   *  mid-play when the first stone powered up; the audit's phase 2), so it's ready before play. */
+  prewarm(): void { this.k.space(); }
   dispose(): void { try { this.k.final.disconnect(); } catch { /* gone */ } }
   setVolume(v: number): void { this.k.setVolume(v); }
 
