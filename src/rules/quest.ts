@@ -8,7 +8,7 @@
 import { AREA_TYPES, inLegendClearing, type ForestMap } from "./map";
 import { LEGENDS } from "./legends";
 import type { Creature, Level } from "./creatures";
-import { cellKey } from "./party";
+import { cellKey, routeOf } from "./party";
 import { rng } from "./random";
 
 export interface Quest { species: string; level: Level; /** game time it was done */ done?: number;
@@ -16,8 +16,33 @@ export interface Quest { species: string; level: Level; /** game time it was don
    *  farthest), 0 to 1. A far dream's buff is the stronger (legends.questFar). */
   far?: number }
 
-/** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed. */
-export function questFor(map: ForestMap, cell: [number, number], own: string): Quest | undefined {
+/** The early easy quest (Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants
+ *  one of the first three [not itself] so there's always an easy quest to do in the first third"): of the first three areas
+ *  the waves wake (the planned route, rules/party.ts routeOf), one with a legend, seeded, dreams of the creature of another of
+ *  those three (a kind not its own). Should none of the three have a legend (legends.share leaves about half without), the first
+ *  legend area further along the route takes it. Null when legends.earlyQuest is off or no area fits. */
+export interface EarlyQuest { host: string; wants: string; first: string[] }
+const EARLY = new WeakMap<ForestMap, EarlyQuest | null>();
+export function earlyQuest(map: ForestMap): EarlyQuest | null {
+  if (EARLY.has(map)) return EARLY.get(map)!;
+  let out: EarlyQuest | null = null;
+  if (map.tuning.legends?.earlyQuest !== false) {
+    const order = routeOf(map).order, first = order.slice(0, 3), r = rng(map.seed * 7477 + 29);
+    const kind = (k: string) => { const [cx, cy] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(cx, cy)].creature; };
+    const shuffled = [...first]; for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+    for (const host of [...shuffled, ...order.slice(3)]) {
+      if (!map.legendCells.has(host)) continue;
+      const wants = [...new Set(first.filter(k => k !== host).map(kind))].filter(sp => sp !== kind(host)).sort();
+      if (wants.length) { out = { host, wants: wants[Math.floor(r() * wants.length)], first }; break; }
+    }
+  }
+  EARLY.set(map, out);
+  return out;
+}
+
+/** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed; `want`, that
+ *  species' baby (the early easy quest, earlyQuest). */
+export function questFor(map: ForestMap, cell: [number, number], own: string, want?: string): Quest | undefined {
   // A gamble (Ed, 2026-10-06: "you don't know how hard the quest will be before you go off to try and find the
   // creature"): any other kind on the map, equally likely, near or far; only the truly far go (balance, 2026-10-06:
   // a kind whose nearest area lies over legends.questCap areas away, about the farthest tenth, could eat a run), unless
@@ -35,7 +60,8 @@ export function questFor(map: ForestMap, cell: [number, number], own: string): Q
   const kinds = inReach.length ? inReach : all;
   if (!kinds.length) return undefined;
   const r = rng(map.seed * 6151 + cell[0] * 389 + cell[1] * 1031 + 17);
-  const species = kinds[Math.floor(r() * kinds.length)], level = Math.floor(r() * 3) as Level;
+  let species = kinds[Math.floor(r() * kinds.length)], level = Math.floor(r() * 3) as Level;
+  if (want && nearest.has(want)) { species = want; level = 0; }
   const far = Math.min(1, nearest.get(species)! / (cap > 0 ? cap : Math.max(...all.map(sp => nearest.get(sp)!))));
   return { species, level, far };
 }

@@ -335,6 +335,8 @@ export interface Tuning {
     questCap: number;
     /** A done quest's buff is 1 + questFar × its dream's distance (Quest.far, 0 to 1 at the cap) times as strong: the far ones pay more. */
     questFar: number;
+    /** The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a legend, dreams of the baby of another of those three's kind. */
+    earlyQuest: boolean;
     /** An angry legend bombarding soundsystems (Ed, 2026-10-06: "Legend bombards, but prioritises you"): with no witch in its reach, the first lob or beam of its volley goes at the nearest standing soundsystem within range metres, doing damage to it (of combat.soundsystemHealth). */
     bombard: { on: boolean; range: number; damage: number };
     /** The stomp (Ed, 2026-10-06, a "perhaps"): a legend turning angry with its own area's soundsystem standing destroys it at once; with it on, legends stay restless angryAfter seconds (not legends.json's) before they anger. */
