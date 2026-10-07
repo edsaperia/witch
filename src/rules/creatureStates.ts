@@ -98,5 +98,3 @@ export function danceAt(c: Creature, at: { x: number; z: number }, radius = 10):
   c.anchorX = at.x; c.anchorZ = at.z; c.range = radius; c.dancing = true;
 }
 
-/** Dazed (a knocked-down wild one, for tuning combat.daze seconds): nothing attacks it, it attacks nothing, it can be invited. */
-export const dazed = (c: Creature, time: number) => c.dazedUntil !== undefined && time < c.dazedUntil;
