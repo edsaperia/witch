@@ -35,7 +35,7 @@ const used = new Set<number>();
 function put(g: Game, species: string, level: Level, x: number, z: number, cell = g.map.cellSafe(x, z).cell as [number, number]): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !used.has(k.id) && Math.hypot(k.x - x, k.z - z) > 300)!;
   used.add(c.id);
-  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0, asleep: undefined, napUntil: undefined, wakeUntil: undefined, watchUntil: undefined, dazed: undefined, dazedUntil: undefined, stunUntil: undefined, fleeUntil: undefined }); // (none of what it was doing: a nap, a watch)
   g.byArea = null;
   return c;
 }
@@ -127,9 +127,9 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     g.combat.sounds.set(key, { hp: 4000, max: 4000, x: at.x, z: at.z, radius: 2 });
     mate!.gone = true; // (none of its kind left: restless, at its next look, within legends.json check seconds)
     let restlessAt = -1;
-    run(g, LEGENDS.check + 1, idle, () => { if (restlessAt < 0 && L.legendState === "restless") restlessAt = g.clock.time; });
+    for (let i = 0; i < (LEGENDS.check + 1) * 60 && restlessAt < 0; i++) { stepGame(g, idle, STEP); if (L.legendState === "restless") restlessAt = g.clock.time; } // (up to its next look)
     expect(restlessAt).toBeGreaterThan(0);
-    run(g, 2.5 - (g.clock.time - restlessAt));
+    run(g, 2.5);
     expect(L.legendState).toBe("restless"); // (the stomp's 3 s, not legends.json's)
     run(g, 1);
     expect(L.legendState).toBe("angry");
@@ -304,6 +304,8 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     const other = L.species === "wolf" ? "fox" : "wolf";
     const target = put(g, other, 2, L.x + far, L.z); target.leashed = true; g.leash.placed.push({ id: target.id, x: target.x, z: target.z, at: 0 });
     const inLane = [put(g, "beetle", 1, L.x + 30, L.z + 1), put(g, "otter", 2, L.x + 50, L.z - 1.5)];
+    for (const c of g.creatures) if (!c.boss && c !== target && !inLane.includes(c) && Math.hypot(c.x - L.x, c.z - L.z) < 250) c.gone = true; // (no other wild crowd in its lanes)
+    g.byArea = null;
     // (wild ones: it charges only her and her posse, but tramples whatever's in its way)
     return { g, L, target, inLane };
   }
@@ -313,7 +315,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     const pins = inLane.map(c => [c, c.x] as const);
     const hits = new Map<number, number>(); let witchHits = 0, x0 = 0, z0 = 0, ran = false, done = false;
     run(g, 30, idle, () => {
-      if (L.run?.phase === "home" && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
+      if (L.run?.phase === "home" && ran && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
       for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
       if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
         if (e.kind === "hit" && e.id !== undefined && (e.id !== target.id || e.big)) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (its target: only the legend's own hits; the trampled wild may go for it after)
