@@ -122,3 +122,21 @@ The heap is flat over the frames in both (no leak). Down: `refresh` 1.87 → 0.7
   - #445 sigil-spill: a soft glow round the wolf's sigil on the ground (19,899 px, at most 44 levels), on purpose.
   - #440 p2-readback: 81 px of one sigil's edge, as its PR says (the sigil atlas drawn on the CPU, so no GPU readback: the first sigil 916 → 2.4 ms).
   - **#449 grass-uploads** (minor): a phase-2 PR claiming the same picture, yet 45 px of the boot shot differ by 1 level (its own "game unchanged" was red when it merged). Invisible; likely overlapping tufts' order or slots; not bit-exact as claimed.
+
+## After the core design: a44fd114 (#487, #483, #492), 12:33–12:56
+
+Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, seed 123), all pass, no page or console errors:
+
+| | result |
+|---|---|
+| nothing clears by itself | none before she invites anyone |
+| the boot is 30 s | first speaker 11.5 → boot's end 41.5 (off the decks at 8.5, the first stone 3 s later) |
+| a cleared area transforms | 10,9 turned happy (4 holders): partified, its soundsystem up, one `areaCleared`, in `party.ahead`, within a second |
+| a wave at a transformed stone only celebrates | one `waveCelebrate` for 10,9 and nothing else: soundsystems 2 → 2, enraged 0 → 0 |
+| no creature spawns mid-run | 1840 at the start, 1840 after two waves and two minutes, no new id |
+
+(The next wave at an uncleared stone still wakes it: soundsystems 2 → 3, 2 enraged.) Run on #487's own head before it merged too: the same.
+
+**Journey**: every moment reached, no errors, draw calls 53–91, `dropped` 0, 1840 creatures throughout. Its step-off check fired early: since #470 she's held at the decks through the needle-drop routine; the journey now moves until she's off, and takes the boot's shot at mid-boot (half the ring), whatever the boot's length.
+
+**Untracked**: the full smoke's trunk checks ("trunks are drawn on the ground", "trunks are shaded round") fail on the prototype too, vary run to run, and aren't on `smoke.cjs`'s KNOWN list (reported by #487's author; passed to the coordinator).
