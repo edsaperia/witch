@@ -18,6 +18,7 @@ export const HEAD_PX = 7;
 const EMBERS = 64;
 /** The head's height over the ground (m), and its light's radius (m) and strength (kept under the bloom's threshold). */
 const HEAD_Y = 1.4, GLOW_R = 3.5, GLOW_I = 0.3;
+const ATTRS = ["position", "aCol", "aKind"];
 
 const VERT = /* glsl */ `
 attribute vec4 aCol;  // rgb, alpha
@@ -93,7 +94,7 @@ export class LeyHead {
   private glowU: { uColour: { value: THREE.Vector3 }; uStrength: { value: number } };
   private u: { uBeat: { value: number }; uPop: { value: number } };
   private embers: Ember[] = [];
-  private last: { x: number; z: number; links: number; time: number } | null = null;
+  private last = { x: 0, z: 0, links: 0, time: 0, on: false };
   private popAt = -Infinity;
   private seed = 1;
 
@@ -133,20 +134,23 @@ export class LeyHead {
     this.u.uBeat.value = beats;
     if (tip && on) {
       const L = this.last;
-      if (L && Math.abs(time - L.time) < 1) {
+      if (L.on && Math.abs(time - L.time) < 1) {
         const moved = Math.hypot(tip.x - L.x, tip.z - L.z);
         for (let n = Math.min(4, Math.floor(moved * this.sparks + this.rand())); n > 0; n--) this.spark(tip.x, tip.z, tip.colour, time, false);
         if (Math.floor(tip.links) > Math.floor(L.links) && tip.links - L.links < 0.5) { this.popAt = time; for (let i = 0; i < 18; i++) this.spark(tip.x, tip.z, tip.colour, time, true); }
       }
-      this.last = { x: tip.x, z: tip.z, links: tip.links, time };
-    } else this.last = null;
+      L.x = tip.x; L.z = tip.z; L.links = tip.links; L.time = time; L.on = true;
+    } else this.last.on = false;
     const pop = Math.max(0, 1 - (time - this.popAt) / 0.6);
     this.u.uPop.value = pop;
     // The embers: up, out and down again, fading in steps (pixels).
-    this.embers = this.embers.filter(e => time - e.at < e.life && time >= e.at);
+    let live = 0; // (kept in place: nothing allocated a frame)
+    for (const e of this.embers) if (time - e.at < e.life && time >= e.at) this.embers[live++] = e;
+    this.embers.length = live;
     let n = 0;
     const put = (x: number, y: number, z: number, r: number, g: number, b: number, a: number, kind: number, px: number) => {
-      this.pos.set([x, y, z], n * 3); this.col.set([r, g, b, a], n * 4); this.kind.set([kind, px], n * 2); n++;
+      const P = this.pos, C = this.col, K = this.kind;
+      P[n * 3] = x; P[n * 3 + 1] = y; P[n * 3 + 2] = z; C[n * 4] = r; C[n * 4 + 1] = g; C[n * 4 + 2] = b; C[n * 4 + 3] = a; K[n * 2] = kind; K[n * 2 + 1] = px; n++;
     };
     for (const e of this.embers) {
       const t = time - e.at, k = t / e.life, fade = k < 0.5 ? 1 : k < 0.8 ? 0.6 : 0.3;
@@ -162,6 +166,6 @@ export class LeyHead {
       this.glowU.uStrength.value = GLOW_I * (1 + 0.6 * pop) * strength;
     }
     this.geo.setDrawRange(0, n);
-    for (const k of ["position", "aCol", "aKind"]) this.geo.getAttribute(k).needsUpdate = true;
+    for (const k of ATTRS) this.geo.getAttribute(k).needsUpdate = true;
   }
 }
