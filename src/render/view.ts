@@ -9,8 +9,7 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { poseOf, STEP } from "../rules/game";
-import { coastView } from "../rules/camera";
+import { poseOf } from "../rules/game";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
@@ -23,7 +22,7 @@ import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
 import { Ride } from "./ride";
-import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
+import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { AreaMoods, hsvInto, moodOf } from "./mood";
@@ -36,14 +35,13 @@ import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./pa
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
 import { LOAD_DEFAULT, loadView } from "./load";
 import { InviteView } from "./invites";
-import { stunned } from "../rules/knock";
 import { StateMarks } from "./looks";
 import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, type Mote } from "./markers";
-import { PARTY_CAST, waveCountdown, type SpawnMarker } from "../rules/party";
+import type { SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
@@ -52,12 +50,10 @@ import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
-import { edgeLayout, HAT, StoneIndicator } from "./indicator";
-import { AlarmIndicators } from "./alarm";
-import { ALARM_DEFAULTS, newAlarms, shownAlarms, stepAlarms } from "../rules/alarms";
-import { hatMarker } from "../rules/hat";
+import { StoneIndicator } from "./indicator";
+import type { AlarmIndicators } from "./alarm";
+import { newAlarms } from "../rules/alarms";
 import { hasRune } from "../rules/creatureStates";
-import { leyPulse, pointerShown } from "../rules/leypulse";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
@@ -69,19 +65,23 @@ import { LeyLines, leyReveal, shaderPulse } from "./leylines";
 import { bootLineAt, bootPath, bootPulseAt, bootShare } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { leyChain, leyKey } from "../rules/leylines";
-import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
+import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
 import type { Style } from "./style";
 
 // The view's parts, each in its own module under view/ (issue #122), as functions of the View:
 // what the camera can see, the pop check, the scenery rebuild, creatures and berries, home's
 // pieces (markers, speakers, treehouse), and the lights. Its fields they share aren't private.
-import { inView, overBulge, updateFrustum, viewRect } from "./view/culling";
+import { inView, overBulge, viewRect } from "./view/culling";
 import { checkPops, drawGhosts } from "./view/pops";
 import { refresh } from "./view/scenery";
 import { drawBerries, drawCreatures } from "./view/creatures";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./view/home";
 import { setLights, updateSources } from "./view/lights";
-import { setOverlayTilt } from "./overlayTilt";
+import { placeCamera } from "./view/camera";
+import { setFrameUniforms } from "./view/frameUniforms";
+import { drawWitch } from "./view/witch";
+import { drawPointers } from "./view/hud";
+import { workAhead } from "./view/ahead";
 
 /** Her shadow, lying on the rolling ground corner by corner. */
 const SHADOW_VERT = `varying vec2 vUv;
@@ -95,41 +95,41 @@ export interface ForestLight { x: number; y: number; z: number; reach: number; r
  *  forest, the hills, ground tiles, art) gets whatever the frame's own work and its drawing (as
  *  the last frames' took) leave, each at least its floor. (It was 9 ms before the drawing: with
  *  the drawing's few ms on top, a frame with work ahead ran long. Ed, 2026-10-05: spiky late in a run.) */
-const FRAME_MS = 11;
+export const FRAME_MS = 11;
 
 export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number; heightMoves?: number }
 
 /** Her dropped hat is drawn this far (m) to the side of where she went down, so it isn't under her as she sits slumped
  *  (well inside the pick-up radius of the spot itself). */
-const HAT_BESIDE = 0.9;
-const HAT_INK = new THREE.Vector3(232 / 255, 180 / 255, 106 / 255); // (the HUD's one accent)
+export const HAT_BESIDE = 0.9;
+export const HAT_INK = new THREE.Vector3(232 / 255, 180 / 255, 106 / 255); // (the HUD's one accent)
 
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   camera: THREE.PerspectiveCamera;
   /** The canopy hole's lead ahead of her on screen (pixels, eased) and when it was last moved. */
-  private holeLead = { x: 0, y: 0 };
-  private holeAt = 0;
-  private ground: Ground;
+  holeLead = { x: 0, y: 0 };
+  holeAt = 0;
+  ground: Ground;
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
-  private heights: HeightField;
+  heights: HeightField;
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   bendTo = 0;
   /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
   numberSeen = new Map<string, number>();
   numbersAt = 0;
   /** How far the camera is lifted to see her over a hill in between (metres, eased). */
-  private camLift = 0;
+  camLift = 0;
   /** The night sky that shows over the bend, in treetop mode. */
-  private sky: Sky;
+  sky: Sky;
   /** The moonlight as the style and mood set it, before the moon's colour tints it (rules/moon.ts). */
   private moonBase = new THREE.Vector3();
   private moonUpBase = new THREE.Vector3();
   /** Seconds added to game time for the moon only (previews: a time-lapse of its phases, way and colours). */
   moonShift = 0;
   /** Real clouds over the bend, with lightning. */
-  private clouds: Clouds;
+  clouds: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
   private smoke: Smoke;
   /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
@@ -139,36 +139,36 @@ export class View {
   typeBatches = new Map<number, SpriteBatch>();
   decorBatches = new Map<string, SpriteBatch>();
   creatureBatches = new Map<string, SpriteBatch>();
-  private witchBatch: SpriteBatch;
+  witchBatch: SpriteBatch;
   /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
-  private bareBatch: SpriteBatch | null = null;
-  private bareAsked = false;
+  bareBatch: SpriteBatch | null = null;
+  bareAsked = false;
   /** The smoothed heights she and the camera ride over the hills (ride.ts), and how far hers is
    *  over the ground under her this frame (everything drawn at her adds it). */
-  private ride = new Ride();
-  private camRide = new Ride();
-  private rideOff = 0;
-  private rideTime = NaN;
+  ride = new Ride();
+  camRide = new Ride();
+  rideOff = 0;
+  rideTime = NaN;
   treehouseBatch: SpriteBatch;
   markerArt: MarkerArt;
   markerBatch: SpriteBatch;
   markerFx = new MarkerFx();
   markerCache = { wave: -1, n: -1, list: [] as SpawnMarker[] };
   /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
-  private seatK = 1;
-  private seatTime = 0;
+  seatK = 1;
+  seatTime = 0;
   speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
-  private spellFx = new SpellFx();
+  spellFx = new SpellFx();
   /** The party spell's cast already burst into sparkles (its time). */
-  private castSeen: number | null | undefined = undefined;
+  castSeen: number | null | undefined = undefined;
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail: WitchTrail;
   private trailAt = -1;
   private trailRgb = new THREE.Vector3();
   readonly actionBar = new ActionBar(document.body);
   private buffHud = new BuffHud(document.body);
-  private shadow: THREE.Mesh;
+  shadow: THREE.Mesh;
   mpp: number; // metres per art pixel
   lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
   /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
@@ -184,7 +184,7 @@ export class View {
   leashView: LeashView;
   private lasers: Lasers;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
-  private ley: LeyLines;
+  ley: LeyLines;
   /** The sleeping legends' clearings: their twilight and rising motes. */
   private glades: Glades;
   private gladeTime = 0;
@@ -205,26 +205,26 @@ export class View {
     return this.markerArt.colour.get(AREA_TYPES[this.game.map.typeOf(s.cell[0], s.cell[1])].creature) ?? this.leyHome;
   };
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
-  private partyWitchView: PartyWitchView;
+  partyWitchView: PartyWitchView;
   /** The beach round the circular map: nothing made until she's near it. */
-  private beachView: BeachView;
+  beachView: BeachView;
   /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */
-  private swoopTrails: SwoopTrails;
+  swoopTrails: SwoopTrails;
   /** The 💌s, their bubbles and rings (render/invites.ts). */
-  private inviteView: InviteView;
+  inviteView: InviteView;
   /** Angry brows and daze stars over the creatures (render/looks.ts). */
-  private stateMarks: StateMarks;
+  stateMarks: StateMarks;
   /** The smoke test sets this to draw trunks flat magenta for a frame, to count them on screen. */
   debugTrunks = false;
   /** The party objects strewn over partified areas (#38). */
   partyObjects: PartyObjectsView;
   private borders: BorderView;
-  private nextStones: StoneIndicator[] = [];
+  nextStones: StoneIndicator[] = [];
   /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
-  private hatPointer: StoneIndicator | null = null;
+  hatPointer: StoneIndicator | null = null;
   /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
-  private alarms = newAlarms();
-  private alarmCues: AlarmIndicators | null = null;
+  alarms = newAlarms();
+  alarmCues: AlarmIndicators | null = null;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -248,7 +248,7 @@ export class View {
   shadowList: ShadowInstance[] = [];
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
-  private mist: Mist | null = null;
+  mist: Mist | null = null;
   width = 1;
   height = 1;
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
@@ -260,10 +260,10 @@ export class View {
   ghostLines: THREE.LineSegments | null = null;
   now = 0;
   /** The area moods (render/mood.ts), if the mood is spooky; the area she's in, when it's next looked up, and when they were last eased. */
-  private areaMoods: AreaMoods | null = null;
-  private moodArea = "";
-  private moodAt = -Infinity;
-  private moodTime = NaN;
+  areaMoods: AreaMoods | null = null;
+  moodArea = "";
+  moodAt = -Infinity;
+  moodTime = NaN;
   stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
@@ -273,7 +273,7 @@ export class View {
     this.renderer.setPixelRatio(1);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
-    this.mpp = 1 / (t.artPixelsPerMetre * (2 / t.pixelSize));
+    this.mpp = metresPerArtPixel(t);
     this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
@@ -481,6 +481,17 @@ export class View {
   /** Sets fading in since they were drawn, and when they arrived (real ms). */
   appearing = new Map<SpriteBatch, number>();
   private prepared = false;
+  /** The party's next areas whose art has been asked for ahead (prefetchWave). */
+  private prefetched = "";
+  /** The next wave's art, asked for as soon as its areas are chosen (a whole countdown ahead), so a woken area's
+   *  creatures and legend are drawn enraged the moment it wakes rather than seconds later (overnight phase 2: the
+   *  woken looks arrived 2 to 7 s after their wave on a fresh browser). The workers draw them between the scenery. */
+  private prefetchWave(): void {
+    const g = this.game, key = g.party.next.map(c => c.join(",")).join(";");
+    if (!this.prepared || this.quick || key === this.prefetched) return;
+    this.prefetched = key;
+    for (const c of g.party.next) { const sp = AREA_TYPES[g.map.typeOf(c[0], c[1])]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.wokenArt(sp); } }
+  }
   private easeAppearing(): void {
     const now = performance.now();
     for (const [b, at] of this.appearing) {
@@ -520,9 +531,9 @@ export class View {
   trackPops = false;
 
   /** On foot: 0 flying, 1 landed (eased), and the sigil pose she's playing, if any. */
-  private foot = 0;
-  private footTime = 0;
-  private footAct: { pose: string; at: number } | null = null;
+  foot = 0;
+  footTime = 0;
+  footAct: { pose: string; at: number } | null = null;
 
   /** Where the last rebuild looked: the middle and half-size of its square (for the prefetch). */
   lastView: { x: number; z: number; half: number } | null = null;
@@ -573,8 +584,8 @@ export class View {
 
   speakerFlare: (number | undefined)[] = [];
   /** Her lean cycle's phase (frames) and the time it was last stepped. */
-  private leanPhase = 0;
-  private leanTime = 0;
+  leanPhase = 0;
+  leanTime = 0;
   /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
   speakerTops: RingSpeaker[] = [];
   readonly waveNumbers = new WaveNumbers();
@@ -586,11 +597,11 @@ export class View {
   /** Milliseconds each part of the latest frame took (for the perf check: tools/smoke). */
   ms: Record<string, number> = {};
   private lap = 0;
-  private frameStart = 0;
+  frameStart = 0;
   /** Whether the hills' next strip was all worked out last frame. */
-  private heightsReady = true;
+  heightsReady = true;
   /** The moon now (one moon: rules/moon.ts), and the moonlight tinted a little with its colour (moon.tint). */
-  private updateMoon(g: Game): MoonState {
+  updateMoon(g: Game): MoonState {
     const m = moonState(g.clock.time + this.moonShift, g.seed, g.tuning), k = m.kind === "red" ? g.tuning.moon.bloodTint : g.tuning.moon.tint, P = [0.92, 0.94, 0.86];
     const r = 1 + (m.rgb[0] / P[0] - 1) * k, gr = 1 + (m.rgb[1] / P[1] - 1) * k, b = 1 + (m.rgb[2] / P[2] - 1) * k, n = 3 / (r + gr + b); // its hue, not its brightness
     LIGHT_UNIFORMS.uMoon.value.set(this.moonBase.x * r * n, this.moonBase.y * gr * n, this.moonBase.z * b * n);
@@ -614,10 +625,10 @@ export class View {
     S.end(time);
   }
 
-  private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
+  time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
 
   /** Her sprite batch, from the assets' witch frames (bare: her hat knocked off, and the hat on the ground). */
-  private makeWitchBatch(bare = false): SpriteBatch {
+  makeWitchBatch(bare = false): SpriteBatch {
     const t = this.game.tuning, b = new SpriteBatch(bare ? this.assets.witchBare() : this.assets.witch, this.mpp, { absolute: true, rim: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
     b.mesh.renderOrder = 10;
     this.scene.add(...b.meshes);
@@ -644,7 +655,7 @@ export class View {
   }
   private aimRay = new THREE.Raycaster();
   /** The drawing's CPU time (ms), eased over the last frames: the work ahead leaves room for it. */
-  private drawEst = 0;
+  drawEst = 0;
 
   /** The legends' clearings nearest her this frame (reused: no garbage a frame). */
   private nearRings: LegendClearing[] = [];
@@ -693,6 +704,7 @@ export class View {
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
+    this.prefetchWave();
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
@@ -704,139 +716,10 @@ export class View {
     }
     if (this.sceneryFixed !== null) this.budget.radius = Math.min(t.haze.far, Math.max(1, this.sceneryFixed));
     LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
-    const a = (pose.angle * Math.PI) / 180;
-    // Camera, snapped to the pixel grid along the screen's axes so the art does not shimmer.
-    const wpp = (2 * pose.distance * Math.tan((t.camera.fov * Math.PI) / 360)) / this.height;
-    const up = new THREE.Vector3(0, Math.cos(a), -Math.sin(a));
-    // The rolling ground: its window follows her, and the camera rides over its height.
-    this.time("start");
-    if (this.heights.follow(g.witch.x, g.witch.z)) this.stats.heightMoves = (this.stats.heightMoves ?? 0) + 1;
-    this.time("heights");
-    this.ground.follow(g.witch.x, g.witch.z);
-    // Riding the hills smoothly (Ed, v289): she and the camera follow damped heights, not the bumps.
-    {
-      const W = g.witch, rdt = Number.isNaN(this.rideTime) ? 0 : time - this.rideTime, full = W.mode === "ground" ? t.groundSpeed : t.treetopSpeed;
-      this.rideTime = time;
-      this.ride.update(rdt, W.x, W.z, W.vx, W.vz, full, groundHeight, t.witch, witchHeight(W, t));
-      this.camRide.update(rdt, pose.tx, pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity); // (no floor: just the smoothed ground)
-      this.rideOff = W.seated ? 0 : this.ride.h - groundHeight(W.x, W.z);
-    }
-    const target = new THREE.Vector3(pose.tx, pose.ty + this.camRide.h, pose.tz);
-    // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
-    // camera's focus, along its forward on the ground.
-    {
-      const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift));
-      // Lying on the beach to stargaze (Ed, 2026-10-06: "the bend shader applies so that you can see the sky"): the bend eased up
-      // past the treetops' over beach.gazeEase seconds, the night sky opening over the sea, and back down as she gets up.
-      // And nearing the sea, on the ground, it bends up toward beach.camera.curve times the treetops' (Ed, 2026-10-06: "gradual as
-      // you approach the beach, over 200m"), the camera lowering with it (rules/camera.ts), both eased by the rules' camera.
-      const B = t.beach, V = coastView(g.camera);
-      const gk = Math.max(V.gaze * (B?.stargazeCurve ?? 0), V.coast * (B?.camera?.curve ?? 0)) * C.treetop;
-      SPRITE_UNIFORMS.uNearCut.value = V.gaze > 0.01 ? V.gaze * Math.max(0, pose.distance - 12) : 0; // (lying down, the camera low behind her: what's between it and her, from 12 m before her, dithers away)
-      const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
-      HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
-      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, this.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) : 0);
-      HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
-      const far = t.haze.far;
-      this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));
-    }
-    this.time("sky");
-    const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
-    target.addScaledVector(up, eu);
-    target.x += er;
-    // What the snap took off (in the picture's pixels): main.ts moves the canvas back by it, in whole
-    // screen pixels, so the art stays on its grid but the view glides (Ed, 2026-10-05: whole art-pixel
-    // steps of the camera felt like a low framerate). Moved right, the picture moves left; up, down.
-    this.subpixel.x = er / wpp; this.subpixel.y = -eu / wpp;
-    const back = new THREE.Vector3(0, Math.sin(a), Math.cos(a)).multiplyScalar(pose.distance);
-    this.camera.position.copy(target).add(back);
-    // Over tall hills a rise between the camera and her could hide her: lift the camera (eased)
-    // just enough that its line of sight to her clears the ground in between by 4 m.
-    {
-      let need = 0;
-      for (let f = 0.08; f < 0.95; f += 0.08) {
-        const px = target.x + back.x * f, pz = target.z + back.z * f, line = target.y + back.y * f;
-        need = Math.max(need, (groundHeight(px, pz) + 4 - line) / f);
-      }
-      this.camLift += (Math.max(0, need) - this.camLift) * (need > this.camLift ? 0.35 : 0.06);
-      this.camera.position.y += this.camLift;
-    }
-    this.camera.up.set(0, 1, 0);
-    this.camera.lookAt(target);
-    // A legend's quake nearby shakes the screen (only legends: Stage 4).
-    const shake = this.leashView.shake(time);
-    if (shake > 0) this.camera.position.add(this.v3.set(Math.sin(time * 61) * shake, Math.sin(time * 47 + 1) * shake * 0.6, 0));
-    updateFrustum(this);
+    const up = placeCamera(this, time, pose);
 
-    // Sprites face the camera, tilted back toward it by spriteTilt.
-    const tilt = t.spriteTilt;
-    SPRITE_UNIFORMS.uUp.value.set(0, 1, 0).lerp(up, tilt).normalize();
-    SPRITE_UNIFORMS.uFacing.value.crossVectors(SPRITE_UNIFORMS.uRight.value, SPRITE_UNIFORMS.uUp.value).normalize();
-    // The canopy is always drawn; round the witch a hole is cut, sized to the view, which shrinks
-    // to nothing as she rises (and opens as she descends).
-    const lifted = canopyShown(g.witch), cut = t.canopyCutout;
-    this.camera.updateMatrixWorld();
-    const ws = placed(this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5 + this.rideOff, g.witch.z)).project(this.camera);
-    // (The edge stays its full softness as the hole closes: shrunk with it, a small hole's edge was crisp, Ed v289.)
-    // (its middle a little ahead of her the way she's going, canopyCutout.lead seconds, eased: the opening leans into her path)
-    const lead = cut.lead ?? 0, lx = (ws.x * 0.5 + 0.5) * this.width, ly = (ws.y * 0.5 + 0.5) * this.height;
-    let hx = lx, hy = ly;
-    if (lead > 0) {
-      const ah = placed(this.v3.set(g.witch.x + g.witch.vx * lead, witchHeight(g.witch, t) * 0.5 + this.rideOff, g.witch.z + g.witch.vz * lead)).project(this.camera);
-      const tx = (ah.x * 0.5 + 0.5) * this.width, ty = (ah.y * 0.5 + 0.5) * this.height, k = 1 - Math.exp(-Math.min(0.1, Math.max(0, time - this.holeAt)) / 0.6);
-      this.holeLead.x += (tx - lx - this.holeLead.x) * k; this.holeLead.y += (ty - ly - this.holeLead.y) * k;
-      hx += this.holeLead.x; hy += this.holeLead.y;
-    }
-    this.holeAt = time;
-    SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
-    SPRITE_UNIFORMS.uCutWhole.value = cut.whole ?? 0;
-    SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
-    SPRITE_UNIFORMS.uTopFade.value = lifted;
-    SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
-    SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
-    SPRITE_UNIFORMS.uDebugTrunks.value = this.debugTrunks ? 1 : 0;
-    const Fd = t.find; // finding wild creatures in the dark (Ed, v244; ?find=0 turns it off)
-    SPRITE_UNIFORMS.uFindLook.value.set(Fd.on ? Fd.lightFloor : 0, Fd.on ? Fd.rim : 0, Fd.on ? Fd.eyeshine.strength : 0, Fd.eyeshine.blink);
-    SPRITE_UNIFORMS.uEyeRange.value = Fd.eyeshine.range;
-    // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
-    const W = t.wind;
-    SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);
-    // The witch's glow reaches as far as the ground-mode canopy hole round her (Ed, v149: "about
-    // the width of the canopy hiding circle"): the hole's radius plus its soft edge, in metres at
-    // her depth, times glowToCutout; beyond it the forest is dark. ?glow= fixes it instead.
-    if (!t.glowFixed) {
-      const wx = g.witch.x, wz = g.witch.z, R = SPRITE_UNIFORMS.uRight.value;
-      const a = placed(this.v3.set(wx, 0, wz)).project(this.camera).x, b = placed(this.v3.set(wx + R.x * 10, 0, wz + R.z * 10)).project(this.camera).x;
-      const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
-      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
-    }
-    // At night (Ed, 2026-10-06: "Seems very bright for nighttime"): the hole's share of the screen is many more metres from a far
-    // camera, so her light is held to nightLight.maxReach metres anywhere (the ground camera's own, about), and over the treetops
-    // to a lantern's few metres (treetopReach), dimmed (treetopGlow), eased in as she rises; the canopy stays moonlit, warm
-    // only close round her.
-    const NL = t.nightLight, rise = Math.max(0, Math.min(1, g.witch.lift));
-    if (NL) {
-      const R0 = Math.min(LIGHT_UNIFORMS.uGlowR.value, NL.maxReach); // (never more than a lantern's metres, however far the camera: stargazing, zoomed out)
-      const R1 = R0 + (Math.min(R0, NL.treetopReach) - R0) * rise;
-      LIGHT_UNIFORMS.uGlowR.value = R1 + (Math.min(R1, NL.gazeReach ?? R1) - R1) * coastView(g.camera).gaze; // (lying on the sand to stargaze, the camera low and far: her own small pool, eased with the bend)
-      LIGHT_UNIFORMS.uGlowDim.value = 1 + (NL.treetopGlow - 1) * rise;
-    }
-    SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
-
-    const w = g.witch, h = witchHeight(w, t);
-    LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + this.rideOff + h + t.glowHeight, w.z);
-    LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
-    // The mood where she is (render/mood.ts): each area's own fog, grade tint and mist, eased across;
-    // which area, looked up four times a second.
-    if (this.areaMoods) {
-      if (!(time < this.moodAt) || time < this.moodAt - 1) {
-        this.moodAt = time + 0.25;
-        const d = g.map.dancefloor;
-        this.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
-      }
-      this.areaMoods.update(this.moodArea, Number.isNaN(this.moodTime) ? 0 : time - this.moodTime, LIGHT_UNIFORMS.uHazeColour.value, this.post.gradeTint, this.mist);
-      this.moodTime = time;
-    }
+    setFrameUniforms(this, time, up);
+    const w = g.witch;
     this.time("uniforms");
     updateSources(this, time);
     this.time("sources");
@@ -894,7 +777,7 @@ export class View {
     this.strings.update();
     this.borders.update();
     // A point on the treehouse's sprite (its pixels) in the world, standing on its spot.
-    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle), U2 = SPRITE_UNIFORMS;
+    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle, time), U2 = SPRITE_UNIFORMS;
     const onTreehouse = (px: number, py: number) => {
       const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
       return { x: at.x + r.x * dx + u.x * dy, y: at.y + r.y * dx + u.y * dy, z: at.z + r.z * dx + u.z * dy };
@@ -922,8 +805,9 @@ export class View {
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
     const near: { x: number; z: number; r: number; d: number }[] = [], GR = t.groundCover.radius;
-    for (const c of g.creatures) {
-      const dx = c.x - w.x, dz = c.z - w.z;
+    const cs = g.creatures; // (by index: render is too big for the engine to optimise, and for...of made an object a creature)
+    for (let i = 0; i < cs.length; i++) {
+      const c = cs[i], dx = c.x - w.x, dz = c.z - w.z;
       if (Math.abs(dx) >= GR || Math.abs(dz) >= GR) continue;
       const d = Math.sqrt(dx * dx + dz * dz);
       if (d < GR) near.push({ x: c.x, z: c.z, r: Math.max(0.8, (this.leashView.tops.get(c.id) ?? 1.6) * 0.75), d }); // parting by its drawn size (#47)
@@ -932,7 +816,7 @@ export class View {
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     { const H = g.witches[0].hat.down; if (H && g.witches[0].hat.has) clear.push({ x: H.x + HAT_BESIDE, z: H.z, r: t.groundCover.sigilClear }); } // (her hat where it lies)
-    for (const c of g.creatures) if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); // (a happy one's rune at its feet)
+    for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of g.relics) if (r.state === "lying" && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
@@ -944,147 +828,7 @@ export class View {
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
-    const bob = Math.sin(ht * 2.4) * 0.12;
-    // Her hover frames, turned away when flying up the screen, leaning when fast.
-    // Climbing to the treetops or dropping to the ground: the rise or descend pose, fluttering
-    // between its two frames, until the move is about 90% done.
-    const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
-    // Leaning, her four-frame lean cycle (#37) plays faster the faster she goes: 8 fps at her ordinary ground speed.
-    const ldt = Math.min(0.1, Math.max(0, ht - this.leanTime));
-    this.leanTime = ht;
-    this.leanPhase += ldt * 8 * Math.hypot(w.vx, w.vz) / Math.max(1, t.groundSpeed);
-    const leanK = Math.floor(this.leanPhase) % 4, LC = this.assets.witchLean[w.away ? "away" : "towards"];
-    let wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(ht * 7) % 2)
-      : w.lean ? LC[leanK] ?? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(ht * 4) % 3);
-    // Treetop momentum: skidding to brake on a sharp turn, and the fast pose at boost.
-    if (!climbing && !dropping) {
-      const Fl = this.assets.witchFly, sideF = w.away ? "away" : "towards";
-      if (w.braking) wf = Fl.brake[sideF][Math.floor(ht * Fl.brake.fps) % Fl.brake[sideF].length];
-      else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(ht * Fl.fast.fps) % Fl.fast[sideF].length];
-      // Straight up or down the screen (#27): her heading frames, from behind or coming at us.
-      const Hd = w.heading && w.heading !== "side" ? this.assets.witchHeading[w.heading] : null;
-      if (Hd) wf = w.braking ? Hd.brake[Math.floor(ht * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(ht * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.leanCycle[leanK] ?? Hd.lean : Hd.hover[Math.floor(ht * 4) % Hd.hover.length];
-    }
-    // Handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the placeSigil or
-    // liftSigil pose, and back up into the air when she's done. Talking (by herself, Ed v244), she
-    // chats on the fly while moving and settles into the talk pose when she comes to rest.
-    const L = g.leash, F = this.assets.witchFoot, side = w.away ? "away" : "towards";
-    for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") this.footAct = { pose: "placeSigil", at: ht }; else if (e.kind === "picked" || e.kind === "hatPicked") this.footAct = { pose: "liftSigil", at: ht };
-    const actLen = this.footAct ? F[this.footAct.pose].towards.length / F[this.footAct.pose].fps : 0;
-    const acting = !!this.footAct && ht - this.footAct.at < actLen + 0.3;
-    const still = Math.hypot(w.vx, w.vz) < 0.6;
-    const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting || !!w.stargazing) ? 1 : 0;
-    const fdt = Math.min(0.1, Math.max(0, ht - this.footTime)), prevFoot = this.foot;
-    this.footTime = ht;
-    this.foot += (wantFoot - this.foot) * Math.min(1, fdt * 8);
-    if (Math.abs(wantFoot - this.foot) < 0.01) this.foot = wantFoot;
-    const pick = (pose: string, k: number) => { const fr = F[pose][side]; return fr[Math.max(0, Math.min(fr.length - 1, k))]; };
-    if (this.foot > 0.6) {
-      if (acting && this.footAct) wf = pick(this.footAct.pose, Math.floor((ht - this.footAct.at) * F[this.footAct.pose].fps));
-      else if (L.talk) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
-      else wf = pick("stand", Math.floor(ht * F.stand.fps) % F.stand[side].length);
-    } else if (this.foot > 0.02) wf = this.foot >= prevFoot ? pick("land", Math.floor(this.foot * 3)) : pick("takeoff", Math.floor((1 - this.foot) * 3));
-    const footEase = this.foot * this.foot * (3 - 2 * this.foot), wy = (h + bob - 0.4) * (1 - footEase);
-    // At the start she sits on the treehouse terrace (the sit pose, swinging her legs), and eases
-    // off it into the air when she first moves.
-    const sdt = Math.min(0.1, Math.max(0, ht - this.seatTime));
-    this.seatTime = ht;
-    this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
-    let wx = w.x, wz = w.z, wyy = wy;
-    // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
-    { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
-    if (this.seatK > 0) {
-      const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
-      this.leashView.seatAt = seat; // (where she sparkles back in after a knockout)
-      const cam = onTreehouse(T.camera.x, T.camera.y);
-      g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
-      const fwd = this.camera.getWorldDirection(this.v3);
-      wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
-      if (w.seated) {
-        // Behind the decks (Ed, 2026-10-06): standing, waiting for the party spell; casting it, her arms up over her hat
-        // (the liftSigil pose, through once over the cast) in a burst of sparkles; in a game without the spell, sitting.
-        const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST;
-        if (casting) { const n = F.liftSigil.towards.length; wf = F.liftSigil.towards[Math.min(n - 1, Math.floor(((time - sp!) / PARTY_CAST) * n))]; }
-        else if (sp === undefined) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
-        else wf = F.stand.towards[Math.floor(time * F.stand.fps) % F.stand.towards.length];
-        if (typeof sp === "number" && sp !== this.castSeen) { this.castSeen = sp; this.spellFx.partyBurst(wx, wyy, wz, sp); }
-      }
-    }
-    // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
-    // vanishes in a sparkle and comes back in one at the treehouse.
-    const KO = g.witches[0].ko;
-    // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
-    const D = g.witches[0].dash;
-    let hidden = ht >= D.at - STEP && ht < D.until;
-    if (KO) {
-      if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
-      else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
-    }
-    // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
-    // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").
-    wyy += this.rideOff * (1 - this.seatK * this.seatK * (3 - 2 * this.seatK)) * (1 - footEase);
-    // Her hat knocked off (rules/hat.ts): her frames without it, and the hat where it lies. Baked a moment after the game is up
-    // (not at a knockout, mid-fight), if she has a hat to lose.
-    const Hat = g.witches[0].hat;
-    if (!this.bareAsked && Hat.has && !g.clock.paused && ht > 1) { this.bareAsked = true; setTimeout(() => { this.bareBatch ??= this.makeWitchBatch(true); }, 0); }
-    const bare = Hat.has && !!Hat.down ? (this.bareBatch ??= this.makeWitchBatch(true)) : null;
-    const watlas = bare ? this.assets.witchBare() : this.assets.witch, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * this.mpp;
-    // Stood by her frame's ground (art/witch.js liftShadow): the point under her on the model's ground lands on wyy, so on
-    // foot her feet are on the ground, not on the bottom of a box that held a shadow drawn into her (Ed, 2026-10-06); and
-    // her shadow lies at that point, under her feet whatever the pose.
-    const wg = watlas.grounds?.[wf], wflip = w.seated ? false : w.facing < 0, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
-    const wsink = wg ? (wframe.h - wg.y) * this.mpp : 0, wside = wg ? (wg.x - wframe.w / 2) * this.mpp * (wflip ? -1 : 1) : 0;
-    this.partyWitchView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4));
-    this.swoopTrails.update(g.partyWitches.list, time);
-    setOverlayTilt(t.tiltShift, w.lift, this.canvas.clientHeight || window.innerHeight, this.height); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
-    this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
-    const onBeach = this.beachView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
-    this.stateMarks.update(g, time, this.leashView.tops, 70, this.camera.position);
-    this.inviteView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
-    // Idling into the party, she's drawn in her party pose there instead.
-    const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink, y: wyy + groundHeight(wx, wz) - U.y * wsink, z: wz - U.z * wsink, frame: wframe, flip: wflip }];
-    const hatFrame = bare ? this.assets.witchBare().frames[this.assets.witchHatFrame] : undefined;
-    { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
-      const LV = this.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && this.foot < 0.05 && !this.partyWitchView.herIdle;
-      const fwd = w.facing < 0 ? -1 : 1, k = flying ? LV.load : 0;
-      this.witchBatch.leanU.value.set(fwd * LT.witchLean * k * LV.away, fwd * LT.broomTilt * k, LT.broomBow * k, 0);
-      this.leashView.bristle.on = flying && !hidden;
-    }
-    this.witchBatch.set(bare ? [] : her);
-    this.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
-    // The party's and the beach's witches' shadows, and a small one under her hat where it lies.
-    this.witchShadows = [...this.partyWitchView.shadows, ...this.beachView.shadows];
-    if (bare && hatFrame) this.witchShadows.push({ x: Hat.down!.x + HAT_BESIDE, z: Hat.down!.z, w: hatFrame.w * this.mpp * 0.9, d: hatFrame.w * this.mpp * 0.35 });
-    // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
-    // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
-    // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
-    this.witchBase.x = wx; this.witchBase.y = wyy + groundHeight(wx, wz); this.witchBase.z = wz;
-    if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle && !onBeach) {
-      const b = bendPoint(this.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(this.camera);
-      const X = (b.x * 0.5 + 0.5) * this.width, Y = (b.y * 0.5 + 0.5) * this.height;
-      // (Her place under the camera before its snap: what her own snap takes off, and what the camera's did.)
-      this.subpixel.x += X - (Math.floor(X) + 0.5); this.subpixel.y += -(Y - (Math.floor(Y) + 0.5));
-    }
-    // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
-    {
-      const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
-      const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
-      SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
-      SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h + this.rideOff, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
-      // Her pool on screen, for the grade to spare (render/post.ts: on a dark floor her light sits among the tones the
-      // spooky grade drains to blue, and it vanished: the art director's round 3, the fern forest): its centre under her
-      // feet and its half-widths across and up the screen, out to half her light's reach.
-      const R = LIGHT_UNIFORMS.uGlowR.value * LIGHT_UNIFORMS.uGlowNear.value * 0.5, foot = px(wx, 0, wz), across = px(wx + R, 0, wz), down = px(wx, 0, wz + R);
-      this.post.pool.set(foot[0] / this.width, foot[1] / this.height, Math.max(1e-3, Math.abs(across[0] - foot[0]) / this.width), Math.max(1e-3, Math.abs(down[1] - foot[1]) / this.height));
-    }
-    this.clouds.update(time, this.camera, SPRITE_UNIFORMS.uWitch.value, this.width, this.height);
-    // Her shadow under her feet (her frame's ground), as wide as the pose (lying down, all of her); none while she's up on the
-    // terrace, nowhere (mid-blink, sparkled away), or drawn by the party's or the beach's view (they lay her shadow there).
-    const ref = watlas.grounds?.[0], wide = wg && ref && ref.w > 0 ? Math.max(0.6, Math.min(3, wg.w / ref.w)) : 1;
-    this.shadow.position.set(wx + R.x * wside, 0.08, wz + R.z * wside);
-    const shown = hidden || this.partyWitchView.herIdle || onBeach ? 0 : (1 - 0.5 * canopyShown(w)) * (1 - this.seatK);
-    this.shadow.scale.set(shown * wide + 1e-3, 1, shown + 1e-3);
-
+    const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.time("witch");
     refresh(this);
     this.time("refresh");
@@ -1096,67 +840,11 @@ export class View {
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
     // (no cue toward the dancefloor any more: Ed, 2026-10-06, "You can remove the UI icon that points towards the dancefloor")
     this.minimap.update(g.party, w.x, w.z);
-    // The wave pointer (Ed, 2026-10-06): toward the ley line's pulse on its way to the next wave's stone (rules/leypulse.ts,
-    // along the link as drawn), 🎶 in its ring as the countdown fills; for a second witch's next stone, its rune as before
-    // (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two"). None while home boots up (Ed,
-    // 2026-10-06: "The wave pointer first appears when bootup finishes"; the dancefloor's boot ring shows the boot), fading
-    // in as the pulse sets off.
-    {
-      const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
-      const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)); // (none once the party's over: rules/partyOver.ts)
-      edgeLayout.reset(); // (no two edge cues on one another: render/indicator.ts)
-      const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
-        while (list.length < cells.length) list.push(make());
-        list.forEach((ind, i) => {
-          const c = cells[i];
-          ind.fade(shown);
-          if (!c || shown <= 0) { ind.update(this.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
-          const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
-          const pulse = i === 0 ? leyPulse(g.party, g.map, time, this.ley.currentLink()) : null, at = pulse ?? s;
-          ind.update(this.camera, cw, ch, { x: at.x, z: at.z, colour: this.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
-        });
-      };
-      // Pausing holds the countdown.
-      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone);
-      // Her hat on the ground (Ed, 2026-10-06: "there's a direction marker for it, so you can go back and find it"): toward it
-      // off screen, over it on screen, while it lies there; in the HUD's amber.
-      const H = hatMarker(g.witches[0].hat);
-      if (H || this.hatPointer) {
-        const P = (this.hatPointer ??= new StoneIndicator(document.body, 3));
-        P.fade(H ? 1 : 0);
-        P.update(this.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
-      }
-      // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
-      const AT = t.alarms ?? ALARM_DEFAULTS;
-      stepAlarms(this.alarms, g.combat.sounds, g.combat.events, time, AT);
-      if (this.alarms.byKey.size || this.alarmCues) (this.alarmCues ??= new AlarmIndicators(document.body)).update(this.camera, cw, ch, shownAlarms(this.alarms, AT), w.x, w.z, time, AT);
-    }
+    drawPointers(this, time);
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.time("leash");
-    // Work done ahead, a little each frame, out of what's left of the frame's budget (Ed, v256:
-    // boosting over the treetops dropped frames when a rebuild, the hills' window moving and
-    // these all fell in one frame). Each gets at least its floor, so all keep up at full boost.
-    let spare = FRAME_MS - (performance.now() - this.frameStart) - this.drawEst;
-    const give = (most: number, floor: number) => Math.max(floor, Math.min(most, spare));
-    const took = (from: number) => { spare -= performance.now() - from; };
-    let t0 = performance.now();
-    // The hills' next strip, in the direction she's flying (the window moves every 16 m).
-    // (More while it's behind: at full boost the next strip is due every 8 frames or so.)
-    this.heightsReady = this.heights.prepare(w.vx, w.vz, give(this.heightsReady ? 2 : 6, 0.5));
-    took(t0); this.time("heightsAhead"); t0 = performance.now();
-    // The forest ahead, centred where the view will be in two seconds at her speed, so a rebuild
-    // finds its chunks already made instead of making a whole strip at once.
-    const lv = this.lastView;
-    if (lv) this.stats.forestMissing = g.forest.prefetch(lv.x + w.vx * 2, lv.z + w.vz * 2, lv.half + 64, give(4, 1));
-    this.stats.forestMs = g.forest.buildMs; g.forest.buildMs = 0;
-    took(t0); this.time("prefetch"); t0 = performance.now();
-    this.assets.work(give(6, 1));
-    took(t0); this.time("art");
-    // The ground's area tiles: everything the cameras can see, plus a band ahead.
-    this.stats.pendingGround = this.ground.fill(this.renderer, viewRect(this, t.haze.far, 40), w.x, w.z, give(4, 1));
-    this.stats.pendingArt = this.assets.pending;
-    this.time("groundTiles");
+    workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
     if (!draw) return;
     this.renderer.info.reset();
