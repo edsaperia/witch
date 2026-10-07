@@ -140,3 +140,10 @@ Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, s
 **Journey**: every moment reached, no errors, draw calls 53–91, `dropped` 0, 1840 creatures throughout. Its step-off check fired early: since #470 she's held at the decks through the needle-drop routine; the journey now moves until she's off, and takes the boot's shot at mid-boot (half the ring), whatever the boot's length.
 
 **Untracked**: the full smoke's trunk checks ("trunks are drawn on the ground", "trunks are shaded round") fail on the prototype too, vary run to run, and aren't on `smoke.cjs`'s KNOWN list (reported by #487's author; passed to the coordinator).
+
+## Evening: 42920350 (#514), 18:23–19:12
+
+12 merges since 3f01ccf4 (#503, #501, #504, #505, #507, #506, #498, #510, #500, #511, #508, #514), ten touching the rules: no per-merge bench this time (nearly all change the game on purpose). Tests, typecheck, build green.
+
+- **Core-design check**: all pass, no errors: nothing clears by itself; the boot 30.0 s (11.0 → 41.0); 10,9 cleared transforms (soundsystem, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 2 → 2, enraged 0 → 0); 1840 creatures, no new id; the next uncleared stone still wakes (2 → 3, 2 enraged).
+- **Journey**: every moment reached, no errors, `dropped` 0, 1840 creatures throughout; off the decks 8 s after the cast, the boot caught mid-way (7 of 12 speakers). To watch: draw calls over the treetops 100, from about 90 earlier in the day. (A container restart cut the first run short; re-run whole.)
