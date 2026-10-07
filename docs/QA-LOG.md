@@ -28,3 +28,27 @@ The flights' frame work is nearly all `draw` (the software renderer); the bench 
 - #383 changed the fingerprint's format (keys sorted, notes dropped), so rules fingerprints from before it don't compare with ones after.
 - Journey: ok, every moment reached, no errors, no blank frames. Draw calls 51–91 (91 in the treetops), `dropped` 0 throughout.
 - Harness notes (not game bugs): the HUD clock reads 00:00 in the journey's shots (frames stepped by hand don't update it); in the beach shot the sea isn't clearly in view (camera), to look at again.
+
+## Round 2: tip 5f917266 (#396), 02:49–04:11
+
+14 merges, each checked against its first parent with `bench:quick`.
+
+| PR | what | result |
+|---|---|---|
+| #380 | main-split | same |
+| #387 | state-names | same |
+| #384 | leash-split | same |
+| #392 | art-check-coverage | same |
+| #364 | beach-night | rules "differ (buffs)", 0 pixels: a bench false positive (below) |
+| #391 | ui-one-pattern | same |
+| #393 | gc-audit | same |
+| #390 | sigil-button | same |
+| #375 | docs-design-sweep | same |
+| #394 | art-prefetch | same |
+| #395 | main-split-2 | same |
+| #374 | view-split | same |
+| #385 | friendly-area | same |
+| #396 | main-split-3 | same |
+
+- Tests and typecheck green at the tip. Journey ok: no errors, every moment reached, draw calls 50–93, `dropped` 0.
+- **Bench false positive** (reported to the coordinator): `g.buffs` holds the whole tuning (`buffs.tuning`, `buffs.base`: `newBuffs` in `rules/buffs.ts`), and the fingerprint includes `g.buffs`, so any new or renamed tuning knob reads as "rules differ (buffs)". A refactor that only touches a knob would turn "game unchanged" red. Fix: leave those two out of the fingerprint in `tools/bench/rules.ts`.
