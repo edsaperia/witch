@@ -14,7 +14,7 @@
 // nothing allocated a frame.
 import type { PartyState } from "../rules/party";
 import { pulseProgress } from "../rules/leypulse";
-import { bootPath } from "../rules/bootRing";
+import { bootPath, bootPulseAt, ringAlong, ringRadius } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LeyHead, type LeyTip } from "./leyHead";
@@ -114,7 +114,7 @@ void main() {
 const FRAG = /* glsl */ `
 uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uStrength;
 uniform vec2 uFar; // the faintest a section gets, ahead and behind (the whole route always shows)
-uniform vec2 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1: Ed's reveal, growing out from the treehouse
+uniform vec3 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1, and from z on: Ed's reveal, branching off the boot ring
 uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
 uniform vec2 uFlow;
 uniform vec4 uCore; // its pixel core's half-width and rim (metres) on the ground and over the treetops
@@ -129,7 +129,7 @@ void main() {
   // Growing (Ed, 2026-10-06: "a better design for the front of the leyline"): written on pixel by pixel, the end at a whole art
   // pixel along it; tipD, metres behind the front (on its own link; further back, more).
   float tipD = uGrow.y > 0.5 ? (uGrow.x - vLink) * vLen - (floor(vS / uMpp) + 0.5) * uMpp : 1e6;
-  if (tipD < 0.0) discard;
+  if (tipD < 0.0 || (uGrow.y > 0.5 && along < uGrow.z)) discard; // (none on the boot ring itself: that is the ring's own line)
   float across = 1.0 - abs(vSide), halo = across * across;
   // Ed, round 14: "the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they should be lighting
   // objects that are pixels"; and "the leyline is too faint". On the ground the line itself is pixels: a hard core a whole
@@ -207,16 +207,33 @@ export function shaderPulse(p: PartyState, map: ForestMap, time: number): number
   return pulseProgress(p, map, time);
 }
 
-/** How far the line is drawn, in links along the whole route from the treehouse, or null for all of it (Ed, 2026-10-06:
- *  "before that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving
- *  three times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"): none
- *  until home has booted; then the tip runs at `reveal` links a wave, reaching the `reveal`th stone as the first wave
- *  lands and going on at that pace (so no stone pops on at once), until it has drawn the whole route; with no wave
- *  clock, all of it once booted. rules/leypulse.ts leyReachTimes says when it reaches each stone, at the same pace. */
-export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: number): number | null {
-  if (p.spellAt === null || time < p.bootUntil) return 0;
+/** Where the first link leaves the boot ring: its share of that link (0-1, the ring's own line before it) and how far along
+ *  the boot path (m) the boot's pulse passes that point (rules/bootRing.ts ringAlong). */
+export interface LeyBranch { share: number; at: number }
+
+/** How far the line is drawn, in links along the whole route from the treehouse, or null for all of it. None before the
+ *  party spell, nor while the boot's pulse is still on its way to where the first link leaves the home ring (Ed, v2001: the
+ *  line to the first stone showed before the boot began; 2026-10-07, "It branches off the ring as an EXTENSION of the boot ley
+ *  line, and the pulse carries on out along it towards the first stone while the rest of the ring finishes"). As the pulse
+ *  passes that point (`branch`, about a third of the way round) the line branches off there, its tip running out to the
+ *  first stone as the boot's pulse goes on round, reaching it as the last speaker turns (the boot's end): by the boot
+ *  pulse's own progress, so a shorter boot keeps it. Then (Ed, 2026-10-06: "moving three times (adjustable) the speed on the
+ *  pulse (so it reaches runestone 3 by the time the first wave finishes)") it goes on at a pace that reaches the `reveal`th
+ *  stone as the first wave lands, then `reveal` links a wave, until it has drawn the whole route; with no wave clock, all
+ *  of it once booted. Without a branch (the line not yet routed) it starts from the treehouse as the boot ends.
+ *  rules/leypulse.ts leyReachTimes says when it reaches each stone, at the same pace. */
+export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: number, branch?: LeyBranch | null): number | null {
+  if (p.spellAt === null) return 0;
+  if (time < p.bootUntil) {
+    if (!branch || !map.dancefloor) return 0;
+    const P = bootPath(map), at = bootPulseAt(p, map, time), end = P.order.length ? P.stoneAt[P.order[P.order.length - 1]] : P.length;
+    if (!(at > 0) || at < branch.at) return 0;
+    const u = end > branch.at ? Math.min(1, (at - branch.at) / (end - branch.at)) : 1;
+    return branch.share + (1 - branch.share) * u;
+  }
   const k = shaderPulse(p, map, time);
-  return k === null ? null : reveal * (p.wave + k);
+  if (k === null) return null;
+  return p.wave === 0 && branch ? 1 + (reveal - 1) * k : reveal * (p.wave + k);
 }
 
 export class LeyLines {
@@ -237,7 +254,7 @@ export class LeyLines {
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
-      uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
+      uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector3() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
       uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? metresPerArtPixel(map.tuning) : 0.1 },
     };
     this.cur = this.makeSet();
@@ -259,15 +276,21 @@ export class LeyLines {
   scale(k: number): void { this.u.uBright.value = this.T.brightness * BRIGHT * k; }
 
   /** The wave's pulse on the current link: how far it's got (0-1), or null for none (leyPulse). */
-  pulse(p: number | null): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); }
+  /** `head` false: lit only to there, with no pulse drawn (the boot: the wave's pulse waits at the treehouse, so the line the
+   *  boot branches off is drawn as it will be when the boot ends, the not-yet-lit sketch, its tip running out ahead). */
+  pulse(p: number | null, head = true): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); this.pulseHead = head; }
+  private pulseHead = true;
   /** How far the line is drawn, in links along the route from its start (leyReveal), or null for all of it. */
-  grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1); this.growTo = links; }
+  grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1, this.branchAt?.share ?? 0); this.growTo = links; }
+  /** Where the first link leaves the boot ring (leyReveal), once the line is routed; null before. */
+  branch(): LeyBranch | null { return this.branchAt; }
+  private branchAt: LeyBranch | null = null;
 
   /** The boot's ring (rules/bootRing.ts; Ed, 2026-10-06): one path from the treehouse's front round the home ring, its
    *  own pulse and reveal (shares of the path), drawn while the boot runs and faint round the speakers after. */
   private ringSet: LeySet;
   private ringPulse = new THREE.Vector2();
-  private ringGrow = new THREE.Vector2();
+  private ringGrow = new THREE.Vector3();
   /** The ring: its pulse (a share of the path, or null for none), how far it's drawn (a share), its strength (0 hides it). */
   ring(pulse: number | null, line: number, strength: number, colour?: THREE.Vector3): void {
     this.ringPulse.set(pulse ?? 0, pulse === null ? 0 : 1); this.ringGrow.set(line, 1); this.ringStrength.value = strength;
@@ -322,6 +345,7 @@ export class LeyLines {
         if (was && P.chain[P.current] && P.chain[P.current].cell.join() === was.cell.join()) this.shiftFrom = time; // (moved on)
         this.build(this.cur.geo, P.colours, P.routes);
         this.routes = P.routes;
+        this.branchAt = this.map && P.chain[0]?.depart ? leaveRing(this.map, P.routes[0]) : null;
         this.cur.current.value = P.current;
         this.key = P.key; this.chain = P.chain; this.current = P.current; this.pending = null;
       }
@@ -465,7 +489,7 @@ export class LeyLines {
     const g = this.growTo, D = this.drawn, on = this.T.on, P = this.u.uPulse.value;
     // The front of the line (none drawn while it's all shown), and its pulse (lighting it as it passes).
     const tip = on && g !== null && g > 0 && g < D.length ? this.pointAt(D, g, time, 0) : null;
-    const pulse = on && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, this.current + P.x), time, 1) : null;
+    const pulse = on && this.pulseHead && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, this.current + P.x), time, 1) : null;
     // The boot's ring: its front and its pulse, while it boots.
     const R = this.ringLive, ringOn = !!R && R.pulse !== null;
     const ringTip = ringOn && R!.line < 1 ? this.pointAt(this.ringDrawn, R!.line, time, 2) : null;
@@ -498,4 +522,18 @@ interface DrawnLink { pts: [number, number][]; lens: number[]; total: number; fr
 /** The line's slow sideways drift (m) at s metres along link k, t of the way along it, as the vertex shader has it. */
 export function leyDrift(s: number, t: number, k: number, time: number): number {
   return (Math.sin(s * 0.11 + time * 0.6 + k * 1.7) * 0.6 + Math.sin(s * 0.037 - time * 0.23) * 1.2) * Math.sin(Math.PI * t);
+}
+
+/** Where a link from the treehouse leaves the boot ring (rules/bootRing.ts: the first link runs on the ring's circle from the
+ *  treehouse, then off it): the last of its points still on the circle, as a share of the link and as the boot pulse's
+ *  distance along its path there. */
+function leaveRing(map: ForestMap, link: readonly (readonly [number, number])[] | undefined): LeyBranch | null {
+  if (!link || link.length < 2) return null;
+  const d = map.dancefloor, rho = ringRadius(map), on = (q: readonly [number, number]) => Math.hypot(q[0] - d.x, q[1] - d.z) <= rho + 1;
+  let total = 0, upTo = 0, at = 0;
+  for (let i = 1; i < link.length; i++) {
+    total += Math.hypot(link[i][0] - link[i - 1][0], link[i][1] - link[i - 1][1]);
+    if (on(link[i]) && at === i - 1) { at = i; upTo = total; }
+  }
+  return { share: total > 0 ? upTo / total : 0, at: ringAlong(map, link[at][0], link[at][1]) };
 }

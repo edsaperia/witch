@@ -748,12 +748,15 @@ export class View {
       // The party's over (rules/partyOver.ts): the line fades to partyOver.leyFloor of itself, its pulse gone.
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
-      this.ley.pulse(g.partyOver ? null : shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
-      // None till the party spell, nor while home boots (Ed, v2001: the line to the first stone showed before the boot began; "it
-      // should be an extension of the boot-up ley line"): once the boot's pulse has gone round the ring, the line grows on from
-      // the treehouse along the ring it drew and out to the first stone, timed from the boot's end (leyReveal).
+      // the wave's pulse along the current link, by the party's clock (as the HUD's pointer); while home boots, none drawn, but the
+      // line the boot branches off unlit ahead of where it will set off (as it is once the boot ends: no change as it does)
+      const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
+      this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
+      // None till the party spell, nor before the boot's pulse reaches where the first link leaves the home ring (Ed, v2001 and
+      // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
+      // (leyReveal, by the boot pulse's own progress), then on along the route.
       this.ley.near(w.x, w.z);
-      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3));
+      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
         this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
