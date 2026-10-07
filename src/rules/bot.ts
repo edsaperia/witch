@@ -19,8 +19,8 @@ import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
 import type { Cell } from "./partition";
 
-export type BotKind = "skilled" | "champion" | "crude" | "novice" | "idle" | "hover";
-export const BOT_KINDS: readonly BotKind[] = ["skilled", "champion", "crude", "novice", "idle", "hover"];
+import { BOT_KINDS, type BotKind } from "./botKinds";
+export { BOT_KINDS, type BotKind };
 
 export interface BotOptions {
   /** Parks up to this many at the next soundsystem (skilled)... */
@@ -335,7 +335,10 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         if (goTo(at.x, at.z, true)) {
           if (qi >= 0 && qi !== st.length - 1) { st.push(st.splice(qi, 1)[0]); } // (cycling the stack, as the sigil button does in the treetops)
           if (qi >= 0) { sigil = true; bot.doing = `doing the ${g.creatures[L!].species} legend's quest`; }
-          else if (!parkedAt.has(key) && st.length > KEEP) { sigil = true; bot.doing = `posting guards at wave ${wave}`; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }
+          else if (!parkedAt.has(key) && st.length > KEEP) {
+            // (not the creature a quest she's on wants: it goes to the top of the stack, out of the way)
+            if (qjob && st[st.length - 1] === qjob.want.id && st.length > 1) st.unshift(st.pop()!);
+            sigil = true; bot.doing = `posting guards at wave ${wave}`; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }
           // Then hold the spot, kiting anything that comes for her.
           for (const c of g.creatures) if (c.enraged && !c.gone && Math.hypot(c.x - b.x, c.z - b.z) < K.kite) { const d = Math.hypot(c.x - b.x, c.z - b.z) || 1; mx = (b.x - c.x) / d; mz = (b.z - c.z) / d; dash = d < K.dashAt; bot.doing = `dodging ${article(c.species)} at wave ${wave}`; break; }
         }

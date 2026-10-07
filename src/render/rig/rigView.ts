@@ -10,6 +10,7 @@ import type { Creature } from "../../rules/creatures";
 import type { RigFace, RigGear, RigMeta } from "./rigBuild";
 import type { Tuning } from "../../rules/tuning";
 import { ENRAGED_TINT } from "../looks";
+import { hasOverride } from "../overrides";
 
 /** The live rig is on (Ed, 2026-10-05: "let's put what we have live"); ?rig=0 turns it off, for comparison. */
 export const rigOn = (): boolean => typeof location === "undefined" || new URLSearchParams(location.search).get("rig") !== "0";
@@ -58,6 +59,7 @@ export class RigView {
   /** Lays out a creature with the rig, if its template has one and its parts are baked: true when drawn. */
   add(c: Creature, look: RigLook): boolean {
     if ((!this.ground || look.h * look.scale < this.minPx) && !this.always.includes(c.level)) return false; // (legends always: Ed, 2026-10-05)
+    if (hasOverride(c.species, c.level)) return false; // (a hand-drawn level: its own frames, art/overrides)
     const t0 = performance.now(), art = this.assets.rigArt(c.species, c.level, look.gear);
     if (!art) return false;
     let body = this.bodies.get(c.id);

@@ -75,7 +75,8 @@ export function drawCreatures(v: View, time = 0): void {
   const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
   let n = 0;
   v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
-  for (const c of g.creatures) {
+  for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
+    const c = g.creatures[i];
     if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
     if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
     // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
