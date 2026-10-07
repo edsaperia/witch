@@ -117,7 +117,6 @@ uniform vec2 uFar; // the faintest a section gets, ahead and behind (the whole r
 uniform vec2 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1: Ed's reveal, growing out from the treehouse
 uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
 uniform vec2 uFlow;
-uniform vec2 uSketch; // y 1: all of it drawn (to uGrow) as the sketch, unlit (while home boots: the way out, not yet lit)
 uniform vec4 uCore; // its pixel core's half-width and rim (metres) on the ground and over the treetops
 uniform float uMpp; // metres per art pixel
 varying float vSide, vS, vT, vLink, vSeen, vW, vLen;
@@ -157,7 +156,7 @@ void main() {
   // width, solid, saturated, glowing softly, its shimmer flowing on toward the front, brightest just behind the pulse. Ahead of
   // it (drawn, not yet lit) it's a sketch, a promise: a thin dashed line of art pixels in a dim, cool, greyed version of its
   // colour, with no glow. The pulse (its pixel head: render/leyHead.ts) lights it as it passes.
-  float pAlong = uSketch.y > 0.5 ? -1.0 : uPulse.y > 0.5 ? uCurrent + uPulse.x : 1e6;
+  float pAlong = uPulse.y > 0.5 ? uCurrent + uPulse.x : 1e6;
   if (along > pAlong) {
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11));
     vec3 cool = mix(vec3(grey), vec3(0.55, 0.68, 1.0) * grey * 1.3, 0.55);
@@ -238,11 +237,11 @@ export class LeyLines {
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
-      uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() }, uSketch: { value: new THREE.Vector2() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
+      uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
       uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? metresPerArtPixel(map.tuning) : 0.1 },
     };
     this.cur = this.makeSet();
-    this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength, uSketch: { value: new THREE.Vector2() } }); // (never the sketch: lit behind its own pulse)
+    this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength }); // (lit behind its own pulse)
     if (map) this.build(this.ringSet.geo, [new THREE.Vector3(1, 0.7, 0.42), new THREE.Vector3(1, 0.7, 0.42)], [bootPath(map).path]);
     const mpp = this.u.uMpp.value as number;
     this.head = new LeyHead(SPRITE_UNIFORMS.uRes, mpp);
@@ -280,11 +279,8 @@ export class LeyLines {
   /** The ring while it's drawn: its pulse and how far it's drawn (shares of its path), its strength; null when not. */
   private ringLive: { pulse: number | null; line: number; strength: number } | null = null;
   private ringDrawn: DrawnLink[] = [];
-  /** Home booting (Ed, 2026-10-06: "The leyline leaving the speaker circle seems to be not visible"): the line's first link
-   *  drawn as the sketch (unlit), so the way out of the ring always reads, before the line itself grows out. */
   /** Where she is, each frame: the line shows through the trees only near her. */
   near(x: number, z: number): void { this.u.uNear.value.set(x, z, NEAR); }
-  sketch(on: boolean): void { this.u.uSketch.value.set(0, on ? 1 : 0); }
   private ringStrength = { value: 1 };
 
   private makeSet(extra: Record<string, THREE.IUniform> = {}): LeySet {
@@ -466,10 +462,10 @@ export class LeyLines {
   /** Each frame after grow(): the front of the line, where it's drawn to, for its head (none with the whole line drawn, or
    *  none yet). beats: the beat clock, for its pulse; strength: how far it's faded (the party's over). */
   front(time: number, beats: number, strength = 1): LeyTip | null {
-    const g = this.growTo, D = this.drawn, on = this.T.on, sketch = this.u.uSketch.value.y > 0.5, P = this.u.uPulse.value;
-    // The front of the line (none drawn while it's all shown, or as the sketch), and its pulse (lighting it as it passes).
-    const tip = on && !sketch && g !== null && g > 0 && g < D.length ? this.pointAt(D, g, time, 0) : null;
-    const pulse = on && !sketch && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, this.current + P.x), time, 1) : null;
+    const g = this.growTo, D = this.drawn, on = this.T.on, P = this.u.uPulse.value;
+    // The front of the line (none drawn while it's all shown), and its pulse (lighting it as it passes).
+    const tip = on && g !== null && g > 0 && g < D.length ? this.pointAt(D, g, time, 0) : null;
+    const pulse = on && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, this.current + P.x), time, 1) : null;
     // The boot's ring: its front and its pulse, while it boots.
     const R = this.ringLive, ringOn = !!R && R.pulse !== null;
     const ringTip = ringOn && R!.line < 1 ? this.pointAt(this.ringDrawn, R!.line, time, 2) : null;
