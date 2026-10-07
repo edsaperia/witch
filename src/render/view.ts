@@ -801,7 +801,8 @@ export class View {
     const NL = t.nightLight, rise = Math.max(0, Math.min(1, g.witch.lift));
     if (NL) {
       const R0 = Math.min(LIGHT_UNIFORMS.uGlowR.value, NL.maxReach); // (never more than a lantern's metres, however far the camera: stargazing, zoomed out)
-      LIGHT_UNIFORMS.uGlowR.value = R0 + (Math.min(R0, NL.treetopReach) - R0) * rise;
+      const R1 = R0 + (Math.min(R0, NL.treetopReach) - R0) * rise;
+      LIGHT_UNIFORMS.uGlowR.value = R1 + (Math.min(R1, NL.gazeReach ?? R1) - R1) * this.gaze; // (lying on the sand to stargaze, the camera low and far: her own small pool, eased with the bend)
       LIGHT_UNIFORMS.uGlowDim.value = 1 + (NL.treetopGlow - 1) * rise;
     }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
