@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How It Was Made · The Making of Coven Rush</title>
+<meta name="description" content="One coordinator and a team of builder sessions working in parallel, with Ed playtesting and deciding.">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top"><a class="brand" href="./">The Making of Coven Rush</a><nav><a href="./">Start</a><a href="timeline.html">1. Timeline</a><a href="art.html">2. Art</a><a href="music.html">3. Music</a><a href="balance.html">4. Balance</a><a href="systems.html">5. Systems</a><a href="architecture.html">6. Code</a><a href="how.html" aria-current="page">7. How</a><a href="builders.html">8. Builders</a></nav></header>
+<main>
+<p class="kicker">Chapter 7</p><h1>How It Was Made</h1><p class="lede">One coordinator and a team of builder sessions working in parallel, with Ed playtesting and deciding.</p>
+<p>Coven Rush was made in four days by a small, odd studio: Ed, who plays every build and decides; one coordinator session, which turns what Ed says into jobs; and a team of builder sessions, each working on its own branch in the cloud, all at once. None of them shared a desk or a screen. They met in pull requests. Between the first commit on the morning of 3 October and the small hours of the 7th, they opened 357 of them, and 336 were merged. This chapter is about how that worked: the loop every change went round, the people in it, the rules they wrote for each other as they went, and the safety nets that let a dozen builders change the same game in parallel without breaking it.</p>
+
+<h2>The loop</h2>
+<p>Every change went round the same loop. Ed plays a build and says what he sees. The coordinator writes it down word for word, works out which builder owns that part of the game, and briefs them. The builder works on its own branch, runs the fast checks, pushes, and opens a pull request. A bot builds that pull request into a playable copy of the game at its own address and comments the link. CI runs, the builder posts a <code>REPORT</code> with the build number, then runs the slow checks and posts a <code>FINAL</code>. The coordinator reviews it and merges it into the prototype branch. Every so often a <b>round</b> rolls the prototype branch up into <code>main</code>, which deploys the game at the site's root, and Ed plays again.</p>
+<div class="diagram">
+<svg viewBox="0 0 760 400" role="img" aria-label="The loop: Ed's note goes to the coordinator, who briefs a builder; the builder pushes its own branch and opens a pull request, which the bot builds into a playable link; CI and the slower checks run; the builder posts a REPORT, then a FINAL; the coordinator merges it into the prototype branch; a round rolls the prototype up into main; Ed plays and writes the next note">
+  <rect x="0" y="0" width="760" height="400" fill="#120f22"/>
+  <defs><marker id="lp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9a93b4"/></marker></defs>
+  <text x="20" y="26" fill="#e8e2f4" font-size="15">One turn of the loop</text>
+  <rect x="20" y="50" width="134" height="64" rx="8" fill="#181330" stroke="#d9789e"/>
+  <text x="87" y="76" fill="#e8e2f4" font-size="14" text-anchor="middle">Ed's note</text>
+  <text x="87" y="96" fill="#9a93b4" font-size="12" text-anchor="middle">after a playtest</text>
+  <rect x="174" y="50" width="134" height="64" rx="8" fill="#181330" stroke="#f2c46a"/>
+  <text x="241" y="76" fill="#e8e2f4" font-size="14" text-anchor="middle">coordinator</text>
+  <text x="241" y="96" fill="#9a93b4" font-size="12" text-anchor="middle">quotes, briefs</text>
+  <rect x="328" y="50" width="134" height="64" rx="8" fill="#181330" stroke="#8fcf7a"/>
+  <text x="395" y="76" fill="#e8e2f4" font-size="14" text-anchor="middle">builder branch</text>
+  <text x="395" y="96" fill="#9a93b4" font-size="12" text-anchor="middle">push first</text>
+  <rect x="482" y="50" width="134" height="64" rx="8" fill="#181330" stroke="#6fd6c8"/>
+  <text x="549" y="76" fill="#e8e2f4" font-size="14" text-anchor="middle">pull request</text>
+  <text x="549" y="96" fill="#9a93b4" font-size="12" text-anchor="middle">/pr-N/ link</text>
+  <rect x="610" y="156" width="134" height="64" rx="8" fill="#181330" stroke="#6fd6c8"/>
+  <text x="677" y="182" fill="#e8e2f4" font-size="14" text-anchor="middle">checks</text>
+  <text x="677" y="202" fill="#9a93b4" font-size="12" text-anchor="middle">CI, smoke, art</text>
+  <rect x="482" y="262" width="134" height="64" rx="8" fill="#181330" stroke="#8fcf7a"/>
+  <text x="549" y="288" fill="#e8e2f4" font-size="14" text-anchor="middle">REPORT, FINAL</text>
+  <text x="549" y="308" fill="#9a93b4" font-size="12" text-anchor="middle">on the PR</text>
+  <rect x="328" y="262" width="134" height="64" rx="8" fill="#181330" stroke="#f2c46a"/>
+  <text x="395" y="288" fill="#e8e2f4" font-size="14" text-anchor="middle">merge</text>
+  <text x="395" y="308" fill="#9a93b4" font-size="12" text-anchor="middle">into prototype</text>
+  <rect x="174" y="262" width="134" height="64" rx="8" fill="#181330" stroke="#f2c46a"/>
+  <text x="241" y="288" fill="#e8e2f4" font-size="14" text-anchor="middle">round roll-up</text>
+  <text x="241" y="308" fill="#9a93b4" font-size="12" text-anchor="middle">into main</text>
+  <rect x="20" y="262" width="134" height="64" rx="8" fill="#181330" stroke="#d9789e"/>
+  <text x="87" y="288" fill="#e8e2f4" font-size="14" text-anchor="middle">Ed plays</text>
+  <text x="87" y="308" fill="#9a93b4" font-size="12" text-anchor="middle">the site's root</text>
+  <line x1="154" y1="82" x2="172" y2="82" stroke="#9a93b4" stroke-width="2" marker-end="url(#lp)"/>
+  <line x1="308" y1="82" x2="326" y2="82" stroke="#9a93b4" stroke-width="2" marker-end="url(#lp)"/>
+  <line x1="462" y1="82" x2="480" y2="82" stroke="#9a93b4" stroke-width="2" marker-end="url(#lp)"/>
+  <path d="M616,82 Q677,82 677,154" fill="none" stroke="#9a93b4" stroke-width="2" marker-end="url(#lp)"/>
+  <path d="M677,220 Q677,294 618,294" fill="none" stroke="#9a93b4" stroke-width="2" marker-end="url(#lp)"/>
+  <line x1="482" y1="294" x2="464" y2="294" stroke="#9a93b4" stroke-width="2" marker-end="url(#lp)"/>
+  <line x1="328" y1="294" x2="310" y2="294" stroke="#9a93b4" stroke-width="2" marker-end="url(#lp)"/>
+  <line x1="174" y1="294" x2="156" y2="294" stroke="#9a93b4" stroke-width="2" marker-end="url(#lp)"/>
+  <line x1="87" y1="262" x2="87" y2="116" stroke="#d9789e" stroke-width="2" marker-end="url(#lp)"/>
+  <path d="M520,116 Q470,200 150,232 Q120,236 112,260" fill="none" stroke="#d9789e" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#lp)"/>
+  <text x="112" y="170" fill="#d9789e" font-size="12">or plays an open pull request</text>
+  <text x="112" y="186" fill="#d9789e" font-size="12">at its own link</text>
+  <text x="395" y="250" fill="#f2c46a" font-size="12" text-anchor="middle">DECISION FOR ED waits here</text>
+  <text x="20" y="360" fill="#9a93b4" font-size="12">Merging into main deploys the site's root. Every pull request deploys</text>
+  <text x="20" y="378" fill="#9a93b4" font-size="12">under /pr-N/, and the bot comments the link and its build number.</text>
+</svg>
+</div>
+<p>The loop was fast. Half the merged pull requests went from opening to merge in under an hour (the median is 57 minutes; a quarter took under 22 minutes, and three quarters under 2¼ hours). The build number in the corner of the game is a count of builds, and it ran from v13 on the first afternoon to v1703 by the end of the fourth night.</p>
+
+<h3>Two branches, and a link for everything</h3>
+<p>There were two long-lived branches. The prototype branch was where the game was built: 313 pull requests were aimed at it, and 292 merged. <code>main</code> was what Ed played by default: it took 44 pull requests, almost all of them on the first two days (the early art went straight there), and then only the <b>rounds</b>. A round is one pull request from the prototype branch into <code>main</code> with a list of what's in it: "Prototype, round 2" <a class="pr" href="https://github.com/edsaperia/witch/pull/6">#6</a>, "round 3" <a class="pr" href="https://github.com/edsaperia/witch/pull/39">#39</a>, and so on up to round 14 <a class="pr" href="https://github.com/edsaperia/witch/pull/251">#251</a>, the Coven Rush playtest build, merged at 18:12 UTC on the 6th. Rounds 15 and 16 went in later that evening as direct merges, each a playtest build.</p>
+<p>Every pull request got its own copy of the game. The Pages workflow builds it and publishes it under <code>/pr-&lt;number&gt;/</code>, and the bot leaves a comment: "Playable link for this PR", the commit, the build number, and a reminder that <code>?seed=123</code> plays a given map. 352 of those comments went out. That link is what made the rest of the process work, because Ed never had to wait for a merge to see something. Round 13 <a class="pr" href="https://github.com/edsaperia/witch/pull/219">#219</a> and round 14 <a class="pr" href="https://github.com/edsaperia/witch/pull/251">#251</a> were even opened as drafts on purpose, "so the overnight work has a playable link", since a merged pull request loses its preview.</p>
+<p>Many deploys at once turned out to be a problem of their own. By the early hours of the 6th, previews were failing because several pull requests' deploys pushed to <code>gh-pages</code> at the same moment and all but one were rejected. A builder posted the diagnosis on the housekeeping issue, and the bug hunter's fix <a class="pr" href="https://github.com/edsaperia/witch/pull/210">#210</a> made each deploy write only its own folder and, when its push is beaten, fetch the newer branch and try again, up to ten times. It was tested against nine deploys at once before it went in.</p>
+
+<h3>REPORT and FINAL</h3>
+<p>Builders talked to the coordinator and to Ed in pull-request comments with two fixed openings. A <code>REPORT</code> says what has been pushed, which build to try and what to look for. A <code>FINAL</code> says the work is done: the checks run, their results, the base it was merged with, anything left for later. Over the four days there were 312 comments that open with REPORT and 323 that open with FINAL. A typical FINAL reads like a lab note:</p>
+<blockquote>CI: check and smoke are green on 38fff62, and the build deployed. … Tests: 693 pass; typecheck and build are clean.<cite>The prototype builder's FINAL on #338</cite></blockquote>
+<p>From the afternoon of the 5th, a builder posting a FINAL (or a question it couldn't go on without) also woke the coordinator directly, so a finished pull request didn't sit waiting. The coordinator reviewed at once, without waiting for Ed, and merged: "merged after a local check" on the 5th, and from the afternoon of the 6th "Merged on CI", with the green run named (67 of those).</p>
+
+<h3>Push first, check after</h3>
+<p>Until the morning of the 4th, a builder ran every check, slow ones included, before pushing. Then Ed changed the order, and the coordinator posted it to every open pull request as a standing rule:</p>
+<blockquote>All the builders should push first and run checks afterwards.<cite>Ed, 2026-10-04, via the coordinator</cite></blockquote>
+<p>The rule, as it went into the project's notes: when a change works, run the fast checks (the tests, the type check, the build, and the art check if it touched art), push straight away so the bot builds a playable version, and post a short REPORT with the version. Then run the slow checks, the full smoke run and the preview sheets; report any failure, fix it and push again; and post the FINAL once they are done. "Never hold a playable build back waiting for the smoke run." For the rest of that day REPORTs opened with "REPORT (push first)".</p>
+
+<h3>The changelog that stopped conflicting</h3>
+<p>The start screen shows a <b>What's new</b> panel. It began as one shared list, <code>config/changelog.json</code>, and every builder added a line to it with every change Ed could see. With builders working in parallel, that one file became the thing everyone fought over: by the morning of the 5th it was "the most-edited file (54 of the last 150 commits) and the main source of merge conflicts" <a class="pr" href="https://github.com/edsaperia/witch/pull/77">#77</a>. So it became a folder. Each change now adds its own small file, <code>config/changelog/&lt;date&gt;-&lt;slug&gt;.json</code>, holding its bullets in plain player words and a <code>version</code> left empty; once the bot has given the build a number, the builder writes it into its own fragment on its next push, and never edits anyone else's. The build gathers the files, and fragments with the same version make one entry. Everything up to round 9 was frozen into <code>archive.json</code>. The change was checked to render exactly the same 35 entries as before. By the end there were 240 files in the folder, and no shared list left to collide on.</p>
+
+<h2>Who built it</h2>
+<p>Every pull request names the session that opened it, which makes it possible to count the team. Thirteen sessions opened the 357 pull requests: the coordinator and twelve builders. Builders were long-lived. Each took a part of the game and kept it for days, so by the end most had twenty to fifty pull requests behind them. They went by their jobs, and those names are how they address each other in the comments ("@prototype builder", "Rendering builder → art director, round 1").</p>
+<table>
+<tr><th>Who</th><th>Pull requests</th><th>First</th><th>What they took on</th></tr>
+<tr><td>The coordinator</td><td>14</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/1">#1</a>, 3 Oct</td><td>The project's setup, the design document <a class="pr" href="https://github.com/edsaperia/witch/pull/2">#2</a>, round 2 and rounds 10 to 14, and a few small changes Ed asked for (doubling the berries <a class="pr" href="https://github.com/edsaperia/witch/pull/241">#241</a>, the bold pixel style by default <a class="pr" href="https://github.com/edsaperia/witch/pull/253">#253</a>)</td></tr>
+<tr><td>Art builder 1</td><td>57</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/3">#3</a>, 3 Oct</td><td>The first art pass, sigils, the witch's poses, the treehouse, fifteen UK trees and each area's flora, area recipes, the night palette</td></tr>
+<tr><td>Prototype builder</td><td>31</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/4">#4</a>, 3 Oct</td><td>The Three.js prototype itself and rounds 3 to 9, then performance, the KNOWN list and the bench</td></tr>
+<tr><td>Bug hunter</td><td>42</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/14">#14</a>, 3 Oct</td><td>Fixes, the CI smoke test <a class="pr" href="https://github.com/edsaperia/witch/pull/26">#26</a>, combat, the sleeping legends <a class="pr" href="https://github.com/edsaperia/witch/pull/63">#63</a>, the deploy retries <a class="pr" href="https://github.com/edsaperia/witch/pull/210">#210</a>, a headless whole-run checker <a class="pr" href="https://github.com/edsaperia/witch/pull/190">#190</a></td></tr>
+<tr><td>Rendering builder</td><td>31</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/30">#30</a>, 4 Oct</td><td>Lighting the witch and the night, the spooky lighting, splitting the view into modules <a class="pr" href="https://github.com/edsaperia/witch/pull/131">#131</a>, art pixels for effects <a class="pr" href="https://github.com/edsaperia/witch/pull/330">#330</a></td></tr>
+<tr><td>Art builder 2</td><td>44</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/31">#31</a>, 4 Oct</td><td>Scenes and party objects, then creature genomes <a class="pr" href="https://github.com/edsaperia/witch/pull/83">#83</a>, the live rig <a class="pr" href="https://github.com/edsaperia/witch/pull/102">#102</a>, textures and evolutions</td></tr>
+<tr><td>Music builder</td><td>32</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/45">#45</a>, 4 Oct</td><td>The generative music engine, every sound effect, the mix</td></tr>
+<tr><td>Balance builder</td><td>20</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/59">#59</a>, 4 Oct</td><td>The simulators and bots, the config schemas, tonight's balance pass <a class="pr" href="https://github.com/edsaperia/witch/pull/346">#346</a></td></tr>
+<tr><td>Art director</td><td>6</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/97">#97</a>, 5 Oct</td><td>Review, not building: notes on other builders' pull requests and the art guide <a class="pr" href="https://github.com/edsaperia/witch/pull/120">#120</a></td></tr>
+<tr><td>Controls builder</td><td>21</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/133">#133</a>, 5 Oct</td><td>WASD and mouse, the aim reticle and dodge, how the frame feels <a class="pr" href="https://github.com/edsaperia/witch/pull/216">#216</a></td></tr>
+<tr><td>Creator builder</td><td>32</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/134">#134</a>, 5 Oct</td><td>The character creator and her bedroom <a class="pr" href="https://github.com/edsaperia/witch/pull/143">#143</a>, the HUD, Ed's decisions panel <a class="pr" href="https://github.com/edsaperia/witch/pull/227">#227</a></td></tr>
+<tr><td>Art builder 3</td><td>26</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/142">#142</a>, 5 Oct</td><td>The prop generator, generated set pieces, making legends read in their circles</td></tr>
+<tr><td>Art builder 4</td><td>1</td><td><a class="pr" href="https://github.com/edsaperia/witch/pull/356">#356</a>, 6 Oct</td><td>The witch DJing behind her decks, on the last night</td></tr>
+</table>
+<p>The team grew in steps. The first day had four: the coordinator, the art builder, the prototype builder and, from the evening, the bug hunter. The 4th added rendering, a second art builder, music and balance. The 5th added the art director, controls, the creator and a third art builder. That evening the coordinator changed CI to run once per pull request instead of on every push, because "with eleven builders" the doubled runs had "swamped GitHub's runners" <a class="pr" href="https://github.com/edsaperia/witch/pull/145">#145</a>.</p>
+
+<h3>The art director</h3>
+<p>One builder didn't build the game at all. From the 5th, the art director reviewed: each iteration of the art pass as a set <a class="pr" href="https://github.com/edsaperia/witch/pull/112">#112</a>, each new generator, each lighting change, ranking what worked and sending briefs back ("For quick ranking: the snail is the strongest set, the badger and woodlouse work, the boar and fox need one pass, and the ram needs the most"). Its notes appear on more than twenty pull requests. The lessons went into a living style guide, <code>docs/ART-GUIDE.md</code> <a class="pr" href="https://github.com/edsaperia/witch/pull/120">#120</a>, which art builders read before each batch. On the night of the 5th Ed gave it a standing job:</p>
+<blockquote>take sets of screenshots of the game and think about what will make the visuals more coherent and aesthetic, keep iterating.<cite>Ed, quoted on #177</cite></blockquote>
+<p>So it shot the same fixed set each round (seed 123, at night, the bedroom, home, four areas on the ground and from the treetops, a fight), wrote a critique and briefed the builders. The rendering builder answered each round with stacked pull requests <a class="pr" href="https://github.com/edsaperia/witch/pull/184">#184</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/189">#189</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/195">#195</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/199">#199</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/208">#208</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/220">#220</a>. There were four rounds between about 01:00 and 06:30 UTC on the 6th, and the last one left a shot-for-shot comparison, first against latest, "for Ed's morning".</p>
+
+<h3>Talking to each other</h3>
+<p>Builders shared one issue for plans that touched each other's code, the housekeeping issue (#122). There they posted what they would change and what they wouldn't touch, and sorted out clashes before anyone wrote a line: the rendering builder warning the prototype builder that its split of <code>view.ts</code> would collide with a scenery rebuild, and offering two ways round it; the controls builder handing over its diagnosis of a row of pops it hadn't fixed ("My guess, unconfirmed: … To tell the two apart: …"); the bug hunter triaging a full smoke run failure by failure, each with its owner.</p>
+
+<h2>Ed's notes, word for word</h2>
+<p>Ed played builds and said what he saw, usually with the build number. The coordinator's job was to keep his words intact and attach them to the right person. Its comments open "COORDINATOR — Ed's playtest note" and then quote him:</p>
+<blockquote>v160 I see treetops being cut off<cite>Ed, 2026-10-04, playtest, quoted on #26</cite></blockquote>
+<blockquote>Increase witch ground speed by 10%<cite>Ed, 2026-10-04, quoted on #6</cite></blockquote>
+<p>Below the quote comes the coordinator's reading of it: what the screenshot shows, where in the code it probably lives, what to change, what to leave alone. For the treetops, it described "several long, perfectly horizontal straight edges in the canopy" and made it a quick-fix pull request ahead of the evolution work. For the ground speed, it gave the old and new number (17.5 to 19.25), told the builder to check anything tuned against it so the walk didn't look like skating, and wrote the What's-new line: "Witch walks 10% faster." The coordinator posted 282 comments headed COORDINATOR, most of them in the first two days (139 on the 3rd, 105 on the 4th); later builders more often quoted Ed in their own pull-request titles and descriptions, "Ed's playtest: …" <a class="pr" href="https://github.com/edsaperia/witch/pull/324">#324</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/339">#339</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/350">#350</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/354">#354</a>.</p>
+<p>Ed's words didn't stop at the pull request. The project's rule is to record his answers where they apply, with his name and the date, and the code is full of them. The string <i>Ed, 2026-10-0…</i> or <i>Ed's playtest</i> appears more than 800 times in <code>src/</code> alone, and more in the configs, tools and design document. One of the music engine's tests is named after his complaint:</p>
+<blockquote>The music cuts in and out a lot<cite>Ed, 2026-10-06, playtest, quoted in musicEngine.test.ts</cite></blockquote>
+<p>That keeps the reason for a number next to the number. When a later builder wonders why the waves come every five minutes, or why a legend's clearing slows the world, the answer is in the comment above it, in Ed's own words.</p>
+
+<h3>DECISION FOR ED</h3>
+<p>The project's rule is to ask Ed rather than assume. But much of the work went on overnight, while Ed was away. So when something was his call, a change to how the game plays or looks by default, a builder built it anyway, put it behind a switch where it could, and marked it <b>DECISION FOR ED</b>. Seventy pull requests carry the phrase. The prop generator going on by default <a class="pr" href="https://github.com/edsaperia/witch/pull/221">#221</a> opens with "DECISION FOR ED. Don't merge without his OK." and lays out the evidence: six views side by side, frame timings, the known gaps. Others went in overnight as the builder's best guess, marked for Ed to overturn: a moment's grace after a hit <a class="pr" href="https://github.com/edsaperia/witch/pull/197">#197</a>, wild areas growing half as fast <a class="pr" href="https://github.com/edsaperia/witch/pull/211">#211</a>. A few still stand that way in the project's glossary.</p>
+<p>On the 6th Ed asked for something better than reading pull requests to make those calls:</p>
+<blockquote>give me labelled sliders or toggle switches down the side of the game screen, with a button next to it that lets me confirm my preference<cite>Ed, 2026-10-06, quoted on #227</cite></blockquote>
+<p>The creator builder made it that morning <a class="pr" href="https://github.com/edsaperia/witch/pull/227">#227</a>: <code>?decide</code> or F2 opens a panel of the open decisions (pixel style, camera glide, the props, wild growth…), each applying at once in the game, and <b>Confirm</b> opens a GitHub issue labelled <code>decision</code> with the setting, the build and the seed, for the coordinator to pick up.</p>
+
+<h2>Safety nets</h2>
+<p>Twelve builders changing one game at once only works if a broken change is caught before it reaches anyone else. The checks grew in layers, each added as the work needed it.</p>
+<ol class="timeline">
+  <li><time>2026-10-03</time> <b>Tests, types and a build on every push.</b> The first prototype <a class="pr" href="https://github.com/edsaperia/witch/pull/4">#4</a> came with CI: the Vitest tests of the rules, the type check and the build. The rules live in <code>src/rules/</code> with no Three.js in them, so they can be tested headless and later ported to Godot. There were 32 tests that first afternoon.</li>
+  <li><time>2026-10-03</time> <b>The art check.</b> <code>node art/check.mjs</code> builds the Art Lab, opens it in headless Chromium and draws every creature, tree, prop and pose, checking the rules the art has to keep: babies smaller than adults in clear steps, only magical things glowing, no stray pixels on the witch. Every art batch added its own rows; its description in the project notes is now a single paragraph of nearly 1,800 words. It first appears in <a class="pr" href="https://github.com/edsaperia/witch/pull/8">#8</a>.</li>
+  <li><time>2026-10-04</time> <b>A smoke test in CI.</b> Ed: "yes, have it add the smoke test". The bug hunter's quick smoke <a class="pr" href="https://github.com/edsaperia/witch/pull/26">#26</a> loads the built game in headless Chromium, starts, flies on the ground, rises, flies in the treetops and comes down, and fails on any error, a blank picture or a witch who doesn't move. The longer full smoke test, run by builders before a FINAL, flies every zoom step at Ed's own window sizes and fails on any <b>pop</b>, anything appearing or vanishing in clear view.</li>
+  <li><time>2026-10-05</time> <b>Pixel-exact baselines.</b> When the trees moved onto plant genomes <a class="pr" href="https://github.com/edsaperia/witch/pull/81">#81</a>, the builder first fingerprinted every tree and bush drawing, then made sure the new code matched: "736 of 736". The creatures got the same kind of tool, <code>tools/genome/compare.mjs</code>, comparing every sprite with an old checkout pixel for pixel. Schemas followed for the tuning file and the other configs, so a misspelt or out-of-range knob fails the tests.</li>
+  <li><time>2026-10-06</time> <b>Whole runs, headless.</b> The bug hunter's playthrough tool <a class="pr" href="https://github.com/edsaperia/witch/pull/190">#190</a> plays fifteen game minutes with a simple bot and reports exceptions, NaNs and stuck creatures. Its first night found two bugs, a siege that froze far from her <a class="pr" href="https://github.com/edsaperia/witch/pull/187">#187</a> and a siege that woke the sleeping legend <a class="pr" href="https://github.com/edsaperia/witch/pull/182">#182</a>.</li>
+  <li><time>2026-10-06</time> <b>The KNOWN list.</b> Some full-smoke checks failed on the prototype branch itself all day, for reasons that were known: frame-time budgets on the cloud's slow, shared machines (#310), and pop checks under its one-to-two-second software-rendered frames (#311). Every builder was re-running them and writing "fails the same way on the base". The prototype builder <a class="pr" href="https://github.com/edsaperia/witch/pull/312">#312</a> moved them into a list at the top of the smoke script, each with its issue, reported apart and never failing the run, "so a red full smoke means something new". One that starts passing says so, to come off the list.</li>
+  <li><time>2026-10-06</time> <b>Bench and pixel-match.</b> For changes meant to change nothing, the prototype builder's harness <a class="pr" href="https://github.com/edsaperia/witch/pull/338">#338</a> runs the rules on fixed seeds to wave 30, fingerprinting the game's state every 300 steps, and drives the built game frame by frame through seven fixed scenes, comparing two runs part by part and pixel by pixel. A quick version <a class="pr" href="https://github.com/edsaperia/witch/pull/344">#344</a> takes about five minutes, and an optional Bench workflow runs it on each pull request's base and head. Its rule of thumb: "green means the same game".</li>
+</ol>
+<p>The checks were also bent to the speed of the work. CI runs once per pull request rather than on every push <a class="pr" href="https://github.com/edsaperia/witch/pull/145">#145</a>; the slow checks come after the push, never before; and a builder's FINAL states which ran and how they came out, so the coordinator merges on evidence rather than on trust.</p>
+
+<h2>The numbers</h2>
+<p>The work came in waves of its own. The first day was mostly art going straight to <code>main</code> and one prototype; the second, the first systems; the third, the team doubling. The fourth was the biggest day by far: 202 pull requests opened on the 6th, against 85 on the 5th, 45 on the 4th and 22 on the 3rd.</p>
+<div class="diagram">
+<svg viewBox="0 0 720 316" role="img" aria-label="Pull requests opened per six hours, 3 to 7 October (UTC): from 2 to 15 a block on the first day, rising to 61 in the small hours of the 6th">
+<rect x="0" y="0" width="720" height="316" fill="#120f22"/>
+<text x="20" y="24" fill="#e8e2f4" font-size="15">Pull requests opened, per six hours (UTC)</text>
+<line x1="48" y1="250.0" x2="704" y2="250.0" stroke="#3a2f5c" stroke-width="1"/>
+<text x="40" y="254.0" fill="#9a93b4" font-size="12" text-anchor="end">0</text>
+<line x1="48" y1="190.0" x2="704" y2="190.0" stroke="#3a2f5c" stroke-width="1"/>
+<text x="40" y="194.0" fill="#9a93b4" font-size="12" text-anchor="end">20</text>
+<line x1="48" y1="130.0" x2="704" y2="130.0" stroke="#3a2f5c" stroke-width="1"/>
+<text x="40" y="134.0" fill="#9a93b4" font-size="12" text-anchor="end">40</text>
+<line x1="48" y1="70.0" x2="704" y2="70.0" stroke="#3a2f5c" stroke-width="1"/>
+<text x="40" y="74.0" fill="#9a93b4" font-size="12" text-anchor="end">60</text>
+<rect x="90.6" y="244.0" width="36.6" height="6.0" fill="#d9789e"/>
+<text x="108.9" y="239.0" fill="#e8e2f4" font-size="12" text-anchor="middle">2</text>
+<rect x="131.2" y="235.0" width="36.6" height="15.0" fill="#d9789e"/>
+<text x="149.4" y="230.0" fill="#e8e2f4" font-size="12" text-anchor="middle">5</text>
+<rect x="171.7" y="205.0" width="36.6" height="45.0" fill="#d9789e"/>
+<text x="190.0" y="200.0" fill="#e8e2f4" font-size="12" text-anchor="middle">15</text>
+<rect x="252.9" y="211.0" width="36.6" height="39.0" fill="#d9789e"/>
+<text x="271.2" y="206.0" fill="#e8e2f4" font-size="12" text-anchor="middle">13</text>
+<rect x="293.5" y="202.0" width="36.6" height="48.0" fill="#d9789e"/>
+<text x="311.8" y="197.0" fill="#e8e2f4" font-size="12" text-anchor="middle">16</text>
+<rect x="334.0" y="202.0" width="36.6" height="48.0" fill="#d9789e"/>
+<text x="352.3" y="197.0" fill="#e8e2f4" font-size="12" text-anchor="middle">16</text>
+<rect x="374.6" y="235.0" width="36.6" height="15.0" fill="#d9789e"/>
+<text x="392.9" y="230.0" fill="#e8e2f4" font-size="12" text-anchor="middle">5</text>
+<rect x="415.2" y="184.0" width="36.6" height="66.0" fill="#d9789e"/>
+<text x="433.5" y="179.0" fill="#e8e2f4" font-size="12" text-anchor="middle">22</text>
+<rect x="455.8" y="154.0" width="36.6" height="96.0" fill="#d9789e"/>
+<text x="474.1" y="149.0" fill="#e8e2f4" font-size="12" text-anchor="middle">32</text>
+<rect x="496.4" y="172.0" width="36.6" height="78.0" fill="#d9789e"/>
+<text x="514.6" y="167.0" fill="#e8e2f4" font-size="12" text-anchor="middle">26</text>
+<rect x="536.9" y="67.0" width="36.6" height="183.0" fill="#d9789e"/>
+<text x="555.2" y="62.0" fill="#e8e2f4" font-size="12" text-anchor="middle">61</text>
+<rect x="577.5" y="88.0" width="36.6" height="162.0" fill="#d9789e"/>
+<text x="595.8" y="83.0" fill="#e8e2f4" font-size="12" text-anchor="middle">54</text>
+<rect x="618.1" y="118.0" width="36.6" height="132.0" fill="#d9789e"/>
+<text x="636.4" y="113.0" fill="#e8e2f4" font-size="12" text-anchor="middle">44</text>
+<rect x="658.7" y="121.0" width="36.6" height="129.0" fill="#d9789e"/>
+<text x="676.9" y="116.0" fill="#e8e2f4" font-size="12" text-anchor="middle">43</text>
+<rect x="699.2" y="241.0" width="2.8" height="9.0" fill="#d9789e"/>
+<text x="700.6" y="236.0" fill="#e8e2f4" font-size="12" text-anchor="middle">3</text>
+<line x1="48.0" y1="34" x2="48.0" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="129.2" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">3 Oct · 22</text>
+<line x1="210.3" y1="34" x2="210.3" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="291.5" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">4 Oct · 45</text>
+<line x1="372.6" y1="34" x2="372.6" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="453.8" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">5 Oct · 85</text>
+<line x1="534.9" y1="34" x2="534.9" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="616.1" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">6 Oct · 202</text>
+<line x1="697.2" y1="34" x2="697.2" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="700.6" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">7th</text>
+<text x="48" y="290" fill="#9a93b4" font-size="12">Day totals after each date: 357 pull requests in all,</text>
+<text x="48" y="308" fill="#9a93b4" font-size="12">#1 to #364 (the other seven numbers are issues).</text>
+</svg>
+</div>
+<p>The tallest bar is a night. Between midnight and 06:00 UTC on the 6th, 61 pull requests were opened while Ed was away: the overnight round, round 13 <a class="pr" href="https://github.com/edsaperia/witch/pull/219">#219</a>, with the spooky lighting, the party's life, the evolutions, the props and the art director's four review rounds. Ed approved shipping it that morning.</p>
+<p>Counting pull requests open at once shows how much was in flight. On the first day it was one to five. From the late morning of the 5th it rarely fell below eight, and it peaked at 26 at 02:45 UTC on the 6th, in the middle of that night. Counting the builders with at least one open pull request gives the size of the team actually working at a moment: up to twelve.</p>
+<div class="diagram">
+<svg viewBox="0 0 720 316" role="img" aria-label="Pull requests open at once, and builder sessions with a pull request open, over the four days: one to three on the 3rd, up to 26 open pull requests and 12 builders by the 6th">
+<rect x="0" y="0" width="720" height="316" fill="#120f22"/>
+<text x="20" y="24" fill="#e8e2f4" font-size="15">Open at once, every 15 minutes (UTC)</text>
+<line x1="48" y1="250.0" x2="704" y2="250.0" stroke="#3a2f5c" stroke-width="1"/>
+<text x="40" y="254.0" fill="#9a93b4" font-size="12" text-anchor="end">0</text>
+<line x1="48" y1="180.0" x2="704" y2="180.0" stroke="#3a2f5c" stroke-width="1"/>
+<text x="40" y="184.0" fill="#9a93b4" font-size="12" text-anchor="end">10</text>
+<line x1="48" y1="110.0" x2="704" y2="110.0" stroke="#3a2f5c" stroke-width="1"/>
+<text x="40" y="114.0" fill="#9a93b4" font-size="12" text-anchor="end">20</text>
+<line x1="48" y1="40.0" x2="704" y2="40.0" stroke="#3a2f5c" stroke-width="1"/>
+<text x="40" y="44.0" fill="#9a93b4" font-size="12" text-anchor="end">30</text>
+<line x1="48.0" y1="34" x2="48.0" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="129.2" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">3 Oct</text>
+<line x1="210.3" y1="34" x2="210.3" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="291.5" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">4 Oct</text>
+<line x1="372.6" y1="34" x2="372.6" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="453.8" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">5 Oct</text>
+<line x1="534.9" y1="34" x2="534.9" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="616.1" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">6 Oct</text>
+<line x1="697.2" y1="34" x2="697.2" y2="256" stroke="#3a2f5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="700.6" y="272" fill="#9a93b4" font-size="12" text-anchor="middle">7th</text>
+<path d="M108.9,250.0 H110.6 V250.0 H112.2 V250.0 H113.9 V250.0 H115.6 V243.0 H117.3 V243.0 H119.0 V243.0 H120.7 V243.0 H122.4 V243.0 H124.1 V243.0 H125.8 V243.0 H127.5 V243.0 H129.2 V243.0 H130.8 V243.0 H132.5 V243.0 H134.2 V243.0 H135.9 V243.0 H137.6 V243.0 H139.3 V243.0 H141.0 V236.0 H142.7 V229.0 H144.4 V229.0 H146.1 V229.0 H147.8 V229.0 H149.4 V229.0 H151.1 V229.0 H152.8 V236.0 H154.5 V243.0 H156.2 V236.0 H157.9 V236.0 H159.6 V229.0 H161.3 V229.0 H163.0 V229.0 H164.7 V229.0 H166.4 V229.0 H168.0 V243.0 H169.7 V243.0 H171.4 V236.0 H173.1 V243.0 H174.8 V236.0 H176.5 V229.0 H178.2 V243.0 H179.9 V229.0 H181.6 V215.0 H183.3 V215.0 H184.9 V215.0 H186.6 V236.0 H188.3 V222.0 H190.0 V229.0 H191.7 V222.0 H193.4 V222.0 H195.1 V222.0 H196.8 V229.0 H198.5 V243.0 H200.2 V243.0 H201.9 V236.0 H203.5 V229.0 H205.2 V229.0 H206.9 V236.0 H208.6 V236.0 H210.3 V236.0 H212.0 V236.0 H213.7 V236.0 H215.4 V236.0 H217.1 V236.0 H218.8 V236.0 H220.5 V236.0 H222.1 V236.0 H223.8 V236.0 H225.5 V236.0 H227.2 V236.0 H228.9 V236.0 H230.6 V236.0 H232.3 V236.0 H234.0 V236.0 H235.7 V236.0 H237.4 V236.0 H239.1 V236.0 H240.7 V236.0 H242.4 V236.0 H244.1 V236.0 H245.8 V236.0 H247.5 V236.0 H249.2 V236.0 H250.9 V236.0 H252.6 V236.0 H254.3 V236.0 H256.0 V243.0 H257.6 V243.0 H259.3 V236.0 H261.0 V229.0 H262.7 V236.0 H264.4 V236.0 H266.1 V229.0 H267.8 V236.0 H269.5 V236.0 H271.2 V229.0 H272.9 V229.0 H274.6 V229.0 H276.2 V215.0 H277.9 V215.0 H279.6 V215.0 H281.3 V201.0 H283.0 V194.0 H284.7 V194.0 H286.4 V194.0 H288.1 V208.0 H289.8 V229.0 H291.5 V222.0 H293.2 V208.0 H294.8 V215.0 H296.5 V222.0 H298.2 V222.0 H299.9 V222.0 H301.6 V222.0 H303.3 V236.0 H305.0 V236.0 H306.7 V236.0 H308.4 V236.0 H310.1 V222.0 H311.8 V229.0 H313.4 V222.0 H315.1 V222.0 H316.8 V229.0 H318.5 V229.0 H320.2 V222.0 H321.9 V222.0 H323.6 V215.0 H325.3 V215.0 H327.0 V229.0 H328.7 V222.0 H330.4 V236.0 H332.0 V236.0 H333.7 V243.0 H335.4 V250.0 H337.1 V250.0 H338.8 V250.0 H340.5 V250.0 H342.2 V243.0 H343.9 V236.0 H345.6 V215.0 H347.3 V201.0 H348.9 V201.0 H350.6 V201.0 H352.3 V194.0 H354.0 V194.0 H355.7 V194.0 H357.4 V194.0 H359.1 V187.0 H360.8 V208.0 H362.5 V215.0 H364.2 V229.0 H365.9 V229.0 H367.5 V236.0 H369.2 V243.0 H370.9 V243.0 H372.6 V229.0 H374.3 V229.0 H376.0 V215.0 H377.7 V222.0 H379.4 V222.0 H381.1 V236.0 H382.8 V236.0 H384.5 V236.0 H386.1 V236.0 H387.8 V236.0 H389.5 V236.0 H391.2 V236.0 H392.9 V236.0 H394.6 V236.0 H396.3 V236.0 H398.0 V236.0 H399.7 V236.0 H401.4 V236.0 H403.1 V236.0 H404.7 V236.0 H406.4 V236.0 H408.1 V236.0 H409.8 V236.0 H411.5 V236.0 H413.2 V250.0 H414.9 V243.0 H416.6 V243.0 H418.3 V243.0 H420.0 V243.0 H421.6 V229.0 H423.3 V222.0 H425.0 V215.0 H426.7 V208.0 H428.4 V208.0 H430.1 V222.0 H431.8 V222.0 H433.5 V215.0 H435.2 V208.0 H436.9 V194.0 H438.6 V194.0 H440.2 V187.0 H441.9 V180.0 H443.6 V180.0 H445.3 V194.0 H447.0 V187.0 H448.7 V187.0 H450.4 V194.0 H452.1 V194.0 H453.8 V180.0 H455.5 V187.0 H457.2 V173.0 H458.8 V152.0 H460.5 V159.0 H462.2 V180.0 H463.9 V187.0 H465.6 V173.0 H467.3 V180.0 H469.0 V201.0 H470.7 V194.0 H472.4 V187.0 H474.1 V187.0 H475.8 V180.0 H477.4 V173.0 H479.1 V187.0 H480.8 V166.0 H482.5 V166.0 H484.2 V166.0 H485.9 V159.0 H487.6 V166.0 H489.3 V187.0 H491.0 V180.0 H492.7 V187.0 H494.4 V187.0 H496.0 V187.0 H497.7 V187.0 H499.4 V187.0 H501.1 V194.0 H502.8 V159.0 H504.5 V152.0 H506.2 V152.0 H507.9 V145.0 H509.6 V145.0 H511.3 V138.0 H512.9 V138.0 H514.6 V138.0 H516.3 V145.0 H518.0 V180.0 H519.7 V180.0 H521.4 V166.0 H523.1 V166.0 H524.8 V173.0 H526.5 V173.0 H528.2 V173.0 H529.9 V173.0 H531.5 V173.0 H533.2 V180.0 H534.9 V166.0 H536.6 V173.0 H538.3 V173.0 H540.0 V166.0 H541.7 V145.0 H543.4 V110.0 H545.1 V103.0 H546.8 V89.0 H548.5 V75.0 H550.1 V82.0 H551.8 V89.0 H553.5 V68.0 H555.2 V82.0 H556.9 V68.0 H558.6 V68.0 H560.3 V82.0 H562.0 V103.0 H563.7 V138.0 H565.4 V152.0 H567.1 V159.0 H568.7 V152.0 H570.4 V166.0 H572.1 V159.0 H573.8 V187.0 H575.5 V201.0 H577.2 V201.0 H578.9 V194.0 H580.6 V208.0 H582.3 V201.0 H584.0 V201.0 H585.6 V201.0 H587.3 V194.0 H589.0 V194.0 H590.7 V194.0 H592.4 V187.0 H594.1 V180.0 H595.8 V194.0 H597.5 V152.0 H599.2 V131.0 H600.9 V124.0 H602.6 V138.0 H604.2 V138.0 H605.9 V159.0 H607.6 V138.0 H609.3 V138.0 H611.0 V138.0 H612.7 V124.0 H614.4 V124.0 H616.1 V138.0 H617.8 V138.0 H619.5 V138.0 H621.2 V138.0 H622.8 V131.0 H624.5 V124.0 H626.2 V110.0 H627.9 V110.0 H629.6 V103.0 H631.3 V110.0 H633.0 V131.0 H634.7 V138.0 H636.4 V152.0 H638.1 V152.0 H639.8 V152.0 H641.4 V138.0 H643.1 V131.0 H644.8 V138.0 H646.5 V145.0 H648.2 V159.0 H649.9 V166.0 H651.6 V159.0 H653.3 V166.0 H655.0 V173.0 H656.7 V180.0 H658.4 V180.0 H660.0 V180.0 H661.7 V187.0 H663.4 V173.0 H665.1 V159.0 H666.8 V152.0 H668.5 V159.0 H670.2 V194.0 H671.9 V180.0 H673.6 V187.0 H675.3 V187.0 H676.9 V187.0 H678.6 V187.0 H680.3 V194.0 H682.0 V187.0 H683.7 V180.0 H685.4 V201.0 H687.1 V194.0 H688.8 V201.0 H690.5 V187.0 H692.2 V159.0 H693.9 V159.0 H695.5 V145.0 H697.2 V131.0 H698.9 V145.0 H700.6 V152.0 H702.3 V152.0" fill="none" stroke="#6fd6c8" stroke-width="2"/>
+<path d="M108.9,250.0 H110.6 V250.0 H112.2 V250.0 H113.9 V250.0 H115.6 V250.0 H117.3 V250.0 H119.0 V250.0 H120.7 V250.0 H122.4 V250.0 H124.1 V250.0 H125.8 V250.0 H127.5 V250.0 H129.2 V250.0 H130.8 V250.0 H132.5 V250.0 H134.2 V250.0 H135.9 V250.0 H137.6 V250.0 H139.3 V250.0 H141.0 V243.0 H142.7 V236.0 H144.4 V236.0 H146.1 V236.0 H147.8 V236.0 H149.4 V236.0 H151.1 V236.0 H152.8 V243.0 H154.5 V250.0 H156.2 V250.0 H157.9 V250.0 H159.6 V243.0 H161.3 V243.0 H163.0 V243.0 H164.7 V243.0 H166.4 V243.0 H168.0 V250.0 H169.7 V250.0 H171.4 V243.0 H173.1 V250.0 H174.8 V243.0 H176.5 V243.0 H178.2 V250.0 H179.9 V243.0 H181.6 V236.0 H183.3 V236.0 H184.9 V243.0 H186.6 V243.0 H188.3 V236.0 H190.0 V236.0 H191.7 V236.0 H193.4 V236.0 H195.1 V236.0 H196.8 V243.0 H198.5 V250.0 H200.2 V250.0 H201.9 V243.0 H203.5 V236.0 H205.2 V236.0 H206.9 V243.0 H208.6 V243.0 H210.3 V243.0 H212.0 V243.0 H213.7 V243.0 H215.4 V243.0 H217.1 V243.0 H218.8 V243.0 H220.5 V243.0 H222.1 V243.0 H223.8 V243.0 H225.5 V243.0 H227.2 V243.0 H228.9 V243.0 H230.6 V243.0 H232.3 V243.0 H234.0 V243.0 H235.7 V243.0 H237.4 V243.0 H239.1 V243.0 H240.7 V243.0 H242.4 V243.0 H244.1 V243.0 H245.8 V243.0 H247.5 V243.0 H249.2 V243.0 H250.9 V243.0 H252.6 V243.0 H254.3 V243.0 H256.0 V250.0 H257.6 V250.0 H259.3 V243.0 H261.0 V236.0 H262.7 V243.0 H264.4 V243.0 H266.1 V236.0 H267.8 V243.0 H269.5 V243.0 H271.2 V236.0 H272.9 V236.0 H274.6 V236.0 H276.2 V222.0 H277.9 V222.0 H279.6 V222.0 H281.3 V222.0 H283.0 V222.0 H284.7 V222.0 H286.4 V222.0 H288.1 V229.0 H289.8 V243.0 H291.5 V236.0 H293.2 V229.0 H294.8 V229.0 H296.5 V229.0 H298.2 V229.0 H299.9 V229.0 H301.6 V229.0 H303.3 V243.0 H305.0 V236.0 H306.7 V236.0 H308.4 V236.0 H310.1 V222.0 H311.8 V229.0 H313.4 V222.0 H315.1 V222.0 H316.8 V229.0 H318.5 V229.0 H320.2 V222.0 H321.9 V222.0 H323.6 V215.0 H325.3 V215.0 H327.0 V229.0 H328.7 V222.0 H330.4 V236.0 H332.0 V236.0 H333.7 V243.0 H335.4 V250.0 H337.1 V250.0 H338.8 V250.0 H340.5 V250.0 H342.2 V243.0 H343.9 V236.0 H345.6 V215.0 H347.3 V215.0 H348.9 V215.0 H350.6 V215.0 H352.3 V208.0 H354.0 V208.0 H355.7 V208.0 H357.4 V208.0 H359.1 V201.0 H360.8 V215.0 H362.5 V215.0 H364.2 V229.0 H365.9 V229.0 H367.5 V236.0 H369.2 V243.0 H370.9 V243.0 H372.6 V229.0 H374.3 V229.0 H376.0 V222.0 H377.7 V229.0 H379.4 V222.0 H381.1 V236.0 H382.8 V236.0 H384.5 V236.0 H386.1 V236.0 H387.8 V236.0 H389.5 V236.0 H391.2 V236.0 H392.9 V236.0 H394.6 V236.0 H396.3 V236.0 H398.0 V236.0 H399.7 V236.0 H401.4 V236.0 H403.1 V236.0 H404.7 V236.0 H406.4 V236.0 H408.1 V236.0 H409.8 V236.0 H411.5 V236.0 H413.2 V250.0 H414.9 V243.0 H416.6 V243.0 H418.3 V243.0 H420.0 V243.0 H421.6 V236.0 H423.3 V229.0 H425.0 V229.0 H426.7 V222.0 H428.4 V222.0 H430.1 V229.0 H431.8 V222.0 H433.5 V215.0 H435.2 V208.0 H436.9 V208.0 H438.6 V208.0 H440.2 V208.0 H441.9 V208.0 H443.6 V208.0 H445.3 V208.0 H447.0 V201.0 H448.7 V201.0 H450.4 V208.0 H452.1 V208.0 H453.8 V201.0 H455.5 V208.0 H457.2 V208.0 H458.8 V194.0 H460.5 V201.0 H462.2 V208.0 H463.9 V215.0 H465.6 V194.0 H467.3 V194.0 H469.0 V208.0 H470.7 V201.0 H472.4 V194.0 H474.1 V201.0 H475.8 V194.0 H477.4 V194.0 H479.1 V208.0 H480.8 V201.0 H482.5 V201.0 H484.2 V201.0 H485.9 V208.0 H487.6 V201.0 H489.3 V208.0 H491.0 V208.0 H492.7 V208.0 H494.4 V208.0 H496.0 V208.0 H497.7 V208.0 H499.4 V208.0 H501.1 V215.0 H502.8 V194.0 H504.5 V194.0 H506.2 V194.0 H507.9 V194.0 H509.6 V187.0 H511.3 V187.0 H512.9 V187.0 H514.6 V187.0 H516.3 V187.0 H518.0 V194.0 H519.7 V201.0 H521.4 V194.0 H523.1 V194.0 H524.8 V194.0 H526.5 V201.0 H528.2 V201.0 H529.9 V194.0 H531.5 V194.0 H533.2 V201.0 H534.9 V194.0 H536.6 V201.0 H538.3 V201.0 H540.0 V201.0 H541.7 V194.0 H543.4 V180.0 H545.1 V194.0 H546.8 V187.0 H548.5 V187.0 H550.1 V201.0 H551.8 V201.0 H553.5 V194.0 H555.2 V201.0 H556.9 V201.0 H558.6 V208.0 H560.3 V215.0 H562.0 V194.0 H563.7 V208.0 H565.4 V201.0 H567.1 V201.0 H568.7 V208.0 H570.4 V208.0 H572.1 V201.0 H573.8 V208.0 H575.5 V222.0 H577.2 V229.0 H578.9 V215.0 H580.6 V222.0 H582.3 V215.0 H584.0 V215.0 H585.6 V215.0 H587.3 V208.0 H589.0 V208.0 H590.7 V208.0 H592.4 V194.0 H594.1 V208.0 H595.8 V215.0 H597.5 V194.0 H599.2 V194.0 H600.9 V180.0 H602.6 V187.0 H604.2 V194.0 H605.9 V194.0 H607.6 V201.0 H609.3 V201.0 H611.0 V208.0 H612.7 V187.0 H614.4 V194.0 H616.1 V201.0 H617.8 V194.0 H619.5 V194.0 H621.2 V201.0 H622.8 V194.0 H624.5 V194.0 H626.2 V180.0 H627.9 V187.0 H629.6 V180.0 H631.3 V194.0 H633.0 V201.0 H634.7 V201.0 H636.4 V194.0 H638.1 V187.0 H639.8 V180.0 H641.4 V180.0 H643.1 V173.0 H644.8 V180.0 H646.5 V187.0 H648.2 V187.0 H649.9 V187.0 H651.6 V187.0 H653.3 V194.0 H655.0 V194.0 H656.7 V201.0 H658.4 V201.0 H660.0 V194.0 H661.7 V201.0 H663.4 V201.0 H665.1 V180.0 H666.8 V173.0 H668.5 V187.0 H670.2 V201.0 H671.9 V194.0 H673.6 V208.0 H675.3 V208.0 H676.9 V208.0 H678.6 V201.0 H680.3 V208.0 H682.0 V201.0 H683.7 V194.0 H685.4 V215.0 H687.1 V208.0 H688.8 V215.0 H690.5 V201.0 H692.2 V194.0 H693.9 V180.0 H695.5 V173.0 H697.2 V166.0 H698.9 V173.0 H700.6 V187.0 H702.3 V187.0" fill="none" stroke="#f2c46a" stroke-width="2"/>
+<circle cx="553.5" cy="68.0" r="4" fill="#6fd6c8"/>
+<text x="545.5" y="72.0" fill="#6fd6c8" font-size="12" text-anchor="end">26 open (02:45, 6 Oct)</text>
+<line x1="58" y1="46" x2="82" y2="46" stroke="#6fd6c8" stroke-width="2"/><text x="88" y="50" fill="#e8e2f4" font-size="12">pull requests open</text>
+<line x1="58" y1="64" x2="82" y2="64" stroke="#f2c46a" stroke-width="2"/><text x="88" y="68" fill="#e8e2f4" font-size="12">builders with one open (peak 12)</text>
+<text x="48" y="290" fill="#9a93b4" font-size="12">A pull request counts from opening to merge or close;</text>
+<text x="48" y="308" fill="#9a93b4" font-size="12">a builder is told apart by the session that opened it.</text>
+</svg>
+</div>
+<table>
+<tr><th></th><th>3 Oct</th><th>4 Oct</th><th>5 Oct</th><th>6 Oct</th><th>7 Oct (to 00:45)</th></tr>
+<tr><td>Pull requests opened</td><td>22</td><td>45</td><td>85</td><td>202</td><td>3</td></tr>
+<tr><td>Pull requests merged</td><td>20</td><td>44</td><td>73</td><td>193</td><td>6</td></tr>
+<tr><td>Most tests reported passing</td><td>49</td><td>158</td><td>440</td><td>719</td><td></td></tr>
+</table>
+<p>Of the 357 pull requests, 336 were merged, 14 were still open as this was written, and only 7 were closed without merging. One of those is the art pass <a class="pr" href="https://github.com/edsaperia/witch/pull/112">#112</a>, closed on Ed's ruling that the generators should replace hand-tuned art; its lessons went into the art guide and the generators instead.</p>
+
+<h2>Tonight: the overnight programme</h2>
+<p>The fourth night, 6 to 7 October, was planned differently from the ones before. Instead of new features, Ed's overnight programme gave it four phases, in order:</p>
+<ol>
+  <li><b>Housekeeping and refactor.</b> Changes that should change nothing a player sees: splitting the biggest files, gathering repeated code, removing what nothing uses. The plans for this had been posted on the housekeeping issue on the 5th (#122), and a few went in straight away, like the audio folder <a class="pr" href="https://github.com/edsaperia/witch/pull/125">#125</a> and the view split <a class="pr" href="https://github.com/edsaperia/witch/pull/131">#131</a>. The bench harness <a class="pr" href="https://github.com/edsaperia/witch/pull/338">#338</a> and its five-minute quick mode and Bench workflow <a class="pr" href="https://github.com/edsaperia/witch/pull/344">#344</a> were built on the evening of the 6th for exactly this: every refactor pull request shows by itself whether the game is unchanged.</li>
+  <li><b>Optimisation.</b> Making the game run faster. It builds on the earlier performance work (far creatures coarse or frozen <a class="pr" href="https://github.com/edsaperia/witch/pull/154">#154</a>, a frame budget and far less garbage <a class="pr" href="https://github.com/edsaperia/witch/pull/157">#157</a>) and the full smoke test's frame-time budgets, still on the KNOWN list (#310).</li>
+  <li><b>Pixel art.</b> The game's pixel look. It follows the art styles tried in playtesting (<a class="pr" href="https://github.com/edsaperia/witch/pull/127">#127</a>, bold by default since <a class="pr" href="https://github.com/edsaperia/witch/pull/253">#253</a>) and the last evening's pull requests putting effects, the ley line and the legends into the scene's own art pixels <a class="pr" href="https://github.com/edsaperia/witch/pull/330">#330</a> <a class="pr" href="https://github.com/edsaperia/witch/pull/363">#363</a>.</li>
+  <li><b>Balance.</b> The balance builder's pass with the bots on the round island, of which part 1 <a class="pr" href="https://github.com/edsaperia/witch/pull/346">#346</a> merged just after midnight.</li>
+</ol>
+<p>Two smaller rules came in with the night. Preview pictures stopped being committed, because the <code>previews/</code> folder "had grown to 416 MB"; they go into pull-request comments instead, and the best of the old ones were captioned and kept for this site. And each builder, as it finishes, writes its own short note for the Builders' Notes page, one file each, never editing anyone else's: the same trick as the changelog fragments.</p>
+
+<!-- coordinator notes -->
+<p><i>The coordinator's own account of the night follows.</i></p>
+
+</main>
+<footer><div class="steps"><a rel="prev" href="architecture.html">← The Code</a><a rel="next" href="builders.html">The Builders' Notes →</a></div><p class="dim">Coven Rush is a game by Ed Saperia, in progress. <a href="../">Play the latest build</a> · <a href="https://github.com/edsaperia/witch">Source</a></p></footer>
+</body>
+</html>
