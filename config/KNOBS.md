@@ -823,6 +823,7 @@ A legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower, thi
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
 | `legendClearing.minFromStone` | number | 0 to … |
+| `legendClearing.minFromOtherStones` | number | 0 to … |
 | `legendClearing.floor.on` | boolean |  |
 | `legendClearing.floor.overgrowth` | number | 0 to … |
 | `legendClearing.floor.slab` | number | 0 to … |
