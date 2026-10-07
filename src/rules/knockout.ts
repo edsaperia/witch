@@ -28,7 +28,7 @@ export interface Knockout {
   /** Game time the teleport starts (after the last sigil), and ends. */
   teleportAt: number;
   backAt: number;
-  /** She's sparkled out, and been moved to the treehouse (halfway through the teleport). */
+  /** She's sparkled out, and been moved to the treehouse, behind her decks (halfway through the teleport). */
   out: boolean;
   moved: boolean;
 }
@@ -80,7 +80,11 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
   const mid = (k.teleportAt + k.backAt) / 2;
   if (!k.moved && time >= mid) {
     k.moved = true;
-    body = { ...body, x: map.start.x, z: map.start.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: false };
+    // Back behind her decks in the treehouse, as at the start (Ed, 2026-10-06: "When you die and respawn, you should appear
+    // behind the decks in your treehouse, as when the game begins (but not zoomed in)"): seated till she first moves. (The
+    // opening close-up doesn't come back: the camera's intro only ever eases out, rules/camera.ts; nor the boot, which runs
+    // from the first time she left.)
+    body = { ...body, x: map.start.x, z: map.start.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: true };
     events.push({ kind: "sparkleIn", at: time, x: body.x, z: body.z });
     // Loyal legends come home with her.
     for (const id of leash.stack) { const c = creatures[id]; c.x = body.x + (c.rand() - 0.5) * 3; c.z = body.z + 2 + c.rand() * 2; c.tx = c.x; c.tz = c.z; }

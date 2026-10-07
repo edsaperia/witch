@@ -122,6 +122,19 @@ float overBend(vec3 w) {
   float m = (H + uBend.x * dh * dh) / (dh + D);
   return (H - w.y + uBend.x * ahead * ahead) / (ahead + D) <= m + 0.02 ? 1.0 : 0.0;
 }
+// 1 if nothing of the bent, rolling ground stands between a (lifted, unbent) world point and the camera, 0 if it hides it:
+// the bend's horizon, and the hills on the way, marched in 16 steps along the line of sight, both bent as drawn (Ed, 2026-10-06:
+// "I shouldn't see anything on the ground that's obscured when it goes past the bend"). For what is drawn without a depth
+// test, or past one (the ley line through the trees, its pixel heads), so it hides where the earth would hide it.
+float groundSeen(vec3 w) {
+  if (overBend(w) < 0.5) return 0.0;
+  vec3 b = bendW(w);
+  for (int i = 1; i < 16; i++) {
+    vec3 q = mix(b, cameraPosition, float(i) / 16.0);
+    if (bendW(vec3(q.x, groundH(q.xz), q.z)).y > q.y + 0.3) return 0.0;
+  }
+  return 1.0;
+}
 `;
 
 /** Glowing points (rgba vertex colours, added on) given as height above the ground: motes, trails. */
@@ -539,6 +552,27 @@ export function seenOverBend(ahead: number, top: number, k: number, cam: { y: nu
   if (ahead > dh + beyond) return false;
   const m = (H + k * dh * dh) / (dh + D); // the grazing line's drop per metre
   return (H - top + k * ahead * ahead) / (ahead + D) <= m + 0.02;
+}
+
+/** overBend's twin on the CPU (HEIGHT_VERT_GLSL): whether a world point (x, z), `y` metres up (absolute, the ground's height
+ *  included, unbent), shows over the bent ground's horizon from `cam`. For what's drawn over the picture or without a depth
+ *  test (the DOM overlays, the state marks), so nothing on the ground shows past the bend (Ed, 2026-10-06: "I shouldn't see
+ *  anything on the ground that's obscured when it goes past the bend"). */
+export function overBendAt(x: number, y: number, z: number, cam: { x: number; y: number; z: number }): boolean {
+  const B = HEIGHT_UNIFORMS.uBend.value, F = HEIGHT_UNIFORMS.uBendFwd.value;
+  if (B.x <= 0) return true;
+  const ahead = (x - B.y) * F.x + (z - B.z) * F.y;
+  if (ahead <= 0) return true;
+  const D = Math.max(1, -((cam.x - B.y) * F.x + (cam.z - B.z) * F.y)), H = cam.y + B.w + 3;
+  const dh = -D + Math.sqrt(D * D + H / B.x);
+  if (ahead <= dh) return true;
+  const m = (H + B.x * dh * dh) / (dh + D);
+  return (H - y + B.x * ahead * ahead) / (ahead + D) <= m + 0.02;
+}
+
+/** Whether a point `y` metres above the ground at (x, z) shows over the bend from `cam` (overBendAt, on the rolling ground). */
+export function shownOverBend(x: number, y: number, z: number, cam: { x: number; y: number; z: number }): boolean {
+  return overBendAt(x, y + groundHeight(x, z), z, cam);
 }
 
 /** A point given as height above the ground, lifted onto it and bent (in place): where it is drawn. */

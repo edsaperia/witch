@@ -38,7 +38,8 @@ async function main() {
   if (fa && fb) {
     const browser = await playwright.chromium.launch();
     const page = await browser.newPage();
-    lines.push("### Frames (1280×720, seed " + fa.seed + ")", "", "| scene | where | pixels differing | frame work median ms | p99 ms | worst ms |", "|---|---|---|---|---|---|");
+    if (!!fa.quick !== !!fb.quick) bad.push(`frames: a ${fa.quick ? "quick" : "full"} run against a ${fb.quick ? "quick" : "full"} one (compare like with like)`);
+    lines.push(`### Frames (${(fa.viewport ?? "1280x720").replace("x", "×")}${fa.quick ? ", quick" : ""}, seed ${fa.seed})`, "", "| scene | where | pixels differing | frame work median ms | p99 ms | worst ms |", "|---|---|---|---|---|---|");
     for (const [name, sa] of Object.entries(fa.scenes)) {
       const sb = fb.scenes[name];
       if (!sb) { bad.push(`frames: ${name} missing after`); continue; }

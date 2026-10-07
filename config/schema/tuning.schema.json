@@ -265,12 +265,52 @@
         "simRange": {
           "type": "number",
           "minimum": 0
+        },
+        "camera": {
+          "type": "object",
+          "properties": {
+            "approach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "curve": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeAngle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeDistance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeLook": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "approach",
+            "angle",
+            "curve",
+            "gazeAngle",
+            "gazeDistance",
+            "gazeLook"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "on",
         "width",
         "shore",
+        "vary",
+        "decor",
         "ease",
         "sand",
         "sea",
@@ -287,7 +327,8 @@
         "meet",
         "idleAfter",
         "turn",
-        "simRange"
+        "simRange",
+        "camera"
       ],
       "additionalProperties": false
     },
@@ -3679,6 +3720,10 @@
           "type": "number",
           "minimum": 0
         },
+        "minFromOtherStones": {
+          "type": "number",
+          "minimum": 0
+        },
         "floor": {
           "type": "object",
           "properties": {
@@ -3795,6 +3840,7 @@
         "edge",
         "top",
         "minFromStone",
+        "minFromOtherStones",
         "floor",
         "rim",
         "grove",
@@ -4471,6 +4517,33 @@
           "type": "number",
           "minimum": 0
         },
+        "runeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runePull": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "speed",
+            "stop"
+          ],
+          "additionalProperties": false
+        },
         "weight": {
           "type": "object",
           "properties": {
@@ -4535,33 +4608,6 @@
             "maxTension"
           ],
           "additionalProperties": false
-        },
-        "runeRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "runePull": {
-          "type": "object",
-          "properties": {
-            "radius": {
-              "type": "number",
-              "minimum": 0
-            },
-            "speed": {
-              "type": "number",
-              "minimum": 0
-            },
-            "stop": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "radius",
-            "speed",
-            "stop"
-          ],
-          "additionalProperties": false
         }
       },
       "required": [
@@ -4569,9 +4615,9 @@
         "runSpeed",
         "pickRadius",
         "spacing",
-        "weight",
         "runeRadius",
-        "runePull"
+        "runePull",
+        "weight"
       ],
       "additionalProperties": false
     },
@@ -5656,6 +5702,24 @@
             "floor"
           ],
           "additionalProperties": false
+        },
+        "beach": {
+          "type": "object",
+          "properties": {
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "fade",
+            "quiet"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -5671,7 +5735,8 @@
         "clear",
         "distort",
         "src",
-        "over"
+        "over",
+        "beach"
       ],
       "additionalProperties": false
     },
@@ -6873,6 +6938,18 @@
         "outer": {
           "type": "number",
           "minimum": 0
+        },
+        "ragged": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lead": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -6880,7 +6957,10 @@
         "edge",
         "whole",
         "wobble",
-        "outer"
+        "outer",
+        "ragged",
+        "spread",
+        "lead"
       ],
       "additionalProperties": false
     },
@@ -7207,6 +7287,14 @@
           "type": "number",
           "minimum": 0
         },
+        "questCap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "questFar": {
+          "type": "number",
+          "minimum": 0
+        },
         "bombard": {
           "type": "object",
           "properties": {
@@ -7266,6 +7354,8 @@
         "share",
         "buffPower",
         "happyRange",
+        "questCap",
+        "questFar",
         "bombard",
         "stomp",
         "partyEgg",
@@ -7341,6 +7431,29 @@
         "glow": {
           "type": "number",
           "minimum": 0
+        },
+        "seen": {
+          "type": "object",
+          "properties": {
+            "aura": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "aura",
+            "rim",
+            "floor"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -7353,7 +7466,8 @@
         "breathe",
         "breathEvery",
         "aura",
-        "glow"
+        "glow",
+        "seen"
       ],
       "additionalProperties": false
     },
