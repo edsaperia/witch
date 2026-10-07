@@ -189,6 +189,8 @@ export interface Tuning {
     night?: { volume: number; bed: number; noise: number; sounds: number; from: number; snore: { volume: number; gap: number; range: number; max: number } };
     ambience?: { volume: number; bed: number; noise: number; sounds: number; quiet: number };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
+    /** By the ley line's pulse, its tip a burning sparkler (#491): its fizz. */
+    sparkler?: { volume: number; hiss: number; pops: number; rate: number; fork: number; range: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
     deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
