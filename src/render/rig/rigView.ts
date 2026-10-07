@@ -29,7 +29,7 @@ export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
   let by = faceMetas.get(meta); if (!by) faceMetas.set(meta, (by = {}));
   return (by[face!] ??= { ...meta, head });
 }
-export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number; /** its character (render/character.ts): its posture, and its idle quirk and how far through it (-1: none) */ posture?: { hx: number; hy: number; by: number }; quirk?: string; quirkK?: number }
+export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number; /** its character (render/character.ts): its posture, and its idle quirk and how far through it (-1: none) */ posture?: { hx: number; hy: number; by: number }; quirk?: string; quirkK?: number; /** standing, it turns to look at this (rules/wildWatch.ts: a wild area watching her come down) */ lookAt?: { x: number; z: number } }
 
 export class RigView {
   private bodies = new Map<number, RigBody>();
@@ -43,7 +43,7 @@ export class RigView {
   stats = { creatures: 0, instances: 0, ms: 0 };
 
   /** A wild legend's batch look (render/view/creatures.ts legendLook: its sleeping rim and its light in steps), set by the view. */
-  legendLook: ((species: string) => { legend?: THREE.Vector4; legendFloor?: number; steps?: number }) | null = null;
+  legendLook: ((species: string) => { legend?: THREE.Vector4; legendFloor?: number; legendAwake?: number; steps?: number }) | null = null;
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
 
@@ -70,7 +70,7 @@ export class RigView {
     this.seen.add(c.id);
     // how it moves, as drawn (eased between the rules' steps): its velocity only in a charge (c.vx is a fight's, and stale out of one,
     // so a creature wandering with an old vx of 0 would glide with its legs still)
-    body.update(c.x, c.z, this.dt, c.charge ? c.charge.dx * c.charge.speed : undefined, c.charge ? c.charge.dz * c.charge.speed : undefined);
+    body.update(c.x, c.z, this.dt, c.charge ? c.charge.dx * c.charge.speed : undefined, c.charge ? c.charge.dz * c.charge.speed : undefined, look.lookAt);
     const drive = this.drive(c, this.time, look), u2m = this.mpp * art.meta.s * look.scale; // metres per model unit
     this.out.reset();
     const meta = withFace(art.meta, look.face);

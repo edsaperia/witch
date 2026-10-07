@@ -43,6 +43,8 @@ export interface TypeLayout {
   /** The big objects of its tallest tree kinds, by index (a legend's grove grows only these: rules/forest.ts legendGrove):
    *  giant, its biggest class (or its tallest if it has none), and tall, the next (or giant again). */
   grove: { giant: number[]; tall: number[] };
+  /** The big object of its tree with a face in its bark (Ed 2026-10-07), if it has one: on at most two trees an area. */
+  face?: number;
   small: Piece[];
   walls: number[];
   set: Piece | null;
@@ -58,7 +60,7 @@ type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: number;
 // line so it splits into a top half (shown from the treetops) and a bottom half (the trunk).
 function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: number) {
   const f = (Art.treeSpecies as (type: string) => { fn: unknown })(o.type).fn as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number }; // any species art/trees.js knows
-  const ts = { ...st, leafHue: def.leaf + (o.dark ? 0.05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs } as unknown as Style;
+  const ts = { ...st, leafHue: def.leaf + (o.dark ? 0.05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: (def as { layout?: { hang?: number } }).layout?.hang ?? 0 } as unknown as Style;
   const t = f(r, ts, st.treeSize * K * (o.scale || 1) * Art.uni(r, 0.9, 1.1));
   const c = Art.treeColours(r, ts, f) as Record<number, number[]>;
   if (o.dark) { c[Art.M.LEAF] = c[Art.M.LEAF3]; c[Art.M.LEAF3] = Art.hsv2rgb(def.leaf + 0.05, 0.7, 0.22); }
@@ -85,14 +87,18 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // of the area's trees. Anything else big (mounds, boulders, logs) is drawn whole, as before.
   // Each height class gets the area's own share of its trees (its layout's heightMix), split among
   // that class's variants; without one, the art's default weights.
-  const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
-  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
+  const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; face?: boolean; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
+  const faced = variants.filter(v => v.face), plain = variants.filter(v => !v.face); // (the bark face's tree: never dealt by weight, see below)
+  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => plain.filter(v => v.heightClass === c).length || 1;
   // Each carries its sway mask (#34), so only its leaves move in the wind.
   const withSway = (b: Baked, S?: unknown) => (S ? { ...b, S: S as Baked["A"] } : b);
-  for (const v of variants) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
+  for (const v of plain) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
   // The grove's trees (a legend's ring of old giants, Ed 2026-10-06): the two tallest classes it has.
-  const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => variants.some(v => v.heightClass === c)), of = (c?: string) => variants.flatMap((v, i) => (v.heightClass === c ? [i] : []));
+  const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => plain.some(v => v.heightClass === c)), of = (c?: string) => plain.flatMap((v, i) => (v.heightClass === c ? [i] : []));
   layout.grove.giant = of(have[have.length - 1]); layout.grove.tall = have.length > 1 ? of(have[have.length - 2]) : layout.grove.giant;
+  // The bark face's tree (art/areas.js barkFace): a big object of its own, weight 0, so it's never dealt; the view puts it on
+  // at most two trees an area (view/scenery.ts).
+  for (const v of faced.slice(0, 1)) { layout.face = layout.big.length; layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(0); }
   // The baked pieces stand for the area's list entries (a.from): one each, or under the prop generator (?props=gen) n variants of
   // one, each a share of that entry's weight (a.share). Walked by piece, not by entry, so each entry is its own art.
   type Asset = { sp: Baked; sway?: unknown; sparse?: number; from: number; share?: number };
@@ -259,6 +265,8 @@ export interface SceneArt { pieces: Record<string, { frame: number; originX: num
 export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean }
 
 /** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
+/** A home speaker's runestone, times an area's rune stone (Ed: "smaller runestones"): baked at that size. */
+export const SPEAKER_STONE = 0.55;
 export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The small runestone each home speaker starts as (Ed, 2026-10-06), and its ground point. */ stone?: number; stoneOrigin?: { x: number; y: number } }
 
 /** The beach's edge of the woods in its atlas (render/beach.ts): palms as crown and trunk frames, shrubs and grass clumps whole. */
@@ -302,8 +310,8 @@ function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers
         speakers.frames[`${angle}:${state}:${frame}`] = sprites.push(Art.bake(r.sp, colours, st, st.cOutline, mk) as Baked) - 1;
         if (!speakers.origin[angle]) speakers.origin[angle] = r.origin;
       }
-  // the runestone it starts as (the areas' rune stone, cyan, its home rune): drawn small by the view
-  const stone = (Art.runeStone as unknown as (st: Style, o: { glow: string; makeCanvas: MakeCanvas }) => Baked)(st, { glow: "cyan", makeCanvas: mk });
+  // the runestone it starts as (the areas' rune stone, cyan, its home rune): baked small, at SPEAKER_STONE of a rune stone's size, drawn at 1 (docs/STYLE.md rule 1)
+  const stone = (Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; makeCanvas: MakeCanvas }) => Baked)(st, { glow: "cyan", scale: SPEAKER_STONE, makeCanvas: mk });
   speakers.stone = sprites.push(stone) - 1; speakers.stoneOrigin = { x: stone.w / 2, y: stone.h };
   return { sprites, speakers };
 }

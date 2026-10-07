@@ -39,6 +39,24 @@ export interface Mood {
   areas?: Record<string, Partial<{ hazeHue: number; hazeSat: number; haze: number; gradeHue: number; gradeSat: number; mist: number }>>; areaEase?: number;
 }
 
+/** Will-o'-the-wisps: faint slow lights drifting between the trees of the wild areas (render/wisps.ts, Ed 2026-10-07). */
+export interface WispTuning {
+  on: boolean;
+  /** The ground is split into squares this wide (m); each may hold a wisp, by a seeded chance. */
+  cell: number;
+  /** Only squares within this (m) of her hold wisps. */
+  reach: number;
+  /** A wild square's chance of a wisp, far from the party. */
+  chance: number;
+  /** None within partyNear (m) of a partified area's middle, the full chance from partyFar (m) on. */
+  partyNear: number; partyFar: number;
+  /** How high a wisp floats (m, its lowest and highest), how far it wanders from its spot (m), and its cycle: seconds to
+   *  fade in, linger and fade out. */
+  height: number[]; drift: number; period: number;
+  /** Its core's and halo's size (art pixels), colour and brightness. */
+  size: number; halo: number; hue: number; sat: number; bright: number;
+}
+
 /** The sleeping legends' clearings' light (render/glades.ts). */
 export interface GladeTuning {
   on: boolean;
@@ -55,6 +73,8 @@ export interface GladeTuning {
 }
 
 export interface Tuning {
+  /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
+  wisps?: WispTuning;
   /** A legend's circle (Ed, 2026-10-06): slow, the world slowed to scale of its speed (eased over ease seconds) while she stands on the ground in the circle of a legend asleep or restless; on false (?slow=0) for none. */
   legendCircle?: { slow: { on?: boolean; scale: number; ease: number } };
   mapAreas: number;
@@ -122,13 +142,18 @@ export interface Tuning {
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
   /** Wild idlers' naps (rules/creatures.ts NapRules). */
+  /** The wild watch (Ed, 2026-10-07: a dormant area's animals "stir, evade and hang back, turning to LOOK at her", then attack):
+   *  on her first coming down in a wild area, its wild young and adults hold off for `time` seconds, standing and staring at her
+   *  (any within hangBack metres backing off), then fight as ever; an area is forgotten `forget` seconds after the last witch was
+   *  on the ground in it, so a later visit plays it again (rules/wildWatch.ts). */
+  wildWatch?: { on: boolean; time: number; forget: number; hangBack: number };
   naps?: { on: boolean; chance: number; length: number[]; wake: number; /** A legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"): its own chance and length, roused only by a witch on the ground within reach metres of its circle's edge. */ circle?: { chance: number; length: number[]; reach: number } };
   /** The soundsystem alarm (rules/alarms.ts, render/alarm.ts). */
   alarms?: { linger: number; fall: number; most: number };
   /** The witch's health (Ed, 2026-10-04): hits she takes before she's knocked out; one comes back every repairTime seconds out of the fight. */
   witchHealth: { hits: number; repairTime: number; /** seconds after a hit in which no other blow lands (0: none) */ grace: number };
   /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
-  knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean; dropHat: boolean };
+  knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean; dropHat: boolean; /** Her hat's float to the ground (s), the knockout's first phase. */ hatFloat?: number; /** The wait from going down to moving again (rules/knockout.ts respawnWait). */ respawn?: { base: number; step: number; max: number; cooldown: number; minScratch: number }; /** Drawing only (Ed, 2026-10-07): how much the screen dims round her from the knockdown to her sparkle away, her hat floating off (0 none; no hat, no dim). */ dim?: number; /** Seconds of the wait a candle on her desk (rules/knockout.ts candleCount), 1 by default. */ candleStep?: number };
   /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
    *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
   dash: { distance: number; gone: number; cooldown: number; buffer: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
@@ -336,8 +361,10 @@ export interface Tuning {
     happyRange: number;
     /** A legend dreams of any other kind on the map, equally likely, but none whose nearest area lies over questCap areas away (about the farthest tenth at 5; 0: no cap). */
     questCap: number;
-    /** A done quest's buff is 1 + questFar × its dream's distance (Quest.far, 0 to 1 at the cap) times as strong: the far ones pay more. */
-    questFar: number;
+    /** A done quest's buff is questRoll times as strong as written, whatever its dream's distance (a relic's as written). */
+    questRoll: number;
+    /** A legend dreams only of a kind living in an area later on the route than its own (else the nearest later area's, else any). */
+    questLater?: boolean;
     /** The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a legend, dreams of the baby of another of those three's kind. */
     earlyQuest: boolean;
     /** An angry legend bombarding soundsystems (Ed, 2026-10-06: "Legend bombards, but prioritises you"): with no witch in its reach, the first lob or beam of its volley goes at the nearest standing soundsystem within range metres, doing damage to it (of combat.soundsystemHealth). */
@@ -347,7 +374,7 @@ export interface Tuning {
     /** The party-legend Easter egg (rules/partyLegend.ts): on, 💌s to fill a happy legend's meter, its drain (share a second), how far (m) she can go from it leashed. */ partyEgg: boolean; partyHits: number; partyDrain: number; partyReach: number };
   /** The party's over (rules/partyOver.ts): seconds it eases in over, the ley line's brightness at its end, the creatures' pace home (times their roaming speed). */
   partyOver: { ease: number; leyFloor: number; walk: number };
-  wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number; /** How a legend reads in its circle (Ed's round 14 playtest: "Legends in the circle are not very distinct"): its sigil neon's glow on the ground under it asleep or happy (alpha), the neon rim round a sleeping form (0 none to 1), and its light floor (a share of its unlit look it never drops below). */ seen?: { aura: number; rim: number; floor: number; /** asleep, its nap (art/naps.js: the animal itself lying asleep) for its mound (art/legends.js) */ nap?: boolean; /** its light in this many steps of brightness (0 smooth) */ steps?: number } };
+  wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number; /** How a legend reads in its circle (Ed's round 14 playtest: "Legends in the circle are not very distinct"): its sigil neon's glow on the ground under it asleep or happy (alpha), the neon rim round a sleeping form (0 none to 1), and its light floor (a share of its unlit look it never drops below). */ seen?: { aura: number; rim: number; floor: number; /** asleep, its nap (art/naps.js: the animal itself lying asleep) for its mound (art/legends.js) */ nap?: boolean; /** its light in this many steps of brightness (0 smooth) */ steps?: number; /** Dark coats (Ed, 2026-10-07: lift only the legends dark enough to vanish at night): a legend whose floored look (floor times its coat's luminance) is under dark has its floor raised to dark over its coat's luminance, at most liftMax; lighter legends as they are. */ dark?: number; liftMax?: number } };
   creatureSimRadius: number;
   /** The simulation's level of detail (rules/simLod.ts): creatures in full near her and the action, coarse beyond, frozen past creatureSimRadius. */
   simLod: import("./simLod").SimLod;
