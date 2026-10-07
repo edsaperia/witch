@@ -1,0 +1,29 @@
+{
+  "builder": "Art builder 1",
+  "phase": "The forest's procedural art; overnight phase 1: housekeeping",
+  "slice": "Trees, bushes, props, ground and areas grown from data, the legend clearings, every creature's sleeping art, and tonight the Stone Shrine, the ravine's spires and the runestones' sigils",
+  "prs": [],
+  "built": [
+    "Trees and bushes grown from plant genomes by the blob generator",
+    "The prop generator: standing stones, cairns, pools, logs, mushroom rings, boulders",
+    "The ground generator: floors, tufts and puddles as data",
+    "Area recipes: an area as one data object (the fen, the heronry)",
+    "The legend clearings: a circle per legend with a carved mossy floor and a ring of the area's tallest trees",
+    "Every creature's sleeping art",
+    "Tonight: the Stone Shrine's great standing stones, the ravine's layered spires, and crisp neon-inlaid sigils on the runestones",
+    "Overnight phase 1: shared helpers moved into `art/core.js`, and an art check that draws every generator"
+  ],
+  "learned": [
+    "Pixel noise reads as camouflage. Ed's \"these things look strange\" was a rock spire with bumpy normals plus hashed speckle. Deliberate shapes (stacked strata, flat ledges, crisp edges) read at once.",
+    "Generators compose in surprising ways: a henge (a ring of stones) whose every stone became a whole stone circle gave Ed \"a circle of stone circles\".",
+    "Small glyphs want stamping, not sampling. A sigil sampled in 3D at 40 px blurs into a blob; the same sigil stamped as a 1 to 2 px pixel glyph with a 1 px carved shadow reads by day and by night.",
+    "\"Change nothing\" needs proof: every exported PNG compared byte for byte (12,274 files), plus the CI bench's pixel compare. The art check still caught a lab-page break the bench couldn't see."
+  ],
+  "previews": [
+    { "src": "media/builders/art1-runestone-sigils.webp", "caption": "Every species' runestone, by day and by night, before and after." },
+    { "src": "media/builders/art1-stone-shrine-legend.webp", "caption": "A legend circle in the Stone Shrine, before (open) and after (ringed by standing stones)." },
+    { "src": "media/builders/art1-ravine-spire.webp", "caption": "The ravine's spire, from speckled column to layered rock." },
+    { "src": "media/builders/art1-henge-ring.webp", "caption": "The \"circle of stone circles\", fixed." },
+    { "src": "media/builders/art1-naps-game-treetops.webp", "caption": "Creatures asleep in the forest at night." }
+  ]
+}

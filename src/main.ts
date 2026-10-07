@@ -33,6 +33,7 @@ import { setupActionBar, setupDebugKeys } from "./app/keys";
 import { ScreenShake } from "./app/shake";
 import { playerPick as makePlayerPick } from "./app/playerPick";
 import { installHooks } from "./app/hooks";
+import { PerfHud } from "./app/perfHud";
 import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 
@@ -264,6 +265,8 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) last 
 let lastDraw = 0;
 let last = 0;
 const frameStats = new FrameStats(view.renderer.getContext());
+// ?perf=1: the performance panel (app/perfHud.ts), always on.
+const perfHud = params.get("perf") === "1" ? new PerfHud(game, view, frameStats) : null;
 // Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
 const stallLog = new StallLog();
 playtest.stalls = () => stallLog.stalls;
@@ -349,6 +352,7 @@ function frame(now: number): void {
   frameStats.endGpu();
   aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot, dashLanding());
   frameStats.work(performance.now() - work0);
+  perfHud?.frame(now, dt * 1000, stepMs, !game.clock.paused && !freeze.frozen);
   if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   shake.apply();
   freeze.update();

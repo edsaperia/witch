@@ -108,7 +108,8 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
 /** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null): Baked[] {
   const out: Baked[] = [];
-  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
+  const n = (Art.walkGait(species) as { frames: number }).frames; // (its walk's frames: 2, or its own cycle's)
+  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < n; f++) {
     const hand = overrideFor(species, poseName(level, f, facing === "away")); // (a hand-drawn frame: art/overrides, as it is)
     if (hand) { out.push(bakeOverride(hand, mk)); continue; }
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
@@ -144,8 +145,11 @@ function eyeMask(m: ArrayLike<number>): Uint8Array | undefined {
   for (let i = 0; i < m.length; i++) if (EYES.has(m[i])) { out[i] = 1; any = true; }
   return any ? out : undefined;
 }
-/** Towards: frames 0-7 (level x 2 + walk frame); away: the same, from 8. */
-export const creatureFrame = (level: number, f: number, away = false) => (away ? 8 : 0) + level * 2 + f;
+/** Towards: frames 0 to 4n - 1 (level x n + walk frame, n its walk's frames: 2 unless it has its own cycle); away: the
+ *  same, from 4n. */
+export const creatureFrame = (level: number, f: number, away = false, n = 2) => (away ? 4 * n : 0) + level * n + (((f % n) + n) % n);
+/** A species' walk: its frames, and how far it moves between them (a share of its sprite's width). */
+export const walkGait = (species: string): { frames: number; step: number } => Art.walkGait(species) as { frames: number; step: number };
 
 function pixels(c: AnyCanvas, w: number, h: number): Uint8ClampedArray {
   const ctx = c.getContext("2d") as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
