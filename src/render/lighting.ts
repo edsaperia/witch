@@ -67,8 +67,6 @@ export const LIGHT_UNIFORMS = {
   uPartyOver: { value: new THREE.Vector4(0, 0, 0, 30) },
 };
 
-export type LightUniforms = typeof LIGHT_UNIFORMS;
-
 /** Set the light colours from a style (the Art Lab's knobs). One set of uniforms is shared by
  *  every material, so this and the glow position update everything at once. */
 /** How far her pool's ground takes her light's own colour at its centre (0 none, 1 all): glowPool. */
