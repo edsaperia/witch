@@ -50,6 +50,11 @@ export interface BotOptions {
   /** Blinks sideways out of a charge's line, a pounce's landing or a blow about to land, and always away (the
    *  dodge goes toward the cursor: the others' kiting blink goes toward what she's aiming at). */
   blink?: boolean;
+  /** Puts one of an angry (or restless) legend's own kind down in its area, from her stack, which lulls it back to
+   *  sleep (rules/legends.ts: a legend sleeps while one of its kind is in its area, a parked sigil's included). */
+  calm?: boolean;
+  /** ...the restless ones too, before they turn. */
+  calmRestless?: boolean;
 }
 
 /** The careful bots' numbers: the skilled bot plays these; the champion plays the ones its search found. */
@@ -102,7 +107,7 @@ export const BOT_KNOBS: BotKnobs = { defendLead: 50, defendHold: 60, healAt: 1, 
  *  and leads her young to berries, as a good player would. The balance tool's runs keep each to its flag. */
 export const BOT_GAME: Record<BotKind, BotOptions> = {
   skilled: { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true }, // (two relics: all six took her first ten minutes, and halved her army)
-  champion: { feed: true, siege: true, regroup: true, blink: true, knobs: { lead: 0.8 } }, // (no quest or relic trips: they cost her army in the first ten minutes; the search's numbers go here) // (the champion: the skilled bot's play with the numbers and tactics its search found; tools/balance/coach.mjs)
+  champion: { feed: true, siege: true, regroup: true, blink: true, calm: true, calmRestless: true, knobs: { lead: 0.8 } }, // (no quest or relic trips: they cost her army in the first ten minutes; the search's numbers go here) // (the champion: the skilled bot's play with the numbers and tactics its search found; tools/balance/coach.mjs)
   crude: {}, novice: {}, idle: {}, hover: {},
 };
 
@@ -144,6 +149,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
   let feeding: { x: number; z: number; until: number } | null = null, feedAgain = 0, healing = false;
   let target: Target | null = null, pickAt = -1, landWave = -1, lastWave = 0, seenWave = 0, lastWoken: Cell | null = null, steps = 0;
   const parkedAt = new Set<string>();
+  let holding = null as string | null; // (the soundsystem the champion's holding)
   const seen = new Map<number, { x: number; z: number; at: number }>(); // (where she last saw each target: the champion leads moving ones)
   const bot: Bot = { kind, doing: "", done: { quests: [], relics: [] }, decide };
   return bot;
@@ -194,7 +200,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
      *  (the dancefloor's weighed up), unless it outweighs her posse past `concede`. */
     const siegeFront = () => {
       const posse = sideValue(w.leash.stack.map(id => g.creatures[id]));
-      let best = null as { h: { x: number; z: number }; near: Creature | null; n: number; home: boolean } | null, bs = 0;
+      let best = null as { key: string; h: { x: number; z: number }; near: Creature | null; n: number; home: boolean } | null, bs = 0;
       for (const [key, h] of g.combat.sounds) {
         if (h.hp <= 0) continue;
         let f = 0, n = 0, near: Creature | null = null, nd = Infinity;
@@ -204,15 +210,18 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           f += creatureValue(c); n++; if (d < nd) { nd = d; near = c; }
         }
         if (f < K.siegeMin || (K.concede > 0 && f > K.concede * Math.max(posse, 1))) continue;
-        const sc = f * (key === "home" ? K.homeWeight : 1) / (1 + Math.hypot(h.x - b.x, h.z - b.z) / 600);
-        if (sc > bs) { bs = sc; best = { h, near, n, home: key === "home" }; }
+        const sc = f * (key === "home" ? K.homeWeight : 1) / (1 + Math.hypot(h.x - b.x, h.z - b.z) / 600) * (key === holding ? 2 : 1); // (the one she's going to, twice: no flip-flopping between two)
+        if (sc > bs) { bs = sc; best = { key, h, near, n, home: key === "home" }; }
       }
+      holding = best?.key ?? null;
       return best;
     };
     /** The nearest of her guards that's far from every standing soundsystem. */
     const strandedGuard = () => {
       let best = null as { x: number; z: number } | null, bd = Infinity;
       for (const p of w.leash.placed) {
+        const pc = g.creatures[p.id], ak = cellKey(map.cellSafe(p.x, p.z).cell);
+        if (o.calm && LO.has(ak) && g.creatures[LO.get(ak)!].species === pc.species) continue; // (keeping its legend asleep)
         let far = true;
         for (const h of [...g.combat.sounds.values(), ...(g.party.next ?? []).map(c => ({ ...spot(c), hp: 1 }))]) if (h.hp > 0 && Math.hypot(h.x - p.x, h.z - p.z) < K.strandFar) { far = false; break; } // (the coming waves' spots too: guards posted before it)
         const d = Math.hypot(p.x - b.x, p.z - b.z);
@@ -248,6 +257,21 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       }
       return null;
     }
+    /** The nearest angry (or restless) legend she carries one of its kind for, and which of her stack (the youngest). */
+    function calmJob(): { L: Creature; id: number } | null {
+      let best = null as { L: Creature; id: number } | null, bd = Infinity;
+      for (const lid of LO.values()) {
+        const L = g.creatures[lid];
+        if (L.gone || !(L.legendState === "angry" || (o.calmRestless && L.legendState === "restless"))) continue;
+        let id = -1, lv = 9;
+        for (const i of w.leash.stack) { const c = g.creatures[i]; if (c.species === L.species && c.level < lv) { lv = c.level; id = i; } }
+        if (id < 0) continue;
+        const d = Math.hypot(L.x - b.x, L.z - b.z);
+        if (d < bd) { bd = d; best = { L, id }; }
+      }
+      return best;
+    }
+    let calm = null as ReturnType<typeof calmJob>, cycle = false;
     let front = null as ReturnType<typeof siegeFront>, stray = null as ReturnType<typeof strandedGuard>;
     let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false, place = false;
     /** Toward (x, z): over the treetops when far, landing there if `land`; true once on the ground within `within` m. */
@@ -274,6 +298,12 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       if (qjob) { qjob = null; questAgain = time + 60; }
       if (rjob?.phase === "pick") { rjob = null; relicAgain = time + 60; }
       if (b.mode === "ground" && healing) toggle = true;
+    } else if (o.calm && careful && (calm = calmJob())) {
+      // The champion calming a legend: one of its kind from her stack, put down in its area (cycled to the bottom first,
+      // a press of the cycle button a step, as a player would).
+      const { L, id } = calm, at = map.siteOf(L.cell[0], L.cell[1]);
+      bot.doing = `bringing ${article(L.species)} home to the ${L.legendState} ${L.species} legend`;
+      if (goTo(at.x, at.z, true, 6)) { const st = w.leash.stack, qi = st.indexOf(id); if (qi === st.length - 1) sigil = true; else if (qi >= 0) cycle = true; }
     } else if (o.siege && careful && (front = siegeFront())) {
       // The champion's siege response: to the soundsystem with the most marching on it, standing between it and the
       // nearest of them, so her posse meets them there; kiting what comes for her.
@@ -407,6 +437,6 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       if (dd) { dash = true; mx = dd.x; mz = dd.z; aimX = dd.x * 10; aimZ = dd.z * 10; fire = false; }
       else if (dash) { const l = Math.hypot(mx, mz) || 1; aimX = (mx / l) * 10; aimZ = (mz / l) * 10; fire = false; } // (a kiting blink: away, the way she's going)
     }
-    return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, castParty: g.party.spellAt === null };
+    return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, ...(cycle ? { cycle } : {}), castParty: g.party.spellAt === null };
   }
 }

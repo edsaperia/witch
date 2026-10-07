@@ -31,6 +31,6 @@ for (let step = 0; step * dt < TIME; step++) {
   for (const bm of g.combat.beams) if (bm.sound) { const a = hitters.get(bm.sound.key) ?? []; a.push(`beam:${bm.species}`); hitters.set(bm.sound.key, a); }
   for (const sh of g.combat.shots) if (sh.sound) { const a = hitters.get(sh.sound.key) ?? []; a.push(`lob:${sh.species}`); hitters.set(sh.sound.key, a); }
   if (hitters.size) console.log(`   hitting: ${[...hitters].map(([k, a]) => `${k} <- ${a.join(",")}`).join(" | ")}`);
-  console.log(`${(g.clock.time / 60).toFixed(1)} min wave ${g.party.wave} (next in ${r0(g.party.nextAt - g.clock.time)} s) hp ${w.health.hp} ${w.body.mode}: ${bot.doing} | stack ${w.leash.stack.length} (${lv(w.leash.stack)}) parked ${w.leash.placed.length} in ${parked.size} spots | ${ss.join(" ")}`);
+  console.log(`${(g.clock.time / 60).toFixed(1)} min wave ${g.party.wave} (next in ${r0(g.party.nextAt - g.clock.time)} s) hp ${w.health.hp} ${w.body.mode} at ${r0(w.body.x)},${r0(w.body.z)}: ${bot.doing} | stack ${w.leash.stack.length} (${lv(w.leash.stack)}) parked ${w.leash.placed.length} in ${parked.size} spots | ${ss.join(" ")}`);
 }
 await close();
