@@ -20,7 +20,7 @@ import * as THREE from "three";
 import { sigilGlyph } from "../../art/generator.js";
 import { groundHeight, HEIGHT_UNIFORMS, placed, seenOverBend } from "./height";
 
-const N = 40; // art pixels across
+export const N = 40; // art pixels across
 const SCALE = 4; // screen pixels per art pixel
 
 /** A cue for (x, z), seen from the witch at (wx, wz): where on the screen's edge it goes, pointing
@@ -59,7 +59,22 @@ export function arrowPixels(a: number, n: number, from: number, tip: number, hal
   return out;
 }
 
-class PixelCue {
+/** The edge cues placed this frame (centres, CSS pixels), so no two sit on one another (Ed's v1628 screenshot: two cues
+ *  pointing the same way, their distances drawn over each other, "2018m m"): the view resets it each frame, before its cues;
+ *  each cue on the edge claims its spot, nudged along the edge (across its arrow) till it overlaps none placed before. */
+export const edgeLayout = {
+  spots: [] as { x: number; y: number; r: number }[],
+  reset(): void { this.spots.length = 0; },
+  claim(x: number, y: number, angle: number, r: number, nudge = true): { x: number; y: number } {
+    const tx = -Math.sin(angle), ty = Math.cos(angle), clear = (px: number, py: number) => this.spots.every(p => Math.hypot(p.x - px, p.y - py) >= p.r + r);
+    let ox = x, oy = y;
+    for (let k = 0; nudge && k < 8 && !clear(ox, oy); k++) { const d = (k % 2 ? -1 : 1) * Math.ceil((k + 1) / 2) * r * 2; ox = x + tx * d; oy = y + ty * d; }
+    this.spots.push({ x: ox, y: oy, r });
+    return { x: ox, y: oy };
+  },
+};
+
+export class PixelCue {
   readonly canvas = document.createElement("canvas");
   readonly label = document.createElement("div");
   readonly g: CanvasRenderingContext2D;
@@ -69,12 +84,25 @@ class PixelCue {
     this.canvas.width = this.canvas.height = N;
     Object.assign(this.canvas.style, { position: "fixed", width: `${N * scale}px`, height: `${N * scale}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none", opacity: `${opacity}` });
     this.label.style.opacity = `${opacity}`;
-    Object.assign(this.label.style, { position: "fixed", pointerEvents: "none", zIndex: "2", display: "none", font: "bold 12px monospace", color: "#e8e2f4", textShadow: "0 1px 0 #000, 1px 0 0 #000, 0 0 3px #000", transform: "translate(-50%, 0)" });
+    // one crisp pixel label (the pixel font, ui/pixelUi.ts's Tiny5, on a small dark plate so it reads on any ground; never wrapped)
+    Object.assign(this.label.style, { position: "fixed", pointerEvents: "none", zIndex: "2", display: "none", font: '16px "Tiny5", ui-monospace, monospace', lineHeight: "16px", whiteSpace: "nowrap", color: "#e8e2f4", background: "rgba(14, 9, 22, 0.72)", padding: "2px 4px 0", transform: "translate(-50%, -50%)", webkitFontSmoothing: "none" } as Partial<CSSStyleDeclaration>);
     parent.append(this.canvas, this.label);
     this.g = this.canvas.getContext("2d")!;
     this.img = this.g.createImageData(N, N);
   }
   hide(): void { this.canvas.style.display = "none"; this.label.style.display = "none"; }
+  private text = ""; private textW = 0;
+  /** Its label, `text` in `colour`, centred out from (cx, cy) along (ux, uy) (a unit vector), its near edge `clear` pixels
+   *  out, so it never lies over the cue's own ring or arrow. */
+  say(text: string, colour: string, cx: number, cy: number, ux: number, uy: number, clear: number): void {
+    const L = this.label;
+    L.style.display = "block";
+    if (text !== this.text) { this.text = L.textContent = text; this.textW = L.offsetWidth || text.length * 9; }
+    L.style.color = colour;
+    const d = clear + Math.abs(ux) * this.textW / 2 + Math.abs(uy) * 9;
+    L.style.left = `${cx + ux * d}px`;
+    L.style.top = `${cy + uy * d}px`;
+  }
   /** Centred on (sx, sy), `size` times its usual size. */
   place(sx: number, sy: number, size = 1): void {
     const s = N * this.scale * size;
@@ -199,7 +227,8 @@ export class StoneIndicator {
     const dist = Math.hypot(at.x - wx, at.z - wz), over = 1 - e.show, ease = over * over * (3 - 2 * over);
     const size = 1 - 0.3 * ease * (1 - Math.min(1, Math.max(0, (dist - 12) / 28)));
     const lift = (N * c.scale * size) / 2 + 6; // above the stone's top, clear of it
-    const cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (e.sy - lift - e.ey) * ease;
+    let cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (e.sy - lift - e.ey) * ease;
+    ({ x: cx, y: cy } = edgeLayout.claim(cx, cy, e.angle, (N * c.scale * size) * 0.42, e.show > 0.5));
     c.place(cx, cy, size);
     c.clear();
     const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
@@ -230,13 +259,8 @@ export class StoneIndicator {
     c.flush();
     // The distance on the far side of the ring from the arrow (or under the ring, over the stone).
     const showLabel = !!label || dist > 20;
-    c.label.style.display = showLabel ? "block" : "none";
-    if (!showLabel) return;
-    c.label.textContent = label ?? `${Math.round(dist)} m`;
-    c.label.style.color = `rgb(${neon.map(Math.round).join(",")})`;
+    if (!showLabel) { c.label.style.display = "none"; return; }
     const ax = -Math.cos(e.angle) * e.show, ay = -Math.sin(e.angle) * e.show + (1 - e.show), al = Math.hypot(ax, ay) || 1;
-    const lx = cx + (ax / al) * (R + 6) * c.scale * size, ly = cy + (ay / al) * (R + 6) * c.scale * size;
-    c.label.style.left = `${lx}px`;
-    c.label.style.top = `${ly - 7}px`;
+    c.say(label ?? `${Math.round(dist)} m`, `rgb(${neon.map(Math.round).join(",")})`, cx, cy, ax / al, ay / al, (R + 1.5) * c.scale * size);
   }
 }
