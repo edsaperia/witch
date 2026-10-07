@@ -4868,6 +4868,39 @@
           ],
           "additionalProperties": false
         },
+        "seaLife": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "splash": {
+              "type": "number",
+              "minimum": 0
+            },
+            "groan": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pour": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "splash",
+            "groan",
+            "pour",
+            "range"
+          ],
+          "additionalProperties": false
+        },
         "room": {
           "type": "object",
           "properties": {
@@ -5384,6 +5417,7 @@
         "picnic",
         "sparkler",
         "fireworks",
+        "seaLife",
         "room",
         "deck",
         "spell",
