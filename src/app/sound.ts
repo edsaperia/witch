@@ -16,6 +16,8 @@ export class Sound {
   music: Music | null = null;
   sfx: Sfx | null = null;
   sfxCues: SfxCues | null = null;
+  /** The ley line's drawn current link (the view's), for the pulse's fizz (SfxCues.leyLink). */
+  leyLink: SfxCues["leyLink"] = null;
   /** The volume, 0 to 1 (0 mutes); remembered on this browser. */
   level = 0.8;
   /** The music's last mix (by how near she is to a playing soundsystem): the playtest log reads it. */
@@ -97,6 +99,7 @@ export class Sound {
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
     this.lastMix = musicMix(game, game.witch);
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
+    if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
     // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
     // still crackling under her hands (quieter: room.decks), till the boot's first speaker brings the music in

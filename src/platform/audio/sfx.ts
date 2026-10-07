@@ -17,6 +17,7 @@ import { Picnic, Pond, Room, Sea } from "./places";
 import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
+import { Sparkler } from "./sparkler";
 import { scratch } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
@@ -38,6 +39,8 @@ export class Sfx {
   private spellFx: Spell;
   /** The sea on the beach: made the first time she comes near it (most runs never do). */
   private seaBed: Sea | null = null;
+  /** The ley pulse's sparkler fizz: made the first time she comes near its tip. */
+  private fizz: Sparkler | null = null;
 
   constructor(ctx: AudioContext | OfflineAudioContext, volume: number, T: SfxTuning, root = 57, dest?: AudioNode) {
     this.k = new SfxKit(ctx, volume, T, root, dest);
@@ -120,6 +123,8 @@ export class Sfx {
   /** By the sea on the beach (0-1 by how near the water): nothing made until she first comes near. */
   sea(level: number, pan = 0): void { if (level > 0.001 || this.seaBed) (this.seaBed ??= new Sea(this.k)).update(level, pan); }
   /** Whether the sea's sounds are built (none in an ordinary run). */
+  /** By the ley line's pulse, the sparkler's burning tip (#491): its fizz, by how near (0-1). */
+  sparkler(level: number, pan = 0): void { if (level > 0.001 || this.fizz) (this.fizz ??= new Sparkler(this.k)).update(level, pan); }
   get seaBuilt(): boolean { return !!this.seaBed?.built; }
   /** The party's over: the area's night (`kind`, at `level` 0-1), made the first time it's heard (most runs, never). */
   night(kind: NightKind | null, level: number): void { if (level > 0.001 || this.nightBed) (this.nightBed ??= new Night(this.k)).update(kind, level); }
