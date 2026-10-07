@@ -9,7 +9,8 @@
 // spot in the area furthest from the witches, from its edge if she's in it. No drawing here.
 import { makeCreature, type Creature, type Level } from "./creatures";
 import { AREA_TYPES, type ForestMap } from "./map";
-import { strengthOf } from "./combat";
+import { COMBAT, strengthOf, type CombatData } from "./combat";
+import { levelValue } from "./power";
 import { hash2, rng } from "./random";
 
 export interface Pending { level: Level; wave: number; n: number }
@@ -52,13 +53,46 @@ export const startCount = (base: number, scale: number) => (base > 0 ? Math.max(
  *  wave to wave (a loner's half a creature a wave is one every other wave). */
 export const grownAt = (wave: number, perWave: number, scale: number) => { const k = perWave * scale; return Math.floor(wave * k + 1e-9) - Math.floor((wave - 1) * k + 1e-9); };
 
-/** How many more than population.start an area holds from the start (Ed, 2026-10-07: "pre-populate every area by its
- *  route position"; no growth on a clock): by its place on the waves' route, `index` (1 the first wave's area, 2 the
- *  second's...), table[index - 1] if the table is given (its last entry for the areas past its end), else per × index;
- *  times the area's count scale, rounded down. With per 0.5 it is what an area woken at that wave grew to before. */
-export function routeExtra(index: number, R: { per: number; table: readonly number[] }, scale: number): number {
-  const base = R.table.length ? R.table[Math.max(0, Math.min(index, R.table.length) - 1)] : R.per * index;
-  return Math.max(0, Math.floor(Math.max(0, base) * scale + 1e-9));
+/** Pre-population by route (Ed, 2026-10-07: "pre-populate every area by its route position"; no growth on a clock;
+ *  Balance 2's shape): an area's extra fighting value by its place on the waves' route, and how its kind spends it. */
+export interface ByRoute {
+  /** Babies in every area, start's included (they're 0 F: quest sigils and berries, not danger). */
+  babies: number;
+  /** At most this many babies in any area, start's included. */
+  babyCap: number;
+  /** [route index, extra F] points (1 the first wave's stone), straight lines between, flat past the ends. */
+  threat: number[][];
+  /** Per species (else `default`): the shares of its extra creatures at each level [babies, young, adults]. */
+  profiles: Record<string, number[]>;
+}
+
+/** The threat curve at route index `n`: straight lines between its points, flat past its ends. */
+export function threatAt(n: number, curve: readonly (readonly number[])[]): number {
+  if (!curve.length) return 0;
+  if (n <= curve[0][0]) return curve[0][1];
+  for (let i = 1; i < curve.length; i++) {
+    const [x1, y1] = curve[i];
+    if (n <= x1) { const [x0, y0] = curve[i - 1]; return x1 > x0 ? y0 + ((n - x0) / (x1 - x0)) * (y1 - y0) : y1; }
+  }
+  return curve[curve.length - 1][1];
+}
+
+/** An area's whole starting population [babies, young, adults] (its legend and its circle's baby aside), by its place on
+ *  the route `index`: population.start's young and adults (times its count scale) and, over them, the threat curve's F at
+ *  that index spent on its kind's profile: count = threat ÷ the profile's mean F a creature (young and adults at their
+ *  fighting value, rules/power.ts; babies 0) × its count scale (weaker kinds more of them, the same danger), rounded,
+ *  split by the shares (largest remainder, ties by the seed); and its babies, byRoute.babies (or start's, if more), at
+ *  most babyCap. */
+export function routePopulation(index: number, R: ByRoute, start: { babies: number; young: number; adults: number }, species: string, scale: number, seed: number, cell: readonly [number, number], data: CombatData = COMBAT): [number, number, number] {
+  const shares = R.profiles[species] ?? R.profiles.default ?? [0, 0.5, 0.5], F = [0, levelValue(1, data), levelValue(2, data)];
+  const sum = shares.reduce((a, b) => a + Math.max(0, b), 0), mean = sum > 0 ? shares.reduce((a, b, l) => a + Math.max(0, b) * F[l], 0) / sum : 0;
+  const count = mean > 0 ? Math.max(0, Math.round((threatAt(index, R.threat) / mean) * scale)) : 0;
+  // Split by the shares: each its whole part, then the rest one at a time to the largest remainders (ties by the seed).
+  const raw = shares.map(v => (sum > 0 ? (count * Math.max(0, v)) / sum : 0)), out = raw.map(Math.floor);
+  const order = [0, 1, 2].sort((a, b) => (raw[b] - out[b]) - (raw[a] - out[a]) || hash2(cell[0] * 7 + a, cell[1] * 11 + b, seed + 5323) - 0.5);
+  for (let k = 0, left = count - out[0] - out[1] - out[2]; k < left; k++) out[order[k % 3]]++;
+  const babies = Math.min(Math.max(0, R.babyCap), Math.max(startCount(start.babies, scale), R.babies) + out[0]);
+  return [babies, startCount(start.young, scale) + out[1], startCount(start.adults, scale) + out[2]];
 }
 
 /** Each area's place on the waves' route (1 the first wave's area; rules/party.ts routeOf), by area key. */

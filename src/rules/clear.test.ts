@@ -3,10 +3,11 @@
 // nothing grows on a clock.
 import { describe, expect, it } from "vitest";
 import { loseSoundsystem, newGame, stepGame, type Controls, type Game } from "./game";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING } from "./tuning";
 import { cellKey, routeOf } from "./party";
 import { clearedAreas, holdsArea } from "./clear";
-import { countScale, routeExtra, routeIndex, startCount } from "./growth";
+import { countScale, routeIndex, routePopulation, threatAt, type ByRoute } from "./growth";
+import { levelValue } from "./power";
 import { spawnCreatures } from "./creatures";
 import { generateMap, AREA_TYPES } from "./map";
 import { befriend } from "./creatureStates";
@@ -31,29 +32,44 @@ function empty(g: Game, key: string): void {
   g.byArea = null;
 }
 
-describe("pre-population by route (Ed, 2026-10-07: no growth on a clock)", () => {
-  it("gives each area start plus per × its route index (times its count scale, rounded down), or the table's", () => {
-    const R = { per: 0.5, table: [] as number[] };
-    expect([1, 2, 3, 4, 5, 6].map(i => routeExtra(i, R, 1))).toEqual([0, 1, 1, 2, 2, 3]); // (what an area woken at that wave grew to)
-    expect(routeExtra(4, R, 3)).toBe(6);
-    expect([1, 2, 3, 9].map(i => routeExtra(i, { per: 0.5, table: [0, 2, 5] }, 1))).toEqual([0, 2, 5, 5]); // (the table's last for those past it)
-    expect(routeExtra(3, { per: 0, table: [] }, 1)).toBe(0);
+describe("pre-population by route (Ed, 2026-10-07: no growth on a clock; Balance 2's threat curve)", () => {
+  const R: ByRoute = { babies: 2, babyCap: 2, threat: [[1, 12], [10, 90], [40, 355]], profiles: { default: [0, 0.6, 0.4], bear: [0, 0.3, 0.7], beetle: [0, 0.9, 0.1] } };
+  const S = { babies: 1, young: 1, adults: 0 }, Fy = levelValue(1), Fa = levelValue(2);
+
+  it("reads the threat curve in straight lines between its points, flat past its ends", () => {
+    expect(threatAt(0, R.threat)).toBe(12); expect(threatAt(1, R.threat)).toBe(12);
+    expect(threatAt(5.5, R.threat)).toBeCloseTo(51, 6); expect(threatAt(10, R.threat)).toBe(90);
+    expect(threatAt(25, R.threat)).toBeCloseTo(222.5, 6); expect(threatAt(99, R.threat)).toBe(355);
   });
 
-  it("peoples every area from the start, the later on the route the more, the same from the same seed", () => {
-    const map = generateMap(123, TUNING), all = spawnCreatures(map), order = routeOf(map).order, at = routeIndex(order), S = TUNING.population.start;
-    expect(order.length).toBe(map.cells.length - 1); // (every area but home)
-    const count = (key: string) => all.filter(c => cellKey(c.cell) === key && !c.boss && !c.circle).length;
-    for (const key of order) {
-      const [cx, cy] = key.split(",").map(Number), k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
-      expect(count(key), key).toBe(startCount(S.babies, k) + startCount(S.young, k) + startCount(S.adults, k) + routeExtra(at.get(key)!, TUNING.population.byRoute, k));
+  it("spends an area's threat by its kind's profile: the same danger, a heavy kind's few adults or a swarm's many young; babies fixed", () => {
+    const value = ([, y, a]: number[]) => (y - S.young) * Fy + a * Fa;
+    for (const [sp, scale] of [["bear", 1], ["beetle", 1], ["wolf", 1], ["beetle", 3]] as const) for (const n of [1, 10, 25, 40]) {
+      const p = routePopulation(n, R, S, sp, scale, 123, [3, 4]);
+      expect(p[0], `${sp} babies`).toBe(2); // (byRoute.babies, start's included, at most babyCap)
+      expect(Math.abs(value(p) - threatAt(n, R.threat) * scale), `${sp} at ${n}`).toBeLessThan(Fa * scale); // (within a creature of the threat)
     }
-    const first = order.slice(0, 5).reduce((a, k) => a + count(k), 0), last = order.slice(-5).reduce((a, k) => a + count(k), 0);
-    expect(last).toBeGreaterThan(first);
+    const bear = routePopulation(40, R, S, "bear", 1, 123, [3, 4]), beetle = routePopulation(40, R, S, "beetle", 1, 123, [3, 4]);
+    expect(bear[2]).toBeGreaterThan(bear[1] - S.young); // (mostly adults)
+    expect(beetle[1] + beetle[2]).toBeGreaterThan((bear[1] + bear[2]) * 2); // (many more of them)
+    expect(routePopulation(40, { ...R, babyCap: 1 }, { ...S, babies: 3 }, "bear", 1, 1, [0, 0])[0]).toBe(1); // (the cap holds over start's)
+    expect(routePopulation(40, R, S, "bear", 1, 7, [2, 9])).toEqual(routePopulation(40, R, S, "bear", 1, 7, [2, 9]));
+  });
+
+  it("peoples every area from the start, the later on the route the more, the same from the same seed; every profile a real kind", () => {
+    const map = generateMap(123, TUNING), all = spawnCreatures(map), order = routeOf(map).order, at = routeIndex(order), T = TUNING.population;
+    expect(order.length).toBe(map.cells.length - 1); // (every area but home)
+    const levels = (key: string) => [0, 1, 2].map(l => all.filter(c => cellKey(c.cell) === key && !c.boss && !c.circle && c.level === l).length);
+    for (const key of order) {
+      const [cx, cy] = key.split(",").map(Number), sp = AREA_TYPES[map.typeOf(cx, cy)].creature;
+      expect(levels(key), key).toEqual(routePopulation(at.get(key)!, T.byRoute, T.start, sp, countScale(sp), map.seed, [cx, cy]));
+    }
+    const F = (keys: string[]) => keys.reduce((a, k) => { const [, y, ad] = levels(k); return a + y * Fy + ad * Fa; }, 0);
+    expect(F(order.slice(-5))).toBeGreaterThan(F(order.slice(0, 5)) * 3);
     expect(spawnCreatures(generateMap(123, TUNING)).map(c => [c.level, c.x, c.z])).toEqual(all.map(c => [c.level, c.x, c.z]));
-    // A table shapes it freely (population.byRoute.table: Balance 2's).
-    const flat = withTuning({ population: { ...TUNING.population, byRoute: { ...TUNING.population.byRoute, table: [0] } } });
-    expect(spawnCreatures(generateMap(123, flat)).length).toBeLessThan(all.length);
+    const kinds = new Set(AREA_TYPES.map(t => t.creature));
+    for (const sp of Object.keys(T.byRoute.profiles)) if (sp !== "default") expect(kinds.has(sp), sp).toBe(true);
+    expect(T.byRoute.profiles.default).toBeDefined();
   }, 60000);
 });
 

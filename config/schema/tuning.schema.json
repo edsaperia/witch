@@ -2940,25 +2940,42 @@
         "byRoute": {
           "type": "object",
           "properties": {
-            "per": {
+            "babies": {
               "type": "number",
               "minimum": 0
             },
-            "table": {
-              "type": "array"
+            "babyCap": {
+              "type": "number",
+              "minimum": 0
             },
-            "weights": {
+            "threat": {
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 0
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "profiles": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minItems": 3,
+                "maxItems": 3
               }
             }
           },
           "required": [
-            "per",
-            "table",
-            "weights"
+            "babies",
+            "babyCap",
+            "threat",
+            "profiles"
           ],
           "additionalProperties": false
         },

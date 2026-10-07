@@ -13,7 +13,7 @@ import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesN
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
 import { newParty, routeOf, spreadWave, stepParty, spawnMarkers, nextWave, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
-import { countScale, routeExtra, routeIndex, startCount } from "./growth";
+import { countScale, routeIndex, routePopulation, startCount } from "./growth";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -500,12 +500,13 @@ describe("creatures", () => {
     let more = 0;
     for (const [cx, cy] of map.cells.filter((_, i) => i % 9 === 0)) {
       if (cx === mx && cy === my) continue;
-      const here = inCell(cx, cy), k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature), extra = routeExtra(at.get(`${cx},${cy}`)!, R, k);
+      const here = inCell(cx, cy), species = AREA_TYPES[map.typeOf(cx, cy)].creature, k = countScale(species);
+      const want = routePopulation(at.get(`${cx},${cy}`)!, R, S, species, k, map.seed, [cx, cy]);
       const n = (l: number) => here.filter(c => c.level === l && !c.circle).length; // (not its legend's clearing's baby: below)
-      expect(n(0) + n(1) + n(2)).toBe(startCount(S.babies, k) + startCount(S.young, k) + startCount(S.adults, k) + extra);
-      expect(n(0)).toBeGreaterThanOrEqual(startCount(S.babies, k));
+      expect([n(0), n(1), n(2)]).toEqual(want);
+      expect(n(0)).toBeLessThanOrEqual(R.babyCap);
       expect(n(1)).toBeGreaterThanOrEqual(startCount(S.young, k));
-      more += extra;
+      more += n(1) + n(2) - startCount(S.young, k) - startCount(S.adults, k);
       expect(here.filter(c => c.level === 3 && c.boss).length).toBe(map.hasLegend(cx, cy) ? 1 : 0);
     }
     expect(population(map)).toEqual(S);

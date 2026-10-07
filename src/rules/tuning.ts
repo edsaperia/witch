@@ -1,5 +1,6 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
+import type { ByRoute } from "./growth";
 
 export interface CameraModeTuning { angleIn: number; angleOut: number; distanceIn: number; distanceOut: number }
 
@@ -349,9 +350,9 @@ export interface Tuning {
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; /** The share of the blur the sky takes, so the stars stay perceptible (Ed, 2026-10-06); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
   /** Wild creatures: every area starts with `start` and, from the first frame (Ed, 2026-10-07: no growth on a clock),
-   *  byRoute's extra by its place on the waves' route (rules/growth.ts routeExtra), each at a level by byRoute.weights
-   *  (baby, young, adult). `growth` is the old per-wave growth: the game no longer reads it (the balance simulators do). */
-  population: { start: { babies: number; young: number; adults: number }; byRoute: { per: number; table: number[]; weights: number[] }; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
+   *  byRoute's extra by its place on the waves' route (rules/growth.ts routePopulation: a threat curve spent by each
+   *  kind's profile, and a fixed number of babies). `growth` is the old per-wave growth: the game no longer reads it (the balance simulators do). */
+  population: { start: { babies: number; young: number; adults: number }; byRoute: ByRoute; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
   /** Area legends (Ed, 2026-10-04): one an area, asleep till its area's wave, then a mini-boss guarding it. */
   /** A sleeping legend's dream bubble (Ed, 2026-10-05): shown only to a witch on the ground within range metres of it. */
   dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string } };

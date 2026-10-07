@@ -52,10 +52,10 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
     const value = (l: typeof before) => l.reduce((a, c) => a + levelValue(c.level, COMBAT, c.species), 0), was = value(before);
     giving(species, 1 / 3);
     const after = spawnCreatures(map).filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle);
-    // (Its start three times over exactly; its extra by its place on the route, per × index × 3 rounded down, within one.)
-    expect(after.length - before.length * 3).toBeGreaterThanOrEqual(0);
-    expect(after.length - before.length * 3).toBeLessThanOrEqual(1);
-    expect(value(after) / was).toBeGreaterThan(0.85); expect(value(after) / was).toBeLessThan(1.3);
+    // (Its young and adults about three times over, its threat spent the same: rules/growth.ts routePopulation; its babies fixed.)
+    const fighters = (l: typeof before) => l.filter(c => c.level > 0).length;
+    expect(Math.abs(fighters(after) - fighters(before) * 3)).toBeLessThanOrEqual(2);
+    expect(value(after) / was).toBeGreaterThan(0.85); expect(value(after) / was).toBeLessThan(1.2);
   }, 30000);
 });
 
