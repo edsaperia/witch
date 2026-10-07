@@ -18,15 +18,19 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
 
 1. **Dress her up.** The run opens in the character creator. When the scroll unrolls, click it (or press Enter, or her spell key R) to **cast the party spell**. The cast takes 1.2 s, and she can't move until it's done.
 2. **At the decks.** She sits behind the decks in the treehouse until you first move or rise.
-3. **Boot-up.** About 3 s after she leaves the decks (`boot.firstAfter` 3), a pulse runs round the home ring and turns each little runestone into a speaker, one by one. The boot lasts **5 minutes** (`boot.time` 300). The animals still attack during it, but no waves come.
-4. **Waves.** When the boot ends, the first wave's countdown starts. A wave comes every **5 minutes** (`party.interval` 300, `party.startDelay` 0), so **wave 1 lands about 10 minutes after she leaves her decks**. The dancefloor switches on at the first wave.
-5. **Each wave partifies one area** (`party.areasPerWave` 1). It doesn't take every neighbour, just the next area along a route planned for the whole map (`party.picker` "route", `party.route` "spiral"): outward from home, ring by ring, crossing itself as little as possible. The ley line traces that same route, so you always know what's next.
-6. **A new soundsystem** rises at the area's runestone. It has **4000 health** (`combat.soundsystemHealth`), and the home ring has **8000** (`combat.homeHealth`). When it arrives:
-   - the area's wild young and adults become **enraged** and **besiege** it;
+3. **Boot-up.** About 3 s after she leaves the decks (`boot.firstAfter` 3), a pulse runs round the home ring and turns each little runestone into a speaker, one by one. The boot lasts **30 s** (`boot.time` 30; it was 5 minutes until Ed's new core design, 2026-10-07). The animals still attack during it, but no waves come.
+4. **Waves.** When the boot ends, the first wave's countdown starts. A wave comes every **3 minutes** (`party.interval` 180, `party.startDelay` 0), so **wave 1 lands about 3½ minutes after she leaves her decks**. The dancefloor switches on at the first wave.
+5. **Each wave goes to the next stone on the route** (`party.areasPerWave` 1). It doesn't take every neighbour, just the next area along a route planned for the whole map (`party.picker` "route", `party.route` "spiral"): outward from home, ring by ring, crossing itself as little as possible. The ley line traces that same route, so you always know what's next. The waves keep that schedule whatever you do: each takes the next stone on the route, never skipping one.
+   - If that stone is still wild, the wave **partifies** its area (below).
+   - If you've **cleared** it already, so its soundsystem plays, the wave **does nothing to the rules**: no animal is enraged and no second soundsystem comes. It **celebrates** instead (the `waveCelebrate` event: fireworks and that soundsystem's lasers). The music's next step, the ley line and the countdown carry on as normal.
+   - If its early soundsystem has been lost, the wave passes it quietly.
+6. **Clearing an area** (Ed, 2026-10-07: the new core design) transforms its runestone **at once**, without waiting for its wave. An area is cleared when **none of its own wild animals is left**: every one of them invited, or run off. Its sleeping legend and the wild baby in its legend's circle don't count. A few times a second the game looks (rules/clear.ts) and does just what a wave would (the `areaCleared` event): the soundsystem rises, the babies (the circle's too) turn happy and dance, a party witch comes, the area's music plays and its ley stone counts as reached. An early soundsystem **can be attacked** (besiegers marching on, an angry legend's bombard), and losing one works as any other (below).
+7. **A new soundsystem** rises at the area's runestone. It has **4000 health** (`combat.soundsystemHealth`), and the home ring has **8000** (`combat.homeHealth`). When it arrives:
+   - the area's wild young and adults become **enraged** and **besiege** it (none, when you cleared it);
    - its wild babies turn **happy** on the spot;
    - its happy animals come and **dance** round it, or at the area's party spots.
-7. **Losing a soundsystem**: the area is **ruined** and its party ends for good. Its happy babies run off the map for good, and its besiegers march on to the **next-nearest standing soundsystem**, home included. Each loss brings the next wave **60 s sooner** (`party.lossPenalty`).
-8. **The party's over** once every soundsystem *and* the home ring are down (rules/partyOver.ts):
+8. **Losing a soundsystem**: the area is **ruined** and its party ends for good. Its happy babies run off the map for good, and its besiegers march on to the **next-nearest standing soundsystem**, home included. Each loss brings the next wave **60 s sooner** (`party.lossPenalty`).
+9. **The party's over** once every soundsystem *and* the home ring are down (rules/partyOver.ts):
    - the waves stop and nothing fights;
    - the lights and music wind down over 6 s (`partyOver.ease`);
    - every animal (yours too, and the ones that ran off) walks home or is simply there, asleep;
@@ -98,7 +102,7 @@ Babies weigh 0.5, young 1, adults 2 and legends 3 (`leash.weight.levels`). So yo
 
 (`config/combat.json` `levels`.) Some species shoot (owl, bat, raven, moth, glow-worm, spider, toad, salamander, snake, woodlouse). The rest bite, maul or charge. Every attack is telegraphed with a wind-up, and you can step aside or blink out of it. A charge that misses leaves the animal winded for 1.2 s, which is a free window for 💌s (`fight.charge.miss`).
 
-**Who lives where.** Every area except home starts with **one baby and one young** (`population.start`). Then, every wave, each area the party hasn't reached grows **half a creature** (one every other wave, `population.growth.perWave` 0.5), at a random level split evenly between baby, young and adult (`growth.weights`). So the areas the party reaches late are the dangerous ones. New arrivals always appear out of your sight. About **half the areas** also have a sleeping legend (`legends.share` 0.5), with a wild baby of its own kind in its circle.
+**Who lives where.** Every area is peopled from the very start (Ed, 2026-10-07; no growth on a clock any more, and no animal appears out of sight). Each has **two babies** (`population.byRoute.babies` 2, at most `babyCap` 2) and **one young** (`population.start`), and on top of that a **threat** by its place on the waves' route: the fighting value its extra young and adults add, from about **12** at the first wave's stone to **355** at the 40th (`byRoute.threat`, straight lines between its points; F as in Balance: young 11.6, adult 40). Each kind spends it its own way (`byRoute.profiles`): heavy kinds (bear, boar, elk, stag, badger, ram, beaver) mostly as a few adults, packs (wolf, fox, otter) and the rest as young with some adults, and swarms (beetle, hedgehog, moth, spider and the like) as many young. Weaker species come in more numbers for the same danger (`strength`). So the areas the party reaches late are the dangerous ones. (`population.growth` is the old per-wave growth: the game no longer reads it, the balance simulators still do.) About **half the areas** also have a sleeping legend (`legends.share` 0.5), with a wild baby of its own kind in its circle.
 
 **States.** Each animal is in one of these:
 - **Wild**: as found. It roams its own area and attacks you on the ground once you're in its area or within its attack's range. It goes for your party animals within 30 m (`combat.aggro`). It gives up if you rise, or once you're 30 m past its area's edge (`combat.leaveArea`), then walks home. It ignores happy animals.
@@ -140,10 +144,11 @@ No animal ever fights its own kind. Nobody dies: they "run off".
 
 **Asleep in their circles.** A legend lies half sunk in its own small clearing, mossed over like a boulder. The clearing is about 9 m across, bigger for big species (`legendClearing`), ringed with the area's tallest trees. **Waves don't wake legends.**
 
-**Dreams and quests.** Stand within 60 m on the ground (`dreams.range`) and you see what a sleeping legend dreams of: one other species at one level (baby, young or adult). The dream is a gamble: it can be anything on the map, except kinds whose nearest area is over 5 areas away (`legends.questCap`).
+**Dreams and quests.** Stand within 60 m on the ground (`dreams.range`) and you see what a sleeping legend dreams of: one other species at one level (baby, young or adult). The dream points **deeper in**: a kind that lives in an area **later on the route** than the legend's own, within 6 areas (`legends.questCap`; `legends.questLater`). If none of those is in reach, it's the kind of the nearest later area; a legend with no later area dreams of any kind. The gamble is how hard that later area is to reach and fight through.
+- **The early easy quest** is the exception: one legend among the first three areas the waves reach dreams of the baby of another of those three (`legends.earlyQuest`).
 - **Put a sigil of exactly that creature and level down inside its circle**, while the legend sleeps (or is restless), and the quest is done. You get its **buff for good** and the animal stays parked there.
-- **The farther away the dream creature lives, the stronger the buff**, up to 1.5× (`legends.questFar` 0.5).
-- If the area's wave hasn't come yet, the ley line also moves on from it early, and the area counts as **friendly**. (See the last section: today only animals that grow there *after* the quest are actually marked friendly.)
+- **Every quest's buff is the same strength**, 1.25× as written (`legends.questRoll`), however far the dream creature lived: the encounter is the gamble, not the reward. (A relic's buff stays as written.)
+- If the area's wave hasn't come yet, the ley line also moves on from it early, and the area counts as **friendly**. (Only animals that grew there *after* the quest were ever marked friendly, and nothing grows now, so in practice none are.)
 - Drop the sigil just outside the circle and the circle flashes as a hint.
 
 **Restless and angry.**
@@ -198,7 +203,7 @@ No animal ever fights its own kind. Nobody dies: they "run off".
   - The music is full within 25 m of a playing soundsystem and muffled further off (`music.nearDist`, `music.farDist`).
   - In a sleeping legend's circle it goes muffled and slow, and the legend's own layer comes in.
 - **The beat** drives the dancing animals, the lasers, the dancefloor tiles and the evolutions. The dancefloor gets brighter as more areas join the party: level steps at 3, 8 and 15 areas (`dancefloor.levels`).
-- **The ley line** is a glowing line on the ground. It runs from the treehouse through every runestone, in the order the waves will reach them: the whole route, all the time. There's none during the boot. After that it grows out from the treehouse at 3 links per wave (`leyLines.reveal`), reaching the third stone as wave 1 lands. A pulse runs along the current stretch with the wave countdown. A stone counts as reached when its wave comes or its quest is done, whichever is first. Only the next stone gets an on-screen pointer.
+- **The ley line** is a glowing line on the ground. It runs from the treehouse through every runestone, in the order the waves will reach them: the whole route, all the time. There's none during the boot. After that it grows out from the treehouse at 3 links per wave (`leyLines.reveal`), reaching the third stone as wave 1 lands. A pulse runs along the current stretch with the wave countdown. A stone counts as reached when its wave comes, its area is cleared or its quest is done, whichever is first. Only the next stone gets an on-screen pointer.
 
 ---
 

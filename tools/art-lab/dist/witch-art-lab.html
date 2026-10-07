@@ -1425,6 +1425,40 @@ function lowLife(t, r, st, s, P) {
       clump(sp, lerp2([x, y], b.end, .6), L * .5, 3.5 * s, st, r, { mat: r() < .5 ? M.LEAF3 : M.LEAF, ragged: 1.2 });
     });
   }
+  // hanging moss and vines (Ed, 2026-10-07, the eerie forest: "moss and vines only", nothing else hangs): pale beards of
+  // moss and dark vine ropes hanging from the underside of the crown and from the low boughs, in the areas that ask for
+  // them (st.treeHang, 0 to 1: their layout's hang). Only onto empty pixels below the crown's underside, so the crown
+  // (the top half) is untouched; listed in sp.low like the rest, so they hang in the bottom half, under the canopy.
+  const hang = st.treeHang || 0;
+  if (hang > 0) {
+    const under = new Int16Array(W).fill(-1); // each column's lowest leaf above the crown line
+    for (let x = 0; x < W; x++) for (let y = Math.min(H - 1, y0); y >= 0; y--) { const v = sp.m[y * W + x]; if (v && !WOOD.has(v)) { under[x] = y; break; } }
+    const cols = []; for (let x = 0; x < W; x++) if (under[x] >= 0) cols.push(x);
+    const strand = (x0, ya, L, mat, mat2, wave) => { // one strand, a pixel wide, swaying a little as it falls; its own end thinning
+      let x = x0;
+      for (let k = 0; k < L; k++) { const y = ya + k; if (y >= H - 2) break; x = x0 + Math.round(Math.sin(k * .35 + wave) * (k / L) * 1.5); const i = y * W + x;
+        if (x < 0 || x >= W || (sp.m[i] && !WOOD.has(sp.m[i]) && !low[i])) continue;
+        sp.px(x, y, k > L * .7 && k % 2 ? mat2 : mat, 0, 0, 1); low[i] = 1; }
+    };
+    const nMoss = cols.length ? Math.round(hang * (6 + cols.length / (2.5 * s))) : 0, nVine = cols.length ? Math.round(hang * (2 + cols.length / (7 * s))) : 0;
+    for (let k = 0; k < nMoss; k++) { // beards of moss: short, pale, in tufts of two or three strands
+      const x = pick(r, cols), L = Math.round(uni(r, 8, 20) * s * (.6 + hang * .6)), n = 2 + (r() < .5 ? 1 : 0), w = r() * 6;
+      for (let j = 0; j < n; j++) strand(x + j - 1, under[Math.max(0, Math.min(W - 1, x + j - 1))] + 1 || under[x] + 1, Math.round(L * (1 - j * .25)), M.MOSS, M.LEAF2, w + j);
+    }
+    for (let k = 0; k < nVine; k++) { // vines: long dark ropes, one strand, a leaf now and then
+      const x = pick(r, cols), L = Math.round(uni(r, 20, 42) * s * (.6 + hang * .6)), w = r() * 6;
+      strand(x, under[x] + 1, L, M.LEAF3, M.LEAF3, w);
+      for (let y = under[x] + 3; y < under[x] + L - 2; y += Math.max(3, Math.round(4 * s))) { const xx = x + Math.round(Math.sin((y - under[x]) * .35 + w) * ((y - under[x]) / L) * 1.5) + (hash2(x, y, 21) < .5 ? -1 : 1), i = y * W + xx;
+        if (y < H - 2 && xx >= 0 && xx < W && !sp.m[i]) { sp.px(xx, y, M.LEAF, 0, 0, .8); low[i] = 1; } }
+    }
+    // and on the trunk and its low boughs, where she sees them from the ground (the crown's underside is cut away round her
+    // there): beards of moss draped off the bark's edges, and vines trailing down the trunk's side
+    const nDrape = Math.round(hang * (6 + (H - y0) / (5 * s)));
+    for (let k = 0; k < nDrape; k++) { const p = spot(); if (!p || p.y > y0 + (H - y0) * .8) continue; const L = Math.round(uni(r, 6, 14) * s * (.6 + hang * .5)), w = r() * 6;
+      strand(p.x + p.side, p.y, L, M.MOSS, M.LEAF2, w); if (r() < .5) strand(p.x + p.side * 2, p.y + 1, Math.round(L * .7), M.MOSS, M.LEAF2, w + 1); }
+    const nTrail = Math.round(hang * (2 + (H - y0) / (14 * s)));
+    for (let k = 0; k < nTrail; k++) { const p = spot(); if (!p || p.y > y0 + (H - y0) * .5) continue; strand(p.x + p.side, p.y, Math.round(uni(r, 12, 24) * s * (.6 + hang * .5)), M.LEAF3, M.LEAF, r() * 6); }
+  }
   clusterClumps(sp);
   return t;
 }
@@ -1497,7 +1531,7 @@ function treeColours(r, st, type, blob = false) {
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
   const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = nightGreen((S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh); // hueAbs: a hue of its own, whatever the area's; never lime (nightGreen)
   const c = {
-    [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
+    [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212], [M.MOSS]: hsv2rgb(.24, .22 * st.sat, .6), // (hanging beard moss: pale grey-green)
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .46 * st.sat * sa), Math.min(1, .68 * va)), /* (the night palette: the lit tone quieter, so a lit crown never glows) */ [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
   if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
@@ -2648,7 +2682,7 @@ const WITCH_FOOT_POSES = {
   laugh: { frames: 3, fps: 4, party: "social" }, drink: { frames: 4, fps: 1.5, party: "social" }, run: { frames: 4, fps: 10, party: "move" },
   sitGround: { frames: 2, fps: 1, party: "rest" }, stargaze: { frames: 2, fps: 1, party: "rest" }, conga: { frames: 4, fps: 4, party: "pair" },
   twirl: { frames: 4, fps: 4, party: "pair" }, twirled: { frames: 4, fps: 4, party: "pair" }, limboHold: { frames: 2, fps: 2, party: "pair" }, limboHelp: { frames: 2, fps: 2, party: "pair" }, limbo: { frames: 4, fps: 3, party: "dance" },
-  dj: { frames: 14, fps: 4, heading: "towards" },
+  dj: { frames: 20, fps: 4, heading: "towards" },
 };
 // Two witches together: each is her own sprite, and the game puts them so that her `meet` anchor and her partner's land on
 // the same pixel. mirror: the partner's sprite is flipped left-right (anchors too: x becomes w - x), so the two face each
@@ -2773,18 +2807,27 @@ const FOOT_FRAMES = {
 //   knob     a fingertip on the mixer's knobs
 //   hype     a hand thrown up in the air, grinning (now and then)
 //   cast     both hands up (the party spell)
+// and for her set's routine (Ed, 2026-10-07; its timing and which frame when: rules/djSet.ts DJ_ROUTINE):
+//   needle   the needle drop: lifting the tonearm by its headshell, then the needle down on the record, her head right down to it
+//   chirp    the record pulled back with the crossfader cut, pushed forward with it open (each stroke a chirp)
+//   spin     a spin-back: her palm flat on the record pushing it round backwards, then her hand swept away
 const DJ_DECKS = { top: .5, platter: { a: .27, c: .29, r: .15 }, mixer: { a: .27, w: .09 }, fader: .37, depth: [.1, .44], width: .52 };
-const DJ_GESTURES = { groove: [0, 1], cue: [2, 3], scratch: [4, 5], fader: [6, 7], knob: [8, 9], hype: [10, 11], cast: [12, 13] };
+const DJ_GESTURES = { groove: [0, 1], cue: [2, 3], scratch: [4, 5], fader: [6, 7], knob: [8, 9], hype: [10, 11], cast: [12, 13],
+  needle: [14, 15], chirp: [16, 17], spin: [18, 19] };
 // the set she plays: a gesture a bar, round and round (hype once a loop)
 const DJ_SET = ["groove", "groove", "cue", "scratch", "groove", "fader", "knob", "cue", "groove", "scratch", "fader", "hype"];
 // The frame behind the decks at `beat` (beats on the game's beat clock, rules/beat.ts: beatAt): the gesture by the bar
 // (4 beats; `offset` bars along the set), its first frame for the first half of each beat; `cast`, the spell's gesture.
-function djFrame(beat, { cast = false, offset = 0 } = {}) {
-  return DJ_GESTURES[djGesture(beat, { cast, offset })][(Math.max(0, beat) % 1) < .5 ? 0 : 1];
+// `scratch` (her wait behind the decks after a knockout, the hotel builder's hook): scratching, a bar of scratches and a bar of
+// chirps by turns, a stroke a half-beat. (The game plays its timed routine there instead, rules/djSet.ts; this is its fallback.)
+function djFrame(beat, { cast = false, offset = 0, scratch = false } = {}) {
+  return DJ_GESTURES[djGesture(beat, { cast, offset, scratch })][(Math.max(0, beat) % 1) < .5 ? 0 : 1];
 }
 /** The gesture she plays at `beat` (a DJ_GESTURES key): the picture's djFrame and the sound's cues (platform/audio/deck.ts) read the same set. */
-function djGesture(beat, { cast = false, offset = 0 } = {}) {
-  return cast ? "cast" : DJ_SET[(Math.floor(Math.max(0, beat) / 4) + offset) % DJ_SET.length];
+function djGesture(beat, { cast = false, offset = 0, scratch = false } = {}) {
+  if (cast) return "cast";
+  if (scratch) return Math.floor(Math.max(0, beat) / 4) % 2 ? "chirp" : "scratch";
+  return DJ_SET[(Math.floor(Math.max(0, beat) / 4) + offset) % DJ_SET.length];
 }
 const DJ_BROOM = { binding: [-.08, .31, -.42], dir: [-.06, 1, -.16] };
 const djOn = (K) => ({ broom: DJ_BROOM, dj: true, farHand: "down", hand: "down", sway: .015, ...K });
@@ -2811,6 +2854,15 @@ FOOT_FRAMES.dj = [
   // cast: both hands up
   djOn({ crouch: .06, look: .22, mouth: true, free: [.06, 1.26, .26], elbow: [.06, 1.0, .28], hand: "wave", far: [.06, 1.26, -.26], farElbow: [.06, 1.0, -.28], farHand: "wave" }),
   djOn({ look: .3, mouth: "laugh", free: [.02, 1.36, .21], elbow: [.04, 1.08, .26], hand: "wave", far: [.02, 1.36, -.21], farElbow: [.04, 1.08, -.26], farHand: "wave" }),
+  // needle: lifting the tonearm by its headshell; then the needle down on the record, her head right down to it
+  djOn({ nod: .4, tilt: .25, look: .05, free: [PL.a + .03, HT + .12, PL.c - .09], elbow: [.12, .78, .27], hand: "grip", far: [PL.a - .04, HT + .02, -.05] }),
+  djOn({ crouch: .08, nod: .9, tilt: .3, free: [PL.a + .04, HT + .02, PL.c - .04], hand: "grip", far: [PL.a - .04, HT + .02, -.05] }),
+  // chirp: the record pulled back with the fader cut, pushed forward with it open
+  djOn({ crouch: .06, nod: .8, tilt: .1, mouth: true, free: [PL.a - .07, HT, PL.c + .03], far: [DJ_DECKS.fader, HT + .01, .06] }),
+  djOn({ crouch: .02, nod: .55, tilt: .2, free: [PL.a + .06, HT, PL.c - .04], far: [DJ_DECKS.fader, HT + .01, -.07] }),
+  // spin: her palm flat on the record's far side pushing it round backwards, then swept off it, out and up
+  djOn({ crouch: .07, nod: .7, tilt: .2, free: [PL.a + .09, HT, PL.c - .05], far: [PL.a - .04, HT + .02, -.05] }),
+  djOn({ look: .15, tilt: .3, mouth: true, free: [PL.a - .08, HT + .16, PL.c + .1], elbow: [.06, .82, .32], hand: "palm", far: [PL.a - .04, HT + .02, -.05] }),
 ];
 // the knee between a hip and a foot, bent forward
 function kneeOf(hip, foot, l) {
@@ -3390,8 +3442,8 @@ function treehouseModel(facing = "towards") {
   return { m, lights, dj, seat: DJ_STAND, door: [Math.cos(Math.PI / 2 + .05) * S.porch.R, S.porch.y, Math.sin(Math.PI / 2 + .05) * (S.porch.R + .05)], camera: [0, sy + .95, 1.9], splitY: sy + S.studio.h + 1.5, footprint: 4.3, crownR, trunkR: 1.55 }; // trunkR: its radius 3 m up
 }
 
-// The treehouse at the witch's scale: { whole, top, bot, fore, crownY, anchors: { base, seat, door, camera, lights: [{ x, y, rgb, kind }] }, metres }.
-// base: the trunk's foot on the ground (place the treehouse by it); seat: where her sit pose's anchor goes (the studio's floor under her
+// The treehouse at the witch's scale: { whole, top, bot, fore, crownY, anchors: { base, seat, platter, door, camera, lights: [{ x, y, rgb, kind }] }, metres }.
+// base: the trunk's foot on the ground (place the treehouse by it); platter: the pink-labelled turntable's centre (the knockout's iris opens on it, render/koIris.ts); seat: where her sit pose's anchor goes (the studio's floor under her
 // stool); door: the porch's front door; camera: the studio's middle, near her seat (to frame for the opening zoom); lights: its light sources.
 // top is the crown and everything above the studio's roof (the loft and the tower over the treeline: drawn in treetop mode, cut out round
 // the witch); bot the rest. metres: height and width; towerFloor and roofTip (the top storey's floor and the roof's tip, above the ground);
@@ -3425,8 +3477,46 @@ function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
   for (const fs of frames) for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (fs.m[y * sp.w + x]) { fx0 = Math.min(fx0, x); fx1 = Math.max(fx1, x); fy0 = Math.min(fy0, y); fy1 = Math.max(fy1, y); }
   const foreFrames = frames.map(fs => { const c = new Sprite(fx1 - fx0 + 1, fy1 - fy0 + 1); for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) { const i = (y + fy0) * sp.w + x + fx0; if (fs.m[i]) c.put(x, y, fs.m[i], fs.n[i * 3], fs.n[i * 3 + 1], fs.n[i * 3 + 2]); } return c; });
   const S = TREEHOUSE_STOREYS;
-  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
+  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, candles: candleRow(at), crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), platter: at(T.dj.to([DJ_DECKS.platter.a, DJ_DECKS.top, DJ_DECKS.platter.c])), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
     metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), towerFloor: um(S.tower.y), roofTip: um(S.tower.y + S.tower.h + 3.3 + .3), footprint: um(T.footprint), overhang: um(S.studio.deck), trunk: um(T.trunkR * 2), crown: um(T.crownR) } };
+}
+
+// The candles' row: along the front edge of the studio's terrace (Ed, 2026-10-07: "along the front edge of the terrace she is
+// standing on", so the bar reads at the game's own zoom), CANDLE.arc either side of its nearest point to the camera, on its
+// open side between the walls, CANDLE.inset in from the edge, in front of the low railing; CANDLE.samples points along it, screen left to right,
+// in the base's pixels (the game spaces the candles along it by length).
+function candleRow(at) {
+  const S = TREEHOUSE_STOREYS.studio, R = S.deck - CANDLE.inset, pt = a => at([Math.cos(a) * R, S.y, Math.sin(a) * R]), out = [];
+  let mid = Math.PI / 2, low = -Infinity; // (centred on the edge's nearest point to the camera, the lowest on screen: the house is turned a little)
+  for (let a = Math.PI / 2 - 1.3; a <= Math.PI / 2 + 1.3; a += .02) { const y = pt(a).y; if (y > low) { low = y; mid = a; } }
+  const lo = Math.max(Math.PI / 2 - 1.3, mid - CANDLE.arc), hi = Math.min(Math.PI / 2 + 1.3, mid + CANDLE.arc); // (and kept to the open side, between the walls)
+  for (let k = 0; k < CANDLE.samples; k++) out.push(pt(lo + k / (CANDLE.samples - 1) * (hi - lo)));
+  return out.sort((p, q) => p.x - q.x);
+}
+// The knockdown candles (Ed, 2026-10-07, via the coordinator: "a LOADING BAR ... many candles, one per second, or even one
+// per ½ second, of respawn wait ... the base cooldown WHITE candles, the extra from repeat knockdowns RED"): a taper on a
+// little pewter drip-cup, standing in a row along the front edge of the studio's terrace (treehouseSprite's `candles`, a line
+// of points: candleRow), at the house's scale; 12 stand well apart along it and 24 still apart. white: the base wait's (white wax, cream where
+// it's melted), else the extra's (red, pink where it's melted). level 0 whole to CANDLE.levels - 2 a stub, its wax running
+// down more as it goes; the last level out, a stub with a curl of smoke. frame: the flame's flicker (CANDLE.frames), leaning
+// and stretching; the flame two warm glowing tones, a dark wick.
+const CANDLE = { levels: 5, frames: 3, colours: 2, arc: .8, inset: .05, samples: 25, height: .4, r: .04 };
+function candleSprite(st = {}, { level = 0, frame = 0, white = false } = {}) {
+  const m = new Model({ blend: .02 }), out = level >= CANDLE.levels - 1, h = [1, .74, .5, .28, .14][Math.min(level, 4)] * CANDLE.height, r = CANDLE.r;
+  const wax = white ? M.BELLY : M.CLOTH, melted = white ? M.BODY2 : M.EAR;
+  m.ell([0, .01, 0], [r * 1.7, .01, r * 1.7], M.FRAME, { group: 1 }); // the drip-cup
+  m.seg([0, .016, 0], [0, .016 + h, 0], r, r * .9, wax, { group: 3, paint: p => p[1] > .016 + h - .01 ? melted : undefined }); // the wax, its melted top paler
+  for (let k = 0; k < Math.min(level, 2); k++) { const a = 1.1 + k * 2.6, dl = h * (.35 + .2 * k); m.seg([Math.cos(a) * r, .016 + h - .008, Math.sin(a) * r], [Math.cos(a) * r * 1.1, .016 + h - dl, Math.sin(a) * r * 1.1], .008, .011, melted, { group: 4 + k }); } // runs of wax
+  const top = [0, .016 + h, 0];
+  m.seg(top, v3.add(top, [0, .022, 0]), .005, .004, M.LINE, { group: 8 }); // the wick
+  if (!out) { // the flame: an outer glow round a bright core, leaning and stretching with the flicker
+    const lean = [0, .01, -.008][frame % 3], tall = [1, .8, 1.15][frame % 3], f = v3.add(top, [lean, .05 * tall, 0]);
+    m.ell(f, [.02, .048 * tall, .02], M.GLOW, { group: 9 });
+    m.ell(v3.add(f, [0, -.012, .01]), [.01, .026 * tall, .01], M.MAGIC2, { group: 10 });
+  } else for (let k = 0; k < 4; k++) m.ell(v3.add(top, [Math.sin(k * 1.7 + frame) * .015, .04 + k * .035, 0]), [.009 + k * .003, .009, .009 + k * .003], M.STONE, { group: 11 + k, extra: true }); // a curl of smoke
+  const { sp, s } = render(m, { scale: witchPixelsPerUnit(st), facing: "towards" });
+  sp.scale = s;
+  return sp;
 }
 
 
@@ -4852,7 +4942,7 @@ const GENOMES = [
     levels: [
       { body: { len: .58, chest: .22, tuck: .24, hr: .3, legW: 1.1 }, head: { snout: .8, blaze: 1.6 } },
       { body: { len: .9, chest: .18, tuck: .2, neckAng: 0 }, head: { snout: 1.2, snoutTaper: .45, blaze: 1.3 } },
-      { body: { len: .9, bw: .46, chest: .14, tuck: .16, legW: 1.6 }, head: { blaze: 1.45 }, features: [{ kind: "mane", from: .1, to: .85, height: .12, count: 16, lean: .95 }, { kind: "claws", size: .14 }] },
+      { body: { len: 1.6, hgt: .55, bw: .62, chest: .04, tuck: .05, legW: 1.7, hr: .3, neckAng: .12 }, head: { blaze: 1.8 }, features: [{ kind: "mane", from: .1, to: .85, height: .04, count: 16, lean: .95 }, { kind: "claws", size: .14 }] }, // (Ed, 2026-10-07: low, wide and flat-backed on short legs, not a bear: art lint)
       { body: { len: .95, bw: .5, chest: .14, tuck: .16, legW: 1.8, neckAng: -.05 }, head: { blaze: 1.5, blazeGlow: true }, features: [
         { kind: "mane", from: .05, to: .9, height: .12, count: 20, lean: 1 },
         { kind: "stones", from: .15, to: .8, count: 5, height: .62 },
@@ -4889,7 +4979,7 @@ const GENOMES = [
       { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
       { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, eyesRing: true } },
     ] },
-  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.22, len: .74, chest: .36, tuck: .42, neck: .22, neckAng: .05, neckW: .6, hr: .3, legW: 1.75, back: "hump", front: 1.25, humpK: 2.6, bw: .34 }, head: { snout: .62, snoutD: .68, snoutTaper: .75, muzzle: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
+  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
   { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] , texture: { kind: "bristles" } },
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },
@@ -7916,6 +8006,10 @@ const AREA_LAYOUTS = {
     "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
 };
 Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS); // the recipes' own
+// Hanging moss and vines in the eerie woods (Ed, 2026-10-07: "moss and vines only"): how much hangs from their trees'
+// crowns and low boughs, 0 to 1 (art/trees.js lowLife, st.treeHang): the wet, old and tangled woods.
+const HANG = { "wispy-forest": .9, "tangly-forest": .7, "muddy-forest": .55, "ancient": .7, "old-oaks": .5, "alder-forest": .6, "wetland": .7, "bog": .8, "deadwood": .45, "honeysuckle-tangle": .6, "beaver-pond": .5, "stream": .4 };
+for (const [id, h] of Object.entries(HANG)) if (AREA_LAYOUTS[id]) AREA_LAYOUTS[id].hang = h;
 for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
 // Checks a layout's shape; returns a list of problems (empty when it's sound).
 function layoutProblems(a) {
@@ -7973,7 +8067,7 @@ function prop(kind, o, def, st, r, s) {
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
     const f = treeSpecies(o.type).fn;
-    const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs };
+    const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: def.layout?.hang ?? 0 };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
     c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
@@ -8171,7 +8265,7 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
   const slots = flora?.length ? null : floraSlots(id, total)?.map((o, i) => [o, i]).sort((a, b) => stature(a[0]) - stature(b[0]) || a[1] - b[1]).map(([o]) => o);
   const character = (({ type, minor, bare, dark, ...rest }) => rest)(mains[0] || {}), own = type => recipes.find(o => o.type === type);
   if (!recipes.length) return [];
-  const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];
+  const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [], raw = [];
   let n = 0;
   for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
     const o = slots ? { ...character, ...own(slots[n].type), ...slots[n], minor: undefined } : minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
@@ -8184,15 +8278,57 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
     const scale = willow ? 1 + (h - 1) * .45 : small ? 1 + (h - 1) * .5 : wide ? 1 + (h - 1) * .75 : h;
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
-      treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs };
+      treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs, treeHang: def.layout?.hang ?? 0 };
     const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
     c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
     const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), sw = sp => bakeSway(sp, makeCanvas), m = px => +(px / ppm).toFixed(2);
     out.push({ heightClass: cls.id, species: o.type, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), sway: { whole: sw(t.sp), top: sw(parts.top), bot: sw(parts.bot) }, crownY: t.crownY,
       metres: { height: m(t.sp.h), crownBase: m(t.sp.h - t.crownY), crownHeight: m(t.crownY), crownRadius: m(t.sp.w / 2) } });
+    raw.push({ t, c, cls: cls.id });
+  }
+  // A bark face (Ed, 2026-10-07, the eerie forest): one more variant, a copy of the area's first tall tree (or mature, failing
+  // that) with a face half-seen in its bark, weight 0: the view puts it on at most two trees an area (render/view/scenery.ts
+  // barkFaces), never more. Easy to miss: the bark's own dark tones only, two uneven knot-holes and a drooping split.
+  const order = ["giant", "tall", "mature"].flatMap(cl => raw.flatMap((q, k) => (q.cls === cl ? [k] : [])));
+  for (const fi of order) { // the first that takes one (a trunk thick enough)
+    const { t, c } = raw[fi], sp = t.sp, faced = Object.assign(Object.create(Object.getPrototypeOf(sp)), sp, { m: sp.m.slice(), n: sp.n.slice(), ...(sp.blob ? { blob: sp.blob.slice() } : {}), ...(sp.low ? { low: sp.low.slice() } : {}) });
+    if (barkFace(faced, t.crownY, rng(seed + 977))) {
+      const ft = { ...t, sp: faced }, parts = splitTree(ft), bk = q => bake(q, c, st, "none", makeCanvas), sw = q => bakeSway(q, makeCanvas), m = px => +(px / ppm).toFixed(2), o = out[fi];
+      out.push({ ...o, face: true, weight: 0, whole: bk(faced), top: bk(parts.top), bot: bk(parts.bot), sway: { whole: sw(faced), top: sw(parts.top), bot: sw(parts.bot) } });
+      break;
+    }
   }
   return out;
+}
+// A face in a trunk's bark, as a tree's knots and splits happen to make one: two knot-holes a little uneven (one higher,
+// one bigger), a faint ridge between them, and a split below drooping at its ends. Only the bark's dark tones (BARKD, its
+// darkest LINE), no whites, no pupils, nothing cartoon. On the trunk where it's one stem, at least 8 pixels wide and mostly bare bark, from 40% of the
+// way down from the crown line, below its fork and above its flaring foot (in the bottom half, so it shows from the ground). False if the trunk is too thin for one.
+function barkFace(sp, crownY, r) {
+  const W = sp.w, H = sp.h, WOODS = new Set([M.TRUNK, M.BARKD, M.BARKL, M.BARK2]);
+  let best = null; // the highest row from a quarter of the way down where the trunk is one stem, wide enough, with bare bark
+  for (let y = Math.round(crownY + (H - crownY) * .25); y <= Math.round(crownY + (H - crownY) * .8) && !best; y++) { // round the face (above its ivy and sprigs)
+    const runs = []; let a = -1;
+    for (let x = 0; x <= W; x++) { const w = x < W && WOODS.has(sp.m[y * W + x]); if (w && a < 0) a = x; if (!w && a >= 0) { runs.push({ x: a, y, w: x - a }); a = -1; } }
+    const wide = runs.filter(q => q.w >= 8);
+    if (wide.length !== 1 || wide[0].w > 26) continue;
+    const q = wide[0], x0 = Math.round(q.x + q.w * .15), x1 = Math.round(q.x + q.w * .85); let bark = 0, all = 0;
+    for (let yy = y; yy < Math.min(H, y + 9); yy++) for (let x = x0; x <= x1; x++) { all++; if (WOODS.has(sp.m[yy * W + x])) bark++; }
+    if (bark >= all * .7) best = q;
+  }
+  if (!best) return false;
+  const cx = best.x + best.w / 2 + (r() - .5) * best.w * .1, y = best.y, gap = Math.max(2, Math.round(best.w * .2)), big = r() < .5 ? -1 : 1;
+  const dark = (x, yy, v = M.LINE) => { x = Math.round(x); if (WOODS.has(sp.m[yy * W + x]) || sp.m[yy * W + x] === M.LINE) sp.px(x, yy, v, 0, 0, 1); };
+  for (const side of [-1, 1]) { // the knot-holes: a dark core, a BARKD rim on their lower side; the bigger one a pixel lower
+    const ex = cx + side * gap, ey = y + (side === big ? 1 : 0), rr = side === big && best.w >= 13 ? 1 : 0;
+    for (let dx = -rr; dx <= 1; dx++) for (let dy = 0; dy <= 1 + rr; dy++) dark(ex + dx - .5, ey + dy);
+    dark(ex - .5, ey + 2 + rr, M.BARKD); dark(ex + .5, ey + 2 + rr, M.BARKD);
+  }
+  dark(cx, y + 2, M.BARKL); dark(cx, y + 3, M.BARKL); // the ridge between them, a little lit
+  const my = y + 5 + Math.round(best.w / 10), half = Math.max(2, Math.round(best.w * .22)); // the split below, drooping at its ends
+  for (let dx = -half; dx <= half; dx++) dark(cx + dx, my + (Math.abs(dx) >= half - 1 ? 1 : 0), Math.abs(dx) === half ? M.BARKD : M.LINE);
+  return true;
 }
 
 // ================= light sources (campfires, magic stones, ponds) =================
@@ -9095,6 +9231,136 @@ function beachSprite(id, st = {}, { ppm = 16, heading = 0 } = {}) {
   const [px, py] = project([0, 0, 0]);
   return { whole: crop, origin: { x: +(px - x0).toFixed(1), y: +(py - y0).toFixed(1) }, metres: { width: +(W / ppm).toFixed(2), height: +(H / ppm).toFixed(2) } };
 }
+
+
+// ---- inlined from art/dolphins.js ----
+// Dolphins leaping off the east coast at night (Ed, 2026-10-07, via the coordinator: "occasional dolphins arcing out of the
+// water and back, alone or in pairs ... a silvery moonlit highlight and a small splash; pixel art that reads at px 5"):
+//   dolphin   a bottlenose seen side-on, travelling right (the game mirrors it to go left), in DOLPHIN.frames frames along its
+//             arc: nose up as it breaks the water, level at the top, nose down as it goes back in; a dark slate back over a pale
+//             belly, a beak, a dorsal fin, flukes, an eye; the moon catching its back in a line of glints (the only lit pixels);
+//   splash    DOLPHIN.splashFrames frames of a small splash where it leaves or enters the water: a burst of spray up, falling,
+//             a ring of foam left on the water.
+// Built in 3D at the witch's scale (art/model3d.js), about 2.4 m long; origin: the dolphin's middle (the game puts it on its
+// arc), the splash's foot on the water.
+
+
+
+const DOLPHIN = { frames: 6, splashFrames: 3, length: 2.4, pitch: [.95, .55, .18, -.18, -.55, -.95] };
+
+function dolphinColours() {
+  return {
+    [M.BODY]: [58, 70, 92], [M.BODY2]: [88, 102, 126], [M.BELLY]: [196, 204, 214], // its back, flank, belly
+    [M.GLINT]: [226, 236, 255], // the moon on its back
+    [M.FRAME]: [214, 232, 240], [M.RUNE]: [150, 210, 230], // spray and foam
+    [M.NOSE]: [14, 12, 18], [M.LINE]: [20, 24, 34],
+  };
+}
+
+const DU = 1.9; // metres a model unit (the witch's scale)
+// The dolphin along +x (nose at +x), up +y, in model units; pitched by `a` (radians, nose up) about its middle.
+function dolphinModel(a) {
+  const m = new Model({ blend: .04 }), L = DOLPHIN.length / DU, c = Math.cos(a), s = Math.sin(a);
+  const P = (x, y, z = 0) => [x * c - y * s, x * s + y * c, z]; // a point on the body, pitched
+  const back = p => { const q = [p[0] * c + p[1] * s, -p[0] * s + p[1] * c]; return q[1] < -.02 ? M.BELLY : q[1] > .045 ? (q[0] > -L * .22 && q[0] < L * .2 && q[1] > .108 + Math.abs(q[0]) * .05 ? M.GLINT : M.BODY) : M.BODY2; }; // (the glint: a thin line along the top of its back)
+  // the body: beak, melon, the thick of it, the tail stock
+  m.chain([[...P(L * .5, -.005), .018], [...P(L * .42, 0), .035], [...P(L * .3, .02), .08], [...P(L * .08, .015), .115], [...P(-L * .14, 0), .095], [...P(-L * .34, -.01), .05], [...P(-L * .46, -.01), .025]], M.BODY2, { group: 1, paint: back });
+  // the flukes, flat and wide, a little swept back
+  for (const z of [-1, 1]) m.seg(P(-L * .45, -.01, 0), P(-L * .53, 0, z * .1), .022, .008, M.BODY, { group: 2 });
+  // the dorsal fin, curving back; the pectoral fin
+  m.chain([[...P(-L * .02, .1), .03], [...P(-L * .07, .17), .018], [...P(-L * .12, .2), .006]], M.BODY, { group: 3, paint: p => { const q = [p[0] * c + p[1] * s, -p[0] * s + p[1] * c]; return q[1] > .175 && q[0] > -L * .1 ? M.GLINT : undefined; } }); // (its tip catching the moon)
+  m.seg(P(L * .14, -.06, .05), P(L * .04, -.12, .09), .02, .008, M.BODY2, { group: 4 });
+  m.ell(P(L * .33, .03, .055), [.012, .012, .008], M.NOSE, { group: 5 }); // its eye
+  return m;
+}
+const dolphinSpriteOf = (m, st) => { const { sp, project } = render(m, { scale: witchPixelsPerUnit(st), yaw: 0 }); const [x, y] = project([0, 0, 0]); sp.origin = { x: +x.toFixed(1), y: +y.toFixed(1) }; return sp; };
+/** The dolphin at `frame` of its leap (0 breaking the water nose up .. DOLPHIN.frames - 1 going back in nose down). */
+function dolphinSprite(st = {}, { frame = 0 } = {}) {
+  const sp = dolphinSpriteOf(dolphinModel(DOLPHIN.pitch[Math.max(0, Math.min(DOLPHIN.frames - 1, frame))]), st);
+  return sp;
+}
+/** The splash at `frame`: 0 a burst of spray going up, 1 at its height, 2 falling back with a ring of foam on the water. */
+function dolphinSplash(st = {}, { frame = 0 } = {}) {
+  const m = new Model({ blend: .02 }), k = Math.max(0, Math.min(DOLPHIN.splashFrames - 1, frame)), up = [.12, .2, .1][k], spread = [.08, .14, .2][k];
+  m.ell([0, .004, 0], [spread + .06, .006, (spread + .06) * .55], k === 2 ? M.RUNE : M.FRAME, { group: 1 }); // foam on the water
+  for (let i = 0; i < 7; i++) { // drops of spray
+    const a = i / 7 * Math.PI * 2 + .4, r = spread * (.5 + (i % 3) * .25), h = up * (1 - (i % 3) * .25) * (k === 2 ? .5 : 1);
+    m.ell([Math.cos(a) * r, .02 + h, Math.sin(a) * r * .5], [.018, .022, .018], i % 2 ? M.FRAME : M.RUNE, { group: 2 + i });
+  }
+  m.ell([0, 0, 0], [.004, .002, .004], M.NOSE, { group: 0, extra: true }); // (the foot in the frame)
+  const sp = dolphinSpriteOf(m, st); for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.NOSE) sp.m[i] = 0;
+  return sp;
+}
+
+
+// ---- inlined from art/kraken.js ----
+// A kraken off the west coast (Ed, 2026-10-07, via the coordinator: "a few huge tentacles rise slowly out of the moonlit sea, curl
+// and sink back; maybe an eye or the dome of its head breaking the surface; rare, slow and awe-inspiring"): seen against the
+// moon road, so a near-black sea-purple with a moonlit rim and pale suckers along its inner side.
+//   tentacle  KRAKEN.frames frames of one tentacle out of the water (its foot on the water, the rest the sea hides): rising, its
+//             tip lifting, tall and curling over, curled tight, unfurling as it sinks, nearly gone; mirrored by the game for a
+//             tentacle curling the other way. About 9 m out of the water at its tallest.
+//   head      KRAKEN.headFrames frames of the dome of its head breaking the surface: a hump, the dome up with the water running
+//             off it, its great eye open (the eye the one glowing thing: a dim gold, slit-pupilled).
+// Built in 3D at the witch's scale (art/model3d.js); every sprite's foot is the water line (its bottom row).
+
+
+
+const KRAKEN = { frames: 6, headFrames: 3, tall: 9 };
+function krakenColours() {
+  return {
+    [M.BODY]: [34, 24, 46], [M.BODY2]: [52, 36, 64], [M.BELLY]: [150, 120, 150], // its hide, the light side, the suckers
+    [M.GLINT]: [196, 210, 240], // the moon along its rim
+    [M.WOKEN]: [214, 170, 60], [M.NOSE]: [10, 6, 14], // its eye, the slit
+    [M.FRAME]: [200, 220, 232], [M.RUNE]: [120, 170, 200], // water running off it
+    [M.LINE]: [12, 8, 18],
+  };
+}
+const KU = 1.9; // metres a model unit
+// Each frame: how much of it is out of the water (0..1) and how far its tip has curled over (radians along its last third).
+const KRAKEN_POSE = [[.35, .2], [.7, .5], [1, 1.2], [1, 2.4], [.75, 1.6], [.35, .8]];
+
+function krakenTentacleModel(frame) {
+  const [out, curl] = KRAKEN_POSE[Math.max(0, Math.min(KRAKEN_POSE.length - 1, frame))], H = KRAKEN.tall / KU * out, n = 14, m = new Model({ blend: .05 }), pts = [];
+  // its spine: up from the water, leaning a little, then the tip curling over (to +x), the curl tightening along it
+  let p = [0, -.3, 0], a = Math.PI / 2 - .12; const step = (H + .3) / n;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, r = .42 * (1 - t) ** .8 + .03;
+    pts.push([...p, r]);
+    const bend = t > .5 ? curl * ((t - .5) / .5) * 2.6 / n * 3 : .015; // (most of the curl in its last stretch)
+    a -= bend; p = v3.add(p, [Math.cos(a) * step, Math.sin(a) * step, 0]);
+  }
+  const rimSide = q => q[0] + q[1] * .3; // (the moon behind it, up and to its left: the rim on that side)
+  m.chain(pts, M.BODY, { group: 1, paint: q => {
+    // suckers along its inner (curling) side, the moonlit rim on its outer
+    let best = 0, bd = Infinity; for (let i = 0; i < pts.length; i++) { const d = Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]); if (d < bd) { bd = d; best = i; } }
+    const c = pts[best], dx = q[0] - c[0], dy = q[1] - c[1], r = c[3], along = best / pts.length;
+    if (dx > r * .45 && dy < 0 && along > .2 && (best % 2 === 0)) return M.BELLY;
+    if (dx < -r * .55 && dy > -r * .2) return M.GLINT;
+    return along > .6 ? M.BODY2 : undefined;
+  } });
+  m.ell([0, 0, 0], [.6, .02, .3], M.RUNE, { group: 2 }); // the water stirred round its foot
+  return m;
+}
+function krakenHeadModel(frame) {
+  const k = Math.max(0, Math.min(KRAKEN.headFrames - 1, frame)), up = [.35, .8, .9][k], m = new Model({ blend: .05 });
+  m.ell([0, -.6 + up, 0], [1.6, 1.1, 1.1], M.BODY, { group: 1, rough: .04, paint: q => q[1] > -.6 + up + 1.02 ? M.GLINT : q[1] > -.6 + up + .7 ? M.BODY2 : undefined }); // the dome, a thin crown of moonlight on it
+  if (k === 2) { const e = [.95, -.6 + up + .25, .78]; m.ell(e, [.2, .3, .24], M.WOKEN, { group: 2 }); m.ell(v3.add(e, [.06, 0, .08]), [.05, .26, .08], M.NOSE, { group: 3 }); } // its great eye, slit-pupilled
+  for (let i = 0; i < (k === 0 ? 2 : 5); i++) m.ell([(i - 2) * .5, .03 + (i % 2) * .05, .9], [.06, .08 + k * .03, .05], i % 2 ? M.FRAME : M.RUNE, { group: 4 + i }); // water running off
+  m.ell([0, 0, 0], [2, .02, 1], M.RUNE, { group: 10 }); // its wake on the water
+  return m;
+}
+const krakenBelow = (sp, project) => { // everything under the water line cut away (the sea hides it), so its foot is the bottom row
+  const [ox, wy] = project([0, 0, 0]), H = Math.max(1, Math.min(sp.h, Math.round(wy) + 1)), out = new Sprite(sp.w, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < sp.w; x++) { const i = y * sp.w + x; if (sp.m[i]) out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
+  out.origin = { x: +ox.toFixed(1), y: H };
+  return out;
+};
+const krakenDraw = (m, st) => { const { sp, project } = render(m, { scale: witchPixelsPerUnit(st), yaw: .25 }); return krakenBelow(sp, project); };
+/** One tentacle at `frame` (0 rising .. KRAKEN.frames - 1 nearly gone). */
+const krakenTentacle = (st = {}, { frame = 0 } = {}) => krakenDraw(krakenTentacleModel(frame), st);
+/** The dome of its head at `frame` (0 a hump, 1 the dome, 2 its eye open). */
+const krakenHead = (st = {}, { frame = 0 } = {}) => krakenDraw(krakenHeadModel(frame), st);
 
 
 // ---- inlined from art/decor.js ----
@@ -12156,8 +12422,7 @@ function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = defaultC
   return out;
 }
 
-export { DOLPHIN, dolphinColours, dolphinSprite, dolphinSplash } from "./dolphins.js";
-export { KRAKEN, krakenColours, krakenTentacle, krakenHead } from "./kraken.js";
+export { DOLPHIN, dolphinColours, dolphinSprite, dolphinSplash, KRAKEN, krakenColours, krakenTentacle, krakenHead }; // (imported above, so the lab's inliner sees them)
 
 
 // ---- inlined from art/lighting.js ----

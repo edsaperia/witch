@@ -22,10 +22,10 @@ export function dolphinColours() {
   };
 }
 
-const U = 1.9; // metres a model unit (the witch's scale)
+const DU = 1.9; // metres a model unit (the witch's scale)
 // The dolphin along +x (nose at +x), up +y, in model units; pitched by `a` (radians, nose up) about its middle.
 function dolphinModel(a) {
-  const m = new Model({ blend: .04 }), L = DOLPHIN.length / U, c = Math.cos(a), s = Math.sin(a);
+  const m = new Model({ blend: .04 }), L = DOLPHIN.length / DU, c = Math.cos(a), s = Math.sin(a);
   const P = (x, y, z = 0) => [x * c - y * s, x * s + y * c, z]; // a point on the body, pitched
   const back = p => { const q = [p[0] * c + p[1] * s, -p[0] * s + p[1] * c]; return q[1] < -.02 ? M.BELLY : q[1] > .045 ? (q[0] > -L * .22 && q[0] < L * .2 && q[1] > .108 + Math.abs(q[0]) * .05 ? M.GLINT : M.BODY) : M.BODY2; }; // (the glint: a thin line along the top of its back)
   // the body: beak, melon, the thick of it, the tail stock
@@ -38,10 +38,10 @@ function dolphinModel(a) {
   m.ell(P(L * .33, .03, .055), [.012, .012, .008], M.NOSE, { group: 5 }); // its eye
   return m;
 }
-const spriteOf = (m, st) => { const { sp, project } = render(m, { scale: witchPixelsPerUnit(st), yaw: 0 }); const [x, y] = project([0, 0, 0]); sp.origin = { x: +x.toFixed(1), y: +y.toFixed(1) }; return sp; };
+const dolphinSpriteOf = (m, st) => { const { sp, project } = render(m, { scale: witchPixelsPerUnit(st), yaw: 0 }); const [x, y] = project([0, 0, 0]); sp.origin = { x: +x.toFixed(1), y: +y.toFixed(1) }; return sp; };
 /** The dolphin at `frame` of its leap (0 breaking the water nose up .. DOLPHIN.frames - 1 going back in nose down). */
 export function dolphinSprite(st = {}, { frame = 0 } = {}) {
-  const sp = spriteOf(dolphinModel(DOLPHIN.pitch[Math.max(0, Math.min(DOLPHIN.frames - 1, frame))]), st);
+  const sp = dolphinSpriteOf(dolphinModel(DOLPHIN.pitch[Math.max(0, Math.min(DOLPHIN.frames - 1, frame))]), st);
   return sp;
 }
 /** The splash at `frame`: 0 a burst of spray going up, 1 at its height, 2 falling back with a ring of foam on the water. */
@@ -53,6 +53,6 @@ export function dolphinSplash(st = {}, { frame = 0 } = {}) {
     m.ell([Math.cos(a) * r, .02 + h, Math.sin(a) * r * .5], [.018, .022, .018], i % 2 ? M.FRAME : M.RUNE, { group: 2 + i });
   }
   m.ell([0, 0, 0], [.004, .002, .004], M.NOSE, { group: 0, extra: true }); // (the foot in the frame)
-  const sp = spriteOf(m, st); for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.NOSE) sp.m[i] = 0;
+  const sp = dolphinSpriteOf(m, st); for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.NOSE) sp.m[i] = 0;
   return sp;
 }

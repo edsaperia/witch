@@ -88,7 +88,9 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
     run(g, 2 * STEP);
     for (const c of sleepers) expect(c.asleep).toBeFalsy();
     const off = overWild({ ...TUNING, naps: { ...TUNING.naps!, on: false } });
-    run(off.g, 60, () => { for (const c of off.g.creatures) expect(c.asleep).toBeFalsy(); });
+    let napped = 0; // (counted in a plain loop, one expect at the end: an expect a creature a step was most of the test's time with every area peopled)
+    run(off.g, 60, () => { for (const c of off.g.creatures) if (c.asleep) napped++; });
+    expect(napped).toBe(0);
   }, 120_000);
 
   it("leaves a sleep without napUntil (the party's over) alone: down till cleared, out of fights", () => {

@@ -6,6 +6,7 @@ import style from "../../config/music-style.json";
 import { voiceOf } from "../../src/platform/audio/voices";
 import type { Creature } from "../../src/rules/creatures";
 import type { NightKind } from "../../src/platform/audio/night";
+import { DJ_ROUTINE } from "../../src/rules/djSet";
 
 const v = (species: string, level: number) => voiceOf({ species, level, boss: level === 3 } as unknown as Creature, TUNING);
 
@@ -68,6 +69,13 @@ const SOUNDS: [string, number, Play][] = [
   ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
   ["deck-scratch", 4.2, () => {}],
   ["deck-whoop", 0.8, s => s.whoop()],
+  ...(["oaks", "ravine", "stones", "cave"] as const).map(k => [`night-${k}`, 16, () => {}] as [string, number, Play]),
+  ...(["oaks", "ravine", "stones", "cave", "wet"] as const).map(k => [`ambience-${k}`, 16, () => {}] as [string, number, Play]),
+  ["sad-trumpet", 4, s => s.sadTrumpet(true)],
+  ["sad-trumpet-bare", 2.4, s => s.sadTrumpet(false)],
+  ["sad-trumpet-cut", 4, () => {}],
+  ["deck-routine", 9, () => {}],
+  ["sparkler", 10, () => {}],
   ["dolphins", 6, () => {}],
   ["kraken", 8, () => {}],
 ];
@@ -79,6 +87,10 @@ async function render(name: string, seconds: number, play: Play) {
   if (name === "witch-chatter") {
     // her 💌 hose as #89 fires it: bursts of 3 letters 0.12 s apart, a burst every 0.6 s
     for (let b = 0; b < 4; b++) for (let i = 0; i < 3; i++) { const at = b * 0.6 + i * 0.12; void oc.suspend(Math.round(at * rate) / rate).then(() => { s.letter(0); return oc.resume(); }); }
+  } else if (name === "deck-routine") {
+    // her routine at the decks (rules/djSet.ts DJ_ROUTINE) at 120 bpm: the needle dropped, baby scratches, chirps, the spin-back, her hype
+    for (const e of DJ_ROUTINE) if (e.stroke) void oc.suspend(Math.round(e.at * 0.5 * rate) / rate).then(() => { s.deck(e.stroke!); return oc.resume(); });
+    void oc.suspend(Math.round(12 * 0.5 * rate) / rate).then(() => { s.whoop(); return oc.resume(); });
   } else if (name === "deck-scratch") {
     // her scratch bars at the decks: two bars of strokes on the half-beats at 120 bpm, forward on the beat, back off it
     for (let k = 0; k < 16; k++) void oc.suspend(Math.round(k * 0.25 * rate) / rate).then(() => { s.scratch(k % 2 === 0); return oc.resume(); });
@@ -90,6 +102,10 @@ async function render(name: string, seconds: number, play: Play) {
     // the kraken rising off the west coast: its groan, the water pouring off its tentacles
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
     at(0, () => s.krakenGroan(-0.5)); at(1.2, () => s.krakenPour(5, -0.6));
+  } else if (name === "sad-trumpet-cut") {
+    // knocked down with her hat: the trumpet, cut off by the rewind as she's whisked to her decks (3 s on, as hotel's float)
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0, () => s.sadTrumpet(true)); at(3, () => s.rewind());
   } else if (name === "witch-knock") {
     // a bite's small knock (1 m), a knockback attack's (4 m), a charge's big throw (9 m) with its stun's twinkle
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
@@ -101,6 +117,10 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "shoes") {
     // four dancers' party shoes on the beat at 120 bpm
     for (let b = 0; b < 6; b++) void oc.suspend(Math.round(b * 0.5 * rate) / rate).then(() => { s.taps(4, 0, 1); return oc.resume(); });
+  } else if (name.startsWith("ambience-")) {
+    // an area's ambience in play (night.ts layers without their bed), up over 2 s and held: what she hears in the wild
+    const kind = name.slice("ambience-".length) as NightKind;
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = Math.min(1, sec / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.ambience(kind, L); return oc.resume(); }); }
   } else if (name.startsWith("night-")) {
     // the party's over: the night coming in over 3 s, then held (the crossfade: the woods, then into a bog at 8 s)
     const kind = name.slice(6);
@@ -111,6 +131,9 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "sea") {
     // walking down the beach to the water (two waves or so), then away up it until it's let go
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 11 ? 1 : Math.max(0, 1 - (sec - 11) / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sea(L, 0.3); return oc.resume(); }); }
+  } else if (name === "sparkler") {
+    // walking up to the ley pulse's tip, standing by it, and away until it's let go
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 7 ? 1 : Math.max(0, 1 - (sec - 7) / 1.5); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sparkler(L, -0.2); return oc.resume(); }); }
   } else if (name === "pond" || name === "picnic" || name === "creator-room") {
     // walking up to it and standing by it: its level each 0.1 s
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = Math.min(1, sec / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { if (name === "pond") s.pond(L, -0.2); else if (name === "picnic") s.picnic(L, 0.2); else s.room(L); return oc.resume(); }); }

@@ -49,7 +49,7 @@ export interface Knockout {
   scratching?: boolean;
 }
 
-export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | /** her scratching starts behind her decks (the respawn wait: knockout.respawn); "back" ends it */ "scratch" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
+export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | /** the teleport's midpoint, with sparkleIn: the transition's cut (render/koIris.ts: the rewind smear; the music's scratch cutting the trumpet) */ "cut" | /** her scratching starts behind her decks (the respawn wait: knockout.respawn); "back" ends it */ "scratch" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
 export interface KnockoutEvent { kind: KnockoutEventKind; at: number; x: number; z: number; id?: number }
 
 export const newHealth = (t: Tuning): Health => ({ hp: t.witchHealth.hits, repairAt: Infinity, hurtAt: -Infinity });
@@ -121,6 +121,7 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     // from the first time she left.)
     body = { ...body, x: map.start.x, z: map.start.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: true };
     events.push({ kind: "sparkleIn", at: time, x: body.x, z: body.z });
+    events.push({ kind: "cut", at: time, x: body.x, z: body.z }); // (the cut from the hat to the decks: render/koIris.ts, and the music's scratch)
     // Loyal legends come home with her.
     for (const id of leash.stack) { const c = creatures[id]; c.x = body.x + (c.rand() - 0.5) * 3; c.z = body.z + 2 + c.rand() * 2; c.tx = c.x; c.tz = c.z; }
   }
@@ -157,14 +158,22 @@ export function stepWanderers(creatures: Creature[], map: ForestMap, dt: number)
  *  countdown at the decks (render/leash/respawn.ts). */
 export const respawnLeft = (k: Knockout | null | undefined, time: number): number | null => (k && time >= k.inAt && time < k.backAt ? k.backAt - time : null);
 
-/** The candles along the front of her DJ desk while she scratches (Ed, 2026-10-07; art builder 4 draws them): one for every
- *  two seconds of the wait (3 for the first knockdown's 6 s, up to 6 for 12), 0 with no wait. */
-export const candleCount = (k: Knockout | null | undefined): number => (k && k.backAt > k.inAt ? Math.max(1, Math.round(k.wait / 2)) : 0);
+/** The candles along the front of her DJ desk while she scratches (Ed, 2026-10-07; art builder 4 draws them), a loading bar:
+ *  one for every knockout.candleStep seconds of the wait (1: 6 for the first knockdown's 6 s, up to 12 for 12; 0.5: 12 to 24),
+ *  0 with no wait. */
+export const candleCount = (k: Knockout | null | undefined, t: Tuning): number =>
+  (k && k.backAt > k.inAt ? Math.max(1, Math.round(k.wait / (t.knockout.candleStep ?? 1))) : 0);
 
-/** How far candle i (0 the first to go) has melted at `time`, 0 whole to 1 gone: they burn down one after another over her
- *  scratching (inAt to backAt), so the last is gone as respawnLeft reaches 0; all whole before it. */
-export function candleMelt(k: Knockout | null | undefined, time: number, i: number): number {
-  const n = candleCount(k);
+/** How many of them are red (Ed, 2026-10-07: "the base cooldown WHITE candles, the extra cooldown from repeat knockdowns RED"):
+ *  the wait past knockout.respawn's base, by candleStep. They burn first (candles 0 to red - 1), the bar emptying from its red
+ *  end, so the white base is all that's left at the end. */
+export const candleRed = (k: Knockout | null | undefined, t: Tuning): number => {
+  const n = candleCount(k, t), base = (t.knockout.respawn ?? RESPAWN_NONE).base;
+  return n && k ? Math.max(0, Math.min(n, n - Math.round(Math.min(k.wait, base) / (t.knockout.candleStep ?? 1)))) : 0;
+};
+
+export function candleMelt(k: Knockout | null | undefined, time: number, i: number, t: Tuning): number {
+  const n = candleCount(k, t);
   if (!k || !n) return 0;
   const p = Math.min(1, Math.max(0, (time - k.inAt) / (k.backAt - k.inAt))) * n - i;
   return Math.min(1, Math.max(0, p));

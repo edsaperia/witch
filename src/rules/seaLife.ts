@@ -3,15 +3,15 @@
 // (no state), so the picture (render/dolphins.ts, render/kraken.ts) and the sound (the music builder's splashes and groan)
 // read the same leaps and risings. Framed for the stargazing camera (the music builder's #468, beach.camera.bearings: the
 // camera looks north, standing out over the water, so the east coast's sea is the picture's right-hand quarter, the west's its
-// left): a dolphin leaps `out` metres past the water's edge from her and `ahead` metres north (away from the camera), along the
-// coast; the kraken rises `far` metres north-west of her, out in the water, small against the moon road there. Knobs: the tuning's beach.dolphins and beach.kraken (defaults below).
+// left, and bent so hard that only about 20 m ahead of her stays on screen): a dolphin leaps, and the kraken rises, `out` metres
+// past the water's edge from her and `ahead` metres north of that (away from the camera, inside that). Knobs: the tuning's beach.dolphins and beach.kraken (defaults below).
 import type { Game } from "./game";
 import type { Beach } from "./mapShape";
 
 export interface DolphinKnobs { on: boolean; arc: number; every: [number, number]; pair: number; ahead: [number, number]; out: [number, number]; length: number; height: number; time: number }
-export const DOLPHINS_DEFAULT: DolphinKnobs = { on: true, arc: 0.7, every: [5, 12], pair: 0.4, ahead: [40, 140], out: [30, 90], length: 6, height: 2.2, time: 1.4 };
-export interface KrakenKnobs { on: boolean; arc: number; every: number; chance: number; tentacles: [number, number]; far: [number, number]; time: number; head: number }
-export const KRAKEN_DEFAULT: KrakenKnobs = { on: true, arc: 0.7, every: 75, chance: 0.6, tentacles: [2, 4], far: [120, 300], time: 14, head: 0.5 };
+export const DOLPHINS_DEFAULT: DolphinKnobs = { on: true, arc: 0.7, every: [5, 12], pair: 0.4, ahead: [0, 15], out: [8, 25], length: 6, height: 2.2, time: 1.4 };
+export interface KrakenKnobs { on: boolean; arc: number; every: number; chance: number; tentacles: [number, number]; ahead: [number, number]; out: [number, number]; time: number; head: number }
+export const KRAKEN_DEFAULT: KrakenKnobs = { on: true, arc: 0.7, every: 75, chance: 0.6, tentacles: [2, 4], ahead: [5, 18], out: [6, 20], time: 14, head: 0.5 };
 
 /** One dolphin's leap: it leaves the water at `start` (world time) at (x, z) - (tx, tz) × length / 2, travelling (tx, tz), and goes
  *  back in `dur` seconds later `length` metres on; (x, z) the middle, where it's highest. */
@@ -50,13 +50,13 @@ export function krakenRising(g: Game, b: Beach, time: number): Rising | null {
   if (!K.on || Math.PI - Math.abs(her) > K.arc) return null;
   const slot = Math.floor(time / K.every), t0 = slot * K.every;
   if (hash(slot, 11) >= K.chance) return null;
-  // north-west of her, `far` metres, and out in the water whatever the coast's shape there
-  const d = K.far[0] + hash(slot, 12) * (K.far[1] - K.far[0]), ang = -Math.PI * (0.62 + 0.16 * hash(slot, 13)); // (from due west round toward north)
-  let x = g.witch.x + Math.cos(ang) * d, z = g.witch.z + Math.sin(ang) * d;
-  const past = b.intoSea(x, z); if (past < 25) { const a = Math.atan2(z - b.z, x - b.x); x += Math.cos(a) * (25 - past); z += Math.sin(a) * (25 - past); }
+  // `out` metres past the water's edge from her and `ahead` metres north of that (as the dolphins: inside the stargazing bend's horizon)
+  const shore = (g.tuning.beach as { shore?: number } | undefined)?.shore ?? 0, nx = Math.cos(her), nz = Math.sin(her);
+  const r = b.edge(her) + shore + K.out[0] + hash(slot, 12) * (K.out[1] - K.out[0]), north = K.ahead[0] + hash(slot, 13) * (K.ahead[1] - K.ahead[0]);
+  const x = b.x + nx * r, z = b.z + nz * r - north;
   const n = K.tentacles[0] + Math.floor(hash(slot, 14) * (K.tentacles[1] - K.tentacles[0] + 1)), gap = K.time * 0.3, a = Math.atan2(z - b.z, x - b.x), tx = -Math.sin(a), tz = Math.cos(a);
   if (time > t0 + (n - 1) * gap + K.time + 1) return null;
-  const tentacles = [...Array(n).keys()].map(k => { const along = (k - (n - 1) / 2) * 7 + (hash(slot, 20 + k) - 0.5) * 3; return { start: t0 + k * gap, dur: K.time, x: x + tx * along, z: z + tz * along, side: along < 0 ? -1 : 1 }; });
+  const tentacles = [...Array(n).keys()].map(k => { const along = (k - (n - 1) / 2) * 5 + (hash(slot, 20 + k) - 0.5) * 2; return { start: t0 + k * gap, dur: K.time, x: x + tx * along, z: z + tz * along, side: along < 0 ? -1 : 1 }; });
   const head = hash(slot, 15) < K.head ? { start: t0 + gap, dur: K.time, x: x + Math.cos(a) * 8, z: z + Math.sin(a) * 8 } : null;
   return { tentacles, head };
 }

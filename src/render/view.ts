@@ -68,6 +68,7 @@ import { Glades } from "./glades";
 import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
+import { Fireworks } from "./fireworks";
 import type { Style } from "./style";
 
 // The view's parts, each in its own module under view/ (issue #122), as functions of the View:
@@ -185,6 +186,8 @@ export class View {
   private strings: StringLightsView;
   leashView: LeashView;
   private lasers: Lasers;
+  /** The wave's celebrations: fireworks over a soundsystem already cleared (render/fireworks.ts). */
+  readonly fireworks: Fireworks;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   ley: LeyLines;
   /** The sleeping legends' clearings: their twilight and rising motes. */
@@ -251,6 +254,8 @@ export class View {
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
   mist: Mist | null = null;
+  /** Where she was a beat ago, for the trees watching her (render/view/frameUniforms.ts). */
+  watch = { x: NaN, z: NaN, t: 0 };
   width = 1;
   height = 1;
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
@@ -376,6 +381,8 @@ export class View {
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
+    this.fireworks = new Fireworks(SPRITE_UNIFORMS.uRes, this.mpp);
+    this.scene.add(this.fireworks.mesh);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
     this.leyBase = M?.leyBright ?? 1;
     this.ley.scale(this.leyBase);
@@ -568,6 +575,8 @@ export class View {
   edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
   /** The world's campfires showing this frame, for the party objects to draw. */
   worldFires: { x: number; z: number; scale: number; flip: boolean }[] = [];
+  /** Where her fallen hat was on screen as the knockout's iris closed on it (render/koIris.ts), for the record to stay put across the cut. */
+  irisHat: [number, number] | null = null;
   /** Each light source's area (a campfire's party), worked out once. */
   sourceCell = new WeakMap<object, string>();
   /** ?bare: hide everything but the ground, the witch, soundsystems, the dancefloor and its
@@ -731,7 +740,8 @@ export class View {
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
-    const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false);
+    this.fireworks.update(g.waveEvents, time, t); // (before the soundsystems: a celebrated one's lasers come on as its show starts)
+    const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
@@ -829,7 +839,7 @@ export class View {
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
-    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...this.forestLights], w.x, w.z);
+    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);

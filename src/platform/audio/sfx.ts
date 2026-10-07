@@ -18,7 +18,9 @@ import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
 import { groan, pour, splash } from "./seaLife";
-import { scratch } from "./deck";
+import { rewind, sadTrumpet } from "./knockdown";
+import { Sparkler } from "./sparkler";
+import { chirp, needle, scratch, spinBack } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
 import { SfxKit, type SfxTuning } from "./sfxKit";
@@ -39,6 +41,8 @@ export class Sfx {
   private spellFx: Spell;
   /** The sea on the beach: made the first time she comes near it (most runs never do). */
   private seaBed: Sea | null = null;
+  /** The ley pulse's sparkler fizz: made the first time she comes near its tip. */
+  private fizz: Sparkler | null = null;
 
   constructor(ctx: AudioContext | OfflineAudioContext, volume: number, T: SfxTuning, root = 57, dest?: AudioNode) {
     this.k = new SfxKit(ctx, volume, T, root, dest);
@@ -114,8 +118,26 @@ export class Sfx {
   splash(size = 0.5, pan = 0, near = 1, fall = 0.9): void { splash(this.k, size, pan, near, fall); }
   krakenGroan(pan = 0, near = 1): void { groan(this.k, pan, near); }
   krakenPour(dur = 4, pan = 0, near = 1): void { pour(this.k, dur, pan, near); }
+  /** Knocked down (knockdown.ts): the sad trumpet as her hat drops (`full`; with no hat, its shorter "wah-waaah"); then the
+   *  rewind as she's whisked to her decks, a backwards scratch cutting the trumpet off (never before its last note has had
+   *  sadTrumpet.cutAfter seconds). */
+  sadTrumpet(full = true, pan = 0): void { this.trumpet = sadTrumpet(this.k, full, pan); }
+  rewind(pan = 0): void {
+    const t = this.trumpet, now = this.k.ctx.currentTime + 0.01;
+    rewind(this.k, t ? Math.max(now, t.lastAt + this.k.T.sadTrumpet.cutAfter) : now, t ? t.gain : null, pan);
+    this.trumpet = null;
+  }
+  private trumpet: { gain: GainNode; lastAt: number } | null = null;
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
+  /** Her routine's strokes (art/witch.js DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
+  deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype", pan = 0, near = 1): void {
+    if (stroke === "hype") this.babble.whoop(pan, near);
+    else if (stroke === "lift" || stroke === "drop") needle(this.k, stroke, pan, near);
+    else if (stroke === "chirp") chirp(this.k, pan, near);
+    else if (stroke === "spin") spinBack(this.k, pan, near);
+    else scratch(this.k, stroke === "f", pan, near);
+  }
   whoop(pan = 0, near = 1): void { this.babble.whoop(pan, near); }
   /** The party spell's scroll (ui/spellScroll.ts): "hum" its level every frame, "rustle" the ripple stirring, "crackle" the
    *  grow, "burst" the burst. */
@@ -125,6 +147,8 @@ export class Sfx {
   /** By the sea on the beach (0-1 by how near the water): nothing made until she first comes near. */
   sea(level: number, pan = 0): void { if (level > 0.001 || this.seaBed) (this.seaBed ??= new Sea(this.k)).update(level, pan); }
   /** Whether the sea's sounds are built (none in an ordinary run). */
+  /** By the ley line's pulse, the sparkler's burning tip (#491): its fizz, by how near (0-1). */
+  sparkler(level: number, pan = 0): void { if (level > 0.001 || this.fizz) (this.fizz ??= new Sparkler(this.k)).update(level, pan); }
   get seaBuilt(): boolean { return !!this.seaBed?.built; }
   /** The party's over: the area's night (`kind`, at `level` 0-1), made the first time it's heard (most runs, never). */
   night(kind: NightKind | null, level: number): void { if (level > 0.001 || this.nightBed) (this.nightBed ??= new Night(this.k)).update(kind, level); }
@@ -133,4 +157,7 @@ export class Sfx {
   /** Whether the night's sounds are built. */
   get nightBuilt(): boolean { return !!this.nightBed?.built; }
   private nightBed: Night | null = null;
+  /** Each area's ambience in play (night.ts layers without their bed): `kind` her area's, at `level` (0-1). Built when first heard. */
+  ambience(kind: NightKind | null, level: number): void { if (level > 0.001 || this.ambienceBed) (this.ambienceBed ??= new Night(this.k, () => this.k.T.ambience)).update(kind, level); }
+  private ambienceBed: Night | null = null;
 }
