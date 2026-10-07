@@ -8,7 +8,7 @@
 // least FLOOR ms. Prints p50/p95/p99/worst, hitches, draw calls and heap, and for the hitches the parts that took the time
 // (with every part over a 60 Hz frame counted by part); writes <out>/hitch.json.
 // Run `npm run build` first. Playwright comes from the machine's global install.
-//   node tools/bench/hitch.cjs [out dir] (default bench-out/)   SEED=871136 WAVE=28 FRAMES=600 HITCH=3 FLOOR=33
+//   node tools/bench/hitch.cjs [out dir] (default bench-out/)   SEED=871136 WAVE=28 FRAMES=600 HITCH=3 FLOOR=33 FINISH=0 HUNT=1
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -42,7 +42,7 @@ async function frames(page, n, c, { timed = false, draw = true, label = "" } = {
     const w = window.witch, f = fn ? new Function("i", `return (${c})(i)`) : () => c, rows = [], info = w.view.renderer.info;
     for (let i = 0; i < n; i++) {
       const r = w.frame(f(i), DT, draw);
-      if (timed) rows.push({ label, i, step: r.step, render: r.render, ms: { ...r.ms }, calls: info.render.calls, tris: info.render.triangles, heap: performance.memory ? performance.memory.usedJSHeapSize : 0, creatures: w.game.creatures.length, wave: w.game.party.wave, mode: w.game.witch.mode });
+      if (timed) rows.push({ label, i, step: r.step, render: r.render, ms: { ...r.ms }, calls: info.render.calls, tris: info.render.triangles, heap: performance.memory ? performance.memory.usedJSHeapSize : 0, creatures: w.game.creatures.length, hunters: w.game.hunts ? w.game.hunts.size : 0, wave: w.game.party.wave, mode: w.game.witch.mode });
       if (i % 30 === 29) await new Promise(r => setTimeout(r, 0));
     }
     return rows;
@@ -63,7 +63,9 @@ async function main() {
   await page.goto(`http://127.0.0.1:${port}/?seed=${seed}`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 });
   await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
-  await page.evaluate(() => { window.witch.manual = true; });
+  // FINISH=1: the GPU drained inside each draw (gl.finish), so in the cloud's software renderer its backlog isn't waited on
+  // in whichever part makes the next GL call (texture uploads, uniforms), and every part but draw reads as CPU alone.
+  await page.evaluate(fin => { window.witch.manual = true; if (fin) { const r = window.witch.view.renderer, gl = r.getContext(), o = r.render.bind(r); r.render = (s, c) => { o(s, c); gl.finish(); }; } }, env("FINISH", "0") === "1");
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 });
   await page.evaluate(() => { const p = window.witch.game.party; if (p.spellAt === null) p.spellAt = -100; });
@@ -81,7 +83,7 @@ async function main() {
   await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
   lap(`at wave ${await page.evaluate(() => window.witch.game.party.wave)}`);
   // The bench route: a ground flight turning every 150 frames, then up to the treetops and a straight treetop flight,
-  // then a wave called in mid-flight (the wave's new soundsystem, sieges and art).
+  // then a wave called in mid-flight (the wave's new soundsystem, sieges and art); then the hunt (HUNT=0 skips it).
   const rows = [];
   rows.push(...await frames(page, N, i => ({ moveX: Math.cos(Math.floor(i / 150) * 1.4), moveZ: -Math.abs(Math.sin(Math.floor(i / 150) * 1.4)), toggleMode: false, zoom: 0 }), { timed: true, label: "ground" }));
   await frames(page, 1, { ...idle, toggleMode: true });
@@ -89,6 +91,28 @@ async function main() {
   rows.push(...await frames(page, N, { ...idle, moveZ: -1 }, { timed: true, label: "treetop" }));
   rows.push(...await frames(page, 1, { ...idle, nextWave: true }, { timed: true, label: "wave" }));
   rows.push(...await frames(page, 300, { ...idle, moveX: 1 }, { timed: true, label: "after-wave" }));
+  // The hunt (rules/hunt.ts, Ed 2026-10-07): down on the ground in the nearest wild area with the most young and adults, her
+  // health held, circling slowly while its watch runs out and its own young and adults come for her wherever she goes.
+  if (env("HUNT", "1") !== "0") {
+    const spot = await page.evaluate(() => {
+      const g = window.witch.game, w = g.witch, best = { n: -1, x: 0, z: 0, key: "" };
+      for (const [key, cs] of (g.byArea ?? new Map())) {
+        if (g.party.areas.has(key) || g.friendly?.has(key)) continue;
+        const n = cs.filter(c => c.level > 0 && c.level < 3 && (!c.state || c.state === "wild")).length, [i, j] = key.split(",").map(Number), s = g.map.siteOf(i, j);
+        const d = Math.hypot(s.x - w.x, s.z - w.z), score = n - d / 400;
+        if (d < 1500 && score > best.n) Object.assign(best, { n: score, x: s.x + 25, z: s.z + 25, key });
+      }
+      return best;
+    });
+    await page.evaluate(({ x, z }) => { const g = window.witch.game, w = g.witch; w.x = x; w.z = z; w.vx = w.vz = 0; }, spot);
+    if (await page.evaluate(() => window.witch.game.witch.mode !== "ground")) await frames(page, 1, { ...idle, toggleMode: true });
+    await frames(page, 120, idle, { draw: true });
+    for (let k = 0; k < 6; k++) {
+      await page.evaluate(() => { const w = window.witch.game.witches?.[0]; if (w?.health) w.health.hp = w.health.max ?? 1e6; });
+      rows.push(...await frames(page, 150, i => ({ moveX: Math.cos(i / 75) * 0.35, moveZ: Math.sin(i / 75) * 0.35, toggleMode: false, zoom: 0 }), { timed: true, label: "hunt" }));
+    }
+    console.log(`  hunt in ${spot.key}: ${await page.evaluate(() => window.witch.game.hunts?.size ?? 0)} hunting her at the end`);
+  }
   lap("flown");
   const cpu = r => r.step + r.render - (r.ms.draw ?? 0), work = rows.map(cpu), med = pct(work, 0.5), cut = Math.max(FLOOR, med * HITCH);
   const hitches = rows.filter(r => cpu(r) >= cut).map(r => {
