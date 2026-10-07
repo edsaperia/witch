@@ -13,18 +13,17 @@
 // tipped goods wagon, an overgrown carriage, a station platform, a level crossing, a signal gantry).
 // Night-readable and mostly unlit; the magic trail is the one glowing kind (and the carriage's
 // windows). No text or liveries.
-import { M, Sprite, hsv2rgb } from "./core.js";
+import { M, Sprite, hsv2rgb, sinHash, glowBall } from "./core.js";
 import { BRIDGE_GENOMES, buildBridge } from "./props/bridges.js";
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 
 export const PATH_PPM = 16; // ground pixels per metre
-const pkHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
 const UP = [0, -.42, .9]; // a ground pixel's normal (as the floor's)
 // value noise on the ground, periodic along v with period P (metres), so strips tile
-const pkNoise = (x, y, k, P = 0) => { if (P) k = Math.max(1, Math.round(P * k)) / P; /* a whole number of cells per period, so it repeats */ const X = x * k, Y = y * k, ix = Math.floor(X), iy = Math.floor(Y), fx = X - ix, fy = Y - iy, n = P ? Math.round(P * k) : 0, w = j => n ? ((j % n) + n) % n : j, h = (a, b) => pkHash(a, w(b)), s = t => t * t * (3 - 2 * t); return (h(ix, iy) * (1 - s(fx)) + h(ix + 1, iy) * s(fx)) * (1 - s(fy)) + (h(ix, iy + 1) * (1 - s(fx)) + h(ix + 1, iy + 1) * s(fx)) * s(fy); };
+const pkNoise = (x, y, k, P = 0) => { if (P) k = Math.max(1, Math.round(P * k)) / P; /* a whole number of cells per period, so it repeats */ const X = x * k, Y = y * k, ix = Math.floor(X), iy = Math.floor(Y), fx = X - ix, fy = Y - iy, n = P ? Math.round(P * k) : 0, w = j => n ? ((j % n) + n) % n : j, h = (a, b) => sinHash(a, w(b)), s = t => t * t * (3 - 2 * t); return (h(ix, iy) * (1 - s(fx)) + h(ix + 1, iy) * s(fx)) * (1 - s(fy)) + (h(ix, iy + 1) * (1 - s(fx)) + h(ix + 1, iy + 1) * s(fx)) * s(fy); };
 // cells (for flagstones and cobbles): the nearest jittered point, and how close the second is
-function pkCells(x, y, k, P) { k = Math.max(1, Math.round(P * k)) / P; const X = x * k, Y = y * k, ix = Math.floor(X), iy = Math.floor(Y), n = Math.round(P * k); let d1 = 9, d2 = 9, id = 0; for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) { const cx = ix + i, cy = iy + j, wy = ((cy % n) + n) % n, px = cx + pkHash(cx, wy * 3 + 1), py = cy + pkHash(cx * 7 + 2, wy), d = Math.hypot(px - X, py - Y); if (d < d1) { d2 = d1; d1 = d; id = pkHash(cx, wy); } else if (d < d2) d2 = d; } return { edge: d2 - d1, id }; }
+function pkCells(x, y, k, P) { k = Math.max(1, Math.round(P * k)) / P; const X = x * k, Y = y * k, ix = Math.floor(X), iy = Math.floor(Y), n = Math.round(P * k); let d1 = 9, d2 = 9, id = 0; for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) { const cx = ix + i, cy = iy + j, wy = ((cy % n) + n) % n, px = cx + sinHash(cx, wy * 3 + 1), py = cy + sinHash(cx * 7 + 2, wy), d = Math.hypot(px - X, py - Y); if (d < d1) { d2 = d1; d1 = d; id = sinHash(cx, wy); } else if (d < d2) d2 = d; } return { edge: d2 - d1, id }; }
 
 // Each kind: width (m), period (the strip's tile length, m), moods (areas it suits), and surface(u, v, core):
 // u in [-1, 1] across (0 the middle), v metres along; core: inside a junction's middle (no markings).
@@ -40,13 +39,13 @@ export const PATH_KINDS = {
   cobbles: { width: 4, period: 4, desc: "cobbles: a stretch of old village lane", moods: ["garden", "old-oaks", "meadow", "stone-shrine"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .08)) return 0; const c = pkCells(u * 2, v, 2.2, P); if (c.edge < .16) return [pkNoise(u, v, 3, P) < .3 ? M.MOSS : M.STONED, .05]; return [c.id < .2 ? M.STONED : c.id > .85 ? M.BELLY : M.STONE, .35]; } },
   stepping: { width: 2, period: 4, desc: "stepping stones across water or bog (each also a 3D prop)", moods: ["stream", "wetland", "bog", "ravine", "beaver-pond"],
-    surface(u, v) { const P = 4, sp = P / 3, k = Math.floor(v / sp), t = v - k * sp - sp / 2, du = u * 1 - (pkHash(k % 3, 9) - .5) * .5, d = Math.hypot(du * .9, t / .55); if (d > .55 + pkNoise(u, v, 4, P) * .1) return 0; return [d > .45 ? M.MOSS : M.STONE, .4]; } },
+    surface(u, v) { const P = 4, sp = P / 3, k = Math.floor(v / sp), t = v - k * sp - sp / 2, du = u * 1 - (sinHash(k % 3, 9) - .5) * .5, d = Math.hypot(du * .9, t / .55); if (d > .55 + pkNoise(u, v, 4, P) * .1) return 0; return [d > .45 ? M.MOSS : M.STONE, .4]; } },
   boardwalk: { width: 2.5, period: 4, desc: "a boardwalk: planks on posts over bog or pools, a few boards missing (posts are 3D props)", moods: ["bog", "wetland", "moor", "beaver-pond"],
-    surface(u, v) { const P = 4, k = Math.floor(v / .5), f = v / .5 - k; if (Math.abs(u) > .97) return [M.BARKD, .1]; if (pkHash(k % 8, 3) < .1) return 0; if (f < .1) return 0; const grain = Math.abs(Math.sin(u * 40 + (k % 8) * 3)) < .12; return [pkNoise(u, v, 3, P) < .15 ? M.MOSS : grain ? M.BARKD : pkHash(k % 8, 5) < .4 ? M.BARK2 : M.WOOD, .1]; } },
+    surface(u, v) { const P = 4, k = Math.floor(v / .5), f = v / .5 - k; if (Math.abs(u) > .97) return [M.BARKD, .1]; if (sinHash(k % 8, 3) < .1) return 0; if (f < .1) return 0; const grain = Math.abs(Math.sin(u * 40 + (k % 8) * 3)) < .12; return [pkNoise(u, v, 3, P) < .15 ? M.MOSS : grain ? M.BARKD : sinHash(k % 8, 5) < .4 ? M.BARK2 : M.WOOD, .1]; } },
   tarmac: { width: 10, period: 8, desc: "an overgrown tarmac road: cracked, faded centre lines, verge posts and a cat's-eye or two (3D props)", moods: ["grassland", "deadwood", "heath", "muddy-forest", "moor"],
     surface(u, v, core) { const P = 8; if (rag(u, v, P, .06)) return 0; const n = pkNoise(u * 4, v, 1.1, P), crack = Math.abs(pkNoise(u * 6, v, .7, P) - .5) < .02 || Math.abs(pkNoise(u * 3 + 9, v, 1.6, P) - .5) < .012; if (crack) return [pkNoise(u, v, 6, P) < .5 ? M.LEAF2 : M.STONED, 0]; if (Math.abs(u) > .9) return [n < .5 ? M.LEAF2 : M.LEAF, .1]; if (!core && Math.abs(u) < .025 && (v % 4) < 2.2 && n > .3) return [M.CLOTH, .05]; if (!core && Math.abs(Math.abs(u) - .84) < .015 && n > .35) return [M.BELLY, .05]; return [n < .2 ? M.MOSS : n > .85 ? M.STONED : M.STONE, .05]; } },
   railway: { width: 4, period: 4, desc: "an old railway line: rusty rails, sleepers half-buried in grass", moods: ["grassland", "heath", "deadwood", "moor", "norway", "rocky-slope"], variants: ["plain", "half-buried", "overgrown"],
-    surface(u, v, core, variant = 0) { const P = 4, n = pkNoise(u * 3, v, 2.5, P), grass = [0, .35, .6][variant]; if (rag(u, v, P, .2)) return 0; const ru = Math.abs(Math.abs(u) - .3); if (ru < .05) return [pkNoise(u, v, 8, P) < grass * .5 ? M.LEAF2 : ru < .018 ? M.FRAME : M.SHADES, .3]; /* the rails: dark, a rusty shine along their tops */ const k = Math.floor(v * 6 / P), f = v * 6 / P - k; if (Math.abs(u) < .55 && f < .38 && pkNoise(u, v, 6, P) > grass * .8) return [pkHash(k % 6, 2) < .25 ? M.BARKD : f < .06 || f > .32 ? M.BARKD : M.BARK2, .2]; if (n < grass) return [n < grass * .5 ? M.LEAF : M.LEAF2, .1]; return [n > .7 ? M.STONED : M.STONE, .3]; } },
+    surface(u, v, core, variant = 0) { const P = 4, n = pkNoise(u * 3, v, 2.5, P), grass = [0, .35, .6][variant]; if (rag(u, v, P, .2)) return 0; const ru = Math.abs(Math.abs(u) - .3); if (ru < .05) return [pkNoise(u, v, 8, P) < grass * .5 ? M.LEAF2 : ru < .018 ? M.FRAME : M.SHADES, .3]; /* the rails: dark, a rusty shine along their tops */ const k = Math.floor(v * 6 / P), f = v * 6 / P - k; if (Math.abs(u) < .55 && f < .38 && pkNoise(u, v, 6, P) > grass * .8) return [sinHash(k % 6, 2) < .25 ? M.BARKD : f < .06 || f > .32 ? M.BARKD : M.BARK2, .2]; if (n < grass) return [n < grass * .5 ? M.LEAF : M.LEAF2, .1]; return [n > .7 ? M.STONED : M.STONE, .3]; } },
   roots: { width: 2.5, period: 4, desc: "a root path: gnarled roots across it, worn into steps", moods: ["ancient", "old-oaks", "old-pinewood", "log-pile", "fern-forest"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .25)) return 0; const k = Math.floor(v / .8), wob = Math.sin(u * 3 + (k % 5) * 2) * .12, f = v / .8 - k + wob; if (Math.abs(f - .5) < .14 + pkNoise(u, v, 3, P) * .06) return [Math.abs(f - .5) < .05 ? M.BARKL : M.TRUNK, .6]; return [pkNoise(u, v, 2, P) < .4 ? M.BARKD : M.BARK2, .1]; } },
   magic: { width: 2, period: 4, desc: "a magic trail: a line of softly glowing mushrooms and fairy stones (the one glowing kind; use rarely, leading to a set piece)", glow: true, moods: ["bluebell-glade", "hazel-forest", "stone-shrine", "wispy-forest", "ancient"],
@@ -55,7 +54,7 @@ export const PATH_KINDS = {
 export const PATH_IDS = Object.keys(PATH_KINDS);
 
 // ---------------- the ground textures ----------------
-function ground(w, h, fn) { const sp = new Sprite(w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const r = fn(x + .5, y + .5); if (r) sp.px(x, y, r[0], UP[0] + (r[1] ? (pkHash(x, y) - .5) * r[1] : 0), UP[1] + (r[1] ? (pkHash(y, x) - .5) * r[1] * .5 : 0), UP[2]); } return sp; }
+function ground(w, h, fn) { const sp = new Sprite(w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const r = fn(x + .5, y + .5); if (r) sp.px(x, y, r[0], UP[0] + (r[1] ? (sinHash(x, y) - .5) * r[1] : 0), UP[1] + (r[1] ? (sinHash(y, x) - .5) * r[1] * .5 : 0), UP[2]); } return sp; }
 // One kind's textures: { strip, end, y, t } (Sprites in ground space; x across, y along; 16 px per metre).
 export function pathTextures(id, { variant = 0 } = {}) {
   const K = PATH_KINDS[id], W = Math.round(K.width * PATH_PPM), L = Math.round(K.period * PATH_PPM), half = K.width / 2, S = (x, y, core) => K.surface(x, y, core, variant);
@@ -97,7 +96,7 @@ export function railPoints({ variant = 0, length = 16, radius = 30 } = {}) {
 // The broken end of a line: the rails lifted and bent, sleepers scattered (ground space).
 export function railBrokenEnd({ variant = 1 } = {}) {
   const K = PATH_KINDS.railway, W = Math.round(K.width * PATH_PPM), L = Math.round(6 * PATH_PPM);
-  return ground(W, L, (x, y) => { const u = (x / W) * 2 - 1, v = y / PATH_PPM, t = y / L; if (t < .35) { const k = Math.floor(v / .67); if (pkHash(k, 4) < .5 && Math.abs(u + (pkHash(k, 5) - .5) * .5) < .5 && (v / .67 - k) < .35) return [M.WOOD, .3]; return pkNoise(u, v, 2) > .55 ? [M.LEAF2, .1] : 0; } return K.surface(u, v % K.period, false, variant); });
+  return ground(W, L, (x, y) => { const u = (x / W) * 2 - 1, v = y / PATH_PPM, t = y / L; if (t < .35) { const k = Math.floor(v / .67); if (sinHash(k, 4) < .5 && Math.abs(u + (sinHash(k, 5) - .5) * .5) < .5 && (v / .67 - k) < .35) return [M.WOOD, .3]; return pkNoise(u, v, 2) > .55 ? [M.LEAF2, .1] : 0; } return K.surface(u, v % K.period, false, variant); });
 }
 // A level crossing's road surface: tarmac over the rails (ground space, a square the road's width).
 export function railCrossing() {
@@ -106,14 +105,13 @@ export function railCrossing() {
 }
 
 // ---------------- 3D pieces at the game's view ----------------
-const pkCell = (p, k, s = 0) => pkHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
+const pkCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 const pkWorn = (rust = .25, moss = .15) => p => { const r = pkCell(p, 16, 3), n = pkCell(p, 6, 5); return n < moss && p[1] > .1 ? M.MOSS : r > 1 - rust * .7 ? M.BODY2 : undefined; };
 const pkBar = (m, a, b, g, r = .025, mat = M.FRAME) => m.seg(a, b, r, r, mat, { group: g, paint: pkWorn(.4, .05) });
 const pkStone = (m, c, r, g) => m.ell(c, r, M.STONE, { group: g, rough: .025, paint: p => p[1] > c[1] + r[1] * .5 && pkCell(p, 5, g) < .6 ? M.MOSS : pkCell(p, 14) > .9 ? M.STONED : undefined });
-const pkTufts = (m, n, R, g, seed) => { for (let i = 0; i < n; i++) { const a = pkHash(seed, i) * 6.283, d = R * Math.sqrt(pkHash(i, seed)); m.ell([Math.cos(a) * d, .07, Math.sin(a) * d * .7], [.07, .1 + pkHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .13 ? M.LEAF : undefined }); } };
+const pkTufts = (m, n, R, g, seed) => { for (let i = 0; i < n; i++) { const a = sinHash(seed, i) * 6.283, d = R * Math.sqrt(sinHash(i, seed)); m.ell([Math.cos(a) * d, .07, Math.sin(a) * d * .7], [.07, .1 + sinHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .13 ? M.LEAF : undefined }); } };
 const pkCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: .04, paint: p => { const n = pkCell(p, 10, 2); return p[1] < c[1] - .15 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; } });
-const pkIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4; k++) pts.push([...v3.add(v3.lerp(from, to, k / 4), [(pkHash(seed, k) - .5) * .12, 0, .02]), .03]); m.chain(pts, M.LEAF, { group: g, paint: p => pkCell(p, 30) < .3 ? M.LEAF2 : undefined }); };
-const pkGlow = (m, c, r, g, mat = M.MAGIC) => m.ell(c, [r, r, r], mat, { group: g, extra: true });
+const pkIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4; k++) pts.push([...v3.add(v3.lerp(from, to, k / 4), [(sinHash(seed, k) - .5) * .12, 0, .02]), .03]); m.chain(pts, M.LEAF, { group: g, paint: p => pkCell(p, 30) < .3 ? M.LEAF2 : undefined }); };
 function pkPlace(m, from, { pitch = 0, roll = 0, at = [0, 0, 0] } = {}) {
   const R = (v, a, i, j) => { const c = Math.cos(a), s = Math.sin(a), o = [...v]; o[i] = v[i] * c - v[j] * s; o[j] = v[i] * s + v[j] * c; return o; };
   const rot = v => R(R(v, roll, 1, 2), pitch, 0, 1), inv = v => R(R(v, -pitch, 0, 1), -roll, 1, 2), fwd = p => v3.add(rot(p), at), back = p => inv(v3.sub(p, at));
@@ -126,7 +124,7 @@ const PIECES = {
   "stepping-stone": { family: "prop", path: "stepping", desc: "a stepping stone, flat-topped and mossy", build(m) { pkStone(m, [0, .08, 0], [.38, .12, .3], 1); } },
   "boardwalk-post": { family: "prop", path: "boardwalk", desc: "a boardwalk's post, standing in the water", build(m) { m.seg([0, 0, 0], [0, .55, 0], .06, .055, M.WOOD, { group: 1, paint: p => p[1] < .12 ? M.MOSS : p[1] > .5 ? M.BARK2 : undefined }); } },
   "sleeper-sapling": { family: "prop", path: "railway", desc: "a sapling grown up between the sleepers", build(m) { m.seg([0, 0, 0], [0, .9, 0], .025, .015, M.TRUNK, { group: 1 }); pkCrown(m, [0, .95, 0], [.22, .18, .2], 2); pkTufts(m, 4, .2, 3, 2); } },
-  "glow-mushrooms": { family: "prop", path: "magic", glow: true, desc: "a cluster of softly glowing mushrooms", build(m) { for (let i = 0; i < 4; i++) { const c = [(pkHash(i) - .5) * .3, 0, (pkHash(i, 2) - .5) * .2], h = .08 + pkHash(i, 3) * .1; m.seg(c, v3.add(c, [0, h, 0]), .015, .012, M.CLOTH, { group: 1 }); m.ell(v3.add(c, [0, h + .02, 0]), [.05, .03, .05], M.MAGIC, { group: 2 + i, paint: p => p[1] > c[1] + h + .035 ? M.MAGIC2 : undefined }); } } },
+  "glow-mushrooms": { family: "prop", path: "magic", glow: true, desc: "a cluster of softly glowing mushrooms", build(m) { for (let i = 0; i < 4; i++) { const c = [(sinHash(i) - .5) * .3, 0, (sinHash(i, 2) - .5) * .2], h = .08 + sinHash(i, 3) * .1; m.seg(c, v3.add(c, [0, h, 0]), .015, .012, M.CLOTH, { group: 1 }); m.ell(v3.add(c, [0, h + .02, 0]), [.05, .03, .05], M.MAGIC, { group: 2 + i, paint: p => p[1] > c[1] + h + .035 ? M.MAGIC2 : undefined }); } } },
   "fairy-stone": { family: "prop", path: "magic", glow: true, desc: "a small fairy stone with a glowing rune", build(m) { m.box([0, .18, 0], [.09, .18, .06], M.STONE, { round: .04, group: 1, paint: p => p[2] > .04 && Math.abs(p[1] - .2) < .07 && Math.abs(p[0]) < .025 ? M.RUNE : p[1] > .32 ? M.MOSS : undefined }); } },
   "signal-post": { family: "prop", path: "railway", desc: "a rusty old signal post, its arm dropped (unlit)", build(m) { pkBar(m, [0, 0, 0], [0, 2.2, 0], 1, .04); m.box([.25, 2.0, 0], [.25, .05, .02], M.ACCENT, { dir: [1, -.6, 0], group: 2, paint: p => p[0] > .38 ? M.BELLY : pkWorn(.4, 0)(p) }); m.ell([0, 2.05, .05], [.06, .06, .03], M.SHADES, { group: 3 }); pkIvy(m, [0, 0, .04], [.02, 1.4, .04], 4, 3); } },
   // crossings and steps

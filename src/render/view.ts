@@ -10,6 +10,7 @@ import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf, STEP } from "../rules/game";
+import { coastView } from "../rules/camera";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
@@ -51,7 +52,9 @@ import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
-import { HAT, StoneIndicator } from "./indicator";
+import { edgeLayout, HAT, StoneIndicator } from "./indicator";
+import { AlarmIndicators } from "./alarm";
+import { ALARM_DEFAULTS, newAlarms, shownAlarms, stepAlarms } from "../rules/alarms";
 import { hatMarker } from "../rules/hat";
 import { hasRune } from "../rules/creatureStates";
 import { leyPulse, pointerShown } from "../rules/leypulse";
@@ -113,9 +116,6 @@ export class View {
   private heights: HeightField;
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   bendTo = 0;
-  /** How far the stargazing bend has eased in (0 to 1), and when it was last eased. */
-  private gaze = 0;
-  private gazeTime = NaN;
   /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
   numberSeen = new Map<string, number>();
   numbersAt = 0;
@@ -222,6 +222,9 @@ export class View {
   private nextStones: StoneIndicator[] = [];
   /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
   private hatPointer: StoneIndicator | null = null;
+  /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
+  private alarms = newAlarms();
+  private alarmCues: AlarmIndicators | null = null;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -725,14 +728,14 @@ export class View {
       const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift));
       // Lying on the beach to stargaze (Ed, 2026-10-06: "the bend shader applies so that you can see the sky"): the bend eased up
       // past the treetops' over beach.gazeEase seconds, the night sky opening over the sea, and back down as she gets up.
-      const B = t.beach, gdt = Number.isNaN(this.gazeTime) ? 0 : Math.min(0.25, Math.max(0, time - this.gazeTime)), gz = this.beachView.gazing ? 1 : 0;
-      this.gazeTime = time;
-      this.gaze += (gz - this.gaze) * (1 - Math.exp(-gdt * 3 / Math.max(0.05, B?.gazeEase ?? 1.5)));
-      if (Math.abs(gz - this.gaze) < 0.001) this.gaze = gz;
-      const gk = this.gaze * this.gaze * (3 - 2 * this.gaze) * C.treetop * (B?.stargazeCurve ?? 0);
+      // And nearing the sea, on the ground, it bends up toward beach.camera.curve times the treetops' (Ed, 2026-10-06: "gradual as
+      // you approach the beach, over 200m"), the camera lowering with it (rules/camera.ts), both eased by the rules' camera.
+      const B = t.beach, V = coastView(g.camera);
+      const gk = Math.max(V.gaze * (B?.stargazeCurve ?? 0), V.coast * (B?.camera?.curve ?? 0)) * C.treetop;
+      SPRITE_UNIFORMS.uNearCut.value = V.gaze > 0.01 ? V.gaze * Math.max(0, pose.distance - 12) : 0; // (lying down, the camera low behind her: what's between it and her, from 12 m before her, dithers away)
       const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
       HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
-      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, this.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) : 0);
+      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, this.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) : 0);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));
@@ -848,10 +851,16 @@ export class View {
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
       this.ley.pulse(g.partyOver ? null : shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
-      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
+      // None till the party spell; while home boots, its first link as the sketch (the way out of the ring: Ed, 2026-10-06), then
+      // the line grows out from the treehouse along the route (Ed).
+      const booting = g.party.spellAt !== null && time < g.party.bootUntil;
+      this.ley.sketch(booting);
+      this.ley.near(w.x, w.z);
+      this.ley.grow(booting ? 1 : leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
         this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
+        this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
@@ -1084,6 +1093,7 @@ export class View {
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
       const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)); // (none once the party's over: rules/partyOver.ts)
+      edgeLayout.reset(); // (no two edge cues on one another: render/indicator.ts)
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
         while (list.length < cells.length) list.push(make());
         list.forEach((ind, i) => {
@@ -1105,6 +1115,10 @@ export class View {
         P.fade(H ? 1 : 0);
         P.update(this.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
       }
+      // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
+      const AT = t.alarms ?? ALARM_DEFAULTS;
+      stepAlarms(this.alarms, g.combat.sounds, g.combat.events, time, AT);
+      if (this.alarms.byKey.size || this.alarmCues) (this.alarmCues ??= new AlarmIndicators(document.body)).update(this.camera, cw, ch, shownAlarms(this.alarms, AT), w.x, w.z, time, AT);
     }
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);

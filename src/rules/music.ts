@@ -1,9 +1,10 @@
 // Music by proximity (Ed, 2026-10-04): one shared track, louder and clearer the nearer the witch
 // is to a playing soundsystem, quiet and muffled in the deep forest, and distorted by damage
-// nearby (a damaged soundsystem wobbles, crackles and drops out, scaled by its damage and how
+// nearby (a damaged soundsystem crunches, wobbles and crackles, scaled by its damage and how
 // close she is). The home ring of speakers plays as one source at the dancefloor's centre, as
 // loud as its share of speakers powered on, damaged as its speakers are. The numbers only: the
 // platform plays them.
+import { beachOf } from "./mapShape";
 import type { Game } from "./game";
 import type { Tuning } from "./tuning";
 import { speakersOn } from "./party";
@@ -13,7 +14,7 @@ export interface MusicMix {
   volume: number;
   /** The low-pass filter's cutoff (Hz): high near, muffled far. */
   cutoff: number;
-  /** 0-1: how much damage is heard (wobble, crackle, drop-outs). */
+  /** 0-1: how much damage is heard (crunch, wobble, crackle; no drop-outs since Ed's 2026-10-06 playtest). */
   distort: number;
   /** Metres to the nearest playing source. */
   distance: number;
@@ -54,7 +55,16 @@ export function musicMix(g: Game, at: { x: number; z: number }): MusicMix {
     const level = near * s.loud;
     if (level > best.level || (best.level === 0 && dist < best.distance)) best = { level, damage: s.damage * near, distance: dist };
   }
-  return mixAt(M, best.level, best.damage, best.distance);
+  const mix = mixAt(M, best.level, best.damage, best.distance);
+  // By the sea the party gives way to the waves (Ed, round 16: "Music is still starting and stopping unexpectedly. I heard it
+  // on the beach"): within music.beach.fade metres of the water, down to music.beach.quiet of itself at its edge.
+  const Bq = M.beach, b = Bq ? beachOf(g.map.bounds, g.tuning) : null;
+  if (Bq && b) {
+    const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) + b.out - Math.hypot(dx, dz); // (metres from the water, by the coast's edge her way)
+    const k = Math.max(0, Math.min(1, 1 - off / Math.max(1, Bq.fade)));
+    mix.volume *= 1 - (1 - Bq.quiet) * k * k * (3 - 2 * k);
+  }
+  return mix;
 }
 
 /** The mix `distance` metres from a source heard at `level` (1 right by it, 0 beyond farDist),

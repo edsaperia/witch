@@ -63,7 +63,6 @@ export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return 
 // upright, a cuff over the hoof), "paw" (round, the toes filling its front) or "claw" (an open toe, the talons
 // poking out). The shoe is SHOE, its sole SOLE (a light-up sole glows in the animal's neon: COLLAR). The live
 // rig bakes the same shoe as a piece at each heading (genome/parts.js), so it steps and lifts with the leg.
-export const SHOE_FITS = ["hoof", "paw", "claw"];
 export function shoe3d(m, f, style, o = {}) {
   const r = f.r, fit = f.fit || "paw", group = f.group, ex = { group, extra: true, ...o };
   const hoof = fit === "hoof", claw = fit === "claw", plat = style === "platform", heels = style === "heels";
@@ -140,7 +139,6 @@ function gearUp(m) {
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
-export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles"];
 function evolve3d(m, feats, c) {
   for (const f of feats) {
     if (f.kind === "mane") {
