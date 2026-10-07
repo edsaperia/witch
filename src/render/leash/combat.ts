@@ -7,7 +7,7 @@ import { hash2 } from "../../rules/random";
 import { FIGHT, profileOf } from "../../rules/movement";
 import { huntsWitch } from "../../rules/creatureStates";
 import { LEGENDS } from "../../rules/legends";
-import { SPRITE_UNIFORMS } from "../sprites";
+import { SPRITE_UNIFORMS, metresPerArtPixel } from "../sprites";
 import { SQ } from "./glyphs";
 import type { LeashView } from "../leash";
 import { drawPips } from "./bubbles";
@@ -45,7 +45,7 @@ function coatOf(species: string, tone: number): { r: number; g: number; b: numbe
  *  and teleport, the marker on creatures walking home, and the witch's hit pips. */
 export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
   const g = lv.game, w = g.witch, W = g.witches[0], dot = lv.uv(0), sq = lv.uv(SQ), near = 90, t = g.tuning;
-  const artPx = 1 / (t.artPixelsPerMetre * (2 / t.pixelSize)); // one art pixel, in metres (the pixel star and bits sit on it)
+  const artPx = metresPerArtPixel(t); // one art pixel, in metres (the pixel star and bits sit on it)
   const close = (x: number, z: number, r = near) => Math.abs(x - w.x) < r && Math.abs(z - w.z) < r;
   const neon = (sp: string) => lv.colours.get(sp) ?? (lv.slotOf(sp, 0), lv.colours.get(sp)!);
   // New happenings become effects.
