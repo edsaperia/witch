@@ -1,18 +1,21 @@
-// Clearing an area (Ed, 2026-10-07: his new core design): an area none of whose own wild creatures is left (every one of
-// them invited, or run off) transforms its runestone at once, as its wave would: its soundsystem rises, its babies turn
-// happy and dance (its legend circle's too), a party witch comes, its music plays and the ley line counts its stone as
-// reached (all of which follow from its being partified: rules/party.ts clearArea, game.ts stepFights). Its sleeping
-// legend and the wild baby in its legend's circle don't count. Only an area's natives count, wherever they've wandered (Ed, 2026-10-07: visitors from next door
+// Clearing an area (Ed, 2026-10-07: his new core design): an area none of whose own wild young and adults is left (every one
+// of them invited, or run off) transforms its runestone at once, as its wave would: its soundsystem rises, its babies turn
+// happy and join the party (its legend circle's too), a party witch comes, its music plays and the ley line counts its stone
+// as reached (all of which follow from its being partified: rules/party.ts clearArea, game.ts stepFights). Its babies never
+// hold it (Ed, 2026-10-07: "An area should transition early when I invite all of the hostile creatures (youths and adults).
+// Wild babies don't count; they should become party animals when the transition happens"), nor its sleeping legend or the
+// wild baby in its legend's circle. Only an area's natives count, wherever they've wandered (Ed, 2026-10-07: visitors from next door
 // "wouldn't get enraged when the runestone transforms"): a creature belongs to its own area (c.cell), never to where it stands. Its wave, when it comes, changes nothing in the rules: it
 // only celebrates (rules/party.ts spreadWave). No drawing here.
 import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
 import type { PartyState } from "./party";
 
-/** Whether a creature keeps its home area from being cleared: one of its own, not leashed, not happy (wild or enraged),
- *  still about (not gone, not running off for good); never its legend or the wild baby in its legend's circle. */
+/** Whether a creature keeps its home area from being cleared: one of its own young or adults, not leashed, not happy (wild
+ *  or enraged), still about (not gone, not running off for good); never a baby (they join the party when it transforms),
+ *  its legend or the wild baby in its legend's circle. */
 export function holdsArea(c: Creature): boolean {
-  if (c.gone || c.leashed || c.boss || c.circle || c.fleeUntil === Infinity) return false;
+  if (c.level === 0 || c.gone || c.leashed || c.boss || c.circle || c.fleeUntil === Infinity) return false;
   return c.state !== "happy" && c.legendState !== "happy";
 }
 
