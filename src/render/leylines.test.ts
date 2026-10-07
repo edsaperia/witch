@@ -76,5 +76,34 @@ describe("the whole line, from home to its tip (Ed, 2026-10-06: \"The leyline sh
       const p = { wave, paused: false, bootUntil: 10, nextAt: 70 + 60 * wave } as unknown as PartyState;
       expect(leyReveal(p, m, t, TIP_PACE)).toBeCloseTo(TIP_PACE * (wave + shaderPulse(p, m, t)!));
     }
-  });
+  }, 30000);
+});
+
+describe("the line's front (Ed, 2026-10-06: \"Please come up with a better design for the front of the leyline\")", () => {
+  it("sits on the drawn line where it's drawn to, tinted toward the next stone's colour; none with the whole line shown; it bursts passing a stone", async () => {
+    const THREE = await import("three");
+    const { newGame } = await import("../rules/game");
+    const { TUNING } = await import("../rules/tuning");
+    const { leyChain } = await import("../rules/leylines");
+    const { LeyLines } = await import("./leylines");
+    const g = newGame(123, TUNING), ley = new LeyLines(TUNING.leyLines, () => 0, g.map), chain = leyChain(g.party, g.map);
+    const colours = chain.stones.map((_, i) => new THREE.Vector3(i % 2, 0.5, 1 - (i % 2)));
+    for (let i = 0; i < 2000 && !ley.currentLink(); i++) ley.update(1, () => chain, s => colours[chain.stones.indexOf(s)], 0, 0);
+    const routes = (ley as unknown as { drawn: { pts: [number, number][]; total: number }[] }).drawn;
+    ley.grow(1.5);
+    const tip = ley.front(0, 0)!;
+    expect(tip).not.toBeNull();
+    // Within the line's drift (1.8 m) of the second link's drawn points, about half way along it.
+    const near = Math.min(...routes[1].pts.map(p => Math.hypot(p[0] - tip.x, p[1] - tip.z)));
+    expect(near).toBeLessThan(2.5);
+    expect(tip.colour.x).toBeLessThan(0.5); // (from stone 1's colour, red 1, toward stone 2's, red 0: past half way)
+    ley.grow(null);
+    expect(ley.front(1, 1)).toBeNull();
+    // Passing a stone: a burst of embers.
+    const embers = () => (ley.head as unknown as { embers: unknown[] }).embers.length;
+    ley.grow(1.98); ley.front(2, 2);
+    const before = embers();
+    ley.grow(2.02); ley.front(2.05, 2.1);
+    expect(embers()).toBeGreaterThanOrEqual(before + 18);
+  }, 30000);
 });
