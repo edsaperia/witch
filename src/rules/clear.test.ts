@@ -104,6 +104,7 @@ describe("clearing an area transforms its runestone (Ed, 2026-10-07)", () => {
     expect(g.party.areas.size).toBe(areas); expect(g.party.areas.get(key)!.at).toBe(at); expect(g.party.areas.get(key)!.early).toBeUndefined();
     expect(g.creatures.filter(c => c.enraged).length).toBe(enraged); expect(g.creatures.length).toBe(n);
     expect(g.party.ahead?.has(key)).toBe(false);
+    expect(g.party.areas.get(key)!.celebrated).toBe(g.clock.time); // (kept: its lasers stay on)
     expect(g.party.next.map(cellKey)).toEqual(after); // (on to the next stone on the route)
     expect(g.party.waveAt?.[0]).toBe(g.clock.time);
   }, 60000);

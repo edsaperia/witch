@@ -23,6 +23,9 @@ export interface Partified {
   /** Cleared before its wave (Ed, 2026-10-07: clearing an area of its wild creatures transforms its runestone at once;
    *  rules/clear.ts): its wave, when it comes, only celebrates. `wave` is then the wave it was cleared during (the one to come). */
   early?: boolean;
+  /** When its wave came to it already playing (cleared before it) and celebrated (game.ts: the waveCelebrate event), so
+   *  the view can keep its lasers on from then on without remembering the event (art builder 2's ask). */
+  celebrated?: number;
 }
 
 export interface PartyState {
@@ -239,7 +242,7 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number, celebrat
   for (const { key: k, cell: c, from } of nextWave(p, map)) {
     if (p.ahead?.delete(k)) {
       const a = p.areas.get(k);
-      if (a) { a.early = undefined; celebrate?.(a, wave); }
+      if (a) { a.early = undefined; a.celebrated = time; celebrate?.(a, wave); }
       continue;
     }
     const a: Partified = { cell: c, wave, at: time, from, soundsystem: soundsystemFor(map, c) };
