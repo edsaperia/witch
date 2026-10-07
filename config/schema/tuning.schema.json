@@ -3119,6 +3119,10 @@
               "type": "number",
               "minimum": 0
             },
+            "minHostile": {
+              "type": "number",
+              "minimum": 0
+            },
             "threat": {
               "type": "array",
               "items": {
@@ -3145,6 +3149,7 @@
           "required": [
             "babies",
             "babyCap",
+            "minHostile",
             "threat",
             "profiles"
           ],
