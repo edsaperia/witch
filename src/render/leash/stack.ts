@@ -5,6 +5,10 @@ import { leashPoint } from "../../rules/leash";
 import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
+import { easeRoute } from "../routeEase";
+
+/** Seconds a travelling animal's drawn route takes to settle onto a re-plan (render/routeEase.ts). */
+const ROUTE_EASE = 0.3;
 
 /** The stack above her hat: newest at the bottom. A chain of springs: each sigil follows the one below with lag, so the stack
  *  trails behind her flight in proportion to speed, overshoots when she stops or turns, and settles into a gentle idle sway;
@@ -75,10 +79,14 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
     const was = lv.travelling.get(id) ?? false;
     if (was && !c.travelling) { lv.fx.push({ kind: "ring", x: c.x, y: 0, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: 0, size: 2.4, n: 18, dot: 0.6 }); lv.fx.push({ kind: "spark", x: c.x, y: 1, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: id * 7 + time, size: 2 }); }
     lv.travelling.set(id, !!c.travelling);
+    if (!c.travelling || !c.route) lv.routes.delete(id);
     if (c.travelling && c.route) {
       // (bigger from the treetops, where the camera is far off and the routes run far)
       const up = w.mode === "treetop", rd = up ? 1.8 : 0.45, gap = up ? 5 : 2.2, hi = up ? 0.35 : 0; // (and lighter, to show over dark crowns)
-      const R = c.route, way = [{ x: c.x, z: c.z }, ...R.points.slice(Math.min(R.next, R.points.length - 1), -1), { x: lp.x, z: lp.z }], flow = (time * 3) % gap;
+      const R = c.route, plan = [{ x: c.x, z: c.z }, ...R.points.slice(Math.min(R.next, R.points.length - 1), -1), { x: lp.x, z: lp.z }], flow = (time * 3) % gap;
+      // (eased: a re-plan's new bend glides in over ROUTE_EASE seconds rather than jumping; Ed, 2026-10-06)
+      const eased = easeRoute(lv.routes.get(id), plan, time, ROUTE_EASE, lv.routeScratch), way = eased.line;
+      lv.routes.set(id, eased.shape);
       let carry = gap - flow;
       for (let i = 1; i < way.length; i++) {
         const a = way[i - 1], b = way[i], seg = Math.hypot(b.x - a.x, b.z - a.z);

@@ -10,6 +10,7 @@
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
+import { ROUTE_SAMPLES, type RouteShape } from "./routeEase";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
@@ -85,6 +86,9 @@ export class LeashView {
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
   /** Whether each party animal was travelling last frame (to pop as it joins her posse again). */
   travelling = new Map<number, boolean>();
+  /** Each traveller's drawn route, eased between the rules' re-plans (render/routeEase.ts). */
+  routes = new Map<number, RouteShape>();
+  routeScratch = new Float32Array((ROUTE_SAMPLES + 1) * 2);
   fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number; /** a ring's dots (else 36) and their size (else 0.7) */ n?: number; dot?: number }[] = [];
   /** The screen shake (a legend's quake): when it started and how hard. */
   shakeAt = -Infinity;
