@@ -1934,5 +1934,42 @@
   "chapter": "timeline",
   "from": "previews/respawn/respawn.gif",
   "pr": 362
+ },
+ {
+  "src": "media/builders/art1-runestone-sigils.webp",
+  "caption": "Every species' runestone, by day and by night, before and after: the sigils stamped as crisp neon-inlaid pixel glyphs with a carved shadow.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art1-stone-shrine-legend.webp",
+  "caption": "A legend circle in the treeless Stone Shrine, before (open) and after (ringed by great standing stones), from the treetops and the ground.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art1-ravine-spire.webp",
+  "caption": "The ravine's spire, from a speckled column to layered rock, beside the shrine's new stones.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art1-henge-ring.webp",
+  "caption": "The \"circle of stone circles\" (a henge whose every stone had become a whole stone circle), fixed.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art1-naps-game-treetops.webp",
+  "caption": "Creatures asleep in the forest at night, seen from the treetops.",
+  "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art2-swoop-trails-treetop.webp",
+  "caption": "The party witches' rainbow swoops over the dancefloor, from the treetops.",
+  "chapter": "builders",
+  "pr": 291
+ },
+ {
+  "src": "media/builders/art2-tilt-shift-treetop.webp",
+  "caption": "The gentler tilt-shift from the treetops, before and after: half the blur and a wider sharp band.",
+  "chapter": "builders",
+  "pr": 349
  }
 ]
