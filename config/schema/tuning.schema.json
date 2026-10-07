@@ -2997,6 +2997,18 @@
       ],
       "additionalProperties": false
     },
+    "hunt": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on"
+      ],
+      "additionalProperties": false
+    },
     "naps": {
       "type": "object",
       "properties": {
@@ -8531,6 +8543,7 @@
     "combat",
     "notice",
     "wildWatch",
+    "hunt",
     "naps",
     "guard",
     "population",

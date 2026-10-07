@@ -82,9 +82,9 @@ describe("charges and leaps go further (Ed, 2026-10-06)", () => {
 });
 
 describe("a chase given up (Ed, 2026-10-06: 'pursue you 30 m outside of their area ... instead they should retreat and go back to idling')", () => {
-  it("follows her about 30 m past its area's edge, then retreats into its area and roams again, not waiting on the edge", () => {
+  it("follows her about 30 m past its area's edge, then retreats into its area and roams again, not waiting on the edge (one not hunting her: the hunt off, rules/hunt.ts)", () => {
     expect(TUNING.combat.leaveArea).toBe(30);
-    const g = newGame(1000, TUNING), w = g.witches[0];
+    const g = newGame(1000, { ...TUNING, hunt: { on: false } }), w = g.witches[0];
     g.clock.paused = false; g.party.paused = true;
     const [hx, hy] = g.map.centreCell, cell: [number, number] = [hx + 2, hy], site = g.map.siteOf(cell[0], cell[1]);
     w.body = { ...w.body, seated: false, mode: "ground", lift: 0, x: site.x, z: site.z };

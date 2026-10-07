@@ -1,5 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { stepWildWatch } from "./wildWatch";
+import { stepHunts } from "./hunt";
 import { MOVEMENT } from "./movement";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
@@ -114,6 +115,8 @@ export interface Game {
   friendly: Set<string>;
   /** The wild areas a witch has come down in lately (rules/wildWatch.ts): when, and when one was last on the ground there. */
   wildEntry: Map<string, { at: number; last: number }>;
+  /** The creatures hunting a witch (rules/hunt.ts), by id. */
+  hunts?: Set<number>;
   /** Quests done in this frame's steps (for the view). */
   questEvents: QuestEvent[];
   /** The map's relics (rules/legends.ts): lying half buried, carried, or put down by a legend. */
@@ -432,6 +435,7 @@ function fixedStep(g: Game, controls: Controls): void {
   updateModes(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
   g.lod = newLodCounts();
   if (!over) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
+  if (!over) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)
   if (!over) stepFights(g, t, dt, busy);
   else stepPartyOver(g, dt); // (nothing fights: everyone walks home to bed, rules/partyOver.ts)
   // Noticing her (before they step, so a curious baby sets off this step).

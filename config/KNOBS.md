@@ -757,7 +757,7 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 | `notice.curious` | number | 0 to … |
 | `notice.skittish` | number | 0 to … |
 
-### `wildWatch`, `naps`
+### `wildWatch`
 
 The wild watch (Ed, 2026-10-07: when she enters a dormant area its animals nap, then "stir, evade and hang back, turning to LOOK at her", then attack; every creature looks, no special art): on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. on: false: they attack at once, as before.
 
@@ -767,6 +767,14 @@ The wild watch (Ed, 2026-10-07: when she enters a dormant area its animals nap, 
 | `wildWatch.time` | number | 0 to … |
 | `wildWatch.forget` | number | 0 to … |
 | `wildWatch.hangBack` | number | 0 to … |
+
+### `hunt`, `naps`
+
+The hunt (Ed, 2026-10-07: "When I go to a wild area, after they are awoken all of the wild creatures from that area should fight with me until either I die or they are invited. When they are all invited, the runestone transforms into a soundsystem. The legend and the circle baby are the exceptions"; rules/hunt.ts): once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her wherever she goes, past its area's edge (combat.leaveArea no longer lets it give up), never napping; over the treetops it holds and comes on again when she lands. It ends for one when it's invited, enraged, or knocked down and run off; for all of hers when she's knocked out: they give up, walk home and roam (DECISION FOR ED), and the area's watch plays again on her next visit. Babies don't fight. on: false: the old rule (they give up combat.leaveArea metres past their area's edge).
+
+| knob | type | range |
+|---|---|---|
+| `hunt.on` | boolean |  |
 | `naps.on` | boolean |  |
 | `naps.chance` | number | 0 to … |
 | `naps.length` | array of number |  |
