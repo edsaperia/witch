@@ -16,6 +16,7 @@ import { keysDir, newWalker, spotAt, walk, type RoomFloor, type Walker } from ".
 import { SpellScroll, type SpellCue } from "./spellScroll";
 import { KeyHint } from "./keyHint";
 import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixelUi";
+import { button, h } from "./dom";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -196,9 +197,7 @@ export class Creator {
   readonly scroll: SpellScroll;
   /** A button of the rendering builder's or anyone's, under the panel's own (the bot game). */
   addButton(text: string, onClick: () => void): HTMLButtonElement {
-    const b = document.createElement("button"); b.type = "button"; b.textContent = noEmoji(text);
-    Object.assign(b.style, { font: "inherit", color: "inherit", cursor: "pointer" });
-    b.addEventListener("click", e => { e.stopPropagation(); onClick(); });
+    const b = button(noEmoji(text), e => { e.stopPropagation(); onClick(); }, { style: { font: "inherit", color: "inherit", cursor: "pointer" } });
     this.extras.append(b);
     return b;
   }
@@ -307,14 +306,12 @@ export class Creator {
 
   /** A box's page and its tab (see build): its body, to fill. */
   private makeBox(id: string, name: string): HTMLElement {
-    const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend"), tab = document.createElement("button");
     const [icon, ...words] = name.split(" ");
-    fs.dataset.box = id; tab.dataset.tab = id; tab.type = "button"; tab.append(pixelIcon(id)); tab.title = words.join(" "); tab.setAttribute("aria-label", words.join(" "));
     void icon; // (the box's emoji: drawn as its pixel icon, ui/pixelUi.ts)
+    const fs = h("fieldset", { data: { box: id }, style: { border: "1px solid rgba(214,170,92,.45)", borderRadius: "6px", margin: "0 0 6px", padding: "2px 8px 6px" } }), body = h("div");
+    const lg = h("legend", { style: { padding: "0 4px", color: "#f2c46a", userSelect: "none" } }, pixelIcon(id), words.join(" "));
+    const tab = h("button", { data: { tab: id }, type: "button", title: words.join(" "), attrs: { "aria-label": words.join(" ") } }, pixelIcon(id));
     if (this.extraTabs.some(T => T.id === id)) tab.style.display = "none"; // (an extra page's button is under the panel)
-    Object.assign(fs.style, { border: "1px solid rgba(214,170,92,.45)", borderRadius: "6px", margin: "0 0 6px", padding: "2px 8px 6px" });
-    Object.assign(lg.style, { padding: "0 4px", color: "#f2c46a", userSelect: "none" });
-    lg.append(pixelIcon(id), document.createTextNode(words.join(" ")));
     Object.assign(tab.style, { font: "inherit", fontSize: "18px", width: "38px", height: "34px", cursor: "pointer", border: "1px solid rgba(214,170,92,.45)", borderRight: "none", borderRadius: "8px 0 0 8px", padding: "0", position: "relative" });
     const paint = () => {
       const on = this.box === id;
@@ -333,10 +330,8 @@ export class Creator {
     const P = this.panel, g = this.g;
     P.innerHTML = ""; this.tabs.innerHTML = "";
     this.boxes.clear();
-    const h = document.createElement("div");
-    h.innerHTML = `<div class="px-head">Your witch</div><div class="px-intro">The party's tonight! Dress her up while the forest grows: walk her to her things (WASD) or pick a tab (Q, E). When the scroll unrolls, click it (or Enter) to cast the party spell. R randomises.</div>`;
-    P.append(h);
-    const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); r.className = "px-row"; Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
+    P.append(h("div", { html: `<div class="px-head">Your witch</div><div class="px-intro">The party's tonight! Dress her up while the forest grows: walk her to her things (WASD) or pick a tab (Q, E). When the scroll unrolls, click it (or Enter) to cast the party spell. R randomises.</div>` }));
+    const row = (parent: HTMLElement, name: string) => { const r = h("div", { class: "px-row", style: { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }, html: `<span style="width:78px;opacity:.85">${name}</span>` }); parent.append(r); return r; };
     // The boxes, as tabs down the tapestry's left edge (Ed, 2026-10-06: "The different things you can change ... can be tabs
     // down the left side of the character creation pane"): its icon on the tab, its name as its tooltip and at the top of its
     // page; only the open one's page shows, its tab joined to the page like a bookmark. The open one is kept on this browser.
@@ -345,11 +340,7 @@ export class Creator {
     const lk = row(box("looks", "👗 Looks"), "");
     lk.firstElementChild?.remove();
     for (const L of LOOKS) {
-      const b = document.createElement("button");
-      b.type = "button"; b.textContent = L.name; b.title = L.note; b.dataset.look = L.id;
-      Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "rgba(255,255,255,.08)" });
-      b.addEventListener("click", () => this.look(L.id));
-      lk.append(b);
+      lk.append(button(L.name, () => this.look(L.id), { title: L.note, data: { look: L.id }, style: { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "rgba(255,255,255,.08)" } }));
     }
     const get = (axis: string) => { const [part, key] = slot(axis); return part ? (g[part] as Record<string, unknown>)[key] : g[key]; };
     const set = (axis: string, v: unknown) => { const [part, key] = slot(axis); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; this.dirty = true; };
@@ -364,12 +355,9 @@ export class Creator {
         const ar = row(body, "");
         ar.firstElementChild?.remove();
         for (const k of wear) {
-          const l = document.createElement("label"), c = document.createElement("input");
-          c.type = "checkbox"; c.checked = !!g.accessories[k]; c.dataset.wear = k;
-          c.addEventListener("change", () => { g.accessories[k] = c.checked; this.dirty = true; });
-          Object.assign(l.style, { display: "inline-flex", alignItems: "center", gap: "3px", marginRight: "8px", cursor: "pointer" });
-          l.append(c, document.createTextNode(WEAR_NAMES[k] ?? label(k)));
-          ar.append(l);
+          const c = h("input", { type: "checkbox", data: { wear: k }, on: { change: () => { g.accessories[k] = c.checked; this.dirty = true; } } });
+          c.checked = !!g.accessories[k];
+          ar.append(h("label", { style: { display: "inline-flex", alignItems: "center", gap: "3px", marginRight: "8px", cursor: "pointer" } }, c, WEAR_NAMES[k] ?? label(k)));
         }
       }
       for (const axis of axes) this.axisRow(body, axis, row, get, set);
@@ -379,11 +367,8 @@ export class Creator {
     this.inert();
     if (!this.boxes.has(this.box)) this.openBox(this.boxes.keys().next().value ?? "");
     // The buttons.
-    const bar = document.createElement("div");
-    bar.dataset.bar = "";
-    Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(22,14,32,.97)", padding: "6px 0" });
-    bar.style.position = "sticky";
-    const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
+    const bar = h("div", { data: { bar: "" }, style: { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(22,14,32,.97)", padding: "6px 0" } });
+    const btn = (text: string, f: () => void, main = false) => bar.appendChild(button(text, f, { style: { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" } }));
     btn("Randomise", () => this.randomise());
     btn("Wild", () => this.wild());
     btn("Classic", () => this.classic());
@@ -396,8 +381,7 @@ export class Creator {
     const g = this.g, lim = AXES[axis], r = row(body, label(axis));
     if (typeof lim[0] === "string") {
       for (const opt of lim as string[]) {
-        const b = document.createElement("button");
-        b.type = "button"; b.textContent = optName(axis, opt);
+        const b = h("button", { type: "button", text: optName(axis, opt) });
         const on = () => { const chosen = get(axis) === opt; b.style.background = chosen ? "var(--accent)" : "rgba(255,255,255,.08)"; b.style.color = chosen ? "#1d1408" : "inherit"; }; // (the HUD's one accent, lantern amber: #188, art review round 2)
         Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" });
         if (axis === "hatShape") b.dataset.hat = opt;
@@ -406,11 +390,10 @@ export class Creator {
       }
       return;
     }
-    const [a, z] = lim as [number, number], s = document.createElement("input");
-    s.type = "range"; s.min = String(a); s.max = String(z); s.step = String((z - a) / 200); s.value = String(get(axis) ?? a);
+    const [a, z] = lim as [number, number], s = h("input", { type: "range" });
+    s.min = String(a); s.max = String(z); s.step = String((z - a) / 200); s.value = String(get(axis) ?? a);
     s.style.flex = "1"; s.style.accentColor = "var(--accent)"; s.dataset.axis = axis;
-    const wear = WEARS[axis], out = document.createElement("span");
-    Object.assign(out.style, { width: "38px", textAlign: "right", opacity: ".7" });
+    const wear = WEARS[axis], out = h("span", { style: { width: "38px", textAlign: "right", opacity: ".7" } });
     const show = () => { const v = +s.value; out.textContent = NONE_AT_ZERO.has(axis) && v === 0 ? "none" : axis === "hatTilt" || axis === "broomBend" ? (v > 0 ? "+" : "") + v.toFixed(2) : "×" + v.toFixed(2); };
     show();
     // a light snap to her classic value (so it's easy to get back to), and a double-click resets the slider to it
@@ -424,14 +407,12 @@ export class Creator {
   /** A box's own colour picker: a swatch per part it colours (the one being picked ringed; one part, no swatches), then that
    *  part's 256-step strips (the rainbow, the shade: dark, full, pale; and grey), a few quick picks, and back to her classic. */
   private picker(body: HTMLElement, id: string, parts: string[], row: (p: HTMLElement, n: string) => HTMLElement, pal: () => Record<string, number[]>, cur: (part: string) => number[]): void {
-    const g = this.g, tabs = row(body, "colour"), picker = document.createElement("div");
-    picker.dataset.picker = id;
+    const g = this.g, tabs = row(body, "colour"), picker = h("div", { data: { picker: id } });
     if (!parts.includes(this.picking.get(id) ?? "")) this.picking.set(id, parts[0]);
     body.append(picker);
     const strip = (kind: "hue" | "shade" | "grey") => {
-      const c = document.createElement("canvas");
-      c.width = STEPS; c.height = 1; c.dataset.strip = kind;
-      Object.assign(c.style, { width: "100%", height: "14px", imageRendering: "pixelated", cursor: "crosshair", borderRadius: "3px", border: "1px solid rgba(0,0,0,.6)", display: "block" });
+      const c = h("canvas", { data: { strip: kind }, style: { width: "100%", height: "14px", imageRendering: "pixelated", cursor: "crosshair", borderRadius: "3px", border: "1px solid rgba(0,0,0,.6)", display: "block" } });
+      c.width = STEPS; c.height = 1;
       return c;
     };
     const showPart = () => {
@@ -457,32 +438,22 @@ export class Creator {
         };
         c.addEventListener("pointerdown", e => { c.setPointerCapture(e.pointerId); pick(e); });
         c.addEventListener("pointermove", e => { if (c.hasPointerCapture(e.pointerId)) pick(e); });
-        const l = document.createElement("div");
-        Object.assign(l.style, { display: "flex", alignItems: "center", gap: "6px", margin: "3px 0" });
-        l.innerHTML = `<span style="width:42px;opacity:.7">${kind}</span>`;
-        const w = document.createElement("div"); w.style.flex = "1"; w.append(c); l.append(w);
-        picker.append(l);
+        picker.append(h("div", { style: { display: "flex", alignItems: "center", gap: "6px", margin: "3px 0" }, html: `<span style="width:42px;opacity:.7">${kind}</span>` }, h("div", { style: { flex: "1" } }, c)));
       }
       paint();
       const q = row(picker, "");
       q.firstElementChild?.remove();
       const quick = (sw: number[], text = "") => {
-        const b = document.createElement("button");
-        b.type = "button"; b.textContent = text;
-        Object.assign(b.style, { minWidth: "16px", height: "16px", padding: "0 4px", font: "11px inherit", color: "#efe6ff", border: "1px solid rgba(0,0,0,.6)", borderRadius: "3px", background: text ? "rgba(255,255,255,.1)" : css(sw), cursor: "pointer" });
-        b.addEventListener("click", () => { const c = classicPalette(this.style); g.palette = { ...pal(), [part]: text ? c[part] ?? [.07, .5, .45] : sw }; this.dirty = true; showPart(); });
-        q.append(b);
+        q.append(button(text, () => { const c = classicPalette(this.style); g.palette = { ...pal(), [part]: text ? c[part] ?? [.07, .5, .45] : sw }; this.dirty = true; showPart(); },
+          { style: { minWidth: "16px", height: "16px", padding: "0 4px", font: "11px inherit", color: "#efe6ff", border: "1px solid rgba(0,0,0,.6)", borderRadius: "3px", background: text ? "rgba(255,255,255,.1)" : css(sw), cursor: "pointer" } }));
       };
       for (const sw of swatches(part)) quick(sw);
       quick([], "classic");
     };
     for (const part of parts) {
-      const b = document.createElement("button");
-      b.type = "button"; b.title = label(part); b.dataset.part = part;
-      Object.assign(b.style, { height: "20px", padding: "0 6px", font: "inherit", fontSize: "11px", color: "#fff", textShadow: "0 0 2px #000, 0 0 2px #000", border: "1px solid rgba(0,0,0,.6)", borderRadius: "4px", cursor: "pointer" });
-      b.textContent = parts.length > 1 ? PART_NAMES[part] ?? label(part) : "";
+      const b = button(parts.length > 1 ? PART_NAMES[part] ?? label(part) : "", () => { this.picking.set(id, part); showPart(); },
+        { title: label(part), data: { part }, style: { height: "20px", padding: "0 6px", font: "inherit", fontSize: "11px", color: "#fff", textShadow: "0 0 2px #000, 0 0 2px #000", border: "1px solid rgba(0,0,0,.6)", borderRadius: "4px", cursor: "pointer" } });
       if (parts.length === 1) b.style.width = "20px";
-      b.addEventListener("click", () => { this.picking.set(id, part); showPart(); });
       tabs.append(b);
     }
     showPart();
