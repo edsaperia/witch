@@ -7,6 +7,7 @@
 // panel; Ed submits it and the coordinator acts on it. The page holds no secret: the issue is Ed's to send. Copy puts the
 // same line on the clipboard instead.
 import DECISIONS from "../../config/decisions.json";
+import { button, h } from "./dom";
 
 export type Control = { type: "toggle" } | { type: "choice"; options: { value: string; label: string }[] } | { type: "slider"; min: number; max: number; step: number };
 export interface Decision { id: string; label: string; note: string; control: Control; default: string | number | boolean; apply: { knob?: string; param?: string; reload?: boolean } }
@@ -93,10 +94,8 @@ export class DecidePanel {
     this.el.id = "decide";
     const params = new URLSearchParams(location.search);
     for (const d of DECISION_LIST) this.values.set(d.id, currentValue(d, host.tuning, params));
-    const tab = document.createElement("div"); tab.className = "tab"; tab.textContent = "DECISIONS · F2"; tab.title = "Open or close the decisions panel (F2)";
-    tab.addEventListener("click", () => this.toggle());
-    const body = document.createElement("div"); body.className = "body";
-    body.innerHTML = `<h2>Decisions</h2><p class="hint">Try a setting: it applies now. Confirm sends your choice (a GitHub issue to submit).</p>`;
+    const tab = h("div", { class: "tab", text: "DECISIONS · F2", title: "Open or close the decisions panel (F2)", on: { click: () => this.toggle() } });
+    const body = h("div", { class: "body", html: `<h2>Decisions</h2><p class="hint">Try a setting: it applies now. Confirm sends your choice (a GitHub issue to submit).</p>` });
     for (const d of DECISION_LIST) body.append(this.row(d));
     this.el.append(tab, body);
     if (!open) this.el.classList.add("closed");
@@ -110,14 +109,9 @@ export class DecidePanel {
   state(): Record<string, unknown> { return Object.fromEntries(this.values); }
 
   private row(d: Decision): HTMLElement {
-    const box = document.createElement("div"); box.className = "d"; box.dataset.id = d.id;
-    const head = document.createElement("div"); head.className = "row";
-    const label = document.createElement("span"); label.className = "label"; label.textContent = d.label;
-    head.append(label);
-    const note = document.createElement("div"); note.className = "note"; note.textContent = d.note;
-    const ctl = document.createElement("div"); ctl.className = "ctl";
-    const def = document.createElement("div"); def.className = "def";
-    const sent = document.createElement("div"); sent.className = "sent";
+    const box = h("div", { class: "d", data: { id: d.id } });
+    const label = h("span", { class: "label", text: d.label }), head = h("div", { class: "row" }, label);
+    const note = h("div", { class: "note", text: d.note }), ctl = h("div", { class: "ctl" }), def = h("div", { class: "def" }), sent = h("div", { class: "sent" });
     const fmt = (v: unknown) => d.control.type === "choice" ? d.control.options.find(o => o.value === v)?.label ?? String(v) : d.control.type === "toggle" ? (v ? "on" : "off") : String(v);
     const paint = () => {
       const v = this.values.get(d.id), changed = v !== d.default;
@@ -132,34 +126,27 @@ export class DecidePanel {
     this.rows.set(d.id, paint);
     const set = (v: string | number | boolean) => { this.values.set(d.id, v); this.apply(d, v); paint(); sent.textContent = ""; };
     if (d.control.type === "slider") {
-      const c = d.control, r = document.createElement("input"), out = document.createElement("span");
-      r.type = "range"; r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";
+      const c = d.control, r = h("input", { type: "range" }), out = h("span");
+      r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";
       r.addEventListener("input", () => set(+r.value));
       r.addEventListener("dblclick", () => set(d.default as number));
       ctl.append(r, out);
     } else {
       const opts = d.control.type === "toggle" ? [{ value: "true", label: "On" }, { value: "false", label: "Off" }] : d.control.options;
       for (const o of opts) {
-        const b = document.createElement("button"); b.type = "button"; b.className = "opt"; b.textContent = o.label; b.dataset.v = o.value;
-        b.addEventListener("click", () => set(d.control.type === "toggle" ? o.value === "true" : o.value));
-        ctl.append(b);
+        ctl.append(button(o.label, () => set(d.control.type === "toggle" ? o.value === "true" : o.value), { class: "opt", data: { v: o.value } }));
       }
     }
-    const acts = document.createElement("div"); acts.className = "acts";
-    const confirm = document.createElement("button"); confirm.type = "button"; confirm.className = "confirm"; confirm.textContent = "Confirm ✓";
-    confirm.title = "Open a GitHub issue with this choice, for you to submit";
-    confirm.addEventListener("click", () => {
+    const confirm = button("Confirm ✓", () => {
       const v = this.values.get(d.id), url = issueUrl(d.id, v, this.state(), this.host.version, this.host.seed, location.href);
       window.open(url, "_blank", "noopener");
       sent.textContent = "opened as an issue: submit it there";
-    });
-    const copy = document.createElement("button"); copy.type = "button"; copy.className = "copy"; copy.textContent = "copy";
-    copy.title = "Copy this choice as a line to paste";
-    copy.addEventListener("click", () => {
+    }, { class: "confirm", title: "Open a GitHub issue with this choice, for you to submit" });
+    const copy = button("copy", () => {
       const v = this.values.get(d.id), line = `${decisionLine(d.id, v)} · ${this.host.version} · seed ${this.host.seed} · ${JSON.stringify(this.state())}`;
       navigator.clipboard?.writeText(line).then(() => { sent.textContent = "copied"; }, () => { sent.textContent = line; });
-    });
-    acts.append(confirm, copy);
+    }, { class: "copy", title: "Copy this choice as a line to paste" });
+    const acts = h("div", { class: "acts" }, confirm, copy);
     box.append(head, note, ctl, def, acts, sent);
     paint();
     return box;
