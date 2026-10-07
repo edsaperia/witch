@@ -57,24 +57,24 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
     }
     return s;
   };
-  // The 5 x 5 sites round a grid cell, kept per layer for the last cell asked about: neighbouring
-  // lookups (a walker, a tile of texels) mostly fall in the same cell, so they read an array
-  // instead of 25 map lookups.
-  const rings: { gx: number; gy: number; xy: Float64Array }[] = [];
-  const ringOf = (layer: number, gx: number, gy: number): Float64Array => {
-    let r = rings[layer];
-    if (!r) rings[layer] = r = { gx: NaN, gy: NaN, xy: new Float64Array(50) };
-    if (r.gx !== gx || r.gy !== gy) {
-      let i = 0;
-      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const q = site(layer, gx + dx, gy + dy); r.xy[i++] = q[0]; r.xy[i++] = q[1]; }
-      r.gx = gx; r.gy = gy;
+  // The 5 x 5 sites round a grid cell, kept in a direct-mapped table of RINGS rings (by layer and cell): neighbouring
+  // lookups (a walker, a tile of texels) mostly fall in the same cell, and with every area peopled, creatures walking all
+  // over the map each come back to their own few (one remembered ring a layer was rebuilt from 25 map lookups at almost
+  // every call). ringOf returns the ring's offset into RING_XY: 25 sites as x, y.
+  const RINGS = 2048, ringKey = new Float64Array(RINGS).fill(NaN), RING_XY = new Float64Array(RINGS * 50);
+  const ringOf = (layer: number, gx: number, gy: number): number => {
+    const k = key(layer, gx, gy), slot = ((Math.imul(gx, 73856093) ^ Math.imul(gy, 19349663) ^ Math.imul(layer, 83492791)) >>> 0) % RINGS, o = slot * 50;
+    if (ringKey[slot] !== k) {
+      let i = o;
+      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const q = site(layer, gx + dx, gy + dy); RING_XY[i++] = q[0]; RING_XY[i++] = q[1]; }
+      ringKey[slot] = k;
     }
-    return r.xy;
+    return o;
   };
   const nearest = (layer: number, px: number, py: number): Cell => {
-    const c = Math.pow(2, -layer), gx = Math.floor(px / c), gy = Math.floor(py / c), xy = ringOf(layer, gx, gy);
+    const c = Math.pow(2, -layer), gx = Math.floor(px / c), gy = Math.floor(py / c), o = ringOf(layer, gx, gy), xy = RING_XY;
     let bi = 0, bd = Infinity;
-    for (let i = 0; i < 25; i++) { const d = (xy[2 * i] - px) ** 2 + (xy[2 * i + 1] - py) ** 2; if (d < bd) { bd = d; bi = i; } }
+    for (let i = 0; i < 25; i++) { const d = (xy[o + 2 * i] - px) ** 2 + (xy[o + 2 * i + 1] - py) ** 2; if (d < bd) { bd = d; bi = i; } }
     return [gx + Math.floor(bi / 5) - 2, gy + (bi % 5) - 2];
   };
   const root = (layer: number, cx: number, cy: number): Cell => {
@@ -98,18 +98,18 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
     partition(px, py) {
       if (home && fromHome(px, py) < home.radius) return home.cell;
       // (nearest(depth, ...) inline, its cell in locals: no tuple a call before root's cached one; phase 2's GC audit)
-      const c = Math.pow(2, -depth), gx = Math.floor(px / c), gy = Math.floor(py / c), xy = ringOf(depth, gx, gy);
+      const c = Math.pow(2, -depth), gx = Math.floor(px / c), gy = Math.floor(py / c), o = ringOf(depth, gx, gy), xy = RING_XY;
       let bi = 0, bd = Infinity;
-      for (let i = 0; i < 25; i++) { const d = (xy[2 * i] - px) ** 2 + (xy[2 * i + 1] - py) ** 2; if (d < bd) { bd = d; bi = i; } }
+      for (let i = 0; i < 25; i++) { const d = (xy[o + 2 * i] - px) ** 2 + (xy[o + 2 * i + 1] - py) ** 2; if (d < bd) { bd = d; bi = i; } }
       return root(depth, gx + Math.floor(bi / 5) - 2, gy + (bi % 5) - 2);
     },
     partitionSafe(px, py) {
       const dh = fromHome(px, py);
       if (home && dh < home.radius) return { cell: home.cell, safe: Math.min(Math.pow(2, -depth), home.radius - dh) }; // (capped as below)
-      const c = Math.pow(2, -depth), gx = Math.floor(px / c), gy = Math.floor(py / c), xy = ringOf(depth, gx, gy);
+      const c = Math.pow(2, -depth), gx = Math.floor(px / c), gy = Math.floor(py / c), o = ringOf(depth, gx, gy), xy = RING_XY;
       let bi = 0, d1 = Infinity, d2 = Infinity;
       for (let i = 0; i < 25; i++) {
-        const d = (xy[2 * i] - px) ** 2 + (xy[2 * i + 1] - py) ** 2;
+        const d = (xy[o + 2 * i] - px) ** 2 + (xy[o + 2 * i + 1] - py) ** 2;
         if (d < d1) { d2 = d1; d1 = d; bi = i; } else if (d < d2) d2 = d;
       }
       const bx = gx + Math.floor(bi / 5) - 2, by = gy + (bi % 5) - 2;
@@ -130,9 +130,9 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
     },
     openness(px, py) {
       let d1 = Infinity, d2 = Infinity;
-      const xy = ringOf(0, Math.floor(px), Math.floor(py));
+      const o = ringOf(0, Math.floor(px), Math.floor(py)), xy = RING_XY;
       for (let i = 0; i < 25; i++) {
-        const d = (xy[2 * i] - px) ** 2 + (xy[2 * i + 1] - py) ** 2;
+        const d = (xy[o + 2 * i] - px) ** 2 + (xy[o + 2 * i + 1] - py) ** 2;
         if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
       }
       d1 = Math.sqrt(d1); d2 = Math.sqrt(d2);
