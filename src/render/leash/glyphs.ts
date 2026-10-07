@@ -112,7 +112,8 @@ export class Instances {
   add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1, glow = false): void {
     if (this.n >= this.cap) this.grow(this.cap * 2);
     const i = this.n++;
-    this.pos.set([x, y, z], i * 3); this.size[i] = size; this.uv.set(uv, i * 4); this.col.set([r, g, b, a], i * 4); this.draw[i] = draw + (glow ? 2 : 0);
+    const p = this.pos, c = this.col, j = i * 3, k = i * 4; // (written in place: two arrays a dot were a fight frame's top allocator)
+    p[j] = x; p[j + 1] = y; p[j + 2] = z; this.size[i] = size; this.uv.set(uv, k); c[k] = r; c[k + 1] = g; c[k + 2] = b; c[k + 3] = a; this.draw[i] = draw + (glow ? 2 : 0);
   }
   end(): void {
     this.geo.instanceCount = this.n;

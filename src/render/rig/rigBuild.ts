@@ -41,8 +41,8 @@ export function rigSprites(st: Style, species: string, level: number, mk: MakeCa
   const add = (p: Part, outline = st.cOutline): RigPiece | null => p ? { frame: sprites.push(Art.bake(p.sp, colours, st, outline, mk) as Baked) - 1, px: p.px, py: p.py } : null;
   const all = (k: string) => (P.pieces[k] ?? [null, null, null, null, null]).map(p => add(p));
   const discs: RigMeta["discs"] = {};
-  // discs unoutlined: strung along a bone they overlap into one limb, not a string of beads
-  for (const [mat, byR] of Object.entries(P.discs)) { discs[+mat] = {}; for (const [r, p] of Object.entries(byR)) { const d = add(p, "none"); if (d) discs[+mat][+r] = d; } }
+  // discs unoutlined ("bare": not even the pixel-art style's own): strung along a bone they overlap into one limb, not a string of beads
+  for (const [mat, byR] of Object.entries(P.discs)) { discs[+mat] = {}; for (const [r, p] of Object.entries(byR)) { const d = add(p, "bare"); if (d) discs[+mat][+r] = d; } }
   const J = P.joints, head = J.head && !Array.isArray(J.head) ? J.head : null;
   const meta: RigMeta = {
     template: P.template, s: P.s, shoe: P.pieces.shoe ? all("shoe") : undefined, torso: all("torso"), head: all("head"), tail: all("tail"), discs,

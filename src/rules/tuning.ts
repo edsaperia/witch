@@ -142,7 +142,7 @@ export interface Tuning {
     on: boolean; volume: number; hear: number;
     voice: {
       witch: { volume: number; pitch: number; range: number; pace: number; timbre: number; phraseGap: number };
-      animals: { volume: number; pitch: number; maxVoices: number; duck: number; syllables: number[]; gap: number; reply: number };
+      animals: { volume: number; pitch: number; maxVoices: number; duck: number; syllables: number[]; gap: number; reply: number; /** a voice gives way only to one this much nearer (prio, 0 to 1.5) */ swapBy?: number; /** and at most one gives way every swapGap seconds */ swapGap?: number };
     };
     hit: { volume: number; gap: number }; fill: { volume: number; octaves: number }; invited: { volume: number };
     enraged: { volume: number; gap: number }; happy: { volume: number; gap: number };
@@ -160,7 +160,8 @@ export interface Tuning {
     /** The afterparty's night (Ed, 2026-10-06: "nice environmental music and sounds that match each area"; platform/audio/night.ts): its volume, the bed's (pad and bells), the noise bed's and the night sounds' shares, when it comes in (from `from` of the party-over ease), and the sleeping animals' snores (volume, the gap between them, heard within range metres, at most max at once). */
     night?: { volume: number; bed: number; noise: number; sounds: number; from: number; snore: { volume: number; gap: number; range: number; max: number } };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
-    room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number };
+    room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
+    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
     spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
     land: { volume: number; gap: number };

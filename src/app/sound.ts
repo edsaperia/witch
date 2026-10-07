@@ -50,7 +50,7 @@ export class Sound {
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
   ensureSfx(): void {
     const { tuning } = this;
-    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, tuning.music.volume * this.level, tuning.sfx, this.style.root + 24); this.sfxCues = new SfxCues(this.sfx, (by, sec) => this.music?.duck(by, sec)); }
+    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, tuning.music.volume * this.level, tuning.sfx, this.style.root + 24); this.sfxCues = new SfxCues(this.sfx, (by, sec) => this.music?.duck(by, sec)); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
   }
 
   /** A first press (the creator's): the context, resumed, and the sound effects. */
@@ -98,6 +98,9 @@ export class Sound {
     this.lastMix = musicMix(game, game.witch);
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
-    this.sfx?.room(roomOpen ? 1 : 0); // the creator's room in the treehouse
+    // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
+    // still crackling under her hands (quieter: room.decks), till the boot's first speaker brings the music in
+    const atDecks = game.witch.seated && typeof game.party.spellAt === "number" && !game.speakerBoot.some(t => t !== null);
+    this.sfx?.room(roomOpen ? 1 : atDecks ? this.tuning.sfx.room.decks : 0);
   }
 }
