@@ -3,12 +3,13 @@
 // baby wolf (1405, 401) and a young fox (1273, 392) popped in 258 m ahead over the treetops, culled
 // behind the horizon one frame and in clear view the next, the camera having moved metres in a long
 // frame while the cull judged it where it stood.
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { HEIGHT_UNIFORMS, seenOverBend } from "./height";
 import { horizonLead } from "./view/culling";
 import { TUNING } from "../rules/tuning";
 
 describe("the horizon cull keeps ahead of the camera", () => {
+  afterEach(() => { HEIGHT_UNIFORMS.uBend.value.set(0, 0, 0, 0); HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); }); // (the bend back as other files find it: tests share modules)
   const C = TUNING.camera, T = C.treetop, a = (T.angleOut * Math.PI) / 180;
   // The treetop camera over her, the bend's focus under her (both move with her).
   for (const [k, distance] of [[C.curve.treetop, T.distanceIn], [C.curve.treetop, T.distanceOut], [C.curve.treetop * 2, T.distanceOut]] as const) {

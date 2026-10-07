@@ -38,7 +38,10 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
   const siteCache = new Map<number, [number, number]>();
   const rootCache = new Map<number, Cell>();
   // Integer keys: layers stay under 16 and cells within +-2^20, which a 20 x 20 map never nears.
-  const key = (layer: number, cx: number, cy: number) => (layer * 2097152 + (cx + 1048576)) * 2097152 + (cy + 1048576);
+  // (small integers where the cell is within ±1024, which every map's is: V8 keeps them unboxed, so a cache lookup makes
+  // no heap number; phase 2's GC audit. Anything further out keeps the old wide key, negated so the two never meet.)
+  const key = (layer: number, cx: number, cy: number) =>
+    cx >= -1024 && cx < 1024 && cy >= -1024 && cy < 1024 && layer < 64 ? (layer * 2048 + (cx + 1024)) * 2048 + (cy + 1024) : -1 - (layer * 2097152 + (cx + 1048576)) * 2097152 - (cy + 1048576);
   const site = (layer: number, cx: number, cy: number): [number, number] => {
     const k = key(layer, cx, cy);
     let s = siteCache.get(k);

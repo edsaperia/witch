@@ -858,6 +858,7 @@ The music's clock (beats per minute): the lasers sweep to it and party animals d
 | `leyLines.valley` | number | 0 to … |
 | `leyLines.flow` | array of number |  |
 | `leyLines.depart.avoid` | number | 0 to … |
+| `leyLines.minRadius` | number | 0 to … |
 
 ### `partyObjects`, `partyWitches`, `speakerLasers`, `lasers`
 

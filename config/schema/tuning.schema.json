@@ -3217,6 +3217,10 @@
             "avoid"
           ],
           "additionalProperties": false
+        },
+        "minRadius": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -3232,7 +3236,8 @@
         "height",
         "valley",
         "flow",
-        "depart"
+        "depart",
+        "minRadius"
       ],
       "additionalProperties": false
     },
