@@ -101,7 +101,7 @@ export class LeashView {
 
   constructor(scene: THREE.Scene, readonly game: Game) {
     this.canvas.width = this.canvas.height = SLOT * SLOTS;
-    const g = this.canvas.getContext("2d")!;
+    const g = this.canvas.getContext("2d", { willReadFrequently: true })!;
     const dot = g.createRadialGradient(SLOT / 2, SLOT / 2, 0, SLOT / 2, SLOT / 2, SLOT / 2);
     dot.addColorStop(0, "rgba(255,255,255,1)"); dot.addColorStop(0.35, "rgba(255,255,255,.55)"); dot.addColorStop(1, "rgba(255,255,255,0)");
     g.fillStyle = dot; g.fillRect(0, 0, SLOT, SLOT);
@@ -132,7 +132,7 @@ export class LeashView {
     // a legendary one: a block of 2 × 2 slots from LEGEND_ROW down (8 a row pair), its top left slot
     s = legendary ? LEGEND_ROW * SLOTS + Math.floor(this.legendSlots / 8) * 2 * SLOTS + (this.legendSlots++ % 8) * 2 : this.nextSlot++;
     this.slots.set(key, s);
-    const g = this.canvas.getContext("2d")!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT, W = legendary ? SLOT * 2 : SLOT;
+    const g = this.canvas.getContext("2d", { willReadFrequently: true })!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT, W = legendary ? SLOT * 2 : SLOT;
     g.clearRect(ox, oy, W, W);
     drawSigil(g, species, { x: ox + 1, y: oy + 1, size: (W - 2) / (legendary ? LEGEND_SCALE : 1), level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary });
     // Crisp: no soft edges, so it reads as pixel art.
