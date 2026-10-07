@@ -66,7 +66,16 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
     const k = key(layer, gx, gy), slot = ((Math.imul(gx, 73856093) ^ Math.imul(gy, 19349663) ^ Math.imul(layer, 83492791)) >>> 0) % RINGS, o = slot * 50;
     if (ringKey[slot] !== k) {
       let i = o;
-      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const q = site(layer, gx + dx, gy + dy); RING_XY[i++] = q[0]; RING_XY[i++] = q[1]; }
+      // A deeper layer's sites are two hashes each, written in place: through site()'s cache (a map lookup and a tuple each)
+      // they were half the map's making, findNeighbours' 17,000 partitions each landing in a new deepest cell (the
+      // overnight start-up pass). Layer 0's go through site(): home pushes its neighbours' sites out.
+      if (layer > 0) {
+        const c = Math.pow(2, -layer);
+        for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) {
+          const x = gx + dx, y = gy + dy;
+          RING_XY[i++] = c * (x + hash2(x * 7 + layer, y, seed)); RING_XY[i++] = c * (y + hash2(x, y * 13 + layer, seed + 1));
+        }
+      } else for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const q = site(layer, gx + dx, gy + dy); RING_XY[i++] = q[0]; RING_XY[i++] = q[1]; }
       ringKey[slot] = k;
     }
     return o;
