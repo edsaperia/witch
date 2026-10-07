@@ -336,6 +336,13 @@
               "type": "number",
               "minimum": 0
             },
+            "ahead": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
             "out": {
               "type": "array",
               "items": {
@@ -361,6 +368,7 @@
             "arc",
             "every",
             "pair",
+            "ahead",
             "out",
             "length",
             "height",
@@ -393,7 +401,7 @@
                 "minimum": 0
               }
             },
-            "out": {
+            "far": {
               "type": "array",
               "items": {
                 "type": "number",
@@ -415,7 +423,7 @@
             "every",
             "chance",
             "tentacles",
-            "out",
+            "far",
             "time",
             "head"
           ],
