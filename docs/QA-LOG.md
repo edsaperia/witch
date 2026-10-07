@@ -111,4 +111,14 @@ The heap is flat over the frames in both (no leak). Down: `refresh` 1.87 → 0.7
   - #420 bench-buffs: the bench's own fingerprint (the fix for the knob false positive).
   - #422 balance: the combat state only, 0 pixels.
 
-Not checked: 31d1905c → the frozen ship tip 0ab00110 (#427–#449, 11 merges).
+
+## Round 5: 31d1905c → the shipped tip 0ab00110 (#427–#449), 10:55–12:13
+
+11 merges, each against its first parent. Tests and typecheck green at 0ab00110; journey ok there (every moment reached, no errors, draw calls 49–89, `dropped` 0).
+
+- **Same** (7): #437 pages-size, #439 balance, #442 champion-bot, #443 setpiece-scale, #444 batch-uploads, #447 runestone-carving, #448 ed-notes-ravine.
+- **Differ** (4):
+  - #427 disc-outline: the creatures' leg outlines (12,681 px), on purpose.
+  - #445 sigil-spill: a soft glow round the wolf's sigil on the ground (19,899 px, at most 44 levels), on purpose.
+  - #440 p2-readback: 81 px of one sigil's edge, as its PR says (the sigil atlas drawn on the CPU, so no GPU readback: the first sigil 916 → 2.4 ms).
+  - **#449 grass-uploads** (minor): a phase-2 PR claiming the same picture, yet 45 px of the boot shot differ by 1 level (its own "game unchanged" was red when it merged). Invisible; likely overlapping tufts' order or slots; not bit-exact as claimed.
