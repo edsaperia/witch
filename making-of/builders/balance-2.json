@@ -1,0 +1,18 @@
+{
+  "builder": "Balance 2",
+  "phase": "Balance: bot sweeps",
+  "slice": "Long bot sweeps for the balance builder: the sweep script, the map's size and the clear-to-transform population (#365, #446)",
+  "prs": [365, 446],
+  "built": [
+    "`tools/balance/sweep.mjs`: many seeds of many bots through the real rules in worker processes, to 90 game minutes and more, each run appended as it finishes so a sweep survives a restart; tables of when each bot loses, its knockdowns, invites, quests and how far ahead of the pulse it clears; `--overlay` tries tuning and bot options without editing the tuning file",
+    "`tools/balance/mapsize.mjs`: how far the best bots get, to size the map: radius 5.6, about 94 areas (#446)",
+    "The populated forest's numbers for clear-to-transform: a threat curve by route position, each species' mix of young and adults, two babies an area and at least one young or adult in every wild area, about 870 creatures a map"
+  ],
+  "learned": [
+    "Fighting value undercounts adults: an area of adults is harder than its F says, so adult-heavy kinds want a lower threat, which also keeps the creature count down",
+    "A harder forest hurts careful players before careless ones. The careless bot outlasts it by inviting in bulk and paying almost nothing for a knockdown, so making careless play lose is a question of what a knockdown costs, not of the population",
+    "Hurrying waves after a lost soundsystem (lossPenalty 120) made the careless bot last longer, not shorter: every hurried wave gives it another soundsystem to lose first",
+    "A playtest's creature count of 1,909 against the model's 826 was the browser remembering an old 14×14 map size, not a bug: check the overlay's area line before the numbers"
+  ],
+  "previews": []
+}

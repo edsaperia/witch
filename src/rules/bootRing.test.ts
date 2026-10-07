@@ -22,10 +22,12 @@ describe("the boot's ley ring", () => {
     for (let k = 1; k < b.length; k++) expect(b[k]).toBeGreaterThan(b[k - 1]);
     expect(b[3]).toBeCloseTo(105); expect(b[6]).toBeCloseTo(195); expect(b[9]).toBeCloseTo(285);
   });
-  it("starts at the treehouse's front and drops to the ring's top", () => {
-    const P = bootPath(map).path;
-    expect(P[0]).toEqual([cx, cz - 45]);
-    expect(P[1][0]).toBeCloseTo(cx); expect(P[1][1]).toBeCloseTo(cz - R, 0);
+  it("starts at the treehouse's front and comes down on to the ring along it, just past its top, before the first stone", () => {
+    const P = bootPath(map), on = P.path[P.path.length - 73], r = Math.hypot(on[0] - cx, on[1] - cz), b = (Math.atan2(on[0] - cx, -(on[1] - cz)) * 180) / Math.PI;
+    expect(P.path[0]).toEqual([cx, cz - 45]);
+    expect(r).toBeCloseTo(R, 3);
+    expect(b).toBeGreaterThan(0); expect(b).toBeLessThan(15); // (east of north, short of the first stone)
+    expect(maxTurn(P.path.slice(0, P.path.length - 60))).toBeLessThan(35); // (no right angle on to it)
   });
   it("moves nothing before the party spell", () => {
     const p = waiting();
@@ -105,11 +107,13 @@ describe("the ring and the way out are one path (Ed, 2026-10-06: \"it doesn't co
     for (const to of [{ x: d.x + 400, z: d.z + 300 }, { x: d.x - 500, z: d.z - 100 }]) {
       const route = departureRoute(g.map, to, TUNING.leyLines.depart.avoid, 4), r = (p: [number, number]) => Math.hypot(p[0] - d.x, p[1] - d.z);
       expect(route[0]).toEqual(P.path[0]); // (both from the treehouse's front)
-      // Never inside the ring, and its first stretch on it (within the smoothing's half metre or so) before it heads out.
+      // Never inside the ring; in from the treehouse's front onto it (the ring is the speakers' own circle, inside the front:
+      // Ed, 2026-10-07), a stretch on it (within the smoothing's half metre or so), then out.
       expect(Math.min(...route.map(r))).toBeGreaterThan(R - 0.6);
-      const onRing = route.slice(1).findIndex(p => r(p) > R + 1.5);
-      expect(onRing).toBeGreaterThan(2);
-      for (const p of route.slice(1, onRing)) expect(Math.abs(r(p) - R)).toBeLessThan(1.5);
+      const on = route.findIndex(p => Math.abs(r(p) - R) < 1.5), onRing = on + route.slice(on).findIndex(p => r(p) > R + 1.5);
+      expect(on).toBeGreaterThan(0);
+      expect(onRing - on).toBeGreaterThan(2);
+      for (const p of route.slice(on, onRing)) expect(Math.abs(r(p) - R)).toBeLessThan(1.5);
       // No right angle (Ed's second shot): onto the ring, round it and off it, each step turns gently.
       expect(maxTurn(route.slice(0, onRing + 12))).toBeLessThan(35);
     }

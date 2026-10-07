@@ -13,3 +13,8 @@ export const aggroGlow = (a: number): number => -1.05 - 0.4 * Math.min(1, Math.m
 
 /** The shader's reading (as render/sprites.ts): its red, or null for any other glow. */
 export const readAggroGlow = (g: number): number | null => (g < -1.02 && g > -1.5 ? Math.min(1, Math.max(0, (-1.05 - g) / 0.4)) : null);
+
+/** Its red easing out once the watch ends (it attacks, is invited, gives up, she leaves; Ed, 2026-10-07: "should fade out rather
+ *  than cut out instantly"): from the red it last showed, `since` seconds ago, gone over `fade` seconds, quick at first then
+ *  settling (its rise stays as it is). */
+export const aggroFadeOut = (last: number, since: number, fade = 0.7): number => { const k = Math.min(1, Math.max(0, 1 - since / Math.max(1e-6, fade))); return last * k * k; };

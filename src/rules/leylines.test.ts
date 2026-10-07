@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
 import { newParty, spreadWave, cellKey } from "./party";
-import { departureClear, departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
+import { departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
+import { speakerCircle } from "./departure";
 
 const map = generateMap(123, TUNING);
 const keys = (c: { cell: readonly [number, number] }[]) => c.map(s => cellKey(s.cell));
@@ -102,7 +103,7 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
     // (The noisy picker's first objective lies anywhere round home; the route's on the side it leaves by.)
     for (const T of [TUNING, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }]) for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
       const m = generateMap(seed, T), p = newParty(m), [a, b] = ahead(p, m, 2), d = m.dancefloor;
-      const pts = departureRoute(m, b, D.avoid, 4), R = departureClear(m, D.avoid);
+      const pts = departureRoute(m, b, D.avoid, 4), R = speakerCircle(m) - 0.6; // (on the speakers' own circle at the closest: the boot ring's, Ed 2026-10-07)
       expect(pts[0]).toEqual([a.x, a.z]);
       const last = pts[pts.length - 1];
       expect(Math.hypot(last[0] - b.x, last[1] - b.z)).toBeLessThan(1);

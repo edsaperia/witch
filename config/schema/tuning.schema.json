@@ -2996,7 +2996,7 @@
           "type": "number",
           "minimum": 0
         },
-        "vignette": {
+        "fade": {
           "type": "number",
           "minimum": 0
         }
@@ -3008,7 +3008,7 @@
         "hangBack",
         "dangerF",
         "tint",
-        "vignette"
+        "fade"
       ],
       "additionalProperties": false
     },
@@ -5093,6 +5093,24 @@
           ],
           "additionalProperties": false
         },
+        "nope": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
         "stir": {
           "type": "object",
           "properties": {
@@ -5488,6 +5506,7 @@
         "deck",
         "spell",
         "land",
+        "nope",
         "stir",
         "knock",
         "charge",
@@ -5510,6 +5529,14 @@
         "volume": {
           "type": "number",
           "minimum": 0
+        },
+        "latency": {
+          "type": "string",
+          "enum": [
+            "interactive",
+            "balanced",
+            "playback"
+          ]
         },
         "dropLayers": {
           "type": "number",
@@ -5641,6 +5668,7 @@
       "required": [
         "on",
         "volume",
+        "latency",
         "dropLayers",
         "nearDist",
         "farDist",

@@ -136,8 +136,8 @@ describe("clearing an area transforms its runestone (Ed, 2026-10-07)", () => {
     expect(holders.length).toBeGreaterThan(0);
     expect(holders.some(c => c.boss || c.circle)).toBe(false);
     empty(g, key);
-    const last = own(g, key).find(c => c.level > 0)!;
-    last.gone = false; // one left
+    const last = own(g, key).find(c => !c.boss && !c.circle && c.level > 0)!; // (minHostile: every wild area has one)
+    last.gone = false; last.state = undefined; // one left, wild
     expect(clearedAreas(g.party, g.map, g.creatures).map(cellKey)).not.toContain(key);
     last.leashed = true; // invited and leashed
     expect(clearedAreas(g.party, g.map, g.creatures).map(cellKey)).toContain(key);
@@ -216,7 +216,9 @@ describe("what's left to clear (Ed's playtest, 2026-10-07: the HUD's count, and 
 
 describe("only an area's natives count (Ed, 2026-10-07: visitors from next door 'wouldn't get enraged when the runestone transforms')", () => {
   it("a visitor standing in a cleared area doesn't block it, isn't counted, and isn't touched when its stone transforms; a native wandered off still holds it", () => {
-    const g = game(), order = routeOf(g.map).order, key = order[3], other = order[6];
+    const g = game(), order = routeOf(g.map).order, other = order[6];
+    // an area of two or more young and adults (the first ring's may hold only minHostile's one)
+    const key = order.slice(1).find(k => k !== other && wildLeft(g.creatures, k.split(",").map(Number) as [number, number]).length >= 2)!;
     const [cx, cy] = key.split(",").map(Number) as [number, number];
     // a wild visitor from another area, standing in this one
     const visitor = g.creatures.find(c => cellKey(c.cell) === other && holdsArea(c) && c.level > 0)!;

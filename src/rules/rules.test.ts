@@ -9,7 +9,7 @@ import { AREA_TYPES, HOME_LOOK, LOOKS, generateMap, parseSeed, sceneFootprint } 
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
+import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor, type Creature } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
 import { newParty, routeOf, spreadWave, stepParty, spawnMarkers, nextWave, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
@@ -529,7 +529,10 @@ describe("creatures", () => {
   }, 60000);
 
   it("roam their whole area, slowly, and never leave it", () => {
-    const sample = all.filter(c => !keepsToCircle(c)).filter((_, i) => i % 97 === 0).slice(0, 5); // (a legend's circle baby keeps to its circle)
+    // (the first roamer of every ninth area, so the sample doesn't move with the population's numbers; a legend's circle baby keeps to its circle)
+    const firsts = new Map<string, Creature>();
+    for (const c of all) if (!keepsToCircle(c) && !c.boss && !firsts.has(`${c.cell}`)) firsts.set(`${c.cell}`, c);
+    const sample = [...firsts.values()].filter((_, i) => i % 9 === 0).slice(0, 5);
     for (const c of sample) {
       const visited = new Set<string>(), start = [c.x, c.z];
       const k = map.areaSize / 112, minutes = 40 * k * k, sq = 8 * k; // forty minutes in an area 112 m across, longer in bigger ones by its area (they walk no faster)
