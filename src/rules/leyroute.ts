@@ -75,25 +75,33 @@ export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
   // A changed route's crossings: those of the links outside [lo, hi] as they were, and the changed links' afresh.
   const pairsAfter = (links: P2[][], lo: number, hi: number): [number, number][] => {
     const inn = (k: number) => k >= lo && k <= hi, out: [number, number][] = bestPairs.filter(([a, b]) => !inn(a) && !inn(b));
-    for (let a = Math.max(1, lo); a <= Math.min(links.length - 1, hi); a++) for (let b = 0; b < links.length; b++) if (b !== a && !(inn(b) && b < a) && (a < b ? polylinesMeet(links[a], links[b]) : polylinesMeet(links[b], links[a]))) out.push(a < b ? [a, b] : [b, a]);
+    for (let a = Math.max(0, lo); a <= Math.min(links.length - 1, hi); a++) for (let b = 0; b < links.length; b++) if (b !== a && !(inn(b) && b < a) && (a < b ? polylinesMeet(links[a], links[b]) : polylinesMeet(links[b], links[a]))) out.push(a < b ? [a, b] : [b, a]);
     return out;
   };
   // Where its curves still meet (a wide swing into a strand passing close by), the stones between the two links turned
   // round (2-opt, as untangle does on the straight line) and curved again, kept if it meets less and is no worse a shape.
   const dip = routeShape(map, r.stones).lateDip;
   let bestOk = withinCrossingRules(best.links, CROSSING_RULES, bestPairs);
-  for (let round = 0, tried = 0; round < 6 && !bestOk && tried < 24; round++) {
+  for (let round = 0, tried = 0; round < 6 && !bestOk && tried < 60; round++) {
     let improved = false;
-    for (const [i, j] of [...bestPairs]) {
-      if (own.has(`${i},${j}`)) continue; // (the straight line's own crossings are Ed's few, kept; the first stone stays first: the departure leads to it)
+    // (the curves' own crossings first; then, if the rules still fail (two of the straight line's own few curved closer
+    // together than CROSSING_RULES.apart), those too; the first stone stays first: the departure leads to it)
+    for (const [i, j] of [...bestPairs].sort((p, q) => +own.has(`${p[0]},${p[1]}`) - +own.has(`${q[0]},${q[1]}`))) {
       // the stones between them turned round, or one stone swapped with its neighbour near either link (two hairpins
       // close together: a stone taken in the other order)
       // (or a few round them turned round, or the stone at the crossing taken a few waves sooner or later)
-      const N = best.stones.length, tries: { a: number; b: number; move?: number }[] = [[i, j], [i - 1, i + 1], [i, i + 2], [j - 1, j + 1], [j, j + 2], [i - 1, i + 2], [i - 2, i + 2], [i - 2, i + 3]].map(([a, b]) => ({ a, b }));
+      const N = best.stones.length, tries: { a: number; b: number; move?: number; perm?: number[] }[] = [[i, j], [i - 1, i + 1], [i, i + 2], [j - 1, j + 1], [j, j + 2], [i - 1, i + 2], [i - 2, i + 2], [i - 2, i + 3]].map(([a, b]) => ({ a, b }));
       for (const at of [i, j]) for (const d of [-3, -2, 2, 3]) tries.push({ a: at, b: at + d, move: 1 });
-      for (const { a, b, move } of tries) {
+      // (at the start, where the departure fixes the first stone's way and the first stones lie close together: every
+      // order of the next four)
+      if (i <= 1) for (const perm of PERMS4) tries.push({ a: 1, b: 5, perm });
+      for (const { a, b, move, perm } of tries) {
         let st: P2[], keys: string[];
-        if (move) {
+        if (perm) {
+          if (N < 6) continue;
+          st = [...best.stones]; keys = [...best.order];
+          perm.forEach((p, k) => { st[1 + k] = best.stones[1 + p]; keys[1 + k] = best.order[1 + p]; });
+        } else if (move) {
           if (a < 1 || b < 1 || a >= N || b >= N) continue;
           st = [...best.stones]; keys = [...best.order];
           const [sv] = st.splice(a, 1), [kv] = keys.splice(a, 1); st.splice(b, 0, sv); keys.splice(b, 0, kv);
@@ -103,7 +111,7 @@ export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
         }
         const straight: P2[][] = [best.straight![0] as P2[]];
         for (let k = 1; k < st.length; k++) straight.push([st[k - 1], st[k]]);
-        if (++tried > 24) break;
+        if (++tried > 60) break;
         const lo = Math.min(a, b) - 2, hi = Math.max(a, b) + 1, o = make({ order: keys, stones: st, links: straight }, [lo, hi]), ps = pairsAfter(o.links, lo, hi + 1), c = ps.length;
         const ok = withinCrossingRules(o.links, CROSSING_RULES, ps);
         if (((ok && !bestOk) || (ok === bestOk && c < bestC)) && routeShape(map, st).lateDip <= Math.max(dip, SPIRAL_RULES.dip)) { best = o; bestPairs = ps; bestC = c; bestOk = ok; improved = true; keepWays(o); break; }
@@ -115,6 +123,8 @@ export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
   if (globalThis.process?.env?.LEYPROF) console.log("all", Math.round(performance.now() - T0));
   return best;
 }
+/** Every order of four (but the one they're in). */
+const PERMS4 = ((): number[][] => { const out: number[][] = [], go = (p: number[], rest: number[]) => { if (!rest.length) { if (p.join() !== "0,1,2,3") out.push(p); return; } rest.forEach((r, k) => go([...p, r], [...rest.slice(0, k), ...rest.slice(k + 1)])); }; go([], [0, 1, 2, 3]); return out; })();
 /** The tightest the ley line turns (metres; leyLines.minRadius, 30 by default). */
 export const leyRadius = (map: ForestMap) => map.tuning.leyLines.minRadius ?? 30;
 
