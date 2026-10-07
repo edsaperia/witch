@@ -498,19 +498,19 @@ export class SfxCues {
 
   /** The wild watch's warning (art builder 3's aggroOf, rules/wildWatch.ts): rising while a wild area's watchers stare at
    *  her; when it ends, a hit if the watch ran its course (they attack) or a fall if it was called off (she rose, left or
-   *  was knocked out). aggroOf is null from the attack's own moment, so which it was is read from the area's watch. */
-  private aggro({ g, time }: Here): void {
+   *  was knocked out). aggroOf goes null on the attack's own step too, so the last k tells which (art builder 3: k reaches
+   *  1 on the step the watch ends; a call-off leaves it below about 0.98). */
+  private aggro({ g }: Here): void {
     if (!g.tuning.sfx.aggro) return;
     const a = aggroOf(g);
-    if (a) { this.aggroDanger = a.danger; this.aggroOn = true; this.sfx.aggro(a.k, a.danger); return; }
-    if (!this.aggroOn) return;
-    this.aggroOn = false;
-    const w = g.witches[0], e = w ? g.wildEntry.get(cellKey(g.map.cellSafe(w.body.x, w.body.z).cell)) : undefined;
-    const attacked = !!w && !!e && time >= e.until && w.body.mode === "ground" && !w.ko;
+    if (a) { this.aggroK = a.k; this.aggroDanger = a.danger; this.sfx.aggro(a.k, a.danger); return; }
+    if (this.aggroK === null) return;
+    const w = g.witches[0], attacked = this.aggroK >= 0.98 && !!w && w.body.mode === "ground" && !w.ko;
+    this.aggroK = null;
     if (attacked) this.sfx.aggro(1, this.aggroDanger);
     this.sfx.aggro(null);
   }
-  private aggroOn = false;
+  private aggroK: number | null = null;
   private aggroDanger = 0;
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
