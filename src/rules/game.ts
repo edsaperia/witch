@@ -450,13 +450,16 @@ function fixedStep(g: Game, controls: Controls): void {
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
  *  once, after it's done. A sleeping legend (and one waking) holds its ground; one burrowed or in the air is out of it. */
+const spacingList: Creature[] = []; // (kept from step to step: a siege's thousands)
 function stepSpacing(g: Game, dt: number): void {
-  const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list: Creature[] = [];
+  const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list = spacingList;
+  list.length = 0;
   for (const c of g.creatures) {
     if (c.gone || c.burrow || c.leap) continue;
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
   spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
+  list.length = 0; // (let them go)
 }
 
 /** The naps' rules this step (rules/creatures.ts NapRules; tuning naps): an area is rousing while a witch is on the ground
