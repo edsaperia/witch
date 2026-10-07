@@ -8,6 +8,7 @@ import type { Atlas, Frame } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { Dirty } from "./dirty";
 
 /** One art pixel's size in the world (metres): the sprites' scale at the tuning's pixel size. */
 export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: number }): number {
@@ -469,6 +470,8 @@ export class SpriteBatch {
   private flags: THREE.InstancedBufferAttribute;
   private glow: THREE.InstancedBufferAttribute;
   private capacity = 0;
+  /** What changed this set, per attribute: pos, size, uvs, flags, glow (dirty.ts). */
+  private dirty = [new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty()];
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
@@ -542,19 +545,27 @@ export class SpriteBatch {
     this.items = items;
     if (items.length > this.capacity) this.grow(items.length);
     const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array, G = this.glow.array as Float32Array;
-    // (a plain loop, the uv's four numbers written straight in: thousands of instances a frame, every batch, every frame)
+    const dP = this.dirty[0], dS = this.dirty[1], dU = this.dirty[2], dF = this.dirty[3], dG = this.dirty[4];
+    // (a plain loop, the numbers written straight in: thousands of instances a frame, every batch, every frame; each
+    // attribute written, and sent, only where it changed: dirty.ts)
     const mpp = this.metresPerPixel;
     for (let i = 0, n = items.length; i < n; i++) {
       const it = items[i], fr = it.frame, uv = fr.uv, k = it.scale ?? 1;
-      P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
-      S[i * 2] = (it.sx === undefined ? fr.w : Math.max(1, Math.round(fr.w * it.sx))) * mpp * k; S[i * 2 + 1] = (it.sy === undefined ? fr.h : Math.max(1, Math.round(fr.h * it.sy))) * mpp * k; // (a squash in whole art pixels: one pixel scale on screen)
-      U[i * 4] = uv[0]; U[i * 4 + 1] = uv[1]; U[i * 4 + 2] = uv[2]; U[i * 4 + 3] = uv[3];
-      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = (fr.masked ? -1 : 1) * (it.sway ?? 0);
-      G[i] = it.glow ?? 0;
+      let j = i * 3;
+      if (P[j] !== it.x || P[j + 1] !== it.y || P[j + 2] !== it.z) { P[j] = it.x; P[j + 1] = it.y; P[j + 2] = it.z; dP.touch(i); }
+      const w = (it.sx === undefined ? fr.w : Math.max(1, Math.round(fr.w * it.sx))) * mpp * k, h = (it.sy === undefined ? fr.h : Math.max(1, Math.round(fr.h * it.sy))) * mpp * k; // (a squash in whole art pixels: one pixel scale on screen)
+      j = i * 2;
+      if (S[j] !== w || S[j + 1] !== h) { S[j] = w; S[j + 1] = h; dS.touch(i); }
+      j = i * 4;
+      if (U[j] !== uv[0] || U[j + 1] !== uv[1] || U[j + 2] !== uv[2] || U[j + 3] !== uv[3]) { U[j] = uv[0]; U[j + 1] = uv[1]; U[j + 2] = uv[2]; U[j + 3] = uv[3]; dU.touch(i); }
+      const f0 = it.flip ? 1 : 0, f1 = it.top ? 1 : it.cut ? -it.cut : 0, f2 = it.fresh ? 1 : 0, f3 = (fr.masked ? -1 : 1) * (it.sway ?? 0);
+      if (F[j] !== f0 || F[j + 1] !== f1 || F[j + 2] !== f2 || F[j + 3] !== f3) { F[j] = f0; F[j + 1] = f1; F[j + 2] = f2; F[j + 3] = f3; dF.touch(i); }
+      const gl = it.glow ?? 0;
+      if (G[i] !== gl) { G[i] = gl; dG.touch(i); }
     }
-    // Only the instances in use go to the GPU (the buffers keep their largest size, often twice
-    // what's drawn: a whole one every frame was much of the frame's uploading). Nothing set, nothing sent.
-    if (items.length) for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) { a.clearUpdateRanges(); a.addUpdateRange(0, items.length * a.itemSize); a.needsUpdate = true; }
+    // Only the instances in use that changed go to the GPU (the buffers keep their largest size, often twice what's
+    // drawn, and most instances are as they were last frame). Nothing changed, nothing sent.
+    dP.flush(this.pos); dS.flush(this.size); dU.flush(this.uvs); dF.flush(this.flags); dG.flush(this.glow);
     this.count = items.length;
     this.geo.instanceCount = items.length;
     for (const m of this.meshes) m.visible = items.length > 0;
