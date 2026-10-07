@@ -1,4 +1,4 @@
-import{D as m,d as k,h as i,b as u,i as C,e as P,f as E,k as v}from"./index-Blx6bQf6.js";import{I as N,g as U,j as q,p as M}from"./index-Blx6bQf6.js";const L=`
+import{D as m,d as k,h as i,b as u,i as C,e as P,f as E,k as v}from"./index-BGHzdPna.js";import{I as N,g as U,j as q,p as M}from"./index-BGHzdPna.js";const L=`
 #decide { position: fixed; top: 64px; right: 0; z-index: 30; display: flex; align-items: flex-start; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: var(--ink, #e8e2f4); pointer-events: auto; }
 #decide .tab { writing-mode: vertical-rl; transform: rotate(180deg); background: var(--panel, rgba(14,11,28,.82)); color: var(--accent, #e8b46a); border: 1px solid var(--accent-dim, rgba(232,180,106,.45)); border-right: 0; border-radius: 0 6px 6px 0; padding: 10px 5px; cursor: pointer; user-select: none; letter-spacing: .08em; }
 #decide .body { width: 248px; max-height: calc(100vh - 150px); overflow: auto; background: var(--panel, rgba(14,11,28,.82)); border: 1px solid var(--accent-dim, rgba(232,180,106,.45)); border-right: 0; border-radius: 6px 0 0 6px; padding: 8px 10px; }
