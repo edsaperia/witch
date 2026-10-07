@@ -97,7 +97,7 @@ export const BOT_KNOBS: BotKnobs = { defendLead: 50, defendHold: 60, healAt: 1, 
  *  and leads her young to berries, as a good player would. The balance tool's runs keep each to its flag. */
 export const BOT_GAME: Record<BotKind, BotOptions> = {
   skilled: { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true }, // (two relics: all six took her first ten minutes, and halved her army)
-  champion: { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true, siege: true, regroup: true }, // (the champion: the skilled bot's play with the numbers and tactics its search found; tools/balance/coach.mjs)
+  champion: { feed: true, siege: true, regroup: true, knobs: { lead: 0.8 } }, // (no quest or relic trips: they cost her army in the first ten minutes; the search's numbers go here) // (the champion: the skilled bot's play with the numbers and tactics its search found; tools/balance/coach.mjs)
   crude: {}, novice: {}, idle: {}, hover: {},
 };
 
