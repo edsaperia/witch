@@ -17,6 +17,7 @@ import { Picnic, Pond, Room, Sea } from "./places";
 import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
+import { sadTrumpet, snuff } from "./knockdown";
 import { scratch } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
@@ -109,6 +110,9 @@ export class Sfx {
   pond(level: number, pan = 0): void { this.pondBed.update(level, pan); }
   picnic(level: number, pan = 0): void { this.picnicBed.update(level, pan); }
   room(level: number): void { this.roomBed.update(level); }
+  /** Knocked down (knockdown.ts): the sad trumpet as her hat drops (`full`; with no hat, its shorter "wah-waaah"); a candle snuffed as each sigil comes off. */
+  sadTrumpet(full = true, pan = 0): void { sadTrumpet(this.k, full, pan); }
+  snuff(pan = 0): void { snuff(this.k, pan); }
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
   whoop(pan = 0, near = 1): void { this.babble.whoop(pan, near); }

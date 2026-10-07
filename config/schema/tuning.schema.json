@@ -4451,6 +4451,47 @@
           ],
           "additionalProperties": false
         },
+        "sadTrumpet": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "duck": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bare": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "duck",
+            "bare"
+          ],
+          "additionalProperties": false
+        },
+        "snuff": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
         "deck": {
           "type": "object",
           "properties": {
@@ -4857,6 +4898,8 @@
         "pond",
         "picnic",
         "room",
+        "sadTrumpet",
+        "snuff",
         "deck",
         "spell",
         "land",
@@ -7923,6 +7966,7 @@
     "moon",
     "glowReach",
     "sigilSpill",
+    "combatLight",
     "nightLight",
     "glowFalloff",
     "glowNear",
