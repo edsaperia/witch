@@ -409,8 +409,10 @@ function fixedStep(g: Game, controls: Controls): void {
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (!over) stepLegends(g, legends, !!c.happyNearest);
   if (W.ko) {
-    const r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents);
+    const wasMoved = W.ko.moved, r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
+    // The cut to her decks (the "cut" event, render/koIris.ts): the camera's there at once, not gliding over the map.
+    if (W.ko.moved && !wasMoved && W === g.witches[0]) g.camera = { ...g.camera, tx: W.body.x, ty: witchHeight(W.body, t), tz: W.body.z, vx: 0, vy: 0, vz: 0, ax: 0, az: 0 };
     if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
   }
   repair(W.health, ht, t);
@@ -772,7 +774,9 @@ export function coastOf(g: Game): CoastView | null {
   // the coast's edge her way: intoSea's quick path is only right about which side of the water a point is on, well inland)
   const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) - (g.tuning.map?.push ?? 0) * 0.6 - Math.hypot(dx, dz);
   const gazing = w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
-  return { near: Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach))), gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)) }; // (south of the middle: the sea behind a camera looking north)
+  const near = Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach)));
+  // (her bearing round the coast only by the sea, where the stargazing camera reads it: inland the camera's state is as ever)
+  return { near, gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)), bearing: near > 0 || gazing ? Math.atan2(dx, -dz) : undefined }; // (south of the middle: the sea behind a camera looking north)
 }
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */

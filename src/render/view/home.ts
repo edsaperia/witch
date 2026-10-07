@@ -224,17 +224,23 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const p = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.fore);
     items.push({ ...p, frame: ff, flip: false, overlay: true });
   }
-  // The knockdown candles along the desk's front, a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
+  // The knockdown candles along the front edge of the studio's terrace (Ed, 2026-10-07), a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
   // seconds of her wait; candleRed of them red, the wait past the base; candleMelt, burning down one after another as she
-  // scratches, on her clock): white at the left, red at the right, the bar emptying from its right end; nearest of all.
+  // scratches, on her clock): white at the left, red at the right, the bar emptying from its right end, spaced evenly
+  // along the row's line (T.candleRow, art/treehouse.js candleRow); nearest of all.
   // (the rules clear her knockout the moment she's free: the last count kept here, the stubs smoking out for a second after)
   const tu = v.game.tuning, ko = v.game.witches[0]?.ko, live = candleCount(ko, tu), ht = v.game.herTime, was = candlesSeen.get(v);
   if (live > 0) candlesSeen.set(v, { n: live, red: candleRed(ko, tu), until: Infinity }); else if (was && was.until === Infinity) was.until = ht + 1; else if (was && ht > was.until) candlesSeen.delete(v);
   const n = live || (candlesSeen.get(v)?.n ?? 0), red = candlesSeen.get(v)?.red ?? 0;
-  if (n > 0 && T.candleRow.length === 2) {
-    const [L, Rr] = T.candleRow, R = SPRITE_UNIFORMS.uRight.value;
+  if (n > 0 && T.candleRow.length >= 2) {
+    const row = T.candleRow, R = SPRITE_UNIFORMS.uRight.value, lens = [0];
+    for (let k = 1; k < row.length; k++) lens.push(lens[k - 1] + Math.hypot(row[k].x - row[k - 1].x, row[k].y - row[k - 1].y));
+    const along = (u: number) => { // the point u (0 to 1) of the way along the row, by its length
+      const d = u * lens[lens.length - 1]; let k = 1; while (k < row.length - 1 && lens[k] < d) k++;
+      const t = (d - lens[k - 1]) / Math.max(1e-6, lens[k] - lens[k - 1]); return { x: row[k - 1].x + (row[k].x - row[k - 1].x) * t, y: row[k - 1].y + (row[k].y - row[k - 1].y) * t };
+    };
     for (let i = 0; i < n; i++) {
-      const j = n - 1 - i, m = live ? candleMelt(ko, ht, j, tu) : 1, k = n === 1 ? 0.5 : i / (n - 1), px = L.x + (Rr.x - L.x) * k, py = L.y + (Rr.y - L.y) * k;
+      const j = n - 1 - i, m = live ? candleMelt(ko, ht, j, tu) : 1, { x: px, y: py } = along(n === 1 ? 0.5 : (i + 0.5) / n);
       const level = m >= 1 ? T.candleLevels - 1 : Math.min(T.candleLevels - 2, Math.floor(m * (T.candleLevels - 1)));
       const fr = f[T.candle0 + (j < red ? T.candleRed : 0) + level * T.candleFlicker + (Math.floor(time * 7 + i * 1.7) % T.candleFlicker)]; if (!fr) continue;
       const dx = (px - f[0].w / 2) * mpp, dy = (f[0].h - py) * mpp; // (the candle's foot on the row, in the base's pixels: its sprite's bottom middle there)
