@@ -203,6 +203,7 @@ uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts
 uniform float uRimInset; // 1: stylised sprites, the rim one pixel in from the edge (inside the style's outline)
 float rimAlpha(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : texture2D(uAlbedo, q).a; }
 uniform vec4 uTint; // this batch's tint: colour and how much (enraged creatures' red, Ed 2026-10-05)
+uniform float uSteps; // a legend's batch: its light in this many steps of brightness (0: smooth; Ed's round 14 playtest: "same pixel density and palette discipline")
 uniform vec4 uLegend; // a sleeping legend's batch: its sigil's neon and the rim's strength (0: none; Ed's round 14 playtest)
 uniform float uLegendFloor; // and the share of its own (mossed) look it never drops below
 uniform vec4 uFindLook;
@@ -399,6 +400,9 @@ void shade() {
     float under = clamp(0.45 - N.y * 0.75, 0.0, 1.0);
     col += up * uUplight.x * (1.0 + uUplight.y * sin(uUplight.w)) * under;
   }
+  // A legend's light in a few steps (Ed's round 14 playtest: a legend at its size read airbrushed, "smooth gradients, glossy
+  // highlights", beside the pixel art round it): banded by brightness, its hue kept, so its shading is a short ramp of tones.
+  if (uSteps > 0.5) { float l = max(1e-3, dot(col, vec3(0.3, 0.55, 0.15))), q = (floor(l * uSteps) + 0.6) / uSteps; col *= min(q / l, 3.0); }
   gl_FragColor = vec4(haze(min(vec3(1.0), col), vWorld), alpha);
 }
 void main() {
@@ -458,6 +462,18 @@ void main() {
 
 export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Squashed or stretched: its width and height times these, about its feet, rounded to whole art pixels (an attack's feel: render/attackFeel.ts). */ sx?: number; sy?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean }
 
+/** Where a floor draws: right after the ground (-1) and before anything standing (creatures 0, scenery 0.5, shadows 1), and
+ *  writing no depth, so it can never hide an actor, a prop or a shadow on it or at its edge (Ed's playtest, 2026-10-06: "the sports
+ *  field isn't sitting flat on the ground properly"; a pitch's decal is an upright sprite at its near edge, nearer the camera than
+ *  anything on the pitch). */
+export const FLOOR_ORDER = -0.5;
+
+/** A floor's batch (a court, a pitch, the beach's and the party's decals): drawn as FLOOR_ORDER says, under everything. */
+export function asFloor<B extends { meshes: THREE.Mesh[] }>(b: B): B {
+  for (const m of b.meshes) { m.renderOrder = FLOOR_ORDER; (m.material as THREE.Material).depthWrite = false; }
+  return b;
+}
+
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
   /** Every mesh to add to the scene: the batch itself, plus its see-through pass (things in
@@ -475,7 +491,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Characters (the witch, creatures): the mood's moonlight rim. */ rim?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 }; /** A sleeping legend's batch: its sigil's neon and its rim's strength, and its light floor (Ed's round 14 playtest). */ legend?: THREE.Vector4; legendFloor?: number } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Characters (the witch, creatures): the mood's moonlight rim. */ rim?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 }; /** A sleeping legend's batch: its sigil's neon and its rim's strength, and its light floor (Ed's round 14 playtest). */ legend?: THREE.Vector4; legendFloor?: number; /** A legend's batch: its light banded into this many steps of brightness (0 smooth). */ steps?: number } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -484,7 +500,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};

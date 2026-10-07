@@ -17,6 +17,7 @@ import { Picnic, Pond, Room, Sea } from "./places";
 import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
+import { scratch } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
 import { SfxKit, type SfxTuning } from "./sfxKit";
@@ -54,6 +55,9 @@ export class Sfx {
   /** What reaches the speakers (the audio watchdog taps it). */
   get output(): AudioNode { return this.k.final; }
   /** Silenced for good and let go (the watchdog building afresh). */
+  /** Build ahead what is slow to build the first time (the legends' long reverb: tens of milliseconds on the main thread, once
+   *  mid-play when the first stone powered up; the audit's phase 2), so it's ready before play. */
+  prewarm(): void { this.k.space(); }
   dispose(): void { try { this.k.final.disconnect(); } catch { /* gone */ } }
   setVolume(v: number): void { this.k.setVolume(v); }
 
@@ -105,6 +109,9 @@ export class Sfx {
   pond(level: number, pan = 0): void { this.pondBed.update(level, pan); }
   picnic(level: number, pan = 0): void { this.picnicBed.update(level, pan); }
   room(level: number): void { this.roomBed.update(level); }
+  /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
+  scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
+  whoop(pan = 0, near = 1): void { this.babble.whoop(pan, near); }
   /** The party spell's scroll (ui/spellScroll.ts): "hum" its level every frame, "rustle" the ripple stirring, "crackle" the
    *  grow, "burst" the burst. */
   spell(cue: "hum" | "rustle" | "crackle" | "burst", v = 1): void {

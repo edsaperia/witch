@@ -60,7 +60,16 @@ export interface CombatData {
 export type Trait = "flier" | "armoured" | "swarm" | "heavy" | "nimble" | "burrower";
 export const COMBAT = raw as unknown as CombatData;
 /** A species' traits. */
-export const traitsOf = (species: string, data: CombatData = COMBAT): Trait[] => (Object.keys(data.traits) as Trait[]).filter(k => data.traits[k].includes(species));
+const TRAITS = new WeakMap<CombatData, Map<string, readonly Trait[]>>();
+/** A species' traits, worked out once a data set (two new arrays a call were a fight frame's allocator: every hit, every hurt
+ *  creature's marks); shared, so read-only. */
+export function traitsOf(species: string, data: CombatData = COMBAT): readonly Trait[] {
+  let by = TRAITS.get(data);
+  if (!by) TRAITS.set(data, (by = new Map()));
+  let tr = by.get(species);
+  if (!tr) by.set(species, (tr = Object.freeze((Object.keys(data.traits) as Trait[]).filter(k => data.traits[k].includes(species)))));
+  return tr;
+}
 /** What a target's traits make of a blow: damage, knockback and slow multipliers, and a stun. */
 export function counterOf(species: string, delivery: Delivery, data: CombatData = COMBAT): { damage: number; knockback: number; stun: number; slow: number } {
   const out = { damage: 1, knockback: 1, stun: 0, slow: 1 };

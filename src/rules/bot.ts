@@ -107,7 +107,12 @@ export const BOT_KNOBS: BotKnobs = { defendLead: 50, defendHold: 60, healAt: 1, 
  *  and leads her young to berries, as a good player would. The balance tool's runs keep each to its flag. */
 export const BOT_GAME: Record<BotKind, BotOptions> = {
   skilled: { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true }, // (two relics: all six took her first ten minutes, and halved her army)
-  champion: { feed: true, siege: true, regroup: true, blink: true, calm: true, calmRestless: true, knobs: { lead: 0.8 } }, // (no quest or relic trips: they cost her army in the first ten minutes; the search's numbers go here) // (the champion: the skilled bot's play with the numbers and tactics its search found; tools/balance/coach.mjs)
+  // (the champion: the skilled bot's play with its own tactics and the numbers its search found, tools/balance/coach.mjs,
+  // overnight 2026-10-07: no quest or relic trips, which cost her army in the first ten minutes)
+  champion: {
+    guards: 3, keep: 1, feed: true, siege: true, regroup: true, blink: true, calm: true, calmRestless: true,
+    knobs: { defendLead: 52, defendHold: 45, kite: 9.8, dashAt: 5.8, fireFrac: 0.95, closeFrac: 0.91, recruitRange: 926, feedMin: 4, feedRange: 535, feedWait: 20, siegeNear: 120, siegeMin: 11.8, concede: 0.73, siegeStand: 10.5, homeWeight: 2.9, strandFar: 84, lead: 0.47, blinkLead: 0.43 },
+  },
   crude: {}, novice: {}, idle: {}, hover: {},
 };
 

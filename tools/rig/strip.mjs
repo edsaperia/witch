@@ -22,7 +22,7 @@ for (const id of list.split(",")) {
     const parts = P.rigParts(id, level, st, gear), baked = [];
     const add = (p, o = st.cOutline) => p ? { frame: baked.push(G.bake(p.sp, colours, st, o)) - 1, px: p.px, py: p.py } : null;
     const all = k => (parts.pieces[k] ?? [null, null, null, null, null]).map(p => add(p)), discs = {};
-    for (const [mat, byR] of Object.entries(parts.discs)) { discs[mat] = {}; for (const [r, p] of Object.entries(byR)) { const d = add(p, "none"); if (d) discs[mat][r] = d; } }
+    for (const [mat, byR] of Object.entries(parts.discs)) { discs[mat] = {}; for (const [r, p] of Object.entries(byR)) { const d = add(p, "bare"); if (d) discs[mat][r] = d; } }
     const J = parts.joints, head = J.head && !Array.isArray(J.head) ? J.head : null;
     const meta = { template: parts.template, s: parts.s, shoe: parts.pieces.shoe ? all("shoe") : undefined, torso: all("torso"), head: all("head"), tail: all("tail"), discs, legs: J.legs ?? [], neck: head ? head.nb : J.head, headAt: head ? head.H : J.head, tailAt: J.tail ?? [0, 0, 0], top: J.top ?? 0, len: J.len ?? 0, spine: J.spine ?? [] };
     // the script: [seconds, label, vx, vz (body lengths a second), drive]
