@@ -63,7 +63,7 @@ vec4 mistOut(float a) {
   if (a <= 0.003) discard;
   if (gl_FragCoord.z > texture2D(uDepth, gl_FragCoord.xy / uLow).r) discard; // behind a tree
   vec3 col = mix(uHazeColour * 1.8, uMoon * 0.75 + uAmb * 0.9, 0.55);
-  a = clamp(a, 0.0, 0.92);
+  a = clamp(a, 0.0, 0.8);
   return vec4(col * a, a); // premultiplied
 }
 `;
@@ -96,7 +96,7 @@ void main() {
   if (uPatch.x > 0.0 && uMC.y > 0.0) {
     vec2 q = (p - drift) / uPatch.y;
     float pn = vnoise(q) * 0.7 + vnoise(q * 2.7 + 17.0) * 0.3;
-    a = max(a, smoothstep(1.0 - uPatch.x, 1.0 - uPatch.x * 0.45, pn) * 0.75 * uMC.y);
+    a = max(a, smoothstep(1.0 - uPatch.x, 1.0 - uPatch.x * 0.45, pn) * 0.5 * uMC.y);
   }
   gl_FragColor = mistOut(a * parted(p));
 }`;
