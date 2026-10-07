@@ -132,8 +132,6 @@ export function band(spine, { cap = 1, capEnd = cap } = {}) {
   const pts = [...L, end(spine[n - 1], spine[n - 2], spine[n - 1][2], capEnd), ...R.reverse(), end(spine[0], spine[1], spine[0][2], cap)];
   return pts;
 }
-// Moves control points: `f([x, y], i) -> [x, y]`.
-export const mapPts = (pts, f) => pts.map((p, i) => f(p, i));
 export const rot = ([x, y], [cx, cy], a) => { const c = Math.cos(a), s = Math.sin(a); return [cx + (x - cx) * c - (y - cy) * s, cy + (x - cx) * s + (y - cy) * c]; };
 export const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
 export const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
