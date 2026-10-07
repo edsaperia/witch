@@ -294,6 +294,10 @@
               "type": "number",
               "minimum": 0
             },
+            "gazeDistanceSeaBehind": {
+              "type": "number",
+              "minimum": 0
+            },
             "gazeLook": {
               "type": "number",
               "minimum": 0
@@ -306,6 +310,7 @@
             "seaward",
             "gazeAngle",
             "gazeDistance",
+            "gazeDistanceSeaBehind",
             "gazeLook"
           ],
           "additionalProperties": false
