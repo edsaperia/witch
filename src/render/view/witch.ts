@@ -18,11 +18,17 @@ import { djRoutineAt } from "../../rules/djSet";
 import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
 import { hatFlight } from "../hatFlight";
+import { atDecksFrom, koIris } from "../koIris";
+
+/** The player asked for less motion (the knockout's iris then a plain cut: render/koIris.ts). */
+const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
  *  the treehouse's sprite (its pixels) in the world. */
 export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: number, py: number) => { x: number; y: number; z: number }): number {
   const g = v.game, t = g.tuning, w = g.witch, h = witchHeight(w, t), T = v.assets.treehouse;
+  const KO = g.witches[0].ko;
+  const irisOn = !!KO && g.witches[0].hat.has && !!g.witches[0].hat.down && !REDUCED; // (the cut from her fallen hat to her decks, render/koIris.ts)
   const bob = Math.sin(ht * 2.4) * 0.12;
   // Her hover frames, turned away when flying up the screen, leaning when fast.
   // Climbing to the treetops or dropping to the ground: the rise or descend pose, fluttering
@@ -90,7 +96,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       else {
         // Her set's routine (rules/djSet.ts: the needle drop after the cast, the scratching after a respawn) over her ordinary set.
         const R = djRoutineAt(g, time);
-        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
+        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null || (!!KO && irisOn && ht >= atDecksFrom(KO, true))); // (mid-scratch already as the iris opens on her) // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
@@ -98,13 +104,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   }
   // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
   // vanishes in a sparkle and comes back in one at the treehouse.
-  const KO = g.witches[0].ko;
   // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
   const D = g.witches[0].dash;
   let hidden = ht >= D.at - STEP && ht < D.until;
   if (KO) {
     if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
-    else hidden = ht < KO.inAt - (KO.inAt - KO.teleportAt) * 0.25;
+    else hidden = ht < atDecksFrom(KO, irisOn); // (with the iris, at her decks from its cut: render/koIris.ts)
   }
   // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
   // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").
@@ -154,7 +159,16 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // The rest of the screen dims while she's down with her hat floating off (render/post.ts uKoDim): in over half a second from
   // the knockdown, held till she sparkles away, out as she goes. No hat to lose, no dim.
   const KD = t.knockout.dim ?? 0;
-  v.post.koDim = KO && hat && KD > 0 ? KD * Math.min(1, Math.max(0, (ht - KO.at) / 0.5)) * (1 - Math.min(1, Math.max(0, (ht - KO.teleportAt) / 0.6))) : 0;
+  // Then the iris (render/koIris.ts): it closes onto the hat, which turns into a spinning record; the cut, a rewind smear; it
+  // opens on her at her decks. The dim holds till the cut, the iris's dark outside over it.
+  const IR = irisOn && hat ? koIris(KO, ht, true, false, brimOf(v, hat.x, hat.y + groundHeight(hat.x, hat.z), hat.z, hatFrame!.w * v.mpp * 0.5)) : null;
+  v.post.koDim = KO && hat && KD > 0 ? KD * Math.min(1, Math.max(0, (ht - KO.at) / 0.5)) * (IR ? (IR.on === "hat" ? 1 : 0) : 1 - Math.min(1, Math.max(0, (ht - KO.teleportAt) / 0.6))) : 0;
+  if (IR) {
+    // on the hat, then from where it was on screen over to her at the decks as it opens (no jump at the cut)
+    let ctr = IR.on === "hat" ? onScreen(v, hat!.x, hat!.y + groundHeight(hat!.x, hat!.z) + hatFrame!.h * v.mpp * 0.3, hat!.z) : onScreen(v, wx, wyy + groundHeight(wx, wz) + (hatTop - wyy) * 0.4, wz);
+    if (IR.on === "hat") v.irisHat = ctr; else if (v.irisHat) ctr = [v.irisHat[0] + (ctr[0] - v.irisHat[0]) * IR.move, v.irisHat[1] + (ctr[1] - v.irisHat[1]) * IR.move];
+    v.post.iris.set(ctr[0], ctr[1], IR.r, IR.dark); v.post.iris2.set(IR.spin, IR.label, IR.smear, IR.labelR);
+  } else { v.post.iris.set(0, 0, 0, 0); v.post.iris2.set(0, 0, 0, 0); }
   // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
   // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
   // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
@@ -186,4 +200,15 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   v.shadow.scale.set(shown * wide + 1e-3, 1, shown + 1e-3);
 
   return hatTop;
+}
+
+/** A point's place on screen, 0 to 1 across and up (the post composite's uv). */
+function onScreen(v: View, x: number, y: number, z: number): [number, number] {
+  const p = placed(v.v3.set(x, y, z)).project(v.camera);
+  return [(p.x + 1) / 2, (p.y + 1) / 2];
+}
+/** A hat's brim's radius on screen (half its width), as a share of the screen's height. */
+function brimOf(v: View, x: number, y: number, z: number, half: number): number {
+  const a = onScreen(v, x, y, z), b = onScreen(v, x + SPRITE_UNIFORMS.uRight.value.x * half, y, z + SPRITE_UNIFORMS.uRight.value.z * half);
+  return Math.hypot((b[0] - a[0]) * v.width / v.height, b[1] - a[1]);
 }

@@ -49,7 +49,7 @@ export interface Knockout {
   scratching?: boolean;
 }
 
-export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | /** her scratching starts behind her decks (the respawn wait: knockout.respawn); "back" ends it */ "scratch" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
+export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | /** the teleport's midpoint, with sparkleIn: the transition's cut (render/koIris.ts: the rewind smear; the music's scratch cutting the trumpet) */ "cut" | /** her scratching starts behind her decks (the respawn wait: knockout.respawn); "back" ends it */ "scratch" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
 export interface KnockoutEvent { kind: KnockoutEventKind; at: number; x: number; z: number; id?: number }
 
 export const newHealth = (t: Tuning): Health => ({ hp: t.witchHealth.hits, repairAt: Infinity, hurtAt: -Infinity });
@@ -121,6 +121,7 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     // from the first time she left.)
     body = { ...body, x: map.start.x, z: map.start.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: true };
     events.push({ kind: "sparkleIn", at: time, x: body.x, z: body.z });
+    events.push({ kind: "cut", at: time, x: body.x, z: body.z }); // (the cut from the hat to the decks: render/koIris.ts, and the music's scratch)
     // Loyal legends come home with her.
     for (const id of leash.stack) { const c = creatures[id]; c.x = body.x + (c.rand() - 0.5) * 3; c.z = body.z + 2 + c.rand() * 2; c.tx = c.x; c.tz = c.z; }
   }
