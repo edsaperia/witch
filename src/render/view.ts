@@ -10,6 +10,7 @@ import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf, STEP } from "../rules/game";
+import { coastView } from "../rules/camera";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
@@ -105,14 +106,14 @@ export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   camera: THREE.PerspectiveCamera;
+  /** The canopy hole's lead ahead of her on screen (pixels, eased) and when it was last moved. */
+  private holeLead = { x: 0, y: 0 };
+  private holeAt = 0;
   private ground: Ground;
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
   private heights: HeightField;
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   bendTo = 0;
-  /** How far the stargazing bend has eased in (0 to 1), and when it was last eased. */
-  private gaze = 0;
-  private gazeTime = NaN;
   /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
   numberSeen = new Map<string, number>();
   numbersAt = 0;
@@ -722,14 +723,14 @@ export class View {
       const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift));
       // Lying on the beach to stargaze (Ed, 2026-10-06: "the bend shader applies so that you can see the sky"): the bend eased up
       // past the treetops' over beach.gazeEase seconds, the night sky opening over the sea, and back down as she gets up.
-      const B = t.beach, gdt = Number.isNaN(this.gazeTime) ? 0 : Math.min(0.25, Math.max(0, time - this.gazeTime)), gz = this.beachView.gazing ? 1 : 0;
-      this.gazeTime = time;
-      this.gaze += (gz - this.gaze) * (1 - Math.exp(-gdt * 3 / Math.max(0.05, B?.gazeEase ?? 1.5)));
-      if (Math.abs(gz - this.gaze) < 0.001) this.gaze = gz;
-      const gk = this.gaze * this.gaze * (3 - 2 * this.gaze) * C.treetop * (B?.stargazeCurve ?? 0);
+      // And nearing the sea, on the ground, it bends up toward beach.camera.curve times the treetops' (Ed, 2026-10-06: "gradual as
+      // you approach the beach, over 200m"), the camera lowering with it (rules/camera.ts), both eased by the rules' camera.
+      const B = t.beach, V = coastView(g.camera);
+      const gk = Math.max(V.gaze * (B?.stargazeCurve ?? 0), V.coast * (B?.camera?.curve ?? 0)) * C.treetop;
+      SPRITE_UNIFORMS.uNearCut.value = V.gaze > 0.01 ? V.gaze * Math.max(0, pose.distance - 12) : 0; // (lying down, the camera low behind her: what's between it and her, from 12 m before her, dithers away)
       const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
       HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
-      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, this.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) : 0);
+      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, this.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) : 0);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));
@@ -772,9 +773,19 @@ export class View {
     this.camera.updateMatrixWorld();
     const ws = placed(this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5 + this.rideOff, g.witch.z)).project(this.camera);
     // (The edge stays its full softness as the hole closes: shrunk with it, a small hole's edge was crisp, Ed v289.)
-    SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
+    // (its middle a little ahead of her the way she's going, canopyCutout.lead seconds, eased: the opening leans into her path)
+    const lead = cut.lead ?? 0, lx = (ws.x * 0.5 + 0.5) * this.width, ly = (ws.y * 0.5 + 0.5) * this.height;
+    let hx = lx, hy = ly;
+    if (lead > 0) {
+      const ah = placed(this.v3.set(g.witch.x + g.witch.vx * lead, witchHeight(g.witch, t) * 0.5 + this.rideOff, g.witch.z + g.witch.vz * lead)).project(this.camera);
+      const tx = (ah.x * 0.5 + 0.5) * this.width, ty = (ah.y * 0.5 + 0.5) * this.height, k = 1 - Math.exp(-Math.min(0.1, Math.max(0, time - this.holeAt)) / 0.6);
+      this.holeLead.x += (tx - lx - this.holeLead.x) * k; this.holeLead.y += (ty - ly - this.holeLead.y) * k;
+      hx += this.holeLead.x; hy += this.holeLead.y;
+    }
+    this.holeAt = time;
+    SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
     SPRITE_UNIFORMS.uCutWhole.value = cut.whole ?? 0;
-    SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35);
+    SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
     SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
@@ -835,10 +846,16 @@ export class View {
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
       this.ley.pulse(g.partyOver ? null : shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
-      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
+      // None till the party spell; while home boots, its first link as the sketch (the way out of the ring: Ed, 2026-10-06), then
+      // the line grows out from the treehouse along the route (Ed).
+      const booting = g.party.spellAt !== null && time < g.party.bootUntil;
+      this.ley.sketch(booting);
+      this.ley.near(w.x, w.z);
+      this.ley.grow(booting ? 1 : leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
         this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
+        this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
@@ -962,6 +979,7 @@ export class View {
     { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
+      this.leashView.seatAt = seat; // (where she sparkles back in after a knockout)
       const cam = onTreehouse(T.camera.x, T.camera.y);
       g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
       const fwd = this.camera.getWorldDirection(this.v3);
