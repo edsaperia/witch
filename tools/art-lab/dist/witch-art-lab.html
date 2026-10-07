@@ -9148,7 +9148,7 @@ function beachSprite(id, st = {}, { ppm = 16, heading = 0 } = {}) {
 //     have a magical touch (a keystone rune, fireflies in the well, a lit chapel window, the
 //     statue's eyes);
 //   rocks (8): fist-sized clusters to big boulders and a flat slab, tinted per area (areas[].rockTint);
-//   freak trees (8): oddities, rare and memorable;
+//   freak trees (13): oddities, rare and memorable; five of them eerie: dead, gnarled, hollow, cleft, bowed;
 //   lakes: a water tile, a shore band and props for the edge (reeds, lily pads), for the prototype
 //     to build organic lakes from (see lakeKit).
 // Tall pieces are split into a bottom and a top (from crownY up) for the treetop cut-out.
@@ -9170,6 +9170,8 @@ const dcIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4
 const dcTufts = (m, n, R, g, seed) => { for (let i = 0; i < n; i++) { const a = sinHash(seed, i) * 6.283, d = R * Math.sqrt(sinHash(i, seed)), x = Math.cos(a) * d, z = Math.sin(a) * d * .7; m.ell([x, .08, z], [.07, .1 + sinHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .14 ? M.LEAF : undefined }); } };
 const dcCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: .04, paint: dcLeafy(c) });
 const dcLimb = (m, pts, g) => m.chain(pts, M.TRUNK, { group: g, rough: .012, paint: dcBark });
+// dead wood: bleached and grey, its cracks dark
+const dcDead = (m, pts, g) => m.chain(pts, M.STONE, { group: g, rough: .014, paint: p => { const n = dcCell(p, 11, 9); return n < .2 ? M.BARKD : n > .8 ? M.STONED : undefined; } });
 const dcRock = (m, c, r, g, o = {}) => m.ell(c, r, M.STONE, { group: g, rough: .03, dir: o.dir, paint: p => p[1] > c[1] + r[1] * (o.moss ?? .62) && dcCell(p, 5, g) < .7 ? M.MOSS : dcCell(p, 14) > .9 ? M.STONED : undefined }); // moss in patches on top
 
 // ---------------- ruins ----------------
@@ -9286,6 +9288,43 @@ const FREAKS = {
   "root-tree": { desc: "an upside-down-looking tree, its roots raised high like a crown", split: 2.0, build(m) { dcLimb(m, [[0, 0, 0, .35], [0, 1.6, 0, .25]], 1); for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; dcLimb(m, [[0, 1.6, 0, .16], [Math.cos(a) * .7, 2.2 + sinHash(i) * .3, Math.sin(a) * .6, .1], [Math.cos(a) * 1.2, 2.5 + sinHash(i, 2) * .4, Math.sin(a) * 1.0, .04]], 2 + (i % 2)); } for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2 + .4; dcLimb(m, [[Math.cos(a) * .25, .3, Math.sin(a) * .25, .14], [Math.cos(a) * .6, .02, Math.sin(a) * .55, .05]], 4); } } },
   "stone-lifter": { desc: "a tree that has lifted great stones up in its roots", split: 2.4, build(m) { dcLimb(m, [[0, .6, 0, .3], [0, 2.0, 0, .22], [.1, 2.8, 0, .12]], 1); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; dcLimb(m, [[Math.cos(a) * .2, .6, Math.sin(a) * .2, .15], [Math.cos(a) * .6, .45, Math.sin(a) * .55, .12], [Math.cos(a) * .9, 0, Math.sin(a) * .8, .07]], 2); } for (const [x, z, y] of [[.5, .45, .9], [-.5, .4, 1.1], [.15, -.5, .8]]) dcRock(m, [x, y, z], [.3, .24, .26], 3); /* lifted up in the roots */ dcCrown(m, [.1, 3.0, 0], [1.0, .6, .85], 4); } },
   "ring-tree": { desc: "a hollow ring of a tree you could fly through", split: null, build(m) { for (let k = 0; k <= 16; k++) { const a = k / 16 * Math.PI * 2, c = [Math.cos(a) * 1.2, 1.35 + Math.sin(a) * 1.2, 0]; m.ell(c, [.3, .3, .3], M.TRUNK, { group: 1, rough: .02, paint: dcBark }); } dcLimb(m, [[-.6, 0, .2, .3], [-.5, .3, .1, .3]], 2); dcLimb(m, [[.6, 0, .2, .3], [.5, .3, .1, .3]], 2); for (const [x, y] of [[-.9, 2.3], [.3, 2.65], [1.1, 2.0]]) dcCrown(m, [x, y, -.1], [.45, .3, .35], 3); } },
+  // The eerie ones (Ed, 2026-10-07: "make the wild forest eerier": dead, twisted, hollow, split): bare, pale, crooked, no
+  // face, nothing living in them (bark faces are their own, rarer, piece).
+  "dead-tree": { desc: "a long-dead tree, bleached grey, its bare crooked limbs reaching up, its top snapped off", split: 2.6, build(m) {
+    dcDead(m, [[0, 0, 0, .26], [.05, 1.2, 0, .2], [-.08, 2.3, .02, .14], [0, 2.9, 0, .1]], 1); // the trunk, snapped at its top
+    m.ell([0, 2.95, 0], [.11, .12, .1], M.BARKD, { group: 1, rough: .04 }); // (the splintered break)
+    for (let i = 0; i < 6; i++) { const a = (i / 6 + sinHash(i, 31) * .1) * Math.PI * 2 + .4, y = 1.1 + i * .3, L = 1.7 - i * .15, c = Math.cos(a), z = Math.sin(a) * .5;
+      const mid = [c * L * .45, y + .45, z * L * .5], tip = [c * L, y + .75 + sinHash(i, 32) * .5, z * L];
+      dcDead(m, [[0, y, 0, .1], [...mid, .065], [...tip, .025]], 2 + i % 2); // reaching up and out, crooked
+      dcDead(m, [[...mid, .045], [mid[0] + c * .35, mid[1] + .55, mid[2] + .1, .02]], 2 + i % 2); } // a twig off it
+  } },
+  "gnarled-tree": { desc: "a hunched, gnarled old tree, knotted and leaning, its long thin branches clawing down", split: 2.4, build(m) {
+    dcLimb(m, [[0, 0, 0, .3], [.3, .8, 0, .26], [.15, 1.6, 0, .22], [.55, 2.2, 0, .16], [1.0, 2.5, 0, .1]], 1); // bent like a back
+    for (const [y, x, r] of [[.5, .2, .2], [1.25, .28, .18], [1.9, .3, .15]]) m.ell([x, y, .1], [r, r * .8, r], M.TRUNK, { group: 1, rough: .04, paint: dcBark }); // knots
+    for (let i = 0; i < 5; i++) { const s = i % 2 ? 1 : -1, y = 1.7 + i * .15, z = (i - 2) * .25;
+      dcLimb(m, [[.4 + i * .12, y, z * .3, .07], [.6 + i * .2, y + .35, z, .045], [.9 + i * .25, y + .05, z * 1.4, .03], [1.0 + i * .25, y - .55 - s * .1, z * 1.6, .015]], 2 + i % 2); } // reaching out, then hooking down
+    m.ell([.95, 2.65, 0], [.55, .3, .5], M.LEAF3, { group: 2, rough: .06, paint: p => dcCell(p, 10, 5) < .3 ? M.LEAF : undefined }); // a thin, dark crown
+  } },
+  "hollow-tree": { desc: "a fat old trunk, hollow, a black opening at its foot, its top broken and jagged", split: 2.3, build(m) {
+    m.seg([0, 0, 0], [0, 1.9, 0], .62, .5, M.STONE, { group: 1, rough: .025, paint: p => { // long dead, bleached pale, so its black hollow shows at night
+      const dx = p[0] / .42, dy = (p[1] - .5) / .5; if (p[2] > .2 && dx * dx + dy * dy < 1) return dx * dx + dy * dy < .7 ? M.LINE : M.BARKD; // the hollow at its foot, dark to its rim
+      if (p[1] > 2.05) return M.LINE; // (its open top dark: hollow right up)
+      const n = dcCell(p, 11, 9); return n < .2 ? M.BARKD : n > .8 ? M.STONED : undefined; } });
+    for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, r = .46; m.seg([Math.cos(a) * r, 1.9, Math.sin(a) * r * .9], [Math.cos(a) * r * 1.05, 2.25 + sinHash(i, 33) * .75, Math.sin(a) * r * .95], .13, .025, M.STONE, { group: 1, paint: p => dcCell(p, 11, 9) < .25 ? M.BARKD : undefined }); } // its jagged broken rim, standing up round the hollow
+    dcDead(m, [[.45, 1.6, 0, .1], [1.0, 2.2, .1, .06], [1.3, 2.8, .1, .025]], 2); dcDead(m, [[-.45, 1.3, 0, .09], [-.95, 1.8, 0, .05], [-1.25, 2.2, -.1, .02]], 3); // two dead limbs
+  } },
+  "cleft-tree": { desc: "a dead tree cleft down its middle, its two halves leaning apart, dark heartwood between them", split: 2.6, build(m) {
+    dcDead(m, [[0, 0, 0, .3], [0, .8, 0, .27]], 1);
+    for (const s of [-1, 1]) { dcDead(m, [[s * .08, .8, 0, .16], [s * .35, 1.7, 0, .14], [s * .8, 2.6, .02, .1], [s * 1.0, 3.1, 0, .05]], s > 0 ? 2 : 3);
+      dcDead(m, [[s * .6, 2.2, 0, .05], [s * 1.25, 2.55, .1, .03], [s * 1.5, 2.9, .1, .015]], s > 0 ? 2 : 3); }
+    m.ell([0, .95, .08], [.1, .3, .12], M.LINE, { group: 1 }); // the dark heart of the cleft
+  } },
+  "bowed-tree": { desc: "a tree bowed right over, its top bent down to the ground in an arch, its thin branches trailing", split: 2.3, build(m) {
+    const pts = []; for (let k = 0; k <= 10; k++) { const t = k / 10, a = t * Math.PI * .95; pts.push([-.9 + .9 * (1 - Math.cos(a)) * 1.05, Math.sin(a) * 2.7, 0, .24 - t * .17]); }
+    dcLimb(m, pts, 1);
+    for (let i = 0; i < 8; i++) { const t = .35 + i * .07, a = t * Math.PI * .95, x = -.9 + .9 * (1 - Math.cos(a)) * 1.05, y = Math.sin(a) * 2.7, z = (sinHash(i, 34) - .5) * .5;
+      dcLimb(m, [[x, y, z * .3, .04], [x + .15, y - .4 - sinHash(i, 35) * .3, z, .025], [x + .2, y - .9 - sinHash(i, 36) * .4, z * 1.2, .012]], 2 + i % 2); } // its twigs hanging down from the arch
+  } },
 };
 
 // ---------------- the table ----------------
