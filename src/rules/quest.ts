@@ -19,8 +19,8 @@ export interface Quest { species: string; level: Level; /** game time it was don
 /** The early easy quest (Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants
  *  one of the first three [not itself] so there's always an easy quest to do in the first third"): of the first three areas
  *  the waves wake (the planned route, rules/party.ts routeOf), one with a legend, seeded, dreams of the creature of another of
- *  those three (a kind not its own). Should none of the three have a legend (legends.share leaves about half without), the first
- *  legend area further along the route takes it. Null when legends.earlyQuest is off or no area fits. */
+ *  those three (a kind not its own). The map makes sure one of the three has a legend (map.ts, before its clearings: Ed,
+ *  2026-10-07, "force a circle into the first three"); only should that fail, the first legend area further along takes it. Null when legends.earlyQuest is off or no area fits. */
 export interface EarlyQuest { host: string; wants: string; first: string[] }
 const EARLY = new WeakMap<ForestMap, EarlyQuest | null>();
 export function earlyQuest(map: ForestMap): EarlyQuest | null {

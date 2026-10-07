@@ -14,6 +14,7 @@ import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speak
  *  the dance floor, outside the speaker ring"): past the ring's outer edge by gap, plus its footprint. */
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
+import { routeOf } from "./party";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
@@ -516,6 +517,16 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // (where the legend always lay), wholly inside its own area and the map, clear of everything
   // placed before it and of the paths; sized to its legend. Placed after the scenes, before the
   // paths' pieces, so those and all later scenery (trees, decor, berries) keep out of it.
+  // The early easy quest (Ed, 2026-10-07: "force a circle into the first three"; rules/quest.ts earlyQuest): one of the first
+  // three areas the waves wake always has a legend. When legends.share left all three without, one of them (seeded, one whose
+  // kind another of the three doesn't share, so its dream has a creature to want) is given one here, before the clearings are cut.
+  if (tuning.legends?.earlyQuest !== false) {
+    const first = routeOf(map as unknown as ForestMap).order.slice(0, 3), kind = (k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[typeOf(x, y)].creature; };
+    if (first.length && !first.some(k => legendCells.has(k))) {
+      const fit = first.filter(k => first.some(o => o !== k && kind(o) !== kind(k)));
+      if (fit.length) legendCells.add(fit[Math.floor(hash2(seed, 907, 911) * fit.length)]);
+    }
+  }
   const LC = tuning.legendClearing, nearStone: string[] = [];
   for (const [cx, cy] of cells) {
     if (!legendCells.has(cellKey(cx, cy))) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)

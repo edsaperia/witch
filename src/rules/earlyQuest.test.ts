@@ -15,12 +15,18 @@ describe("the early easy quest", () => {
     expect(E).not.toBeNull();
     expect(E.first).toEqual(first);
     expect(map.legendCells.has(E.host)).toBe(true);
-    // its host is one of the first three whenever one of them has a legend
-    if (first.some(k => map.legendCells.has(k))) expect(first).toContain(E.host);
+    // its host is always one of the first three (Ed, 2026-10-07: "force a circle into the first three"), with its clearing
+    expect(first).toContain(E.host);
+    const [hx, hy] = E.host.split(",").map(Number);
+    expect(map.legendClearing(hx, hy)).toBeTruthy();
     expect(E.wants).not.toBe(kindOf(map, E.host));
     expect(first.filter(k => k !== E.host).map(k => kindOf(map, k))).toContain(E.wants);
     const L = spawnCreatures(map).find(c => c.legendState && cellKey(c.cell) === E.host)!;
     expect(L.quest).toMatchObject({ species: E.wants, level: 0 });
+  });
+
+  it("plans the same route mid-build (where the map gives the first areas their legend) as on the finished map", () => {
+    for (const seed of [31337, 123]) { const map = generateMap(seed, TUNING); expect(routeOf({ ...map }).order).toEqual(routeOf(map).order); }
   });
 
   it("is the same every time for a seed", () => {
