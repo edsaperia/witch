@@ -14,7 +14,7 @@ import { befriend, danceAt, invitableNow, stateOf, STATES } from "./creatureStat
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, PARTY_CAST, spreadWave, stepParty, type PartyState } from "./party";
+import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { beachOf, exitPoint } from "./mapShape";
@@ -150,8 +150,6 @@ export interface Game {
   tally: { berries: number; invites: number; evolved: number; /** soundsystems a legend stamped on as it turned angry (legends.stomp) */ stomps?: number };
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
-  /** When her DJ routine last began (game time; rules/dj.ts): the party spell's burst over, back from a knockout. */
-  djFrom?: number | null;
 }
 
 /** A soundsystem destroyed ("home" for the dancefloor's ring): the next wave `cut` seconds sooner,
@@ -398,15 +396,13 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
   if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
   if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated);
-  // The party spell's burst over, still at her decks: her routine (rules/dj.ts), once.
-  { const sp = g.party.spellAt; if (g.djFrom == null && g.witch.seated && typeof sp === "number" && g.clock.time >= sp + PARTY_CAST) g.djFrom = sp + PARTY_CAST; }
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (!over) stepLegends(g, legends, !!c.happyNearest);
   if (W.ko) {
     const r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
-    if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; g.djFrom = ht; } // (back behind her decks: her routine again, rules/dj.ts)
+    if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
   }
   repair(W.health, ht, t);
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);

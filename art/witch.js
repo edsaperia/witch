@@ -629,46 +629,12 @@ export const DJ_GESTURES = { groove: [0, 1], cue: [2, 3], scratch: [4, 5], fader
 const DJ_SET = ["groove", "groove", "cue", "scratch", "groove", "fader", "knob", "cue", "groove", "scratch", "fader", "hype"];
 // The frame behind the decks at `beat` (beats on the game's beat clock, rules/beat.ts: beatAt): the gesture by the bar
 // (4 beats; `offset` bars along the set), its first frame for the first half of each beat; `cast`, the spell's gesture.
-/** @param {number} beat @param {{ cast?: boolean, offset?: number, from?: number | null }} [o] */
-export function djFrame(beat, { cast = false, offset = 0, from = null } = {}) {
-  const r = !cast && from !== null ? djRoutine(beat - from) : null;
-  if (r) return (DJ_GESTURES[r.gesture] ?? DJ_GESTURES[DJ_STAND_IN[r.gesture]] ?? DJ_GESTURES.groove)[r.frame];
+export function djFrame(beat, { cast = false, offset = 0 } = {}) {
   return DJ_GESTURES[djGesture(beat, { cast, offset })][(Math.max(0, beat) % 1) < .5 ? 0 : 1];
 }
-/** The gesture she plays at `beat` (a DJ_GESTURES key, or the routine's own: DJ_ROUTINE): the picture's djFrame and the
- *  sound's cues (platform/audio/deck.ts) read the same set. `from`: the beat her routine started on (rules/dj.ts).
- *  @param {number} beat @param {{ cast?: boolean, offset?: number, from?: number | null }} [o] */
-export function djGesture(beat, { cast = false, offset = 0, from = null } = {}) {
-  if (cast) return "cast";
-  const r = from === null ? null : djRoutine(beat - from);
-  return r ? r.gesture : DJ_SET[(Math.floor(Math.max(0, beat) / 4) + offset) % DJ_SET.length];
-}
-// Her routine (Ed, 2026-10-07: "before the first music starts, the dj witch can drop the needle and do a little scratching
-// performance"; the respawn's wait too): beats from its start, each entry from its `at` on: a gesture, its frame of the
-// pair (or, with none, nodding on the beat as the set does), and the `stroke` the sound plays then (platform/audio/deck.ts:
-// lift, drop, f and b a stroke forward and back, chirp a stroke the fader cuts, spin a wind-back, hype her woo-hoo). Two beats to lift the
-// tonearm and drop the needle, a beat listening, a bar of baby scratches on the sixteenths, a bar of chirps ending in a
-// spin-back, and a hype; then back into the set.
-const strokes = (g, list) => list.map(([at, stroke], i) => ({ at, gesture: g, frame: i % 2, stroke }));
-export const DJ_ROUTINE = [
-  { at: 0, gesture: "needle", frame: 0, stroke: "lift" },
-  { at: 1, gesture: "needle", frame: 1, stroke: "drop" },
-  { at: 2, gesture: "groove" },
-  ...strokes("scratch", [[4, "f"], [4.5, "b"], [5, "f"], [5.25, "b"], [5.5, "f"], [6, "b"], [6.5, "f"], [6.75, "b"], [7, "f"]]),
-  ...strokes("chirp", [[8, "chirp"], [8.5, "chirp"], [9, "chirp"], [9.75, "chirp"], [10, "chirp"], [10.5, "chirp"]]),
-  { at: 11, gesture: "spin", frame: 0, stroke: "spin" },
-  { at: 11.5, gesture: "spin", frame: 1 },
-  { at: 12, gesture: "hype", stroke: "hype" },
-];
-export const DJ_ROUTINE_BEATS = 16;
-/** The routine's gestures drawn with another's frames until they have their own (art4: the needle pair, chirp, spin). */
-const DJ_STAND_IN = { needle: "knob", chirp: "scratch", spin: "scratch" };
-/** Her routine at `b` beats from its start: its entry (the last begun) with its frame, or null outside it. */
-export function djRoutine(b) {
-  if (!(b >= 0 && b < DJ_ROUTINE_BEATS)) return null;
-  let e = DJ_ROUTINE[0];
-  for (const r of DJ_ROUTINE) { if (r.at <= b) e = r; else break; }
-  return { ...e, frame: e.frame ?? ((b % 1) < .5 ? 0 : 1) };
+/** The gesture she plays at `beat` (a DJ_GESTURES key): the picture's djFrame and the sound's cues (platform/audio/deck.ts) read the same set. */
+export function djGesture(beat, { cast = false, offset = 0 } = {}) {
+  return cast ? "cast" : DJ_SET[(Math.floor(Math.max(0, beat) / 4) + offset) % DJ_SET.length];
 }
 const DJ_BROOM = { binding: [-.08, .31, -.42], dir: [-.06, 1, -.16] };
 const djOn = (K) => ({ broom: DJ_BROOM, dj: true, farHand: "down", hand: "down", sway: .015, ...K });
