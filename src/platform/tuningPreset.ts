@@ -8,6 +8,7 @@ import states from "../../config/states.json";
 import preOvernight from "../../config/presets/pre-overnight.json";
 
 type Tree = Record<string, unknown>;
+type Configs = Partial<Record<"tuning" | "combat" | "states", Tree>>;
 const isTree = (v: unknown): v is Tree => typeof v === "object" && v !== null && !Array.isArray(v);
 
 /** Writes from's numbers over into's, in place, key by key (into's own objects kept, so anything holding one sees the change). */
@@ -18,13 +19,16 @@ function over(into: Tree, from: Tree): void {
   }
 }
 
-const PRESETS: Record<string, Partial<Record<"tuning" | "combat" | "states", Tree>>> = { "pre-overnight": preOvernight as Tree };
+export const PRESETS: Record<string, Configs> = { "pre-overnight": preOvernight as Tree };
 
-/** The preset the page asked for, if any (applied once, as this module loads). */
-export const TUNING_PRESET = typeof location !== "undefined" ? new URLSearchParams(location.search).get("tuning") : null;
-const p = TUNING_PRESET ? PRESETS[TUNING_PRESET] : undefined;
-if (p) {
-  if (p.tuning) over(tuning as Tree, p.tuning);
-  if (p.combat) over(combat as Tree, p.combat);
-  if (p.states) over(states as Tree, p.states);
+/** Writes the named preset's numbers over these configs, in place; false if there's no such preset. */
+export function applyPreset(name: string, into: Configs): boolean {
+  const p = PRESETS[name];
+  if (!p) return false;
+  for (const k of ["tuning", "combat", "states"] as const) if (p[k] && into[k]) over(into[k]!, p[k]!);
+  return true;
 }
+
+/** The preset the page asked for, if any (applied once, as this module loads, to the config files themselves). */
+export const TUNING_PRESET = typeof location !== "undefined" ? new URLSearchParams(location.search).get("tuning") : null;
+if (TUNING_PRESET) applyPreset(TUNING_PRESET, { tuning: tuning as Tree, combat: combat as Tree, states: states as Tree });
