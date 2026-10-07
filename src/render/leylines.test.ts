@@ -84,7 +84,7 @@ describe("the whole line, from home to its tip (Ed, 2026-10-06: \"The leyline sh
 });
 
 describe("the line's front (Ed, 2026-10-06: \"Please come up with a better design for the front of the leyline\")", () => {
-  it("sits on the drawn line where it's drawn to, tinted toward the next stone's colour; none with the whole line shown; it bursts passing a stone", async () => {
+  it("sits on the drawn line where it's drawn to, tinted toward the next stone's colour; none with the whole line shown; nothing drawn at it", async () => {
     const THREE = await import("three");
     const { newGame } = await import("../rules/game");
     const { TUNING } = await import("../rules/tuning");
@@ -103,12 +103,9 @@ describe("the line's front (Ed, 2026-10-06: \"Please come up with a better desig
     expect(tip.colour.x).toBeLessThan(0.5); // (from stone 1's colour, red 1, toward stone 2's, red 0: past half way)
     ley.grow(null);
     expect(ley.front(1, 1)).toBeNull();
-    // Passing a stone: a burst of embers.
-    const embers = () => (ley.head as unknown as { embers: unknown[] }).embers.length;
-    ley.grow(1.98); ley.front(2, 2);
-    const before = embers();
-    ley.grow(2.02); ley.front(2.05, 2.1);
-    expect(embers()).toBeGreaterThanOrEqual(before + 18);
+    // Nothing drawn there (Ed, 2026-10-07: "It can just be the leyline finishing plainly"): only the line's own meshes and the
+    // two pulses' sparklers (the wave's and the boot's).
+    expect(ley.meshes.filter(m => (m as { isPoints?: boolean }).isPoints).length).toBe(2);
   }, 30000);
 });
 
@@ -138,5 +135,33 @@ describe("the first line branching off the boot ring (Ed, v2001 and 2026-10-07)"
     const at = F + ((branch.at - first) / (last - first)) * (B / 10);
     expect(leyReveal(short, shortMap, at - 0.05, reveal, branch)).toBe(0);
     expect(leyReveal(short, shortMap, at + 0.05, reveal, branch)!).toBeGreaterThan(0.3);
+  });
+  it("finds where it leaves the ring with the treehouse's front outside the ring (Ed, 2026-10-07: the ring on the speakers' own circle)", async () => {
+    const THREE = await import("three");
+    const { leyChain } = await import("../rules/leylines");
+    const { LeyLines } = await import("./leylines");
+    const { ringRadius } = await import("../rules/bootRing");
+    for (const seed of [123, 7, 42]) {
+      const g2 = newGame(seed, TUNING), m = g2.map, d = m.dancefloor, R = ringRadius(m), ley = new LeyLines(TUNING.leyLines, () => 0, m), chain = leyChain(g2.party, m);
+      for (let i = 0; i < 2000 && !ley.currentLink(); i++) ley.update(1, () => chain, () => new THREE.Vector3(1, 1, 1), 0, 0);
+      expect(Math.hypot(m.treehouseFront.x - d.x, m.treehouseFront.z - d.z), `seed ${seed}`).toBeGreaterThan(R + 1); // (the front outside it)
+      const b = ley.branch()!, link = ley.currentLink()!;
+      expect(b.share, `seed ${seed}`).toBeGreaterThan(0.05); expect(b.share).toBeLessThan(0.9);
+      // The link's point at that share is on the ring, and the boot path passes it at b.at.
+      let total = 0; const lens = [0];
+      for (let i = 1; i < link.length; i++) lens.push((total += Math.hypot(link[i][0] - link[i - 1][0], link[i][1] - link[i - 1][1])));
+      const k = lens.findIndex(l => l >= b.share * total), q = link[Math.max(0, k)];
+      expect(Math.abs(Math.hypot(q[0] - d.x, q[1] - d.z) - R), `seed ${seed}`).toBeLessThan(1.01);
+      expect(b.at).toBeGreaterThan(bootPath(m).ringFrom);
+    }
+  }, 60000);
+  it("runs the boot ring through every stone, so the pulse touches each as it turns it (Ed, 2026-10-07)", () => {
+    const d = map.dancefloor, R = P.path.slice(-72);
+    for (const [i, s] of d.speakers.entries()) {
+      const near = Math.min(...R.map(q => Math.hypot(q[0] - s.x, q[1] - s.z)));
+      expect(near, `stone ${i}`).toBeLessThan(0.5);
+      // (and the boot path's own measure of it is where the pulse passes it)
+      expect(P.stoneAt[i]).toBeGreaterThan(P.ringFrom);
+    }
   });
 });
