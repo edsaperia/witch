@@ -12,7 +12,7 @@
 // 3D (model3d.js) at the witch's scale (she is about 1.3 units tall, so a unit is about 1.3 real metres),
 // turned towards the viewer; the prototype mirrors them.
 import { M, Sprite, hsv2rgb, sinHash, glowBall } from "./core.js";
-export { sinHash as ctHash, glowBall as ctGlow } from "./core.js"; // (their old names here, for the landmarks and party objects)
+export const ctHash = sinHash, ctGlow = glowBall; // (their old names here, for the landmarks and party objects; aliases, not a re-export, which the lab's bundler cannot inline)
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 import { carModel } from "./relics.js";
