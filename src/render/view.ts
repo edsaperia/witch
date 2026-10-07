@@ -448,6 +448,7 @@ export class View {
     this.render(0, false);
     drawCreatures(this);
     this.ground.fill(this.renderer, viewRect(this, this.game.tuning.haze.near, 20), this.game.witch.x, this.game.witch.z, Infinity);
+    await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
     await this.assets.whenIdle();
     this.render(0, false);
     refresh(this, true);
@@ -640,10 +641,17 @@ export class View {
   }
   /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
   setWitch(genome: unknown): void {
-    this.assets.rebakeWitch(genome);
-    this.scene.remove(...this.witchBatch.meshes);
-    this.witchBatch = this.makeWitchBatch();
+    this.assets.rebakeWitch(genome); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
     if (this.bareBatch) { this.scene.remove(...this.bareBatch.meshes); this.bareBatch = null; this.bareAsked = false; }
+  }
+  /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
+  private swapHomeArt(): void {
+    const A = this.assets;
+    if (this.witchBatch.atlas !== A.witch) this.witchBatch.setAtlas(A.witch);
+    if (this.bareBatch && this.bareBatch.atlas !== A.witchBare()) this.bareBatch.setAtlas(A.witchBare());
+    if (this.treehouseBatch.atlas !== A.treehouse.atlas) this.treehouseBatch.setAtlas(A.treehouse.atlas);
+    if (this.propBatch.atlas !== A.props) this.propBatch.setAtlas(A.props);
+    if (this.soundBatch.atlas !== A.soundsystems) { this.soundBatch.setAtlas(A.soundsystems); this.partyView.atlas = A.soundsystems; }
   }
 
   /** How much of a thing shows over the bent horizon (culling.ts overBulge): the smoke check reads it. */
@@ -722,6 +730,7 @@ export class View {
     LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
     const up = placeCamera(this, time, pose);
 
+    this.swapHomeArt();
     setFrameUniforms(this, time, up);
     const w = g.witch;
     this.time("uniforms");
