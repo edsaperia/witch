@@ -39,7 +39,7 @@ void main() {
 const POOL_SPARE = 0.8;
 
 const COMPOSITE = /* glsl */ `
-uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
+uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uAggro; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
 float irisHash(float n) { return fract(sin(n * 91.345) * 47453.21); }
 // The knockout's iris and its record at a pixel q from its centre (low-res pixels), over the picture's colour there.
 vec3 irisShade(vec2 q, vec3 base) {
@@ -88,6 +88,9 @@ void main() {
       if (mod(floor(vUv.y * uLow.y), 2.0) < 1.0) c *= 1.0 - 0.3 * uIris2.z; // (scanlines, a tape winding back)
     } else c = irisShade(q, c);
   }
+  // A wild area's rising aggro (rules/wildWatch.ts aggroOf, render/aggro.ts): the screen's edges reddening as its animals make up
+  // their minds (Ed, 2026-10-07), by whole low-res pixels.
+  if (uAggro > 0.0) { vec2 q = ((floor(vUv * uLow) + 0.5) / uLow - 0.5) * vec2(uLow.x / uLow.y, 1.0); c = mix(c, vec3(0.55, 0.02, 0.03), uAggro * smoothstep(0.38, 0.95, length(q))); }
   gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
 }`;
 
@@ -147,7 +150,7 @@ export class Post {
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
-      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
+      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uAggro: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
@@ -163,6 +166,8 @@ export class Post {
   get iris2(): THREE.Vector4 { return this.mats.composite.uniforms.uIris2.value; }
   /** How much the screen dims round her while she's knocked down with her hat floating off (0 none: render/view/witch.ts). */
   set koDim(k: number) { this.mats.composite.uniforms.uKoDim.value = k; }
+  /** The screen edges' red as a wild area's aggro rises (0 none; render/aggro.ts). */
+  set aggro(k: number) { this.mats.composite.uniforms.uAggro.value = k; }
 
   /** lowW x lowH: the scene; outW x outH: the canvas. */
   /** The low resolution, shared with shaders that read the scene's depth. */

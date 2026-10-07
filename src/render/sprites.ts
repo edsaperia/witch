@@ -407,6 +407,13 @@ void main() {
   if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
   // Tinted (enraged creatures, red): toward the tint by the pixel's own lightness, so its shading and shape still read.
   if (uTint.a > 0.0 && uSilhouette.a <= 0.0) { float l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15)); gl_FragColor.rgb = mix(gl_FragColor.rgb, uTint.rgb * (0.55 + 1.1 * l), uTint.a); } // (a floor: red even in the dark, from the treetops)
+  // A wild area's rising aggro (glow -1.05 to -1.45, render/aggro.ts; Ed, 2026-10-07): reddening by its own lightness, so its
+  // shape still reads, and (on its body, not its legs' discs) a red outline pulsing faster as it nears the attack.
+  if (vGlow < -1.02 && vGlow > -1.5 && gl_FragColor.a > 0.5) {
+    float ag = clamp((-1.05 - vGlow) / 0.4, 0.0, 1.0), l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15)), pulse = 0.7 + 0.3 * sin(uTime * (3.0 + 12.0 * ag));
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 0.16, 0.12) * (0.45 + 1.2 * l), ag * 0.6);
+    if (uRimOn > 0.5) { float e = min(min(rimAlpha(vUv + rdx), rimAlpha(vUv - rdx)), min(rimAlpha(vUv + rdy), rimAlpha(vUv - rdy))); if (e < 0.5) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 0.22, 0.15), min(1.0, ag * 1.5) * pulse); }
+  }
   // A sleeping legend (glow -2 - moss): grown over, its colours gone toward moss and earth, so it
   // reads as a mound of the ground (no eyeshine: below -0.5).
   if (vGlow < -1.5) {

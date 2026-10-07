@@ -741,7 +741,7 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 
 ### `wildWatch`, `naps`
 
-The wild watch (Ed, 2026-10-07: when she enters a dormant area its animals nap, then "stir, evade and hang back, turning to LOOK at her", then attack; every creature looks, no special art): on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. on: false: they attack at once, as before.
+The wild watch (Ed, 2026-10-07: when she enters a dormant area its animals nap, then "stir, evade and hang back, turning to LOOK at her", then attack; every creature looks, no special art): on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. on: false: they attack at once, as before. Slower, with a warning (Ed, 2026-10-07: "make the dormant-to-attacking choreography slower, with a visible sign of aggro (e.g. red tint) rising that lets a player who wanders into a dangerous area understand what's happening and have time to run away"): time is 5.5 s (DECISION FOR ED, from 2); leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint, and the screen edges reddening up to vignette, both times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one.
 
 | knob | type | range |
 |---|---|---|
@@ -749,6 +749,9 @@ The wild watch (Ed, 2026-10-07: when she enters a dormant area its animals nap, 
 | `wildWatch.time` | number | 0 to … |
 | `wildWatch.forget` | number | 0 to … |
 | `wildWatch.hangBack` | number | 0 to … |
+| `wildWatch.dangerF` | number | 0 to … |
+| `wildWatch.tint` | number | 0 to … |
+| `wildWatch.vignette` | number | 0 to … |
 | `naps.on` | boolean |  |
 | `naps.chance` | number | 0 to … |
 | `naps.length` | array of number |  |

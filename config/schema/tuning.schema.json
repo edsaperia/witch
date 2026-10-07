@@ -2863,13 +2863,28 @@
         "hangBack": {
           "type": "number",
           "minimum": 0
+        },
+        "dangerF": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "vignette": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "on",
         "time",
         "forget",
-        "hangBack"
+        "hangBack",
+        "dangerF",
+        "tint",
+        "vignette"
       ],
       "additionalProperties": false
     },
