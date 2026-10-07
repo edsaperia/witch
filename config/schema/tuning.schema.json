@@ -1872,6 +1872,10 @@
             "minScratch"
           ],
           "additionalProperties": false
+        },
+        "candleStep": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -1883,7 +1887,8 @@
         "dropHat",
         "hatFloat",
         "dim",
-        "respawn"
+        "respawn",
+        "candleStep"
       ],
       "additionalProperties": false
     },
