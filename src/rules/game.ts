@@ -774,7 +774,9 @@ export function coastOf(g: Game): CoastView | null {
   // the coast's edge her way: intoSea's quick path is only right about which side of the water a point is on, well inland)
   const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) - (g.tuning.map?.push ?? 0) * 0.6 - Math.hypot(dx, dz);
   const gazing = w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
-  return { near: Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach))), gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)) }; // (south of the middle: the sea behind a camera looking north)
+  const near = Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach)));
+  // (her bearing round the coast only by the sea, where the stargazing camera reads it: inland the camera's state is as ever)
+  return { near, gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)), bearing: near > 0 || gazing ? Math.atan2(dx, -dz) : undefined }; // (south of the middle: the sea behind a camera looking north)
 }
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */
