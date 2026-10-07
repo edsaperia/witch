@@ -114,6 +114,9 @@ void main() {
   gl_Position = clipOf(p);
 }`;
 
+/** The ley lines' ripple: how fast it runs along a line (m/s) and how often one passes any point (s). */
+const RIPPLE_SPEED = 28, RIPPLE_EVERY = 4.5;
+
 const FRAG = /* glsl */ `
 uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uStrength;
 uniform float uSpent; // 1: behind the wave's pulse the line is spent, a burnt fuse (the route, not the boot's ring)
@@ -127,6 +130,13 @@ varying float vSide, vS, vT, vLink, vSeen, vW, vLen;
 varying vec3 vCol;
 float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float soft0(float d) { return smoothstep(0.0, 8.0, d); }
+// The ripple (Ed, 2026-10-07: "The leyline should have an occasional ripple along its length that shows you which direction
+// it is going"): now and then a small swell runs along each line the way its pulse goes, out from home (round the boot ring
+// the way its pulse goes): a short bright front with a softer tail behind it, one past any point every RIPPLE_EVERY seconds.
+float ripple(float s, float link) {
+  float d = s - mod(uTime * ${RIPPLE_SPEED.toFixed(1)} + link * 37.0, ${(RIPPLE_SPEED * RIPPLE_EVERY).toFixed(1)});
+  return d > 0.0 ? exp(-d * d / 1.5) : exp(d / 4.0);
+}
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
 void main() {
   if (vSeen < 0.5) discard;
@@ -172,9 +182,10 @@ void main() {
     vec3 cool = mix(vec3(grey), vec3(0.55, 0.68, 1.0) * grey * 1.3, 0.55);
     // (From the treetops, a faint cool glow along it, so it still reads there.)
     if (uGlowPass > 0.5) { gl_FragColor = vec4(cool * 0.12 * halo * uLift * uStrength, 1.0); return; }
-    float dash = mod(floor(vS / uMpp), 4.0) < 3.0 ? 1.0 : 0.0, thin = off < max(1.0, floor(coreN * 0.5)) ? 1.0 : 0.0;
+    float rip = floor(ripple(sq, vLink) * 3.0 + 0.5) / 3.0;
+    float dash = mod(floor(vS / uMpp), 4.0) < 3.0 || rip > 0.6 ? 1.0 : 0.0, thin = off < max(1.0, floor(coreN * 0.5)) ? 1.0 : 0.0;
     if (dash * thin < 0.5) discard;
-    gl_FragColor = vec4(min(cool * 0.75 * uBright * uStrength, vec3(0.7)), 1.0);
+    gl_FragColor = vec4(min(cool * (0.75 + 0.6 * rip) * uBright * uStrength, vec3(0.75)), 1.0);
     return;
   }
   float litD = pAlong > 1e5 ? 1e6 : (pAlong - along) * vLen; // metres behind the pulse (on its own link)
@@ -193,8 +204,9 @@ void main() {
     float heat = floor(max(ember, 0.7 * smoulder) * 4.0 + 0.5) / 4.0;   // (in quarter steps: pixels)
     // Thin once spent (Ed, 2026-10-07: "The leyline after the pulse should be thinner"): its middle pixel or two, widening to the
     // line's full width in the ember just behind the sparkler.
-    float thinN = max(1.0, floor(coreN * 0.5)), wN = floor(mix(thinN, coreN + rimN, ember) + 0.5);
-    float coreA = (off < wN ? (off < max(thinN, coreN) ? 1.0 : 0.5) : 0.0) * (0.6 + 0.9 * heat);
+    float rip = floor(ripple(sq, vLink) * 3.0 + 0.5) / 3.0;          // (in thirds: pixels)
+    float thinN = max(1.0, floor(coreN * 0.5)), wN = floor(mix(thinN, coreN + rimN, ember) + 0.5) + (rip > 0.6 ? 1.0 : 0.0);
+    float coreA = (off < wN ? (off < max(thinN, coreN) ? 1.0 : 0.5) : 0.0) * (0.6 + 0.9 * heat + 0.7 * rip);
     vec3 c = mix(ash, hot, heat) * coreA + hot * halo * 0.25 * ember;  // (the ember's own small glow; the ash none)
     gl_FragColor = vec4(min(c * uBright * 2.0 * uStrength, vec3(0.9)), 1.0);
     return;
