@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import type { View } from "../view";
 import { poseOf } from "../../rules/game";
-import { coastView } from "../../rules/camera";
+import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
@@ -43,7 +43,10 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // below a horizon of sand, and the flat sea shows the sky anyway: there it keeps only beach.camera.seaward of itself
     // (Ed, 2026-10-07: the sea "on the horizon" must read from the stargazing pose), easing round the coast by bearing.
     const ring = g.map.bounds.circle, wx = ring ? g.witch.x - ring.x : 0, wz = ring ? g.witch.z - ring.z : 0, seaAhead = Math.max(0, -wz / (Math.hypot(wx, wz) || 1)); // (no circle, no coast: 0)
-    const seaKeep = 1 - seaAhead * (1 - (B?.camera?.seaward ?? 1));
+    // Lying down, the bend is the stargazing table's for her bearing round the coast (beach.camera.bearings.bend: rules/camera.ts
+    // gazeAt), eased in with her lying down.
+    const seaKeep0 = 1 - seaAhead * (1 - (B?.camera?.seaward ?? 1)), gazeBend = B?.camera?.bearings.bend ? gazeAt(B.camera, g.camera.bearing ?? 0).bend : seaKeep0;
+    const seaKeep = seaKeep0 + (Math.max(0, gazeBend) - seaKeep0) * V.gaze;
     const gk = Math.max(V.gaze * (B?.stargazeCurve ?? 0), V.coast * (B?.camera?.curve ?? 0)) * C.treetop * seaKeep;
     SPRITE_UNIFORMS.uNearCut.value = V.gaze > 0.01 ? V.gaze * Math.max(0, pose.distance - 12) : 0; // (lying down, the camera low behind her: what's between it and her, from 12 m before her, dithers away)
     const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
