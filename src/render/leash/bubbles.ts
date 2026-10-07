@@ -176,7 +176,7 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
   if (!host) return;
   const now = performance.now() / 1000, dt = lv.circleAt ? Math.min(0.1, now - lv.circleAt) : 0;
   lv.circleAt = now;
-  const near = legendCircleNear(g, g.witch.lift > 0.5 ? { ...g.witch, mode: "treetop" } : g.witch);
+  const near = g.witch.lift > 0.5 ? null : legendCircleNear(g, g.witch); // (the treetops never)
   if (near) lv.circleLast = near;
   lv.circleFade = circleShown(lv.circleFade, !!near, dt);
   let el = lv.circlePanel;

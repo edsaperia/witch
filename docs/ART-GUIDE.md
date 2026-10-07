@@ -193,6 +193,11 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 | Boar invisible in game | #112 v2 fern forest | Coat the same value as the floor | Lift the value, or a paler ridge |
 | Ram, v2 (a success) | #112 v2 tangly | White fleece, black face and legs, dark horns: three values that never merge | The model for a strong creature read |
 | Contour banding on big legends | #112 | The 3D bake's shading terraces at large size | Waits for the generator's next stage (Ed) |
+| Sleeping legend as a mound | round 14, lynx | Sunk to its belly and grown over, the lynx read as a rock; Ed couldn't tell what it was | Its own nap pose (`art/naps.js`), whole, eyes shut, a neon rim (#363) |
+| Legend cut by a straight line | round 14, a bird legend | Sunk into the ground, its lower body clipped flat along the ground plane | Barely sunk: the nap pose lies on the ground (`wildLegends.sink` down to 0.1) |
+| Floors drawn over actors | round 14, the pig at the sports field | Flat decals and floors wrote depth, so a creature walking on them was cut | Floors draw first and write no depth (`asFloor`, `FLOOR_ORDER`, #363) |
+| Angry bear airbrushed | round 14 | A 1.35 draw scale with a ±4% breath resampled the art: soft, smeared pixels | Scale 1, the breath a whole-pixel squash, light in 5 steps (`seen.steps`) |
+| Legs with outlines | round 14 (Ed) | Each rig leg disc got its own rim, so a leg read as a glowing wireframe | Leg discs batched with no rim |
 | In-game shots too dark | #97, #112 | Night lighting at ground level | Judge colour on sheets; a lit review mode is proposed |
 
 ## 8. Checks that a machine could do (proposals for art/check.mjs)
@@ -216,3 +221,16 @@ These follow from the rules above. Each needs the art set (`artSet`) given to th
 - Bigger brims and longer cloaks.
 - Accessories both witchy and modern.
 - Our own witch stays as she is unless Ed says otherwise. Every generated witch must read as a witch next to the 30 creatures: hat first, then broom.
+
+## 10. Round 14: legends at night, the grid, the overlays (2026-10-06 to 07)
+
+From Ed's playtest notes and #334, #358, #325 and #363. The rules themselves are in `docs/STYLE.md`; this is what taught them.
+
+- **A legend asleep is the animal asleep, not scenery.** The old sleeping form (sunk, mossed over, a boulder or a log) worked as a secret and failed as a read: Ed couldn't find the lynx, and the Stone Shrine's legend (the fox) read as claws. Under `wildLegends.seen.nap` it lies in its own nap pose, whole, eyes shut, with a neon outline in its sigil's colour and a ground glow, so it reads as a sleeping animal from across the circle.
+- **Never draw at a fractional scale.** The legend's 1.35 scale and its breathing resample the art and blur it (the "airbrushed" bear). Bake at the size wanted and draw at 1; animate size in whole art pixels.
+- **Stepped light on big creatures.** A legend's light falls in 5 flat steps (`seen.steps`, `uSteps` in `render/sprites.ts`), so a 200 px creature keeps the pixel look under the game's smooth lights instead of a smooth gradient.
+- **Nothing is cut by the ground.** Sinking into the floor slices a sprite along a straight line; lie it down instead. Flat things (floors, decals, mats) draw before actors and write no depth (`asFloor`).
+- **No outline on limbs.** The rig's leg discs carry no rim (Ed: "Animal legs have outlines on them; they'd look better without").
+- **Overlays belong to the world.** 💌s, hearts and bubbles standing in the world blur with the tilt-shift (#325) and hide past the bend (#358); only the HUD sits on top.
+- **Bold is the default style** (Ed, 2026-10-06), at art pixel 3 until Ed picks 4 or 5. With `fx: "smooth"` (the default) the game's moonlight isn't banded; under bold the bands are baked into the sprites instead (the Lab and `?fx=pixel` band the light itself).
+- **Contact sheets for legends**: every state (asleep, restless, happy, angry) in the game at night, before and after, not only the art preview (`previews/legend-pixels/` on #363).
