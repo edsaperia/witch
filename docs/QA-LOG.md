@@ -52,3 +52,14 @@ The flights' frame work is nearly all `draw` (the software renderer); the bench 
 
 - Tests and typecheck green at the tip. Journey ok: no errors, every moment reached, draw calls 50–93, `dropped` 0.
 - **Bench false positive** (reported to the coordinator): `g.buffs` holds the whole tuning (`buffs.tuning`, `buffs.base`: `newBuffs` in `rules/buffs.ts`), and the fingerprint includes `g.buffs`, so any new or renamed tuning knob reads as "rules differ (buffs)". A refactor that only touches a knob would turn "game unchanged" red. Fix: leave those two out of the fingerprint in `tools/bench/rules.ts`.
+
+## Round 3: tip 893849d2 (#404), 04:12–06:05
+
+22 merges, each against its first parent. Tests (101 files, 769) and typecheck green at the tip.
+
+- **Same** (18): #388 p1-deadcode, #389 p1-tools, #371 balance, #378 unused-uniforms, #379 legend-attack-visible, #397 lazy-bot-decide, #367 making-of, #369 previews-curation, #400 art-overrides, #399 gc-map, #403 view-gc, #401 crowd-perf, #402 gc-keys, #408 spacing-grid, #405 p1-test-speed, #409 bedroom-first-paint, #412 changelog-versions, #404 creature-mustelids.
+- **Differ, on purpose** (4, none a refactor):
+  - #356 dj-witch: the boot shot's treehouse DJ booth only (17,535 px): the decks redrawn, smaller and lit, on a rug. Looks right.
+  - #381 ley-curvature, #406 balance: "buffs" in the rules only, 0 pixels: the tuning-in-buffs false positive (fixed since by #420 bench-buffs).
+  - #407 sea-glints: a new camera field (`seaBehind`, 0 inland) and its knob; 0 pixels.
+- Journey ok: no errors, every moment reached, draw calls 49–89, `dropped` 0.
