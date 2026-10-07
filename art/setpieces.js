@@ -3,7 +3,7 @@
 // 3D (model3d.js) at the witch's own scale and about 6 to 12 m across or tall, turned towards the
 // viewer. Most are unlit; a few have one magical touch (fairy-stone runes, will-o'-wisps, glowworms,
 // a charcoal mound's embers). The flowering areas (meadow, heath, berry thicket) have none.
-import { M, Sprite, hsv2rgb } from "./core.js";
+import { M, Sprite, hsv2rgb, cropKeepBottom } from "./core.js";
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 import { SET_PROP_GENOMES, genSetPiece } from "./props/sets.js";
@@ -246,11 +246,6 @@ export const NEW_SET_PIECES = {
 };
 export const SET_PIECE_KINDS = Object.keys(spSETS);
 // A sprite cropped to its drawn pixels (it already stands on its bottom row), and where the crop began.
-function spCrop(sp) {
-  let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
-  const out = new Sprite(x1 - x0 + 1, sp.h - y0); for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) { const i = (y + y0) * sp.w + x + x0; if (sp.m[i]) out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
-  return { sp: out, x0, y0 };
-}
 
 export function setPieceColours(def, st) {
   const leaf = def.leaf, trunk = st.trunkHue ?? .07;
@@ -273,7 +268,7 @@ export function setPiece3d(kind, def, st, ppm = 16) {
   const m = new Model({ blend: .05 }); spSETS[kind](m);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // so every piece stands on the same ground line
   const size = (Object.values(NEW_SET_PIECES).find(([k]) => k === kind) || [, , 1])[2];
-  const r = render(m, { scale: witchPixelsPerUnit(st) * size }), { sp, x0, y0 } = spCrop(r.sp); // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
+  const r = render(m, { scale: witchPixelsPerUnit(st) * size }), { sp, x0, y0 } = cropKeepBottom(r.sp); // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
   const [ox, oy] = r.project([0, 0, 0]); // origin: where its middle on the ground lands, in the cropped sprite
   return { sp, colours: setPieceColours(def, st), origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }

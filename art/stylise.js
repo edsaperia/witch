@@ -9,7 +9,6 @@
 // (tools/art-iterations/ladder.mjs) shows the same treatments side by side.
 import { hsv2rgb } from "./core.js";
 
-export const ART_STYLES = ["now", "bold", "ref"];
 const STYLE_LIGHT = (() => { const l = [-.45, -.75, .5], n = Math.hypot(...l); return l.map(v => v / n); })();
 const styleHsv = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(h / 6 + 1) % 1, mx ? d / mx : 0, mx]; };
 const styleToward = (h, target, k) => { let d = target - h; if (d > .5) d -= 1; if (d < -.5) d += 1; return (h + d * k + 1) % 1; };

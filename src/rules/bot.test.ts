@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, type Game } from "./game";
-import { article, newBot, plural, type BotKind } from "./bot";
+import { article, BOT_GAME, newBot, plural, type BotKind, type BotOptions } from "./bot";
 
 /** A fresh game as the bot game starts one: unpaused, waiting for the party spell. */
 function fresh(seed = 123): Game {
@@ -12,8 +12,8 @@ function fresh(seed = 123): Game {
   return g;
 }
 /** Plays `secs` seconds with the bot, a fixed step at a time; the witch's track every 10 s. */
-function play(g: Game, kind: BotKind, secs: number) {
-  const bot = newBot(kind), track: string[] = [], said = new Set<string>();
+function play(g: Game, kind: BotKind, secs: number, opts: BotOptions = {}) {
+  const bot = newBot(kind, opts), track: string[] = [], said = new Set<string>();
   for (let i = 0; i < secs * 60; i++) {
     stepGame(g, bot.decide(g), 1 / 60);
     said.add(bot.doing);
@@ -45,6 +45,16 @@ describe("the bot", () => {
   it("is deterministic: the same game and steps give the same run", () => {
     const a = play(fresh(7), "skilled", 60).track, b = play(fresh(7), "skilled", 60).track;
     expect(a).toEqual(b);
+  });
+
+  it("the champion without its tactics plays exactly as the skilled bot (skilled stays the balance's measuring stick)", () => {
+    expect(play(fresh(7), "champion", 60).track).toEqual(play(fresh(7), "skilled", 60).track);
+  });
+
+  it("the champion plays its own game: it says what it's doing, and is deterministic", () => {
+    const a = play(fresh(9), "champion", 60, BOT_GAME.champion), b = play(fresh(9), "champion", 60, BOT_GAME.champion);
+    expect(a.track).toEqual(b.track);
+    expect([...a.said].every(s => s.length > 0)).toBe(true);
   });
 
   it("the idle bot stays home; the hover bot rises", () => {

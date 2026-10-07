@@ -6,6 +6,7 @@ import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
+import { overrideFor, poseName, type Override } from "./overrides";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
@@ -91,6 +92,12 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
     const sparse = (assets.big[i] as { sparse?: number }).sparse;
     layout.bigWeight.push(variants.length ? 0.1 : sparse ?? 1);
   });
+  // An area with no trees (Ed, 2026-10-06: "Legend with no tall trees around it"): its legends' groves grow its two tallest big
+  // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring.
+  if (!variants.length && def.big.length) {
+    const hOf = (i: number) => assets.big[i].sp.h, byH = def.big.map((_, i) => i).filter(i => hOf(i) >= 48).sort((a, b) => hOf(b) - hOf(a)); // (as tall as she is or more, in art pixels: no boulders or mounds)
+    if (byH.length) { layout.grove.giant = [byH[0]]; layout.grove.tall = [byH[1] ?? byH[0]]; }
+  }
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(withSway(assets.small[i].sp, (assets.small[i] as { sway?: unknown }).sway)), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));
   for (const a of assets.rim) layout.rim.push({ frame: add(a.sp), form: a.kind, height: a.metres.height });
@@ -103,12 +110,30 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
   const out: Baked[] = [];
   const n = (Art.walkGait(species) as { frames: number }).frames; // (its walk's frames: 2, or its own cycle's)
   for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < n; f++) {
+    const hand = overrideFor(species, poseName(level, f, facing === "away")); // (a hand-drawn frame: art/overrides, as it is)
+    if (hand) { out.push(bakeOverride(hand, mk)); continue; }
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
     const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
     if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
     out.push(b);
   }
   return out;
+}
+
+/** A hand-drawn frame (art/overrides/README.md) as a baked sprite: its pixels as drawn (alpha 254 glows, under 128 is empty,
+ *  the rest solid) and a flat normal facing us, so the light falls on it evenly. */
+export function bakeOverride(o: Override, mk: MakeCanvas): Baked {
+  const A = mk(o.w, o.h), N = mk(o.w, o.h);
+  const ca = A.getContext("2d") as CanvasRenderingContext2D, cn = N.getContext("2d") as CanvasRenderingContext2D;
+  const a = ca.createImageData(o.w, o.h), n = cn.createImageData(o.w, o.h);
+  for (let i = 0; i < o.w * o.h; i++) {
+    const al = o.rgba[i * 4 + 3];
+    if (al < 128) continue;
+    a.data.set([o.rgba[i * 4], o.rgba[i * 4 + 1], o.rgba[i * 4 + 2], al === 254 ? 254 : 255], i * 4);
+    n.data.set([128, 128, 255, 255], i * 4);
+  }
+  ca.putImageData(a, 0, 0); cn.putImageData(n, 0, 0);
+  return { A, N, w: o.w, h: o.h };
 }
 
 // Wild creatures' eyes (Ed, v244): packPixels gives their eye pixels alpha 253, so the sprite
