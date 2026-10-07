@@ -538,14 +538,16 @@ export class SpriteBatch {
     this.items = items;
     if (items.length > this.capacity) this.grow(items.length);
     const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array, G = this.glow.array as Float32Array;
-    items.forEach((it, i) => {
+    // (a plain loop, the uv's four numbers written straight in: thousands of instances a frame, every batch, every frame)
+    const mpp = this.metresPerPixel;
+    for (let i = 0, n = items.length; i < n; i++) {
+      const it = items[i], fr = it.frame, uv = fr.uv, k = it.scale ?? 1;
       P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
-      const k = it.scale ?? 1;
-      S[i * 2] = (it.sx === undefined ? it.frame.w : Math.max(1, Math.round(it.frame.w * it.sx))) * this.metresPerPixel * k; S[i * 2 + 1] = (it.sy === undefined ? it.frame.h : Math.max(1, Math.round(it.frame.h * it.sy))) * this.metresPerPixel * k; // (a squash in whole art pixels: one pixel scale on screen)
-      U.set(it.frame.uv, i * 4);
-      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = (it.frame.masked ? -1 : 1) * (it.sway ?? 0);
+      S[i * 2] = (it.sx === undefined ? fr.w : Math.max(1, Math.round(fr.w * it.sx))) * mpp * k; S[i * 2 + 1] = (it.sy === undefined ? fr.h : Math.max(1, Math.round(fr.h * it.sy))) * mpp * k; // (a squash in whole art pixels: one pixel scale on screen)
+      U[i * 4] = uv[0]; U[i * 4 + 1] = uv[1]; U[i * 4 + 2] = uv[2]; U[i * 4 + 3] = uv[3];
+      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = (fr.masked ? -1 : 1) * (it.sway ?? 0);
       G[i] = it.glow ?? 0;
-    });
+    }
     // Only the instances in use go to the GPU (the buffers keep their largest size, often twice
     // what's drawn: a whole one every frame was much of the frame's uploading). Nothing set, nothing sent.
     if (items.length) for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) { a.clearUpdateRanges(); a.addUpdateRange(0, items.length * a.itemSize); a.needsUpdate = true; }
