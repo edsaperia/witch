@@ -999,7 +999,7 @@ export class View {
     const D = g.witches[0].dash;
     let hidden = ht >= D.at - STEP && ht < D.until;
     if (KO) {
-      if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
+      if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
       else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
     }
     // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
