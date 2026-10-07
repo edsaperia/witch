@@ -175,6 +175,9 @@ export interface Creature {
   wakeUntil?: number;
   /** Holding off and watching her till then (world clock): just come down in its wild area (rules/wildWatch.ts). */
   watchUntil?: number;
+  /** Hunting her (Ed, 2026-10-07: woken, "all of the wild creatures from that area should fight with me until either I die or
+   *  they are invited"): the witch it's after, wherever she goes; set and ended in rules/hunt.ts. */
+  hunting?: number;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
   safeX?: number;
   safeZ?: number;
@@ -226,7 +229,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, siege: undefined,
     wanderTo: undefined, circle: undefined, healedAt: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined,
-    wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined,
+    wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined,
   };
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
   return c;
@@ -234,7 +237,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -384,7 +387,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
 
 /** A creature moved by combat (rules/combat.ts) or a knockout (rules/knockout.ts) this step,
  *  not by its roam or its leash. */
-export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed));
+export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed) || c.hunting !== undefined); // (a hunter: moved by combat, wherever she is: rules/hunt.ts)
 
 /** Wild idlers' naps (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are
  *  there in ground mode, but stay asleep if you're in treetop mode, or not in their area"; "They don't all sleep - but it's
