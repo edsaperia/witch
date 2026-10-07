@@ -92,7 +92,7 @@
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
     /* the legend circle's explainer (render/leash.ts drawCirclePanel; Ed, 2026-10-06) */
-    .respawn { position: absolute; transform: translate(-50%, -100%) scale(calc(1 + var(--pulse, 0) * .06)); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 2; text-shadow: 0 1px 0 #000, 0 0 calc(6px + var(--pulse, 0) * 10px) rgba(255, 80, 200, .8); } /* the wait behind her decks after a knockout (render/leash/respawn.ts) */
+    .respawn { position: absolute; transform: translate(-50%, -100%) scale(calc(1 + var(--pulse, 0) * .06)); padding: 4px 12px 6px; border-radius: 10px; background: rgba(14, 11, 28, .62); box-shadow: 0 0 0 1px rgba(255, 120, 220, calc(.25 + var(--pulse, 0) * .45)); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 2; text-shadow: 0 1px 0 #000, 0 0 calc(6px + var(--pulse, 0) * 10px) rgba(255, 80, 200, .8); } /* the wait behind her decks after a knockout (render/leash/respawn.ts) */
     .respawn .lead { font-size: 13px; color: rgb(140, 240, 255); letter-spacing: .04em; }
     .respawn .n { font-size: 34px; font-weight: 700; line-height: 1; color: rgb(255, 120, 220); }
     .legend-panel { position: absolute; max-width: 290px; padding: 10px 14px; border-radius: 10px; background: rgba(14, 11, 28, .72); box-shadow: 0 0 0 1px rgba(232, 180, 106, .25), 0 6px 24px rgba(0, 0, 0, .35); color: var(--ink); font-size: 14px; line-height: 1.35; text-shadow: 0 1px 0 #000; pointer-events: none; z-index: 2; }
