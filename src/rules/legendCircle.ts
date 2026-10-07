@@ -83,19 +83,22 @@ export function circleShown(prev: number, inside: boolean, dt: number, fade = 0.
   return inside ? Math.min(1, prev + step) : Math.max(0, prev - step);
 }
 
-/** Her animals standing in this legend's circle that aren't what it dreams of (Ed's playtest, 2026-10-07: "I brought a quest
+/** Her sigils put down in this legend's circle, and her animals standing in it, that aren't what it dreams of (Ed's playtest, 2026-10-07: "I brought a quest
  *  animal into the legend circle and I wasn't granted the buff"): a line saying so, naming both, so a look-alike kind or the
  *  wrong age reads at once; null when none of hers is in it, or its quest is done or gone. The right one finishes the quest by
  *  standing there (rules/sigilButton.ts questsFromStanding), so never lingers to be named. */
 export function broughtLine(g: Game, near: { legend: Creature; x: number; z: number; r: number }): CircleLine | null {
   const q = near.legend.quest, st = near.legend.legendState ?? "asleep";
   if (!q || q.done !== undefined || (st !== "asleep" && st !== "restless")) return null;
-  const wrong = new Set<string>();
-  for (const id of [...g.leash.stack, ...g.leash.placed.map(p => p.id)]) {
+  const wrong = new Set<string>(), inside = (x: number, z: number) => Math.hypot(x - near.x, z - near.z) <= near.r;
+  const check = (id: number, sigilIn = false) => {
     const c = g.creatures[id];
-    if (!c || c.gone || c.boss || Math.hypot(c.x - near.x, c.z - near.z) > near.r) continue;
+    if (!c || c.gone || c.boss || !(sigilIn || inside(c.x, c.z))) return;
     if (c.species !== q.species || c.level !== q.level) wrong.add(creatureWords(c.species, c.level));
-  }
+  };
+  // her animals standing in it, and (Ed, 2026-10-07: the drop is the moment) her sigils put down in it, their animals anywhere
+  for (const id of g.leash.stack) check(id);
+  for (const p of g.leash.placed) check(p.id, inside(p.x, p.z));
   if (!wrong.size) return null;
   const list = [...wrong].sort(), brought = list.length > 2 ? `${list.slice(0, 2).join(", ")} and others` : list.join(" and ");
   return { text: `Not this one: it dreams of ${creatureWords(q.species, q.level)}, and you've brought ${brought}.` };
