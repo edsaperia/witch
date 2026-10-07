@@ -3093,6 +3093,48 @@
           ],
           "additionalProperties": false
         },
+        "byRoute": {
+          "type": "object",
+          "properties": {
+            "babies": {
+              "type": "number",
+              "minimum": 0
+            },
+            "babyCap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "threat": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "profiles": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          },
+          "required": [
+            "babies",
+            "babyCap",
+            "threat",
+            "profiles"
+          ],
+          "additionalProperties": false
+        },
         "growth": {
           "type": "object",
           "properties": {
@@ -3126,6 +3168,7 @@
       },
       "required": [
         "start",
+        "byRoute",
         "growth"
       ],
       "additionalProperties": false
@@ -4734,6 +4777,44 @@
           ],
           "additionalProperties": false
         },
+        "sparkler": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hiss": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pops": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rate": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fork": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "hiss",
+            "pops",
+            "rate",
+            "fork",
+            "range"
+          ],
+          "additionalProperties": false
+        },
         "room": {
           "type": "object",
           "properties": {
@@ -5248,6 +5329,7 @@
         "shoes",
         "pond",
         "picnic",
+        "sparkler",
         "room",
         "deck",
         "spell",
@@ -6945,6 +7027,65 @@
       ],
       "additionalProperties": false
     },
+    "fireworks": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "shells": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "over": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "height": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "radius": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "finale": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "shells",
+        "over",
+        "rise",
+        "height",
+        "radius",
+        "drift",
+        "finale"
+      ],
+      "additionalProperties": false
+    },
     "combatLight": {
       "type": "object",
       "properties": {
@@ -8351,6 +8492,7 @@
     "moon",
     "glowReach",
     "sigilSpill",
+    "fireworks",
     "combatLight",
     "nightLight",
     "glowFalloff",

@@ -32,7 +32,7 @@ export function installHooks({ game, view, tuning, hud, sound, meter, shake, loa
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
     guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
     /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
-    lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) hud.showLoss(e); return e; },
+    lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e?.kind === "soundsystemLost") hud.showLoss(e); return e; },
     /** A debug hook (the dropped hat's previews): a hit on her now, as a creature's would be (her last one knocks her out). */
     hit: () => { hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
     get manual() { return loop.manual; }, set manual(on: boolean) { loop.manual = on; },
