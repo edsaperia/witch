@@ -3,11 +3,34 @@
 import { describe, expect, it } from "vitest";
 import { newGame } from "./game";
 import { TUNING } from "./tuning";
-import { boonWords, circleLines, circleShown, legendCircleNear } from "./legendCircle";
+import { boonWords, circleLines, circleShown, circleReach, legendCircleNear } from "./legendCircle";
+import { legendCircleAt } from "./musicPlan";
 import { LEGEND_BUFFS } from "./buffs";
 
 describe("the legend circle's explainer", () => {
   const setup = () => { const g = newGame(123, TUNING), L = g.creatures.find(c => c.boss && !c.gone && c.legendState === "asleep")!; return { g, L }; };
+
+  it("skips only legends too far for their circle: the same answers as searching every legend's clearing", () => {
+    const { g } = setup(), R = g.tuning.music.circle.radius, ks = g.map.legendClearings;
+    // the search before circleReach: every legend's nearest clearing, the point in it (or in R of the legend)
+    const ring = (c: { x: number; z: number }) => { let k = null as (typeof ks)[number] | null, rd = Infinity; for (const q of ks) { const d = Math.hypot(q.legend.x - c.x, q.legend.z - c.z); if (d < rd) { rd = d; k = q; } } return k && rd <= k.r ? k : { x: c.x, z: c.z, r: R }; };
+    const all = (at: { x: number; z: number }, calm = false) => { let best = null, bd = Infinity; for (const c of g.creatures) { if (!c.boss || c.gone || c.leashed || (calm && c.legendState !== "asleep" && c.legendState !== "restless")) continue; const k = ring(c), d = Math.hypot(at.x - k.x, at.z - k.z); if (d <= k.r && d < bd) { bd = d; best = c; } } return best; };
+    expect(circleReach(ks, R)).toBeGreaterThan(R);
+    let inside = 0;
+    for (const L of g.creatures.filter(c => c.boss && !c.gone)) {
+      L.x += 3; L.z -= 2; // (a woken legend wanders off its spot)
+      if (L.id % 3 === 0) L.legendState = "angry";
+      const k = ring(L);
+      for (let i = 0; i < 24; i++) {
+        const a = i * 2.4, at = { x: k.x + Math.cos(a) * k.r * (i / 20), z: k.z + Math.sin(a) * k.r * (i / 20), mode: "ground" };
+        const want = all(at);
+        if (want) inside++;
+        expect(legendCircleNear(g, at)?.legend ?? null).toBe(want);
+        expect(legendCircleAt(g, at)).toBe(all(at, true));
+      }
+    }
+    expect(inside).toBeGreaterThan(100);
+  });
 
   it("shows on the ground inside the clearing only, fading in on entering and out on leaving", () => {
     const { g, L } = setup(), first = legendCircleNear(g, { x: L.x, z: L.z, mode: "ground" })!;

@@ -11,6 +11,7 @@
 import { beatAt, type BeatClock } from "./beat";
 import type { Game } from "./game";
 import type { Creature } from "./creatures";
+import { circleReach } from "./legendCircle";
 import { arcStep, type BlockPlan, type MusicStyle } from "./musicScore";
 
 /** Everything the conductor needs, in bars of the beat clock (bar 0 at game time 0). */
@@ -77,9 +78,10 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
 export function legendCircleAt(g: Game, at: { x: number; z: number; mode?: string }): Creature | null {
   if (at.mode !== "ground") return null;
   const R = g.tuning.music.circle.radius, clearings = (g.map as { legendClearings?: readonly { x: number; z: number; r: number; legend: { x: number; z: number } }[] }).legendClearings;
+  const B = circleReach(clearings, R);
   let best: Creature | null = null, bd = Infinity;
   for (const c of g.creatures) {
-    if (!c.boss || c.gone || c.leashed || (c.legendState !== "asleep" && c.legendState !== "restless")) continue;
+    if (!c.boss || c.gone || c.leashed || Math.abs(at.x - c.x) > B || Math.abs(at.z - c.z) > B || (c.legendState !== "asleep" && c.legendState !== "restless")) continue;
     let cx = c.x, cz = c.z, r = R;
     if (clearings) {
       let ring: { x: number; z: number; r: number } | null = null, rd = Infinity;
