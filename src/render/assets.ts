@@ -357,8 +357,9 @@ export class AssetLibrary {
     this.witchLean.towards = W.lean.towards; this.witchLean.away = W.lean.away;
     this.witchDj.full.length = 0; this.witchDj.upper.length = 0; this.witchDj.full.push(...W.dj.full); this.witchDj.upper.push(...W.dj.upper);
   }
-  /** Her frame behind the decks at `beat` (rules/beat.ts beatAt): its index in witchDj (Art.djFrame: a gesture a bar, nodding on the beat). */
-  djFrame(beat: number, cast = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast }); }
+  /** Her frame behind the decks at `beat` (rules/beat.ts beatAt): its index in witchDj (Art.djFrame: a gesture a bar, nodding on the beat;
+   *  scratching, the wait after a knockout). */
+  djFrame(beat: number, cast = false, scratch = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast, scratch }); } // (scratch: her respawn wait after a knockout; art/witch.js's frames for it, else she DJs as ever)
   /** The character creator changed her look: her frames again, from an art worker (her old ones until they arrive; then onWitch). */
   rebakeWitch(genome: unknown): void { this.witchGenome = genome; this.bare = null; this.bareAsked = false; this.ask(this.witchJob(genome, false), true); }
   /** Her frames with her hat knocked off (rules/hat.ts), at the same places as `witch`'s, and her hat lying on the

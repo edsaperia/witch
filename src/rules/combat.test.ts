@@ -7,7 +7,7 @@ import { AREA_TYPES } from "./map";
 import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
 import { hasRune } from "./creatureStates";
-import { hurt, knockOut, newHealth, repair } from "./knockout";
+import { candleCount, candleMelt, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, c, STEP); };
@@ -146,6 +146,8 @@ describe("the witch's health (Ed, 2026-10-04)", () => {
 });
 
 describe("knocked out (Ed, 2026-10-04)", () => {
+  const RESPAWN = (TUNING.knockout.respawn?.max ?? 0) + (TUNING.knockout.hatFloat ?? 0); // (the most the wait can add: rules/knockout.ts respawnWait)
+  const NO_WAIT = { base: 0, step: 0, max: 0, cooldown: 0, minScratch: 0 };
   const withTuning = (patch: (t: Tuning) => void): Tuning => { const t = JSON.parse(JSON.stringify(TUNING)) as Tuning; patch(t); return t; };
   /** Three on her leash (a legend among them, bottom of the stack last) and one parked at a sigil; down to her last hit, an owl in range. */
   function setUp(t: Tuning = TUNING) {
@@ -160,17 +162,17 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     return { g, a, b, l, parked };
   }
 
-  it("puts her carried sigils down where their animals stand, bottom first, a second each (#87: leashed is for good); then she's back at the treehouse, whole", () => {
-    const { g, a, b, l, parked } = setUp(), W = g.witches[0];
+  it("puts her carried sigils down where their animals stand, bottom first, a second each with knockout.releaseEach 1 (#87: leashed is for good); then she's back at the treehouse, whole", () => {
+    const { g, a, b, l, parked } = setUp(withTuning(t => { t.knockout.releaseEach = 1; })), W = g.witches[0];
     expect(W.ko).not.toBeNull();
     const down = g.clock.time, bottomFirst = [l.id, b.id, a.id]; // stack order a, b, l: l is the bottom
     const put = new Map<number, number>();
-    for (let i = 0; i < 10 / STEP && W.ko; i++) {
+    for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) {
       stepGame(g, { moveX: 1, moveZ: 0, toggleMode: true, zoom: 0, dash: true }, STEP); // input is ignored meanwhile
       for (const c of [a, b, l]) if (!g.leash.stack.includes(c.id) && !put.has(c.id)) put.set(c.id, g.clock.time - down);
     }
     expect([...put.keys()]).toEqual(bottomFirst);
-    bottomFirst.map(id => put.get(id)!).forEach((s, i) => expect(s).toBeCloseTo((i + 1) * TUNING.knockout.releaseEach, 1));
+    bottomFirst.map(id => put.get(id)!).forEach((s, i) => expect(s).toBeCloseTo(i + 1, 1));
     for (const c of [a, b, l]) {
       expect(c.leashed).toBe(true); // still hers
       const p = g.leash.placed.find(q => q.id === c.id)!;
@@ -187,8 +189,9 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     for (const far of [false, true]) {
       const { g } = setUp(), W = g.witches[0];
       if (far) W.body = { ...W.body, x: W.body.x + 900, z: W.body.z + 400 }; // (knocked down far from home)
+      g.camera = { ...g.camera, intro: 0 }; // (knocked down well into a game: the start's close-up long gone; seated, it's held as it is)
       const intro0 = g.camera.intro ?? 0;
-      for (let i = 0; i < 30 / STEP && W.ko; i++) stepGame(g, idle, STEP);
+      for (let i = 0; i < (30 + RESPAWN) / STEP && W.ko; i++) stepGame(g, idle, STEP);
       expect(W.ko).toBeNull();
       expect(g.witch.seated, `far ${far}: behind her decks`).toBe(true);
       expect(Math.hypot(g.witch.x - g.map.start.x, g.witch.z - g.map.start.z)).toBeLessThan(0.5);
@@ -200,6 +203,69 @@ describe("knocked out (Ed, 2026-10-04)", () => {
       expect(g.witch.seated, "up and away").toBeFalsy();
     }
   }, 120000);
+
+  it("holds her scratching behind her decks for the rest of the wait after the sparkle-in (Ed, 2026-10-07), input ignored, then lets her go (no wait: as before)", () => {
+    for (const wait of [true, false]) {
+      const { g } = setUp(withTuning(t => { if (!wait) t.knockout.respawn = NO_WAIT; })), W = g.witches[0], K = W.ko!, R = g.tuning.knockout.respawn ?? NO_WAIT;
+      expect(K.backAt, "the whole wait counted from going down, at least minScratch scratching").toBeCloseTo(Math.max(K.inAt + R.minScratch, K.at + respawnWait(0, g.tuning)), 6);
+      const go = { ...idle, moveX: 1, toggleMode: true, dash: true };
+      while (!K.moved) stepGame(g, go, STEP);
+      const at = { x: g.witch.x, z: g.witch.z };
+      expect(Math.hypot(at.x - g.map.start.x, at.z - g.map.start.z), "at the decks from the sparkle-in").toBeLessThan(0.5);
+      let held = 0, scratches = 0;
+      while (W.ko) { stepGame(g, go, STEP); held += STEP; scratches += g.koEvents.filter(e => e.kind === "scratch").length; if (W.ko) { expect(Math.hypot(g.witch.x - at.x, g.witch.z - at.z), "held while she waits").toBeLessThan(1e-6); expect(g.witch.seated).toBe(true); } }
+      expect(held, "the sparkle-in's second half, then the scratching").toBeCloseTo(K.backAt - (K.teleportAt + K.inAt) / 2, 0);
+      expect(scratches, "her scratching starts once (the sound's hook), only if she waits").toBe(K.backAt > K.inAt ? 1 : 0);
+      if (!wait) expect(K.backAt).toBe(K.inAt);
+      expect(W.ko).toBeNull();
+      stepGame(g, { ...idle, moveX: 1 }, STEP);
+      expect(g.witch.seated, `wait ${wait}: up and away once it's over`).toBeFalsy();
+    }
+  }, 120000);
+
+  it("makes the wait longer for knockdowns close together, to a cap, and short again after the cooldown (Ed, 2026-10-07)", () => {
+    const t = TUNING, R = t.knockout.respawn!;
+    expect(respawnWait(0, t)).toBe(R.base);
+    expect(respawnWait(1, t)).toBe(Math.min(R.max, R.base + R.step));
+    expect(respawnWait(99, t)).toBe(R.max);
+    let last: { n: number; at: number } | null = null;
+    const downs = [0, 20, 40, 60, 60 + R.cooldown + 1], ns: number[] = [];
+    for (const at of downs) { const n = nextStreak(last, at, t); ns.push(n); last = { n, at }; }
+    expect(ns).toEqual([0, 1, 2, 3, 0]);
+  });
+
+  it("drops all her sigils at once as she goes down (Ed, 2026-10-07)", () => {
+    const { g } = setUp(), W = g.witches[0], K = W.ko!;
+    expect(K.order.length).toBeGreaterThan(1);
+    for (const at of K.times) expect(at).toBe(K.at);
+    stepGame(g, idle, STEP);
+    expect(g.leash.stack.filter(id => K.order.includes(id))).toEqual([]);
+  });
+
+  it("lights a candle on her desk for every two seconds of the wait, melting one after another as she scratches (Ed, 2026-10-07)", () => {
+    const { g } = setUp(), W = g.witches[0], t = g.tuning;
+    const counts = [0, 1, 2, 3, 9].map(streak => candleCount(knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak })));
+    expect(counts).toEqual([3, 4, 5, 6, 6]); // (6, 8, 10, 12 s: the cap)
+    const K = knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak: 0 }), n = candleCount(K);
+    expect([0, 1, 2].map(i => candleMelt(K, K.inAt, i))).toEqual([0, 0, 0]); // (all whole as she arrives)
+    expect([0, 1, 2].map(i => candleMelt(K, K.backAt, i))).toEqual([1, 1, 1]); // (all gone as she can move)
+    const mid = K.inAt + (K.backAt - K.inAt) / n * 1.5;
+    expect(candleMelt(K, mid, 0)).toBe(1); expect(candleMelt(K, mid, 1)).toBeCloseTo(0.5, 6); expect(candleMelt(K, mid, 2)).toBe(0);
+    expect(candleCount(knockOut(W.leash, g.creatures, 100, withTuning(x => { x.knockout.respawn = NO_WAIT; }), {}))).toBe(0);
+  });
+
+  it("floats her hat down first, then lets her sigils go within it; a first knockdown with her hat stays near Ed's six seconds", () => {
+    const { g } = setUp(), W = g.witches[0], t = g.tuning;
+    const K = knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak: 0 });
+    expect(K.floatUntil).toBeCloseTo(100 + (t.knockout.hatFloat ?? 0), 6);
+    expect(K.teleportAt).toBeGreaterThanOrEqual(K.floatUntil);
+    expect(Math.max(...K.times)).toBeLessThanOrEqual(K.floatUntil + 1e-6); // (her sigils come down while it floats)
+    expect(K.backAt - K.at, "her whole wait, down to moving again").toBeLessThanOrEqual(6.5);
+    expect(K.backAt - K.inAt, "some scratching shows").toBeGreaterThanOrEqual(t.knockout.respawn!.minScratch - 1e-6);
+    const bare = knockOut(W.leash, g.creatures, 100, t, { hatFloats: false, streak: 0 });
+    expect(bare.floatUntil).toBe(100);
+    expect(bare.backAt - bare.at, "without a hat, the same wait: more scratching").toBeCloseTo(K.backAt - K.at, 0);
+  });
 
   it("keeps her legends if knockout.legendsLoyal: they come home with her", () => {
     const { g, l } = setUp(withTuning(t => { t.knockout.legendsLoyal = true; })), W = g.witches[0];

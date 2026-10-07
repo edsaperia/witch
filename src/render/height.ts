@@ -18,15 +18,11 @@ import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { floorClearing } from "../rules/speakers";
 import { beachOf, type Beach } from "../rules/mapShape";
-import { smoothstep, vnoise } from "../rules/random";
+import { smoothstep } from "../rules/random";
+import { SLOPE_SCALE, terrainAt, type HillsTuning } from "../rules/terrain";
 
-export interface HillsTuning { on: boolean; amplitude: number; scale: number; octaves: number; /** The steepest the ground may rise (tan of the camera's shallowest pitch): the hills are made at least broad enough for it (HeightField). */ maxSlope?: number }
-
-/** How broad hills of amplitude A must be (scale, m) so that, with their levelling, ground rising
- *  away from the camera stays under its sightline to her (Ed, v289: "you never go behind a bump"):
- *  measured over the map (height.test.ts), the raw noise's steepest is about 2.6 A / scale, and the
- *  plateaus' and paths' ramps steepen it by about 1.65 times. */
-export const SLOPE_SCALE = 4.3;
+// The hills' noise and the layout's rises and hollows are the rules' (rules/terrain.ts: the trees grow by them too).
+export { hillsAt, SLOPE_SCALE, type HillsTuning } from "../rules/terrain";
 
 /** Metres a sample; samples across the window; the window moves in steps of this many samples. */
 export const RES = 2;
@@ -43,15 +39,6 @@ const BUCKET = 64;
 /** The path segments' index: cell size (m), and floats a segment. */
 const SEG_CELL = 24, SEG = 8;
 
-/** The hills' raw noise at (x, z): centred on 0, between -amplitude and +amplitude. */
-export function hillsAt(x: number, z: number, seed: number, H: HillsTuning): number {
-  let s = 0, a = 1, f = 1 / Math.max(1, H.scale), norm = 0;
-  for (let o = 0; o < Math.max(1, H.octaves); o++) {
-    s += (vnoise(x * f, z * f, seed + o * 101) - 0.5) * a;
-    norm += a * 0.5; a *= 0.45; f *= 2.03;
-  }
-  return (s / norm) * H.amplitude;
-}
 
 /** h pulled toward several levels at once: `pulls` is flat (weight 0 to 1, level, the most odds
  *  it can have). Each pulls by its odds w / (1 - w), so one alone is a plain mix by w, a level
@@ -161,7 +148,6 @@ export class HeightField {
   private ci = 0;
   private cj = 0;
   private filled = false;
-  private seed: number;
   private circles = new Map<number, Circle[]>();
   private pondBuckets = new Set<number>();
   /** The bucket whose ponds round it were last made sure of. */
@@ -205,7 +191,6 @@ export class HeightField {
     this.PLATEAU_FADE = Math.max(16, H.amplitude * 2);
     amplitude = H.on ? H.amplitude : 0;
     { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) { const ease = Math.max(1, B.ease), clear = b.edgeMin - Math.max(...b.sand) - ease; this.beach = { b, ease, hSand: B.sand, hSea: B.sea, clear2: clear > 0 ? clear * clear : 0 }; } }
-    this.seed = map.seed + 6113;
     this.texture = new THREE.DataTexture(this.half, N, N, THREE.RedFormat, THREE.HalfFloatType);
     const t = this.texture;
     t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -239,7 +224,7 @@ export class HeightField {
 
   private raw(x: number, z: number): number {
     if (!this.H.on) return 0;
-    const h = hillsAt(x, z, this.seed, this.H), b = this.beach;
+    const h = terrainAt(this.map, x, z, this.H), b = this.beach; // (the hills and the layout's rises and hollows)
     if (!b) return h;
     // The beach (rules/mapShape.ts beachOf): the hills eased down over `ease` metres to the sand's
     // height where it starts, the sand sloping gently to the sea's, flat beyond.
