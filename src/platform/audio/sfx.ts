@@ -19,6 +19,7 @@ import { powerUp } from "./power";
 import { Spell } from "./spell";
 import { rewind, sadTrumpet } from "./knockdown";
 import { Sparkler } from "./sparkler";
+import { Aggro } from "./aggro";
 import * as fireworks from "./fireworks";
 import { chirp, needle, scratch, spinBack } from "./deck";
 import { Babble } from "./babble";
@@ -43,6 +44,8 @@ export class Sfx {
   private seaBed: Sea | null = null;
   /** The ley pulse's sparkler fizz: made the first time she comes near its tip. */
   private fizz: Sparkler | null = null;
+  /** The wild watch's warning: made the first time a watch starts. */
+  private watch: Aggro | null = null;
 
   constructor(ctx: AudioContext | OfflineAudioContext, volume: number, T: SfxTuning, root = 57, dest?: AudioNode) {
     this.k = new SfxKit(ctx, volume, T, root, dest);
@@ -150,6 +153,8 @@ export class Sfx {
   fireworkWhoosh(dur: number, whistle: boolean, pan = 0, near = 1): void { fireworks.whoosh(this.k, dur, whistle, pan, near); }
   fireworkBurst(size: number, pan = 0, near = 1, glitter = false): void { fireworks.burst(this.k, size, pan, near, glitter); }
   fireworkCheer(pan = 0, near = 1): void { fireworks.cheer(this.k, pan, near); }
+  /** The wild watch's warning (aggro.ts): each frame, the watch's share run (null: none or called off) and its danger. */
+  aggro(k: number | null, danger = 0, pan = 0): void { if (k !== null || this.watch) (this.watch ??= new Aggro(this.k)).update(k, danger, pan); }
   get seaBuilt(): boolean { return !!this.seaBed?.built; }
   /** The party's over: the area's night (`kind`, at `level` 0-1), made the first time it's heard (most runs, never). */
   night(kind: NightKind | null, level: number): void { if (level > 0.001 || this.nightBed) (this.nightBed ??= new Night(this.k)).update(kind, level); }

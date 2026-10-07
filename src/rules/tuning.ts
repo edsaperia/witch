@@ -190,6 +190,8 @@ export interface Tuning {
     ambience?: { volume: number; bed: number; noise: number; sounds: number; quiet: number };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
     /** By the ley line's pulse, its tip a burning sparkler (#491): its fizz. */
+    /** The wild watch's warning (aggro.ts, on rules/wildWatch.ts aggroOf). */
+    aggro?: { volume: number; swell: number; riser: number; hit: number; fall: number };
     sparkler?: { volume: number; hiss: number; pops: number; rate: number; fork: number; range: number };
     /** Fireworks over a soundsystem when a wave reaches an area she'd cleared (waveCelebrate). */
     fireworks?: { volume: number; whoosh: number; boom: number; echo: number; crackle: number; cheer: number; range: number; cheerRange: number; speed: number };
