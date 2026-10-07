@@ -277,6 +277,8 @@
   "mist": { "on": true, "strength": 0.12, "height": 3, "wind": 0.8 },
   "_coldPalette": "Away from the party, colder (Ed, 2026-10-07, making the wild forest eerier: \"a subtle colour shift where areas far from the party read colder, bluer and greyer, and colour returns as you approach the music\"; render/post.ts): a grade of colour only, never darker, the brightest (lights, the party's far glow) and her own light spared. By how far she is from the nearest partified area's middle: none within near metres, all from far; eased over ease seconds. amount: how much of the cold grade at its fullest (0 to 1); desat: how much of the colour it takes at most.",
   "coldPalette": { "on": true, "amount": 0.55, "desat": 0.6, "near": 140, "far": 520, "ease": 1.5 },
+  "_watching": "The trees watching her (Ed, 2026-10-07, making the wild forest eerier: \"canopy tips within a few metres of her sway a beat late and slightly TOWARDS her, as if the trees lean in to watch\"; render/sprites.ts uWatch): a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius. A shader nudge, nothing new drawn; keep it small.",
+  "watching": { "on": true, "radius": 9, "lean": 0.35, "lag": 0.45 },
   "_moonbeams": "How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 is off (Ed, v108: they read as stripes over a dense canopy). ?moonbeams=on brings them back at 1.",
   "moonbeams": 0,
   "looks": { "enragedTint": { "colour": "#ff2a2a", "amount": 0.38 }, "anger": { "on": true, "size": 1 }, "partyGlow": { "on": true, "sparkles": 4, "rate": 0.9, "size": 1.4, "strength": 1 } },
