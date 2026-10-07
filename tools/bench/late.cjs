@@ -5,6 +5,8 @@
 // a fixed 1/60 s: hovering, then flying. Per frame: the rules' step and the view's work (view.ms by part), the draw calls and
 // what's drawn (view.stats), and the JS heap. Writes <out>/late.json and <out>/late.png. Report only: changes nothing.
 //   npm run build && node tools/bench/late.cjs [out dir]   SEED=871136 WAVE=28 AT=1059,1499 FRAMES=600 SIZE=1280x720
+//   HEAP=1: the sampling heap profiler from the page's load, so <out>/late-heap.json says where what's still alive at the end
+//   was made (by function and file, the biggest first).
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -37,6 +39,8 @@ const sum = (o, k) => o.reduce((a, x) => a + (x[k] ?? 0), 0);
   const page = await (await browser.newContext({ viewport: { width: vw, height: vh } })).newPage();
   const errors = [];
   page.on("pageerror", e => errors.push(String(e)));
+  const cdp = process.env.HEAP === "1" ? await page.context().newCDPSession(page) : null;
+  if (cdp) { await cdp.send("HeapProfiler.enable"); await cdp.send("HeapProfiler.startSampling", { samplingInterval: 32768 }); }
   await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&creator=0`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 });
   await page.evaluate(() => { window.witch.manual = true; });
@@ -77,6 +81,20 @@ const sum = (o, k) => o.reduce((a, x) => a + (x[k] ?? 0), 0);
     return { rows, heap0, lod: g.lod ? { ...g.lod } : null, creatures: g.creatures.length, wild: g.creatures.filter(c => (c.state ?? "wild") === "wild").length, marching: g.creatures.filter(c => c.siege).length, mode: g.witch.mode };
   }, { frames });
   await page.screenshot({ path: path.join(out, "late.png") });
+  if (cdp) {
+    // What's still alive, by where it was made: each sampled node's self size, by function and file, and by file alone.
+    const { profile } = await cdp.send("HeapProfiler.getSamplingProfile"), byFn = new Map(), byFile = new Map();
+    const walk = (n, chain) => {
+      const f = n.callFrame, at = `${f.functionName || "(anon)"} ${(f.url || "").split("/").pop()}:${f.lineNumber + 1}`, file = (f.url || "(native)").split("/").pop() || "(native)";
+      if (n.selfSize) { byFn.set(at, (byFn.get(at) ?? 0) + n.selfSize); byFile.set(file, (byFile.get(file) ?? 0) + n.selfSize); }
+      for (const c of n.children || []) walk(c, chain);
+    };
+    walk(profile.head, []);
+    const mb = m => [...m].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, +(v / 2 ** 20).toFixed(1)]);
+    const total = [...byFile.values()].reduce((a, b) => a + b, 0);
+    fs.writeFileSync(path.join(out, "late-heap.json"), JSON.stringify({ totalMB: +(total / 2 ** 20).toFixed(1), byFunction: mb(byFn), byFile: mb(byFile) }, null, 1));
+    console.error(`heap: ${(total / 2 ** 20).toFixed(0)} MB sampled alive; see late-heap.json`);
+  }
   await browser.close(); server.close();
   // The report: per frame, the work (rules + view) at percentiles, the view's parts by their mean, the draws and the heap.
   const rows = timed.rows, work = rows.map(r => r.step + r.render), parts = {};
