@@ -33,7 +33,7 @@ attribute float iOpen;      // how open the ground is there: where the canopy is
 uniform vec4 uCanopy;       // the ground's canopy shadow: strength (0 off), height, cover, wind speed
 uniform vec2 uClearing;     // clearingSize, clearingFalloff
 uniform vec3 uMoonDir;
-uniform float uTime, uSmooth;
+uniform float uTime;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying float vMoonK;
@@ -69,7 +69,7 @@ ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
     vec2 p = vec2(iTuft.x, iTuft.y), cq = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
     float leaves = vnoise(cq / 2.6) * 0.6 + vnoise(cq / 1.1 + 31.0) * 0.4;
     float cover = uCanopy.z * smoothstep(0.0, 1.0, (iOpen - uClearing.x) / max(0.01, uClearing.y));
-    vMoonK = 1.0 - uCanopy.x * (uSmooth > 0.5 ? smoothstep(-0.07, 0.07, cover - leaves) : step(leaves, cover));
+    vMoonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
   }
   gl_Position = clipOf(w);
   gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;

@@ -1,9 +1,8 @@
-// The ley line's route from above, today's against the spiral (Ed, 2026-10-06: the spiral mock-up,
-// "This last example looks great!"): for each seed, the whole route through every area in wave
-// order, the varied order (?route=varied) beside the spiral (the default), the line from blue (the
-// first waves, thicker) to pink (the last), home the yellow dot, each crossing ringed red; under
-// them, distance from home by wave for both (orange: the varied order; cyan: the spiral; dashed:
-// the steady ideal, the k-th wave at the k-th nearest stone).
+// The ley line's route from above (Ed, 2026-10-06: the spiral mock-up, "This last example looks
+// great!"): for each seed, the whole route through every area in wave order, the line from blue (the
+// first waves, thicker) to pink (the last), home the yellow dot, each crossing ringed red; under it,
+// distance from home by wave (cyan; dashed: the steady ideal, the k-th wave at the k-th nearest
+// stone). (The varied order it was first compared with retired with its ?route=varied, 2026-10-07.)
 //   node tools/map/leyroute.mjs [--seeds 1,2,3,123,4242,925469] [--out previews/ley-spiral]
 // (one PNG of all the seeds, drawn by Playwright's Chromium.)
 import { createRequire } from "module";
@@ -38,26 +37,25 @@ function routeSvg(map, r, label) {
   return p.join("");
 }
 
-function chartSvg(map, a, b) {
-  const d = map.dancefloor, rad = st => st.map(q => Math.hypot(q[0] - d.x, q[1] - d.z)), ra = rad(a.stones), rb = rad(b.stones), ideal = [...rb].sort((u, v) => u - v);
-  const top = Math.max(...ra, ...rb) * 1.05, n = ra.length, X = i => (30 + (i / Math.max(1, n - 1)) * (CW - 40)).toFixed(1), Y = v => (CH - 18 - (v / top) * (CH - 30)).toFixed(1);
+function chartSvg(map, b) {
+  const d = map.dancefloor, rad = st => st.map(q => Math.hypot(q[0] - d.x, q[1] - d.z)), rb = rad(b.stones), ideal = [...rb].sort((u, v) => u - v);
+  const top = Math.max(...rb) * 1.05, n = rb.length, X = i => (30 + (i / Math.max(1, n - 1)) * (CW - 40)).toFixed(1), Y = v => (CH - 18 - (v / top) * (CH - 30)).toFixed(1);
   const line = (vs, col, extra = "") => `<polyline points="${vs.map((v, i) => `${X(i)},${Y(v)}`).join(" ")}" fill="none" stroke="${col}" stroke-width="1.4" ${extra}/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${CW}" height="${CH}"><rect width="${CW}" height="${CH}" fill="#0b0a12"/>`
     + `<line x1="30" y1="${CH - 18}" x2="${CW - 10}" y2="${CH - 18}" stroke="#444"/><line x1="30" y1="8" x2="30" y2="${CH - 18}" stroke="#444"/>`
-    + line(ideal, "#888", `stroke-dasharray="4 3"`) + line(ra, "#ff9a3c") + line(rb, "#5fe8ff")
+    + line(ideal, "#888", `stroke-dasharray="4 3"`) + line(rb, "#5fe8ff")
     + `<text x="34" y="18" fill="#aaa" font-family="monospace" font-size="10">distance from home by wave (up to ${top.toFixed(0)} m)</text>`
     + `<text x="${CW - 10}" y="${CH - 4}" text-anchor="end" fill="#aaa" font-family="monospace" font-size="10">wave ${n}</text></svg>`;
 }
 
 const cells = [];
 for (const seed of seeds) {
-  const map = generateMap(seed, TUNING), vmap = generateMap(seed, { ...TUNING, party: { ...TUNING.party, route: "varied" } });
-  const spiral = routeOf(map), varied = routeOf(vmap);
-  cells.push(`<div style="display:flex;flex-direction:column;gap:4px"><div style="font:12px monospace;color:#eee">seed ${seed}</div><div style="display:flex;gap:8px">${routeSvg(vmap, varied, "today (varied)")}${routeSvg(map, spiral, "spiral")}</div>${chartSvg(map, varied, spiral)}</div>`);
-  console.log(`seed ${seed}: varied ${JSON.stringify(routeShape(vmap, varied.stones), (k, v) => (typeof v === "number" ? Math.round(v * 100) / 100 : v))}, spiral ${JSON.stringify(routeShape(map, spiral.stones), (k, v) => (typeof v === "number" ? Math.round(v * 100) / 100 : v))}`);
+  const map = generateMap(seed, TUNING), spiral = routeOf(map);
+  cells.push(`<div style="display:flex;flex-direction:column;gap:4px"><div style="font:12px monospace;color:#eee">seed ${seed}</div><div style="display:flex;gap:8px">${routeSvg(map, spiral, "spiral")}</div>${chartSvg(map, spiral)}</div>`);
+  console.log(`seed ${seed}: spiral ${JSON.stringify(routeShape(map, spiral.stones), (k, v) => (typeof v === "number" ? Math.round(v * 100) / 100 : v))}`);
 }
 await rules.close();
-const legend = `<div style="font:12px monospace;color:#ccc;padding:6px 2px">The whole route in wave order, blue (first, thicker) to pink (last); home yellow; crossings ringed red. Under each map: radial drift (m), one-sidedness, the largest late dip toward home (m), crossings (✕). Chart: orange today's varied order, cyan the spiral, dashed the steady ideal (the k-th wave at the k-th nearest stone).</div>`;
+const legend = `<div style="font:12px monospace;color:#ccc;padding:6px 2px">The whole route in wave order, blue (first, thicker) to pink (last); home yellow; crossings ringed red. Under each map: radial drift (m), one-sidedness, the largest late dip toward home (m), crossings (✕). Chart: cyan the route, dashed the steady ideal (the k-th wave at the k-th nearest stone).</div>`;
 const cols = 3, html = `<body style="margin:0;padding:10px;background:#07060c"><div style="display:grid;grid-template-columns:repeat(${cols},${CW}px);gap:18px">${cells.join("")}</div>${legend}</body>`;
 const require = createRequire(import.meta.url);
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }

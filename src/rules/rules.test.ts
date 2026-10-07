@@ -12,7 +12,7 @@ import { newCamera, stepCamera, cameraPose } from "./camera";
 import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -609,16 +609,6 @@ describe("the party", () => {
     }
     expect(besideLast).toBeLessThan(couldAvoid * 0.5);
   });
-  it("offers the other pickers: near3 picks one of the 3 dormant areas nearest the dancefloor", () => {
-    const p = newParty(map), d = map.dancefloor;
-    const dist = (c: [number, number]) => { const s = map.soundsystemSpot(c[0], c[1]); return Math.hypot(s.x - d.x, s.z - d.z); };
-    const all: [number, number][] = [];
-    for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) if (!p.areas.has(`${x},${y}`)) all.push([x, y]);
-    const three = all.sort((a, b) => dist(a) - dist(b)).slice(0, 3).map(c => key(c));
-    expect(three).toContain(key(pickNext(p, map, "near3")!));
-    const n = pickNext(p, map, "nearest")!;
-    expect([...map.neighbours.get(key(n))!].some(k => p.areas.has(k))).toBe(true);
-  });
   it("boots the home speakers up first, one by one, then counts down to the first wave (Ed, 2026-10-04; the first speaker 3 s off the decks, 2026-10-06)", () => {
     const p = newParty(map), B = TUNING.boot.time, F = TUNING.boot.firstAfter, n = map.dancefloor.speakers.length;
     expect(F).toBe(3);
@@ -1146,7 +1136,7 @@ describe("paths, roads and railways", () => {
     let bridges = 0;
     for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
     expect(bridges).toBeGreaterThan(0);
-    expect(P.pieces.some(p => p.id === "fingerpost")).toBe(false); // fingerposts only with paths.fingerposts (?props=gen)
+    expect(P.pieces.some(p => p.id === "fingerpost")).toBe(false); // fingerposts only with paths.fingerposts (the game sets it)
     const withPosts = generateMap(123, { ...TUNING, paths: { ...TUNING.paths, fingerposts: true } }).paths.pieces;
     expect(withPosts.filter(p => p.id === "fingerpost").length).toBeGreaterThan(3);
     expect(withPosts.filter(p => p.id !== "fingerpost")).toEqual(P.pieces); // placed last: every other piece where it was

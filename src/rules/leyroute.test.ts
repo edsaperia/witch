@@ -75,12 +75,9 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
       expect(sh.lateDip, `seed ${seed}: late dip`).toBeLessThan(450);
     }
   }, 120_000);
-  it("is the spiral before untangling and crossings (spiralOrder), and ?route=varied gives the order before it", () => {
+  it("is the spiral before untangling and crossings (spiralOrder)", () => {
     const map = generateMap(5, TUNING), spiral = spiralOrder(map), r = routeOf(map);
     expect(new Set(spiral)).toEqual(new Set(r.order));
-    const varied = routeOf(generateMap(5, { ...TUNING, party: { ...TUNING.party, route: "varied" } }));
-    expect(varied.order).not.toEqual(r.order);
-    expect(routeShape(map, varied.stones).drift).toBeGreaterThan(routeShape(map, r.stones).drift);
   }, 60_000);
   it("(the noisy picker before it crossed itself thousands of times a run)", () => {
     const t = structuredClone(TUNING) as Tuning;

@@ -45,14 +45,14 @@ if (seed === null) {
 }
 
 // The link's switches and the tuning for this load (app/linkParams.ts).
-const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT, propsGen } = tuningFromLink(params);
+const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
 let musicCueNow = linkMusicCue;
 const game = newGame(seed, tuning);
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
 const { WAVE_CHOICES, setWaveInterval, waveChoice } = gameFromLink(game, tuning, params);
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
-const style = styleFromLink(params, tuning, propsGen); // (app/viewParams.ts)
+const style = styleFromLink(params, tuning); // (app/viewParams.ts)
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 // Her look (the character creator's, kept on this browser; else the classic witch).
@@ -247,7 +247,6 @@ if (params.get("creator") !== "0" && !botKind) {
   if (news) creator.addTab("news", "📜 What's new", [news]);
   creator.addTab("options", "⚙ Options", [wavesEl, ...(shakeEl ? [shakeEl] : [])]);
 } else startEl.style.display = "";
-if (params.get("glide") === "camera") view.glide = "camera"; // (?glide=camera: the glide by the camera's snap, as before 2026-10-06)
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
 // (ui/decisions.ts, app/linkParams.ts).
@@ -255,7 +254,7 @@ let decide: DecidePanel | null = null, decideLoading = false;
 const decidePanel = (open: boolean) => {
   if (decide || decideLoading) return;
   decideLoading = true;
-  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: { glide: v => { view.glide = v === "camera" ? "camera" : "witch"; } } }, open); });
+  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: {} }, open); });
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
