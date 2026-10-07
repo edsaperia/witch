@@ -30,6 +30,10 @@
     #clock.paused { color: var(--dim); }
     #clock .label { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; color: var(--dim); font-size: 11px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
     #clock.lost { animation: clock-lost .9s ease-out; }
+    /* The wild animals still holding the area she's in (Ed's playtest, 2026-10-07: clearing an area needs every one of its own
+       invited or run off, some out of sight, asleep or lying knocked down): a quiet line under the clock. */
+    #wild-left { position: fixed; left: 50%; top: 34px; transform: translateX(-50%); padding: 1px 8px; border-radius: 4px; background: rgba(14, 11, 28, .35); color: var(--dim); font-size: 12px; white-space: nowrap; text-shadow: 0 1px 0 #000; pointer-events: none; z-index: 2; display: none; }
+    #wild-left.on { display: block; }
     @keyframes clock-lost { 0%, 30% { color: var(--loss); box-shadow: 0 0 8px var(--loss); } }
     #clock .loss-pop, #clock .boot-pop { position: absolute; left: 50%; top: 100%; margin-top: 18px; transform: translateX(-50%); white-space: nowrap; font-size: 12px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
     #clock .loss-pop { color: var(--loss); font-weight: bold; font-size: 13px; animation: loss-pop 1.8s ease-out forwards; }
@@ -126,7 +130,7 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/index-Bnh20rcY.js"></script>
+  <script type="module" crossorigin src="./assets/index-BPRrmTfE.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-DnShPyXc.css">
 </head>
 <body>
@@ -137,6 +141,7 @@
   <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button" class="fight-reset">reset fight scale, speed and momentum</button><span>treetop speed m/s</span><input type="range" name="treetop" min="16" max="160" step="2"><span class="treetop"></span><span>area (?areaSize=)</span><span class="area" style="grid-column: 2 / -1"></span><button type="button" class="world-reset">reset area size and treetop speed (new map)</button></div>
   <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
   <div id="clock"><span class="t">00:00</span><div class="label"></div></div>
+  <div id="wild-left"></div>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
   <div id="touch">
     <div id="stick-zone"></div>
