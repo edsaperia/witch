@@ -34,6 +34,8 @@ const FEATHERED = new Set(["owl", "raven", "heron"]), SHELLED = new Set(["beetle
 const hitBits = (species: string, party: boolean) => party ? HIT_BITS.confetti : FEATHERED.has(species) ? HIT_BITS.feather : SHELLED.has(species) ? HIT_BITS.chip : HIT_BITS.fur;
 /** A species' coat, for the bits a hit throws off it (the art director, #193: a wolf throws grey, a fox rust): its lit coat
  *  material (BODYL) from its palette row, toned down toward the night floor; worked out once per species. */
+// The wild's reds, once (not an object a creature a frame).
+const RED_25 = { r: 1, g: 0.25, b: 0.35 }, RED_30 = { r: 1, g: 0.3, b: 0.3 }, RED_35 = { r: 1, g: 0.35, b: 0.35 }, RED_45 = { r: 1, g: 0.45, b: 0.4 };
 const coats = new Map<string, { r: number; g: number; b: number }>();
 function coatOf(species: string, tone: number): { r: number; g: number; b: number } {
   let c = coats.get(species);
@@ -88,7 +90,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     // Stage 5: a lob lands in a ring the size of its splash; an ambusher springs; a charge slams home.
     if (e.kind === "landed" && close(e.x, e.z, c?.level === 3 ? far : 150)) { const sh = c ? attackOf(c.species, c.level) : null; lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: c?.level === 3 ? 0.9 : 0.5, r: 1, g: 0.5, b: 0.35, seed: 0, size: c?.level === 3 ? LEGENDS.attack.lobRadius * FIGHT.scale : sh?.attack.radius ?? 1.8, ...(c?.level === 3 ? { n: 36, dot: 0.7 * big } : {}) }); lv.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.6, r: 0.9, g: 0.7, b: 0.6, seed: e.at * 17 }); }
     // A pulse (a screech, an upheaval) or a toad's slam: a ring out to its reach; burrowing or surfacing, a spray of earth.
-    if ((e.kind === "pulse" || e.kind === "slammed") && c && close(e.x, e.z)) { const A = attackOf(c.species, c.level)?.attack, col = c.leashed || c.legendState === "happy" ? neon(c.species) : { r: 1, g: 0.45, b: 0.4 }; lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: col.r, g: col.g, b: col.b, seed: 0, size: A?.radius ?? 2.5 }); }
+    if ((e.kind === "pulse" || e.kind === "slammed") && c && close(e.x, e.z)) { const A = attackOf(c.species, c.level)?.attack, col = c.leashed || c.legendState === "happy" ? neon(c.species) : RED_45; lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: col.r, g: col.g, b: col.b, seed: 0, size: A?.radius ?? 2.5 }); }
     if (e.kind === "slept" && close(e.x, e.z, 150)) for (let i = 0; i < 3; i++) lv.fx.push({ kind: "puff", x: e.x + (i - 1) * 1.2, y: 0.4, z: e.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: e.at * 7 + i });
     if ((e.kind === "burrowed" || e.kind === "surfaced" || e.kind === "slammed") && close(e.x, e.z)) lv.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.6, r: 0.55, g: 0.42, b: 0.3, seed: e.at * 41 + (e.id ?? 0) });
     if (e.kind === "sprung" && close(e.x, e.z)) lv.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
@@ -157,7 +159,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   // Shots in flight: a bright core and a halo, red for the wild, the party's in their neon.
   for (const sh of g.combat.shots) {
     if (!close(sh.x, sh.z, sh.lob ? far : 150) && !(sh.lob && close(sh.lob.tx, sh.lob.tz, far))) continue;
-    const col = huntsWitch(sh.side) ? { r: 1, g: 0.25, b: 0.35 } : neon(sh.species);
+    const col = huntsWitch(sh.side) ? RED_25 : neon(sh.species);
     if (sh.lob) {
       // A lob: high over everything, and a ring tightening where it'll land (get out of it).
       // (a legend's: a great arc, as high as a fifth of its throw, a bomb the size of a boulder with a trail of embers)
@@ -179,7 +181,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   for (const b of g.combat.beams) {
     const c = g.creatures[b.from];
     if (!c || !close(c.x, c.z, b.attack === "legendBeam" ? far : 150)) continue;
-    const col = huntsWitch(b.side) ? { r: 1, g: 0.3, b: 0.3 } : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
+    const col = huntsWitch(b.side) ? RED_30 : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
     for (let s2 = 0.6; s2 < b.length; s2 += 0.45) {
       lv.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, Math.max(0.5, b.width * 0.9), dot, col.r, col.g, col.b, 0.45 * fl, 1, true); // (its glow: light)
       lv.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, 0.3, dot, 1, 1, 1, 0.8 * fl);
@@ -215,21 +217,21 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     // Burrowed (the mole): a mound of earth moving over the ground, flecks thrown up.
     if (c.burrow) for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, q = hash2(c.id, Math.floor(time * 12) + i, 19); lv.standing.add(c.x + Math.cos(a) * 0.45, 0.1 + (i === 0 ? 0.25 : 0) + q * 0.12, c.z + Math.sin(a) * 0.3, 0.45, dot, 0.42, 0.3, 0.2, 0.9); }
     // Leaping (the toad): a ring tightening where it'll land.
-    if (c.leap) { const L = c.leap, k = Math.max(0, Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at))), A = attackOf(c.species, c.level)?.attack, R = (A?.radius ?? 2.4) * (1.3 - 0.3 * k), col = c.leashed ? neon(c.species) : { r: 1, g: 0.35, b: 0.35 }; for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2; lv.flat.add(L.tx + Math.cos(a) * R, 0, L.tz + Math.sin(a) * R * 0.8, 0.35, dot, col.r, col.g, col.b, 0.3 + 0.6 * k); } }
+    if (c.leap) { const L = c.leap, k = Math.max(0, Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at))), A = attackOf(c.species, c.level)?.attack, R = (A?.radius ?? 2.4) * (1.3 - 0.3 * k), col = c.leashed ? neon(c.species) : RED_35; for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2; lv.flat.add(L.tx + Math.cos(a) * R, 0, L.tz + Math.sin(a) * R * 0.8, 0.35, dot, col.r, col.g, col.b, 0.3 + 0.6 * k); } }
     // A wild legend in its second phase: a red aura pulsing round its feet.
     if (c.legend?.phase === 2 && !c.leashed) { const pk = 0.5 + 0.5 * Math.sin(time * 6 + c.id); for (let i = 0; i < 28; i++) { const a = (i / 28) * Math.PI * 2 + time * 0.5, R = 2.6 + pk * 0.4; lv.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.45, dot, 1, 0.2, 0.25, 0.3 + 0.4 * pk); } }
     if (legendCharging(c, time)) for (let i = 0; i < 3; i++) lv.standing.add(c.x + (hash2(c.id, Math.floor(time * 15) + i, 23) - 0.5) * 2, 0.4, c.z + (hash2(c.id, Math.floor(time * 15) + i, 29) - 0.5) * 1.2, 0.8, dot, 0.7, 0.6, 0.5, 0.4);
     // A friendly area's creature (its legend's quest done): a rosy heart-mote over it now and then.
     if (c.friendly && !c.leashed && c.level > 0) { const top = (lv.tops.get(c.id) ?? 1.2 + c.level * 0.6) + 0.35, ph = (time * 0.5 + c.id * 0.37) % 1; lv.standing.add(c.x, top + ph * 0.6, c.z, 0.28, dot, 1, 0.5, 0.75, Math.sin(ph * Math.PI) * 0.9); }
     // About to charge (the boar lowering its head): the lane it will run down, brightening.
-    if (c.charge?.from !== undefined && time < c.charge.from) { const ch = c.charge, k = 1 - Math.max(0, ch.from! - time) / 0.5, L = ch.speed * (ch.until - ch.from!), col = c.leashed ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 }; for (let s2 = 1.5; s2 < L; s2 += 1.2) for (const side of [-1, 1]) lv.flat.add(c.x + ch.dx * s2 - ch.dz * side * 1.6, 0, c.z + ch.dz * s2 + ch.dx * side * 1.6, 0.35, dot, col.r, col.g, col.b, 0.15 + 0.55 * k); }
+    if (c.charge?.from !== undefined && time < c.charge.from) { const ch = c.charge, k = 1 - Math.max(0, ch.from! - time) / 0.5, L = ch.speed * (ch.until - ch.from!), col = c.leashed ? neon(c.species) : RED_30; for (let s2 = 1.5; s2 < L; s2 += 1.2) for (let side = -1; side <= 1; side += 2) lv.flat.add(c.x + ch.dx * s2 - ch.dz * side * 1.6, 0, c.z + ch.dz * s2 + ch.dx * side * 1.6, 0.35, dot, col.r, col.g, col.b, 0.15 + 0.55 * k); }
     // A legend's long charge (legends.json charge): head down, its first lane on the ground, brightening;
     // then dust and churned ground behind it as it runs and brakes in its arc (the ruts fade slowly).
     if (c.run) {
-      const run = c.run, K = LEGENDS.charge, col = c.legendState === "happy" ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 };
+      const run = c.run, K = LEGENDS.charge, col = c.legendState === "happy" ? neon(c.species) : RED_30;
       if (run.phase === "windup") {
         const k = Math.min(1, (time - run.at) / Math.max(0.05, K.windup)), ux = Math.cos(run.angle), uz = Math.sin(run.angle), half = (K.laneWidth * FIGHT.scale) / 2;
-        for (let s2 = 2; s2 < K.laneShown * FIGHT.scale; s2 += 1.4) for (const side of [-1, 1]) lv.flat.add(c.x + ux * s2 - uz * side * half, 0, c.z + uz * s2 + ux * side * half, 0.45, dot, col.r, col.g, col.b, (0.15 + 0.6 * k) * (1 - s2 / (K.laneShown * FIGHT.scale * 1.1)));
+        for (let s2 = 2; s2 < K.laneShown * FIGHT.scale; s2 += 1.4) for (let side = -1; side <= 1; side += 2) lv.flat.add(c.x + ux * s2 - uz * side * half, 0, c.z + uz * s2 + ux * side * half, 0.45, dot, col.r, col.g, col.b, (0.15 + 0.6 * k) * (1 - s2 / (K.laneShown * FIGHT.scale * 1.1)));
         for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2, R = 4 - 2 * k; lv.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.5, dot, col.r, col.g, col.b, 0.3 + 0.6 * k); }
       } else if (run.phase !== "home") {
         let ruts = lv.ruts.get(c.id);
@@ -254,14 +256,14 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       // at, a line on the ground filling in from it and a target ring tightening there (a beam's lane its own width), all
       // brightening till it fires: where it's going to land, readable from the treetops, time to get out of it.
       const K = LEGENDS.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, K.windup))), happy = c.legendState === "happy";
-      const col = happy ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 }, beam = K.beam.includes(c.species), S = FIGHT.scale;
+      const col = happy ? neon(c.species) : RED_30, beam = K.beam.includes(c.species), S = FIGHT.scale;
       const R0 = (bodyRadius(c) + 3) * (1.6 - 0.6 * k);
       for (let i = 0; i < 36; i++) { const a = (i / 36) * Math.PI * 2 + time * 0.6; mark(c.x + Math.cos(a) * R0, c.z + Math.sin(a) * R0 * 0.8, 0.45 * big, col.r, col.g, col.b, 0.35 + 0.6 * k); }
       for (const a of c.aims!) {
         if (!close(a.x, a.z, far) && !close(c.x, c.z, far)) continue;
         const dx = a.x - c.x, dz = a.z - c.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d, gap = 1.5 * big;
         for (let s2 = R0; s2 < d * k; s2 += gap) mark(c.x + ux * s2, c.z + uz * s2, 0.55 * big, col.r, col.g, col.b, 0.4 + 0.55 * k);
-        if (beam) { const half = (K.beamWidth * S) / 2; for (let s2 = R0; s2 < d; s2 += gap) for (const side of [-1, 1]) mark(c.x + ux * s2 - uz * half * side, c.z + uz * s2 + ux * half * side, 0.3 * big, col.r, col.g, col.b, 0.1 + 0.45 * k); }
+        if (beam) { const half = (K.beamWidth * S) / 2; for (let s2 = R0; s2 < d; s2 += gap) for (let side = -1; side <= 1; side += 2) mark(c.x + ux * s2 - uz * half * side, c.z + uz * s2 + ux * half * side, 0.3 * big, col.r, col.g, col.b, 0.1 + 0.45 * k); }
         else { const R = K.lobRadius * S * (1.5 - 0.5 * k); for (let i = 0; i < 40; i++) { const q = (i / 40) * Math.PI * 2; mark(a.x + Math.cos(q) * R, a.z + Math.sin(q) * R * 0.8, 0.45 * big, col.r, col.g, col.b, 0.3 + 0.65 * k); } }
       }
     }
@@ -286,7 +288,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       } else if (f.move && A.delivery === "melee") {
         // A legend's charge: the long lane it will run down.
         const dx = f.aimX - c.x, dz = f.aimZ - c.z, d = Math.hypot(dx, dz) || 1, L = (A.speed ?? 8) * (A.duration ?? 1.5);
-        for (let s2 = 1.5; s2 < L; s2 += 0.8) for (const side of [-1, 1]) lv.flat.add(c.x + (dx / d) * s2 - (dz / d) * side * 1.4, 0, c.z + (dz / d) * s2 + (dx / d) * side * 1.4, 0.32, dot, r, gg, b, 0.15 + 0.55 * k);
+        for (let s2 = 1.5; s2 < L; s2 += 0.8) for (let side = -1; side <= 1; side += 2) lv.flat.add(c.x + (dx / d) * s2 - (dz / d) * side * 1.4, 0, c.z + (dz / d) * s2 + (dx / d) * side * 1.4, 0.32, dot, r, gg, b, 0.15 + 0.55 * k);
       } else {
         const R = 1.8 - 0.9 * k;
         for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.35, dot, r, gg, b, 0.4 + 0.5 * k); }
@@ -314,7 +316,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       const tr = traitsOf(c.species);
       if (tr.length) {
         const y = (lv.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
-        tr.forEach((m, j) => { const o = -5.2 * 0.17 * wide - 0.3 - j * 0.35, px = c.x + R.x * o, pz = c.z + R.z * o, M = TRAIT_MARKS[m]; lv.over.add(px, y, pz, M.size, M.square ? sq : dot, M.r, M.g, M.b, 0.95); });
+        for (let j = 0; j < tr.length; j++) { const o = -5.2 * 0.17 * wide - 0.3 - j * 0.35, px = c.x + R.x * o, pz = c.z + R.z * o, M = TRAIT_MARKS[tr[j]]; lv.over.add(px, y, pz, M.size, M.square ? sq : dot, M.r, M.g, M.b, 0.95); }
       }
     }
     if ((hp < max || healed) && !c.fleeUntil) {

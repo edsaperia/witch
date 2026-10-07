@@ -186,8 +186,11 @@ export class SwoopTrails {
     }
     const g = this.geo;
     g.setDrawRange(0, ix);
-    for (const k of DYNAMIC) (g.getAttribute(k) as THREE.BufferAttribute).needsUpdate = true;
-    const I = g.getIndex()!; I.needsUpdate = true; I.clearUpdateRanges?.(); I.addUpdateRange?.(0, ix);
+    // Only what's drawn goes up (the first v vertices and ix indices), and nothing when none is: the pool holds `slots`
+    // trails, and sending all of it every frame was most of a late frame's buffer uploads (283 KB a frame at 96 slots,
+    // swooping or not: overnight phase 2, tools/bench/late.cjs GLSTATS=1). Nothing past them is drawn.
+    if (v > 0) for (const k of DYNAMIC) { const a = g.getAttribute(k) as THREE.BufferAttribute; a.clearUpdateRanges(); a.addUpdateRange(0, v * a.itemSize); a.needsUpdate = true; }
+    if (ix > 0) { const I = g.getIndex()!; I.clearUpdateRanges(); I.addUpdateRange(0, ix); I.needsUpdate = true; }
     this.u.uWidth.value = T.width; this.u.uNear.value = Math.max(1, T.near ?? 50); this.u.uBright.value = T.bright; this.u.uHueSpeed.value = T.hueSpeed;
   }
 }

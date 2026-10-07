@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { characterOf, quirkAt, bounceAt } from "./character";
+import { characterOf, quirkAt, bounceAt, spriteQuirk } from "./character";
+import { SPECIES } from "../../art/generator.js";
 import raw from "../../config/character.json";
 
 describe("creature character (config/character.json)", () => {
@@ -25,6 +26,16 @@ describe("creature character (config/character.json)", () => {
     let hi = 0;
     for (let t = 0; t < 30; t += 0.01) { const h = bounceAt(7, t); expect(h).toBeGreaterThanOrEqual(0); hi = Math.max(hi, h); }
     expect(hi).toBeGreaterThan(0.2);
+  });
+  it("every species has a quirk a baked frame can show, and every quirk shows and settles back", () => {
+    for (const S of SPECIES as { id: string }[]) expect(["hop", "puff", "look", "shiver"]).toContain(characterOf(S.id).sprite);
+    const out = { hop: 0, x: 0, sx: 1, sy: 1, turned: false };
+    for (const q of ["hop", "puff", "look", "shiver"] as const) {
+      let moved = false;
+      for (let k = 0; k < 1; k += 0.05) { spriteQuirk(q, k, k * 3.1, out); expect(out.hop).toBeGreaterThanOrEqual(-1e-9); if (out.hop > 0.05 || Math.abs(out.x) > 0.01 || out.sy > 1.05 || out.turned) moved = true; }
+      expect(moved).toBe(true);
+      spriteQuirk(q, -1, 0, out); expect(out).toEqual({ hop: 0, x: 0, sx: 1, sy: 1, turned: false }); // (between quirks, nothing)
+    }
   });
   it("an unknown species takes the default", () => { expect(characterOf("nobody").quirk).toBe(raw.default.quirk); });
 });
