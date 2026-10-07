@@ -39,7 +39,22 @@ void main() {
 const POOL_SPARE = 0.8;
 
 const COMPOSITE = /* glsl */ `
-uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim; uniform vec4 uGrade, uPool; uniform vec3 uGradeTint; varying vec2 vUv;
+uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
+float irisHash(float n) { return fract(sin(n * 91.345) * 47453.21); }
+// The knockout's iris and its record at a pixel q from its centre (low-res pixels), over the picture's colour there.
+vec3 irisShade(vec2 q, vec3 base) {
+  float d = length(q), R = uIris.z * uLow.y;
+  if (d > R) return base * (1.0 - uIris.w);
+  if (uIris2.y <= 0.0) return base;
+  float L = max(3.0, uIris2.w * uLow.y), a = fract(atan(q.y, q.x) / 6.2831853 - uIris2.x), sector = floor(a * 16.0) / 16.0;
+  vec3 rec;
+  if (d < 1.5) rec = vec3(0.04); // the spindle
+  else if (d < L) { rec = vec3(1.0, 0.31, 0.78) * (0.82 + 0.18 * step(0.5, fract(sector * 2.0))); if (sector < 0.07 && d > L * 0.3) rec = vec3(1.0, 0.96, 0.9); } // the label, pink, its white mark turning
+  else if (d < L + 1.0) rec = vec3(0.02); // the label's edge
+  else { rec = vec3(0.08, 0.07, 0.1) + 0.06 * step(1.0, mod(floor(d), 3.0)); if (abs(fract(a + 0.25) - 0.5) < 0.05 || abs(fract(a + 0.75) - 0.5) < 0.05) rec += 0.2; } // the vinyl, its grooves, the light's sheen across it
+  if (d > R - 1.0) rec = vec3(0.02); // its rim
+  return mix(base, rec, uIris2.y);
+}
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
   vec3 c = texture2D(uScene, p).rgb;
@@ -61,6 +76,18 @@ void main() {
   // Knocked down with her hat on (Ed, 2026-10-07): the rest of the screen dims, her spot and her hat floating down left lit
   // (round her light's pool, uPool, and well above it, where the hat starts).
   if (uKoDim > 0.0) { vec2 q = (vUv - uPool.xy - vec2(0.0, 0.06)) * vec2(uLow.x / uLow.y, 1.0); c *= 1.0 - uKoDim * smoothstep(0.12, 0.32, uPool.z > 0.0 ? length(q) : 9.0); } // (her spot lit: about a tenth of the screen's height round her, a little above her feet)
+  // The iris (render/koIris.ts): uIris its centre on screen, its radius (a share of the screen's height) and how dark outside;
+  // uIris2 the record's turn, how far it shows, the rewind smear, and its label's radius. All by whole low-res pixels, so it reads
+  // at any px. The smear drags the picture (the record) backwards in bands of rows for a few frames at the cut.
+  if (uIris.z > 0.0) {
+    vec2 q = floor(vUv * uLow) + 0.5 - uIris.xy * uLow;
+    if (uIris2.z > 0.0) {
+      float row = floor(vUv.y * uLow.y / 3.0), sh = floor((3.0 + irisHash(row + floor(uIris2.x * 9.0)) * 14.0) * uIris2.z);
+      vec3 s = vec3(0.0); for (int i = 0; i < 4; i++) s += irisShade(q + vec2(float(i) * sh, 0.0), c);
+      c = s * 0.25;
+      if (mod(floor(vUv.y * uLow.y), 2.0) < 1.0) c *= 1.0 - 0.3 * uIris2.z; // (scanlines, a tape winding back)
+    } else c = irisShade(q, c);
+  }
   gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
 }`;
 
@@ -120,7 +147,7 @@ export class Post {
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
-      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
+      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
@@ -131,6 +158,9 @@ export class Post {
   lift = 0;
   /** Her light's pool on screen (0 to 1, y up): its centre and half-widths, spared from the grade (z 0: none). */
   get pool(): THREE.Vector4 { return this.mats.composite.uniforms.uPool.value; }
+  /** The knockout's iris (render/koIris.ts): centre x, y (0-1 on screen), radius (a share of its height), dark outside; and the record's turn, how far it shows, the smear, its label's radius. */
+  get iris(): THREE.Vector4 { return this.mats.composite.uniforms.uIris.value; }
+  get iris2(): THREE.Vector4 { return this.mats.composite.uniforms.uIris2.value; }
   /** How much the screen dims round her while she's knocked down with her hat floating off (0 none: render/view/witch.ts). */
   set koDim(k: number) { this.mats.composite.uniforms.uKoDim.value = k; }
 
