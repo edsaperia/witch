@@ -58,6 +58,7 @@ import { hasRune } from "../rules/creatureStates";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
+import { LightRings } from "./lightRings";
 import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
@@ -254,6 +255,8 @@ export class View {
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
   mist: Mist | null = null;
+  /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts). */
+  lightRings: LightRings | null = null;
   /** Where she was a beat ago, for the trees watching her (render/view/frameUniforms.ts). */
   watch = { x: NaN, z: NaN, t: 0 };
   width = 1;
@@ -338,6 +341,10 @@ export class View {
     if (t.mist.on && t.mist.strength > 0) {
       this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer is half the scene's size: post.ts)
       this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
+    }
+    if (t.lightRings?.on && t.lightRings.strength > 0 && !t.bare) {
+      this.lightRings = new LightRings(t.lightRings, this.post.scene.depthTexture, game.map.seed);
+      (this.post.fxScene ??= new THREE.Scene()).add(this.lightRings.mesh);
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
     LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
@@ -843,6 +850,7 @@ export class View {
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
+    this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.time("witch");
     refresh(this);

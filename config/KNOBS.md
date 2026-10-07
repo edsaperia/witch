@@ -1773,6 +1773,26 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `lightRings`
+
+Light rings in the canopy (Ed, 2026-10-07, making the wild forest eerier: "a halo / circle optical illusion: faint concentric rings of moonlight in the canopy, visible from treetop view"; render/lightRings.ts): one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor. Centres seeded on a spacing-metre grid (a share of its cells has one), each count faint bands of moonlight out to radius metres, breathing outward at speed bands a second, laid on a level sheet plane metres up (about the crowns' tops: the crowns are upright sprites, so it's where the line of sight crosses that sheet that is ringed); strength: a band at its brightest (in the moon's hue, paled), added as light. They fade out between fadeNear and fadeFar metres from her. And the glory: rings of moonlight round her own shadow on the leaves (the halo you see round your shadow on dewy foliage), glory metres across at gloryStrength, faintly prismatic, going with her. Treetops only (fading in as she rises).
+
+| knob | type | range |
+|---|---|---|
+| `lightRings.on` | boolean |  |
+| `lightRings.strength` | number | 0 to … |
+| `lightRings.radius` | number | 0 to … |
+| `lightRings.count` | number | 0 to … |
+| `lightRings.spacing` | number | 0 to … |
+| `lightRings.share` | number | 0 to … |
+| `lightRings.above` | number | 0 to … |
+| `lightRings.speed` | number | 0 to … |
+| `lightRings.plane` | number | 0 to … |
+| `lightRings.glory` | number | 0 to … |
+| `lightRings.gloryStrength` | number | 0 to … |
+| `lightRings.fadeNear` | number | 0 to … |
+| `lightRings.fadeFar` | number | 0 to … |
+
 ### `watching`
 
 The trees watching her (Ed, 2026-10-07, making the wild forest eerier: "canopy tips within a few metres of her sway a beat late and slightly TOWARDS her, as if the trees lean in to watch"; render/sprites.ts uWatch): a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius. A shader nudge, nothing new drawn; keep it small.
