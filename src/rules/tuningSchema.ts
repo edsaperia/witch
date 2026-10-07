@@ -11,4 +11,5 @@ export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "partyWitches.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "grounds.radius": { additionalProperties: { type: "number", minimum: 0 } },
   "legendClearing.species": { additionalProperties: { type: "number", minimum: 0 } },
+  "population.byRoute.profiles": { additionalProperties: { type: "array", items: { type: "number", minimum: 0 }, minItems: 3, maxItems: 3 } },
 };
