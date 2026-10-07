@@ -43,6 +43,8 @@ export interface TypeLayout {
   /** The big objects of its tallest tree kinds, by index (a legend's grove grows only these: rules/forest.ts legendGrove):
    *  giant, its biggest class (or its tallest if it has none), and tall, the next (or giant again). */
   grove: { giant: number[]; tall: number[] };
+  /** The big object of its tree with a face in its bark (Ed 2026-10-07), if it has one: on at most two trees an area. */
+  face?: number;
   small: Piece[];
   walls: number[];
   set: Piece | null;
@@ -85,14 +87,18 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // of the area's trees. Anything else big (mounds, boulders, logs) is drawn whole, as before.
   // Each height class gets the area's own share of its trees (its layout's heightMix), split among
   // that class's variants; without one, the art's default weights.
-  const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
-  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
+  const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; face?: boolean; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
+  const faced = variants.filter(v => v.face), plain = variants.filter(v => !v.face); // (the bark face's tree: never dealt by weight, see below)
+  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => plain.filter(v => v.heightClass === c).length || 1;
   // Each carries its sway mask (#34), so only its leaves move in the wind.
   const withSway = (b: Baked, S?: unknown) => (S ? { ...b, S: S as Baked["A"] } : b);
-  for (const v of variants) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
+  for (const v of plain) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
   // The grove's trees (a legend's ring of old giants, Ed 2026-10-06): the two tallest classes it has.
-  const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => variants.some(v => v.heightClass === c)), of = (c?: string) => variants.flatMap((v, i) => (v.heightClass === c ? [i] : []));
+  const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => plain.some(v => v.heightClass === c)), of = (c?: string) => plain.flatMap((v, i) => (v.heightClass === c ? [i] : []));
   layout.grove.giant = of(have[have.length - 1]); layout.grove.tall = have.length > 1 ? of(have[have.length - 2]) : layout.grove.giant;
+  // The bark face's tree (art/areas.js barkFace): a big object of its own, weight 0, so it's never dealt; the view puts it on
+  // at most two trees an area (view/scenery.ts).
+  for (const v of faced.slice(0, 1)) { layout.face = layout.big.length; layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(0); }
   // The baked pieces stand for the area's list entries (a.from): one each, or under the prop generator (?props=gen) n variants of
   // one, each a share of that entry's weight (a.share). Walked by piece, not by entry, so each entry is its own art.
   type Asset = { sp: Baked; sway?: unknown; sparse?: number; from: number; share?: number };
