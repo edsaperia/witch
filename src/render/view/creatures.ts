@@ -18,6 +18,8 @@ import { hash2 } from "../../rules/random";
 import { restlessness } from "../../rules/dream";
 import { sigilColour } from "../../../art/generator.js";
 import type { View } from "../view";
+import type { Style } from "../style";
+import { coatLuminance, legendFloor } from "../legendLight";
 import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
@@ -76,7 +78,7 @@ export function drawCreatures(v: View, time = 0): void {
   const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
   let n = 0;
   v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
-  if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning);
+  if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning, v.style);
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
     const c = g.creatures[i];
     if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
@@ -194,7 +196,7 @@ export function drawCreatures(v: View, time = 0): void {
   for (const [s, b] of v.creatureBatches) if (!per.has(s)) b.set([]);
   for (const [s, list] of per) {
     const k = legendKeys.has(s) ? s.slice(7) : s; // (a legend's batch: as its own key's, plus its look)
-    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning, v.style) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
     b?.set(list);
   }
   v.stats.creatures = n;
@@ -204,8 +206,9 @@ export function drawCreatures(v: View, time = 0): void {
 /** A wild legend's batch (Ed's round 14 playtest: "Legends in the circle are not very distinct"; "the same pixel density and palette
  *  discipline as the rest of the scene"): its sleeping outline in its sigil's neon (a little toward white, so a deep colour still shows
  *  at night) and a light floor (render/sprites.ts uLegend: on instances drawn asleep, glow -2), and its light in steps of brightness. */
-export function legendLook(species: string, t: Tuning): { legend?: THREE.Vector4; legendFloor?: number; steps?: number } {
+export function legendLook(species: string, t: Tuning, style: Style): { legend?: THREE.Vector4; legendFloor?: number; legendAwake?: number; steps?: number } {
   const S = t.wildLegends.seen;
   if (!S) return {};
-  return { legend: new THREE.Vector4(...legendNeon(species), S.rim), legendFloor: S.floor, steps: S.steps ?? 0 };
+  const floor = legendFloor(S.floor, coatLuminance(species, style), S.dark, S.liftMax); // (a dark coat's floor raised: render/legendLight.ts)
+  return { legend: new THREE.Vector4(...legendNeon(species), S.rim), legendFloor: floor, legendAwake: floor > S.floor ? floor : 0, steps: S.steps ?? 0 }; // (and awake too, only for those raised)
 }

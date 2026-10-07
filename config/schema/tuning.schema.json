@@ -3178,9 +3178,12 @@
           "type": "number",
           "minimum": 0
         },
-        "questFar": {
+        "questRoll": {
           "type": "number",
           "minimum": 0
+        },
+        "questLater": {
+          "type": "boolean"
         },
         "bombard": {
           "type": "object",
@@ -3243,7 +3246,8 @@
         "buffPower",
         "happyRange",
         "questCap",
-        "questFar",
+        "questRoll",
+        "questLater",
         "bombard",
         "stomp",
         "partyEgg",
@@ -3317,6 +3321,14 @@
             "steps": {
               "type": "number",
               "minimum": 0
+            },
+            "dark": {
+              "type": "number",
+              "minimum": 0
+            },
+            "liftMax": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -3324,7 +3336,9 @@
             "rim",
             "floor",
             "nap",
-            "steps"
+            "steps",
+            "dark",
+            "liftMax"
           ],
           "additionalProperties": false
         }

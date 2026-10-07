@@ -140,9 +140,10 @@ No animal ever fights its own kind. Nobody dies: they "run off".
 
 **Asleep in their circles.** A legend lies half sunk in its own small clearing, mossed over like a boulder. The clearing is about 9 m across, bigger for big species (`legendClearing`), ringed with the area's tallest trees. **Waves don't wake legends.**
 
-**Dreams and quests.** Stand within 60 m on the ground (`dreams.range`) and you see what a sleeping legend dreams of: one other species at one level (baby, young or adult). The dream is a gamble: it can be anything on the map, except kinds whose nearest area is over 5 areas away (`legends.questCap`).
+**Dreams and quests.** Stand within 60 m on the ground (`dreams.range`) and you see what a sleeping legend dreams of: one other species at one level (baby, young or adult). The dream points **deeper in**: a kind that lives in an area **later on the route** than the legend's own, within 6 areas (`legends.questCap`; `legends.questLater`). If none of those is in reach, it's the kind of the nearest later area; a legend with no later area dreams of any kind. The gamble is how hard that later area is to reach and fight through.
+- **The early easy quest** is the exception: one legend among the first three areas the waves reach dreams of the baby of another of those three (`legends.earlyQuest`).
 - **Put a sigil of exactly that creature and level down inside its circle**, while the legend sleeps (or is restless), and the quest is done. You get its **buff for good** and the animal stays parked there.
-- **The farther away the dream creature lives, the stronger the buff**, up to 1.5× (`legends.questFar` 0.5).
+- **Every quest's buff is the same strength**, 1.25× as written (`legends.questRoll`), however far the dream creature lived: the encounter is the gamble, not the reward. (A relic's buff stays as written.)
 - If the area's wave hasn't come yet, the ley line also moves on from it early, and the area counts as **friendly**. (See the last section: today only animals that grow there *after* the quest are actually marked friendly.)
 - Drop the sigil just outside the circle and the circle flashes as a hint.
 

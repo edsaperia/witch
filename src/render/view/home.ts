@@ -147,8 +147,9 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
  *  Each shows its front to the camera, the far half facing in and the near half out, so its
  *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
  *  cones pump on the beat. Anchored by its ground point, like a path piece. */
-/** A home speaker's runestone, times the speaker's size (Ed: "smaller runestones"); the share of its turn spent as the stone (glowing, stretching) before the speaker springs up. */
-const STONE = 0.55, TURN = 0.4;
+/** The share of a home speaker's turn spent as its runestone (glowing, stretching) before the speaker springs up. (The stone's
+ *  baked at its own small size, render/artBuild.ts SPEAKER_STONE, and drawn at 1.) */
+const TURN = 0.4;
 export function drawSpeakers(v: View, time: number, angle: number): ForestLight[] {
   const A = v.assets.speakerArt(), g = v.game, lights: ForestLight[] = [];
   if (!A) return lights;
@@ -166,11 +167,11 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   g.map.dancefloor.speakers.forEach((sp, i) => {
     const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", k = speakerBoot(g, i, time), powered = k >= TURN;
     if (!powered && A.stone !== undefined) { // still its runestone (charging once the pulse has reached it)
-      const f = A.atlas.frames[A.stone], o = A.stoneOrigin!, c = k / TURN, d = (f.pad ?? 0) * mpp * STONE;
-      v.speakerTops[i] = { x: sp.x, y: o.y * mpp * STONE * (1 + 0.6 * c), z: sp.z, state, powered: false };
+      const f = A.atlas.frames[A.stone], o = A.stoneOrigin!, c = k / TURN, d = (f.pad ?? 0) * mpp;
+      v.speakerTops[i] = { x: sp.x, y: o.y * mpp * (1 + 0.6 * c), z: sp.z, state, powered: false };
       if (!inView(v, sp.x, sp.z, f.w * mpp, f.h * mpp, 6)) return;
       if (c > 0) lights.push({ x: sp.x, y: 1.5, z: sp.z, reach: 8, rgb: new THREE.Vector3(0.3, 0.9, 1), strength: 1.5 * c });
-      list.push({ x: sp.x - U.x * d, y: -U.y * d, z: sp.z - U.z * d, frame: f, flip: face.flip, scale: STONE, sx: 1 - 0.2 * c, sy: 1 + 0.6 * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
+      list.push({ x: sp.x - U.x * d, y: -U.y * d, z: sp.z - U.z * d, frame: f, flip: face.flip, sx: 1 - 0.2 * c, sy: 1 + 0.6 * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
       return;
     }
     const u = A.stone === undefined ? 1 : Math.min(1, (k - TURN) / (1 - TURN)), rise = u >= 1 ? 1 : 1 - Math.pow(1 - u, 3) * Math.cos(u * 4.2); // springs up, past full, settles
