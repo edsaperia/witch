@@ -65,6 +65,7 @@ Babies weigh 0.5, young 1, adults 2 and legends 3 (`leash.weight.levels`). So yo
 - Her carried sigils come off one a second, bottom first (`knockout.releaseEach`). **Each is put down where its animal stands, so they stay hers** as a parked group.
 - She sparkles out and back in **behind her decks** (the teleport takes 1.6 s, `knockout.teleport`) with full health.
 - **She drops her hat** where she fell, and a 🎩 pointer shows the way back to it. Stand on it and press the sigil button to put it back on. If she gets knocked out again before picking it up, no second hat drops. (The hat doesn't change any number that could be found in the rules.)
+- **The beat speeds up** (Ed, 2026-10-07: "the BPM goes up by 1 each time you die": the DJ's off the decks and the crowd gets restless). Each knockdown adds **1 BPM** to the party's tempo for the rest of the run (`knockout.bpmStep`; `knockout.bpmCap`, if set, is the most it can add), eased in from the next beat over 4 beats (`beat.knockBeats`). The music follows it, and the wave countdown and the ley line's pulse run that much faster (the tempo with the bonus over the wave's own), so every wave comes a little sooner. Once she's been knocked down, the tempo shows beside the clock and pulses as it rises, with "+1 BPM" under it.
 
 ---
 

@@ -2027,6 +2027,10 @@
         "candleStep": {
           "type": "number",
           "minimum": 0
+        },
+        "bpmStep": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2039,7 +2043,8 @@
         "hatFloat",
         "dim",
         "respawn",
-        "candleStep"
+        "candleStep",
+        "bpmStep"
       ],
       "additionalProperties": false
     },

@@ -283,13 +283,16 @@ export function clearArea(p: PartyState, map: ForestMap, cell: Cell, time: numbe
  *  (Ed, 2026-10-06: "three seconds after you leave your decks" the first stone turns, and the boot's minutes run from it),
  *  the party spell cast (or in a game without it, `spellAt` undefined: the tools and tests, as soon as she's off them):
  *  then `bootFrom` is set and the boot's end and the first wave's countdown are reckoned from it. */
-export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false, celebrate?: (a: Partified, wave: number) => void): Partified[] {
+export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false, celebrate?: (a: Partified, wave: number) => void, rate = 1): Partified[] {
   if (p.bootFrom === undefined && p.spellAt !== null && !seated) {
     const left = p.nextAt - p.bootUntil; // (the countdown after the boot, as it was set)
     p.bootFrom = time; p.bootUntil = time + Math.max(0, map.tuning.boot.firstAfter ?? 0) + map.tuning.boot.time; p.nextAt = p.bootUntil + left;
   }
   const waiting = p.bootFrom === undefined;
   if (p.paused || (waiting && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
+  // The countdown runs at the party's tempo (rules/beat.ts tempoRate: faster for her knockdowns), so the wave and the ley
+  // line's pulse come sooner, smoothly: the time left shrinks the faster from now on, never jumping.
+  if (rate !== 1 && time >= p.bootUntil) p.nextAt -= dt * (rate - 1);
   if (time < p.nextAt) return [];
   p.nextAt += map.tuning.party.interval;
   return spreadWave(p, map, time, celebrate);
