@@ -70,7 +70,10 @@ function serve() {
 
     // the cast and the step-off, then a few seconds standing: nothing should clear by itself
     await run(1, { castParty: true });
-    await run(150, { moveX: 1, moveZ: 0.3 });
+    // off the decks: moving until she's left them (the cast holds her a while), as the boot waits for that
+    let off = null;
+    for (let i = 0; i < 40 && !off; i++) { await run(30, { moveX: 1, moveZ: 0.3 }); off = await page.evaluate(() => (window.witch.game.witch.seated || window.witch.game.party.bootFrom === undefined ? null : { t: +window.witch.game.clock.time.toFixed(2), bootFrom: +window.witch.game.party.bootFrom.toFixed(2) })); }
+    check("she steps off her decks", !!off, off ?? (await state()));
     await run(300, {});
     const early = await events("areaCleared");
     check("nothing clears by itself", early.length === 0, { cleared: early.map(e => e.key), state: await state() });
