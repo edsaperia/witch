@@ -82,7 +82,9 @@ export interface Tuning {
   groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
   /** The ground's fake relief: rises and hollows from noise (scale metres across) tilting the ground's normal by strength, so lights pick out the bumps, and shading hollows darker by shade. */
   /** relief: the fake bumps in the ground's shading; hills: the rolling ground, drawn only (render/height.ts): amplitude (m), scale (m across a swell), octaves. */
-  ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number; /** The light reads the hills' slopes this many times steeper (relief shading). */ shade: number } };
+  ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number; /** The light reads the hills' slopes this many times steeper (relief shading). */ shade: number };
+    /** The lie of the land in the layout (rules/terrain.ts; Ed's idea, relayed 2026-10-07): every runestone on a rise and every legend clearing in a hollow, rise and dip times the hills' amplitude, easing out over reach metres; trees thicker in low ground and sparser on high by up to trees (a share). */
+    layout?: { on: boolean; rise: number; dip: number; reach: number; trees: number } };
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
   /** ?bare=1 or 2 (not in the file): the terrain on its own (render/view.ts). */
   bare?: number;
