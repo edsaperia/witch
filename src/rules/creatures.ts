@@ -100,7 +100,7 @@ export interface Creature {
    *  ways), its route along area borders, and until when it stays in her posse after a fight. */
   travelling?: boolean;
   /** Its state (rules/creatureStates.ts, issue #87): set when it's invited to happy, or enraged; read it with stateOf. */
-  state?: "wild" | "happy" | "leashed" | "enraged";
+  state?: CreatureState;
   /** When it was made happy (its 💌 ring full): its sigil rune pops out then (creatureStates.ts hasRune). */
   happyAt?: number;
   /** A party legend (Ed's Easter egg, 2026-10-06; tuning legends.partyEgg): a happy legend won over by an absurd number of
@@ -178,7 +178,13 @@ export interface Creature {
   rand: () => number;
 }
 
-export type LegendState = "asleep" | "restless" | "angry" | "happy";
+/** The creature states (issue #87; rules/creatureStates.ts), the one list of their names: wild as found, happy once invited,
+ *  leashed once she picks up its rune, enraged when a wave sets it on a soundsystem. */
+export const CREATURE_STATES = ["wild", "happy", "leashed", "enraged"] as const;
+export type CreatureState = (typeof CREATURE_STATES)[number];
+/** An area legend's states (rules/legends.ts), the one list of their names. */
+export const LEGEND_STATES = ["asleep", "restless", "angry", "happy"] as const;
+export type LegendState = (typeof LEGEND_STATES)[number];
 
 export interface AreaPopulation { babies: number; young: number; adults: number }
 
