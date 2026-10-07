@@ -26,9 +26,9 @@ function game(seed = 123, t = TUNING): Game {
   return g;
 }
 const own = (g: Game, key: string) => g.creatures.filter(c => cellKey(c.cell) === key);
-/** Every one of an area's own creatures that holds it, invited (happy; the babies) or run off (the rest). */
+/** Every one of an area's own creatures that holds it (its young and adults) run off. */
 function empty(g: Game, key: string): void {
-  for (const c of own(g, key)) if (holdsArea(c)) { if (c.level === 0) befriend(c, g.clock.time); else c.gone = true; }
+  for (const c of own(g, key)) if (holdsArea(c)) c.gone = true;
   g.byArea = null;
 }
 
@@ -141,6 +141,18 @@ describe("clearing an area transforms its runestone (Ed, 2026-10-07)", () => {
     expect(clearedAreas(g.party, g.map, g.creatures).map(cellKey)).not.toContain(key);
     last.leashed = true; // invited and leashed
     expect(clearedAreas(g.party, g.map, g.creatures).map(cellKey)).toContain(key);
+  }, 60000);
+
+  it("babies never hold it (Ed, 2026-10-07: 'Wild babies don't count'): with only its wild babies left it transforms, and they join the party", () => {
+    const g = game(), key = routeOf(g.map).order[4];
+    const babies = own(g, key).filter(c => c.level === 0 && !c.circle && !c.gone && c.state !== "happy");
+    expect(babies.length, "the area has wild babies").toBeGreaterThan(0);
+    expect(babies.some(holdsArea)).toBe(false);
+    empty(g, key);
+    expect(clearedAreas(g.party, g.map, g.creatures).map(cellKey)).toContain(key);
+    run(g, 0.5);
+    expect(g.party.areas.has(key)).toBe(true);
+    for (const c of babies) { expect(c.state, `baby ${c.id}`).toBe("happy"); expect(c.dancing, `baby ${c.id} dances`).toBeTruthy(); }
   }, 60000);
 
   it("plays the same from the same seed", () => {
