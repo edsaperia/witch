@@ -14,3 +14,9 @@ npm run bench:compare /tmp/before /tmp/after   # exits 1 on any mismatch
 - **`compare.cjs`**: the fingerprints part by part (a quick run compares only with a quick run), the shots pixel by pixel (`diff-<scene>.png` in the second out, the differing pixels red), the timings side by side, as markdown.
 
 Timings in the cloud's software renderer are noisy and slow (frames are mostly the renderer); compare them only between runs on the same machine with nothing else running.
+
+## Performance probes (report only; overnight phase 2, docs/perf/)
+
+- **`node tools/bench/ts.mjs perf`** (`perf.ts`): the rules at late waves, headless. `--seeds=123,871136 --waves=10,20,28 --steps=1200`, brought on by the playtest key every `--gap` steps (180), or `--bot=skilled|champion` playing at the game's own waves. Per wave: step p50/p95/p99/worst, steps over 4 and 16.7 ms, creatures by state, the sim's level of detail and the heap.
+- **`node tools/bench/late.cjs [out]`** (after `npm run build`): the late game in headless Chromium. `SEED=871136 WAVE=28 AT=1059,1499 FRAMES=600 SIZE=1280x720`: the rules brought to the wave without drawing, her put over the treetops there, then frames timed at 1/60 s (the view's work by part, draw calls, the JS heap). In the cloud the `draw` part is the software renderer's; the other parts are the CPU's own.
+- **`node tools/bench/ts.mjs spikes`** (`spikes.ts`): a bot game (`--seed`, `--bot`, `--wave`), every step over `--over` ms noted; `--profile=<step>,...` replays and profiles exactly those steps.

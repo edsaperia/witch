@@ -781,7 +781,7 @@ export class View {
     this.strings.update();
     this.borders.update();
     // A point on the treehouse's sprite (its pixels) in the world, standing on its spot.
-    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle), U2 = SPRITE_UNIFORMS;
+    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle, time), U2 = SPRITE_UNIFORMS;
     const onTreehouse = (px: number, py: number) => {
       const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
       return { x: at.x + r.x * dx + u.x * dy, y: at.y + r.y * dx + u.y * dy, z: at.z + r.z * dx + u.z * dy };
@@ -809,8 +809,9 @@ export class View {
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
     const near: { x: number; z: number; r: number; d: number }[] = [], GR = t.groundCover.radius;
-    for (const c of g.creatures) {
-      const dx = c.x - w.x, dz = c.z - w.z;
+    const cs = g.creatures; // (by index: render is too big for the engine to optimise, and for...of made an object a creature)
+    for (let i = 0; i < cs.length; i++) {
+      const c = cs[i], dx = c.x - w.x, dz = c.z - w.z;
       if (Math.abs(dx) >= GR || Math.abs(dz) >= GR) continue;
       const d = Math.sqrt(dx * dx + dz * dz);
       if (d < GR) near.push({ x: c.x, z: c.z, r: Math.max(0.8, (this.leashView.tops.get(c.id) ?? 1.6) * 0.75), d }); // parting by its drawn size (#47)
@@ -819,7 +820,7 @@ export class View {
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     { const H = g.witches[0].hat.down; if (H && g.witches[0].hat.has) clear.push({ x: H.x + HAT_BESIDE, z: H.z, r: t.groundCover.sigilClear }); } // (her hat where it lies)
-    for (const c of g.creatures) if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); // (a happy one's rune at its feet)
+    for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of g.relics) if (r.state === "lying" && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge

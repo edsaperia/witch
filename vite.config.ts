@@ -1,6 +1,7 @@
 import { defineConfig } from "vitest/config";
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { availableParallelism } from "node:os";
 import { readPng } from "./tools/overrides/png";
 
 // base "./": the same build works at the site's root and under /pr-<number>/.
@@ -41,5 +42,8 @@ export default defineConfig({
   // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
   // under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
   // One generous limit for all (a hung test still fails, after a minute).
-  test: { include: ["src/**/*.test.ts"], environment: "node", testTimeout: 60_000, hookTimeout: 60_000 },
+  // Tests (overnight phase 1, test speed): a worker per core (Vitest leaves one idle by default) and one module load per
+  // worker rather than per file (isolate false: no test file leaves module state changed; the few that change it put it
+  // back in afterEach). 281 s to 216 s locally on 4 cores, the same 758 tests.
+  test: { include: ["src/**/*.test.ts", "tools/bench/*.test.ts"], environment: "node", testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
 });

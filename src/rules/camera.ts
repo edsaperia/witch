@@ -31,11 +31,13 @@ export interface CameraState {
    *  water's edge to 1 at it, on the ground (eased); and lying down to stargaze, 0 to 1 (eased over beach.gazeEase seconds). */
   coast?: number;
   gaze?: number;
+  /** How much the open sea lies behind the camera (0 to 1: the south coast, the camera always looking north). */
+  seaBehind?: number;
 }
 
 /** What the camera needs of the beach each step: how near the water she is (0 at beach.camera.approach metres, 1 at its
  *  edge) and whether she's lying stargazing. */
-export interface CoastView { near: number; gazing: boolean }
+export interface CoastView { near: number; gazing: boolean; /** how much the open sea lies behind the camera, 0 to 1 */ seaBehind?: number }
 
 export interface CameraPose {
   /** Degrees below the horizontal. */
@@ -89,7 +91,8 @@ export function stepCamera(c: CameraState, zoomDelta: number, target: { x: numbe
   let near = (c.coast ?? 0) + (coast0(coast) - (c.coast ?? 0)) * ck, gaze = (c.gaze ?? 0) + ((coast?.gazing ? 1 : 0) - (c.gaze ?? 0)) * gk;
   if (near < 1e-4) near = 0;
   if (gaze < 1e-4) gaze = 0; else if (gaze > 1 - 1e-4) gaze = 1;
-  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze };
+  const seaBehind = coast ? clamp(coast.seaBehind ?? 0, 0, 1) : (c.seaBehind ?? 0); // (by bearing: changes only as slowly as she walks)
+  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind };
 }
 const coast0 = (v?: CoastView | null) => (v ? clamp(v.near, 0, 1) : 0);
 
@@ -115,7 +118,9 @@ export function cameraPose(c: CameraState, lift: number, t: Tuning): CameraPose 
   if (BC) {
     const v = coastView(c);
     angle = lerp(angle, BC.angle, v.coast);
-    angle = lerp(angle, BC.gazeAngle, v.gaze); distance = lerp(distance, BC.gazeDistance, v.gaze);
+    // (with the sea behind it, the camera stands further out over the water, so the sea fills the foot of the picture under her)
+    const gd = lerp(BC.gazeDistance, BC.gazeDistanceSeaBehind ?? BC.gazeDistance, c.seaBehind ?? 0);
+    angle = lerp(angle, BC.gazeAngle, v.gaze); distance = lerp(distance, gd, v.gaze);
     look = (BC.gazeLook ?? 0) * v.gaze; // (aimed a little over her, so she lies low in the picture under the sky)
   }
   const a = (angle * Math.PI) / 180, ty = c.ty + look;

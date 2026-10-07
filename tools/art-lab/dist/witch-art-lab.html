@@ -1523,8 +1523,37 @@ function splitTree(t) { // bottom = wood below the crown line and the life on it
     dst.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
     if (sp.blob?.[i]) (dst.blob || (dst.blob = new Uint8Array(sp.w * sp.h)))[i] = sp.blob[i];
   }
+  underTrunk(sp, crownY, bot);
   if (sp.stylised) top.stylised = bot.stylised = sp.stylised; // drawn stylised already: bake leaves it be
   return { top, bot };
+}
+// A crown reaching nearly to the ground (a fir's, a cedar's), or leaves hanging over the trunk (a willow's, a yew's), hide the trunk, so the
+// bottom half kept a stub of wood, and in ground mode, where the crowns are cut away round her, a forest of them showed no
+// trunks at all, only the crowns' haze further off (Ed, 2026-10-06: "In a forest in Norway area, no tree trunks"). Then the
+// bottom half carries the trunk the leaves hide, up to TRUNK_UNDER of the tree's height: the wood of its highest visible row
+// below that (two pixels wide or more) carried straight up, each pixel lit as that row's is (so it stays round). The top half is untouched.
+const LOW_CROWN = .3, TRUNK_UNDER = .32;
+function underTrunk(sp, crownY, bot) {
+  const W = sp.w, H = sp.h;
+  const y1 = Math.max(0, Math.round(H * (1 - TRUNK_UNDER)));
+  // (a crown low over its trunk, or leaves hanging over it, a willow's curtain, a yew's skirt: whatever its crown line, the bottom
+  // half holding under two pixels a row over that height)
+  let kept = 0;
+  for (let i = y1 * W; i < H * W; i++) if (bot.m[i]) kept++;
+  if (H - crownY >= H * LOW_CROWN && kept >= (H - y1) * 2) return;
+  // (the highest row of it showing, from the carried trunk's top down: the trunk itself, not its foot flaring into roots)
+  let row = -1, xs = [];
+  for (let y = y1; y < H && xs.length < 2; y++) {
+    const here = [];
+    for (let x = 0; x < W; x++) if (WOOD.has(sp.m[y * W + x])) here.push(x);
+    if (here.length > xs.length) { xs = here; row = y; }
+  }
+  const col = x => row >= 0 ? { m: sp.m[row * W + x], n: [sp.n[(row * W + x) * 3], sp.n[(row * W + x) * 3 + 1], sp.n[(row * W + x) * 3 + 2]] } : null;
+  if (!xs.length) { const c = Math.floor(W / 2); xs = [c - 1, c]; } // (none showing at all: a plain trunk up its middle)
+  for (const x of xs) {
+    const c = col(x) ?? { m: M.TRUNK, n: x < W / 2 ? [-.6, 0, .8] : [.6, 0, .8] };
+    for (let y = y1; y < H; y++) if (!bot.m[y * W + x]) bot.px(x, y, c.m, c.n[0], c.n[1], c.n[2]);
+  }
 }
 
 // ================= undergrowth =================
@@ -2617,6 +2646,7 @@ const WITCH_FOOT_POSES = {
   laugh: { frames: 3, fps: 4, party: "social" }, drink: { frames: 4, fps: 1.5, party: "social" }, run: { frames: 4, fps: 10, party: "move" },
   sitGround: { frames: 2, fps: 1, party: "rest" }, stargaze: { frames: 2, fps: 1, party: "rest" }, conga: { frames: 4, fps: 4, party: "pair" },
   twirl: { frames: 4, fps: 4, party: "pair" }, twirled: { frames: 4, fps: 4, party: "pair" }, limboHold: { frames: 2, fps: 2, party: "pair" }, limboHelp: { frames: 2, fps: 2, party: "pair" }, limbo: { frames: 4, fps: 3, party: "dance" },
+  dj: { frames: 14, fps: 4, heading: "towards" },
 };
 // Two witches together: each is her own sprite, and the game puts them so that her `meet` anchor and her partner's land on
 // the same pixel. mirror: the partner's sprite is flipped left-right (anchors too: x becomes w - x), so the two face each
@@ -2730,6 +2760,53 @@ const FOOT_FRAMES = {
   limbo: [0, 1, 2, 3].map(f => ({ broom: null, crouch: .62, limbo: 1.12 + [0, .05, 0, -.04][f], look: .3, sway: .02, mouth: f === 1,
     feet: [[.26 + [0, .05, .08, .03][f], .07, -.1], [.26 + [.08, .03, 0, .05][f], .07, .1]], free: [.0, .82 + [0, .03, 0, -.03][f], .44], hand: "palm", far: [.0, .82 - [0, .03, 0, -.03][f], -.44], farHand: "palm" })), // arms out for balance, shuffling forward
 };
+// dj (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): behind the
+// treehouse's decks, facing us (drawn heading towards), her broom leaning beside her, her hands on the decks laid out by
+// DJ_DECKS (in her own model's units: a forward, b up, c to her near side). Gestures of two frames each, the first on the
+// beat (her head nodding down, her knees dipping), the second off it; djFrame picks them from the beat clock:
+//   groove   nodding along, one hand on a platter, the other on the mixer
+//   cue      a hand to her headphone cup (the headphones round her neck when she isn't wearing them), head bent to it
+//   scratch  her hand rocking the record back and forth, eyes down on it
+//   fader    riding the crossfader from side to side
+//   knob     a fingertip on the mixer's knobs
+//   hype     a hand thrown up in the air, grinning (now and then)
+//   cast     both hands up (the party spell)
+const DJ_DECKS = { top: .5, platter: { a: .27, c: .29, r: .15 }, mixer: { a: .27, w: .09 }, fader: .37, depth: [.1, .44], width: .52 };
+const DJ_GESTURES = { groove: [0, 1], cue: [2, 3], scratch: [4, 5], fader: [6, 7], knob: [8, 9], hype: [10, 11], cast: [12, 13] };
+// the set she plays: a gesture a bar, round and round (hype once a loop)
+const DJ_SET = ["groove", "groove", "cue", "scratch", "groove", "fader", "knob", "cue", "groove", "scratch", "fader", "hype"];
+// The frame behind the decks at `beat` (beats on the game's beat clock, rules/beat.ts: beatAt): the gesture by the bar
+// (4 beats; `offset` bars along the set), its first frame for the first half of each beat; `cast`, the spell's gesture.
+function djFrame(beat, { cast = false, offset = 0 } = {}) {
+  const b = Math.max(0, beat), g = cast ? "cast" : DJ_SET[(Math.floor(b / 4) + offset) % DJ_SET.length];
+  return DJ_GESTURES[g][(b % 1) < .5 ? 0 : 1];
+}
+const DJ_BROOM = { binding: [-.08, .31, -.42], dir: [-.06, 1, -.16] };
+const djOn = (K) => ({ broom: DJ_BROOM, dj: true, farHand: "down", hand: "down", sway: .015, ...K });
+const PL = DJ_DECKS.platter, HT = DJ_DECKS.top + .06; // (a hand resting on a platter or the mixer)
+FOOT_FRAMES.dj = [
+  // groove
+  djOn({ crouch: .07, nod: .7, tilt: .1, free: [PL.a - .02, HT, PL.c + .01], far: [PL.a - .03, HT + .02, -.05] }),
+  djOn({ nod: -.15, look: .05, tilt: -.05, mouth: true, free: [PL.a, HT + .01, PL.c], far: [PL.a - .01, HT + .03, -.04] }),
+  // cue: the near hand up at her ear, its elbow out
+  djOn({ crouch: .05, nod: .45, tilt: .45, free: [.0, .93, .2], elbow: [.06, .78, .31], hand: "rest", far: [PL.a - .01, HT, -PL.c] }),
+  djOn({ nod: .05, tilt: .35, free: [.0, .94, .2], elbow: [.06, .79, .31], hand: "rest", far: [PL.a, HT, -PL.c + .01] }),
+  // scratch: the record pulled back, pushed forward
+  djOn({ crouch: .07, nod: .8, tilt: .15, free: [PL.a - .07, HT, PL.c + .03], far: [DJ_DECKS.fader - .02, HT + .01, -.02] }),
+  djOn({ crouch: .02, nod: .55, tilt: .2, free: [PL.a + .06, HT, PL.c - .04], far: [DJ_DECKS.fader - .02, HT + .01, .03] }),
+  // fader: across and back
+  djOn({ crouch: .06, nod: .6, tilt: -.15, free: [PL.a - .01, HT, PL.c], far: [DJ_DECKS.fader, HT + .01, -.07] }),
+  djOn({ nod: 0, tilt: -.05, free: [PL.a, HT, PL.c], far: [DJ_DECKS.fader, HT + .01, .06] }),
+  // knob: a fingertip on the mixer
+  djOn({ crouch: .06, nod: .55, tilt: -.25, look: -.1, free: [PL.a - .02, HT, PL.c], far: [PL.a - .06, HT + .05, .02], farHand: "point" }),
+  djOn({ nod: .1, tilt: -.15, free: [PL.a - .02, HT, PL.c], far: [PL.a - .04, HT + .05, -.03], farHand: "point" }),
+  // hype: a hand in the air
+  djOn({ crouch: .08, look: .2, tilt: .2, mouth: "laugh", free: [.06, 1.24, .26], elbow: [.08, 1.0, .27], hand: "point", far: [PL.a - .03, HT + .02, -.05] }),
+  djOn({ look: .28, tilt: .1, mouth: "laugh", free: [.08, 1.32, .23], elbow: [.08, 1.06, .26], hand: "wave", far: [PL.a - .02, HT + .03, -.04] }),
+  // cast: both hands up
+  djOn({ crouch: .06, look: .22, mouth: true, free: [.06, 1.26, .26], elbow: [.06, 1.0, .28], hand: "wave", far: [.06, 1.26, -.26], farElbow: [.06, 1.0, -.28], farHand: "wave" }),
+  djOn({ look: .3, mouth: "laugh", free: [.02, 1.36, .21], elbow: [.04, 1.08, .26], hand: "wave", far: [.02, 1.36, -.21], farElbow: [.04, 1.08, -.26], farHand: "wave" }),
+];
 // the knee between a hip and a foot, bent forward
 function kneeOf(hip, foot, l) {
   const d = Math.hypot(foot[0] - hip[0], foot[1] - hip[1]), mid = v3.lerp(hip, foot, .5);
@@ -2797,6 +2874,12 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   if (L.phones) {
     for (const side of [-1, 1]) m.ell(v3.add(H, [-.015, 0, side * .105]), [.05, .055, .03], M.PHONES, { group: 10 });
     m.chain([[...v3.add(H, [-.005, .03, -.095]), .015], [...v3.add(H, [-.005, .11, -.05]), .015], [...v3.add(H, [-.005, .125, 0]), .015], [...v3.add(H, [-.005, .11, .05]), .015], [...v3.add(H, [-.005, .03, .095]), .015]], M.PHONES, { group: 10 });
+  }
+  if (K.dj && !L.phones) { // behind the decks, a pair round her neck (one cup up to her ear, cueing)
+    const neck = v3.add(chest, v3.mul(spine, .13)), cueing = free[1] > H[1] - .1 && free[1] < H[1] + .1;
+    const near = cueing ? v3.add(free, [.01, .02, -.04]) : v3.add(neck, [.05, -.02, .1]), far = v3.add(neck, [.05, -.02, -.1]);
+    for (const c of [near, far]) m.ell(c, [.035, .045, .045], M.PHONES, { group: 10 });
+    m.chain([[...far, .014], [...v3.add(neck, [-.06, .02, 0]), .014], [...near, .014]], M.PHONES, { group: 10 });
   }
   const brim = v3.add(H, [-.03 + K.nod * .03, .1 - K.nod * .02, K.tilt * .02]), tz = K.tilt * .05;
   const tip = drawHat(m, L, brim, [1, .25 - K.look * .8 - K.nod * .7, K.tilt * .3], v3.add(brim, [-.05 + K.nod * .05, .17, tz]), v3.add(brim, [-.16 - sway * .5 + K.nod * .12, .27 - K.nod * .04, tz * 2]));
@@ -2929,14 +3012,30 @@ const WITCH_HEADINGS = { away: -Math.PI / 2, towards: Math.PI / 2 };
 // look: a party look (DEFAULT_LOOK's keys; partyWitch gives one). Anchors, in pixels from the top-left: hand and hatTip on
 // every sprite; on foot also pair (where a partner meets her, WITCH_PAIRS), back (the conga) and cup (drinking).
 function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose, heading = "side", look } = {}) {
+  const dj = pose === "dj";
+  if (dj) heading = WITCH_FOOT_POSES.dj.heading;
   const h = witchHeight(st), yaw = WITCH_HEADINGS[heading];
   const model = witchModel({ frame, lean, pose, look }); model.phaseOnBody = true; // (her train and streaks never move her pixels)
-  const { sp, project, s } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw }) : pose ? render(model, { scale: witchScale(h), facing }) : look && look !== DEFAULT_LOOK ? render(model, { scale: ownScale(h, frame, lean, facing), facing }) : render(model, { height: h, facing }); // (another look at the scale she has in that pose, so a tall hat doesn't shrink her)
+  const { sp, project, s, depth, depthOf } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw, keepDepth: dj }) : pose ? render(model, { scale: witchScale(h), facing }) : look && look !== DEFAULT_LOOK ? render(model, { scale: ownScale(h, frame, lean, facing), facing }) : render(model, { height: h, facing }); // (another look at the scale she has in that pose, so a tall hat doesn't shrink her)
   sp.scale = s; // pixels per model unit
   if (model.anchors.hand) sp.anchors = Object.fromEntries(Object.entries(model.anchors).filter(([k]) => k !== "feet").map(([k, p]) => [k, project(p)]));
   liftShadow(sp, model, project);
   cleanFlecks(sp); // (Ed: "The witch has these little flecks … we should remove them")
+  if (dj) sp.upper = aboveDecks(sp, project, depth, depthOf);
   return sp;
+}
+// Behind the decks: which of her pixels are above the decks' top (DJ_DECKS.top), so drawn over the DJ table (the game draws
+// the table over her, then these over it: her hands on the platters, the table hiding her legs). Each pixel's height in the
+// model from where it lands and how deep it is (the render's projection is affine: inverted from the axes).
+function aboveDecks(sp, project, depth, depthOf) {
+  const f = p => { const [x, y] = project(p); return [x, y, depthOf(p)]; }, o = f([0, 0, 0]), ax = [[1, 0, 0], [0, 1, 0], [0, 0, 1]].map(e => f(e).map((v, k) => v - o[k]));
+  const [a, b, c] = ax, det = v3.dot(a, v3.cross(b, c)), row = v3.mul(v3.cross(c, a), 1 / det); // the inverse's middle row: the model's y
+  const up = new Uint8Array(sp.w * sp.h), top = DJ_DECKS.top + .015;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
+    const i = y * sp.w + x; if (!sp.m[i] || !isFinite(depth[i])) continue;
+    if (v3.dot(row, [x + .5 - o[0], y + .5 - o[1], depth[i] - o[2]]) > top) up[i] = 1;
+  }
+  return up;
 }
 // Her shadow, drawn by the game instead (Ed, 2026-10-06: she floated over her shadow lying on the beach): the model's dark
 // ellipse on its ground is taken out of the sprite (the box kept, so she stands and flies exactly where she did), and two
@@ -3115,24 +3214,66 @@ const TREEHOUSE_STOREYS = {
 };
 const FAIRY = [M.COLLAR, M.RUNE, M.WOKEN, M.MAGIC];
 const OPEN = a => Math.abs(((a - Math.PI / 2 + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 1.35; // the studio's open side: round +z, towards the camera
-// The DJ table (Ed: "she is a DJ, and should have decks"): a sturdy desk across the front of the studio, two turntables
-// with a mixer between them, a laptop on a stand, headphones; small lights on the decks and the mixer's faders in the party's
-// colours. Built into the house and, alone, into the `fore` sprite the game draws over her (she sits behind it).
-const DJ = { z: 2.38, y: TREEHOUSE_STOREYS.studio.y };
-function djTable(m) {
-  const { z, y } = DJ, top = y + .6, G0 = 60; // its own groups (60..69), apart from the house's
-  m.box([0, y + .3, z], [.9, .3, .26], M.WOOD, { round: .03, group: G0, paint: p => p[2] > z + .24 ? (p[1] < y + .1 ? FAIRY[Math.floor((p[0] + 9) * 5) % 4] : ((p[0] + 9) * 4) % 1 < .06 ? M.BARKD : M.BARK2) : p[1] > top - .03 ? M.BARKL : undefined }); // the desk, an LED strip along its front foot
-  for (const [x, k] of [[-.47, 0], [.47, 2]]) { // the turntables
-    m.box([x, top + .03, z], [.3, .03, .23], M.SHADES, { round: .015, group: G0 + 1 + k });
-    const pc = [x - .03, top + .065, z - .01]; m.ell(pc, [.19, .012, .19], M.BODY3, { group: G0 + 2 + k, paint: p => { const d = Math.hypot(p[0] - pc[0], p[2] - pc[2]); return d < .045 ? M.ACCENT : Math.abs(p[0] - pc[0] - (p[2] - pc[2]) * .6) < .012 && d < .17 ? M.FRAME : (d * 60) % 1 < .25 ? M.SHADES : undefined; } }); // the platter: a record, a label, a glint across it
-    m.seg([x + .22, top + .09, z - .16], [x + .08, top + .09, z + .05], .01, .008, M.FRAME, { group: G0 + 1 + k }); // the tonearm
-    m.ell([x + .24, top + .065, z + .17], [.018, .012, .018], k ? M.WOKEN : M.RUNE, { group: G0 + 1 + k }); // its light
-  }
-  m.box([0, top + .05, z], [.11, .05, .21], M.SHADES, { round: .015, group: G0 + 5, paint: p => p[1] > top + .09 ? ((Math.floor((p[0] + 9) * 26) % 2 === 0 && ((p[2] - z + 9) * 9) % 1 < .45) ? FAIRY[Math.floor((p[0] + 9) * 13) % 4] : undefined) : undefined }); // the mixer, its faders lit
-  m.seg([.8, top, z - .05], [.8, top + .14, z - .08], .02, .02, M.FRAME, { group: G0 + 6 }); m.box([.8, top + .15, z - .05], [.14, .008, .1], M.FRAME, { round: .004, group: G0 + 6 }); m.box([.8, top + .26, z - .14], [.14, .1, .008], M.FRAME, { dir: [1, 0, 0], up: [0, 1, .45], round: .004, group: G0 + 6, paint: p => p[2] < z - .145 ? M.RUNE : undefined }); // a laptop on its stand
-  m.chain([[-.86, top + .02, z + .1, .015], [-.8, top + .1, z + .04, .015], [-.7, top + .02, z - .02, .015]], M.BODY3, { group: G0 + 7 }); for (const [x, zz] of [[-.86, .1], [-.7, -.02]]) m.ell([x, top + .03, z + zz], [.045, .03, .045], M.BODY3, { group: G0 + 7, paint: p => p[1] > top + .05 ? M.COLLAR : undefined }); // headphones
+// The DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks. Feel free
+// to redesign the treehouse to make it better for this"): a desk squared up to the camera (whichever way the house is turned)
+// right in front of where she stands, laid out to her own reach (DJ_DECKS in witch.js, in her model's units: a forward, b up,
+// c to her near side, the screen's left): two turntables, their platters' labels glowing pink and cyan, a white mark on each
+// going round (frame by frame), tonearms, start lights; a mixer between them, its knobs, channel faders, crossfader and two
+// level meters jumping; a raised lip along the front edge, and on the front panel a chasing strip of party LEDs top and
+// bottom, round a glowing crescent moon. Built into the house (frame 0) and, alone, into the fore frames the game draws over
+// her (DJ_FRAMES of them: the platters turn an eighth of a turn and the LEDs chase on each).
+const DJ_FRAMES = 8;
+const DJ_STAND = [0, TREEHOUSE_STOREYS.studio.y, 1.75]; // where she stands (her seat anchor), in the house's units
+function djFrame3(facing) { // her model's (a, b, c) in the house's: squared to the camera at the house's yaw for this facing
+  const yaw = YAW[facing] ?? YAW.towards, f = [Math.sin(yaw), 0, Math.cos(yaw)], r = [Math.cos(yaw), 0, -Math.sin(yaw)], o = v3.sub(DJ_STAND, v3.mul(f, .02)); // (her ground anchor .02 ahead of her origin)
+  const to = ([a, b, c]) => v3.add(o, v3.add(v3.mul(f, a), v3.add(v3.mul(r, -c), [0, b, 0])));
+  const from = p => { const d = v3.sub(p, o); return [v3.dot(d, f), d[1], -v3.dot(d, r)]; };
+  return { to, from, f, r };
 }
-function treehouseModel() {
+function djTable(m, { frame = 0, facing = "towards" } = {}) {
+  const D = DJ_DECKS, F = djFrame3(facing), { to, from, f, r } = F, G0 = 60, TOP = D.top, [a0, a1] = D.depth, am = (a0 + a1) / 2, W = D.width; // its own groups (60..79), apart from the house's
+  const box = (c, h, mat, o = {}) => m.box(to(c), h, mat, { dir: r, up: [0, 1, 0], ...o }); // half sizes: across, up, deep
+  const chase = (c, k) => FAIRY[((Math.floor((c + 9) * 22) + frame + k) % 4 + 4) % 4];
+  // the desk: a panelled front with LED strips top and bottom round a crescent moon, wood sides, a dark top
+  box([am, TOP / 2, 0], [W, TOP / 2, (a1 - a0) / 2], M.WOOD, { round: .02, group: G0, paint: p => {
+    const [a, b, c] = from(p);
+    if (b > TOP - .012) return undefined; // the top (bare wood, so the dark decks stand out on it)
+    if (a < a1 - .015) return Math.abs(c) > W - .02 ? M.BARKL : undefined; // the sides
+    if (b > TOP - .06 || b < .05) return Math.abs(c) > W - .03 ? M.BARKD : chase(c, b < .05 ? 2 : 0); // the LED strips
+    const mc = [c - .0, b - .27], d1 = Math.hypot(mc[0], mc[1]), d2 = Math.hypot(mc[0] - .05, mc[1] - .03); // the moon: a disc less a disc
+    if (d1 < .11 && d2 > .095) return M.MAGIC2;
+    return Math.abs(((c + 9) * 7.5) % 1 - .5) > .46 ? M.BARK2 : undefined; // slats
+  } });
+  box([a1 - .01, TOP + .012, 0], [W + .015, .014, .018], M.BARKL, { round: .008, group: G0 + 1 }); // the lip along its front edge
+  // the turntables
+  for (const [k, side] of [[0, 1], [1, -1]]) {
+    const P = D.platter, c0 = side * P.c, gk = G0 + 2 + k * 4, mark = (frame / DJ_FRAMES) * Math.PI * 2 * -side + k * 1.7; // (both turning clockwise seen from above)
+    box([P.a, TOP + .01, c0], [P.r + .04, .012, P.r + .03], M.SHADES, { round: .01, group: gk });
+    const pc = to([P.a, TOP + .03, c0]);
+    m.ell(pc, [P.r, .008, P.r], M.BODY3, { group: gk + 1, paint: p => {
+      const [a, , c] = from(p), da = a - P.a, dc = c - c0, d = Math.hypot(da, dc);
+      if (d < .04) return d < .012 ? M.FRAME : k ? M.RUNE : M.COLLAR; // the label (and its spindle)
+      const ang = Math.atan2(dc, da), off = Math.abs(((ang - mark) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+      if (off < .32 && d > .065 && d < P.r - .015) return M.BELLY; // the mark going round
+      return Math.abs(d - .085) < .006 || Math.abs(d - .11) < .005 ? M.SHADES : undefined; // grooves
+    } });
+    const pivot = to([P.a - .1, TOP + .05, c0 - side * (P.r + .02)]), stylus = to([P.a + .06, TOP + .04, c0 - side * .07]);
+    m.seg(pivot, stylus, .009, .007, M.FRAME, { group: gk + 2 }); m.ell(pivot, [.02, .02, .02], M.FRAME, { group: gk + 2 }); // the tonearm
+    m.ell(to([P.a + P.r - .005, TOP + .03, c0 - side * (P.r + .015)]), [.014, .01, .014], (frame + k) % 4 < 2 ? (k ? M.WOKEN : M.RUNE) : M.SHADES, { group: gk + 3 }); // its start light, blinking
+  }
+  // the mixer: knobs at the back, two level meters, channel faders, the crossfader in front
+  const X = D.mixer, gm = G0 + 12, lv = [5, 3, 4, 2, 5, 2, 4, 3][frame % 8], lv2 = [4, 5, 2, 4, 3, 5, 2, 4][frame % 8];
+  box([X.a, TOP + .02, 0], [X.w, .02, .15], M.SHADES, { round: .01, group: gm, paint: p => {
+    const [a, b, c] = from(p); if (b < TOP + .035) return undefined;
+    for (const [cc, L] of [[.02, lv], [-.02, lv2]]) if (Math.abs(c - cc) < .009) { const n = Math.floor((.31 - a) / .016); if (n >= 0 && n < 5 && ((.31 - a) / .016) % 1 < .7) return n < L ? (n < 2 ? M.RUNE : n < 4 ? M.WOKEN : M.COLLAR) : M.BODY3; } // the meters, low to high
+    return undefined;
+  } });
+  for (const cc of [-.06, .06]) for (const aa of [.16, .2, .24]) m.ell(to([aa, TOP + .045, cc]), [.012, .008, .012], M.FRAME, { group: gm + 1 }); // knobs
+  for (const cc of [-.045, .045]) m.box(to([.34, TOP + .045, cc]), [.008, .006, .016], M.BELLY, { dir: r, up: [0, 1, 0], group: gm + 2 }); // channel faders
+  m.box(to([D.fader, TOP + .045, [.03, .01, -.03, -.01][frame % 4]]), [.018, .007, .008], M.BELLY, { dir: r, up: [0, 1, 0], group: gm + 3 }); // the crossfader, riding
+  return F;
+}
+function treehouseModel(facing = "towards") {
   const m = new Model({ blend: .04 }), lights = [];
   const hash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
   let G = 100; const g = () => G++;
@@ -3204,14 +3345,14 @@ function treehouseModel() {
   { const c = [2.15, sy, -1.65], gk = g(), d = [Math.cos(-2.4), 0, Math.sin(-2.4)], f = v3.norm([-d[2], 0, d[0]]); m.box(v3.add(c, [0, .45, 0]), [.36, .45, .32], M.SHADES, { dir: d, round: .03, group: gk }); m.box(v3.add(c, [0, 1.15, 0]), [.26, .25, .24], M.SHADES, { dir: d, round: .03, group: gk }); for (const [dy, r, o] of [[.45, .27, .33], [1.15, .15, .25]]) { const cc = v3.add(v3.add(c, [0, dy, 0]), v3.mul(f, o)); m.ell(cc, [r, r, .03], M.BODY3, { dir: f, up: [0, 1, 0], group: gk, paint: p => Math.hypot(...v3.sub(p, cc)) < r * .4 ? M.MAGIC : M.BODY3 }); } } // a speaker stack in the corner
   for (const x of [-1.2, 1.25]) { const c = [x, sy, 2.25], gm = g(); m.seg(c, v3.add(c, [0, .8, 0]), .025, .025, M.BODY3, { group: gm }); m.box(v3.add(c, [0, 1.0, 0]), [.15, .2, .14], M.SHADES, { dir: [x < 0 ? .95 : -.95, 0, -.3], round: .02, group: gm }); } // monitors on stands either side of the decks
   for (const [x, z] of [[-1.75, 1.75], [1.75, 2.0]]) { const c = [x, sy, z], gc = g(); m.box(v3.add(c, [0, .17, 0]), [.27, .17, .2], M.WOOD, { round: .015, group: gc, paint: p => p[1] > sy + .3 ? M.BARKL : undefined }); for (let k = 0; k < 6; k++) m.box(v3.add(c, [-.2 + k * .08, .3 + hash(k, x) * .04, 0]), [.012, .16, .16], [M.ACCENT, M.CLOTH, M.BODY2, M.EAR][k % 4], { round: .005, group: gc }); } // record crates, the sleeves showing
-  djTable(m);
-  const stool = [0, sy, 1.68], gst = g(); m.ell(v3.add(stool, [0, WITCH_SEAT_HEIGHT - .03, 0]), [.2, .04, .2], M.CLOTH, { group: gst }); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2; m.seg(v3.add(stool, [Math.cos(a) * .14, 0, Math.sin(a) * .14]), v3.add(stool, [0, WITCH_SEAT_HEIGHT - .05, 0]), .02, .02, M.FRAME, { group: gst }); } // her stool, behind the decks
+  const dj = djTable(m, { facing });
+  const stool = v3.sub(DJ_STAND, v3.mul(dj.f, .25)), gst = g(); m.ell(v3.add(stool, [0, WITCH_SEAT_HEIGHT - .03, 0]), [.2, .04, .2], M.CLOTH, { group: gst }); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2; m.seg(v3.add(stool, [Math.cos(a) * .14, 0, Math.sin(a) * .14]), v3.add(stool, [0, WITCH_SEAT_HEIGHT - .05, 0]), .02, .02, M.FRAME, { group: gst }); } // her stool, behind the decks
   for (const [a, y, k] of [[-Math.PI / 2 - 1.55, 1.1, 0], [-Math.PI / 2 + 1.5, 1.2, 1], [-Math.PI / 2 + .1, 1.55, 2], [Math.PI + .55, 1.0, 3]]) { const c = [Math.cos(a) * (SR - .07), sy + y, Math.sin(a) * (SR - .07)], d = [-Math.sin(a), 0, Math.cos(a)]; m.box(c, [.17, .23, .01], [M.ACCENT, M.CLOTH, M.BODY2, M.EAR][k], { dir: d, up: [0, 1, 0], round: .005, group: g(), paint: p => { const u = v3.dot(v3.sub(p, c), d) / .17, v = (p[1] - c[1]) / .23; return Math.hypot(u, v - .2) < .45 ? [M.BODY2, M.ACCENT, M.CLOTH, M.ACCENT][k] : v < -.55 && Math.abs(u) < .7 && ((u + 2) * 6) % 1 < .5 ? M.SHADES : undefined; } }); } // party flyers on the walls
-  { const gl = g(), top = [0, sy + S.studio.h + .6, 1.9], bulb = [0, sy + 1.6, 1.9]; m.seg(top, v3.add(bulb, [0, .16, 0]), .008, .008, M.BODY3, { group: gl }); m.seg(v3.add(bulb, [0, .17, 0]), v3.add(bulb, [0, .02, 0]), .03, .16, M.BODY3, { group: gl }); m.ell(bulb, [.07, .06, .07], M.MAGIC2, { group: gl }); } // a pendant lamp over the decks
+  { const gl = g(), top = [0, sy + S.studio.h + .6, 1.0], bulb = [0, sy + 1.6, 1.0]; m.seg(top, v3.add(bulb, [0, .16, 0]), .008, .008, M.BODY3, { group: gl }); m.seg(v3.add(bulb, [0, .17, 0]), v3.add(bulb, [0, .02, 0]), .03, .16, M.BODY3, { group: gl }); m.ell(bulb, [.07, .06, .07], M.MAGIC2, { group: gl }); } // a pendant lamp over the decks
   { const gl = g(), f = [-1.6, sy, -1.7]; m.seg(f, v3.add(f, [0, 1.25, 0]), .02, .02, M.BODY3, { group: gl }); m.seg(v3.add(f, [0, 1.25, 0]), v3.add(f, [0, 1.05, 0]), .04, .14, M.STRAW, { group: gl }); m.ell(v3.add(f, [0, 1.1, 0]), [.06, .05, .06], M.MAGIC2, { group: gl }); } // a floor lamp
-  lights.push({ at: [0, sy + 1.55, 1.9], rgb: [255, 214, 150], kind: "studio lamp" }, { at: [-1.6, sy + 1.1, -1.7], rgb: [255, 200, 130], kind: "studio lamp" });
-  lights.push({ at: [0, sy + 1.0, 1.4], rgb: [255, 200, 120], kind: "studio" }, { at: [Math.cos(-Math.PI / 2 + .62) * SR, sy + 1.2, Math.sin(-Math.PI / 2 + .62) * SR], rgb: [255, 190, 96], kind: "studio window" }, { at: [-.6, sy + S.studio.h - .1, 1.6], rgb: [255, 120, 220], kind: "fairy lights" });
-  for (const [x, rgb] of [[-.45, [80, 230, 255]], [0, [255, 80, 200]], [.45, [255, 214, 80]]]) lights.push({ at: [x, sy + .7, 2.3], rgb, kind: "decks" }); // the decks' and mixer's indicator lights, for the game to pulse with the music
+  lights.push({ at: [0, sy + 1.55, 1.0], rgb: [255, 214, 150], kind: "studio lamp" }, { at: [-1.6, sy + 1.1, -1.7], rgb: [255, 200, 130], kind: "studio lamp" });
+  lights.push({ at: [0, sy + 1.6, .7], rgb: [255, 200, 120], kind: "studio" }, { at: [Math.cos(-Math.PI / 2 + .62) * SR, sy + 1.2, Math.sin(-Math.PI / 2 + .62) * SR], rgb: [255, 190, 96], kind: "studio window" }, { at: [-.6, sy + S.studio.h - .1, 1.6], rgb: [255, 120, 220], kind: "fairy lights" });
+  for (const [c, rgb] of [[DJ_DECKS.platter.c, [255, 80, 200]], [0, [255, 214, 80]], [-DJ_DECKS.platter.c, [80, 230, 255]]]) lights.push({ at: dj.to([DJ_DECKS.depth[1] + .35, DJ_DECKS.top * .5, c]), rgb, kind: "decks" }); // the decks' LEDs, lighting the booth's front (out in front of it, not on her), for the game to pulse
   { const gl = g(), D = S.studio.deck, n = 40; for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; m.ell([Math.cos(a) * (D - .05), sy - .16, Math.sin(a) * (D - .05)], [.05, .035, .05], FAIRY[k % 4], { group: gl, extra: true }); } lights.push({ at: [0, sy - .2, S.studio.deck], rgb: [80, 230, 255], kind: "LED strip" }); } // an LED strip under the deck's edge
   // ---- the loft: a smaller storey, a loudspeaker on its balcony, solar panels on its roof ----
   deck(S.loft, { under: 5 });
@@ -3241,7 +3382,7 @@ function treehouseModel() {
     m.chain(rail, M.BODY3, { group: g() }); }
   for (const [a, y0, y1] of [[Math.PI / 2 + 1.55, S.studio.y, S.loft.y], [Math.PI / 2 + 1.45, S.loft.y, S.tower.y]]) { const gl = g(), D = y0 < 6 ? 2.6 : 2.05; for (const off of [-.18, .18]) { const b = a + off / D; m.seg([Math.cos(b) * D, y0, Math.sin(b) * D], [Math.cos(b) * D, y1, Math.sin(b) * D], .025, .025, M.WOOD, { group: gl }); } for (let y = y0 + .3; y < y1; y += .32) m.seg([Math.cos(a - .18 / D) * D, y, Math.sin(a - .18 / D) * D], [Math.cos(a + .18 / D) * D, y, Math.sin(a + .18 / D) * D], .02, .02, M.WOOD, { group: gl }); } // ladders up the outside
   m.ell([0, .005, 0], [4.6, .005, 3.6], M.NOSE, { group: 0 }); // its shadow on the ground
-  return { m, lights, seat: stool, door: [Math.cos(Math.PI / 2 + .05) * S.porch.R, S.porch.y, Math.sin(Math.PI / 2 + .05) * (S.porch.R + .05)], camera: [0, sy + .95, 1.9], splitY: sy + S.studio.h + 1.5, footprint: 4.3, crownR, trunkR: 1.55 }; // trunkR: its radius 3 m up
+  return { m, lights, dj, seat: DJ_STAND, door: [Math.cos(Math.PI / 2 + .05) * S.porch.R, S.porch.y, Math.sin(Math.PI / 2 + .05) * (S.porch.R + .05)], camera: [0, sy + .95, 1.9], splitY: sy + S.studio.h + 1.5, footprint: 4.3, crownR, trunkR: 1.55 }; // trunkR: its radius 3 m up
 }
 
 // The treehouse at the witch's scale: { whole, top, bot, fore, crownY, anchors: { base, seat, door, camera, lights: [{ x, y, rgb, kind }] }, metres }.
@@ -3253,7 +3394,7 @@ function treehouseModel() {
 // trunk (the giant tree's diameter 3 m up) and crown (its crown's radius). fore: the DJ table alone, at the same size and origin
 // as whole, for the game to draw over the witch sitting behind it.
 function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
-  const T = treehouseModel(), ppu = witchPixelsPerUnit(st), r = render(T.m, { scale: ppu, facing }), full = r.sp, um = u => +(u * ppu / ppm).toFixed(1); // model units to metres
+  const T = treehouseModel(facing), ppu = witchPixelsPerUnit(st), r = render(T.m, { scale: ppu, facing }), full = r.sp, um = u => +(u * ppu / ppm).toFixed(1); // model units to metres
   // cropped to what is drawn (a part's bounding sphere leaves empty rows above it); anchors move with it
   let x0 = full.w, x1 = -1, y0 = full.h; for (let y = 0; y < full.h; y++) for (let x = 0; x < full.w; x++) if (full.m[y * full.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
   const sp = new Sprite(x1 - x0 + 1, full.h - y0); for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = (y + y0) * full.w + x + x0; if (full.m[i]) sp.put(x, y, full.m[i], full.n[i * 3], full.n[i * 3 + 1], full.n[i * 3 + 2]); }
@@ -3265,11 +3406,21 @@ function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
     (LEAVES.has(mm) || y < crownY ? top : bot).put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
   }
   const at = p => { const [x, y] = project(p); return { x, y }; };
-  // fore: the DJ table alone, where it shows in the whole sprite (same size and origin), for the game to draw over her
-  const fm = new Model({ blend: .04 }); djTable(fm); const rf = render(fm, { scale: ppu, facing }), P0 = [0, DJ.y + .3, DJ.z], [ax, ay] = r.project(P0), [bx, by] = rf.project(P0), fore = new Sprite(sp.w, sp.h);
-  for (let y = 0; y < rf.sp.h; y++) for (let x = 0; x < rf.sp.w; x++) { const i = y * rf.sp.w + x, mm = rf.sp.m[i]; if (!mm) continue; const X = Math.round(x + ax - bx - x0), Y = Math.round(y + ay - by - y0); if (X < 0 || Y < 0 || X >= sp.w || Y >= sp.h || !sp.m[Y * sp.w + X]) continue; const j = Y * sp.w + X; if (sp.m[j] !== M.LINE && sp.m[j] !== mm && !(mm === M.LINE)) continue; fore.put(X, Y, sp.m[j], sp.n[j * 3], sp.n[j * 3 + 1], sp.n[j * 3 + 2]); }
+  // fore: the DJ table alone, where it shows in the whole sprite (same size and origin), for the game to draw over her; and
+  // foreFrames, its DJ_FRAMES turns cropped to the box they share (foreBox: its top-left in the whole sprite's pixels)
+  const P0 = T.dj.to([DJ_DECKS.platter.a, DJ_DECKS.top, 0]), [ax, ay] = r.project(P0), frames = [];
+  for (let k = 0; k < DJ_FRAMES; k++) {
+    const fm = new Model({ blend: .04 }); djTable(fm, { frame: k, facing }); const rf = render(fm, { scale: ppu, facing }), [bx, by] = rf.project(P0), fs = new Sprite(sp.w, sp.h);
+    for (let y = 0; y < rf.sp.h; y++) for (let x = 0; x < rf.sp.w; x++) { const i = y * rf.sp.w + x, mm = rf.sp.m[i]; if (!mm) continue; const X = Math.round(x + ax - bx - x0), Y = Math.round(y + ay - by - y0); if (X < 0 || Y < 0 || X >= sp.w || Y >= sp.h) continue; fs.put(X, Y, mm, rf.sp.n[i * 3], rf.sp.n[i * 3 + 1], rf.sp.n[i * 3 + 2]); }
+    frames.push(fs);
+  }
+  const fore = frames[0]; // (and the house shows it exactly as drawn over her: alone, its edges carry no lines against the room behind)
+  for (let i = 0; i < fore.m.length; i++) if (fore.m[i]) for (const t of [sp, bot]) t.put(i % sp.w, Math.floor(i / sp.w), fore.m[i], fore.n[i * 3], fore.n[i * 3 + 1], fore.n[i * 3 + 2]);
+  let fx0 = sp.w, fx1 = -1, fy0 = sp.h, fy1 = -1;
+  for (const fs of frames) for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (fs.m[y * sp.w + x]) { fx0 = Math.min(fx0, x); fx1 = Math.max(fx1, x); fy0 = Math.min(fy0, y); fy1 = Math.max(fy1, y); }
+  const foreFrames = frames.map(fs => { const c = new Sprite(fx1 - fx0 + 1, fy1 - fy0 + 1); for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) { const i = (y + fy0) * sp.w + x + fx0; if (fs.m[i]) c.put(x, y, fs.m[i], fs.n[i * 3], fs.n[i * 3 + 1], fs.n[i * 3 + 2]); } return c; });
   const S = TREEHOUSE_STOREYS;
-  return { whole: sp, top, bot, fore, crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
+  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
     metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), towerFloor: um(S.tower.y), roofTip: um(S.tower.y + S.tower.h + 3.3 + .3), footprint: um(T.footprint), overhang: um(S.studio.deck), trunk: um(T.trunkR * 2), crown: um(T.crownR) } };
 }
 
@@ -4735,14 +4886,14 @@ const GENOMES = [
   { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] , texture: { kind: "bristles" } },
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },
-  { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { hgt: .55, len: 1, chest: .25, tuck: .25, neck: .3, neckAng: .35, neckW: .5, hr: .27, legW: 1.1 }, head: { snout: .6, snoutD: .7, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .5 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] },
+  { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { hgt: .46, len: 1.15, chest: .32, tuck: .26, neck: .36, neckAng: .5, neckW: .6, hr: .27, legW: 1.2, back: "arch" }, head: { snout: .55, snoutD: .55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] },
   { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .45, val: .75 }, body: { hgt: .9, len: .55, chest: .5, tuck: .55, neck: .25, neckAng: .8, neckW: .4, hr: .27, legW: 1.2 }, head: { snout: .5, snoutD: .75, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"] },
   { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .38 }, body: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, legW: .9, back: "hump" }, head: { snout: 1.6, snoutD: .9, snoutTaper: .85 }, parts: { ears: { kind: "point", size: .9 }, tail: "stub", feet: "hoof", antlers: "palm" }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"] },
   { id: "raven", name: "Raven", template: "avian", builder: "raven", palette: { hue: .68, sat: .35, val: .3 }, legend: ["wings", "eyesRing"] },
   { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3 } },
   { id: "mole", name: "Mole", template: "squat", builder: "mole", palette: { hue: .7, sat: .15, val: .32 }, legend: ["crown"] , texture: { kind: "fur", size: 3 } },
-  { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .6, val: .45 }, body: { hgt: .6, len: .65, chest: .2, tuck: .22, neck: .2, neckAng: .4, neckW: .55, hr: .28, legW: 1.2, back: "arch" }, head: { snout: .6, snoutD: .75, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: .45 }, tail: "flat", feet: "paw" }, legend: ["moss"] },
-  { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .25, val: .92 }, body: { hgt: .5, len: 1, chest: .3, tuck: .33, neck: .35, neckAng: .6, neckW: .32, hr: .25, legW: .8, back: "arch" }, head: { snout: .6, snoutD: .6, whiskers: true }, parts: { ears: { kind: "round", size: .6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, legend: ["ribbons", "mane"] },
+  { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .6, val: .45 }, body: { hgt: .66, len: .62, chest: .34, tuck: .3, neck: .18, neckAng: .35, neckW: .6, hr: .3, legW: 1.25, back: "hump" }, head: { snout: .55, snoutD: .8, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: .45 }, tail: "flat", feet: "paw" }, legend: ["moss"] },
+  { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .25, val: .92 }, body: { hgt: .48, len: 1.05, chest: .3, tuck: .33, neck: .5, neckAng: .9, neckW: .3, hr: .25, legW: .8, back: "arch" }, head: { snout: .6, snoutD: .6, whiskers: true }, parts: { ears: { kind: "round", size: .6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, legend: ["ribbons", "mane"] },
   { id: "snail", name: "Snail", template: "squat", builder: "snail", palette: { hue: .08, sat: .45, val: .55 }, legend: ["glowShell"] , texture: { kind: "shell" },
     // its evolution (docs/art-guide/EVOLUTIONS.md): a near-clear one-turn shell on a baby with big stalk eyes, an amber banded young,
     // a tall ridged cone on a frilled adult, and the muddy forest's legend: a spiral tower the forest built, buttressed, caked in mud,
@@ -4779,10 +4930,10 @@ const GENOMES = [
     ] },
   { id: "snake", name: "Snake", template: "serpent", builder: "snake", palette: { hue: .25, sat: .45, val: .45 }, legend: ["wings"] },
   { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3, stretch: 1.6 } },
-  { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .6, val: .45 }, body: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, legW: .85, back: "arch" }, head: { snout: .65, snoutD: .6 }, parts: { ears: { kind: "round", size: .9 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["mane"] },
-  { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
+  { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .6, val: .45 }, body: { hgt: .68, len: .78, chest: .35, tuck: .42, neck: .3, neckAng: .55, neckW: .35, hr: .25, legW: .85, back: "arch" }, head: { snout: .65, snoutD: .6 }, parts: { ears: { kind: "round", size: 1.3 }, tail: "marten", feet: "paw" }, coat: { belly: true }, legend: ["mane"] },
+  { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "salamander", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
   // the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
-  { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .44, len: 1.1, chest: .11, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .32, legW: .7 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: true }, legend: ["crystals"], texture: { kind: "smooth" } },
+  { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .44, len: 1.1, chest: .11, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .32, legW: .7 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "newt", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: true }, legend: ["crystals"], texture: { kind: "smooth" } },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
@@ -4811,7 +4962,7 @@ const TEMPLATES = {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
@@ -5738,9 +5889,12 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "puff") m.ell(v3.add(tb, [-.04, .02, 0]), [.11, .11, .1], M.BELLY, o);
   else if (kind === "dormouse") m.chain([[...tb, .1], [X(1.3), top - .2 + tw, 0, .12], [X(1.7), top - .42, 0, .13], [X(2.05), top - .3 + tw, 0, .12], [X(2.2), top - .08, 0, .08]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) ? M.BODY2 : undefined }); // long, low and furry, curling up at its tip (the silhouette check: it read as a squirrel's)
   else if (kind === "squirrel" || kind === "star") m.chain([[...tb, .12], [X(1.3), top + .05 + tw, 0, .25], [X(1.3), top + .6 + tw, 0, .3], [X(1.0), top + .95 + tw, 0, .27], [X(.65), top + .9 + tw, 0, .16]], kind === "star" ? M.MAGIC : M.BODY, { ...o, extra: true, paint: kind === "star" ? p => spotty(p, 14, .12) ? M.GLINT : undefined : undefined });
-  else if (kind === "otter") m.chain([[...tb, .17], [X(1.3), top - .45 + tw, 0, .12], [X(1.6), .1, 0, .07], [X(1.85), .06 + tw, 0, .03]], M.BODY, o);
-  else if (kind === "stoat") m.chain([[...tb, .08], [X(1.3), top - .12 + tw, 0, .07], [X(1.6), top - .05 + tw, 0, .06]], M.BODY, { ...o, paint: p => p[0] < X(1.45) ? M.BODY3 : undefined });
-  else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .08, .07, M.BODY2, o); m.ell([X(1.4), .1 + tw * .5, 0], [.28, .03, .14], M.BODY3, o); }
+  else if (kind === "otter") m.chain([[...tb, .22], [X(1.3), top - .4 + tw, 0, .17], [X(1.65), .12, 0, .1], [X(1.95), .07 + tw, 0, .04]], M.BODY, o); // a thick tapering rudder (its signature)
+  else if (kind === "stoat") m.chain([[...tb, .08], [X(1.25), top + .08 + tw, 0, .07], [X(1.45), top + .3 + tw, 0, .085], [X(1.5), top + .45 + tw, 0, .07]], M.BODY, { ...o, paint: p => p[1] > top + .26 ? M.BODY3 : undefined }); // held up, its big black tip its signature
+  else if (kind === "marten") m.chain([[...tb, .12], [X(1.15) - .3, top - .02 + tw, 0, .2], [X(1.15) - .75, top - .05 + tw, 0, .22], [X(1.15) - 1.15, top + .1 + tw, 0, .17], [X(1.15) - 1.35, top + .3, 0, .08]], M.BODY, { ...o, paint: p => p[0] < X(1.15) - 1.0 ? M.BODY3 : undefined }); // a long, thick brush held out level, curling up at its dark end
+  else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
+  else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
+  else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }
 
