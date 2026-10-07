@@ -87,7 +87,7 @@ describe("the first quest (Ed, 2026-10-04)", () => {
 describe("legends.questCap: dreams from anywhere but the truly far (Ed, 2026-10-06: quests are a gamble)", () => {
   /** Each legend's distance (in areas) to the nearest area of the kind it dreams of, and its quest's far. */
   const dists = (questCap: number, seed = 8919) => {
-    const map = generateMap(seed, withTuning({ legends: { ...TUNING.legends, questCap } })), out: { d: number; far: number }[] = [];
+    const map = generateMap(seed, withTuning({ legends: { ...TUNING.legends, questCap, questLater: false } })), out: { d: number; far: number }[] = [];
     for (const L of spawnCreatures(map).filter(c => c.boss && c.quest)) {
       const s = map.siteOf(L.cell[0], L.cell[1]);
       out.push({ far: L.quest!.far!, d: Math.min(...map.cells.filter(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature === L.quest!.species).map(([cx, cy]) => { const t = map.siteOf(cx, cy); return Math.hypot(t.x - s.x, t.z - s.z); })) / map.areaSize });
@@ -102,6 +102,6 @@ describe("legends.questCap: dreams from anywhere but the truly far (Ed, 2026-10-
     const ratios = [8919, 1, 123, 4242, 77].map(seed => med(dists(cap, seed)) / med(dists(0, seed)));
     expect(ratios.reduce((a, b) => a + b, 0) / ratios.length).toBeGreaterThan(0.85);
     for (const q of capped) { expect(q.far).toBeGreaterThan(0); expect(q.far).toBeLessThanOrEqual(1); expect(q.far).toBeCloseTo(q.d / cap, 6); }
-    for (const L of spawnCreatures(generateMap(8919, TUNING)).filter(c => c.boss && c.quest)) expect(L.quest!.species).not.toBe(L.species);
+    for (const L of spawnCreatures(generateMap(8919, TUNING)).filter(c => c.boss && c.quest)) expect(L.quest!.species).not.toBe(L.species); // (and with questLater on)
   }, 60000);
 });

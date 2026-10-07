@@ -49,7 +49,7 @@ export interface BuffTable { how: BuffHow; limits: Record<string, [number, numbe
 
 export const LEGEND_BUFFS = raw as unknown as BuffTable;
 
-export interface ActiveBuff { id: number; species: string; def: BuffDef; /** Its own strength, times legends.buffPower: 1, or more for a far dream's quest (legends.questFar). */ roll?: number }
+export interface ActiveBuff { id: number; species: string; def: BuffDef; /** Its own strength, times legends.buffPower: 1, or legends.questRoll for a done quest's. */ roll?: number }
 export interface BuffEvent { kind: "gained" | "lost"; id: number; species: string; label: string }
 
 export interface BuffState {
@@ -121,10 +121,11 @@ export function buffedTuning(t: Tuning, defs: readonly BuffDef[], table: BuffTab
 /** One step: which buffs are on, from the legends giving them now (and any forced for debugging). */
 export function stepBuffs(s: BuffState, creatures: readonly Creature[], partyIds: Iterable<number>, t: Tuning, table: BuffTable = LEGEND_BUFFS): void {
   s.events = [];
-  // A quest's buff rolls stronger the farther its dream creature lived (balance, 2026-10-06: the high roll worth taking).
-  const far = t.legends?.questFar ?? 0;
+  // A quest's buff is one fixed strength, legends.questRoll (Ed's core design, relayed 2026-10-07: the encounter's
+  // difficulty is the slot machine, not the reward's size), whatever its dream's distance; a relic's as written.
+  const roll = t.legends?.questRoll ?? 1;
   const now: { id: number; species: string; roll?: number }[] = partyLegends(creatures, partyIds).filter(c => table.species[c.species])
-    .map(c => ({ id: c.id, species: c.species, roll: c.quest?.done !== undefined ? 1 + far * (c.quest.far ?? 0) : 1 }));
+    .map(c => ({ id: c.id, species: c.species, roll: c.quest?.done !== undefined ? roll : 1 }));
   s.forced.forEach((sp, i) => { if (table.species[sp]) now.push({ id: -1 - i, species: sp }); });
   const was = new Map(s.active.map(a => [a.id, a]));
   const is = new Set(now.map(c => c.id));

@@ -286,21 +286,51 @@
               "minimum": 0,
               "maximum": 1
             },
-            "gazeAngle": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistance": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistanceSeaBehind": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeLook": {
-              "type": "number",
-              "minimum": 0
+            "bearings": {
+              "type": "object",
+              "properties": {
+                "angle": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "distance": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "look": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "side": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "bend": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "required": [
+                "angle",
+                "distance",
+                "look",
+                "side",
+                "bend"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -308,10 +338,7 @@
             "angle",
             "curve",
             "seaward",
-            "gazeAngle",
-            "gazeDistance",
-            "gazeDistanceSeaBehind",
-            "gazeLook"
+            "bearings"
           ],
           "additionalProperties": false
         }
@@ -3178,9 +3205,12 @@
           "type": "number",
           "minimum": 0
         },
-        "questFar": {
+        "questRoll": {
           "type": "number",
           "minimum": 0
+        },
+        "questLater": {
+          "type": "boolean"
         },
         "bombard": {
           "type": "object",
@@ -3243,7 +3273,8 @@
         "buffPower",
         "happyRange",
         "questCap",
-        "questFar",
+        "questRoll",
+        "questLater",
         "bombard",
         "stomp",
         "partyEgg",
@@ -4937,6 +4968,39 @@
           ],
           "additionalProperties": false
         },
+        "ambience": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "noise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sounds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "bed",
+            "noise",
+            "sounds",
+            "quiet"
+          ],
+          "additionalProperties": false
+        },
         "night": {
           "type": "object",
           "properties": {
@@ -5033,6 +5097,7 @@
         "meadow",
         "whale",
         "waves",
+        "ambience",
         "night"
       ],
       "additionalProperties": false

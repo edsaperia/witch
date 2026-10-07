@@ -15,7 +15,7 @@
 //  - A soundsystem lost; the boot-up over (things stirring); the witch hurt and knocked down.
 //  - Features still open, each read loosely until it lands: the witch knocked back and stunned
 //    (#108), a legend's long charge (#114), a relic bottle found (#99).
-//  - Home's meadow.
+//  - Home's meadow; each other area's own ambience (night.ts, quiet near the party).
 import { affectionOf, type Game } from "../../rules/game";
 import type { Creature } from "../../rules/creatures";
 import { restlessness } from "../../rules/dream";
@@ -28,7 +28,7 @@ import { dances } from "../../render/looks";
 import { beatAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
-import { partyOverEase } from "../../rules/music";
+import { musicMix, partyOverEase } from "../../rules/music";
 import { PARTY_CAST } from "../../rules/party";
 import { djGesture } from "../../../art/witch.js";
 
@@ -110,6 +110,7 @@ export class SfxCues {
     this.picnic(h);
     this.sea(h);
     this.night(h);
+    this.ambience(h);
     this.primed = true;
   }
 
@@ -369,6 +370,17 @@ export class SfxCues {
 
   /** The afterparty (Ed, 2026-10-06): once the party's over, the night of the area she's in (rules/music.ts partyOverEase,
    *  coming in from sfx.night.from of it) and the sleeping animals snoring near her, the nearest few. */
+  /** Each area's ambience in play (Ed, 2026-10-07: "Each area gets its own ambient soundscape"; night.ts layers without
+   *  their bed): her area's (home's meadow is its own: meadow), quiet near the party (sfx.ambience.quiet of itself, by how
+   *  loud the music is where she is) and up in the wild; giving way to the afterparty's night as the party ends. */
+  private ambience({ g }: Here): void {
+    const A = g.tuning.sfx.ambience;
+    if (!A) return;
+    const w = g.witch, a = g.map.areaAt(w.x, w.z), home = a.cell[0] === g.map.centreCell[0] && a.cell[1] === g.map.centreCell[1], T = AREA_TYPES[a.type];
+    const music = Math.max(0, Math.min(1, musicMix(g, w).volume)), level = (1 - partyOverEase(g, OVER_DEBUG)) * (A.quiet + (1 - A.quiet) * (1 - music));
+    this.sfx.ambience(home ? null : nightKind(T.id, !!T.wet), home ? 0 : level);
+  }
+
   private night({ g, pan }: Here): void {
     const N = g.tuning.sfx.night, ease = partyOverEase(g, OVER_DEBUG);
     if (!N) return;
