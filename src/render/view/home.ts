@@ -202,6 +202,9 @@ export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d:
   return { x: p.x - (dx / l) * d, y: p.y - (dy / l) * d, z: p.z - (dz / l) * d };
 }
 
+/** The knockdown candles last shown, per view: their count, and (once she's free) when their smoke is done. */
+const candlesSeen = new WeakMap<View, { n: number; until: number }>();
+
 /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
  *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
  *  pixel on the ground. Returns where its sprite stands (the bottom middle of its box). */
@@ -222,11 +225,14 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
   }
   // The knockdown candles along the desk's front (the hotel builder's candleCount and candleMelt, rules/knockout.ts: one for
   // every 2 s of her wait, burning down one after another as she scratches, on her clock), the first to go at the right; nearest of all.
-  const ko = v.game.witches[0]?.ko, n = candleCount(ko);
+  // (the rules clear her knockout the moment she's free: the last count kept here, the stubs smoking out for a second after)
+  const ko = v.game.witches[0]?.ko, live = candleCount(ko), ht = v.game.herTime, was = candlesSeen.get(v);
+  if (live > 0) candlesSeen.set(v, { n: live, until: Infinity }); else if (was && was.until === Infinity) was.until = ht + 1; else if (was && ht > was.until) candlesSeen.delete(v);
+  const n = live || (candlesSeen.get(v)?.n ?? 0);
   if (n > 0 && T.candleRow.length === 2) {
     const [L, Rr] = T.candleRow, R = SPRITE_UNIFORMS.uRight.value;
     for (let i = 0; i < n; i++) {
-      const m = candleMelt(ko, v.game.herTime, n - 1 - i), k = n === 1 ? 0.5 : i / (n - 1), px = L.x + (Rr.x - L.x) * k, py = L.y + (Rr.y - L.y) * k;
+      const m = live ? candleMelt(ko, ht, n - 1 - i) : 1, k = n === 1 ? 0.5 : i / (n - 1), px = L.x + (Rr.x - L.x) * k, py = L.y + (Rr.y - L.y) * k;
       const level = m >= 1 ? T.candleLevels - 1 : Math.min(T.candleLevels - 2, Math.floor(m * (T.candleLevels - 1)));
       const fr = f[T.candle0 + level * T.candleFlicker + (Math.floor(time * 7 + i * 1.7) % T.candleFlicker)]; if (!fr) continue;
       const dx = (px - f[0].w / 2) * mpp, dy = (f[0].h - py) * mpp; // (the candle's foot on the row, in the base's pixels: its sprite's bottom middle there)
