@@ -88,7 +88,7 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
     const map = generateMap(1, t), p = newParty(map), order = [...wavePlan(p, map).keys()], r = routeOf(map);
     const st = order.map(k => r.stones[r.order.indexOf(k)]), links = [r.links[0]];
     for (let i = 1; i < st.length; i++) links.push([st[i - 1], st[i]]);
-    expect(crossings(links)).toBeGreaterThan(1000);
+    expect(crossings(links)).toBeGreaterThan(map.cells.length * 5); // (over a thousand on the old 196-area map; it grows with the map)
   }, 60_000);
   it("starts about the ring round home, and keeps the waves near each other", () => {
     for (const seed of SEEDS.slice(0, 10)) {

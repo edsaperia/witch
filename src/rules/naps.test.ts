@@ -19,9 +19,12 @@ function overWild(t: Tuning = TUNING): { g: Game; key: string; at: { x: number; 
   for (const c of g.creatures) if (!c.boss && !c.gone) count.set(cellKey(c.cell), (count.get(cellKey(c.cell)) ?? 0) + 1);
   const cell = g.map.cells.map(c => ({ c, s: g.map.siteOf(c[0], c[1]), n: count.get(cellKey(c)) ?? 0 })).filter(({ c }) => cellKey(c) !== home && !g.party.areas.has(cellKey(c)))
     .sort((a, b) => b.n - a.n)[0];
-  const at = { x: cell.s.x, z: cell.s.z };
+  // (a point in it: its site, or where one of its creatures lives when the partition puts the site over the border)
+  const key = cellKey(cell.c), inIt = (x: number, z: number) => cellKey(g.map.cellSafe(x, z).cell) === key;
+  const one = g.creatures.find(c => cellKey(c.cell) === key && !c.boss && inIt(c.x, c.z));
+  const at = inIt(cell.s.x, cell.s.z) || !one ? { x: cell.s.x, z: cell.s.z } : { x: one.x, z: one.z };
   g.witch = { ...g.witch, seated: false, x: at.x, z: at.z, vx: 0, vz: 0, mode: "treetop", lift: 1 };
-  return { g, key: cellKey(cell.c), at };
+  return { g, key, at };
 }
 const wildHere = (g: Game, key: string) => g.creatures.filter(c => cellKey(c.cell) === key && !c.gone && !c.leashed && !c.boss && !c.enraged);
 const land = (g: Game, x: number, z: number) => { g.witch = { ...g.witch, x, z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false }; };

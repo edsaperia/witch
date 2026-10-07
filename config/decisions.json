@@ -57,9 +57,9 @@
       "default": 1, "apply": { "knob": "legends.buffPower" }
     },
     {
-      "id": "questCap", "label": "Farthest dream (areas)", "note": "A sleeping legend dreams of any other kind on the map, near or far, but none whose nearest area lies more than this many areas away (5 cuts about the farthest tenth; 0: no cap).",
+      "id": "questCap", "label": "Farthest dream (areas)", "note": "A sleeping legend dreams of any other kind on the map, near or far, but none whose nearest area lies more than this many areas away (6 cuts about the farthest tenth on the ~96-area map, as 5 did on the old ~196; 0: no cap).",
       "control": { "type": "slider", "min": 0, "max": 10, "step": 0.5 },
-      "default": 5, "apply": { "knob": "legends.questCap", "reload": true }
+      "default": 6, "apply": { "knob": "legends.questCap", "reload": true }
     },
     {
       "id": "questFar", "label": "Far dream bonus", "note": "How much stronger a quest's buff rolls the farther its dream creature lived: 1 + this × its distance over the cap (0.5: the farthest half again as strong).",

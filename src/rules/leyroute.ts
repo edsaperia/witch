@@ -49,6 +49,10 @@ export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () 
       let dip = routeShape(map, r.stones).lateDip;
       for (const o of others()) { const q = planRoute(map, o), d = routeShape(map, q.stones).lateDip; if (d < dip - 1 && withinCrossingRules(q.links)) { r = q; dip = d; } }
     }
+    // A link straight over the dancefloor (Ed, 2026-10-06: never; a smaller map's first ring can leave a gap round home
+    // that the spiral jumps across): the other orders planned, the first that keeps clear of it and Ed's crossing rules kept.
+    const overIt = (q: LeyRoute) => q.stones.some((s, i) => i > 0 && overHome(map, q.stones[i - 1], s));
+    if (others && overIt(r)) for (const o of others()) { const q = planRoute(map, o); if (!overIt(q) && withinCrossingRules(q.links) && routeShape(map, q.stones).lateDip <= SPIRAL_RULES.maxDip) { r = q; break; } }
     if (finish && withinCrossingRules(r.links)) r = finish(r);
     if (fallback && !withinCrossingRules(r.links)) r = planRoute(map, fallback());
     r = curved(map, r);
