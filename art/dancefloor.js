@@ -22,7 +22,7 @@
 //   as a strip that repeats every DISCO_RIM.period px along the circumference (discoRimStrip), and the whole
 //   unlit floor (discoFloorBase) with tiles, grout and rim, for the engine to draw under the lit tiles.
 import { M, Sprite, hash2, runeGlyph } from "./core.js";
-import { NEON, SIGIL_NEON, sigilGlyph } from "./sigils.js";
+import { NEON, SIGIL_NEON, sigilArrival } from "./sigils.js";
 import { AREAS } from "./areas.js";
 
 export const DISCO_GRID = 32;
@@ -223,7 +223,8 @@ function discoBoot() {
 const discoContrast = name => ({ lemon: "violet", acid: "magenta", mint: "pink", cyan: "orange", blue: "lemon" }[name] || "lemon");
 function discoAreaPattern(A) {
   const neon = SIGIL_NEON[A.creature] || "cyan", G = 22, off = (DISCO_GRID - G) / 2;
-  const glyphs = Array.from({ length: 8 }, (_, k) => sigilGlyph(A.creature, G, { progress: (k + 1) / 8 })), full = glyphs[7];
+  const arrive = sigilArrival(A.creature, G); // (once: each step of the draw-on is it up to that step, as sigilGlyph's progress)
+  const glyphs = Array.from({ length: 8 }, (_, k) => ({ m: arrive.map(a => (a <= (k + 1) / 8 ? 1 : 0)) })), full = glyphs[7];
   const at = (g, x, y) => { const i = Math.floor(x + DC - off), j = Math.floor(y + DC - off); return i >= 0 && j >= 0 && i < G && j < G && g.m[j * G + i]; };
   const halo = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => at(full, x + dx, y + dy));
   return discoPattern("area-" + A.id, A.name, "area", 2, 4, 4, [neon, discoContrast(neon)], k => (x, y) => {

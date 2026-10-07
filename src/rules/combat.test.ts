@@ -560,8 +560,8 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     g.tuning.fight.scale = 1;
   }, 60000);
 
-  it("has a wild creature chasing her give up soon after she leaves its area, and go home (Ed, 2026-10-05)", () => {
-    const g = quiet(), W = g.witches[0];
+  it("has a wild creature chasing her give up soon after she leaves its area, and go home (Ed, 2026-10-05; one not hunting her: the hunt off, rules/hunt.ts)", () => {
+    const g = quiet({ ...TUNING, hunt: { on: false } }), W = g.witches[0];
     W.health.hp = 1e6;
     const cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]], site = g.map.siteOf(cell[0], cell[1]);
     const wolf = place(g, 0, "wolf", 2, site.x, site.z);

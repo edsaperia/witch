@@ -64,6 +64,9 @@ export interface ByRoute {
   threat: number[][];
   /** Per species (else `default`): the shares of its extra creatures at each level [babies, young, adults]. */
   profiles: Record<string, number[]>;
+  /** At least this many young or adults in every wild area (Ed, 2026-10-07: "every wild area has at least one hostile wild
+   *  creature"); any shortfall made up with young. */
+  minHostile?: number;
 }
 
 /** The threat curve at route index `n`: straight lines between its points, flat past its ends. */
@@ -92,7 +95,8 @@ export function routePopulation(index: number, R: ByRoute, start: { babies: numb
   const order = [0, 1, 2].sort((a, b) => (raw[b] - out[b]) - (raw[a] - out[a]) || hash2(cell[0] * 7 + a, cell[1] * 11 + b, seed + 5323) - 0.5);
   for (let k = 0, left = count - out[0] - out[1] - out[2]; k < left; k++) out[order[k % 3]]++;
   const babies = Math.min(Math.max(0, R.babyCap), Math.max(startCount(start.babies, scale), R.babies) + out[0]);
-  return [babies, startCount(start.young, scale) + out[1], startCount(start.adults, scale) + out[2]];
+  const young = startCount(start.young, scale) + out[1], adults = startCount(start.adults, scale) + out[2];
+  return [babies, young + Math.max(0, (R.minHostile ?? 0) - young - adults), adults]; // (at least minHostile young or adults: Ed, 2026-10-07)
 }
 
 /** Each area's place on the waves' route (1 the first wave's area; rules/party.ts routeOf), by area key. */

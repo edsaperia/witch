@@ -20,7 +20,8 @@ compare against an older look were retired on 2026-10-07 (the list at the end).
 | `dev=0` | hides the bedroom's dev "Player:" pick | app/playerPick.ts |
 | `room=<S>` | the creator's room drawn at this scale | ui/creator.ts |
 | `shake=0` | no screen shake (else the start screen's choice) | app/shake.ts |
-| `areaSize=<m>`, `areaScale=<k>`, `treetopSpeed=<m/s>`, `mapAreas=<n>` | the world's size and travel speed, remembered on this browser till changed | app/linkParams.ts |
+| `areaSize=<m>`, `areaScale=<k>`, `treetopSpeed=<m/s>`, `mapAreas=<n>` | the world's size and travel speed, for this load only (never remembered: they change the balance) | app/linkParams.ts |
+| `fightScale=<k>`, `fightSpeed=<k>`, `fightMomentum=<k>` | the fight's scale, speed and momentum for this load (the debug overlay's sliders; never remembered) | app/knobs.ts |
 | `shape=square\|circle` | the map's shape (circle, the default since 2026-10-06) | app/linkParams.ts |
 | `slow=0` / `slow=<k>` | legend circles slowing time: off, or another speed (0 < k < 1) | app/linkParams.ts |
 | `picker=route\|noisy\|near3\|near3touch\|nearest` | how the party picks the next area to wake | app/linkParams.ts |

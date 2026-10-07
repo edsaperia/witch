@@ -24,6 +24,7 @@ import { bossBreath } from "../../render/leash";
 import type { CombatEventKind } from "../../rules/combat";
 import type { Sfx } from "./sfx";
 import { beachOf, type Beach } from "../../rules/mapShape";
+import { dolphinLeaps, krakenRising } from "../../rules/seaLife";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
 import { beatAt } from "../../rules/beat";
@@ -39,6 +40,7 @@ export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(
 import { nightKind } from "./night";
 import { AREA_TYPES } from "../../rules/map";
 import { leyPulse, pointerShown, type P2 } from "../../rules/leypulse";
+import { aggroOf } from "../../rules/wildWatch";
 import { fireworkShells, type Shell } from "../../rules/fireworks";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
@@ -119,6 +121,7 @@ export class SfxCues {
     this.picnic(h);
     this.sea(h);
     this.sparkler(h);
+    this.aggro(h);
     this.fireworks(h);
     this.night(h);
     this.ambience(h);
@@ -444,7 +447,29 @@ export class SfxCues {
     const w = g.witch, d = Math.hypot(w.x - B.x, w.z - B.z) || 1, off = B.edge(Math.atan2(w.z - B.z, w.x - B.x)) + B.out - d;
     if (off >= P.range) { this.sfx.sea(0); return; } // (Sfx.sea: nothing unless already made)
     this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
+    this.seaLife(g, B, off);
   }
+
+  /** What lives in the sea (Ed, 2026-10-07; art builder 4's timetable, rules/seaLife.ts, read alike by the picture): each
+   *  dolphin's leap as it starts (its blow, then its splash as it falls back in), and the kraken's rising (a groan as it
+   *  begins, water pouring off each tentacle as it rises), heard within sfx.seaLife.range of her and panned by where it is. */
+  private seaLife(g: Game, B: Beach, off: number): void {
+    const L = g.tuning.sfx.seaLife, w = g.witch, time = g.clock.time;
+    if (!L || off > L.range) return;
+    const near = (x: number, z: number) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / Math.max(1, L.range)), pan = (x: number) => Math.max(-1, Math.min(1, (x - w.x) / 60));
+    const fresh = (at: number) => at <= time && at > time - 1 && !this.seaHeard.has(at) && (this.seaHeard.add(at), true);
+    for (const l of dolphinLeaps(g, B, time)) if (fresh(l.start)) { const k = near(l.x, l.z); if (k > 0 && this.primed) this.sfx.splash(Math.min(1, l.length / 8), pan(l.x), k, l.dur); }
+    const r = krakenRising(g, B, time);
+    if (r) {
+      const first = r.tentacles[0];
+      if (first && fresh(first.start - 1e-6)) { const k = near(first.x, first.z); if (k > 0 && this.primed) this.sfx.krakenGroan(pan(first.x), k); }
+      for (const t of r.tentacles) if (fresh(t.start)) { const k = near(t.x, t.z); if (k > 0 && this.primed) this.sfx.krakenPour(Math.min(6, t.dur * 0.35), pan(t.x), k); }
+      if (r.head && fresh(r.head.start + 1e-6)) { const k = near(r.head.x, r.head.z); if (k > 0 && this.primed) this.sfx.krakenGroan(pan(r.head.x), k * 0.8); }
+    }
+    if (this.seaHeard.size > 64) for (const at of this.seaHeard) if (at < time - 30) this.seaHeard.delete(at);
+  }
+  /** The sea life's starts already heard (world times). */
+  private seaHeard = new Set<number>();
   private beach: { map: Game["map"]; at: Beach | null } | null = null;
 
   /** The ley line's drawn route of its current link (render/leylines.ts currentLink), when the game has a view: the
@@ -493,6 +518,23 @@ export class SfxCues {
     this.shows = this.shows.filter(s => !s.cheered || s.shells.some(x => !x.popped));
   }
   private shows: { at: number; x: number; z: number; cheered: boolean; cheerAt: number; shells: (Shell & { launched: boolean; popped: boolean })[] }[] = [];
+
+  /** The wild watch's warning (art builder 3's aggroOf, rules/wildWatch.ts): rising while a wild area's watchers stare at
+   *  her; when it ends, a hit if the watch ran its course (they attack) or a fall if it was called off (she rose, left or
+   *  was knocked out). aggroOf goes null on the attack's own step too, so the last k tells which (art builder 3: k reaches
+   *  1 on the step the watch ends; a call-off leaves it below about 0.98). */
+  private aggro({ g }: Here): void {
+    if (!g.tuning.sfx.aggro) return;
+    const a = aggroOf(g);
+    if (a) { this.aggroK = a.k; this.aggroDanger = a.danger; this.sfx.aggro(a.k, a.danger); return; }
+    if (this.aggroK === null) return;
+    const w = g.witches[0], attacked = this.aggroK >= 0.98 && !!w && w.body.mode === "ground" && !w.ko;
+    this.aggroK = null;
+    if (attacked) this.sfx.aggro(1, this.aggroDanger);
+    this.sfx.aggro(null);
+  }
+  private aggroK: number | null = null;
+  private aggroDanger = 0;
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {

@@ -23,6 +23,15 @@ export function carvingMask(species: string): Uint8Array {
   return m;
 }
 
+/** Make the carvings of these species in idle time, one a time (so the first she comes near is already made: a carving is
+ *  10-80 ms, Ed's playtest stalls of 2026-10-07). Those already made, or made meanwhile, are skipped. */
+export function warmCarvings(species: readonly string[]): void {
+  const todo = [...new Set(species)].filter(s => !cache.has(s));
+  const idle = (f: () => void) => (typeof requestIdleCallback === "function" ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 50));
+  const next = () => { const s = todo.shift(); if (s === undefined) return; carvingMask(s); idle(next); };
+  idle(next);
+}
+
 /** The legend's legendary sigil as grooves, or null if it has none. */
 function drawSigil(species: string, n: number): Uint8Array | null {
   let f: Float32Array;

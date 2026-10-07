@@ -2987,13 +2987,40 @@
         "hangBack": {
           "type": "number",
           "minimum": 0
+        },
+        "dangerF": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "vignette": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "on",
         "time",
         "forget",
-        "hangBack"
+        "hangBack",
+        "dangerF",
+        "tint",
+        "vignette"
+      ],
+      "additionalProperties": false
+    },
+    "hunt": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on"
       ],
       "additionalProperties": false
     },
@@ -3104,6 +3131,10 @@
               "type": "number",
               "minimum": 0
             },
+            "minHostile": {
+              "type": "number",
+              "minimum": 0
+            },
             "threat": {
               "type": "array",
               "items": {
@@ -3130,6 +3161,7 @@
           "required": [
             "babies",
             "babyCap",
+            "minHostile",
             "threat",
             "profiles"
           ],
@@ -4777,6 +4809,39 @@
           ],
           "additionalProperties": false
         },
+        "aggro": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "swell": {
+              "type": "number",
+              "minimum": 0
+            },
+            "riser": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hit": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fall": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "swell",
+            "riser",
+            "hit",
+            "fall"
+          ],
+          "additionalProperties": false
+        },
         "sparkler": {
           "type": "object",
           "properties": {
@@ -4865,6 +4930,39 @@
             "range",
             "cheerRange",
             "speed"
+          ],
+          "additionalProperties": false
+        },
+        "seaLife": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "splash": {
+              "type": "number",
+              "minimum": 0
+            },
+            "groan": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pour": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "splash",
+            "groan",
+            "pour",
+            "range"
           ],
           "additionalProperties": false
         },
@@ -5382,8 +5480,10 @@
         "shoes",
         "pond",
         "picnic",
+        "aggro",
         "sparkler",
         "fireworks",
+        "seaLife",
         "room",
         "deck",
         "spell",
@@ -8497,6 +8597,7 @@
     "combat",
     "notice",
     "wildWatch",
+    "hunt",
     "naps",
     "guard",
     "population",
