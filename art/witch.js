@@ -498,6 +498,7 @@ export const WITCH_FOOT_POSES = {
   laugh: { frames: 3, fps: 4, party: "social" }, drink: { frames: 4, fps: 1.5, party: "social" }, run: { frames: 4, fps: 10, party: "move" },
   sitGround: { frames: 2, fps: 1, party: "rest" }, stargaze: { frames: 2, fps: 1, party: "rest" }, conga: { frames: 4, fps: 4, party: "pair" },
   twirl: { frames: 4, fps: 4, party: "pair" }, twirled: { frames: 4, fps: 4, party: "pair" }, limboHold: { frames: 2, fps: 2, party: "pair" }, limboHelp: { frames: 2, fps: 2, party: "pair" }, limbo: { frames: 4, fps: 3, party: "dance" },
+  dj: { frames: 14, fps: 4, heading: "towards" },
 };
 // Two witches together: each is her own sprite, and the game puts them so that her `meet` anchor and her partner's land on
 // the same pixel. mirror: the partner's sprite is flipped left-right (anchors too: x becomes w - x), so the two face each
@@ -611,6 +612,53 @@ const FOOT_FRAMES = {
   limbo: [0, 1, 2, 3].map(f => ({ broom: null, crouch: .62, limbo: 1.12 + [0, .05, 0, -.04][f], look: .3, sway: .02, mouth: f === 1,
     feet: [[.26 + [0, .05, .08, .03][f], .07, -.1], [.26 + [.08, .03, 0, .05][f], .07, .1]], free: [.0, .82 + [0, .03, 0, -.03][f], .44], hand: "palm", far: [.0, .82 - [0, .03, 0, -.03][f], -.44], farHand: "palm" })), // arms out for balance, shuffling forward
 };
+// dj (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): behind the
+// treehouse's decks, facing us (drawn heading towards), her broom leaning beside her, her hands on the decks laid out by
+// DJ_DECKS (in her own model's units: a forward, b up, c to her near side). Gestures of two frames each, the first on the
+// beat (her head nodding down, her knees dipping), the second off it; djFrame picks them from the beat clock:
+//   groove   nodding along, one hand on a platter, the other on the mixer
+//   cue      a hand to her headphone cup (the headphones round her neck when she isn't wearing them), head bent to it
+//   scratch  her hand rocking the record back and forth, eyes down on it
+//   fader    riding the crossfader from side to side
+//   knob     a fingertip on the mixer's knobs
+//   hype     a hand thrown up in the air, grinning (now and then)
+//   cast     both hands up (the party spell)
+export const DJ_DECKS = { top: .5, platter: { a: .27, c: .29, r: .15 }, mixer: { a: .27, w: .09 }, fader: .37, depth: [.1, .44], width: .52 };
+export const DJ_GESTURES = { groove: [0, 1], cue: [2, 3], scratch: [4, 5], fader: [6, 7], knob: [8, 9], hype: [10, 11], cast: [12, 13] };
+// the set she plays: a gesture a bar, round and round (hype once a loop)
+const DJ_SET = ["groove", "groove", "cue", "scratch", "groove", "fader", "knob", "cue", "groove", "scratch", "fader", "hype"];
+// The frame behind the decks at `beat` (beats on the game's beat clock, rules/beat.ts: beatAt): the gesture by the bar
+// (4 beats; `offset` bars along the set), its first frame for the first half of each beat; `cast`, the spell's gesture.
+export function djFrame(beat, { cast = false, offset = 0 } = {}) {
+  const b = Math.max(0, beat), g = cast ? "cast" : DJ_SET[(Math.floor(b / 4) + offset) % DJ_SET.length];
+  return DJ_GESTURES[g][(b % 1) < .5 ? 0 : 1];
+}
+const DJ_BROOM = { binding: [-.08, .31, -.42], dir: [-.06, 1, -.16] };
+const djOn = (K) => ({ broom: DJ_BROOM, dj: true, farHand: "down", hand: "down", sway: .015, ...K });
+const PL = DJ_DECKS.platter, HT = DJ_DECKS.top + .06; // (a hand resting on a platter or the mixer)
+FOOT_FRAMES.dj = [
+  // groove
+  djOn({ crouch: .07, nod: .7, tilt: .1, free: [PL.a - .02, HT, PL.c + .01], far: [PL.a - .03, HT + .02, -.05] }),
+  djOn({ nod: -.15, look: .05, tilt: -.05, mouth: true, free: [PL.a, HT + .01, PL.c], far: [PL.a - .01, HT + .03, -.04] }),
+  // cue: the near hand up at her ear, its elbow out
+  djOn({ crouch: .05, nod: .45, tilt: .45, free: [.0, .93, .2], elbow: [.06, .78, .31], hand: "rest", far: [PL.a - .01, HT, -PL.c] }),
+  djOn({ nod: .05, tilt: .35, free: [.0, .94, .2], elbow: [.06, .79, .31], hand: "rest", far: [PL.a, HT, -PL.c + .01] }),
+  // scratch: the record pulled back, pushed forward
+  djOn({ crouch: .07, nod: .8, tilt: .15, free: [PL.a - .07, HT, PL.c + .03], far: [DJ_DECKS.fader - .02, HT + .01, -.02] }),
+  djOn({ crouch: .02, nod: .55, tilt: .2, free: [PL.a + .06, HT, PL.c - .04], far: [DJ_DECKS.fader - .02, HT + .01, .03] }),
+  // fader: across and back
+  djOn({ crouch: .06, nod: .6, tilt: -.15, free: [PL.a - .01, HT, PL.c], far: [DJ_DECKS.fader, HT + .01, -.07] }),
+  djOn({ nod: 0, tilt: -.05, free: [PL.a, HT, PL.c], far: [DJ_DECKS.fader, HT + .01, .06] }),
+  // knob: a fingertip on the mixer
+  djOn({ crouch: .06, nod: .55, tilt: -.25, look: -.1, free: [PL.a - .02, HT, PL.c], far: [PL.a - .06, HT + .05, .02], farHand: "point" }),
+  djOn({ nod: .1, tilt: -.15, free: [PL.a - .02, HT, PL.c], far: [PL.a - .04, HT + .05, -.03], farHand: "point" }),
+  // hype: a hand in the air
+  djOn({ crouch: .08, look: .2, tilt: .2, mouth: "laugh", free: [.06, 1.24, .26], elbow: [.08, 1.0, .27], hand: "point", far: [PL.a - .03, HT + .02, -.05] }),
+  djOn({ look: .28, tilt: .1, mouth: "laugh", free: [.08, 1.32, .23], elbow: [.08, 1.06, .26], hand: "wave", far: [PL.a - .02, HT + .03, -.04] }),
+  // cast: both hands up
+  djOn({ crouch: .06, look: .22, mouth: true, free: [.06, 1.26, .26], elbow: [.06, 1.0, .28], hand: "wave", far: [.06, 1.26, -.26], farElbow: [.06, 1.0, -.28], farHand: "wave" }),
+  djOn({ look: .3, mouth: "laugh", free: [.02, 1.36, .21], elbow: [.04, 1.08, .26], hand: "wave", far: [.02, 1.36, -.21], farElbow: [.04, 1.08, -.26], farHand: "wave" }),
+];
 // the knee between a hip and a foot, bent forward
 function kneeOf(hip, foot, l) {
   const d = Math.hypot(foot[0] - hip[0], foot[1] - hip[1]), mid = v3.lerp(hip, foot, .5);
@@ -678,6 +726,12 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   if (L.phones) {
     for (const side of [-1, 1]) m.ell(v3.add(H, [-.015, 0, side * .105]), [.05, .055, .03], M.PHONES, { group: 10 });
     m.chain([[...v3.add(H, [-.005, .03, -.095]), .015], [...v3.add(H, [-.005, .11, -.05]), .015], [...v3.add(H, [-.005, .125, 0]), .015], [...v3.add(H, [-.005, .11, .05]), .015], [...v3.add(H, [-.005, .03, .095]), .015]], M.PHONES, { group: 10 });
+  }
+  if (K.dj && !L.phones) { // behind the decks, a pair round her neck (one cup up to her ear, cueing)
+    const neck = v3.add(chest, v3.mul(spine, .13)), cueing = free[1] > H[1] - .1 && free[1] < H[1] + .1;
+    const near = cueing ? v3.add(free, [.01, .02, -.04]) : v3.add(neck, [.05, -.02, .1]), far = v3.add(neck, [.05, -.02, -.1]);
+    for (const c of [near, far]) m.ell(c, [.035, .045, .045], M.PHONES, { group: 10 });
+    m.chain([[...far, .014], [...v3.add(neck, [-.06, .02, 0]), .014], [...near, .014]], M.PHONES, { group: 10 });
   }
   const brim = v3.add(H, [-.03 + K.nod * .03, .1 - K.nod * .02, K.tilt * .02]), tz = K.tilt * .05;
   const tip = drawHat(m, L, brim, [1, .25 - K.look * .8 - K.nod * .7, K.tilt * .3], v3.add(brim, [-.05 + K.nod * .05, .17, tz]), v3.add(brim, [-.16 - sway * .5 + K.nod * .12, .27 - K.nod * .04, tz * 2]));
@@ -810,14 +864,30 @@ export const WITCH_HEADINGS = { away: -Math.PI / 2, towards: Math.PI / 2 };
 // look: a party look (DEFAULT_LOOK's keys; partyWitch gives one). Anchors, in pixels from the top-left: hand and hatTip on
 // every sprite; on foot also pair (where a partner meets her, WITCH_PAIRS), back (the conga) and cup (drinking).
 export function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose, heading = "side", look } = {}) {
+  const dj = pose === "dj";
+  if (dj) heading = WITCH_FOOT_POSES.dj.heading;
   const h = witchHeight(st), yaw = WITCH_HEADINGS[heading];
   const model = witchModel({ frame, lean, pose, look }); model.phaseOnBody = true; // (her train and streaks never move her pixels)
-  const { sp, project, s } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw }) : pose ? render(model, { scale: witchScale(h), facing }) : look && look !== DEFAULT_LOOK ? render(model, { scale: ownScale(h, frame, lean, facing), facing }) : render(model, { height: h, facing }); // (another look at the scale she has in that pose, so a tall hat doesn't shrink her)
+  const { sp, project, s, depth, depthOf } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw, keepDepth: dj }) : pose ? render(model, { scale: witchScale(h), facing }) : look && look !== DEFAULT_LOOK ? render(model, { scale: ownScale(h, frame, lean, facing), facing }) : render(model, { height: h, facing }); // (another look at the scale she has in that pose, so a tall hat doesn't shrink her)
   sp.scale = s; // pixels per model unit
   if (model.anchors.hand) sp.anchors = Object.fromEntries(Object.entries(model.anchors).filter(([k]) => k !== "feet").map(([k, p]) => [k, project(p)]));
   liftShadow(sp, model, project);
   cleanFlecks(sp); // (Ed: "The witch has these little flecks … we should remove them")
+  if (dj) sp.upper = aboveDecks(sp, project, depth, depthOf);
   return sp;
+}
+// Behind the decks: which of her pixels are above the decks' top (DJ_DECKS.top), so drawn over the DJ table (the game draws
+// the table over her, then these over it: her hands on the platters, the table hiding her legs). Each pixel's height in the
+// model from where it lands and how deep it is (the render's projection is affine: inverted from the axes).
+function aboveDecks(sp, project, depth, depthOf) {
+  const f = p => { const [x, y] = project(p); return [x, y, depthOf(p)]; }, o = f([0, 0, 0]), ax = [[1, 0, 0], [0, 1, 0], [0, 0, 1]].map(e => f(e).map((v, k) => v - o[k]));
+  const [a, b, c] = ax, det = v3.dot(a, v3.cross(b, c)), row = v3.mul(v3.cross(c, a), 1 / det); // the inverse's middle row: the model's y
+  const up = new Uint8Array(sp.w * sp.h), top = DJ_DECKS.top + .015;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
+    const i = y * sp.w + x; if (!sp.m[i] || !isFinite(depth[i])) continue;
+    if (v3.dot(row, [x + .5 - o[0], y + .5 - o[1], depth[i] - o[2]]) > top) up[i] = 1;
+  }
+  return up;
 }
 // Her shadow, drawn by the game instead (Ed, 2026-10-06: she floated over her shadow lying on the beach): the model's dark
 // ellipse on its ground is taken out of the sprite (the box kept, so she stands and flies exactly where she did), and two

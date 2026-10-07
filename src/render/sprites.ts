@@ -503,9 +503,13 @@ export class SpriteBatch {
       // Where she is hidden (behind something already drawn), a flat tint, so she's never lost.
       const c = opts.silhouette.colour, sil = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uSilhouette: { value: new THREE.Vector4(c.x, c.y, c.z, opts.silhouette.opacity) } }), transparent: true, depthWrite: false, depthFunc: THREE.GreaterDepth }));
       sil.frustumCulled = false; sil.renderOrder = 12;
-      this.meshes.push(sil);
+      this.meshes.push(sil); this.sil = sil;
     }
   }
+
+  private sil: THREE.Mesh | null = null;
+  /** Her silhouette through what hides her shown or not (off behind the DJ table, which hides her legs on purpose). */
+  set silhouette(on: boolean) { if (this.sil) this.sil.visible = on; }
 
   private grow(n: number): void {
     const cap = Math.max(n, this.capacity * 2);
