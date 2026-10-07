@@ -58,20 +58,20 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
 });
 
 describe("berries to evolve, tied to strength (Ed, 2026-10-05: \"tie the cost to strength\")", () => {
-  it("costs 4 and 4 for a species of normal strength (the same 8 baby to adult; doubled, Ed 2026-10-06), nothing past adult", () => {
-    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([4, 4, Infinity]);
-    expect(toEvolve(1, TUNING, "wolf")).toBe(4);
+  it("costs 3 and 8 for a species of normal strength (the level gap of 2026-10-07: an adult gains far more; 4 and 4 before, doubled by Ed 2026-10-06), nothing past adult", () => {
+    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([3, 8, Infinity]);
+    expect(toEvolve(1, TUNING, "wolf")).toBe(8);
   });
 
   it("buys the same fighting value a berry for every species (at least one berry)", () => {
     giving("bear", 2); giving("bat", 0.3);
-    expect(toEvolve(0, TUNING, "bear") + toEvolve(1, TUNING, "bear")).toBe(16); // twice the value, twice the berries
+    expect(toEvolve(0, TUNING, "bear") + toEvolve(1, TUNING, "bear")).toBe(22); // twice the value, twice the berries (3 + 8 = 11 for a normal one)
     expect(toEvolve(0, TUNING, "bat")).toBe(1);
-    expect(toEvolve(1, TUNING, "bat")).toBe(1);
+    expect(toEvolve(1, TUNING, "bat")).toBe(2);
   });
 
-  it("can count by power instead (cost.by \"power\", hp × dps): the old 1 and 3", () => {
+  it("can count by power instead (cost.by \"power\", hp × dps): 1 and 6 at the level gap (the old 1 and 3)", () => {
     const t = withTuning({ berries: { ...TUNING.berries, cost: { by: "power", per: 240 } } });
-    expect([toEvolve(0, t), toEvolve(1, t)]).toEqual([1, 3]);
+    expect([toEvolve(0, t), toEvolve(1, t)]).toEqual([1, 6]);
   });
 });
