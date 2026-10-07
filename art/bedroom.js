@@ -59,7 +59,6 @@ export const BANNER_FONT = {
   Y: ["101", "101", "010", "010", "010"], O: ["111", "101", "101", "101", "111"], N: ["110", "101", "101", "101", "101"], I: ["111", "010", "010", "010", "111"],
   G: ["111", "100", "101", "101", "111"], H: ["101", "101", "111", "101", "101"],
 };
-const bLetterAt = (ch, s, t) => { const g = BANNER_FONT[ch]; if (!g) return false; const x = Math.floor((s + 1) / 2 * 3), y = Math.floor((t + 1) / 2 * 5); return g[y]?.[x] === "1"; };
 
 // Directions on the floor: along the right-hand far wall (x), along the left-hand one (z), and the view's own.
 const bX = [1, 0, 0], bZ = [0, 0, 1], bUP = [0, 1, 0], bDOWN = [0, -1, 0];

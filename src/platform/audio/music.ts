@@ -61,8 +61,9 @@ export class Music {
     } else this.engine = new MusicEngine(ctx, this.bus, style, seed, this.circleGain);
   }
 
-  /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. */
-  /** `rate`: the game's time scale (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape. */
+  /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. `rate`: the game's time scale
+   *  (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape;
+   *  `over`: the party's-over ease (0 to 1), winding it down. */
   update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"], rate = 1, over = 0): void {
     const c = this.ctx, now = c.currentTime, k = 0.08;
     // The party's over (Ed, 2026-10-06: "the dance music stops"): over the first `over.stop` of the ease the music winds down
@@ -98,7 +99,7 @@ export class Music {
   /** The engine's continuity (tools/music-lab/flight.cjs). */
   get stats() { return this.engine?.stats ?? { resyncs: 0, late: 0, gap: 0, ahead: 0 }; }
 
-  /** What reaches the speakers (the audio watchdog taps it). */
+  /** What reaches the speakers (the audio watchdog and the output meter tap it). */
   get output(): AudioNode { return this.master; }
   /** The legend circle's layer, which reaches the speakers on its own (the measured output taps it too). */
   get circleOutput(): AudioNode { return this.circleGain; }

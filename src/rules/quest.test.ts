@@ -55,6 +55,24 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     expect(here.some(c => c.fight?.target?.kind === "creature" && c.fight.target.id === mine.id)).toBe(true);
   }, 60000);
 
+  it("makes every wild creature already living in the area friendly when it's done, calming any mid-attack; hers and other areas' as they were (art builder 3, 2026-10-07)", () => {
+    const { g, L, gift } = demo(), key = cellKey(L.cell);
+    const here = g.creatures.filter(c => cellKey(c.cell) === key && !c.boss && !c.gone && !c.leashed);
+    expect(here.length).toBeGreaterThan(1);
+    // some of them going for her already
+    for (const c of here.slice(0, 2)) Object.assign(c, { enraged: true, fight: { target: { kind: "witch", id: 0 }, windupUntil: 0, nextAt: 0 } });
+    const elsewhere = g.creatures.find(c => cellKey(c.cell) !== key && !c.boss && !c.gone && !c.leashed)!;
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(g.friendly.has(key)).toBe(true);
+    for (const c of here) { expect(c.friendly, `creature ${c.id}`).toBe(true); expect(c.enraged).toBeFalsy(); expect(c.fight?.target ?? null).toBeNull(); expect(c.siege).toBeUndefined(); }
+    expect(gift.leashed).toBe(true); expect(gift.friendly).toBeFalsy(); // (hers, parked by the legend: as it was)
+    expect(elsewhere.friendly).toBeFalsy();
+    // and they leave her be from now on
+    const hp = g.witches[0].health.hp;
+    for (let i = 0; i < Math.round(5 / STEP); i++) { stepGame(g, idle, STEP); for (const c of here) if (!c.gone && !c.leashed) expect(c.fight?.target?.kind === "witch").toBeFalsy(); }
+    expect(g.witches[0].health.hp).toBe(hp);
+  }, 60000);
+
   it("can still be done after the area's wave, while its legend sleeps: the buff, but not a friendly area (Ed, 2026-10-06)", () => {
     const { g, L } = demo(), key = cellKey(L.cell);
     g.party.areas.set(key, { cell: L.cell, wave: 1, at: g.clock.time, from: null, soundsystem: null });

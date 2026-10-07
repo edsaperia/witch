@@ -596,13 +596,14 @@ const report = await b.page.evaluate(async () => {
   }
   { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
     // (its trees across their heights, or for the open areas the tall pieces); the tall pieces (snag, cairn, standing stone, pillar, spire, stalagmite)
-    // stand on the ground, 4.5 to 12 m tall, and are flagged sparse (a small share of the area's big objects)
+    // stand on the ground, 4.5 to 12 m tall, and are flagged sparse (a small share of the area's big objects), or big where they stand in for
+    // the area's trees (the stone shrine's great standing stones: Ed, 2026-10-06)
     const bad = [], tallest = {};
     for (const A of G.AREAS) {
       const a = G.areaAssets(A.id, st), hs = [...a.big.filter((b, i) => A.big[i][0] !== "tree").map(b => b.sp.h / 16), ...G.areaTreeVariants(A.id, st).map(v => v.metres.height)]; tallest[A.id] = Math.max(0, ...hs); // trees: their variants, sapling to giant
       if (!(tallest[A.id] >= 4)) bad.push(`${A.id} ${tallest[A.id].toFixed(1)} m`);
       a.big.forEach((b, i) => { const [kind, o] = A.big[i]; if (!G.TALL_KINDS.includes(kind)) return; let bottom = 0; const d = b.sp.A.getContext("2d").getImageData(0, b.sp.h - 1, b.sp.w, 1).data; for (let k = 3; k < d.length; k += 4) if (d[k]) bottom++;
-        if (!(bottom > 0 && b.metres && b.metres.height >= 4.5 && b.metres.height <= 12 && o.sparse > 0 && o.sparse <= .3)) bad.push(`${A.id} ${kind} ${b.metres?.height} m${bottom ? "" : ", floating"}`); });
+        if (!(bottom > 0 && b.metres && b.metres.height >= 4.5 && b.metres.height <= 12 && (o.sparse > 0 && o.sparse <= .3 || o.big))) bad.push(`${A.id} ${kind} ${b.metres?.height} m${bottom ? "" : ", floating"}`); });
     }
     const open = ["moor", "stone-shrine", "log-pile", "ravine"].map(id => `${id} ${tallest[id].toFixed(1)} m`).join(", ");
     res.push({ what: "something tall in every area: a big piece 4 m+ in each; the open areas' tall pieces stand, 4.5 to 12 m, sparse", good: !bad.length, info: bad.join("; ") || `the open areas' tallest: ${open}` });
@@ -738,6 +739,28 @@ const report = await b.page.evaluate(async () => {
     for (const d of G.PATH_PIECES) { const P = G.pathPieceSprite(d.id, st); if (!(stats(P.sp).bottom > 0 && n(P.sp) > 8 && lit(P.sp) === !!d.glow)) bad.push(d.id); }
     const ap = G.areaPathKinds(), none = G.AREAS.filter(A => !(ap[A.id] || []).length).map(A => A.id);
     res.push({ what: "paths: 10 kinds, each strip tiling with its end, Y and T; only the magic trail glows; railway variants, points, broken end, crossing; the 3D pieces stand, only flagged ones glow; every area suits a path kind", good: !bad.length && !none.length && G.PATH_IDS.length >= 10, info: [...bad, ...none.map(a => a + " has no path kind")].join(", ") || `${G.PATH_IDS.length} kinds, ${G.PATH_PIECES.length} pieces` });
+  }
+  { // every generator draws (phase 1: the ones no other check reached): every beach find and print (prints at every heading), the bedroom,
+    // every broom kind under the witch, her hat alone both ways, every species' rune stone, a party patch, every legend's sprites; each
+    // non-empty, nothing NaN in its normals, every material it uses coloured, its origin (where it has one) on the sprite
+    const bad = [], seen = { beach: 0, brooms: 0, stones: 0, legends: 0 };
+    const nan = sp => { for (let i = 0; i < sp.n.length; i++) if (Number.isNaN(sp.n[i])) return true; return false; };
+    const look = (what, sp, col, origin) => {
+      const s = stats(sp); if (!(s.n > 0)) { bad.push(`${what} empty`); return; }
+      if (nan(sp)) bad.push(`${what} NaN normals`);
+      if (col) for (const v of new Set(sp.m)) if (v && v !== G.M.LINE && !col[v]) { bad.push(`${what} material ${v} uncoloured`); break; }
+      if (origin && !(origin.x >= 0 && origin.x <= sp.w && origin.y >= 0 && origin.y <= sp.h + 1)) bad.push(`${what} origin off the sprite`);
+    };
+    const bc = G.beachColours(st);
+    for (const d of [...G.BEACH_FINDS, ...G.BEACH_PRINTS]) for (let h = 0; h < (d.kind === "print" ? G.PRINT_HEADINGS : 1); h++) { const b = G.beachSprite(d.id, st, { heading: h }); look(`beach ${d.id}${h ? " heading " + h : ""}`, b.whole, bc, b.origin); seen.beach++; }
+    { const sp = G.bedroomSprite(st); look("bedroom", sp, G.bedroomColours(st)); if (!sp.anchors?.decks || !sp.anchors?.screen) bad.push("bedroom anchors"); }
+    const wc = G.witchColours(st);
+    for (const broom of G.WITCH_AXES.broom) { look(`broom ${broom}`, G.witchSprite(st, { look: { ...G.DEFAULT_LOOK, broom } }), wc); seen.brooms++; }
+    for (const facing of ["towards", "away"]) look(`witch hat ${facing}`, G.witchHatSprite(st, { facing }), wc);
+    for (const id of Object.keys(G.SIGIL_NEON)) { const b = G.runeStone(st, { sigil: id }); if (!(b.w > 4 && b.h > 4)) bad.push(`rune stone ${id}`); seen.stones++; }
+    { const p = G.partyPatch(1, (id, o) => G.scenePlacements(id, st, o)); if (!(p.length > 10) || p.some(q => !q.ref || Number.isNaN(q.x) || Number.isNaN(q.y))) bad.push(`party patch: ${p.length} pieces`); else { const missing = p.filter(q => !G.sceneRefExists(q.ref)); if (missing.length) bad.push(`party patch: ${missing[0].ref} is no piece`); } }
+    for (const id of G.LEGEND_IDS) { const L = G.legendSprites(id, st); if (!L || !Object.keys(L).length) bad.push(`legend sprites ${id}`); seen.legends++; }
+    res.push({ what: "every generator draws: the beach's finds and prints (every heading), the bedroom, every broom, the witch's hat both ways, every species' rune stone, a party patch, every legend's sprites; none empty, nothing NaN, every material coloured", good: !bad.length && seen.beach > 0 && seen.brooms >= 18, info: bad.slice(0, 6).join("; ") || `${seen.beach} beach pieces, ${seen.brooms} brooms, ${seen.stones} rune stones, ${seen.legends} legends` });
   }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {

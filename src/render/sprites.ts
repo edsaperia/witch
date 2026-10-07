@@ -9,6 +9,11 @@ import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
+/** One art pixel's size in the world (metres): the sprites' scale at the tuning's pixel size. */
+export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: number }): number {
+  return 1 / (t.artPixelsPerMetre * (2 / t.pixelSize));
+}
+
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
   /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */
@@ -173,7 +178,7 @@ uniform float uDebugCull, uIsScenery, uAppear;
 uniform vec4 uLean;
 uniform vec4 uWitch, uOcc, uSilhouette;
 varying float vNear;
-uniform float uFadePass;
+uniform float uFadePass, uHasFade;
 uniform float uFlat; // lies flat on the ground (a court's decal), or gameplay that stays solid: never cut away round her
 uniform vec4 uParty[16];
 uniform vec3 uPartyCol[16];
@@ -228,6 +233,22 @@ float cluster4(vec2 p) {
 // A slow value noise (0-1) for the hole's wobbly edge.
 float cutHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float cutNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(cutHash(i), cutHash(i + vec2(1.0, 0.0)), f.x), mix(cutHash(i + vec2(0.0, 1.0)), cutHash(i + 1.0), f.x), f.y); }
+// One screen pixel's step in the sprite's uv (main takes them, in uniform flow), and, where a sprite is drawn smaller than its
+// art (far crowns, the bend squashing the far forest), the texels each pixel covers (Ed, 2026-10-06: "Trees with horizontal
+// lines"): nearest sampling dropped whole rows of the leaf clusters' lit tops and shaded undersides, and what was left read as
+// scanlines. There a pixel takes the average colour (and normal) of the opaque texels it covers; its alpha and its flags stay
+// the texel's own, so outlines stay crisp. Scenery only.
+vec2 uvDx, uvDy, areaH;
+bool areaOn = false;
+vec4 areaAvg(sampler2D t, vec2 uv, vec4 c) {
+  vec3 sum = c.rgb; float w = 1.0;
+  for (int i = 0; i < 4; i++) {
+    vec2 o = vec2(i == 0 || i == 2 ? -areaH.x : areaH.x, i < 2 ? -areaH.y : areaH.y);
+    vec2 q = clamp(uv + o, vFrame.xy, vFrame.zw);
+    if (texture2D(uAlbedo, q).a > 0.5) { sum += texture2D(t, q).rgb; w += 1.0; }
+  }
+  return vec4(sum / w, c.a);
+}
 void shade() {
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
   // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
@@ -262,6 +283,10 @@ void shade() {
   vec4 a = texture2D(uAlbedo, uvS);
   if (a.a < 0.5) discard;
   if (vNear < 1.0 && bayer(gl_FragCoord.xy) >= vNear) discard; // (near the low stargazing camera: dithered away)
+  if (uIsScenery > 0.5) {
+    vec2 ts = vec2(textureSize(uAlbedo, 0)), fp = vec2(length(vec2(uvDx.x, uvDy.x)), length(vec2(uvDx.y, uvDy.y))) * ts;
+    if (max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(uAlbedo, uvS, a); }
+  }
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
   // Things standing in front of the witch fade (smoothly) where they cover her: left out of the
@@ -290,24 +315,32 @@ void shade() {
     if (uSmooth < 0.5) { if (bayer(gl_FragCoord.xy) >= shown) discard; shown = 1.0; }
     else if (shown < 0.004) discard;
   }
-  bool see = occl > 0.001 || (shown < 0.996 && vOverHer > 0.5); // (only crowns that could hide her: the rest keep their depth)
-  if (uFadePass > 0.5 ? !see : see) discard;
-  float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown;
+  // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
+  // hidden, its top fades out over uTrunkFade.x metres in a clustered ordered dither on the art's own
+  // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
+  // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
+  // all), so every trunk keeps a solid base. Smooth (Ed: no dithering), its top fades out in alpha (trunkA);
+  // ?fx=pixel, in the clustered dither as before.
+  float trunkA = 1.0;
   if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
-    // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
-    // hidden, its top fades out over uTrunkFade.x metres in a clustered ordered dither on the art's own
-    // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
-    // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
-    // all), so every trunk keeps a solid base.
     float crown = max(hole, uTopFade);
     float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));
-    // Smooth (Ed: no dithering), its top fades out in alpha; ?fx=pixel, in the clustered dither as before.
     float keep = max(t, crown);
-    if (uSmooth > 0.5) { if (keep < 0.004) discard; alpha *= keep * keep * (3.0 - 2.0 * keep); }
+    if (uSmooth > 0.5) { if (keep < 0.004) discard; trunkA = keep * keep * (3.0 - 2.0 * keep); }
     else if (cluster4(artPx) >= keep) discard;
   }
+  // Which pass draws it. Anything partly see-through (a crown fading in the hole, a trunk's top fading, scenery fading at the
+  // budget's edge) goes in the see-through pass, after everything solid and writing no depth (Ed, 2026-10-06: "no tree
+  // trunks", "trees cut off at the top"): drawn in the opaque pass, nearest first for the early depth test, a half-faded
+  // crown near the camera wrote its depth and hid every trunk and crown behind it, a teal carpet where the forest should be.
+  // A batch with no see-through pass (uHasFade 0) keeps them in its one pass, as before.
+  float edgeK = uIsScenery > 0.5 ? sceneryFade(vWorld) * uAppear : 1.0;
+  bool part = shown * trunkA * edgeK < 0.996;
+  bool see = occl > 0.001 || (part && (uHasFade > 0.5 || vOverHer > 0.5));
+  if (uFadePass > 0.5 ? !see : see) discard;
+  float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown * trunkA;
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
   if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, alpha); return; }
@@ -325,6 +358,7 @@ void shade() {
   }
   if (a.a < 0.999 && !eyePx) { gl_FragColor = vec4(haze(a.rgb, vWorld), alpha); return; }
   vec4 n = texture2D(uNormal, uvS);
+  if (areaOn) n = areaAvg(uNormal, uvS, n);
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
@@ -372,6 +406,7 @@ void shade() {
 }
 void main() {
   vec2 rdx = dFdx(vUv), rdy = dFdy(vUv); // (taken here, in uniform flow: one screen pixel, one art pixel, along the sprite)
+  uvDx = rdx; uvDy = rdy;
   shade();
   // Glowing white (a party animal evolving).
   if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
@@ -462,7 +497,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
