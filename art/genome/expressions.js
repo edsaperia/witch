@@ -9,7 +9,7 @@
 // The shapes vary by family: each template has a face style (templates.js: brow, happy, dazed) a
 // species' genome can override (its `face`). Everything is built from the anchors every builder
 // records (the head and the eyes), so a new species gets its expressions for nothing.
-import { M } from "../core.js";
+import { M, unitVec } from "../core.js";
 import { v3 } from "../model3d.js";
 
 export const EXPRESSIONS = ["neutral", "angry", "happy", "dazed", "asleep"];
@@ -20,7 +20,6 @@ export const FACE_KINDS = { brow: ["bar", "tuft", "ridge"], happy: ["arc", "squi
 export const FACE_DEFAULT = { brow: "bar", happy: "arc", dazed: "x" };
 
 const faceEyeMats = new Set([M.EYE, M.IRIS, M.PUPIL, M.GLINT, M.MAGIC2]);
-const faceUnit = v => { const l = Math.hypot(...v) || 1; return v.map(x => x / l); };
 
 // Out of the head along dir until the point is no deeper than `keep` inside the model.
 function faceSurface(m, p, dir, keep) {
@@ -40,15 +39,15 @@ export function faceUp(m, face, style = FACE_DEFAULT) {
 function faceDraw(m, face, st, u) { // u: one pixel, in model units
   const A = m.anchors, head = A.head, eyes = A.eyes, E = Math.max(eyes.size, u * 1.6); // the eye's radius, never under a pixel and a half
   const mid = eyes.pts.reduce((a, e) => v3.add(a, v3.mul(e, 1 / eyes.pts.length)), [0, 0, 0]);
-  const fwd = faceUnit(v3.sub(mid, head.c)), up = faceUnit(v3.sub([0, 1, 0], v3.mul(fwd, v3.dot([0, 1, 0], fwd) * .6)));
+  const fwd = unitVec(v3.sub(mid, head.c)), up = unitVec(v3.sub([0, 1, 0], v3.mul(fwd, v3.dot([0, 1, 0], fwd) * .6)));
   // the eyes' own parts: the ellipsoids sitting on each anchor
   const near = (q, e) => q.type === "ell" && faceEyeMats.has(q.mat) && Math.hypot(...v3.sub(q.c, e)) < Math.max(eyes.size * 1.6, u);
   const eyeMat = e => m.parts.find(q => near(q, e) && (q.mat === M.EYE || q.mat === M.MAGIC2))?.mat ?? M.EYE;
   const drop = e => { m.parts = m.parts.filter(q => !near(q, e)); };
   const o = { group: 63, extra: true, part: "head" }, line = Math.max(E * .3, u * .6); // a stroke: a pixel wide at least
-  const across = e => eyes.pts.length > 1 ? faceUnit(v3.sub(e, mid)) : faceUnit(v3.cross(fwd, up)); // out to the side, away from the middle
+  const across = e => eyes.pts.length > 1 ? unitVec(v3.sub(e, mid)) : unitVec(v3.cross(fwd, up)); // out to the side, away from the middle
   for (const e of eyes.pts) {
-    const out = faceUnit(v3.sub(e, head.c)), a = across(e), mat = eyeMat(e);
+    const out = unitVec(v3.sub(e, head.c)), a = across(e), mat = eyeMat(e);
     const at = (x, y, keep = line * .5) => faceSurface(m, v3.add(v3.add(e, v3.mul(a, x * E)), v3.mul(up, y * E)), out, keep);
     // ---- the eyes ----
     if (face === "angry") for (const q of m.parts) if (near(q, e)) q.r = [q.r[0], q.r[1] * .62, q.r[2]]; // narrowed
