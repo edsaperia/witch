@@ -296,15 +296,15 @@ describe("buff strength (legends.buffPower; Ed, 2026-10-06, on quests: \"Bigger 
     expect(modsOf([S.fox], LEGEND_BUFFS, 3).charm).toBe(1); // (a one-off behaviour stays one)
   });
 
-  it("rolls a done quest's buff stronger the farther its dream lived (legends.questFar), a relic's as written", () => {
-    expect(t.legends.questFar).toBeGreaterThan(0);
+  it("gives every done quest's buff at one strength, legends.questRoll, near or far; a relic's as written", () => {
+    expect(t.legends.questRoll).toBeGreaterThan(1);
     const map = generateMap(123, t), cs = spawnCreatures(map), [near, far, relic] = cs;
     for (const c of [near, far, relic]) Object.assign(c, { leashed: false, level: LEGEND, legendState: "asleep", species: "snake", buffed: true });
     near.quest = { species: "wolf", level: 0, done: 1, far: 0 }; far.quest = { species: "wolf", level: 0, done: 1, far: 1 }; relic.quest = { species: "wolf", level: 0, far: 1 };
     const speed = (c: Creature) => { const s = newBuffs(t); stepBuffs(s, cs, [c.id], t); return s.tuning.invites.speed / t.invites.speed - 1; };
     const lim = B.limits["invites.speed"][1] / t.invites.speed - 1, base = Math.min(lim, S.snake.scale!["invites.speed"] - 1);
-    expect(speed(near)).toBeCloseTo(base, 6);
     expect(speed(relic)).toBeCloseTo(base, 6); // (made happy some other way: as written)
-    expect(speed(far)).toBeCloseTo(Math.min(lim, base * (1 + t.legends.questFar)), 6);
+    expect(speed(near)).toBeCloseTo(Math.min(lim, base * t.legends.questRoll), 6);
+    expect(speed(far)).toBeCloseTo(speed(near), 6); // (the distance no longer matters)
   });
 });

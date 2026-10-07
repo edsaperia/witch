@@ -361,8 +361,10 @@ export interface Tuning {
     happyRange: number;
     /** A legend dreams of any other kind on the map, equally likely, but none whose nearest area lies over questCap areas away (about the farthest tenth at 5; 0: no cap). */
     questCap: number;
-    /** A done quest's buff is 1 + questFar × its dream's distance (Quest.far, 0 to 1 at the cap) times as strong: the far ones pay more. */
-    questFar: number;
+    /** A done quest's buff is questRoll times as strong as written, whatever its dream's distance (a relic's as written). */
+    questRoll: number;
+    /** A legend dreams only of a kind living in an area later on the route than its own (else the nearest later area's, else any). */
+    questLater?: boolean;
     /** The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a legend, dreams of the baby of another of those three's kind. */
     earlyQuest: boolean;
     /** An angry legend bombarding soundsystems (Ed, 2026-10-06: "Legend bombards, but prioritises you"): with no witch in its reach, the first lob or beam of its volley goes at the nearest standing soundsystem within range metres, doing damage to it (of combat.soundsystemHealth). */
