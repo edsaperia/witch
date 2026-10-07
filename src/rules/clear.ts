@@ -23,6 +23,13 @@ export interface ClearRules {
   /** Extra creatures by route position (1 the first area the pulse reaches): [position, babies, young, adults], straight
    *  lines between the points, flat past the ends; each times the area's count scale (rules/growth.ts countScale). */
   populate?: [number, number, number, number][];
+  /** Or by threat (the form proposed to hotel): an area's extra fighting value (F: young 11.6, adult 40, baby 0) by route
+   *  position, [position, F], straight lines between; turned into creatures by its species' profile... */
+  threat?: [number, number][];
+  /** ...the share of its extra creatures at each level [babies, young, adults], by species (default for the rest)... */
+  profiles?: Record<string, [number, number, number]>;
+  /** ...and at most this many babies in an area, population.start's included. */
+  babyCap?: number;
   /** A new soundsystem's health, times combat.soundsystemHealth, by route position: [position, times], straight lines
    *  between, flat past the ends. */
   soundHealth?: [number, number][];
@@ -60,6 +67,7 @@ export function curveAt(pts: readonly (readonly number[])[], x: number, j: numbe
 /** The forest populated by the route (clear.populate): each area's extra creatures made at the start, so an area's whole
  *  population is there to clear (counts made real only out of her sight could leave one she stands in never cleared). */
 export function populateByRoute(creatures: Creature[], map: ForestMap, R: ClearRules): number {
+  if (R.threat?.length) return populateByThreat(creatures, map, R);
   if (!R.populate?.length) return 0;
   let made = 0;
   for (const [key, pos] of routePos(map)) {
@@ -70,6 +78,27 @@ export function populateByRoute(creatures: Creature[], map: ForestMap, R: ClearR
       const want = Math.max(0, curveAt(R.populate, pos, level + 1)) * k, whole = Math.floor(want), n = whole + (hash2(cx * 31 + level, cy * 37, map.seed + 9011) < want - whole ? 1 : 0);
       for (let i = 0; i < n; i++) { creatures.push(makeCreature(map, cell, level, creatures.length, r)); made++; }
     }
+  }
+  return made;
+}
+
+/** The threat form: count = threat(N) / the profile's mean F a creature, split by its shares (largest remainder, seeded),
+ *  babies capped (start's included). */
+const F_LEVEL = [0, Math.sqrt(45 * 3), Math.sqrt(160 * 10)];
+function populateByThreat(creatures: Creature[], map: ForestMap, R: ClearRules): number {
+  const P = R.profiles ?? {}, cap = R.babyCap ?? Infinity, startBabies = map.tuning.population.start.babies;
+  let made = 0;
+  for (const [key, pos] of routePos(map)) {
+    const [cx, cy] = key.split(",").map(Number), cell: [number, number] = [cx, cy], sp = AREA_TYPES[map.typeOf(cx, cy)].creature;
+    const mix = P[sp] ?? P.default ?? [0.25, 0.5, 0.25], tot = mix[0] + mix[1] + mix[2] || 1, sh = mix.map(x => x / tot);
+    const per = sh[1] * F_LEVEL[1] + sh[2] * F_LEVEL[2];
+    if (!(per > 0)) continue;
+    const n = Math.max(0, Math.round(curveAt(R.threat!, pos, 1) / per)), raw = sh.map(x => x * n), out = raw.map(Math.floor);
+    const rest = raw.map((x, i) => [x - Math.floor(x) + hash2(cx * 7 + i, cy * 11, map.seed + 9013) * 1e-6, i] as const).sort((a, b) => b[0] - a[0]);
+    for (let k = 0; k < n - out.reduce((a, b) => a + b, 0); k++) out[rest[k][1]]++;
+    out[0] = Math.min(out[0], Math.max(0, cap - startBabies));
+    const r = rng(map.seed * 4447 + cx * 211 + cy * 1013 + 5);
+    for (let level = 0 as Level; level < 3; level = (level + 1) as Level) for (let i = 0; i < out[level]; i++) { creatures.push(makeCreature(map, cell, level, creatures.length, r)); made++; }
   }
   return made;
 }
