@@ -471,7 +471,17 @@ export class LeashView {
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
       this.standing.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
     }
-    s.relics.forEach((id, i) => { const tw = 0.6 + 0.4 * Math.sin(time * 4 + id); this.over.add(w.x + (i - (s.relics.length - 1) / 2) * 0.6, hatTop + 2.2, w.z, 0.5, dot, 1, 0.85, 0.4, tw); });
+    // The relic sigils she carries (Ed's playtest, 2026-10-07: "the flask sigil is too small"; it was a 0.5 m glint): each its
+    // own flask sigil, as big as an adult's sigil in her stack, in its gold, beside the stack over her hat, with a soft halo
+    // and a slow twinkle, so the silhouette reads at the game's pixel size.
+    if (s.relics.length) {
+      const slot = this.slotOf("relic", 0), col = this.colours.get("relic")!, size = 2.8 * t.stack.scale, uv = this.uv(slot);
+      s.relics.forEach((id, i) => {
+        const x = w.x + size * (1.1 + i * 1.05), y = hatTop + size * 0.75 + Math.sin(time * 1.6 + id) * 0.08, tw = 0.88 + 0.12 * Math.sin(time * 3 + id);
+        this.standing.add(x, y, w.z, size * 1.6, dot, col.r, col.g, col.b, 0.22 * tw);
+        this.standing.add(x, y, w.z, size, uv, col.r * tw, col.g * tw, col.b * tw, 1);
+      });
+    }
 
     // The ruts of legends' long charges, fading.
     for (const [id, ruts] of this.ruts) {
