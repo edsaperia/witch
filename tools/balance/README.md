@@ -18,6 +18,23 @@ Can she walk away from a charge or a leap?
 node tools/balance/charges.mjs [--dists 10,20,30,40] [--escapes walk,side,blink,blinkside,blinkthrough,stand] [--blink-side 8] [--blink-through 5] [--set path=value;...]
 ```
 
+## `coach.mjs`
+
+The coach: a search over the careful bot's options and numbers by a simple evolution strategy, every candidate playing the real rules headless on the training seeds and the best scored again on held-out seeds it never trained on.
+
+```
+node tools/balance/coach.mjs search [--gens 8] [--pop 8] [--seeds 4 (training seeds 0..N-1)] [--time 2700] [--workers 4] [--from best.json] [--out dir]
+node tools/balance/coach.mjs score [--bots skilled,champion,crude] [--opts file.json (the champion's options)] [--held 8 (held-out seeds 100..)] [--time 5400] [--json out.json]
+```
+
+## `coachwatch.mjs`
+
+The coach's eye on one run: a bot plays a seed headless and, each --every seconds, prints what decides a siege: her place and mode, her stack and parked sigils, every standing soundsystem's health, and the marchers by the soundsystem they're after with…
+
+```
+node tools/balance/coachwatch.mjs [--bot champion] [--seed 1000] [--time 2700] [--every 60] [--opts file.json]
+```
+
 ## `endgame.mjs`
 
 How long losing takes.

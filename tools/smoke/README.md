@@ -23,7 +23,7 @@ node tools/smoke/bedroom.cjs [now/3,bold/4,ref/5]
 The canopy's hole round her in ground mode: the built game at Ed's window, on the ground in the thickest wood near home on a seed, standing still and then walking, each shot after the art has come in.
 
 ```
-npm run build && node tools/smoke/canopy-hole.cjs [out dir] [seed] [query]
+npm run build && node tools/smoke/canopy-hole.cjs [out dir] [seed] [query]   (SPOT=x,z: just there; ZOOMS=1: every zoom step too; TREETOPS=1: up over the treetops and out)
 ```
 
 ## `creator-menus.cjs`

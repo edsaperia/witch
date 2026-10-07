@@ -8,7 +8,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`art-lab/`](art-lab/README.md): 1 script — build.mjs
 - [`art-style/`](art-style/README.md): 1 script — capture.cjs
 - [`attacks/`](attacks/README.md): 1 script — strip.cjs
-- [`balance/`](balance/README.md): 14 scripts — buffs.mjs, charges.mjs, endgame.mjs, fight.mjs, fightbot.mjs, leycross.mjs, lib.mjs, logistics.mjs, opening.mjs, playthrough.mjs, runbot.mjs, sim.mjs, states.mjs, waves.mjs
+- [`balance/`](balance/README.md): 16 scripts — buffs.mjs, charges.mjs, coach.mjs, coachwatch.mjs, endgame.mjs, fight.mjs, fightbot.mjs, leycross.mjs, lib.mjs, logistics.mjs, opening.mjs, playthrough.mjs, runbot.mjs, sim.mjs, states.mjs, waves.mjs
 - [`beach/`](beach/README.md): 5 scripts — approach.cjs, check.cjs, gaze-gif.cjs, map.mjs, spot.cjs
 - [`bench/`](bench/README.md): 4 scripts — compare.cjs, frames.cjs, rules.ts, run.mjs
 - [`config/`](config/README.md): 1 script — schema.mjs
@@ -16,6 +16,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`flora/`](flora/README.md): 3 scripts — bush-sheet.mjs, species-sheet.mjs, tuft-sheet.mjs
 - [`genome/`](genome/README.md): 1 script — compare.mjs
 - [`ground/`](ground/README.md): 1 script — ground-sheet.mjs
+- [`leash/`](leash/README.md): 1 script — route-strip.mjs
 - [`lighting/`](lighting/README.md): 1 script — survey.cjs
 - [`map/`](map/README.md): 3 scripts — leydepart.mjs, leyroute.mjs, shape.mjs
 - [`music-lab/`](music-lab/README.md): 11 scripts — analyse.cjs, analyse.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, flight.cjs, lab.ts, silence.cjs
