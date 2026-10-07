@@ -7,10 +7,15 @@ import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "../s
 import type { ShadowInstance } from "../shadows";
 import type { TypeArt } from "../assets";
 import { hash2 } from "../../rules/random";
-import { poseOf } from "../../rules/game";
+import { poseOf, type Game } from "../../rules/game";
 import type { View } from "../view";
 import { inView, viewRect } from "./culling";
 import { checkPops, mark } from "./pops";
+import { BarkFaces } from "../barkFaces";
+// Each map's bark faces (render/barkFaces.ts), made once; the forest's trees round a spot, for its anchors to find theirs.
+const FACES = new WeakMap<object, BarkFaces>(), NEAR = new WeakMap<object, (x: number, z: number, r: number) => Iterable<Plant>>();
+function facesOf(g: Game): BarkFaces { let f = FACES.get(g.map); if (!f) { const d = g.map.dancefloor; FACES.set(g.map, (f = new BarkFaces(g.map, d ? g.map.areaAt(d.x, d.z).cell : undefined))); } return f; }
+function nearTrees(g: Game): (x: number, z: number, r: number) => Iterable<Plant> { let n = NEAR.get(g.forest); if (!n) NEAR.set(g.forest, (n = (x, z, r) => g.forest.treesNear(x, z, r))); return n; }
 
 /** An index by weight, from a seeded integer (its last six digits as a share). */
 function pickWeighted(w: number[], seed: number): number {
@@ -100,7 +105,9 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     // drawn bigger, both easing out with it into the area's own forest)
     const gv = art.layout.grove, gs = p.grove ?? 0, GT = t.legendClearing.grove, u = ((p.variant >> 3) % 101) / 100;
     const G = gs > 0 && gv && u < GT.tallest * gs ? (u < GT.tallest * gs * 0.4 ? gv.giant : gv.tall) : undefined;
-    const f = art.atlas.frames, big = art.layout.big[G?.length ? G[p.variant % G.length] : pickWeighted(art.layout.bigWeight, p.variant)], whole = f[big.top ?? big.bot];
+    // (one of the area's two bark faces at most, render/barkFaces.ts: its faced tree instead)
+    const face = art.layout.face !== undefined && facesOf(g).isFace(p, nearTrees(g)) ? art.layout.face : -1;
+    const f = art.atlas.frames, big = art.layout.big[face >= 0 ? face : G?.length ? G[p.variant % G.length] : pickWeighted(art.layout.bigWeight, p.variant)], whole = f[big.top ?? big.bot];
     const boost = 1 + (GT.scale - 1) * gs * (0.75 + 0.5 * (((p.variant >> 5) % 97) / 96));
     if (!inView(v, p.x, p.z, whole.w * mpp * boost, whole.h * mpp * boost, margin, reach)) continue;
     // Squeeze the tallest variants so they never bury her flight (treeCap); a grove's a little beyond.

@@ -7,7 +7,7 @@ import { AREA_TYPES } from "./map";
 import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
 import { hasRune } from "./creatureStates";
-import { candleCount, candleMelt, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
+import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, c, STEP); };
@@ -242,16 +242,19 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     expect(g.leash.stack.filter(id => K.order.includes(id))).toEqual([]);
   });
 
-  it("lights a candle on her desk for every two seconds of the wait, melting one after another as she scratches (Ed, 2026-10-07)", () => {
-    const { g } = setUp(), W = g.witches[0], t = g.tuning;
-    const counts = [0, 1, 2, 3, 9].map(streak => candleCount(knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak })));
-    expect(counts).toEqual([3, 4, 5, 6, 6]); // (6, 8, 10, 12 s: the cap)
-    const K = knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak: 0 }), n = candleCount(K);
-    expect([0, 1, 2].map(i => candleMelt(K, K.inAt, i))).toEqual([0, 0, 0]); // (all whole as she arrives)
-    expect([0, 1, 2].map(i => candleMelt(K, K.backAt, i))).toEqual([1, 1, 1]); // (all gone as she can move)
+  it("lights a loading bar of candles on her desk, one a candleStep of the wait, the extra red, melting one after another as she scratches (Ed, 2026-10-07)", () => {
+    const { g } = setUp(), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; });
+    const kos = [0, 1, 2, 3, 9].map(streak => knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak }));
+    expect(kos.map(k => candleCount(k, t))).toEqual([6, 8, 10, 12, 12]); // (6, 8, 10, 12 s: the cap)
+    expect(kos.map(k => candleRed(k, t))).toEqual([0, 2, 4, 6, 6]); // (the base's 6 s white)
+    const half = withTuning(x => { x.knockout.candleStep = 0.5; });
+    expect([candleCount(kos[0], half), candleCount(kos[4], half), candleRed(kos[4], half)]).toEqual([12, 24, 12]);
+    const K = kos[1], n = candleCount(K, t);
+    expect([0, 1, 7].map(i => candleMelt(K, K.inAt, i, t))).toEqual([0, 0, 0]); // (all whole as she arrives)
+    expect([0, 1, 7].map(i => candleMelt(K, K.backAt, i, t))).toEqual([1, 1, 1]); // (all gone as she can move)
     const mid = K.inAt + (K.backAt - K.inAt) / n * 1.5;
-    expect(candleMelt(K, mid, 0)).toBe(1); expect(candleMelt(K, mid, 1)).toBeCloseTo(0.5, 6); expect(candleMelt(K, mid, 2)).toBe(0);
-    expect(candleCount(knockOut(W.leash, g.creatures, 100, withTuning(x => { x.knockout.respawn = NO_WAIT; }), {}))).toBe(0);
+    expect(candleMelt(K, mid, 0, t)).toBe(1); expect(candleMelt(K, mid, 1, t)).toBeCloseTo(0.5, 6); expect(candleMelt(K, mid, 2, t)).toBe(0);
+    expect(candleCount(knockOut(W.leash, g.creatures, 100, withTuning(x => { x.knockout.respawn = NO_WAIT; }), {}), t)).toBe(0);
   });
 
   it("floats her hat down first, then lets her sigils go within it; a first knockdown with her hat stays near Ed's six seconds", () => {
@@ -537,7 +540,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     let t = 0;
     for (; t < 10 && Math.hypot(wolf.x - g.witch.x, wolf.z - g.witch.z) > 18; t += STEP) stepGame(g, { ...idle, autoTalk: false }, STEP);
     expect(d0).toBeGreaterThan(20);
-    expect(t).toBeLessThan(0.5 + d0 / 15); // (a moment's reaction, then about 20 m/s)
+    expect(t).toBeLessThan(0.5 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0) + d0 / 15); // (a moment's reaction after its area's watched her come down, rules/wildWatch.ts, then about 20 m/s)
   }, 60000);
 
   it("scales a fight live: lengths with fight.scale, speeds with fight.speed", () => {
@@ -563,7 +566,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     const wolf = place(g, 0, "wolf", 2, site.x, site.z);
     wolf.cell = cell;
     g.witch = { ...g.witch, x: site.x + 8, z: site.z, mode: "ground", lift: 0, seated: false };
-    for (let i = 0; i < 2 / STEP; i++) stepGame(g, { ...idle, autoTalk: false }, STEP);
+    for (let i = 0; i < (2 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0)) / STEP; i++) stepGame(g, { ...idle, autoTalk: false }, STEP); // (after the watch, rules/wildWatch.ts)
     expect(wolf.fight?.target?.kind).toBe("witch");
     // She runs out of its area, far east, and keeps going.
     let maxOut = 0;

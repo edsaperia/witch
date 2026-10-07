@@ -333,7 +333,6 @@ export class Creator {
     const P = this.panel, g = this.g;
     P.innerHTML = ""; this.tabs.innerHTML = "";
     this.boxes.clear();
-    P.append(h("div", { html: `<div class="px-head">Your witch</div><div class="px-intro">The party's tonight! Dress her up while the forest grows: walk her to her things (WASD) or pick a tab (Q, E). When the scroll unrolls, click it (or Enter) to cast the party spell. R randomises.</div>` }));
     const row = (parent: HTMLElement, name: string) => { const r = h("div", { class: "px-row", style: { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }, html: `<span style="width:78px;opacity:.85">${name}</span>` }); parent.append(r); return r; };
     // The boxes, as tabs down the tapestry's left edge (Ed, 2026-10-06: "The different things you can change ... can be tabs
     // down the left side of the character creation pane"): its icon on the tab, its name as its tooltip and at the top of its

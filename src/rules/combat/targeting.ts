@@ -115,7 +115,7 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
     const d = Math.hypot(o.x - x, o.z - z);
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
-  if (huntsWitch(sideOf(c))) for (const v of w.witches) {
+  if (huntsWitch(sideOf(c)) && !(c.watchUntil !== undefined && w.time < c.watchUntil)) for (const v of w.witches) { // (not while it's still watching her: rules/wildWatch.ts)
     if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
     if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || !pastEdge(w, c, v.x, v.z)))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }

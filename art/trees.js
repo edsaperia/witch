@@ -217,6 +217,40 @@ function lowLife(t, r, st, s, P) {
       clump(sp, lerp2([x, y], b.end, .6), L * .5, 3.5 * s, st, r, { mat: r() < .5 ? M.LEAF3 : M.LEAF, ragged: 1.2 });
     });
   }
+  // hanging moss and vines (Ed, 2026-10-07, the eerie forest: "moss and vines only", nothing else hangs): pale beards of
+  // moss and dark vine ropes hanging from the underside of the crown and from the low boughs, in the areas that ask for
+  // them (st.treeHang, 0 to 1: their layout's hang). Only onto empty pixels below the crown's underside, so the crown
+  // (the top half) is untouched; listed in sp.low like the rest, so they hang in the bottom half, under the canopy.
+  const hang = st.treeHang || 0;
+  if (hang > 0) {
+    const under = new Int16Array(W).fill(-1); // each column's lowest leaf above the crown line
+    for (let x = 0; x < W; x++) for (let y = Math.min(H - 1, y0); y >= 0; y--) { const v = sp.m[y * W + x]; if (v && !WOOD.has(v)) { under[x] = y; break; } }
+    const cols = []; for (let x = 0; x < W; x++) if (under[x] >= 0) cols.push(x);
+    const strand = (x0, ya, L, mat, mat2, wave) => { // one strand, a pixel wide, swaying a little as it falls; its own end thinning
+      let x = x0;
+      for (let k = 0; k < L; k++) { const y = ya + k; if (y >= H - 2) break; x = x0 + Math.round(Math.sin(k * .35 + wave) * (k / L) * 1.5); const i = y * W + x;
+        if (x < 0 || x >= W || (sp.m[i] && !WOOD.has(sp.m[i]) && !low[i])) continue;
+        sp.px(x, y, k > L * .7 && k % 2 ? mat2 : mat, 0, 0, 1); low[i] = 1; }
+    };
+    const nMoss = cols.length ? Math.round(hang * (6 + cols.length / (2.5 * s))) : 0, nVine = cols.length ? Math.round(hang * (2 + cols.length / (7 * s))) : 0;
+    for (let k = 0; k < nMoss; k++) { // beards of moss: short, pale, in tufts of two or three strands
+      const x = pick(r, cols), L = Math.round(uni(r, 8, 20) * s * (.6 + hang * .6)), n = 2 + (r() < .5 ? 1 : 0), w = r() * 6;
+      for (let j = 0; j < n; j++) strand(x + j - 1, under[Math.max(0, Math.min(W - 1, x + j - 1))] + 1 || under[x] + 1, Math.round(L * (1 - j * .25)), M.MOSS, M.LEAF2, w + j);
+    }
+    for (let k = 0; k < nVine; k++) { // vines: long dark ropes, one strand, a leaf now and then
+      const x = pick(r, cols), L = Math.round(uni(r, 20, 42) * s * (.6 + hang * .6)), w = r() * 6;
+      strand(x, under[x] + 1, L, M.LEAF3, M.LEAF3, w);
+      for (let y = under[x] + 3; y < under[x] + L - 2; y += Math.max(3, Math.round(4 * s))) { const xx = x + Math.round(Math.sin((y - under[x]) * .35 + w) * ((y - under[x]) / L) * 1.5) + (hash2(x, y, 21) < .5 ? -1 : 1), i = y * W + xx;
+        if (y < H - 2 && xx >= 0 && xx < W && !sp.m[i]) { sp.px(xx, y, M.LEAF, 0, 0, .8); low[i] = 1; } }
+    }
+    // and on the trunk and its low boughs, where she sees them from the ground (the crown's underside is cut away round her
+    // there): beards of moss draped off the bark's edges, and vines trailing down the trunk's side
+    const nDrape = Math.round(hang * (6 + (H - y0) / (5 * s)));
+    for (let k = 0; k < nDrape; k++) { const p = spot(); if (!p || p.y > y0 + (H - y0) * .8) continue; const L = Math.round(uni(r, 6, 14) * s * (.6 + hang * .5)), w = r() * 6;
+      strand(p.x + p.side, p.y, L, M.MOSS, M.LEAF2, w); if (r() < .5) strand(p.x + p.side * 2, p.y + 1, Math.round(L * .7), M.MOSS, M.LEAF2, w + 1); }
+    const nTrail = Math.round(hang * (2 + (H - y0) / (14 * s)));
+    for (let k = 0; k < nTrail; k++) { const p = spot(); if (!p || p.y > y0 + (H - y0) * .5) continue; strand(p.x + p.side, p.y, Math.round(uni(r, 12, 24) * s * (.6 + hang * .5)), M.LEAF3, M.LEAF, r() * 6); }
+  }
   clusterClumps(sp);
   return t;
 }
@@ -289,7 +323,7 @@ export function treeColours(r, st, type, blob = false) {
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
   const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = nightGreen((S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh); // hueAbs: a hue of its own, whatever the area's; never lime (nightGreen)
   const c = {
-    [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
+    [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212], [M.MOSS]: hsv2rgb(.24, .22 * st.sat, .6), // (hanging beard moss: pale grey-green)
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .46 * st.sat * sa), Math.min(1, .68 * va)), /* (the night palette: the lit tone quieter, so a lit crown never glows) */ [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
   if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and

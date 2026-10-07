@@ -69,6 +69,8 @@ const SOUNDS: [string, number, Play][] = [
   ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
   ["deck-scratch", 4.2, () => {}],
   ["deck-whoop", 0.8, s => s.whoop()],
+  ...(["oaks", "ravine", "stones", "cave"] as const).map(k => [`night-${k}`, 16, () => {}] as [string, number, Play]),
+  ...(["oaks", "ravine", "stones", "cave", "wet"] as const).map(k => [`ambience-${k}`, 16, () => {}] as [string, number, Play]),
   ["deck-routine", 9, () => {}],
 ];
 
@@ -97,6 +99,10 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "shoes") {
     // four dancers' party shoes on the beat at 120 bpm
     for (let b = 0; b < 6; b++) void oc.suspend(Math.round(b * 0.5 * rate) / rate).then(() => { s.taps(4, 0, 1); return oc.resume(); });
+  } else if (name.startsWith("ambience-")) {
+    // an area's ambience in play (night.ts layers without their bed), up over 2 s and held: what she hears in the wild
+    const kind = name.slice("ambience-".length) as NightKind;
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = Math.min(1, sec / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.ambience(kind, L); return oc.resume(); }); }
   } else if (name.startsWith("night-")) {
     // the party's over: the night coming in over 3 s, then held (the crossfade: the woods, then into a bog at 8 s)
     const kind = name.slice(6);

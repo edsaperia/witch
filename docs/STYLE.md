@@ -27,9 +27,10 @@ Where the game breaks rule 1 today (each is a ticket for the builder who owns it
 | Wild legends | 1.35, breathing ±4% (**fixed by #363**: 1, breath as a whole-pixel squash) | legends |
 | Set pieces | `setPieceScale` 1.8 | scenery |
 | Rune markers | `runeMarkers.scale` 2.25 | markers |
-| Home speaker boot stones, speaker tops | 0.55, 0.96 | home |
+| Home speaker boot stones | 0.55 (**fixed**: baked at 0.55 of a rune stone, `SPEAKER_STONE`, drawn at 1; the speaker tops' 0.96 is only its laser's height, not a draw scale) | home |
 | Tall trees | squeezed by `treeCap` past 20 m | trees |
-| Party objects, beach plants, fires, an evolving pop | per-instance `scale` | party, beach |
+| Party objects and their campfires | their pop-in `scale` (**fixed**: they pop and grow by `sx`/`sy`, whole art pixels) | party |
+| Beach plants, berries (their regrowth and the nibble's sparkles), an evolving pop | per-instance `scale` | beach, berries |
 
 The camera is a perspective camera, so an art pixel is about 1.1 screen pixels at Ed's 1240-high window at the starting zoom (0.64 at 720 high, 0.43 from the treetops). That resampling is accepted: the rule is about what we bake and draw, not the camera.
 

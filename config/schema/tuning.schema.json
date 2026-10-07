@@ -286,21 +286,51 @@
               "minimum": 0,
               "maximum": 1
             },
-            "gazeAngle": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistance": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistanceSeaBehind": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeLook": {
-              "type": "number",
-              "minimum": 0
+            "bearings": {
+              "type": "object",
+              "properties": {
+                "angle": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "distance": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "look": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "side": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "bend": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "required": [
+                "angle",
+                "distance",
+                "look",
+                "side",
+                "bend"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -308,10 +338,7 @@
             "angle",
             "curve",
             "seaward",
-            "gazeAngle",
-            "gazeDistance",
-            "gazeDistanceSeaBehind",
-            "gazeLook"
+            "bearings"
           ],
           "additionalProperties": false
         }
@@ -1872,6 +1899,10 @@
             "minScratch"
           ],
           "additionalProperties": false
+        },
+        "candleStep": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -1883,7 +1914,8 @@
         "dropHat",
         "hatFloat",
         "dim",
-        "respawn"
+        "respawn",
+        "candleStep"
       ],
       "additionalProperties": false
     },
@@ -2814,6 +2846,33 @@
       ],
       "additionalProperties": false
     },
+    "wildWatch": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0
+        },
+        "forget": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hangBack": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "time",
+        "forget",
+        "hangBack"
+      ],
+      "additionalProperties": false
+    },
     "naps": {
       "type": "object",
       "properties": {
@@ -3146,9 +3205,12 @@
           "type": "number",
           "minimum": 0
         },
-        "questFar": {
+        "questRoll": {
           "type": "number",
           "minimum": 0
+        },
+        "questLater": {
+          "type": "boolean"
         },
         "bombard": {
           "type": "object",
@@ -3211,7 +3273,8 @@
         "buffPower",
         "happyRange",
         "questCap",
-        "questFar",
+        "questRoll",
+        "questLater",
         "bombard",
         "stomp",
         "partyEgg",
@@ -3285,6 +3348,14 @@
             "steps": {
               "type": "number",
               "minimum": 0
+            },
+            "dark": {
+              "type": "number",
+              "minimum": 0
+            },
+            "liftMax": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -3292,7 +3363,9 @@
             "rim",
             "floor",
             "nap",
-            "steps"
+            "steps",
+            "dark",
+            "liftMax"
           ],
           "additionalProperties": false
         }
@@ -4900,6 +4973,39 @@
           ],
           "additionalProperties": false
         },
+        "ambience": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "noise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sounds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "bed",
+            "noise",
+            "sounds",
+            "quiet"
+          ],
+          "additionalProperties": false
+        },
         "night": {
           "type": "object",
           "properties": {
@@ -4996,6 +5102,7 @@
         "meadow",
         "whale",
         "waves",
+        "ambience",
         "night"
       ],
       "additionalProperties": false
@@ -8009,6 +8116,7 @@
     "attackFx",
     "combat",
     "notice",
+    "wildWatch",
     "naps",
     "guard",
     "population",
