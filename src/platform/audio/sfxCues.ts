@@ -40,6 +40,7 @@ export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(
 import { nightKind } from "./night";
 import { AREA_TYPES } from "../../rules/map";
 import { leyPulse, pointerShown, type P2 } from "../../rules/leypulse";
+import { aggroOf } from "../../rules/wildWatch";
 import { fireworkShells, type Shell } from "../../rules/fireworks";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
@@ -120,6 +121,7 @@ export class SfxCues {
     this.picnic(h);
     this.sea(h);
     this.sparkler(h);
+    this.aggro(h);
     this.fireworks(h);
     this.night(h);
     this.ambience(h);
@@ -516,6 +518,23 @@ export class SfxCues {
     this.shows = this.shows.filter(s => !s.cheered || s.shells.some(x => !x.popped));
   }
   private shows: { at: number; x: number; z: number; cheered: boolean; cheerAt: number; shells: (Shell & { launched: boolean; popped: boolean })[] }[] = [];
+
+  /** The wild watch's warning (art builder 3's aggroOf, rules/wildWatch.ts): rising while a wild area's watchers stare at
+   *  her; when it ends, a hit if the watch ran its course (they attack) or a fall if it was called off (she rose, left or
+   *  was knocked out). aggroOf goes null on the attack's own step too, so the last k tells which (art builder 3: k reaches
+   *  1 on the step the watch ends; a call-off leaves it below about 0.98). */
+  private aggro({ g }: Here): void {
+    if (!g.tuning.sfx.aggro) return;
+    const a = aggroOf(g);
+    if (a) { this.aggroK = a.k; this.aggroDanger = a.danger; this.sfx.aggro(a.k, a.danger); return; }
+    if (this.aggroK === null) return;
+    const w = g.witches[0], attacked = this.aggroK >= 0.98 && !!w && w.body.mode === "ground" && !w.ko;
+    this.aggroK = null;
+    if (attacked) this.sfx.aggro(1, this.aggroDanger);
+    this.sfx.aggro(null);
+  }
+  private aggroK: number | null = null;
+  private aggroDanger = 0;
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {
