@@ -135,12 +135,26 @@ The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises 
 | `ground.layout.reach` | number | 0 to … |
 | `ground.layout.trees` | number | 0 to … |
 
-### `glades`
+### `wisps`, `glades`
 
 The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it."; render/glades.ts): art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. hue, sat: the twilight's colour (a cool violet dusk, against the party's amber); light: its pool, filling the circle and soft at its edge; edge: the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one (Ed, 2026-10-06: "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."): the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds. motes: per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright.
 
 | knob | type | range |
 |---|---|---|
+| `wisps.on` | boolean |  |
+| `wisps.cell` | number | 0 to … |
+| `wisps.reach` | number | 0 to … |
+| `wisps.chance` | number | 0 to … |
+| `wisps.partyNear` | number | 0 to … |
+| `wisps.partyFar` | number | 0 to … |
+| `wisps.height` | array of number |  |
+| `wisps.drift` | number | 0 to … |
+| `wisps.period` | number | 0 to … |
+| `wisps.size` | number | 0 to … |
+| `wisps.halo` | number | 0 to … |
+| `wisps.hue` | number | 0 to … |
+| `wisps.sat` | number | 0 to … |
+| `wisps.bright` | number | 0 to … |
 | `glades.on` | boolean |  |
 | `glades.radius` | number | 0 to … |
 | `glades.top` | number | 0 to … |
@@ -482,7 +496,7 @@ The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) b
 
 ### `knockout`
 
-Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each sigil put down where its animal stands, so it stays hers, parked (#87, 2026-10-05; at first each creature turned neutral as its sigil went and walked to the nearest area of its own kind, where it turned wild again); then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this. One timeline (Ed, 2026-10-07), the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max (Ed, 2026-10-07: 6, 8, 10, 12). releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. candleStep (Ed, 2026-10-07: the candles along her desk are a loading bar): one candle for every candleStep seconds of the wait (1 or 0.5), white for the base wait, red for the extra from knockdowns in a row; the red burn first.
+Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each sigil put down where its animal stands, so it stays hers, parked (#87, 2026-10-05; at first each creature turned neutral as its sigil went and walked to the nearest area of its own kind, where it turned wild again); then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this. One timeline (Ed, 2026-10-07), the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max (Ed, 2026-10-07: 6, 8, 10, 12). releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. dim (drawing only; Ed, 2026-10-07: "the rest of the screen darkened"): how much the screen dims round her while her hat floats off, from the knockdown to her sparkle away (her spot and the hat left lit); no hat, no dim. candleStep (Ed, 2026-10-07: the candles along her desk are a loading bar): one candle for every candleStep seconds of the wait (1 or 0.5), white for the base wait, red for the extra from knockdowns in a row; the red burn first.
 
 | knob | type | range |
 |---|---|---|
@@ -493,6 +507,7 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 | `knockout.legendsLoyal` | boolean |  |
 | `knockout.dropHat` | boolean |  |
 | `knockout.hatFloat` | number | 0 to … |
+| `knockout.dim` | number | 0 to … |
 | `knockout.respawn.base` | number | 0 to … |
 | `knockout.respawn.step` | number | 0 to … |
 | `knockout.respawn.max` | number | 0 to … |

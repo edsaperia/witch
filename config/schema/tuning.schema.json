@@ -568,6 +568,86 @@
       ],
       "additionalProperties": false
     },
+    "wisps": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "cell": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyNear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyFar": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "period": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "halo": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "cell",
+        "reach",
+        "chance",
+        "partyNear",
+        "partyFar",
+        "height",
+        "drift",
+        "period",
+        "size",
+        "halo",
+        "hue",
+        "sat",
+        "bright"
+      ],
+      "additionalProperties": false
+    },
     "glades": {
       "type": "object",
       "properties": {
@@ -1756,6 +1836,10 @@
           "type": "number",
           "minimum": 0
         },
+        "dim": {
+          "type": "number",
+          "minimum": 0
+        },
         "respawn": {
           "type": "object",
           "properties": {
@@ -1802,6 +1886,7 @@
         "legendsLoyal",
         "dropHat",
         "hatFloat",
+        "dim",
         "respawn",
         "candleStep"
       ],
@@ -7858,6 +7943,7 @@
     "areaEdgeBlend",
     "groundBlend",
     "ground",
+    "wisps",
     "glades",
     "treehouse",
     "home",
