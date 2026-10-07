@@ -96,7 +96,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       else {
         // Her set's routine (rules/djSet.ts: the needle drop after the cast, the scratching after a respawn) over her ordinary set.
         const R = djRoutineAt(g, time);
-        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null || (!!KO && irisOn && ht >= atDecksFrom(KO, true))); // (mid-scratch already as the iris opens on her) // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
+        // (from the iris's cut, render/koIris.ts, to her respawn routine at ko.inAt: her hand on the record, mid-scratch, as it opens on her)
+        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : KO && irisOn && ht >= atDecksFrom(KO, true) && ht < KO.inAt ? v.assets.djGestureFrame("scratch", 0) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
@@ -165,7 +166,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   v.post.koDim = KO && hat && KD > 0 ? KD * Math.min(1, Math.max(0, (ht - KO.at) / 0.5)) * (IR ? (IR.on === "hat" ? 1 : 0) : 1 - Math.min(1, Math.max(0, (ht - KO.teleportAt) / 0.6))) : 0;
   if (IR) {
     // on the hat, then from where it was on screen over to her at the decks as it opens (no jump at the cut)
-    let ctr = IR.on === "hat" ? onScreen(v, hat!.x, hat!.y + groundHeight(hat!.x, hat!.z) + hatFrame!.h * v.mpp * 0.3, hat!.z) : onScreen(v, wx, wyy + groundHeight(wx, wz) + (hatTop - wyy) * 0.4, wz);
+    let ctr = IR.on === "hat" ? onScreen(v, hat!.x, hat!.y + groundHeight(hat!.x, hat!.z) + hatFrame!.h * v.mpp * 0.3, hat!.z) : T.platter ? (({ x, y, z }) => onScreen(v, x, y, z))(onTreehouse(T.platter.x, T.platter.y)) : onScreen(v, wx, wyy + groundHeight(wx, wz) + (hatTop - wyy) * 0.4, wz); // (on the record under her hand: the treehouse's platter anchor)
     if (IR.on === "hat") v.irisHat = ctr; else if (v.irisHat) ctr = [v.irisHat[0] + (ctr[0] - v.irisHat[0]) * IR.move, v.irisHat[1] + (ctr[1] - v.irisHat[1]) * IR.move];
     v.post.iris.set(ctr[0], ctr[1], IR.r, IR.dark); v.post.iris2.set(IR.spin, IR.label, IR.smear, IR.labelR);
   } else { v.post.iris.set(0, 0, 0, 0); v.post.iris2.set(0, 0, 0, 0); }
