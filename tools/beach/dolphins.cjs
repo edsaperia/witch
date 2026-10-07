@@ -2,11 +2,11 @@
 // her set down on the sand of the east coast facing the sea, then 24 s stepped a fixed 1/30 s, lying down to stargaze half
 // way (STARGAZE=0 to stay standing). Saves the frames with a leap on screen as dolphins-<k>.png and dolphins.gif.
 // COAST=west films the west coast's kraken instead (render/kraken.ts), its slot clock shortened so one rises in the film
-// (kraken-<k>.png, kraken.gif).
+// (kraken-<k>.png, kraken.gif). NEAR=1 brings them close to her (to see the drawing, whatever the camera).
 //   npm run build && node tools/beach/dolphins.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), { execFileSync } = require("child_process");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
-const [outDir = "previews", seed = "123"] = process.argv.slice(2), west = process.env.COAST === "west", name = west ? "kraken" : "dolphins";
+const [outDir = "previews", seed = "123"] = process.argv.slice(2), west = process.env.COAST === "west", near = process.env.NEAR === "1", name = west ? "kraken" : "dolphins";
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist")), tmp = fs.mkdtempSync(path.join(os.tmpdir(), "witch-dolphins-"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2" };
 (async () => {
@@ -23,7 +23,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 600000, polling: 500 });
     // onto the east coast's sand, a little in from the edge
-    const at = await page.evaluate(west => { const g = window.witch.game, c = g.map.bounds.circle, x = west ? c.x - c.r + 20 : c.x + c.r - 20; if (west) g.tuning.beach = { ...g.tuning.beach, kraken: { every: 26, chance: 1, head: 1 } }; g.witch = { ...g.witch, x, z: c.z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };  return { x, z: c.z, r: c.r }; }, west);
+    const at = await page.evaluate(([west, near]) => { const g = window.witch.game, c = g.map.bounds.circle, x = west ? c.x - c.r + 20 : c.x + c.r - 20; if (west) g.tuning.beach = { ...g.tuning.beach, kraken: { every: 26, chance: 1, head: 1, ...(near ? { far: [25, 30] } : {}) } }; else if (near) g.tuning.beach = { ...g.tuning.beach, dolphins: { ahead: [5, 10], out: [8, 12], every: [3, 4] } }; g.witch = { ...g.witch, x, z: c.z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };  return { x, z: c.z, r: c.r }; }, [west, near]);
     console.log(west ? "on the west coast" : "on the east coast", JSON.stringify(at));
     const step = (o, n = 1) => page.evaluate(([o, n]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 30); return window.witch.view.beachView.on; }, [o, n]);
     console.log("beach shown", await step({}, 60));

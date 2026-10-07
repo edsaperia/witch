@@ -21,12 +21,12 @@ export function krakenColours() {
     [M.LINE]: [12, 8, 18],
   };
 }
-const U = 1.9; // metres a model unit
+const KU = 1.9; // metres a model unit
 // Each frame: how much of it is out of the water (0..1) and how far its tip has curled over (radians along its last third).
-const POSE = [[.35, .2], [.7, .5], [1, 1.2], [1, 2.4], [.75, 1.6], [.35, .8]];
+const KRAKEN_POSE = [[.35, .2], [.7, .5], [1, 1.2], [1, 2.4], [.75, 1.6], [.35, .8]];
 
-function tentacleModel(frame) {
-  const [out, curl] = POSE[Math.max(0, Math.min(POSE.length - 1, frame))], H = KRAKEN.tall / U * out, n = 14, m = new Model({ blend: .05 }), pts = [];
+function krakenTentacleModel(frame) {
+  const [out, curl] = KRAKEN_POSE[Math.max(0, Math.min(KRAKEN_POSE.length - 1, frame))], H = KRAKEN.tall / KU * out, n = 14, m = new Model({ blend: .05 }), pts = [];
   // its spine: up from the water, leaning a little, then the tip curling over (to +x), the curl tightening along it
   let p = [0, -.3, 0], a = Math.PI / 2 - .12; const step = (H + .3) / n;
   for (let i = 0; i <= n; i++) {
@@ -47,7 +47,7 @@ function tentacleModel(frame) {
   m.ell([0, 0, 0], [.6, .02, .3], M.RUNE, { group: 2 }); // the water stirred round its foot
   return m;
 }
-function headModel(frame) {
+function krakenHeadModel(frame) {
   const k = Math.max(0, Math.min(KRAKEN.headFrames - 1, frame)), up = [.35, .8, .9][k], m = new Model({ blend: .05 });
   m.ell([0, -.6 + up, 0], [1.6, 1.1, 1.1], M.BODY, { group: 1, rough: .04, paint: q => q[1] > -.6 + up + 1.02 ? M.GLINT : q[1] > -.6 + up + .7 ? M.BODY2 : undefined }); // the dome, a thin crown of moonlight on it
   if (k === 2) { const e = [.95, -.6 + up + .25, .78]; m.ell(e, [.2, .3, .24], M.WOKEN, { group: 2 }); m.ell(v3.add(e, [.06, 0, .08]), [.05, .26, .08], M.NOSE, { group: 3 }); } // its great eye, slit-pupilled
@@ -55,14 +55,14 @@ function headModel(frame) {
   m.ell([0, 0, 0], [2, .02, 1], M.RUNE, { group: 10 }); // its wake on the water
   return m;
 }
-const below = (sp, project) => { // everything under the water line cut away (the sea hides it), so its foot is the bottom row
+const krakenBelow = (sp, project) => { // everything under the water line cut away (the sea hides it), so its foot is the bottom row
   const [ox, wy] = project([0, 0, 0]), H = Math.max(1, Math.min(sp.h, Math.round(wy) + 1)), out = new Sprite(sp.w, H);
   for (let y = 0; y < H; y++) for (let x = 0; x < sp.w; x++) { const i = y * sp.w + x; if (sp.m[i]) out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
   out.origin = { x: +ox.toFixed(1), y: H };
   return out;
 };
-const draw = (m, st) => { const { sp, project } = render(m, { scale: witchPixelsPerUnit(st), yaw: .25 }); return below(sp, project); };
+const krakenDraw = (m, st) => { const { sp, project } = render(m, { scale: witchPixelsPerUnit(st), yaw: .25 }); return krakenBelow(sp, project); };
 /** One tentacle at `frame` (0 rising .. KRAKEN.frames - 1 nearly gone). */
-export const krakenTentacle = (st = {}, { frame = 0 } = {}) => draw(tentacleModel(frame), st);
+export const krakenTentacle = (st = {}, { frame = 0 } = {}) => krakenDraw(krakenTentacleModel(frame), st);
 /** The dome of its head at `frame` (0 a hump, 1 the dome, 2 its eye open). */
-export const krakenHead = (st = {}, { frame = 0 } = {}) => draw(headModel(frame), st);
+export const krakenHead = (st = {}, { frame = 0 } = {}) => krakenDraw(krakenHeadModel(frame), st);
