@@ -6398,6 +6398,44 @@
       "type": "number",
       "minimum": 0
     },
+    "sigilSpill": {
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stack": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackHeight": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "strength",
+        "reach",
+        "height",
+        "stack",
+        "stackReach",
+        "stackHeight"
+      ],
+      "additionalProperties": false
+    },
     "nightLight": {
       "type": "object",
       "properties": {
@@ -7763,7 +7801,8 @@
     "looks",
     "tone",
     "bloom",
-    "tiltShift"
+    "tiltShift",
+    "sigilSpill"
   ],
   "additionalProperties": false
 }
