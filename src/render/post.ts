@@ -12,7 +12,7 @@ import { hsv2rgb } from "../../art/generator.js";
 export interface PostTuning { light?: import("../rules/tuning").Tuning["light"];
   bloom: { on: boolean; strength: number; threshold: number };
   tone: { black: number; gamma: number; ambient: number };
-  tiltShift: { on: boolean; where: "before" | "after"; /** Whether the sky over the bend is blurred too (Ed, round 12); false leaves it sharp. */ sky?: boolean; /** The share of the blur the sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", "the stars don't have to be crisp, just perceptible"); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
+  tiltShift: { on: boolean; /** The share of the blur the sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", "the stars don't have to be crisp, just perceptible"); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
 }
 
 const VERT = "varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
@@ -67,7 +67,7 @@ uniform sampler2D uSrc, uDepth; uniform vec2 uTexel, uDir; uniform float uStreng
 void main() {
   // The sky over the bend (nothing drawn there: the far plane) is blurred with everything else, as
   // the last pass over the finished, bent image (Ed, round 12: "the tilt shift effect has to be applied
-  // after the bend shader"); tiltShift.sky false leaves it sharp, as it was, its stars crisp pixels.
+  // after the bend shader").
   float d = max(0.0, abs(vUv.y - uCentre) - uBand * 0.5) / max(0.05, 0.5 - uBand * 0.5);
   // The sky (nothing drawn there: the far plane) takes only uSkyBlur of it, so its stars stay perceptible, softly.
   float r = uStrength * smoothstep(0.0, 1.0, d) * (texture2D(uDepth, vUv).r >= 0.99999 ? uSkyBlur : 1.0);
@@ -93,7 +93,7 @@ export class Post {
   private bloomB = target(1, 1, THREE.LinearFilter);
   private a = target(1, 1, THREE.LinearFilter);
   private b = target(1, 1, THREE.LinearFilter);
-  // The smooth effects layer (?fx=smooth): mist as soft alpha, blurred, scaled up linearly.
+  // The smooth effects layer: mist as soft alpha, blurred, scaled up linearly.
   private fx = target(1, 1, THREE.LinearFilter);
   private fxB = target(1, 1, THREE.LinearFilter);
   /** What goes into the smooth effects layer; null for none. */
@@ -122,12 +122,10 @@ export class Post {
     this.quad.frustumCulled = false;
   }
 
-  /** Whether the canvas holds the full-resolution image (tilt-shift after the upscale). */
   /** How far the witch is risen (0 ground, 1 treetops): the tilt-shift blends from the ground's to the treetops'. */
   lift = 0;
   /** Her light's pool on screen (0 to 1, y up): its centre and half-widths, spared from the grade (z 0: none). */
   get pool(): THREE.Vector4 { return this.mats.composite.uniforms.uPool.value; }
-  get fullResolution(): boolean { return this.tuning.tiltShift.on && this.tuning.tiltShift.where === "after"; }
 
   /** lowW x lowH: the scene; outW x outH: the canvas. */
   /** The low resolution, shared with shaders that read the scene's depth. */
@@ -140,8 +138,7 @@ export class Post {
     this.scene.setSize(lowW, lowH);
     const bw = Math.max(1, Math.round(lowW / 2)), bh = Math.max(1, Math.round(lowH / 2));
     this.bright.setSize(bw, bh); this.bloomB.setSize(bw, bh);
-    const tw = this.fullResolution ? outW : lowW, th = this.fullResolution ? outH : lowH;
-    this.a.setSize(tw, th); this.b.setSize(tw, th);
+    this.a.setSize(lowW, lowH); this.b.setSize(lowW, lowH);
   }
 
   private pass(name: string, to: THREE.WebGLRenderTarget | null, set: (u: Record<string, THREE.IUniform>) => void): void {
@@ -194,12 +191,12 @@ export class Post {
       this.setGrade(u);
     });
     if (!tilt) return;
-    // The blur radius is given in low-res pixels; after the upscale it covers the same ground.
-    const w = this.a.width, h = this.a.height, scale = this.fullResolution ? this.out.y / this.low.y : 1;
+    // The blur at the low resolution, before the browser scales the picture up.
+    const w = this.a.width, h = this.a.height;
     const common = (u: Record<string, THREE.IUniform>) => {
       const T = t.tiltShift, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
-      u.uDepth.value = this.scene.depthTexture; u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = (T.strength + (T.treetop.strength - T.strength) * k2) * scale; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
-      u.uSkyBlur.value = T.sky === false ? 0 : T.skyBlur ?? 1;
+      u.uDepth.value = this.scene.depthTexture; u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = T.strength + (T.treetop.strength - T.strength) * k2; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
+      u.uSkyBlur.value = T.skyBlur ?? 1;
     };
     this.pass("tilt", this.b, u => { common(u); u.uSrc.value = this.a.texture; u.uDir.value.set(1, 0); });
     this.pass("tilt", null, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });

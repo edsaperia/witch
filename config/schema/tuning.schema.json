@@ -3718,9 +3718,6 @@
     "runeMarkers": {
       "type": "object",
       "properties": {
-        "awakeStyle": {
-          "type": "string"
-        },
         "laser": {
           "type": "object",
           "properties": {
@@ -3850,7 +3847,6 @@
         }
       },
       "required": [
-        "awakeStyle",
         "laser",
         "scale",
         "beamHeight",
@@ -5108,9 +5104,6 @@
         "picker": {
           "type": "string"
         },
-        "route": {
-          "type": "string"
-        },
         "noisy": {
           "type": "object",
           "properties": {
@@ -5159,7 +5152,6 @@
         "startDelay",
         "areasPerWave",
         "picker",
-        "route",
         "noisy",
         "transition",
         "lightReach",
@@ -6114,9 +6106,6 @@
     "find": {
       "type": "object",
       "properties": {
-        "on": {
-          "type": "boolean"
-        },
         "eyeshine": {
           "type": "object",
           "properties": {
@@ -6162,7 +6151,6 @@
         }
       },
       "required": [
-        "on",
         "eyeshine",
         "lightFloor",
         "rim",
@@ -7542,13 +7530,6 @@
       ],
       "additionalProperties": false
     },
-    "fx": {
-      "type": "string",
-      "enum": [
-        "smooth",
-        "pixel"
-      ]
-    },
     "moonbeams": {
       "type": "number",
       "minimum": 0
@@ -7686,16 +7667,6 @@
         "on": {
           "type": "boolean"
         },
-        "where": {
-          "type": "string",
-          "enum": [
-            "before",
-            "after"
-          ]
-        },
-        "sky": {
-          "type": "boolean"
-        },
         "skyBlur": {
           "type": "number",
           "minimum": 0
@@ -7733,8 +7704,6 @@
       },
       "required": [
         "on",
-        "where",
-        "sky",
         "skyBlur",
         "strength",
         "band",
@@ -7882,7 +7851,6 @@
     "haze",
     "shadows",
     "mist",
-    "fx",
     "moonbeams",
     "looks",
     "tone",
