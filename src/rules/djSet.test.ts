@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { newBeatClock, beatAt } from "./beat";
 import { PARTY_CAST, type PartyState } from "./party";
-import { DJ_ROUTINE, DJ_ROUTINE_BEATS, djRoutineAt, djRoutineStart, djStrokes, koCandles } from "./djSet";
+import { DJ_ROUTINE, DJ_ROUTINE_BEATS, djRoutineAt, djRoutineStart, djStrokes } from "./djSet";
 import { DJ_GESTURES } from "../../art/witch.js";
 
 const game = (spellAt: number | null | undefined, seated = true, ko: { inAt: number; backAt: number } | null = null) =>
@@ -56,16 +56,5 @@ describe("her set at the decks (rules/djSet.ts)", () => {
     const g = { ...game(undefined, true, { inAt: 40, backAt: 46 }), clock: { time: 60 }, herTime: 50 }; // the world 10 s ahead (a slowed circle once)
     expect(djRoutineStart(g, 45)).toBeNull(); // in her time that's before she's back
     expect(djRoutineAt(g, 51)?.gesture).toBe("scratch"); expect(djRoutineAt(g, 52)?.gesture).toBe("chirp"); // back at 50 in the world's time
-  });
-  it("lights a candle for every 2 s of the wait, melting from the right as she scratches, the last out as she's free", () => {
-    const at = (ko: { at: number; inAt: number; backAt: number }, t: number) => koCandles({ ...game(undefined, true, ko), clock: { time: t }, herTime: t });
-    const first = { at: 0, inAt: 4.2, backAt: 6 }, worst = { at: 0, inAt: 4.2, backAt: 12 };
-    expect(at(first, 4.2)?.n).toBe(3); expect(at(worst, 4.2)?.n).toBe(6);
-    expect(at(first, 4.2)!.melt).toEqual([0, 0, 0]); // all whole as she's back
-    const mid = at(worst, 4.2 + 7.8 / 2)!.melt; // halfway: the right three gone, the left three whole
-    for (const m of mid.slice(3)) expect(m).toBeCloseTo(1, 6); for (const m of mid.slice(0, 3)) expect(m).toBeCloseTo(0, 6);
-    expect(at(first, 6)!.melt).toEqual([1, 1, 1]); // free: all out
-    expect(at(first, 2)).toBeNull(); expect(at(first, 7.1)).toBeNull(); // only round her time at the decks (and a second's smoke)
-    expect(koCandles(game(undefined))).toBeNull();
   });
 });
