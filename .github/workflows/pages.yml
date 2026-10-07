@@ -58,7 +58,7 @@ jobs:
           # ~56 MB of pictures every preview had grown to ~60 MB): a pull request's preview leaves the Making Of out (main's
           # has it, at /witch/making-of/) and replaces its folder rather than adding to it; main's deploy drops the
           # folders of pull requests no longer open (the remove job below only catches the ones that close from now on).
-          if [ "$DEST" != "." ]; then rm -rf ../dist/making-of; else
+          if [ "$DEST" != "." ]; then rm -rf dist/making-of; else  # (from the checkout, before the cd into site/ below)
             OPEN=" $(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" --paginate --jq '.[].number' | tr '\n' ' ') "
           fi
           git init -q site && cd site
