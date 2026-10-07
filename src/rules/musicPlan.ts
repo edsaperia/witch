@@ -8,6 +8,7 @@
 // Hooks for later: knockedOut plays the knockout section (a breakdown under a filter); siege adds the
 // style's siege parts (rules/musicScore.ts); party, near a woken area that has joined the party,
 // its party parts. Numbers only: the platform plays them.
+import { djIntroEnd } from "./djSet";
 import { beatAt, type BeatClock } from "./beat";
 import type { Game } from "./game";
 import type { Creature } from "./creatures";
@@ -34,6 +35,11 @@ export interface MusicCue {
    *  bar each speaker turned on, of `speakers` in all. Absent: the music whole (previews, the lab). */
   speakerBars?: number[];
   speakers?: number;
+  /** The bar her needle-drop routine ends in (rules/djSet.ts djIntroEnd; Ed, 2026-10-07: the first music drops straight after
+   *  it, before any speaker): from the bar line after it the intro's first layer plays. */
+  dropBar?: number;
+  /** How many of the intro's layers drop then (music.dropLayers), the speakers adding theirs on top. */
+  dropLayers?: number;
   /** In a sleeping legend's clearing on the ground (Ed, 2026-10-06): its species, the layer's level 0-1. */
   circle?: { species: string; level: number };
   /** ?music= previews: always this section; or this wave's arc step whatever the wave. */
@@ -42,11 +48,15 @@ export interface MusicCue {
 }
 
 /** How much of the music has booted at bar `bar` (0 silent to 1 whole): the home speakers on, each
- *  counted from the bar line after it turned (so its layer comes in on a bar, after its crackle). */
-export function bootLayers(cue: Pick<MusicCue, "speakerBars" | "speakers">, bar: number): number {
+ *  counted from the bar line after it turned (so its layer comes in on a bar, after its crackle); and the first layer
+ *  `dropLayers` more from the bar line after her needle-drop routine ends (`dropBar`). */
+export function bootLayers(cue: Pick<MusicCue, "speakerBars" | "speakers" | "dropBar" | "dropLayers">, bar: number): number {
   if (!cue.speakerBars || !cue.speakers) return 1;
   let on = 0;
   for (const b of cue.speakerBars) if (Math.ceil(b - 1e-6) <= bar) on++;
+  // (the needle dropped and her routine done: `dropLayers` layers on the bar line after, before any speaker has turned, each
+  // speaker adding its own on top)
+  if (cue.dropBar !== undefined && Math.ceil(cue.dropBar - 1e-6) <= bar) on += cue.dropLayers ?? 1;
   return Math.min(1, on / cue.speakers);
 }
 
@@ -68,6 +78,7 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
     knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), legend: legendNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
     circle: circleCue(g, g.witch),
     speakerBars: g.speakerBoot.filter((t): t is number => t !== null).map(bar).sort((a, b) => a - b), speakers: g.speakerBoot.length,
+    dropBar: ((end: number | null) => end === null ? undefined : bar(end))(djIntroEnd(g)), dropLayers: g.tuning.music.dropLayers ?? 1,
   };
 }
 

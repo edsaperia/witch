@@ -286,21 +286,51 @@
               "minimum": 0,
               "maximum": 1
             },
-            "gazeAngle": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistance": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistanceSeaBehind": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeLook": {
-              "type": "number",
-              "minimum": 0
+            "bearings": {
+              "type": "object",
+              "properties": {
+                "angle": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "distance": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "look": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "side": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "bend": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "required": [
+                "angle",
+                "distance",
+                "look",
+                "side",
+                "bend"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -308,10 +338,7 @@
             "angle",
             "curve",
             "seaward",
-            "gazeAngle",
-            "gazeDistance",
-            "gazeDistanceSeaBehind",
-            "gazeLook"
+            "bearings"
           ],
           "additionalProperties": false
         },
@@ -1996,6 +2023,10 @@
             "minScratch"
           ],
           "additionalProperties": false
+        },
+        "candleStep": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2007,7 +2038,8 @@
         "dropHat",
         "hatFloat",
         "dim",
-        "respawn"
+        "respawn",
+        "candleStep"
       ],
       "additionalProperties": false
     },
@@ -3297,9 +3329,12 @@
           "type": "number",
           "minimum": 0
         },
-        "questFar": {
+        "questRoll": {
           "type": "number",
           "minimum": 0
+        },
+        "questLater": {
+          "type": "boolean"
         },
         "bombard": {
           "type": "object",
@@ -3362,7 +3397,8 @@
         "buffPower",
         "happyRange",
         "questCap",
-        "questFar",
+        "questRoll",
+        "questLater",
         "bombard",
         "stomp",
         "partyEgg",
@@ -3436,6 +3472,14 @@
             "steps": {
               "type": "number",
               "minimum": 0
+            },
+            "dark": {
+              "type": "number",
+              "minimum": 0
+            },
+            "liftMax": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -3443,7 +3487,9 @@
             "rim",
             "floor",
             "nap",
-            "steps"
+            "steps",
+            "dark",
+            "liftMax"
           ],
           "additionalProperties": false
         }
@@ -4748,6 +4794,10 @@
             "hype": {
               "type": "number",
               "minimum": 0
+            },
+            "needle": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -4755,7 +4805,8 @@
             "scratch",
             "hiss",
             "stroke",
-            "hype"
+            "hype",
+            "needle"
           ],
           "additionalProperties": false
         },
@@ -5046,6 +5097,72 @@
           ],
           "additionalProperties": false
         },
+        "ambience": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "noise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sounds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "bed",
+            "noise",
+            "sounds",
+            "quiet"
+          ],
+          "additionalProperties": false
+        },
+        "sadTrumpet": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "duck": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bare": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rewind": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cutAfter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "duck",
+            "bare",
+            "rewind",
+            "cutAfter"
+          ],
+          "additionalProperties": false
+        },
         "night": {
           "type": "object",
           "properties": {
@@ -5142,6 +5259,8 @@
         "meadow",
         "whale",
         "waves",
+        "ambience",
+        "sadTrumpet",
         "night"
       ],
       "additionalProperties": false
@@ -5153,6 +5272,10 @@
           "type": "boolean"
         },
         "volume": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dropLayers": {
           "type": "number",
           "minimum": 0
         },
@@ -5282,6 +5405,7 @@
       "required": [
         "on",
         "volume",
+        "dropLayers",
         "nearDist",
         "farDist",
         "floor",
@@ -7890,6 +8014,33 @@
       ],
       "additionalProperties": false
     },
+    "watching": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lag": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "radius",
+        "lean",
+        "lag"
+      ],
+      "additionalProperties": false
+    },
     "moonbeams": {
       "type": "number",
       "minimum": 0
@@ -8214,6 +8365,7 @@
     "haze",
     "shadows",
     "mist",
+    "watching",
     "moonbeams",
     "looks",
     "tone",
