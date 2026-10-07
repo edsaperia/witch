@@ -2677,13 +2677,40 @@
         "wake": {
           "type": "number",
           "minimum": 0
+        },
+        "circle": {
+          "type": "object",
+          "properties": {
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "length": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "chance",
+            "length",
+            "reach"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "on",
         "chance",
         "length",
-        "wake"
+        "wake",
+        "circle"
       ],
       "additionalProperties": false
     },
@@ -2947,6 +2974,9 @@
           "type": "number",
           "minimum": 0
         },
+        "earlyQuest": {
+          "type": "boolean"
+        },
         "buffPower": {
           "type": "number",
           "minimum": 0
@@ -3020,6 +3050,7 @@
       },
       "required": [
         "share",
+        "earlyQuest",
         "buffPower",
         "happyRange",
         "questCap",
@@ -3090,12 +3121,21 @@
             "floor": {
               "type": "number",
               "minimum": 0
+            },
+            "nap": {
+              "type": "boolean"
+            },
+            "steps": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "aura",
             "rim",
-            "floor"
+            "floor",
+            "nap",
+            "steps"
           ],
           "additionalProperties": false
         }
@@ -3682,9 +3722,6 @@
     "runeMarkers": {
       "type": "object",
       "properties": {
-        "awakeStyle": {
-          "type": "string"
-        },
         "laser": {
           "type": "object",
           "properties": {
@@ -3814,7 +3851,6 @@
         }
       },
       "required": [
-        "awakeStyle",
         "laser",
         "scale",
         "beamHeight",
@@ -3913,6 +3949,14 @@
                 "reply": {
                   "type": "number",
                   "minimum": 0
+                },
+                "swapBy": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "swapGap": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
@@ -3922,7 +3966,9 @@
                 "duck",
                 "syllables",
                 "gap",
-                "reply"
+                "reply",
+                "swapBy",
+                "swapGap"
               ],
               "additionalProperties": false
             }
@@ -4356,6 +4402,10 @@
             "creakEvery": {
               "type": "number",
               "minimum": 0
+            },
+            "decks": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -4363,7 +4413,41 @@
             "hum",
             "crackle",
             "creak",
-            "creakEvery"
+            "creakEvery",
+            "decks"
+          ],
+          "additionalProperties": false
+        },
+        "deck": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scratch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hiss": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stroke": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hype": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "scratch",
+            "hiss",
+            "stroke",
+            "hype"
           ],
           "additionalProperties": false
         },
@@ -4740,6 +4824,7 @@
         "pond",
         "picnic",
         "room",
+        "deck",
         "spell",
         "land",
         "stir",
@@ -5023,9 +5108,6 @@
         "picker": {
           "type": "string"
         },
-        "route": {
-          "type": "string"
-        },
         "noisy": {
           "type": "object",
           "properties": {
@@ -5074,7 +5156,6 @@
         "startDelay",
         "areasPerWave",
         "picker",
-        "route",
         "noisy",
         "transition",
         "lightReach",
@@ -6029,9 +6110,6 @@
     "find": {
       "type": "object",
       "properties": {
-        "on": {
-          "type": "boolean"
-        },
         "eyeshine": {
           "type": "object",
           "properties": {
@@ -6077,7 +6155,6 @@
         }
       },
       "required": [
-        "on",
         "eyeshine",
         "lightFloor",
         "rim",
@@ -6397,6 +6474,92 @@
     "glowReach": {
       "type": "number",
       "minimum": 0
+    },
+    "sigilSpill": {
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stack": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackHeight": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "strength",
+        "reach",
+        "height",
+        "stack",
+        "stackReach",
+        "stackHeight"
+      ],
+      "additionalProperties": false
+    },
+    "combatLight": {
+      "type": "object",
+      "properties": {
+        "wildReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wildGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fall": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "wildReach",
+        "wildGlow",
+        "fightReach",
+        "fightGlow",
+        "range",
+        "hold",
+        "rise",
+        "fall"
+      ],
+      "additionalProperties": false
     },
     "nightLight": {
       "type": "object",
@@ -7419,13 +7582,6 @@
       ],
       "additionalProperties": false
     },
-    "fx": {
-      "type": "string",
-      "enum": [
-        "smooth",
-        "pixel"
-      ]
-    },
     "moonbeams": {
       "type": "number",
       "minimum": 0
@@ -7563,16 +7719,6 @@
         "on": {
           "type": "boolean"
         },
-        "where": {
-          "type": "string",
-          "enum": [
-            "before",
-            "after"
-          ]
-        },
-        "sky": {
-          "type": "boolean"
-        },
         "skyBlur": {
           "type": "number",
           "minimum": 0
@@ -7610,8 +7756,6 @@
       },
       "required": [
         "on",
-        "where",
-        "sky",
         "skyBlur",
         "strength",
         "band",
@@ -7745,6 +7889,7 @@
     "sky",
     "moon",
     "glowReach",
+    "sigilSpill",
     "nightLight",
     "glowFalloff",
     "glowNear",
@@ -7758,7 +7903,6 @@
     "haze",
     "shadows",
     "mist",
-    "fx",
     "moonbeams",
     "looks",
     "tone",

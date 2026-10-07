@@ -62,7 +62,7 @@ describe("party objects (Ed, 2026-10-04)", () => {
     expect(sample.clusters.length).toBeGreaterThanOrEqual(P.clusters[0] - 1);
     expect(sample.loose.length).toBeGreaterThanOrEqual(P.loose[0] * 0.75);
   });
-  it("the prop generator's party pieces (gen-*) only under partyObjects.generated (?props=gen), in place of the ones they replace", () => {
+  it("the prop generator's party pieces (gen-*) only under partyObjects.generated, in place of the ones they replace", () => {
     const refs = (tt: typeof t) => { const all: string[] = []; for (let cx = 0; cx < 12; cx++) for (let cy = 0; cy < 12; cy++) { const d = dressingOf(map, [cx, cy], tt); all.push(...d.loose.map(p => p.ref), ...d.hanging.map(p => p.ref)); } return all; };
     expect(refs(t).some(r => r.includes(":gen-"))).toBe(false);
     const on = { ...t, partyObjects: { ...P, generated: true } }, gen = refs(on);

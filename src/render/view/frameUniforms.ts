@@ -39,8 +39,8 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, v.mpp, t.trunkFade.share);
   SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
   SPRITE_UNIFORMS.uDebugTrunks.value = v.debugTrunks ? 1 : 0;
-  const Fd = t.find; // finding wild creatures in the dark (Ed, v244; ?find=0 turns it off)
-  SPRITE_UNIFORMS.uFindLook.value.set(Fd.on ? Fd.lightFloor : 0, Fd.on ? Fd.rim : 0, Fd.on ? Fd.eyeshine.strength : 0, Fd.eyeshine.blink);
+  const Fd = t.find; // finding wild creatures in the dark (Ed, v244)
+  SPRITE_UNIFORMS.uFindLook.value.set(Fd.lightFloor, Fd.rim, Fd.eyeshine.strength, Fd.eyeshine.blink);
   SPRITE_UNIFORMS.uEyeRange.value = Fd.eyeshine.range;
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;
@@ -64,6 +64,15 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
     const R1 = R0 + (Math.min(R0, NL.treetopReach) - R0) * rise;
     LIGHT_UNIFORMS.uGlowR.value = R1 + (Math.min(R1, NL.gazeReach ?? R1) - R1) * coastView(g.camera).gaze; // (lying on the sand to stargaze, the camera low and far: her own small pool, eased with the bend)
     LIGHT_UNIFORMS.uGlowDim.value = 1 + (NL.treetopGlow - 1) * rise;
+  }
+  // In the wild, dimmer; in a fight, back up (render/combatLight.ts: eased over seconds, so it isn't seen to change).
+  const CL = t.combatLight;
+  if (CL) {
+    v.combatLight.update(g, CL, g.clock.time);
+    const f = v.combatLight.factors(CL);
+    // (from a base each frame: a fixed reach, ?glow=, isn't worked out again each frame, and neither is the dimming without nightLight)
+    const R = t.glowFixed ? (v.combatLight.fixedReach ??= LIGHT_UNIFORMS.uGlowR.value) : LIGHT_UNIFORMS.uGlowR.value;
+    LIGHT_UNIFORMS.uGlowR.value = R * f.reach; LIGHT_UNIFORMS.uGlowDim.value = (NL ? LIGHT_UNIFORMS.uGlowDim.value : 1) * f.glow;
   }
   SPRITE_UNIFORMS.uDebugCull.value = v.debugCull ? 1 : 0;
 

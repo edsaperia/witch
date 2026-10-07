@@ -52,17 +52,23 @@ function tlPillar(m, r, o) {
   else { m.box(L([0, top + .08, 0]), [.4, .08, .4], M.STONE, { round: .02, group: 3, dir: [Math.cos(o.lean || 0), -Math.sin(o.lean || 0), 0] }); m.box(L([0, top + .22, 0]), [.46, .06, .46], M.STONE, { round: .02, group: 3, dir: [Math.cos(o.lean || 0), -Math.sin(o.lean || 0), 0], paint: () => M.MOSS }); } // its capital, moss on top
 }
 function tlSpire(m, r, o) {
-  // a jagged, layered rock spire (Ed, 2026-10-06: the ravine's column read as camouflage noise): a stack of strata, each a slab of rock
-  // offset and turned a little from the one below, narrowing upward, with flat ledges where moss gathers and crisp edges; no speckle,
-  // its light and shade from the slabs' own faces, a dark seam under each slab and a paler band through the odd one
-  const one = (x, z, h, w, g) => { let y = 0, ox = x, oz = z;
-    for (let k = 0; y < h - .2; k++) { const t = y / h, hh = Math.min(h - y, .38 + r() * .32), ww = w * (1 - .62 * t) * (.88 + r() * .24), a = (r() - .5) * .9, pale = r() < .3, mossy = r() < .45;
-      const c = [ox, y + hh / 2, oz], top = y + hh;
-      m.box(c, [ww, hh / 2, ww * (.7 + r() * .3)], M.STONE, { round: .02, group: g, dir: [Math.cos(a), 0, Math.sin(a)], up: [(r() - .5) * .08, 1, (r() - .5) * .08], paint: p => p[1] > top - .07 ? (mossy ? M.MOSS : M.BELLY) : p[1] < y + .06 ? M.STONED : pale && Math.abs(p[1] - c[1]) < hh * .18 ? M.BELLY : undefined });
-      if (r() < .5) { const b = r() * Math.PI * 2; m.box([ox + Math.cos(b) * ww * .8, y + hh * .35, oz + Math.sin(b) * ww * .8], [ww * .35, hh * .35, ww * .3], M.STONE, { round: .015, group: g, dir: [Math.cos(b + .5), 0, Math.sin(b + .5)], paint: p => p[1] > y + hh * .62 ? M.MOSS : undefined }); } // a broken block jutting from the side
-      y = top; ox += (r() - .5) * ww * .25; oz += (r() - .5) * ww * .2; }
-    for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + r(), c = [ox + Math.cos(a) * .12, y + .05, oz + Math.sin(a) * .12]; m.seg(c, [c[0] + Math.cos(a) * .45, c[1] + .35, c[2] + Math.sin(a) * .45], .06, .01, k % 2 ? M.LEAF2 : M.LEAF, { group: g + 10 }); } // ferns and a tuft on top
-    m.ell([ox, y - .02, oz], [w * .32, .1, w * .28], M.MOSS, { group: g + 10 }); };
+  // a weathered rock spire (Ed, 2026-10-06: the ravine's column read as camouflage noise; 2026-10-07: the stack of square slabs
+  // after it read as "a strange tall column", stacked dark blocks): one rough, tapering column of rock, bending a little as it
+  // rises, its strata as bands across it (a dark seam, a paler band, moss on the ledges) rather than separate slabs, with a few
+  // broken ledges jutting out at odd heights and angles to break its outline
+  const one = (x, z, h, w, g) => {
+    const n = 5, pts = [], band = .42 + r() * .12, tilt = (r() - .5) * .5;
+    let ox = x, oz = z;
+    for (let k = 0; k <= n; k++) { const t = k / n; pts.push([ox, t * h, oz, w * (.82 - .52 * t) * (.9 + r() * .2)]); ox += (r() - .5) * w * .22; oz += (r() - .5) * w * .18; }
+    const strata = p => { const s = (p[1] + Math.sin(Math.atan2(p[2] - z, p[0] - x) * 3 + p[1] * tilt) * .07) / band, f = s - Math.floor(s), i = Math.floor(s);
+      return f < .12 ? M.STONED : f > .9 && tlHash(i, g, 6) < .55 ? M.MOSS : tlHash(i, g, 7) < .3 && f > .35 && f < .65 ? M.BELLY : undefined; };
+    m.chain(pts, M.STONE, { group: g, rough: .025, paint: strata });
+    for (let k = 0; k < 3; k++) { const [px, py, pz, pr] = pts[1 + k], b = r() * Math.PI * 2; m.ell([px + Math.cos(b) * pr * .55, py * (.8 + r() * .3), pz + Math.sin(b) * pr * .5], [pr * (.7 + r() * .3), h * (.12 + r() * .08), pr * (.6 + r() * .25)], M.STONE, { group: g, rough: .03, dir: [Math.cos(b), 0, Math.sin(b)], paint: strata }); } // its bulk: lumps of rock merged into the lower half
+    for (let k = 0; k < 4; k++) { const t = .15 + k * .2 + r() * .08, [px, py, pz, pr] = pts[Math.min(n, Math.round(t * n))], b = r() * Math.PI * 2, s = pr * (.45 + r() * .3);
+      m.box([px + Math.cos(b) * pr * .75, py + (r() - .5) * .3, pz + Math.sin(b) * pr * .7], [s, s * (.35 + r() * .25), s * .8], M.STONE, { round: .03, rough: .03, group: g, dir: [Math.cos(b + r()), (r() - .5) * .3, Math.sin(b + r())], paint: p => p[1] > py + s * .2 ? M.MOSS : undefined }); } // broken ledges
+    const [tx, ty, tz] = pts[n];
+    for (let k = 0; k < 3; k++) { const a = k * 2.1 + r(), c = [tx + Math.cos(a) * w * .15, ty - .1, tz + Math.sin(a) * w * .12]; m.seg(c, [c[0] + Math.cos(a) * .3, c[1] + .22, c[2] + Math.sin(a) * .3], .05, .01, k % 2 ? M.LEAF2 : M.LEAF, { group: g + 10 }); } // a few ferns low on its top (not a crown of fronds: it read as a palm)
+    m.ell([tx, ty - .12, tz], [w * .34, .14, w * .3], M.MOSS, { group: g + 10, rough: .02 }); };
   one(0, 0, 4.4 + r() * .8, .8, 1);
   if (o.twin) one(1.25, -.45, 2.8 + r() * .5, .58, 2);
   for (let k = 0; k < 5; k++) { const a = k * 1.25, s = .2 + r() * .12; m.box([Math.cos(a) * 1.15, s * .6, Math.sin(a) * .95], [s, s * .6, s * .8], M.STONE, { round: .02, group: 5, dir: [Math.cos(a * 3), 0, Math.sin(a * 3)], paint: p => p[1] > s * 1.05 ? M.MOSS : undefined }); } // fallen blocks round its foot

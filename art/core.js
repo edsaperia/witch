@@ -334,7 +334,8 @@ export function cropTight(sp) {
 // NF the same for the sprite mirrored (facing left).
 export function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = defaultCanvas) {
   const { w, h } = sp, mk = () => makeCanvas(w, h), artStyle = st?.artStyle; // artStyle: a pixel-art style (art/stylise.js: the game's ?style=), drawing its own outline
-  if ((artStyle === "bold" || artStyle === "ref") && !sp.stylised) outlineMode = "none";
+  const bare = outlineMode === "bare"; // "bare": no outline at all, not even a pixel-art style's own (the rig's leg and body discs: Ed, 2026-10-06, "Animal legs have outlines on them; they'd look better without")
+  if (bare || ((artStyle === "bold" || artStyle === "ref") && !sp.stylised)) outlineMode = "none";
   const A = mk(), N = mk(), NF = mk(), a = A.getContext("2d").createImageData(w, h), n = N.getContext("2d").createImageData(w, h), nf = NF.getContext("2d").createImageData(w, h);
   const outline = outlineMode === "none" ? null : outlineMode === "dark" ? [22, 18, 30] : "tint";
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -355,7 +356,7 @@ export function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = def
     n.data.set([nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
     nf.data.set([-nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
   }
-  if ((artStyle === "bold" || artStyle === "ref") && !sp.stylised) stylisePixels(a.data, n.data, nf.data, w, h, artStyle, { interior: st.styleInterior !== false }); // (a sprite its generator drew stylised already, the blob trees, keeps its own tones; st.styleInterior false: ref without its interior lines)
+  if ((artStyle === "bold" || artStyle === "ref") && !sp.stylised) stylisePixels(a.data, n.data, nf.data, w, h, artStyle, { interior: st.styleInterior !== false, outline: !bare }); // (a sprite its generator drew stylised already, the blob trees, keeps its own tones; st.styleInterior false: ref without its interior lines)
   A.getContext("2d").putImageData(a, 0, 0); N.getContext("2d").putImageData(n, 0, 0); NF.getContext("2d").putImageData(nf, 0, 0);
   return { A, N, NF, w, h };
 }

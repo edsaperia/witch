@@ -5,7 +5,7 @@
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
 import { coarseTurn, inFull, type LodCounts } from "./simLod";
-import { questFor, type Quest } from "./quest";
+import { earlyQuest, questFor, type Quest } from "./quest";
 import { rng } from "./random";
 import { countScale, startCount } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
@@ -297,7 +297,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
   // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
-  const [hx, hy] = map.centreCell;
+  const [hx, hy] = map.centreCell, early = earlyQuest(map);
   for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
@@ -313,7 +313,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = "asleep"; L.stateAt = 0;
     L.lairX = L.x; L.lairZ = L.z; // (where it lies: home, which it goes back to before it sleeps again; Ed, 2026-10-06)
-    L.quest = questFor(map, cell, L.species);
+    L.quest = questFor(map, cell, L.species, early?.host === `${cx},${cy}` ? early.wants : undefined); // (one of the first areas' legends wants a creature from another of them: quest.ts earlyQuest)
     out.push(L);
     // A wild baby of its own kind in its clearing (Ed, 2026-10-06), keeping to it: so the legend starts with kin. Like any
     // baby: happy once its area's soundsystem comes (it dances, in its circle), off home for good once that falls (game.ts).
@@ -373,7 +373,7 @@ export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wande
  *  `chance`, for `length` seconds (a range); it gets up when that's over, when a witch is on the ground in its area
  *  (`roused`; none start a nap then either), or when it no longer may (its area partified, it enraged, taken, fleeing...),
  *  over `wake` seconds (a stretch, so landing isn't an instant pounce). Tuning: naps. */
-export interface NapRules { chance: number; length: readonly number[]; wake: number; /** its area still wild (no soundsystem yet) */ wild: (c: Creature) => boolean; /** a witch on the ground in its area */ roused: (c: Creature) => boolean }
+export interface NapRules { chance: number; length: readonly number[]; wake: number; /** a legend circle's baby's own chance and length (tuning naps.circle) */ circle?: { chance: number; length: readonly number[] }; /** its area still wild (no soundsystem yet) */ wild: (c: Creature) => boolean; /** a witch on the ground in its area */ roused: (c: Creature) => boolean }
 /** May nap at all: a wild idler, not a legend, besieging, fleeing, dazed, marching, fighting or happy. */
 export const napper = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss && !c.enraged && c.state !== "happy" && !c.siege && !c.fleeUntil && !c.dazedUntil && !c.wanderTo && !c.fight?.target && !c.retreat;
 /** Asleep or still getting up: out of fights. */
@@ -416,8 +416,9 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     const paused = c.rest > 0;
     stepCreature(c, full ? dt : dt * lod.every, map);
     // Just paused: now and then it lies down for a nap instead (never with her on the ground in its area).
-    if (naps && !paused && c.rest > 0 && napper(c) && naps.wild(c) && !naps.roused(c) && c.rand() < naps.chance) {
-      c.asleep = true; c.napUntil = time + naps.length[0] + c.rand() * (naps.length[1] - naps.length[0]); c.rest = 0;
+    const nr = naps && keepsToCircle(c) && naps.circle ? naps.circle : naps; // (a legend circle's baby: mostly asleep)
+    if (naps && nr && !paused && c.rest > 0 && napper(c) && naps.wild(c) && !naps.roused(c) && c.rand() < nr.chance) {
+      c.asleep = true; c.napUntil = time + nr.length[0] + c.rand() * (nr.length[1] - nr.length[0]); c.rest = 0;
     }
   }
 }

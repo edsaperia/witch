@@ -29,7 +29,7 @@ const pixelCache = new Map<string, string>(), pixelData = new Map<string, ImageD
 function emojiPixels(e: string, n: number): { canvas: HTMLCanvasElement; data: ImageData | null } {
   const c = document.createElement("canvas");
   c.width = c.height = n;
-  const x = c.getContext("2d");
+  const x = c.getContext("2d", { willReadFrequently: true });
   let d: ImageData | null = null;
   if (x) {
     x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
@@ -73,7 +73,7 @@ export function pixelTurned(e: string, n: number, sx: number, sy: number, deg: n
     if (!pixelData.has(`${e}:${n}`)) emojiPixels(e, n);
     const src = pixelData.get(`${e}:${n}`), cv = document.createElement("canvas");
     cv.width = W; cv.height = H;
-    const x = cv.getContext("2d");
+    const x = cv.getContext("2d", { willReadFrequently: true });
     if (x && src) {
       const out = x.createImageData(W, H);
       for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
