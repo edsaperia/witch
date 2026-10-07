@@ -1,6 +1,6 @@
 // The creatures and berries (from render/view.ts, issue #122): each creature's look, dance, glow and
 // shadow every frame, and the berries growing back and nibbled.
-import { characterOf, quirkAt, bounceAt } from "../character";
+import { characterOf, quirkAt, bounceAt, spriteQuirk } from "../character";
 import * as THREE from "three";
 import type { Tuning } from "../../rules/tuning";
 import type { CreatureArt } from "../assets";
@@ -22,6 +22,7 @@ import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
 import { legendSleep, newSleepTrack, type SleepPose } from "../legendSleep";
+const SQ = { hop: 0, x: 0, sx: 1, sy: 1, turned: false }; // (a baked frame's idle quirk, filled each creature: no allocation)
 
 const FEEL = newFeel(); // (filled per creature, never kept)
 const SLEEP: SleepPose = { sleep: 0, droop: 0 }; // (likewise)
@@ -177,8 +178,9 @@ export function drawCreatures(v: View, time = 0): void {
     if (standing && (look === "leashed" || look === "happy") && !c.boss) hop += bounceAt(c.id, time);
     if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy * breathY, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK }))) // the rig draws it, if it can
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
-      const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1);
-      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k, y: dance + hop + sunk, z: c.z + R.z * k, frame, flip, fresh, glow, scale, sx: feel.sx, sy: feel.sy * breathY });
+      spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
+      const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip !== SQ.turned, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1) + SQ.x * fh;
+      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k, y: dance + hop + sunk + SQ.hop * fh, z: c.z + R.z * k, frame, flip, fresh, glow, scale, sx: feel.sx * SQ.sx, sy: feel.sy * breathY * SQ.sy });
     }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     // Its shadow under it as drawn (its sway and a nightmare's tossing too), as big as it's drawn (a legend's size, an evolving

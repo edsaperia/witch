@@ -140,6 +140,19 @@ const SCENES: Scene[] = [
       { g: "by a pond", kind: "ambience", at: 3, len: 20 },
     ],
   },
+  {
+    // back behind her decks (the DJ witch, after a knockout): the home music playing, her scratch bars and her hype
+    name: "decks", seconds: 10, section: "forest", wave: 1, distance: 20,
+    cues: [
+      ...series(1, 16, 0.25, "her scratch (two bars)", (s, i) => s.scratch(i % 2 === 0, 0.1)),
+      { at: 6, g: "her hype (woo-hoo!)", play: s => s.whoop(0.1) },
+      ...series(7.5, 8, 0.25, "her scratch (two bars)", (s, i) => s.scratch(i % 2 === 0, 0.1)),
+    ],
+    sounds: [
+      { g: "her scratch (two bars)", kind: "feedback", at: 1, len: 4 },
+      { g: "her hype (woo-hoo!)", kind: "voice", at: 6, len: 0.5 },
+    ],
+  },
 ];
 
 /** Short-term loudness (dB, 200 ms windows every 50 ms: short enough that a quick pop or knock counts as heard) of a stereo render, roughly K-weighted (a
