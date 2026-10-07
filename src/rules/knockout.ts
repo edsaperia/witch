@@ -3,7 +3,11 @@
 // hit. At none she's knocked out: she collapses where she is (no more hits, no input), her sigil
 // stack comes down from the bottom up, one every releaseEach seconds, each sigil put down where
 // its animal stands (#87, Ed 2026-10-05: leashed is for good, so they stay hers as a parked
-// group); then she sparkles out and back in at the treehouse. No drawing here.
+// group). One timeline (Ed, 2026-10-07), the whole wait counted from her going down (knockout.respawn: short, longer for
+// knockdowns close together, back to base after a cooldown): her hat floats to the ground (knockout.hatFloat, the screen
+// dimmed, a sad trumpet; if she had one to drop), she sparkles out and back in behind her decks, and scratches there for the
+// rest of the wait ("Every time she respawns she could do a bit of scratching to increase the respawn time"), her army
+// fighting on without her; then she can move. No drawing here.
 import type { ForestMap } from "./map";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
 import { letPartyLegendGo, type LeashState } from "./leash";
@@ -25,15 +29,27 @@ export interface Knockout {
   order: number[];
   times: number[];
   released: number;
-  /** Game time the teleport starts (after the last sigil), and ends. */
+  /** Game time her hat has floated to the ground (Ed, 2026-10-07: the screen dimmed, a sad trumpet; knockout.hatFloat), or `at`
+   *  if she had no hat to drop. */
+  floatUntil: number;
+  /** Game time the teleport starts (after the hat's float and the last sigil), and ends (she's in at the treehouse). */
   teleportAt: number;
+  inAt: number;
+  /** Game time she can move again: after her scratching behind her decks, the whole wait (knockout.respawn: base, a step
+   *  more for each knockdown within cooldown of the last, to max) counted from `at`, and at least minScratch of scratching. */
   backAt: number;
+  /** Knockdowns in a row, each within knockout.respawn.cooldown of the last (0 the first). */
+  streak: number;
+  /** The whole wait (s) this knockdown costs (respawnWait), from `at`. */
+  wait: number;
   /** She's sparkled out, and been moved to the treehouse, behind her decks (halfway through the teleport). */
   out: boolean;
   moved: boolean;
+  /** Her scratching has started (the "scratch" event: the respawn wait, inAt to backAt). */
+  scratching?: boolean;
 }
 
-export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
+export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | /** her scratching starts behind her decks (the respawn wait: knockout.respawn); "back" ends it */ "scratch" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
 export interface KnockoutEvent { kind: KnockoutEventKind; at: number; x: number; z: number; id?: number }
 
 export const newHealth = (t: Tuning): Health => ({ hp: t.witchHealth.hits, repairAt: Infinity, hurtAt: -Infinity });
@@ -51,13 +67,32 @@ export function repair(h: Health, time: number, t: Tuning): void {
   if (time >= h.repairAt) { h.hp += 1; h.repairAt = h.hp >= t.witchHealth.hits ? Infinity : time + t.witchHealth.repairTime; }
 }
 
-/** She goes down: plan the release of her stack, bottom first (legends kept if they're loyal). */
-export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning): Knockout {
-  const K = t.knockout, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND && !creatures[id].partyLegend)); // (a party legend is always let go: it doesn't move)
+/** The respawn wait's knobs (knockout.respawn), none: no wait. */
+const RESPAWN_NONE = { base: 0, step: 0, max: 0, cooldown: 0, minScratch: 0 };
+
+/** Knockdowns in a row at `time`: one more than the last if it was within the cooldown, else 0. */
+export const nextStreak = (last: { n: number; at: number } | null | undefined, time: number, t: Tuning): number =>
+  last && time - last.at < (t.knockout.respawn ?? RESPAWN_NONE).cooldown ? last.n + 1 : 0;
+
+/** The whole wait (s) from going down to moving again, for a knockdown with `streak` before it (Ed, 2026-10-07: "any more than
+ *  about six seconds to wait will be frustrating. We could alternatively make each successive death a bit longer, with a
+ *  cooldown, to punish rapid dying"). */
+export function respawnWait(streak: number, t: Tuning): number {
+  const R = t.knockout.respawn ?? RESPAWN_NONE;
+  return Math.min(Math.max(R.base, R.max), R.base + R.step * streak);
+}
+
+/** She goes down: her hat floats down if it dropped (hatFloats), then her stack is let go, bottom first (legends kept if
+ *  they're loyal), then the teleport home and her scratching behind her decks for the rest of the wait. */
+export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning, o: { hatFloats?: boolean; streak?: number } = {}): Knockout {
+  const K = t.knockout, R = K.respawn ?? RESPAWN_NONE, streak = o.streak ?? 0, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND && !creatures[id].partyLegend)); // (a party legend is always let go: it doesn't move)
   const each = K.releaseMax > 0 && order.length * K.releaseEach > K.releaseMax ? K.releaseMax / order.length : K.releaseEach;
   const times = order.map((_, i) => time + (i + 1) * each);
-  const teleportAt = order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat;
-  return { at: time, order, times, released: 0, teleportAt, backAt: teleportAt + K.teleport, out: false, moved: false };
+  const floatUntil = time + (o.hatFloats ? K.hatFloat ?? 0 : 0);
+  const teleportAt = Math.max(floatUntil, order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat);
+  const inAt = teleportAt + K.teleport;
+  const backAt = Math.max(inAt + R.minScratch, time + respawnWait(streak, t));
+  return { at: time, order, times, released: 0, floatUntil, teleportAt, inAt, backAt, streak, wait: respawnWait(streak, t), out: false, moved: false };
 }
 
 /** Put a carried sigil down where its animal stands (a little aside if another sigil is there): it stays hers, parked. */
@@ -77,7 +112,7 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     else if (c && c.leashed && leash.stack.includes(c.id)) { parkWhere(c, leash, time); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
   }
   if (time >= k.teleportAt && !k.out) { k.out = true; events.push({ kind: "sparkleOut", at: time, x: body.x, z: body.z }); }
-  const mid = (k.teleportAt + k.backAt) / 2;
+  const mid = (k.teleportAt + k.inAt) / 2;
   if (!k.moved && time >= mid) {
     k.moved = true;
     // Back behind her decks in the treehouse, as at the start (Ed, 2026-10-06: "When you die and respawn, you should appear
@@ -89,6 +124,7 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     // Loyal legends come home with her.
     for (const id of leash.stack) { const c = creatures[id]; c.x = body.x + (c.rand() - 0.5) * 3; c.z = body.z + 2 + c.rand() * 2; c.tx = c.x; c.tz = c.z; }
   }
+  if (!k.scratching && k.backAt > k.inAt && time >= k.inAt) { k.scratching = true; events.push({ kind: "scratch", at: time, x: body.x, z: body.z }); }
   if (time >= k.backAt) { events.push({ kind: "back", at: time, x: body.x, z: body.z }); return { body, done: true }; }
   return { body: { ...body, vx: 0, vz: 0 }, done: false };
 }
@@ -115,4 +151,29 @@ export function stepWanderers(creatures: Creature[], map: ForestMap, dt: number)
     c.moving = true; c.walk += dt * 4;
   }
   return settled;
+}
+
+/** Seconds left of her wait behind her decks after a knockout (knockout.respawn), or null when she isn't waiting: for the
+ *  countdown at the decks (render/leash/respawn.ts). */
+export const respawnLeft = (k: Knockout | null | undefined, time: number): number | null => (k && time >= k.inAt && time < k.backAt ? k.backAt - time : null);
+
+/** The candles along the front of her DJ desk while she scratches (Ed, 2026-10-07; art builder 4 draws them), a loading bar:
+ *  one for every knockout.candleStep seconds of the wait (1: 6 for the first knockdown's 6 s, up to 12 for 12; 0.5: 12 to 24),
+ *  0 with no wait. */
+export const candleCount = (k: Knockout | null | undefined, t: Tuning): number =>
+  (k && k.backAt > k.inAt ? Math.max(1, Math.round(k.wait / (t.knockout.candleStep ?? 1))) : 0);
+
+/** How many of them are red (Ed, 2026-10-07: "the base cooldown WHITE candles, the extra cooldown from repeat knockdowns RED"):
+ *  the wait past knockout.respawn's base, by candleStep. They burn first (candles 0 to red - 1), the bar emptying from its red
+ *  end, so the white base is all that's left at the end. */
+export const candleRed = (k: Knockout | null | undefined, t: Tuning): number => {
+  const n = candleCount(k, t), base = (t.knockout.respawn ?? RESPAWN_NONE).base;
+  return n && k ? Math.max(0, Math.min(n, n - Math.round(Math.min(k.wait, base) / (t.knockout.candleStep ?? 1)))) : 0;
+};
+
+export function candleMelt(k: Knockout | null | undefined, time: number, i: number, t: Tuning): number {
+  const n = candleCount(k, t);
+  if (!k || !n) return 0;
+  const p = Math.min(1, Math.max(0, (time - k.inAt) / (k.backAt - k.inAt))) * n - i;
+  return Math.min(1, Math.max(0, p));
 }
