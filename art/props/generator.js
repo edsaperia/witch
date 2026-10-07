@@ -25,7 +25,8 @@ export function propVariant(kind, seed = 0, over = {}, table = PROP_GENOMES) { /
   }
   v.branchSide = v.branchSide !== undefined ? (v.branchSide < 0 ? -1 : 1) : undefined;
   v.seed = seed; v.r = r;
-  return Object.assign(v, Object.fromEntries(Object.entries(over).filter(([k]) => k in G && k !== "colour")));
+  // an over given as [min, max] (an area's own range, e.g. the stone shrine's big stones) is drawn from, each variant its own
+  return Object.assign(v, Object.fromEntries(Object.entries(over).filter(([k]) => k in G && k !== "colour").map(([k, x]) => [k, Array.isArray(x) && x.length === 2 && typeof x[0] === "number" && !Array.isArray(G[k]?.[0]) ? x[0] + (x[1] - x[0]) * r() : x])));
 }
 const gpPrCell = (p, k, seed) => hash2(Math.floor(p[0] * k + 500), Math.floor(p[1] * k + 500) + Math.floor(p[2] * k + 500) * 131, seed);
 // patches: a few big blobs on a surface (centres and radii), so marks come as clusters, not noise
@@ -255,14 +256,18 @@ export function propPiece(kind, o = {}, def = null, st = {}, ppm = 16) {
 }
 // Which generated kind (and fixed numbers) stands in for one of the areas' hand-made props under ?props=gen, or null.
 export function propFor(kind, o = {}) {
-  if (kind === "standingstone") return ["standingStone", o.lean ? { lean: o.lean } : {}];
+  // big: the stone shrine's tree-equivalents (Ed, 2026-10-06: "the tree equivalents should just be large standing stones, perhaps quite
+  // similar to the runestones"): great plain monoliths, taller and broader than any runestone, no sigil, each its own height, width and lean
+  if (kind === "standingstone") return ["standingStone", o.big ? { height: [4.8, 7.2], width: [1.2, 2], depth: [.5, .8], lean: [-.12, .12], moss: [.08, .2] } : o.lean ? { lean: o.lean } : {}];
   if (kind === "cairn") return ["cairn", o.tall ? { height: 2.6, stones: 15, spread: 1.5, size: .38 } : {}]; // the stone shrine's tall cairn stays a tall cone
   if (kind === "water" && !o.stream) return ["pool", { bog: !!o.bog, ...(o.w ? { radius: .6 * o.w } : {}) }];
   if (kind === "boulder") return ["boulder", { ...(o.big ? { size: 1.3 } : {}), ...(o.moss ? { moss: .45 } : {}) }];
   if (kind === "mound") return ["mound", { skin: o.moss ? "moss" : o.brown ? "earth" : "moss", ...(o.small ? { radius: .45, height: .28, lumps: 2 } : {}) }];
   if (kind === "log") return ["fallenLog", o.giant ? { length: 6, girth: .62, moss: .8, fungi: 3, ends: "broken" } : o.branch ? { length: 1.5, girth: .1, stubs: 2, fungi: 0 } : o.rot ? { moss: .75, fungi: 3 } : {}];
   if (kind === "fungi") return ["mushroomRing", {}];
-  if (kind === "henge") return ["stoneCircle", o.scale ? { radius: 2.2 * o.scale } : {}];
+  // a henge piece is one mossy standing stone (art/areas.js "henge"): the areas lay them out in rings themselves (rules/walls.ts), so one stone,
+  // not a whole stoneCircle each (Ed, 2026-10-06: "A circle of stone circles?"), a little smaller than a lone one so a ring of them reads as a henge
+  if (kind === "henge") return ["standingStone", { height: 2.8 * (o.scale ?? 1), moss: .22 }];
   if (kind === "stump" && !o.gnawed) return ["brokenTrunk", o.snag ? {} : { branch: "none" }];
   return null;
 }
