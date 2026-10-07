@@ -328,7 +328,7 @@ export class View {
     this.shadows.mesh.visible = t.shadows.on;
     this.scene.add(this.shadows.mesh);
     if (t.mist.on && t.mist.strength > 0) {
-      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.lowSize);
+      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer is half the scene's size: post.ts)
       this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
