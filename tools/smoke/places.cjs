@@ -37,16 +37,22 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
         else if (what === "at") { [x, z] = name.split(",").map(Number); }
         else return null;
         g.witch = { ...g.witch, x, z, seated: false, mode: height === "treetop" ? "treetop" : "ground", lift: height === "treetop" ? 1 : 0, vx: 0, vz: 0 };
-        g.clock.paused = true; // (held while the art comes in: a wild creature could knock her out and send her home meanwhile)
-        return { x: Math.round(x), z: Math.round(z), area: typeId(x, z), info };
+        g.clock.paused = false;
+        return { x0: x, z0: z, x: Math.round(x), z: Math.round(z), area: typeId(x, z), info };
       }, place);
       if (!at) { errors.push(`${place}: not on this map`); continue; }
-      await page.waitForFunction(() => { const W = window.witch, g = W.game; return !!W.view.assets.typeArt(g.map.areaAt(g.witch.x, g.witch.z).type); }, null, { timeout: 400000, polling: 500 }).catch(() => errors.push(`${place}: its area's art never came`));
-      await page.waitForTimeout(8000); // (the rest of the art round the spot in, the view settled)
+      // While the art comes in, she's kept on the spot and whole (a wild creature could knock her out and send her home meanwhile;
+      // paused, the view wouldn't follow her there).
+      const hold = ([x, z]) => { const g = window.witch.game, W = g.witches[0]; W.ko = null; W.health.hp = g.tuning.witchHealth.hits; W.health.repairAt = Infinity; if (Math.hypot(g.witch.x - x, g.witch.z - z) > 0.5) g.witch = { ...g.witch, x, z, vx: 0, vz: 0 }; };
+      let ready = false;
+      for (let t = 0; t < 400 && !ready; t += 2) { await page.evaluate(hold, [at.x0, at.z0]); ready = await page.evaluate(() => { const W = window.witch, g = W.game; return !!W.view.assets.typeArt(g.map.areaAt(g.witch.x, g.witch.z).type); }); if (!ready) await page.waitForTimeout(2000); }
+      if (!ready) errors.push(`${place}: its area's art never came`);
+      for (let t = 0; t < 8; t += 2) { await page.evaluate(hold, [at.x0, at.z0]); await page.waitForTimeout(2000); } // (the rest of the art round the spot in, the view settled)
+      await page.evaluate(() => { window.witch.game.clock.paused = true; });
       await page.waitForTimeout(1500);
       const file = path.join(outDir, `${place.replace(/[:,@]/g, "-")}.png`);
       await page.screenshot({ path: file });
-      console.log(place, JSON.stringify(at), "->", file);
+      const { x0, z0, ...shown } = at; console.log(place, JSON.stringify(shown), "->", file);
     }
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
