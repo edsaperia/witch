@@ -200,7 +200,7 @@ const report = await b.page.evaluate(async () => {
       for (let f = 0; f < P.limbo.frames; f++) { const top = G.witchModel({ pose: "limbo", frame: f }).anchors.top; if (!(top && top[1] < G.LIMBO_BAR - .02)) bad.push(`limbo ${f} top ${top && top[1].toFixed(2)} not under the bar ${G.LIMBO_BAR}`); }
     }
     const counts = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.frames])), want = { stand: 3, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2,
-      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4 };
+      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4, dj: 14 };
     res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), sit (2), and the party's 21 (7 dances with the limbo, dance with a partner, hold hands, hug, high-five, laugh, drink, run, sit on the ground, stargaze, conga, twirl and twirled, the broom limbo's two holders), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors, the limbo dancer under the bar; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
   }
   { // her lean cycle (WITCH_FLIGHT_POSES.lean): 4 frames, both facings and both headings, at her ordinary scale, standing, hand and hat-tip anchors inside; the frames differ (it moves)
@@ -307,6 +307,27 @@ const report = await b.page.evaluate(async () => {
       info = `${sp.w}x${sp.h} (${Mx.height} m; top storey at ${Mx.towerFloor} m, roof tip ${Mx.roofTip} m; trunk ${Mx.trunk} m across, crown ${Mx.crown} m; footprint ${Mx.footprint} m, decks to ${Mx.overhang} m), ${A.lights.length} lights (${A.lights.filter(L => L.kind === "decks").length} on the decks)`;
     }
     res.push({ what: "treehouse: towards and away, 28 to 40 m, its top storey above the 24 m treetops; its giant tree's trunk 5 m+ across and crown 11 m+; fore (the DJ table) part of the whole; top + bottom = whole, the studio below the split; windows glow; anchors inside; the seat on the studio floor, the camera over it", good: !bad.length, info: bad.join("; ") || info });
+  }
+  { // the DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): the DJ
+    // table's fore frames (DJ_FRAMES of them, one size, each different: the platters turning, the LEDs chasing; the first is the
+    // whole's own table); her DJ frames, facing us, every gesture's frames different, each with an upper layer (what's over the
+    // decks: her head and arms, none of her legs); stood with her ground anchor on the seat, every hand meant for the decks lands
+    // on the decks' pixels (not the desk's front or the room behind); djFrame plays every gesture over the set, two frames a beat
+    const bad = [], T = G.treehouseSprite(st), FF = T.foreFrames, key = sp => Array.from(sp.m).join(), seat = T.anchors.seat;
+    if (FF.length !== G.DJ_FRAMES || new Set(FF.map(f => f.w + "x" + f.h)).size !== 1 || new Set(FF.map(key)).size !== FF.length) bad.push("fore frames");
+    { const f0 = FF[0]; for (let y = 0; y < f0.h; y++) for (let x = 0; x < f0.w; x++) { const v = f0.m[y * f0.w + x]; if (v && T.fore.m[(y + T.foreBox.y) * T.fore.w + x + T.foreBox.x] !== v) { bad.push("fore frame 0 not the table"); y = f0.h; break; } } }
+    const DECK = new Set([G.M.SHADES, G.M.BODY3, G.M.COLLAR, G.M.RUNE, G.M.BELLY, G.M.FRAME, G.M.WOKEN]), onDeck = (x, y) => { const f0 = FF[0]; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = Math.round(x) - T.foreBox.x + dx, Y = Math.round(y) - T.foreBox.y + dy; if (X >= 0 && Y >= 0 && X < f0.w && Y < f0.h && DECK.has(f0.m[Y * f0.w + X])) return true; } return false; };
+    const P = G.WITCH_FOOT_POSES.dj, frames = [], deckHands = [0, 1, 4, 5, 6, 7, 8, 9];
+    for (let f = 0; f < P.frames; f++) {
+      const sp = G.witchSprite(st, { pose: "dj", frame: f }), up = sp.upper, n = sp.m.filter(Boolean).length, nu = up ? up.reduce((a, v) => a + v, 0) : 0; frames.push(key(sp));
+      let lowUp = 0; if (up) for (let i = 0; i < up.length; i++) if (up[i]) lowUp = Math.max(lowUp, Math.floor(i / sp.w));
+      if (!up || nu < n * .3 || nu > n * .9 || lowUp > sp.anchors.ground[1] - 8) bad.push(`dj ${f}: upper ${nu} of ${n}, lowest row ${lowUp}`);
+      if (deckHands.includes(f)) { const hx = seat.x - sp.anchors.ground[0] + sp.anchors.hand[0], hy = seat.y - sp.anchors.ground[1] + sp.anchors.hand[1]; if (!onDeck(hx, hy)) bad.push(`dj ${f}: hand off the decks (${hx.toFixed(1)}, ${hy.toFixed(1)})`); }
+    }
+    for (const fr of Object.values(G.DJ_GESTURES)) if (frames[fr[0]] === frames[fr[1]]) bad.push(`dj ${fr}: frames alike`);
+    const played = new Set(); for (let b = 0; b < 48 * 4; b += .25) played.add(G.djFrame(b)); for (const [gname, fr] of Object.entries(G.DJ_GESTURES)) if (gname !== "cast" && !fr.every(f => played.has(f))) bad.push(`djFrame never plays ${gname}`);
+    if (!G.DJ_GESTURES.cast.includes(G.djFrame(3.2, { cast: true }))) bad.push("djFrame cast");
+    res.push({ what: "DJ booth: the table's fore frames turn (one size, each different, the first the whole's table); her DJ frames facing us, every gesture's frames different, each with an upper layer (head and arms, no legs); her deck hands on the decks' pixels; djFrame plays every gesture", good: !bad.length, info: bad.join("; ") || `${FF.length} fore frames ${FF[0].w}x${FF[0].h}, ${P.frames} DJ frames` });
   }
   { const H = G.soundsystemHeight(st), ws = G.witchSprite(st);
     for (let v = 0; v < G.SOUNDSYSTEMS.length; v++) {
@@ -739,6 +760,28 @@ const report = await b.page.evaluate(async () => {
     for (const d of G.PATH_PIECES) { const P = G.pathPieceSprite(d.id, st); if (!(stats(P.sp).bottom > 0 && n(P.sp) > 8 && lit(P.sp) === !!d.glow)) bad.push(d.id); }
     const ap = G.areaPathKinds(), none = G.AREAS.filter(A => !(ap[A.id] || []).length).map(A => A.id);
     res.push({ what: "paths: 10 kinds, each strip tiling with its end, Y and T; only the magic trail glows; railway variants, points, broken end, crossing; the 3D pieces stand, only flagged ones glow; every area suits a path kind", good: !bad.length && !none.length && G.PATH_IDS.length >= 10, info: [...bad, ...none.map(a => a + " has no path kind")].join(", ") || `${G.PATH_IDS.length} kinds, ${G.PATH_PIECES.length} pieces` });
+  }
+  { // every generator draws (phase 1: the ones no other check reached): every beach find and print (prints at every heading), the bedroom,
+    // every broom kind under the witch, her hat alone both ways, every species' rune stone, a party patch, every legend's sprites; each
+    // non-empty, nothing NaN in its normals, every material it uses coloured, its origin (where it has one) on the sprite
+    const bad = [], seen = { beach: 0, brooms: 0, stones: 0, legends: 0 };
+    const nan = sp => { for (let i = 0; i < sp.n.length; i++) if (Number.isNaN(sp.n[i])) return true; return false; };
+    const look = (what, sp, col, origin) => {
+      const s = stats(sp); if (!(s.n > 0)) { bad.push(`${what} empty`); return; }
+      if (nan(sp)) bad.push(`${what} NaN normals`);
+      if (col) for (const v of new Set(sp.m)) if (v && v !== G.M.LINE && !col[v]) { bad.push(`${what} material ${v} uncoloured`); break; }
+      if (origin && !(origin.x >= 0 && origin.x <= sp.w && origin.y >= 0 && origin.y <= sp.h + 1)) bad.push(`${what} origin off the sprite`);
+    };
+    const bc = G.beachColours(st);
+    for (const d of [...G.BEACH_FINDS, ...G.BEACH_PRINTS]) for (let h = 0; h < (d.kind === "print" ? G.PRINT_HEADINGS : 1); h++) { const b = G.beachSprite(d.id, st, { heading: h }); look(`beach ${d.id}${h ? " heading " + h : ""}`, b.whole, bc, b.origin); seen.beach++; }
+    { const sp = G.bedroomSprite(st); look("bedroom", sp, G.bedroomColours(st)); if (!sp.anchors?.decks || !sp.anchors?.screen) bad.push("bedroom anchors"); }
+    const wc = G.witchColours(st);
+    for (const broom of G.WITCH_AXES.broom) { look(`broom ${broom}`, G.witchSprite(st, { look: { ...G.DEFAULT_LOOK, broom } }), wc); seen.brooms++; }
+    for (const facing of ["towards", "away"]) look(`witch hat ${facing}`, G.witchHatSprite(st, { facing }), wc);
+    for (const id of Object.keys(G.SIGIL_NEON)) { const b = G.runeStone(st, { sigil: id }); if (!(b.w > 4 && b.h > 4)) bad.push(`rune stone ${id}`); seen.stones++; }
+    { const p = G.partyPatch(1, (id, o) => G.scenePlacements(id, st, o)); if (!(p.length > 10) || p.some(q => !q.ref || Number.isNaN(q.x) || Number.isNaN(q.y))) bad.push(`party patch: ${p.length} pieces`); else { const missing = p.filter(q => !G.sceneRefExists(q.ref)); if (missing.length) bad.push(`party patch: ${missing[0].ref} is no piece`); } }
+    for (const id of G.LEGEND_IDS) { const L = G.legendSprites(id, st); if (!L || !Object.keys(L).length) bad.push(`legend sprites ${id}`); seen.legends++; }
+    res.push({ what: "every generator draws: the beach's finds and prints (every heading), the bedroom, every broom, the witch's hat both ways, every species' rune stone, a party patch, every legend's sprites; none empty, nothing NaN, every material coloured", good: !bad.length && seen.beach > 0 && seen.brooms >= 18, info: bad.slice(0, 6).join("; ") || `${seen.beach} beach pieces, ${seen.brooms} brooms, ${seen.stones} rune stones, ${seen.legends} legends` });
   }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {

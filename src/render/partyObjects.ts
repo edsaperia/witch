@@ -6,12 +6,17 @@
 // Decals (confetti, streamers, glitter) lie flat under everything.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import { dressingOf, excluded, isLit, lightOf, partyDef, type Dressing } from "../rules/partyDressing";
+import { dressingOf, excluded, isLit, leftOut, lightOf, partyDef, pieceId, type Dressing } from "../rules/partyDressing";
 import { hash2 } from "../rules/random";
 import type { AssetLibrary } from "./assets";
 import type { ForestLight } from "./view";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import { moodOf, type Mood } from "./mood";
+
+/** A party piece's ref worked out once (its id, its def, whether it lights): the rules' helpers split the ref each call, and
+ *  these ran for every piece every frame. Whether it's left out still asks the tuning each time (it can change live). */
+const REFS = new Map<string, { id: string; def: ReturnType<typeof partyDef>; lit: boolean }>();
+const refOf = (ref: string) => { let r = REFS.get(ref); if (!r) REFS.set(ref, (r = { id: pieceId(ref), def: partyDef(ref), lit: isLit(ref) })); return r; };
 
 export class PartyObjectsView {
   private upright: SpriteBatch | null = null;
@@ -21,6 +26,8 @@ export class PartyObjectsView {
   private bounds = new Map<string, [number, number, number, number]>();
   /** The tree each hanging piece hangs in (by area and piece), found once. */
   private trees = new Map<string, { x: number; z: number } | null>();
+  /** Each area's cluster pieces' refs in its neons ([cluster][piece]), worked out once (a string replace a piece a frame before). */
+  private neonRefs = new Map<string, string[][]>();
   /** Each area's fires (its campfires, bonfires and tiki torches, in its clusters and loose), for the smoke: x, z, size, ... */
   private fireSpots = new Map<string, number[]>();
   /** Instances drawn this frame (for the debug overlay). */
@@ -94,13 +101,13 @@ export class PartyObjectsView {
       const b = this.bounds.get(key)!, PAD = 20;
       if (view && (b[0] > view.x + view.half + PAD || b[2] < view.x - view.half - PAD || b[1] > view.z + view.half + PAD || b[3] < view.z - view.half - PAD)) {
         // Out of view: its lights only (they reach onto the ground in view), as below.
-        for (const c of d.clusters) { const lay = art.layouts[c.id]; if (lay) for (const p of c.mirror ? lay.mirror : lay.plain) if (lit < (M?.decorLights ?? t.partyObjects.lightsPerArea) && isLit(p.ref)) { lit++; lights.push(light(c.x + p.dx, c.z + p.dz, lightOf(p.ref, t)!, time, since(time, from), M)); } }
+        for (const c of d.clusters) { const lay = art.layouts[c.id]; if (lay) for (const p of c.mirror ? lay.mirror : lay.plain) if (lit < (M?.decorLights ?? t.partyObjects.lightsPerArea) && refOf(p.ref).lit) { lit++; lights.push(light(c.x + p.dx, c.z + p.dz, lightOf(p.ref, t)!, time, since(time, from), M)); } }
         for (const p of d.lights) lights.push(light(p.x, p.z, lightOf(p.ref, t)!, time, since(time, from), M));
         continue;
       }
       const put = (ref: string, gx: number, gz: number, flip: boolean, i: number, hang = 0) => {
-        const a = art.pieces[ref], def = partyDef(ref);
-        if (!a || !def || excluded(ref, t)) return; // (left out of the clusters too)
+        const a = art.pieces[ref], r = refOf(ref), def = r.def;
+        if (!a || !def || leftOut(r.id, t)) return; // (left out of the clusters too)
         // Each pops up in turn as the party arrives.
         const since = time - from - hash2(i, Math.round(gx * 3), 77) * 2.5;
         if (since < 0) return;
@@ -115,15 +122,18 @@ export class PartyObjectsView {
         (a.decal ? flat : upright).push(inst);
         this.count++;
       };
+      let refs = this.neonRefs.get(key);
+      if (!refs) this.neonRefs.set(key, (refs = []));
       d.clusters.forEach((c, ci) => {
         const lay = art.layouts[c.id];
         if (!lay) return;
+        const cr = (refs![ci] ??= []);
         (c.mirror ? lay.mirror : lay.plain).forEach((p, pi) => {
           // a cluster's neon pieces in the area's neons (its own colour, one accent: rules/partyDressing.ts areaNeons)
-          const ref = d!.neons?.length && p.ref.includes("@") ? p.ref.replace(/@[a-z]+/, "@" + d!.neons[(ci * 7 + pi * 3) % d!.neons.length]) : p.ref;
+          const ref = (cr[pi] ??= d!.neons?.length && p.ref.includes("@") ? p.ref.replace(/@[a-z]+/, "@" + d!.neons[(ci * 7 + pi * 3) % d!.neons.length]) : p.ref);
           put(ref, c.x + p.dx, c.z + p.dz, p.left, ci * 16 + pi);
           // The clusters' campfires and lanterns light up too, while the area has lights to spare.
-          if (lit < (M?.decorLights ?? t.partyObjects.lightsPerArea) && isLit(ref)) { lit++; const L = lightOf(ref, t)!; lights.push(light(c.x + p.dx, c.z + p.dz, L, time, since(time, from), M)); }
+          if (lit < (M?.decorLights ?? t.partyObjects.lightsPerArea) && refOf(ref).lit) { lit++; const L = lightOf(ref, t)!; lights.push(light(c.x + p.dx, c.z + p.dz, L, time, since(time, from), M)); }
         });
       });
       d.loose.forEach((p, i) => put(p.ref, p.x, p.z, p.flip, 200 + i));

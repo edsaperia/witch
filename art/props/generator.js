@@ -5,21 +5,20 @@
 // and ?style=ref stylisation) give each material its tones; surface detail is a few big patches, never speckle.
 //   propVariant(kind, seed, over): the variant's numbers (over: fixed ones, an area's)
 //   propPiece(kind, o, def, st): { sp, prColours, metres: { height, width }, variant } (o.seed picks the variant; o's other keys fix numbers)
-import { M, Sprite, hsv2rgb, hash2, rng } from "../core.js";
+import { M, Sprite, hsv2rgb, hash2, rng, pickByWeight, cellHash, cropTight } from "../core.js";
 import { Model, render, v3 } from "../model3d.js";
 import { witchPixelsPerUnit, cleanFlecks } from "../witch.js";
 import { PROP_GENOMES, RIM_GENOMES } from "./genomes.js";
 import { groundColours } from "../ground.js";
 
 const PR_U = 1 / 1.9; // model units a metre (the witch's model is about 1.9 m a unit)
-const prPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
 // A variant: each range picked within (integers stay whole where both ends are), each list of options by weight; `over` fixes any.
 export function propVariant(kind, seed = 0, over = {}, table = PROP_GENOMES) { // table: another set of genomes (the party's: PARTY_PROP_GENOMES)
   const G = table[kind]; if (!G) throw new Error(`no prop kind "${kind}"`);
   const r = rng(((seed + 1) * 2654435761 + kind.length * 97) >>> 0), v = {};
   for (const [k, g] of Object.entries(G)) {
     if (k === "colour" || k === "bog") continue;
-    if (Array.isArray(g) && Array.isArray(g[0])) v[k] = prPick(r, g);
+    if (Array.isArray(g) && Array.isArray(g[0])) v[k] = pickByWeight(r, g);
     else if (Array.isArray(g)) { const x = g[0] + (g[1] - g[0]) * r(); v[k] = Number.isInteger(g[0]) && Number.isInteger(g[1]) && Math.abs(g[1] - g[0]) >= 1 && k !== "branchSide" ? Math.round(x) : x; }
     else v[k] = g;
   }
@@ -28,7 +27,6 @@ export function propVariant(kind, seed = 0, over = {}, table = PROP_GENOMES) { /
   // an over given as [min, max] (an area's own range, e.g. the stone shrine's big stones) is drawn from, each variant its own
   return Object.assign(v, Object.fromEntries(Object.entries(over).filter(([k]) => k in G && k !== "colour").map(([k, x]) => [k, Array.isArray(x) && x.length === 2 && typeof x[0] === "number" && !Array.isArray(G[k]?.[0]) ? x[0] + (x[1] - x[0]) * r() : x])));
 }
-const gpPrCell = (p, k, seed) => hash2(Math.floor(p[0] * k + 500), Math.floor(p[1] * k + 500) + Math.floor(p[2] * k + 500) * 131, seed);
 // patches: a few big blobs on a surface (centres and radii), so marks come as clusters, not noise
 const prInPatch = (p, patches) => patches.some(([c, rad]) => (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 * 1.4 + (p[2] - c[2]) ** 2 < rad * rad);
 
@@ -40,7 +38,7 @@ function prStanding(m, v) {
   const broken = v.top === "broken", H = broken ? h * .62 : h;
   const patches = [...Array(v.lichen).keys()].map(() => [at(H * (.3 + r() * .6), w * (r() - .5) * 1.2, d * 1.05), v.lichenSize * PR_U]);
   const lichenMat = v.lichenMat, mossTop = H * v.moss;
-  const paint = p => v3.dot(p, up) < mossTop * (.75 + .5 * gpPrCell(p, 9, 3)) ? M.MOSS : prInPatch(p, patches) ? lichenMat : undefined;
+  const paint = p => v3.dot(p, up) < mossTop * (.75 + .5 * cellHash(p, 9, 3)) ? M.MOSS : prInPatch(p, patches) ? lichenMat : undefined;
   // the slab: one rounded box, sunk a little into the ground, its shoulders cut away towards the top (its taper), so its faces stay flat and plain
   m.box(at(H * .5 - .02, 0), [H * .5 + .02, w, d], M.STONE, { dir: up, up: side, round: Math.min(w, d) * .5, rough: v.rough, group: 1, paint });
   const cutW = v.top === "flat" ? 0 : w * (1 - v.taper); // a flat-topped slab stays square
@@ -61,7 +59,7 @@ function prStanding(m, v) {
   if (broken) { // snapped off: a jagged top, and the piece lying beside it
     for (let i = 0; i < 3; i++) m.box(v3.add(top, at(.02, w * (i - 1) * .6)), [w * .35, w * .35, d * 1.6], M.STONE, { dir: v3.norm(v3.add(up, v3.mul(side, (i - 1) * .8 + .3))), up: [0, 0, 1], cut: true, group: 1 });
     const L = h * .38, s0 = (r() < .5 ? -1 : 1);
-    m.box([s0 * (w + L * .55), d * .9, (r() - .3) * w], [L * .5, d * .95, w * .8], M.STONE, { dir: [s0, .12, (r() - .5) * .5], up: [0, 1, 0], round: d * .6, rough: v.rough, group: 2, paint: q => q[1] > d * 1.4 && gpPrCell(q, 7, 9) < .35 ? M.MOSS : undefined });
+    m.box([s0 * (w + L * .55), d * .9, (r() - .3) * w], [L * .5, d * .95, w * .8], M.STONE, { dir: [s0, .12, (r() - .5) * .5], up: [0, 1, 0], round: d * .6, rough: v.rough, group: 2, paint: q => q[1] > d * 1.4 && cellHash(q, 7, 9) < .35 ? M.MOSS : undefined });
   }
   for (let i = 0; i < 5 + Math.floor(r() * 4); i++) { const x = (r() - .5) * w * 3, z = d * (1 + r() * 1.5) * (r() < .7 ? 1 : -1); m.seg([x, 0, z], [x + (r() - .5) * .04, .08 + r() * .14, z], .025, .006, r() < .5 ? M.LEAF : M.LEAF2, { group: 3 }); } // grass round its foot
 }
@@ -75,7 +73,7 @@ function prCairn(m, v) {
     const t = j / layers, ring = R * (1 - t) * .62, n = Math.max(1, Math.round((layers - j) * .9)), s = sz * (1.2 - t * .6), fl = v.flat, a0 = r() * Math.PI * 2;
     for (let i = 0; i < n && placed < v.stones - 1; i++, placed++) {
       const a = a0 + i / n * Math.PI * 2 + (r() - .5) * .5, ss = s * (.85 + r() * .3), c = [Math.cos(a) * ring, y + ss * fl * .85, Math.sin(a) * ring * .85], mossy = j < 2 && r() < v.moss;
-      m.ell(c, [ss * (1 + r() * .3), ss * fl * (.85 + r() * .3), ss * (.8 + r() * .3)], M.STONE, { dir: [Math.cos(a + 1.6), (r() - .5) * .3, Math.sin(a + 1.6)], rough: v.rough, group: 1 + (placed % 3), paint: p => mossy && p[1] > c[1] + ss * fl * .4 ? M.MOSS : gpPrCell(p, 8, placed) < .06 ? M.BELLY : undefined });
+      m.ell(c, [ss * (1 + r() * .3), ss * fl * (.85 + r() * .3), ss * (.8 + r() * .3)], M.STONE, { dir: [Math.cos(a + 1.6), (r() - .5) * .3, Math.sin(a + 1.6)], rough: v.rough, group: 1 + (placed % 3), paint: p => mossy && p[1] > c[1] + ss * fl * .4 ? M.MOSS : cellHash(p, 8, placed) < .06 ? M.BELLY : undefined });
     }
     y += s * fl * 1.45 * Math.min(1, H / (layers * s * fl * 1.45));
   }
@@ -150,7 +148,7 @@ function prTrunk(m, v) {
 function prLog(m, v) {
   const r = v.r, L = v.length * PR_U, R = v.girth * PR_U, yaw = (r() - .5) * .7, cy = R * (1 - v.sink), bow = v.bend * L;
   const ax = [Math.cos(yaw), 0, -Math.sin(yaw)], nz = [Math.sin(yaw), 0, Math.cos(yaw)], at = (t, up = 0, side = 0) => v3.add(v3.add(v3.mul(ax, (t - .5) * L), v3.mul(nz, side + bow * (1 - (2 * t - 1) ** 2))), [0, cy + up, 0]);
-  const grooves = p => { const d = v3.dot(p, nz), a = Math.atan2(p[1] - cy, d), k = Math.sin(a * 6 + v3.dot(p, ax) * 9); return p[1] > cy + R * (.55 - v.moss * .4) && gpPrCell(p, 9, 21) < .55 + v.moss * .4 ? M.MOSS : k > .82 ? M.BARKD : k < -.9 ? M.BARKL : undefined; };
+  const grooves = p => { const d = v3.dot(p, nz), a = Math.atan2(p[1] - cy, d), k = Math.sin(a * 6 + v3.dot(p, ax) * 9); return p[1] > cy + R * (.55 - v.moss * .4) && cellHash(p, 9, 21) < .55 + v.moss * .4 ? M.MOSS : k > .82 ? M.BARKD : k < -.9 ? M.BARKL : undefined; };
   const pts = [0, .25, .5, .75, 1].map(t => [...at(t), R * (1 - .12 * Math.abs(2 * t - 1))]);
   m.chain(pts, M.TRUNK, { group: 1, rough: .006, paint: grooves });
   const ends = v.ends === "mixed" ? ["broken", "sawn"] : [v.ends, v.ends];
@@ -172,7 +170,7 @@ function prMushrooms(m, v) {
     const x = Math.cos(a) * rr, z = Math.sin(a) * rr * .9, cs = v.size * PR_U * (1 + (r() - .5) * v.spread * .8), h = cs * (1 + r() * .7), lean = (r() - .5) * .3, top = [x + lean * h, h, z];
     m.seg([x, 0, z], top, cs * .3, cs * .24, M.BELLY, { group: 10 + i });
     const capC = v3.add(top, [0, cs * .15, 0]), spotted = r() < v.spots && !glow;
-    m.ell(capC, [cs, cs * (.5 + r() * .25), cs], M.FLOWER, { group: 10 + i, paint: p => p[1] < capC[1] - cs * .05 ? (glow ? M.MAGIC : M.BELLY) : spotted && gpPrCell(p, 1 / (cs * .55), i) < .22 ? M.WEB : undefined }); // its cap; gills under it (glowing on a glow cap)
+    m.ell(capC, [cs, cs * (.5 + r() * .25), cs], M.FLOWER, { group: 10 + i, paint: p => p[1] < capC[1] - cs * .05 ? (glow ? M.MAGIC : M.BELLY) : spotted && cellHash(p, 1 / (cs * .55), i) < .22 ? M.WEB : undefined }); // its cap; gills under it (glowing on a glow cap)
   }
   for (let k = 0; k < 8; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R * (.3 + r()), z = Math.sin(a) * R * (.3 + r()); m.seg([x, 0, z], [x, .05 + r() * .08, z], .018, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 40 }); }
 }
@@ -180,7 +178,7 @@ function prMushrooms(m, v) {
 function prCircle(m, v) {
   const r = v.r, R = v.radius * PR_U, n = v.count, fallen = new Set([...Array(v.fallen).keys()].map(() => Math.floor(r() * n)));
   m.flat([0, .003, 0], [1, 0, 0], [0, 0, -1], R * 1.15, R * 1.15 * .85, (s, t) => { const d = Math.hypot(s, t) * 1.15; return d < .92 + .08 * hash2(Math.floor(Math.atan2(t, s) * 4 + 20), 1, 9) ? M.LEAF3 : undefined; }, { group: 0, bend: .04 }); // the short, trodden grass inside it
-  const lichen = (p, g) => gpPrCell(p, 6, g) < .12 ? M.BELLY : p[1] < .05 + gpPrCell(p, 9, g + 3) * .05 ? M.MOSS : undefined;
+  const lichen = (p, g) => cellHash(p, 6, g) < .12 ? M.BELLY : p[1] < .05 + cellHash(p, 9, g + 3) * .05 ? M.MOSS : undefined;
   for (let i = 0; i < n; i++) {
     const a = i / n * Math.PI * 2 + (r() - .5) * .25, c = [Math.cos(a) * R, 0, Math.sin(a) * R * .85], h = v.height * PR_U * (.75 + r() * .5), w = v.width * PR_U * (.8 + r() * .4), d = w * (.4 + r() * .2), tan = [-Math.sin(a), 0, Math.cos(a)];
     if (fallen.has(i)) { m.box(v3.add(c, [0, d * .8, 0]), [h * .5, d, w * .5], M.STONE, { dir: v3.norm(v3.add(tan, [Math.cos(a) * .4, 0, Math.sin(a) * .4])), up: [0, 1, 0], round: d * .5, group: 1 + i, paint: p => lichen(p, i) }); continue; }
@@ -195,7 +193,7 @@ function prCircle(m, v) {
 function prRock(m, v) {
   const r = v.r, R = v.size * PR_U, H = R * v.flat, base = -R * v.sink, patches = [...Array(v.lichen).keys()].map(() => { const a = r() * Math.PI * 2; return [[Math.cos(a) * R * .8, base + H * (.6 + r() * .6), Math.sin(a) * R * .8 + R * .3], R * (.2 + r() * .15)]; });
   const crackA = r() * Math.PI, cracked = r() < v.crack, mossH = base + H * 2 * (1 - v.moss);
-  const paint = p => p[1] > mossH + gpPrCell(p, 1 / (R * .25), 3) * R * .15 ? M.MOSS : cracked && Math.abs((p[0] * Math.cos(crackA) + p[2] * Math.sin(crackA)) + Math.sin(p[1] * 9) * R * .06) < R * .035 ? M.STONED : prInPatch(p, patches) ? M.BELLY : undefined;
+  const paint = p => p[1] > mossH + cellHash(p, 1 / (R * .25), 3) * R * .15 ? M.MOSS : cracked && Math.abs((p[0] * Math.cos(crackA) + p[2] * Math.sin(crackA)) + Math.sin(p[1] * 9) * R * .06) < R * .035 ? M.STONED : prInPatch(p, patches) ? M.BELLY : undefined;
   for (let i = 0; i < v.lumps; i++) { const a = i / v.lumps * Math.PI * 2 + r(), off = i ? R * (.35 + r() * .3) : 0, k = i ? .55 + r() * .3 : 1; m.ell([Math.cos(a) * off, base + H * k, Math.sin(a) * off * .8], [R * k, H * k, R * k * (.75 + r() * .3)], M.STONE, { dir: [Math.cos(a * 2), (r() - .5) * .3, Math.sin(a * 2)], rough: .012, group: 1, paint }); }
   for (let i = 0; i < v.pebbles; i++) { const a = r() * Math.PI * 2, d = R * (1.05 + r() * .5), s = R * (.08 + r() * .1); m.ell([Math.cos(a) * d, s * .4, Math.sin(a) * d * .85], [s, s * .6, s * .8], M.STONE, { rough: .01, group: 2 + i }); }
   for (let k = 0; k < 6; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R * 1.05, z = Math.sin(a) * R * .9; m.seg([x, 0, z], [x, .06 + r() * .1, z], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 20 }); }
@@ -203,22 +201,14 @@ function prRock(m, v) {
 // ---- mound: a mound of moss or bare earth of a few lumps, tufts on top, a stone or two half buried ----
 function prHillock(m, v) {
   const r = v.r, R = v.radius * PR_U, H = v.height * PR_U, moss = v.skin === "moss";
-  for (let i = 0; i < v.lumps; i++) { const a = i / v.lumps * Math.PI * 2 + r(), off = i ? R * (.3 + r() * .3) : 0, k = i ? .5 + r() * .3 : 1; m.ell([Math.cos(a) * off, -H * .25, Math.sin(a) * off * .8], [R * k, H * k * 1.25, R * k * .85], M.BODY, { dir: [Math.cos(a), 0, Math.sin(a)], rough: .01, group: 1, paint: p => gpPrCell(p, 1 / (R * .45), 5) < .25 ? M.BODY2 : undefined }); }
+  for (let i = 0; i < v.lumps; i++) { const a = i / v.lumps * Math.PI * 2 + r(), off = i ? R * (.3 + r() * .3) : 0, k = i ? .5 + r() * .3 : 1; m.ell([Math.cos(a) * off, -H * .25, Math.sin(a) * off * .8], [R * k, H * k * 1.25, R * k * .85], M.BODY, { dir: [Math.cos(a), 0, Math.sin(a)], rough: .01, group: 1, paint: p => cellHash(p, 1 / (R * .45), 5) < .25 ? M.BODY2 : undefined }); }
   for (let i = 0; i < v.stones; i++) { const a = r() * Math.PI * 2, d = R * (.4 + r() * .4), s = R * (.12 + r() * .1); m.ell([Math.cos(a) * d, H * .35, Math.sin(a) * d * .8], [s, s * .6, s * .8], M.STONE, { group: 3 + i, rough: .01 }); }
   for (let i = 0; i < v.tufts; i++) { const a = r() * Math.PI * 2, d = R * Math.sqrt(r()) * .8, x = Math.cos(a) * d, z = Math.sin(a) * d * .8, y = H * (1 - (d / R) ** 2) * .9; m.seg([x, y, z], [x + (r() - .5) * .04, y + .07 + r() * (moss ? .06 : .12), z], .02, .005, i % 2 ? M.LEAF2 : M.LEAF, { group: 10 }); }
 }
 const PR_BUILD = { standingStone: prStanding, cairn: prCairn, pool: prPool, brokenTrunk: prTrunk, fallenLog: prLog, mushroomRing: prMushrooms, stoneCircle: prCircle, boulder: prRock, mound: prHillock };
 
-function prCrop(sp) {
-  let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
-  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  if (x1 < 0) return sp;
-  const out = new Sprite(x1 - x0 + 1, y1 - y0 + 1);
-  for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) { const i = (y + y0) * sp.w + x + x0; if (sp.m[i]) { out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); out.g[y * out.w + x] = sp.g[i]; } }
-  return out;
-}
 // A colour from the genome: [h, s, v] jittered by the variant's spread (a list of [h, s, v, weight] picks one).
-function prTone(c, r, k) { if (Array.isArray(c[0])) c = prPick(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
+function prTone(c, r, k) { if (Array.isArray(c[0])) c = pickByWeight(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
 function prColours(kind, v, def, o, st = {}) {
   const G = PROP_GENOMES[kind], C = { ...G.colour, ...(o.bog && G.bog ? G.bog : {}) }, r = rng((v.seed * 7919 + 13) >>> 0), k = C.spread, leaf = def?.leaf ?? .26;
   const grass = { [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.LEAF3]: hsv2rgb(leaf + .02, .5, .4), [M.LINE]: [24, 22, 30] };
@@ -240,12 +230,12 @@ export function propPiece(kind, o = {}, def = null, st = {}, ppm = 16) {
   if (kind === "standingStone") { v.lichenMat = M.BELLY; if (o.lead) { v.shape = "tall"; v.height = Math.max(v.height, 5.2); v.lean *= .5; if (v.top === "broken" || v.top === "notch") v.top = "flat"; } } // lead: an area's first stone stands tall and whole (the moor's something 4 m tall)
   const m = new Model({ blend: kind === "brokenTrunk" ? .06 : .035 });
   PR_BUILD[kind](m, v);
-  let sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp);
+  let sp = cropTight(render(m, { scale: witchPixelsPerUnit(st) }).sp).sp;
   if (kind === "pool") { // its shore breaks into the floor: the outermost rim pixels (touching nothing) dropped in 2 x 1 clusters, by hash (agreed with art builder 1, #156)
     const rim = new Set([M.BODY, M.BARK2, M.MOSS]), at = (x, y) => x < 0 || y < 0 || x >= sp.w || y >= sp.h ? 0 : sp.m[y * sp.w + x], drop = [];
     for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const m0 = at(x, y); if (!rim.has(m0) || (at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1))) continue; if (hash2(x >> 1, y, v.seed + 77) < .5) drop.push(y * sp.w + x, y * sp.w + (x ^ 1)); }
     for (const i of drop) if (rim.has(sp.m[i])) sp.m[i] = 0;
-    sp = prCrop(sp); // (thinned, it may have lost its bottom row)
+    sp = cropTight(sp).sp; // (thinned, it may have lost its bottom row)
   }
   cleanFlecks(sp); // no lone pixels or stray line dots (docs/ART-GUIDE.md: clusters, not noise)
   // a pool's water lit as a level surface at a grazing light, so every style gives it its base tone (the light tone's shift toward
@@ -276,7 +266,7 @@ export function propFor(kind, o = {}) {
 // a short post: a squared stake, weathered, leaning a little; its top flat, cut to a point or split; moss up its foot
 function prPost(m, v) {
   const r = v.r, H = v.height * PR_U, R = v.girth * PR_U, up = v3.norm([v.lean, 1, (r() - .5) * .1]), at = y => v3.mul(up, y);
-  const grain = p => Math.sin(p[0] * 90 + p[2] * 40 + p[1] * 6) > .85 ? M.BARKD : p[1] < H * v.moss * (.7 + .6 * gpPrCell(p, 30, 4)) ? M.MOSS : undefined;
+  const grain = p => Math.sin(p[0] * 90 + p[2] * 40 + p[1] * 6) > .85 ? M.BARKD : p[1] < H * v.moss * (.7 + .6 * cellHash(p, 30, 4)) ? M.MOSS : undefined;
   const top = v.top === "point" ? H * .82 : H;
   m.box(at(top * .5 - .01), [top * .5 + .01, R, R * .9], M.TRUNK, { dir: up, up: [1, 0, 0], round: R * .25, rough: .006, group: 1, paint: grain });
   if (v.top === "point") for (const s0 of [-1, 1]) m.box(v3.add(at(top), [s0 * R * .9, 0, 0]), [R * 1.1, R * .9, R * 1.2], M.TRUNK, { dir: v3.norm(v3.add(up, [-s0 * .9, 0, 0])), up: [0, 0, 1], cut: true, group: 1 });
@@ -308,11 +298,11 @@ export function rimPiece(o = {}, def = null, st = {}, ppm = 16) {
 }
 function rimPieceOnce(o, def, st, ppm) {
   const form = o.form ?? rimForm(def, o.k ?? 0), G = RIM_GENOMES[form], seed = o.seed ?? 0, r = rng(((seed + 3) * 2654435761 + form.length * 131) >>> 0);
-  const fix = Object.fromEntries(Object.entries(G).filter(([k]) => k !== "kind" && k !== "colour").map(([k, g]) => [k, Array.isArray(g) && Array.isArray(g[0]) ? prPick(r, g) : Array.isArray(g) ? (Number.isInteger(g[0]) && Number.isInteger(g[1]) ? Math.round(g[0] + (g[1] - g[0]) * r()) : g[0] + (g[1] - g[0]) * r()) : g]));
+  const fix = Object.fromEntries(Object.entries(G).filter(([k]) => k !== "kind" && k !== "colour").map(([k, g]) => [k, Array.isArray(g) && Array.isArray(g[0]) ? pickByWeight(r, g) : Array.isArray(g) ? (Number.isInteger(g[0]) && Number.isInteger(g[1]) ? Math.round(g[0] + (g[1] - g[0]) * r()) : g[0] + (g[1] - g[0]) * r()) : g]));
   if (form === "post") {
     const v = { ...fix, seed, r }, m = new Model({ blend: .03 });
     prPost(m, v);
-    const sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp); cleanFlecks(sp);
+    const sp = cropTight(render(m, { scale: witchPixelsPerUnit(st) }).sp).sp; cleanFlecks(sp);
     const vr = rng((seed * 7919 + 13) >>> 0), C = G.colour, k = C.spread, leaf = def?.leaf ?? .26;
     const colours = { [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.TRUNK]: prTone(C.wood, vr, k), [M.BARKD]: prTone(C.dark, vr, k), [M.BARKL]: prTone(C.light, vr, k), [M.BELLY]: prTone(C.pale, vr, k * .5), [M.MOSS]: prTone(C.moss, vr, k), [M.LINE]: [24, 22, 30] };
     const { r: _r, ...variant } = v;

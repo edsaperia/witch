@@ -6,56 +6,12 @@
 // Confirm opens a new GitHub issue, labelled decision, filled in with the choice, the game's version and seed and the whole
 // panel; Ed submits it and the coordinator acts on it. The page holds no secret: the issue is Ed's to send. Copy puts the
 // same line on the clipboard instead.
-import DECISIONS from "../../config/decisions.json";
-
-export type Control = { type: "toggle" } | { type: "choice"; options: { value: string; label: string }[] } | { type: "slider"; min: number; max: number; step: number };
-export interface Decision { id: string; label: string; note: string; control: Control; default: string | number | boolean; apply: { knob?: string; param?: string; reload?: boolean } }
-export const DECISION_LIST = (DECISIONS as unknown as { decisions: Decision[] }).decisions;
-/** Where an issue is opened. */
-export const ISSUES = "https://github.com/edsaperia/witch/issues/new";
-/** The URL param a knob's choice is kept in. */
-export const knobParam = (id: string) => `d_${id}`;
-
-/** A knob's value by its dotted path in the tuning (undefined if there's none). */
-export function knobAt(tuning: object, path: string): unknown {
-  return path.split(".").reduce<unknown>((o, k) => (o && typeof o === "object" ? (o as Record<string, unknown>)[k] : undefined), tuning);
-}
-/** Set a knob by its dotted path (its parents must exist). */
-export function setKnob(tuning: object, path: string, v: unknown): void {
-  const keys = path.split("."), last = keys.pop()!;
-  const parent = keys.reduce<Record<string, unknown>>((o, k) => o[k] as Record<string, unknown>, tuning as Record<string, unknown>);
-  parent[last] = v;
-}
-/** A raw string (a URL param's) as the decision's own kind of value. */
-export function parseValue(d: Decision, raw: string): string | number | boolean {
-  if (d.control.type === "slider") { const n = Number(raw), c = d.control; return Number.isFinite(n) ? Math.min(c.max, Math.max(c.min, n)) : (d.default as number); }
-  if (d.control.type === "toggle") return raw === "1" || raw === "true" || raw === "on";
-  return d.control.options.some(o => o.value === raw) ? raw : (d.default as string);
-}
-/** Its value now: a knob's from the tuning, a switch's from the URL (else its default). */
-export function currentValue(d: Decision, tuning: object, params: URLSearchParams): string | number | boolean {
-  if (d.apply.knob) { const v = knobAt(tuning, d.apply.knob); return (v as string | number | boolean) ?? d.default; }
-  const raw = params.get(d.apply.param!);
-  return raw === null ? d.default : parseValue(d, raw);
-}
-/** The line a confirmed choice is sent as (the issue's title, the clipboard's first line). */
-export const decisionLine = (id: string, value: unknown) => `Decision: ${id} = ${value}`;
-/** The new-issue link for a confirmed choice: title, the decision label, and a body with the version, seed, link and the whole panel. */
-export function issueUrl(id: string, value: unknown, panel: Record<string, unknown>, version: string, seed: number, link: string): string {
-  const body = [`**${id}** = \`${value}\``, "", `- game: ${version}`, `- seed: ${seed}`, `- link: ${link}`, "", "The whole panel:", "```json", JSON.stringify(panel, null, 1), "```", "", "(sent from the game's decisions panel, ?decide)"].join("\n");
-  return `${ISSUES}?labels=decision&title=${encodeURIComponent(decisionLine(id, value))}&body=${encodeURIComponent(body)}`;
-}
+import { button, h } from "./dom";
+import { DECISION_LIST, decisionLine, issueUrl, knobParam, setKnob, currentValue, type Decision } from "./decisions";
+export * from "./decisions";
 
 /** What the panel needs from the game. */
 export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void> }
-
-/** Knob choices kept in the URL (d_<id>) put on the tuning, as the game starts. */
-export function applyKnobParams(tuning: object, params: URLSearchParams): void {
-  for (const d of DECISION_LIST) {
-    const raw = d.apply.knob ? params.get(knobParam(d.id)) : null;
-    if (raw !== null && knobAt(tuning, d.apply.knob!) !== undefined) setKnob(tuning, d.apply.knob!, parseValue(d, raw));
-  }
-}
 
 const CSS = `
 #decide { position: fixed; top: 64px; right: 0; z-index: 30; display: flex; align-items: flex-start; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: var(--ink, #e8e2f4); pointer-events: auto; }
@@ -93,10 +49,8 @@ export class DecidePanel {
     this.el.id = "decide";
     const params = new URLSearchParams(location.search);
     for (const d of DECISION_LIST) this.values.set(d.id, currentValue(d, host.tuning, params));
-    const tab = document.createElement("div"); tab.className = "tab"; tab.textContent = "DECISIONS · F2"; tab.title = "Open or close the decisions panel (F2)";
-    tab.addEventListener("click", () => this.toggle());
-    const body = document.createElement("div"); body.className = "body";
-    body.innerHTML = `<h2>Decisions</h2><p class="hint">Try a setting: it applies now. Confirm sends your choice (a GitHub issue to submit).</p>`;
+    const tab = h("div", { class: "tab", text: "DECISIONS · F2", title: "Open or close the decisions panel (F2)", on: { click: () => this.toggle() } });
+    const body = h("div", { class: "body", html: `<h2>Decisions</h2><p class="hint">Try a setting: it applies now. Confirm sends your choice (a GitHub issue to submit).</p>` });
     for (const d of DECISION_LIST) body.append(this.row(d));
     this.el.append(tab, body);
     if (!open) this.el.classList.add("closed");
@@ -110,14 +64,9 @@ export class DecidePanel {
   state(): Record<string, unknown> { return Object.fromEntries(this.values); }
 
   private row(d: Decision): HTMLElement {
-    const box = document.createElement("div"); box.className = "d"; box.dataset.id = d.id;
-    const head = document.createElement("div"); head.className = "row";
-    const label = document.createElement("span"); label.className = "label"; label.textContent = d.label;
-    head.append(label);
-    const note = document.createElement("div"); note.className = "note"; note.textContent = d.note;
-    const ctl = document.createElement("div"); ctl.className = "ctl";
-    const def = document.createElement("div"); def.className = "def";
-    const sent = document.createElement("div"); sent.className = "sent";
+    const box = h("div", { class: "d", data: { id: d.id } });
+    const label = h("span", { class: "label", text: d.label }), head = h("div", { class: "row" }, label);
+    const note = h("div", { class: "note", text: d.note }), ctl = h("div", { class: "ctl" }), def = h("div", { class: "def" }), sent = h("div", { class: "sent" });
     const fmt = (v: unknown) => d.control.type === "choice" ? d.control.options.find(o => o.value === v)?.label ?? String(v) : d.control.type === "toggle" ? (v ? "on" : "off") : String(v);
     const paint = () => {
       const v = this.values.get(d.id), changed = v !== d.default;
@@ -132,34 +81,27 @@ export class DecidePanel {
     this.rows.set(d.id, paint);
     const set = (v: string | number | boolean) => { this.values.set(d.id, v); this.apply(d, v); paint(); sent.textContent = ""; };
     if (d.control.type === "slider") {
-      const c = d.control, r = document.createElement("input"), out = document.createElement("span");
-      r.type = "range"; r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";
+      const c = d.control, r = h("input", { type: "range" }), out = h("span");
+      r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";
       r.addEventListener("input", () => set(+r.value));
       r.addEventListener("dblclick", () => set(d.default as number));
       ctl.append(r, out);
     } else {
       const opts = d.control.type === "toggle" ? [{ value: "true", label: "On" }, { value: "false", label: "Off" }] : d.control.options;
       for (const o of opts) {
-        const b = document.createElement("button"); b.type = "button"; b.className = "opt"; b.textContent = o.label; b.dataset.v = o.value;
-        b.addEventListener("click", () => set(d.control.type === "toggle" ? o.value === "true" : o.value));
-        ctl.append(b);
+        ctl.append(button(o.label, () => set(d.control.type === "toggle" ? o.value === "true" : o.value), { class: "opt", data: { v: o.value } }));
       }
     }
-    const acts = document.createElement("div"); acts.className = "acts";
-    const confirm = document.createElement("button"); confirm.type = "button"; confirm.className = "confirm"; confirm.textContent = "Confirm ✓";
-    confirm.title = "Open a GitHub issue with this choice, for you to submit";
-    confirm.addEventListener("click", () => {
+    const confirm = button("Confirm ✓", () => {
       const v = this.values.get(d.id), url = issueUrl(d.id, v, this.state(), this.host.version, this.host.seed, location.href);
       window.open(url, "_blank", "noopener");
       sent.textContent = "opened as an issue: submit it there";
-    });
-    const copy = document.createElement("button"); copy.type = "button"; copy.className = "copy"; copy.textContent = "copy";
-    copy.title = "Copy this choice as a line to paste";
-    copy.addEventListener("click", () => {
+    }, { class: "confirm", title: "Open a GitHub issue with this choice, for you to submit" });
+    const copy = button("copy", () => {
       const v = this.values.get(d.id), line = `${decisionLine(d.id, v)} · ${this.host.version} · seed ${this.host.seed} · ${JSON.stringify(this.state())}`;
       navigator.clipboard?.writeText(line).then(() => { sent.textContent = "copied"; }, () => { sent.textContent = line; });
-    });
-    acts.append(confirm, copy);
+    }, { class: "copy", title: "Copy this choice as a line to paste" });
+    const acts = h("div", { class: "acts" }, confirm, copy);
     box.append(head, note, ctl, def, acts, sent);
     paint();
     return box;

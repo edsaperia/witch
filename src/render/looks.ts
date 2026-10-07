@@ -6,7 +6,7 @@
 // stars are marks drawn over the sprite.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import type { Creature } from "../rules/creatures";
+import type { Creature, CreatureState } from "../rules/creatures";
 import { LEGEND } from "../rules/creatures";
 import { cellKey } from "../rules/party";
 import { placed, shownOverBend } from "./height";
@@ -15,10 +15,10 @@ import { witchHeight } from "../rules/witch";
 import type { Tuning } from "../rules/tuning";
 import { bubbleScale } from "./bubbles";
 
-export type Look = "wild" | "happy" | "leashed" | "enraged" | "legend";
+export type Look = CreatureState | "legend";
 
 /** The state machine's fields (issue #87), read if present; today's flags otherwise. */
-type WithState = Creature & { state?: "wild" | "happy" | "leashed" | "enraged"; dazedUntil?: number };
+type WithState = Creature & { state?: CreatureState; dazedUntil?: number };
 
 export function isHappy(c: Creature): boolean {
   const s = (c as WithState).state;
@@ -136,7 +136,8 @@ export class StateMarks {
     setTint(g.tuning);
     const A = g.tuning.looks?.anger ?? { on: true, size: 1 }, P = g.tuning.looks?.partyGlow ?? { on: true, sparkles: 4, rate: 0.9, size: 1.4, strength: 1 };
     const w = g.witch, px = 2; // (each mark pixel two game pixels: readable at a glance)
-    for (const c of g.creatures) {
+    for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
+      const c = g.creatures[i];
       if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R) continue;
       const top = tops.get(c.id);
       if (top === undefined) continue;

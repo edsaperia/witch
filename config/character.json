@@ -1,0 +1,26 @@
+{
+  "_readme": "Each creature's character (overnight phase 3): its temperament posture and its idle quirk, drawn by the live rig (src/render/rig). posture: head [forward, up] and body (up), in the creature's model units (a body is about 1 long); quirk: what it does now and then while it stands idle (sniff, perk, stomp, thump, scratch, shake, tailflick, tailslap, stretch, howl, rise); every: seconds between quirks [min, max]; for: how long one lasts (s). bounce: a happy or party creature standing about hops now and then (height m, every s). Ed can tune any number here.",
+  "default": { "posture": { "head": [0, 0], "body": 0 }, "quirk": "sniff", "every": [5, 10], "for": 1.2 },
+  "bounce": { "height": 0.35, "every": [2.5, 5], "for": 0.45 },
+  "species": {
+    "wolf": { "posture": { "head": [0.05, -0.05], "body": -0.02 }, "quirk": "howl", "every": [7, 13], "for": 1.8 },
+    "fox": { "posture": { "head": [0.02, 0.03], "body": 0 }, "quirk": "perk", "every": [4, 8], "for": 1.1 },
+    "badger": { "posture": { "head": [0.04, -0.07], "body": -0.02 }, "quirk": "sniff", "every": [3, 6], "for": 1.4 },
+    "boar": { "posture": { "head": [0.05, -0.06], "body": 0 }, "quirk": "stomp", "every": [4, 8], "for": 1.0 },
+    "stag": { "posture": { "head": [-0.02, 0.07], "body": 0.01 }, "quirk": "perk", "every": [5, 10], "for": 1.6 },
+    "hare": { "posture": { "head": [0, 0.04], "body": 0 }, "quirk": "thump", "every": [4, 8], "for": 0.8 },
+    "bear": { "posture": { "head": [0.04, -0.04], "body": 0 }, "quirk": "scratch", "every": [6, 11], "for": 1.6 },
+    "squirrel": { "posture": { "head": [0, 0.04], "body": 0 }, "quirk": "tailflick", "every": [2, 4], "for": 0.7 },
+    "otter": { "posture": { "head": [0.02, 0.02], "body": -0.01 }, "quirk": "shake", "every": [5, 9], "for": 0.8 },
+    "lynx": { "posture": { "head": [0.04, -0.02], "body": -0.03 }, "quirk": "tailflick", "every": [3, 6], "for": 0.6 },
+    "elk": { "posture": { "head": [0.03, 0.02], "body": 0 }, "quirk": "stomp", "every": [6, 11], "for": 1.2 },
+    "beaver": { "posture": { "head": [0.02, -0.02], "body": -0.01 }, "quirk": "tailslap", "every": [5, 9], "for": 0.7 },
+    "stoat": { "posture": { "head": [0, 0.05], "body": 0 }, "quirk": "perk", "every": [3, 6], "for": 1.0 },
+    "ram": { "posture": { "head": [0.04, -0.04], "body": 0 }, "quirk": "stomp", "every": [4, 8], "for": 1.0 },
+    "marten": { "posture": { "head": [0.02, 0.02], "body": -0.01 }, "quirk": "sniff", "every": [3, 6], "for": 1.0 },
+    "salamander": { "posture": { "head": [0.03, -0.02], "body": -0.01 }, "quirk": "tailflick", "every": [4, 8], "for": 1.2 },
+    "newt": { "posture": { "head": [0.03, 0.01], "body": -0.01 }, "quirk": "tailflick", "every": [4, 8], "for": 1.0 },
+    "dormouse": { "posture": { "head": [0, 0.03], "body": 0 }, "quirk": "sniff", "every": [2, 5], "for": 0.8 },
+    "snake": { "posture": { "head": [0, 0.02], "body": 0 }, "quirk": "rise", "every": [5, 9], "for": 1.4 }
+  }
+}

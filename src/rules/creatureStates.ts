@@ -5,9 +5,10 @@
 // (leashed, enraged, a happy legend) still say the same, and stateOf reads them, so the
 // rest of the rules and the view keep working. No drawing here.
 import raw from "../../config/states.json";
-import { LEGEND, type Creature } from "./creatures";
+import { LEGEND, type Creature, type CreatureState } from "./creatures";
 
-export type State = "wild" | "happy" | "leashed" | "enraged";
+/** A creature's state (its names: CREATURE_STATES, rules/creatures.ts). */
+export type State = CreatureState;
 export interface StatesData { affection: { hits: number[]; drain: number; drainDelay: number; gap: number; /** A legend's meter drains this share a second instead (the party-legend egg). */ legendDrain?: number }; /** The party-legend egg (tuning legends.partyEgg): a happy legend takes 💌s. */ partyEgg?: boolean; leash: "pickup" | "again" | "hold"; /** Seconds after the hearts before a happy one's rune can be picked up (leash "pickup"). */ pickupDelay: number; holdTime: number }
 export const STATES = raw as unknown as StatesData;
 
@@ -22,9 +23,12 @@ export function stateOf(c: Creature): State {
 /** Whether creatures in these two states fight (both ways): leashed against wild and enraged,
  *  enraged against happy. Wild and happy ignore each other; wild and enraged too. */
 export function foes(a: State, b: State): boolean {
+  // (compared directly, not as a joined "a|b" string: that made a string for every pair looked at, a fight's commonest
+  // garbage; phase 2's GC audit)
   if (a === b) return false;
-  const p = a < b ? `${a}|${b}` : `${b}|${a}`;
-  return p === "leashed|wild" || p === "enraged|leashed" || p === "enraged|happy";
+  if (a === "leashed") return b === "wild" || b === "enraged";
+  if (b === "leashed") return a === "wild" || a === "enraged";
+  return (a === "enraged" && b === "happy") || (a === "happy" && b === "enraged");
 }
 
 /** Whether a creature in this state goes for the witch: the wild (in or near its area) and the enraged. */
@@ -97,5 +101,3 @@ export function danceAt(c: Creature, at: { x: number; z: number }, radius = 10):
   c.anchorX = at.x; c.anchorZ = at.z; c.range = radius; c.dancing = true;
 }
 
-/** Dazed (a knocked-down wild one, for tuning combat.daze seconds): nothing attacks it, it attacks nothing, it can be invited. */
-export const dazed = (c: Creature, time: number) => c.dazedUntil !== undefined && time < c.dazedUntil;

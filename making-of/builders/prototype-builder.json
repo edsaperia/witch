@@ -1,0 +1,52 @@
+{
+  "builder": "Prototype builder",
+  "phase": "Phase 1: housekeeping (overnight 2026-10-06/07), and earlier fixes",
+  "slice": "The \"game unchanged\" gate, `main.ts` split into `src/app/`, the link switches documented, and earlier in the night legend circles, runestones, respawn and copy",
+  "prs": [
+    344,
+    383,
+    380,
+    395,
+    396,
+    327,
+    360,
+    362,
+    353
+  ],
+  "built": [
+    "The \"game unchanged\" gate, `npm run bench:quick` (#344): the rules to wave 10 on two seeds plus three scenes compared pixel by pixel (the boot, a wave fight, the bedroom), in about 5 minutes, as its own CI job on every PR into the prototype. Every phase-1 refactor tonight used it as its proof; #383 made its fingerprint canonical (keys sorted, `_` notes dropped), so editing a note in the tuning file no longer looks like a change to the game.",
+    "`main.ts` split into `src/app/` (#380, #395, #396), from 1,000+ lines to 364: the link's switches (tuning, game, view), the HUD and overlay, the debug knobs, the sound, the page keys, the screen shake, the dev Player pick and the `window.witch` hooks. `main.ts` keeps the boot order, the start and the frame loop. Each PR bench-identical to the one before.",
+    "`docs/LINK-SWITCHES.md`: every `?switch`, what it does and where it's read. None turned out to be dead; 13 comparison relics went to Ed as a decision.",
+    "Earlier in the night: legend circles safe from outside attackers (#327); runestones kept away from legends by fixing \"ghost areas\", cells with no ground in the partition (#360); after a knockout she respawns behind the decks (#362); \"kin\" for \"children\" in the legends' copy (#353)."
+  ],
+  "learned": [
+    "A refactor's proof should be cheap enough to run every time. The full bench takes 45 minutes, too slow for every change; the 5-minute quick one ran on every PR, and it caught me comparing against a stale base.",
+    "Make the fingerprint about the game, not the file: hashing the tuning file verbatim turned the gate red for a comment.",
+    "Nondeterminism hides in the page, not the rules. The bedroom scene was flaky because the creator's animation ran on the real clock; the fix was to freeze the page clock from the very first script.",
+    "Tools that find their inputs relative to themselves bite: running one branch's bench script against another branch's checkout silently measures the first branch twice. Each tree runs its own copy now.",
+    "Merge the base in first. A PR in conflict runs no CI at all: one sat for 1.5 hours looking \"pending\" when it was actually blocked.",
+    "To move code without changing it, export setup functions and call each one exactly where its code used to run, so the order of side effects stays the same. Then a pixel diff can prove it."
+  ],
+  "previews": [
+    {
+      "src": "media/timeline/respawn-respawn.webp",
+      "caption": "Knocked down, she's back behind her decks."
+    },
+    {
+      "src": "media/timeline/slowtime-enter-leave.webp",
+      "caption": "Time slowing as she steps into a legend's circle."
+    },
+    {
+      "src": "media/builders/proto-map-shape-925469.webp",
+      "caption": "The circular map with its irregular coast."
+    },
+    {
+      "src": "media/systems/ley-depart-ley-spiral.webp",
+      "caption": "The ley route spiralling out from home."
+    },
+    {
+      "src": "media/builders/proto-slowtime-edge-sparkle.webp",
+      "caption": "The circle's edge sparkle."
+    }
+  ]
+}

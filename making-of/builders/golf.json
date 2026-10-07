@@ -1,0 +1,56 @@
+{
+  "builder": "Golf",
+  "phase": "UI, the bedroom and the canopy; tonight's phases 1 to 3",
+  "slice": "The bedroom as the front door, legends that say what they want, the canopy's hole, and tonight one way to build UI, lazy-loaded panels and a slot for hand-drawn sprites",
+  "prs": [
+    333,
+    341,
+    348,
+    357,
+    373,
+    391,
+    397,
+    400
+  ],
+  "built": [
+    "The bedroom as the front door (#333, #341): the game opens straight into her room; the old start card's Controls, What's new and Options became tabs in the creator; a WASD keycap hint drawn into the floor in the room's own pixels; the party-spell scroll stays rolled up until the forest has loaded, then unrolls; a pixel-font pass makes the whole room one pixel scale (Tiny5 and Jacquard 24), laid out at four window sizes and on a phone.",
+    "Legends tell you what they want (#348): the legend card names its boon, and the dream bubble points by compass to the nearest runestone of the creature it's dreaming of.",
+    "The canopy (#357, #373): the hole round the witch went from a hard circle to a ragged, drifting, organic one; then three fixes from Ed's notes: straight-line cut-offs (partly faded crowns no longer hide the trees behind), horizontal streaks (distant crowns averaged over an area instead of point-sampled), and fir trees in the Norway forest that had no trunks.",
+    "Phase 1 (#391): one way to build UI elements (`h()`), proved to change nothing by dumping the DOM before and after (identical) and by the bench (0 pixels differ).",
+    "Phase 2 (#397): the bot game and the decisions panel load only when they're used; then a profile of why the bedroom takes about 13 s to appear.",
+    "Phase 3 (#400): a slot for hand-drawn sprites: drop a PNG at `art/overrides/<species>/<pose>.png` and it replaces that generated frame."
+  ],
+  "learned": [
+    "Prove \"nothing changed\" with the page's own structure: pixel benches miss a DOM attribute out of order; a sorted DOM dump catches it.",
+    "Measure before you split. The \"code-split the bedroom\" brief assumed download size was the problem, but the bundle arrives in 42 ms; the time goes to a 3D raymarched treehouse baked on the main thread, and a tapestry drawn one `fillRect` at a time.",
+    "Benchmarks lie when the machine is busy: my first before/after said the change was 30% slower; it was competing with my own test run. Run interleaved, alone, it was identical.",
+    "Depth and transparency fight: a crown that's half faded must not write depth, or it silently erases every tree behind it in a straight line. That's where the cut-offs Ed saw came from.",
+    "A uniform declared vec4 in one shader and vec2 in the other draws nothing at all, without an error. Now the shot script fails on any shader warning."
+  ],
+  "previews": [
+    {
+      "src": "media/opening/bedroom-pass-before-2000x1240.webp",
+      "caption": "The bedroom before the pixel pass."
+    },
+    {
+      "src": "media/opening/bedroom-pass-after-2000x1240.webp",
+      "caption": "And after: one pixel scale for the whole room."
+    },
+    {
+      "src": "media/builders/golf-norway-treetops.webp",
+      "caption": "Norway's crowns with straight-line gaps, then whole."
+    },
+    {
+      "src": "media/builders/golf-norway-ground.webp",
+      "caption": "The trunkless firs, then with trunks."
+    },
+    {
+      "src": "media/builders/golf-canopy-hole-walk.webp",
+      "caption": "The organic hole following her through the treetops."
+    },
+    {
+      "src": "media/builders/golf-test-wolves.webp",
+      "caption": "Hand-drawn test wolves among the rigged foxes: a joke picture of a real feature."
+    }
+  ]
+}
