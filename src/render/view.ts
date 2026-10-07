@@ -331,7 +331,7 @@ export class View {
     const smooth = t.fx === "smooth";
     LIGHT_UNIFORMS.uSmooth.value = smooth ? 1 : 0;
     if (t.mist.on && t.mist.strength > 0) {
-      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.mpp, smooth, this.post.scene.depthTexture, this.post.lowSize);
+      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.mpp, smooth, this.post.scene.depthTexture, smooth ? this.post.fxSize : this.post.lowSize);
       if (smooth) { this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh); }
       else this.scene.add(this.mist.mesh);
     }
