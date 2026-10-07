@@ -286,21 +286,51 @@
               "minimum": 0,
               "maximum": 1
             },
-            "gazeAngle": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistance": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeDistanceSeaBehind": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gazeLook": {
-              "type": "number",
-              "minimum": 0
+            "bearings": {
+              "type": "object",
+              "properties": {
+                "angle": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "distance": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "look": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "side": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "bend": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "required": [
+                "angle",
+                "distance",
+                "look",
+                "side",
+                "bend"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -308,10 +338,7 @@
             "angle",
             "curve",
             "seaward",
-            "gazeAngle",
-            "gazeDistance",
-            "gazeDistanceSeaBehind",
-            "gazeLook"
+            "bearings"
           ],
           "additionalProperties": false
         }
@@ -7841,6 +7868,7 @@
     "sky",
     "moon",
     "glowReach",
+    "sigilSpill",
     "nightLight",
     "glowFalloff",
     "glowNear",
@@ -7859,8 +7887,7 @@
     "looks",
     "tone",
     "bloom",
-    "tiltShift",
-    "sigilSpill"
+    "tiltShift"
   ],
   "additionalProperties": false
 }
