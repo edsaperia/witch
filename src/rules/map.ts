@@ -290,12 +290,13 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
 
   // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
   const SITES = new Map<number, [number, number]>();
-  const siteOf = (cx: number, cy: number) => {
+  const siteXZ = (cx: number, cy: number): readonly [number, number] => {
     const k = (cx + 32768) * 65536 + (cy + 32768);
     let w = SITES.get(k);
     if (!w) { const s = partition.site(cx, cy); w = toWorld(s[0], s[1]); SITES.set(k, w); }
-    return { x: w[0], z: w[1] };
+    return w;
   };
+  const siteOf = (cx: number, cy: number) => { const w = siteXZ(cx, cy); return { x: w[0], z: w[1] }; };
   const centre = siteOf(centreCell[0], centreCell[1]);
   // The playable areas and the buffer ring, by their centres' distance from home's.
   // (each by how far its centre lies out along its own direction, as a share of the coast there)
@@ -314,7 +315,9 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const stretch = 1 + (2 * V / L) * 1.5 * 2;
   const cellSafe = (x: number, z: number) => { const [u, v] = toPart(x, z), r = partition.partitionSafe(u, v); return { cell: r.cell, safe: (r.safe * A) / stretch }; };
   const areaAt = (x: number, z: number): AreaSample => {
-    const [u, v] = toPart(x, z), cell = partition.partition(u, v);
+    // (toPart inline: no [u, v] tuple a call; phase 2's GC audit, the same sums)
+    const uu = x / A, vv = z / A;
+    const u = uu + V * (vnoise(uu / L, vv / L, seed + 91) - 0.5) * 2, v = vv + V * (vnoise(uu / L, vv / L, seed + 92) - 0.5) * 2, cell = partition.partition(u, v);
     return { cell, type: typeOf(cell[0], cell[1]), look: cell[0] === centreCell[0] && cell[1] === centreCell[1] ? HOME_LOOK : typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
   // An area that rolls a set piece (setPieceChance of those whose type has one; not home).
@@ -440,8 +443,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const arenaIn = (x: number, z: number, cell: Cell) => {
     const R = tuning.arena;
     if (!R || R.radius <= 0) return 1;
-    const k = tuning.fight?.scale ?? 1, s = siteOf(cell[0], cell[1]), q = soundsystemSpot(cell[0], cell[1]);
-    const d = Math.min(Math.hypot(x - s.x, z - s.z), Math.hypot(x - q.x, z - q.z)), band = R.band * k;
+    const k = tuning.fight?.scale ?? 1, s = siteXZ(cell[0], cell[1]), q = soundsystemSpot(cell[0], cell[1]);
+    const d = Math.min(Math.hypot(x - s[0], z - s[1]), Math.hypot(x - q.x, z - q.z)), band = R.band * k;
     const wob = (vnoise(x / 14, z / 14, seed + 71) - 0.5) * 2 * R.noise * band;
     const f = Math.min(1, Math.max(0, (d + wob - R.radius * k) / Math.max(0.01, band)));
     return R.curve === "smooth" ? smoothstep(f) : f; // (linear: the woods start thinning in right past the open middle, Ed at v473)
