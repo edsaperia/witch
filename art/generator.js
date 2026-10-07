@@ -220,3 +220,5 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   return out;
 }
 
+export { DOLPHIN, dolphinColours, dolphinSprite, dolphinSplash } from "./dolphins.js";
+export { KRAKEN, krakenColours, krakenTentacle, krakenHead } from "./kraken.js";

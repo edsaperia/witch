@@ -314,6 +314,120 @@
             "gazeLook"
           ],
           "additionalProperties": false
+        },
+        "dolphins": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "pair": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ahead": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "out": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "length": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "arc",
+            "every",
+            "pair",
+            "ahead",
+            "out",
+            "length",
+            "height",
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        "kraken": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tentacles": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "far": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "head": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "arc",
+            "every",
+            "chance",
+            "tentacles",
+            "far",
+            "time",
+            "head"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -339,7 +453,9 @@
         "idleAfter",
         "turn",
         "simRange",
-        "camera"
+        "camera",
+        "dolphins",
+        "kraken"
       ],
       "additionalProperties": false
     },
@@ -2811,6 +2927,33 @@
         "radius",
         "curious",
         "skittish"
+      ],
+      "additionalProperties": false
+    },
+    "wildWatch": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0
+        },
+        "forget": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hangBack": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "time",
+        "forget",
+        "hangBack"
       ],
       "additionalProperties": false
     },
@@ -8033,6 +8176,7 @@
     "attackFx",
     "combat",
     "notice",
+    "wildWatch",
     "naps",
     "guard",
     "population",
