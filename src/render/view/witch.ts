@@ -15,6 +15,7 @@ import { inView } from "./culling";
 import { DJ_DEPTH, nearerCamera } from "./home";
 import { beatAt } from "../../rules/beat";
 import { djRoutineAt } from "../../rules/djSet";
+import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
 
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
@@ -88,7 +89,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       else {
         // Her set's routine (rules/djSet.ts: the needle drop after the cast, the scratching after a respawn) over her ordinary set.
         const R = djRoutineAt(g, time);
-        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : v.assets.djFrame(beatAt(g.beat, time), casting);
+        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
@@ -102,7 +103,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   let hidden = ht >= D.at - STEP && ht < D.until;
   if (KO) {
     if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
-    else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
+    else hidden = ht < KO.inAt - (KO.inAt - KO.teleportAt) * 0.25;
   }
   // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
   // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").
