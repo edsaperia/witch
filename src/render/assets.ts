@@ -3,8 +3,9 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
-import { atlasFromPixels, packAtlas, type Atlas, type Baked, type FrameGround, groundOf } from "./atlas";
-import { creatureFrame, walkGait, runJob, witchLookOf, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
+import { witchSprites, type WitchArt } from "./homeArt";
+import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -45,8 +46,9 @@ export class AssetLibrary {
   private inFlight = new Set<string>();
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
   private useWorkers: boolean;
-  /** Her frames (bakeWitch: from her genome, re-baked when the character creator changes her). */
-  witch!: Atlas;
+  /** Her frames (from her genome, drawn by an art worker: render/homeArt.ts; a stand-in until they arrive, and her old look's
+   *  while the character creator's new one is drawn). */
+  witch: Atlas = placeholderAtlas(256);
   /** Her genome (art/witchGenome.js; null: the classic witch). */
   witchGenome: unknown = null;
   /** On foot (from frame 16): each pose's frames, towards and away. */
@@ -60,14 +62,21 @@ export class AssetLibrary {
   /** Behind the decks (Art.djFrame picks one): her DJ frames, and each one's upper layer (what shows over the DJ table). */
   readonly witchDj = { full: [] as number[], upper: [] as number[] };
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
-  readonly props: Atlas;
+  props: Atlas = placeholderAtlas(8);
   /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
-  readonly soundsystems: Atlas;
+  soundsystems: Atlas = placeholderAtlas(16);
   /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
    *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
-  readonly treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
+  treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
     /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
-    foreFrames: number; foreBox: { x: number; y: number } };
+    foreFrames: number; foreBox: { x: number; y: number } } = { atlas: placeholderAtlas(8), base: { x: 0, y: 1 }, seat: { x: 0, y: 0 }, camera: { x: 0, y: 0 }, hasFore: false, lights: [], foreFrames: 0, foreBox: { x: 0, y: 0 } };
+  /** The start's own art (fast start (b)): which of it has arrived from the art workers. Play waits for it (prepare's whenIdle). */
+  readonly home = { witch: false, props: false, soundsystems: false, treehouse: false };
+  get homeReady(): boolean { const h = this.home; return h.witch && h.props && h.soundsystems && h.treehouse; }
+  /** Resolves once the start's own art has arrived (her frames, the light props, the soundsystems, the treehouse). */
+  homeArt(): Promise<void> {
+    return new Promise(resolve => { const check = () => { if (this.homeReady) resolve(); else { this.work(50); setTimeout(check, 30); } }; check(); });
+  }
   /** Style scale: the lab's K, 2 / pixel size. */
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
@@ -87,21 +96,10 @@ export class AssetLibrary {
   constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null) {
     this.K = 2 / pixelSize;
     this.styleHash = hashText(JSON.stringify(style));
-    this.witch = this.bakeWitch(witchGenome);
-    const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
-    this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);
-    const ss: Baked[] = [];
-    for (let v = 0; v < 3; v++) for (let f = 0; f < 3; f++) ss.push(Art.bake(Art.soundsystemSprite(style, { variant: v, frame: f, state: "playing" }), Art.soundsystemColours(v), style, style.cOutline) as Baked);
-    this.soundsystems = packAtlas(ss, 2048);
-    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; foreFrames?: unknown[]; foreBox?: { x: number; y: number }; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; camera?: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
-    const thc = Art.treehouseColours(style);
-    // Its model draws a hard dark shadow ellipse on the ground round the trunk's foot: drop it (a
-    // soft contact shadow goes there instead), as Ed asked for set pieces.
-    for (const sp of [th.bot, th.top] as { w: number; h: number; m: Uint8Array }[])
-      for (let y = Math.max(0, Math.floor(th.anchors.base.y - 14)); y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === Art.M.NOSE) sp.m[y * sp.w + x] = 0;
-    // Frames: 0 its base, 1 its top (treetop mode), 2 on the studio's DJ table alone, turning (drawn over her).
-    const fores = th.foreFrames ?? [];
-    this.treehouse = { atlas: packAtlas([th.bot, th.top, ...fores].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors, camera: th.anchors.camera ?? th.anchors.seat, hasFore: fores.length > 0, foreFrames: fores.length, foreBox: th.foreBox ?? { x: 0, y: 0 } };
+    // Where her poses' frames will be, at once (a dry run: nothing drawn), and the stand-ins above; the art itself from the
+    // workers, ahead of everything else (fast start (b): drawn on the page here it was most of the time before anything showed).
+    this.applyWitchTables(witchSprites(style, witchGenome, false, () => null as never, true).witch);
+    this.witchGenome = witchGenome;
     this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
     if (this.useWorkers) {
       // One worker per core but the page's own, up to six: the area types' trees are most of the work.
@@ -120,6 +118,10 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
+    this.ask({ kind: "treehouse", id: "home", style }, true);
+    this.ask({ kind: "soundsystems", id: "home", style }, true);
+    this.ask({ kind: "props", id: "home", style }, true);
+    this.ask(this.witchJob(witchGenome, false), true);
   }
 
   private key = (j: ArtJob) => j.kind + ":" + j.id;
@@ -168,7 +170,15 @@ export class AssetLibrary {
     if (!r.cached) { const ck = this.cacheKey(r.job); if (ck) cachePut(ck, r.result); }
     const atlas = atlasFromPixels(r.result.px);
     this.timings.push({ set: this.key(r.job), ms: r.ms ?? 0, at: performance.now(), cached: !!r.cached });
-    if (r.job.kind === "relics") {
+    if (r.job.kind === "witch") {
+      if (r.job.bare) { this.bare = { ...atlas, grounds: r.result.ours!.grounds }; this.witchHatFrame = r.result.ours!.hat; }
+      else if (JSON.stringify(r.job.genome ?? null) === JSON.stringify(this.witchGenome ?? null)) { // (a look since replaced by the creator's next: not hers)
+        this.witch = { ...atlas, grounds: r.result.ours!.grounds }; this.applyWitchTables(r.result.ours!); this.home.witch = true;
+      }
+    } else if (r.job.kind === "props") { this.props = atlas; this.home.props = true; }
+    else if (r.job.kind === "soundsystems") { this.soundsystems = atlas; this.home.soundsystems = true; }
+    else if (r.job.kind === "treehouse") { this.treehouse = { atlas, ...r.result.treehouse! }; this.home.treehouse = true; }
+    else if (r.job.kind === "relics") {
       const list = r.result.relics!;
       this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
     } else if (r.job.kind === "beach") {
@@ -335,69 +345,33 @@ export class AssetLibrary {
     if (!this.party) this.ask({ kind: "partyObjects", id: "party", style: this.style });
     return this.party;
   }
-  /** Her frames from her genome (null: the classic witch): flight, on foot, headings. Called again by
-   *  rebakeWitch when the character creator changes her look. */
-  private bakeWitch(genome: unknown, bare = false): Atlas {
-    // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7); then
-    // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
-    // Bare (her hat knocked off: rules/hat.ts): the same frames, at the same places, with no hat; then the hat on the ground.
-    const style = this.style, mine = witchLookOf(style, genome), wc = mine.colours, look = bare ? { ...(mine.look ?? {}), hat: "none" } : mine.look;
-    const grounds: (FrameGround | null)[] = []; // (each frame's ground, in the order they're made: every one is kept, in order)
-    const wb = (o: object) => {
-      const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }) as { anchors?: Record<string, number[]> };
-      grounds.push(groundOf(sp.anchors));
-      return Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline) as Baked;
-    };
-    const witchFoot = bare ? {} as typeof this.witchFoot : this.witchFoot, witchFly = bare ? {} as typeof this.witchFly : this.witchFly;
-    const witchLean = bare ? { towards: [] as number[], away: [] as number[] } : this.witchLean, witchHeading = bare ? {} as typeof this.witchHeading : this.witchHeading;
-    for (const k of Object.keys(witchFoot)) delete witchFoot[k];
-    for (const k of Object.keys(witchFly)) delete witchFly[k];
-    witchLean.towards.length = 0; witchLean.away.length = 0;
-    const sprites = [0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
-      ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
-    // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one.
-    const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number }>;
-    for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit"]) {
-      const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
-      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
-      witchFoot[pose] = entry;
-    }
-    // Treetop flight: fast (at boost: three frames) and brake (a skid: two frames), towards and away.
-    for (const [pose, n] of [["fast", 3], ["brake", 2]] as const) {
-      const entry = { towards: [] as number[], away: [] as number[], fps: pose === "fast" ? 10 : 8 };
-      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
-      witchFly[pose] = entry;
-    }
-    for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { witchLean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
-    // Behind the decks: each DJ frame, then its upper layer (the same sprite, only what's above the decks' top: art/witch.js aboveDecks).
-    const witchDj = bare ? { full: [] as number[], upper: [] as number[] } : this.witchDj;
-    witchDj.full.length = 0; witchDj.upper.length = 0;
-    for (let frame = 0; frame < (FOOT.dj?.frames ?? 0); frame++) {
-      const sp = (Art.witchSprite as (st: Style, o: object) => { anchors?: Record<string, number[]>; upper?: Uint8Array; m: Uint8Array; w: number; h: number })(style, { pose: "dj", frame, look });
-      grounds.push(groundOf(sp.anchors), groundOf(sp.anchors));
-      witchDj.full.push(sprites.length); sprites.push(Art.bake(sp as never, wc, style, style.cOutline) as Baked);
-      witchDj.upper.push(sprites.length); sprites.push(upperOnly(Art.bake(sp as never, wc, style, style.cOutline) as Baked, sp));
-    }
-    for (const [h, heading] of [["up", "away"], ["down", "towards"]] as const) {
-      const at = (o: object) => sprites.push(wb({ ...o, heading })) - 1;
-      witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
-    }
-    if (bare) {
-      const hat = (Art.witchHatSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite> | null)(style, { look: mine.look });
-      this.witchHatFrame = hat ? sprites.push(Art.bake(hat, wc, style, style.cOutline) as Baked) - 1 : -1;
-      if (hat) grounds.push(null);
-    } else this.witchGenome = genome;
-    return { ...packAtlas(sprites, 2048), grounds };
+  /** Her frames' job: drawn by an art worker (render/homeArt.ts), kept in the browser's store by her genome. */
+  private witchJob(genome: unknown, bare: boolean): ArtJob {
+    return { kind: "witch", id: `${hashText(JSON.stringify(genome ?? null))}${bare ? "-bare" : ""}`, style: this.style, genome, bare };
+  }
+  /** Where each of her poses' frames are (kept objects: the view holds them). */
+  private applyWitchTables(W: WitchArt): void {
+    for (const k of Object.keys(this.witchFoot)) delete this.witchFoot[k];
+    for (const k of Object.keys(this.witchFly)) delete this.witchFly[k];
+    Object.assign(this.witchFoot, W.foot); Object.assign(this.witchFly, W.fly); Object.assign(this.witchHeading, W.heading);
+    this.witchLean.towards = W.lean.towards; this.witchLean.away = W.lean.away;
+    this.witchDj.full.length = 0; this.witchDj.upper.length = 0; this.witchDj.full.push(...W.dj.full); this.witchDj.upper.push(...W.dj.upper);
   }
   /** Her frame behind the decks at `beat` (rules/beat.ts beatAt): its index in witchDj (Art.djFrame: a gesture a bar, nodding on the beat;
    *  scratching, the wait after a knockout). */
   djFrame(beat: number, cast = false, scratch = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast, scratch }); } // (scratch: her respawn wait after a knockout; art/witch.js's frames for it, else she DJs as ever)
-  /** The character creator changed her look: her frames again (the view swaps its batch). */
-  rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.bare = null; this.version++; }
+  /** The character creator changed her look: her frames again, from an art worker (her old ones until they arrive; then onWitch). */
+  rebakeWitch(genome: unknown): void { this.witchGenome = genome; this.bare = null; this.bareAsked = false; this.ask(this.witchJob(genome, false), true); }
   /** Her frames with her hat knocked off (rules/hat.ts), at the same places as `witch`'s, and her hat lying on the
-   *  ground (`witchHatFrame`): baked the first time they're asked for (the view asks once the game is up). */
-  witchBare(): Atlas { return (this.bare ??= this.bakeWitch(this.witchGenome, true)); }
+   *  ground (`witchHatFrame`): asked for the first time they're wanted (the view asks once the game is up); a stand-in
+   *  till they arrive (then onWitch). */
+  witchBare(): Atlas {
+    if (!this.bare && !this.bareAsked) { this.bareAsked = true; this.ask(this.witchJob(this.witchGenome, true)); }
+    return this.bare ?? this.bareStandIn;
+  }
   private bare: Atlas | null = null;
+  private bareAsked = false;
+  private bareStandIn = placeholderAtlas(256);
   /** The hat on the ground in witchBare()'s atlas (-1: she has none). */
   witchHatFrame = -1;
 
@@ -436,19 +410,3 @@ export class AssetLibrary {
     });
   }
 }
-
-/** A DJ frame's upper layer: its baked pixels kept only where the sprite is above the decks (sp.upper), and its outline
- *  where it borders those; cleared elsewhere (so no outline runs along the cut at the table's top). */
-function upperOnly(b: Baked, sp: { upper?: Uint8Array; m: Uint8Array; w: number; h: number }): Baked {
-  const up = sp.upper, { w, h } = sp;
-  if (!up) return b;
-  const keep = (i: number) => up[i] === 1 || (!sp.m[i] && [i % w > 0 ? i - 1 : -1, i % w < w - 1 ? i + 1 : -1, i - w, i + w].some(j => j >= 0 && j < w * h && up[j] === 1));
-  for (const c of [b.A, b.N, (b as { NF?: Baked["A"] }).NF]) {
-    if (!c) continue;
-    const g = (c as HTMLCanvasElement).getContext("2d") as CanvasRenderingContext2D, d = g.getImageData(0, 0, w, h);
-    for (let i = 0; i < w * h; i++) if (!keep(i)) d.data[i * 4 + 3] = 0;
-    g.putImageData(d, 0, 0);
-  }
-  return b;
-}
-
