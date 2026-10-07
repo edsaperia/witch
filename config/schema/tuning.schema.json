@@ -3917,6 +3917,14 @@
                 "reply": {
                   "type": "number",
                   "minimum": 0
+                },
+                "swapBy": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "swapGap": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
@@ -3926,7 +3934,9 @@
                 "duck",
                 "syllables",
                 "gap",
-                "reply"
+                "reply",
+                "swapBy",
+                "swapGap"
               ],
               "additionalProperties": false
             }
