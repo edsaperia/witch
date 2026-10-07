@@ -358,7 +358,8 @@ function styleTone(r, g, b, t, mode) {
 // Stylise a baked sprite's pixels in place: a (RGBA albedo, alpha 254 = glowing), n and nf (RGBA normal maps, as bake writes
 // them), w x h. The sprite must have been baked without an outline (this draws its own).
 // opts.interior: false leaves out ref's interior lines (a busy scene, such as the creator's bedroom, keeps just its outline).
-function stylisePixels(a, n, nf, w, h, mode, { interior = true } = {}) {
+// opts.outline: false leaves out the outline too (the rig's discs, strung into one limb).
+function stylisePixels(a, n, nf, w, h, mode, { interior = true, outline = true } = {}) {
   if (mode !== "bold" && mode !== "ref") return;
   const T = 3, N = w * h, band = new Int8Array(N).fill(-1), key = new Int32Array(N).fill(-1), glow = new Uint8Array(N), nrm = new Float32Array(N * 3);
   const keyOf = o => (a[o] << 16) | (a[o + 1] << 8) | a[o + 2];
@@ -400,7 +401,7 @@ function stylisePixels(a, n, nf, w, h, mode, { interior = true } = {}) {
   }
   // the outline, in the empty pixels round the shape
   const strong = mode === "ref";
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+  if (outline) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = y * w + x; if (key[i] >= 0) continue;
     const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => x + dx >= 0 && x + dx < w && y + dy >= 0 && y + dy < h && key[i + dy * w + dx] >= 0).map(([dx, dy]) => [dx, dy, i + dy * w + dx]);
     if (!nb.length) continue;
@@ -756,7 +757,8 @@ function cropTight(sp) {
 // NF the same for the sprite mirrored (facing left).
 function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = defaultCanvas) {
   const { w, h } = sp, mk = () => makeCanvas(w, h), artStyle = st?.artStyle; // artStyle: a pixel-art style (art/stylise.js: the game's ?style=), drawing its own outline
-  if ((artStyle === "bold" || artStyle === "ref") && !sp.stylised) outlineMode = "none";
+  const bare = outlineMode === "bare"; // "bare": no outline at all, not even a pixel-art style's own (the rig's leg and body discs: Ed, 2026-10-06, "Animal legs have outlines on them; they'd look better without")
+  if (bare || ((artStyle === "bold" || artStyle === "ref") && !sp.stylised)) outlineMode = "none";
   const A = mk(), N = mk(), NF = mk(), a = A.getContext("2d").createImageData(w, h), n = N.getContext("2d").createImageData(w, h), nf = NF.getContext("2d").createImageData(w, h);
   const outline = outlineMode === "none" ? null : outlineMode === "dark" ? [22, 18, 30] : "tint";
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -777,7 +779,7 @@ function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = defaultCan
     n.data.set([nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
     nf.data.set([-nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
   }
-  if ((artStyle === "bold" || artStyle === "ref") && !sp.stylised) stylisePixels(a.data, n.data, nf.data, w, h, artStyle, { interior: st.styleInterior !== false }); // (a sprite its generator drew stylised already, the blob trees, keeps its own tones; st.styleInterior false: ref without its interior lines)
+  if ((artStyle === "bold" || artStyle === "ref") && !sp.stylised) stylisePixels(a.data, n.data, nf.data, w, h, artStyle, { interior: st.styleInterior !== false, outline: !bare }); // (a sprite its generator drew stylised already, the blob trees, keeps its own tones; st.styleInterior false: ref without its interior lines)
   A.getContext("2d").putImageData(a, 0, 0); N.getContext("2d").putImageData(n, 0, 0); NF.getContext("2d").putImageData(nf, 0, 0);
   return { A, N, NF, w, h };
 }
@@ -2778,8 +2780,11 @@ const DJ_SET = ["groove", "groove", "cue", "scratch", "groove", "fader", "knob",
 // The frame behind the decks at `beat` (beats on the game's beat clock, rules/beat.ts: beatAt): the gesture by the bar
 // (4 beats; `offset` bars along the set), its first frame for the first half of each beat; `cast`, the spell's gesture.
 function djFrame(beat, { cast = false, offset = 0 } = {}) {
-  const b = Math.max(0, beat), g = cast ? "cast" : DJ_SET[(Math.floor(b / 4) + offset) % DJ_SET.length];
-  return DJ_GESTURES[g][(b % 1) < .5 ? 0 : 1];
+  return DJ_GESTURES[djGesture(beat, { cast, offset })][(Math.max(0, beat) % 1) < .5 ? 0 : 1];
+}
+/** The gesture she plays at `beat` (a DJ_GESTURES key): the picture's djFrame and the sound's cues (platform/audio/deck.ts) read the same set. */
+function djGesture(beat, { cast = false, offset = 0 } = {}) {
+  return cast ? "cast" : DJ_SET[(Math.floor(Math.max(0, beat) / 4) + offset) % DJ_SET.length];
 }
 const DJ_BROOM = { binding: [-.08, .31, -.42], dir: [-.06, 1, -.16] };
 const djOn = (K) => ({ broom: DJ_BROOM, dj: true, farHand: "down", hand: "down", sway: .015, ...K });
@@ -4303,7 +4308,7 @@ function genSetPiece(kind, o = {}, def = null, st = {}, size = 1, ppm = 16) {
   m.clipY = 0; // a sunk punt's keel, a buried stone: cut away under the ground
   GS_BUILD[kind](m, v);
   m.ell([0, .004, 0], [.01, .004, .01], M.STONE, { group: 0, extra: true });
-  const rr = render(m, { scale: witchPixelsPerUnit(st) * size });
+  const rr = render(m, { scale: witchPixelsPerUnit(st) * size * (st.setPieceScale || 1) }); // (st.setPieceScale: baked at the size the game draws it)
   let { sp, x0, y0 } = cropTight(rr.sp);
   if (kind === "punt" || kind === "jetty") { // the shore breaks into the floor: its outermost rim pixels dropped in 2 x 1 clusters by hash (as the props' pools, #142)
     const rim = new Set([M.BODY, M.BARK2]), at = (x, y) => x < 0 || y < 0 || x >= sp.w || y >= sp.h ? 0 : sp.m[y * sp.w + x], drop = [];
@@ -4887,7 +4892,7 @@ const GENOMES = [
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },
   { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { hgt: .46, len: 1.15, chest: .32, tuck: .26, neck: .36, neckAng: .5, neckW: .6, hr: .27, legW: 1.2, back: "arch" }, head: { snout: .55, snoutD: .55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] },
-  { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .45, val: .75 }, body: { hgt: .9, len: .55, chest: .5, tuck: .55, neck: .25, neckAng: .8, neckW: .4, hr: .27, legW: 1.2 }, head: { snout: .5, snoutD: .75, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"] },
+  { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .45, val: .75 }, body: { hgt: 1.08, len: .5, chest: .56, tuck: .62, neck: .25, neckAng: .8, neckW: .4, hr: .27, legW: .95 }, head: { snout: .5, snoutD: .75, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.5 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"] },
   { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .38 }, body: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, legW: .9, back: "hump" }, head: { snout: 1.6, snoutD: .9, snoutTaper: .85 }, parts: { ears: { kind: "point", size: .9 }, tail: "stub", feet: "hoof", antlers: "palm" }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"] },
   { id: "raven", name: "Raven", template: "avian", builder: "raven", palette: { hue: .68, sat: .35, val: .3 }, legend: ["wings", "eyesRing"] },
   { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3 } },
@@ -4904,14 +4909,14 @@ const GENOMES = [
       { body: { shell: { turns: 3, r: .32, cone: 1, ridge: true, bands: 2 }, stalks: 1.5, mantle: true, sheen: true } },
       { body: { shell: { turns: 4, r: .36, cone: 1.25, ridge: true, bands: 2, glow: true, buttress: true, mud: true, trees: 6 }, stalks: 2, mantle: true, sheen: true, eyeGlow: true } },
     ] },
-  { id: "ram", name: "Ram", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .12, val: .88, flower: [196, 36, 52] }, body: { hgt: .95, len: .6, chest: .48, tuck: .52, neck: .22, neckAng: .45, neckW: .48, hr: .25, legW: .9 }, head: { snout: .85, snoutD: .75, snoutTaper: .8, face: "dark" }, parts: { ears: { kind: "small", size: .7 }, tail: "stub", feet: "hoof", horns: "curl" }, coat: { wool: true }, legend: ["hornsGlow"] , texture: { kind: "fur", stretch: 1.2, size: 3 },
+  { id: "ram", name: "Ram", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .12, val: .88, flower: [196, 36, 52] }, body: { hgt: .95, len: .62, chest: .44, tuck: .48, neck: .2, neckAng: .9, neckW: .5, hr: .25, legW: .62 }, head: { snout: .85, snoutD: .75, snoutTaper: .8, face: "dark" }, parts: { ears: { kind: "small", size: .7 }, tail: "stub", feet: "hoof", horns: "curl" }, coat: { wool: true }, legend: ["hornsGlow"] , texture: { kind: "fur", stretch: 1.2, size: 3 },
     // its evolution (docs/art-guide/EVOLUTIONS.md): a curly white lamb with big ears and no horns, a young with its first horn buds,
     // an adult with heavy dark ridged horns in a full curl and a fleece ruff, and the tangly forest's legend: bronze horns in a double
     // spiral with thorns along their ridges, brambles and berries woven through fleece that hangs in shaggy locks
     levels: [
       { body: { len: .5, hr: .29 }, parts: { ears: { kind: "small", size: 1.25 }, horns: false }, coat: { legMat: "BODY3" } },
-      { parts: { horns: "twist" }, head: { horn: { length: 1.1, r: .38, curl: .7, twist: 0, ridges: 2, segs: 8, out: .55, ease: 1, mat: "BODY3" } } },
-      { body: { bw: .36, legW: 1.1 }, coat: { legMat: "BODY3" }, parts: { horns: "twist" }, head: { horn: { length: 3.4, r: .62, curl: 1.75, twist: 0, ridges: 1, segs: 26, out: .7, ease: 1, tighten: .6, mat: "BODY3" } }, features: [{ kind: "ruff", size: .2, count: 14, mat: "BODY" }] },
+      { parts: { horns: "twist" }, head: { horn: { length: 1.9, r: .42, curl: 1.1, twist: 0, ridges: 2, segs: 8, out: .55, ease: 1, mat: "BODY3" } } },
+      { body: { bw: .36, legW: .8 }, coat: { legMat: "BODY3" }, parts: { horns: "twist" }, head: { horn: { length: 3.8, r: .62, curl: 1.75, twist: 0, ridges: 1, segs: 26, out: .7, ease: 1, tighten: .6, mat: "BODY3" } }, features: [{ kind: "ruff", size: .2, count: 14, mat: "BODY" }] },
       { body: { bw: .4, legW: 1.2 }, coat: { legMat: "BODY3" }, parts: { horns: "twist" }, head: { horn: { length: 6, r: .7, curl: 3.3, twist: 0, ridges: 1, segs: 44, out: .8, ease: 1, tighten: .72, mat: "WOOD", thorns: 9, back: .4, wide: .15 } }, features: [
         { kind: "ruff", size: .28, count: 18, mat: "BODY" },
         { kind: "mane", belly: true, from: .1, to: .95, height: .2, count: 14, lean: .2, mat: "BODY" },
@@ -7492,7 +7497,7 @@ function setPiece3d(kind, def, st, ppm = 16) {
   const m = new Model({ blend: .05 }); spSETS[kind](m);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // so every piece stands on the same ground line
   const size = (Object.values(NEW_SET_PIECES).find(([k]) => k === kind) || [, , 1])[2];
-  const r = render(m, { scale: witchPixelsPerUnit(st) * size }), { sp, x0, y0 } = cropKeepBottom(r.sp); // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
+  const r = render(m, { scale: witchPixelsPerUnit(st) * size * (st.setPieceScale || 1) }), { sp, x0, y0 } = cropKeepBottom(r.sp); // (st.setPieceScale: baked at the size the game draws it) // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
   const [ox, oy] = r.project([0, 0, 0]); // origin: where its middle on the ground lands, in the cropped sprite
   return { sp, colours: setPieceColours(def, st), origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }
@@ -8061,7 +8066,9 @@ function prop(kind, o, def, st, r, s) {
 }
 
 // Set pieces: one per area that has one, bigger than the props.
+// st.setPieceScale (the game's tuning setPieceScale): baked that much bigger, at the art pixel, so the game draws it at 1, never stretched.
 function setPiece(kind, o, def, st, r, s) {
+  s *= st.setPieceScale || 1;
   if (o.three) return setPiece3d(kind, def, st);
   if (kind === "tree" || kind === "log") return prop(kind, o, def, st, r, s);
   const W = Math.round(90 * s), H = Math.round(70 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
@@ -8213,9 +8220,10 @@ function carveSigil(sp, sigil) {
   for (let y = -1; y <= n; y++) for (let x = -1; x <= n; x++) {
     if (ink(x, y)) sp.recolour(ox + x, oy + y, M.RUNE);
     else if (ink(x - 1, y) || ink(x, y - 1) || ink(x - 1, y - 1)) sp.recolour(ox + x, oy + y, M.LINE); // the groove's shadow side
+    else if (ink(x + 1, y) || ink(x, y + 1) || ink(x + 1, y + 1)) sp.recolour(ox + x, oy + y, M.MAGIC); // its lit rim (up and left), catching the inlay's light: a dim glow, so the carving reads from mid-distance at night (Ed's note #1)
   }
 }
-function magicStone(variant, sigil) {
+function magicStone(variant, sigil, size = 1) { // size: baked that much bigger (the game's runeMarkers.scale), never stretched
   const m = new Model({ blend: .04 }), k = Math.max(0, Object.keys(STONE_GLOW).indexOf(variant)), glow = Array.isArray(variant) ? [variant, variant.map(c => Math.round(c + (255 - c) * .7))] : STONE_GLOW[variant], fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
   // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
   const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
@@ -8242,8 +8250,8 @@ function magicStone(variant, sigil) {
   // moss and grass at its foot
   for (const [x, z, r] of [[-.24, .14, .08], [.2, .02, .07], [.0, .12, .07]]) m.ell([x, .015, z], [r, r * .4, r], M.MOSS, { group: 2 });
   for (let i = 0; i < 9; i++) { const x = -.3 + i * .07, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
-  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: glow[0], [M.MAGIC2]: glow[1], [M.LINE]: [40, 40, 50] };
-  const sp = render(m, { height: 44 }).sp;
+  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: glow[0], [M.MAGIC2]: glow[1], [M.MAGIC]: glow[0].map(c => Math.round(c * .5)), [M.LINE]: [40, 40, 50] };
+  const sp = render(m, { height: Math.round(44 * size) }).sp;
   if (sigil) carveSigil(sp, sigil);
   // a few motes drifting round it
   let n = 0;
@@ -8266,7 +8274,8 @@ function pond() {
 // The pond's mask is a canvas, white where its pixels are water.
 // A rune stone in one glow ("cyan", "violet" or "green", or an [r, g, b] neon), carved with a creature's sigil (an
 // area's stones can carry the area creature's sigil) or, without one, a generic rune. Baked.
-function runeStone(st, { glow = "cyan", sigil, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil); return bake(s.sp, s.colours, st, "none", makeCanvas); }
+// scale: baked that much bigger (the game draws it at 1: docs/STYLE.md §1).
+function runeStone(st, { glow = "cyan", sigil, scale = 1, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil, scale); return bake(s.sp, s.colours, st, "none", makeCanvas); }
 function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
   const bk = (sp, col) => bake(sp, col, st, "none", makeCanvas);
   const out = { campfire: [0, 1, 2].map(f => bk(campfire(f), fireCol)), stones: {}, pond: null };
