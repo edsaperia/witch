@@ -17,7 +17,7 @@ import { groundOf, type Atlas } from "./atlas";
 import type { PartyWitchArt } from "./artBuild";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { ShadowInstance } from "./shadows";
-import { placed } from "./height";
+import { placed, shownOverBend } from "./height";
 import { tiltFilter } from "./overlayTilt";
 
 /** How many different looks are drawn: party witches beyond that share them (each look is a set of sprites to draw). */
@@ -82,7 +82,7 @@ export class PartyWitchView {
       tiltFilter(el, y);
       const e = CHAT[(turn * 7 + w.id * 3) % CHAT.length];
       if (el.textContent !== e) el.textContent = e;
-      el.style.display = this.v.z < 1 ? "" : "none";
+      el.style.display = this.v.z < 1 && shownOverBend(w.x, 2.4, w.z, camera.position) ? "" : "none"; // (never past the bend)
       n++;
     }
     for (let i = n; i < this.bubblePool.length; i++) this.bubblePool[i].style.display = "none";

@@ -49,7 +49,7 @@ export interface BuffTable { how: BuffHow; limits: Record<string, [number, numbe
 
 export const LEGEND_BUFFS = raw as unknown as BuffTable;
 
-export interface ActiveBuff { id: number; species: string; def: BuffDef }
+export interface ActiveBuff { id: number; species: string; def: BuffDef; /** Its own strength, times legends.buffPower: 1, or more for a far dream's quest (legends.questFar). */ roll?: number }
 export interface BuffEvent { kind: "gained" | "lost"; id: number; species: string; label: string }
 
 export interface BuffState {
@@ -82,12 +82,14 @@ export function partyLegends(creatures: readonly Creature[], partyIds: Iterable<
   return out;
 }
 
+/** One buff's strength: the same for all (a number), or each its own (by index). */
+const powerOf = (powers: number | readonly number[], i: number) => (typeof powers === "number" ? powers : powers[i] ?? 1);
 const hold = (v: number, lim: [number, number] | undefined) => (lim ? Math.min(lim[1], Math.max(lim[0], v)) : v);
 
 /** The behaviours these buffs count, each held inside its limits. */
-export function modsOf(defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS, power = 1): BuffMods {
+export function modsOf(defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS, powers: number | readonly number[] = 1): BuffMods {
   const M = noMods();
-  for (const d of defs) for (const [k, v] of Object.entries(d.mods ?? {})) M[k as ModKind] += Math.max(v ?? 0, Math.round((v ?? 0) * power));
+  for (const [i, d] of defs.entries()) for (const [k, v] of Object.entries(d.mods ?? {})) M[k as ModKind] += Math.max(v ?? 0, Math.round((v ?? 0) * powerOf(powers, i)));
   for (const k of MOD_KINDS) M[k] = hold(M[k], table.limits[`mods.${k}`]);
   return M;
 }
@@ -104,9 +106,10 @@ function set<T extends object>(o: T, path: string, v: number): T {
 
 /** The tuning with these buffs' numbers applied: scales multiply and adds add (on the file's
  *  value), then each is held inside its limits. Untouched numbers are the file's own. */
-export function buffedTuning(t: Tuning, defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS, power = 1): Tuning {
+export function buffedTuning(t: Tuning, defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS, powers: number | readonly number[] = 1): Tuning {
   const scale = new Map<string, number>(), add = new Map<string, number>();
-  for (const d of defs) {
+  for (const [i, d] of defs.entries()) {
+    const power = powerOf(powers, i);
     for (const [p, v] of Object.entries(d.scale ?? {})) scale.set(p, (scale.get(p) ?? 1) * Math.max(0.05, 1 + (v - 1) * power));
     for (const [p, v] of Object.entries(d.add ?? {})) add.set(p, (add.get(p) ?? 0) + v * power);
   }
@@ -118,7 +121,10 @@ export function buffedTuning(t: Tuning, defs: readonly BuffDef[], table: BuffTab
 /** One step: which buffs are on, from the legends giving them now (and any forced for debugging). */
 export function stepBuffs(s: BuffState, creatures: readonly Creature[], partyIds: Iterable<number>, t: Tuning, table: BuffTable = LEGEND_BUFFS): void {
   s.events = [];
-  const now: { id: number; species: string }[] = partyLegends(creatures, partyIds).filter(c => table.species[c.species]).map(c => ({ id: c.id, species: c.species }));
+  // A quest's buff rolls stronger the farther its dream creature lived (balance, 2026-10-06: the high roll worth taking).
+  const far = t.legends?.questFar ?? 0;
+  const now: { id: number; species: string; roll?: number }[] = partyLegends(creatures, partyIds).filter(c => table.species[c.species])
+    .map(c => ({ id: c.id, species: c.species, roll: c.quest?.done !== undefined ? 1 + far * (c.quest.far ?? 0) : 1 }));
   s.forced.forEach((sp, i) => { if (table.species[sp]) now.push({ id: -1 - i, species: sp }); });
   const was = new Map(s.active.map(a => [a.id, a]));
   const is = new Set(now.map(c => c.id));
@@ -127,13 +133,14 @@ export function stepBuffs(s: BuffState, creatures: readonly Creature[], partyIds
   const active = s.active.filter(a => is.has(a.id));
   for (const c of now) if (!was.has(c.id)) {
     const def = table.species[c.species];
-    active.push({ id: c.id, species: c.species, def });
+    active.push({ id: c.id, species: c.species, def, roll: c.roll });
     s.events.push({ kind: "gained", id: c.id, species: c.species, label: def.label });
     changed = true;
   }
   // Their strength (Ed, 2026-10-06, on quests: "Bigger buffs"): legends.buffPower, 1 as each is written.
   const power = t.legends?.buffPower ?? 1;
-  if (changed || s.power !== power) { s.active = active; s.mods = modsOf(active.map(a => a.def), table, power); }
-  if (changed || s.base !== t || s.power !== power) { s.tuning = s.active.length ? buffedTuning(t, s.active.map(a => a.def), table, power) : t; s.base = t; }
+  const powers = () => active.map(a => power * (a.roll ?? 1));
+  if (changed || s.power !== power) { s.active = active; s.mods = modsOf(active.map(a => a.def), table, powers()); }
+  if (changed || s.base !== t || s.power !== power) { s.tuning = s.active.length ? buffedTuning(t, s.active.map(a => a.def), table, powers()) : t; s.base = t; }
   s.power = power;
 }
