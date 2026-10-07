@@ -196,6 +196,7 @@ export interface Tuning {
     /** Fireworks over a soundsystem when a wave reaches an area she'd cleared (waveCelebrate). */
     fireworks?: { volume: number; whoosh: number; boom: number; echo: number; crackle: number; cheer: number; range: number; cheerRange: number; speed: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
+    seaLife: { volume: number; splash: number; groan: number; pour: number; range: number };
     sadTrumpet: { volume: number; duck: number; bare: number; rewind: number; cutAfter: number };
     deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number; needle: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */

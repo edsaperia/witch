@@ -17,6 +17,7 @@ import { Picnic, Pond, Room, Sea } from "./places";
 import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
+import { groan, pour, splash } from "./seaLife";
 import { rewind, sadTrumpet } from "./knockdown";
 import { Sparkler } from "./sparkler";
 import { Aggro } from "./aggro";
@@ -117,6 +118,10 @@ export class Sfx {
   pond(level: number, pan = 0): void { this.pondBed.update(level, pan); }
   picnic(level: number, pan = 0): void { this.picnicBed.update(level, pan); }
   room(level: number): void { this.roomBed.update(level); }
+  /** The sea's life off the beach (seaLife.ts): a dolphin's leap (its splash `fall` seconds after), the kraken's groan and the water pouring off it. */
+  splash(size = 0.5, pan = 0, near = 1, fall = 0.9): void { splash(this.k, size, pan, near, fall); }
+  krakenGroan(pan = 0, near = 1): void { groan(this.k, pan, near); }
+  krakenPour(dur = 4, pan = 0, near = 1): void { pour(this.k, dur, pan, near); }
   /** Knocked down (knockdown.ts): the sad trumpet as her hat drops (`full`; with no hat, its shorter "wah-waaah"); then the
    *  rewind as she's whisked to her decks, a backwards scratch cutting the trumpet off (never before its last note has had
    *  sadTrumpet.cutAfter seconds). */
