@@ -3317,6 +3317,14 @@
             "steps": {
               "type": "number",
               "minimum": 0
+            },
+            "dark": {
+              "type": "number",
+              "minimum": 0
+            },
+            "liftMax": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -3324,7 +3332,9 @@
             "rim",
             "floor",
             "nap",
-            "steps"
+            "steps",
+            "dark",
+            "liftMax"
           ],
           "additionalProperties": false
         }

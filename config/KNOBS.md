@@ -867,6 +867,8 @@ Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test 
 | `wildLegends.seen.floor` | number | 0 to … |
 | `wildLegends.seen.nap` | boolean |  |
 | `wildLegends.seen.steps` | number | 0 to … |
+| `wildLegends.seen.dark` | number | 0 to … |
+| `wildLegends.seen.liftMax` | number | 0 to … |
 | `legendSpeed` | number | 0 to … |
 
 ## Party
