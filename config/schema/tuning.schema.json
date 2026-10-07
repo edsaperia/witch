@@ -389,10 +389,6 @@
       "type": "number",
       "minimum": 0
     },
-    "treeDensity": {
-      "type": "number",
-      "minimum": 0
-    },
     "clearingSize": {
       "type": "number",
       "minimum": 0
@@ -528,312 +524,662 @@
       ],
       "additionalProperties": false
     },
-    "smoke": {
+    "glades": {
       "type": "object",
       "properties": {
         "on": {
           "type": "boolean"
         },
-        "rate": {
+        "radius": {
           "type": "number",
           "minimum": 0
         },
-        "life": {
+        "top": {
           "type": "number",
           "minimum": 0
         },
-        "rise": {
+        "reach": {
           "type": "number",
           "minimum": 0
         },
-        "speed": {
+        "hue": {
           "type": "number",
           "minimum": 0
         },
-        "size": {
+        "sat": {
           "type": "number",
           "minimum": 0
         },
-        "grow": {
+        "light": {
           "type": "number",
           "minimum": 0
         },
-        "drift": {
+        "edge": {
           "type": "number",
           "minimum": 0
         },
-        "opacity": {
+        "edgeEase": {
           "type": "number",
           "minimum": 0
         },
-        "warm": {
+        "dark": {
           "type": "number",
           "minimum": 0
         },
-        "pixel": {
-          "type": "boolean"
-        },
-        "perFire": {
+        "glowOff": {
           "type": "number",
           "minimum": 0
         },
-        "maxFires": {
+        "fade": {
           "type": "number",
           "minimum": 0
         },
-        "range": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "on",
-        "rate",
-        "life",
-        "rise",
-        "speed",
-        "size",
-        "grow",
-        "drift",
-        "opacity",
-        "warm",
-        "pixel",
-        "perFire",
-        "maxFires",
-        "range"
-      ],
-      "additionalProperties": false
-    },
-    "sky": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "stars": {
-          "type": "number",
-          "minimum": 0
-        },
-        "moon": {
-          "type": "number",
-          "minimum": 0
-        },
-        "clouds": {
+        "motes": {
           "type": "object",
           "properties": {
-            "count": {
+            "per": {
               "type": "number",
               "minimum": 0
             },
-            "altitude": {
+            "rise": {
               "type": "number",
               "minimum": 0
             },
-            "speed": {
+            "height": {
               "type": "number",
               "minimum": 0
             },
-            "opacity": {
+            "size": {
               "type": "number",
               "minimum": 0
             },
-            "partyGlow": {
+            "hue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bright": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "count",
-            "altitude",
-            "speed",
-            "opacity",
-            "partyGlow"
-          ],
-          "additionalProperties": false
-        },
-        "lightning": {
-          "type": "object",
-          "properties": {
-            "every": {
-              "type": "number",
-              "minimum": 0
-            },
-            "flashes": {
-              "type": "number",
-              "minimum": 0
-            },
-            "ground": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "every",
-            "flashes",
-            "ground"
+            "per",
+            "rise",
+            "height",
+            "size",
+            "hue",
+            "sat",
+            "bright"
           ],
           "additionalProperties": false
         }
       },
       "required": [
         "on",
-        "stars",
-        "moon",
-        "clouds",
-        "lightning"
+        "radius",
+        "top",
+        "reach",
+        "hue",
+        "sat",
+        "light",
+        "edge",
+        "edgeEase",
+        "dark",
+        "glowOff",
+        "fade",
+        "motes"
       ],
       "additionalProperties": false
     },
-    "moon": {
+    "treehouse": {
       "type": "object",
       "properties": {
-        "phasePeriod": {
+        "gap": {
           "type": "number",
           "minimum": 0
         },
-        "phaseStart": {
+        "angle": {
+          "type": "number"
+        },
+        "clear": {
           "type": "number",
           "minimum": 0
         },
-        "orbit": {
+        "lightReach": {
           "type": "number",
           "minimum": 0
         },
-        "arcStart": {
+        "lightStrength": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "gap",
+        "angle",
+        "clear",
+        "lightReach",
+        "lightStrength"
+      ],
+      "additionalProperties": false
+    },
+    "home": {
+      "type": "object",
+      "properties": {
+        "margin": {
           "type": "number",
           "minimum": 0
         },
-        "left": {
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "margin",
+        "gap"
+      ],
+      "additionalProperties": false
+    },
+    "scenes": {
+      "type": "object",
+      "properties": {
+        "chance": {
           "type": "number",
           "minimum": 0
         },
-        "right": {
+        "scale": {
           "type": "number",
           "minimum": 0
         },
-        "low": {
+        "pad": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "chance",
+        "scale",
+        "pad"
+      ],
+      "additionalProperties": false
+    },
+    "grounds": {
+      "type": "object",
+      "properties": {
+        "chance": {
           "type": "number",
           "minimum": 0
         },
-        "high": {
-          "type": "number",
-          "minimum": 0
+        "kinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
-        "colourEvery": {
-          "type": "number",
-          "minimum": 0
-        },
-        "colourChance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "colourTime": {
-          "type": "number",
-          "minimum": 0
-        },
-        "colourFade": {
-          "type": "number",
-          "minimum": 0
-        },
-        "colours": {
+        "radius": {
           "type": "object",
-          "properties": {
-            "red": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "minimum": 0
-              }
-            },
-            "blue": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "minimum": 0
-              }
-            },
-            "gold": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "minimum": 0
-              }
-            }
-          },
-          "required": [
-            "red",
-            "blue",
-            "gold"
-          ],
-          "additionalProperties": false
-        },
-        "tint": {
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "chance",
+        "kinds",
+        "radius"
+      ],
+      "additionalProperties": false
+    },
+    "legendClearing": {
+      "type": "object",
+      "properties": {
+        "radius": {
           "type": "number",
           "minimum": 0
         },
-        "bloodTint": {
+        "edge": {
           "type": "number",
           "minimum": 0
         },
-        "disc": {
+        "top": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minFromStone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minFromOtherStones": {
           "type": "number",
           "minimum": 0
         },
         "floor": {
           "type": "object",
           "properties": {
-            "palette": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              }
+            "on": {
+              "type": "boolean"
             },
-            "size": {
+            "overgrowth": {
               "type": "number",
               "minimum": 0
             },
-            "stars": {
+            "slab": {
               "type": "number",
               "minimum": 0
             },
-            "flare": {
+            "glint": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "palette",
-            "size",
-            "stars",
-            "flare"
+            "on",
+            "overgrowth",
+            "slab",
+            "glint"
           ],
           "additionalProperties": false
+        },
+        "rim": {
+          "type": "object",
+          "properties": {
+            "spacing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "out": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "spacing",
+            "chance",
+            "out",
+            "spread",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "grove": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "density": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tallest": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "soft": {
+              "type": "number",
+              "minimum": 0
+            },
+            "jitter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "density",
+            "tallest",
+            "scale",
+            "gap",
+            "soft",
+            "jitter"
+          ],
+          "additionalProperties": false
+        },
+        "species": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
         }
       },
       "required": [
-        "phasePeriod",
-        "phaseStart",
-        "orbit",
-        "arcStart",
-        "left",
-        "right",
-        "low",
-        "high",
-        "colourEvery",
-        "colourChance",
-        "colourTime",
-        "colourFade",
-        "colours",
-        "tint",
-        "bloodTint",
-        "disc",
-        "floor"
+        "radius",
+        "edge",
+        "top",
+        "minFromStone",
+        "minFromOtherStones",
+        "floor",
+        "rim",
+        "grove",
+        "species"
       ],
       "additionalProperties": false
+    },
+    "relics": {
+      "type": "object",
+      "properties": {
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "nearRoad": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minGap": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "spacing",
+        "chance",
+        "nearRoad",
+        "minGap"
+      ],
+      "additionalProperties": false
+    },
+    "walls": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "runLength": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "gateChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rings": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "ringStones": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "ringRadius": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "avenueChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "loneChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clumps": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "clumpSize": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "clumpRadius": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "runs",
+        "runLength",
+        "gateChance",
+        "rings",
+        "ringStones",
+        "ringRadius",
+        "avenueChance",
+        "loneChance",
+        "clumps",
+        "clumpSize",
+        "clumpRadius"
+      ],
+      "additionalProperties": false
+    },
+    "decor": {
+      "type": "object",
+      "properties": {
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ruins": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rocks": {
+          "type": "number",
+          "minimum": 0
+        },
+        "freak": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clearing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pathGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "footprint": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "spacing",
+        "ruins",
+        "rocks",
+        "freak",
+        "minGap",
+        "clearing",
+        "pathGap",
+        "footprint"
+      ],
+      "additionalProperties": false
+    },
+    "paths": {
+      "type": "object",
+      "properties": {
+        "rails": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "roads": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "linkChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deadEndChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pathHalf": {
+          "type": "number",
+          "minimum": 0
+        },
+        "roadHalf": {
+          "type": "number",
+          "minimum": 0
+        },
+        "railHalf": {
+          "type": "number",
+          "minimum": 0
+        },
+        "railBroken": {
+          "type": "number",
+          "minimum": 0
+        },
+        "streams": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "streamHalf": {
+          "type": "number",
+          "minimum": 0
+        },
+        "landmarkSpacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "landmarkChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "vergeSpacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pieceGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fingerposts": {
+          "type": "boolean"
+        },
+        "treesOnBroken": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edgeBushes": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bushBoost": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "rails",
+        "roads",
+        "linkChance",
+        "deadEndChance",
+        "pathHalf",
+        "roadHalf",
+        "railHalf",
+        "railBroken",
+        "streams",
+        "streamHalf",
+        "landmarkSpacing",
+        "landmarkChance",
+        "vergeSpacing",
+        "pieceGap",
+        "fingerposts",
+        "treesOnBroken",
+        "edgeBushes",
+        "bushBoost"
+      ],
+      "additionalProperties": false
+    },
+    "setPieceChance": {
+      "type": "number",
+      "minimum": 0
+    },
+    "setPieceScale": {
+      "type": "number",
+      "minimum": 0
+    },
+    "setPieceClear": {
+      "type": "number",
+      "minimum": 0
+    },
+    "setPieceFootprint": {
+      "type": "number",
+      "minimum": 0
+    },
+    "soundsystemFootprint": {
+      "type": "number",
+      "minimum": 0
+    },
+    "reserveMargin": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treeMarginFromSoundsystem": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treeDensity": {
+      "type": "number",
+      "minimum": 0
     },
     "wind": {
       "type": "object",
@@ -1006,6 +1352,53 @@
       "type": "number",
       "minimum": 0
     },
+    "scenery": {
+      "type": "object",
+      "properties": {
+        "adaptive": {
+          "type": "boolean"
+        },
+        "fps": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hysteresis": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sustain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shrink": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "adaptive",
+        "fps",
+        "hysteresis",
+        "sustain",
+        "minRadius",
+        "shrink",
+        "grow",
+        "fade"
+      ],
+      "additionalProperties": false
+    },
     "groundSpeed": {
       "type": "number",
       "minimum": 0
@@ -1128,1180 +1521,429 @@
       "type": "number",
       "minimum": 0
     },
-    "camera": {
+    "witch": {
       "type": "object",
       "properties": {
-        "fov": {
-          "type": "number",
-          "minimum": 0
-        },
-        "ground": {
+        "knock": {
           "type": "object",
           "properties": {
-            "angleIn": {
-              "type": "number",
-              "minimum": 0
+            "on": {
+              "type": "boolean"
             },
-            "angleOut": {
-              "type": "number",
-              "minimum": 0
-            },
-            "distanceIn": {
-              "type": "number",
-              "minimum": 0
-            },
-            "distanceOut": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "angleIn",
-            "angleOut",
-            "distanceIn",
-            "distanceOut"
-          ],
-          "additionalProperties": false
-        },
-        "treetop": {
-          "type": "object",
-          "properties": {
-            "angleIn": {
-              "type": "number",
-              "minimum": 0
-            },
-            "angleOut": {
-              "type": "number",
-              "minimum": 0
-            },
-            "distanceIn": {
-              "type": "number",
-              "minimum": 0
-            },
-            "distanceOut": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "angleIn",
-            "angleOut",
-            "distanceIn",
-            "distanceOut"
-          ],
-          "additionalProperties": false
-        },
-        "lookAhead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lookAheadMax": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lookAheadEase": {
-          "type": "number",
-          "minimum": 0
-        },
-        "zoomEase": {
-          "type": "number",
-          "minimum": 0
-        },
-        "liftEase": {
-          "type": "number",
-          "minimum": 0
-        },
-        "curve": {
-          "type": "object",
-          "properties": {
-            "ground": {
-              "type": "number",
-              "minimum": 0
-            },
-            "treetop": {
-              "type": "number",
-              "minimum": 0
-            },
-            "beyond": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "ground",
-            "treetop",
-            "beyond"
-          ],
-          "additionalProperties": false
-        },
-        "zoomSteps": {
-          "type": "number",
-          "minimum": 0
-        },
-        "speedZoom": {
-          "type": "object",
-          "properties": {
             "base": {
               "type": "number",
               "minimum": 0
             },
-            "power": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "base",
-            "power"
-          ],
-          "additionalProperties": false
-        },
-        "startZoom": {
-          "type": "number",
-          "minimum": 0
-        },
-        "shake": {
-          "type": "object",
-          "properties": {
-            "base": {
+            "scale": {
               "type": "number",
               "minimum": 0
             },
-            "perMissingHit": {
+            "charge": {
               "type": "number",
               "minimum": 0
             },
-            "knockdown": {
-              "type": "number",
-              "minimum": 0
-            },
-            "decay": {
-              "type": "number",
-              "minimum": 0
-            },
-            "maxOffsetPx": {
-              "type": "number",
-              "minimum": 0
-            },
-            "maxRotDeg": {
-              "type": "number",
-              "minimum": 0
-            },
-            "speed": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "base",
-            "perMissingHit",
-            "knockdown",
-            "decay",
-            "maxOffsetPx",
-            "maxRotDeg",
-            "speed"
-          ],
-          "additionalProperties": false
-        },
-        "follow": {
-          "type": "number",
-          "minimum": 0
-        },
-        "intro": {
-          "type": "object",
-          "properties": {
-            "distance": {
-              "type": "number",
-              "minimum": 0
-            },
-            "angle": {
+            "max": {
               "type": "number",
               "minimum": 0
             },
             "ease": {
               "type": "number",
               "minimum": 0
-            }
-          },
-          "required": [
-            "distance",
-            "angle",
-            "ease"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "fov",
-        "ground",
-        "treetop",
-        "lookAhead",
-        "lookAheadMax",
-        "lookAheadEase",
-        "zoomEase",
-        "liftEase",
-        "curve",
-        "zoomSteps",
-        "speedZoom",
-        "startZoom",
-        "shake",
-        "follow",
-        "intro"
-      ],
-      "additionalProperties": false
-    },
-    "pixelSize": {
-      "type": "number",
-      "minimum": 0
-    },
-    "glowReach": {
-      "type": "number",
-      "minimum": 0
-    },
-    "nightLight": {
-      "type": "object",
-      "properties": {
-        "maxReach": {
-          "type": "number",
-          "minimum": 0
-        },
-        "treetopReach": {
-          "type": "number",
-          "minimum": 0
-        },
-        "treetopGlow": {
-          "type": "number",
-          "minimum": 0
-        },
-        "gazeReach": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "maxReach",
-        "treetopReach",
-        "treetopGlow",
-        "gazeReach"
-      ],
-      "additionalProperties": false
-    },
-    "glowFalloff": {
-      "type": "number",
-      "minimum": 0
-    },
-    "glowNear": {
-      "type": "number",
-      "minimum": 0
-    },
-    "glowToCutout": {
-      "type": "number",
-      "minimum": 0
-    },
-    "glowHeight": {
-      "type": "number",
-      "minimum": 0
-    },
-    "spriteTilt": {
-      "type": "number",
-      "minimum": 0
-    },
-    "artPixelsPerMetre": {
-      "type": "number",
-      "minimum": 0
-    },
-    "viewMargin": {
-      "type": "number",
-      "minimum": 0
-    },
-    "lightBudget": {
-      "type": "number",
-      "minimum": 0
-    },
-    "lights": {
-      "type": "object",
-      "properties": {
-        "campfire": {
-          "type": "object",
-          "properties": {
-            "reach": {
+            },
+            "stunBase": {
               "type": "number",
               "minimum": 0
             },
-            "strength": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "reach",
-            "strength"
-          ],
-          "additionalProperties": false
-        },
-        "stone": {
-          "type": "object",
-          "properties": {
-            "reach": {
+            "stunScale": {
               "type": "number",
               "minimum": 0
             },
-            "strength": {
+            "stunMax": {
+              "type": "number",
+              "minimum": 0
+            },
+            "immune": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "reach",
-            "strength"
+            "on",
+            "base",
+            "scale",
+            "charge",
+            "max",
+            "ease",
+            "stunBase",
+            "stunScale",
+            "stunMax",
+            "immune"
+          ],
+          "additionalProperties": false
+        },
+        "lightFloor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightTint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightRim": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightSmooth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightLookAhead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightClearance": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "knock",
+        "lightFloor",
+        "lightTint",
+        "lightRim",
+        "heightSmooth",
+        "heightLookAhead",
+        "heightClearance"
+      ],
+      "additionalProperties": false
+    },
+    "stack": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stiffness": {
+          "type": "number",
+          "minimum": 0
+        },
+        "damping": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trail": {
+          "type": "number",
+          "minimum": 0
+        },
+        "idleSway": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "offset",
+        "scale",
+        "gap",
+        "stiffness",
+        "damping",
+        "trail",
+        "idleSway"
+      ],
+      "additionalProperties": false
+    },
+    "witchHealth": {
+      "type": "object",
+      "properties": {
+        "hits": {
+          "type": "number",
+          "minimum": 0
+        },
+        "repairTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grace": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "hits",
+        "repairTime",
+        "grace"
+      ],
+      "additionalProperties": false
+    },
+    "knockout": {
+      "type": "object",
+      "properties": {
+        "releaseEach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "releaseMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "emptyBeat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "teleport": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendsLoyal": {
+          "type": "boolean"
+        },
+        "dropHat": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "releaseEach",
+        "releaseMax",
+        "emptyBeat",
+        "teleport",
+        "legendsLoyal",
+        "dropHat"
+      ],
+      "additionalProperties": false
+    },
+    "dash": {
+      "type": "object",
+      "properties": {
+        "distance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0
+        },
+        "buffer": {
+          "type": "number",
+          "minimum": 0
+        },
+        "toCursor": {
+          "type": "boolean"
+        },
+        "aimDead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clear": {
+          "type": "object",
+          "properties": {
+            "tree": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decor": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sound": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speaker": {
+              "type": "number",
+              "minimum": 0
+            },
+            "treehouse": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "tree",
+            "decor",
+            "sound",
+            "speaker",
+            "treehouse"
           ],
           "additionalProperties": false
         }
       },
       "required": [
-        "campfire",
-        "stone"
+        "distance",
+        "gone",
+        "cooldown",
+        "buffer",
+        "toCursor",
+        "aimDead",
+        "clear"
       ],
       "additionalProperties": false
     },
-    "glowPower": {
-      "type": "number",
-      "minimum": 0
-    },
-    "light": {
+    "spells": {
       "type": "object",
       "properties": {
-        "mood": {
+        "equipped": {
           "type": "string"
         },
-        "spooky": {
+        "speed": {
           "type": "object",
           "properties": {
-            "ambientHue": {
+            "mult": {
               "type": "number",
               "minimum": 0
             },
-            "ambient": {
+            "duration": {
               "type": "number",
               "minimum": 0
             },
-            "moonHue": {
+            "cooldown": {
               "type": "number",
               "minimum": 0
-            },
-            "moonSat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "moon": {
-              "type": "number",
-              "minimum": 0
-            },
-            "hazeHue": {
-              "type": "number",
-              "minimum": 0
-            },
-            "hazeSat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "haze": {
-              "type": "number",
-              "minimum": 0
-            },
-            "hazeNear": {
-              "type": "number",
-              "minimum": 0
-            },
-            "hazeFar": {
-              "type": "number",
-              "minimum": 0
-            },
-            "mist": {
-              "type": "number",
-              "minimum": 0
-            },
-            "glowHue": {
-              "type": "number",
-              "minimum": 0
-            },
-            "glowSat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "grade": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gradeDesat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gradePivot": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gradeHue": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gradeSat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "partyWarm": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              }
-            },
-            "partyReach": {
-              "type": "number",
-              "minimum": 0
-            },
-            "partyStrength": {
-              "type": "number",
-              "minimum": 0
-            },
-            "decorLights": {
-              "type": "number",
-              "minimum": 0
-            },
-            "decorReach": {
-              "type": "number",
-              "minimum": 0
-            },
-            "decorStrength": {
-              "type": "number",
-              "minimum": 0
-            },
-            "decorWarm": {
-              "type": "number",
-              "minimum": 0
-            },
-            "rimHue": {
-              "type": "number",
-              "minimum": 0
-            },
-            "rimSat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "rim": {
-              "type": "number",
-              "minimum": 0
-            },
-            "witchGlow": {
-              "type": "number",
-              "minimum": 0
-            },
-            "moonUp": {
-              "type": "number",
-              "minimum": 0
-            },
-            "moonUpHue": {
-              "type": "number",
-              "minimum": 0
-            },
-            "moonUpSat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "moonUpWrap": {
-              "type": "number",
-              "minimum": 0
-            },
-            "styledRim": {
-              "type": "number",
-              "minimum": 0
-            },
-            "styledGlow": {
-              "type": "number",
-              "minimum": 0
-            },
-            "styledLift": {
-              "type": "number",
-              "minimum": 0
-            },
-            "leyRgb": {
-              "type": "string"
-            },
-            "leyBright": {
-              "type": "number",
-              "minimum": 0
-            },
-            "berryHalo": {
-              "type": "number",
-              "minimum": 0
-            },
-            "berryGlow": {
-              "type": "number",
-              "minimum": 0
-            },
-            "areaEase": {
-              "type": "number",
-              "minimum": 0
-            },
-            "areas": {
-              "type": "object",
-              "properties": {
-                "bog": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "mist",
-                    "gradeHue"
-                  ],
-                  "additionalProperties": false
-                },
-                "wetland": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "mist",
-                    "gradeHue"
-                  ],
-                  "additionalProperties": false
-                },
-                "beaver-pond": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "mist",
-                    "gradeHue"
-                  ],
-                  "additionalProperties": false
-                },
-                "stream": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "mist",
-                    "gradeHue"
-                  ],
-                  "additionalProperties": false
-                },
-                "deadwood": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "gradeHue",
-                    "gradeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "ancient": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "gradeHue",
-                    "gradeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "log-pile": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "gradeHue",
-                    "gradeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "bluebell-glade": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "gradeHue",
-                    "mist"
-                  ],
-                  "additionalProperties": false
-                },
-                "wispy-forest": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "gradeHue",
-                    "mist"
-                  ],
-                  "additionalProperties": false
-                },
-                "moor": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "mist"
-                  ],
-                  "additionalProperties": false
-                },
-                "heath": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "mist"
-                  ],
-                  "additionalProperties": false
-                },
-                "grassland": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "mist"
-                  ],
-                  "additionalProperties": false
-                },
-                "cave-mouth": {
-                  "type": "object",
-                  "properties": {
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "haze",
-                    "gradeHue",
-                    "gradeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "ravine": {
-                  "type": "object",
-                  "properties": {
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "haze",
-                    "gradeHue",
-                    "gradeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "rocky-slope": {
-                  "type": "object",
-                  "properties": {
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "haze",
-                    "gradeHue",
-                    "gradeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "old-pinewood": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "gradeHue"
-                  ],
-                  "additionalProperties": false
-                },
-                "norway": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "haze": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat",
-                    "haze",
-                    "gradeHue"
-                  ],
-                  "additionalProperties": false
-                },
-                "honeysuckle-tangle": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "garden": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "berry-thicket": {
-                  "type": "object",
-                  "properties": {
-                    "hazeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "hazeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "hazeHue",
-                    "hazeSat"
-                  ],
-                  "additionalProperties": false
-                },
-                "home": {
-                  "type": "object",
-                  "properties": {
-                    "gradeHue": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "gradeSat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "mist": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "gradeHue",
-                    "gradeSat",
-                    "mist"
-                  ],
-                  "additionalProperties": false
-                }
-              },
-              "required": [
-                "bog",
-                "wetland",
-                "beaver-pond",
-                "stream",
-                "deadwood",
-                "ancient",
-                "log-pile",
-                "bluebell-glade",
-                "wispy-forest",
-                "moor",
-                "heath",
-                "grassland",
-                "cave-mouth",
-                "ravine",
-                "rocky-slope",
-                "old-pinewood",
-                "norway",
-                "honeysuckle-tangle",
-                "garden",
-                "berry-thicket",
-                "home"
-              ],
-              "additionalProperties": false
             }
           },
           "required": [
-            "ambientHue",
-            "ambient",
-            "moonHue",
-            "moonSat",
-            "moon",
-            "hazeHue",
-            "hazeSat",
-            "haze",
-            "hazeNear",
-            "hazeFar",
-            "mist",
-            "glowHue",
-            "glowSat",
-            "grade",
-            "gradeDesat",
-            "gradePivot",
-            "gradeHue",
-            "gradeSat",
-            "partyWarm",
-            "partyReach",
-            "partyStrength",
-            "decorLights",
-            "decorReach",
-            "decorStrength",
-            "decorWarm",
-            "rimHue",
-            "rimSat",
-            "rim",
-            "witchGlow",
-            "moonUp",
-            "moonUpHue",
-            "moonUpSat",
-            "moonUpWrap",
-            "styledRim",
-            "styledGlow",
-            "styledLift",
-            "leyRgb",
-            "leyBright",
-            "berryHalo",
-            "berryGlow",
-            "areaEase",
-            "areas"
+            "mult",
+            "duration",
+            "cooldown"
           ],
           "additionalProperties": false
         }
       },
       "required": [
-        "mood",
-        "spooky"
+        "equipped",
+        "speed"
       ],
       "additionalProperties": false
     },
-    "beat": {
+    "trail": {
       "type": "object",
       "properties": {
-        "bpm": {
+        "on": {
+          "type": "boolean"
+        },
+        "ground": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetops": {
+          "type": "number",
+          "minimum": 0
+        },
+        "from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curve": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shrink": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sparks": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on",
+        "ground",
+        "treetops",
+        "from",
+        "curve",
+        "width",
+        "bright",
+        "fade",
+        "grow",
+        "shrink",
+        "colourEase",
+        "sparks"
+      ],
+      "additionalProperties": false
+    },
+    "swoopTrail": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hueSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hueSpread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "liftFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "slots": {
           "type": "number",
           "minimum": 0
         }
       },
       "required": [
-        "bpm"
+        "on",
+        "life",
+        "width",
+        "near",
+        "bright",
+        "hueSpeed",
+        "hueSpread",
+        "liftFade",
+        "slots"
       ],
       "additionalProperties": false
     },
@@ -2394,114 +2036,1108 @@
       ],
       "additionalProperties": false
     },
-    "glades": {
+    "invites": {
       "type": "object",
       "properties": {
         "on": {
           "type": "boolean"
         },
+        "burst": {
+          "type": "number",
+          "minimum": 0
+        },
+        "burstGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "arc": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homingCone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homingRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "multiShot": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0
+        },
         "radius": {
           "type": "number",
           "minimum": 0
         },
-        "top": {
+        "amount": {
           "type": "number",
           "minimum": 0
         },
-        "reach": {
+        "hits": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "drain": {
           "type": "number",
           "minimum": 0
         },
-        "hue": {
+        "fireSlow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "linger": {
           "type": "number",
           "minimum": 0
         },
-        "sat": {
+        "lingerFade": {
           "type": "number",
           "minimum": 0
         },
-        "light": {
+        "lingerMax": {
           "type": "number",
           "minimum": 0
         },
-        "edge": {
+        "spin": {
           "type": "number",
           "minimum": 0
         },
-        "edgeEase": {
-          "type": "number",
-          "minimum": 0
-        },
-        "dark": {
-          "type": "number",
-          "minimum": 0
-        },
-        "glowOff": {
-          "type": "number",
-          "minimum": 0
-        },
-        "fade": {
-          "type": "number",
-          "minimum": 0
-        },
-        "motes": {
+        "orbit": {
           "type": "object",
           "properties": {
-            "per": {
+            "scale": {
               "type": "number",
               "minimum": 0
             },
-            "rise": {
+            "gap": {
               "type": "number",
               "minimum": 0
             },
-            "height": {
-              "type": "number",
-              "minimum": 0
-            },
-            "size": {
-              "type": "number",
-              "minimum": 0
-            },
-            "hue": {
-              "type": "number",
-              "minimum": 0
-            },
-            "sat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "bright": {
+            "min": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "per",
-            "rise",
-            "height",
-            "size",
-            "hue",
-            "sat",
-            "bright"
+            "scale",
+            "gap",
+            "min"
           ],
           "additionalProperties": false
         }
       },
       "required": [
         "on",
+        "burst",
+        "burstGap",
+        "cooldown",
+        "range",
+        "speed",
+        "arc",
+        "homing",
+        "homingCone",
+        "homingRange",
+        "multiShot",
+        "spread",
         "radius",
-        "top",
-        "reach",
-        "hue",
-        "sat",
-        "light",
-        "edge",
-        "edgeEase",
-        "dark",
-        "glowOff",
-        "fade",
-        "motes"
+        "amount",
+        "hits",
+        "drain",
+        "fireSlow",
+        "linger",
+        "lingerFade",
+        "lingerMax",
+        "spin",
+        "orbit"
+      ],
+      "additionalProperties": false
+    },
+    "invite": {
+      "type": "object",
+      "properties": {
+        "talkRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cancelDistance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "snubTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "talkTime": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "turn": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "decayRate": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "talkRange",
+        "cancelDistance",
+        "snubTime",
+        "talkTime",
+        "turn",
+        "decayRate"
+      ],
+      "additionalProperties": false
+    },
+    "leash": {
+      "type": "object",
+      "properties": {
+        "length": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pickRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runePull": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "speed",
+            "stop"
+          ],
+          "additionalProperties": false
+        },
+        "weight": {
+          "type": "object",
+          "properties": {
+            "free": {
+              "type": "number",
+              "minimum": 0
+            },
+            "levels": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "drag": {
+              "type": "number",
+              "minimum": 0
+            },
+            "drift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sink": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sinkMax": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "extreme": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxTension": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "free",
+            "levels",
+            "drag",
+            "drift",
+            "rise",
+            "sink",
+            "sinkMax",
+            "floor",
+            "extreme",
+            "maxTension"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "length",
+        "runSpeed",
+        "pickRadius",
+        "spacing",
+        "runeRadius",
+        "runePull",
+        "weight"
+      ],
+      "additionalProperties": false
+    },
+    "bond": {
+      "type": "object",
+      "properties": {
+        "rim": {
+          "type": "boolean"
+        },
+        "sparks": {
+          "type": "boolean"
+        },
+        "thread": {
+          "type": "boolean"
+        },
+        "sparkEvery": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadArcSlack": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadArcTaut": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadArcMax": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "rim",
+        "sparks",
+        "thread",
+        "sparkEvery",
+        "threadArcSlack",
+        "threadArcTaut",
+        "threadArcMax"
+      ],
+      "additionalProperties": false
+    },
+    "fight": {
+      "type": "object",
+      "properties": {
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "momentum": {
+          "type": "number",
+          "minimum": 0
+        },
+        "charge": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "brake": {
+              "type": "number",
+              "minimum": 0
+            },
+            "contact": {
+              "type": "boolean"
+            },
+            "chase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "miss": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "turn",
+            "brake",
+            "contact",
+            "chase",
+            "miss"
+          ],
+          "additionalProperties": false
+        },
+        "leap": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "through": {
+              "type": "number"
+            },
+            "contact": {
+              "type": "boolean"
+            },
+            "lead": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "through",
+            "contact",
+            "lead"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "scale",
+        "speed",
+        "momentum",
+        "charge",
+        "leap"
+      ],
+      "additionalProperties": false
+    },
+    "attackFx": {
+      "type": "object",
+      "properties": {
+        "windupSquash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "windupMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lungeStretch": {
+          "type": "number",
+          "minimum": 0
+        },
+        "squash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "squashSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleKnock": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnTo": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendFlash": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "windupSquash",
+        "windupMax",
+        "lungeStretch",
+        "squash",
+        "squashSecs",
+        "tumbleKnock",
+        "tumbleHeight",
+        "tumbleSecs",
+        "turnFrom",
+        "turnTo",
+        "legendFlash"
+      ],
+      "additionalProperties": false
+    },
+    "combat": {
+      "type": "object",
+      "properties": {
+        "aggro": {
+          "type": "number",
+          "minimum": 0
+        },
+        "witchLose": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leaveArea": {
+          "type": "number",
+          "minimum": 0
+        },
+        "engage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pursuit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pursuitRun": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightRun": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendRun": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reaction": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chaseMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyChaseMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "marchMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fleeMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "soundsystemHealth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "soundsystemRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homeHealth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shake": {
+          "type": "number",
+          "minimum": 0
+        },
+        "daze": {
+          "type": "number",
+          "minimum": 0
+        },
+        "retreatHome": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "aggro",
+        "witchLose",
+        "leaveArea",
+        "engage",
+        "pursuit",
+        "pursuitRun",
+        "fightRun",
+        "legendRun",
+        "reaction",
+        "chaseMult",
+        "partyChaseMult",
+        "marchMult",
+        "fleeMult",
+        "soundsystemHealth",
+        "soundsystemRadius",
+        "homeHealth",
+        "homeRadius",
+        "shake",
+        "daze",
+        "retreatHome"
+      ],
+      "additionalProperties": false
+    },
+    "notice": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curious": {
+          "type": "number",
+          "minimum": 0
+        },
+        "skittish": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "radius",
+        "curious",
+        "skittish"
+      ],
+      "additionalProperties": false
+    },
+    "naps": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "chance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "length": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "wake": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "chance",
+        "length",
+        "wake"
+      ],
+      "additionalProperties": false
+    },
+    "guard": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "radius"
+      ],
+      "additionalProperties": false
+    },
+    "population": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "object",
+          "properties": {
+            "babies": {
+              "type": "number",
+              "minimum": 0
+            },
+            "young": {
+              "type": "number",
+              "minimum": 0
+            },
+            "adults": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "babies",
+            "young",
+            "adults"
+          ],
+          "additionalProperties": false
+        },
+        "growth": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "perWave": {
+              "type": "number",
+              "minimum": 0
+            },
+            "weights": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "hide": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "perWave",
+            "weights",
+            "hide"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "start",
+        "growth"
+      ],
+      "additionalProperties": false
+    },
+    "creatureSimRadius": {
+      "type": "number",
+      "minimum": 0
+    },
+    "simLod": {
+      "type": "object",
+      "properties": {
+        "full": {
+          "type": "object",
+          "properties": {
+            "ground": {
+              "type": "number",
+              "minimum": 0
+            },
+            "treetop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ground",
+            "treetop"
+          ],
+          "additionalProperties": false
+        },
+        "action": {
+          "type": "number",
+          "minimum": 0
+        },
+        "band": {
+          "type": "number",
+          "minimum": 0
+        },
+        "every": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "full",
+        "action",
+        "band",
+        "every"
+      ],
+      "additionalProperties": false
+    },
+    "creatureSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "creatureSpeeds": {
+      "type": "object",
+      "properties": {
+        "fast": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fastMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legend": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "fast",
+        "fastMult",
+        "legend"
+      ],
+      "additionalProperties": false
+    },
+    "legendCircle": {
+      "type": "object",
+      "properties": {
+        "slow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "scale",
+            "ease"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "slow"
+      ],
+      "additionalProperties": false
+    },
+    "dreams": {
+      "type": "object",
+      "properties": {
+        "range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "nightmare": {
+          "type": "object",
+          "properties": {
+            "at": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "faces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "at",
+            "faces"
+          ],
+          "additionalProperties": false
+        },
+        "sleepy": {
+          "type": "object",
+          "properties": {
+            "face": {
+              "type": "string"
+            },
+            "weight": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "faces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fallback": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "face",
+            "weight",
+            "every",
+            "faces",
+            "fallback"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "range",
+        "nightmare",
+        "sleepy"
+      ],
+      "additionalProperties": false
+    },
+    "legends": {
+      "type": "object",
+      "properties": {
+        "share": {
+          "type": "number",
+          "minimum": 0
+        },
+        "buffPower": {
+          "type": "number",
+          "minimum": 0
+        },
+        "happyRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "questCap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "questFar": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bombard": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "damage": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "range",
+            "damage"
+          ],
+          "additionalProperties": false
+        },
+        "stomp": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "angryAfter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "angryAfter"
+          ],
+          "additionalProperties": false
+        },
+        "partyEgg": {
+          "type": "boolean"
+        },
+        "partyHits": {
+          "type": "number",
+          "minimum": 1
+        },
+        "partyDrain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "share",
+        "buffPower",
+        "happyRange",
+        "questCap",
+        "questFar",
+        "bombard",
+        "stomp",
+        "partyEgg",
+        "partyHits",
+        "partyDrain",
+        "partyReach"
+      ],
+      "additionalProperties": false
+    },
+    "wildLegends": {
+      "type": "object",
+      "properties": {
+        "wake": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sink": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moss": {
+          "type": "number",
+          "minimum": 0
+        },
+        "guard": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heal": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "breathe": {
+          "type": "number",
+          "minimum": 0
+        },
+        "breathEvery": {
+          "type": "number",
+          "minimum": 0
+        },
+        "aura": {
+          "type": "number",
+          "minimum": 0
+        },
+        "glow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "seen": {
+          "type": "object",
+          "properties": {
+            "aura": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "aura",
+            "rim",
+            "floor"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "wake",
+        "sink",
+        "moss",
+        "guard",
+        "heal",
+        "scale",
+        "breathe",
+        "breathEvery",
+        "aura",
+        "glow",
+        "seen"
+      ],
+      "additionalProperties": false
+    },
+    "legendSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "beat": {
+      "type": "object",
+      "properties": {
+        "bpm": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "bpm"
       ],
       "additionalProperties": false
     },
@@ -2602,244 +3238,6 @@
         "flow",
         "depart",
         "minRadius"
-      ],
-      "additionalProperties": false
-    },
-    "witch": {
-      "type": "object",
-      "properties": {
-        "knock": {
-          "type": "object",
-          "properties": {
-            "on": {
-              "type": "boolean"
-            },
-            "base": {
-              "type": "number",
-              "minimum": 0
-            },
-            "scale": {
-              "type": "number",
-              "minimum": 0
-            },
-            "charge": {
-              "type": "number",
-              "minimum": 0
-            },
-            "max": {
-              "type": "number",
-              "minimum": 0
-            },
-            "ease": {
-              "type": "number",
-              "minimum": 0
-            },
-            "stunBase": {
-              "type": "number",
-              "minimum": 0
-            },
-            "stunScale": {
-              "type": "number",
-              "minimum": 0
-            },
-            "stunMax": {
-              "type": "number",
-              "minimum": 0
-            },
-            "immune": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "on",
-            "base",
-            "scale",
-            "charge",
-            "max",
-            "ease",
-            "stunBase",
-            "stunScale",
-            "stunMax",
-            "immune"
-          ],
-          "additionalProperties": false
-        },
-        "lightFloor": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lightTint": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lightRim": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightSmooth": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightLookAhead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightClearance": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "knock",
-        "lightFloor",
-        "lightTint",
-        "lightRim",
-        "heightSmooth",
-        "heightLookAhead",
-        "heightClearance"
-      ],
-      "additionalProperties": false
-    },
-    "sigilProjection": {
-      "type": "object",
-      "properties": {
-        "height": {
-          "type": "number",
-          "minimum": 0
-        },
-        "opacity": {
-          "type": "number",
-          "minimum": 0
-        },
-        "beam": {
-          "type": "number",
-          "minimum": 0
-        },
-        "size": {
-          "type": "number",
-          "minimum": 0
-        },
-        "creatures": {
-          "type": "object",
-          "properties": {
-            "range": {
-              "type": "number",
-              "minimum": 0
-            },
-            "max": {
-              "type": "number",
-              "minimum": 0
-            },
-            "size": {
-              "type": "number",
-              "minimum": 0
-            },
-            "opacity": {
-              "type": "number",
-              "minimum": 0
-            },
-            "happy": {
-              "type": "number",
-              "minimum": 0
-            },
-            "fade": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "range",
-            "max",
-            "size",
-            "opacity",
-            "happy",
-            "fade"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "height",
-        "opacity",
-        "beam",
-        "size",
-        "creatures"
-      ],
-      "additionalProperties": false
-    },
-    "occlusion": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "fadeOpacity": {
-          "type": "number",
-          "minimum": 0
-        },
-        "edge": {
-          "type": "number",
-          "minimum": 0
-        },
-        "minHeight": {
-          "type": "number",
-          "minimum": 0
-        },
-        "silhouette": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "on",
-        "fadeOpacity",
-        "edge",
-        "minHeight",
-        "silhouette"
-      ],
-      "additionalProperties": false
-    },
-    "stack": {
-      "type": "object",
-      "properties": {
-        "offset": {
-          "type": "number",
-          "minimum": 0
-        },
-        "scale": {
-          "type": "number",
-          "minimum": 0
-        },
-        "gap": {
-          "type": "number",
-          "minimum": 0
-        },
-        "stiffness": {
-          "type": "number",
-          "minimum": 0
-        },
-        "damping": {
-          "type": "number",
-          "minimum": 0
-        },
-        "trail": {
-          "type": "number",
-          "minimum": 0
-        },
-        "idleSway": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "offset",
-        "scale",
-        "gap",
-        "stiffness",
-        "damping",
-        "trail",
-        "idleSway"
       ],
       "additionalProperties": false
     },
@@ -3264,368 +3662,6 @@
       ],
       "additionalProperties": false
     },
-    "lightSources": {
-      "type": "object",
-      "properties": {
-        "spacing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "campfire": {
-          "type": "number",
-          "minimum": 0
-        },
-        "magicStone": {
-          "type": "number",
-          "minimum": 0
-        },
-        "pond": {
-          "type": "number",
-          "minimum": 0
-        },
-        "wetPond": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "spacing",
-        "campfire",
-        "magicStone",
-        "pond",
-        "wetPond"
-      ],
-      "additionalProperties": false
-    },
-    "haze": {
-      "type": "object",
-      "properties": {
-        "near": {
-          "type": "number",
-          "minimum": 0
-        },
-        "far": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "near",
-        "far"
-      ],
-      "additionalProperties": false
-    },
-    "scenery": {
-      "type": "object",
-      "properties": {
-        "adaptive": {
-          "type": "boolean"
-        },
-        "fps": {
-          "type": "number",
-          "minimum": 0
-        },
-        "hysteresis": {
-          "type": "number",
-          "minimum": 0
-        },
-        "sustain": {
-          "type": "number",
-          "minimum": 0
-        },
-        "minRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "shrink": {
-          "type": "number",
-          "minimum": 0
-        },
-        "grow": {
-          "type": "number",
-          "minimum": 0
-        },
-        "fade": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "adaptive",
-        "fps",
-        "hysteresis",
-        "sustain",
-        "minRadius",
-        "shrink",
-        "grow",
-        "fade"
-      ],
-      "additionalProperties": false
-    },
-    "shadows": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "strength": {
-          "type": "number",
-          "minimum": 0
-        },
-        "trees": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "on",
-        "strength",
-        "trees"
-      ],
-      "additionalProperties": false
-    },
-    "canopyShadow": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "strength": {
-          "type": "number",
-          "minimum": 0
-        },
-        "height": {
-          "type": "number",
-          "minimum": 0
-        },
-        "cover": {
-          "type": "number",
-          "minimum": 0
-        },
-        "wind": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "on",
-        "strength",
-        "height",
-        "cover",
-        "wind"
-      ],
-      "additionalProperties": false
-    },
-    "mist": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "strength": {
-          "type": "number",
-          "minimum": 0
-        },
-        "height": {
-          "type": "number",
-          "minimum": 0
-        },
-        "wind": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "on",
-        "strength",
-        "height",
-        "wind"
-      ],
-      "additionalProperties": false
-    },
-    "fx": {
-      "type": "string",
-      "enum": [
-        "smooth",
-        "pixel"
-      ]
-    },
-    "moonbeams": {
-      "type": "number",
-      "minimum": 0
-    },
-    "treehouse": {
-      "type": "object",
-      "properties": {
-        "gap": {
-          "type": "number",
-          "minimum": 0
-        },
-        "angle": {
-          "type": "number"
-        },
-        "clear": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lightReach": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lightStrength": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "gap",
-        "angle",
-        "clear",
-        "lightReach",
-        "lightStrength"
-      ],
-      "additionalProperties": false
-    },
-    "home": {
-      "type": "object",
-      "properties": {
-        "margin": {
-          "type": "number",
-          "minimum": 0
-        },
-        "gap": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "margin",
-        "gap"
-      ],
-      "additionalProperties": false
-    },
-    "rig": {
-      "type": "object",
-      "properties": {
-        "minPx": {
-          "type": "number",
-          "minimum": 0
-        },
-        "alwaysLevels": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "baby",
-              "young",
-              "adult",
-              "legend"
-            ]
-          }
-        },
-        "wakeSecs": {
-          "type": "number",
-          "minimum": 0
-        },
-        "angryWake": {
-          "type": "number",
-          "minimum": 0
-        },
-        "settleSecs": {
-          "type": "number",
-          "minimum": 0
-        },
-        "sink": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "minPx",
-        "alwaysLevels",
-        "wakeSecs",
-        "angryWake",
-        "settleSecs",
-        "sink"
-      ],
-      "additionalProperties": false
-    },
-    "looks": {
-      "type": "object",
-      "properties": {
-        "enragedTint": {
-          "type": "object",
-          "properties": {
-            "colour": {
-              "type": "string"
-            },
-            "amount": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "colour",
-            "amount"
-          ],
-          "additionalProperties": false
-        },
-        "anger": {
-          "type": "object",
-          "properties": {
-            "on": {
-              "type": "boolean"
-            },
-            "size": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "on",
-            "size"
-          ],
-          "additionalProperties": false
-        },
-        "partyGlow": {
-          "type": "object",
-          "properties": {
-            "on": {
-              "type": "boolean"
-            },
-            "sparkles": {
-              "type": "number",
-              "minimum": 0
-            },
-            "rate": {
-              "type": "number",
-              "minimum": 0
-            },
-            "size": {
-              "type": "number",
-              "minimum": 0
-            },
-            "strength": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "on",
-            "sparkles",
-            "rate",
-            "size",
-            "strength"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "enragedTint",
-        "anger",
-        "partyGlow"
-      ],
-      "additionalProperties": false
-    },
     "bubbles": {
       "type": "object",
       "properties": {
@@ -3649,347 +3685,6 @@
         "emojiPixels",
         "scale",
         "levelScale"
-      ],
-      "additionalProperties": false
-    },
-    "scenes": {
-      "type": "object",
-      "properties": {
-        "chance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "scale": {
-          "type": "number",
-          "minimum": 0
-        },
-        "pad": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "chance",
-        "scale",
-        "pad"
-      ],
-      "additionalProperties": false
-    },
-    "grounds": {
-      "type": "object",
-      "properties": {
-        "chance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "kinds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "radius": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0
-          }
-        }
-      },
-      "required": [
-        "chance",
-        "kinds",
-        "radius"
-      ],
-      "additionalProperties": false
-    },
-    "legendCircle": {
-      "type": "object",
-      "properties": {
-        "slow": {
-          "type": "object",
-          "properties": {
-            "on": {
-              "type": "boolean"
-            },
-            "scale": {
-              "type": "number",
-              "minimum": 0
-            },
-            "ease": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "on",
-            "scale",
-            "ease"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "slow"
-      ],
-      "additionalProperties": false
-    },
-    "legendClearing": {
-      "type": "object",
-      "properties": {
-        "radius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "edge": {
-          "type": "number",
-          "minimum": 0
-        },
-        "top": {
-          "type": "number",
-          "minimum": 0
-        },
-        "minFromStone": {
-          "type": "number",
-          "minimum": 0
-        },
-        "minFromOtherStones": {
-          "type": "number",
-          "minimum": 0
-        },
-        "floor": {
-          "type": "object",
-          "properties": {
-            "on": {
-              "type": "boolean"
-            },
-            "overgrowth": {
-              "type": "number",
-              "minimum": 0
-            },
-            "slab": {
-              "type": "number",
-              "minimum": 0
-            },
-            "glint": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "on",
-            "overgrowth",
-            "slab",
-            "glint"
-          ],
-          "additionalProperties": false
-        },
-        "rim": {
-          "type": "object",
-          "properties": {
-            "spacing": {
-              "type": "number",
-              "minimum": 0
-            },
-            "chance": {
-              "type": "number",
-              "minimum": 0
-            },
-            "out": {
-              "type": "number",
-              "minimum": 0
-            },
-            "spread": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gap": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "spacing",
-            "chance",
-            "out",
-            "spread",
-            "gap"
-          ],
-          "additionalProperties": false
-        },
-        "grove": {
-          "type": "object",
-          "properties": {
-            "reach": {
-              "type": "number",
-              "minimum": 0
-            },
-            "density": {
-              "type": "number",
-              "minimum": 0
-            },
-            "tallest": {
-              "type": "number",
-              "minimum": 0
-            },
-            "scale": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gap": {
-              "type": "number",
-              "minimum": 0
-            },
-            "soft": {
-              "type": "number",
-              "minimum": 0
-            },
-            "jitter": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "reach",
-            "density",
-            "tallest",
-            "scale",
-            "gap",
-            "soft",
-            "jitter"
-          ],
-          "additionalProperties": false
-        },
-        "species": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0
-          }
-        }
-      },
-      "required": [
-        "radius",
-        "edge",
-        "top",
-        "minFromStone",
-        "minFromOtherStones",
-        "floor",
-        "rim",
-        "grove",
-        "species"
-      ],
-      "additionalProperties": false
-    },
-    "relics": {
-      "type": "object",
-      "properties": {
-        "spacing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "chance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "nearRoad": {
-          "type": "number",
-          "minimum": 0
-        },
-        "minGap": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "spacing",
-        "chance",
-        "nearRoad",
-        "minGap"
-      ],
-      "additionalProperties": false
-    },
-    "walls": {
-      "type": "object",
-      "properties": {
-        "runs": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "runLength": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "gateChance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "rings": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "ringStones": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "ringRadius": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "avenueChance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "loneChance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "clumps": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "clumpSize": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "clumpRadius": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "runs",
-        "runLength",
-        "gateChance",
-        "rings",
-        "ringStones",
-        "ringRadius",
-        "avenueChance",
-        "loneChance",
-        "clumps",
-        "clumpSize",
-        "clumpRadius"
       ],
       "additionalProperties": false
     },
@@ -4136,561 +3831,6 @@
         "dormant",
         "awake",
         "flare"
-      ],
-      "additionalProperties": false
-    },
-    "pathFade": {
-      "type": "object",
-      "properties": {
-        "metres": {
-          "type": "number",
-          "minimum": 0
-        },
-        "dither": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "metres",
-        "dither"
-      ],
-      "additionalProperties": false
-    },
-    "trunkFade": {
-      "type": "object",
-      "properties": {
-        "metres": {
-          "type": "number",
-          "minimum": 0
-        },
-        "share": {
-          "type": "number",
-          "minimum": 0
-        },
-        "dither": {
-          "type": "boolean"
-        },
-        "lightFloor": {
-          "type": "number",
-          "minimum": 0
-        },
-        "rim": {
-          "type": "number",
-          "minimum": 0
-        },
-        "crownShare": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "metres",
-        "share",
-        "dither",
-        "lightFloor",
-        "rim",
-        "crownShare"
-      ],
-      "additionalProperties": false
-    },
-    "decor": {
-      "type": "object",
-      "properties": {
-        "spacing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "ruins": {
-          "type": "number",
-          "minimum": 0
-        },
-        "rocks": {
-          "type": "number",
-          "minimum": 0
-        },
-        "freak": {
-          "type": "number",
-          "minimum": 0
-        },
-        "minGap": {
-          "type": "number",
-          "minimum": 0
-        },
-        "clearing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "pathGap": {
-          "type": "number",
-          "minimum": 0
-        },
-        "footprint": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "spacing",
-        "ruins",
-        "rocks",
-        "freak",
-        "minGap",
-        "clearing",
-        "pathGap",
-        "footprint"
-      ],
-      "additionalProperties": false
-    },
-    "paths": {
-      "type": "object",
-      "properties": {
-        "rails": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "roads": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "linkChance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "deadEndChance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "pathHalf": {
-          "type": "number",
-          "minimum": 0
-        },
-        "roadHalf": {
-          "type": "number",
-          "minimum": 0
-        },
-        "railHalf": {
-          "type": "number",
-          "minimum": 0
-        },
-        "railBroken": {
-          "type": "number",
-          "minimum": 0
-        },
-        "streams": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "streamHalf": {
-          "type": "number",
-          "minimum": 0
-        },
-        "landmarkSpacing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "landmarkChance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "vergeSpacing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "pieceGap": {
-          "type": "number",
-          "minimum": 0
-        },
-        "fingerposts": {
-          "type": "boolean"
-        },
-        "treesOnBroken": {
-          "type": "number",
-          "minimum": 0
-        },
-        "edgeBushes": {
-          "type": "number",
-          "minimum": 0
-        },
-        "bushBoost": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "rails",
-        "roads",
-        "linkChance",
-        "deadEndChance",
-        "pathHalf",
-        "roadHalf",
-        "railHalf",
-        "railBroken",
-        "streams",
-        "streamHalf",
-        "landmarkSpacing",
-        "landmarkChance",
-        "vergeSpacing",
-        "pieceGap",
-        "fingerposts",
-        "treesOnBroken",
-        "edgeBushes",
-        "bushBoost"
-      ],
-      "additionalProperties": false
-    },
-    "invites": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "burst": {
-          "type": "number",
-          "minimum": 0
-        },
-        "burstGap": {
-          "type": "number",
-          "minimum": 0
-        },
-        "cooldown": {
-          "type": "number",
-          "minimum": 0
-        },
-        "range": {
-          "type": "number",
-          "minimum": 0
-        },
-        "speed": {
-          "type": "number",
-          "minimum": 0
-        },
-        "arc": {
-          "type": "number",
-          "minimum": 0
-        },
-        "homing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "homingCone": {
-          "type": "number",
-          "minimum": 0
-        },
-        "homingRange": {
-          "type": "number",
-          "minimum": 0
-        },
-        "multiShot": {
-          "type": "number",
-          "minimum": 0
-        },
-        "spread": {
-          "type": "number",
-          "minimum": 0
-        },
-        "radius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "amount": {
-          "type": "number",
-          "minimum": 0
-        },
-        "hits": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "drain": {
-          "type": "number",
-          "minimum": 0
-        },
-        "fireSlow": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "linger": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lingerFade": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lingerMax": {
-          "type": "number",
-          "minimum": 0
-        },
-        "spin": {
-          "type": "number",
-          "minimum": 0
-        },
-        "orbit": {
-          "type": "object",
-          "properties": {
-            "scale": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gap": {
-              "type": "number",
-              "minimum": 0
-            },
-            "min": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "scale",
-            "gap",
-            "min"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "on",
-        "burst",
-        "burstGap",
-        "cooldown",
-        "range",
-        "speed",
-        "arc",
-        "homing",
-        "homingCone",
-        "homingRange",
-        "multiShot",
-        "spread",
-        "radius",
-        "amount",
-        "hits",
-        "drain",
-        "fireSlow",
-        "linger",
-        "lingerFade",
-        "lingerMax",
-        "spin",
-        "orbit"
-      ],
-      "additionalProperties": false
-    },
-    "invite": {
-      "type": "object",
-      "properties": {
-        "talkRange": {
-          "type": "number",
-          "minimum": 0
-        },
-        "cancelDistance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "snubTime": {
-          "type": "number",
-          "minimum": 0
-        },
-        "talkTime": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "turn": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "decayRate": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "talkRange",
-        "cancelDistance",
-        "snubTime",
-        "talkTime",
-        "turn",
-        "decayRate"
-      ],
-      "additionalProperties": false
-    },
-    "leash": {
-      "type": "object",
-      "properties": {
-        "length": {
-          "type": "number",
-          "minimum": 0
-        },
-        "runSpeed": {
-          "type": "number",
-          "minimum": 0
-        },
-        "pickRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "spacing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "runeRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "runePull": {
-          "type": "object",
-          "properties": {
-            "radius": {
-              "type": "number",
-              "minimum": 0
-            },
-            "speed": {
-              "type": "number",
-              "minimum": 0
-            },
-            "stop": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "radius",
-            "speed",
-            "stop"
-          ],
-          "additionalProperties": false
-        },
-        "weight": {
-          "type": "object",
-          "properties": {
-            "free": {
-              "type": "number",
-              "minimum": 0
-            },
-            "levels": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "minimum": 0
-              },
-              "minItems": 4,
-              "maxItems": 4
-            },
-            "drag": {
-              "type": "number",
-              "minimum": 0
-            },
-            "drift": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
-            },
-            "rise": {
-              "type": "number",
-              "minimum": 0
-            },
-            "sink": {
-              "type": "number",
-              "minimum": 0
-            },
-            "sinkMax": {
-              "type": "number",
-              "minimum": 0
-            },
-            "floor": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
-            },
-            "extreme": {
-              "type": "number",
-              "minimum": 0
-            },
-            "maxTension": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "free",
-            "levels",
-            "drag",
-            "drift",
-            "rise",
-            "sink",
-            "sinkMax",
-            "floor",
-            "extreme",
-            "maxTension"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "length",
-        "runSpeed",
-        "pickRadius",
-        "spacing",
-        "runeRadius",
-        "runePull",
-        "weight"
-      ],
-      "additionalProperties": false
-    },
-    "bond": {
-      "type": "object",
-      "properties": {
-        "rim": {
-          "type": "boolean"
-        },
-        "sparks": {
-          "type": "boolean"
-        },
-        "thread": {
-          "type": "boolean"
-        },
-        "sparkEvery": {
-          "type": "number",
-          "minimum": 0
-        },
-        "threadArcSlack": {
-          "type": "number",
-          "minimum": 0
-        },
-        "threadArcTaut": {
-          "type": "number",
-          "minimum": 0
-        },
-        "threadArcMax": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "rim",
-        "sparks",
-        "thread",
-        "sparkEvery",
-        "threadArcSlack",
-        "threadArcTaut",
-        "threadArcMax"
       ],
       "additionalProperties": false
     },
@@ -5773,319 +4913,6 @@
       ],
       "additionalProperties": false
     },
-    "fight": {
-      "type": "object",
-      "properties": {
-        "scale": {
-          "type": "number",
-          "minimum": 0
-        },
-        "speed": {
-          "type": "number",
-          "minimum": 0
-        },
-        "momentum": {
-          "type": "number",
-          "minimum": 0
-        },
-        "charge": {
-          "type": "object",
-          "properties": {
-            "reach": {
-              "type": "number",
-              "minimum": 0
-            },
-            "turn": {
-              "type": "number",
-              "minimum": 0
-            },
-            "brake": {
-              "type": "number",
-              "minimum": 0
-            },
-            "contact": {
-              "type": "boolean"
-            },
-            "chase": {
-              "type": "number",
-              "minimum": 0
-            },
-            "miss": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "reach",
-            "turn",
-            "brake",
-            "contact",
-            "chase",
-            "miss"
-          ],
-          "additionalProperties": false
-        },
-        "leap": {
-          "type": "object",
-          "properties": {
-            "reach": {
-              "type": "number",
-              "minimum": 0
-            },
-            "through": {
-              "type": "number"
-            },
-            "contact": {
-              "type": "boolean"
-            },
-            "lead": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "reach",
-            "through",
-            "contact",
-            "lead"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "scale",
-        "speed",
-        "momentum",
-        "charge",
-        "leap"
-      ],
-      "additionalProperties": false
-    },
-    "attackFx": {
-      "type": "object",
-      "properties": {
-        "windupSquash": {
-          "type": "number",
-          "minimum": 0
-        },
-        "windupMax": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lungeStretch": {
-          "type": "number",
-          "minimum": 0
-        },
-        "squash": {
-          "type": "number",
-          "minimum": 0
-        },
-        "squashSecs": {
-          "type": "number",
-          "minimum": 0
-        },
-        "tumbleKnock": {
-          "type": "number",
-          "minimum": 0
-        },
-        "tumbleHeight": {
-          "type": "number",
-          "minimum": 0
-        },
-        "tumbleSecs": {
-          "type": "number",
-          "minimum": 0
-        },
-        "turnFrom": {
-          "type": "number",
-          "minimum": 0
-        },
-        "turnTo": {
-          "type": "number",
-          "minimum": 0
-        },
-        "legendFlash": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        }
-      },
-      "required": [
-        "windupSquash",
-        "windupMax",
-        "lungeStretch",
-        "squash",
-        "squashSecs",
-        "tumbleKnock",
-        "tumbleHeight",
-        "tumbleSecs",
-        "turnFrom",
-        "turnTo",
-        "legendFlash"
-      ],
-      "additionalProperties": false
-    },
-    "combat": {
-      "type": "object",
-      "properties": {
-        "aggro": {
-          "type": "number",
-          "minimum": 0
-        },
-        "witchLose": {
-          "type": "number",
-          "minimum": 0
-        },
-        "leaveArea": {
-          "type": "number",
-          "minimum": 0
-        },
-        "engage": {
-          "type": "number",
-          "minimum": 0
-        },
-        "pursuit": {
-          "type": "number",
-          "minimum": 0
-        },
-        "pursuitRun": {
-          "type": "number",
-          "minimum": 0
-        },
-        "fightRun": {
-          "type": "number",
-          "minimum": 0
-        },
-        "legendRun": {
-          "type": "number",
-          "minimum": 0
-        },
-        "reaction": {
-          "type": "number",
-          "minimum": 0
-        },
-        "chaseMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "partyChaseMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "marchMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "fleeMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "soundsystemHealth": {
-          "type": "number",
-          "minimum": 0
-        },
-        "soundsystemRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "homeHealth": {
-          "type": "number",
-          "minimum": 0
-        },
-        "homeRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "shake": {
-          "type": "number",
-          "minimum": 0
-        },
-        "daze": {
-          "type": "number",
-          "minimum": 0
-        },
-        "retreatHome": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "aggro",
-        "witchLose",
-        "leaveArea",
-        "engage",
-        "pursuit",
-        "pursuitRun",
-        "fightRun",
-        "legendRun",
-        "reaction",
-        "chaseMult",
-        "partyChaseMult",
-        "marchMult",
-        "fleeMult",
-        "soundsystemHealth",
-        "soundsystemRadius",
-        "homeHealth",
-        "homeRadius",
-        "shake",
-        "daze",
-        "retreatHome"
-      ],
-      "additionalProperties": false
-    },
-    "notice": {
-      "type": "object",
-      "properties": {
-        "radius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "curious": {
-          "type": "number",
-          "minimum": 0
-        },
-        "skittish": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "radius",
-        "curious",
-        "skittish"
-      ],
-      "additionalProperties": false
-    },
-    "naps": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "chance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "length": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "wake": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "on",
-        "chance",
-        "length",
-        "wake"
-      ],
-      "additionalProperties": false
-    },
     "alarms": {
       "type": "object",
       "properties": {
@@ -6106,363 +4933,6 @@
         "linger",
         "fall",
         "most"
-      ],
-      "additionalProperties": false
-    },
-    "guard": {
-      "type": "object",
-      "properties": {
-        "radius": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "radius"
-      ],
-      "additionalProperties": false
-    },
-    "witchHealth": {
-      "type": "object",
-      "properties": {
-        "hits": {
-          "type": "number",
-          "minimum": 0
-        },
-        "repairTime": {
-          "type": "number",
-          "minimum": 0
-        },
-        "grace": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "hits",
-        "repairTime",
-        "grace"
-      ],
-      "additionalProperties": false
-    },
-    "knockout": {
-      "type": "object",
-      "properties": {
-        "releaseEach": {
-          "type": "number",
-          "minimum": 0
-        },
-        "releaseMax": {
-          "type": "number",
-          "minimum": 0
-        },
-        "emptyBeat": {
-          "type": "number",
-          "minimum": 0
-        },
-        "teleport": {
-          "type": "number",
-          "minimum": 0
-        },
-        "legendsLoyal": {
-          "type": "boolean"
-        },
-        "dropHat": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "releaseEach",
-        "releaseMax",
-        "emptyBeat",
-        "teleport",
-        "legendsLoyal",
-        "dropHat"
-      ],
-      "additionalProperties": false
-    },
-    "dash": {
-      "type": "object",
-      "properties": {
-        "distance": {
-          "type": "number",
-          "minimum": 0
-        },
-        "gone": {
-          "type": "number",
-          "minimum": 0
-        },
-        "cooldown": {
-          "type": "number",
-          "minimum": 0
-        },
-        "buffer": {
-          "type": "number",
-          "minimum": 0
-        },
-        "toCursor": {
-          "type": "boolean"
-        },
-        "aimDead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "clear": {
-          "type": "object",
-          "properties": {
-            "tree": {
-              "type": "number",
-              "minimum": 0
-            },
-            "decor": {
-              "type": "number",
-              "minimum": 0
-            },
-            "sound": {
-              "type": "number",
-              "minimum": 0
-            },
-            "speaker": {
-              "type": "number",
-              "minimum": 0
-            },
-            "treehouse": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "tree",
-            "decor",
-            "sound",
-            "speaker",
-            "treehouse"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "distance",
-        "gone",
-        "cooldown",
-        "buffer",
-        "toCursor",
-        "aimDead",
-        "clear"
-      ],
-      "additionalProperties": false
-    },
-    "spells": {
-      "type": "object",
-      "properties": {
-        "equipped": {
-          "type": "string"
-        },
-        "speed": {
-          "type": "object",
-          "properties": {
-            "mult": {
-              "type": "number",
-              "minimum": 0
-            },
-            "duration": {
-              "type": "number",
-              "minimum": 0
-            },
-            "cooldown": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "mult",
-            "duration",
-            "cooldown"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "equipped",
-        "speed"
-      ],
-      "additionalProperties": false
-    },
-    "trail": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "ground": {
-          "type": "number",
-          "minimum": 0
-        },
-        "treetops": {
-          "type": "number",
-          "minimum": 0
-        },
-        "from": {
-          "type": "number",
-          "minimum": 0
-        },
-        "curve": {
-          "type": "number",
-          "minimum": 0
-        },
-        "width": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "bright": {
-          "type": "number",
-          "minimum": 0
-        },
-        "fade": {
-          "type": "number",
-          "minimum": 0
-        },
-        "grow": {
-          "type": "number",
-          "minimum": 0
-        },
-        "shrink": {
-          "type": "number",
-          "minimum": 0
-        },
-        "colourEase": {
-          "type": "number",
-          "minimum": 0
-        },
-        "sparks": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "on",
-        "ground",
-        "treetops",
-        "from",
-        "curve",
-        "width",
-        "bright",
-        "fade",
-        "grow",
-        "shrink",
-        "colourEase",
-        "sparks"
-      ],
-      "additionalProperties": false
-    },
-    "load": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "full": {
-          "type": "number",
-          "minimum": 0
-        },
-        "stackSag": {
-          "type": "number",
-          "minimum": 0
-        },
-        "stackLean": {
-          "type": "number",
-          "minimum": 0
-        },
-        "threadFrom": {
-          "type": "number",
-          "minimum": 0
-        },
-        "threadBright": {
-          "type": "number",
-          "minimum": 0
-        },
-        "witchLean": {
-          "type": "number",
-          "minimum": 0
-        },
-        "broomTilt": {
-          "type": "number",
-          "minimum": 0
-        },
-        "broomBow": {
-          "type": "number",
-          "minimum": 0
-        },
-        "sparks": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "on",
-        "full",
-        "stackSag",
-        "stackLean",
-        "threadFrom",
-        "threadBright",
-        "witchLean",
-        "broomTilt",
-        "broomBow",
-        "sparks"
-      ],
-      "additionalProperties": false
-    },
-    "swoopTrail": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "life": {
-          "type": "number",
-          "minimum": 0
-        },
-        "width": {
-          "type": "number",
-          "minimum": 0
-        },
-        "near": {
-          "type": "number",
-          "minimum": 0
-        },
-        "bright": {
-          "type": "number",
-          "minimum": 0
-        },
-        "hueSpeed": {
-          "type": "number",
-          "minimum": 0
-        },
-        "hueSpread": {
-          "type": "number",
-          "minimum": 0
-        },
-        "liftFade": {
-          "type": "number",
-          "minimum": 0
-        },
-        "slots": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "on",
-        "life",
-        "width",
-        "near",
-        "bright",
-        "hueSpeed",
-        "hueSpread",
-        "liftFade",
-        "slots"
       ],
       "additionalProperties": false
     },
@@ -6972,6 +5442,556 @@
       ],
       "additionalProperties": false
     },
+    "partyOver": {
+      "type": "object",
+      "properties": {
+        "ease": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leyFloor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "walk": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "ease",
+        "leyFloor",
+        "walk"
+      ],
+      "additionalProperties": false
+    },
+    "camera": {
+      "type": "object",
+      "properties": {
+        "fov": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ground": {
+          "type": "object",
+          "properties": {
+            "angleIn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angleOut": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceIn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceOut": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angleIn",
+            "angleOut",
+            "distanceIn",
+            "distanceOut"
+          ],
+          "additionalProperties": false
+        },
+        "treetop": {
+          "type": "object",
+          "properties": {
+            "angleIn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angleOut": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceIn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceOut": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angleIn",
+            "angleOut",
+            "distanceIn",
+            "distanceOut"
+          ],
+          "additionalProperties": false
+        },
+        "lookAhead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lookAheadMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lookAheadEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "zoomEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "liftEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curve": {
+          "type": "object",
+          "properties": {
+            "ground": {
+              "type": "number",
+              "minimum": 0
+            },
+            "treetop": {
+              "type": "number",
+              "minimum": 0
+            },
+            "beyond": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ground",
+            "treetop",
+            "beyond"
+          ],
+          "additionalProperties": false
+        },
+        "zoomSteps": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speedZoom": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 0
+            },
+            "power": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "base",
+            "power"
+          ],
+          "additionalProperties": false
+        },
+        "startZoom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shake": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 0
+            },
+            "perMissingHit": {
+              "type": "number",
+              "minimum": 0
+            },
+            "knockdown": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decay": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxOffsetPx": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxRotDeg": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "base",
+            "perMissingHit",
+            "knockdown",
+            "decay",
+            "maxOffsetPx",
+            "maxRotDeg",
+            "speed"
+          ],
+          "additionalProperties": false
+        },
+        "follow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "intro": {
+          "type": "object",
+          "properties": {
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "distance",
+            "angle",
+            "ease"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "fov",
+        "ground",
+        "treetop",
+        "lookAhead",
+        "lookAheadMax",
+        "lookAheadEase",
+        "zoomEase",
+        "liftEase",
+        "curve",
+        "zoomSteps",
+        "speedZoom",
+        "startZoom",
+        "shake",
+        "follow",
+        "intro"
+      ],
+      "additionalProperties": false
+    },
+    "pixelSize": {
+      "type": "number",
+      "minimum": 0
+    },
+    "spriteTilt": {
+      "type": "number",
+      "minimum": 0
+    },
+    "artPixelsPerMetre": {
+      "type": "number",
+      "minimum": 0
+    },
+    "viewMargin": {
+      "type": "number",
+      "minimum": 0
+    },
+    "sigilProjection": {
+      "type": "object",
+      "properties": {
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "beam": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "creatures": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "happy": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "max",
+            "size",
+            "opacity",
+            "happy",
+            "fade"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "height",
+        "opacity",
+        "beam",
+        "size",
+        "creatures"
+      ],
+      "additionalProperties": false
+    },
+    "occlusion": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "fadeOpacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "silhouette": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "fadeOpacity",
+        "edge",
+        "minHeight",
+        "silhouette"
+      ],
+      "additionalProperties": false
+    },
+    "canopyShadow": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cover": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wind": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "strength",
+        "height",
+        "cover",
+        "wind"
+      ],
+      "additionalProperties": false
+    },
+    "rig": {
+      "type": "object",
+      "properties": {
+        "minPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "alwaysLevels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "baby",
+              "young",
+              "adult",
+              "legend"
+            ]
+          }
+        },
+        "wakeSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "angryWake": {
+          "type": "number",
+          "minimum": 0
+        },
+        "settleSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sink": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "minPx",
+        "alwaysLevels",
+        "wakeSecs",
+        "angryWake",
+        "settleSecs",
+        "sink"
+      ],
+      "additionalProperties": false
+    },
+    "pathFade": {
+      "type": "object",
+      "properties": {
+        "metres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dither": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "metres",
+        "dither"
+      ],
+      "additionalProperties": false
+    },
+    "trunkFade": {
+      "type": "object",
+      "properties": {
+        "metres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "share": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dither": {
+          "type": "boolean"
+        },
+        "lightFloor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rim": {
+          "type": "number",
+          "minimum": 0
+        },
+        "crownShare": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "metres",
+        "share",
+        "dither",
+        "lightFloor",
+        "rim",
+        "crownShare"
+      ],
+      "additionalProperties": false
+    },
+    "load": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "full": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackSag": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackLean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadBright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "witchLean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "broomTilt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "broomBow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sparks": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "full",
+        "stackSag",
+        "stackLean",
+        "threadFrom",
+        "threadBright",
+        "witchLean",
+        "broomTilt",
+        "broomBow",
+        "sparks"
+      ],
+      "additionalProperties": false
+    },
     "canopyCutout": {
       "type": "object",
       "properties": {
@@ -7078,6 +6098,1426 @@
         "ambient",
         "moonHue",
         "moonSat"
+      ],
+      "additionalProperties": false
+    },
+    "smoke": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "warm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pixel": {
+          "type": "boolean"
+        },
+        "perFire": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxFires": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "rate",
+        "life",
+        "rise",
+        "speed",
+        "size",
+        "grow",
+        "drift",
+        "opacity",
+        "warm",
+        "pixel",
+        "perFire",
+        "maxFires",
+        "range"
+      ],
+      "additionalProperties": false
+    },
+    "sky": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "stars": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moon": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clouds": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "altitude": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "partyGlow": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "count",
+            "altitude",
+            "speed",
+            "opacity",
+            "partyGlow"
+          ],
+          "additionalProperties": false
+        },
+        "lightning": {
+          "type": "object",
+          "properties": {
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "flashes": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ground": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "every",
+            "flashes",
+            "ground"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "stars",
+        "moon",
+        "clouds",
+        "lightning"
+      ],
+      "additionalProperties": false
+    },
+    "moon": {
+      "type": "object",
+      "properties": {
+        "phasePeriod": {
+          "type": "number",
+          "minimum": 0
+        },
+        "phaseStart": {
+          "type": "number",
+          "minimum": 0
+        },
+        "orbit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "arcStart": {
+          "type": "number",
+          "minimum": 0
+        },
+        "left": {
+          "type": "number",
+          "minimum": 0
+        },
+        "right": {
+          "type": "number",
+          "minimum": 0
+        },
+        "low": {
+          "type": "number",
+          "minimum": 0
+        },
+        "high": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourEvery": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colours": {
+          "type": "object",
+          "properties": {
+            "red": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "blue": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "gold": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "red",
+            "blue",
+            "gold"
+          ],
+          "additionalProperties": false
+        },
+        "tint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bloodTint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "disc": {
+          "type": "number",
+          "minimum": 0
+        },
+        "floor": {
+          "type": "object",
+          "properties": {
+            "palette": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stars": {
+              "type": "number",
+              "minimum": 0
+            },
+            "flare": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "palette",
+            "size",
+            "stars",
+            "flare"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "phasePeriod",
+        "phaseStart",
+        "orbit",
+        "arcStart",
+        "left",
+        "right",
+        "low",
+        "high",
+        "colourEvery",
+        "colourChance",
+        "colourTime",
+        "colourFade",
+        "colours",
+        "tint",
+        "bloodTint",
+        "disc",
+        "floor"
+      ],
+      "additionalProperties": false
+    },
+    "glowReach": {
+      "type": "number",
+      "minimum": 0
+    },
+    "nightLight": {
+      "type": "object",
+      "properties": {
+        "maxReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopGlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gazeReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "maxReach",
+        "treetopReach",
+        "treetopGlow",
+        "gazeReach"
+      ],
+      "additionalProperties": false
+    },
+    "glowFalloff": {
+      "type": "number",
+      "minimum": 0
+    },
+    "glowNear": {
+      "type": "number",
+      "minimum": 0
+    },
+    "glowToCutout": {
+      "type": "number",
+      "minimum": 0
+    },
+    "glowHeight": {
+      "type": "number",
+      "minimum": 0
+    },
+    "lightBudget": {
+      "type": "number",
+      "minimum": 0
+    },
+    "lights": {
+      "type": "object",
+      "properties": {
+        "campfire": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "strength"
+          ],
+          "additionalProperties": false
+        },
+        "stone": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "strength"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "campfire",
+        "stone"
+      ],
+      "additionalProperties": false
+    },
+    "glowPower": {
+      "type": "number",
+      "minimum": 0
+    },
+    "light": {
+      "type": "object",
+      "properties": {
+        "mood": {
+          "type": "string"
+        },
+        "spooky": {
+          "type": "object",
+          "properties": {
+            "ambientHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ambient": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moon": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "haze": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeNear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeFar": {
+              "type": "number",
+              "minimum": 0
+            },
+            "mist": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "grade": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeDesat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradePivot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "partyWarm": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "partyReach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "partyStrength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorLights": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorReach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorStrength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorWarm": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rimHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rimSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "witchGlow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpWrap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledRim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledGlow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledLift": {
+              "type": "number",
+              "minimum": 0
+            },
+            "leyRgb": {
+              "type": "string"
+            },
+            "leyBright": {
+              "type": "number",
+              "minimum": 0
+            },
+            "berryHalo": {
+              "type": "number",
+              "minimum": 0
+            },
+            "berryGlow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "areaEase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "areas": {
+              "type": "object",
+              "properties": {
+                "bog": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "wetland": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "beaver-pond": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "stream": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "deadwood": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "ancient": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "log-pile": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "bluebell-glade": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "gradeHue",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "wispy-forest": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "gradeHue",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "moor": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "heath": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "grassland": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "cave-mouth": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "ravine": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "rocky-slope": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "old-pinewood": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "norway": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "honeysuckle-tangle": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "garden": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "berry-thicket": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "home": {
+                  "type": "object",
+                  "properties": {
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "gradeHue",
+                    "gradeSat",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "bog",
+                "wetland",
+                "beaver-pond",
+                "stream",
+                "deadwood",
+                "ancient",
+                "log-pile",
+                "bluebell-glade",
+                "wispy-forest",
+                "moor",
+                "heath",
+                "grassland",
+                "cave-mouth",
+                "ravine",
+                "rocky-slope",
+                "old-pinewood",
+                "norway",
+                "honeysuckle-tangle",
+                "garden",
+                "berry-thicket",
+                "home"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ambientHue",
+            "ambient",
+            "moonHue",
+            "moonSat",
+            "moon",
+            "hazeHue",
+            "hazeSat",
+            "haze",
+            "hazeNear",
+            "hazeFar",
+            "mist",
+            "glowHue",
+            "glowSat",
+            "grade",
+            "gradeDesat",
+            "gradePivot",
+            "gradeHue",
+            "gradeSat",
+            "partyWarm",
+            "partyReach",
+            "partyStrength",
+            "decorLights",
+            "decorReach",
+            "decorStrength",
+            "decorWarm",
+            "rimHue",
+            "rimSat",
+            "rim",
+            "witchGlow",
+            "moonUp",
+            "moonUpHue",
+            "moonUpSat",
+            "moonUpWrap",
+            "styledRim",
+            "styledGlow",
+            "styledLift",
+            "leyRgb",
+            "leyBright",
+            "berryHalo",
+            "berryGlow",
+            "areaEase",
+            "areas"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "mood",
+        "spooky"
+      ],
+      "additionalProperties": false
+    },
+    "lightSources": {
+      "type": "object",
+      "properties": {
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "campfire": {
+          "type": "number",
+          "minimum": 0
+        },
+        "magicStone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wetPond": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "spacing",
+        "campfire",
+        "magicStone",
+        "pond",
+        "wetPond"
+      ],
+      "additionalProperties": false
+    },
+    "haze": {
+      "type": "object",
+      "properties": {
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
+        "far": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "near",
+        "far"
+      ],
+      "additionalProperties": false
+    },
+    "shadows": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trees": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on",
+        "strength",
+        "trees"
+      ],
+      "additionalProperties": false
+    },
+    "mist": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wind": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "strength",
+        "height",
+        "wind"
+      ],
+      "additionalProperties": false
+    },
+    "fx": {
+      "type": "string",
+      "enum": [
+        "smooth",
+        "pixel"
+      ]
+    },
+    "moonbeams": {
+      "type": "number",
+      "minimum": 0
+    },
+    "looks": {
+      "type": "object",
+      "properties": {
+        "enragedTint": {
+          "type": "object",
+          "properties": {
+            "colour": {
+              "type": "string"
+            },
+            "amount": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "colour",
+            "amount"
+          ],
+          "additionalProperties": false
+        },
+        "anger": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "size"
+          ],
+          "additionalProperties": false
+        },
+        "partyGlow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "sparkles": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rate": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "sparkles",
+            "rate",
+            "size",
+            "strength"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "enragedTint",
+        "anger",
+        "partyGlow"
       ],
       "additionalProperties": false
     },
@@ -7193,446 +7633,6 @@
         "treetop"
       ],
       "additionalProperties": false
-    },
-    "population": {
-      "type": "object",
-      "properties": {
-        "start": {
-          "type": "object",
-          "properties": {
-            "babies": {
-              "type": "number",
-              "minimum": 0
-            },
-            "young": {
-              "type": "number",
-              "minimum": 0
-            },
-            "adults": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "babies",
-            "young",
-            "adults"
-          ],
-          "additionalProperties": false
-        },
-        "growth": {
-          "type": "object",
-          "properties": {
-            "on": {
-              "type": "boolean"
-            },
-            "perWave": {
-              "type": "number",
-              "minimum": 0
-            },
-            "weights": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "minimum": 0
-              }
-            },
-            "hide": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "on",
-            "perWave",
-            "weights",
-            "hide"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "start",
-        "growth"
-      ],
-      "additionalProperties": false
-    },
-    "dreams": {
-      "type": "object",
-      "properties": {
-        "range": {
-          "type": "number",
-          "minimum": 0
-        },
-        "nightmare": {
-          "type": "object",
-          "properties": {
-            "at": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "minimum": 0
-              }
-            },
-            "faces": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": [
-            "at",
-            "faces"
-          ],
-          "additionalProperties": false
-        },
-        "sleepy": {
-          "type": "object",
-          "properties": {
-            "face": {
-              "type": "string"
-            },
-            "weight": {
-              "type": "number",
-              "minimum": 0
-            },
-            "every": {
-              "type": "number",
-              "minimum": 0
-            },
-            "faces": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "fallback": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "face",
-            "weight",
-            "every",
-            "faces",
-            "fallback"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "range",
-        "nightmare",
-        "sleepy"
-      ],
-      "additionalProperties": false
-    },
-    "legends": {
-      "type": "object",
-      "properties": {
-        "share": {
-          "type": "number",
-          "minimum": 0
-        },
-        "buffPower": {
-          "type": "number",
-          "minimum": 0
-        },
-        "happyRange": {
-          "type": "number",
-          "minimum": 0
-        },
-        "questCap": {
-          "type": "number",
-          "minimum": 0
-        },
-        "questFar": {
-          "type": "number",
-          "minimum": 0
-        },
-        "bombard": {
-          "type": "object",
-          "properties": {
-            "on": {
-              "type": "boolean"
-            },
-            "range": {
-              "type": "number",
-              "minimum": 0
-            },
-            "damage": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "on",
-            "range",
-            "damage"
-          ],
-          "additionalProperties": false
-        },
-        "stomp": {
-          "type": "object",
-          "properties": {
-            "on": {
-              "type": "boolean"
-            },
-            "angryAfter": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "on",
-            "angryAfter"
-          ],
-          "additionalProperties": false
-        },
-        "partyEgg": {
-          "type": "boolean"
-        },
-        "partyHits": {
-          "type": "number",
-          "minimum": 1
-        },
-        "partyDrain": {
-          "type": "number",
-          "minimum": 0
-        },
-        "partyReach": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "share",
-        "buffPower",
-        "happyRange",
-        "questCap",
-        "questFar",
-        "bombard",
-        "stomp",
-        "partyEgg",
-        "partyHits",
-        "partyDrain",
-        "partyReach"
-      ],
-      "additionalProperties": false
-    },
-    "partyOver": {
-      "type": "object",
-      "properties": {
-        "ease": {
-          "type": "number",
-          "minimum": 0
-        },
-        "leyFloor": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "walk": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "ease",
-        "leyFloor",
-        "walk"
-      ],
-      "additionalProperties": false
-    },
-    "wildLegends": {
-      "type": "object",
-      "properties": {
-        "wake": {
-          "type": "number",
-          "minimum": 0
-        },
-        "sink": {
-          "type": "number",
-          "minimum": 0
-        },
-        "moss": {
-          "type": "number",
-          "minimum": 0
-        },
-        "guard": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heal": {
-          "type": "number",
-          "minimum": 0
-        },
-        "scale": {
-          "type": "number",
-          "minimum": 0
-        },
-        "breathe": {
-          "type": "number",
-          "minimum": 0
-        },
-        "breathEvery": {
-          "type": "number",
-          "minimum": 0
-        },
-        "aura": {
-          "type": "number",
-          "minimum": 0
-        },
-        "glow": {
-          "type": "number",
-          "minimum": 0
-        },
-        "seen": {
-          "type": "object",
-          "properties": {
-            "aura": {
-              "type": "number",
-              "minimum": 0
-            },
-            "rim": {
-              "type": "number",
-              "minimum": 0
-            },
-            "floor": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "aura",
-            "rim",
-            "floor"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "wake",
-        "sink",
-        "moss",
-        "guard",
-        "heal",
-        "scale",
-        "breathe",
-        "breathEvery",
-        "aura",
-        "glow",
-        "seen"
-      ],
-      "additionalProperties": false
-    },
-    "creatureSimRadius": {
-      "type": "number",
-      "minimum": 0
-    },
-    "simLod": {
-      "type": "object",
-      "properties": {
-        "full": {
-          "type": "object",
-          "properties": {
-            "ground": {
-              "type": "number",
-              "minimum": 0
-            },
-            "treetop": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "ground",
-            "treetop"
-          ],
-          "additionalProperties": false
-        },
-        "action": {
-          "type": "number",
-          "minimum": 0
-        },
-        "band": {
-          "type": "number",
-          "minimum": 0
-        },
-        "every": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "full",
-        "action",
-        "band",
-        "every"
-      ],
-      "additionalProperties": false
-    },
-    "creatureSpeed": {
-      "type": "number",
-      "minimum": 0
-    },
-    "setPieceChance": {
-      "type": "number",
-      "minimum": 0
-    },
-    "setPieceScale": {
-      "type": "number",
-      "minimum": 0
-    },
-    "setPieceClear": {
-      "type": "number",
-      "minimum": 0
-    },
-    "setPieceFootprint": {
-      "type": "number",
-      "minimum": 0
-    },
-    "soundsystemFootprint": {
-      "type": "number",
-      "minimum": 0
-    },
-    "reserveMargin": {
-      "type": "number",
-      "minimum": 0
-    },
-    "treeMarginFromSoundsystem": {
-      "type": "number",
-      "minimum": 0
-    },
-    "legendSpeed": {
-      "type": "number",
-      "minimum": 0
-    },
-    "creatureSpeeds": {
-      "type": "object",
-      "properties": {
-        "fast": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "fastMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "legend": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "fast",
-        "fastMult",
-        "legend"
-      ],
-      "additionalProperties": false
     }
   },
   "required": [
@@ -7644,7 +7644,6 @@
     "arena",
     "areaSizeVariance",
     "borderLayers",
-    "treeDensity",
     "clearingSize",
     "clearingFalloff",
     "gladeAmount",
@@ -7652,9 +7651,24 @@
     "areaEdgeBlend",
     "groundBlend",
     "ground",
-    "smoke",
-    "sky",
-    "moon",
+    "glades",
+    "treehouse",
+    "home",
+    "scenes",
+    "grounds",
+    "legendClearing",
+    "relics",
+    "walls",
+    "decor",
+    "paths",
+    "setPieceChance",
+    "setPieceScale",
+    "setPieceClear",
+    "setPieceFootprint",
+    "soundsystemFootprint",
+    "reserveMargin",
+    "treeMarginFromSoundsystem",
+    "treeDensity",
     "wind",
     "groundCover",
     "density",
@@ -7668,6 +7682,7 @@
     "crownHalfWidth",
     "crownHeight",
     "bushSpacing",
+    "scenery",
     "groundSpeed",
     "treetopSpeed",
     "acceleration",
@@ -7679,105 +7694,90 @@
     "descendTime",
     "groundHeight",
     "treetopHeight",
+    "witch",
+    "stack",
+    "witchHealth",
+    "knockout",
+    "dash",
+    "spells",
+    "trail",
+    "swoopTrail",
+    "berries",
+    "invites",
+    "invite",
+    "leash",
+    "bond",
+    "fight",
+    "attackFx",
+    "combat",
+    "notice",
+    "naps",
+    "guard",
+    "population",
+    "creatureSimRadius",
+    "simLod",
+    "creatureSpeed",
+    "creatureSpeeds",
+    "legendCircle",
+    "dreams",
+    "legends",
+    "wildLegends",
+    "legendSpeed",
+    "beat",
+    "leyLines",
+    "partyObjects",
+    "partyWitches",
+    "speakerLasers",
+    "lasers",
+    "borders",
+    "bubbles",
+    "runeMarkers",
+    "sfx",
+    "music",
+    "alarms",
+    "boot",
+    "party",
+    "stringLights",
+    "waveNumbers",
+    "dancefloor",
+    "partyOver",
     "camera",
     "pixelSize",
+    "spriteTilt",
+    "artPixelsPerMetre",
+    "viewMargin",
+    "sigilProjection",
+    "occlusion",
+    "canopyShadow",
+    "rig",
+    "pathFade",
+    "trunkFade",
+    "load",
+    "canopyCutout",
+    "find",
+    "smoke",
+    "sky",
+    "moon",
     "glowReach",
     "nightLight",
     "glowFalloff",
     "glowNear",
     "glowToCutout",
     "glowHeight",
-    "spriteTilt",
-    "artPixelsPerMetre",
-    "viewMargin",
     "lightBudget",
     "lights",
     "glowPower",
     "light",
-    "beat",
-    "berries",
-    "glades",
-    "leyLines",
-    "witch",
-    "sigilProjection",
-    "occlusion",
-    "stack",
-    "partyObjects",
-    "partyWitches",
-    "speakerLasers",
-    "lasers",
-    "borders",
     "lightSources",
     "haze",
-    "scenery",
     "shadows",
-    "canopyShadow",
     "mist",
     "fx",
     "moonbeams",
-    "treehouse",
-    "home",
-    "rig",
     "looks",
-    "bubbles",
-    "scenes",
-    "grounds",
-    "legendCircle",
-    "legendClearing",
-    "relics",
-    "walls",
-    "runeMarkers",
-    "pathFade",
-    "trunkFade",
-    "decor",
-    "paths",
-    "invites",
-    "invite",
-    "leash",
-    "bond",
-    "sfx",
-    "music",
-    "fight",
-    "attackFx",
-    "combat",
-    "notice",
-    "naps",
-    "alarms",
-    "guard",
-    "witchHealth",
-    "knockout",
-    "dash",
-    "spells",
-    "trail",
-    "load",
-    "swoopTrail",
-    "boot",
-    "party",
-    "stringLights",
-    "waveNumbers",
-    "dancefloor",
-    "canopyCutout",
-    "find",
     "tone",
     "bloom",
-    "tiltShift",
-    "population",
-    "dreams",
-    "legends",
-    "partyOver",
-    "wildLegends",
-    "creatureSimRadius",
-    "simLod",
-    "creatureSpeed",
-    "setPieceChance",
-    "setPieceScale",
-    "setPieceClear",
-    "setPieceFootprint",
-    "soundsystemFootprint",
-    "reserveMargin",
-    "treeMarginFromSoundsystem",
-    "legendSpeed",
-    "creatureSpeeds"
+    "tiltShift"
   ],
   "additionalProperties": false
 }
