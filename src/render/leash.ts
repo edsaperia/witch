@@ -52,6 +52,8 @@ export class LeashView {
   slots = new Map<string, number>();
   /** The creatures whose sigils are projected over the treetops this frame (kept, not made anew each frame). */
   projected: { c: Creature; d: number }[] = [];
+  /** Its records, kept and refilled each frame. */
+  projectedPool: { c: Creature; d: number }[] = [];
   nextSlot = 1; // the next free atlas slot
   legendSlots = 0; // legendary blocks taken
   colours = new Map<string, THREE.Color>();
