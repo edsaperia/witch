@@ -62,7 +62,6 @@ export type InviteEvent =
   | (InviteEventAt & { kind: "hit"; id: number; n: number; spent: boolean })
   | (InviteEventAt & { kind: "blocked"; id: number; n: number; spent?: undefined })
   | (InviteEventAt & { kind: "happy"; id: number; n?: undefined; spent?: undefined });
-export type InviteEventKind = InviteEvent["kind"];
 
 export interface Invites {
   letters: Letter[];

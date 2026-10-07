@@ -12,6 +12,8 @@ import { LOAD_DEFAULT } from "../load";
 import { setOverlayTilt } from "../overlayTilt";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { inView } from "./culling";
+import { DJ_DEPTH, nearerCamera } from "./home";
+import { beatAt } from "../../rules/beat";
 import { HAT_BESIDE } from "../view";
 
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
@@ -64,7 +66,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const sdt = Math.min(0.1, Math.max(0, ht - v.seatTime));
   v.seatTime = ht;
   v.seatK = w.seated ? 1 : Math.max(0, v.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
-  let wx = w.x, wz = w.z, wyy = wy;
+  let wx = w.x, wz = w.z, wyy = wy, djUpper = -1;
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
   { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
   if (v.seatK > 0) {
@@ -72,15 +74,17 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     v.leashView.seatAt = seat; // (where she sparkles back in after a knockout)
     const cam = onTreehouse(T.camera.x, T.camera.y);
     g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
-    const fwd = v.camera.getWorldDirection(v.v3);
-    wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
+    // (a touch nearer the camera than the house, along the ray to it, so she lands on the seat's own pixel: render/view/home.ts)
+    const near = nearerCamera(v, seat, DJ_DEPTH.her);
+    wx += (near.x - wx) * k; wyy += (near.y - wyy) * k; wz += (near.z - wz) * k;
     if (w.seated) {
-      // Behind the decks (Ed, 2026-10-06): standing, waiting for the party spell; casting it, her arms up over her hat
-      // (the liftSigil pose, through once over the cast) in a burst of sparkles; in a game without the spell, sitting.
-      const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST;
-      if (casting) { const n = F.liftSigil.towards.length; wf = F.liftSigil.towards[Math.min(n - 1, Math.floor(((time - sp!) / PARTY_CAST) * n))]; }
-      else if (sp === undefined) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
-      else wf = F.stand.towards[Math.floor(time * F.stand.fps) % F.stand.towards.length];
+      // Behind the decks (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"):
+      // facing us, DJing on the beat clock (a gesture a bar: art/witch.js djFrame), her upper half drawn again over the DJ
+      // table so her hands are on the decks; casting the party spell, both hands up in a burst of sparkles; in a game
+      // without the spell, sitting.
+      const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST, Dj = v.assets.witchDj;
+      if (sp === undefined || !Dj.full.length) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
+      else { const j = v.assets.djFrame(beatAt(g.beat, time), casting); wf = Dj.full[j]; djUpper = Dj.upper[j]; }
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
     }
   }
@@ -91,7 +95,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const D = g.witches[0].dash;
   let hidden = ht >= D.at - STEP && ht < D.until;
   if (KO) {
-    if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
+    if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
     else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
   }
   // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
@@ -116,7 +120,11 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   v.stateMarks.update(g, time, v.leashView.tops, 70, v.camera.position);
   v.inviteView.update(ht, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.leashView.tops);
   // Idling into the party, she's drawn in her party pose there instead.
-  const her = v.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink, y: wyy + groundHeight(wx, wz) - U.y * wsink, z: wz - U.z * wsink, frame: wframe, flip: wflip }];
+  // Behind the decks her frame stands with its ground anchor on the seat (not its box's middle), so her hands land on the decks;
+  // her upper layer goes over the DJ table, nearer the camera along the same ray.
+  const wcen = djUpper >= 0 && wg ? (wg.x - wframe.w / 2) * v.mpp : 0;
+  const her = v.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink - R.x * wcen, y: wyy + groundHeight(wx, wz) - U.y * wsink - R.y * wcen, z: wz - U.z * wsink - R.z * wcen, frame: wframe, flip: wflip }];
+  if (djUpper >= 0 && her.length) { const b = her[0], up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
   const hatFrame = bare ? v.assets.witchBare().frames[v.assets.witchHatFrame] : undefined;
   { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
     const LV = v.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && v.foot < 0.05 && !v.partyWitchView.herIdle;
@@ -125,6 +133,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     v.leashView.bristle.on = flying && !hidden;
   }
   v.witchBatch.set(bare ? [] : her);
+  v.witchBatch.silhouette = djUpper < 0; if (v.bareBatch) v.bareBatch.silhouette = djUpper < 0;
   v.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
   // The party's and the beach's witches' shadows, and a small one under her hat where it lies.
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];

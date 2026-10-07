@@ -1,0 +1,1938 @@
+[
+ {
+  "src": "media/art/bend-hides-letters-past-horizon.webp",
+  "caption": "An invisible bug made visible: before the fix, the farthest rows of 💌 letters folded back down past the horizon of the bent world. Now nothing past the bend is drawn.",
+  "chapter": "art",
+  "from": "previews/bend-hides/letters-past-horizon.png",
+  "group": "bend",
+  "order": 1,
+  "pr": 358
+ },
+ {
+  "src": "media/art/trees-before-1.webp",
+  "caption": "Trees before: the twelve species that each had their own hand-written generator.",
+  "chapter": "art",
+  "from": "previews/trees-before-1.png",
+  "group": "blob-trees",
+  "order": 1,
+  "pr": 128
+ },
+ {
+  "src": "media/art/trees-after-1.webp",
+  "caption": "Trees after: the same species regrown on the blob generator, crowns built from lit blobs of leaf stamps.",
+  "chapter": "art",
+  "from": "previews/trees-after-1.png",
+  "group": "blob-trees",
+  "order": 2,
+  "pr": 128
+ },
+ {
+  "src": "media/art/crowns-style-before.webp",
+  "caption": "Broadleaf tree crowns before the bold pixel-art style pass.",
+  "chapter": "art",
+  "from": "previews/crowns-style-before.png",
+  "group": "bold-crowns",
+  "order": 1,
+  "pr": 159
+ },
+ {
+  "src": "media/art/crowns-style-after.webp",
+  "caption": "The same crowns under the bold style: fewer, chunkier leaf clusters in three hue-shifted tones.",
+  "chapter": "art",
+  "from": "previews/crowns-style-after.png",
+  "group": "bold-crowns",
+  "order": 2,
+  "pr": 159
+ },
+ {
+  "src": "media/art/broadleaf-before.webp",
+  "caption": "Broadleaf trees before the leaf-clump pass: crowns built the old way.",
+  "chapter": "art",
+  "from": "previews/broadleaf-before.png",
+  "group": "broadleaf",
+  "order": 1,
+  "pr": 155
+ },
+ {
+  "src": "media/art/broadleaf-after.webp",
+  "caption": "After: crowns made of lit leaf clumps, and life below them too, ivy, moss and low boughs on every trunk.",
+  "chapter": "art",
+  "from": "previews/broadleaf-after.png",
+  "group": "broadleaf",
+  "order": 2,
+  "pr": 155
+ },
+ {
+  "src": "media/art/105-campfire-0-dormant.webp",
+  "caption": "A party campfire before the party reaches it: cold and dark, waiting by the path.",
+  "chapter": "art",
+  "from": "previews/105-campfire-0-dormant.png",
+  "group": "campfire-lights",
+  "order": 1
+ },
+ {
+  "src": "media/art/105-campfire-1-whoosh.webp",
+  "caption": "The moment the wave arrives: the campfire whooshes alight in a burst of warm light and sparks.",
+  "chapter": "art",
+  "from": "previews/105-campfire-1-whoosh.png",
+  "group": "campfire-lights",
+  "order": 2
+ },
+ {
+  "src": "media/art/105-campfire-2-lit.webp",
+  "caption": "Settled in: the fire burns steadily, lighting the ground and the party pieces around it.",
+  "chapter": "art",
+  "from": "previews/105-campfire-2-lit.png",
+  "group": "campfire-lights",
+  "order": 3
+ },
+ {
+  "src": "media/art/magic-dodge-dodge-before.webp",
+  "caption": "The dodge before her magic got its night palette: she just jumps.",
+  "chapter": "art",
+  "from": "previews/magic-dodge/dodge-before.gif",
+  "group": "dodge-magic",
+  "order": 1,
+  "pr": 215
+ },
+ {
+  "src": "media/art/magic-dodge-dodge-after.webp",
+  "caption": "After: the dodge leaves a glowing afterimage and her broom throws sparks.",
+  "chapter": "art",
+  "from": "previews/magic-dodge/dodge-after.gif",
+  "group": "dodge-magic",
+  "order": 2,
+  "pr": 215
+ },
+ {
+  "src": "media/art/dreams-dream.webp",
+  "caption": "Dream bubbles restyled as soft, round, amber thought bubbles holding the wished-for creature's sigil.",
+  "chapter": "art",
+  "from": "previews/dreams/dream.png",
+  "group": "dreams",
+  "order": 2,
+  "pr": 238
+ },
+ {
+  "src": "media/art/texture-testset.webp",
+  "caption": "The boar's evolution with its surface texture: fur gathered into small tufted cells so the light breaks along them, coarse on the piglet and fine on the legend.",
+  "chapter": "art",
+  "from": "previews/texture-testset.png",
+  "group": "evolutions",
+  "order": 0,
+  "pr": 139
+ },
+ {
+  "src": "media/art/snail-evolution-bold-px4.webp",
+  "caption": "The snail's evolution, from a near-clear shell to a towering legend the forest has built on its back.",
+  "chapter": "art",
+  "from": "previews/snail-evolution-bold-px4.png",
+  "group": "evolutions",
+  "order": 1,
+  "pr": 167
+ },
+ {
+  "src": "media/art/ram-evolution-bold-px4.webp",
+  "caption": "The ram's evolution, from a curly lamb to the thicket-grown legend with bronze thorned horns and brambles over its back.",
+  "chapter": "art",
+  "from": "previews/ram-evolution-bold-px4.png",
+  "group": "evolutions",
+  "order": 2,
+  "pr": 174
+ },
+ {
+  "src": "media/art/wolf-evolution-bold-px4.webp",
+  "caption": "The wolf's evolution, from a round pup to the spirit-fire legend with a spiky, flaming mane.",
+  "chapter": "art",
+  "from": "previews/wolf-evolution-bold-px4.png",
+  "group": "evolutions",
+  "order": 3,
+  "pr": 178
+ },
+ {
+  "src": "media/art/woodlouse-evolution-bold-px4.webp",
+  "caption": "The woodlouse's evolution, from a pale baby to a leaf-litter fortress crowned with moonstone spires.",
+  "chapter": "art",
+  "from": "previews/woodlouse-evolution-bold-px4.png",
+  "group": "evolutions",
+  "order": 4,
+  "pr": 175
+ },
+ {
+  "src": "media/art/heron.webp",
+  "caption": "The heron builder's wading bird at every level, on slender stilt legs.",
+  "chapter": "art",
+  "from": "previews/heron.png",
+  "group": "heron",
+  "order": 1,
+  "pr": 222
+ },
+ {
+  "src": "media/art/heron-legend.webp",
+  "caption": "The heron and its sleeping legend, the second area and creature made purely from data.",
+  "chapter": "art",
+  "from": "previews/heron-legend.png",
+  "group": "heron",
+  "order": 2,
+  "pr": 222
+ },
+ {
+  "src": "media/art/legends-seen-salamander-same-moment.webp",
+  "caption": "The salamander legend at the same moment, before and after: a neon outline in its sigil's colour and a soft glow on the ground under it, so a sleeping legend reads at a glance in its circle.",
+  "chapter": "art",
+  "from": "previews/legends-seen/salamander-same-moment.png",
+  "group": "legends-seen",
+  "order": 1,
+  "pr": 334
+ },
+ {
+  "src": "media/art/magic-letters-before.webp",
+  "caption": "Throwing 💌s before the magic pass: they simply appear and vanish.",
+  "chapter": "art",
+  "from": "previews/magic-letters/before.gif",
+  "group": "letter-magic",
+  "order": 1,
+  "pr": 212
+ },
+ {
+  "src": "media/art/magic-letters-after.webp",
+  "caption": "After: each 💌 trails sparkles, puffs where it lands and blooms rose on a hit.",
+  "chapter": "art",
+  "from": "previews/magic-letters/after.gif",
+  "group": "letter-magic",
+  "order": 2,
+  "pr": 212
+ },
+ {
+  "src": "media/art/rig-strip-wolf.webp",
+  "caption": "The live rig: a wolf put together each frame from baked torso, head and leg pieces, its legs stepping as two-bone chains through walk, turn, charge and leap.",
+  "chapter": "art",
+  "from": "previews/rig-strip-wolf.png",
+  "group": "live-rig",
+  "order": 1,
+  "pr": 102
+ },
+ {
+  "src": "media/art/rig-strip-boar-boots.webp",
+  "caption": "Party animals got little party shoes; here a boar in boots walks, turns, charges and leaps on the live rig, its shoes stepping with each leg.",
+  "chapter": "art",
+  "from": "previews/rig-strip-boar-boots.png",
+  "group": "live-rig",
+  "order": 2,
+  "pr": 149
+ },
+ {
+  "src": "media/art/lighting-r2-before-moor-treetops.webp",
+  "caption": "The moor from the treetops before the art director's second round: the canopy sinks into the dark.",
+  "chapter": "art",
+  "from": "previews/lighting/r2/before-moor-treetops.png",
+  "group": "moon-treetops",
+  "order": 1,
+  "pr": 208
+ },
+ {
+  "src": "media/art/lighting-r2-after-moor-treetops.webp",
+  "caption": "After: moonlight catches the tops of the trees, so flying high finally looks like flying over a moonlit forest.",
+  "chapter": "art",
+  "from": "previews/lighting/r2/after-moor-treetops.png",
+  "group": "moon-treetops",
+  "order": 2,
+  "pr": 208
+ },
+ {
+  "src": "media/art/83-paths-ground-road.webp",
+  "caption": "A broken old road running through a birch wood: one of the ten path kinds that wind between the areas.",
+  "chapter": "art",
+  "from": "previews/83-paths-ground-road.png",
+  "group": "paths",
+  "order": 1
+ },
+ {
+  "src": "media/art/84-paths-treetop-rail.webp",
+  "caption": "From the treetops an old railway line cuts through the forest, lamplight along its edge.",
+  "chapter": "art",
+  "from": "previews/84-paths-treetop-rail.png",
+  "group": "paths",
+  "order": 2
+ },
+ {
+  "src": "media/art/props-before-after.webp",
+  "caption": "The first props grown from genomes: standing stones, cairns, pools and broken trunks, hand-made versions beside their generated variants, with the witch for scale.",
+  "chapter": "art",
+  "from": "previews/props/before-after.png",
+  "group": "prop-generator",
+  "order": 1,
+  "pr": 142
+ },
+ {
+  "src": "media/art/props-new-kinds.webp",
+  "caption": "Fallen logs, mushroom rings and stone circles, each grown from a seed by the prop generator.",
+  "chapter": "art",
+  "from": "previews/props/new-kinds.png",
+  "group": "prop-generator",
+  "order": 2,
+  "pr": 180
+ },
+ {
+  "src": "media/art/props-before-after-rocks.webp",
+  "caption": "Boulders and mounds joined the prop generator: each comes in several seeded shapes, half sunk, cracked and mossed, instead of one hand-drawn sprite repeated.",
+  "chapter": "art",
+  "from": "previews/props/before-after-rocks.png",
+  "group": "prop-generator",
+  "order": 3,
+  "pr": 201
+ },
+ {
+  "src": "media/art/sigils-sheet.webp",
+  "caption": "The monoline animal sigils: every species' sigil is the animal itself drawn as one clean line, in its area's neon.",
+  "chapter": "art",
+  "from": "previews/sigils/sheet.png",
+  "group": "sigils",
+  "order": 1,
+  "pr": 303
+ },
+ {
+  "src": "media/art/sigils-legendary.webp",
+  "caption": "Legendary sigils: twice as wide, more of the animal, with a crowned gold border, for the legends of each area.",
+  "chapter": "art",
+  "from": "previews/sigils/legendary.png",
+  "group": "sigils",
+  "order": 2,
+  "pr": 303
+ },
+ {
+  "src": "media/art/sizes-small-before.webp",
+  "caption": "Creature sizes before the size curves: babies, young, adults and legends grew in uneven steps.",
+  "chapter": "art",
+  "from": "previews/sizes-small-before.png",
+  "group": "size-curves",
+  "order": 1,
+  "pr": 86
+ },
+ {
+  "src": "media/art/sizes-small-after.webp",
+  "caption": "After the size curves: each species now grows from baby to legend in clear, even steps.",
+  "chapter": "art",
+  "from": "previews/sizes-small-after.png",
+  "group": "size-curves",
+  "order": 2,
+  "pr": 86
+ },
+ {
+  "src": "media/art/legs-before-stag.webp",
+  "caption": "Rigged stag legs before: strings of balls.",
+  "chapter": "art",
+  "from": "previews/legs/before-stag.png",
+  "group": "smooth-legs",
+  "order": 1,
+  "pr": 242
+ },
+ {
+  "src": "media/art/legs-after-stag.webp",
+  "caption": "After: smooth limbs with proper hocks on the hind legs.",
+  "chapter": "art",
+  "from": "previews/legs/after-stag.png",
+  "group": "smooth-legs",
+  "order": 2,
+  "pr": 242
+ },
+ {
+  "src": "media/art/reveal-fern-mid-walk-before-after.webp",
+  "caption": "Walking under the fern forest: before, the crowns round her vanished in hard rings; after, they fade softly tree by tree.",
+  "chapter": "art",
+  "from": "previews/reveal/fern-mid-walk-before-after.png",
+  "group": "soft-reveal",
+  "order": 1,
+  "pr": 258
+ },
+ {
+  "src": "media/art/reveal-fern-walk-after.webp",
+  "caption": "The soft reveal in motion: crowns melt away one by one as she walks through the forest on foot.",
+  "chapter": "art",
+  "from": "previews/reveal/fern-walk-after.gif",
+  "group": "soft-reveal",
+  "order": 2,
+  "pr": 258
+ },
+ {
+  "src": "media/art/lighting-before-123-area0-t7-treetop.webp",
+  "caption": "Spooky lighting 1: a cold dark wood with the party as the only warm light.",
+  "chapter": "art",
+  "from": "previews/lighting/before/123-area0-t7-treetop.png",
+  "group": "spooky-lighting",
+  "order": 1,
+  "pr": 184
+ },
+ {
+  "src": "media/art/lighting-before-123-late-party-ground.webp",
+  "caption": "Before the spooky lighting pass: a late-game party scene lit evenly, every corner of the wood as bright as the dancefloor.",
+  "chapter": "art",
+  "from": "previews/lighting/before/123-late-party-ground.png",
+  "group": "spooky-lighting",
+  "order": 1,
+  "pr": 184
+ },
+ {
+  "src": "media/art/lighting-areas-123-area0-t7-treetop.webp",
+  "caption": "Spooky lighting 3: each area type gets its own fog, tint and mist.",
+  "chapter": "art",
+  "from": "previews/lighting/areas/123-area0-t7-treetop.png",
+  "group": "spooky-lighting",
+  "order": 2,
+  "pr": 195
+ },
+ {
+  "src": "media/art/lighting-spooky-123-late-party-ground.webp",
+  "caption": "Spooky lighting, step one: the wood goes cold and dark, so the party becomes the warm light you fly towards.",
+  "chapter": "art",
+  "from": "previews/lighting/spooky/123-late-party-ground.png",
+  "group": "spooky-lighting",
+  "order": 2,
+  "pr": 184
+ },
+ {
+  "src": "media/art/lighting-party-123-late-party-ground.webp",
+  "caption": "Step two: the party throws warm pools of light round its soundsystems and lights, islands of colour in the night.",
+  "chapter": "art",
+  "from": "previews/lighting/party/123-late-party-ground.png",
+  "group": "spooky-lighting",
+  "order": 3,
+  "pr": 189
+ },
+ {
+  "src": "media/art/lighting-rim-123-late-party-ground.webp",
+  "caption": "Step four: a thin moonlight rim on every character, so the witch and the animals still read against the dark.",
+  "chapter": "art",
+  "from": "previews/lighting/rim/123-late-party-ground.png",
+  "group": "spooky-lighting",
+  "order": 4,
+  "pr": 199
+ },
+ {
+  "src": "media/art/20-tilt-before.webp",
+  "caption": "The treehouse before the tilt-shift: every part of the picture in the same sharp focus.",
+  "chapter": "art",
+  "from": "previews/20-tilt-before.png",
+  "group": "tilt-shift",
+  "order": 1
+ },
+ {
+  "src": "media/art/21-tilt-after.webp",
+  "caption": "With the tilt-shift on, the top and bottom of the screen blur away, so the forest reads like a model village seen up close.",
+  "chapter": "art",
+  "from": "previews/21-tilt-after.png",
+  "group": "tilt-shift",
+  "order": 2
+ },
+ {
+  "src": "media/art/witch-generator.webp",
+  "caption": "The witch generator: a witch as genome data. Ours is drawn exactly, and every other is a new witch within the limits, hats, brooms, cloaks and all.",
+  "chapter": "art",
+  "from": "previews/witch-generator.png",
+  "group": "witches",
+  "order": 1,
+  "pr": 98
+ },
+ {
+  "src": "media/art/witch-hats.webp",
+  "caption": "Witch hats: no hat and eleven more, from a cowboy hat and a crown to boppers and a traffic cone, flying and standing.",
+  "chapter": "art",
+  "from": "previews/witch-hats.png",
+  "group": "witches",
+  "order": 2,
+  "pr": 123
+ },
+ {
+  "src": "media/art/witch-variety.webp",
+  "caption": "Generated party witches: bigger brims, longer cloaks and a wide spread of looks for the witches who fly in to dance.",
+  "chapter": "art",
+  "from": "previews/witch-variety.png",
+  "group": "witches",
+  "order": 3,
+  "pr": 123
+ },
+ {
+  "src": "media/art/104-ring-lasers.webp",
+  "caption": "Lasers fan out from the dancefloor ring into the night, an early sign the forest was going to be a rave.",
+  "chapter": "art",
+  "from": "previews/104-ring-lasers.png"
+ },
+ {
+  "src": "media/art/106-party-witches-arriving.webp",
+  "caption": "Party witches flying in over the dancefloor as its tiles blaze pink, one for every soundsystem that is up and playing.",
+  "chapter": "art",
+  "from": "previews/106-party-witches-arriving.png"
+ },
+ {
+  "src": "media/art/42-rising.webp",
+  "caption": "Rising past the treehouse's storeys: a round timber tower with glowing windows and a ring of fairy lights.",
+  "chapter": "art",
+  "from": "previews/42-rising.png"
+ },
+ {
+  "src": "media/art/43-behind-soundsystem.webp",
+  "caption": "The early dancefloor from behind a soundsystem: a round floor of glowing blue tiles and a laser beam sweeping across it.",
+  "chapter": "art",
+  "from": "previews/43-behind-soundsystem.png"
+ },
+ {
+  "src": "media/art/80-campfire-fx-pixel.webp",
+  "caption": "A campfire in a birch wood, its light falling across the pale trunks in dithered pixel steps.",
+  "chapter": "art",
+  "from": "previews/80-campfire-fx-pixel.png"
+ },
+ {
+  "src": "media/art/81-witch-glow-ground.webp",
+  "caption": "Her own light: a warm pool round the witch on the forest floor, so she is never lost in the dark.",
+  "chapter": "art",
+  "from": "previews/81-witch-glow-ground.png"
+ },
+ {
+  "src": "media/art/85-areas-treetop-sheet.webp",
+  "caption": "Thirty areas side by side from the treetops: every kind of forest, moor and clearing in the game, each with its own trees, floor and colours.",
+  "chapter": "art",
+  "from": "previews/85-areas-treetop-sheet.png"
+ },
+ {
+  "src": "media/art/90-football.webp",
+  "caption": "An overgrown football pitch, goals and all: part of the old modern world the forest has swallowed.",
+  "chapter": "art",
+  "from": "previews/90-football.png"
+ },
+ {
+  "src": "media/art/96-witch-lit-before-after.webp",
+  "caption": "The witch lit by the world around her, before and after: campfire, neon and moonlight now colour her sprite.",
+  "chapter": "art",
+  "from": "previews/96-witch-lit-before-after.png"
+ },
+ {
+  "src": "media/art/97-treetop-bend-off-subtle-strong.webp",
+  "caption": "The bend, off, subtle and strong: the world curving away toward the top of the screen so the night sky shows over the forest.",
+  "chapter": "art",
+  "from": "previews/97-treetop-bend-off-subtle-strong.png"
+ },
+ {
+  "src": "media/art/99-scene-castle-ruins.webp",
+  "caption": "Castle ruins in the woods, with wild creatures wandering round: one of the large scenes built from landmark pieces.",
+  "chapter": "art",
+  "from": "previews/99-scene-castle-ruins.png"
+ },
+ {
+  "src": "media/art/attacks-after-px4.webp",
+  "caption": "Attack feel, frame by frame: a wind-up crouch, a lunge, a squash and tumble, and a little star where the hit lands.",
+  "chapter": "art",
+  "from": "previews/attacks/after-px4.png",
+  "pr": 193
+ },
+ {
+  "src": "media/art/badger-evolution-bold-px4.webp",
+  "caption": "The badger growing up, from a cub that is all face to a legend carrying standing stones on its back: the moor's walking stones.",
+  "chapter": "art",
+  "from": "previews/badger-evolution-bold-px4.png",
+  "pr": 163
+ },
+ {
+  "src": "media/art/beach-decor-trail.webp",
+  "caption": "A trail of footprints wandering across the sand and fading out, among shells and starfish.",
+  "chapter": "art",
+  "from": "previews/beach-decor/trail.png",
+  "pr": 337
+ },
+ {
+  "src": "media/art/beach-edge-bay-134m.webp",
+  "caption": "Where the woods meet the beach: palms, beach grass and scalloped bushes instead of a hard wall of trees.",
+  "chapter": "art",
+  "from": "previews/beach-edge/bay-134m.png",
+  "pr": 335
+ },
+ {
+  "src": "media/art/beach-sea-before-after.webp",
+  "caption": "The sea before and after: too dark at first, then a calm moonlit blue-teal that mirrors the sky.",
+  "chapter": "art",
+  "from": "previews/beach-sea-before-after.png",
+  "pr": 331
+ },
+ {
+  "src": "media/art/boar-evolution-bold-px4.webp",
+  "caption": "The boar, pilot of the evolution kit: from a striped piglet to a legend with curling tusks and wisps of flame.",
+  "chapter": "art",
+  "from": "previews/boar-evolution-bold-px4.png",
+  "pr": 139
+ },
+ {
+  "src": "media/art/brooms-flying.webp",
+  "caption": "Fourteen new brooms for the creator, from a missile and a jet bike to a canoe, a bicycle and a gyrocopter.",
+  "chapter": "art",
+  "from": "previews/brooms/flying.gif",
+  "pr": 288
+ },
+ {
+  "src": "media/art/canopy-hole-before-after-close.webp",
+  "caption": "Seeing her under the trees, before and after: a round window cut in the canopy, then a ragged hole opened crown by crown.",
+  "chapter": "art",
+  "from": "previews/canopy-hole/before-after-close.png",
+  "pr": 357
+ },
+ {
+  "src": "media/art/canopy-pool-treetops-after.webp",
+  "caption": "Her light on the treetops: a warm amber pool following her across the crowns, no longer lime green.",
+  "chapter": "art",
+  "from": "previews/canopy-pool/treetops-after.gif",
+  "pr": 260
+ },
+ {
+  "src": "media/art/creator-looks.webp",
+  "caption": "A wardrobe of starting looks for the witch, each a different hat, cloak, broom and palette, made to go together.",
+  "chapter": "art",
+  "from": "previews/creator-looks.png",
+  "pr": 168
+ },
+ {
+  "src": "media/art/faces-closeup.webp",
+  "caption": "Creature expressions up close: every species can look neutral, angry, happy or dazed, drawn right into its face.",
+  "chapter": "art",
+  "from": "previews/faces-closeup.png",
+  "pr": 110
+ },
+ {
+  "src": "media/art/fen-area.webp",
+  "caption": "The fen and its newt: the first area type and creature built entirely from data, with no new drawing code.",
+  "chapter": "art",
+  "from": "previews/fen-area.png",
+  "pr": 183
+ },
+ {
+  "src": "media/art/flora-game-fantasy-treetops.webp",
+  "caption": "Fantasy flora from the treetops: glowcap mushroom trees lighting up a patch of night forest.",
+  "chapter": "art",
+  "from": "previews/flora-game-fantasy-treetops.png",
+  "pr": 85
+ },
+ {
+  "src": "media/art/flora-new-species.webp",
+  "caption": "Ten new tree species grown by the genome generator, blob crowns filled with leaf stamps, three of them fantasy.",
+  "chapter": "art",
+  "from": "previews/flora-new-species.png",
+  "pr": 85
+ },
+ {
+  "src": "media/art/flora-wind.webp",
+  "caption": "Pixel wind: each blob of a crown sways as a whole, a whole pixel at a time, out of step with its neighbours.",
+  "chapter": "art",
+  "from": "previews/flora-wind.png",
+  "pr": 88
+ },
+ {
+  "src": "media/art/fox-evolution-bold-px4.webp",
+  "caption": "The fox's evolution from a fluffy kit to the shrine's many-tailed kitsune legend, each stage its own design, not just bigger.",
+  "chapter": "art",
+  "from": "previews/fox-evolution-bold-px4.png",
+  "pr": 170
+ },
+ {
+  "src": "media/art/genome-palettes.webp",
+  "caption": "Creature genomes let one species wear many curated coats (frost, ember, shadow, gold, moss, rose, ash) with no redrawing.",
+  "chapter": "art",
+  "from": "previews/genome-palettes.png",
+  "pr": 83
+ },
+ {
+  "src": "media/art/ground-variants.webp",
+  "caption": "Ground variants: each area's floor grown from a ground genome, in several variants so it no longer visibly repeats.",
+  "chapter": "art",
+  "from": "previews/ground-variants.png",
+  "pr": 160
+ },
+ {
+  "src": "media/art/home-picnics.webp",
+  "caption": "Party ground at home: picnic blankets, tables with chairs and tall balloons scattered round the dancefloor.",
+  "chapter": "art",
+  "from": "previews/home-picnics.png",
+  "pr": 136
+ },
+ {
+  "src": "media/art/legends-batch3.webp",
+  "caption": "Sleeping legends, batch 3: lynx, otter, beaver, ram, squirrel, dormouse and salamander, sunk and mossed so they pass for boulders and logs.",
+  "chapter": "art",
+  "from": "previews/legends-batch3.png"
+ },
+ {
+  "src": "media/art/legends-moss-trees-after-asleep.webp",
+  "caption": "Legends' back trees: little generated forests growing on the sleeping legends' backs, by species and seed.",
+  "chapter": "art",
+  "from": "previews/legends/moss-trees-after-asleep.png",
+  "pr": 245
+ },
+ {
+  "src": "media/art/legends-sleepy-face-yawn.webp",
+  "caption": "A sleeping legend's sleepy face, mostly 😴, mid-yawn in its circle.",
+  "chapter": "art",
+  "from": "previews/legends/sleepy-face-yawn.png",
+  "pr": 233
+ },
+ {
+  "src": "media/art/lighting-areas-165272-home-treetop.webp",
+  "caption": "Home from the treetops under the spooky lighting: the treehouse glowing amid party lights and ley lines.",
+  "chapter": "art",
+  "from": "previews/lighting/areas/165272-home-treetop.png",
+  "pr": 195
+ },
+ {
+  "src": "media/art/lighting-r3-party-ground-before-after.webp",
+  "caption": "Round three of the lighting reviews: a paler moon fill without the dotted pattern, and the witch properly lit in the bold pixel style.",
+  "chapter": "art",
+  "from": "previews/lighting/r3/party-ground-before-after.png",
+  "pr": 220
+ },
+ {
+  "src": "media/art/lighting-rim-zoom-squirrel-rim-before-after.webp",
+  "caption": "Up close on a squirrel, before and after: the moonlight rim picks out its silhouette from the forest floor.",
+  "chapter": "art",
+  "from": "previews/lighting/rim/zoom-squirrel-rim-before-after.png",
+  "pr": 199
+ },
+ {
+  "src": "media/art/lighting-tilt-treetop-before-after.webp",
+  "caption": "The tilt-shift blur, before and after: the miniature-world blur now lets the stars show through softly at the top of the screen.",
+  "chapter": "art",
+  "from": "previews/lighting/tilt/treetop-before-after.png",
+  "pr": 249
+ },
+ {
+  "src": "media/art/longwear-sheet.webp",
+  "caption": "The character creator's longer cloaks and scarves: past the old limits they stream and ripple behind her in flight.",
+  "chapter": "art",
+  "from": "previews/longwear/sheet.png",
+  "pr": 287
+ },
+ {
+  "src": "media/art/magic-sigils-placed.webp",
+  "caption": "A sigil glowing as she sets it down on the ground, part of giving all her magic one night-time palette.",
+  "chapter": "art",
+  "from": "previews/magic-sigils/placed.gif",
+  "pr": 213
+ },
+ {
+  "src": "media/art/moon-sky-timelapse.webp",
+  "caption": "One moon for the whole game: a time-lapse of it rising behind the far forest and crossing the sky over a run.",
+  "chapter": "art",
+  "from": "previews/moon/sky-timelapse.gif",
+  "pr": 252
+ },
+ {
+  "src": "media/art/newt.webp",
+  "caption": "The newt, from baby to legend: the first creature (with its fen) made entirely from data, no new drawing code.",
+  "chapter": "art",
+  "from": "previews/newt.png",
+  "pr": 183
+ },
+ {
+  "src": "media/art/overlay-tilt-before-after.webp",
+  "caption": "The 💌s, hearts and chat bubbles now blur with the tilt-shift too, so they sit in the miniature world instead of floating over it.",
+  "chapter": "art",
+  "from": "previews/overlay-tilt/before-after.png",
+  "pr": 325
+ },
+ {
+  "src": "media/art/owl-evolution-bold-px4.webp",
+  "caption": "Owl evolution: from a downy owlet to the legend's moonlit cloak, each level its own design rather than just bigger.",
+  "chapter": "art",
+  "from": "previews/owl-evolution-bold-px4.png",
+  "pr": 179
+ },
+ {
+  "src": "media/art/party-life-dance.webp",
+  "caption": "Party animals dancing on the beat once they've joined.",
+  "chapter": "art",
+  "from": "previews/party-life/dance.gif",
+  "pr": 206
+ },
+ {
+  "src": "media/art/party-life-dancefloor.webp",
+  "caption": "Guests spread out round the dancefloor instead of piling up in one heap.",
+  "chapter": "art",
+  "from": "previews/party-life/dancefloor.png",
+  "pr": 206
+ },
+ {
+  "src": "media/art/party-picnics.webp",
+  "caption": "Picnic blankets, picnic tables with chairs and tall balloons on long strings, scattered over partified ground.",
+  "chapter": "art",
+  "from": "previews/party-picnics.png",
+  "pr": 136
+ },
+ {
+  "src": "media/art/party-relics.webp",
+  "caption": "The party relics: six giant glowing bottles, half-buried in the forest floor, each with its own sigil to wake a legend happy.",
+  "chapter": "art",
+  "from": "previews/party-relics.png",
+  "pr": 93
+ },
+ {
+  "src": "media/art/party-shoes.webp",
+  "caption": "Little party shoes on party animals: trainers, glitter, platforms, heels, boots and light-ups, on hooves, paws and claws.",
+  "chapter": "art",
+  "from": "previews/party-shoes.png",
+  "pr": 149
+ },
+ {
+  "src": "media/art/party-witches-party-ground.webp",
+  "caption": "Party witches fly in to the dancefloor and roam round it, dancing, drinking and resting.",
+  "chapter": "art",
+  "from": "previews/party-witches/party-ground.gif",
+  "pr": 275
+ },
+ {
+  "src": "media/art/party-witches-party-treetop.webp",
+  "caption": "The party from above: witches swoop round the dancefloor below the treehouse.",
+  "chapter": "art",
+  "from": "previews/party-witches/party-treetop.gif",
+  "pr": 275
+ },
+ {
+  "src": "media/art/party-witches-swoop-trails-close.webp",
+  "caption": "Their swoops leave bright rainbow trails of glow behind them.",
+  "chapter": "art",
+  "from": "previews/party-witches/swoop-trails-close.gif",
+  "pr": 291
+ },
+ {
+  "src": "media/art/pixel-lines-invites-before-after.webp",
+  "caption": "Spinning 💌s before (rotated smoothly) and after (redrawn in whole art pixels), a small change that keeps the pixel look honest.",
+  "chapter": "art",
+  "from": "previews/pixel-lines/invites-before-after.png",
+  "pr": 330
+ },
+ {
+  "src": "media/art/pixel-lines-ley-whole-before-after.webp",
+  "caption": "The ley line redrawn in art pixels with smooth light, and brighter, so it reads as part of the pixel world.",
+  "chapter": "art",
+  "from": "previews/pixel-lines/ley-whole-before-after.png",
+  "pr": 330
+ },
+ {
+  "src": "media/art/placement-stump-throne-soundsystem.webp",
+  "caption": "A soundsystem set beside a stump throne in its clearing, from an early pass on where set pieces stand.",
+  "chapter": "art",
+  "from": "previews/placement-stump-throne-soundsystem.png"
+ },
+ {
+  "src": "media/art/ponds-bog-before-after.webp",
+  "caption": "Ponds that read as water, not holes: a moonlit rim, a sheen of sky, a muddy lip and glints.",
+  "chapter": "art",
+  "from": "previews/ponds/bog-before-after.png",
+  "pr": 257
+ },
+ {
+  "src": "media/art/props-bridges.webp",
+  "caption": "Footbridges, rope bridges and root bridges each got three generated variants, so no two stream crossings look quite alike.",
+  "chapter": "art",
+  "from": "previews/props/bridges.png",
+  "pr": 207
+ },
+ {
+  "src": "media/art/props-party-gen.webp",
+  "caption": "The party's bunting, balloon bunches and paper lanterns, now varied by the prop generator so every partified clearing is dressed a little differently.",
+  "chapter": "art",
+  "from": "previews/props/party-gen.png",
+  "pr": 191
+ },
+ {
+  "src": "media/art/props-set-pieces.webp",
+  "caption": "Set pieces from genomes: sunken punts, rickety jetties, rings of stones or stumps and mossy heaps, each sized to sit in a clearing.",
+  "chapter": "art",
+  "from": "previews/props/set-pieces.png",
+  "pr": 204
+ },
+ {
+  "src": "media/art/silhouettes-adult.webp",
+  "caption": "The silhouette check: every adult creature beside its shadow shape, so no two species can be mistaken for each other at game size.",
+  "chapter": "art",
+  "from": "previews/silhouettes-adult.png",
+  "pr": 86
+ },
+ {
+  "src": "media/art/smoke-treetop.webp",
+  "caption": "Smoke from every fire: soft moonlit puffs rise well above the treetops, drifting with the wind and thinning away.",
+  "chapter": "art",
+  "from": "previews/smoke/treetop.gif",
+  "pr": 236
+ },
+ {
+  "src": "media/art/soft-cutout-before-after.webp",
+  "caption": "The canopy cut-out round the witch: a hard ring of whole trees before, a soft, wide, wandering fade after.",
+  "chapter": "art",
+  "from": "previews/soft-cutout/before-after.png",
+  "pr": 326
+ },
+ {
+  "src": "media/art/tilt-shift-1-ground-before-after.webp",
+  "caption": "A gentler tilt-shift: half the blur and a wider sharp band, so more of the dancefloor stays in focus.",
+  "chapter": "art",
+  "from": "previews/tilt-shift/1-ground-before-after.png",
+  "pr": 349
+ },
+ {
+  "src": "media/art/tilt-stars-moon-phases.webp",
+  "caption": "The moon through the tilt-shift at every phase, from a thin crescent to full, still readable through the blur.",
+  "chapter": "art",
+  "from": "previews/tilt-stars/moon-phases.png",
+  "pr": 249
+ },
+ {
+  "src": "media/art/trail-treetops.webp",
+  "caption": "Her flight trail over the treetops: a fading glow in the colour of the area she flies over.",
+  "chapter": "art",
+  "from": "previews/trail/treetops.gif",
+  "pr": 237
+ },
+ {
+  "src": "media/art/tufts-stamp.webp",
+  "caption": "Ground-cover tufts for six areas in today's style and the two pixel-art styles, bold and ref: fewer, bolder stamps.",
+  "chapter": "art",
+  "from": "previews/tufts-stamp.png",
+  "pr": 150
+ },
+ {
+  "src": "media/balance/bot-game-bot-game.webp",
+  "caption": "The bot game: sit back and watch the skilled bot play a whole run, flying, talking and fighting on its own.",
+  "chapter": "balance",
+  "from": "previews/bot-game/bot-game.gif",
+  "pr": 316
+ },
+ {
+  "src": "media/balance/pr73-1-charge-speed.webp",
+  "caption": "A young boar's speed over a charge, before and after: charges got weight, winding up and carrying through instead of snapping on and off.",
+  "chapter": "balance",
+  "from": "previews/pr73/1-charge-speed.png",
+  "pr": 73
+ },
+ {
+  "src": "media/balance/pr74-1-moves-topdown.webp",
+  "caption": "Signature moves for 19 more species, traced from above: backing off, pounces, flanking and darting.",
+  "chapter": "balance",
+  "from": "previews/pr74/1-moves-topdown.png",
+  "pr": 74
+ },
+ {
+  "src": "media/balance/round13-charge-after.webp",
+  "caption": "Combat round 13: a boar's charge now carries further across the dancefloor, a real threat to dodge.",
+  "chapter": "balance",
+  "from": "previews/round13/charge-after.gif",
+  "pr": 243
+ },
+ {
+  "src": "media/music/sfx-afterparty-night-wood.mp3",
+  "caption": "After the Party's Over: the wood's night sounds.",
+  "chapter": "music",
+  "group": "afterparty",
+  "order": 1,
+  "pr": 320,
+  "from": "previews/sfx/afterparty/night-wood.mp3"
+ },
+ {
+  "src": "media/music/sfx-afterparty-wood-snores.mp3",
+  "caption": "...and the sleepers' snores.",
+  "chapter": "music",
+  "group": "afterparty",
+  "order": 2,
+  "pr": 320,
+  "from": "previews/sfx/afterparty/wood-snores.mp3"
+ },
+ {
+  "src": "media/music/music-boot-build.mp3",
+  "caption": "The Boot, sped up: the home speakers turn on one by one and each brings in one of the intro's twelve layers on the next bar line.",
+  "chapter": "music",
+  "group": "boot",
+  "order": 1,
+  "pr": 277,
+  "from": "previews/music/boot-build.mp3"
+ },
+ {
+  "src": "media/music/sfx-stone-boot-12.mp3",
+  "caption": "All twelve runestones crackling into life as speakers, one after another.",
+  "chapter": "music",
+  "group": "boot",
+  "order": 2,
+  "pr": 273,
+  "from": "previews/sfx/stone-boot-12.mp3"
+ },
+ {
+  "src": "media/music/music-circles-wolf.mp3",
+  "caption": "Walking into the wolf legend's circle: the music muffles and slows like a tape winding down, while the legend's own layer plays on at full speed.",
+  "chapter": "music",
+  "group": "circles",
+  "order": 1,
+  "pr": 255,
+  "from": "previews/music/circles/wolf.mp3"
+ },
+ {
+  "src": "media/music/music-circles-owl.mp3",
+  "caption": "The owl's circle: every legend has its own patterns, melody and octave in the music's key.",
+  "chapter": "music",
+  "group": "circles",
+  "order": 2,
+  "pr": 255,
+  "from": "previews/music/circles/owl.mp3"
+ },
+ {
+  "src": "media/music/music-circles-moth.mp3",
+  "caption": "The moth's circle.",
+  "chapter": "music",
+  "group": "circles",
+  "order": 3,
+  "pr": 255,
+  "from": "previews/music/circles/moth.mp3"
+ },
+ {
+  "src": "media/music/sfx-mix-forest-before.mp3",
+  "caption": "The deep forest scene before the mix pass: the music far off, a sleeping legend's moans, a wind-up, a charge.",
+  "chapter": "music",
+  "group": "mix",
+  "order": 1,
+  "pr": 126,
+  "from": "previews/sfx/mix/forest-before.mp3"
+ },
+ {
+  "src": "media/music/sfx-mix-forest-after.mp3",
+  "caption": "The same scene after the mix pass, every sound set to its target loudness over the music.",
+  "chapter": "music",
+  "group": "mix",
+  "order": 2,
+  "pr": 126,
+  "from": "previews/sfx/mix/forest-after.mp3"
+ },
+ {
+  "src": "media/music/sfx-run-boot-after.mp3",
+  "caption": "Thirty seconds of a scripted run: the boot at home.",
+  "chapter": "music",
+  "group": "run",
+  "order": 1,
+  "pr": 185,
+  "from": "previews/sfx/run/boot-after.mp3"
+ },
+ {
+  "src": "media/music/sfx-run-wave3-after.mp3",
+  "caption": "Wave three: the arc has moved on through its sections.",
+  "chapter": "music",
+  "group": "run",
+  "order": 2,
+  "pr": 185,
+  "from": "previews/sfx/run/wave3-after.mp3"
+ },
+ {
+  "src": "media/music/sfx-run-siege-after.mp3",
+  "caption": "A siege: the siege parts come in by how near the fight at the soundsystem is.",
+  "chapter": "music",
+  "group": "run",
+  "order": 3,
+  "pr": 185,
+  "from": "previews/sfx/run/siege-after.mp3"
+ },
+ {
+  "src": "media/music/sfx-spell-burst.mp3",
+  "caption": "The party spell's scroll bursting.",
+  "chapter": "music",
+  "group": "sfx",
+  "order": 1,
+  "pr": 315,
+  "from": "previews/sfx/spell-burst.wav"
+ },
+ {
+  "src": "media/music/sfx-pond.mp3",
+  "caption": "A pond at night.",
+  "chapter": "music",
+  "group": "sfx",
+  "order": 2,
+  "pr": 171,
+  "from": "previews/sfx/pond.wav"
+ },
+ {
+  "src": "media/music/sfx-sea.mp3",
+  "caption": "The sea, heard as she nears the beach.",
+  "chapter": "music",
+  "group": "sfx",
+  "order": 3,
+  "pr": 301,
+  "from": "previews/sfx/sea.wav"
+ },
+ {
+  "src": "media/music/sfx-species-calls.mp3",
+  "caption": "Every species' call in turn: speech without words, a voice through vowel formants, each family with its own call style.",
+  "chapter": "music",
+  "group": "voices",
+  "order": 1,
+  "pr": 94,
+  "from": "previews/sfx/species-calls.wav"
+ },
+ {
+  "src": "media/music/sfx-witch-chatter.mp3",
+  "caption": "The witch's babble: each 💌 is a syllable, each burst a phrase lifting at the end.",
+  "chapter": "music",
+  "group": "voices",
+  "order": 2,
+  "pr": 94,
+  "from": "previews/sfx/witch-chatter.wav"
+ },
+ {
+  "src": "media/music/sfx-legend-lament-elk.mp3",
+  "caption": "A sleeping elk legend's lament: whale song, long gliding moans in a big reverb.",
+  "chapter": "music",
+  "group": "voices",
+  "order": 3,
+  "pr": 239,
+  "from": "previews/sfx/legend-lament-elk.mp3"
+ },
+ {
+  "src": "media/music/sfx-invited-legend.mp3",
+  "caption": "The flourish when a legend is invited (each level has its own).",
+  "chapter": "music",
+  "group": "voices",
+  "order": 4,
+  "pr": 94,
+  "from": "previews/sfx/invited-legend.wav"
+ },
+ {
+  "src": "media/opening/room-after.webp",
+  "caption": "The creator's bedroom, twice the size, with her look editor beside it: the place every run now begins.",
+  "chapter": "opening",
+  "from": "previews/room/after.png",
+  "group": "bedroom",
+  "order": 1,
+  "pr": 229
+ },
+ {
+  "src": "media/opening/room-walk.webp",
+  "caption": "Walking about the bedroom with WASD, her pool of light following her across the floorboards.",
+  "chapter": "opening",
+  "from": "previews/room/walk.gif",
+  "group": "bedroom",
+  "order": 2,
+  "pr": 229
+ },
+ {
+  "src": "media/opening/bedroom-pass-before-2000x1240.webp",
+  "caption": "The bedroom character creator before its layout pass: the room and the menu at different pixel scales.",
+  "chapter": "opening",
+  "from": "previews/bedroom-pass/before-2000x1240.png",
+  "group": "bedroom-pass",
+  "order": 1,
+  "pr": 341
+ },
+ {
+  "src": "media/opening/bedroom-pass-after-2000x1240.webp",
+  "caption": "After: one pixel scale for room and menu, the Coven Rush title on top and the 🎶 party spell scroll waiting in the corner.",
+  "chapter": "opening",
+  "from": "previews/bedroom-pass/after-2000x1240.png",
+  "group": "bedroom-pass",
+  "order": 2,
+  "pr": 341
+ },
+ {
+  "src": "media/opening/boot-ring-waiting.webp",
+  "caption": "The opening: the witch on the dark dancefloor with one button, CAST THE PARTY SPELL.",
+  "chapter": "opening",
+  "from": "previews/boot-ring/waiting.png",
+  "group": "boot-ring",
+  "order": 1,
+  "pr": 282
+ },
+ {
+  "src": "media/opening/boot-ring-boot.webp",
+  "caption": "The party spell cast: the pulse runs round the runestones clockwise, turning each one on as it passes.",
+  "chapter": "opening",
+  "from": "previews/boot-ring/boot.gif",
+  "group": "boot-ring",
+  "order": 2,
+  "pr": 282
+ },
+ {
+  "src": "media/opening/boot-ring-after.webp",
+  "caption": "Booted: the home ring lit and the ley lines glowing off into the forest.",
+  "chapter": "opening",
+  "from": "previews/boot-ring/after.png",
+  "group": "boot-ring",
+  "order": 3,
+  "pr": 282
+ },
+ {
+  "src": "media/opening/creator-load-2-getting-ready.webp",
+  "caption": "The first character creator, in the witch's early treehouse room: dress her up while the forest loads behind the scenes.",
+  "chapter": "opening",
+  "from": "previews/creator-load-2-getting-ready.png",
+  "group": "creator",
+  "order": 1,
+  "pr": 117
+ },
+ {
+  "src": "media/opening/creator2-high.webp",
+  "caption": "Character creator 2 moved into a cosy isometric bedroom, with wider sliders, rainbow colours, more hats and bags.",
+  "chapter": "opening",
+  "from": "previews/creator2/high.png",
+  "group": "creator",
+  "order": 2,
+  "pr": 134
+ },
+ {
+  "src": "media/opening/creator-sliders-creator-broom.webp",
+  "caption": "The creator's broom box in its finished form: missiles, hobby horses, jet bikes, canoes and gyrocopters alongside the classic broomstick.",
+  "chapter": "opening",
+  "from": "previews/creator-sliders/creator-broom.png",
+  "group": "creator",
+  "order": 3,
+  "pr": 340
+ },
+ {
+  "src": "media/opening/partyspell-waiting.webp",
+  "caption": "How a run begins: behind her decks in the treehouse, one button, CAST THE PARTY SPELL.",
+  "chapter": "opening",
+  "from": "previews/partyspell/waiting.png",
+  "group": "party-spell",
+  "order": 1,
+  "pr": 276
+ },
+ {
+  "src": "media/opening/partyspell-start.webp",
+  "caption": "Casting the party spell: she raises her hands, sparkles burst, and the night begins.",
+  "chapter": "opening",
+  "from": "previews/partyspell/start.gif",
+  "group": "party-spell",
+  "order": 2,
+  "pr": 276
+ },
+ {
+  "src": "media/opening/spell-scroll-near.webp",
+  "caption": "The party spell as a scroll with a glowing note on it, waiting in the corner of her bedroom; nearing it, the paper trembles and the screen darkens.",
+  "chapter": "opening",
+  "from": "previews/spell-scroll/near.png",
+  "group": "spell-scroll",
+  "order": 1,
+  "pr": 315
+ },
+ {
+  "src": "media/opening/spell-scroll-scroll.webp",
+  "caption": "Casting the party spell: the scroll grows to fill the screen, crackles, bursts, and the night begins.",
+  "chapter": "opening",
+  "from": "previews/spell-scroll/scroll.gif",
+  "group": "spell-scroll",
+  "order": 2,
+  "pr": 315
+ },
+ {
+  "src": "media/opening/start-screen-1280x720.webp",
+  "caption": "An early start screen: a title, a What's new list and a Coming up column, all text.",
+  "chapter": "opening",
+  "from": "previews/start-screen-1280x720.png",
+  "group": "start-screen",
+  "order": 1,
+  "pr": 84
+ },
+ {
+  "src": "media/opening/start-screen-ready-1900x1240.webp",
+  "caption": "The start screen as it became: Coven Rush, opening straight into her bedroom, with the character creator on the left and the spell scroll waiting bottom right.",
+  "chapter": "opening",
+  "from": "previews/start-screen/ready-1900x1240.png",
+  "group": "start-screen",
+  "order": 2,
+  "pr": 333
+ },
+ {
+  "src": "media/opening/treehouse-after-123-start.webp",
+  "caption": "Where a run starts: the witch behind her decks in the treehouse's cutaway DJ booth.",
+  "chapter": "opening",
+  "from": "previews/treehouse/after-123-start.png",
+  "group": "treehouse",
+  "order": 1,
+  "pr": 118
+ },
+ {
+  "src": "media/opening/98-treehouse-v2-left-seat.webp",
+  "caption": "The second treehouse: she sits behind her decks in a round booth, neon strips glowing along the desk.",
+  "chapter": "opening",
+  "from": "previews/98-treehouse-v2-left-seat.png",
+  "group": "treehouse-v2",
+  "order": 1
+ },
+ {
+  "src": "media/opening/98-treehouse-v2-treetop.webp",
+  "caption": "Treehouse v2 from the treetops: a timber tower of lit storeys climbing a giant tree.",
+  "chapter": "opening",
+  "from": "previews/98-treehouse-v2-treetop.png",
+  "group": "treehouse-v2",
+  "order": 2
+ },
+ {
+  "src": "media/opening/00-start-screen.webp",
+  "caption": "The very first start screen: a plain text panel over the forest saying \"fly the witch round the forest at night\", with the controls and a What's new list. Everything later grew out of this.",
+  "chapter": "opening",
+  "from": "previews/00-start-screen.png"
+ },
+ {
+  "src": "media/opening/40-dancefloor-ground.webp",
+  "caption": "Early version of the start: she stands behind the decks in the treehouse's cutaway DJ booth, the party gear around her.",
+  "chapter": "opening",
+  "from": "previews/40-dancefloor-ground.png"
+ },
+ {
+  "src": "media/opening/88-treehouse-from-below.webp",
+  "caption": "The treehouse from below, with the glowing pentagram of the runestone ring on the ground in front of it.",
+  "chapter": "opening",
+  "from": "previews/88-treehouse-from-below.png"
+ },
+ {
+  "src": "media/opening/95-start-seated.webp",
+  "caption": "A cosy start: the witch sits on the porch of her caravan-like treehouse, fairy lights strung beside her.",
+  "chapter": "opening",
+  "from": "previews/95-start-seated.png"
+ },
+ {
+  "src": "media/opening/bedroom-bold-px4-room.webp",
+  "caption": "Her messy treehouse bedroom, drawn isometric, with PARTY TONIGHT bunting over the bed: the place you dress your witch.",
+  "chapter": "opening",
+  "from": "previews/bedroom/bold-px4-room.png",
+  "pr": 143
+ },
+ {
+  "src": "media/opening/creator-idle.webp",
+  "caption": "While the game loads, the witch potters about her room: her idle moments made the loading screen feel alive.",
+  "chapter": "opening",
+  "from": "previews/creator-idle.png",
+  "pr": 168
+ },
+ {
+  "src": "media/opening/creator-load-1-designing.webp",
+  "caption": "The first character creator: dress your witch in her treehouse under PARTY TONIGHT bunting, a mirror at the side.",
+  "chapter": "opening",
+  "from": "previews/creator-load-1-designing.png",
+  "pr": 117
+ },
+ {
+  "src": "media/opening/creator-load-3-playing.webp",
+  "caption": "Creator done, game on: she appears behind her decks in the treehouse's DJ booth, ready to start the party.",
+  "chapter": "opening",
+  "from": "previews/creator-load-3-playing.png",
+  "pr": 117
+ },
+ {
+  "src": "media/opening/menus-box-hat.webp",
+  "caption": "The character creator reorganised into a box per item, one open at a time, each with its own colour picker.",
+  "chapter": "opening",
+  "from": "previews/menus/box-hat.png",
+  "pr": 240
+ },
+ {
+  "src": "media/opening/menus-hat-picker.webp",
+  "caption": "The creator beside the witch's cosy bedroom: you dress her up before the night begins.",
+  "chapter": "opening",
+  "from": "previews/menus/hat-picker.png",
+  "pr": 240
+ },
+ {
+  "src": "media/opening/menus-walk-to-things.webp",
+  "caption": "In the bedroom she walks over to whatever you're changing: the wardrobe, the hat stand, the broom.",
+  "chapter": "opening",
+  "from": "previews/menus/walk-to-things.gif",
+  "pr": 240
+ },
+ {
+  "src": "media/opening/moon-flare.webp",
+  "caption": "When the first wave comes, the full moon on the dancefloor flares out into the party's switch-on.",
+  "chapter": "opening",
+  "from": "previews/moon/flare.gif",
+  "pr": 252
+ },
+ {
+  "src": "media/opening/moon-floor-phases-strip.webp",
+  "caption": "Before the first wave, the dancefloor shows only the moon's phase in muted tiles, new moon to full.",
+  "chapter": "opening",
+  "from": "previews/moon/floor-phases-strip.png",
+  "pr": 252
+ },
+ {
+  "src": "media/opening/partyspell-casting.webp",
+  "caption": "Mid-cast in the DJ booth, amber and rose sparkles bursting round her.",
+  "chapter": "opening",
+  "from": "previews/partyspell/casting.png",
+  "pr": 276
+ },
+ {
+  "src": "media/opening/placement-treehouse-after.webp",
+  "caption": "An early look at the treehouse settled beside the dancefloor's glowing ring.",
+  "chapter": "opening",
+  "from": "previews/placement-treehouse-after.png"
+ },
+ {
+  "src": "media/opening/speakers-stones-to-speakers.webp",
+  "caption": "The boot pulse runs round the dancefloor, turning each small runestone into a speaker as the home ring powers up.",
+  "chapter": "opening",
+  "from": "previews/speakers/stones-to-speakers.gif",
+  "pr": 272
+ },
+ {
+  "src": "media/systems/95-floor-booting.webp",
+  "caption": "The hero dancefloor booting up: its glass tiles flickering into life before the party.",
+  "chapter": "systems",
+  "from": "previews/95-floor-booting.png",
+  "group": "dancefloor-levels",
+  "order": 1
+ },
+ {
+  "src": "media/systems/95-floor-level1.webp",
+  "caption": "Party level 1: a calm pattern of a few lit tiles.",
+  "chapter": "systems",
+  "from": "previews/95-floor-level1.png",
+  "group": "dancefloor-levels",
+  "order": 2
+ },
+ {
+  "src": "media/systems/95-floor-level4.webp",
+  "caption": "Party level 4, a full rave: the floor spins with purple and yellow spokes.",
+  "chapter": "systems",
+  "from": "previews/95-floor-level4.png",
+  "group": "dancefloor-levels",
+  "order": 3
+ },
+ {
+  "src": "media/systems/hud-before-hud.webp",
+  "caption": "The HUD before: a wave timer bar and a cue toward the dancefloor.",
+  "chapter": "systems",
+  "from": "previews/hud/before/hud.png",
+  "group": "hud-clock",
+  "order": 1,
+  "pr": 265
+ },
+ {
+  "src": "media/systems/hud-after-hud.webp",
+  "caption": "After: a game clock at the top and a single 🎶 wave pointer toward the ley line's pulse.",
+  "chapter": "systems",
+  "from": "previews/hud/after/hud.png",
+  "group": "hud-clock",
+  "order": 2,
+  "pr": 265
+ },
+ {
+  "src": "media/systems/legend-charge-1-charging-in.webp",
+  "caption": "An angry legend's long charge, 1: thundering in toward the witch.",
+  "chapter": "systems",
+  "from": "previews/legend-charge/1-charging-in.png",
+  "group": "legend-charge",
+  "order": 1,
+  "pr": 114
+ },
+ {
+  "src": "media/systems/legend-charge-2-braking-past.webp",
+  "caption": "2: missing and braking past her.",
+  "chapter": "systems",
+  "from": "previews/legend-charge/2-braking-past.png",
+  "group": "legend-charge",
+  "order": 2,
+  "pr": 114
+ },
+ {
+  "src": "media/systems/legend-charge-3-walking-home.webp",
+  "caption": "3: walking back home to its area.",
+  "chapter": "systems",
+  "from": "previews/legend-charge/3-walking-home.png",
+  "group": "legend-charge",
+  "order": 3,
+  "pr": 114
+ },
+ {
+  "src": "media/systems/ley-depart-ley-spiral.webp",
+  "caption": "The whole route on six seeds: the older varied order (left) beside the spiral (right), blue for the first waves to pink for the last, crossings ringed red. Under each pair, distance from home by wave.",
+  "chapter": "systems",
+  "from": "previews/ley-depart/ley-spiral.png",
+  "group": "ley-route",
+  "order": 1,
+  "pr": 329
+ },
+ {
+  "src": "media/systems/ley-depart-ley-depart.webp",
+  "caption": "The ley line leaving home on six seeds: clockwise round the ring of speakers, off to the right and on to the first runestone, never over the dancefloor.",
+  "chapter": "systems",
+  "from": "previews/ley-depart/ley-depart.png",
+  "group": "ley-route",
+  "order": 2,
+  "pr": 329
+ },
+ {
+  "src": "media/systems/50-party-transition-0.webp",
+  "caption": "A wave arriving, first frame: the area's little runestone glade is still quiet as the party's magic begins to circle.",
+  "chapter": "systems",
+  "from": "previews/50-party-transition-0.png",
+  "group": "party-transition",
+  "order": 1
+ },
+ {
+  "src": "media/systems/52-party-transition-2.webp",
+  "caption": "A few moments later the ring of pink sparkles has spread round the area: the party has taken it over.",
+  "chapter": "systems",
+  "from": "previews/52-party-transition-2.png",
+  "group": "party-transition",
+  "order": 2
+ },
+ {
+  "src": "media/systems/relics-relics-123.webp",
+  "caption": "Where the six party relics land on one map: one just inside home's edge, the rest scattered at least 150 m apart.",
+  "chapter": "systems",
+  "from": "previews/relics/relics-123.png",
+  "group": "relics",
+  "order": 1,
+  "pr": 264
+ },
+ {
+  "src": "media/systems/10-phone-ground.webp",
+  "caption": "The game on a phone from the start: the treehouse squeezed into a tall screen, with on-screen buttons for flying, rising and sigils under her thumbs.",
+  "chapter": "systems",
+  "from": "previews/10-phone-ground.png"
+ },
+ {
+  "src": "media/systems/71-leash-stack-flying.webp",
+  "caption": "Flying with a full leash: the sigils of every creature that joined her stack above her head as she crosses the woods.",
+  "chapter": "systems",
+  "from": "previews/71-leash-stack-flying.png"
+ },
+ {
+  "src": "media/systems/attacks-fight-after.webp",
+  "caption": "A fight in the dark: wild creatures rushing the witch while her party animals hold the line in blue rings.",
+  "chapter": "systems",
+  "from": "previews/attacks/fight-after.png",
+  "pr": 193
+ },
+ {
+  "src": "media/systems/beacons-treetop-before-after.webp",
+  "caption": "Runestone beacons, before and after: the rings of symbols gone, each column of light now appearing only when the ley line reaches it.",
+  "chapter": "systems",
+  "from": "previews/beacons/treetop-before-after.png",
+  "pr": 283
+ },
+ {
+  "src": "media/systems/blink-strip.webp",
+  "caption": "The dodge as a blink: she vanishes in a faint ring of motes and reappears ten metres on.",
+  "chapter": "systems",
+  "from": "previews/blink-strip.png",
+  "pr": 82
+ },
+ {
+  "src": "media/systems/controls-feel-aim-dodge-recharging.webp",
+  "caption": "The aim reticle up close: a ring for her 💌 range, with a blue arc filling as the dodge recharges.",
+  "chapter": "systems",
+  "from": "previews/controls-feel/aim-dodge-recharging.png",
+  "pr": 165
+ },
+ {
+  "src": "media/systems/dash-dash-to-cursor.webp",
+  "caption": "The dodge now flies toward the mouse cursor, with a little diamond on the ground showing where she'll land.",
+  "chapter": "systems",
+  "from": "previews/dash/dash-to-cursor.gif",
+  "pr": 228
+ },
+ {
+  "src": "media/systems/happy-pickup-pickup.webp",
+  "caption": "A happy creature carries its sigil rune at its feet; the witch picks the rune up and the creature joins her leash for good.",
+  "chapter": "systems",
+  "from": "previews/happy-pickup/pickup.gif",
+  "pr": 294
+ },
+ {
+  "src": "media/systems/hat-dropped-hat.webp",
+  "caption": "Knocked out, the witch drops her hat where she fell, so she can fly back, find it and pop it back on.",
+  "chapter": "systems",
+  "from": "previews/hat/dropped-hat.gif",
+  "pr": 285
+ },
+ {
+  "src": "media/systems/invite-ring-adult.webp",
+  "caption": "Every 💌 that lands counts: a ring of envelopes orbits the creature being invited, filling up as she charms it.",
+  "chapter": "systems",
+  "from": "previews/invite-ring/adult.gif",
+  "pr": 289
+ },
+ {
+  "src": "media/systems/invites-frisbee-ground-slowmo.webp",
+  "caption": "Slow motion: 💌s spin flat like frisbees, and the ones that miss settle on the ground before fading.",
+  "chapter": "systems",
+  "from": "previews/invites/frisbee-ground-slowmo.gif",
+  "pr": 230
+ },
+ {
+  "src": "media/systems/invites-strip.webp",
+  "caption": "The first 💌 invites: speech bubbles, the affection meter and the creatures' state looks, side by side.",
+  "chapter": "systems",
+  "from": "previews/invites-strip.png",
+  "pr": 89
+ },
+ {
+  "src": "media/systems/knock-boar.webp",
+  "caption": "Blows now knock the witch back and stagger her, with the biggest shoves from charging boars.",
+  "chapter": "systems",
+  "from": "previews/knock-boar.png",
+  "pr": 108
+ },
+ {
+  "src": "media/systems/leash-slack-arc-profile.webp",
+  "caption": "Leash physics: slack leashes curve higher and flatten out as they pull taut.",
+  "chapter": "systems",
+  "from": "previews/leash/slack-arc-profile.png",
+  "pr": 300
+ },
+ {
+  "src": "media/systems/legend-buffs-stack.webp",
+  "caption": "Legend buffs stacked up: with several happy legends, her 💌 volleys fan, echo and orbit all at once.",
+  "chapter": "systems",
+  "from": "previews/legend-buffs/stack.png",
+  "pr": 111
+ },
+ {
+  "src": "media/systems/loss-countdown-flash.webp",
+  "caption": "Losing a soundsystem now hurries the next wave 60 seconds closer, with a red flash on the countdown bar so you feel it.",
+  "chapter": "systems",
+  "from": "previews/loss/countdown-flash.png",
+  "pr": 101
+ },
+ {
+  "src": "media/systems/party-join-join.webp",
+  "caption": "A new guest joins the party with a burst of amber twinkles.",
+  "chapter": "systems",
+  "from": "previews/party-join/join.gif",
+  "pr": 206
+ },
+ {
+  "src": "media/systems/pr91-1-routes-topdown.webp",
+  "caption": "Party animals far from the witch travel quietly along area borders rather than cutting straight through the wild; here a traveller's straight line is compared with the border route it actually walks.",
+  "chapter": "systems",
+  "from": "previews/pr91/1-routes-topdown.png",
+  "pr": 91
+ },
+ {
+  "src": "media/systems/relic-glint-gap-treetop.webp",
+  "caption": "A party relic's glint seen from the treetops through a gap in the canopy: the little four-point star is how a sharp-eyed witch spots one from above.",
+  "chapter": "systems",
+  "from": "previews/relic-glint/gap-treetop.png",
+  "pr": 99
+ },
+ {
+  "src": "media/systems/sigil-weight-load-ground.webp",
+  "caption": "Sigil weight made visible: the more creatures on her leash, the more the stack over her head sags, the threads pull taut and she leans into her flight.",
+  "chapter": "systems",
+  "from": "previews/sigil-weight/load-ground.gif",
+  "pr": 298
+ },
+ {
+  "src": "media/systems/states-ground.webp",
+  "caption": "The creature state looks on the ground: wild, happy, leashed, enraged and dazed, each readable at a glance.",
+  "chapter": "systems",
+  "from": "previews/states-ground.png",
+  "pr": 89
+ },
+ {
+  "src": "media/systems/treetop-sigils-treetops.webp",
+  "caption": "From the treetops, leashed and happy creatures' sigils float above them, so she can find her party animals from on high.",
+  "chapter": "systems",
+  "from": "previews/treetop-sigils/treetops.png",
+  "pr": 328
+ },
+ {
+  "src": "media/timeline/beach-decor-map-123-before.webp",
+  "caption": "The island's beach from above, first version: an even ring of sand.",
+  "chapter": "timeline",
+  "from": "previews/beach-decor/map-123-before.png",
+  "group": "beach-shape",
+  "order": 1,
+  "pr": 337
+ },
+ {
+  "src": "media/timeline/beach-decor-map-123.webp",
+  "caption": "The same island after: wide bays, narrows and rocky stretches where the sand almost vanishes.",
+  "chapter": "timeline",
+  "from": "previews/beach-decor/map-123.png",
+  "group": "beach-shape",
+  "order": 2,
+  "pr": 337
+ },
+ {
+  "src": "media/timeline/dream-ground.webp",
+  "caption": "An early legend dream: a sleeping legend's thought bubble shows the creature it longs for, pointing toward where to find one.",
+  "chapter": "timeline",
+  "from": "previews/dream-ground.png",
+  "group": "dreams",
+  "order": 1,
+  "pr": 90
+ },
+ {
+  "src": "media/timeline/pr67-1-dream-bubble.webp",
+  "caption": "The first quest: a sleeping legend dreams of a creature, shown as a sigil in its thought bubble.",
+  "chapter": "timeline",
+  "from": "previews/pr67/1-dream-bubble.png",
+  "group": "first-quest",
+  "order": 1,
+  "pr": 67
+ },
+ {
+  "src": "media/timeline/pr67-3-legend-happy.webp",
+  "caption": "Bring that creature to it and the legend wakes happy, making its whole area friendly.",
+  "chapter": "timeline",
+  "from": "previews/pr67/3-legend-happy.png",
+  "group": "first-quest",
+  "order": 2,
+  "pr": 67
+ },
+ {
+  "src": "media/timeline/home-before-123-overhead.webp",
+  "caption": "Before: home's area was just one patch of the map beside the dancefloor.",
+  "chapter": "timeline",
+  "from": "previews/home/before-123-overhead.png",
+  "group": "home-area",
+  "order": 1,
+  "pr": 107
+ },
+ {
+  "src": "media/timeline/home-after-123-overhead.webp",
+  "caption": "After: home became the whole circle round the dancefloor, out past the treehouse, so the party starts at the centre of everything.",
+  "chapter": "timeline",
+  "from": "previews/home/after-123-overhead.png",
+  "group": "home-area",
+  "order": 2,
+  "pr": 107
+ },
+ {
+  "src": "media/timeline/home-home-area-123.webp",
+  "caption": "The map before and after: home (green) grows into a round area centred on the dancefloor.",
+  "chapter": "timeline",
+  "from": "previews/home/home-area-123.png",
+  "group": "home-area",
+  "order": 3,
+  "pr": 107
+ },
+ {
+  "src": "media/timeline/glades-walk-in-before.webp",
+  "caption": "Walking into a legend's clearing, before: just another bit of forest.",
+  "chapter": "timeline",
+  "from": "previews/glades/walk-in-before.gif",
+  "group": "legend-clearing",
+  "order": 1,
+  "pr": 261
+ },
+ {
+  "src": "media/timeline/glades-walk-in-after.webp",
+  "caption": "After: stepping in brings an eerie twilight, rising motes, and the forest beyond going dark.",
+  "chapter": "timeline",
+  "from": "previews/glades/walk-in-after.gif",
+  "group": "legend-clearing",
+  "order": 2,
+  "pr": 261
+ },
+ {
+  "src": "media/timeline/leylines-uncrossed-routes-before.webp",
+  "caption": "Ley line routes before, over many seeds: a tangle that crossed itself everywhere.",
+  "chapter": "timeline",
+  "from": "previews/leylines-uncrossed/routes-before.png",
+  "group": "ley-routes",
+  "order": 1,
+  "pr": 248
+ },
+ {
+  "src": "media/timeline/leylines-uncrossed-routes-after.webp",
+  "caption": "After: the whole route shown all the time, untangled so it never crosses itself.",
+  "chapter": "timeline",
+  "from": "previews/leylines-uncrossed/routes-after.png",
+  "group": "ley-routes",
+  "order": 2,
+  "pr": 248
+ },
+ {
+  "src": "media/timeline/leylines-variety-routes-varied.webp",
+  "caption": "Then varied: sweeps, lobes and combs, so each run's route has its own shape.",
+  "chapter": "timeline",
+  "from": "previews/leylines-variety/routes-varied.png",
+  "group": "ley-routes",
+  "order": 3,
+  "pr": 284
+ },
+ {
+  "src": "media/timeline/leylines-uncrossed-seed10-wave3-before.webp",
+  "caption": "In game, before the untangling: ley lines criss-crossing the whole sky.",
+  "chapter": "timeline",
+  "from": "previews/leylines-uncrossed/seed10-wave3-before.png",
+  "group": "ley-uncross-ingame",
+  "order": 1,
+  "pr": 248
+ },
+ {
+  "src": "media/timeline/leylines-uncrossed-seed10-wave3-after.webp",
+  "caption": "After: one calm route winding through the runestones.",
+  "chapter": "timeline",
+  "from": "previews/leylines-uncrossed/seed10-wave3-after.png",
+  "group": "ley-uncross-ingame",
+  "order": 2,
+  "pr": 248
+ },
+ {
+  "src": "media/timeline/relics-relic-sigil-ground.webp",
+  "caption": "Each half-buried party relic has its sigil on the ground just south of it; stand on it and pick it up like any other sigil, then carry it to a sleeping legend.",
+  "chapter": "timeline",
+  "from": "previews/relics/relic-sigil-ground.png",
+  "group": "relics",
+  "order": 2,
+  "pr": 279
+ },
+ {
+  "src": "media/timeline/sigils-legendary-ingame-placed.webp",
+  "caption": "A legendary sigil put down on the ground opens as a magic circle of rune bands round the witch.",
+  "chapter": "timeline",
+  "from": "previews/sigils/legendary-ingame/placed.png",
+  "group": "sigils",
+  "order": 3,
+  "pr": 303
+ },
+ {
+  "src": "media/timeline/slowtime-normal-slowed-normal.webp",
+  "caption": "Normal, slowed, normal: the same spot outside and inside a legend's circle, the world beyond its edge drained of colour.",
+  "chapter": "timeline",
+  "from": "previews/slowtime/normal-slowed-normal.png",
+  "group": "slow-time",
+  "order": 1,
+  "pr": 307
+ },
+ {
+  "src": "media/timeline/slowtime-enter-leave.webp",
+  "caption": "Walking into a sleeping legend's circle: the world outside greys and cools as time slows to a crawl, then warms again as she steps out.",
+  "chapter": "timeline",
+  "from": "previews/slowtime/enter-leave.gif",
+  "group": "slow-time",
+  "order": 2,
+  "pr": 307
+ },
+ {
+  "src": "media/timeline/treehouse-after-123-overhead.webp",
+  "caption": "The treehouse moved due north of the dancefloor, so the first ley line runs straight south from it across the clearing.",
+  "chapter": "timeline",
+  "from": "previews/treehouse/after-123-overhead.png",
+  "group": "treehouse",
+  "order": 2,
+  "pr": 118
+ },
+ {
+  "src": "media/timeline/01-ground-dancefloor.webp",
+  "caption": "An early look at home: the witch at her decks on the treehouse balcony, wrapped in fairy lights, with the debug numbers still running down the corner.",
+  "chapter": "timeline",
+  "from": "previews/01-ground-dancefloor.png"
+ },
+ {
+  "src": "media/timeline/70-leash-talk.webp",
+  "caption": "The witch talking a creature round, emoji bubbles taking turns. Talk long enough and it joins her party and follows on her leash.",
+  "chapter": "timeline",
+  "from": "previews/70-leash-talk.png"
+ },
+ {
+  "src": "media/timeline/70-ley-before-treetop.webp",
+  "caption": "The first ley line: a glowing green-gold thread winding through the treetops toward the next area to party.",
+  "chapter": "timeline",
+  "from": "previews/70-ley-before-treetop.png"
+ },
+ {
+  "src": "media/timeline/beach-stargaze.webp",
+  "caption": "Fly out past the edge of the island and the witch lands on the sand, lies down and gazes up at the stars.",
+  "chapter": "timeline",
+  "from": "previews/beach-stargaze.gif",
+  "pr": 317
+ },
+ {
+  "src": "media/timeline/beach-witches.webp",
+  "caption": "A beach witch lying alone on the sand: land by her, keep still, and she comes over to chat and stargaze.",
+  "chapter": "timeline",
+  "from": "previews/beach-witches.png",
+  "pr": 301
+ },
+ {
+  "src": "media/timeline/dream-way-legend1-circle.webp",
+  "caption": "Standing in a legend's circle, a note beside it explains what the legend wants and names the boon it will grant.",
+  "chapter": "timeline",
+  "from": "previews/dream-way/legend1-circle.png",
+  "pr": 348
+ },
+ {
+  "src": "media/timeline/legend-panel-fox-boon.webp",
+  "caption": "The legend circle explainer beside a sleeping fox legend, spelling out how to wake it happy and what boon it gives.",
+  "chapter": "timeline",
+  "from": "previews/legend-panel/fox-boon.png",
+  "pr": 292
+ },
+ {
+  "src": "media/timeline/legends-seen-asleep-before-after.webp",
+  "caption": "Legends made readable in their circles: a neon outline, a light floor and a soft ground glow (right) where before they were lost in the dark (left).",
+  "chapter": "timeline",
+  "from": "previews/legends-seen/asleep-before-after.png",
+  "pr": 334
+ },
+ {
+  "src": "media/timeline/ley-pulse-one-wave-ground.webp",
+  "caption": "The ley line's pulse travelling from the dancefloor toward the next soundsystem, arriving just as the wave does.",
+  "chapter": "timeline",
+  "from": "previews/ley-pulse/one-wave-ground.gif",
+  "pr": 269
+ },
+ {
+  "src": "media/timeline/ley-treetops.webp",
+  "caption": "Ley lines glowing across the forest from the treetops, linking the runestones in wave order.",
+  "chapter": "timeline",
+  "from": "previews/ley-treetops.png",
+  "pr": 137
+ },
+ {
+  "src": "media/timeline/map-shape-edge-east.webp",
+  "caption": "The edge of the new circular map in play: the forest thins out at the rim of the world.",
+  "chapter": "timeline",
+  "from": "previews/map-shape/edge-east.png",
+  "pr": 281
+ },
+ {
+  "src": "media/timeline/map-shape-map-shape-123.webp",
+  "caption": "The map goes round: the old square forest beside the new circular island, ringed by a buffer the witch can't fly past.",
+  "chapter": "timeline",
+  "from": "previews/map-shape/map-shape-123.png",
+  "pr": 281
+ },
+ {
+  "src": "media/timeline/nightmare-quest-closed.webp",
+  "caption": "A legend's dream turned to nightmare: a restless legend's angry bubble, with the creature it longs for.",
+  "chapter": "timeline",
+  "from": "previews/nightmare-quest-closed.png",
+  "pr": 90
+ },
+ {
+  "src": "media/timeline/party-legend-party-legend.webp",
+  "caption": "The party legend, a hidden Easter egg: a hundred 💌s to win it over, a giant hat, and a leash it simply won't be pulled by.",
+  "chapter": "timeline",
+  "from": "previews/party-legend/party-legend.gif",
+  "pr": 313
+ },
+ {
+  "src": "media/timeline/party-over-card.webp",
+  "caption": "The party's over: instead of a game-over screen, an afterparty where everyone heads home to sleep.",
+  "chapter": "timeline",
+  "from": "previews/party-over/card.png",
+  "pr": 323
+ },
+ {
+  "src": "media/timeline/party-over-party-over-sleepers.webp",
+  "caption": "The lights go out in a ripple and the guests curl up asleep round the treehouse.",
+  "chapter": "timeline",
+  "from": "previews/party-over/party-over-sleepers.gif",
+  "pr": 318
+ },
+ {
+  "src": "media/timeline/party-over-party-over-treetops.webp",
+  "caption": "The party's over from the treetops: the dancefloor goes dark under the moon.",
+  "chapter": "timeline",
+  "from": "previews/party-over/party-over-treetops.gif",
+  "pr": 318
+ },
+ {
+  "src": "media/timeline/respawn-respawn.webp",
+  "caption": "Knocked down, the witch now comes back seated behind her decks in the treehouse, just as at the start of a run.",
+  "chapter": "timeline",
+  "from": "previews/respawn/respawn.gif",
+  "pr": 362
+ }
+]

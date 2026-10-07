@@ -20,8 +20,8 @@
 // drawn in treetop mode, cut out round the witch). Anchors: base, seat, door, camera (the studio, for the opening
 // zoom) and the light sources, in pixels.
 import { M, Sprite, hsv2rgb } from "./core.js";
-import { Model, render, v3 } from "./model3d.js";
-import { witchPixelsPerUnit, WITCH_SEAT_HEIGHT } from "./witch.js";
+import { Model, render, v3, YAW } from "./model3d.js";
+import { witchPixelsPerUnit, WITCH_SEAT_HEIGHT, DJ_DECKS } from "./witch.js";
 
 // Its parts' materials. Wood: WOOD boards with BARKD seams, BARKL trim; shingles HAT1/HAT2; dark iron BODY3 (the
 // stair), steel FRAME; solar cells BODY; the rug CLOTH with BODY2 pattern and ACCENT; piano and speakers SHADES with
@@ -53,24 +53,66 @@ export const TREEHOUSE_STOREYS = {
 };
 const FAIRY = [M.COLLAR, M.RUNE, M.WOKEN, M.MAGIC];
 const OPEN = a => Math.abs(((a - Math.PI / 2 + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 1.35; // the studio's open side: round +z, towards the camera
-// The DJ table (Ed: "she is a DJ, and should have decks"): a sturdy desk across the front of the studio, two turntables
-// with a mixer between them, a laptop on a stand, headphones; small lights on the decks and the mixer's faders in the party's
-// colours. Built into the house and, alone, into the `fore` sprite the game draws over her (she sits behind it).
-const DJ = { z: 2.38, y: TREEHOUSE_STOREYS.studio.y };
-function djTable(m) {
-  const { z, y } = DJ, top = y + .6, G0 = 60; // its own groups (60..69), apart from the house's
-  m.box([0, y + .3, z], [.9, .3, .26], M.WOOD, { round: .03, group: G0, paint: p => p[2] > z + .24 ? (p[1] < y + .1 ? FAIRY[Math.floor((p[0] + 9) * 5) % 4] : ((p[0] + 9) * 4) % 1 < .06 ? M.BARKD : M.BARK2) : p[1] > top - .03 ? M.BARKL : undefined }); // the desk, an LED strip along its front foot
-  for (const [x, k] of [[-.47, 0], [.47, 2]]) { // the turntables
-    m.box([x, top + .03, z], [.3, .03, .23], M.SHADES, { round: .015, group: G0 + 1 + k });
-    const pc = [x - .03, top + .065, z - .01]; m.ell(pc, [.19, .012, .19], M.BODY3, { group: G0 + 2 + k, paint: p => { const d = Math.hypot(p[0] - pc[0], p[2] - pc[2]); return d < .045 ? M.ACCENT : Math.abs(p[0] - pc[0] - (p[2] - pc[2]) * .6) < .012 && d < .17 ? M.FRAME : (d * 60) % 1 < .25 ? M.SHADES : undefined; } }); // the platter: a record, a label, a glint across it
-    m.seg([x + .22, top + .09, z - .16], [x + .08, top + .09, z + .05], .01, .008, M.FRAME, { group: G0 + 1 + k }); // the tonearm
-    m.ell([x + .24, top + .065, z + .17], [.018, .012, .018], k ? M.WOKEN : M.RUNE, { group: G0 + 1 + k }); // its light
-  }
-  m.box([0, top + .05, z], [.11, .05, .21], M.SHADES, { round: .015, group: G0 + 5, paint: p => p[1] > top + .09 ? ((Math.floor((p[0] + 9) * 26) % 2 === 0 && ((p[2] - z + 9) * 9) % 1 < .45) ? FAIRY[Math.floor((p[0] + 9) * 13) % 4] : undefined) : undefined }); // the mixer, its faders lit
-  m.seg([.8, top, z - .05], [.8, top + .14, z - .08], .02, .02, M.FRAME, { group: G0 + 6 }); m.box([.8, top + .15, z - .05], [.14, .008, .1], M.FRAME, { round: .004, group: G0 + 6 }); m.box([.8, top + .26, z - .14], [.14, .1, .008], M.FRAME, { dir: [1, 0, 0], up: [0, 1, .45], round: .004, group: G0 + 6, paint: p => p[2] < z - .145 ? M.RUNE : undefined }); // a laptop on its stand
-  m.chain([[-.86, top + .02, z + .1, .015], [-.8, top + .1, z + .04, .015], [-.7, top + .02, z - .02, .015]], M.BODY3, { group: G0 + 7 }); for (const [x, zz] of [[-.86, .1], [-.7, -.02]]) m.ell([x, top + .03, z + zz], [.045, .03, .045], M.BODY3, { group: G0 + 7, paint: p => p[1] > top + .05 ? M.COLLAR : undefined }); // headphones
+// The DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks. Feel free
+// to redesign the treehouse to make it better for this"): a desk squared up to the camera (whichever way the house is turned)
+// right in front of where she stands, laid out to her own reach (DJ_DECKS in witch.js, in her model's units: a forward, b up,
+// c to her near side, the screen's left): two turntables, their platters' labels glowing pink and cyan, a white mark on each
+// going round (frame by frame), tonearms, start lights; a mixer between them, its knobs, channel faders, crossfader and two
+// level meters jumping; a raised lip along the front edge, and on the front panel a chasing strip of party LEDs top and
+// bottom, round a glowing crescent moon. Built into the house (frame 0) and, alone, into the fore frames the game draws over
+// her (DJ_FRAMES of them: the platters turn an eighth of a turn and the LEDs chase on each).
+export const DJ_FRAMES = 8;
+const DJ_STAND = [0, TREEHOUSE_STOREYS.studio.y, 1.75]; // where she stands (her seat anchor), in the house's units
+function djFrame3(facing) { // her model's (a, b, c) in the house's: squared to the camera at the house's yaw for this facing
+  const yaw = YAW[facing] ?? YAW.towards, f = [Math.sin(yaw), 0, Math.cos(yaw)], r = [Math.cos(yaw), 0, -Math.sin(yaw)], o = v3.sub(DJ_STAND, v3.mul(f, .02)); // (her ground anchor .02 ahead of her origin)
+  const to = ([a, b, c]) => v3.add(o, v3.add(v3.mul(f, a), v3.add(v3.mul(r, -c), [0, b, 0])));
+  const from = p => { const d = v3.sub(p, o); return [v3.dot(d, f), d[1], -v3.dot(d, r)]; };
+  return { to, from, f, r };
 }
-function treehouseModel() {
+function djTable(m, { frame = 0, facing = "towards" } = {}) {
+  const D = DJ_DECKS, F = djFrame3(facing), { to, from, f, r } = F, G0 = 60, TOP = D.top, [a0, a1] = D.depth, am = (a0 + a1) / 2, W = D.width; // its own groups (60..79), apart from the house's
+  const box = (c, h, mat, o = {}) => m.box(to(c), h, mat, { dir: r, up: [0, 1, 0], ...o }); // half sizes: across, up, deep
+  const chase = (c, k) => FAIRY[((Math.floor((c + 9) * 22) + frame + k) % 4 + 4) % 4];
+  // the desk: a panelled front with LED strips top and bottom round a crescent moon, wood sides, a dark top
+  box([am, TOP / 2, 0], [W, TOP / 2, (a1 - a0) / 2], M.WOOD, { round: .02, group: G0, paint: p => {
+    const [a, b, c] = from(p);
+    if (b > TOP - .012) return undefined; // the top (bare wood, so the dark decks stand out on it)
+    if (a < a1 - .015) return Math.abs(c) > W - .02 ? M.BARKL : undefined; // the sides
+    if (b > TOP - .06 || b < .05) return Math.abs(c) > W - .03 ? M.BARKD : chase(c, b < .05 ? 2 : 0); // the LED strips
+    const mc = [c - .0, b - .27], d1 = Math.hypot(mc[0], mc[1]), d2 = Math.hypot(mc[0] - .05, mc[1] - .03); // the moon: a disc less a disc
+    if (d1 < .11 && d2 > .095) return M.MAGIC2;
+    return Math.abs(((c + 9) * 7.5) % 1 - .5) > .46 ? M.BARK2 : undefined; // slats
+  } });
+  box([a1 - .01, TOP + .012, 0], [W + .015, .014, .018], M.BARKL, { round: .008, group: G0 + 1 }); // the lip along its front edge
+  // the turntables
+  for (const [k, side] of [[0, 1], [1, -1]]) {
+    const P = D.platter, c0 = side * P.c, gk = G0 + 2 + k * 4, mark = (frame / DJ_FRAMES) * Math.PI * 2 * -side + k * 1.7; // (both turning clockwise seen from above)
+    box([P.a, TOP + .01, c0], [P.r + .04, .012, P.r + .03], M.SHADES, { round: .01, group: gk });
+    const pc = to([P.a, TOP + .03, c0]);
+    m.ell(pc, [P.r, .008, P.r], M.BODY3, { group: gk + 1, paint: p => {
+      const [a, , c] = from(p), da = a - P.a, dc = c - c0, d = Math.hypot(da, dc);
+      if (d < .04) return d < .012 ? M.FRAME : k ? M.RUNE : M.COLLAR; // the label (and its spindle)
+      const ang = Math.atan2(dc, da), off = Math.abs(((ang - mark) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+      if (off < .32 && d > .065 && d < P.r - .015) return M.BELLY; // the mark going round
+      return Math.abs(d - .085) < .006 || Math.abs(d - .11) < .005 ? M.SHADES : undefined; // grooves
+    } });
+    const pivot = to([P.a - .1, TOP + .05, c0 - side * (P.r + .02)]), stylus = to([P.a + .06, TOP + .04, c0 - side * .07]);
+    m.seg(pivot, stylus, .009, .007, M.FRAME, { group: gk + 2 }); m.ell(pivot, [.02, .02, .02], M.FRAME, { group: gk + 2 }); // the tonearm
+    m.ell(to([P.a + P.r - .005, TOP + .03, c0 - side * (P.r + .015)]), [.014, .01, .014], (frame + k) % 4 < 2 ? (k ? M.WOKEN : M.RUNE) : M.SHADES, { group: gk + 3 }); // its start light, blinking
+  }
+  // the mixer: knobs at the back, two level meters, channel faders, the crossfader in front
+  const X = D.mixer, gm = G0 + 12, lv = [5, 3, 4, 2, 5, 2, 4, 3][frame % 8], lv2 = [4, 5, 2, 4, 3, 5, 2, 4][frame % 8];
+  box([X.a, TOP + .02, 0], [X.w, .02, .15], M.SHADES, { round: .01, group: gm, paint: p => {
+    const [a, b, c] = from(p); if (b < TOP + .035) return undefined;
+    for (const [cc, L] of [[.02, lv], [-.02, lv2]]) if (Math.abs(c - cc) < .009) { const n = Math.floor((.31 - a) / .016); if (n >= 0 && n < 5 && ((.31 - a) / .016) % 1 < .7) return n < L ? (n < 2 ? M.RUNE : n < 4 ? M.WOKEN : M.COLLAR) : M.BODY3; } // the meters, low to high
+    return undefined;
+  } });
+  for (const cc of [-.06, .06]) for (const aa of [.16, .2, .24]) m.ell(to([aa, TOP + .045, cc]), [.012, .008, .012], M.FRAME, { group: gm + 1 }); // knobs
+  for (const cc of [-.045, .045]) m.box(to([.34, TOP + .045, cc]), [.008, .006, .016], M.BELLY, { dir: r, up: [0, 1, 0], group: gm + 2 }); // channel faders
+  m.box(to([D.fader, TOP + .045, [.03, .01, -.03, -.01][frame % 4]]), [.018, .007, .008], M.BELLY, { dir: r, up: [0, 1, 0], group: gm + 3 }); // the crossfader, riding
+  return F;
+}
+function treehouseModel(facing = "towards") {
   const m = new Model({ blend: .04 }), lights = [];
   const hash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
   let G = 100; const g = () => G++;
@@ -142,14 +184,14 @@ function treehouseModel() {
   { const c = [2.15, sy, -1.65], gk = g(), d = [Math.cos(-2.4), 0, Math.sin(-2.4)], f = v3.norm([-d[2], 0, d[0]]); m.box(v3.add(c, [0, .45, 0]), [.36, .45, .32], M.SHADES, { dir: d, round: .03, group: gk }); m.box(v3.add(c, [0, 1.15, 0]), [.26, .25, .24], M.SHADES, { dir: d, round: .03, group: gk }); for (const [dy, r, o] of [[.45, .27, .33], [1.15, .15, .25]]) { const cc = v3.add(v3.add(c, [0, dy, 0]), v3.mul(f, o)); m.ell(cc, [r, r, .03], M.BODY3, { dir: f, up: [0, 1, 0], group: gk, paint: p => Math.hypot(...v3.sub(p, cc)) < r * .4 ? M.MAGIC : M.BODY3 }); } } // a speaker stack in the corner
   for (const x of [-1.2, 1.25]) { const c = [x, sy, 2.25], gm = g(); m.seg(c, v3.add(c, [0, .8, 0]), .025, .025, M.BODY3, { group: gm }); m.box(v3.add(c, [0, 1.0, 0]), [.15, .2, .14], M.SHADES, { dir: [x < 0 ? .95 : -.95, 0, -.3], round: .02, group: gm }); } // monitors on stands either side of the decks
   for (const [x, z] of [[-1.75, 1.75], [1.75, 2.0]]) { const c = [x, sy, z], gc = g(); m.box(v3.add(c, [0, .17, 0]), [.27, .17, .2], M.WOOD, { round: .015, group: gc, paint: p => p[1] > sy + .3 ? M.BARKL : undefined }); for (let k = 0; k < 6; k++) m.box(v3.add(c, [-.2 + k * .08, .3 + hash(k, x) * .04, 0]), [.012, .16, .16], [M.ACCENT, M.CLOTH, M.BODY2, M.EAR][k % 4], { round: .005, group: gc }); } // record crates, the sleeves showing
-  djTable(m);
-  const stool = [0, sy, 1.68], gst = g(); m.ell(v3.add(stool, [0, WITCH_SEAT_HEIGHT - .03, 0]), [.2, .04, .2], M.CLOTH, { group: gst }); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2; m.seg(v3.add(stool, [Math.cos(a) * .14, 0, Math.sin(a) * .14]), v3.add(stool, [0, WITCH_SEAT_HEIGHT - .05, 0]), .02, .02, M.FRAME, { group: gst }); } // her stool, behind the decks
+  const dj = djTable(m, { facing });
+  const stool = v3.sub(DJ_STAND, v3.mul(dj.f, .25)), gst = g(); m.ell(v3.add(stool, [0, WITCH_SEAT_HEIGHT - .03, 0]), [.2, .04, .2], M.CLOTH, { group: gst }); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2; m.seg(v3.add(stool, [Math.cos(a) * .14, 0, Math.sin(a) * .14]), v3.add(stool, [0, WITCH_SEAT_HEIGHT - .05, 0]), .02, .02, M.FRAME, { group: gst }); } // her stool, behind the decks
   for (const [a, y, k] of [[-Math.PI / 2 - 1.55, 1.1, 0], [-Math.PI / 2 + 1.5, 1.2, 1], [-Math.PI / 2 + .1, 1.55, 2], [Math.PI + .55, 1.0, 3]]) { const c = [Math.cos(a) * (SR - .07), sy + y, Math.sin(a) * (SR - .07)], d = [-Math.sin(a), 0, Math.cos(a)]; m.box(c, [.17, .23, .01], [M.ACCENT, M.CLOTH, M.BODY2, M.EAR][k], { dir: d, up: [0, 1, 0], round: .005, group: g(), paint: p => { const u = v3.dot(v3.sub(p, c), d) / .17, v = (p[1] - c[1]) / .23; return Math.hypot(u, v - .2) < .45 ? [M.BODY2, M.ACCENT, M.CLOTH, M.ACCENT][k] : v < -.55 && Math.abs(u) < .7 && ((u + 2) * 6) % 1 < .5 ? M.SHADES : undefined; } }); } // party flyers on the walls
-  { const gl = g(), top = [0, sy + S.studio.h + .6, 1.9], bulb = [0, sy + 1.6, 1.9]; m.seg(top, v3.add(bulb, [0, .16, 0]), .008, .008, M.BODY3, { group: gl }); m.seg(v3.add(bulb, [0, .17, 0]), v3.add(bulb, [0, .02, 0]), .03, .16, M.BODY3, { group: gl }); m.ell(bulb, [.07, .06, .07], M.MAGIC2, { group: gl }); } // a pendant lamp over the decks
+  { const gl = g(), top = [0, sy + S.studio.h + .6, 1.0], bulb = [0, sy + 1.6, 1.0]; m.seg(top, v3.add(bulb, [0, .16, 0]), .008, .008, M.BODY3, { group: gl }); m.seg(v3.add(bulb, [0, .17, 0]), v3.add(bulb, [0, .02, 0]), .03, .16, M.BODY3, { group: gl }); m.ell(bulb, [.07, .06, .07], M.MAGIC2, { group: gl }); } // a pendant lamp over the decks
   { const gl = g(), f = [-1.6, sy, -1.7]; m.seg(f, v3.add(f, [0, 1.25, 0]), .02, .02, M.BODY3, { group: gl }); m.seg(v3.add(f, [0, 1.25, 0]), v3.add(f, [0, 1.05, 0]), .04, .14, M.STRAW, { group: gl }); m.ell(v3.add(f, [0, 1.1, 0]), [.06, .05, .06], M.MAGIC2, { group: gl }); } // a floor lamp
-  lights.push({ at: [0, sy + 1.55, 1.9], rgb: [255, 214, 150], kind: "studio lamp" }, { at: [-1.6, sy + 1.1, -1.7], rgb: [255, 200, 130], kind: "studio lamp" });
-  lights.push({ at: [0, sy + 1.0, 1.4], rgb: [255, 200, 120], kind: "studio" }, { at: [Math.cos(-Math.PI / 2 + .62) * SR, sy + 1.2, Math.sin(-Math.PI / 2 + .62) * SR], rgb: [255, 190, 96], kind: "studio window" }, { at: [-.6, sy + S.studio.h - .1, 1.6], rgb: [255, 120, 220], kind: "fairy lights" });
-  for (const [x, rgb] of [[-.45, [80, 230, 255]], [0, [255, 80, 200]], [.45, [255, 214, 80]]]) lights.push({ at: [x, sy + .7, 2.3], rgb, kind: "decks" }); // the decks' and mixer's indicator lights, for the game to pulse with the music
+  lights.push({ at: [0, sy + 1.55, 1.0], rgb: [255, 214, 150], kind: "studio lamp" }, { at: [-1.6, sy + 1.1, -1.7], rgb: [255, 200, 130], kind: "studio lamp" });
+  lights.push({ at: [0, sy + 1.6, .7], rgb: [255, 200, 120], kind: "studio" }, { at: [Math.cos(-Math.PI / 2 + .62) * SR, sy + 1.2, Math.sin(-Math.PI / 2 + .62) * SR], rgb: [255, 190, 96], kind: "studio window" }, { at: [-.6, sy + S.studio.h - .1, 1.6], rgb: [255, 120, 220], kind: "fairy lights" });
+  for (const [c, rgb] of [[DJ_DECKS.platter.c, [255, 80, 200]], [0, [255, 214, 80]], [-DJ_DECKS.platter.c, [80, 230, 255]]]) lights.push({ at: dj.to([DJ_DECKS.depth[1] + .35, DJ_DECKS.top * .5, c]), rgb, kind: "decks" }); // the decks' LEDs, lighting the booth's front (out in front of it, not on her), for the game to pulse
   { const gl = g(), D = S.studio.deck, n = 40; for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; m.ell([Math.cos(a) * (D - .05), sy - .16, Math.sin(a) * (D - .05)], [.05, .035, .05], FAIRY[k % 4], { group: gl, extra: true }); } lights.push({ at: [0, sy - .2, S.studio.deck], rgb: [80, 230, 255], kind: "LED strip" }); } // an LED strip under the deck's edge
   // ---- the loft: a smaller storey, a loudspeaker on its balcony, solar panels on its roof ----
   deck(S.loft, { under: 5 });
@@ -179,7 +221,7 @@ function treehouseModel() {
     m.chain(rail, M.BODY3, { group: g() }); }
   for (const [a, y0, y1] of [[Math.PI / 2 + 1.55, S.studio.y, S.loft.y], [Math.PI / 2 + 1.45, S.loft.y, S.tower.y]]) { const gl = g(), D = y0 < 6 ? 2.6 : 2.05; for (const off of [-.18, .18]) { const b = a + off / D; m.seg([Math.cos(b) * D, y0, Math.sin(b) * D], [Math.cos(b) * D, y1, Math.sin(b) * D], .025, .025, M.WOOD, { group: gl }); } for (let y = y0 + .3; y < y1; y += .32) m.seg([Math.cos(a - .18 / D) * D, y, Math.sin(a - .18 / D) * D], [Math.cos(a + .18 / D) * D, y, Math.sin(a + .18 / D) * D], .02, .02, M.WOOD, { group: gl }); } // ladders up the outside
   m.ell([0, .005, 0], [4.6, .005, 3.6], M.NOSE, { group: 0 }); // its shadow on the ground
-  return { m, lights, seat: stool, door: [Math.cos(Math.PI / 2 + .05) * S.porch.R, S.porch.y, Math.sin(Math.PI / 2 + .05) * (S.porch.R + .05)], camera: [0, sy + .95, 1.9], splitY: sy + S.studio.h + 1.5, footprint: 4.3, crownR, trunkR: 1.55 }; // trunkR: its radius 3 m up
+  return { m, lights, dj, seat: DJ_STAND, door: [Math.cos(Math.PI / 2 + .05) * S.porch.R, S.porch.y, Math.sin(Math.PI / 2 + .05) * (S.porch.R + .05)], camera: [0, sy + .95, 1.9], splitY: sy + S.studio.h + 1.5, footprint: 4.3, crownR, trunkR: 1.55 }; // trunkR: its radius 3 m up
 }
 
 // The treehouse at the witch's scale: { whole, top, bot, fore, crownY, anchors: { base, seat, door, camera, lights: [{ x, y, rgb, kind }] }, metres }.
@@ -191,7 +233,7 @@ function treehouseModel() {
 // trunk (the giant tree's diameter 3 m up) and crown (its crown's radius). fore: the DJ table alone, at the same size and origin
 // as whole, for the game to draw over the witch sitting behind it.
 export function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
-  const T = treehouseModel(), ppu = witchPixelsPerUnit(st), r = render(T.m, { scale: ppu, facing }), full = r.sp, um = u => +(u * ppu / ppm).toFixed(1); // model units to metres
+  const T = treehouseModel(facing), ppu = witchPixelsPerUnit(st), r = render(T.m, { scale: ppu, facing }), full = r.sp, um = u => +(u * ppu / ppm).toFixed(1); // model units to metres
   // cropped to what is drawn (a part's bounding sphere leaves empty rows above it); anchors move with it
   let x0 = full.w, x1 = -1, y0 = full.h; for (let y = 0; y < full.h; y++) for (let x = 0; x < full.w; x++) if (full.m[y * full.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
   const sp = new Sprite(x1 - x0 + 1, full.h - y0); for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = (y + y0) * full.w + x + x0; if (full.m[i]) sp.put(x, y, full.m[i], full.n[i * 3], full.n[i * 3 + 1], full.n[i * 3 + 2]); }
@@ -203,10 +245,20 @@ export function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) 
     (LEAVES.has(mm) || y < crownY ? top : bot).put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
   }
   const at = p => { const [x, y] = project(p); return { x, y }; };
-  // fore: the DJ table alone, where it shows in the whole sprite (same size and origin), for the game to draw over her
-  const fm = new Model({ blend: .04 }); djTable(fm); const rf = render(fm, { scale: ppu, facing }), P0 = [0, DJ.y + .3, DJ.z], [ax, ay] = r.project(P0), [bx, by] = rf.project(P0), fore = new Sprite(sp.w, sp.h);
-  for (let y = 0; y < rf.sp.h; y++) for (let x = 0; x < rf.sp.w; x++) { const i = y * rf.sp.w + x, mm = rf.sp.m[i]; if (!mm) continue; const X = Math.round(x + ax - bx - x0), Y = Math.round(y + ay - by - y0); if (X < 0 || Y < 0 || X >= sp.w || Y >= sp.h || !sp.m[Y * sp.w + X]) continue; const j = Y * sp.w + X; if (sp.m[j] !== M.LINE && sp.m[j] !== mm && !(mm === M.LINE)) continue; fore.put(X, Y, sp.m[j], sp.n[j * 3], sp.n[j * 3 + 1], sp.n[j * 3 + 2]); }
+  // fore: the DJ table alone, where it shows in the whole sprite (same size and origin), for the game to draw over her; and
+  // foreFrames, its DJ_FRAMES turns cropped to the box they share (foreBox: its top-left in the whole sprite's pixels)
+  const P0 = T.dj.to([DJ_DECKS.platter.a, DJ_DECKS.top, 0]), [ax, ay] = r.project(P0), frames = [];
+  for (let k = 0; k < DJ_FRAMES; k++) {
+    const fm = new Model({ blend: .04 }); djTable(fm, { frame: k, facing }); const rf = render(fm, { scale: ppu, facing }), [bx, by] = rf.project(P0), fs = new Sprite(sp.w, sp.h);
+    for (let y = 0; y < rf.sp.h; y++) for (let x = 0; x < rf.sp.w; x++) { const i = y * rf.sp.w + x, mm = rf.sp.m[i]; if (!mm) continue; const X = Math.round(x + ax - bx - x0), Y = Math.round(y + ay - by - y0); if (X < 0 || Y < 0 || X >= sp.w || Y >= sp.h) continue; fs.put(X, Y, mm, rf.sp.n[i * 3], rf.sp.n[i * 3 + 1], rf.sp.n[i * 3 + 2]); }
+    frames.push(fs);
+  }
+  const fore = frames[0]; // (and the house shows it exactly as drawn over her: alone, its edges carry no lines against the room behind)
+  for (let i = 0; i < fore.m.length; i++) if (fore.m[i]) for (const t of [sp, bot]) t.put(i % sp.w, Math.floor(i / sp.w), fore.m[i], fore.n[i * 3], fore.n[i * 3 + 1], fore.n[i * 3 + 2]);
+  let fx0 = sp.w, fx1 = -1, fy0 = sp.h, fy1 = -1;
+  for (const fs of frames) for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (fs.m[y * sp.w + x]) { fx0 = Math.min(fx0, x); fx1 = Math.max(fx1, x); fy0 = Math.min(fy0, y); fy1 = Math.max(fy1, y); }
+  const foreFrames = frames.map(fs => { const c = new Sprite(fx1 - fx0 + 1, fy1 - fy0 + 1); for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) { const i = (y + fy0) * sp.w + x + fx0; if (fs.m[i]) c.put(x, y, fs.m[i], fs.n[i * 3], fs.n[i * 3 + 1], fs.n[i * 3 + 2]); } return c; });
   const S = TREEHOUSE_STOREYS;
-  return { whole: sp, top, bot, fore, crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
+  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
     metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), towerFloor: um(S.tower.y), roofTip: um(S.tower.y + S.tower.h + 3.3 + .3), footprint: um(T.footprint), overhang: um(S.studio.deck), trunk: um(T.trunkR * 2), crown: um(T.crownR) } };
 }
