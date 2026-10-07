@@ -10,6 +10,7 @@ import type { Creature } from "../../rules/creatures";
 import type { RigFace, RigGear, RigMeta } from "./rigBuild";
 import type { Tuning } from "../../rules/tuning";
 import { ENRAGED_TINT } from "../looks";
+import { hasOverride } from "../overrides";
 
 /** The live rig is on (Ed, 2026-10-05: "let's put what we have live"); ?rig=0 turns it off, for comparison. */
 export const rigOn = (): boolean => typeof location === "undefined" || new URLSearchParams(location.search).get("rig") !== "0";
@@ -28,7 +29,7 @@ export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
   let by = faceMetas.get(meta); if (!by) faceMetas.set(meta, (by = {}));
   return (by[face!] ??= { ...meta, head });
 }
-export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number }
+export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number; /** its character (render/character.ts): its posture, and its idle quirk and how far through it (-1: none) */ posture?: { hx: number; hy: number; by: number }; quirk?: string; quirkK?: number }
 
 export class RigView {
   private bodies = new Map<number, RigBody>();
@@ -40,6 +41,9 @@ export class RigView {
   private R = new THREE.Vector3(); private U = new THREE.Vector3(); private F = new THREE.Vector3();
   /** Creatures drawn with the rig this frame, its instances, and its own time (ms). */
   stats = { creatures: 0, instances: 0, ms: 0 };
+
+  /** A wild legend's batch look (render/view/creatures.ts legendLook: its sleeping rim and its light in steps), set by the view. */
+  legendLook: ((species: string) => { legend?: THREE.Vector4; legendFloor?: number; steps?: number }) | null = null;
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
 
@@ -58,6 +62,7 @@ export class RigView {
   /** Lays out a creature with the rig, if its template has one and its parts are baked: true when drawn. */
   add(c: Creature, look: RigLook): boolean {
     if ((!this.ground || look.h * look.scale < this.minPx) && !this.always.includes(c.level)) return false; // (legends always: Ed, 2026-10-05)
+    if (hasOverride(c.species, c.level)) return false; // (a hand-drawn level: its own frames, art/overrides)
     const t0 = performance.now(), art = this.assets.rigArt(c.species, c.level, look.gear);
     if (!art) return false;
     let body = this.bodies.get(c.id);
@@ -84,7 +89,7 @@ export class RigView {
     let air = 0, crouch = winding;
     if (lp) { const k = (time - lp.at) / Math.max(0.01, lp.lands - lp.at); if (k < 0) crouch = Math.max(crouch, 1 + k * 3); else if (k <= 1) air = Math.sin(k * Math.PI); else crouch = Math.max(crouch, Math.max(0, 1 - (k - 1) * 4)); }
     crouch = Math.max(crouch, (look.crouch ?? 0) * 0.8); // an attack's wind-up crouches it too (render/attackFeel.ts)
-    return { crouch: Math.max(0, Math.min(1, crouch)), charging: charging || !!look.lunging, air, tap: look.tap ?? 0, sleep: look.sleep ?? 0, droop: look.droop ?? look.sleep ?? 0, twitch: look.twitch ?? 0 };
+    return { crouch: Math.max(0, Math.min(1, crouch)), charging: charging || !!look.lunging, air, tap: look.tap ?? 0, sleep: look.sleep ?? 0, droop: look.droop ?? look.sleep ?? 0, twitch: look.twitch ?? 0, posture: look.posture, quirk: look.quirk, quirkK: look.quirkK ?? -1 };
   }
 
   /** Each item as an instance: the sprite placed so its pivot pixel lands on the item's world point. The limbs' discs go in a batch of
@@ -93,7 +98,7 @@ export class RigView {
   private place(c: Creature, art: RigArt, look: RigLook, u2m: number): void {
     const key = art.atlas.albedo.uuid, dkey = key + "|discs", discs = discFrames(art.meta);
     for (const k of [key, dkey]) if (!this.pool.has(k)) { this.pool.set(k, []); this.used.set(k, 0); }
-    if (!this.batches.has(key)) for (const [k, rim] of [[key, true], [dkey, false]] as const) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined }); this.batches.set(k, b); this.scene.add(...b.meshes); }
+    if (!this.batches.has(key)) for (const [k, rim] of [[key, true], [dkey, false]] as const) { const L = c.boss && !c.leashed && this.legendLook ? this.legendLook(c.species) : {}, b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined, ...(rim ? L : { steps: L.steps }) }); this.batches.set(k, b); this.scene.add(...b.meshes); } // (a legend's look: its rim on its body, not its legs' discs)
     const pools = [this.pool.get(key)!, this.pool.get(dkey)!], ns = [this.used.get(key)!, this.used.get(dkey)!];
     const m = this.mpp * look.scale, R = this.R, U = this.U, F = this.F, sx = look.sx ?? 1, sy = look.sy ?? 1;
     for (let k = 0; k < this.out.n; k++) {

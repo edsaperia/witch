@@ -9,13 +9,13 @@
 // the stones between them reversed, 2-opt, and a stone whose links still meet another's moved to
 // wherever they cross fewest); then a few crossings added (addCrossings) within Ed's rules
 // (CROSSING_RULES: at most 4, none the pulse would pass over already drawn ahead of it, 350 m apart).
-// ?route=varied gives the order before it (variedOrder: petals round home, then sweeps, lobes or
-// combs). Past the rules, the noisy picker's order untangled instead. Seeded only by the map; no
+// Past the rules, the noisy picker's order untangled instead. Seeded only by the map; no
 // drawing here.
 import type { ForestMap } from "./map";
 import { departureClear, departureRoute } from "./departure";
 import { polylinesMeet, segmentsMeet, type P2 } from "./crossing";
 import { rng } from "./random";
+import { fitWays } from "./leycurve";
 
 export type { P2 };
 
@@ -24,8 +24,11 @@ export interface LeyRoute {
   order: string[];
   /** Each one's stone (its soundsystem's spot), in that order. */
   stones: P2[];
-  /** links[i] runs into order[i]: links[0] the departure curve from the treehouse, the rest straight. */
+  /** links[i] runs into order[i]: links[0] the departure curve from the treehouse, the rest curving smoothly through
+   *  each stone, never tighter than leyLines.minRadius (rules/leycurve.ts). */
   links: P2[][];
+  /** The same links straight from stone to stone, as the order was planned on. */
+  straight?: P2[][];
 }
 
 const ROUTES = new WeakMap<ForestMap, LeyRoute>();
@@ -34,16 +37,99 @@ const ROUTES = new WeakMap<ForestMap, LeyRoute>();
  *  without it (the noisy picker's: its lobes and wanderings, so every map's differs), untangled;
  *  if it still crosses itself, the order nudged a little (a few neighbouring stones swapped, seeded)
  *  and untangled again, up to TRIES times, the least crossed kept (none, on every seed tried). */
-export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () => string[], finish?: (r: LeyRoute) => LeyRoute): LeyRoute {
+export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () => string[], finish?: (r: LeyRoute) => LeyRoute, others?: () => string[][]): LeyRoute {
   let r = ROUTES.get(map);
   if (!r) {
     r = planRoute(map, initial());
+    // A route that turns back toward home late on (untangling can reverse a long run: seed 2 once the ghost areas went,
+    // Ed v1628; seed 32 before): the other orders planned too, the one with the least late dip that keeps Ed's crossing
+    // rules kept. (Most maps' routes are sound: nothing more to plan.)
+    if (others && routeShape(map, r.stones).lateDip > SPIRAL_RULES.maxDip) {
+      let dip = routeShape(map, r.stones).lateDip;
+      for (const o of others()) { const q = planRoute(map, o), d = routeShape(map, q.stones).lateDip; if (d < dip - 1 && withinCrossingRules(q.links)) { r = q; dip = d; } }
+    }
+    // A link straight over the dancefloor (Ed, 2026-10-06: never; a smaller map's first ring can leave a gap round home
+    // that the spiral jumps across): the other orders planned, the first that keeps clear of it and Ed's crossing rules kept.
+    const overIt = (q: LeyRoute) => q.stones.some((s, i) => i > 0 && overHome(map, q.stones[i - 1], s));
+    if (others && overIt(r)) for (const o of others()) { const q = planRoute(map, o); if (!overIt(q) && withinCrossingRules(q.links) && routeShape(map, q.stones).lateDip <= SPIRAL_RULES.maxDip) { r = q; break; } }
     if (finish && withinCrossingRules(r.links)) r = finish(r);
     if (fallback && !withinCrossingRules(r.links)) r = planRoute(map, fallback());
+    r = curved(map, r);
     ROUTES.set(map, r);
   }
   return r;
 }
+
+/** The route's links curved (Ed, 2026-10-06: "can we give leylines a maximum curvature so they don't kink like this?"):
+ *  through every stone in one sweep, never tighter than leyLines.minRadius (rules/leycurve.ts). */
+export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
+  if (!r.stones.length) return r;
+  const R = leyRadius(map), ways = new Map<string, number>();
+  let heads: number[] = [];
+  const own = new Set(crossingPairs(r.links).map(([i, j]) => `${i},${j}`)); // (the straight line's own few crossings, Ed's)
+  const make = (o: LeyRoute, only?: [number, number]): LeyRoute => {
+    const f = fitWays(o.links[0], o.stones, R, { keep: (i, j) => own.has(`${i},${j}`), from: only ? o.order.map(k => ways.get(k) ?? NaN) : undefined, only });
+    heads = f.heads;
+    return { ...o, straight: o.links, links: f.links };
+  };
+  const keepWays = (o: LeyRoute) => o.order.forEach((k, i) => ways.set(k, heads[i])); // (the ways the kept route goes through its stones)
+  const T0 = performance.now(); let best = make(r), bestPairs = crossingPairs(best.links), bestC = bestPairs.length; if (globalThis.process?.env?.LEYPROF) console.log("fit", Math.round(performance.now() - T0));
+  keepWays(best);
+  // A changed route's crossings: those of the links outside [lo, hi] as they were, and the changed links' afresh.
+  const pairsAfter = (links: P2[][], lo: number, hi: number): [number, number][] => {
+    const inn = (k: number) => k >= lo && k <= hi, out: [number, number][] = bestPairs.filter(([a, b]) => !inn(a) && !inn(b));
+    for (let a = Math.max(0, lo); a <= Math.min(links.length - 1, hi); a++) for (let b = 0; b < links.length; b++) if (b !== a && !(inn(b) && b < a) && (a < b ? polylinesMeet(links[a], links[b]) : polylinesMeet(links[b], links[a]))) out.push(a < b ? [a, b] : [b, a]);
+    return out;
+  };
+  // Where its curves still meet (a wide swing into a strand passing close by), the stones between the two links turned
+  // round (2-opt, as untangle does on the straight line) and curved again, kept if it meets less and is no worse a shape.
+  const dip = routeShape(map, r.stones).lateDip;
+  let bestOk = withinCrossingRules(best.links, CROSSING_RULES, bestPairs);
+  for (let round = 0, tried = 0; round < 6 && !bestOk && tried < 60; round++) {
+    let improved = false;
+    // (the curves' own crossings first; then, if the rules still fail (two of the straight line's own few curved closer
+    // together than CROSSING_RULES.apart), those too; the first stone stays first: the departure leads to it)
+    for (const [i, j] of [...bestPairs].sort((p, q) => +own.has(`${p[0]},${p[1]}`) - +own.has(`${q[0]},${q[1]}`))) {
+      // the stones between them turned round, or one stone swapped with its neighbour near either link (two hairpins
+      // close together: a stone taken in the other order)
+      // (or a few round them turned round, or the stone at the crossing taken a few waves sooner or later)
+      const N = best.stones.length, tries: { a: number; b: number; move?: number; perm?: number[] }[] = [[i, j], [i - 1, i + 1], [i, i + 2], [j - 1, j + 1], [j, j + 2], [i - 1, i + 2], [i - 2, i + 2], [i - 2, i + 3]].map(([a, b]) => ({ a, b }));
+      for (const at of [i, j]) for (const d of [-3, -2, 2, 3]) tries.push({ a: at, b: at + d, move: 1 });
+      // (at the start, where the departure fixes the first stone's way and the first stones lie close together: every
+      // order of the next four)
+      if (i <= 1) for (const perm of PERMS4) tries.push({ a: 1, b: 5, perm });
+      for (const { a, b, move, perm } of tries) {
+        let st: P2[], keys: string[];
+        if (perm) {
+          if (N < 6) continue;
+          st = [...best.stones]; keys = [...best.order];
+          perm.forEach((p, k) => { st[1 + k] = best.stones[1 + p]; keys[1 + k] = best.order[1 + p]; });
+        } else if (move) {
+          if (a < 1 || b < 1 || a >= N || b >= N) continue;
+          st = [...best.stones]; keys = [...best.order];
+          const [sv] = st.splice(a, 1), [kv] = keys.splice(a, 1); st.splice(b, 0, sv); keys.splice(b, 0, kv);
+        } else {
+          if (a < 1 || b > N || b - a < 2) continue;
+          st = [...best.stones.slice(0, a), ...best.stones.slice(a, b).reverse(), ...best.stones.slice(b)]; keys = [...best.order.slice(0, a), ...best.order.slice(a, b).reverse(), ...best.order.slice(b)];
+        }
+        const straight: P2[][] = [best.straight![0] as P2[]];
+        for (let k = 1; k < st.length; k++) straight.push([st[k - 1], st[k]]);
+        if (++tried > 60) break;
+        const lo = Math.min(a, b) - 2, hi = Math.max(a, b) + 1, o = make({ order: keys, stones: st, links: straight }, [lo, hi]), ps = pairsAfter(o.links, lo, hi + 1), c = ps.length;
+        const ok = withinCrossingRules(o.links, CROSSING_RULES, ps);
+        if (((ok && !bestOk) || (ok === bestOk && c < bestC)) && routeShape(map, st).lateDip <= Math.max(dip, SPIRAL_RULES.dip)) { best = o; bestPairs = ps; bestC = c; bestOk = ok; improved = true; keepWays(o); break; }
+      }
+      if (improved) break;
+    }
+    if (!improved) break;
+  }
+  if (globalThis.process?.env?.LEYPROF) console.log("all", Math.round(performance.now() - T0));
+  return best;
+}
+/** Every order of four (but the one they're in). */
+const PERMS4 = ((): number[][] => { const out: number[][] = [], go = (p: number[], rest: number[]) => { if (!rest.length) { if (p.join() !== "0,1,2,3") out.push(p); return; } rest.forEach((r, k) => go([...p, r], [...rest.slice(0, k), ...rest.slice(k + 1)])); }; go([], [0, 1, 2, 3]); return out; })();
+/** The tightest the ley line turns (metres; leyLines.minRadius, 30 by default). */
+export const leyRadius = (map: ForestMap) => map.tuning.leyLines.minRadius ?? 30;
 
 /** Ed's limits on crossings. At most `max` a map (Ed, 2026-10-06: "A map can have at most four crossings").
  *  The pulse never passes over a crossing already drawn ahead of it (Ed, 2026-10-06; this replaced
@@ -54,11 +140,12 @@ export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () 
  *  Crossings at least `apart` metres from each other on the map. links[i] runs into the (i + 1)th
  *  wave's stone. */
 export const CROSSING_RULES = { max: 4, pace: 3, margin: 1, apart: 350 };
-/** Adding crossings to the spiral (spiralRoute): each new link at most `stretch` times the mean link;
+/** maxDip: the planned route's late dip (routeShape) past which leyRoute plans the other orders it's given (the spiral's other ring counts).
+ *  Adding crossings to the spiral (spiralRoute): each new link at most `stretch` times the mean link;
  *  no reversal pulling the route's distance from home (smoothed over `smooth` waves) back more than
  *  `dip` metres below the farthest it has been, after the first `dipFrom` waves (or the plain spiral's
  *  own worst, if more). */
-export const SPIRAL_RULES = { stretch: 2, dip: 160, smooth: 9, dipFrom: 24, tries: 600, local: 12 };
+export const SPIRAL_RULES = { stretch: 2, dip: 160, smooth: 9, dipFrom: 24, tries: 600, local: 12, maxDip: 380 };
 export function crossingPairs(links: readonly (readonly P2[])[]): [number, number][] {
   const out: [number, number][] = [];
   for (let i = 0; i < links.length; i++) for (let j = i + 1; j < links.length; j++) if (polylinesMeet(links[i], links[j])) out.push([i, j]);
@@ -84,8 +171,7 @@ export function meetPoint(p: readonly P2[], q: readonly P2[]): P2 | null {
   for (let i = 0; i + 1 < p.length; i++) for (let j = 0; j + 1 < q.length; j++) { const m = segmentPoint(p[i], p[i + 1], q[j], q[j + 1]); if (m) return m; }
   return null;
 }
-export function withinCrossingRules(links: readonly (readonly P2[])[], rules = CROSSING_RULES): boolean {
-  const ps = crossingPairs(links);
+export function withinCrossingRules(links: readonly (readonly P2[])[], rules = CROSSING_RULES, ps = crossingPairs(links)): boolean {
   if (ps.length > rules.max || !ps.every(([i, j]) => j >= rules.pace * (i + 1) + rules.margin)) return false;
   const pts = ps.map(([i, j]) => meetPoint(links[i], links[j]) ?? links[i][0]);
   for (let a = 0; a < pts.length; a++) for (let b = a + 1; b < pts.length; b++) if (Math.hypot(pts[a][0] - pts[b][0], pts[a][1] - pts[b][1]) < rules.apart) return false;
@@ -136,7 +222,10 @@ function segsMeet(s: Seg, t: Seg): boolean {
  *  alternately (a gentle zigzag); on about half the rings (not the last), one wedge reaches out as a
  *  little lobe through the next ring's stones in it (out along its first half, back along the second;
  *  the next ring skips them). */
-export function spiralOrder(map: ForestMap): string[] {
+export function spiralOrder(map: ForestMap): string[] { return spiralWith(map); }
+
+/** The spiral with its rings: K of them, or the seeded 5 to 7 (spiralOrder). */
+export function spiralWith(map: ForestMap, ringsOver?: number): string[] {
   const R = rng(map.seed * 7919 + 41), d = map.dancefloor, home = `${map.centreCell[0]},${map.centreCell[1]}`, TAU = Math.PI * 2;
   const wrap = (a: number) => ((a % TAU) + TAU) % TAU;
   type Pt = { k: string; r: number; a: number; p: P2 };
@@ -151,7 +240,7 @@ export function spiralOrder(map: ForestMap): string[] {
   // 2026-10-06: "After going around the speaker circle it should go off to the right and loop around to whatever direction
   // it needs to go"; rules/departure.ts): round the speakers from the treehouse and off to the right, so the spiral goes
   // on the way the line came, never folding back. (It was either way round, from anywhere, seeded.)
-  const K = 5 + Math.floor(R() * 3), dir = (R(), -1), seeded = (R(), Math.PI / 2), n = all.length;
+  const K0 = 5 + Math.floor(R() * 3), K = ringsOver ?? K0, dir = (R(), -1), seeded = (R(), Math.PI / 2), n = all.length;
   const byR = [...all].sort((u, v) => u.r - v.r), rings: Pt[][] = [];
   for (let i = 0; i < K; i++) rings.push(byR.slice(Math.round((i * n) / K), Math.round(((i + 1) * n) / K)));
   // The first stone: the innermost of the first ring's just past the line's way out (so the ring's end, coming back round,
@@ -274,68 +363,9 @@ export function addCrossings(map: ForestMap, route: LeyRoute): LeyRoute {
   return { order: keys, stones: st, links: linksOf(st) };
 }
 
-/** A varied order to start from (Ed, 2026-10-06: "mix in back-and-forth sweeps and lobes so maps aren't
- *  all spirals"), seeded by the map: first petals round home (lobes: wedges of random width, out along
- *  one half and back along the other, to a random reach), then the rest of the map in a few sectors
- *  round it, each filled one of three ways: sweeps (back and forth round in bands, each band the other
- *  way), lobes (narrower petals), or a comb (out and back in, stepping round); which way round home it
- *  goes and where it starts, seeded too. */
-export function variedOrder(map: ForestMap): string[] {
-  const R = rng(map.seed * 6151 + 29), d = map.dancefloor, home = `${map.centreCell[0]},${map.centreCell[1]}`, TAU = Math.PI * 2;
-  const wrap = (a: number) => ((a % TAU) + TAU) % TAU;
-  type Pt = { k: string; r: number; a: number };
-  const all: Pt[] = [];
-  for (const [x, y] of map.cells) { // (the playable areas: never the circular map's buffer ring)
-    const k = `${x},${y}`;
-    if (k === home) continue;
-    const q = map.soundsystemSpot(x, y);
-    all.push({ k, r: Math.hypot(q.x - d.x, q.z - d.z), a: Math.atan2(q.x - d.x, q.z - d.z) });
-  }
-  const near = all.filter(p => map.neighbours.get(home)?.has(p.k)), ring = near.length ? near.reduce((t, p) => t + p.r, 0) / near.length : map.areaSize;
-  const seeded = R() * TAU, dir = R() < 0.5 ? 1 : -1;
-  // (the first petal starts just before the first of home's neighbours round from the seeded angle, so the route always leaves from beside home)
-  const first = near.length ? near.reduce((m, p) => (wrap(dir * (p.a - seeded)) < wrap(dir * (m.a - seeded)) ? p : m)) : null;
-  const a0 = first ? first.a - dir * 1e-3 : seeded, rel = (p: Pt) => (dir > 0 ? wrap(p.a - a0) : wrap(a0 - p.a));
-  const out: string[] = [], used = new Set<string>();
-  const take = (list: Pt[]) => { for (const p of list) if (!used.has(p.k)) { used.add(p.k); out.push(p.k); } };
-  const petal = (ps: Pt[], from: number, w: number) => {
-    const mid = from + w / 2, q = ps.filter(p => !used.has(p.k) && rel(p) >= from && rel(p) < from + w);
-    take(q.filter(p => rel(p) < mid).sort((u, v) => u.r - v.r));
-    take(q.filter(p => rel(p) >= mid).sort((u, v) => v.r - u.r));
-  };
-  // Petals round home.
-  const inner = 1.4 + R() * 1.4;
-  for (let at = 0; at < TAU - 0.3; ) {
-    const w = Math.min(TAU - at, 0.6 + R() * 1.2), reach = ring * (inner + R() * 2.2);
-    petal(all.filter(p => p.r <= reach), at, w);
-    at += w;
-  }
-  // The rest, sector by sector.
-  const sectors = 2 + Math.floor(R() * 3), bounds: number[] = [];
-  for (let i = 0; i < sectors; i++) bounds.push((i / sectors) * TAU + (R() - 0.5) * 0.6);
-  bounds.push(TAU);
-  for (let i = 0; i < sectors; i++) {
-    const lo = Math.max(0, bounds[i]), hi = bounds[i + 1], ps = all.filter(p => !used.has(p.k) && rel(p) >= lo && rel(p) < hi);
-    if (!ps.length) continue;
-    const kind = Math.floor(R() * 3);
-    if (kind === 0) { // sweeps
-      const band = ring * (0.9 + R() * 0.6), rmin = Math.min(...ps.map(p => p.r)), bands = new Map<number, Pt[]>();
-      for (const p of ps) { const b = Math.floor((p.r - rmin) / band); let l = bands.get(b); if (!l) bands.set(b, (l = [])); l.push(p); }
-      [...bands.keys()].sort((u, v) => u - v).forEach((b, j) => take(bands.get(b)!.sort((u, v) => (j % 2 ? rel(v) - rel(u) : rel(u) - rel(v)))));
-    } else if (kind === 1) { // lobes
-      for (let s = lo; s < hi - 1e-6; ) { const w = Math.min(hi - s, 0.3 + R() * 0.5); petal(ps, s, w); s += w; }
-    } else { // a comb
-      const step = 0.12 + R() * 0.12;
-      for (let s = lo, j = 0; s < hi - 1e-6; s += step, j++) take(ps.filter(p => !used.has(p.k) && rel(p) >= s && rel(p) < s + step).sort((u, v) => (j % 2 ? v.r - u.r : u.r - v.r)));
-    }
-  }
-  take(all.filter(p => !used.has(p.k)).sort((u, v) => rel(u) - rel(v)));
-  return out;
-}
-
 const TRIES = 30;
 
-function planRoute(map: ForestMap, order: string[]): LeyRoute {
+export function planRoute(map: ForestMap, order: string[]): LeyRoute {
   let best = untangle(map, order) ?? { order: [], stones: [], links: [] }, bestC = crossingsOf(best.links);
   const R = rng(map.seed * 4099 + 17);
   for (let t = 1; t <= TRIES && bestC > 0; t++) {

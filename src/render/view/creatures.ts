@@ -1,5 +1,8 @@
 // The creatures and berries (from render/view.ts, issue #122): each creature's look, dance, glow and
 // shadow every frame, and the berries growing back and nibbled.
+import { characterOf, quirkAt, bounceAt, spriteQuirk } from "../character";
+import * as THREE from "three";
+import type { Tuning } from "../../rules/tuning";
 import type { CreatureArt } from "../assets";
 import { ENRAGED_TINT, dances, expression, lookOf } from "../looks";
 
@@ -9,7 +12,7 @@ import type { RigGear } from "../rig/rigBuild";
 import type { ShadowInstance } from "../shadows";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { beatTime } from "../../rules/beat";
-import { bossBreath } from "../leash";
+import { bossBreath, legendNeon } from "../leash";
 import { dormant } from "../../rules/game";
 import { hash2 } from "../../rules/random";
 import { restlessness } from "../../rules/dream";
@@ -19,19 +22,20 @@ import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
 import { legendSleep, newSleepTrack, type SleepPose } from "../legendSleep";
+const SQ = { hop: 0, x: 0, sx: 1, sy: 1, turned: false }; // (a baked frame's idle quirk, filled each creature: no allocation)
 
 const FEEL = newFeel(); // (filled per creature, never kept)
 const SLEEP: SleepPose = { sleep: 0, droop: 0 }; // (likewise)
 
 /** The baked walk's frame (0 or 1) by how far it has gone as drawn (Ed's playtest: feet walking in place, or not walking while it
  *  moves): a step every `step` metres, standing (frame 0) once it has stopped for a quarter of a second. One small record per creature. */
-function strideFrame(v: View, c: { id: number; x: number; z: number }, time: number, step: number): number {
+function strideFrame(v: View, c: { id: number; x: number; z: number }, time: number, step: number, frames = 2): number {
   let o = v.strides.get(c.id);
   if (!o) v.strides.set(c.id, (o = { x: c.x, z: c.z, d: 0, at: -1 }));
   const d = Math.hypot(c.x - o.x, c.z - o.z);
   if (d > 1e-3 && d < 3) { o.d += d; o.at = time; } // (a jump of metres is a teleport, not a step)
   o.x = c.x; o.z = c.z;
-  return time - o.at < 0.25 ? Math.floor(o.d / Math.max(0.05, step)) % 2 : 0;
+  return time - o.at < 0.25 ? Math.floor(o.d / Math.max(0.05, step)) % frames : 0;
 }
 
 const WOKEN_GEAR: RigGear = { woken: true };
@@ -68,11 +72,13 @@ export function drawBerries(v: View, time: number): void {
 
 export function drawCreatures(v: View, time = 0): void {
   const g = v.game, R = g.tuning.haze.far + 20;
-  const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [];
+  const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [], legendKeys = new Map<string, string>();
   const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
   let n = 0;
   v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
-  for (const c of g.creatures) {
+  if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning);
+  for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
+    const c = g.creatures[i];
     if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
     if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
     // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
@@ -100,20 +106,24 @@ export function drawCreatures(v: View, time = 0): void {
     // Its expression, part of its face (art/genome/expressions.js; render/looks.ts expression): the party looks are happy and the woken one angry already.
     const face = sleeping || lying > 0.5 ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? v.assets.faceArt(c.species, face) : undefined;
     // Asleep, its own sleeping form (art/legends.js), drawn once it's baked; until then the awake one sunk, as before.
-    const slept = sleeping ? v.assets.sleepArt(c.species) : undefined;
+    // (Ed's round 14 playtest, "it's hard to make out what it is at all": with wildLegends.seen.nap its nap, art/naps.js, the animal itself lying asleep, not a mound)
+    const slept = sleeping ? (g.tuning.wildLegends.seen?.nap ? v.assets.napArt(c.species) : v.assets.sleepArt(c.species)) : undefined;
     // Lain down asleep (more than half way: the rig, where it draws, carries it there and back), its nap (art/naps.js), its level's frames.
     const napped = !st && lying > 0.5 ? v.assets.napArt(c.species, party ? { id: c.id, colour: look === "leashed" ? sigilColour(c.species) : null } : undefined) : undefined; // (a party animal asleep in its party gear: Ed, 2026-10-06)
     const art = napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = napped ? (party ? `nap-${look === "happy" ? "happy" : "party"}-${c.id}` : `nap-${c.species}`) : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
     if (!art) continue;
-    arts.set(key, art);
-    const fi = slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37)) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * 0.3), c.away), frame = art.atlas.frames[fi]; // (asleep: a slow breath, in and out)
+    const lk = c.boss && !c.leashed && g.tuning.wildLegends.seen ? `legend-${key}` : key; // (a wild legend in a batch of its own: its rim and its light in steps)
+    if (lk !== key) legendKeys.set(lk, c.species);
+    arts.set(lk, art);
+    const gait = art.walk, fi = slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.step ?? 0.3), gait?.frames ?? 2), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
     // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
     const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
-    const bossScale = boss ? boss.scale * (1 + boss.breathe * bossBreath(time, c.id, boss.breathEvery * (dormant(g, c) ? 1.5 : 1))) : 1;
+    // (its size a constant, so its pixels stay the scene's: its breath a squash in whole art pixels, sy, not a swelling; Ed's round 14 playtest)
+    const breath = boss ? 1 + boss.breathe * bossBreath(time, c.id, boss.breathEvery * (dormant(g, c) ? 1.5 : 1)) : 1, bossScale = boss ? boss.scale * (boss.seen ? 1 : breath) : 1, breathY = boss?.seen ? breath : 1;
     if (!inView(v, c.x, c.z, frame.w * v.mpp * bossScale, frame.h * v.mpp * bossScale, 4)) continue;
     const fresh = mark(v, "creature", c.x, c.z, frame.h * v.mpp * (boss ? boss.scale : 1), c.id);
-    let l = per.get(key);
-    if (!l) per.set(key, (l = []));
+    let l = per.get(lk);
+    if (!l) per.set(lk, (l = []));
     // Party animals never stand still: a bounce and a sway on the beat when idle, a little
     // bounce as they go. (Wild ones roam, graze and pause.)
     const ph = (bt / beat + (c.id % 4) * 0.25) * Math.PI;
@@ -161,10 +171,16 @@ export function drawCreatures(v: View, time = 0): void {
     if (form && st) glow = -2; else if (lying > 0 && st) glow = -2 - W.moss * lying; // (a legend's moss; a napping creature is itself)
     // Restless in its sleep (#87, a nightmare): it tosses in bursts, and turns over when it's bad (on the rig, its legs paddle and its head jerks).
     const toss = sleeping ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
+    // Its character (render/character.ts, config/character.json): the posture it holds, its idle quirk while it stands about (not
+    // fighting, dancing or asleep), and a happy creature's bounce now and then (a party or happy one not dancing).
+    const ch = characterOf(c.species), standing = !c.moving && !c.charge && !c.leap && lying <= 0 && !party2 && !feel.crouch && !feel.lunging;
+    const quirkK = standing ? quirkAt(c.id, ch, time) : -1;
+    if (standing && (look === "leashed" || look === "happy") && !c.boss) hop += bounceAt(c.id, time);
+    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy * breathY, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK }))) // the rig draws it, if it can
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
-      const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1);
-      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k, y: dance + hop + sunk, z: c.z + R.z * k, frame, flip, fresh, glow, scale, sx: feel.sx, sy: feel.sy });
+      spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
+      const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip !== SQ.turned, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1) + SQ.x * fh;
+      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k, y: dance + hop + sunk + SQ.hop * fh, z: c.z + R.z * k, frame, flip, fresh, glow, scale, sx: feel.sx * SQ.sx, sy: feel.sy * breathY * SQ.sy });
     }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     // Its shadow under it as drawn (its sway and a nightmare's tossing too), as big as it's drawn (a legend's size, an evolving
@@ -176,9 +192,19 @@ export function drawCreatures(v: View, time = 0): void {
   v.rig?.end();
   for (const [s, b] of v.creatureBatches) if (!per.has(s)) b.set([]);
   for (const [s, list] of per) {
-    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-") && !s.startsWith("nap-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+    const k = legendKeys.has(s) ? s.slice(7) : s; // (a legend's batch: as its own key's, plus its look)
+    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
     b?.set(list);
   }
   v.stats.creatures = n;
   if (v.game.tuning.shadows.on) v.shadows.set(v.shadowList.concat(creatureShadows, v.witchShadows));
+}
+
+/** A wild legend's batch (Ed's round 14 playtest: "Legends in the circle are not very distinct"; "the same pixel density and palette
+ *  discipline as the rest of the scene"): its sleeping outline in its sigil's neon (a little toward white, so a deep colour still shows
+ *  at night) and a light floor (render/sprites.ts uLegend: on instances drawn asleep, glow -2), and its light in steps of brightness. */
+export function legendLook(species: string, t: Tuning): { legend?: THREE.Vector4; legendFloor?: number; steps?: number } {
+  const S = t.wildLegends.seen;
+  if (!S) return {};
+  return { legend: new THREE.Vector4(...legendNeon(species), S.rim), legendFloor: S.floor, steps: S.steps ?? 0 };
 }

@@ -6,6 +6,7 @@ import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
+import { overrideFor, poseName, type Override } from "./overrides";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
@@ -82,16 +83,36 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // The grove's trees (a legend's ring of old giants, Ed 2026-10-06): the two tallest classes it has.
   const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => variants.some(v => v.heightClass === c)), of = (c?: string) => variants.flatMap((v, i) => (v.heightClass === c ? [i] : []));
   layout.grove.giant = of(have[have.length - 1]); layout.grove.tall = have.length > 1 ? of(have[have.length - 2]) : layout.grove.giant;
-  def.big.forEach(([kind], i) => {
-    if (kind === "tree" && variants.length) return;
-    layout.big.push({ bot: add(withSway(assets.big[i].sp, (assets.big[i] as { sway?: unknown }).sway)), top: null });
+  // The baked pieces stand for the area's list entries (a.from): one each, or under the prop generator (?props=gen) n variants of
+  // one, each a share of that entry's weight (a.share). Walked by piece, not by entry, so each entry is its own art.
+  type Asset = { sp: Baked; sway?: unknown; sparse?: number; from: number; share?: number };
+  const bigs = assets.big as Asset[], smalls = assets.small as Asset[];
+  const firstBig = layout.big.length;
+  bigs.forEach(a => {
+    if (def.big[a.from][0] === "tree" && variants.length) return;
+    layout.big.push({ bot: add(withSway(a.sp, a.sway)), top: null });
     // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
     // sparsely: their art's own sparse share as their weight among the area's big objects (about
     // a fifth of them all), the mounds, boulders and logs at 1.
-    const sparse = (assets.big[i] as { sparse?: number }).sparse;
-    layout.bigWeight.push(variants.length ? 0.1 : sparse ?? 1);
+    layout.bigWeight.push(variants.length ? 0.1 * (a.share ?? 1) : a.sparse ?? a.share ?? 1);
   });
-  def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(withSway(assets.small[i].sp, (assets.small[i] as { sway?: unknown }).sway)), top: null }));
+  // An area with no trees (Ed, 2026-10-06: "Legend with no tall trees around it"): its legends' groves grow its two tallest big
+  // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring;
+  // every variant of each.
+  if (!variants.length && bigs.length) {
+    const tallest = new Map<number, number>(); // (an entry's tallest piece, in art pixels)
+    bigs.forEach(a => tallest.set(a.from, Math.max(tallest.get(a.from) ?? 0, a.sp.h)));
+    const byH = [...tallest].filter(([, h]) => h >= 48).sort((a, b) => b[1] - a[1]).map(([from]) => from); // (as tall as she is or more: no boulders or mounds)
+    const of = (from: number) => bigs.flatMap((a, j) => (a.from === from ? [firstBig + j] : []));
+    if (byH.length) { layout.grove.giant = of(byH[0]); layout.grove.tall = of(byH[1] ?? byH[0]); }
+  }
+  // The small objects are picked evenly, so each entry gets as many slots as the most variants any has (a plain one repeated).
+  const slots = Math.max(1, ...def.small.map((_, i) => smalls.filter(a => a.from === i).length));
+  def.small.forEach(([kind, o], i) => {
+    const mine = smalls.filter(a => a.from === i);
+    const pieces = kind === "tree" ? [tree(o as TreeOpts, 500 + i)] : mine.map(a => ({ bot: add(withSway(a.sp, a.sway)), top: null }));
+    for (let k = 0; k < slots && pieces.length; k++) layout.small.push(pieces[k % pieces.length]);
+  });
   for (const a of assets.walls) layout.walls.push(add(a.sp));
   for (const a of assets.rim) layout.rim.push({ frame: add(a.sp), form: a.kind, height: a.metres.height });
   if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null, origin: assets.setPiece.origin };
@@ -101,13 +122,32 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
 /** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null): Baked[] {
   const out: Baked[] = [];
-  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
+  const n = (Art.walkGait(species) as { frames: number }).frames; // (its walk's frames: 2, or its own cycle's)
+  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < n; f++) {
+    const hand = overrideFor(species, poseName(level, f, facing === "away")); // (a hand-drawn frame: art/overrides, as it is)
+    if (hand) { out.push(bakeOverride(hand, mk)); continue; }
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
     const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
     if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
     out.push(b);
   }
   return out;
+}
+
+/** A hand-drawn frame (art/overrides/README.md) as a baked sprite: its pixels as drawn (alpha 254 glows, under 128 is empty,
+ *  the rest solid) and a flat normal facing us, so the light falls on it evenly. */
+export function bakeOverride(o: Override, mk: MakeCanvas): Baked {
+  const A = mk(o.w, o.h), N = mk(o.w, o.h);
+  const ca = A.getContext("2d") as CanvasRenderingContext2D, cn = N.getContext("2d") as CanvasRenderingContext2D;
+  const a = ca.createImageData(o.w, o.h), n = cn.createImageData(o.w, o.h);
+  for (let i = 0; i < o.w * o.h; i++) {
+    const al = o.rgba[i * 4 + 3];
+    if (al < 128) continue;
+    a.data.set([o.rgba[i * 4], o.rgba[i * 4 + 1], o.rgba[i * 4 + 2], al === 254 ? 254 : 255], i * 4);
+    n.data.set([128, 128, 255, 255], i * 4);
+  }
+  ca.putImageData(a, 0, 0); cn.putImageData(n, 0, 0);
+  return { A, N, w: o.w, h: o.h };
 }
 
 // Wild creatures' eyes (Ed, v244): packPixels gives their eye pixels alpha 253, so the sprite
@@ -119,8 +159,11 @@ function eyeMask(m: ArrayLike<number>): Uint8Array | undefined {
   for (let i = 0; i < m.length; i++) if (EYES.has(m[i])) { out[i] = 1; any = true; }
   return any ? out : undefined;
 }
-/** Towards: frames 0-7 (level x 2 + walk frame); away: the same, from 8. */
-export const creatureFrame = (level: number, f: number, away = false) => (away ? 8 : 0) + level * 2 + f;
+/** Towards: frames 0 to 4n - 1 (level x n + walk frame, n its walk's frames: 2 unless it has its own cycle); away: the
+ *  same, from 4n. */
+export const creatureFrame = (level: number, f: number, away = false, n = 2) => (away ? 4 * n : 0) + level * n + (((f % n) + n) % n);
+/** A species' walk: its frames, and how far it moves between them (a share of its sprite's width). */
+export const walkGait = (species: string): { frames: number; step: number } => Art.walkGait(species) as { frames: number; step: number };
 
 function pixels(c: AnyCanvas, w: number, h: number): Uint8ClampedArray {
   const ctx = c.getContext("2d") as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -167,6 +210,8 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
   | { kind: "decor"; id: string; style: Style }
+  /** The beach's edge of the woods (render/beach.ts): palms (split as trees are), beach shrubs and grass clumps, each with its sway mask. */
+  | { kind: "beachEdge"; id: string; style: Style; K: number }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
   | { kind: "pathPieces"; id: string; style: Style }
   /** Modern relics, playground and sports pieces, with the art's arrangements. */
@@ -200,6 +245,9 @@ export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean
 /** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
 export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The small runestone each home speaker starts as (Ed, 2026-10-06), and its ground point. */ stone?: number; stoneOrigin?: { x: number; y: number } }
 
+/** The beach's edge of the woods in its atlas (render/beach.ts): palms as crown and trunk frames, shrubs and grass clumps whole. */
+export interface BeachEdgeArt { palms: { top: number; bot: number }[]; shrubs: number[]; grass: number[] }
+
 /** One relic in its atlas: family (modern, playground, sports), whether it's a flat ground decal, and its ground point. */
 export interface RelicArt { id: string; family: string; decal: boolean; frame: number; originX: number; originY: number }
 export type RelicLayouts = Record<string, { id: string; x: number; z: number }[]>;
@@ -212,7 +260,7 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
+export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
 
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
@@ -278,12 +326,30 @@ function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces
     const r = Art.pathPieceSprite(d.id, st) as { sp: unknown; origin: { x: number; y: number } };
     pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
-  // Under ?props=gen, each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
+  // With the prop generator (the game always has it on), each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
   if ((st as { propGen?: number }).propGen) for (const id of Art.PATH_GEN_IDS as string[]) for (let k = 0; k < (Art.BRIDGE_VARIANTS as number); k++) {
     const r = Art.pathPieceSprite(`${id}~${k}`, st) as { sp: unknown; origin: { x: number; y: number } };
     pieces.push({ id: `${id}~${k}`, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
   return { sprites, pieces };
+}
+
+/** The beach's edge of the woods (Ed, 2026-10-06, after a photo of a real beach forest: "rounded bushes and shrubs, dense low
+ *  vegetation, pandanus and palm-like plants, clumps spilling onto the sand"): the art's palms, and its shrubs, round bushes, ferns
+ *  and grass, in a beach palette (the leaves a deep green, a little brighter than the woods' at night), with their sway masks. */
+function beachEdgeSprites(st: Style, K: number, mk: MakeCanvas): { sprites: Baked[]; beach: BeachEdgeArt } {
+  const sprites: Baked[] = [], beach: BeachEdgeArt = { palms: [], shrubs: [], grass: [] }, add = (b: Baked) => sprites.push(b) - 1;
+  const bst = { ...st, leafHue: 0.31, leafVal: 1.12, leafVariety: 0.12, bushSize: (st as { bushSize: number }).bushSize * K } as Style;
+  const sway = (b: Baked, sp: unknown) => ({ ...b, S: Art.bakeSway(sp, mk) as Baked["A"] });
+  for (let v = 0; v < 4; v++) {
+    const r = Art.rng(9100 + v * 37) as () => number, f = Art.palmTree as (r: () => number, st: Style, s: number) => unknown;
+    const t = f(r, bst, (st as { treeSize: number }).treeSize * K * (0.8 + 0.12 * v)), col = Art.treeColours(r, bst, f), parts = Art.splitTree(t) as { top: unknown; bot: unknown };
+    beach.palms.push({ top: add(sway(Art.bake(parts.top, col, bst, "none", mk) as Baked, parts.top)), bot: add(sway(Art.bake(parts.bot, col, bst, "none", mk) as Baked, parts.bot)) });
+  }
+  const kinds = ["shrub", "round", "shrub", "fern", "round", "shrub", "fern", "round"];
+  kinds.forEach((kind, i) => { const { sp, colours } = Art.bush(Art.rng(9300 + i * 41), bst, kind) as { sp: unknown; colours: unknown }; beach.shrubs.push(add(sway(Art.bake(sp, colours, bst, "none", mk) as Baked, sp))); });
+  for (let i = 0; i < 4; i++) { const { sp, colours } = Art.bush(Art.rng(9500 + i * 43), bst, "grass") as { sp: unknown; colours: unknown }; beach.grass.push(add(sway(Art.bake(sp, colours, bst, "none", mk) as Baked, sp))); }
+  return { sprites, beach };
 }
 
 function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: DecorPiece[] } {
@@ -305,7 +371,7 @@ function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; part
   type Def = { id: string; cls: string; light: string | null; frames: number; hang?: boolean };
   const refs = new Set<string>(), palettes = ["neon", "pastel", "metallic", "mixed"];
   for (const d of Art.PARTY_OBJECTS as Def[]) {
-    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only under ?props=gen
+    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only with it (the game always has it on)
     const neons = d.light === "neon" ? (Art.PARTY_LIGHT_NEONS as string[]).map(n => "@" + n) : [""];
     for (const n of neons) for (const p of d.cls === "balloon" ? palettes.map(q => "~" + q) : [""]) refs.add(`party:${d.id}${n}${p}`);
   }
@@ -388,6 +454,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
   if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk); return { px: packPixels(sprites, 2048), speakers }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
+  if (job.kind === "beachEdge") { const { sprites, beach } = beachEdgeSprites(job.style, job.K, mk); return { px: packPixels(sprites, 2048), beachEdge: beach }; }
   // (enraged: red eyes and the angry face; dressed up: the happy face; art/genome/expressions.js)
   if (job.kind === "sleep") {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];

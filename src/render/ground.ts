@@ -19,6 +19,9 @@ import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
 
+/** How much smaller her warm pool is on the open sand than on the forest floor (the beach's: render/ground.ts). */
+const BEACH_POOL = 2.2;
+
 const TEXELS_PER_METRE = 2;
 const TILE = 32; // texels
 const FLOOR_COLS = 8;
@@ -56,6 +59,7 @@ uniform vec4 uCircle;
 uniform vec4 uBeach; // the beach round the circular map: its centre x, z, how far in from the edge the sand starts, out past it the sea (metres); off while .z is 0
 uniform float uCoast[${COAST_SAMPLES}]; // the edge's radius round (rules/mapShape.ts beachOf: from angle -pi, eased between)
 uniform float uSand[${COAST_SAMPLES}]; // the sand's width round, likewise (its bays and narrows)
+uniform vec3 uMoonRoad; // the sky's moon on the screen (its x, a fraction from the left), the picture's width (px), 1 while it's up
 uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
 // The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
@@ -103,18 +107,36 @@ ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
 }
 void main() {
   vec2 px = floor(vWorld.xz / uPixel);           // the art pixel this fragment is in
+  // How many art pixels one screen pixel spans (taken here, in uniform flow): over 1 at a low, squashed angle (stargazing, the
+  // bend's far edge), where pixel-fine patterns alias into stripes; the sand fades its fine detail by it (fine, 1 to 0).
+  float squash = max(fwidth(vWorld.x), fwidth(vWorld.z)) / uPixel, fine = 1.0 - smoothstep(0.75, 1.6, squash);
   vec2 p = (px + 0.5) * uPixel;                   // its centre, in metres
   // Wobble the lookup a little so area borders read as ragged, not as the texture's grid.
   vec2 j = vec2(vnoise(px / 5.0) - 0.5, vnoise(px / 5.0 + 17.0) - 0.5) * 0.9;
   // The beach and the sea (Ed, 2026-10-06; on only while she's near the edge: render/beach.ts).
+  float shoreNear = 0.0; // (the forest floor near the sand: more moonlight, greener; Ed, 2026-10-06: "the forest still shows greens rather than black")
   if (uBeach.z > 0.0) {
     vec2 bv = p - uBeach.xy;
     float ang = atan(bv.y, bv.x), cu = (ang + 3.14159265) / 6.2831853 * ${COAST_SAMPLES}.0, cf = fract(cu);
     int c0 = int(mod(floor(cu), ${COAST_SAMPLES}.0)), c1 = int(mod(floor(cu) + 1.0, ${COAST_SAMPLES}.0));
-    float edge = mix(uCoast[c0], uCoast[c1], cf), sand = edge - mix(uSand[c0], uSand[c1], cf), shore = edge + uBeach.w;
+    float edge = mix(uCoast[c0], uCoast[c1], cf), sandW = mix(uSand[c0], uSand[c1], cf), sand = edge - sandW, shore = edge + uBeach.w;
     float bd = length(bv), arc = ang * edge;
-    float into = (bd - sand - (vnoise(vec2(arc / 9.0, 3.0)) - 0.5) * 12.0) / 14.0; // (the woods' ragged edge, giving way to sand)
-    if (into > 0.0 && (into >= 1.0 || vnoise(px / 2.0) * 0.6 + bayer4(px) * 0.4 < into)) {
+    // The woods' edge (Ed, 2026-10-06: "The transition between beach and forest looks odd", with a photo of a real beach forest):
+    // no speckled band; a clean, scalloped line, the bushes along it (render/beach.ts) spilling over it, a strip of beach
+    // grass on the woods' side, and on the sand a soft dappled shadow under them before the clean pale sand.
+    float into = bd - sand - ((vnoise(vec2(arc / 7.0, 3.0)) - 0.5) * 7.0 + (vnoise(vec2(arc / 2.3, 11.0)) - 0.5) * 2.0) * clamp(sandW / 24.0, 0.3, 1.0); // metres past the line, sand side (scalloped less where the sand's narrow: render/beachEdge.ts scallop)
+    shoreNear = 1.0 - smoothstep(0.0, 16.0, -into);
+    if (into <= 0.0 && into > -2.6) {
+      // The beach grass: a strip of tussocks, blades lighter and darker, sand showing through at its outer edge.
+      vec2 bp = floor(px / vec2(1.0, 2.0));
+      float hb = fract(sin(dot(bp, vec2(12.9898, 78.233))) * 43758.5453), tuft = vnoise(p / 1.3 + 41.0);
+      vec3 gcol = mix(vec3(0.2, 0.31, 0.2), vec3(0.34, 0.45, 0.27), step(0.62, hb)) * (0.85 + 0.3 * tuft);
+      if (into > -0.9 && tuft < 0.45 + into * 0.4) gcol = vec3(0.45, 0.44, 0.4); // (the sand between the outer tussocks)
+      vec3 glit = max(nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0), vec3(0.24, 0.26, 0.3));
+      gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), gcol * glit * 1.2), vWorld), vWorld), 1.0);
+      return;
+    }
+    if (into > 0.0) {
       // The water's edge: a calm wave running up the sand and back, every seven seconds or so.
       float lap = 0.5 + 0.5 * sin(uTime * 0.9 + vnoise(vec2(arc / 60.0, 7.0)) * 6.0);
       float front = shore - 1.0 - 4.0 * lap;
@@ -136,23 +158,54 @@ void main() {
         if (spec > 0.993) col = mix(col, uMoon + vec3(0.25), 0.8);
         else if (spec > 0.975) col = mix(col, uMoon * 0.7, 0.3);
         else if (mod(px.y, 6.0) < 1.0 && vnoise(px / vec2(9.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.75) col += vec3(0.09, 0.13, 0.15); // a swell catching the light
+        // The moon's road (Ed, 2026-10-07: "glints as small bright pixel sparkles in a moon path"): straight down the water
+        // under the moon the sky draws, narrow far off and widening toward her, single art pixels sparkle and go out,
+        // thickest on its line and thinning off it, each lit for a moment at its own time; warm white with the moon's
+        // colour in it. By the screen, not the grazing reflection: a stargazer's camera sits a few metres over the water.
+        float far = length(p - cameraPosition.xz), off = (gl_FragCoord.x / max(1.0, uMoonRoad.y) - uMoonRoad.x) / (0.02 + 3.0 / max(8.0, far));
+        float road = uMoonRoad.z * exp(-off * off * 2.0);
+        float gh = fract(sin(dot(px, vec2(27.17, 113.9))) * 43758.5453), tw = fract(gh * 7.0 + uTime * (0.6 + gh * 0.9));
+        float glint = gh > 0.995 - road * 0.3 && tw < 0.45 ? (tw < 0.15 ? 1.0 : 0.65) : 0.0; // (put on after the haze: a spark punches through)
+        if (glint == 0.0 && road > 0.25 && mod(px.y, 3.0) < 1.0 && vnoise(px / vec2(5.0, 1.0) + vec2(uTime * 0.5, 0.0)) > 0.65) col += uMoon * 0.22 * road; // the road's broken shimmer
         if (bd < front + 1.0 + lap) col = mix(col, vec3(0.42, 0.66, 0.7), 0.4); // the shallows over the sand
-        gl_FragColor = vec4(haze(col, vWorld), 1.0);
+        // Over the water the far haze is thinner (the north beach's sea reads on the horizon, its road with it, rather than
+        // fading into the sky's glow).
+        gl_FragColor = vec4(mix(mix(col, haze(col, vWorld), 0.45), uMoon * 0.35 + vec3(0.85, 0.86, 0.82), glint), 1.0);
         return;
       }
-      // The sand: pale in the moonlight, grains and drifts; dark where the waves have wet it, with the
-      // moon's sheen on it; a line of foam at the water's edge; shells and pebbles here and there.
+      // The sand: moonlit, not sunlit (Ed, 2026-10-06: "The beach is very bright for nighttime"): a muted, cool, pale grey-beige
+      // about as bright as the lighter forest floors, grains and drifts; dark where the waves have wet it, with the moon's sheen
+      // on it, and a touch brighter toward the water, catching the moonlight off it; a line of foam at the water's edge; shells
+      // and pebbles here and there. Her warm pool on it (glowPool) keeps the sand's own brightness, so it never blows it out.
       float g = vnoise(px / vec2(8.0, 5.0)) * 0.6 + vnoise(px / 1.7) * 0.4;
-      col = vec3(0.95, 0.87, 0.68) * (g < 0.35 ? 0.93 : g > 0.68 ? 1.04 : 1.0);
-      if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 0.94; // ripples the wind left
+      col = vec3(0.6, 0.58, 0.54) * mix(1.0, g < 0.35 ? 0.93 : g > 0.68 ? 1.04 : 1.0, fine);
+      if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 1.0 - 0.06 * fine; // ripples the wind left
       float wet = shore - 6.0 + vnoise(vec2(arc / 20.0, 1.0)) * 1.5;
-      if (bd > wet) col = mix(col, vec3(0.42, 0.4, 0.36), smoothstep(wet, wet + 1.5, bd));
-      if (bd > front - uPixel * 1.5) col = vec3(0.8, 0.84, 0.88);
+      if (bd > wet) col = mix(col, vec3(0.3, 0.31, 0.32), smoothstep(wet, wet + 1.5, bd));
+      // The wave's edge (Ed, 2026-10-07: "a soft foamy pixel line that laps in and out on the sand"): a broken crest of foam
+      // pixels at the front, bubbles thinning behind it, and as the wave draws back a lace of foam left on the wet sand; in
+      // the night's own foam colour (art2's #364), the bubbles and lace smoothed where the pixels squash (fine).
+      float fd = front - bd, ebb = cos(uTime * 0.9 + vnoise(vec2(arc / 60.0, 7.0)) * 6.0); // (ebb > 0: running up; < 0: drawing back)
+      float froth = vnoise(px / vec2(2.0, 1.0) + vec2(uTime * 0.7, 0.0)) * 0.65 + vnoise(px / 0.9 + 3.0) * 0.35;
+      if (fd < uPixel * 1.5 && froth > 0.32) col = vec3(0.62, 0.68, 0.74); // the crest
+      else if (fd < uPixel * 1.5) col = mix(col, vec3(0.62, 0.68, 0.74), 0.55);
+      else if (fd < 1.2 && froth > 0.55 + fd * 0.25) col = mix(col, vec3(0.58, 0.63, 0.68), 0.7 * fine); // bubbles behind it
+      else if (ebb < 0.0 && fd < 2.2 + 2.5 * lap && abs(fract(fd * 0.9 - lap * 2.0) - 0.5) < 0.08 && froth > 0.5) col = mix(col, vec3(0.5, 0.54, 0.58), 0.5 * fine); // the lace left as it draws back
       float sh = fract(sin(dot(floor(px / 2.0), vec2(41.3, 289.1))) * 43758.5453);
-      if (sh > 0.993) col = mix(vec3(0.82, 0.78, 0.72), vec3(0.45, 0.43, 0.42), fract(sh * 13.0));
-      vec3 lit = max(nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0), vec3(0.3, 0.31, 0.36)); // (pale sand: it holds what light there is)
-      if (bd > wet && bd < front && mod(px.x + px.y, 3.0) < 1.0) lit += uMoon * 0.12; // the wet sand's sheen
-      gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), col * lit * 1.25), vWorld), vWorld), 1.0);
+      if (sh > 0.993) col = mix(col, mix(vec3(0.62, 0.6, 0.57), vec3(0.34, 0.33, 0.33), fract(sh * 13.0)), fine);
+      vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
+      lit += uMoon * 0.14 * smoothstep(wet - 18.0, wet, bd); // (toward the water, the moonlight off it)
+      if (bd > wet && bd < front) lit += uMoon * (mod(px.x + px.y, 3.0) < 1.0 ? 0.12 * fine : 0.0) + uMoon * 0.04 * (1.0 - fine); // the wet sand's sheen (smooth where the pixels squash)
+      // Under the bushes at the woods' edge, a soft dappled shadow (light can be smooth: Ed), and the sand's glow calmer near the
+      // dark woods, so the step from sand to forest isn't harsh.
+      float shade = (1.0 - smoothstep(0.0, 6.0, into)) * (0.7 + 0.3 * vnoise(p / 1.7 + 5.0));
+      col *= 1.0 - 0.5 * shade;
+      float calm = 0.82 + 0.18 * smoothstep(4.0, 22.0, into);
+      // (her warm pool on the open sand a lantern's few metres, not the woods' wide one: no canopy breaks it up out here, Ed:
+      // "a warm pool of a few metres on the sand"; glowPool reads only the distance across the ground, so the sand's is taken
+      // BEACH_POOL times as far)
+      vec3 poolAt = uGlowPos + (vWorld - uGlowPos) * vec3(${BEACH_POOL.toFixed(2)}, 1.0, ${BEACH_POOL.toFixed(2)});
+      gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), col * lit * 1.25 * calm), poolAt), vWorld), 1.0); // (lit as the forest floor is)
       return;
     }
   }
@@ -370,9 +423,7 @@ void main() {
     vec2 q = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
     float leaves = vnoise(q / 2.6) * 0.6 + vnoise(q / 1.1 + 31.0) * 0.4;
     float cover = uCanopy.z * smoothstep(0.0, 1.0, (open - uClearing.x) / max(0.01, uClearing.y));
-    float edge = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.03 : -0.03;
-    if (uSmooth > 0.5) moonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
-    else if (leaves + edge < cover) moonK = 1.0 - uCanopy.x;
+    moonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
   }
   // Fake relief (Ed, v171): two octaves of noise as a height; its slope tilts the ground's normal
   // so lights pick out rises and hollows, and the hollows are a little darker. Shading only.
@@ -398,6 +449,7 @@ void main() {
     if (floor(hc / 0.5) != floor(hx / 0.5) || floor(hc / 0.5) != floor(hz / 0.5)) c = mod(floor(hc / 0.5 + 0.5), 5.0) < 0.5 ? vec3(0.02, 0.02, 0.04) : vec3(0.12, 0.1, 0.16); // every 2.5 m darkest
     if (mod(px.x, 10.0 / uPixel) < 1.0 || mod(px.y, 10.0 / uPixel) < 1.0) c *= 0.85;
   }
+  if (shoreNear > 0.0) { moonK = mix(moonK, 1.0, shoreNear * 0.7); c = mix(c, c * vec3(0.95, 1.18, 1.0) * 1.2, shoreNear * 0.6); } // (by the sand, the woods' floor in more moonlight, greener)
   vec3 light = nightLightShaded(N, vWorld, moonK);
   gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), c * light * 1.25), vWorld), vWorld), 1.0); // (her pool in her light's colour)
 }
@@ -450,6 +502,7 @@ export class Ground {
         uBeach: { value: new THREE.Vector4() },
         uCoast: { value: new Array(COAST_SAMPLES).fill(0) },
         uSand: { value: new Array(COAST_SAMPLES).fill(0) },
+        uMoonRoad: { value: new THREE.Vector3() },
         uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uSweepCount: { value: 0 },
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
@@ -527,6 +580,8 @@ export class Ground {
 
   /** The magic circle: its two hues, brightness now, and the rune band's turn. */
   /** The beach and the sea (render/beach.ts): drawn only while given one (she's near the edge). */
+  /** Where the sky draws the moon (rules/moon.ts x, a fraction across) and the picture's width (px): the sea's moon road under it. */
+  moonRoad(x: number, widthPx: number, up: boolean): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uMoonRoad.value as THREE.Vector3).set(x, widthPx, up ? 1 : 0); }
   setBeach(b: Beach | null): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
     if (b) { v.set(b.x, b.z, b.width, b.out); u.uCoast.value = Array.from(b.coast); u.uSand.value = Array.from(b.sand); } else v.set(0, 0, 0, 0);

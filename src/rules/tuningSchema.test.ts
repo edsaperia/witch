@@ -16,11 +16,11 @@ describe("the tuning schema (config/schema/tuning.schema.json)", () => {
 
   it("catches a new knob, a wrong type, an out-of-range number and a bad choice", () => {
     const bad = JSON.parse(JSON.stringify(raw));
-    bad.groundSpeed = "fast"; bad.party.interval = -5; bad.fx = "blurry"; bad.newKnob = 1; delete bad.treetopSpeed;
+    bad.groundSpeed = "fast"; bad.party.interval = -5; bad.map.shape = "blurry"; bad.newKnob = 1; delete bad.treetopSpeed;
     const errs = validate(bad, schema, "tuning").join("\n");
     expect(errs).toMatch(/tuning\.groundSpeed: string, should be number/);
     expect(errs).toMatch(/tuning\.party\.interval: -5, below its minimum 0/);
-    expect(errs).toMatch(/tuning\.fx: "blurry", should be one of/);
+    expect(errs).toMatch(/tuning\.map\.shape: "blurry", should be one of/);
     expect(errs).toMatch(/tuning\.newKnob: not in the schema/);
     expect(errs).toMatch(/tuning\.treetopSpeed: missing/);
   });

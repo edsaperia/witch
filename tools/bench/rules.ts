@@ -4,8 +4,8 @@
 // game's state at checkpoints; a refactor that changes no behaviour gives the same fingerprints
 // (tools/bench/run.mjs compares them with a saved baseline). Bundled by tools/bench/run.mjs with
 // esbuild and run in Node: no Three.js, no browser.
-import { createHash } from "node:crypto";
-import { newGame, stepGame, STEP, type Controls, type Game } from "../../src/rules/game";
+import { newGame, stepGame, STEP, type Controls } from "../../src/rules/game";
+import { fingerprint } from "./fingerprint";
 import { TUNING } from "../../src/rules/tuning";
 
 const args = new Map(process.argv.slice(2).map(a => { const [k, v] = a.replace(/^--/, "").split("="); return [k, v ?? "1"]; }));
@@ -18,25 +18,6 @@ const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 function path(i: number): Controls {
   const leg = Math.floor(i / 240) % 6, ang = (leg * Math.PI) / 3;
   return { ...idle, moveX: Math.cos(ang), moveZ: Math.sin(ang), toggleMode: i % 600 === 300, sigil: i % 450 === 200 };
-}
-
-/** JSON of a value with Maps, Sets and typed arrays spelled out, functions left out. */
-function plain(v: unknown): string {
-  return JSON.stringify(v, (_k, x) => (x instanceof Map ? { map: [...x.entries()] } : x instanceof Set ? { set: [...x] } : ArrayBuffer.isView(x) ? { typed: Array.from(x as unknown as ArrayLike<number>) } : typeof x === "function" ? undefined : x));
-}
-const hash = (s: string) => createHash("sha256").update(s).digest("hex").slice(0, 12);
-
-/** The state that moves (the map and the forest are made from the seed and stand still). */
-function fingerprint(g: Game): Record<string, string> {
-  const parts: Record<string, unknown> = {
-    clock: g.clock, witches: g.witches, creatures: g.creatures, party: g.party, combat: g.combat, growth: g.growth,
-    berries: g.berries, beat: g.beat, camera: g.camera, speakers: g.speakers, floor: g.floor, buffs: g.buffs,
-    partyWitches: g.partyWitches, friendly: g.friendly, tally: g.tally, over: g.over,
-  };
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(parts)) out[k] = hash(plain(v));
-  out.all = hash(Object.values(out).join(""));
-  return out;
 }
 
 const pct = (xs: number[], p: number) => { const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };

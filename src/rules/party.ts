@@ -6,7 +6,7 @@ import { stonesTurned } from "./bootRing";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
-import { addCrossings, leyRoute, spiralOrder, variedOrder, type LeyRoute } from "./leyroute";
+import { addCrossings, leyRoute, spiralOrder, spiralWith, type LeyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -98,18 +98,16 @@ function cellsOf(map: ForestMap) {
   return out;
 }
 
-export type Picker = "route" | "noisy" | "near3" | "near3touch" | "nearest";
+export type Picker = "route" | "noisy";
 
-/** Choose the area the next wave wakes, by the tuning's picker (?picker= in the URL):
+/** Choose the area the next wave wakes, by the tuning's picker:
  *  - route (default; Ed, 2026-10-06: the ley line "should cover the entire set of waves the whole
  *    time" and have "no crossings"): the next area in the map's planned order the party hasn't
  *    (routeOf: the noisy picker's order, untangled, rules/leyroute.ts);
  *  - noisy: of the dormant areas bordering the party (no islands), the `candidates`
  *    cheapest by distance to the dancefloor times a smooth seeded wobble (lobes, not a disc),
- *    not beside the last pick if there's another, one at random;
- *  - near3: of all the dormant areas, the 3 nearest the dancefloor, one at random;
- *  - near3touch: the same among those bordering the party;
- *  - nearest: the nearest dormant area bordering the party. */
+ *    not beside the last pick if there's another, one at random (the route's own fallback, past
+ *    the crossing rules). */
 export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0, border?: Set<string>): Cell | null {
   if (picker === "route") {
     for (const key of routeOf(map).order) if (!p.areas.has(key) && !p.ruined?.has(key)) { const c = key.split(",").map(Number) as unknown as Cell; candidates?.push(c); return c; }
@@ -121,22 +119,16 @@ export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tun
   const dormant: { key: string; cell: Cell; dist: number; cost: number }[] = [];
   for (const c of cellsOf(map)) if (!p.areas.has(c.key) && !p.ruined?.has(c.key)) dormant.push(c);
   const frontier = dormant.filter(c => touching.has(c.key));
-  const pool = picker === "near3" ? dormant : frontier.length ? frontier : dormant;
+  const pool = frontier.length ? frontier : dormant;
   if (!pool.length) return null;
-  if (picker === "nearest") { const c = [...pool].sort((a, b) => a.dist - b.dist)[0].cell; candidates?.push(c); return c; }
-  if (picker === "noisy") {
-    let best = [...pool].sort((a, b) => a.cost - b.cost).slice(0, Math.max(1, N.candidates));
-    if (N.spreadFromLast && p.last) {
-      const beside = map.neighbours.get(cellKey(p.last)) ?? new Set<string>();
-      const away = best.filter(c => !beside.has(c.key));
-      if (away.length) best = away;
-    }
-    candidates?.push(...best.map(c => c.cell));
-    return best[Math.floor(r() * best.length)].cell;
+  let best = [...pool].sort((a, b) => a.cost - b.cost).slice(0, Math.max(1, N.candidates));
+  if (N.spreadFromLast && p.last) {
+    const beside = map.neighbours.get(cellKey(p.last)) ?? new Set<string>();
+    const away = best.filter(c => !beside.has(c.key));
+    if (away.length) best = away;
   }
-  const three = [...pool].sort((a, b) => a.dist - b.dist).slice(0, 3);
-  candidates?.push(...three.map(c => c.cell));
-  return three[Math.floor(r() * three.length)].cell;
+  candidates?.push(...best.map(c => c.cell));
+  return best[Math.floor(r() * best.length)].cell;
 }
 
 /** A wave's areas: `n` picked one after another, each as if the ones before had already woken,
@@ -293,14 +285,12 @@ export function spawnMarkers(p: PartyState, map: ForestMap): SpawnMarker[] {
   return out;
 }
 
-/** The ley line's route for this map (rules/leyroute.ts), by party.route (?route=): "spiral" (the
- *  default; Ed, 2026-10-06: spiralOrder, untangled, then a few crossings added within his rules) or
- *  "varied" (the order before it: petals round home, then sweeps, lobes or combs, untangled). Past
- *  the crossing rules, the noisy picker's order, untangled. Worked out once a map. */
+/** The ley line's route for this map (rules/leyroute.ts): the spiral (Ed, 2026-10-06: spiralOrder,
+ *  untangled, then a few crossings added within his rules). Past the crossing rules, the noisy
+ *  picker's order, untangled. Worked out once a map. */
 export function routeOf(map: ForestMap): LeyRoute {
-  const varied = map.tuning.party.route === "varied";
-  return leyRoute(map, () => (varied ? variedOrder(map) : spiralOrder(map)), () => {
+  return leyRoute(map, () => spiralOrder(map), () => {
     const m: ForestMap = { ...map, tuning: { ...map.tuning, party: { ...map.tuning.party, picker: "noisy" } } };
     return [...wavePlan(newParty(m), m).keys()];
-  }, varied ? undefined : r => addCrossings(map, r));
+  }, r => addCrossings(map, r), () => [4, 5, 6, 7, 8, 9].map(K => spiralWith(map, K)));
 }

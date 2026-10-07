@@ -10,7 +10,7 @@
 //   details  the scatter: [{ stamp, n, mats: [dark, mid, light] }], stamps from GR_STAMPS below
 // groundTile(def, st, variant): the tile. The base noise wraps at the edges and is the same in every variant, and every
 // patch, puddle and detail stays inside the tile, so any variant sits next to any other without a seam.
-import { M, Sprite, hsv2rgb, vnoise, rng, hash2 } from "./core.js";
+import { M, Sprite, hsv2rgb, vnoise, rng, hash2, matOf } from "./core.js";
 
 // Stamps: [dx, dy, tone] (0 dark, 1 mid, 2 light) round their anchor, lit from the upper left. size: from the detail's
 // size (1 default), r: a random stream for their own variety.
@@ -57,7 +57,6 @@ export const GROUND_GENOMES = {
   bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
   clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
 };
-const GR_MAT = name => (typeof name === "number" ? name : M[name]);
 
 // The genome an area's floor grows from: its floor kind's, with the area's own `ground` over it.
 export function groundGenome(def) {
@@ -96,11 +95,11 @@ export function groundTile(def, st, variant = 0, W = 64, H = 48) {
   const r = rng(seed * 7 + variant * 7919 + 1), inside = (x, y) => x >= 1 && y >= 1 && x < W - 1 && y < H - 1, set = (x, y, m) => { if (inside(x, y)) sp.px(x, y, m, ...up); };
   // patches and puddles: soft-edged blobs of another ground, kept inside the tile
   const blob = (rx, ry, f) => { const cx = rx + 1 + r() * (W - 2 * rx - 2), cy = ry + 1 + r() * (H - 2 * ry - 2), ph = r() * 9; for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) { const u = (x + .5 - cx) / rx, v = (y + .5 - cy) / ry, d = u * u + v * v + (vnoise(x / 2, y / 2, ph) - .5) * .5; if (d < 1) f(x, y, u, v, d); } };
-  for (const P of g.patches || []) for (let i = 0; i < P.n; i++) { const rx = P.r[0] + r() * (P.r[1] - P.r[0]); blob(rx, rx * .7, (x, y, u, v, d) => set(x, y, d > .7 && v > 0 ? M.BODY2 : u + v < -.6 ? M.LEAF2 : GR_MAT(P.mat))); }
+  for (const P of g.patches || []) for (let i = 0; i < P.n; i++) { const rx = P.r[0] + r() * (P.r[1] - P.r[0]); blob(rx, rx * .7, (x, y, u, v, d) => set(x, y, d > .7 && v > 0 ? M.BODY2 : u + v < -.6 ? M.LEAF2 : matOf(P.mat))); }
   if (g.puddles) for (let i = 0; i < g.puddles.n; i++) { const rx = g.puddles.r[0] + r() * (g.puddles.r[1] - g.puddles.r[0]); blob(rx, rx * .55, (x, y, u, v, d) => set(x, y, d > .72 && v < 0 ? M.BODY2 : d > .72 ? M.BELLY : u < -.3 && v < -.2 && d < .3 ? M.WEB : M.WATER)); }
   // the scatter: each detail's stamp at random spots inside the tile, its tones lit from the upper left
   for (const Dt of g.details) {
-    const mats = Dt.mats.map(GR_MAT), fn = GR_STAMPS[Dt.stamp];
+    const mats = Dt.mats.map(matOf), fn = GR_STAMPS[Dt.stamp];
     for (let i = 0; i < Dt.n; i++) {
       const px = fn(r, Dt.size || 1), x0 = Math.floor(r() * W), y0 = Math.floor(r() * H);
       if (!px.every(([dx, dy]) => inside(x0 + dx, y0 + dy))) continue; // inside the tile only, so variants meet without a seam

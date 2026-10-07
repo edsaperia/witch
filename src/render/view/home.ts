@@ -7,7 +7,7 @@ import { AREA_TYPES } from "../../rules/map";
 import { type Beacon, type Laser, MARKER_LEVELS, type Mote } from "../markers";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import type { WaveNumber } from "../waveNumbers";
-import { beatTime } from "../../rules/beat";
+import { beatAt, beatTime } from "../../rules/beat";
 import { canopyShown } from "../../rules/witch";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
@@ -31,8 +31,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
-  const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
-  const scale = R.scale;
+  const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
   const stone = (x: number, z: number, species: string, level: number, y = 0) => {
     const frame = v.markerArt.atlas.frames[v.markerArt.frame(species, level)];
     if (!inView(v, x, z, frame.w * v.mpp * scale, frame.h * v.mpp * scale, 6)) return false;
@@ -57,8 +56,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     const A = R.awake, D = R.dormant;
     const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
     if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
-    // Awake: a column of light (column), a thin laser straight up (beam), or both (Ed, v149: "let's
-    // see both"); dormant: only the faint column above the canopy. The beams grow as the
+    // Awake: a column of light and a thin laser straight up (Ed, v149: "let's see both"); dormant:
+    // only the faint column above the canopy. The beams grow as the
     // countdown to the stone's wake runs (Ed, 2026-10-04): the next stone's from half to full,
     // the after-next's up to half.
     const grow = m.stage === "next" ? 0.5 + 0.5 * build : m.stage === "afterNext" ? 0.15 + 0.35 * build : 1;
@@ -68,8 +67,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     if (!shown) continue;
     const { up, flare } = shown;
     if (flare > 0) near.push({ d: d - 1e3, l: { x: m.x, y: 3, z: m.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * flare } });
-    if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: (m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam) * (1 + 2 * flare), base: top, height: R.beamHeight * grow * up });
-    if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow * up, base: top });
+    beacons.push({ x: m.x, z: m.z, colour: col, strength: (m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam) * (1 + 2 * flare), base: top, height: R.beamHeight * grow * up });
+    if (m.awake) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow * up, base: top });
     if (m.awake) {
       const n = Math.round(A.motes + A.moteBuild * build);
       for (let i = 0; i < n; i++) {
@@ -193,18 +192,33 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   return lights;
 }
 
+/** How far nearer the camera than the treehouse's own plane the booth's layers are drawn (metres, along the ray to the camera, so
+ *  each lands on its own pixels): her, the DJ table over her, then her upper half over the table (her hands on the decks). */
+export const DJ_DEPTH = { her: 0.25, fore: 0.5, upper: 0.75 };
+/** A point `d` metres nearer the camera along the ray from it (so it lands on the same pixel on screen). */
+export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {
+  const c = v.camera.position, dx = p.x - c.x, dy = p.y - c.y, dz = p.z - c.z, l = Math.hypot(dx, dy, dz) || 1;
+  return { x: p.x - (dx / l) * d, y: p.y - (dy / l) * d, z: p.z - (dz / l) * d };
+}
+
 /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
  *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
  *  pixel on the ground. Returns where its sprite stands (the bottom middle of its box). */
-export function placeTreehouse(v: View, angle: number): { x: number; y: number; z: number } {
+export function placeTreehouse(v: View, angle: number, time: number): { x: number; y: number; z: number } {
   const T = v.assets.treehouse, f = T.atlas.frames, th = v.game.map.treehouse, mpp = v.mpp, U = SPRITE_UNIFORMS.uUp.value;
   const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(v.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
   const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
   const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
   const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
   const items: SpriteInstance[] = [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
-  // The studio's DJ table (v2) a little nearer the camera than her stool, so it stands in front of her.
-  if (T.hasFore) { const fwd = v.camera.getWorldDirection(v.v3b); items.push({ x: at.x - fwd.x * 1.2, y: at.y - fwd.y * 1.2, z: at.z - fwd.z * 1.2, frame: f[2], flip: false, overlay: true }); }
+  // The studio's DJ table over her (Ed, 2026-10-06): its crop where it shows in the base, a frame two to a beat (the platters
+  // turning an eighth, the LEDs chasing), nearer the camera than her.
+  if (T.hasFore) {
+    const k = Math.floor(beatAt(v.game.beat, time) * 2) % T.foreFrames, ff = f[2 + Math.max(0, k)], R = SPRITE_UNIFORMS.uRight.value;
+    const dx = (T.foreBox.x + ff.w / 2 - f[0].w / 2) * mpp, dy = (f[0].h - T.foreBox.y - ff.h) * mpp;
+    const p = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.fore);
+    items.push({ ...p, frame: ff, flip: false, overlay: true });
+  }
   v.treehouseBatch.set(items);
   return at;
 }

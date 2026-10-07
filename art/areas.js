@@ -10,7 +10,7 @@
 import { NEW_SET_PIECES, setPiece3d } from "./setpieces.js";
 import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, bake, defaultCanvas, runeGlyph } from "./core.js";
 import { Model, render, masks, v3 } from "./model3d.js";
-import { sigilHit } from "./sigils.js";
+import { sigilGlyph } from "./sigils.js";
 import { treeSpecies, treeColours, splitTree, bush, nightGreen } from "./trees.js";
 import { bakeSway } from "./sway.js";
 import { AREA_FLORA, floraSlots } from "./flora/areas.js";
@@ -35,7 +35,7 @@ export const AREAS = [
   { id: "muddy-forest", name: "Muddy forest", creature: "snail", by: "Ed", leaf: .22, floor: ["mud", .07, .5, .28], text: { floor: "mud and leaves", small: "short trunks with broken branches", big: "trees with many trunks and branches" },
     small: [P("stump", { snag: true })], big: [tree("sycamore", { trunks: 3, gnarl: .9 }), tree("alder", { minor: true })] },
   { id: "stone-shrine", name: "Stone shrine", creature: "fox", by: "Ed", leaf: .28, floor: ["stony", .6, .07, .48], ground: { details: [{ stamp: "slab", n: 16, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "pebble", n: 12, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "tuft", n: 14, mats: ["LEAF3", "LEAF", "LEAF2"] }] }, text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
-    wall: [P("henge")], small: [P("stones")], big: [P("boulder"), P("pillar", { sparse: .1 }), P("pillar", { sparse: .08, broken: true, lean: .14 }), P("cairn", { sparse: .08, tall: true })], set: P("shrine") },
+    wall: [P("henge")], small: [P("stones")], big: [P("standingstone", { big: true }), P("boulder", { sparse: .15 }), P("pillar", { sparse: .1 }), P("pillar", { sparse: .08, broken: true, lean: .14 }), P("cairn", { sparse: .08, tall: true })], set: P("shrine") }, // (its tree-equivalents great standing stones: Ed, 2026-10-06)
   { id: "tangly-forest", name: "Tangly forest", creature: "ram", by: "Ed", leaf: .27, floor: ["nettles", .28, .5, .3], text: { floor: "nettles and earth", small: "tangled branches", big: "fairly short tangly trees" },
     small: [P("bramble", { bare: true })], big: [tree("hawthorn", { scale: .9, gnarl: 1 })] },
   { id: "wispy-forest", name: "Wispy forest", creature: "woodlouse", by: "Ed", leaf: .2, floor: ["leaves", .09, .55, .45], text: { floor: "dry leaves", small: "tall thin wispy trees", big: "thick trees with several trunks" },
@@ -366,7 +366,9 @@ function prop(kind, o, def, st, r, s) {
 }
 
 // Set pieces: one per area that has one, bigger than the props.
+// st.setPieceScale (the game's tuning setPieceScale): baked that much bigger, at the art pixel, so the game draws it at 1, never stretched.
 function setPiece(kind, o, def, st, r, s) {
+  s *= st.setPieceScale || 1;
   if (o.three) return setPiece3d(kind, def, st);
   if (kind === "tree" || kind === "log") return prop(kind, o, def, st, r, s);
   const W = Math.round(90 * s), H = Math.round(70 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
@@ -417,8 +419,8 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const ft = floorTile(def, st);
   // ?props=gen (st.propGen): each hand-made prop the prop generator stands in for (propFor) becomes `variants` of it (3; a sparse one's
   // share split among them), each its own shape from its own seed, so a pool or a stone isn't one sprite placed again and again
-  const gen = list => !st.propGen ? list : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, o]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
-  const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand
+  const gen = list => !st.propGen ? (list || []).map(([kind, o], i) => [kind, { ...o, from: i }]) : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, { ...o, from: i }]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, from: i, share: 1 / n, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
+  const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; b.from = o.from; if (o.share) b.share = o.share; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand; each its entry in the area's list (from: a generated prop is n variants of one) and its part of that entry's weight (share)
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null, rim: [] };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
   if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres, origin: sp0.origin }; } // the new 3D ones: their size, and where their middle on the ground lands
@@ -504,8 +506,25 @@ const STONE_GLOW = { cyan: [[70, 230, 255], [200, 250, 255]], violet: [[190, 100
 // cracked and weathered, with moss and grass at its foot and one bold glowing rune carved into
 // its face (the same glyphs as the soundsystem's runes), and a few motes drifting round it.
 // sigil: a creature's id, to carve its sigil (sigils.js) instead of a generic rune.
-function magicStone(variant, sigil) {
-  const m = new Model({ blend: .04 }), k = Object.keys(STONE_GLOW).indexOf(variant), fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
+// The face's sigil (Ed, 2026-10-06: "the sigils as they are written on the runestones are hard to make out"): not sampled in 3D
+// but stamped on as a crisp pixel glyph like the bubble's, its strokes 1 to 2 px, about 60% of the face across with a margin round
+// it: a bright neon inlay (glowing, recoloured to the sigil's neon) in a dark carved groove (its shadow side, down and right, the
+// moon being up and left), so it reads by day as a cut line and by night as a lit one; the faint glow is the inlay's own bloom.
+const FACE = M.GLINT; // a stand-in for the face's pixels while the stone renders
+function carveSigil(sp, sigil) {
+  let x0 = sp.w, y0 = sp.h, x1 = -1, y1 = -1;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === FACE) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); sp.recolour(x, y, M.STONE); }
+  if (x1 < 0) return;
+  const n = Math.max(9, Math.round(Math.min(x1 - x0 + 1, y1 - y0 + 1) * .62)), g = sigilGlyph(sigil, n), ox = Math.round((x0 + x1 + 1 - n) / 2), oy = Math.round((y0 + y1 + 1 - n) / 2);
+  const ink = (x, y) => x >= 0 && y >= 0 && x < n && y < n && g.m[y * n + x];
+  for (let y = -1; y <= n; y++) for (let x = -1; x <= n; x++) {
+    if (ink(x, y)) sp.recolour(ox + x, oy + y, M.RUNE);
+    else if (ink(x - 1, y) || ink(x, y - 1) || ink(x - 1, y - 1)) sp.recolour(ox + x, oy + y, M.LINE); // the groove's shadow side
+    else if (ink(x + 1, y) || ink(x, y + 1) || ink(x + 1, y + 1)) sp.recolour(ox + x, oy + y, M.MAGIC); // its lit rim (up and left), catching the inlay's light: a dim glow, so the carving reads from mid-distance at night (Ed's note #1)
+  }
+}
+function magicStone(variant, sigil, size = 1) { // size: baked that much bigger (the game's runeMarkers.scale), never stretched
+  const m = new Model({ blend: .04 }), k = Math.max(0, Object.keys(STONE_GLOW).indexOf(variant)), glow = Array.isArray(variant) ? [variant, variant.map(c => Math.round(c + (255 - c) * .7))] : STONE_GLOW[variant], fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
   // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
   const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
   // two jagged cracks: one down from the worn top, one up from the foot
@@ -517,7 +536,7 @@ function magicStone(variant, sigil) {
     const d = v3.sub(q, C), p = [v3.dot(d, ax), v3.dot(d, ay) + .46, v3.dot(d, az)]; // in the slab's own axes
     if (p[2] > fz - .02) { // the rune, carved into the face
       const u = (p[0] + .17) / .34, v = (.8 - p[1]) / .5;
-      if (sigil) { const su = (p[0] + .27) / .54, sv = (.8 - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && sigilHit(sigil, su, sv, .055)) return M.RUNE; }
+      if (sigil) { const su = (p[0] + .27) / .54, sv = (.8 - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && !crack(p[0], p[1])) return FACE; } // (the sigil is stamped on after, as pixels)
       else if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k + 1, .1)) return M.RUNE;
     }
     if (crack(p[0], p[1])) return M.STONED; // cracks
@@ -531,8 +550,9 @@ function magicStone(variant, sigil) {
   // moss and grass at its foot
   for (const [x, z, r] of [[-.24, .14, .08], [.2, .02, .07], [.0, .12, .07]]) m.ell([x, .015, z], [r, r * .4, r], M.MOSS, { group: 2 });
   for (let i = 0; i < 9; i++) { const x = -.3 + i * .07, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
-  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: STONE_GLOW[variant][0], [M.MAGIC2]: STONE_GLOW[variant][1], [M.LINE]: [40, 40, 50] };
-  const sp = render(m, { height: 44 }).sp;
+  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: glow[0], [M.MAGIC2]: glow[1], [M.MAGIC]: glow[0].map(c => Math.round(c * .5)), [M.LINE]: [40, 40, 50] };
+  const sp = render(m, { height: Math.round(44 * size) }).sp;
+  if (sigil) carveSigil(sp, sigil);
   // a few motes drifting round it
   let n = 0;
   for (let i = 0; i < 600 && n < 5; i++) {
@@ -552,9 +572,10 @@ function pond() {
 }
 // Bakes the light sources: { campfire: [3 frames], stones: { cyan, violet, green }, pond: { sp, mask } }.
 // The pond's mask is a canvas, white where its pixels are water.
-// A rune stone in one glow ("cyan", "violet" or "green"), carved with a creature's sigil (an
+// A rune stone in one glow ("cyan", "violet" or "green", or an [r, g, b] neon), carved with a creature's sigil (an
 // area's stones can carry the area creature's sigil) or, without one, a generic rune. Baked.
-export function runeStone(st, { glow = "cyan", sigil, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil); return bake(s.sp, s.colours, st, "none", makeCanvas); }
+// scale: baked that much bigger (the game draws it at 1: docs/STYLE.md §1).
+export function runeStone(st, { glow = "cyan", sigil, scale = 1, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil, scale); return bake(s.sp, s.colours, st, "none", makeCanvas); }
 export function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
   const bk = (sp, col) => bake(sp, col, st, "none", makeCanvas);
   const out = { campfire: [0, 1, 2].map(f => bk(campfire(f), fireCol)), stones: {}, pond: null };

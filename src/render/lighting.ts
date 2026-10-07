@@ -1,6 +1,6 @@
 // The night lighting, as shader code shared by sprites and ground: the Art Lab's lighting pass
 // (art/lighting.js) moved into 3D. Twilight ambient, moonlight from the upper left, moonbeams,
-// and the witch's glow, each stepped into a few light bands with a little dithering.
+// and the witch's glow.
 import * as THREE from "three";
 import { hsv2rgb } from "../../art/generator.js";
 import type { Style } from "./style";
@@ -18,8 +18,6 @@ export const LIGHT_UNIFORMS = {
   /** The moon's fill on upward faces: its colour times its strength (the mood's moonUp, moonUpHue, moonUpSat; 0 none), and in w
    *  the share every face gets whatever its normal (moonUpWrap). */
   uMoonUp: { value: new THREE.Vector4() },
-  uBands: { value: 4 },
-  uDither: { value: 0.35 },
   uShafts: { value: 0.3 },
   uShaftScale: { value: 1 },
   uGlowPos: { value: new THREE.Vector3() },
@@ -29,13 +27,13 @@ export const LIGHT_UNIFORMS = {
   /** The share of uGlowR where the glow has fallen to dark (tuning glowNear). */
   uGlowNear: { value: 1 },
   uGlowPower: { value: 1.4 },
+  /** Her glow's strength by height (tuning nightLight.treetopGlow, eased in as she rises): 1 on the ground. */
+  uGlowDim: { value: 1 },
   // The twilight haze: the forest fades into it from near to far metres from the witch.
   uHazeCentre: { value: new THREE.Vector2() },
   uHazeRange: { value: new THREE.Vector2(70, 200) },
   uHazeColour: { value: new THREE.Vector3() },
   uTime: { value: 0 },
-  // ?fx=smooth (1): haze and canopy dapple as smooth gradients; ?fx=pixel (0): dithered steps.
-  uSmooth: { value: 1 },
   // Point lights in the forest (the dancefloor's circle, campfires, magic stones...): the
   // nearest few, as position + reach, and colour + strength. Count in uLightCount.
   uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
@@ -52,6 +50,8 @@ export const LIGHT_UNIFORMS = {
   /** Slowed time in a legend's circle (render/slowtime.ts): the circle's centre x, z, its radius, and how slowed the world
    *  outside is (0 normal to 1 at its slowest): outside, the world greys and cools; the circle's edge shimmers. */
   uSlow: { value: new THREE.Vector4() },
+  /** The circle's legend, kept out of the slowed grey (Ed's round 14 playtest: legends must read in their circles): its spot and the half-widths of an ellipse round it, wide across and shallow in depth, so the ground past the circle's edge still greys. */
+  uSlowKeep: { value: new THREE.Vector4() },
   /** Real time (s), for what keeps its pace while the world slows (uTime slows with it: render/slowtime.ts). */
   uRealTime: { value: 0 },
   // The disco ball: position (w: 1 when present), and spin, speck density, brightness, reach.
@@ -64,8 +64,6 @@ export const LIGHT_UNIFORMS = {
   /** The party's over (render/partyOver.ts): home x, z, the switch-off front's distance from it (0: playing) and its width. */
   uPartyOver: { value: new THREE.Vector4(0, 0, 0, 30) },
 };
-
-export type LightUniforms = typeof LIGHT_UNIFORMS;
 
 /** Set the light colours from a style (the Art Lab's knobs). One set of uniforms is shared by
  *  every material, so this and the glow position update everything at once. */
@@ -81,8 +79,6 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
   LIGHT_UNIFORMS.uAmb.value.copy(v(hsv2rgb(st.ambientHue, 0.55, 1), st.ambient * ambientScale));
   LIGHT_UNIFORMS.uMoon.value.copy(v(hsv2rgb(st.moonHue, (st as { moonSat?: number }).moonSat ?? 0.35, 1), st.moon * moonScale));
   LIGHT_UNIFORMS.uMoonBeam.value.copy(v(hsv2rgb(st.moonHue, 0.35, 1), st.shafts * 0.25));
-  LIGHT_UNIFORMS.uBands.value = st.bands;
-  LIGHT_UNIFORMS.uDither.value = st.dither * 0.5;
   LIGHT_UNIFORMS.uShafts.value = st.shafts;
   LIGHT_UNIFORMS.uShaftScale.value = metresPerArtPixel * 2;
   LIGHT_UNIFORMS.uGlowRgb.value.copy(v(hsv2rgb(st.glowHue, st.glowSat, 1), 1));
@@ -95,7 +91,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
 uniform vec4 uMoonUp;
-uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uTime, uSmooth;
+uniform float uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uGlowDim, uTime;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
 uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
@@ -104,7 +100,7 @@ uniform int uGladeCount;
 uniform vec3 uGladeRgb;
 uniform vec2 uGladeLight;
 uniform float uDim;
-uniform vec4 uSlow;
+uniform vec4 uSlow, uSlowKeep;
 uniform float uRealTime;
 uniform int uLightCount;
 uniform vec4 uPartyOver;
@@ -119,30 +115,24 @@ float sceneryFade(vec3 P) {
   return 1.0 - smoothstep(uScenery.x - uScenery.y, uScenery.x, length(P.xz - uHazeCentre));
 }
 
-// Fade toward the twilight haze with distance, in a few dithered steps so it stays pixel art.
+// Fade toward the twilight haze with distance.
 // Time slowed outside a legend's circle (Ed, 2026-10-06; render/slowtime.ts): the world beyond its edge greys and cools,
 // as it eases to a crawl; inside, as it is.
 vec3 slowGrade(vec3 c, vec3 P) {
   if (uSlow.w <= 0.0) return c;
   float k = uSlow.w * smoothstep(uSlow.z - 0.5, uSlow.z + 1.5, length(P.xz - uSlow.xy));
+  if (uSlowKeep.z > 0.0) k *= smoothstep(0.85, 1.1, length((P.xz - uSlowKeep.xy) / uSlowKeep.zw)); // (its legend, standing up out of the circle, as it is)
   float l = dot(c, vec3(0.299, 0.587, 0.114));
   return mix(c, mix(c, vec3(l), 0.75) * vec3(0.86, 0.95, 1.12), k);
 }
 vec3 haze(vec3 c, vec3 P) {
   float h = smoothstep(uHazeRange.x, uHazeRange.y, length(P.xz - uHazeCentre));
   h *= h; // light through the middle distance, full only at the far edge
-  if (uSmooth > 0.5) return slowGrade(mix(c, uHazeColour * uDim, h), P);
-  float q = h * 4.0, fr = fract(q);
-  q = floor(q) + (fr > (mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.66 : 0.33) ? 1.0 : 0.0);
-  return slowGrade(mix(c, uHazeColour * uDim, q / 4.0), P);
+  return slowGrade(mix(c, uHazeColour * uDim, h), P);
 }
 
 float lightStep(float f) {
-  if (uSmooth > 0.5) return max(0.0, f); // smooth light: no bands, no dither
-  float q = f * uBands;
-  float fr = fract(q);
-  if (uDither > 0.0 && abs(fr - 0.5) < uDither * 0.5) q += mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.5 : -0.5;
-  return max(0.0, floor(q)) / uBands;
+  return max(0.0, f); // smooth light: no bands, no dither
 }
 
 // A sleeping legend's clearing (render/glades.ts; Ed: "lit with an eerie twilight"): a cool pool filling the circle,
@@ -177,11 +167,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   if (uShafts > 0.0 && moonK > 0.99) {
     // Moonbeams: diagonal bands across the world, as the lab draws them across the screen.
     float s = mod(P.x / uShaftScale + P.z * 0.9 / uShaftScale, 150.0);
-    if (uSmooth > 0.5) l += uMoonBeam * smoothstep(0.0, 6.0, s) * (1.0 - smoothstep(28.0, 34.0, s)); // soft-edged beams
-    else {
-      float chk = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0);
-      if (s < 34.0 && (chk > 0.5 || (s > 4.0 && s < 30.0))) l += uMoonBeam;
-    }
+    l += uMoonBeam * smoothstep(0.0, 6.0, s) * (1.0 - smoothstep(28.0, 34.0, s)); // soft-edged beams
   }
   // The witch's glow (Ed, v147: "should fall off faster"; round 11: "a bit flat, it should fall off
   // closer"): full under her, falling off with the distance along the ground as
@@ -192,7 +178,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   if (dg < gr) {
     float ndl = max(0.0, dot(N, normalize(v + vec3(0.0, 1e-4, 0.0)))) * 0.35 + 0.65;
     float fall = pow(1.0 - dg / gr, uGlowFalloff);
-    l += uGlowRgb * min(1.0, ndl * fall * uGlowPower);
+    l += uGlowRgb * min(1.0, ndl * fall * uGlowPower) * uGlowDim;
   }
   for (int i = 0; i < ${MAX_LIGHTS}; i++) {
     if (i >= uLightCount) break;
@@ -231,7 +217,7 @@ vec3 glowPool(vec3 col, vec3 P) {
   float dg = length(v.xz), gr = uGlowR * uGlowNear;
   if (dg >= gr || uGlowPower <= 0.0) return col;
   vec3 Y = vec3(0.3, 0.55, 0.15);
-  float fall = pow(1.0 - dg / gr, uGlowFalloff) * min(1.0, uGlowPower);
+  float fall = pow(1.0 - dg / gr, uGlowFalloff) * min(1.0, uGlowPower) * uGlowDim;
   vec3 warm = max(min(dot(col, Y), ${POOL_CAP.toFixed(3)}), ${POOL_LIFT.toFixed(3)} * fall) * uGlowRgb / max(1e-3, dot(uGlowRgb, Y));
   return mix(col, min(vec3(1.0), warm), ${POOL_WARMTH.toFixed(2)} * fall);
 }

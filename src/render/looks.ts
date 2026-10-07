@@ -6,19 +6,19 @@
 // stars are marks drawn over the sprite.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import type { Creature } from "../rules/creatures";
+import type { Creature, CreatureState } from "../rules/creatures";
 import { LEGEND } from "../rules/creatures";
 import { cellKey } from "../rules/party";
-import { placed } from "./height";
+import { placed, shownOverBend } from "./height";
 import { stunned } from "../rules/knock";
 import { witchHeight } from "../rules/witch";
 import type { Tuning } from "../rules/tuning";
 import { bubbleScale } from "./bubbles";
 
-export type Look = "wild" | "happy" | "leashed" | "enraged" | "legend";
+export type Look = CreatureState | "legend";
 
 /** The state machine's fields (issue #87), read if present; today's flags otherwise. */
-type WithState = Creature & { state?: "wild" | "happy" | "leashed" | "enraged"; dazedUntil?: number };
+type WithState = Creature & { state?: CreatureState; dazedUntil?: number };
 
 export function isHappy(c: Creature): boolean {
   const s = (c as WithState).state;
@@ -111,10 +111,19 @@ export class StateMarks {
     this.star = mat(STAR()); this.anger = mat(angerMark(11));
     this.sparkle = new THREE.SpriteMaterial({ map: SPARKLE(), transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending });
     this.group.renderOrder = 12;
+    // One sprite never shown, so the Bedroom's shader warm-up (View.prepare) compiles the marks' shader too; the pool's own
+    // sprites are made only as they are first needed (the first mark came at the second wave: a hitch).
+    const warm = new THREE.Sprite(this.star);
+    warm.visible = false;
+    this.group.add(warm);
     scene.add(this.group);
   }
 
+  /** The camera's position this frame: a mark past the bent horizon isn't drawn (they're drawn with no depth test). */
+  private eye: { x: number; y: number; z: number } | null = null;
+
   private put(m: THREE.SpriteMaterial, x: number, y: number, z: number, wpx: number, hpx: number, opacity = 1): void {
+    if (this.eye && !shownOverBend(x, y, z, this.eye)) return; // (nothing past the bend: Ed, 2026-10-06)
     let s = this.pool[this.used];
     if (!s) { s = new THREE.Sprite(m.clone()); s.renderOrder = 12; this.pool.push(s); this.group.add(s); }
     this.used++;
@@ -127,12 +136,13 @@ export class StateMarks {
   }
 
   /** The 💢 by the enraged, stars round the dazed, sparkles round party animals (their faces are the art's): those within `R` metres of her. `tops`: each creature's drawn height. */
-  update(g: Game, time: number, tops: Map<number, number>, R = 70): void {
-    this.used = 0;
+  update(g: Game, time: number, tops: Map<number, number>, R = 70, eye?: { x: number; y: number; z: number }): void {
+    this.used = 0; this.eye = eye ?? null;
     setTint(g.tuning);
     const A = g.tuning.looks?.anger ?? { on: true, size: 1 }, P = g.tuning.looks?.partyGlow ?? { on: true, sparkles: 4, rate: 0.9, size: 1.4, strength: 1 };
     const w = g.witch, px = 2; // (each mark pixel two game pixels: readable at a glance)
-    for (const c of g.creatures) {
+    for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
+      const c = g.creatures[i];
       if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R) continue;
       const top = tops.get(c.id);
       if (top === undefined) continue;

@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node tools/making-of/build.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "smoke": "node tools/smoke/smoke.cjs",
     "smoke:quick": "node tools/smoke/quick.cjs",
     "bench": "node tools/bench/run.mjs",
-    "bench:compare": "node tools/bench/compare.cjs"
+    "bench:compare": "node tools/bench/compare.cjs",
+    "bench:quick": "node tools/bench/run.mjs --quick"
   },
   "dependencies": {
     "three": "0.186.1"

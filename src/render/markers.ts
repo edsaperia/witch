@@ -22,13 +22,16 @@ export class MarkerArt {
   readonly colour = new Map<string, THREE.Vector3>();
   /** Per species: how many art pixels the stone stands above its frame's bottom (to its topmost drawn row). */
   readonly height = new Map<string, number>();
+  /** The scale the stones are baked at (runeMarkers.scale): drawn at runeMarkers.scale / this, so 1 (docs/STYLE.md §1). */
+  readonly scale: number;
 
   constructor(style: Style, t: Tuning) {
     const R = t.runeMarkers, sprites: Baked[] = [];
+    this.scale = R.scale;
     const species = [...new Set(AREA_TYPES.map(a => a.creature))];
     const levels = [R.dormant.glow, ...Array.from({ length: MARKER_LEVELS - 1 }, (_, i) => R.awake.glow[0] + ((R.awake.glow[1] - R.awake.glow[0]) * i) / (MARKER_LEVELS - 2))];
     for (const sp of species) {
-      const base = (Art.runeStone as unknown as (st: Style, o: { glow: string; sigil: string }) => Baked & { A: HTMLCanvasElement })(style, { glow: "cyan", sigil: sp });
+      const base = (Art.runeStone as unknown as (st: Style, o: { glow: string; sigil: string; scale: number }) => Baked & { A: HTMLCanvasElement })(style, { glow: "cyan", sigil: sp, scale: R.scale });
       const c = Art.sigilColour(sp) as number[];
       this.index.set(sp, sprites.length);
       this.height.set(sp, drawnHeight(base.A));
@@ -43,7 +46,7 @@ export class MarkerArt {
 
 // Rows from the topmost drawn pixel to the lowest (sprites stand on their lowest drawn pixel).
 function drawnHeight(c: HTMLCanvasElement): number {
-  const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+  const d = c.getContext("2d", { willReadFrequently: true })!.getImageData(0, 0, c.width, c.height).data;
   let top = -1, bottom = -1;
   for (let i = 3; i < d.length; i += 4) if (d[i] > 0) { const y = Math.floor((i >> 2) / c.width); if (top < 0) top = y; bottom = y; }
   return top < 0 ? 0 : bottom - top + 1;
@@ -53,7 +56,7 @@ function drawnHeight(c: HTMLCanvasElement): number {
 function recolour(b: Baked & { A: HTMLCanvasElement }, rgb: number[], k: number): Baked {
   const c = document.createElement("canvas");
   c.width = b.w; c.height = b.h;
-  const g = c.getContext("2d")!;
+  const g = c.getContext("2d", { willReadFrequently: true })!;
   g.drawImage(b.A, 0, 0);
   const img = g.getImageData(0, 0, b.w, b.h), d = img.data;
   for (let i = 0; i < d.length; i += 4) {

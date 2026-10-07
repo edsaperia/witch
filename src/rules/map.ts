@@ -238,7 +238,13 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   };
   const toWorld = (u: number, v: number): [number, number] => {
     let x = u * A, z = v * A;
-    for (let i = 0; i < 30; i++) { const [pu, pv] = toPart(x, z); x += (u - pu) * A; z += (v - pv) * A; }
+    // (toPart inline, its pair in locals: 30 rounds made 30 tuples a call, a frame's commonest garbage; phase 2's GC
+    // audit. The same sums in the same order.)
+    for (let i = 0; i < 30; i++) {
+      const uu = x / A, vv = z / A;
+      const pu = uu + V * (vnoise(uu / L, vv / L, seed + 91) - 0.5) * 2, pv = vv + V * (vnoise(uu / L, vv / L, seed + 92) - 0.5) * 2;
+      x += (u - pu) * A; z += (v - pv) * A;
+    }
     return [x, z];
   };
   // Home first (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the
@@ -282,12 +288,24 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   }
   const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, seed + 17) * typeCount);
 
-  const siteOf = (cx: number, cy: number) => { const s = partition.site(cx, cy), w = toWorld(s[0], s[1]); return { x: w[0], z: w[1] }; };
+  // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
+  const SITES = new Map<number, [number, number]>();
+  const siteXZ = (cx: number, cy: number): readonly [number, number] => {
+    const k = (cx + 32768) * 65536 + (cy + 32768);
+    let w = SITES.get(k);
+    if (!w) { const s = partition.site(cx, cy); w = toWorld(s[0], s[1]); SITES.set(k, w); }
+    return w;
+  };
+  const siteOf = (cx: number, cy: number) => { const w = siteXZ(cx, cy); return { x: w[0], z: w[1] }; };
   const centre = siteOf(centreCell[0], centreCell[1]);
   // The playable areas and the buffer ring, by their centres' distance from home's.
   // (each by how far its centre lies out along its own direction, as a share of the coast there)
   const fromHome = (cx: number, cy: number) => { const s = siteOf(cx, cy), dx = s.x - centre.x, dz = s.z - centre.z; return Math.hypot(dx, dz) / coast(Math.atan2(dz, dx)); };
-  const playable = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < n && cy < n && (!round || fromHome(cx, cy) <= R * A);
+  // An area must own some ground: the warped partition can leave a cell with none (every point near its centre another
+  // area's), and such a ghost area put its runestone, its legend and its creatures all on one spot in a neighbour's
+  // ground (Ed, v1628: "Legend and runestone in the same place"). Ground: any of the neighbour scan's samples, 6 a cell.
+  const hasGround = (cx: number, cy: number) => neighbours.has(cellKey(cx, cy));
+  const playable = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < n && cy < n && (!round || fromHome(cx, cy) <= R * A) && hasGround(cx, cy);
   const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && fromHome(cx, cy) <= flightR + A * 0.5;
   const cells: Cell[] = [];
   for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (playable(cx, cy)) cells.push([cx, cy]);
@@ -297,7 +315,9 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const stretch = 1 + (2 * V / L) * 1.5 * 2;
   const cellSafe = (x: number, z: number) => { const [u, v] = toPart(x, z), r = partition.partitionSafe(u, v); return { cell: r.cell, safe: (r.safe * A) / stretch }; };
   const areaAt = (x: number, z: number): AreaSample => {
-    const [u, v] = toPart(x, z), cell = partition.partition(u, v);
+    // (toPart inline: no [u, v] tuple a call; phase 2's GC audit, the same sums)
+    const uu = x / A, vv = z / A;
+    const u = uu + V * (vnoise(uu / L, vv / L, seed + 91) - 0.5) * 2, v = vv + V * (vnoise(uu / L, vv / L, seed + 92) - 0.5) * 2, cell = partition.partition(u, v);
     return { cell, type: typeOf(cell[0], cell[1]), look: cell[0] === centreCell[0] && cell[1] === centreCell[1] ? HOME_LOOK : typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
   // An area that rolls a set piece (setPieceChance of those whose type has one; not home).
@@ -423,8 +443,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const arenaIn = (x: number, z: number, cell: Cell) => {
     const R = tuning.arena;
     if (!R || R.radius <= 0) return 1;
-    const k = tuning.fight?.scale ?? 1, s = siteOf(cell[0], cell[1]), q = soundsystemSpot(cell[0], cell[1]);
-    const d = Math.min(Math.hypot(x - s.x, z - s.z), Math.hypot(x - q.x, z - q.z)), band = R.band * k;
+    const k = tuning.fight?.scale ?? 1, s = siteXZ(cell[0], cell[1]), q = soundsystemSpot(cell[0], cell[1]);
+    const d = Math.min(Math.hypot(x - s[0], z - s[1]), Math.hypot(x - q.x, z - q.z)), band = R.band * k;
     const wob = (vnoise(x / 14, z / 14, seed + 71) - 0.5) * 2 * R.noise * band;
     const f = Math.min(1, Math.max(0, (d + wob - R.radius * k) / Math.max(0.01, band)));
     return R.curve === "smooth" ? smoothstep(f) : f; // (linear: the woods start thinning in right past the open middle, Ed at v473)
@@ -506,10 +526,13 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     // near its runestone"): its edge at least minFromStone metres off, so the circle, its grove and its rim kit stand
     // clear of the stone's clearing and the party's dance space (and a siege gets no safe spot beside its soundsystem).
     const stone = soundsystemSpot(cx, cy), fromStone = (x: number, z: number) => Math.hypot(x - stone.x, z - stone.z) - r;
+    // (and every neighbouring area's runestone at least minFromOtherStones off its edge, always: none standing over the legend)
+    const others = [...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => k.split(",").map(Number)).filter(([x, y]) => playable(x, y) && !(x === centreCell[0] && y === centreCell[1])).map(([x, y]) => soundsystemSpot(x, y));
+    const clearOfOthers = (x: number, z: number) => others.every(q => Math.hypot(x - q.x, z - q.z) - r >= (LC.minFromOtherStones ?? 0));
     let farEnough = (x: number, z: number) => fromStone(x, z) >= (LC.minFromStone ?? 0);
     const B = map.bounds, fits = (x: number, z: number) => {
       if (!isInside(B, x, z, 15) || !inCell(x, z, cx, cy)) return false; // (its middle where she can fly)
-      if (!farEnough(x, z)) return false;
+      if (!farEnough(x, z) || !clearOfOthers(x, z)) return false;
       for (let k = 0; k < 16; k++) { const b = (k / 16) * Math.PI * 2; if (!inCell(x + Math.cos(b) * r, z + Math.sin(b) * r, cx, cy)) return false; }
       return !reserved(x, z, r) && !map.paths.at(x, z, r * pathK);
     };

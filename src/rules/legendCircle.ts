@@ -1,21 +1,34 @@
 // The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of the
 // circle explaining mechanics to do with legends. Something like: "This is a slumbering elder. If you bring a [sigil] and place it
 // in this circle, it will grant you a boon. If you bring a [relic sigil] and place it in this circle, you will gain a powerful
-// ally. It becomes angered if none of its children are nearby.""): which legend's clearing she stands in (any state), what the
+// ally. It becomes angered if none of its kin are nearby."" ("kin", not "children": Ed, 2026-10-06)): which legend's clearing she stands in (any state), what the
 // panel says for its state, and how far it has faded in. No drawing here (render/leash.ts draws it).
+import { LEGEND_BUFFS } from "./buffs";
 import type { Creature } from "./creatures";
 import type { Game } from "./game";
 
 type Clearing = { x: number; z: number; r: number; legend: { x: number; z: number } };
+
+const REACH = new WeakMap<readonly Clearing[], number>();
+/** How far from a legend a point can be and still stand in its circle (legendCircleNear, musicPlan's legendCircleAt): its own
+ *  radius R, or a clearing's (its legend within r of the clearing's legend spot, the point within r of its middle: 2r + that
+ *  spot's way from its middle), plus a metre for rounding; worked out once a map. Legends past it are skipped without the
+ *  search for their clearing (every legend x every clearing, twice a frame, was a frame's biggest allocator). */
+export function circleReach(clearings: readonly Clearing[] | undefined, R: number): number {
+  let b = clearings ? REACH.get(clearings) : 0;
+  if (b === undefined) { b = 0; for (const k of clearings!) b = Math.max(b, 2 * k.r + Math.hypot(k.x - k.legend.x, k.z - k.legend.z)); REACH.set(clearings!, b); }
+  return Math.max(R, b) + 1;
+}
 
 /** The legend whose clearing `at` stands in, on the ground (the treetops never), whatever its state, with its clearing's middle
  *  and radius (the map's `legendClearings`; else a circle of `music.circle.radius` metres round it, as the music's). Null outside them all. */
 export function legendCircleNear(g: Game, at: { x: number; z: number; mode?: string }): { legend: Creature; x: number; z: number; r: number } | null {
   if (at.mode !== "ground") return null;
   const R = g.tuning.music.circle.radius, clearings = (g.map as { legendClearings?: readonly Clearing[] }).legendClearings;
+  const B = circleReach(clearings, R);
   let best: { legend: Creature; x: number; z: number; r: number } | null = null, bd = Infinity;
   for (const c of g.creatures) {
-    if (!c.boss || c.gone || c.leashed) continue;
+    if (!c.boss || c.gone || c.leashed || Math.abs(at.x - c.x) > B || Math.abs(at.z - c.z) > B) continue;
     let cx = c.x, cz = c.z, r = R;
     if (clearings) {
       let ring: Clearing | null = null, rd = Infinity;
@@ -28,19 +41,32 @@ export function legendCircleNear(g: Game, at: { x: number; z: number; mode?: str
   return best;
 }
 
-/** One line of the panel: its words, with `{sigil}` (the dreamt creature's sigil) or `{relic}` (a relic sigil) where an icon
- *  goes; done: ticked and dimmed (its boon already hers). */
+/** One line of the panel: its words, with `{sigil}` (the dreamt creature's sigil), `{relic}` (a relic sigil) or `{boon}` (the
+ *  legend's own sigil, the buff's icon in the HUD: render/buffhud.ts) where an icon goes; done: ticked and dimmed (its boon
+ *  already hers). */
 export interface CircleLine { text: string; done?: boolean }
+
+/** What a legend's boon does, in its own plain words (Ed, 2026-10-06: "The legend circle text should tell you what the boon
+ *  will be"): its buff's name and line from config/legend-buffs.json (the label after its "Species's Name: "), so it says
+ *  what the game gives; null for a species with no buff. */
+export function boonWords(species: string): string | null {
+  const def = LEGEND_BUFFS.species[species];
+  if (!def) return null;
+  const what = def.label.includes(": ") ? def.label.slice(def.label.indexOf(": ") + 2) : def.label;
+  return `${def.name}, ${what}`;
+}
 
 /** What the panel says for a legend in its state (keeping Ed's words where they hold; party tone). */
 export function circleLines(c: Creature): CircleLine[] {
   const st = c.legendState ?? "asleep", q = c.quest, done = q?.done !== undefined;
-  const boon: CircleLine | null = q ? (done ? { text: "Its boon is yours.", done: true } : { text: "If you bring a {sigil} and place it in this circle, it will grant you a boon." }) : null;
+  const words = boonWords(c.species);
+  const boon: CircleLine | null = q ? (done ? { text: words ? `Its boon is yours: {boon} ${words}.` : "Its boon is yours.", done: true }
+    : { text: words ? `If you bring a {sigil} and place it in this circle, it will grant you its boon for the rest of the night: {boon} ${words}.` : "If you bring a {sigil} and place it in this circle, it will grant you a boon." }) : null;
   const ally: CircleLine = { text: "If you bring a {relic} and place it in this circle, you will gain a powerful ally." };
   if (st === "happy") return [{ text: "This elder is your ally now." }, { text: "It guards its area and anyone partying in it." }, ...(boon?.done ? [boon] : [])];
-  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its children back, and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
-  if (st === "restless") return [{ text: "This elder is restless." }, ...(boon ? [boon] : []), ally, { text: "Bring one of its children back here to calm it." }];
-  return [{ text: "This is a slumbering elder." }, ...(boon ? [boon] : []), ally, { text: "It becomes angered if none of its children are nearby." }];
+  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its kin back, and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
+  if (st === "restless") return [{ text: "This elder is restless." }, ...(boon ? [boon] : []), ally, { text: "Bring one of its kin back here to calm it." }];
+  return [{ text: "This is a slumbering elder." }, ...(boon ? [boon] : []), ally, { text: "It becomes angered if none of its kin are nearby." }];
 }
 
 /** The panel's fade: towards 1 inside a circle and 0 outside, over `fade` seconds. */

@@ -29,6 +29,8 @@ import { beatAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { partyOverEase } from "../../rules/music";
+import { PARTY_CAST } from "../../rules/party";
+import { djGesture } from "../../../art/witch.js";
 
 /** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -48,6 +50,12 @@ export class SfxCues {
   private primed = false;
   private enraged = new Set<number>();
   private happy = new Set<number>();
+  /** The sets swapped in each frame and cleared (no new ones a frame: a late game's thousands of enraged were garbage every frame). */
+  private enragedNext = new Set<number>();
+  private happyNext = new Set<number>();
+  private angryNext = new Set<number>();
+  /** The legends this frame (update gathers them). */
+  private bosses: Creature[] = [];
   private flourished = new Map<number, number>();
   private spoke = new Map<number, number>();
   private lost = -1;
@@ -55,6 +63,8 @@ export class SfxCues {
   /** The home speakers on, and the areas with a soundsystem, last frame (each new one powers up). */
   private speakersOn = -1;
   private stonesOn = new Set<number>();
+  /** The last half-beat heard at her decks (decks). */
+  private deckHalf = -1;
   private soundsystemsUp = new Set<string>();
   /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
   private hp = -1;
@@ -78,6 +88,9 @@ export class SfxCues {
     const w = g.witch, hear = Math.max(1, g.tuning.sfx.hear);
     const h: Here = { g, time, near: (x, z) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / hear), pan: x => (x - w.x) / 30 };
     this.invites(h);
+    // (the legends gathered once a frame for the four that look only at them: not four passes over every creature)
+    this.bosses.length = 0;
+    for (const c of g.creatures) if (c.boss) this.bosses.push(c);
     this.states(h);
     this.legends(h);
     this.attacks(h, hear);
@@ -89,6 +102,7 @@ export class SfxCues {
     this.charges(h);
     this.relics(h);
     this.meadow(h);
+    this.decks(h);
     this.roars(h, hear);
     this.laments(h);
     this.shoes(h);
@@ -126,7 +140,8 @@ export class SfxCues {
     const S = this.sfx, gap = g.tuning.sfx.voice.animals.gap;
     let angry = 0, ak = 0, mad: Creature | null = null;
     let glad: Creature | null = null, gk = 0;
-    const nowEnraged = new Set<number>(), nowHappy = new Set<number>();
+    const nowEnraged = this.enragedNext, nowHappy = this.happyNext;
+    nowEnraged.clear(); nowHappy.clear();
     for (const c of g.creatures) {
       if (c.enraged && !c.gone && !c.leashed) {
         nowEnraged.add(c.id);
@@ -137,6 +152,7 @@ export class SfxCues {
         if (this.primed && !this.happy.has(c.id)) { const k = near(c.x, c.z); if (k > gk) { gk = k; glad = c; } }
       }
     }
+    this.enragedNext = this.enraged; this.happyNext = this.happy;
     this.enraged = nowEnraged; this.happy = nowHappy;
     if (mad) {
       S.enraged(pan(mad.x), ak, angry);
@@ -149,7 +165,7 @@ export class SfxCues {
   private legends({ g, time, pan }: Here): void {
     const w = g.witch;
     let best: Creature | null = null, bd = Infinity;
-    for (const c of g.creatures) if (c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless")) { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
+    for (const c of this.bosses) if (!c.leashed && (c.legendState === "asleep" || c.legendState === "restless")) { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
     const sleep = best ? Math.max(0, 1 - bd / Math.max(1, g.tuning.sfx.snore.range)) : 0;
     const W = g.tuning.wildLegends;
     this.sfx.legends(sleep, best ? bossBreath(time, best.id, W.breathEvery * 1.5) : 0, best ? restlessness(best) * Math.min(1, sleep * 1.5) : 0, best ? pan(best.x) : 0);
@@ -243,7 +259,7 @@ export class SfxCues {
   private charges({ g, time, pan }: Here): void {
     const S = this.sfx, w = g.witch;
     let ch: (Creature & { run?: { phase: string; speed: number } }) | null = null, cd = Infinity;
-    for (const c of g.creatures) { const run = (c as Creature & { run?: { phase: string } }).run; if (c.boss && run) { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < cd) { cd = d; ch = c; } } }
+    for (const c of this.bosses) { const run = (c as Creature & { run?: { phase: string } }).run; if (run) { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < cd) { cd = d; ch = c; } } }
     const C = g.tuning.sfx.charge, ck = ch ? Math.max(0, 1 - cd / Math.max(1, C.range)) : 0;
     if (!ch?.run || ck <= 0) { S.charge(0, 0); return; }
     const { phase, speed } = ch.run, p = pan(ch.x);
@@ -276,14 +292,31 @@ export class SfxCues {
     this.sfx.meadow(Math.max(0, Math.min(1, (g.map.homeRadius - Math.hypot(w.x - home.x, w.z - home.z)) / Math.max(1, g.tuning.sfx.meadow.fade))));
   }
 
+  /** Her decks (the DJ witch, #356): while she stands behind them, the spell cast, her hands heard as the picture plays
+   *  them (art/witch.js djGesture, on the beat clock): a stroke of the record on each half-beat of a scratch bar, and her
+   *  "woo-hoo!" on the first beat of a hype bar. */
+  private decks({ g, time }: Here): void {
+    const sp = g.party.spellAt;
+    if (!g.witch.seated || g.witches[0]?.ko || typeof sp !== "number" || time < sp + PARTY_CAST) { this.deckHalf = -1; return; }
+    const b = beatAt(g.beat, time), half = Math.floor(b * 2);
+    if (half === this.deckHalf) return;
+    const first = this.deckHalf < 0;
+    this.deckHalf = half;
+    if (first || !this.primed) return; // (from the next half-beat: never one already under way)
+    const gesture = djGesture(b);
+    if (gesture === "scratch") this.sfx.scratch(half % 2 === 0, 0.1);
+    else if (gesture === "hype" && half % 8 === 0) this.sfx.whoop(0.1);
+  }
+
   /** A legend turning angry (its restlessness run out, #87): its roar, heard twice as far. */
   private roars({ g, pan }: Here, hear: number): void {
-    const w = g.witch, now = new Set<number>();
-    for (const c of g.creatures) if (c.boss && !c.gone && c.legendState === "angry") {
+    const w = g.witch, now = this.angryNext;
+    now.clear();
+    for (const c of this.bosses) if (!c.gone && c.legendState === "angry") {
       now.add(c.id);
       if (this.primed && !this.angry.has(c.id)) { const k = Math.max(0, 1 - Math.hypot(c.x - w.x, c.z - w.z) / (2 * hear)); if (k > 0) this.sfx.roar(pan(c.x), k); }
     }
-    this.angry = now;
+    this.angryNext = this.angry; this.angry = now;
   }
 
   /** Restless legends calling out sadly (Ed, 2026-10-06), heard from the way of their clearings
@@ -292,7 +325,7 @@ export class SfxCues {
    *  apart, so several at once don't crowd the mix. Calm again (its kin back) or angry, it stops. */
   private laments({ g, time, pan }: Here): void {
     const L = g.tuning.sfx.lament, w = g.witch, near: [Creature, number][] = [];
-    for (const c of g.creatures) if (c.boss && !c.gone && !c.leashed && c.legendState === "restless") {
+    for (const c of this.bosses) if (!c.gone && !c.leashed && c.legendState === "restless") {
       const k = Math.max(0, 1 - Math.hypot(c.x - w.x, c.z - w.z) / Math.max(1, L.range));
       if (k > 0) near.push([c, k]);
     }
@@ -359,9 +392,9 @@ export class SfxCues {
     if (this.beach?.map !== g.map) this.beach = { map: g.map, at: beachOf(g.map.bounds, g.tuning) };
     const P = g.tuning.sfx.waves, B = this.beach.at;
     if (!P || !B) return;
-    const w = g.witch, off = -B.intoSea(w.x, w.z); // (metres from the water)
+    // (metres from the water, by the coast's own edge that way: intoSea's quick path is only right about the side, well inland)
+    const w = g.witch, d = Math.hypot(w.x - B.x, w.z - B.z) || 1, off = B.edge(Math.atan2(w.z - B.z, w.x - B.x)) + B.out - d;
     if (off >= P.range) { this.sfx.sea(0); return; } // (Sfx.sea: nothing unless already made)
-    const d = Math.hypot(w.x - B.x, w.z - B.z) || 1;
     this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
   }
   private beach: { map: Game["map"]; at: Beach | null } | null = null;

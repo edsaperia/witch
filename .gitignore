@@ -9,7 +9,5 @@ tools/rig/.out/
 upcoming.generated.json
 bench-out/
 node_modules
-previews/sfx/mix/*.wav
-previews/sfx/run/*.wav
-previews/feel/
-previews/sfx/live.json
+# The tools' pictures and sounds land here; they go in PR comments, never in commits (Ed's overnight programme, 2026-10-07).
+previews/

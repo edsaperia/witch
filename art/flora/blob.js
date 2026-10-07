@@ -4,12 +4,10 @@
 // little clusters of pixels shaded as one leaf bunch, the whole blob lit from the upper left in three tones (t3ssel8r style), the
 // blobs behind a tone darker. A crown can carry dots (blossom, fruit, glowing spots), glints, hanging vines with glowing buds, or
 // be mushroom caps with glowing gills. The new species in art/flora/genomes.js (generator "blob") are drawn by it.
-import { M, Sprite, uni, hash2, lerp2, add } from "../core.js";
+import { M, Sprite, uni, hash2, lerp2, add, unitVec, matOf } from "../core.js";
 import { bough, roots, bark, smoothBark, trim, spread } from "../trees.js";
 
-const matOf = name => (typeof name === "number" ? name : M[name]);
-const unit = v => { const l = Math.hypot(...v) || 1; return v.map(x => x / l); };
-const BLOB_LIGHT = unit([-.5, -.75, .45]); // from the upper left and a little in front, as the creatures are lit
+const BLOB_LIGHT = unitVec([-.5, -.75, .45]); // from the upper left and a little in front, as the creatures are lit
 const LEAFY = [M.LEAF, M.LEAF2, M.LEAF3];
 // A point a fraction f of the way along a limb's polyline.
 function along(pts, f) { const t = Math.max(0, Math.min(1, f)) * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(t)); return lerp2(pts[i], pts[i + 1], t - i); }
@@ -108,10 +106,10 @@ export function stampBlobs(sp, r, st, s, list, C) {
     }
     pts.sort((a, b) => a[4] - b[4]); // the rim first, the middle over it
     for (const [jx, jy, u, v, nz] of pts) {
-      let nrm = unit([u * .9, v * .9, nz + .15]), top = true;
+      let nrm = unitVec([u * .9, v * .9, nz + .15]), top = true;
       if (C.env) { // lit as one crown (C.env: the crown's envelope { c, rx, ry, mix }): the envelope's normal there, mixed with the blob's own; the light tone only on the crown's lit top-left third
-        const E = C.env, eu0 = (c[0] + jx - E.c[0]) / E.rx, ev0 = (c[1] + jy - E.c[1]) / E.ry, el = Math.max(1, Math.hypot(eu0, ev0) / .97), eu = eu0 / el, ev = ev0 / el, /* (a clump past the envelope takes its edge's light, not the dark beyond) */ en = unit([eu * .9, ev * .9, Math.sqrt(Math.max(0, 1 - eu * eu - ev * ev)) + .15]), k = E.mix ?? .7;
-        nrm = unit([en[0] * k + nrm[0] * (1 - k), en[1] * k + nrm[1] * (1 - k), en[2] * k + nrm[2] * (1 - k)]); top = eu + ev < -.45;
+        const E = C.env, eu0 = (c[0] + jx - E.c[0]) / E.rx, ev0 = (c[1] + jy - E.c[1]) / E.ry, el = Math.max(1, Math.hypot(eu0, ev0) / .97), eu = eu0 / el, ev = ev0 / el, /* (a clump past the envelope takes its edge's light, not the dark beyond) */ en = unitVec([eu * .9, ev * .9, Math.sqrt(Math.max(0, 1 - eu * eu - ev * ev)) + .15]), k = E.mix ?? .7;
+        nrm = unitVec([en[0] * k + nrm[0] * (1 - k), en[1] * k + nrm[1] * (1 - k), en[2] * k + nrm[2] * (1 - k)]); top = eu + ev < -.45;
       }
       const lit = nrm[0] * BLOB_LIGHT[0] + nrm[1] * BLOB_LIGHT[1] + nrm[2] * BLOB_LIGHT[2];
       const base = lit + (sty ? 0 : (r() - .5) * (C.jitter ?? .16)) - (back ? (C.backDark ?? .32) : 0) - Math.max(0, v) * (C.under ?? .12), /* under: how dark a blob's underside goes (a fir's tiers each a dark lower edge) */ sx = Math.round(c[0] + jx), sy = Math.round(c[1] + jy), sd = seed + ((sx * 7 + sy * 13) & 7);

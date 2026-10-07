@@ -11,20 +11,18 @@
 // Mostly unlit; at most one magical touch per piece or ground (a car's headlights, a cone lit like a
 // lantern, the fridge's fireflies, a swing that sways with a sparkle, glowing tennis balls, a
 // floodlight lamp of fairy light). Built in 3D at the witch's scale (she is about 1.3 units tall).
-import { M, Sprite, hsv2rgb } from "./core.js";
+import { M, Sprite, hsv2rgb, sinHash, glowBall } from "./core.js";
 import { Model, render, v3, YAW, PITCH } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 
-const rlHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
-const rlCell = (p, k, s = 0) => rlHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
+const rlCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 // weathering: rust and moss patches over a material
 const rlWorn = (rust = .2, moss = .15) => p => { const r = rlCell(p, 16, 3), n = rlCell(p, 6, 5); return n < moss && p[1] > .1 ? M.MOSS : r > 1 - rust * .7 ? M.BODY2 : undefined; };
-const rlTufts = (m, n, R, g, seed, cx = 0, cz = 0) => { for (let i = 0; i < n; i++) { const a = rlHash(seed, i) * 6.283, d = R * Math.sqrt(rlHash(i, seed)); m.ell([cx + Math.cos(a) * d, .07, cz + Math.sin(a) * d * .7], [.07, .1 + rlHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .13 ? M.LEAF : undefined }); } };
+const rlTufts = (m, n, R, g, seed, cx = 0, cz = 0) => { for (let i = 0; i < n; i++) { const a = sinHash(seed, i) * 6.283, d = R * Math.sqrt(sinHash(i, seed)); m.ell([cx + Math.cos(a) * d, .07, cz + Math.sin(a) * d * .7], [.07, .1 + sinHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .13 ? M.LEAF : undefined }); } };
 const rlFern = (m, c, g, k = 1) => { for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283 + c[0], d = [Math.cos(a), 0, Math.sin(a)]; m.chain([[...c, .03 * k], [...v3.add(c, v3.add(v3.mul(d, .25 * k), [0, .2 * k, 0])), .025 * k], [...v3.add(c, v3.add(v3.mul(d, .5 * k), [0, .05 * k, 0])), .01 * k]], i % 2 ? M.LEAF : M.LEAF2, { group: g }); } };
-const rlIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4; k++) pts.push([...v3.add(v3.lerp(from, to, k / 4), [(rlHash(seed, k) - .5) * .12, 0, .02]), .03]); m.chain(pts, M.LEAF, { group: g, paint: p => rlCell(p, 30) < .3 ? M.LEAF2 : undefined }); };
+const rlIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4; k++) pts.push([...v3.add(v3.lerp(from, to, k / 4), [(sinHash(seed, k) - .5) * .12, 0, .02]), .03]); m.chain(pts, M.LEAF, { group: g, paint: p => rlCell(p, 30) < .3 ? M.LEAF2 : undefined }); };
 const rlCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: .04, paint: p => { const n = rlCell(p, 10, 2); return p[1] < c[1] - .15 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; } });
 const rlBar = (m, a, b, g, r = .025, mat = M.FRAME) => m.seg(a, b, r, r, mat, { group: g, paint: rlWorn(.35, .05) });
-const rlGlow = (m, c, r, g, mat = M.MAGIC) => m.ell(c, [r, r, r], mat, { group: g, extra: true });
 
 // Turns the parts added since `from` (and their paint) by yaw (about y), pitch (about z: nose up) and roll (about x), then moves them by `at`.
 function rlPlace(m, from, { yaw = 0, pitch = 0, roll = 0, at = [0, 0, 0] } = {}) {
@@ -42,7 +40,7 @@ function rlCar(m, g, { len = 1.5, van = false, glow = false, flat = false } = {}
   m.box([0, y, 0], [len, h, .66], M.BODY, { round: .14, group: g, paint: p => { const w = rlWorn(.3, .12)(p); if (w) return w; if (p[0] > len - .06 && Math.abs(p[1] - (y + h * .2)) < .07 && Math.abs(Math.abs(p[2]) - .45) < .1) return glow ? M.MAGIC2 : M.FRAME; if (van && p[1] > y + .1 && Math.abs(p[2]) > .6 && Math.abs(p[0] + .2) < .9 && ((p[0] + 3) * 3) % 1 > .15) return M.SHADES; return p[1] < y - h + .1 ? M.SHADES : undefined; } });
   if (!van) m.box([-.2, y + h + .22, 0], [len * .6, .24, .6], M.BODY, { round: .14, group: g, paint: p => Math.abs(p[2]) > .52 || p[0] > len * .6 - .25 - .2 ? (rlCell(p, 9) < .25 ? M.STONED : M.SHADES) : rlWorn(.3, .25)(p) }); // the cabin, its windows dark and cracked
   for (const x of [-len * .65, len * .65]) for (const z of [-.66, .66]) m.ell([x, .3, z], [.3, flat ? .22 : .3, .1], M.BODY3, { group: g + 1, paint: p => Math.hypot(p[0] - x, p[1] - .3) < .12 ? M.FRAME : undefined });
-  if (glow) for (const z of [-.45, .45]) rlGlow(m, [len + .05, y + h * .2, z], .07, g + 2, M.MAGIC2);
+  if (glow) for (const z of [-.45, .45]) glowBall(m, [len + .05, y + h * .2, z], .07, g + 2, M.MAGIC2);
 }
 
 export const carModel = (m, g, o) => rlCar(m, g, o); // a car's model, for the country pieces' parked car
@@ -122,7 +120,7 @@ const MODERN = {
   "fridge-fireflies": { desc: "a fridge standing in the woods, its door ajar, fireflies inside", glow: true, build(m) {
     m.box([0, .85, 0], [.36, .85, .32], M.BELLY, { round: .05, group: 1, paint: p => p[2] > .28 && Math.abs(p[0]) < .3 && p[1] < 1.55 && p[1] > .1 ? M.SHADES : rlWorn(.25, .2)(p) });
     m.box([.5, .85, .4], [.03, .78, .3], M.BELLY, { dir: [.5, 0, 1], round: .03, group: 2, paint: rlWorn(.25, .15) }); // its door, ajar
-    for (let i = 0; i < 7; i++) rlGlow(m, [(rlHash(i) - .5) * .4, .4 + rlHash(i, 2) * 1.0, .2 + rlHash(i, 3) * .3], .03, 10 + i, i % 2 ? M.MAGIC : M.MAGIC2); rlIvy(m, [-.36, 0, .3], [-.3, 1.6, .33], 3, 13);
+    for (let i = 0; i < 7; i++) glowBall(m, [(sinHash(i) - .5) * .4, .4 + sinHash(i, 2) * 1.0, .2 + sinHash(i, 3) * .3], .03, 10 + i, i % 2 ? M.MAGIC : M.MAGIC2); rlIvy(m, [-.36, 0, .3], [-.3, 1.6, .33], 3, 13);
   } },
 };
 function rlTrolley(m, g) {
@@ -135,7 +133,7 @@ function rlTrolley(m, g) {
 function rlCone(m, c, g, lit = false) {
   m.box(v3.add(c, [0, .03, 0]), [.24, .03, .24], M.ACCENT, { round: .02, group: g, paint: rlWorn(.15, .2) });
   m.seg(v3.add(c, [0, .05, 0]), v3.add(c, [0, .72, 0]), .2, .03, M.ACCENT, { group: g + 1, paint: p => Math.abs(p[1] - c[1] - .42) < .07 ? (lit ? M.MAGIC2 : M.CLOTH) : lit && rlCell(p, 18) < .2 ? M.GLOW : rlWorn(.15, .1)(p) });
-  if (lit) rlGlow(m, v3.add(c, [0, .78, 0]), .05, g + 2, M.MAGIC2);
+  if (lit) glowBall(m, v3.add(c, [0, .78, 0]), .05, g + 2, M.MAGIC2);
 }
 
 // ---------------- the playground ----------------
@@ -144,7 +142,7 @@ const PLAYGROUND = {
     for (const x of [-1.1, 1.1]) for (const z of [-.5, .5]) rlBar(m, [x, 0, z], [x * .95, 2.1, 0], 1, .045);
     rlBar(m, [-1.1, 2.1, 0], [1.1, 2.1, 0], 2, .05);
     for (const z of [-.12, .12]) rlBar(m, [-.5, 2.08, z], [-.42, .55, z * 1.2], 3, .012); m.box([-.42, .52, 0], [.2, .025, .14], M.BODY3, { round: .02, group: 3, dir: [1, -.15, 0] }); // the swing that sways
-    for (let i = 0; i < 5; i++) rlGlow(m, [-.42 + (rlHash(i) - .5) * .5, .6 + rlHash(i, 2) * .7, (rlHash(i, 3) - .5) * .3], .025, 10 + i);
+    for (let i = 0; i < 5; i++) glowBall(m, [-.42 + (sinHash(i) - .5) * .5, .6 + sinHash(i, 2) * .7, (sinHash(i, 3) - .5) * .3], .025, 10 + i);
     rlBar(m, [.5, 2.08, -.12], [.5, 1.3, -.12], 4, .012); rlBar(m, [.5, 2.08, .12], [.58, .9, .2], 4, .012); m.box([.7, .04, .3], [.2, .025, .14], M.BODY3, { round: .02, group: 5, dir: [1, 0, .5] }); // the broken one, its seat in the grass
     rlIvy(m, [1.1, 0, .5], [1.05, 1.6, .25], 6, 14); rlTufts(m, 14, 1.8, 7, 15);
   } },
@@ -153,7 +151,7 @@ const PLAYGROUND = {
     for (let i = 1; i < 6; i++) rlBar(m, [-.95, i * .27, -.3], [-.95, i * .27, .3], 1, .02); // the ladder
     m.box([-.75, 1.5, 0], [.25, .04, .32], M.FRAME, { group: 2, paint: rlWorn(.4, .1) });
     m.box([.35, .78, 0], [.95, .03, .26], M.HAT1, { dir: [1, -.75, 0], round: .02, group: 3, paint: p => Math.abs(p[2]) > .22 ? M.FRAME : rlWorn(.35, .15)(p) }); // the chute
-    for (let i = 0; i < 10; i++) { const a = rlHash(i, 3) * 6.283; m.chain([[.4 + Math.cos(a) * .9, 0, Math.sin(a) * .6, .03], [.3 + Math.cos(a) * .4, .5 + rlHash(i) * .5, Math.sin(a) * .3, .025], [.1 + rlHash(i, 4) * .6, .7 + rlHash(i, 5) * .4, (rlHash(i, 6) - .5) * .4, .015]], M.BARKD, { group: 5 + (i % 2) }); if (i % 3 === 0) m.ell([.3 + rlHash(i, 7) * .6, .5 + rlHash(i, 8) * .4, (rlHash(i, 9) - .5) * .5], [.2, .14, .16], M.LEAF, { group: 7, rough: .03, paint: p => rlCell(p, 30) < .1 ? M.ACCENT : undefined }); }
+    for (let i = 0; i < 10; i++) { const a = sinHash(i, 3) * 6.283; m.chain([[.4 + Math.cos(a) * .9, 0, Math.sin(a) * .6, .03], [.3 + Math.cos(a) * .4, .5 + sinHash(i) * .5, Math.sin(a) * .3, .025], [.1 + sinHash(i, 4) * .6, .7 + sinHash(i, 5) * .4, (sinHash(i, 6) - .5) * .4, .015]], M.BARKD, { group: 5 + (i % 2) }); if (i % 3 === 0) m.ell([.3 + sinHash(i, 7) * .6, .5 + sinHash(i, 8) * .4, (sinHash(i, 9) - .5) * .5], [.2, .14, .16], M.LEAF, { group: 7, rough: .03, paint: p => rlCell(p, 30) < .1 ? M.ACCENT : undefined }); }
     m.seg([1.45, 0, .2], [1.45, 1.2, .2], .03, .02, M.TRUNK, { group: 8 }); rlCrown(m, [1.45, 1.3, .2], [.25, .2, .22], 9); // the sapling
   } },
   "roundabout": { desc: "a roundabout tilted in the moss", build(m) {
@@ -185,7 +183,8 @@ const PLAYGROUND_AT = [["swings", -2.6, -2.0], ["slide", 2.4, -2.2], ["climbing-
 // ---------------- the sports grounds ----------------
 // A ground decal: a flat, cracked surface with painted lines, seen at the game's angle.
 function rlDecal(m, w, d, surface, lines, g = 1) {
-  m.box([0, .015, 0], [w, .015, d], surface, { round: .01, group: g, paint: p => { if (rlCell(p, 3, 4) < .05 || Math.abs(Math.sin(p[0] * 1.3 + 1) * .5 + Math.sin(p[0] * 4.1) * .08 - p[2] * .3) < .012) return rlCell(p, 18) < .5 ? M.LEAF2 : M.STONED; if (lines(p[0], p[2])) return rlCell(p, 10, 2) < .25 ? surface : M.CLOTH; return rlCell(p, 5, 7) < .07 ? M.MOSS : undefined; } });
+  // paper-thin (Ed's notes, 2026-10-07: a court 3 cm thick showed its near edge as a raised slab's face at the game's camera)
+  m.box([0, .003, 0], [w, .003, d], surface, { round: .002, group: g, paint: p => { if (rlCell(p, 3, 4) < .05 || Math.abs(Math.sin(p[0] * 1.3 + 1) * .5 + Math.sin(p[0] * 4.1) * .08 - p[2] * .3) < .012) return rlCell(p, 18) < .5 ? M.LEAF2 : M.STONED; if (lines(p[0], p[2])) return rlCell(p, 10, 2) < .25 ? surface : M.CLOTH; return rlCell(p, 5, 7) < .07 ? M.MOSS : undefined; } });
 }
 const near = (v, t, w = .045) => Math.abs(v - t) < w;
 const SPORTS = {
@@ -193,15 +192,15 @@ const SPORTS = {
   "tennis-net": { desc: "a sagging tennis net between its posts", build(m) { for (const z of [-2.2, 2.2]) rlBar(m, [0, 0, z], [0, .55, z], 1, .035); m.box([0, .38, 0], [.01, .17, 2.15], M.CLOTH, { group: 2, paint: p => p[1] > .5 ? M.CLOTH : ((p[1] * 25) % 1 < .25 || ((p[2] + 5) * 25) % 1 < .25) ? M.SHADES : undefined }); m.box([0, .25, 0], [.012, .15, 1.0], M.SHADES, { group: 2, cut: true }); } },
   "umpire-chair": { desc: "a tennis umpire's chair leaning over", split: 1.4, build(m) { const n = m.parts.length; for (const x of [-.25, .25]) for (const z of [-.2, .2]) rlBar(m, [x * 1.4, 0, z * 1.4], [x, 1.5, z], 1, .03); for (let i = 1; i < 5; i++) rlBar(m, [-.3, i * .3, -.22], [-.3, i * .3, .22], 1, .02); m.box([0, 1.55, 0], [.28, .04, .25], M.WOOD, { group: 2 }); m.box([-.26, 1.8, 0], [.03, .25, .25], M.WOOD, { group: 2 }); rlPlace(m, n, { roll: .25, pitch: -.1 }); rlTufts(m, 8, 1.0, 4, 20); } },
   "court-fence": { desc: "a chain-link fence section, ivy through it, a gap torn in it", build(m) { for (const x of [-1.5, 0, 1.5]) rlBar(m, [x, 0, 0], [x, 1.7, 0], 1, .03); rlBar(m, [-1.5, 1.7, 0], [1.5, 1.7, 0], 1, .025); m.box([0, .85, 0], [1.5, .85, .008], M.FRAME, { group: 2, paint: p => ((p[0] + p[1] + 9) * 9) % 1 < .2 || ((p[0] - p[1] + 9) * 9) % 1 < .2 ? (rlCell(p, 5) < .15 ? M.BODY2 : M.FRAME) : M.SHADES }); m.ell([.7, .5, 0], [.4, .5, .05], M.SHADES, { group: 2, cut: true, rough: .08 }); for (let k = 0; k < 3; k++) rlIvy(m, [-1.3 + k * .6, 0, .03], [-1.1 + k * .5, 1.5, .03], 3 + k, 21 + k); } },
-  "tennis-balls": { desc: "a few old tennis balls glowing faintly in the grass", glow: true, build(m) { for (let i = 0; i < 4; i++) rlGlow(m, [(rlHash(i) - .5) * 1.2, .06, (rlHash(i, 2) - .5) * .8], .06, 1 + i, i % 2 ? M.MAGIC : M.MAGIC2); m.ell([0, .004, 0], [.8, .004, .5], M.LEAF3, { group: 9 }); rlTufts(m, 8, .8, 5, 22); } },
+  "tennis-balls": { desc: "a few old tennis balls glowing faintly in the grass", glow: true, build(m) { for (let i = 0; i < 4; i++) glowBall(m, [(sinHash(i) - .5) * 1.2, .06, (sinHash(i, 2) - .5) * .8], .06, 1 + i, i % 2 ? M.MAGIC : M.MAGIC2); m.ell([0, .004, 0], [.8, .004, .5], M.LEAF3, { group: 9 }); rlTufts(m, 8, .8, 5, 22); } },
   "baseball-diamond": { desc: "a baseball diamond: the worn dirt infield, grown-over bases, a pitcher's mound", decal: true, build(m) { const S = 2.2; m.box([0, .015, 0], [S * 1.6, .015, S * 1.2], M.LEAF2, { group: 1, round: .01, paint: p => { const u = Math.abs(p[0]) / S + Math.abs(p[2]) / (S * .75); if (u < 1.08 && u > .78) return rlCell(p, 8) < .2 ? M.LEAF2 : M.BARK2; if (u <= .78) return rlCell(p, 6) < .15 ? M.MOSS : undefined; return rlCell(p, 6, 3) < .3 ? M.LEAF : undefined; } }); for (const [x, z] of [[S, 0], [0, S * .75], [-S, 0], [0, -S * .75]]) m.box([x * .93, .04, z * .93], [.12, .02, .1], M.BELLY, { group: 2, round: .02, paint: p => rlCell(p, 20) < .3 ? M.LEAF2 : undefined }); m.ell([0, .02, 0], [.35, .08, .28], M.BARK2, { group: 3 }); } },
   "backstop": { desc: "a baseball backstop fence, a dugout bench beside it", build(m) { for (let k = 0; k <= 4; k++) { const a = -.8 + k * .4; rlBar(m, [-Math.cos(a) * .8, 0, Math.sin(a) * 1.4], [-Math.cos(a) * .8, 1.8, Math.sin(a) * 1.4], 1, .03); } for (let k = 0; k < 4; k++) { const a = -.8 + k * .4, b = a + .4, A = [-Math.cos(a) * .8, .9, Math.sin(a) * 1.4], B = [-Math.cos(b) * .8, .9, Math.sin(b) * 1.4], c = v3.lerp(A, B, .5); m.box(c, [Math.hypot(B[0] - A[0], B[2] - A[2]) / 2, .9, .008], M.FRAME, { dir: v3.sub(B, A), group: 2, paint: p => ((p[1] + p[0] * 2 + 9) * 9) % 1 < .2 ? (rlCell(p, 5) < .2 ? M.BODY2 : M.FRAME) : M.SHADES }); } m.box([-.6, .3, 2.0], [.15, .04, .7], M.WOOD, { group: 3 }); for (const z of [1.4, 2.6]) m.box([-.6, .14, z], [.12, .14, .04], M.WOOD, { group: 3 }); rlIvy(m, [-.75, 0, -.5], [-.7, 1.6, -.4], 4, 25); /* a dugout bench to one side */ } },
-  "scoreboard": { desc: "a scoreboard frame, panels missing (no text)", split: 1.8, build(m) { for (const x of [-1.0, 1.0]) rlBar(m, [x, 0, 0], [x, 2.6, 0], 1, .05); for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) if (rlHash(r, c) > .3) m.box([-.8 + c * .4, 1.6 + r * .32, 0], [.18, .14, .03], M.HAT1, { group: 2 + r, round: .01, paint: rlWorn(.3, .1) }); m.box([0, 2.62, 0], [1.1, .05, .06], M.FRAME, { group: 5 }); rlIvy(m, [-1.0, 0, .06], [-.95, 2.3, .06], 6, 26); } },
+  "scoreboard": { desc: "a scoreboard frame, panels missing (no text)", split: 1.8, build(m) { for (const x of [-1.0, 1.0]) rlBar(m, [x, 0, 0], [x, 2.6, 0], 1, .05); for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) if (sinHash(r, c) > .3) m.box([-.8 + c * .4, 1.6 + r * .32, 0], [.18, .14, .03], M.HAT1, { group: 2 + r, round: .01, paint: rlWorn(.3, .1) }); m.box([0, 2.62, 0], [1.1, .05, .06], M.FRAME, { group: 5 }); rlIvy(m, [-1.0, 0, .06], [-.95, 2.3, .06], 6, 26); } },
   "football-pitch": { desc: "a football pitch: faded lines, a centre circle, mown stripes long grown out", decal: true, build(m) { const L = 5.2, W = 3.3; m.box([0, .015, 0], [L + .5, .015, W + .5], M.LEAF2, { group: 1, round: .01, paint: p => { const x = p[0], z = p[2], ln = Math.abs(x) <= L + .05 && Math.abs(z) <= W + .05 && (near(Math.abs(x), L, .06) || near(Math.abs(z), W, .06) || near(x, 0, .06) || near(Math.hypot(x, z * 1), 1.0, .06) || (Math.abs(x) > L - 1.0 && Math.abs(z) < 1.6 && (near(Math.abs(x), L - 1.0, .06) || near(Math.abs(z), 1.6, .06)))); if (ln) return rlCell(p, 8, 2) < .3 ? M.LEAF2 : M.CLOTH; return Math.floor((x + 20) * .8) % 2 ? (rlCell(p, 6) < .25 ? M.LEAF2 : M.LEAF) : rlCell(p, 5, 9) < .1 ? M.LEAF3 : undefined; } }); } },
   "goal": { desc: "a football goal, its net torn, a sapling grown through it", split: 1.1, build(m) { rlGoal(m, 1); m.seg([.3, 0, .2], [.3, 1.5, .2], .035, .025, M.TRUNK, { group: 5 }); rlCrown(m, [.3, 1.6, .2], [.35, .25, .3], 6); rlTufts(m, 8, 1.2, 7, 27); } },
   "goal-tipped": { desc: "a football goal tipped on its back", build(m) { const n = m.parts.length; rlGoal(m, 1); rlPlace(m, n, { pitch: -Math.PI / 2 + .12, at: [-.5, .06, 0] }); /* on its back, the net in the air */ rlTufts(m, 8, 1.2, 7, 28); } },
   "corner-flag": { desc: "a corner flag, its flag a faded rag", build(m) { rlBar(m, [0, 0, 0], [0, .9, 0], 1, .015); m.box([.12, .8, 0], [.12, .08, .006], M.ACCENT, { group: 2, dir: [1, -.3, .1], paint: rlWorn(.2, 0) }); rlTufts(m, 5, .4, 3, 29); } },
-  "floodlight": { desc: "a floodlight pylon, one lamp still flickering with fairy light", glow: true, split: 2.4, build(m) { const H = 4.0; for (const [x, z] of [[-.25, -.25], [.25, -.25], [.25, .25], [-.25, .25]]) rlBar(m, [x * 1.6, 0, z * 1.6], [x * .5, H, z * .5], 1, .035); for (let i = 1; i < 8; i++) { const y = i * H / 8, k = 1.6 - (1.1 * y / H); rlBar(m, [-.25 * k, y, -.25 * k], [.25 * k, y + H / 8, .25 * k], 2, .015); rlBar(m, [.25 * k, y, -.25 * k], [-.25 * k, y + H / 8, .25 * k], 2, .015); } for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) m.box([-.3 + c * .3, H + .2 + r * .25, .1], [.12, .1, .06], M.FRAME, { group: 3, round: .02, paint: p => p[2] > .14 ? (r === 1 && c === 1 ? M.MAGIC2 : M.SHADES) : rlWorn(.4, .1)(p) }); rlGlow(m, [0, H + .45, .22], .06, 4, M.MAGIC2); rlIvy(m, [-.4, 0, .4], [-.2, 2.4, .2], 5, 30); } },
+  "floodlight": { desc: "a floodlight pylon, one lamp still flickering with fairy light", glow: true, split: 2.4, build(m) { const H = 4.0; for (const [x, z] of [[-.25, -.25], [.25, -.25], [.25, .25], [-.25, .25]]) rlBar(m, [x * 1.6, 0, z * 1.6], [x * .5, H, z * .5], 1, .035); for (let i = 1; i < 8; i++) { const y = i * H / 8, k = 1.6 - (1.1 * y / H); rlBar(m, [-.25 * k, y, -.25 * k], [.25 * k, y + H / 8, .25 * k], 2, .015); rlBar(m, [.25 * k, y, -.25 * k], [-.25 * k, y + H / 8, .25 * k], 2, .015); } for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) m.box([-.3 + c * .3, H + .2 + r * .25, .1], [.12, .1, .06], M.FRAME, { group: 3, round: .02, paint: p => p[2] > .14 ? (r === 1 && c === 1 ? M.MAGIC2 : M.SHADES) : rlWorn(.4, .1)(p) }); glowBall(m, [0, H + .45, .22], .06, 4, M.MAGIC2); rlIvy(m, [-.4, 0, .4], [-.2, 2.4, .2], 5, 30); } },
   "basketball-hoop": { desc: "a basketball hoop on a leaning post, its net gone", split: 1.8, build(m) { const n = m.parts.length; rlBar(m, [0, 0, 0], [0, 2.4, 0], 1, .05); m.box([.15, 2.5, 0], [.03, .3, .45], M.BELLY, { group: 2, paint: p => Math.abs(p[1] - 2.4) < .1 && Math.abs(p[2]) < .14 && Math.abs(Math.abs(p[2]) - .12) < .02 ? M.ACCENT : rlWorn(.25, .1)(p) }); for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283, b = (k + 1) / 8 * 6.283; rlBar(m, [.36 + Math.cos(a) * .17, 2.32, Math.sin(a) * .17], [.36 + Math.cos(b) * .17, 2.32, Math.sin(b) * .17], 3, .012, M.ACCENT); } rlPlace(m, n, { pitch: -.2 }); rlTufts(m, 8, 1.0, 5, 31); } },
 };
 function rlGoal(m, g) { for (const z of [-1.4, 1.4]) rlBar(m, [0, 0, z], [0, 1.0, z], g, .035, M.BELLY); rlBar(m, [0, 1.0, -1.4], [0, 1.0, 1.4], g, .035, M.BELLY); for (const z of [-1.4, 1.4]) rlBar(m, [0, 1.0, z], [-.6, 0, z], g + 1, .02, M.BELLY); m.box([-.3, .5, 0], [.012, .55, 1.38], M.CLOTH, { dir: [.6, 1, 0], group: g + 2, paint: p => ((p[1] * 12) % 1 < .3 || ((p[2] + 5) * 12) % 1 < .3) ? M.CLOTH : M.SHADES }); m.ell([-.3, .4, .5], [.2, .3, .4], M.CLOTH, { group: g + 2, cut: true }); }

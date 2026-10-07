@@ -57,9 +57,9 @@ export function hillsAt(x: number, z: number, seed: number, H: HillsTuning): num
  *  it can have). Each pulls by its odds w / (1 - w), so one alone is a plain mix by w, a level
  *  core (w 1) always wins (where two cores meet, the one allowed more odds), and the result
  *  doesn't depend on their order (which was a cliff where two crossed). */
-export function blend(h: number, pulls: number[]): number {
+export function blend(h: number, pulls: ArrayLike<number>, length = pulls.length): number {
   let num = h, den = 1;
-  for (let i = 0; i < pulls.length; i += 3) {
+  for (let i = 0; i < length; i += 3) {
     const w = pulls[i];
     if (w <= 0) continue;
     const o = Math.min(pulls[i + 2], w >= 1 ? Infinity : w / (1 - w));
@@ -121,6 +121,19 @@ float overBend(vec3 w) {
   if (ahead <= dh) return 1.0;
   float m = (H + uBend.x * dh * dh) / (dh + D);
   return (H - w.y + uBend.x * ahead * ahead) / (ahead + D) <= m + 0.02 ? 1.0 : 0.0;
+}
+// 1 if nothing of the bent, rolling ground stands between a (lifted, unbent) world point and the camera, 0 if it hides it:
+// the bend's horizon, and the hills on the way, marched in 16 steps along the line of sight, both bent as drawn (Ed, 2026-10-06:
+// "I shouldn't see anything on the ground that's obscured when it goes past the bend"). For what is drawn without a depth
+// test, or past one (the ley line through the trees, its pixel heads), so it hides where the earth would hide it.
+float groundSeen(vec3 w) {
+  if (overBend(w) < 0.5) return 0.0;
+  vec3 b = bendW(w);
+  for (int i = 1; i < 16; i++) {
+    vec3 q = mix(b, cameraPosition, float(i) / 16.0);
+    if (bendW(vec3(q.x, groundH(q.xz), q.z)).y > q.y + 0.3) return 0.0;
+  }
+  return 1.0;
 }
 `;
 
@@ -191,7 +204,7 @@ export class HeightField {
     this.PATH_EDGE = Math.max(6, H.amplitude * 0.6);
     this.PLATEAU_FADE = Math.max(16, H.amplitude * 2);
     amplitude = H.on ? H.amplitude : 0;
-    { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) this.beach = { b, ease: Math.max(1, B.ease), hSand: B.sand, hSea: B.sea }; }
+    { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) { const ease = Math.max(1, B.ease), clear = b.edgeMin - Math.max(...b.sand) - ease; this.beach = { b, ease, hSand: B.sand, hSea: B.sea, clear2: clear > 0 ? clear * clear : 0 }; } }
     this.seed = map.seed + 6113;
     this.texture = new THREE.DataTexture(this.half, N, N, THREE.RedFormat, THREE.HalfFloatType);
     const t = this.texture;
@@ -230,13 +243,15 @@ export class HeightField {
     if (!b) return h;
     // The beach (rules/mapShape.ts beachOf): the hills eased down over `ease` metres to the sand's
     // height where it starts, the sand sloping gently to the sea's, flat beyond.
+    const dx = x - b.b.x, dz = z - b.b.z;
+    if (dx * dx + dz * dz < b.clear2) return h; // (quickly: nearer the middle than the sand comes anywhere, less the ease)
     const into = b.b.intoSand(x, z);
     if (into < -b.ease) return h;
     if (into < 0) return h + (b.hSand - h) * smoothstep((into + b.ease) / b.ease);
     return b.hSand + (b.hSea - b.hSand) * smoothstep(Math.min(1, into / Math.max(1, b.b.sandAt(Math.atan2(z - b.b.z, x - b.b.x)) + b.b.out)));
   }
   /** The beach's levels, on the circular map with it on. */
-  private beach: { b: Beach; ease: number; hSand: number; hSea: number } | null = null;
+  private beach: { b: Beach; ease: number; hSand: number; hSea: number; clear2: number } | null = null;
 
   private addCircle(c: Circle): void {
     const R = c.r + this.PLATEAU_FADE;
@@ -283,6 +298,14 @@ export class HeightField {
     return h;
   }
 
+  /** Scratch for plateaued's and sourceAt's pulls (weight, level, cap: reused, they ran per sample), grown as needed. */
+  private platPulls: Float64Array = new Float64Array(48);
+  private srcPulls: Float64Array = new Float64Array(48);
+  private static pull(a: Float64Array, n: number, w: number, level: number, cap: number): Float64Array {
+    if (n + 3 > a.length) { const b = new Float64Array(a.length * 2); b.set(a); a = b; }
+    a[n] = w; a[n + 1] = level; a[n + 2] = cap;
+    return a;
+  }
   /** The hills eased to the plateaus (ponds' buckets added first; or, asked not to, the fixed plateaus alone). */
   private plateaued(x: number, z: number, ponds = true): number {
     let h = this.raw(x, z);
@@ -292,13 +315,15 @@ export class HeightField {
       for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) this.ponds(bx + dx, by + dy);
       this.pondsAt[0] = bx; this.pondsAt[1] = by;
     }
-    const pulls: number[] = [];
-    for (const c of this.circles.get(bucketKey(bx, by)) ?? []) {
+    const cs = this.circles.get(bucketKey(bx, by));
+    let n = 0;
+    if (cs) for (let q = 0; q < cs.length; q++) {
+      const c = cs[q];
       if (c.pond && !ponds) continue; // (a pond's own level: the fixed plateaus only)
       const d = Math.hypot(x - c.x, z - c.z);
-      if (d < c.r + this.PLATEAU_FADE) pulls.push(1 - smoothstep((d - c.r) / this.PLATEAU_FADE), c.h, 1e6);
+      if (d < c.r + this.PLATEAU_FADE) { this.platPulls = HeightField.pull(this.platPulls, n, 1 - smoothstep((d - c.r) / this.PLATEAU_FADE), c.h, 1e6); n += 3; }
     }
-    return blend(h, pulls);
+    return blend(h, this.platPulls, n);
   }
 
   private indexPaths(): void {
@@ -334,8 +359,8 @@ export class HeightField {
     // to the nearest stretch: a single nearest point jumps across a bend's inside (a cliff).
     const S = this.segs, LI = this.lnId, LW = this.lnW, LS = this.lnS, LK = this.lnK; // per line near: its pull, sum of weights × level, sum of weights
     let n = 0;
-    for (const id of list) {
-      const o = id * SEG, ax = S[o], az = S[o + 1], ex = S[o + 2], ez = S[o + 3], half = S[o + 5];
+    for (let q = 0; q < list.length; q++) {
+      const id = list[q], o = id * SEG, ax = S[o], az = S[o + 1], ex = S[o + 2], ez = S[o + 3], half = S[o + 5];
       const u = Math.min(1, Math.max(0, ((x - ax) * ex + (z - az) * ez) / S[o + 4])), d = Math.hypot(x - ax - ex * u, z - az - ez * u);
       if (d > half + this.PATH_EDGE) continue;
       const line = S[o + 6], w = 1 - smoothstep((d - half) / this.PATH_EDGE), k = w * w * w * w + 1e-9;
@@ -347,14 +372,15 @@ export class HeightField {
       LW[m] = Math.max(LW[m], w); LS[m] += k * level; LK[m] += k;
     }
     if (!n) return h;
-    const pulls: number[] = [];
-    for (let m = 0; m < n; m++) pulls.push(LW[m], LS[m] / LK[m], 1e3);
+    let p = 0; // (srcPulls, its own scratch: plateaued, above, fills platPulls)
+    for (let m = 0; m < n; m++) { this.srcPulls = HeightField.pull(this.srcPulls, p, LW[m], LS[m] / LK[m], 1e3); p += 3; }
     // A plateau's level core still wins over a path's (eased back over PATH_EDGE at its edge).
-    for (const c of this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? []) {
-      const d = Math.hypot(x - c.x, z - c.z);
-      if (d < c.r + this.PATH_EDGE) pulls.push(1 - smoothstep((d - c.r) / this.PATH_EDGE), c.h, 1e6);
+    const cs = this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET)));
+    if (cs) for (let q = 0; q < cs.length; q++) {
+      const c = cs[q], d = Math.hypot(x - c.x, z - c.z);
+      if (d < c.r + this.PATH_EDGE) { this.srcPulls = HeightField.pull(this.srcPulls, p, 1 - smoothstep((d - c.r) / this.PATH_EDGE), c.h, 1e6); p += 3; }
     }
-    return blend(h, pulls);
+    return blend(h, this.srcPulls, p);
   }
 
   /** h at sample (i, j) before the slope limit (kept). */
@@ -537,6 +563,27 @@ export function seenOverBend(ahead: number, top: number, k: number, cam: { y: nu
   if (ahead > dh + beyond) return false;
   const m = (H + k * dh * dh) / (dh + D); // the grazing line's drop per metre
   return (H - top + k * ahead * ahead) / (ahead + D) <= m + 0.02;
+}
+
+/** overBend's twin on the CPU (HEIGHT_VERT_GLSL): whether a world point (x, z), `y` metres up (absolute, the ground's height
+ *  included, unbent), shows over the bent ground's horizon from `cam`. For what's drawn over the picture or without a depth
+ *  test (the DOM overlays, the state marks), so nothing on the ground shows past the bend (Ed, 2026-10-06: "I shouldn't see
+ *  anything on the ground that's obscured when it goes past the bend"). */
+export function overBendAt(x: number, y: number, z: number, cam: { x: number; y: number; z: number }): boolean {
+  const B = HEIGHT_UNIFORMS.uBend.value, F = HEIGHT_UNIFORMS.uBendFwd.value;
+  if (B.x <= 0) return true;
+  const ahead = (x - B.y) * F.x + (z - B.z) * F.y;
+  if (ahead <= 0) return true;
+  const D = Math.max(1, -((cam.x - B.y) * F.x + (cam.z - B.z) * F.y)), H = cam.y + B.w + 3;
+  const dh = -D + Math.sqrt(D * D + H / B.x);
+  if (ahead <= dh) return true;
+  const m = (H + B.x * dh * dh) / (dh + D);
+  return (H - y + B.x * ahead * ahead) / (ahead + D) <= m + 0.02;
+}
+
+/** Whether a point `y` metres above the ground at (x, z) shows over the bend from `cam` (overBendAt, on the rolling ground). */
+export function shownOverBend(x: number, y: number, z: number, cam: { x: number; y: number; z: number }): boolean {
+  return overBendAt(x, y + groundHeight(x, z), z, cam);
 }
 
 /** A point given as height above the ground, lifted onto it and bent (in place): where it is drawn. */

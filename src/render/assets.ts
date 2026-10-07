@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked, type FrameGround, groundOf } from "./atlas";
-import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type BeachArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, walkGait, runJob, witchLookOf, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -17,7 +17,7 @@ export interface TypeArt {
 }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
-export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
 /** A creature asleep's frame: its level's two breaths (render/artBuild.ts "nap"). */
 export const napFrame = (level: number, f: number) => level * 2 + (f % 2);
 /** A species' live-rig parts at one level (#79): its atlas page and what the rig needs. */
@@ -34,6 +34,8 @@ export class AssetLibrary {
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
   private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
+  /** The beach's edge of the woods (render/beach.ts): asked for only when she comes near the sand. */
+  private beachEdge: (BeachEdgeArt & { atlas: Atlas }) | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private scenes: (SceneArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
@@ -55,13 +57,17 @@ export class AssetLibrary {
   readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[] }>;
   /** Her lean as a four-frame loop (#37), side-on: towards and away; the game plays it faster with her speed. */
   readonly witchLean = { towards: [] as number[], away: [] as number[] };
+  /** Behind the decks (Art.djFrame picks one): her DJ frames, and each one's upper layer (what shows over the DJ table). */
+  readonly witchDj = { full: [] as number[], upper: [] as number[] };
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
   /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
   readonly soundsystems: Atlas;
   /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
    *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
-  readonly treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[] };
+  readonly treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
+    /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
+    foreFrames: number; foreBox: { x: number; y: number } };
   /** Style scale: the lab's K, 2 / pixel size. */
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
@@ -87,14 +93,15 @@ export class AssetLibrary {
     const ss: Baked[] = [];
     for (let v = 0; v < 3; v++) for (let f = 0; f < 3; f++) ss.push(Art.bake(Art.soundsystemSprite(style, { variant: v, frame: f, state: "playing" }), Art.soundsystemColours(v), style, style.cOutline) as Baked);
     this.soundsystems = packAtlas(ss, 2048);
-    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; fore?: unknown; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; camera?: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
+    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; foreFrames?: unknown[]; foreBox?: { x: number; y: number }; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; camera?: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
     const thc = Art.treehouseColours(style);
     // Its model draws a hard dark shadow ellipse on the ground round the trunk's foot: drop it (a
     // soft contact shadow goes there instead), as Ed asked for set pieces.
     for (const sp of [th.bot, th.top] as { w: number; h: number; m: Uint8Array }[])
       for (let y = Math.max(0, Math.floor(th.anchors.base.y - 14)); y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === Art.M.NOSE) sp.m[y * sp.w + x] = 0;
-    // Frames: 0 its base, 1 its top (treetop mode), 2 the studio's DJ table alone (v2), drawn over her.
-    this.treehouse = { atlas: packAtlas([th.bot, th.top, ...(th.fore ? [th.fore] : [])].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors, camera: th.anchors.camera ?? th.anchors.seat, hasFore: !!th.fore };
+    // Frames: 0 its base, 1 its top (treetop mode), 2 on the studio's DJ table alone, turning (drawn over her).
+    const fores = th.foreFrames ?? [];
+    this.treehouse = { atlas: packAtlas([th.bot, th.top, ...fores].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors, camera: th.anchors.camera ?? th.anchors.seat, hasFore: fores.length > 0, foreFrames: fores.length, foreBox: th.foreBox ?? { x: 0, y: 0 } };
     this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
     if (this.useWorkers) {
       // One worker per core but the page's own, up to six: the area types' trees are most of the work.
@@ -118,13 +125,19 @@ export class AssetLibrary {
   private key = (j: ArtJob) => j.kind + ":" + j.id;
   /** Where a set is kept between visits: the art's code, the style, the set, and for an area type
    *  its seed and scale. Party looks are per creature, so they aren't kept. */
-  private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : ""].join("|");
+  private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
+  /** Waiting jobs already moved to the front of the queue by an urgent ask. */
+  private promoted = new Set<string>();
   private ask(job: ArtJob, urgent = false): void {
     const k = this.key(job);
     if (this.inFlight.has(k)) {
-      const i = urgent ? this.queue.findIndex(q => this.key(q) === k) : -1;
+      // (an urgent job asked for again while waiting is moved to the front once: asked for every creature every frame, searching
+      // the queue each time cost creatures x queue while new art was baking)
+      if (!urgent || this.promoted.has(k)) return;
+      this.promoted.add(k);
+      const i = this.queue.findIndex(q => this.key(q) === k);
       if (i > 0) this.queue.unshift(...this.queue.splice(i, 1));
       return;
     }
@@ -170,6 +183,8 @@ export class AssetLibrary {
       this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "partyWitch") {
       this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
+    } else if (r.job.kind === "beachEdge") {
+      this.beachEdge = { atlas, ...r.result.beachEdge! };
     } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
@@ -197,8 +212,9 @@ export class AssetLibrary {
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
-    else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
-    this.inFlight.delete(this.key(r.job));
+    else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
+      this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
+    this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job));
     this.version++;
   }
 
@@ -207,6 +223,11 @@ export class AssetLibrary {
     const a = this.types.get(t);
     if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }, true);
     return a;
+  }
+  /** The beach's edge of the woods (palms, shrubs, grass clumps), or undefined (and asked for). */
+  beachEdgeArt(): (BeachEdgeArt & { atlas: Atlas }) | undefined {
+    if (!this.beachEdge) this.ask({ kind: "beachEdge", id: "all", style: this.style, K: this.K }, true);
+    return this.beachEdge;
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
   decorArt(): DecorArt | undefined {
@@ -240,10 +261,14 @@ export class AssetLibrary {
   }
   /** A species' live-rig parts at a level (#79 stage 4: one atlas page each, keyed by its genome's
    *  hash so a changed record bakes afresh), or undefined (and asked for). */
+  /** Each species' genome hash (rigArt's page key), worked out once. */
+  private genomeHashes = new Map<string, string>();
   rigArt(species: string, level: number, gear?: RigGear): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
     const g = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
     if (!g) return undefined;
-    const k = `rig-${species}-${level}-${Art.genomeHash(g)}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
+    let h = this.genomeHashes.get(species);
+    if (h === undefined) this.genomeHashes.set(species, (h = Art.genomeHash(g) as string)); // (the genomes are fixed for the run: hashed once, not per creature per frame)
+    const k = `rig-${species}-${level}-${h}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
     if (a) { a.used = performance.now(); return a; }
     this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
@@ -344,6 +369,15 @@ export class AssetLibrary {
       witchFly[pose] = entry;
     }
     for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { witchLean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
+    // Behind the decks: each DJ frame, then its upper layer (the same sprite, only what's above the decks' top: art/witch.js aboveDecks).
+    const witchDj = bare ? { full: [] as number[], upper: [] as number[] } : this.witchDj;
+    witchDj.full.length = 0; witchDj.upper.length = 0;
+    for (let frame = 0; frame < (FOOT.dj?.frames ?? 0); frame++) {
+      const sp = (Art.witchSprite as (st: Style, o: object) => { anchors?: Record<string, number[]>; upper?: Uint8Array; m: Uint8Array; w: number; h: number })(style, { pose: "dj", frame, look });
+      grounds.push(groundOf(sp.anchors), groundOf(sp.anchors));
+      witchDj.full.push(sprites.length); sprites.push(Art.bake(sp as never, wc, style, style.cOutline) as Baked);
+      witchDj.upper.push(sprites.length); sprites.push(upperOnly(Art.bake(sp as never, wc, style, style.cOutline) as Baked, sp));
+    }
     for (const [h, heading] of [["up", "away"], ["down", "towards"]] as const) {
       const at = (o: object) => sprites.push(wb({ ...o, heading })) - 1;
       witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
@@ -355,6 +389,8 @@ export class AssetLibrary {
     } else this.witchGenome = genome;
     return { ...packAtlas(sprites, 2048), grounds };
   }
+  /** Her frame behind the decks at `beat` (rules/beat.ts beatAt): its index in witchDj (Art.djFrame: a gesture a bar, nodding on the beat). */
+  djFrame(beat: number, cast = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast }); }
   /** The character creator changed her look: her frames again (the view swaps its batch). */
   rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.bare = null; this.version++; }
   /** Her frames with her hat knocked off (rules/hat.ts), at the same places as `witch`'s, and her hat lying on the
@@ -399,3 +435,19 @@ export class AssetLibrary {
     });
   }
 }
+
+/** A DJ frame's upper layer: its baked pixels kept only where the sprite is above the decks (sp.upper), and its outline
+ *  where it borders those; cleared elsewhere (so no outline runs along the cut at the table's top). */
+function upperOnly(b: Baked, sp: { upper?: Uint8Array; m: Uint8Array; w: number; h: number }): Baked {
+  const up = sp.upper, { w, h } = sp;
+  if (!up) return b;
+  const keep = (i: number) => up[i] === 1 || (!sp.m[i] && [i % w > 0 ? i - 1 : -1, i % w < w - 1 ? i + 1 : -1, i - w, i + w].some(j => j >= 0 && j < w * h && up[j] === 1));
+  for (const c of [b.A, b.N, (b as { NF?: Baked["A"] }).NF]) {
+    if (!c) continue;
+    const g = (c as HTMLCanvasElement).getContext("2d") as CanvasRenderingContext2D, d = g.getImageData(0, 0, w, h);
+    for (let i = 0; i < w * h; i++) if (!keep(i)) d.data[i * 4 + 3] = 0;
+    g.putImageData(d, 0, 0);
+  }
+  return b;
+}
+

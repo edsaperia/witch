@@ -51,6 +51,19 @@ describe("the beach", () => {
         expect(b.intoSand(b.x + Math.cos(a) * (d - 0.5), b.z + Math.sin(a) * (d - 0.5))).toBeLessThan(0);
       }
     }
+    // How far in or out is a true distance anywhere, deep inland too (it was only right about the sign inside the
+    // nearest the coast comes: the waves' loudness, the hills' easing and the paths' clipping read it as a distance).
+    for (const seed of SEEDS) {
+      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!;
+      for (let k = 0; k < 24; k++) {
+        const a = -Math.PI + ((k + 0.5) / 24) * Math.PI * 2;
+        for (const back of [1, 30, 80, 150, 300]) {
+          const d = b.edge(a) - back, x = b.x + Math.cos(a) * d, z = b.z + Math.sin(a) * d;
+          expect(b.intoSea(x, z)).toBeCloseTo(-back - b.out, 3);
+          expect(b.intoSand(x, z)).toBeCloseTo(b.sandAt(a) - back, 3);
+        }
+      }
+    }
     // The same for the same seed; another seed, another shape.
     const one = beachOf(generateMap(1, TUNING).bounds, TUNING)!, again = beachOf(generateMap(1, TUNING).bounds, TUNING)!, other = beachOf(generateMap(123, TUNING).bounds, TUNING)!;
     expect([...one.sand]).toEqual([...again.sand]);

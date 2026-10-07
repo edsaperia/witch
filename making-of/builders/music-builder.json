@@ -1,0 +1,56 @@
+{
+  "builder": "Music builder",
+  "phase": "The music and sound; the beach's camera and the sea; the overnight programme's audio tidy and CPU audit",
+  "slice": "One generated track for the whole run, the game's sound effects and voices, and the hunt for why the music cut in and out",
+  "prs": [
+    331,
+    352,
+    376,
+    407,
+    413
+  ],
+  "built": [
+    "One generated track for the whole run: every note and every sound synthesised in the browser, in the music's key, from the run's seed (`config/music-style.json`, the engine in `src/platform/audio/musicEngine.ts`)",
+    "The boot as an intro: the home speakers' boot builds the intro a layer per speaker",
+    "Waves: each wave brings its own sections and a faster tempo",
+    "Legend circles: a sleeping legend's circle slows the world and the music with it, like a slowing tape, while the legend's own layer plays on at full speed",
+    "The afterparty: the music winds down like a stopped record into each area's night sounds and the sleepers' snores",
+    "Voices: the creatures babble in their own voices, and the legends sing whale song",
+    "The beach: near the sea the party gives way to the waves; the camera lowers to the water, lying down she stargazes under the island's treeline, and the sea gets a moon's road of glints",
+    "The overnight tidy (#376): one looping-noise helper in place of thirteen hand-built ones, and the music's scheduling written down in DESIGN.md (look-ahead, slew, held notes, re-anchoring)",
+    "The sea at the edge of the world (#407): a moon road of glints across the water, a softer foam edge, and the bend easing off when she faces the open sea so the north coast's water actually shows",
+    "The sound's CPU audit (#413, `tools/sfx/audit.cjs`): a crowd now speaks through one shared mouth re-tuned each syllable (38 audio nodes a burst down to 25), voices give way only to a clearly nearer one, the legends' long reverb is built in idle time, and the cues reuse their sets each frame: in a late-game crowd 342 to 277 nodes a second, and the 45 to 70 ms hitch when the first stone powered up is gone"
+  ],
+  "learned": [
+    "\"The music cuts in and out\": every layer that could be wrong checked out fine. The rules asked for continuous music (a 14-minute simulation on the dancefloor never dipped), and the engine scheduled it without a gap (6,724 sixteenths through the real engine, none missing).",
+    "The cause was the page itself: the game's clock stops when the page stalls (the art baking, a new place's first frames), but the audio clock doesn't, and every long frame made the engine re-anchor and leave a hole.",
+    "The fix was to stop letting the music wait for the game: schedule ahead (and further after a stall), ease back into step at 5% at most, and hold a late note rather than drop it.",
+    "Then know whether a cut is real: an output meter measures what actually leaves the game, and an opt-in mic check listens to the room to catch a dropout after the game (the OS, the device, Bluetooth).",
+    "Measure at each boundary (rules, engine, output, room) before fixing: the obvious suspect was innocent every time.",
+    "Count before cutting: most of the audio graph's churn was the crowd's chatter, not the music; the audit found it by sampling who made each node.",
+    "A tidy that should change nothing needs a check that would notice: rendering every sound effect before and after and comparing the files caught a one-character slip (`track?.push(f())` skips calling `f()`) that had quietly dropped the consonants from letters and howls.",
+    "The north sea was invisible not because it was dark but because the world's bend tucked it under the horizon: painting it magenta and seeing none of it proved that in one screenshot."
+  ],
+  "previews": [
+    {
+      "src": "media/music/music-boot-build.mp3",
+      "caption": "The home speakers' boot building the intro a layer per speaker."
+    },
+    {
+      "src": "media/music/music-circles-owl.mp3",
+      "caption": "Walking into the owl legend's circle: the music slows like a tape under its layer, then walking out."
+    },
+    {
+      "src": "media/timeline/beach-stargaze.webp",
+      "caption": "Lying on the sand to stargaze, the sky opening, hearts rising with a beach witch."
+    },
+    {
+      "src": "media/builders/music-beach-gaze-horizon.webp",
+      "caption": "The stargazing horizon, before and after."
+    },
+    {
+      "src": "media/art/beach-sea-before-after.webp",
+      "caption": "The moonlit sea after Ed's \"the sea is too dark\"."
+    }
+  ]
+}

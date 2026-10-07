@@ -1,7 +1,7 @@
 // The edge cues with the world's bend (Ed, v256: "the bend confuses the direction markers, that see
 // things past the bend as south instead of north"): a target far north, south, east or west of the
 // witch gets its cue on the matching edge of the screen, with the bend at its default and doubled.
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import * as THREE from "three";
 import { edgeSpot } from "./indicator";
 import { HEIGHT_UNIFORMS } from "./height";
@@ -18,6 +18,7 @@ function camera(wx: number, wz: number): THREE.PerspectiveCamera {
 }
 
 describe("edge cues point the right way with the bend", () => {
+  afterEach(() => { HEIGHT_UNIFORMS.uBend.value.set(0, 0, 0, 0); HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); }); // (the bend back as other files find it: tests share modules)
   for (const k of [TUNING.camera.curve.treetop, TUNING.camera.curve.treetop * 2]) {
     it(`bend ${k}: far north is up, south down, east right, west left`, () => {
       const wx = 1000, wz = 1000, cam = camera(wx, wz), v = new THREE.Vector3();

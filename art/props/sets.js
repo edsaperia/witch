@@ -10,7 +10,7 @@
 //   ring:  a ring of small stones, posts or stumps round trodden grass, a gap for a way in, one or two fallen, a fire pit, a stone,
 //          a stump or a slab altar in the middle
 //   heap:  a big heap of stones, logs, brushwood or dressed rubble, mossed over, things spilled round its foot, a post or slab on top
-import { M, Sprite, hsv2rgb, hash2, rng } from "../core.js";
+import { M, Sprite, hsv2rgb, hash2, rng, pickByWeight, cellHash, cropTight } from "../core.js";
 import { Model, render, v3 } from "../model3d.js";
 import { witchPixelsPerUnit, cleanFlecks } from "../witch.js";
 import { groundColours } from "../ground.js";
@@ -43,22 +43,20 @@ export const SET_PROP_GENOMES = {
 export const SET_PROP_KINDS = Object.keys(SET_PROP_GENOMES);
 
 const GS_U = 1 / 1.9; // model units a metre (the witch's model is about 1.9 m a unit)
-const gsPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
 // A variant: each range picked within, each list of options by weight; `over` fixes any of them.
 export function setPropVariant(kind, seed = 0, over = {}) {
   const G = SET_PROP_GENOMES[kind]; if (!G) throw new Error(`no set piece kind "${kind}"`);
   const r = rng(((seed + 3) * 2246822519 + kind.length * 131) >>> 0), v = {};
   for (const [k, g] of Object.entries(G)) {
     if (k === "colour") continue;
-    if (Array.isArray(g[0])) v[k] = gsPick(r, g);
+    if (Array.isArray(g[0])) v[k] = pickByWeight(r, g);
     else { const x = g[0] + (g[1] - g[0]) * r(); v[k] = Number.isInteger(g[0]) && Number.isInteger(g[1]) && g[1] - g[0] >= 1 ? Math.round(x) : x; }
   }
   v.seed = seed; v.r = r;
   return Object.assign(v, Object.fromEntries(Object.entries(over).filter(([k]) => k in G && k !== "colour")));
 }
-const gsCell = (p, k, seed) => hash2(Math.floor(p[0] * k + 500), Math.floor(p[1] * k + 500) + Math.floor(p[2] * k + 500) * 131, seed);
 const gsGrain = (p, d, k = 9) => { const s = v3.dot(p, d) * k; return (s - Math.floor(s)) < .12 ? M.BARKD : undefined; }; // plank seams across a direction
-const gsPlanks = (d, up) => p => { const s = v3.dot(p, up) * 16; return (s - Math.floor(s)) < .14 ? M.BARKD : gsCell(p, 6, 3) < .1 ? M.MOSS : undefined; }; // a hull's strakes: seams along it, a little moss
+const gsPlanks = (d, up) => p => { const s = v3.dot(p, up) * 16; return (s - Math.floor(s)) < .14 ? M.BARKD : cellHash(p, 6, 3) < .1 ? M.MOSS : undefined; }; // a hull's strakes: seams along it, a little moss
 
 // A pool with an irregular shore, a mud rim, a moonlit far rim and the sky's faint reflection (as the props' pool), reeds and stones
 // round it; returns the shore's point at an angle (k: times its radius).
@@ -109,7 +107,7 @@ function gsPunt(m, v) {
   if (v.state === "swamped") m.flat(at(-L * .05, -D * .12), d, side, L * .82, B * .82, (s, t) => Math.hypot(s * .9, t) < 1 ? (s > .5 ? M.WEB : M.WATER) : undefined, { group: 3, bend: .02 }); // water inside, its far end lit
   for (let i = 0; i < v.thwarts; i++) { const s = ((i + 1) / (v.thwarts + 1) - .5) * L * 1.5; m.box(at(s, D * .3), [.035, .02, B - .06], M.WOOD, { dir: d, up, group: 4, paint: p => gsGrain(p, side, 14) }); }
   if (v.cargo === "trap") { const p = at(-L * .3, D * .25, B * .2); m.ell(p, [.18, .1, .1], M.STRAW, { dir: d, group: 5, paint: p2 => Math.sin(v3.dot(p2, d) * 60) > .6 ? M.BARKD : undefined }); } // a wicker eel trap
-  if (v.cargo === "nets") m.ell(at(L * .25, D * .25, -B * .2), [.22, .07, .16], M.CLOTH, { group: 5, rough: .03, paint: p => gsCell(p, 30, 2) < .3 ? M.BARKD : undefined });
+  if (v.cargo === "nets") m.ell(at(L * .25, D * .25, -B * .2), [.22, .07, .16], M.CLOTH, { group: 5, rough: .03, paint: p => cellHash(p, 30, 2) < .3 ? M.BARKD : undefined });
   if (v.pole > .4) { const b = [c[0] + Math.cos(v.yaw) * L * 1.3 + side[0] * .2, -.05, c[2] + .35]; m.seg(b, v3.add(b, [-.3, 2.4 * GS_U, -.12]), .022, .018, M.WOOD, { group: 6 }); } // a punt pole stuck in the mud, leaning
 }
 
@@ -125,12 +123,12 @@ function gsJetty(m, v) {
   let L = L0; while (L > L0 * .45 && !inside(path(L, L))) L *= .95; // it ends out over the water, never past the near shore
   const along = s => path(s, L);
   const dirAt = s => s < L / 2 ? dir1 : dir2, deckY = s => H * (1 - v.sag * (s / L) ** 2 * 2.2);
-  m.ell(v3.add(start, [0, -.05, -.1]), [.9, .22, .45], M.BODY, { group: 2, rough: .02, paint: p => gsCell(p, 4, 9) < .3 ? M.MOSS : undefined }); // the bank it starts from
+  m.ell(v3.add(start, [0, -.05, -.1]), [.9, .22, .45], M.BODY, { group: 2, rough: .02, paint: p => cellHash(p, 4, 9) < .3 ? M.MOSS : undefined }); // the bank it starts from
   const nP = Math.round(L / (.16 * GS_U * 2.6)), missing = new Set([...Array(v.missing).keys()].map(() => 3 + Math.floor(r() * (nP - 5))));
   for (let i = 0; i < nP; i++) {
     if (missing.has(i)) continue;
     const s = (i + .5) / nP * L, p = along(s), d = dirAt(s), side = v3.norm(v3.cross([0, 1, 0], d)), jag = (r() - .5) * .03;
-    m.box(v3.add(p, [0, deckY(s), 0]), [.075, .018, W + jag], M.WOOD, { dir: d, group: 3, round: .008, paint: q => gsCell(q, 5, i) < .07 ? M.MOSS : undefined });
+    m.box(v3.add(p, [0, deckY(s), 0]), [.075, .018, W + jag], M.WOOD, { dir: d, group: 3, round: .008, paint: q => cellHash(q, 5, i) < .07 ? M.MOSS : undefined });
     if (i === 0 || i === nP - 1) continue;
     for (const k of [-1, 1]) m.box(v3.add(v3.add(p, v3.mul(side, k * W * .7)), [0, deckY(s) - .04, 0]), [L / nP * .55, .025, .025], M.BARKD, { dir: d, group: 4, round: .01 }); // stringers under the deck
   }
@@ -155,8 +153,8 @@ function gsRing(m, v) {
   const r = v.r, R = v.radius * GS_U, A = .7, H = v.height * GS_U, Wd = v.width * GS_U / 2;
   const ph = [r() * 6.28, r() * 6.28], edgeAt = a => 1 + .1 * Math.sin(3 * a + ph[0]) + .07 * Math.sin(7 * a + ph[1]);
   m.flat([0, .003, 0], [1, 0, 0], [0, 0, -1], R * 1.35, R * A * 1.35, (s, t) => { // a trodden path round inside the ring and its middle worn bare, the floor's own grass between, fading out into the floor in a broken, dithered edge (the art director on #204: no rug)
-    const a = Math.atan2(t, s), d = Math.hypot(s, t) / edgeAt(a) + (gsCell([s, 0, t], 5, 4) - .5) * .1;
-    if (d > .78 && gsCell([s, 0, t], 26, 9) < (d - .78) / .32) return undefined;
+    const a = Math.atan2(t, s), d = Math.hypot(s, t) / edgeAt(a) + (cellHash([s, 0, t], 5, 4) - .5) * .1;
+    if (d > .78 && cellHash([s, 0, t], 26, 9) < (d - .78) / .32) return undefined;
     return d > .72 && d < .88 || d < .26 ? M.BARK2 : M.LEAF3;
   }, { group: 1, bend: .04 });
   for (let i = 0; i < 26; i++) { const a = r() * 6.28, d = R * (.6 + r() * .55), x = Math.cos(a) * d, z = Math.sin(a) * d * A; m.seg([x, 0, z], [x + (r() - .5) * .05, .06 + r() * .08, z], .022, .006, i % 2 ? M.LEAF : M.LEAF2, { group: 70 + (i % 4) }); } // tufts over its fading edge
@@ -167,7 +165,7 @@ function gsRing(m, v) {
     const p = [Math.cos(a) * R, 0, Math.sin(a) * R * A], h = H * (.65 + r() * .5), w = Wd * (.8 + r() * .4), out = v3.norm([Math.cos(a), 0, Math.sin(a)]), g = 10 + i;
     if (fallen.has(i)) { const d = v3.norm([Math.cos(a + 1.4), 0, Math.sin(a + 1.4)]); m.box(v3.add(p, [0, w * .4, 0]), [h * .5, w * .4, w * .7], v.member === "stone" ? M.STONE : M.TRUNK, { dir: d, round: .03, group: g, paint: q => q[1] > w * .55 ? M.MOSS : undefined }); continue; }
     const lean = v.lean * (r() - .3), up = v3.norm(v3.add([0, 1, 0], v3.mul(out, lean))), top = v3.add(p, v3.mul(up, h));
-    if (v.member === "stone") m.box(v3.add(p, v3.mul(up, h * .45)), [h * .5, w, w * .55], M.STONE, { dir: up, up: [-out[2], 0, out[0]], round: w * .45, group: g, rough: .01, paint: q => q[1] < h * .18 ? M.MOSS : gsCell(q, 7, g) < .12 ? M.BELLY : undefined });
+    if (v.member === "stone") m.box(v3.add(p, v3.mul(up, h * .45)), [h * .5, w, w * .55], M.STONE, { dir: up, up: [-out[2], 0, out[0]], round: w * .45, group: g, rough: .01, paint: q => q[1] < h * .18 ? M.MOSS : cellHash(q, 7, g) < .12 ? M.BELLY : undefined });
     else if (v.member === "post") { m.seg(p, top, w * .55, w * .45, M.TRUNK, { group: g, paint: q => { const y = (q[1] / h) * 5; return y - Math.floor(y) < .12 ? M.BARKD : q[1] < h * .15 ? M.MOSS : undefined; } }); m.ell(top, [w * .45, w * .2, w * .45], M.BELLY, { group: g }); } // carved bands, a weathered top
     else { const hh = h * .45; m.seg(p, v3.add(p, [0, hh, 0]), w * .95, w * .8, M.TRUNK, { group: g, rough: .015, paint: q => q[1] < hh * .3 ? M.MOSS : undefined }); m.ell(v3.add(p, [0, hh, 0]), [w * .8, .012, w * .8], M.BELLY, { group: g, paint: q => Math.hypot(q[0] - p[0], q[2] - p[2]) % .06 < .015 ? M.ACCENT : undefined }); } // a stump's rings on top
   }
@@ -177,7 +175,7 @@ function gsRing(m, v) {
     if (v.embers > .5) for (let i = 0; i < 5; i++) m.ell([(r() - .5) * .22, .05, (r() - .5) * .14], [.025, .02, .025], M.GLOW, { group: 41 + i }); // embers still glowing
   } else if (v.centre === "stone") m.box([0, H * .6, 0], [Wd * 1.4, H * .62, Wd * .7], M.STONE, { round: Wd * .5, group: 30, paint: q => q[1] < H * .15 ? M.MOSS : undefined });
   else if (v.centre === "stump") { m.seg([0, 0, 0], [0, H * .4, 0], Wd * 1.6, Wd * 1.4, M.TRUNK, { group: 30, rough: .02 }); m.ell([0, H * .4, 0], [Wd * 1.4, .015, Wd * 1.4], M.BELLY, { group: 30, paint: q => Math.hypot(q[0], q[2]) % .07 < .018 ? M.ACCENT : undefined }); }
-  else { for (const x of [-.3, .3]) m.box([x, .12, 0], [.1, .12, .2], M.STONE, { group: 30, round: .04 }); m.box([0, .27, 0], [.48, .04, .27], M.STONE, { group: 31, round: .03, paint: q => q[1] > .29 && gsCell(q, 6, 2) < .3 ? M.MOSS : undefined }); } // a slab on two stones
+  else { for (const x of [-.3, .3]) m.box([x, .12, 0], [.1, .12, .2], M.STONE, { group: 30, round: .04 }); m.box([0, .27, 0], [.48, .04, .27], M.STONE, { group: 31, round: .03, paint: q => q[1] > .29 && cellHash(q, 6, 2) < .3 ? M.MOSS : undefined }); } // a slab on two stones
 }
 
 // ---- heap: stones, logs, brushwood or dressed rubble piled in a low dome, spilled round its foot, mossed over its top ----
@@ -189,21 +187,21 @@ function gsHeap(m, v) {
   for (let i = 0; i < n; i++) {
     const t = i / n, ring = Math.sqrt(1 - t) * .95, a = r() * Math.PI * 2, base = at(Math.cos(a) * ring, Math.sin(a) * ring), g = 2 + (i % 24);
     const p = v3.add(base, [0, -.05, 0]), s = (.18 + r() * .2) * GS_U * 2;
-    if (v.of === "stones") m.ell(p, [s, s * .6, s * .8], M.STONE, { group: g, rough: .02, dir: [r() - .5, .2, r() - .5], paint: q => mossy(q) ?? (gsCell(q, 9, i) < .08 ? M.BELLY : undefined) });
-    else if (v.of === "rubble") m.box(p, [s * 1.1, s * .55, s * .7], M.STONE, { group: g, round: .02, dir: [Math.cos(a + 1.6), (r() - .5) * .4, Math.sin(a + 1.6)], paint: q => mossy(q) ?? (gsCell(q, 5, i) < .15 ? M.STONED : undefined) }); // dressed blocks, a few cracked
-    else if (v.of === "logs") { const d = [1, (r() - .5) * .15, (r() - .5) * .25], l = s * (2.2 + r() * 1.5); m.seg(v3.sub(p, v3.mul(d, l)), v3.add(p, v3.mul(d, l)), s * .45, s * .42, M.TRUNK, { group: g, paint: q => mossy(q) ?? (gsCell(q, 14, i) < .12 ? M.BARKD : undefined) }); m.ell(v3.add(p, v3.mul(d, l + .005)), [.006, s * .43, s * .43], M.BELLY, { dir: d, group: g }); } // logs stacked lengthways, their sawn ends to us
+    if (v.of === "stones") m.ell(p, [s, s * .6, s * .8], M.STONE, { group: g, rough: .02, dir: [r() - .5, .2, r() - .5], paint: q => mossy(q) ?? (cellHash(q, 9, i) < .08 ? M.BELLY : undefined) });
+    else if (v.of === "rubble") m.box(p, [s * 1.1, s * .55, s * .7], M.STONE, { group: g, round: .02, dir: [Math.cos(a + 1.6), (r() - .5) * .4, Math.sin(a + 1.6)], paint: q => mossy(q) ?? (cellHash(q, 5, i) < .15 ? M.STONED : undefined) }); // dressed blocks, a few cracked
+    else if (v.of === "logs") { const d = [1, (r() - .5) * .15, (r() - .5) * .25], l = s * (2.2 + r() * 1.5); m.seg(v3.sub(p, v3.mul(d, l)), v3.add(p, v3.mul(d, l)), s * .45, s * .42, M.TRUNK, { group: g, paint: q => mossy(q) ?? (cellHash(q, 14, i) < .12 ? M.BARKD : undefined) }); m.ell(v3.add(p, v3.mul(d, l + .005)), [.006, s * .43, s * .43], M.BELLY, { dir: d, group: g }); } // logs stacked lengthways, their sawn ends to us
     else { const d = v3.norm([r() - .5, (r() - .5) * .6, r() - .5]), l = s * (2 + r() * 2); m.chain([[...v3.sub(p, v3.mul(d, l)), .022], [...p, .018], [...v3.add(p, v3.add(v3.mul(d, l), [0, (r() - .5) * .15, 0])), .008]], i % 3 ? M.TRUNK : M.BARKL, { group: g }); } // brushwood
   }
-  if (v.of === "brush") m.ell([0, Hh * .3, 0], [Wh * .62, Hh * .55, Dh * .6], M.BARKD, { group: 1, rough: .04, paint: q => gsCell(q, 8, 3) < .35 ? M.TRUNK : undefined }); // its dark tangled heart
-  else m.ell([0, 0, 0], [Wh * .82, Hh * .88, Dh * .82], v.of === "logs" ? M.TRUNK : M.STONE, { group: 1, rough: .03, paint: q => mossy(q) ?? (gsCell(q, 6, 11) < .4 ? (v.of === "logs" ? M.BARKD : M.STONED) : undefined) }); // a core under the pieces, so the heap is solid
+  if (v.of === "brush") m.ell([0, Hh * .3, 0], [Wh * .62, Hh * .55, Dh * .6], M.BARKD, { group: 1, rough: .04, paint: q => cellHash(q, 8, 3) < .35 ? M.TRUNK : undefined }); // its dark tangled heart
+  else m.ell([0, 0, 0], [Wh * .82, Hh * .88, Dh * .82], v.of === "logs" ? M.TRUNK : M.STONE, { group: 1, rough: .03, paint: q => mossy(q) ?? (cellHash(q, 6, 11) < .4 ? (v.of === "logs" ? M.BARKD : M.STONED) : undefined) }); // a core under the pieces, so the heap is solid
   for (let i = 0; i < v.spill; i++) { const a = r() * Math.PI * 2, p = [Math.cos(a) * Wh * (1 + r() * .15), 0, Math.sin(a) * Dh * (1 + r() * .15)], s = (.12 + r() * .12) * GS_U * 2; if (v.of === "logs" || v.of === "brush") m.seg(v3.add(p, [-s * 1.5, s * .4, 0]), v3.add(p, [s * 1.5, s * .4, (r() - .5) * s]), s * .4, s * .38, M.TRUNK, { group: 30 + i }); else m.ell(v3.add(p, [0, s * .35, 0]), [s, s * .55, s * .8], M.STONE, { group: 30 + i, rough: .02 }); }
   const peak = [0, Hh, 0];
   if (v.top === "post") { m.seg(v3.add(peak, [0, -.1, 0]), v3.add(peak, [.05, .75, 0]), .03, .025, M.TRUNK, { group: 50 }); m.flat(v3.add(peak, [.2, .65, .01]), [1, -.15, 0], [0, 1, 0], .17, .07, (s, t) => t > -1 + (s + 1) * .3 * (s > 0 ? 1 : 0) ? M.CLOTH : undefined, { group: 51 }); } // a stick with a rag tied to it, a way-marker
-  if (v.top === "slab") m.box(v3.add(peak, [0, .12, 0]), [.32, .2, .07], M.STONE, { dir: [1, -.25, 0], round: .03, group: 50, paint: q => gsCell(q, 6, 7) < .2 ? M.BELLY : undefined });
+  if (v.top === "slab") m.box(v3.add(peak, [0, .12, 0]), [.32, .2, .07], M.STONE, { dir: [1, -.25, 0], round: .03, group: 50, paint: q => cellHash(q, 6, 7) < .2 ? M.BELLY : undefined });
 }
 
 const GS_BUILD = { punt: gsPunt, jetty: gsJetty, ring: gsRing, heap: gsHeap };
-function gsTone(c, r, k) { if (Array.isArray(c[0])) c = gsPick(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
+function gsTone(c, r, k) { if (Array.isArray(c[0])) c = pickByWeight(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
 // Its colours: wood and stone from its genome; mud, moss, reeds, grass and water from the area's ground (art/ground.js), so it sits in its floor.
 function gsColours(kind, v, def, st) {
   const C = SET_PROP_GENOMES[kind].colour, r = rng((v.seed * 7919 + 29) >>> 0), k = C.spread, leaf = def?.leaf ?? .26, g = def?.floor ? groundColours(def, { sat: 1, trunkHue: .07, ...st }) : null;
@@ -220,14 +218,6 @@ function gsColours(kind, v, def, st) {
     [M.STRAW]: hsv2rgb(.11, .4, .62), [M.CLOTH]: C.cloth ? gsTone(C.cloth, r, k) : hsv2rgb(.1, .1, .72), [M.GLOW]: [255, 168, 80],
   };
 }
-function gsCrop(sp) {
-  let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
-  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  if (x1 < 0) return { sp, x0: 0, y0: 0 };
-  const out = new Sprite(x1 - x0 + 1, y1 - y0 + 1);
-  for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) { const i = (y + y0) * sp.w + x + x0; if (sp.m[i]) { out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); out.g[y * out.w + x] = sp.g[i]; } }
-  return { sp: out, x0, y0 };
-}
 const GS_WATER = new Set([M.WATER, M.BODY2, M.ACCENT, M.WEB]);
 // One generated set piece: { sp, colours, origin, metres, variant }, as art/setpieces.js setPiece3d gives (o: { seed, ...numbers to fix }; size: times the witch's scale).
 export function genSetPiece(kind, o = {}, def = null, st = {}, size = 1, ppm = 16) {
@@ -235,15 +225,15 @@ export function genSetPiece(kind, o = {}, def = null, st = {}, size = 1, ppm = 1
   m.clipY = 0; // a sunk punt's keel, a buried stone: cut away under the ground
   GS_BUILD[kind](m, v);
   m.ell([0, .004, 0], [.01, .004, .01], M.STONE, { group: 0, extra: true });
-  const rr = render(m, { scale: witchPixelsPerUnit(st) * size });
-  let { sp, x0, y0 } = gsCrop(rr.sp);
+  const rr = render(m, { scale: witchPixelsPerUnit(st) * size * (st.setPieceScale || 1) }); // (st.setPieceScale: baked at the size the game draws it)
+  let { sp, x0, y0 } = cropTight(rr.sp);
   if (kind === "punt" || kind === "jetty") { // the shore breaks into the floor: its outermost rim pixels dropped in 2 x 1 clusters by hash (as the props' pools, #142)
     const rim = new Set([M.BODY, M.BARK2]), at = (x, y) => x < 0 || y < 0 || x >= sp.w || y >= sp.h ? 0 : sp.m[y * sp.w + x], drop = [];
     for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { if (!rim.has(at(x, y)) || (at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1))) continue; if (hash2(x >> 1, y, v.seed + 77) < .5) drop.push(y * sp.w + x, y * sp.w + (x ^ 1)); }
     for (const i of drop) if (rim.has(sp.m[i])) sp.m[i] = 0;
-    const c = gsCrop(sp); sp = c.sp; x0 += c.x0; y0 += c.y0;
+    const c = cropTight(sp); sp = c.sp; x0 += c.x0; y0 += c.y0;
   }
-  cleanFlecks(sp); { const c = gsCrop(sp); sp = c.sp; x0 += c.x0; y0 += c.y0; } // (a lone pixel cleaned off its bottom row would leave it floating)
+  cleanFlecks(sp); { const c = cropTight(sp); sp = c.sp; x0 += c.x0; y0 += c.y0; } // (a lone pixel cleaned off its bottom row would leave it floating)
   if (kind === "punt" || kind === "jetty") { const wn = [.2, 0, .98], l = Math.hypot(...wn); for (let i = 0; i < sp.m.length; i++) if (GS_WATER.has(sp.m[i])) sp.n.set(wn.map(c => c / l), i * 3); } // its water lit as a level surface at a grazing light (as the props' pool), never black
   const [ox, oy] = rr.project([0, 0, 0]), { r, ...variant } = v;
   return { sp, colours: gsColours(kind, v, def, st), origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) }, variant };

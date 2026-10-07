@@ -21,7 +21,7 @@ export class Pond {
     if (!this.lapGain && level <= 0.001) return;
     if (!this.lapGain) {
       this.pan = c.createStereoPanner(); this.pan.connect(K.out);
-      const s = c.createBufferSource(); s.buffer = K.noise; s.loop = true; s.playbackRate.value = 0.6;
+      const s = K.loopNoise(0.6);
       this.lapBand = c.createBiquadFilter(); this.lapBand.type = "bandpass"; this.lapBand.Q.value = 1.2; this.lapBand.frequency.value = 500;
       this.lapGain = c.createGain(); this.lapGain.gain.value = 0;
       s.connect(this.lapBand); this.lapBand.connect(this.lapGain); this.lapGain.connect(this.pan); s.start(now);
@@ -80,7 +80,7 @@ export class Picnic {
     if (!this.gain) {
       // voices too far to make out: breath through a talker's two formant bands, rising and falling
       this.pan = c.createStereoPanner(); this.pan.connect(K.out);
-      const s = c.createBufferSource(); s.buffer = K.noise; s.loop = true; s.playbackRate.value = 0.91;
+      const s = K.loopNoise(0.91);
       this.gain = c.createGain(); this.gain.gain.value = 0; this.gain.connect(this.pan);
       for (const [f, q] of [[520, 3], [1450, 4], [2400, 5]]) { const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = f; b.Q.value = q; s.connect(b); b.connect(this.gain); }
       s.start(now);
@@ -111,12 +111,12 @@ export class Room {
     if (!this.hum) {
       this.hum = c.createGain(); this.hum.gain.value = 0; this.hum.connect(K.out);
       const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 220; lp.connect(this.hum);
-      const s = c.createBufferSource(); s.buffer = K.noise; s.loop = true; s.playbackRate.value = 0.5; s.connect(lp); s.start(now);
+      const s = K.loopNoise(0.5); s.connect(lp); s.start(now);
       for (const f of [55, 110]) { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = f; g.gain.value = f === 55 ? 0.08 : 0.03; o.connect(g); g.connect(this.hum); o.start(now); }
       // the record's surface: hiss high up
       this.crackle = c.createGain(); this.crackle.gain.value = 0; this.crackle.connect(K.out);
       const hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3500; hp.connect(this.crackle);
-      const h = c.createBufferSource(); h.buffer = K.noise; h.loop = true; h.connect(hp); h.start(now);
+      const h = K.loopNoise(); h.connect(hp); h.start(now);
     }
     const L = Math.max(0, Math.min(1, level));
     this.hum.gain.setTargetAtTime(R.volume * R.hum * L, now, 0.3);
@@ -176,8 +176,7 @@ export class Sea {
     }
     this.quietSince = -1;
     if (!this.hush) {
-      const pn = c.createStereoPanner(), src = c.createBufferSource(), lp = c.createBiquadFilter(), gain = c.createGain();
-      src.buffer = K.noise; src.loop = true; src.playbackRate.value = 0.5;
+      const pn = c.createStereoPanner(), src = K.loopNoise(0.5), lp = c.createBiquadFilter(), gain = c.createGain();
       lp.type = "lowpass"; lp.frequency.value = 420; lp.Q.value = 0.3; gain.gain.value = 0;
       src.connect(lp); lp.connect(gain); gain.connect(pn); pn.connect(K.out); src.start(now);
       this.hush = { src, lp, gain, pan: pn };
@@ -198,7 +197,7 @@ export class Sea {
   private wave(vol: number, pan: number): void {
     const K = this.k, c = K.ctx, at = c.currentTime + 0.02, out = K.voice(pan * 0.7), r = Math.random();
     const rise = 1.3 + r * 0.6, brk = at + rise, end = brk + 3.2 + r;
-    const loud = (len: number) => { const s = c.createBufferSource(); s.buffer = K.noise; s.loop = true; s.playbackRate.value = 0.7 + 0.3 * Math.random(); s.start(at, Math.random() * 0.9); s.stop(at + len); return s; };
+    const loud = (len: number) => { const s = K.loopNoise(0.7 + 0.3 * Math.random()); s.start(at, Math.random() * 0.9); s.stop(at + len); return s; };
     // the body: the swell and its wash
     const lp = c.createBiquadFilter(), g = c.createGain();
     lp.type = "lowpass"; lp.Q.value = 0.6;
