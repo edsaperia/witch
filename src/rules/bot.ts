@@ -12,7 +12,7 @@
 // She flies between areas over the treetops and fights on the ground, as a player does. Seeded and deterministic: no
 // clock, no Math.random; the same game and the same steps give the same controls.
 import { AREA_TYPES } from "./map";
-import { cellKey } from "./party";
+import { cellKey, routeOf } from "./party";
 import { runeNear } from "./creatureStates";
 import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
@@ -23,6 +23,12 @@ import { BOT_KINDS, type BotKind } from "./botKinds";
 export { BOT_KINDS, type BotKind };
 
 export interface BotOptions {
+  /** Clear to transform (rules/clear.ts): the careful bots clear the route's next areas in order (every wild one but the
+   *  baby in a legend's circle, which keeps the legend calm), ahead of the pulse, and don't stand guard where a wave
+   *  will only pass a stone already turned. */
+  clear?: boolean;
+  /** ...the nearest of the route's first this many areas not yet turned (1: strictly in order). */
+  clearAhead?: number;
   /** Parks up to this many at the next soundsystem (skilled)... */
   guards?: number;
   /** ...keeping this many on her stack. */
@@ -182,13 +188,29 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       for (const c of g.creatures) if (!c.gone && !c.boss && !c.leashed && c.fleeUntil === undefined && cellKey(c.cell) === key && c.species === sp) kin++;
       for (const c of g.creatures) {
         if (c.gone || c.boss || c.leashed || c.fleeUntil !== undefined || c.enraged || cellKey(c.cell) !== key) continue;
-        if (careful && c.species === sp && kin <= K.kinKeep) continue;
+        if (o.clear && careful) { if (c.circle) continue; } // (clearing: all but its legend's circle baby, which keeps it calm)
+        else if (careful && c.species === sp && kin <= K.kinKeep) continue;
         out.push(c);
       }
       return out;
     };
     /** Where to recruit next: the nearest wild area with someone she may invite. */
     const pickRecruit = () => {
+      // Clearing (o.clear): the first areas of the route not yet turned, in order; the nearest of the first `clearAhead`.
+      if (o.clear && careful) {
+        const order = routeOf(map).order;
+        let best = null as Target | null, bs = Infinity, seen = 0;
+        for (const key of order) {
+          if (g.party.areas.has(key) || g.party.ruined?.has(key)) continue;
+          const [i, j] = key.split(",").map(Number), cell: Cell = [i, j];
+          const L = LO.get(key); if (L !== undefined && g.creatures[L].legendState === "angry") continue;
+          if (!inviteable(key, cell).length) continue;
+          const s = map.siteOf(i, j), d = Math.hypot(s.x - b.x, s.z - b.z);
+          if (d < bs) { bs = d; best = { cell, key, x: s.x, z: s.z }; }
+          if (++seen >= (o.clearAhead ?? 1)) break;
+        }
+        if (best) return best;
+      }
       let best = null as Target | null, bs = Infinity;
       for (const [i, j] of map.cells) {
         const cell: Cell = [i, j], key = cellKey(cell);
@@ -334,7 +356,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       if (goTo(stray.x, stray.z, true, t.leash.pickRadius * 0.5) && b.mode === "ground") sigil = true;
     } else {
       const next = g.party.next[0], left = g.party.nextAt - time;
-      const defending = careful && next && (left < K.defendLead || (landWave === g.party.wave && time - lastWave < K.defendHold));
+      const defending = careful && next && !(o.clear && g.party.areas.has(cellKey(next))) && (left < K.defendLead || (landWave === g.party.wave && time - lastWave < K.defendHold));
       if (defending) {
         const cell = left < K.defendLead ? next : lastWoken ?? next, key = cellKey(cell), s = spot(cell);
         if (left < K.defendLead) landWave = g.party.wave + 1;

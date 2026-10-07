@@ -1,0 +1,7 @@
+{
+  "tuning": {
+    "clear": { "on": true, "transform": true, "populate": [[1, 0, 0, 0], [20, 3.3, 3.3, 3.3], [40, 6.7, 6.7, 6.7]], "soundHealth": [[1, 1], [40, 1]], "questAhead": [2, 12] },
+    "legends": { "questFar": 0 }
+  },
+  "botOptions": { "skilled": { "clear": true }, "champion": { "clear": true }, "top": { "clear": true } }
+}

@@ -10,6 +10,7 @@ import { LEGENDS } from "./legends";
 import type { Creature, Level } from "./creatures";
 import { cellKey, routeOf } from "./party";
 import { rng } from "./random";
+import { laterKinds, routePos } from "./clear";
 
 export interface Quest { species: string; level: Level; /** game time it was done */ done?: number;
   /** How far its creature lives: its nearest area's distance over the cap (legends.questCap areas, else the map's
@@ -60,7 +61,9 @@ export function questFor(map: ForestMap, cell: [number, number], own: string, wa
   const kinds = inReach.length ? inReach : all;
   if (!kinds.length) return undefined;
   const r = rng(map.seed * 6151 + cell[0] * 389 + cell[1] * 1031 + 17);
-  let species = kinds[Math.floor(r() * kinds.length)], level = Math.floor(r() * 3) as Level;
+  // Clear to transform (rules/clear.ts): a kind from later along the route, its buff the same however far (legends.questFar 0).
+  const CL = map.tuning.clear, pool = CL?.on && CL.questAhead ? laterKinds(map, routePos(map).get(`${cell[0]},${cell[1]}`) ?? 0, own, CL.questAhead).filter(sp => nearest.has(sp)) : kinds;
+  let species = (pool.length ? pool : kinds)[Math.floor(r() * (pool.length ? pool : kinds).length)], level = Math.floor(r() * 3) as Level;
   if (want && nearest.has(want)) { species = want; level = 0; }
   const far = Math.min(1, nearest.get(species)! / (cap > 0 ? cap : Math.max(...all.map(sp => nearest.get(sp)!))));
   return { species, level, far };

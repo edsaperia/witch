@@ -1,5 +1,6 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
+import type { ClearRules } from "./clear";
 
 export interface CameraModeTuning { angleIn: number; angleOut: number; distanceIn: number; distanceOut: number }
 
@@ -55,6 +56,8 @@ export interface GladeTuning {
 }
 
 export interface Tuning {
+  /** Clear to transform (rules/clear.ts): a design under study, absent in the game. */
+  clear?: ClearRules;
   /** A legend's circle (Ed, 2026-10-06): slow, the world slowed to scale of its speed (eased over ease seconds) while she stands on the ground in the circle of a legend asleep or restless; on false (?slow=0) for none. */
   legendCircle?: { slow: { on?: boolean; scale: number; ease: number } };
   mapAreas: number;

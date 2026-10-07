@@ -39,6 +39,7 @@ import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { growWave, materialize, newGrowth, type GrowthState } from "./growth";
+import { newClearLog, populateByRoute, soundHealthAt, stepClear, type ClearLog } from "./clear";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 import { startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
@@ -87,6 +88,8 @@ export interface Game {
   readonly creatures: Creature[];
   /** Wild areas growing wave by wave, as counts until a witch comes near (rules/growth.ts). */
   growth: GrowthState;
+  /** Clear to transform (rules/clear.ts, a design under study): the areas cleared ahead of the pulse, and each wave's stone. */
+  clear: ClearLog;
   readonly clock: Clock;
   /** Every player's witch; the first is this machine's (the camera follows her). */
   witches: Witch[];
@@ -197,11 +200,12 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), clear: newClearLog(), partyOver: null as PartyOver | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   const d = map.dancefloor, C = tuning.combat;
   g.combat.sounds.set("home", { hp: C.homeHealth, max: C.homeHealth, x: d.x, z: d.z, radius: C.homeRadius });
+  if (tuning.clear?.on && populateByRoute(g.creatures as Creature[], map, tuning.clear)) g.prev.creatures = new Float64Array(g.creatures.length * 2); // (clear to transform: the forest populated by the route at the start)
   return g as Game;
 }
 
@@ -395,7 +399,9 @@ function fixedStep(g: Game, controls: Controls): void {
   const over = !!g.partyOver;
   if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
   if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
+  const waveWas = g.party.wave, nextWas = g.party.next[0];
   if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated);
+  if (t.clear?.on && g.party.wave > waveWas) { const k = nextWas ? cellKey(nextWas) : null; g.clear.waves.push({ wave: g.party.wave, key: k, at: g.clock.time, already: k !== null ? g.clear.cleared.get(k) ?? null : null }); }
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (!over) stepLegends(g, legends, !!c.happyNearest);
@@ -408,6 +414,7 @@ function fixedStep(g: Game, controls: Controls): void {
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   const grown = g.creatures.length;
   if (!over) stepGrowth(g, wave);
+  if (!over && t.clear?.on && stepClear(g.clear, g.party, g.map, g.growth, g.clock.time, (g.byArea ??= indexByArea(g.creatures))).length) g.byArea = null;
   for (let i = grown; i < g.creatures.length; i++) { const c = g.creatures[i]; if (g.friendly.has(cellKey(c.cell)) && !g.party.areas.has(cellKey(c.cell))) c.friendly = true; } // (a friendly area's newcomers are friendly too)
   updateModes(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
   g.lod = newLodCounts();
@@ -480,7 +487,7 @@ function napRules(g: Game): NapRules | undefined {
 function stepGrowth(g: Game, waveBefore: number): void {
   const p = g.party, woken = new Set<string>();
   for (let w = waveBefore + 1; w <= p.wave; w++) {
-    growWave(g.growth, g.map, w, key => { const a = p.areas.get(key); return (!a || a.wave >= w) && !p.ruined?.has(key); });
+    if (!g.tuning.clear?.on) growWave(g.growth, g.map, w, key => { const a = p.areas.get(key); return (!a || a.wave >= w) && !p.ruined?.has(key); });
     for (const [key, a] of p.areas) if (a.wave >= w) woken.add(key);
   }
   if (materialize(g.growth, g.creatures, g.map, g.witches.map(w => w.body), simRadius(g), g.clock.time, woken)) g.byArea = null;
@@ -501,6 +508,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   // A new soundsystem: its area's wild creatures are enraged and march on it (#87: its quest done or not).
   for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) {
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
+    if (t.clear?.on) { const h = S.sounds.get(key), k = soundHealthAt(g.map, key, t.clear); if (h && k !== 1) { h.hp *= k; h.max *= k; } } // (clear to transform: health by its place on the route)
     // Its besiegers march wherever she is (stepped from now on as busy, not only once she comes near).
     for (const c of g.creatures) if (c.siege === key && !c.gone) S.busy.add(c.id);
     // Its wild babies turn happy at once (Ed, 2026-10-06), its legend's circle's too; then its happy ones (#87) come and

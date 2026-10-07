@@ -110,6 +110,9 @@ export type Picker = "route" | "noisy";
  *    the crossing rules). */
 export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0, border?: Set<string>): Cell | null {
   if (picker === "route") {
+    // Clear to transform (rules/clear.ts): wave W comes to the route's W-th stone whatever happened (a stone already turned
+    // is passed over by it, spreadWave), so clearing ahead buys her time.
+    if (map.tuning.clear?.on) { const k = routeOf(map).order[p.wave * Math.max(1, p.areasPerWave) + salt]; if (!k) return null; const c = k.split(",").map(Number) as unknown as Cell; candidates?.push(c); return c; }
     for (const key of routeOf(map).order) if (!p.areas.has(key) && !p.ruined?.has(key)) { const c = key.split(",").map(Number) as unknown as Cell; candidates?.push(c); return c; }
     return null;
   }
@@ -215,6 +218,7 @@ export function nextWave(p: PartyState, map: ForestMap): { key: string; cell: Ce
 export function spreadWave(p: PartyState, map: ForestMap, time: number): Partified[] {
   const wave = p.wave + 1, fresh: Partified[] = [];
   for (const { key: k, cell: c, from } of nextWave(p, map)) {
+    if (p.areas.has(k) || p.ruined?.has(k)) continue; // (clear to transform: already turned, or fallen; the wave passes)
     const a: Partified = { cell: c, wave, at: time, from, soundsystem: soundsystemFor(map, c) };
     p.areas.set(k, a);
     fresh.push(a);
