@@ -17,6 +17,7 @@ import { BeachDecor, type BeachItem } from "../rules/beachDecor";
 import { tiltFilter } from "./overlayTilt";
 import { BeachEdgeView } from "./beachEdge";
 import { DolphinView } from "./dolphins";
+import { KrakenView } from "./kraken";
 
 /** A heart rising off the two of them stargazing together: where it set off, when, its sway's phase; its image (pooled). */
 interface Heart { x: number; z: number; at: number; sway: number; el: HTMLImageElement }
@@ -40,6 +41,7 @@ export class BeachView {
   private spare: HTMLImageElement[] = [];
   private v = new THREE.Vector3();
   private dolphins: DolphinView | null = null;
+  private kraken: KrakenView | null = null;
   /** The woods' edge along the sand: shrubs, grass, palms (render/beachEdge.ts). */
   private edge: BeachEdgeView;
   /** The beach's decorations (rules/beachDecor.ts, art/beach.js): where they lie, and their two batches (flat: prints, starfish,
@@ -62,6 +64,7 @@ export class BeachView {
     this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);
     this.drawDecor(g, b, visible, camera);
     (this.dolphins ??= new DolphinView(this.scene, this.mpp, this.assets.style)).update(g, b, time); // (off the east coast: render/dolphins.ts)
+    (this.kraken ??= new KrakenView(this.scene, this.mpp, this.assets.style)).update(g, b, time); // (off the west coast: render/kraken.ts)
     // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
     let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
     for (const s of g.beach ?? []) { const d = (s.x - w.x) ** 2 + (s.z - w.z) ** 2; if (d < sd) { sd = d; spot = s; } }
@@ -152,6 +155,7 @@ export class BeachView {
     this.ground.setBeach(null);
     this.edge.dispose();
     this.dolphins?.dispose();
+    this.kraken?.dispose();
     this.upright?.set([]); this.flat?.set([]);
     this.witches?.dispose();
     this.witches = null;
