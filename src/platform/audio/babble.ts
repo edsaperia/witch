@@ -246,6 +246,15 @@ export class Babble {
     K.thump(at, O.volume * (0.6 + 0.4 * strain), pan);
   }
 
+  /** Her hype at the decks (deck.ts): "woo-hoo!", a breathy rising "woo" and a higher "hoo" lifting further, bright. */
+  whoop(pan = 0, near = 1): void {
+    const K = this.k, V = K.T.voice.witch, D = K.T.deck, at = K.ctx.currentTime + 0.005, out = K.voice(pan), p = V.pitch * (0.95 + 0.1 * Math.random()), vol = D.volume * D.hype * near;
+    if (vol <= 0.0005) return;
+    const base = { formants: V.timbre * 1.05, wave: "sawtooth" as OscillatorType, grit: 0, pan, consonant: false };
+    this.syllable(at, { ...base, pitch: p * 1.05, end: p * 1.5, vowel: 4, dur: 0.13, gain: vol * 0.8, noise: 0.2 }, out);
+    this.syllable(at + 0.15, { ...base, pitch: p * 1.6, end: p * 2.05, vowel: 4, dur: 0.24, gain: vol, noise: 0.1 }, out);
+  }
+
   /** Knocked down: a longer "whoa-oh" as she's sent home, falling away, over a heavier thump. */
   knockdown(pan = 0): void {
     const K = this.k, V = K.T.voice.witch, O = K.T.ouch, at = K.ctx.currentTime + 0.005, out = K.voice(pan), p = V.pitch * 1.2, vol = O.volume * O.knockdown;

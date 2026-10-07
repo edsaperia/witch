@@ -98,6 +98,9 @@ export class Sound {
     this.lastMix = musicMix(game, game.witch);
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
-    this.sfx?.room(roomOpen ? 1 : 0); // the creator's room in the treehouse
+    // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
+    // still crackling under her hands (quieter: room.decks), till the boot's first speaker brings the music in
+    const atDecks = game.witch.seated && typeof game.party.spellAt === "number" && !game.speakerBoot.some(t => t !== null);
+    this.sfx?.room(roomOpen ? 1 : atDecks ? this.tuning.sfx.room.decks : 0);
   }
 }

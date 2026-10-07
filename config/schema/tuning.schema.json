@@ -4375,6 +4375,10 @@
             "creakEvery": {
               "type": "number",
               "minimum": 0
+            },
+            "decks": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -4382,7 +4386,41 @@
             "hum",
             "crackle",
             "creak",
-            "creakEvery"
+            "creakEvery",
+            "decks"
+          ],
+          "additionalProperties": false
+        },
+        "deck": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scratch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hiss": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stroke": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hype": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "scratch",
+            "hiss",
+            "stroke",
+            "hype"
           ],
           "additionalProperties": false
         },
@@ -4759,6 +4797,7 @@
         "pond",
         "picnic",
         "room",
+        "deck",
         "spell",
         "land",
         "stir",

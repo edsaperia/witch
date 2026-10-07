@@ -12,6 +12,8 @@ const v = (species: string, level: number) => voiceOf({ species, level, boss: le
 type Play = (s: Sfx) => void;
 const SOUNDS: [string, number, Play][] = [
   ["witch-chatter", 2.4, () => {}],
+  ["deck-scratch", 4.2, () => {}],
+  ["deck-whoop", 0.8, s => s.whoop()],
   ["species-calls", 21, () => {}],
   ["reply-baby", 0.4, s => s.reply(v("hare", 0), 0.5)],
   ["speak-baby-happy", 0.8, s => s.speak(v("hare", 0), "happy")],
@@ -75,6 +77,9 @@ async function render(name: string, seconds: number, play: Play) {
   if (name === "witch-chatter") {
     // her 💌 hose as #89 fires it: bursts of 3 letters 0.12 s apart, a burst every 0.6 s
     for (let b = 0; b < 4; b++) for (let i = 0; i < 3; i++) { const at = b * 0.6 + i * 0.12; void oc.suspend(Math.round(at * rate) / rate).then(() => { s.letter(0); return oc.resume(); }); }
+  } else if (name === "deck-scratch") {
+    // her scratch bars at the decks: two bars of strokes on the half-beats at 120 bpm, forward on the beat, back off it
+    for (let k = 0; k < 16; k++) void oc.suspend(Math.round(k * 0.25 * rate) / rate).then(() => { s.scratch(k % 2 === 0); return oc.resume(); });
   } else if (name === "witch-knock") {
     // a bite's small knock (1 m), a knockback attack's (4 m), a charge's big throw (9 m) with its stun's twinkle
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
