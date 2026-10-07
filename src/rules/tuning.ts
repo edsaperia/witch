@@ -82,7 +82,9 @@ export interface Tuning {
   groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
   /** The ground's fake relief: rises and hollows from noise (scale metres across) tilting the ground's normal by strength, so lights pick out the bumps, and shading hollows darker by shade. */
   /** relief: the fake bumps in the ground's shading; hills: the rolling ground, drawn only (render/height.ts): amplitude (m), scale (m across a swell), octaves. */
-  ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number; /** The light reads the hills' slopes this many times steeper (relief shading). */ shade: number } };
+  ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number; /** The light reads the hills' slopes this many times steeper (relief shading). */ shade: number };
+    /** The lie of the land in the layout (rules/terrain.ts; Ed's idea, relayed 2026-10-07): every runestone on a rise and every legend clearing in a hollow, rise and dip times the hills' amplitude, easing out over reach metres; trees thicker in low ground and sparser on high by up to trees (a share). */
+    layout?: { on: boolean; rise: number; dip: number; reach: number; trees: number } };
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
   /** ?bare=1 or 2 (not in the file): the terrain on its own (render/view.ts). */
   bare?: number;
@@ -120,7 +122,7 @@ export interface Tuning {
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
   /** Wild idlers' naps (rules/creatures.ts NapRules). */
-  naps?: { on: boolean; chance: number; length: number[]; wake: number };
+  naps?: { on: boolean; chance: number; length: number[]; wake: number; /** A legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"): its own chance and length, roused only by a witch on the ground within reach metres of its circle's edge. */ circle?: { chance: number; length: number[]; reach: number } };
   /** The soundsystem alarm (rules/alarms.ts, render/alarm.ts). */
   alarms?: { linger: number; fall: number; most: number };
   /** The witch's health (Ed, 2026-10-04): hits she takes before she's knocked out; one comes back every repairTime seconds out of the fight. */
@@ -223,6 +225,8 @@ export interface Tuning {
    *  eased in by her lift, and never more than maxReach anywhere (a far camera: stargazing, zoomed out). The beach's sand is lit as the forest floor is (render/ground.ts). */
   /** The sigils' neon on the world (render/view/lights.ts sigilLights): each placed sigil a light at height metres over its rune, reaching reach metres (more by level) at strength (0 off); the bottom of her stack one at stack strength, stackReach metres, stackHeight over her. */
   sigilSpill: { strength: number; reach: number; height: number; stack: number; stackReach: number; stackHeight: number };
+  /** Her light in the wild and in a fight (render/combatLight.ts): exploring an area the party hasn't reached, its reach and strength times wildReach and wildGlow; with a fight within range metres in the last hold seconds, times fightReach and fightGlow instead; eased up over rise seconds and back over fall. Drawing only. */
+  combatLight?: { wildReach: number; wildGlow: number; fightReach: number; fightGlow: number; range: number; hold: number; rise: number; fall: number };
   nightLight?: { maxReach: number; treetopReach: number; treetopGlow: number; /** lying on the beach stargazing, at most gazeReach metres */ gazeReach?: number };
   glowHeight: number;
   /** The witch lit by the world's lights (not her own glow): never darker than lightFloor times her unlit look; coloured lights tint her (lightTint) and rim her edge facing them (lightRim). */
