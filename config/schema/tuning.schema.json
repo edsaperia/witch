@@ -7214,6 +7214,14 @@
           "type": "number",
           "minimum": 0
         },
+        "questCap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "questFar": {
+          "type": "number",
+          "minimum": 0
+        },
         "bombard": {
           "type": "object",
           "properties": {
@@ -7273,6 +7281,8 @@
         "share",
         "buffPower",
         "happyRange",
+        "questCap",
+        "questFar",
         "bombard",
         "stomp",
         "partyEgg",
