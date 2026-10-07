@@ -236,10 +236,11 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
 /** The affection rules the 💌s and the view use (issue #87): the state machine's meter
  *  (rules/affection.ts). A full meter makes a wild one happy; she leashes it by picking up its rune (states.leash
  *  "pickup", rules/leash.ts), or by filling it again (the old "again"). How many letters fill it is the tuning's invites.hits (buffs change it);
- *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace). */
+ *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace); it drains at the
+ *  tuning's invites.drain (buffs change it; states.json's affection.drain only when that's missing), after states.json's drainDelay. */
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, E = t.legends;
-  const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), gap: 0, legendDrain: E.partyDrain } };
+  const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain } };
   return {
     invitable: c => !c.asleep && invitableNow(c, data), // (a sleeper isn't to be invited: she wakes it by landing in its area)
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
