@@ -58,13 +58,21 @@ export class Sound {
     if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, tuning.music.volume * this.level, tuning.sfx, this.style.root + 24); this.sfxCues = new SfxCues(this.sfx, (by, sec) => this.music?.duck(by, sec)); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
   }
 
+  /** The context, with the tuning's latencyHint (music.latency; ?latency= for one load): a bigger output buffer gives the
+   *  audio thread more room before it under-runs (heard as the sound cutting out), at the cost of later sound effects. */
+  private context(): AudioContext {
+    let hint: AudioContextLatencyCategory = this.tuning.music.latency ?? "interactive";
+    try { const q = new URLSearchParams(location.search).get("latency"); if (q === "interactive" || q === "balanced" || q === "playback") hint = q; } catch { /* no page */ }
+    return new AudioContext({ latencyHint: hint });
+  }
+
   /** A first press (the creator's): the context, resumed, and the sound effects. */
-  wake(): void { try { this.audio ??= new AudioContext(); void this.audio.resume(); this.ensureSfx(); } catch { /* no sound yet */ } }
+  wake(): void { try { this.audio ??= this.context(); void this.audio.resume(); this.ensureSfx(); } catch { /* no sound yet */ } }
 
   /** Play starts: the context, the music and the sound effects. */
   start(): void {
     const { tuning } = this;
-    try { this.audio ??= new AudioContext(); void this.audio.resume(); if (!this.music && tuning.music.on) this.music = new Music(this.audio, tuning.music.volume * this.level, this.style, this.seed, tuning.music.src); this.ensureSfx(); } catch { /* no sound yet anyway */ }
+    try { this.audio ??= this.context(); void this.audio.resume(); if (!this.music && tuning.music.on) this.music = new Music(this.audio, tuning.music.volume * this.level, this.style, this.seed, tuning.music.src); this.ensureSfx(); } catch { /* no sound yet anyway */ }
   }
 
   /** The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second, a context suspended is

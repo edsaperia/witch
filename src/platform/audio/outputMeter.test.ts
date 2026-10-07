@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MicJudge, SilenceTracker, envelopeLag } from "./outputMeter";
+import { MicJudge, SilenceTracker, envelopeLag, ClockWatch } from "./outputMeter";
 
 describe("the measured output's silence episodes", () => {
   it("logs a silence while the music should be heard, from the last loud read to the last silent one", () => {
@@ -55,5 +55,48 @@ describe("the mic check", () => {
       if (e) eps.push(e);
     }
     expect(eps.map(e => e.kind)).toEqual(["unheard"]);
+  });
+});
+
+describe("ClockWatch: why the sound cut out (Ed, 2026-10-07: \"the music is still cutting out\")", () => {
+  /** 60 s of reads every 0.1 s; `ctxAt(t)` the audio clock at page time t. */
+  const run = (ctxAt: (t: number) => number, stats?: (t: number) => { underrunEvents: number; underrunDuration: number }) => {
+    const w = new ClockWatch();
+    for (let i = 0; i <= 600; i++) { const t = 10 + i * 0.1; w.feed(t, ctxAt(t), true, null, stats?.(t)); }
+    return w;
+  };
+
+  it("calls a true clock true", () => {
+    const w = run(t => t - 10);
+    expect(w.slow).toBe(0);
+    expect(w.verdict()).toBe("clock true");
+  });
+
+  it("tells coarse clock steps (slow seconds paid back by fast ones, nothing lost) from under-runs", () => {
+    // the clock jumps 1.5 s at a time, so some seconds read 0 and others 1.5 or more
+    const w = run(t => Math.floor((t - 10) / 1.5) * 1.5);
+    expect(w.slow).toBeGreaterThan(0);
+    expect(w.fast).toBeGreaterThan(0);
+    expect(Math.abs(w.drift)).toBeLessThan(1600);
+    expect(w.verdict()).toMatch(/clock steps/);
+  });
+
+  it("calls a clock that loses time for good under-runs", () => {
+    // the audio thread loses 300 ms every 10 s and never catches up
+    const w = run(t => (t - 10) - Math.floor((t - 10) / 10) * 0.3);
+    expect(w.drift).toBeLessThan(-1000);
+    expect(w.verdict()).toMatch(/fell behind/);
+  });
+
+  it("believes the browser's own under-run count where it has one", () => {
+    const w = run(t => t - 10, t => ({ underrunEvents: 5 + Math.floor((t - 10) / 20), underrunDuration: 0.01 * Math.floor((t - 10) / 20) }));
+    expect(w.underruns).toBe(3);
+    expect(w.verdict()).toMatch(/device under-ran 3×/);
+  });
+
+  it("starts the reckoning again after a suspend", () => {
+    const w = new ClockWatch();
+    w.feed(0, 0, true); w.feed(5, 5, true); w.feed(6, 5, false); w.feed(100, 5, true); w.feed(101, 6, true);
+    expect(w.drift).toBe(0);
   });
 });

@@ -113,6 +113,72 @@ export class MicJudge {
   }
 }
 
+/** The audio clock against the page's, to tell why the sound cut out (Ed, 2026-10-07: "the music is still cutting out";
+ *  foxtrot's write-up on #510 of the overlay's 126 "clock stalls"). Three different things look alike in a one-second
+ *  ratio of the two clocks:
+ *  - **under-runs**: the audio thread missed its deadlines; the device played silence and the context's clock fell
+ *    behind the page's for good (its drift goes on growing negative), and Chrome's playbackStats, where it has them,
+ *    count the under-runs;
+ *  - **clock steps**: the device (Bluetooth, a big hardware buffer) moves the clock in coarse jumps; slow seconds are
+ *    paid back by fast ones and the drift stays small; nothing is lost;
+ *  - **the game stopped sending**: the clock runs true but the output went silent (the meter's silences).
+ *  Fed each read with the page's time (s), the context's, its output timestamp if it has one and its playback stats if
+ *  it has them; pure, for the tests. */
+export interface ClockEvent { /** Page time (s) of the window's end, its ratio, and the drift then (ms; negative: audio behind). */ t: number; ratio: number; drift: number; kind: "slow" | "fast" }
+export interface PlaybackStats { underrunEvents?: number; underrunDuration?: number; totalDuration?: number }
+export class ClockWatch {
+  /** One-second windows that ran slow (< 0.8) and fast (> 1.2). */
+  slow = 0;
+  fast = 0;
+  /** The audio clock's lead on the page's since it last started running (ms; negative: behind), and its lowest so far. */
+  drift = 0;
+  worstDrift = 0;
+  /** The same by the output timestamp (when the context has getOutputTimestamp): what the device actually played. */
+  outDrift: number | null = null;
+  /** Under-runs the browser counted (AudioContext.playbackStats, where it exists): events and their total (ms). */
+  underruns: number | null = null;
+  underrunMs: number | null = null;
+  /** The last few slow and fast windows, for the log. */
+  readonly events: ClockEvent[] = [];
+  private start: { page: number; ctx: number; out?: { ctx: number; page: number } } | null = null;
+  private win = { page: -1, ctx: 0 };
+  private u0: { n: number; ms: number } | null = null;
+
+  /** `running`: the context's state is "running" (a suspend restarts the reckoning). */
+  feed(page: number, ctx: number, running: boolean, outTs?: { contextTime: number; performanceTime: number } | null, stats?: PlaybackStats | null): void {
+    if (!running) { this.start = null; this.win.page = -1; return; }
+    const out = outTs && outTs.performanceTime > 0 ? { ctx: outTs.contextTime, page: outTs.performanceTime / 1000 } : undefined;
+    if (!this.start) { this.start = { page, ctx, out }; this.win = { page, ctx }; }
+    this.drift = Math.round(((ctx - this.start.ctx) - (page - this.start.page)) * 1000);
+    if (this.drift < this.worstDrift) this.worstDrift = this.drift;
+    if (out) {
+      this.start.out ??= out;
+      this.outDrift = Math.round(((out.ctx - this.start.out.ctx) - (out.page - this.start.out.page)) * 1000);
+    }
+    if (stats && typeof stats.underrunEvents === "number") {
+      this.u0 ??= { n: stats.underrunEvents, ms: (stats.underrunDuration ?? 0) * 1000 };
+      this.underruns = stats.underrunEvents - this.u0.n;
+      this.underrunMs = Math.round((stats.underrunDuration ?? 0) * 1000 - this.u0.ms);
+    }
+    if (page - this.win.page >= 1) {
+      const ratio = Math.round(((ctx - this.win.ctx) / (page - this.win.page)) * 100) / 100;
+      const kind = ratio < 0.8 ? "slow" : ratio > 1.2 ? "fast" : null;
+      if (kind) { this[kind]++; this.events.push({ t: Math.round(page * 10) / 10, ratio, drift: this.drift, kind }); if (this.events.length > 40) this.events.shift(); }
+      this.win = { page, ctx };
+    }
+  }
+
+  /** The verdict in words: what the clock says about cut-outs so far. */
+  verdict(): string {
+    if (this.underruns !== null && this.underruns > 0) return `device under-ran ${this.underruns}× (${this.underrunMs} ms)`;
+    const lost = -(this.outDrift ?? this.drift);
+    if (lost > 150) return `audio fell behind ${lost} ms (under-runs)`;
+    if (this.slow > 0 && this.fast >= this.slow * 0.5) return `clock steps (coarse device clock), nothing lost`;
+    if (this.slow > 0) return `clock slow ${this.slow}×, drift ${this.drift} ms`;
+    return "clock true";
+  }
+}
+
 /** Something that reaches the destination, tapped (never altered). */
 interface Tapped { node: AudioNode }
 
@@ -138,6 +204,8 @@ export class OutputMeter {
   private ctx: AudioContext | null = null;
   private lastRead = -1;
   private clockAt = { wall: -1, ctx: 0 };
+  /** The audio clock against the page's: under-runs, coarse clock steps or a true clock (see ClockWatch). */
+  readonly clockWatch = new ClockWatch();
   private silence = new SilenceTracker();
   readonly reading: MeterReading = { db: -200, peak: -200, state: "none", base: 0, out: 0, clock: 1, silentFor: 0 };
   /** Episodes of silence while expected, and of the audio clock stalling, so far. */
@@ -170,7 +238,11 @@ export class OutputMeter {
     r.state = ctx.state;
     r.base = Math.round((ctx.baseLatency ?? 0) * 1000);
     r.out = Math.round(((ctx as AudioContext & { outputLatency?: number }).outputLatency ?? 0) * 1000);
-    // the context's clock against the page's, a second at a time
+    // the context's clock against the page's, a second at a time; and, over the run, which kind of trouble it is
+    const ac = ctx as AudioContext & { getOutputTimestamp?: () => AudioTimestamp; playbackStats?: PlaybackStats };
+    let outTs: AudioTimestamp | null = null;
+    try { outTs = ac.getOutputTimestamp?.() ?? null; } catch { /* not here */ }
+    this.clockWatch.feed(t, ctx.currentTime, ctx.state === "running", outTs && outTs.contextTime !== undefined && outTs.performanceTime !== undefined ? { contextTime: outTs.contextTime, performanceTime: outTs.performanceTime } : null, ac.playbackStats ?? null);
     if (this.clockAt.wall < 0 || ctx.state !== "running") this.clockAt = { wall: t, ctx: ctx.currentTime };
     else if (t - this.clockAt.wall >= 1) {
       r.clock = Math.round(((ctx.currentTime - this.clockAt.ctx) / (t - this.clockAt.wall)) * 100) / 100;
@@ -197,6 +269,7 @@ export class OutputMeter {
     return `audio  out ${r.db <= -199 ? "-inf" : r.db.toFixed(0)} dBFS (peak ${r.peak <= -199 ? "-inf" : r.peak.toFixed(0)})  ${r.state}  lat ${r.base}+${r.out} ms  clock ${r.clock.toFixed(2)}`
       + (r.silentFor > 0 ? `  SILENT ${r.silentFor.toFixed(1)} s` : "") + `  silences ${this.silences}`
       + (this.clockStalls ? `  clock stalls ${this.clockStalls}` : "")
+      + `\nclock  ${this.clockWatch.verdict()}  (slow ${this.clockWatch.slow}, fast ${this.clockWatch.fast}, drift ${this.clockWatch.drift}${this.clockWatch.outDrift !== null ? `, played ${this.clockWatch.outDrift}` : ""} ms)`
       + (m ? `\nmic    ${m.status}` : "");
   }
 
