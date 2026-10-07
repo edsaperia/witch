@@ -155,6 +155,19 @@ describe("clearing an area transforms its runestone (Ed, 2026-10-07)", () => {
     for (const c of babies) { expect(c.state, `baby ${c.id}`).toBe("happy"); expect(c.dancing, `baby ${c.id} dances`).toBeTruthy(); }
   }, 60000);
 
+  it("its wave transforming it uncleared, its wild babies join the party too (Ed, 2026-10-07: 'Wild babies become party babies when the pulse transforms an uncleared area'); its young and adults besiege", () => {
+    const g = game(), key = cellKey(g.party.next[0]);
+    const babies = own(g, key).filter(c => c.level === 0 && !c.circle && !c.gone && c.state !== "happy");
+    const hostiles = own(g, key).filter(holdsArea);
+    expect(babies.length, "the area has wild babies").toBeGreaterThan(0);
+    expect(hostiles.length, "and is uncleared").toBeGreaterThan(0);
+    stepGame(g, { ...still, nextWave: true }, 1 / 60);
+    run(g, 0.5);
+    expect(g.party.areas.has(key)).toBe(true);
+    for (const c of babies) { expect(c.state, `baby ${c.id}`).toBe("happy"); expect(c.dancing, `baby ${c.id} dances`).toBeTruthy(); }
+    expect(hostiles.some(c => c.enraged || c.siege), "its young and adults besiege, as before").toBe(true);
+  }, 60000);
+
   it("plays the same from the same seed", () => {
     const play = () => { const g = game(7), key = routeOf(g.map).order[3]; empty(g, key); run(g, 1); stepGame(g, { ...still, nextWave: true }, 1 / 60); return [...g.party.areas.keys(), g.party.wave, g.creatures.length, g.combat.sounds.size]; };
     expect(play()).toEqual(play());
