@@ -215,6 +215,10 @@ export interface Tuning {
   glowToCutout: number;
   /** Set by ?glow=: use glowReach as it is. */
   glowFixed?: boolean;
+  /** Night's brightness (Ed, 2026-10-06: "The beach is very bright for nighttime", "Seems very bright for nighttime"): over the
+   *  treetops her light reaches at most treetopReach metres (its reach to dark: times glowNear) at treetopGlow of its strength,
+   *  eased in by her lift, and never more than maxReach anywhere (a far camera: stargazing, zoomed out). The beach's sand is lit as the forest floor is (render/ground.ts). */
+  nightLight?: { maxReach: number; treetopReach: number; treetopGlow: number };
   glowHeight: number;
   /** The witch lit by the world's lights (not her own glow): never darker than lightFloor times her unlit look; coloured lights tint her (lightTint) and rim her edge facing them (lightRim). */
   /** The ley lines through the runestones in wave order (render/leylines.ts). */

@@ -321,14 +321,17 @@ shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake wh
 | `camera.intro.angle` | number | 0 to … |
 | `camera.intro.ease` | number | 0 to … |
 
-## `pixelSize`, `glowReach`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`, `lightBudget`
+## `pixelSize`, `glowReach`, `nightLight`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`, `lightBudget`
 
-Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel. The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach × glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.
+Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel. The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach × glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. nightLight (Ed, 2026-10-06: "Seems very bright for nighttime"): her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.
 
 | knob | type | range |
 |---|---|---|
 | `pixelSize` | number | 0 to … |
 | `glowReach` | number | 0 to … |
+| `nightLight.maxReach` | number | 0 to … |
+| `nightLight.treetopReach` | number | 0 to … |
+| `nightLight.treetopGlow` | number | 0 to … |
 | `glowFalloff` | number | 0 to … |
 | `glowNear` | number | 0 to … |
 | `glowToCutout` | number | 0 to … |
@@ -1006,6 +1009,10 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.runSpeed` | number | 0 to … |
 | `leash.pickRadius` | number | 0 to … |
 | `leash.spacing` | number | 0 to … |
+| `leash.runeRadius` | number | 0 to … |
+| `leash.runePull.radius` | number | 0 to … |
+| `leash.runePull.speed` | number | 0 to … |
+| `leash.runePull.stop` | number | 0 to … |
 | `leash.weight.free` | number | 0 to … |
 | `leash.weight.levels` | array of number |  |
 | `leash.weight.drag` | number | 0 to … |
@@ -1016,10 +1023,6 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.weight.floor` | number | 0 to 1 |
 | `leash.weight.extreme` | number | 0 to … |
 | `leash.weight.maxTension` | number | 0 to … |
-| `leash.runeRadius` | number | 0 to … |
-| `leash.runePull.radius` | number | 0 to … |
-| `leash.runePull.speed` | number | 0 to … |
-| `leash.runePull.stop` | number | 0 to … |
 
 ## `bond`
 
