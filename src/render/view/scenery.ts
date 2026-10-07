@@ -124,7 +124,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
       const pieces = pick(art.layout);
       if (!pieces.length) continue;
       const piece = pieces[p.variant % pieces.length], f = art.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
-      const scale = kind === "setpiece" ? t.setPieceScale : 1, m = mpp * scale; // set pieces: each area's landmark, drawn big
+      const scale = kind === "setpiece" ? t.setPieceScale / (v.style.setPieceScale || 1) : 1, m = mpp * scale; // set pieces: each area's landmark, big: baked at setPieceScale (the style's), so drawn at 1
       // A piece drawn in perspective is anchored by its origin, its middle on the ground: its
       // bottom row (the front of it, nearest the camera) stands on the ground that much nearer
       // the camera, so the origin lands on its spot and nothing of it sinks under the ground.
