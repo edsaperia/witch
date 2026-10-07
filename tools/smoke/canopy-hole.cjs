@@ -1,7 +1,7 @@
 // The canopy's hole round her in ground mode (render/sprites.ts; Ed, 2026-10-06: "circle"): the built game (DIST, default dist/)
 // at Ed's window (1900×1240, or SIZE=WxH, DPR=n), on the ground in the thickest wood near home on a seed, standing still and then
 // walking, each shot after the art has come in. Writes <out dir>/<name>.png.
-//   npm run build && node tools/smoke/canopy-hole.cjs [out dir] [seed] [query]
+//   npm run build && node tools/smoke/canopy-hole.cjs [out dir] [seed] [query]   (SPOT=x,z: just there; ZOOMS=1: every zoom step too; TREETOPS=1: up over the treetops and out)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outDir = "previews/canopy-hole", seed = "123", query = ""] = process.argv.slice(2);
@@ -23,7 +23,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 600000, polling: 500 });
     // the wooded spots: where the forest stands thickest, a little way from home (rules' forest density by area)
-    const spots = await page.evaluate(() => {
+    const spots = process.env.SPOT ? [{ x: +process.env.SPOT.split(",")[0], z: +process.env.SPOT.split(",")[1], n: -1 }] : await page.evaluate(() => {
       const g = window.witch.game, D = g.map.dancefloor, out = [];
       for (let k = 0; k < 400 && out.length < 3; k++) {
         const a = k * 2.399, r = 140 + k * 3, x = D.x + Math.cos(a) * r, z = D.z + Math.sin(a) * r;
@@ -38,12 +38,22 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     let i = 0;
     for (const s of spots) {
       i++;
-      await page.evaluate(s => { const g = window.witch.game; g.witch = { ...g.witch, x: s.x, z: s.z, seated: false, mode: "ground", lift: 0, vx: 0, vz: 0 }; g.clock.paused = false; }, s);
-      await page.waitForTimeout(i === 1 ? 25000 : 8000);
+      await page.evaluate(s => { const g = window.witch.game; g.witch = { ...g.witch, x: s.x, z: s.z, seated: false, mode: "ground", lift: 0, vx: 0, vz: 0 }; g.clock.paused = false; window.__keepUp ??= setInterval(() => { for (const W of window.witch.game.witches) if (W.health) W.health.hp = Math.max(W.health.hp, 99); }, 100); }, s); // (kept on her feet: waiting for the art among the wild ones, she'd be knocked out and sent home)
+      await page.waitForTimeout(i === 1 ? 8000 : 4000);
+      await page.waitForFunction(() => window.witch.view.stats.pendingArt === 0, null, { timeout: 600000, polling: 1000 }).catch(() => {}); // (its art all in)
+      await page.waitForTimeout(3000);
       await page.screenshot({ path: path.join(outDir, `still${i}.png`) });
-      if (process.env.ZOOMS && i === 2) for (const [k, key] of [["in1", "KeyZ"], ["in2", "KeyZ"], ["in3", "KeyZ"], ["out1", "KeyX"], ["out2", "KeyX"], ["out3", "KeyX"], ["out4", "KeyX"], ["out5", "KeyX"]]) {
+      if (process.env.ZOOMS && i === (process.env.SPOT ? 1 : 2)) for (const [k, key] of [["in1", "KeyZ"], ["in2", "KeyZ"], ["in3", "KeyZ"], ["out1", "KeyX"], ["out2", "KeyX"], ["out3", "KeyX"], ["out4", "KeyX"], ["out5", "KeyX"]]) {
         await page.keyboard.press(key); await page.waitForTimeout(3500); await page.screenshot({ path: path.join(outDir, `zoom-${k}.png`) });
         console.log("zoom", k, await page.evaluate(() => JSON.stringify({ zoom: window.witch.view.zoomStep ?? window.witch.game.camera?.zoom ?? null })));
+      }
+      if (process.env.TREETOPS && i === 1) { // up over the treetops, then the views from higher (Ed: "trees cut off at the top", "horizontal lines")
+        await page.keyboard.press("Space"); await page.waitForTimeout(6000);
+        await page.waitForFunction(() => window.witch.view.stats.pendingArt === 0, null, { timeout: 600000, polling: 1000 }).catch(() => {});
+        await page.screenshot({ path: path.join(outDir, `top0.png`) });
+        for (const k of [1, 2, 3]) { await page.keyboard.press("KeyX"); await page.waitForTimeout(4000); await page.screenshot({ path: path.join(outDir, `top-out${k}.png`) }); }
+        for (const k of [1, 2, 3, 4, 5]) { await page.keyboard.press("KeyZ"); await page.waitForTimeout(800); }
+        await page.keyboard.press("Space"); await page.waitForTimeout(5000);
       }
       // walking north a few seconds, then the shot as she goes
       await page.keyboard.down("KeyW"); await page.waitForTimeout(2500); await page.screenshot({ path: path.join(outDir, `walk${i}.png`) }); await page.keyboard.up("KeyW");
