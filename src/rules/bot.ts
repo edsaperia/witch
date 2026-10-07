@@ -343,7 +343,10 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           else if (!parkedAt.has(key) && st.length > KEEP) {
             // (not the creature a quest she's on wants: it goes to the top of the stack, out of the way)
             if (qjob && st[st.length - 1] === qjob.want.id && st.length > 1) st.unshift(st.pop()!);
-            sigil = true; bot.doing = `posting guards at wave ${wave}`; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }
+            // (the champion steps clear of a sigil she's just put down before the next: pressed over it, the button picks it up again)
+            const over = kind === "champion" ? w.leash.placed.find(p => Math.hypot(p.x - b.x, p.z - b.z) <= Math.max(t.leash.pickRadius, t.leash.spacing) + 0.5) : undefined; // (or close enough to fizzle)
+            if (over) { const a = w.leash.placed.length * 2.4; mx = Math.cos(a); mz = Math.sin(a); } else sigil = true;
+            bot.doing = `posting guards at wave ${wave}`; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }
           // Then hold the spot, kiting anything that comes for her.
           for (const c of g.creatures) if (c.enraged && !c.gone && Math.hypot(c.x - b.x, c.z - b.z) < K.kite) { const d = Math.hypot(c.x - b.x, c.z - b.z) || 1; mx = (b.x - c.x) / d; mz = (b.z - c.z) / d; dash = d < K.dashAt; bot.doing = `dodging ${article(c.species)} at wave ${wave}`; break; }
         }
