@@ -1,6 +1,6 @@
 // Music by proximity (Ed, 2026-10-04): one shared track, louder and clearer the nearer the witch
 // is to a playing soundsystem, quiet and muffled in the deep forest, and distorted by damage
-// nearby (a damaged soundsystem wobbles, crackles and drops out, scaled by its damage and how
+// nearby (a damaged soundsystem crunches, wobbles and crackles, scaled by its damage and how
 // close she is). The home ring of speakers plays as one source at the dancefloor's centre, as
 // loud as its share of speakers powered on, damaged as its speakers are. The numbers only: the
 // platform plays them.
@@ -14,7 +14,7 @@ export interface MusicMix {
   volume: number;
   /** The low-pass filter's cutoff (Hz): high near, muffled far. */
   cutoff: number;
-  /** 0-1: how much damage is heard (wobble, crackle, drop-outs). */
+  /** 0-1: how much damage is heard (crunch, wobble, crackle; no drop-outs since Ed's 2026-10-06 playtest). */
   distort: number;
   /** Metres to the nearest playing source. */
   distance: number;

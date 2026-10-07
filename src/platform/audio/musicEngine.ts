@@ -63,8 +63,9 @@ export class MusicEngine {
   private g0 = NaN;
   private a0 = 0;
   private rate = 1;
-  /** Continuity, for the checks (tools/music-lab/flight.cjs): times the timeline was re-anchored, sixteenths dropped
-   *  for being late, and audio seconds left with nothing scheduled between one sixteenth and the next. */
+  /** Continuity, for the checks (tools/music-lab/flight.cjs) and the playtest log: times the timeline was re-anchored,
+   *  sixteenths a stall made late (held and played, not dropped), audio seconds left with nothing scheduled between one
+   *  sixteenth and the next, and how far ahead it schedules now (s). */
   readonly stats = { resyncs: 0, late: 0, gap: 0, ahead: 0 };
   private heardTo = -1;
   private lastNow = -1;
