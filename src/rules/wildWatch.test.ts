@@ -5,6 +5,7 @@ import { TUNING } from "./tuning";
 import { cellKey } from "./party";
 import { watcher } from "./wildWatch";
 import { legendRings } from "./slowTime";
+import { napping } from "./creatures";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
@@ -44,7 +45,7 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     const t0 = g.clock.time;
     run(g, W.time - 0.2, () => {
       expect(onHer(g, key), "none goes for her while they watch").toBe(false);
-      for (const c of here(g, key)) if (c.watchUntil! > g.clock.time && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 1) expect(c.facing, "turned to her").toBe(g.witch.x >= c.x ? 1 : -1);
+      for (const c of here(g, key)) if (c.watchUntil! > g.clock.time && !napping(c, g.clock.time) && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 1) expect(c.facing, "turned to her").toBe(g.witch.x >= c.x ? 1 : -1);
     });
     let went = false;
     run(g, 15, () => { went ||= onHer(g, key); });

@@ -8,7 +8,8 @@ import { watchStep } from "./wildWatch";
 import { coarseTurn, inFull, type LodCounts } from "./simLod";
 import { earlyQuest, questFor, type Quest } from "./quest";
 import { rng } from "./random";
-import { countScale, startCount } from "./growth";
+import { countScale, routeIndex, routePopulation } from "./growth";
+import { routeOf } from "./party";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import { facingAway } from "./witch";
@@ -300,17 +301,20 @@ export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
   // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
-  const [hx, hy] = map.centreCell, early = earlyQuest(map);
+  const [hx, hy] = map.centreCell, early = earlyQuest(map), route = routeIndex(routeOf(map).order);
   for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (home) continue;
     {
-      // Weaker species come in larger numbers, stronger fewer (Ed, 2026-10-05): 1 / their strength times as many.
-      const k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
-      for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
-      for (let i = 0; i < startCount(pop.young, k); i++) make(1);
-      for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
+      // Every area peopled from the start by its place on the waves' route (Ed, 2026-10-07: no growth on a clock; the
+      // later its wave, the more), its kind spending the route's threat by its profile, weaker kinds in larger numbers
+      // (Ed, 2026-10-05: 1 / their strength times as many): rules/growth.ts routePopulation.
+      const species = AREA_TYPES[map.typeOf(cx, cy)].creature, k = countScale(species), at = route.get(`${cx},${cy}`) ?? route.size + 1;
+      const [babies, young, adults] = routePopulation(at, map.tuning.population.byRoute, pop, species, k, map.seed, cell);
+      for (let i = 0; i < babies; i++) make(0);
+      for (let i = 0; i < young; i++) make(1);
+      for (let i = 0; i < adults; i++) make(2);
     }
     if (map.hasLegend && !map.hasLegend(cx, cy)) continue; // (legends in legends.share of the areas: Ed, 2026-10-06)
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));

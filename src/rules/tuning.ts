@@ -1,5 +1,6 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
+import type { ByRoute } from "./growth";
 
 export interface CameraModeTuning { angleIn: number; angleOut: number; distanceIn: number; distanceOut: number }
 
@@ -190,7 +191,7 @@ export interface Tuning {
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
     sadTrumpet: { volume: number; duck: number; bare: number; rewind: number; cutAfter: number };
-    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number };
+    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number; needle: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
     spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
     land: { volume: number; gap: number };
@@ -201,7 +202,7 @@ export interface Tuning {
     meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; fade: number; murmur: number; clinks: number; clinkEvery: number; balloons: number; squeakEvery: number };
     whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
-  music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; /** The most (dB, as a laptop plays it) the music may fall from by a soundsystem to anywhere far off: checked by tools/music-lab/check.cjs. */ audible: number; /** A sleeping legend's clearing on the ground (Ed, 2026-10-06): the muffle (Hz), quiet (its share of the volume), ease (seconds), the layer's level, and the clearing's radius where the map has none. */ circle: { muffle: number; quiet: number; ease: number; level: number; radius: number }; /** The world slowed in a legend's circle (Ed, 2026-10-06: "the music audibly slows down"): the music follows the game's time scale, its notes' pitch dropping with it as a tape slows (the time scale to the power pitch, never under floor of it); on false, the tempo still follows (it must, to keep in step with the waves) but the pitch doesn't drop. */ slow?: { on: boolean; pitch: number; floor: number }; /** The party's over (Ed, 2026-10-06: "the dance music stops"): the music winds down like a tape stopping over the first `stop` of the party-over ease, its pitch falling with it to `floor`, then is silent. */ over?: { stop: number; floor: number }; /** by the sea the party gives way to the waves: within `fade` metres of the water, down to `quiet` of its volume at the water's edge */ beach?: { fade: number; quiet: number }; clear: number; distort: number; src: string };
+  music: { on: boolean; volume: number; /** the intro's layers that drop as her needle-drop routine ends (Ed, 2026-10-07), before any speaker: rules/musicPlan.ts bootLayers */ dropLayers?: number; nearDist: number; farDist: number; floor: number; muffle: number; /** The most (dB, as a laptop plays it) the music may fall from by a soundsystem to anywhere far off: checked by tools/music-lab/check.cjs. */ audible: number; /** A sleeping legend's clearing on the ground (Ed, 2026-10-06): the muffle (Hz), quiet (its share of the volume), ease (seconds), the layer's level, and the clearing's radius where the map has none. */ circle: { muffle: number; quiet: number; ease: number; level: number; radius: number }; /** The world slowed in a legend's circle (Ed, 2026-10-06: "the music audibly slows down"): the music follows the game's time scale, its notes' pitch dropping with it as a tape slows (the time scale to the power pitch, never under floor of it); on false, the tempo still follows (it must, to keep in step with the waves) but the pitch doesn't drop. */ slow?: { on: boolean; pitch: number; floor: number }; /** The party's over (Ed, 2026-10-06: "the dance music stops"): the music winds down like a tape stopping over the first `stop` of the party-over ease, its pitch falling with it to `floor`, then is silent. */ over?: { stop: number; floor: number }; /** by the sea the party gives way to the waves: within `fade` metres of the water, down to `quiet` of its volume at the water's edge */ beach?: { fade: number; quiet: number }; clear: number; distort: number; src: string };
   /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): seconds before the first wave's countdown begins. */
   boot: { time: number; /** Seconds from her leaving the decks to the first home speaker turning (Ed, 2026-10-06: "about three seconds"); the boot's `time` runs from then. */ firstAfter: number; /** Seconds a home speaker takes to turn from its runestone into the speaker when the boot pulse reaches it. */ transform: number };
   groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number; sigilClear: number };
@@ -352,10 +353,10 @@ export interface Tuning {
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; /** The share of the blur the sky takes, so the stars stay perceptible (Ed, 2026-10-06); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
-  /** Wild creatures (Ed, 2026-10-04): every area starts with `start`; while wild it gains
-   *  growth.perWave a wave at a random level by growth.weights (baby, young, adult); new ones
-   *  appear beyond the haze's far edge plus growth.hide metres from every witch (rules/growth.ts). */
-  population: { start: { babies: number; young: number; adults: number }; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
+  /** Wild creatures: every area starts with `start` and, from the first frame (Ed, 2026-10-07: no growth on a clock),
+   *  byRoute's extra by its place on the waves' route (rules/growth.ts routePopulation: a threat curve spent by each
+   *  kind's profile, and a fixed number of babies). `growth` is the old per-wave growth: the game no longer reads it (the balance simulators do). */
+  population: { start: { babies: number; young: number; adults: number }; byRoute: ByRoute; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
   /** Area legends (Ed, 2026-10-04): one an area, asleep till its area's wave, then a mini-boss guarding it. */
   /** A sleeping legend's dream bubble (Ed, 2026-10-05): shown only to a witch on the ground within range metres of it. */
   dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string } };

@@ -2969,6 +2969,48 @@
           ],
           "additionalProperties": false
         },
+        "byRoute": {
+          "type": "object",
+          "properties": {
+            "babies": {
+              "type": "number",
+              "minimum": 0
+            },
+            "babyCap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "threat": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "profiles": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          },
+          "required": [
+            "babies",
+            "babyCap",
+            "threat",
+            "profiles"
+          ],
+          "additionalProperties": false
+        },
         "growth": {
           "type": "object",
           "properties": {
@@ -3002,6 +3044,7 @@
       },
       "required": [
         "start",
+        "byRoute",
         "growth"
       ],
       "additionalProperties": false
@@ -4670,6 +4713,10 @@
             "hype": {
               "type": "number",
               "minimum": 0
+            },
+            "needle": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -4677,7 +4724,8 @@
             "scratch",
             "hiss",
             "stroke",
-            "hype"
+            "hype",
+            "needle"
           ],
           "additionalProperties": false
         },
@@ -5146,6 +5194,10 @@
           "type": "number",
           "minimum": 0
         },
+        "dropLayers": {
+          "type": "number",
+          "minimum": 0
+        },
         "nearDist": {
           "type": "number",
           "minimum": 0
@@ -5272,6 +5324,7 @@
       "required": [
         "on",
         "volume",
+        "dropLayers",
         "nearDist",
         "farDist",
         "floor",
