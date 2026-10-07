@@ -1499,7 +1499,7 @@ The moon (Ed, 2026-10-06: "The moon should slowly change: occasionally becoming 
 | `moon.floor.flare` | number | 0 to … |
 | `glowReach` | number | 0 to … |
 
-### `sigilSpill`, `nightLight`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `lightBudget`
+### `sigilSpill`
 
 The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it.
 
@@ -1511,6 +1511,21 @@ The sigils' neon spilling onto the world (overnight phase 3, the art pass): each
 | `sigilSpill.stack` | number | 0 to … |
 | `sigilSpill.stackReach` | number | 0 to … |
 | `sigilSpill.stackHeight` | number | 0 to … |
+
+### `combatLight`, `nightLight`, `glowFalloff`, `glowNear`, `glowToCutout`, `glowHeight`, `lightBudget`
+
+Her light in the wild and in a fight (Ed, 2026-10-07: the wild forest darker for exploring; a darker forest makes a fight harder to read, so her light rises during one and settles after, too slowly to notice as an effect; render/combatLight.ts). Exploring an area the party hasn't reached, her light's reach and strength are times wildReach and wildGlow (the forest beyond her small pool darker); with a fight within range metres of her (any blow, wind-up or shot, her posse's or the wild's) in the last hold seconds, times fightReach and fightGlow instead (the fight lit, a little more than on party ground). Each eased: up over rise seconds, back over fall, shaped smooth. Drawing only.
+
+| knob | type | range |
+|---|---|---|
+| `combatLight.wildReach` | number | 0 to … |
+| `combatLight.wildGlow` | number | 0 to … |
+| `combatLight.fightReach` | number | 0 to … |
+| `combatLight.fightGlow` | number | 0 to … |
+| `combatLight.range` | number | 0 to … |
+| `combatLight.hold` | number | 0 to … |
+| `combatLight.rise` | number | 0 to … |
+| `combatLight.fall` | number | 0 to … |
 | `nightLight.maxReach` | number | 0 to … |
 | `nightLight.treetopReach` | number | 0 to … |
 | `nightLight.treetopGlow` | number | 0 to … |

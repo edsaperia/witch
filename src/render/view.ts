@@ -45,6 +45,7 @@ import type { SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
+import { CombatLight } from "./combatLight";
 import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
@@ -234,6 +235,8 @@ export class View {
   sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
   forestLights: ForestLight[] = [];
+  /** Her light dimmer in the wild, back up in a fight (render/combatLight.ts). */
+  readonly combatLight = new CombatLight();
   shadows: ShadowBatch;
   /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
   readonly rig: RigView | null;
