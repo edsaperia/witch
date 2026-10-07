@@ -77,6 +77,8 @@ const SOUNDS: [string, number, Play][] = [
   ["deck-routine", 9, () => {}],
   ["sparkler", 10, () => {}],
   ["fireworks", 9, () => {}],
+  ["dolphins", 6, () => {}],
+  ["kraken", 8, () => {}],
 ];
 
 async function render(name: string, seconds: number, play: Play) {
@@ -93,6 +95,14 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "deck-scratch") {
     // her scratch bars at the decks: two bars of strokes on the half-beats at 120 bpm, forward on the beat, back off it
     for (let k = 0; k < 16; k++) void oc.suspend(Math.round(k * 0.25 * rate) / rate).then(() => { s.scratch(k % 2 === 0); return oc.resume(); });
+  } else if (name === "dolphins") {
+    // a pod off the east coast: three leaps, a big one last
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0.1, () => s.splash(0.3, 0.4, 0.8)); at(1.6, () => s.splash(0.5, 0.6, 0.7, 0.8)); at(3.2, () => s.splash(1, 0.5, 1, 1.1));
+  } else if (name === "kraken") {
+    // the kraken rising off the west coast: its groan, the water pouring off its tentacles
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0, () => s.krakenGroan(-0.5)); at(1.2, () => s.krakenPour(5, -0.6));
   } else if (name === "sad-trumpet-cut") {
     // knocked down with her hat: the trumpet, cut off by the rewind as she's whisked to her decks (3 s on, as hotel's float)
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
