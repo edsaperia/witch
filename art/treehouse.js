@@ -224,8 +224,8 @@ function treehouseModel(facing = "towards") {
   return { m, lights, dj, seat: DJ_STAND, door: [Math.cos(Math.PI / 2 + .05) * S.porch.R, S.porch.y, Math.sin(Math.PI / 2 + .05) * (S.porch.R + .05)], camera: [0, sy + .95, 1.9], splitY: sy + S.studio.h + 1.5, footprint: 4.3, crownR, trunkR: 1.55 }; // trunkR: its radius 3 m up
 }
 
-// The treehouse at the witch's scale: { whole, top, bot, fore, crownY, anchors: { base, seat, door, camera, lights: [{ x, y, rgb, kind }] }, metres }.
-// base: the trunk's foot on the ground (place the treehouse by it); seat: where her sit pose's anchor goes (the studio's floor under her
+// The treehouse at the witch's scale: { whole, top, bot, fore, crownY, anchors: { base, seat, platter, door, camera, lights: [{ x, y, rgb, kind }] }, metres }.
+// base: the trunk's foot on the ground (place the treehouse by it); platter: the pink-labelled turntable's centre (the knockout's iris opens on it, render/koIris.ts); seat: where her sit pose's anchor goes (the studio's floor under her
 // stool); door: the porch's front door; camera: the studio's middle, near her seat (to frame for the opening zoom); lights: its light sources.
 // top is the crown and everything above the studio's roof (the loft and the tower over the treeline: drawn in treetop mode, cut out round
 // the witch); bot the rest. metres: height and width; towerFloor and roofTip (the top storey's floor and the roof's tip, above the ground);
@@ -259,19 +259,30 @@ export function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) 
   for (const fs of frames) for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (fs.m[y * sp.w + x]) { fx0 = Math.min(fx0, x); fx1 = Math.max(fx1, x); fy0 = Math.min(fy0, y); fy1 = Math.max(fy1, y); }
   const foreFrames = frames.map(fs => { const c = new Sprite(fx1 - fx0 + 1, fy1 - fy0 + 1); for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) { const i = (y + fy0) * sp.w + x + fx0; if (fs.m[i]) c.put(x, y, fs.m[i], fs.n[i * 3], fs.n[i * 3 + 1], fs.n[i * 3 + 2]); } return c; });
   const S = TREEHOUSE_STOREYS;
-  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, candles: [at(T.dj.to([DJ_DECKS.depth[1] + CANDLE.ahead, 0, DJ_DECKS.width - .1])), at(T.dj.to([DJ_DECKS.depth[1] + CANDLE.ahead, 0, -DJ_DECKS.width + .1]))], crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
+  return { whole: sp, top, bot, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, candles: candleRow(at), crownY, anchors: { base: at([0, 0, 0]), seat: at(T.seat), platter: at(T.dj.to([DJ_DECKS.platter.a, DJ_DECKS.top, DJ_DECKS.platter.c])), door: at(T.door), camera: at(T.camera), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
     metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), towerFloor: um(S.tower.y), roofTip: um(S.tower.y + S.tower.h + 3.3 + .3), footprint: um(T.footprint), overhang: um(S.studio.deck), trunk: um(T.trunkR * 2), crown: um(T.crownR) } };
 }
 
+// The candles' row: along the front edge of the studio's terrace (Ed, 2026-10-07: "along the front edge of the terrace she is
+// standing on", so the bar reads at the game's own zoom), CANDLE.arc either side of its nearest point to the camera, on its
+// open side between the walls, CANDLE.inset in from the edge, in front of the low railing; CANDLE.samples points along it, screen left to right,
+// in the base's pixels (the game spaces the candles along it by length).
+function candleRow(at) {
+  const S = TREEHOUSE_STOREYS.studio, R = S.deck - CANDLE.inset, pt = a => at([Math.cos(a) * R, S.y, Math.sin(a) * R]), out = [];
+  let mid = Math.PI / 2, low = -Infinity; // (centred on the edge's nearest point to the camera, the lowest on screen: the house is turned a little)
+  for (let a = Math.PI / 2 - 1.3; a <= Math.PI / 2 + 1.3; a += .02) { const y = pt(a).y; if (y > low) { low = y; mid = a; } }
+  const lo = Math.max(Math.PI / 2 - 1.3, mid - CANDLE.arc), hi = Math.min(Math.PI / 2 + 1.3, mid + CANDLE.arc); // (and kept to the open side, between the walls)
+  for (let k = 0; k < CANDLE.samples; k++) out.push(pt(lo + k / (CANDLE.samples - 1) * (hi - lo)));
+  return out.sort((p, q) => p.x - q.x);
+}
 // The knockdown candles (Ed, 2026-10-07, via the coordinator: "a LOADING BAR ... many candles, one per second, or even one
-// per ½ second, of respawn wait ... the base cooldown WHITE candles, the extra from repeat knockdowns RED"): a slim taper on a
-// little pewter drip-cup, standing on the studio's floor in a neat row along the desk's front (treehouseSprite's `candles`:
-// the row's two ends, screen left to right, the game spacing them between), at the house's scale; thin enough that 12 stand
-// apart along the desk at px 5 and 24 close up into one bar of wax and flame. white: the base wait's (white wax, cream where
+// per ½ second, of respawn wait ... the base cooldown WHITE candles, the extra from repeat knockdowns RED"): a taper on a
+// little pewter drip-cup, standing in a row along the front edge of the studio's terrace (treehouseSprite's `candles`, a line
+// of points: candleRow), at the house's scale; 12 stand well apart along it and 24 still apart. white: the base wait's (white wax, cream where
 // it's melted), else the extra's (red, pink where it's melted). level 0 whole to CANDLE.levels - 2 a stub, its wax running
 // down more as it goes; the last level out, a stub with a curl of smoke. frame: the flame's flicker (CANDLE.frames), leaning
 // and stretching; the flame two warm glowing tones, a dark wick.
-export const CANDLE = { levels: 5, frames: 3, colours: 2, ahead: .1, height: .24, r: .022 };
+export const CANDLE = { levels: 5, frames: 3, colours: 2, arc: .8, inset: .05, samples: 25, height: .4, r: .04 };
 export function candleSprite(st = {}, { level = 0, frame = 0, white = false } = {}) {
   const m = new Model({ blend: .02 }), out = level >= CANDLE.levels - 1, h = [1, .74, .5, .28, .14][Math.min(level, 4)] * CANDLE.height, r = CANDLE.r;
   const wax = white ? M.BELLY : M.CLOTH, melted = white ? M.BODY2 : M.EAR;
