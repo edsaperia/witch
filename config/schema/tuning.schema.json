@@ -7890,6 +7890,58 @@
       ],
       "additionalProperties": false
     },
+    "groundFog": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "density": {
+          "type": "number",
+          "minimum": 0
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetops": {
+          "type": "number",
+          "minimum": 0
+        },
+        "part": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "density",
+        "depth",
+        "drift",
+        "size",
+        "clear",
+        "reach",
+        "treetops",
+        "part"
+      ],
+      "additionalProperties": false
+    },
     "watching": {
       "type": "object",
       "properties": {
@@ -8241,6 +8293,7 @@
     "haze",
     "shadows",
     "mist",
+    "groundFog",
     "watching",
     "moonbeams",
     "looks",

@@ -58,6 +58,7 @@ import { hasRune } from "../rules/creatureStates";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
+import { GroundFog } from "./groundFog";
 import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
@@ -251,6 +252,9 @@ export class View {
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
   mist: Mist | null = null;
+  /** Low fog over the wild ground, thinning near the party (render/groundFog.ts). */
+  groundFog: GroundFog | null = null;
+  private fogParties: { x: number; z: number; d: number }[] = [];
   /** Where she was a beat ago, for the trees watching her (render/view/frameUniforms.ts). */
   watch = { x: NaN, z: NaN, t: 0 };
   width = 1;
@@ -335,6 +339,10 @@ export class View {
     if (t.mist.on && t.mist.strength > 0) {
       this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer is half the scene's size: post.ts)
       this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
+    }
+    if (t.groundFog?.on && t.groundFog.density > 0 && !t.bare) {
+      this.groundFog = new GroundFog(t.groundFog, this.post.scene.depthTexture);
+      (this.post.fxScene ??= new THREE.Scene()).add(this.groundFog.mesh);
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
     LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
@@ -611,6 +619,19 @@ export class View {
   }
 
   /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
+  /** The ground fog: the partified areas nearest her burn it off (their centres, nearest first). */
+  private updateGroundFog(w: Game["witch"]): void {
+    const g = this.game, P = this.fogParties;
+    let n = 0;
+    for (const a of g.party.areas.values()) {
+      const s = g.map.siteOf(a.cell[0], a.cell[1]), p = P[n] ?? (P[n] = { x: 0, z: 0, d: 0 }); // (kept, not made a frame)
+      p.x = s.x; p.z = s.z; p.d = Math.hypot(s.x - w.x, s.z - w.z); n++;
+    }
+    P.length = n;
+    P.sort((a, b) => a.d - b.d);
+    this.groundFog!.update(this.camera, w.x, w.z, canopyShown(w), g.tuning.wind.on ? g.tuning.wind.speed : 0, P);
+  }
+
   private updateSmoke(g: Game, time: number): void {
     const S = this.smoke, t = g.tuning, w = g.witch, R = t.smoke.range;
     S.begin();
@@ -837,6 +858,7 @@ export class View {
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
+    if (this.groundFog) this.updateGroundFog(w);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.time("witch");
     refresh(this);

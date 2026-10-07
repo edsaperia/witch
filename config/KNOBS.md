@@ -1748,6 +1748,22 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `groundFog`
+
+Low ground fog over the wild (Ed, 2026-10-07, making the wild forest eerier: "low ground fog in the wild areas: slow, thinner near the party, cheap"; render/groundFog.ts): one pass over the screen in the half-size effects layer, thickest where the picture meets the ground and thinning to nothing depth metres above it, so it pools on the forest floor and round the feet of trees and creatures. density: how thick at the ground (0 to 1); size: its patches (m); drift: how fast they drift, times the wind's speed (slow); clear, reach: round each partified area's centre it's gone within clear metres and back to full by reach; treetops: how much of it is left seen from the treetops (0 to 1); part: it parts round her, clear within part metres and full by twice that, so her light still falls warm on the floor.
+
+| knob | type | range |
+|---|---|---|
+| `groundFog.on` | boolean |  |
+| `groundFog.density` | number | 0 to … |
+| `groundFog.depth` | number | 0 to … |
+| `groundFog.drift` | number | 0 to … |
+| `groundFog.size` | number | 0 to … |
+| `groundFog.clear` | number | 0 to … |
+| `groundFog.reach` | number | 0 to … |
+| `groundFog.treetops` | number | 0 to … |
+| `groundFog.part` | number | 0 to … |
+
 ### `watching`
 
 The trees watching her (Ed, 2026-10-07, making the wild forest eerier: "canopy tips within a few metres of her sway a beat late and slightly TOWARDS her, as if the trees lean in to watch"; render/sprites.ts uWatch): a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius. A shader nudge, nothing new drawn; keep it small.
