@@ -94,8 +94,10 @@ describe("a chase given up (Ed, 2026-10-06: 'pursue you 30 m outside of their ar
     g.byArea = null;
     const inArea = (x: number, z: number) => { const k = g.map.cellSafe(x, z).cell; return k[0] === cell[0] && k[1] === cell[1]; };
     let retreated = false, outFar = 0;
-    for (let i = 0; i < 30 / STEP; i++) {
-      stepGame(g, { ...idle, moveX: i * STEP < 12 ? -1 : 0 }, STEP); // (she walks 200 m west out of its area, then stands)
+    const watch = g.tuning.wildWatch?.on ? g.tuning.wildWatch.time + 1 : 0; // (she waits out its area's watch first, rules/wildWatch.ts: leaving before, it wouldn't chase)
+    for (let i = 0; i < (30 + watch) / STEP; i++) {
+      const t = i * STEP - watch;
+      stepGame(g, { ...idle, moveX: t >= 0 && t < 12 ? -1 : 0 }, STEP); // (she walks 200 m west out of its area, then stands)
       if (wolf.retreat) retreated = true;
       if (!inArea(wolf.x, wolf.z)) outFar = Math.max(outFar, Math.hypot(wolf.x - site.x, wolf.z - site.z));
     }

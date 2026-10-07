@@ -40,7 +40,7 @@ export function stepHunts(g: Game, t: Tuning): void {
     if (!cell) continue;
     const key = `${cell[0]},${cell[1]}`;
     if (g.friendly.has(key)) continue;
-    if (W?.on) { const e = g.wildEntry.get(key); if (!e || time < e.at + W.time) continue; }
+    if (W?.on) { const e = g.wildEntry.get(key); if (!e || time < e.until) continue; }
     for (const c of (g.byArea?.get(key) ?? g.creatures)) {
       if (c.hunting !== undefined || c.cell[0] !== cell[0] || c.cell[1] !== cell[1] || !hunter(c)) continue;
       c.hunting = i; c.retreat = undefined; c.retreatFrom = undefined; c.watchUntil = undefined;

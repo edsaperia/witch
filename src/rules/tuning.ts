@@ -149,7 +149,7 @@ export interface Tuning {
    *  on the ground in it, so a later visit plays it again (rules/wildWatch.ts). */
   /** The hunt (Ed, 2026-10-07; rules/hunt.ts): a woken wild area's own young and adults go for her till she's knocked out or they're invited; off, they give up past combat.leaveArea. */
   hunt?: { on: boolean };
-  wildWatch?: { on: boolean; time: number; forget: number; hangBack: number };
+  wildWatch?: { on: boolean; time: number; forget: number; hangBack: number; /** an area with watchers worth this much in a fight (F) or more is fully dangerous: its red at its fullest */ dangerF?: number; /** the red on a watching creature at full aggro in the most dangerous area (render/view/creatures.ts) */ tint?: number; /** the screen edges' red at full aggro there (render/post.ts) */ vignette?: number };
   naps?: { on: boolean; chance: number; length: number[]; wake: number; /** A legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"): its own chance and length, roused only by a witch on the ground within reach metres of its circle's edge. */ circle?: { chance: number; length: number[]; reach: number } };
   /** The soundsystem alarm (rules/alarms.ts, render/alarm.ts). */
   alarms?: { linger: number; fall: number; most: number };
