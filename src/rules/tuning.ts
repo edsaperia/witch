@@ -189,6 +189,8 @@ export interface Tuning {
     night?: { volume: number; bed: number; noise: number; sounds: number; from: number; snore: { volume: number; gap: number; range: number; max: number } };
     ambience?: { volume: number; bed: number; noise: number; sounds: number; quiet: number };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
+    /** By the ley line's pulse, its tip a burning sparkler (#491): its fizz. */
+    sparkler?: { volume: number; hiss: number; pops: number; rate: number; fork: number; range: number };
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
     sadTrumpet: { volume: number; duck: number; bare: number; rewind: number; cutAfter: number };
     deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number; needle: number };
@@ -254,6 +256,8 @@ export interface Tuning {
   /** The sigils' neon on the world (render/view/lights.ts sigilLights): each placed sigil a light at height metres over its rune, reaching reach metres (more by level) at strength (0 off); the bottom of her stack one at stack strength, stackReach metres, stackHeight over her. */
   sigilSpill: { strength: number; reach: number; height: number; stack: number; stackReach: number; stackHeight: number };
   /** Her light in the wild and in a fight (render/combatLight.ts): exploring an area the party hasn't reached, its reach and strength times wildReach and wildGlow; with a fight within range metres in the last hold seconds, times fightReach and fightGlow instead; eased up over rise seconds and back over fall. Drawing only. */
+  /** The wave's celebration at an area already cleared (rules/fireworks.ts, render/fireworks.ts; Ed, 2026-10-07): shells[0] to shells[1] shells over `over` seconds from the soundsystem (the last `finale` together at the end), each rising for rise[0] to rise[1] seconds to height[0] to height[1] metres and bursting radius[0] to radius[1] metres across, drifting up to `drift` metres off its top; then its lasers stay fully on. Drawing (and sound) only. */
+  fireworks?: { on: boolean; shells: number[]; over: number; rise: number[]; height: number[]; radius: number[]; drift: number; finale: number };
   combatLight?: { wildReach: number; wildGlow: number; fightReach: number; fightGlow: number; range: number; hold: number; rise: number; fall: number };
   nightLight?: { maxReach: number; treetopReach: number; treetopGlow: number; /** lying on the beach stargazing, at most gazeReach metres */ gazeReach?: number };
   glowHeight: number;
