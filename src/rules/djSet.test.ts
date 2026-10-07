@@ -1,58 +1,40 @@
 import { describe, expect, it } from "vitest";
 import { newBeatClock, beatAt } from "./beat";
 import { PARTY_CAST, type PartyState } from "./party";
-import type { Tuning } from "./tuning";
-import { djRoutine, heldByNeedle, needleDownAt, needleWindow, respawnWindow, scratchAt, scratchStrokes, SCRATCH_BAR } from "./djSet";
+import { DJ_ROUTINE, DJ_ROUTINE_BEATS, djRoutineAt, djRoutineStart, djStrokes } from "./djSet";
+import { DJ_GESTURES } from "../../art/witch.js";
 
-const game = (spellAt: number | null | undefined, dj = { needleBeats: 2, scratchBeats: 8 }) =>
-  ({ beat: newBeatClock(120), party: { spellAt } as PartyState, tuning: { dj } as unknown as Tuning });
+const game = (spellAt: number | null | undefined, seated = true) => ({ beat: newBeatClock(120), party: { spellAt } as PartyState, witch: { seated } });
 
 describe("her set at the decks (rules/djSet.ts)", () => {
-  it("drops the needle on the beat after the cast's burst, two beats in, and scratches eight more", () => {
-    const g = game(10.1), w = needleWindow(g)!;
-    expect(w.start).toBeGreaterThanOrEqual(10.1 + PARTY_CAST);
-    expect(beatAt(g.beat, w.start) % 1).toBeCloseTo(0, 6); // on a beat
-    expect(beatAt(g.beat, w.needleAt) - beatAt(g.beat, w.start)).toBeCloseTo(2, 6);
-    expect(beatAt(g.beat, w.end) - beatAt(g.beat, w.needleAt)).toBeCloseTo(8, 6);
-    expect(needleDownAt(g)).toBe(w.needleAt);
+  it("starts on the first whole beat after the cast's burst, only while she's at the decks", () => {
+    const g = game(10.1), s = djRoutineStart(g, 12)!;
+    expect(s).toBeGreaterThanOrEqual(10.1 + PARTY_CAST);
+    expect(beatAt(g.beat, s) % 1).toBeCloseTo(0, 6);
+    expect(djRoutineStart(g, s - 0.01)).toBeNull();
+    expect(djRoutineStart(game(10.1, false), 12)).toBeNull(); // stepped off: it stops
+    for (const sp of [undefined, null]) expect(djRoutineStart(game(sp), 12)).toBeNull();
   });
-  it("holds her from the cast to the routine's end, and none without the spell", () => {
-    const g = game(10), w = needleWindow(g)!;
-    expect(heldByNeedle(g, 9.9)).toBe(false);
-    expect(heldByNeedle(g, w.start + 0.1)).toBe(true);
-    expect(heldByNeedle(g, w.end - 0.01)).toBe(true);
-    expect(heldByNeedle(g, w.end)).toBe(false);
-    for (const sp of [undefined, null]) { expect(needleWindow(game(sp))).toBeNull(); expect(heldByNeedle(game(sp), 20)).toBe(false); }
+  it("runs its 13 beats through the needle, the scratches, the chirps, the spin and the hype", () => {
+    const g = game(0), s = djRoutineStart(g, 2)!, at = (b: number) => djRoutineAt(g, s + b * 0.5); // 120 bpm: half a second a beat
+    expect([at(0.1), at(1.1), at(2.1), at(4.1), at(8.1), at(11.1), at(12.6)].map(r => r && `${r.gesture}${r.frame}`))
+      .toEqual(["needle0", "needle1", "groove0", "scratch1", "chirp0", "spin0", "hype1"]);
+    expect(djRoutineAt(g, s + DJ_ROUTINE_BEATS * 0.5 + 0.01)).toBeNull();
   });
-  it("steps through lift, place and scratch", () => {
-    const g = game(10), w = needleWindow(g)!, at = (b: number) => djRoutine(g, w.start + b * 0.5)?.step; // 120 bpm: half a second a beat
-    expect([at(0.2), at(1.2), at(2.2), at(9.9)]).toEqual(["lift", "place", "scratch", "scratch"]);
-    expect(djRoutine(g, w.end + 0.01)).toBeNull();
+  it("names only gestures the art draws, in order, inside its length", () => {
+    let last = -1;
+    for (const c of DJ_ROUTINE) {
+      expect((DJ_GESTURES as Record<string, number[]>)[c.gesture]?.[c.frame], c.gesture).toBeTypeOf("number");
+      expect(c.at).toBeGreaterThan(last); expect(c.at).toBeLessThan(DJ_ROUTINE_BEATS); last = c.at;
+    }
   });
-  it("gives the sound its strokes on the sixteenths of the pattern, only while scratching", () => {
-    const g = game(10), w = needleWindow(g)!, s = scratchStrokes(g, 0, 100);
-    expect(s.length).toBe(2 * SCRATCH_BAR.filter(Boolean).length); // two bars
-    expect(s[0].at).toBeCloseTo(w.needleAt, 6);
-    for (const k of s) { expect(k.at).toBeGreaterThanOrEqual(w.needleAt - 1e-9); expect(k.at).toBeLessThan(w.end); expect(k.len).toBeCloseTo(0.125, 6); expect([1, -1, 2]).toContain(k.dir); }
-    // a window in the middle sees only its own
-    const mid = scratchStrokes(g, w.needleAt + 1, w.needleAt + 2);
-    expect(mid.every(k => k.at >= w.needleAt + 1 && k.at < w.needleAt + 2)).toBe(true);
-  });
-  it("scratches through a respawn wait in bars from the next beat, a flourish on its last beat", () => {
-    const g = game(undefined), r = respawnWindow(g, 30.2, 36)!;
-    expect(beatAt(g.beat, r.start) % 1).toBeCloseTo(0, 6);
-    expect(djRoutine(g, r.start + 0.1, { backAt: 30.2, until: 36 })?.step).toBe("scratch");
-    expect(djRoutine(g, 35.8, { backAt: 30.2, until: 36 })?.step).toBe("flourish");
-    expect(djRoutine(g, 36.1, { backAt: 30.2, until: 36 })).toBeNull();
-    expect(respawnWindow(g, 30, 30)).toBeNull(); // no wait, no routine
-    const s = scratchStrokes(g, 0, 100, { backAt: 30.2, until: 36 });
-    expect(s.length).toBeGreaterThan(0); expect(s.every(k => k.at < 35.5)).toBe(true); // none in the flourish
-  });
-  it("follows the record's way and the fader's cuts", () => {
-    const g = game(undefined), f = (k: number) => scratchAt(g, 0, k * 0.125 + 0.01);
-    expect(f(0)).toEqual({ dir: 1, open: true });
-    expect(f(1)).toEqual({ dir: -1, open: true });
-    expect(f(4).open).toBe(false); // the first cut
-    expect(f(7).dir).toBe(-1); // a rest holds the last stroke
+  it("gives the sound its strokes, in the window asked, as the table says", () => {
+    const g = game(0), s = djRoutineStart(g, 2)!, all = djStrokes(g, 0, 100);
+    expect(all.map(k => k.stroke)).toEqual(DJ_ROUTINE.filter(c => c.stroke).map(c => c.stroke));
+    expect(all[0].at).toBeCloseTo(s, 6); expect(all[1].at).toBeCloseTo(s + 0.5, 6); // lift, then the drop a beat on
+    expect(all.find(k => k.stroke === "spin")!.len).toBeCloseTo(0.375, 6); // held three sixteenths
+    const mid = djStrokes(g, s + 2, s + 3);
+    expect(mid.every(k => k.at >= s + 2 && k.at < s + 3)).toBe(true);
+    expect(djStrokes(game(0, false), 0, 100)).toEqual([]); // stepped off: nothing heard
   });
 });

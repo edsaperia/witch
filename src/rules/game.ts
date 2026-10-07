@@ -14,7 +14,6 @@ import { befriend, danceAt, invitableNow, stateOf, STATES } from "./creatureStat
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { heldByNeedle } from "./djSet";
 import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -363,8 +362,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, gamepad B, touch
   // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
   if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
-  // Then the needle drop (Ed, 2026-10-07: rules/djSet.ts): held at the decks a few more beats while she drops it and scratches.
-  if (heldBySpell(g.party, g.clock.time) || heldByNeedle(g, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  if (heldBySpell(g.party, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   if (c.spell) castSpell(g.spells, ht, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];

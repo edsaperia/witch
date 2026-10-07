@@ -2,7 +2,7 @@
 // anchor on the seat anchor, the DJ table's fore frame over her, then her frame's upper layer (art/witch.js aboveDecks) over
 // that; one cell per gesture frame, at scale 4, the platters turning and the LEDs chasing with the cells. Also the gestures
 // as a GIF's frames (frames written as PNGs to <out>-gif/, for ffmpeg).
-// --needle: the needle drop after the party spell (rules/djSet.ts, Ed 2026-10-07), frame by frame at 30 fps as the game
+// --needle: her routine after the party spell (rules/djSet.ts DJ_ROUTINE, Ed 2026-10-07: the needle drop and scratching), frame by frame at 30 fps as the game
 // picks them (the rules loaded through Vite), into <out>-gif/ like --gif.
 //   node tools/dj/booth-sheet.mjs <out.png> [seed: a generated witch instead of ours] [--gif | --needle]
 import { openBrowser } from "../../art/headless.mjs";
@@ -12,11 +12,11 @@ let given = null;
 if (needle) { // the game's own choice of frame, step by step: the rules' routine over a beat clock at 120 bpm, the cast at 0
   const { openRules } = await import("../balance/lib.mjs"), R = await openRules();
   const D = await R.load("/src/rules/djSet.ts"), B = await R.load("/src/rules/beat.ts"), P = await R.load("/src/rules/party.ts"), W = await R.load("/art/witch.js");
-  const tuning = JSON.parse((await import("node:fs")).readFileSync("config/tuning.json", "utf8")), g = { beat: B.newBeatClock(120), party: { spellAt: 0 }, tuning };
-  const w = D.needleWindow(g); given = [];
-  for (let t = P.PARTY_CAST; t < w.end + 1; t += 1 / 30) {
-    const r = D.djRoutine(g, t), b = B.beatAt(g.beat, t), sc = r && r.step === "scratch" ? D.scratchAt(g, w.needleAt, t) : null;
-    given.push({ f: r ? W.djRoutineFrame(r.step, { beat: r.beat, dir: sc?.dir, open: sc?.open }) : W.djFrame(b), k: Math.floor(b * 2) % 8 });
+  const g = { beat: B.newBeatClock(120), party: { spellAt: 0 }, witch: { seated: true } }, s0 = D.djRoutineStart(g, P.PARTY_CAST + 1); given = [];
+  const end = B.timeAt(g.beat, B.beatAt(g.beat, s0) + D.DJ_ROUTINE_BEATS) + 1;
+  for (let t = P.PARTY_CAST; t < end; t += 1 / 30) {
+    const r = D.djRoutineAt(g, t), b = B.beatAt(g.beat, t);
+    given.push({ f: r ? W.DJ_GESTURES[r.gesture][r.frame] : W.djFrame(b), k: Math.floor(b * 2) % 8 });
   }
   await R.close();
 }

@@ -498,7 +498,7 @@ export const WITCH_FOOT_POSES = {
   laugh: { frames: 3, fps: 4, party: "social" }, drink: { frames: 4, fps: 1.5, party: "social" }, run: { frames: 4, fps: 10, party: "move" },
   sitGround: { frames: 2, fps: 1, party: "rest" }, stargaze: { frames: 2, fps: 1, party: "rest" }, conga: { frames: 4, fps: 4, party: "pair" },
   twirl: { frames: 4, fps: 4, party: "pair" }, twirled: { frames: 4, fps: 4, party: "pair" }, limboHold: { frames: 2, fps: 2, party: "pair" }, limboHelp: { frames: 2, fps: 2, party: "pair" }, limbo: { frames: 4, fps: 3, party: "dance" },
-  dj: { frames: 22, fps: 4, heading: "towards" },
+  dj: { frames: 20, fps: 4, heading: "towards" },
 };
 // Two witches together: each is her own sprite, and the game puts them so that her `meet` anchor and her partner's land on
 // the same pixel. mirror: the partner's sprite is flipped left-right (anchors too: x becomes w - x), so the two face each
@@ -623,21 +623,13 @@ const FOOT_FRAMES = {
 //   knob     a fingertip on the mixer's knobs
 //   hype     a hand thrown up in the air, grinning (now and then)
 //   cast     both hands up (the party spell)
-// and her set's routines (Ed, 2026-10-07; their timing is the rules', rules/djSet.ts; djRoutineFrame picks the frame):
-//   lift     the needle drop: her hand to the tonearm's headshell, then lifting it
-//   place    lowering it over the record, then the needle touching, her head bent right down to it
-//   scratch  the record pulled back or pushed forward, her other hand on the crossfader open or cut (the transform)
+// and for her set's routine (Ed, 2026-10-07; its timing and which frame when: rules/djSet.ts DJ_ROUTINE):
+//   needle   the needle drop: lifting the tonearm by its headshell, then the needle down on the record, her head right down to it
+//   chirp    the record pulled back with the crossfader cut, pushed forward with it open (each stroke a chirp)
+//   spin     a spin-back: her palm flat on the record pushing it round backwards, then her hand swept away
 export const DJ_DECKS = { top: .5, platter: { a: .27, c: .29, r: .15 }, mixer: { a: .27, w: .09 }, fader: .37, depth: [.1, .44], width: .52 };
 export const DJ_GESTURES = { groove: [0, 1], cue: [2, 3], scratch: [4, 5], fader: [6, 7], knob: [8, 9], hype: [10, 11], cast: [12, 13],
-  lift: [14, 15], place: [16, 17], scratchOpen: [18, 19], scratchCut: [20, 21] };
-// The frame for a routine's step (rules/djSet.ts djRoutine): `beat` its beats in (lift and place, flourish: the beat's halves),
-// `dir` and `open` the scratch's (scratchAt: the record's way, the crossfader).
-export function djRoutineFrame(step, { beat = 0, dir = 1, open = true } = {}) {
-  const half = (beat % 1) < .5 ? 0 : 1;
-  if (step === "lift" || step === "place") return DJ_GESTURES[step][half];
-  if (step === "flourish") return DJ_GESTURES.hype[half];
-  return DJ_GESTURES[open ? "scratchOpen" : "scratchCut"][dir > 0 ? 1 : 0];
-}
+  needle: [14, 15], chirp: [16, 17], spin: [18, 19] };
 // the set she plays: a gesture a bar, round and round (hype once a loop)
 const DJ_SET = ["groove", "groove", "cue", "scratch", "groove", "fader", "knob", "cue", "groove", "scratch", "fader", "hype"];
 // The frame behind the decks at `beat` (beats on the game's beat clock, rules/beat.ts: beatAt): the gesture by the bar
@@ -674,17 +666,15 @@ FOOT_FRAMES.dj = [
   // cast: both hands up
   djOn({ crouch: .06, look: .22, mouth: true, free: [.06, 1.26, .26], elbow: [.06, 1.0, .28], hand: "wave", far: [.06, 1.26, -.26], farElbow: [.06, 1.0, -.28], farHand: "wave" }),
   djOn({ look: .3, mouth: "laugh", free: [.02, 1.36, .21], elbow: [.04, 1.08, .26], hand: "wave", far: [.02, 1.36, -.21], farElbow: [.04, 1.08, -.26], farHand: "wave" }),
-  // lift: her fingers to the tonearm's headshell, then lifting it clear
-  djOn({ crouch: .04, nod: .6, tilt: .2, free: [PL.a + .06, HT + .01, PL.c - .07], hand: "grip", far: [PL.a - .04, HT + .02, -.05] }),
+  // needle: lifting the tonearm by its headshell; then the needle down on the record, her head right down to it
   djOn({ nod: .4, tilt: .25, look: .05, free: [PL.a + .03, HT + .12, PL.c - .09], elbow: [.12, .78, .27], hand: "grip", far: [PL.a - .04, HT + .02, -.05] }),
-  // place: over the record, then down on it (the needle touching), her head right down to it
-  djOn({ crouch: .03, nod: .75, tilt: .3, free: [PL.a + .02, HT + .08, PL.c - .03], hand: "grip", far: [PL.a - .04, HT + .02, -.05] }),
   djOn({ crouch: .08, nod: .9, tilt: .3, free: [PL.a + .04, HT + .02, PL.c - .04], hand: "grip", far: [PL.a - .04, HT + .02, -.05] }),
-  // scratch with the crossfader: the record back, forward; the fader open, then cut
-  djOn({ crouch: .06, nod: .8, tilt: .15, free: [PL.a - .07, HT, PL.c + .03], far: [DJ_DECKS.fader, HT + .01, -.07] }),
-  djOn({ crouch: .02, nod: .55, tilt: .2, free: [PL.a + .06, HT, PL.c - .04], far: [DJ_DECKS.fader, HT + .01, -.07] }),
+  // chirp: the record pulled back with the fader cut, pushed forward with it open
   djOn({ crouch: .06, nod: .8, tilt: .1, mouth: true, free: [PL.a - .07, HT, PL.c + .03], far: [DJ_DECKS.fader, HT + .01, .06] }),
-  djOn({ crouch: .02, nod: .55, tilt: .15, free: [PL.a + .06, HT, PL.c - .04], far: [DJ_DECKS.fader, HT + .01, .06] }),
+  djOn({ crouch: .02, nod: .55, tilt: .2, free: [PL.a + .06, HT, PL.c - .04], far: [DJ_DECKS.fader, HT + .01, -.07] }),
+  // spin: her palm flat on the record's far side pushing it round backwards, then swept off it, out and up
+  djOn({ crouch: .07, nod: .7, tilt: .2, free: [PL.a + .09, HT, PL.c - .05], far: [PL.a - .04, HT + .02, -.05] }),
+  djOn({ look: .15, tilt: .3, mouth: true, free: [PL.a - .08, HT + .16, PL.c + .1], elbow: [.06, .82, .32], hand: "palm", far: [PL.a - .04, HT + .02, -.05] }),
 ];
 // the knee between a hip and a foot, bent forward
 function kneeOf(hip, foot, l) {
