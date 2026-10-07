@@ -70,6 +70,8 @@ export interface RigDrive {
   /** Lying asleep (a sleeping legend), 0..1: body down on folded legs, breathing slowly. */ sleep?: number;
   /** Its head down, 0..1 (asleep, or drowsy getting up). */ droop?: number;
   /** A nightmare, 0..1: its legs paddle and its head jerks. */ twitch?: number;
+  /** Its temperament posture (config/character.json): its head forward and up, its body up, in model units. */ posture?: { hx: number; hy: number; by: number };
+  /** Its idle quirk (render/character.ts) and how far through it, 0..1 (-1: none now): played only as it stands. */ quirk?: string; quirkK?: number;
 }
 /** What the rig lays out: a piece or a disc of the atlas, its pivot's world position (metres from
  *  the creature's place on the ground) and a nudge toward the camera (model units) to settle which
@@ -145,23 +147,40 @@ export class RigBody {
     const breath = sl * (Math.sin(t * Math.PI * 2 / 4.5) * 0.012 + tw * Math.sin(t * 5.3) * 0.015);
     const bodyY = -sink + bob + drive.air * 0.05 - sl * legLen * 0.62 + breath;
     const jerk = tw * Math.max(0, Math.sin(t * 2.1)) ** 4 * Math.sin(t * 17) * 0.05; // its head, in fits
+    // its character (config/character.json): the posture it holds, and its idle quirk (a sniff, a stomp, a tail flick...), only as it stands
+    const P = drive.posture, qk = drive.quirkK ?? -1, still = (1 - go) * (1 - sl) * (drive.crouch > 0.05 || drive.air ? 0 : 1), env = qk >= 0 ? Math.sin(qk * Math.PI) * still : 0;
+    let qhx = 0, qhy = 0, qhz = 0, qby = 0, qbz = 0, qty = 0, qtz = 0, qFore = 0, qHind = 0, qReach = 0;
+    if (env > 0 || (drive.quirk === "tailslap" && qk >= 0)) switch (drive.quirk) {
+      case "sniff": qhx = 0.05 * env; qhy = -0.11 * env + Math.abs(Math.sin(qk * Math.PI * 6)) * 0.035 * env; break; // nose down, snuffling
+      case "perk": qhy = 0.13 * env; qhx = -0.04 * env; break; // head up, alert
+      case "howl": qhy = 0.2 * env; qhx = 0.05 * env; qby = -0.04 * env; break; // muzzle to the sky
+      case "shake": { const j = Math.sin(qk * Math.PI * 16) * 0.07 * env; qbz = j; qhz = j * 1.4; qtz = -j * 1.6; break; } // a wet-dog shake
+      case "tailflick": qtz = Math.sin(qk * Math.PI * 6) * 0.22 * env; qty = (0.05 + Math.abs(Math.sin(qk * Math.PI * 6)) * 0.1) * env; break;
+      case "tailslap": qty = (qk < 0.5 ? Math.sin(qk * 2 * Math.PI) * 0.14 : -Math.sin((qk - 0.5) * 2 * Math.PI) * 0.1) * still; break; // up, and slapped down
+      case "stretch": qhy = -0.16 * env; qhx = 0.08 * env; qby = -0.05 * env; qReach = 0.12 * env; break; // a play bow
+      case "stomp": qFore = Math.max(0, Math.sin(qk * Math.PI * 4)) * still; break; // a front hoof pawing the ground, twice
+      case "thump": qHind = Math.max(0, Math.sin(qk * Math.PI * 6)) * still; break; // a hind foot drummed, three times
+      case "scratch": qHind = (0.6 + Math.abs(Math.sin(qk * Math.PI * 10)) * 0.4) * env; qhy = -0.03 * env; break; // a hind foot up at its ear
+    }
+    const phx = (P?.hx ?? 0) + qhx, phy = (P?.hy ?? 0) * (1 - sl) + qhy, pby = (P?.by ?? 0) * (1 - sl) + qby;
     const at = (piece: RigPiece | null | undefined, x: number, y: number, z: number, bias: number) => { if (!piece) return; this.world(x, y, z, a, flip, u2m); out.push(piece, this.wx, this.wy, this.wz, flip, bias); };
-    at(m.torso[i], 0, bodyY, 0, 0);
-    at(m.head[i], m.neck[0] + this.headOff + dr * 0.06, m.neck[1] + bodyY - drive.crouch * 0.12 - Math.max(0, acc) * 0.04 - dr * Math.max(0, m.neck[1] - legLen * 0.2) * 0.45 + jerk, m.neck[2], a < -0.1 ? -0.05 : 0.05); // in front of the torso, unless walking away
+    at(m.torso[i], 0, bodyY + pby, qbz, 0);
+    at(m.head[i], m.neck[0] + this.headOff + dr * 0.06 + phx, m.neck[1] + bodyY + pby + phy - drive.crouch * 0.12 - Math.max(0, acc) * 0.04 - dr * Math.max(0, m.neck[1] - legLen * 0.2) * 0.45 + jerk, m.neck[2] + qhz, a < -0.1 ? -0.05 : 0.05); // in front of the torso, unless walking away
     // the tail swings out on turns: a lagging point behind its base, the piece nudged toward it
     this.sway += (Math.max(-1, Math.min(1, -this.turn * 0.35)) * (drive.charging ? 0.3 : 1) - this.sway) * Math.min(1, dt * 5);
-    at(m.tail[i], m.tailAt[0], m.tailAt[1] + bodyY - sl * 0.06, m.tailAt[2] + this.sway * 0.25 * (flip ? -1 : 1), a > 0.1 ? -0.05 : 0.05); // behind, unless walking away
+    at(m.tail[i], m.tailAt[0], m.tailAt[1] + bodyY + pby + qty - sl * 0.06, m.tailAt[2] + this.sway * 0.25 * (flip ? -1 : 1) + qtz, a > 0.1 ? -0.05 : 0.05); // behind, unless walking away
     // the legs: each foot on its own phase (a trot: diagonal pairs together), IK to the knee, bones as discs
     for (let k = 0; k < m.legs.length; k++) {
       const L = m.legs[k], [fwd, lift] = footCycle(this.phase + (TROT[L.name] ?? 0), duty);
-      const hipY = L.hip[1] + bodyY, tuck = drive.air * legLen * 0.45;
+      const hipY = L.hip[1] + bodyY + pby, tuck = drive.air * legLen * 0.45;
+      const quirked = L.side > 0 ? (L.fore ? qFore : qHind) : 0; // (the near foot does the stomping, thumping, scratching)
       const tapping = L.fore && drive.tap ? (drive.tap > 0) === (L.side > 0) ? Math.abs(drive.tap) * (1 - go) : 0 : 0; // its shoe tapping while it stands
       const paddle = tw * sl * Math.max(0, Math.sin(t * 2.1)) ** 2 * Math.sin(t * 9 + (L.fore ? 0 : 1.7) + (L.side > 0 ? 0 : 3.1)); // running in its dream
-      let fx = L.foot[0] + fwd * stride * go + (drive.charging && !L.fore ? -0.08 : 0) + sl * (L.fore ? 0.1 : -0.04) * legLen + paddle * 0.1, fy = L.foot[1] + lift * 0.14 * go + tuck + tapping * 0.09 + Math.max(0, paddle) * 0.04;
+      let fx = L.foot[0] + fwd * stride * go + (drive.charging && !L.fore ? -0.08 : 0) + sl * (L.fore ? 0.1 : -0.04) * legLen + paddle * 0.1 + (L.fore ? qReach : 0) + (drive.quirk === "scratch" && !L.fore ? quirked * 0.14 : 0), fy = L.foot[1] + lift * 0.14 * go + tuck + tapping * 0.09 + Math.max(0, paddle) * 0.04 + quirked * (drive.quirk === "scratch" ? 0.2 : 0.15);
       const z = L.hip[2]; let fz = z;
       // planted: a foot on the ground stays where it was put down (in the world) while the body goes on over it; lifted, it swings
       // to its next place. (Not in the air, tapping or lying down, and only while walking: standing, the feet settle under the hips.)
-      const stance = k < 4 && lift === 0 && go > 0.05 && !drive.air && !tapping && !sl;
+      const stance = k < 4 && lift === 0 && go > 0.05 && !drive.air && !tapping && !sl && !quirked;
       if (stance) {
         if (!this.planted[k]) { this.world(fx, 0, z, a, flip, u2m); this.plant[k * 2] = this.x + this.wx; this.plant[k * 2 + 1] = this.z + this.wz; this.planted[k] = 1; }
         else { // the planted spot back in model space for the drawn heading (rigWorld undone): along it and across it
@@ -228,7 +247,9 @@ export class RigBody {
     }
     // the neck rises from the front of the body to the head, held lower in a crouch, thrust forward in a charge
     const { i, flip, a } = rigDirection(h), hp = m.headAt, reach = (drive.charging ? 0.2 : 0) + drive.crouch * -0.1;
-    const neck0 = sp[12], tx = hp[0] + reach - ground[12][0] - dr * 0.05, ty = hp[1] * (1 - drive.crouch * 0.5) * (1 - dr * 0.6); // (asleep, its head laid down by its coils)
+    // its character (config/character.json): its head held as it likes, and now and then, as it lies still, it rises to look about
+    const qk = drive.quirkK ?? -1, rise = qk >= 0 && drive.quirk === "rise" ? Math.sin(qk * Math.PI) * (1 - Math.min(1, v / 0.4)) * (1 - sl) * (1 - drive.crouch) : 0;
+    const neck0 = sp[12], tx = hp[0] + reach - ground[12][0] - dr * 0.05 + (drive.posture?.hx ?? 0) - rise * 0.04, ty = (hp[1] + (drive.posture?.hy ?? 0) * (1 - sl) + rise * 0.12) * (1 - drive.crouch * 0.5) * (1 - dr * 0.6); // (asleep, its head laid down by its coils)
     for (let k = 1; k <= 4; k++) {
       const t = k / 5, d = pickDisc(discs, (neck0[3] + (0.07 - neck0[3]) * t) * m.s);
       if (!d) continue;
