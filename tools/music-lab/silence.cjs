@@ -40,7 +40,7 @@ server.listen(0, "127.0.0.1", async () => {
   await page.evaluate(() => { const a = window.witch.audio; a.music.wobble.connect(a.music.master); a.sfx?.k.out.connect(a.sfx.k.final); });
   await page.waitForTimeout(2500);
   const after = await page.evaluate(() => { const m = window.witch.audio.meter, runs = JSON.parse(localStorage.getItem("witch.playtest") || "[]"); return { silences: m.silences, db: m.reading.db, logged: runs.length ? runs[runs.length - 1].silences || [] : [] }; });
-  const mic = MIC ? await page.evaluate(() => window.witch.audio.meter.line().split("\n")[1] || "") : "";
+  const mic = MIC ? await page.evaluate(() => window.witch.audio.meter.line().split("\n").find(l => l.startsWith("mic")) || "") : "";
   const ep = after.logged[after.logged.length - 1];
   const checks = [
     [heard !== null, `the meter hears the music (${heard} dBFS)`],

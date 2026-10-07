@@ -5530,6 +5530,14 @@
           "type": "number",
           "minimum": 0
         },
+        "latency": {
+          "type": "string",
+          "enum": [
+            "interactive",
+            "balanced",
+            "playback"
+          ]
+        },
         "dropLayers": {
           "type": "number",
           "minimum": 0
@@ -5660,6 +5668,7 @@
       "required": [
         "on",
         "volume",
+        "latency",
         "dropLayers",
         "nearDist",
         "farDist",

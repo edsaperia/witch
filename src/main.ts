@@ -283,10 +283,16 @@ const nearestStall = (pageS: number): { off: number; ms: number } | undefined =>
 meter.onSilence = e => {
   const w = game.witch, ago = performance.now() / 1000 - e.start;
   const r2 = (x: number) => Math.round(x * 100) / 100, { lastMix, music, audio } = sound;
-  playtest.silence({ t: Math.round((game.clock.time - ago) * 10) / 10, dur: Math.round(e.dur * 100) / 100, x: Math.round(w.x), z: Math.round(w.z), area: areaUnderWitch(game), mode: w.mode, mix: r2(lastMix?.volume ?? 0), gain: music ? r2((music.output as GainNode).gain.value) : 0, state: audio?.state ?? "none", clock: meter.reading.clock, back: e.db, stall: nearestStall(e.start) });
+  playtest.silence({ cause: meter.reading.clock >= 0.9 ? "game" : "clock", t: Math.round((game.clock.time - ago) * 10) / 10, dur: Math.round(e.dur * 100) / 100, x: Math.round(w.x), z: Math.round(w.z), area: areaUnderWitch(game), mode: w.mode, mix: r2(lastMix?.volume ?? 0), gain: music ? r2((music.output as GainNode).gain.value) : 0, state: audio?.state ?? "none", clock: meter.reading.clock, back: e.db, stall: nearestStall(e.start) });
   console.warn(`audio: the output silent for ${e.dur.toFixed(2)} s while the music should be heard`);
 };
+// each playtest sample's audio carries the clock's account too: under-runs, coarse clock steps or a true clock
+{
+  const own = playtest.audioState, cw = meter.clockWatch;
+  playtest.audioState = () => ({ ...(own?.() ?? { state: "none", volume: 0, distort: 0, distance: 0, mends: 0 }), clock: { slow: cw.slow, fast: cw.fast, drift: cw.drift, played: cw.outDrift, underruns: cw.underruns, underrunMs: cw.underrunMs, verdict: cw.verdict() } });
+}
 const micWanted = params.get("micCheck") === "1";
+let lastShedS = -1; // (the sound's safety valve, checked once a second: platform/audio/shed.ts)
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
@@ -333,6 +339,8 @@ function frame(now: number): void {
   if (sound.audio) {
     meter.tap(sound.audio, [sound.music?.output, sound.music?.circleOutput, sound.sfx?.output]);
     meter.read(performance.now(), sound.musicExpected());
+    const shedS = Math.floor(performance.now() / 1000);
+    if (shedS !== lastShedS) { lastShedS = shedS; const cw = meter.clockWatch, why = sound.shedCheck(shedS, cw.underruns, cw.drift); if (why) { playtest.audio(why); console.warn(`audio: ${why}`); } }
     if (micWanted && !meter.mic && startEl.style.display === "none") meter.startMic(e => {
       const pageS = performance.now() / 1000;
       playtest.mic({ kind: e.kind, t: Math.round(game.clock.time * 10) / 10, dur: Math.round(e.dur * 100) / 100, outDb: e.outDb, micDb: e.micDb, lag: Math.round(e.lag * 1000), stall: nearestStall(pageS) });
@@ -363,7 +371,7 @@ function frame(now: number): void {
     return [
       ...frameStats.lines(),
       stallLog.line(),
-      meter.line(),
+      meter.line() + (sound.valve.level ? `  shed ${sound.valve.level}` : ""),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,
