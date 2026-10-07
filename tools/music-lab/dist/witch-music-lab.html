@@ -9479,7 +9479,7 @@ label.check input { accent-color: var(--accent); }
     synth(t, p, peak, freq, dur, ch) {
       const lite = this.shedLevel >= 2, all = p.waves ?? ["sawtooth"], waves = lite ? all.slice(0, 1) : all, U = lite ? 1 : Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
       const c = this.ctx, attack = Math.max(2e-3, p.attack ?? 5e-3), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
-      const end = t + Math.max(dur, attack), stop = end + release * (lite ? 2 : 4) + 0.02;
+      const end = t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02;
       const g = c.createGain();
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(peak / Math.sqrt(n), t + attack);
@@ -9490,6 +9490,7 @@ label.check input { accent-color: var(--accent); }
         const f = c.createBiquadFilter();
         f.type = p.filter;
         f.Q.value = p.q ?? 0.7;
+        kRate(f.frequency);
         const base = p.cutoff ?? 2e3, top = Math.min(18e3, base + (p.envAmt ?? 0) * peak / Math.max(1e-3, p.gain));
         f.frequency.setValueAtTime(top, t);
         if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
@@ -9538,7 +9539,7 @@ label.check input { accent-color: var(--accent); }
     voice(t, p, peak, freq, dur, step2, dest) {
       const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], vowel = VOWELS[vowels[Math.abs(step2 >> 2) % vowels.length]] ?? VOWELS.ah;
       const U = this.shedLevel >= 2 ? 1 : Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(5e-3, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
-      const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 2 : 4) + 0.02;
+      const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 1.5 : 2) + 0.02;
       const g = c.createGain(), lvl = peak / Math.sqrt(U);
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(lvl, t + attack);
@@ -9568,6 +9569,7 @@ label.check input { accent-color: var(--accent); }
         o.type = "sawtooth";
         o.frequency.value = freq;
         o.detune.value = (p.detune ?? 0) * x;
+        kRate(o.detune);
         vg.connect(o.detune);
         let out = o;
         if (p.width && U > 1) {
@@ -9629,6 +9631,12 @@ label.check input { accent-color: var(--accent); }
       return b;
     }
   };
+  function kRate(p) {
+    try {
+      p.automationRate = "k-rate";
+    } catch {
+    }
+  }
 
   // src/platform/audio/music.ts
   var smooth01 = (x) => {

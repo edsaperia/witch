@@ -111,7 +111,7 @@ export class Sound {
 
   /** Once a second, from the output meter's ClockWatch: sheds a step if the audio thread is falling behind (the reason, if
    *  it did, for the playtest log). */
-  shedCheck(t: number, underruns: number | null, drift: number): string | null { return this.valve.feed(t, underruns, drift); }
+  shedCheck(t: number, underruns: number | null, drift: number): string | null { return this.valve.feed(t, underruns, drift, this.music?.stats.resyncs ?? 0); }
 
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {

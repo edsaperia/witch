@@ -18,6 +18,11 @@ describe("the sound's safety valve (shed.ts)", () => {
     for (let t = 0; t < 8; t++) behind.feed(t, null, -60 * t);
     expect(behind.level).toBe(1);
   });
+  it("sheds when the music keeps re-anchoring (Ed's v2186 pattern: 279 resyncs in 320 s, no clock data)", () => {
+    const v = new ShedValve();
+    for (let t = 0; t < 8; t++) v.feed(t, null, 0, Math.floor(t * 279 / 320));
+    expect(v.level).toBe(1);
+  });
   it("stays put on a true clock, and ?audio=lite starts shed, ?audio=full never sheds", () => {
     const v = new ShedValve();
     for (let t = 0; t < 30; t++) v.feed(t, 5, -3);

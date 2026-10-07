@@ -381,7 +381,7 @@ export class MusicEngine {
   private synth(t: number, p: Patch, peak: number, freq: number, dur: number, ch: Channel): void {
     const lite = this.shedLevel >= 2, all = p.waves ?? ["sawtooth"], waves = lite ? all.slice(0, 1) : all, U = lite ? 1 : Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
     const c = this.ctx, attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
-    const end = t + Math.max(dur, attack), stop = end + release * (lite ? 2 : 4) + 0.02;
+    const end = t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02; // (its gain's fall has time constant release / 3: 2 releases is -52 dB, under everything)
     const g = c.createGain();
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(peak / Math.sqrt(n), t + attack);
@@ -389,7 +389,7 @@ export class MusicEngine {
     g.gain.setTargetAtTime(0, end, release / 3);
     const nodes: AudioNode[] = [];
     if (p.filter) {
-      const f = c.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q ?? 0.7;
+      const f = c.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q ?? 0.7; kRate(f.frequency);
       const base = p.cutoff ?? 2000, top = Math.min(18000, base + (p.envAmt ?? 0) * peak / Math.max(0.001, p.gain));
       f.frequency.setValueAtTime(top, t);
       if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
@@ -427,7 +427,7 @@ export class MusicEngine {
   private voice(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, dest: AudioNode): void {
     const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], vowel = VOWELS[vowels[Math.abs(step >> 2) % vowels.length]] ?? VOWELS.ah;
     const U = this.shedLevel >= 2 ? 1 : Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
-    const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 2 : 4) + 0.02;
+    const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 1.5 : 2) + 0.02;
     const g = c.createGain(), lvl = peak / Math.sqrt(U);
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + attack);
     if (end > t + attack) g.gain.setTargetAtTime(lvl * sustain, t + attack, decay / 3);
@@ -445,7 +445,7 @@ export class MusicEngine {
     vib.connect(vg); vib.start(t); vib.stop(stop);
     for (let u = 0; u < U; u++) {
       const o = c.createOscillator(), x = U > 1 ? (2 * u) / (U - 1) - 1 : 0;
-      o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = (p.detune ?? 0) * x;
+      o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = (p.detune ?? 0) * x; kRate(o.detune);
       vg.connect(o.detune);
       let out: AudioNode = o;
       if (p.width && U > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * x; o.connect(s); out = s; }
@@ -492,3 +492,8 @@ export class MusicEngine {
     return b;
   }
 }
+
+/** An AudioParam worked out once a 128-sample block rather than every sample (about 3 ms: nothing heard in a filter's sweep,
+ *  a pad's slow wobble or a vibrato): a filter whose frequency moves recomputes its coefficients every sample otherwise,
+ *  the music's biggest steady cost on the audio thread (Ed's under-runs, 2026-10-07). */
+function kRate(p: AudioParam): void { try { p.automationRate = "k-rate"; } catch { /* (an older browser: as it was) */ } }
