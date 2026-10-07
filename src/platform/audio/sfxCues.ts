@@ -64,6 +64,8 @@ export class SfxCues {
   /** The home speakers on, and the areas with a soundsystem, last frame (each new one powers up). */
   private speakersOn = -1;
   private stonesOn = new Set<number>();
+  /** The knockout (its ko.at) whose rewind has played. */
+  private cutOf: number | null = null;
   /** The last half-beat heard at her decks (decks). */
   private deckHalf = -1;
   private soundsystemsUp = new Set<string>();
@@ -242,9 +244,11 @@ export class SfxCues {
     if (this.primed) {
       const T = g.tuning.sfx.sadTrumpet, ev = g.koEvents, hat = ev.some(e => e.kind === "hatDropped");
       if (hat || (T.bare > 0 && ev.some(e => e.kind === "down"))) { this.sfx.sadTrumpet(hat); this.duck(T.duck, hat ? 3.6 : 2); }
-      // (Ed, 2026-10-07: the hat's scene turns into her decks with a rewind) a backwards scratch as she's whisked away,
-      // cutting the trumpet's last note off
-      if (ev.some(e => e.kind === "sparkleOut")) this.sfx.rewind();
+      // (Ed, 2026-10-07: the hat's scene turns into her decks with a rewind) a backwards scratch cutting the trumpet's last
+      // note off, on art builder 3's rewind frame: the teleport's midpoint, (teleportAt + inAt) / 2 on her clock (its
+      // knockout event "cut"), once a knockout
+      const ko = me.ko;
+      if (ko && this.cutOf !== ko.at && g.herTime >= (ko.teleportAt + ko.inAt) / 2) { this.cutOf = ko.at; this.sfx.rewind(); }
     }
     else if (this.primed && hp < this.hp && !down) { this.sfx.ouch(1 - Math.max(0, hp - 1) / Math.max(1, g.tuning.witchHealth.hits - 1)); this.duck(O.duck, O.duckTime); }
     this.hp = hp; this.down = down;

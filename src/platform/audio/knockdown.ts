@@ -6,7 +6,8 @@
 //               "hatDropped"); with no hat to drop, a shorter "wah-waaah" (sfx.sadTrumpet.bare; Ed: keep it).
 //   rewind      (Ed, 2026-10-07: the hat's scene turns into her decks, its brim a spinning record, a rewind smear, then her
 //               at the turntable mid-scratch, art builder 3's) a sharp backwards record scratch cutting the trumpet's last
-//               long note off, as she's whisked away (the knockout's "sparkleOut"), her scratching at the decks carrying on.
+//               long note off on art builder 3's rewind frame, the teleport's midpoint (the knockout's "cut"), her scratching
+//               at the decks carrying on.
 // Knobs: the tuning's sfx.sadTrumpet. Cued by sfxCues.ts (hurt).
 import type { SfxKit } from "./sfxKit";
 import { mtof } from "./dsp";
