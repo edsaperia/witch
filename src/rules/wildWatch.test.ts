@@ -86,7 +86,7 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
   }, 120_000);
 
   it("lets her walk out on foot before they make up their minds, and nobody follows (Ed: time to run away)", () => {
-    const { g, key, at } = overWild(), W = TUNING.wildWatch!;
+    const { g, key, at } = overWild();
     // the area's edge due east of her landing spot: she lands 4 m inside it, by its watchers
     let ex = at.x; while (cellKey(g.map.cellSafe(ex + 1, at.z).cell) === key && ex - at.x < 400) ex += 1;
     for (const c of here(g, key)) { c.x = ex - 4 - 1 - (c.id % 3) * 0.5; c.z = at.z + (c.id % 2 ? 1 : -1); c.tx = c.x; c.tz = c.z; } // (right by her: within any attack's reach of the edge)
