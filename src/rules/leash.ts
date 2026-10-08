@@ -24,7 +24,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle";
+export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** a relic's sigil put down on the ground, off any legend's clearing (id: the relic) */ "relicDropped" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number; /** a "cycled" event's: the sigil cycled was a relic's (id: the relic) */ relic?: boolean }
 
 export interface LeashState {
@@ -125,6 +125,10 @@ export interface LeashControls {
   rune?: (x: number, z: number, r: number) => Creature | null;
   /** Debug: invite the nearest invitable creature, however far. */
   inviteNearest?: boolean;
+  /** Put a relic's sigil down on the ground at (x, z) (the game's relics: rules/sigilButton.ts), when it's at the bottom of
+   *  her stack and the button isn't giving it to a legend (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you
+   *  put down when you press e"). */
+  dropRelic?: (id: number, x: number, z: number) => void;
   /** Whether she may talk this frame: always with auto-talk on (the default); with it off, only
    *  while Talk is held (Ed's playtest, 2026-10-04: auto-talk can be turned off). */
   talk?: boolean;
@@ -256,7 +260,17 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     } else if (rune) {
       // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
       inviteCreature(s, rune, rune.x, rune.z, time, "picked");
-    } else if (s.stack.length && stackBottom(s)?.kind === "creature") { // (a relic's at the bottom: it's only ever given to a sleeping legend, rules/legends.ts relicButton; away from one, the button leaves it be)
+    } else if (stackBottom(s)?.kind === "relic") {
+      // A relic's sigil at the bottom (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you put down when you press
+      // e"): by a sleeping legend the sigil button has given it already (rules/legends.ts relicButton); anywhere else it goes
+      // down on the ground where she stands, to pick up again like any sigil.
+      const id = stackBottom(s)!.id;
+      if (c.dropRelic) {
+        c.dropRelic(id, witch.x, witch.z);
+        dropRelic(s, id);
+        s.events.push({ kind: "relicDropped", id, x: witch.x, z: witch.z, at: time });
+      }
+    } else if (s.stack.length) {
       const id = s.stack[s.stack.length - 1];
       // A party legend's (the Easter egg): put down, it's let go where it stands, dancing (its rune at its feet), and she's free.
       if (byId(id).partyLegend) { s.stack.pop(); letPartyLegendGo(byId(id)); s.events.push({ kind: "placed", id, x: byId(id).x, z: byId(id).z, at: time }); }

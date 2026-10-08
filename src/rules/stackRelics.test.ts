@@ -1,7 +1,8 @@
 // A carried relic's sigil sits in her stack like the creatures' (Ed's playtest, 2026-10-08, via the coordinator: "The flask sigil
 // appears to the side of the leashed sigil stack instead of within it. Flasks should behave like other sigils in this regard; sit
 // in the stack, and cycle when it cycles"): picked up, at the bottom; cycled with the rest; the bottom sigil is the active one,
-// so the place button gives the flask to a sleeping legend only from the bottom, and puts a creature's down when that's there.
+// so the place button puts down whatever's at the bottom: the flask (given to a sleeping legend in its clearing, else on the
+// ground, to pick up again), or a creature's sigil.
 import { describe, expect, it } from "vitest";
 import type { Creature } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
@@ -98,21 +99,37 @@ describe("the flask in her stack, in play", () => {
     expect(g.leash.stack).toEqual(mine.map(c => c.id)); // (hers as they were)
   }, 60000);
 
-  it("cycles with the stack (Q), the cycled event naming it a relic; at the bottom away from any legend, E leaves it be", () => {
+  it("cycles with the stack (Q), the cycled event naming it a relic", () => {
     const { g, mine, relic } = setup();
     g.witch = { ...g.witch, x: g.witch.x + 400, z: g.witch.z }; // (well away from the legend)
     for (const c of mine) Object.assign(c, { x: g.witch.x + 2, z: g.witch.z, tx: g.witch.x + 2, tz: g.witch.z });
     expect(stackBottom(g.leash)?.kind).toBe("relic");
-    run(g, 0.2, { ...idle, place: true });
-    expect(g.leash.placed).toEqual([]);
-    expect(g.leash.relics).toEqual([relic]);
-    let ev = null as null | { id: number; relic?: boolean };
     stepGame(g, { ...idle, cycle: true }, STEP);
-    ev = g.leashEvents.find(e => e.kind === "cycled") ?? null;
-    expect(ev).toMatchObject({ id: relic, relic: true });
+    expect(g.leashEvents.find(e => e.kind === "cycled")).toMatchObject({ id: relic, relic: true });
     expect(stackOrder(g.leash)[0]).toEqual({ kind: "relic", id: relic });
     expect(stackBottom(g.leash)).toEqual({ kind: "creature", id: mine[1].id });
     run(g, 0.2, { ...idle, place: true });
     expect(g.leash.placed.map(p => p.id)).toEqual([mine[1].id]);
+  }, 60000);
+
+  // Ed's ruling (2026-10-08, via the coordinator): "if the flask is in the bottom slot, it's what you put down when you press e".
+  it("at the bottom away from any legend, E puts the flask down where she stands, and standing on it E picks it up again, at the bottom", () => {
+    const { g, mine, relic } = setup();
+    g.witch = { ...g.witch, x: g.witch.x + 400, z: g.witch.z };
+    for (const c of mine) Object.assign(c, { x: g.witch.x + 2, z: g.witch.z, tx: g.witch.x + 2, tz: g.witch.z });
+    const at = { x: g.witch.x, z: g.witch.z };
+    run(g, 0.2, { ...idle, place: true });
+    const r = g.relics[relic];
+    expect(g.leash.relics).toEqual([]);
+    expect(g.leash.placed).toEqual([]); // (no creature's sigil went down with it)
+    expect(g.leash.stack).toEqual(mine.map(c => c.id));
+    expect(r).toMatchObject({ state: "dropped", sx: at.x, sz: at.z });
+    // walk off and back: on it, E picks it up, onto the bottom of her stack
+    g.witch = { ...g.witch, x: at.x + 30 };
+    run(g, 0.2);
+    g.witch = { ...g.witch, x: at.x, z: at.z };
+    run(g, 0.2, { ...idle, place: true });
+    expect(r.state).toBe("carried");
+    expect(stackBottom(g.leash)).toEqual({ kind: "relic", id: relic });
   }, 60000);
 });
