@@ -6,7 +6,7 @@
 import type { ForestMap } from "./map";
 import type { PartyState } from "./party";
 import { waveCountdown } from "./party";
-import { leyChain } from "./leylines";
+import { leyChain, waveReached } from "./leylines";
 import { cellKey } from "./party";
 
 export type P2 = readonly [number, number];
@@ -91,13 +91,13 @@ export const TIP_PACE = 3;
  *  as the boot ends (Ed, 2026-10-07); then the `reveal`th (TIP_PACE) stone as the first wave lands, the k-th of those
  *  between (k - 1) / (reveal - 1) of the countdown after the boot; then on at `reveal` links a wave, the k-th stone along
  *  the route k × party.interval / reveal seconds after the boot. A stone its wave (or quest) has already reached counts as
- *  reached then, if sooner. */
+ *  reached then, if sooner; one cleared before its wave doesn't (waveReached). */
 export function leyReachTimes(p: PartyState, map: ForestMap): Map<string, number> | null {
   if (clockStart(p) === null) return null;
   const pace = map.tuning.leyLines.reveal ?? TIP_PACE, { stones } = leyChain(p, map), step = map.tuning.party.interval / pace, out = new Map<string, number>();
   const done = p.leyDone ?? new Map<string, number>();
   stones.forEach((s, k) => {
-    const key = cellKey(s.cell), a = p.areas.get(key), was = Math.min(a ? (key === cellKey(map.centreCell) ? -Infinity : a.at) : Infinity, done.get(key) ?? Infinity);
+    const key = cellKey(s.cell), at = key === cellKey(map.centreCell) ? -Infinity : waveReached(p, key) ?? Infinity, was = Math.min(at, done.get(key) ?? Infinity); // (cleared early: at its wave's pace, not its clear)
     const tip = k >= 1 && k <= pace && pace > 1 ? p.bootUntil + ((k - 1) / (pace - 1)) * map.tuning.party.interval : p.bootUntil + k * step;
     out.set(key, Math.min(tip, was));
   });
