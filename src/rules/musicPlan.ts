@@ -8,8 +8,11 @@
 // Hooks for later: knockedOut plays the knockout section (a breakdown under a filter); siege adds the
 // style's siege parts (rules/musicScore.ts); party, near a woken area that has joined the party,
 // its party parts. Numbers only: the platform plays them.
+import { djIntroEnd } from "./djSet";
 import { beatAt, type BeatClock } from "./beat";
 import type { Game } from "./game";
+import type { Creature } from "./creatures";
+import { circleReach } from "./legendCircle";
 import { arcStep, type BlockPlan, type MusicStyle } from "./musicScore";
 
 /** Everything the conductor needs, in bars of the beat clock (bar 0 at game time 0). */
@@ -25,9 +28,36 @@ export interface MusicCue {
   siege: number;
   /** How near a woken area that has joined the party is (0-1): its soundsystem on, its happy animals dancing. */
   party?: number;
+  /** How near an angry legend is (0-1): charging, or shooting from afar. */
+  legend?: number;
+  /** The home speakers' boot (Ed, 2026-10-06: "the music first starts when the first speaker appears,
+   *  sounding incomplete, and becomes gradually more complete until the last of the 12 appears"): the
+   *  bar each speaker turned on, of `speakers` in all. Absent: the music whole (previews, the lab). */
+  speakerBars?: number[];
+  speakers?: number;
+  /** The bar her needle-drop routine ends in (rules/djSet.ts djIntroEnd; Ed, 2026-10-07: the first music drops straight after
+   *  it, before any speaker): from the bar line after it the intro's first layer plays. */
+  dropBar?: number;
+  /** How many of the intro's layers drop then (music.dropLayers), the speakers adding theirs on top. */
+  dropLayers?: number;
+  /** In a sleeping legend's clearing on the ground (Ed, 2026-10-06): its species, the layer's level 0-1. */
+  circle?: { species: string; level: number };
   /** ?music= previews: always this section; or this wave's arc step whatever the wave. */
   forceSection?: string;
   forceWave?: number;
+}
+
+/** How much of the music has booted at bar `bar` (0 silent to 1 whole): the home speakers on, each
+ *  counted from the bar line after it turned (so its layer comes in on a bar, after its crackle); and the first layer
+ *  `dropLayers` more from the bar line after her needle-drop routine ends (`dropBar`). */
+export function bootLayers(cue: Pick<MusicCue, "speakerBars" | "speakers" | "dropBar" | "dropLayers">, bar: number): number {
+  if (!cue.speakerBars || !cue.speakers) return 1;
+  let on = 0;
+  for (const b of cue.speakerBars) if (Math.ceil(b - 1e-6) <= bar) on++;
+  // (the needle dropped and her routine done: `dropLayers` layers on the bar line after, before any speaker has turned, each
+  // speaker adding its own on top)
+  if (cue.dropBar !== undefined && Math.ceil(cue.dropBar - 1e-6) <= bar) on += cue.dropLayers ?? 1;
+  return Math.min(1, on / cue.speakers);
 }
 
 /** Bars gone by at game time `time` on the beat clock. */
@@ -38,15 +68,47 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
   const p = g.party, bar = (time: number) => barAt(g.beat, time);
   let waves = prev?.waves;
   if (!waves || waves.length !== p.wave) {
-    const times: number[] = [];
-    for (const a of p.areas.values()) if (a.wave > 0) times[a.wave - 1] = Math.min(times[a.wave - 1] ?? Infinity, a.at);
+    const times: number[] = p.waveAt ? p.waveAt.slice(0, p.wave) : []; // (each wave's own time: an area cleared before its wave has an earlier one)
+    if (!p.waveAt) for (const a of p.areas.values()) if (a.wave > 0) times[a.wave - 1] = Math.min(times[a.wave - 1] ?? Infinity, a.at);
     for (let i = 0; i < p.wave; i++) times[i] ??= i > 0 ? times[i - 1] : 0;
     waves = times.map(bar);
   }
   return {
     waves, nextAt: g.tuning.party.interval >= 1e9 ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
-    knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
+    knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), legend: legendNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
+    circle: circleCue(g, g.witch),
+    speakerBars: g.speakerBoot.filter((t): t is number => t !== null).map(bar).sort((a, b) => a - b), speakers: g.speakerBoot.length,
+    dropBar: ((end: number | null) => end === null ? undefined : bar(end))(djIntroEnd(g)), dropLayers: g.tuning.music.dropLayers ?? 1,
   };
+}
+
+/** The sleeping legend whose clearing `at` stands in, on the ground (Ed, 2026-10-06: "when you
+ *  go into a legend circle in ground mode"), or null: in the treetops, or outside every clearing.
+ *  A legend asleep or restless; its clearing the map's (`map.legendClearings`, the legend's circle)
+ *  where the map has them, else a circle of `music.circle.radius` metres round the legend. */
+export function legendCircleAt(g: Game, at: { x: number; z: number; mode?: string }): Creature | null {
+  if (at.mode !== "ground") return null;
+  const R = g.tuning.music.circle.radius, clearings = (g.map as { legendClearings?: readonly { x: number; z: number; r: number; legend: { x: number; z: number } }[] }).legendClearings;
+  const B = circleReach(clearings, R);
+  let best: Creature | null = null, bd = Infinity;
+  for (const c of g.creatures) {
+    if (!c.boss || c.gone || c.leashed || Math.abs(at.x - c.x) > B || Math.abs(at.z - c.z) > B || (c.legendState !== "asleep" && c.legendState !== "restless")) continue;
+    let cx = c.x, cz = c.z, r = R;
+    if (clearings) {
+      let ring: { x: number; z: number; r: number } | null = null, rd = Infinity;
+      for (const k of clearings) { const d = Math.hypot(k.legend.x - c.x, k.legend.z - c.z); if (d < rd) { rd = d; ring = k; } }
+      if (ring && rd <= ring.r) { cx = ring.x; cz = ring.z; r = ring.r; }
+    }
+    const d = Math.hypot(at.x - cx, at.z - cz);
+    if (d <= r && d < bd) { bd = d; best = c; }
+  }
+  return best;
+}
+
+/** The music's cue for a legend's clearing she stands in: its species, at the style's level. */
+export function circleCue(g: Game, at: { x: number; z: number; mode?: string }): MusicCue["circle"] {
+  const c = legendCircleAt(g, at);
+  return c ? { species: c.species, level: g.tuning.music.circle.level } : undefined;
 }
 
 /** How much a soundsystem under siege is heard from `at` (0-1): the nearest standing one with wild
@@ -67,6 +129,20 @@ export function siegeNear(g: Game, at: { x: number; z: number }): number {
   return best;
 }
 
+/** How near an angry legend is to `at` (0-1, the music's nearDist to farDist): one shooting from
+ *  afar, or charging (the legends' long charge). Adds the style's legend parts: the mood darkens. */
+export function legendNear(g: Game, at: { x: number; z: number }): number {
+  const M = g.tuning.music;
+  let best = 0;
+  for (const c of g.creatures) {
+    if (!c.boss || c.gone || c.leashed) continue;
+    if (c.legendState !== "angry" && !(c as { run?: unknown }).run) continue;
+    const d = Math.hypot(c.x - at.x, c.z - at.z), near = 1 - Math.min(1, Math.max(0, (d - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
+    if (near > best) best = near;
+  }
+  return best;
+}
+
 /** How much a woken area that has joined the party is heard from `at` (0-1): the nearest standing
  *  soundsystem (not home's: the track is home's) with happy animals dancing by it (its area's
  *  guards or happy legend, or party animals placed there), by how near it is (nearDist to farDist). */
@@ -78,7 +154,7 @@ export function partyNear(g: Game, at: { x: number; z: number }): number {
     if (key === "home" || h.hp <= 0 || S.ruined.has(key)) continue;
     const d = Math.hypot(h.x - at.x, h.z - at.z), near = 1 - Math.min(1, Math.max(0, (d - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
     if (near <= best) continue;
-    if (!happy) { happy = new Set(); for (const c of g.creatures) if ((c.guard || (c.boss && c.legendState === "happy")) && !c.gone && !c.leashed) happy.add(`${c.cell[0]},${c.cell[1]}`); } // (one pass, only when one's in earshot)
+    if (!happy) { happy = new Set(); for (const c of g.creatures) if (c.boss && c.legendState === "happy" && !c.gone && !c.leashed) happy.add(`${c.cell[0]},${c.cell[1]}`); } // (one pass, only when one's in earshot)
     if (happy.has(key) || g.leash.placed.some(p => Math.hypot(p.x - h.x, p.z - h.z) < h.radius + 30)) best = near;
   }
   return best;
@@ -123,9 +199,15 @@ export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockP
   }
   // the wave's own sections: its arrival, then its loop
   const k = Math.max(0, bar - blockAfter(arrival, B));
-  const arrive = step.arrive.reduce((n, [, b]) => n + b, 0), loop = step.loop.reduce((n, [, b]) => n + b, 0);
-  const hit = walk(step.arrive, k) ?? walk(step.loop, (k - arrive) % Math.max(1, loop))!;
-  return plan(hit.section, bar - hit.offset, hit.bars);
+  const arrive = step.arrive.reduce((n, [, b]) => n + b, 0);
+  const first = walk(step.arrive, k);
+  if (first) return plan(first.section, bar - first.offset, first.bars);
+  // then round the loop, a variant each pass (overnight, 2026-10-06: a long wave mustn't loop audibly)
+  const loops = [step.loop, ...(step.variants ?? [])], len = (l: [string, number][]) => Math.max(1, l.reduce((n, [, b]) => n + b, 0));
+  let j = k - arrive, pass = 0;
+  while (j >= len(loops[pass % loops.length])) { j -= len(loops[pass % loops.length]); pass++; }
+  const hit = walk(loops[pass % loops.length], j)!;
+  return { ...plan(hit.section, bar - hit.offset, hit.bars), pass };
 }
 
 /** Plans blocks once and keeps them, so a block never changes once it has started sounding. */

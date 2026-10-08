@@ -96,3 +96,19 @@ describe("the witch knocked back and staggered (Ed, 2026-10-05)", () => {
     expect(W.dash.until).toBe(-Infinity); // and no blink
   });
 });
+
+describe("a moment's grace after a hit (witchHealth.grace)", () => {
+  it("lets no second blow land within grace seconds of the last, and lands the next one after", async () => {
+    const { withTuning } = await import("./tuning");
+    const t = withTuning({ witchHealth: { ...TUNING.witchHealth, grace: 0.5 } });
+    const g = newGame(7, t), W = g.witches[0], H = t.witchHealth.hits;
+    g.witch = { ...g.witch, seated: false };
+    hitWitch(g, 0, 10, t); hitWitch(g, 0, 10, t); hitWitch(g, 0, 10.3, t); // (a pack's blows together: one counts)
+    expect(W.health.hp).toBe(H - 1);
+    hitWitch(g, 0, 10.6, t);
+    expect(W.health.hp).toBe(H - 2);
+    const off = newGame(7, withTuning({ witchHealth: { ...TUNING.witchHealth, grace: 0 } }));
+    hitWitch(off, 0, 10, off.tuning); hitWitch(off, 0, 10, off.tuning);
+    expect(off.witches[0].health.hp).toBe(H - 2); // (no grace: both land)
+  });
+});

@@ -12,13 +12,12 @@
 // A relic glints now and then (partyRelicGlint: a four-point star in 4 frames, bigger at the treetop zoom) at its `glint` anchor, so a
 // sharp-eyed explorer can spot one from the treetops. They share one sigil (`relic`: the flask's silhouette, in gold), drawn by
 // drawSigil, groundSigil and the stack like a creature's.
-import { M, Sprite, hsv2rgb } from "./core.js";
+import { M, Sprite, hsv2rgb, sinHash } from "./core.js";
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 import { SIGILS, SIGIL_NEON } from "./sigils.js";
 
-const prHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
-const prCell = (p, k, s = 0) => prHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
+const prCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 const prUnit = v => v3.mul(v, 1 / Math.hypot(...v));
 // where p lies along an axis from a in direction d (0 at a), and how far from it
 const prAlong = (p, a, d) => v3.dot(v3.sub(p, a), d);
@@ -27,11 +26,11 @@ const prOff = (p, a, d) => { const q = v3.sub(p, a), t = v3.dot(q, d); return v3
 // The dug earth it lies in: a low mound, darker clods round its rim, moss and a few grass tufts on it.
 function prMound(m, R, seed) {
   m.ell([0, -.05, 0], [R * 1.3, .45, R * 1.05], M.TRUNK, { group: 2, rough: .06, paint: p => { const n = prCell(p, 5, seed); return n < .22 ? M.MOSS : n > .86 ? M.STONE : prCell(p, 11, seed + 1) < .3 ? M.BARKD : undefined; } });
-  for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283 + prHash(seed, i), d = R * (1.05 + .3 * prHash(i, seed)); m.ell([Math.cos(a) * d, .08, Math.sin(a) * d * .85], [.22 + .15 * prHash(i, 3), .16, .2], prHash(i, 7) < .5 ? M.BARKD : M.TRUNK, { group: 3, rough: .03 }); }
-  for (let i = 0; i < 14; i++) { const a = prHash(seed + 9, i) * 6.283, d = R * (.9 + .5 * prHash(i, seed + 9)); m.ell([Math.cos(a) * d, .22, Math.sin(a) * d * .85], [.06, .16 + prHash(i, 5) * .14, .06], prHash(i, 2) < .4 ? M.LEAF2 : M.LEAF, { group: 4 }); }
+  for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283 + sinHash(seed, i), d = R * (1.05 + .3 * sinHash(i, seed)); m.ell([Math.cos(a) * d, .08, Math.sin(a) * d * .85], [.22 + .15 * sinHash(i, 3), .16, .2], sinHash(i, 7) < .5 ? M.BARKD : M.TRUNK, { group: 3, rough: .03 }); }
+  for (let i = 0; i < 14; i++) { const a = sinHash(seed + 9, i) * 6.283, d = R * (.9 + .5 * sinHash(i, seed + 9)); m.ell([Math.cos(a) * d, .22, Math.sin(a) * d * .85], [.06, .16 + sinHash(i, 5) * .14, .06], sinHash(i, 2) < .4 ? M.LEAF2 : M.LEAF, { group: 4 }); }
 }
 // motes rising from the neck: the liquid's glow escaping (GLOW), drifting up a little further each frame
-const prMotes = (m, from, n, r, seed, frame) => { for (let i = 0; i < n; i++) { const t = ((i + frame / 3) / n), up = .35 + t * 2.4, k = 1 - t * .6; m.ell(v3.add(from, [(prHash(seed, i) - .5) * .7 * t, up, (prHash(i, seed) - .5) * .3]), [r * k, r * k, r * k], M.GLOW, { group: 20 + i, extra: true }); } };
+const prMotes = (m, from, n, r, seed, frame) => { for (let i = 0; i < n; i++) { const t = ((i + frame / 3) / n), up = .35 + t * 2.4, k = 1 - t * .6; m.ell(v3.add(from, [(sinHash(seed, i) - .5) * .7 * t, up, (sinHash(i, seed) - .5) * .3]), [r * k, r * k, r * k], M.GLOW, { group: 20 + i, extra: true }); } };
 // The glass's paint, in the bottle's own frame (axis d from a): a highlight streak down its upper-left side; below the liquid's
 // level (a world height: the surface lies flat however the bottle tilts) the liquid, its surface a brighter band; above it, empty glass.
 const prGlass = (a, d, level, ball = null) => p => {

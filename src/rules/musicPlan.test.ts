@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { Conductor, barSeconds, partyNear, planBlock, type MusicCue } from "./musicPlan";
+import { Conductor, barSeconds, bootLayers, legendNear, musicCue, partyNear, planBlock, type MusicCue } from "./musicPlan";
 import { newGame } from "./game";
 import { TUNING } from "./tuning";
 import { checkStyle, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
@@ -174,16 +174,134 @@ describe("music score", () => {
 
 describe("a woken area joining the party (partyNear)", () => {
   it("is heard near a standing soundsystem with happy animals by it, not near home's, a ruined one or one with none", () => {
-    const g = newGame(123, TUNING), c = g.creatures.find(c => !c.boss && c.cell.join(",") !== g.map.centreCell.join(","))!, key = c.cell.join(",");
+    const g = newGame(123, TUNING), c = g.creatures.find(c => c.boss && c.cell.join(",") !== g.map.centreCell.join(","))!, key = c.cell.join(",");
     g.combat.sounds.set(key, { hp: 100, max: 100, x: c.x, z: c.z, radius: 8 });
     g.witch.x = c.x + 10; g.witch.z = c.z;
     expect(partyNear(g, g.witch)).toBe(0); // nobody dancing yet
-    c.guard = true;
+    c.legendState = "happy"; // (its legend at peace)
     expect(partyNear(g, g.witch)).toBe(1);
     g.witch.x = c.x + (TUNING.music.nearDist + TUNING.music.farDist) / 2;
     expect(partyNear(g, g.witch)).toBeGreaterThan(0.2);
     expect(partyNear(g, g.witch)).toBeLessThan(0.8);
     g.combat.ruined.add(key);
     expect(partyNear(g, g.witch)).toBe(0);
+  });
+});
+
+describe("variety over a long run (overnight, 2026-10-06: a 30-minute run shouldn't loop audibly)", () => {
+  // the notes of a block, as a fingerprint
+  const block = (p: BlockPlan) => Array.from({ length: 16 * p.bars }, (_, i) => notesAt(style, p, null, p.start * 16 + i, { seed: 7, siege: 0 }).map(e => `${i}:${e.part}:${e.midi}`).join(",")).join("|");
+
+  it("takes an arc step's variants in turn on later passes round its loop", () => {
+    const plans = run(2 * 60 / spBar + 300 / spBar, t => cueAt(t, 0, 1e6)); // the first wave's music held for many passes
+    const passes = new Set(plans.map(p => p.pass ?? 0)), sections = new Set(plans.map(p => p.section));
+    expect(passes.size).toBeGreaterThan(2);
+    for (const v of style.arc[0].variants ?? []) for (const [s] of v) expect(sections.has(s)).toBe(true);
+  });
+
+  it("never plays a pass's block note for note again on the next pass", () => {
+    for (const arc of [0, 3, 7]) {
+      const a = style.arc[arc], loops = [a.loop, ...(a.variants ?? [])];
+      for (let pass = 0; pass < 4; pass++) {
+        // the same section's first block on two passes in a row, wherever it falls in each
+        const [section, bars] = loops[pass % loops.length][0], next = loops[(pass + 1) % loops.length].find(([s]) => s === section);
+        if (!next) continue;
+        const p0: BlockPlan = { section, start: 0, bars, wave: arc, arc, pass }, p1: BlockPlan = { ...p0, pass: pass + 1 };
+        expect(block(p1), `${a.name} ${section} pass ${pass}`).not.toBe(block(p0));
+      }
+    }
+  });
+
+  it("turns a new phrase every 16 bars through the boot's long intro, and leaves a wave's short blocks be", () => {
+    const bars = 128, intro: BlockPlan = { section: style.intro, start: 0, bars, wave: 0, arc: 0 };
+    // the melodies (motif parts) of 16 bars from bar `from`
+    const melody = (p: BlockPlan, from: number) => Array.from({ length: 16 * 16 }, (_, i) => notesAt(style, p, null, (p.start + from) * 16 + i, { seed: 7, siege: 0 })
+      .filter(e => style.parts[e.part].role === "motif").map(e => `${i}:${e.part}:${e.midi}`)).flat();
+    // late in the boot, with the pluck in: each 16 bars' melody mostly new (it was almost all the same before)
+    for (let k = 4; k < bars / 16 - 1; k++) {
+      const was = new Set(melody(intro, k * 16)), now = melody(intro, (k + 1) * 16);
+      expect(now.length).toBeGreaterThan(0);
+      expect(now.filter(x => was.has(x)).length / now.length, `phrase ${k + 1}`).toBeLessThan(0.5);
+    }
+    const short: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 };
+    expect(melody(short, 16)).toEqual(melody({ ...short, start: 16, bars: 16 }, 0));
+  });
+
+  it("keeps the first pass as it was (pass 0 is the music before variants)", () => {
+    const p: BlockPlan = { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 };
+    expect(block({ ...p, pass: 0 })).toBe(block(p));
+  });
+});
+
+describe("an angry legend near (legendNear and the style's legend parts)", () => {
+  it("darkens the music near an angry or charging legend, by how near, and not near a sleeping or happy one", () => {
+    const g = newGame(123, TUNING), L = g.creatures.find(c => c.boss)!;
+    g.witch.x = L.x + 10; g.witch.z = L.z;
+    expect(legendNear(g, g.witch)).toBe(0); // asleep
+    L.legendState = "angry";
+    expect(legendNear(g, g.witch)).toBe(1);
+    g.witch.x = L.x + (TUNING.music.nearDist + TUNING.music.farDist) / 2;
+    expect(legendNear(g, g.witch)).toBeGreaterThan(0.2);
+    expect(legendNear(g, g.witch)).toBeLessThan(0.8);
+    L.legendState = "happy";
+    expect(legendNear(g, g.witch)).toBe(0);
+    const plan: BlockPlan = { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 };
+    const parts = (legend: number) => new Set(Array.from({ length: 32 }, (_, s) => notesAt(style, plan, null, s, { seed: 1, siege: 0, legend })).flat().map(e => e.part));
+    for (const p of Object.keys(style.legend ?? {})) { expect(parts(0).has(p)).toBe(false); expect(parts(1).has(p)).toBe(true); }
+  });
+});
+
+describe("the music building with the home speakers' boot (Ed, 2026-10-06)", () => {
+  const intro: BlockPlan = { section: style.intro, start: 0, bars: 64, wave: 0, arc: 0 };
+  /** The parts heard over 4 bars of the intro with `k` of 12 speakers booted. */
+  const heard = (k: number) => {
+    const parts = new Set<string>();
+    for (let s = 0; s < 64; s++) for (const e of notesAt(style, intro, null, 16 * 8 + s, { seed: 7, siege: 0, build: k / 12 })) parts.add(e.part);
+    return parts;
+  };
+
+  it("is silent before the first speaker, then adds a layer a speaker until the twelfth makes it whole", () => {
+    expect(heard(0).size).toBe(0);
+    let last = 0;
+    for (let k = 1; k <= 12; k++) {
+      const n = heard(k).size;
+      expect(n, `${k} speakers`).toBe(k);
+      expect(n).toBeGreaterThan(last);
+      last = n;
+    }
+    // the whole intro, as it plays with no boot to follow
+    const whole = new Set<string>();
+    for (let s = 0; s < 64; s++) for (const e of notesAt(style, intro, null, 16 * 60 + s, { seed: 7, siege: 0 })) whole.add(e.part);
+    expect([...heard(12)].sort()).toEqual([...whole].sort());
+  });
+
+  it("brings each speaker's layer in on the bar line after it turns, and is whole without a boot to follow", () => {
+    expect(bootLayers({}, 3)).toBe(1);
+    const cue = { speakerBars: [2.4, 3, 5.9], speakers: 12 };
+    expect(bootLayers(cue, 2)).toBe(0);
+    expect(bootLayers(cue, 3)).toBeCloseTo(2 / 12); // (2.4 from bar 3; 3 on its own bar line)
+    expect(bootLayers(cue, 5)).toBeCloseTo(2 / 12);
+    expect(bootLayers(cue, 6)).toBeCloseTo(3 / 12);
+  });
+
+  it("drops dropLayers of the intro on the bar line after her needle-drop routine, before any speaker (Ed, 2026-10-07)", () => {
+    const none = { speakerBars: [] as number[], speakers: 12, dropBar: 4.3, dropLayers: 3 };
+    expect(bootLayers(none, 4)).toBe(0);
+    expect(bootLayers(none, 5)).toBeCloseTo(3 / 12);
+    expect(bootLayers({ ...none, speakerBars: [6.2, 7] }, 7)).toBeCloseTo(5 / 12); // (each speaker adds its own on top)
+    expect(bootLayers({ ...none, speakerBars: Array(12).fill(1) }, 7)).toBe(1);
+    expect(bootLayers({ speakerBars: [], speakers: 12 }, 50)).toBe(0); // (no routine: silent till a speaker)
+  });
+
+  it("follows the game's speakers: none booted, silent; each the pulse reaches, a layer", () => {
+    const g = newGame(123, TUNING);
+    g.speakerBoot = g.speakerBoot.map(() => null);
+    const cue0 = musicCue(g);
+    expect(bootLayers(cue0, 100)).toBe(0);
+    g.speakerBoot[0] = 0; g.speakerBoot[1] = 0.5;
+    const cue2 = musicCue(g);
+    expect(bootLayers(cue2, 100)).toBeCloseTo(2 / g.speakerBoot.length);
+    g.speakerBoot = g.speakerBoot.map(() => 0);
+    expect(bootLayers(musicCue(g), 100)).toBe(1);
   });
 });

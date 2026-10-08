@@ -21,7 +21,7 @@ const used = new Set<number>();
 function place(g: Game, species: string, level: Level, x: number, z: number, party = false): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !used.has(k.id) && Math.hypot(k.x - x, k.z - z) > 300)!;
   used.add(c.id);
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0, fight: undefined });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0, fight: undefined });
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   if (party) { c.leashed = true; g.leash.stack.push(c.id); }
   g.byArea = null;

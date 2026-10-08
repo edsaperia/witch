@@ -1,25 +1,31 @@
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning, type Tuning } from "./tuning";
+// (she stands by the legends here: their own timers are under test, so the circle's slowed time (rules/slowTime.ts, its own tests) is off)
+const NO_SLOW = { ...TUNING, legendCircle: { slow: { ...TUNING.legendCircle!.slow, on: false } } };
 import { LEGEND_BUFFS } from "./buffs";
-import { LEGENDS, canopyOver, relicGlints } from "./legends";
+import { LEGENDS, anger, canopyOver, lull, relicGlints, stepLegendStates } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
+import { inLegendClearing } from "./map";
 import { stateOf } from "./creatureStates";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Legends, redesigned (Ed, 2026-10-05; issue #87).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, i === 0 ? first : idle, STEP); each?.(); } };
 /** The witch on the ground beside a sleeping legend (one with a buff), everything else round it gone but one of its kind. */
-function beside(kin = true): { g: Game; L: Creature; mate: Creature | null } {
-  const g = newGame(123, TUNING);
+function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: Creature | null } {
+  const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;
-  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species])!;
+  g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
+  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
   const site = g.map.siteOf(L.cell[0], L.cell[1]), d = Math.hypot(site.x - L.x, site.z - L.z) || 1;
   g.witch = { ...g.witch, seated: false, x: L.x + ((site.x - L.x) / d) * 4, z: L.z + ((site.z - L.z) / d) * 4, mode: "ground", lift: 0 };
   for (const c of g.creatures) if (!c.boss && cellKey(c.cell) === cellKey(L.cell)) c.gone = true;
   for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - L.x, c.z - L.z) < 120) c.gone = true;
+  for (const c of g.creatures) if (c.boss && c !== L && Math.hypot(c.x - L.x, c.z - L.z) < 700) c.gone = true; // (no neighbouring legend turning angry too, and charging in)
   let mate: Creature | null = null;
   if (kin) mate = put(g, L.species, 1, site.x, site.z, L.cell);
   g.byArea = null;
@@ -30,11 +36,12 @@ const used = new Set<number>();
 function put(g: Game, species: string, level: Level, x: number, z: number, cell = g.map.cellSafe(x, z).cell as [number, number]): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !used.has(k.id) && Math.hypot(k.x - x, k.z - z) > 300)!;
   used.add(c.id);
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0, asleep: undefined, napUntil: undefined, wakeUntil: undefined, watchUntil: undefined, dazed: undefined, dazedUntil: undefined, stunUntil: undefined, fleeUntil: undefined }); // (none of what it was doing: a nap, a watch)
   g.byArea = null;
   return c;
 }
-const withAngryAfter = <T,>(s: number, f: () => T): T => { const was = LEGENDS.angryAfter; LEGENDS.angryAfter = s; try { return f(); } finally { LEGENDS.angryAfter = was; } };
+/** angryAfter s, and the legends looking for their kind every half second (legends.check is 5 s since 2026-10-06), for quick tests. */
+const withAngryAfter = <T,>(s: number, f: () => T): T => { const was = [LEGENDS.angryAfter, LEGENDS.check]; LEGENDS.angryAfter = s; LEGENDS.check = 0.5; try { return f(); } finally { [LEGENDS.angryAfter, LEGENDS.check] = was; } };
 
 describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
   it("sleep on when their area's soundsystem comes (soundsystems no longer wake them)", () => {
@@ -91,6 +98,47 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
   }), 60000);
 
+  it("when angry with her out of reach, bombard the nearest standing soundsystem within bombard.range (Ed, 2026-10-06: \"Legend bombards, but prioritises you\")", () => withAngryAfter(0.5, () => {
+    const { g, L, mate } = beside();
+    mate!.gone = true;
+    run(g, 1.2);
+    expect(L.legendState).toBe("angry");
+    const B = TUNING.legends.bombard;
+    expect(B.on).toBe(true);
+    for (const k of [...g.combat.sounds.keys()]) g.combat.sounds.delete(k); // (only the one to bombard, and one past its range)
+    g.combat.sounds.set("near", { hp: 4000, max: 4000, x: L.x + 120, z: L.z, radius: 2 });
+    g.combat.sounds.set("far", { hp: 4000, max: 4000, x: L.x + B.range + 60, z: L.z, radius: 2 });
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (out of its reach: not on the ground)
+    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1);
+    const near = g.combat.sounds.get("near")!;
+    expect(near.hp).toBeLessThan(4000);
+    expect(4000 - near.hp).toBeGreaterThanOrEqual(B.damage * 0.99); // (a whole lob, or a beam's whole burn)
+    expect(g.combat.sounds.get("far")!.hp).toBe(4000);
+    // with her on the ground in reach, she comes first: the soundsystem is spared
+    const hp1 = near.hp;
+    g.witch = { ...g.witch, mode: "ground", lift: 0, x: L.x + 30, z: L.z };
+    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1);
+    expect(near.hp).toBe(hp1);
+  }), 60000);
+
+  it("with the stomp on, a legend turning angry stamps on its own area's standing soundsystem, after the stomp's longer restless time (Ed, 2026-10-06)", () => {
+    const { g, L, mate } = beside(true, { ...NO_SLOW, legends: { ...NO_SLOW.legends, stomp: { on: true, angryAfter: 3 } } });
+    const key = cellKey(L.cell), at = { x: L.x + 30, z: L.z };
+    g.party.areas.set(key, { cell: [L.cell[0], L.cell[1]], wave: 1, at: g.clock.time, soundsystem: at } as never);
+    g.combat.sounds.set(key, { hp: 4000, max: 4000, x: at.x, z: at.z, radius: 2 });
+    mate!.gone = true; // (none of its kind left: restless, at its next look, within legends.json check seconds)
+    let restlessAt = -1;
+    for (let i = 0; i < (LEGENDS.check + 1) * 60 && restlessAt < 0; i++) { stepGame(g, idle, STEP); if (L.legendState === "restless") restlessAt = g.clock.time; } // (up to its next look)
+    expect(restlessAt).toBeGreaterThan(0);
+    run(g, 2.5);
+    expect(L.legendState).toBe("restless"); // (the stomp's 3 s, not legends.json's)
+    run(g, 1);
+    expect(L.legendState).toBe("angry");
+    expect(g.combat.sounds.get(key)!.hp).toBe(0);
+    expect(g.party.areas.has(key)).toBe(false); // (ruined, as any fallen one)
+    expect(g.tally.stomps).toBe(1);
+  }, 60000);
+
   it("fire each volley at up to attack.targets of the nearest (balance builder's values: 10 a hit, every 15 s)", () => withAngryAfter(0.5, () => {
     const { g, L, mate } = beside();
     mate!.gone = true;
@@ -120,12 +168,11 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(L.fleeUntil).toBeUndefined();
   }), 60000);
 
-  it("lie relics about the map, far from home and apart; she picks one up with the sigil button and puts it down by a sleeping legend: happy, and its buff hers for good", () => {
+  it("lie relics about the map, one of each; she picks one up with the sigil button and puts it down by a sleeping legend: happy, and its buff hers for good", () => {
     const { g, L } = beside();
-    expect(g.relics.length).toBe(LEGENDS.relics.count);
-    for (const r of g.relics) expect(g.map.remoteness(r.cell[0], r.cell[1])).toBeGreaterThanOrEqual(LEGENDS.relics.minRemoteness);
-    const r = g.relics[0], back = { x: g.witch.x, z: g.witch.z };
-    g.witch = { ...g.witch, x: r.x + 1, z: r.z };
+    expect(g.relics.length).toBe(LEGENDS.relics.kinds.length); // (one of each; where: relics.test.ts)
+    const r = g.relics[1], back = { x: g.witch.x, z: g.witch.z };
+    g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil, south of it)
     run(g, 0.2, { ...idle, sigil: true });
     expect(r.state).toBe("carried");
     expect(g.leash.relics).toEqual([r.id]);
@@ -138,12 +185,62 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(g.buffs.active.map(b => b.id)).toContain(L.id);
   }, 60000);
 
+  // Ed (2026-10-06): "Quest sigils and relics need to be placed in the circle to have their effect."
+  it("take a relic only inside their clearing: put down outside it, nothing happens but a cue (the circle flashes)", () => {
+    const { g, L } = beside(), lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+    expect(lc).not.toBeNull();
+    const r = g.relics[0];
+    g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil)
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(g.leash.relics).toEqual([r.id]);
+    // just outside the ring, on its open (south) side
+    g.witch = { ...g.witch, x: lc.x, z: lc.z + lc.r + 3 };
+    let cued = false;
+    run(g, 0.2, { ...idle, sigil: true }, () => { cued ||= g.leashEvents.some(e => e.kind === "outsideCircle" && e.id === L.id); });
+    expect(L.legendState).not.toBe("happy");
+    expect(g.leash.relics).toEqual([r.id]);
+    expect(cued).toBe(true);
+    // inside it
+    g.witch = { ...g.witch, x: lc.x, z: lc.z + lc.r * 0.5 };
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(L.legendState).toBe("happy");
+    expect(r.state).toBe("used");
+  }, 60000);
+
+  it("take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue", () => {
+    for (const inside of [false, true]) {
+      const g = newGame(123, NO_SLOW);
+      g.clock.paused = false; g.party.paused = true;
+      const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
+      g.witches[0].health.hp = 1e6;
+      const lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+      // (the gift starts out of the circle: standing in it would finish the quest by itself, rules/sigilButton.ts questsFromStanding)
+      const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]];
+      Object.assign(gift, { x: lc.x + lc.r + 30, z: lc.z, tx: lc.x + lc.r + 30, tz: lc.z });
+      if (!inside) {
+        // a spot in its area, out of its circle
+        let spot: [number, number] | null = null;
+        for (let d = lc.r + 4; d < lc.r + 60 && !spot; d += 4) for (let k = 0; k < 16 && !spot; k++) { const a = (k / 16) * Math.PI * 2, x = lc.x + Math.cos(a) * d, z = lc.z + Math.sin(a) * d, c = g.map.cellSafe(x, z).cell; if (c[0] === L.cell[0] && c[1] === L.cell[1]) spot = [x, z]; }
+        expect(spot).not.toBeNull();
+        g.witch = { ...g.witch, x: spot![0], z: spot![1] };
+        expect(inLegendClearing(g.map, L.cell, g.witch.x, g.witch.z, L, LEGENDS.placeRadius)).toBe(false);
+      } else expect(inLegendClearing(g.map, L.cell, g.witch.x, g.witch.z, L, LEGENDS.placeRadius)).toBe(true);
+      let cued = false;
+      run(g, 0.1);
+      run(g, 0.2, { ...idle, sigil: true }, () => { cued ||= g.leashEvents.some(e => e.kind === "outsideCircle" && e.id === L.id); });
+      expect(L.quest!.done !== undefined).toBe(inside);
+      expect(cued).toBe(!inside);
+    }
+  }, 60000);
+
   it("when happy, shoot the enraged from afar; worn down by them, sleep again, her buff kept", () => {
     const { g, L } = beside();
     run(g, 0.2, { ...idle, happyNearest: true });
     expect(L.legendState).toBe("happy");
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
-    const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + 120, L.z); far.enraged = true; far.state = "enraged"; far.siege = "home";
+    // (120 m off toward the map's middle, wherever in its clearing the legend lies)
+    const dx = g.map.dancefloor.x - L.x, dz = g.map.dancefloor.z - L.z, dd = Math.hypot(dx, dz) || 1;
+    const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + (dx / dd) * 120, L.z + (dz / dd) * 120); far.enraged = true; far.state = "enraged"; far.siege = "home";
     let hitFar = false;
     run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { if (far.hp !== undefined) hitFar = true; });
     expect(hitFar).toBe(true);
@@ -156,12 +253,13 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(g.buffs.active.map(b => b.id)).toContain(L.id);
   }, 60000);
 
-  it("has the dream quest give her its buff (it sleeps on, the creature stays hers), and close once its area's soundsystem is on", () => {
-    const g = newGame(123, TUNING);
+  it("has the dream quest give her its buff (it sleeps on, the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {
+    const g = newGame(123, NO_SLOW);
     g.clock.paused = false; g.party.paused = true;
     const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
     g.witches[0].health.hp = 1e6;
-    const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]];
+    const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]], lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+    Object.assign(gift, { x: lc.x + lc.r + 30, z: lc.z, tx: lc.x + lc.r + 30, tz: lc.z }); // (out of the circle until its sigil goes down)
     run(g, 0.1);
     expect(L.questOpen).toBe(true);
     run(g, 0.2, { ...idle, sigil: true });
@@ -172,9 +270,12 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(gift.leashed).toBe(true); // hers, parked there
     expect(g.leash.placed.map(p => p.id)).toContain(gift.id);
     expect(g.buffs.active.map(b => b.id)).toContain(L.id);
-    // Another legend: once its area's soundsystem is on, its quest is closed.
+    // Another legend: its area's soundsystem on, its quest stays open while it sleeps; awake (angry), it's closed.
     const M = g.creatures.find(c => c.boss && c !== L && c.legendState === "asleep" && c.quest)!;
     g.party.areas.set(cellKey(M.cell), { cell: M.cell, wave: 1, at: g.clock.time, from: null, soundsystem: null });
+    run(g, 0.2);
+    expect(M.questOpen).toBe(true);
+    anger(M, g.clock.time);
     run(g, 0.2);
     expect(M.questOpen).toBe(false);
   }, 60000);
@@ -195,4 +296,157 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
       expect(relicGlints(g.forest, g.map, r, true)).toBe(false);
     }
   }, 60000);
+});
+
+describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", () => {
+  /** An angry boar legend, its target (one of her posse) charge.far metres east, things in its lane. */
+  function angryBoar(far = 90) {
+    const { g, L, mate } = beside();
+    L.species = "boar"; mate!.gone = true;
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (out of its sights, at first)
+    withAngryAfter(0.3, () => run(g, 0.8));
+    expect(L.legendState).toBe("angry");
+    const other = L.species === "wolf" ? "fox" : "wolf";
+    const target = put(g, other, 2, L.x + far, L.z); target.leashed = true; g.leash.placed.push({ id: target.id, x: target.x, z: target.z, at: 0 });
+    const inLane = [put(g, "beetle", 1, L.x + 30, L.z + 1), put(g, "otter", 2, L.x + 50, L.z - 1.5)];
+    for (const c of g.creatures) if (!c.boss && c !== target && !inLane.includes(c) && Math.hypot(c.x - L.x, c.z - L.z) < 250) c.gone = true; // (no other wild crowd in its lanes)
+    g.byArea = null;
+    // (wild ones: it charges only her and her posse, but tramples whatever's in its way)
+    return { g, L, target, inLane };
+  }
+  it("tramples everything in its lane once each (her, the wild alike), knocking them aside, through scenery", () => {
+    const { g, L, target, inLane } = angryBoar();
+    g.witch = { ...g.witch, mode: "ground", lift: 0, x: L.x + 60, z: L.z }; // (its target: nearer than her posse's wolf)
+    const pins = inLane.map(c => [c, c.x] as const);
+    const hits = new Map<number, number>(); let witchHits = 0, x0 = 0, z0 = 0, ran = false, done = false;
+    run(g, 30, idle, () => {
+      if (L.run?.phase === "home" && ran && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
+      for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
+      if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
+        if (e.kind === "hit" && e.id !== undefined && (e.id !== target.id || e.big)) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (its target: only the legend's own hits; the trampled wild may go for it after)
+        if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; }
+      }
+      if (L.run?.phase === "run") ran = true;
+      if (L.run?.phase === "windup") g.witch = { ...g.witch, x: L.x + 60, z: L.z }; // (she stands in its lane till it sets off)
+    });
+    expect(ran).toBe(true);
+    for (const c of inLane) expect(hits.get(c.id), c.species).toBe(1);
+    expect(hits.get(target.id) ?? 0).toBeLessThanOrEqual(1);
+    expect(witchHits).toBe(1);
+    expect(Math.hypot(g.witch.x - x0, g.witch.z - z0)).toBeGreaterThan(LEGENDS.charge.knockback * 0.3); // (thrown, away from it: aside or on along its lane, by where it caught her)
+  }, 120000);
+  it("curves toward its target, brakes in a wide arc past it, walks home, and charges again only once it's back", () => {
+    const { g, L, target } = angryBoar(70);
+    const lair = { x: L.x, z: L.z };
+    target.z += 12; target.anchorZ = target.z; // (a little off its first lane: it curves)
+    let windups = 0, maxAway = 0, bentBy = 0, a0: number | null = null, braking = false, home = false;
+    run(g, 60, idle, () => {
+      const r = L.run;
+      if (r?.phase === "windup") { if (g.clock.time - r.at < 1e-6) { windups++; expect(Math.hypot(L.x - L.lairX!, L.z - L.lairZ!)).toBeLessThan(3); } a0 = r.angle; }
+      if (r && a0 !== null && r.phase !== "windup") bentBy = Math.max(bentBy, Math.abs(Math.atan2(Math.sin(r.angle - a0), Math.cos(r.angle - a0))));
+      if (r?.phase === "brake") braking = true;
+      if (r?.phase === "home") home = true;
+      maxAway = Math.max(maxAway, Math.hypot(L.x - lair.x, L.z - lair.z));
+    });
+    expect(windups).toBeGreaterThanOrEqual(1);
+    expect(braking && home).toBe(true);
+    expect(maxAway).toBeGreaterThan(70); // (on past its target, braking)
+    expect(bentBy).toBeGreaterThan(0.1); // (it curved, then turned in its arc)
+    // Home again: in its own area, where it lay.
+    for (let i = 0; i < 60 / STEP && !(L.run === undefined || L.run.phase === "windup"); i++) stepGame(g, idle, STEP); // (its walk home takes as long as its charge ran it out: up to a minute)
+    expect(L.run === undefined || L.run.phase === "windup").toBe(true);
+    expect(Math.hypot(L.x - L.lairX!, L.z - L.lairZ!)).toBeLessThan(3);
+    expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
+  }, 120000);
+});
+
+describe("a wave on a legend's area (#87, found by the overnight playthrough)", () => {
+  it("enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging", () => {
+    const g = newGame(123, withTuning({ ...PEOPLED, legends: { ...TUNING.legends, share: 1 } })); // (a young in it, and a legend in the woken area: with legends.share 0.5 the first wave's may have none)
+    g.clock.paused = false;
+    const before = new Set(g.party.areas.keys());
+    run(g, 0.1, { ...idle, nextWave: true });
+    const woke = [...g.party.areas.keys()].filter(k => !before.has(k));
+    expect(woke.length).toBeGreaterThan(0);
+    let legends = 0, besiegers = 0;
+    for (const c of g.creatures) {
+      if (c.gone || !woke.includes(cellKey(c.cell))) continue;
+      if (c.boss) { legends++; expect(c.legendState).toBe("asleep"); expect(c.enraged).toBeFalsy(); expect(c.siege).toBeUndefined(); expect(stateOf(c)).not.toBe("enraged"); }
+      else if (c.siege) besiegers++;
+    }
+    expect(legends).toBeGreaterThan(0);
+    expect(besiegers).toBeGreaterThan(0);
+  });
+});
+
+
+describe("an awake legend with nothing in reach (balance, 2026-10-06)", () => {
+  it("looks again every attack.recheck seconds, not every step", async () => {
+    const { cheer } = await import("./legends");
+    const g = newGame(1000, TUNING);
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    const L = g.creatures.find(c => c.boss)!;
+    cheer(L, 0); // (happy: it shoots the enraged, and there are none)
+    run(g, LEGENDS.attack.interval);
+    const at = L.fight!.readyAt;
+    expect(at).toBeGreaterThan(g.clock.time); // (its next look is ahead of it, not this step)
+    expect(at - g.clock.time).toBeLessThanOrEqual(LEGENDS.attack.recheck + 1e-9);
+  }, 30000);
+});
+
+describe("legends going back to sleep (Ed, 2026-10-06)", () => {
+  it("look for their kind every legends.check seconds (5), each on its own beat, not all on one frame", () => {
+    expect(LEGENDS.check).toBe(5);
+    const g = newGame(123, NO_SLOW), ids = g.creatures.filter(c => c.boss).map(c => c.id).slice(0, 40);
+    for (const c of g.creatures) if (!c.boss) c.gone = true; // (none of anyone's kind anywhere: each turns restless on its first look)
+    const firstLook = new Map<number, number>();
+    for (let i = 1; i <= Math.round(6 / STEP); i++) {
+      const time = i * STEP;
+      stepLegendStates({ creatures: g.creatures, map: g.map, time, dt: STEP, partified: () => false, areaOf: c => cellKey(c.cell) }, ids);
+      for (const id of ids) if (!firstLook.has(id) && g.creatures[id].legendState === "restless") firstLook.set(id, time);
+    }
+    expect(firstLook.size).toBe(ids.length); // (every one looked within 5 s)
+    expect(Math.max(...firstLook.values())).toBeLessThanOrEqual(LEGENDS.check + STEP);
+    const perStep = new Map<number, number>();
+    for (const t of firstLook.values()) perStep.set(t, (perStep.get(t) ?? 0) + 1);
+    expect(Math.max(...perStep.values())).toBeLessThanOrEqual(3); // (spread over the 5 s, not 40 on one frame)
+  });
+  it("away from where they lay, walk home first and lie down where they spawned", () => {
+    const { g, L } = beside();
+    const home = { x: L.x, z: L.z };
+    expect([L.lairX, L.lairZ]).toEqual([home.x, home.z]); // (its spawn spot, kept from the start)
+    Object.assign(L, { legendState: "angry", x: home.x + 30, z: home.z + 10 }); // (out on a charge, say)
+    lull(L, g.clock.time);
+    expect(L.legendState).toBe("asleep");
+    expect(L.homing).toBe(true);
+    let last = Math.hypot(L.x - home.x, L.z - home.z), steps = 0;
+    while (L.homing && steps++ < 2000) {
+      run(g, STEP);
+      const d = Math.hypot(L.x - home.x, L.z - home.z);
+      expect(d).toBeLessThan(last + 1e-9); // (walking straight home, never lying down on the way)
+      last = d;
+    }
+    expect(L.homing).toBeFalsy();
+    expect([L.x, L.z]).toEqual([home.x, home.z]);
+    expect(L.legendState).toBe("asleep");
+    expect(steps * STEP).toBeGreaterThan(Math.hypot(30, 10) / LEGENDS.homeSpeed - 0.5); // (at homeSpeed m/s)
+  }, 60000);
+  it("calm when angry as soon as one of their kind is back in their area: asleep, restlessness 0, a buff once earned kept, and home first", () => withAngryAfter(0.5, () => {
+    const { g, L, mate } = beside();
+    const home = { x: L.x, z: L.z };
+    mate!.gone = true;
+    run(g, 1.5);
+    expect(L.legendState).toBe("angry");
+    L.buffed = true;
+    Object.assign(L, { x: home.x + 12, z: home.z - 6 });
+    mate!.gone = false; // one of its kind back
+    run(g, LEGENDS.check + 0.1);
+    expect(L.legendState).toBe("asleep");
+    expect(L.restlessness).toBe(0);
+    expect(L.buffed).toBe(true);
+    run(g, 6);
+    expect(L.homing).toBeFalsy();
+    expect([L.x, L.z]).toEqual([home.x, home.z]);
+    expect(L.legendState).toBe("asleep");
+  }), 60000);
 });

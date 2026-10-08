@@ -3,9 +3,10 @@
 // 3D (model3d.js) at the witch's own scale and about 6 to 12 m across or tall, turned towards the
 // viewer. Most are unlit; a few have one magical touch (fairy-stone runes, will-o'-wisps, glowworms,
 // a charcoal mound's embers). The flowering areas (meadow, heath, berry thicket) have none.
-import { M, Sprite, hsv2rgb } from "./core.js";
+import { M, Sprite, hsv2rgb, cropKeepBottom } from "./core.js";
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
+import { SET_PROP_GENOMES, genSetPiece } from "./props/sets.js";
 
 const spHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
 const spBark = p => { const n = spHash(Math.floor(p[0] * 14) + Math.floor(p[2] * 14) * 13, Math.floor(p[1] * 6)); return n < .14 ? M.BARKD : n > .88 ? M.BARKL : undefined; };
@@ -219,7 +220,8 @@ const spSETS = {
     m.box([0, .4, -.35], [.6, .04, .15], M.WOOD, { round: .02, group: 5 }); for (const x of [-.5, .5]) m.seg([x, 0, -.35], [x, .38, -.35], .03, .03, M.WOOD, { group: 5 }); // a bench
   },
 };
-// The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale).
+// The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale); a generated kind
+// (art/props/sets.js) may add a fourth item, its seed and any numbers to fix.
 export const NEW_SET_PIECES = {
   "moor": ["sleeping-giant", "the sleeping giant, a moss mound like a figure lying on its back", 1],
   "fern-forest": ["fern-grotto", "a ring of giant tree ferns round a stone basin", 1],
@@ -244,11 +246,6 @@ export const NEW_SET_PIECES = {
 };
 export const SET_PIECE_KINDS = Object.keys(spSETS);
 // A sprite cropped to its drawn pixels (it already stands on its bottom row), and where the crop began.
-function spCrop(sp) {
-  let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
-  const out = new Sprite(x1 - x0 + 1, sp.h - y0); for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) { const i = (y + y0) * sp.w + x + x0; if (sp.m[i]) out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
-  return { sp: out, x0, y0 };
-}
 
 export function setPieceColours(def, st) {
   const leaf = def.leaf, trunk = st.trunkHue ?? .07;
@@ -264,11 +261,14 @@ export function setPieceColours(def, st) {
   };
 }
 // One area's new set piece: { sp, colours, metres: { width, height } }, drawn at the witch's scale.
+// A kind from the set-piece generator (art/props/sets.js: punt, jetty, ring, heap) is built from its genome, seeded by the area
+// unless its entry's fourth item ({ seed, ...numbers }) says otherwise.
 export function setPiece3d(kind, def, st, ppm = 16) {
+  if (SET_PROP_GENOMES[kind]) { const [, , size = 1, o = {}] = NEW_SET_PIECES[def?.id] || []; return genSetPiece(kind, { seed: [...(def?.id ?? "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7), ...o }, def, st, size, ppm); }
   const m = new Model({ blend: .05 }); spSETS[kind](m);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // so every piece stands on the same ground line
   const size = (Object.values(NEW_SET_PIECES).find(([k]) => k === kind) || [, , 1])[2];
-  const r = render(m, { scale: witchPixelsPerUnit(st) * size }), { sp, x0, y0 } = spCrop(r.sp); // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
+  const r = render(m, { scale: witchPixelsPerUnit(st) * size * (st.setPieceScale || 1) }), { sp, x0, y0 } = cropKeepBottom(r.sp); // (st.setPieceScale: baked at the size the game draws it) // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
   const [ox, oy] = r.project([0, 0, 0]); // origin: where its middle on the ground lands, in the cropped sprite
   return { sp, colours: setPieceColours(def, st), origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }

@@ -6,6 +6,8 @@ import { spawnCreatures } from "./creatures";
 import { AREA_TYPES, generateMap } from "./map";
 import { levelValue } from "./power";
 import { TUNING, withTuning } from "./tuning";
+import { routeOf } from "./party";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Species strength, a number (Ed, 2026-10-05: "just a number that goes up and down"), and berry
 // costs tied to it. No species has one yet, so these tests give one for a moment (and put it back).
@@ -45,33 +47,35 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
   });
 
   it("spawns a weak species' areas three times as many, worth about the same", () => {
-    const map = generateMap(123, TUNING), cell = (cx: number, cy: number) => `${cx},${cy}`;
-    const plain = spawnCreatures(map), [hx, hy] = map.centreCell;
-    const [cx, cy] = hx > 2 ? [hx - 2, hy] : [hx + 2, hy], species = AREA_TYPES[map.typeOf(cx, cy)].creature;
-    const before = plain.filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss);
+    const map = generateMap(123, PEOPLED), cell = (cx: number, cy: number) => `${cx},${cy}`;
+    // (the route's last area: its threat big enough that one creature's rounding doesn't swamp the comparison)
+    const plain = spawnCreatures(map), order = routeOf(map).order, [cx, cy] = order[order.length - 1].split(",").map(Number), species = AREA_TYPES[map.typeOf(cx, cy)].creature;
+    const before = plain.filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle); // (not its legend's clearing's baby: one, whatever its strength)
     const value = (l: typeof before) => l.reduce((a, c) => a + levelValue(c.level, COMBAT, c.species), 0), was = value(before);
     giving(species, 1 / 3);
-    const after = spawnCreatures(map).filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss);
-    expect(after.length).toBe(before.length * 3);
-    expect(value(after)).toBeCloseTo(was, 0);
+    const after = spawnCreatures(map).filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle);
+    // (Its young and adults about three times over, its threat spent the same: rules/growth.ts routePopulation; its babies fixed.)
+    const fighters = (l: typeof before) => l.filter(c => c.level > 0).length;
+    expect(Math.abs(fighters(after) - fighters(before) * 3)).toBeLessThanOrEqual(2);
+    expect(value(after) / was).toBeGreaterThan(0.85); expect(value(after) / was).toBeLessThan(1.2);
   }, 30000);
 });
 
 describe("berries to evolve, tied to strength (Ed, 2026-10-05: \"tie the cost to strength\")", () => {
-  it("costs 2 and 2 for a species of normal strength (the same 4 baby to adult), nothing past adult", () => {
-    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([2, 2, Infinity]);
-    expect(toEvolve(1, TUNING, "wolf")).toBe(2);
+  it("costs 3 and 8 for a species of normal strength (the level gap of 2026-10-07: an adult gains far more; 4 and 4 before, doubled by Ed 2026-10-06), nothing past adult", () => {
+    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([3, 8, Infinity]);
+    expect(toEvolve(1, TUNING, "wolf")).toBe(8);
   });
 
   it("buys the same fighting value a berry for every species (at least one berry)", () => {
     giving("bear", 2); giving("bat", 0.3);
-    expect(toEvolve(0, TUNING, "bear") + toEvolve(1, TUNING, "bear")).toBe(8); // twice the value, twice the berries
+    expect(toEvolve(0, TUNING, "bear") + toEvolve(1, TUNING, "bear")).toBe(22); // twice the value, twice the berries (3 + 8 = 11 for a normal one)
     expect(toEvolve(0, TUNING, "bat")).toBe(1);
-    expect(toEvolve(1, TUNING, "bat")).toBe(1);
+    expect(toEvolve(1, TUNING, "bat")).toBe(2);
   });
 
-  it("can count by power instead (cost.by \"power\", hp × dps): the old 1 and 3", () => {
+  it("can count by power instead (cost.by \"power\", hp × dps): 1 and 6 at the level gap (the old 1 and 3)", () => {
     const t = withTuning({ berries: { ...TUNING.berries, cost: { by: "power", per: 240 } } });
-    expect([toEvolve(0, t), toEvolve(1, t)]).toEqual([1, 3]);
+    expect([toEvolve(0, t), toEvolve(1, t)]).toEqual([1, 6]);
   });
 });

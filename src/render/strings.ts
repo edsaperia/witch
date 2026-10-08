@@ -9,6 +9,8 @@ import { stringsFor, type StringLine } from "../rules/strings";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { areaNeons } from "../rules/partyDressing";
+import { NEON } from "../../art/sigils.js";
 
 const BULB_VERT = /* glsl */ `
 attribute vec3 aColour;
@@ -47,6 +49,7 @@ varying vec2 vB;
 ${LIGHT_GLSL}
 void main() {
   if (vOn < 0.5 || sceneryFade(vWorld) < 0.5) discard; // scenery: gone past the scenery budget's edge
+  if (partyOff(vWorld) > fract(vB.x * 7.31 + vB.y * 0.37)) discard; // the party's over: bulb by bulb out as the front passes
   float b = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * (1.3 + vB.x) + vB.x * 40.0));
   if (fract((vB.y - uTime * uChase) / 60.0) < 0.06) b = 1.4;  // a chase running along now and then
   gl_FragColor = vec4(haze(vColour * b * 1.6, vWorld), 1.0); // bright enough to bloom
@@ -95,14 +98,17 @@ varying float vA;
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 void main() {
-  if (vA < 0.3) discard;
-  gl_FragColor = vec4(haze(uMoteColour * (0.6 + 0.6 * vA), vWorld), 1.0);
+  float po = partyOff(vWorld); // (the party's over: they fade as the front passes)
+  if (vA < 0.3 || po > 0.95) discard;
+  gl_FragColor = vec4(haze(uMoteColour * (0.6 + 0.6 * vA) * (1.0 - po), vWorld), 1.0);
 }`;
 
 interface Built { lines: StringLine[]; group: THREE.Group; on: number }
 
 export class StringLightsView {
   private built = new Map<string, Built>();
+  /** The next waves' areas whose forest is made ahead (update). */
+  private warmed = new Set<string>();
   private palette: THREE.Color[];
   private bulbMat: THREE.ShaderMaterial;
   private wireMat: THREE.ShaderMaterial;
@@ -119,7 +125,7 @@ export class StringLightsView {
 
   /** The lines of one area, and when each bulb switches on (as the party's front passes it). */
   private build(lines: StringLine[], on: (x: number, z: number) => number, centre: { x: number; z: number }, seed: number, cell: readonly [number, number]): THREE.Group {
-    const L = this.game.tuning.stringLights, h = L.height, bulbs: number[] = [], cols: number[] = [], data: number[] = [], wire: number[] = [], sway: number[] = [];
+    const L = this.game.tuning.stringLights, h = L.height, own = L.areaNeon ? new THREE.Color(`rgb(${(NEON as Record<string, number[]>)[areaNeons(this.game.map, cell as [number, number])[0]].join(",")})`) : null, bulbs: number[] = [], cols: number[] = [], data: number[] = [], wire: number[] = [], sway: number[] = [];
     lines.forEach((l, li) => {
       const len = Math.hypot(l.bx - l.ax, l.bz - l.az), n = Math.max(2, Math.round(len / L.bulbSpacing));
       const at = (t: number): [number, number, number] => [l.ax + (l.bx - l.ax) * t, h - L.sag * 4 * t * (1 - t) * (len / 8), l.az + (l.bz - l.az) * t];
@@ -128,7 +134,7 @@ export class StringLightsView {
         if (i < 16) { wire.push(...p0, ...p1); sway.push(li + i / 16, li + (i + 1) / 16); }
       }
       for (let i = 1; i < n; i++) {
-        const t = i / n, p = at(t), c = this.palette[(l.seed + i) % this.palette.length];
+        const t = i / n, p = at(t), c = own ? ((l.seed + i) % 3 === 2 ? own : this.palette[0]) : this.palette[(l.seed + i) % this.palette.length];
         bulbs.push(...p); cols.push(c.r, c.g, c.b);
         data.push(((l.seed * 13 + i * 7) % 100) / 100, li * 40 + i, on(p[0], p[2]) + i * 0.03, 4 * t * (1 - t));
       }
@@ -186,8 +192,18 @@ export class StringLightsView {
         this.built.set(k, b);
       }
     }
+    // The next wave's areas' forest made ahead, about a millisecond a frame while nothing's being built: their lines need
+    // its trees, and making them on the wave's own frame was most of a 65 ms stall there (the wave 4 hitch bench).
+    // (Each area once: asking again would undo the forest's note that the window round her is done.)
+    if (!builds) for (const c of g.party.next) {
+      const k = `${c[0]},${c[1]}`;
+      if (this.built.has(k) || this.warmed.has(k)) continue;
+      const s = g.map.siteOf(c[0], c[1]);
+      if (g.forest.prefetch(s.x, s.z, g.map.areaSize * 1.3, 1) > 0) break;
+      this.warmed.add(k);
+    }
   }
 
   /** Forget everything (a new game). */
-  clear(): void { for (const [, b] of this.built) this.scene.remove(b.group); this.built.clear(); }
+  clear(): void { for (const [, b] of this.built) this.scene.remove(b.group); this.built.clear(); this.warmed.clear(); }
 }

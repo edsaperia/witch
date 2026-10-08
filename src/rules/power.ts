@@ -1,6 +1,6 @@
 // Fighting value (DESIGN.md, Balance; Ed, 2026-10-04: "some kind of measure of how powerful we
 // think a player can get, and how quickly"). By Lanchester's square law a side's strength is the
-// sum over its fighters of √(hp × dps): a young is worth 15.5, an adult 29, a legend 76, a baby 0.
+// sum over its fighters of √(hp × dps): a young is worth 11.6, an adult 40, a legend 76, a baby 0 (the level gap of 2026-10-07; 15.5 and 29 before).
 // The side with more wins, with about √(big² − small²) left. Read by the debug overlay's power
 // meter, the playtest log and the balance simulator (tools/balance). No drawing here.
 import { COMBAT, strengthOf, type CombatData } from "./combat";

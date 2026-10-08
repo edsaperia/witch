@@ -6,11 +6,9 @@
 // with it), and survival by policy and skill.
 //   node tools/balance/waves.mjs [--seeds 3] [--gap 300] [--skills 0.1,0.25,0.5] [--policies defend,leash,relay,mass] [--cap 60 (waves at the starting gap: the runs stop at cap × gap seconds)] [--json out.json]
 //   node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' JSON into the tables)
-import { createServer } from "vite";
+import { openRules, arg, list, mean, median } from "./lib.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
-const list = s => String(s).split(",");
 const VARIANTS = {
   "no penalty (before)": { fallAdvance: 0 },
   "a fall: next wave 60 s sooner (Ed's pick)": { fallAdvance: 60 },
@@ -20,16 +18,13 @@ const VARIANTS = {
   "no penalty, sieges hurry ×3 at ¼": { fallAdvance: 0, hurryAt: 0.25, hurryFactor: 3 },
 };
 const BASE = "no penalty (before)";
-const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-const median = a => { if (!a.length) return NaN; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
 const say = s => console.log(s);
 
 let rows;
 if (arg("report")) rows = list(arg("report")).flatMap(f => JSON.parse(readFileSync(f, "utf8")));
 else {
   const SEEDS = +arg("seeds", 3), GAP = +arg("gap", 300), SKILLS = list(arg("skills", "0.1,0.25,0.5")).map(Number), POLICIES = list(arg("policies", "defend,leash,relay,mass")), CAP = +arg("cap", 60);
-  const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-  const load = p => server.ssrLoadModule(p);
+  const { load, close } = await openRules();
   const { generateMap } = await load("/src/rules/map.ts");
   const { TUNING } = await load("/src/rules/tuning.ts");
   const { simulateStates } = await load("/src/rules/states.ts");
@@ -41,7 +36,7 @@ else {
     rows.push({ gap: GAP, cap: CAP, p, k, seed: m.seed, v, firstFall: r.firstFall, survived: r.survived, lostAt: r.lost?.time ?? null, pnrAt: pnr?.time ?? null, end: r.trace[r.trace.length - 1]?.time ?? 0 });
     process.stderr.write(`${p} ×${k} ${m.seed} ${v}: ${r.lost ? `lost w${r.lost.wave}` : "cap"}\n`);
   }
-  await server.close();
+  await close();
   if (arg("json")) { writeFileSync(arg("json"), JSON.stringify(rows)); process.exit(0); }
 }
 

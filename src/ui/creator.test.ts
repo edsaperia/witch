@@ -2,7 +2,8 @@
 // must land on a field of her genome, so a new axis the art builders add works without code here.
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
-import { fromPicker, slot, STEPS, toPicker, upgrade } from "./creator";
+import { applies, BOXES, boxOf, fromPicker, slot, STEPS, toPicker, upgrade } from "./creator";
+import { clear, newWalker, spotAt, type RoomFloor } from "./roomWalk";
 
 describe("the character creator", () => {
   it("maps every axis of the witch generator onto her genome", () => {
@@ -32,6 +33,27 @@ describe("the character creator", () => {
       expect((Art.witchGenomeProblems as (g: unknown) => string[])(g)).toEqual([]);
     }
   });
+  it("greys out only real sliders on real options, and none on her classic look but her missing cloak's length (Ed, 2026-10-06: every slider does something)", () => {
+    const A = Art.WITCH_AXES as unknown as Record<string, unknown[]>, I = Art.WITCH_INERT as unknown as Record<string, Record<string, string[]>>;
+    const field: Record<string, string> = { hat: "hatShape", broom: "broom", cloak: "cloak" };
+    for (const [axis, by] of Object.entries(I)) {
+      expect(typeof A[axis]?.[0], axis).toBe("number");
+      for (const [f, kinds] of Object.entries(by)) for (const k of kinds) expect(A[field[f]], `${axis}: ${f} ${k}`).toContain(k);
+    }
+    const look = (Art.genomeLook as (g: unknown) => { look: Record<string, unknown> })(upgrade({})).look;
+    for (const axis of Object.keys(A)) if (typeof A[axis][0] === "number") expect(applies(axis, look), axis).toBe(axis !== "cloakLength");
+    expect(applies("broomBend", { ...look, broom: "canoe" })).toBe(false);
+    expect(applies("broomThickness", { ...look, broom: "canoe" })).toBe(true);
+  });
+  it("keeps the broom's thickness in her save, and an old save's broom as thick as hers", () => {
+    const g = upgrade({ broom: { kind: "drone", length: 1.2, bend: 0, bristles: 1 } });
+    expect(g.broom.thickness).toBe(1);
+    g.broom.thickness = 1.8;
+    const back = upgrade(JSON.parse(JSON.stringify(g)));
+    expect(back.broom.thickness).toBe(1.8);
+    expect((Art.genomeLook as (g: unknown) => { look: Record<string, unknown> })(back).look.broomThickness).toBe(1.8);
+    expect((Art.witchGenomeProblems as (g: unknown) => string[])({ ...back, broom: { ...back.broom, thickness: 9 } })).toEqual(["broomThickness 9"]);
+  });
   it("picks colours in 256 steps that come back to the same steps", () => {
     for (let i = 0; i < STEPS; i += 17) for (const [sh, gr] of [[0, 0], [80, 0], [153, 0], [200, 0], [255, 0], [100, 128], [60, 255]]) {
       const c = fromPicker(i, sh, gr);
@@ -39,6 +61,36 @@ describe("the character creator", () => {
       const [h, s2, g2] = toPicker(c);
       expect(h).toBe(i);
       if (c[2] < .995) { expect(Math.abs(s2 - sh)).toBeLessThanOrEqual(1); expect(Math.abs(g2 - gr)).toBeLessThanOrEqual(1); }
+    }
+  });
+  it("draws her bedroom at every art pixel: every glow, the banner's letters, its anchors inside, the floor clear round her", () => {
+    const M = Art.M as Record<string, number>;
+    for (const pixel of [3, 4, 5]) {
+      const sp = (Art.bedroomSprite as unknown as (st: object) => { w: number; h: number; m: Uint8Array; anchors: Record<string, unknown> })({ pixel }), a = sp.anchors;
+      for (const mat of ["RUNE", "GLINT", "WOKEN", "GLOW", "MAGIC", "MAGIC2", "COLLAR"]) expect(sp.m.includes(M[mat]), `${mat} at px ${pixel}`).toBe(true);
+      const inside = (p: unknown) => Array.isArray(p) && p[0] >= 0 && p[1] >= 0 && p[0] < sp.w && p[1] < sp.h;
+      for (const k of ["stand", "screen", "lantern", "potions", "decks"]) expect(inside(a[k]), k).toBe(true);
+      expect((a.runes as unknown[]).length).toBeGreaterThanOrEqual(2);
+      expect((a.letters as [string][]).map(l => l[0]).join("")).toBe("PARTYTONIGHT");
+    }
+  });
+  it("puts every item of hers in its own box: every axis, accessory and colour part in exactly one, each box's parts its own", () => {
+    const ids = BOXES.map(b => b.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const axis of Object.keys(Art.WITCH_AXES)) expect(ids, axis).toContain(boxOf("axes", axis));
+    for (const kind of ["axes", "wear", "parts"] as const) { const all = BOXES.flatMap(b => b[kind]); expect(new Set(all).size, kind).toBe(all.length); }
+    for (const id of ["hat", "hair", "outfit", "shoes", "broom", "scarf", "bag", "backpack"]) expect(ids).toContain(id);
+    expect(boxOf("parts", "plume")).toBe("hat");
+    expect(boxOf("axes", "someNewAxis")).toBe(BOXES[BOXES.length - 1].id); // (a new one shows up in the last box)
+  });
+  it("has a place in her room by each of her things she can walk up to, its box a real one", () => {
+    const f = (Art.bedroomSprite as unknown as (st: object) => { walk: RoomFloor })({ pixel: 4 }).walk, ids = BOXES.map(b => b.id);
+    expect(Object.keys(f.spots ?? {}).length).toBeGreaterThanOrEqual(6);
+    for (const [id, [x, z]] of Object.entries(f.spots!)) {
+      expect(ids, id).toContain(id);
+      expect(clear(f, x, z), `${id}: she can stand there`).toBe(true);
+      const w = newWalker(f); w.x = x; w.z = z;
+      expect(spotAt(f, w)).toBe(id);
     }
   });
 });

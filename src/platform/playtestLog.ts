@@ -5,6 +5,13 @@
 // does opening the game with ?playtest=download. Browser-side, outside the rules.
 import { powerReport } from "../rules/power";
 import type { Game } from "../rules/game";
+import type { Stall } from "./stallLog";
+
+/** A measured silence (outputMeter.ts): game time, how long (s), where she was, the mix's intended volume and the master's
+ *  gain, the context's state and clock, the level it came back at (dBFS), and the nearest stall (its page time's distance, s, and its length, ms). */
+export interface OutputSilence { t: number; dur: number; x: number; z: number; area: string; mode: string; mix: number; gain: number; state: string; clock: number; back: number; stall?: { off: number; ms: number }; /** Why, as far as the clock can tell (outputMeter.ts ClockWatch): "game" (the clock ran true: the game stopped sending), or "clock" (the audio clock was slow then: the device or the browser under-ran). */ cause?: "game" | "clock" }
+/** A mic check episode: its kind, game time, length (s), the output and mic levels (dBFS), the lag (ms), the nearest stall. */
+export interface MicLogged { kind: string; t: number; dur: number; outDb: number; micDb: number; lag: number; stall?: { off: number; ms: number } }
 
 export interface PlaytestSample {
   /** Game time (s), the wave, and the soundsystems standing (home included). */
@@ -23,9 +30,11 @@ export interface PlaytestSample {
   marching: number;
   /** The witch's hits left. */
   hits: number;
+  /** The sound (round 13: the music stopping): the context's state, the music's volume now, the damage heard, metres to the music. */
+  audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[] }
+export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -36,7 +45,9 @@ function readRuns(): PlaytestRun[] {
 
 export class PlaytestLog {
   private run: PlaytestRun;
-  private next = EVERY; // (nothing before the first 10 s: a page opened and never played keeps no run)
+  private next = EVERY;
+  /** The sound as it is now, for each sample (main.ts sets it). */
+  audioState?: () => PlaytestSample["audio"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
   constructor(private game: Game, build: string) {
     this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.party.interval, samples: [] };
   }
@@ -53,10 +64,14 @@ export class PlaytestLog {
       berries: g.tally.berries, invites: g.tally.invites, evolved: g.tally.evolved,
       sieges: p.sieges.map(s => ({ key: s.key, value: round(s.value), count: s.count, hp: Math.round(s.hp) })), marching: round(p.marching),
       hits: g.witches[0].health.hp,
+      audio: this.audioState?.(),
     });
     this.save();
   }
+  /** The stall log's stalls, kept with the run (main.ts sets it). */
+  stalls: (() => Stall[]) | null = null;
   private save(): void {
+    if (this.stalls) this.run.stalls = this.stalls().slice();
     try {
       const runs = readRuns().filter(r => r.started !== this.run.started);
       runs.push(this.run);
@@ -71,6 +86,24 @@ export class PlaytestLog {
   /** Area size, treetop speed or the map's size set (the link, or the debug overlay's slider): noted, with the game time. */
   world(areaSize: number, treetopSpeed: number, mapAreas: number): void {
     (this.run.world ??= []).push({ t: Math.round(this.game.clock.time * 10) / 10, areaSize, treetopSpeed, mapAreas });
+    this.save();
+  }
+  /** The audio watchdog mended something (a context resumed, the music or sound effects rebuilt): noted, with the game time. */
+  audio(what: string): void {
+    const a = (this.run.audio ??= []);
+    if (a.length < 200) a.push({ t: Math.round(this.game.clock.time * 10) / 10, what });
+    this.save();
+  }
+  /** A measured silence while the music should be heard (main.ts fills it in). */
+  silence(e: OutputSilence): void {
+    const a = (this.run.silences ??= []);
+    if (a.length < 300) a.push(e);
+    this.save();
+  }
+  /** A mic check episode. */
+  mic(e: MicLogged): void {
+    const a = (this.run.mic ??= []);
+    if (a.length < 300) a.push(e);
     this.save();
   }
   /** Every run kept on this browser (this one included), as a JSON file to save. */

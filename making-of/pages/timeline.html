@@ -1,0 +1,180 @@
+<p>Coven Rush didn't grow in a straight line. Some days a builder's one pull request changed how the whole game felt. Other times a feature took four goes before Ed was happy with it. This chapter follows the big turns in order: when the game changed shape, what it became, and why. Most of them came from one sentence of Ed's after a playtest.</p>
+
+<h2>Four days at a glance</h2>
+<ol class="timeline">
+  <li><time>2026-10-03</time> <b>A witch in a forest.</b> Ed's answers become <code>DESIGN.md</code> {#2}: "a creature collector" crossed with "tower defence / real-time strategy", and a witch throwing a rave in the forest. By early afternoon there is a fly-around prototype in Three.js {#4}: a square map of 20 × 20 areas, a ground mode and a treetop mode, all playable in the browser. Round two {#6} makes the party spread, a wave every 30 seconds, and Ed sets out the leash and the sigil stack. Sigils, the treehouse and fifteen UK trees arrive in the art {#7} {#13} {#22}. 22 pull requests.</li>
+  <li><time>2026-10-04</time> <b>The party gets rules.</b> Berries and evolving {#28}, legend buffs {#35}, the first combat {#44} {#50}, a generative music engine {#45}, the first ley lines through the runestones {#54}, and the sleeping legends: one in every area, lying in the earth like a boulder {#61} {#63}. Just before midnight, the first quest: a sleeping legend dreams of a creature you can bring it {#67}. 45 pull requests.</li>
+  <li><time>2026-10-05</time> <b>The game's own verbs.</b> Areas become fighting arenas on a 14 × 14 map {#76}. Talking gives way to throwing 💌s {#89}, and creatures get their four states: wild, happy, leashed and enraged {#96}. The legends are redesigned, and relics arrive {#93} {#99}. Home becomes a circle round the dancefloor {#107}. The character creator opens {#117} and moves into a messy bedroom {#143}. 85 pull requests.</li>
+  <li><time>2026-10-06</time> <b>The shape it has now.</b> The biggest day: 202 pull requests, and three more after midnight. Legend clearings {#235}, the whole ley route {#248}, the party spell {#276}, a circular island {#281}, picking up runes {#294}, the beach {#301}, slow time {#305}, the spiral {#314}, the spell scroll {#315} and the Party's Over {#323}. Just after midnight, a knocked-down witch now comes back behind her decks {#362}.</li>
+</ol>
+
+<h2>From a square to an island</h2>
+<p>The first forest was a square grid of 20 × 20 areas {#4}, cut from the seed by the fractal partition ported from the Witch Art Lab, with the dancefloor in the middle. On the first afternoon Ed asked for bigger areas, then "twice as wide again" {#6}. On the morning of the 5th he played a fight and saw the trouble: each area "is effectively a fighting arena… not much room to fight". So round 9 {#76} rebuilt the map as 14 × 14 areas of 168 m rather than 20 × 20 of 112 m. That kept the world about the same size, 196 areas instead of 400, and gave every area 30 m of open ground round its centre and its soundsystem.</p>
+<p>Home came next. Ed wanted the whole circle from the dancefloor out past the treehouse to be home's own ground, "before generating the rest of the areas on the map" {#107}. The partition now cuts home first, as a circle, and pushes every other area's centre out beyond it.</p>
+<!--gallery group=home-area-->
+<p>The square itself went on the 6th.</p>
+<blockquote>The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge.<cite>Ed, 2026-10-06</cite></blockquote>
+<p>The circular map {#281} counts an area as playable when its centre lies within 7.9 areas of home. That gives 193 to 203 areas over seven seeds, about what the old 14 × 14 grid held. Round them is a buffer ring 1.25 areas deep: plain forest she can fly over, with no runestones, legends or creatures, which no wave ever wakes. Her flight edge is a soft circle 1,621 m from the dancefloor. <code>?shape=square</code> still brings back the old map exactly.</p>
+<p>Two hours later the circle got a coastline. Ed: "The island shouldn't be a totally perfect circle; make the coast slightly irregular." {#293} One shared function, <code>map.coast(angle)</code>, sums three low harmonics with seeded weights. It gives gentle bays and headlands within ±8% of round, and the playable areas, the buffer, her flight edge, dashes, knockback and creatures running off all use it.</p>
+<!--figure media/timeline/map-shape-map-shape-123.webp-->
+
+<div class="diagram"><svg viewBox="0 0 720 210" role="img" aria-label="A slice of the island from the dancefloor to the sea: playable areas out to about 1,410 metres, the buffer ring to the flight edge at 1,621 metres, the last 60 metres of it sand, then the sea">
+  <rect x="0" y="0" width="720" height="210" fill="#120f22"/>
+  <text x="20" y="28" fill="#e8e2f4" font-size="15">A slice of the island, from home to the sea (default knobs)</text>
+  <rect x="20" y="70" width="520" height="44" fill="#8fcf7a" opacity="0.35"/>
+  <rect x="540" y="70" width="80" height="44" fill="#8fcf7a" opacity="0.15"/>
+  <rect x="595" y="70" width="25" height="44" fill="#f2c46a" opacity="0.55"/>
+  <rect x="620" y="70" width="80" height="44" fill="#6fd6c8" opacity="0.35"/>
+  <circle cx="26" cy="92" r="6" fill="#d9789e"/>
+  <line x1="620" y1="56" x2="620" y2="130" stroke="#d9789e" stroke-width="2"/>
+  <line x1="540" y1="62" x2="540" y2="122" stroke="#3a2f5c" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="38" y="97" fill="#e8e2f4" font-size="13">dancefloor</text>
+  <text x="200" y="97" fill="#e8e2f4" font-size="13">playable areas (centres within 7.9 areas)</text>
+  <text x="548" y="97" fill="#e8e2f4" font-size="12">buffer</text>
+  <text x="632" y="97" fill="#e8e2f4" font-size="13">sea</text>
+  <text x="560" y="150" fill="#f2c46a" font-size="12">sand: last 60 m</text>
+  <text x="560" y="166" fill="#9a93b4" font-size="12">(6 to about 134 m)</text>
+  <text x="600" y="50" fill="#d9789e" font-size="12">flight edge, 1,621 m</text>
+  <text x="20" y="150" fill="#9a93b4" font-size="12">0 m</text>
+  <text x="20" y="190" fill="#9a93b4" font-size="12">The coast's radius wanders within ±8% of round with the angle; the sand's width has its own seeded noise.</text>
+  <text x="380" y="150" fill="#9a93b4" font-size="12">1.25-area ring, nothing placed for play</text>
+</svg></div>
+
+<h2>Inviting, leashing and the sigil stack</h2>
+<p>The leash was in the pitch from the first hour. On the first afternoon {#6} Ed set out how it works: every creature she wins over adds its sigil to a stack above her head, newest at the bottom; put one down and it becomes a glowing rune, leashing its creature to that spot; pick it up and it follows her again. Of the stack:</p>
+<blockquote>The sway follows how you move. Gentle when you are still, and it teeters behind you when you are moving fast.<cite>Ed, 2026-10-03</cite></blockquote>
+<p>Winning a creature over was talking at first.</p>
+<blockquote>You hold down the talk button (different to the place/pick-up sigil button) near a creature, and if it's in talking range both you and the creature get little speech bubbles.<cite>Ed, 2026-10-03</cite></blockquote>
+<p>Emoji took turns in the bubbles (🎉 🎈 💃 🥳 🍒 🍹…), and after the talk time the creature joined her. Ed set those times himself that evening: babies 3 s, young 6 s, adults 12 s.</p>
+<!--figure media/timeline/70-leash-talk.webp-->
+<p>On the morning of the 5th, Ed's issue #87 changed what talking was. A witch throws 💌s instead: aimed with the mouse, a left click throwing a burst {#89}. Every letter that lands fills a ring round the creature, and each is a syllable of her babble (Ed: "rapid fire sounds like talking: you are inviting"). The same issue split "invited" into states {#96}: a full ring makes a wild creature <b>happy</b>, defending its own area; only <b>leashed</b> creatures follow her and fight for her; a wave's soundsystem makes its area's wild creatures <b>enraged</b>. Nobody is ever killed: they are knocked down, or they run off home.</p>
+<p>For a day, getting from happy to leashed meant filling the ring a second time. On the 6th a builder proposed something better, and Ed answered "Great idea, do it!" {#294}. When the ring fills, the hearts burst, the creature's sigil pops out and settles as a dim rune at its feet, moving with it as it wanders. Walk over and press E to pick it up, and it is leashed at the bottom of her stack. Wild to leashed fell from about 20 s to 10 s for an adult.</p>
+
+<div class="diagram"><svg viewBox="0 0 720 300" role="img" aria-label="Creature states: wild becomes happy when the 💌 ring fills; happy becomes leashed when she picks up its rune; leashed sigils can be placed and picked up again; a wave's soundsystem enrages wild creatures">
+  <rect x="0" y="0" width="720" height="300" fill="#120f22"/>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9a93b4"/></marker></defs>
+  <rect x="20" y="110" width="120" height="56" rx="8" fill="#181330" stroke="#8fcf7a"/>
+  <text x="80" y="135" fill="#e8e2f4" font-size="15" text-anchor="middle">wild</text>
+  <text x="80" y="154" fill="#9a93b4" font-size="12" text-anchor="middle">as found</text>
+  <rect x="240" y="110" width="140" height="56" rx="8" fill="#181330" stroke="#d9789e"/>
+  <text x="310" y="135" fill="#e8e2f4" font-size="15" text-anchor="middle">happy</text>
+  <text x="310" y="154" fill="#9a93b4" font-size="12" text-anchor="middle">rune at its feet</text>
+  <rect x="480" y="110" width="140" height="56" rx="8" fill="#181330" stroke="#f2c46a"/>
+  <text x="550" y="135" fill="#e8e2f4" font-size="15" text-anchor="middle">leashed</text>
+  <text x="550" y="154" fill="#9a93b4" font-size="12" text-anchor="middle">sigil in her stack</text>
+  <rect x="480" y="226" width="140" height="56" rx="8" fill="#181330" stroke="#f2c46a" stroke-dasharray="4 3"/>
+  <text x="550" y="251" fill="#e8e2f4" font-size="15" text-anchor="middle">parked</text>
+  <text x="550" y="270" fill="#9a93b4" font-size="12" text-anchor="middle">sigil on the ground</text>
+  <rect x="20" y="226" width="120" height="56" rx="8" fill="#181330" stroke="#d9789e" stroke-dasharray="2 3"/>
+  <text x="80" y="251" fill="#e8e2f4" font-size="15" text-anchor="middle">enraged</text>
+  <text x="80" y="270" fill="#9a93b4" font-size="12" text-anchor="middle">besieges, blocks 💌s</text>
+  <rect x="20" y="20" width="120" height="50" rx="8" fill="#181330" stroke="#3a2f5c"/>
+  <text x="80" y="42" fill="#e8e2f4" font-size="14" text-anchor="middle">dazed</text>
+  <text x="80" y="60" fill="#9a93b4" font-size="12" text-anchor="middle">knocked down</text>
+  <line x1="140" y1="132" x2="238" y2="132" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="189" y="122" fill="#d9789e" font-size="12" text-anchor="middle">💌 ring full</text>
+  <line x1="380" y1="132" x2="478" y2="132" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="429" y="122" fill="#f2c46a" font-size="12" text-anchor="middle">E on its rune</text>
+  <line x1="535" y1="166" x2="535" y2="224" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="565" y1="224" x2="565" y2="168" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="528" y="200" fill="#9a93b4" font-size="12" text-anchor="end">E: place</text>
+  <text x="572" y="200" fill="#9a93b4" font-size="12">E: pick up</text>
+  <line x1="80" y1="166" x2="80" y2="224" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="88" y="200" fill="#9a93b4" font-size="12">a wave's soundsystem in its area</text>
+  <line x1="80" y1="110" x2="80" y2="72" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="140" y1="45" x2="270" y2="108" stroke="#9a93b4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="215" y="62" fill="#9a93b4" font-size="12">a 💌 fills it</text>
+  <text x="380" y="40" fill="#9a93b4" font-size="12">Never killed: knocked down, they run off home.</text>
+  <text x="380" y="58" fill="#9a93b4" font-size="12">Nobody fights its own kind, whatever its state.</text>
+</svg></div>
+
+<p>The same afternoon, the stack got weight. Rather than cap how many creatures she could lead, Ed made every sigil pull on her {#299}:</p>
+<blockquote>every sigil above your head pulls on you as well as attracting the animal … This stops you just growing a giant army and pulling it around with you everywhere steamrolling everything.<cite>Ed, 2026-10-06</cite></blockquote>
+<p>Each sigil pulls by how taut its leash is times its weight, with a small free allowance so early play feels the same. Then the sigils themselves were redrawn {#303}. Ed found them "too abstract", so all 32 became monoline icons, each one the animal itself, drawn by its two or three defining features: a wolf's sharp face, a badger's stripes, a snail's shell and stalks.</p>
+<!--gallery group=sigils-->
+
+<h2>Legends and their circles</h2>
+<p>Legends began as rare, late bosses and as the reward for feeding an adult until it evolved {#35}. On the night of the 4th Ed turned them into something stranger {#63}: every area got a <b>sleeping legend</b> of its own kind, half sunk in the earth and mossed over so it passed for a boulder, a log or a mound. Five batches of sleeping art covered all 30 species before dawn {#61} {#62} {#69} {#70} {#72}. Minutes before midnight came the first quest {#67}. Each sleeping legend dreams of a creature, shown as that creature's sigil in a thought bubble. Bring one, put its sigil down, and the legend's buff is yours.</p>
+<!--gallery group=first-quest-->
+<p>Issue #87 redesigned them on the 5th {#99}. A legend sleeps. It grows <b>restless</b> when its area has none of its own kind left, its dream turning to a nightmare, and after about a minute it wakes <b>angry</b> and attacks her from far off with slow lobbed bombs or a long beam. A <b>relic</b> put down beside it makes it <b>happy</b>: a powerful ally. The relics themselves are legend-sized party objects half-buried in the forest floor {#93}. Ed's brief was "colourful transparent bottles of different shapes", and there are six, their liquid glowing. The same day, a dream bubble learned to point toward the nearest runestone of the creature it wanted {#90}.</p>
+<!--figure media/timeline/nightmare-quest-closed.webp-->
+<p>On the 6th Ed wrote down what legends are for {#259}:</p>
+<blockquote>The idea of legends is that they provide a different layer of tasks to the tasks to the game, that are mostly optional. If you are quick and can do the quests you can get buffs from them; if you are lucky and find a relic they can be very powerful allies; and if you are losing, their babies get hurt during sieges and they get enraged (ideally this helps the loss spiral happen faster and more dramatically).<cite>Ed, 2026-10-06</cite></blockquote>
+<p>From then on a quest stayed open for as long as its legend slept. Legends were made rarer, in about half the areas ({#259}, <code>legends.share</code>). The relics were placed again: one of each kind, one just inside home's edge and the rest at least 150 m apart {#264}. Each now has its sigil lying 4 m south of it, picked up like any other {#279}.</p>
+<!--gallery group=relics-->
+<p>The same morning, legends got a place of their own.</p>
+<blockquote>Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight, with glowing motes rising in it. Quest sigils and relics need to be placed in the circle to have their effect.<cite>Ed, 2026-10-06</cite></blockquote>
+<p>It came in five numbered parts, with several builders working at once: the clearing itself, sized to its sleeper (a radius of 9 m for most, 22 m for the elk) and clear of every tree and path {#235}; the rule that quest sigils and relics count only inside it {#244}; a wild baby of the legend's own kind in every circle, so the legend starts with kin {#254}; a grove of the area's tallest trees blending back into the woods over 30 m {#263}; and a rim of small stones, toadstools and stumps {#286}. Alongside, the lighting builder added the twilight, the rising motes and the forest going dark when she steps in {#261}, and later came a carved, mossy flagstone floor {#306}.</p>
+<!--gallery group=legend-clearing-->
+<p>The circle also had to explain itself. Standing in one, a note appears beside it in Ed's words {#292}: "This is a slumbering elder." It says what to bring, what a relic would do, and that it is angered if none of its kind are near. By the evening it named the boon itself, and the dream bubble gave the way in words, such as "north-east, 420 m" {#348}. A neon outline and a soft glow now pick legends out in the dark {#334}.</p>
+<!--figure media/timeline/legend-panel-fox-boon.webp-->
+<!--figure media/timeline/legends-seen-asleep-before-after.webp-->
+<p>There was one joke too: a happy legend that takes a hundred 💌s becomes a party legend in a giant hat, whose leash pins her on the spot {#313}.</p>
+
+<h2>Slow time in a legend's circle</h2>
+<p>By the afternoon of the 6th, stepping into a circle already muffled the music under the legend's own layer {#255}, each of the 30 species with its own patterns in the music's key. Then Ed asked for time itself to slow down:</p>
+<blockquote>the music and countdown get ~10x slower, things still move on the outside but very slowly, the music audibly slows down (this is a good audio cue for the transition)<cite>Ed, 2026-10-06</cite></blockquote>
+<p>Three builders built it side by side against one shared field, <code>g.timeScale</code>. The rules builder split the game into two clocks {#305}. The world's clock (waves, the beat, creatures, sieges) runs at the time scale, which eases to 0.1 over half a second when she stands on the ground in a sleeping or restless legend's circle. Her own clock runs as ever. Enraged creatures stay out, and a 💌 that leaves the circle vanishes in a sparkle. The music builder put the engine on game time {#304}, so the bars and the wave's pulse stay in step through the slowdown. Its notes drop in pitch like a slowing tape, an octave down at a tenth, while the legend's layer plays on at full speed. The look builder greyed the world beyond the edge, slowed its wind and smoke, and set a violet shimmer round the rim {#307}.</p>
+<!--gallery group=slow-time-->
+
+<h2>The ley line: from a chain to a spiral</h2>
+<p>The ley lines arrived on the 4th {#54}: a glowing chain through the runestones in the order the waves wake them, from the last wave's stone on to the next few, wandering along the valleys. On the 5th Ed asked for six sections, three ahead and three behind {#137}. The first line now left the treehouse, which had just moved due north, and ran straight south across the dancefloor {#118}.</p>
+<!--figure media/timeline/70-ley-before-treetop.webp-->
+<p>On the 6th the line became the map of the whole run.</p>
+<blockquote>I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself, or try and minimise crossings.<cite>Ed, 2026-10-06</cite></blockquote>
+<p>The waves had been chosen one at a time by a noisy picker. Drawn whole, that order crossed itself 3,610 times a run on average. The new route picker {#248} plans one order per map at the start. It untangles the old order: wherever two links cross, the stones between them are reversed. Over 300 seeds, crossings fell to 0 on every map, and the whole route shrank from 227 km to 51 km. Ed followed up with "Long spirals are okay, but ideally it shouldn't be just spirals", so a variety pass {#284} mixed in petals round home, sweeps, lobes and combs. It also wrote down his first crossing rule: at most four, from waves at least 12 apart, none in the first 12.</p>
+<!--gallery group=ley-routes-->
+<p>In play, the variety went too far. The petals ran far from home too soon and stayed out too long. A builder drew a spiral mock-up and Ed answered: "This last example looks great!" {#314}. The spiral splits the stones into 5 to 7 rings by distance from home and walks each the same way round, zigzagging out and in, with a little lobe on about half the rings. Then it adds back 0 to 4 crossings at random, under a new rule tied to how the line is drawn. The line is revealed at three times the pulse's pace. So link <i>j</i> may cross an earlier link <i>i</i> only if <i>j</i> ≥ 3(<i>i</i> + 1) + 1, which means the later link only appears once the pulse has already gone past the earlier one. Crossings must also be at least 350 m apart. Over 200 seeds, the drift from a steady outward walk fell from 234 m to 80 m.</p>
+
+<div class="diagram"><svg viewBox="0 0 720 230" role="img" aria-label="The crossing rule: the line is drawn three times faster than the pulse, so a later link may only cross an earlier one if it appears after the pulse has passed it">
+  <rect x="0" y="0" width="720" height="230" fill="#120f22"/>
+  <text x="20" y="28" fill="#e8e2f4" font-size="15">Why link j may cross link i only when j ≥ 3(i + 1) + 1</text>
+  <line x1="60" y1="70" x2="680" y2="70" stroke="#3a2f5c" stroke-width="2"/>
+  <line x1="60" y1="150" x2="680" y2="150" stroke="#3a2f5c" stroke-width="2"/>
+  <text x="20" y="74" fill="#9a93b4" font-size="12">pulse</text>
+  <text x="20" y="154" fill="#9a93b4" font-size="12">line</text>
+  <rect x="60" y="62" width="120" height="16" fill="#d9789e" opacity="0.8"/>
+  <text x="120" y="98" fill="#d9789e" font-size="12" text-anchor="middle">on link i = 1 (wave 2)</text>
+  <line x1="180" y1="56" x2="180" y2="200" stroke="#d9789e" stroke-dasharray="3 3"/>
+  <text x="186" y="196" fill="#d9789e" font-size="12">pulse leaves link 1</text>
+  <rect x="60" y="142" width="120" height="16" fill="#f2c46a" opacity="0.8"/>
+  <text x="120" y="178" fill="#f2c46a" font-size="12" text-anchor="middle">links 0 to 5 drawn by then</text>
+  <rect x="180" y="142" width="40" height="16" fill="#6fd6c8" opacity="0.8"/>
+  <text x="236" y="132" fill="#6fd6c8" font-size="12">link 7 or later may cross link 1:</text>
+  <text x="236" y="116" fill="#6fd6c8" font-size="12">it appears after the pulse has passed</text>
+  <text x="60" y="222" fill="#9a93b4" font-size="12">The tip reaches a stone every interval / 3 seconds; the pulse crosses one link a wave. At most 4 crossings, 350 m apart.</text>
+</svg></div>
+
+<p>That evening the line's way out of home was fixed too. Ed: "The leyline shouldn't cross the dancefloor. After going around the speaker circle it should go off to the right and loop around to whatever direction it needs to go." {#329} The spiral now always turns clockwise on the screen, starting east of home where the line leaves. Meanwhile the line had come alive. A pulse travels along the current link as the wave counts down and arrives with the wave {#269}. The line grows out from the treehouse at three times the pulse's pace, and each runestone's column of light first rises when the line reaches it {#283}.</p>
+<!--figure media/timeline/ley-pulse-one-wave-ground.webp-->
+<!--gallery group=ley-uncross-ingame-->
+
+<h2>The beach</h2>
+<p>With the island round, Ed gave its edge an Easter egg:</p>
+<blockquote>Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze …<cite>Ed, 2026-10-06</cite></blockquote>
+<p>The beach {#301} is the last 60 m inside her flight's edge. Nothing grows or stands there, the paths stop short, and the hills ease down to the sea. It is drawn in the ground shader and costs nothing unless she is within 450 m. Fly on into the edge for a moment and she lands, lies down in the party's <code>stargaze</code> pose, and the camera bends to open up the sky. After a playtest the sea was made lighter and moonlit {#331}.</p>
+<!--figure media/timeline/beach-stargaze.webp-->
+<p>The first beach witches turned up in only about a third of runs, two or three together. Ed: "I think there should always be beach witches, but there are only a handful spread around it", and then "Beach witches appear solo." {#317} Now every run has 4 to 6 of them spaced round the coast, each alone. Land near one, keep still, and she comes over to chat, hold hands, hug and stargaze with you. Last came shape and finds {#337}. The sand got its own seeded width, from wide bays of about 130 m down to rocky stretches of 10 m. Ed asked for "shells, star fish, conch, footprints of people and creatures. No towels or deckchairs or human items, just nature", so there are shells, starfish, a conch, seaweed, and trails of footprints that wander along the sand and fade out.</p>
+<!--figure media/timeline/beach-witches.webp-->
+<!--gallery group=beach-shape-->
+
+<h2>The Party's Over</h2>
+<p>Until the evening of the 6th, losing the last soundsystem brought up a full-screen end. Ed wanted something gentler:</p>
+<blockquote>when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little 😴 speech bubbles, and you can walk the map safely.<cite>Ed, 2026-10-06</cite></blockquote>
+<p>Four builders made it at once, all reading one field, <code>g.partyOver</code>. The rules {#323}: the waves stop for good, nothing fights, she is healed and her leash lets go. Creatures in her sight stroll home and lie down; the rest are already home asleep. The look {#318}: a switch-off front leaves home and sweeps out over 12 s. The dancefloor goes dark tile by tile, the string lights bulb by bulb, and 😴 bubbles drift over the nearest sleepers. The sound {#320}: the music winds down like a record stopping, then each area plays its own night (owls and crickets in the woods, frogs in the wet, the sea far off at home) with snores from the sleepers nearby.</p>
+<p>That needed every creature to be able to sleep. Ed: "I guess we will need sleeping artwork for all the creatures" {#322}. So every species at every level got a sleeping pose in two breaths: lying, curled, tucked, coiled or flat. The same shared <code>asleep</code> flag lets wild creatures nap while she's away {#319}.</p>
+<!--figure media/timeline/party-over-party-over-sleepers.webp-->
+<!--figure media/timeline/party-over-card.webp-->
+
+<h2>The bedroom and the party spell</h2>
+<p>For the first two days a run began on a plain start screen, with the witch sitting on her treehouse terrace and taking off when you moved. On the 5th Ed asked for more:</p>
+<blockquote>Our witch should be generated too. Then we can have a character creator at the start of the game where she is in her house and you can tweak the sliders to change her outfit!<cite>Ed, 2026-10-05</cite></blockquote>
+<p>The witch was already genome data {#98}, so the creator {#117} could draw her live as the sliders moved, under a PARTY TONIGHT banner. It doubled as the loading screen, the forest growing behind it. That evening it moved into "a large messy bedroom with clothes all over, musical instruments" {#143}, drawn isometric at her own art pixel: a bed with a glowing laptop, DJ decks, open rune books and heaps of hats. The next day the room doubled in size so you could walk her round it with WASD {#229}, and the menus became one box per item {#240}.</p>
+<!--figure media/opening/bedroom-bold-px4-room.webp-->
+<p>Then the start became a spell. Ed: "Instead you are standing behind your decks in your treehouse, there is a button on the screen that says "CAST THE PARTY SPELL", when you press it, the witch does a spellcasting animation, the pulse appears, and starts going around the dancefloor runestone ring" {#270} {#276}. The clock starts at the cast, and she stays held for the 1.2 s of her casting pose. That afternoon the button became a scroll {#315}: "it looks like an open scroll with "🎶" on it, in the bottom right of the character creation screen". Click it and it fills the screen, crackles and bursts, and the spell is cast. That evening the game began opening straight into the bedroom {#333}, the scroll rolled shut until loading is done and the room's fairy lights as the loading bar (Ed: "I love the bedroom party lights as loading bar"). Last came one pixel scale for the room and the menu together, with the title, Coven Rush, in a pixel blackletter {#341}.</p>
+<!--gallery group=treehouse-->
+<p>The loop closed just after midnight. Ed asked that a knocked-down witch should come back "behind the decks in your treehouse, as when the game begins (but not zoomed in)". Now she comes back standing at her decks, at the normal zoom, and steps off again {#362}.</p>
+<!--figure media/timeline/respawn-respawn.webp-->
+
+<h2>More pictures</h2>
+<!--gallery chapter=timeline rest-->

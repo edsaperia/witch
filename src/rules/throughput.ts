@@ -1,13 +1,13 @@
 // 💌 throughput under legend buffs (Ed, 2026-10-05, issue #87): buffs give more letters or change
-// how they fly, never a stronger letter; each animal takes affection from at most one letter every
-// perAnimalHitGap seconds, so extra letters help against crowds, not to win one animal faster. A
+// how they fly, never a stronger letter. Every letter that lands counts in the game (the per-animal gap went,
+// Ed 2026-10-06); the model keeps a gap (`perAnimalHitGap`, 0: none) to try one out. A
 // model of how many hits a second she lands on a crowd of n invitable animals, for the balance
 // simulator (rules/states.ts) and tools/balance/buffs.mjs. The firing numbers are the tuning's
 // `invites` (PR #89); what each buff does to them is a guess from its one-line effect, here.
 
 /** The firing numbers (config/tuning.json `invites`, PR #89). */
 export interface InviteFire { burst: number; burstGap: number; cooldown: number; multiShot: number; hits: number[]; perAnimalHitGap: number }
-export const INVITE_FIRE: InviteFire = { burst: 3, burstGap: 0.12, cooldown: 0.6, multiShot: 1, hits: [3, 6, 12, 24], perAnimalHitGap: 0.5 };
+export const INVITE_FIRE: InviteFire = { burst: 3, burstGap: 0.12, cooldown: 0.6, multiShot: 1, hits: [3, 6, 12, 24], perAnimalHitGap: 0 };
 
 /** The 💌 buffs (Ed's table on #87; movement buffs below). */
 export const SHOT_BUFFS = ["flutter", "fan", "rearGuard", "howl", "windUp", "echo", "quickFire", "strike", "longThread", "bigHeart", "charm", "pierce", "skimming", "spawn", "spiral", "slipPast", "lanterns", "cache", "orbit"] as const;

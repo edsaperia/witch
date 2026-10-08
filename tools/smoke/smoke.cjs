@@ -24,11 +24,25 @@ function serve() {
   return new Promise(r => server.listen(0, "127.0.0.1", () => r(server)));
 }
 
-// Zoom keys (rise and descend are Space; E is the sigil button).
+// Zoom keys (rise and descend are Space; E puts a sigil down, Q cycles; right click dashes).
 const ZOOM_IN = "KeyZ", ZOOM_OUT = "KeyX";
 const TRUNK_ROUND = 1.3; // across a trunk, its lit side over its shaded one (median): the bluebell glade's flat beeches measured 1.21, shaded ones 1.40
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Known failures (the coordinator, 2026-10-06: "make the list small and honest, so a red full smoke
+// means something new"): checks that fail on claude/prototype itself for a reason we know and have an
+// issue for. A known check that fails is reported apart ("known: N") and doesn't fail the run; one that
+// passes says so, so it can come off the list. Every entry: the check's key, its issue, and why.
+const KNOWN = {
+  "speed-build": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "boost-p99": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "boost-worst": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "vanish-1900x1240": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "vanish-2000x1076": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "trunks-round": { issue: 509, why: "the measure swings 1.04-1.47 run to run at the same spots with the same build (her glow's angle, the moment), with 1.3 inside its noise" },
+};
 
 async function main() {
   fs.mkdirSync(out, { recursive: true });
@@ -39,7 +53,13 @@ async function main() {
   });
   const errors = [];
   const results = [];
-  const check = (ok, what) => { results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what); };
+  const known = [], fixed = [];
+  const check = (ok, what, key) => {
+    const k = key && KNOWN[key];
+    if (k && !ok) { results.push(`KNOWN ${what} (#${k.issue}: ${k.why})`); known.push(`${what} (#${k.issue})`); return; }
+    if (k && ok) fixed.push(`${key} (#${k.issue})`);
+    results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what);
+  };
 
   let shared = null;
   async function run(name, viewport, steps, query) {
@@ -78,7 +98,8 @@ async function main() {
     await sleep(300);
     let s = await state(page);
     check(!s.paused, "a key press starts the game");
-    check(s.stats.trees > 20 && s.stats.batches > 3 && s.stats.drawCalls > 15, `trees drawn round the start (${s.stats.trees} trees, ${s.stats.batches} batches, ${s.stats.drawCalls} draw calls)`);
+    // (Not by batch count: 0.3 s in, seated at the treehouse zoomed in, it can be as few as 3 (6 area types' and 4 creatures' once she's out); the trees and draw calls are what matter.)
+    check(s.stats.trees > 20 && s.stats.batches >= 1 && s.stats.drawCalls > 15, `trees drawn round the start (${s.stats.trees} trees, ${s.stats.batches} batches, ${s.stats.drawCalls} draw calls)`);
     await shot(page, "01-ground-dancefloor.png");
     // Speeds are measured in game time: a slow headless renderer runs fewer, capped frames.
     const tuning = await page.evaluate(() => window.witch.game.tuning);
@@ -120,7 +141,7 @@ async function main() {
     // Again in a Heath (gorse: small bright details), where Ed saw bushes blink.
     const heath = await page.evaluate(() => {
       const g = window.witch.game, m = g.map;
-      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      for (const [x, y] of m.cells) {
         if (window.witch.areaTypeId(m.typeOf(x, y)) !== "heath") continue;
         const s = m.siteOf(x, y), px = s.x + 20, pz = s.z + 20;
         g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: px, tz: pz };
@@ -142,7 +163,7 @@ async function main() {
     check(!!heath, `the pop check also flies a Heath (${heath})`);
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
-    check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`);
+    check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
     await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 60000 });
     if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
@@ -207,12 +228,14 @@ async function main() {
     await shot(page, "41-dancefloor-treetop.png");
     // The wave numbers follow the bend (Ed, 2026-10-05: "the glowing numbers can be seen past the
     // bend"): over the treetops, none shows for a stone hidden behind the bent horizon.
-    const t0 = await page.evaluate(() => window.witch.game.clock.time);
+    // (they're a design aid, off in the tuning since #188's round: on for this check, off again after)
+    const t0 = await page.evaluate(() => { const g = window.witch.game; g.tuning.waveNumbers.on = true; return g.clock.time; });
     await page.waitForFunction(t => window.witch.game.clock.time - t >= 1.5, t0, { timeout: 240000, polling: 50 }); // (their fade settles)
     const nb = await page.evaluate(() => {
       const v = window.witch.view, list = v.waveNumbers.last;
       let hidden = 0, shownPast = 0;
       for (const n of list) { const k = v.overBulge(n.x, n.z, n.top ?? 0); if (k === 0) { hidden++; if ((n.show ?? 1) > 0.1) shownPast++; } }
+      window.witch.game.tuning.waveNumbers.on = false;
       return { drawn: list.length, hidden, shownPast };
     });
     check(nb.shownPast === 0 && nb.drawn > 0, `over the treetops, no wave number shows for a stone past the bent horizon (${nb.drawn} drawn, ${nb.hidden} past the horizon, ${nb.shownPast} still showing)`);
@@ -222,11 +245,11 @@ async function main() {
     await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor, x = d.x + d.radius + 5, z = d.z + 3 - 2.5; g.witch = { ...g.witch, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z }; });
     await sleep(1500);
     await shot(page, "43-behind-soundsystem.png");
-  }, "&tilt=before");
+  }, "");
 
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
   // short recording in motion with them on.
-  for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""], ["fx-pixel", "&fx=pixel"]]) {
+  for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
       await hold(page, "ArrowRight", 1.5);
@@ -236,7 +259,7 @@ async function main() {
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
       await sleep(600);
       await shot(page, `31-treetop-${name}.png`);
-    }, q + "&tilt=before");
+    }, q);
   }
   // The party spreading: one area partifying (shots through its transition, from the treetops),
   // its string lights from the ground, then the party after four waves from high up.
@@ -280,7 +303,7 @@ async function main() {
     const n = await page.evaluate(() => window.witch.game.party.areas.size);
     check(n > 1, `after four waves ${n} areas are partified`);
     await shot(page, "57-party-four-waves.png");
-  }, "&debug&tilt=before");
+  }, "&debug");
 
   // Nothing through the earth (Ed, v256: "due to the bend, I can see string lights through the
   // earth"): in treetop mode with the bend on and the party's lights out, every layer in the scene
@@ -312,24 +335,26 @@ async function main() {
     check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
   });
 
-  // The ley lines (Ed, 2026-10-04): the tuning's links (leyLines.links, 1 since 2026-10-05) through the runestones in wave order, drawn on the
-  // ground and over the treetops; a wave moves the chain on a link (the stone after the current
-  // one is the one the wave wakes). Shots of both.
+  // The ley lines (Ed, 2026-10-04; 2026-10-06: "I think the leylines should cover the entire set of waves the whole
+  // time, but ideally it shouldn't cross itself"): through every area's runestone in wave order, home first, drawn on
+  // the ground and over the treetops; a wave moves the last stone reached on along the same line. Only the next stone
+  // has a HUD indicator ("not the next two"). Shots of both.
   await run("ley", { width: 960, height: 600 }, async page => {
     await page.keyboard.press("Enter");
-    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley; return { visible: L.meshes[0].visible, links: L.chain.length - 1, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, first: L.chain[0]?.cell.join(","), second: L.chain[1]?.cell.join(","), third: L.chain[2]?.cell.join(",") }; });
-    await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 120000, polling: 200 });
+    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, areas: window.witch.game.map.cells.length, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
+    await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 300000, polling: 200 });
     const a = await drawn();
-    const LINKS = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "../../config/tuning.json"), "utf8")).leyLines.links;
-    check(a.visible && a.links === LINKS && a.tris > 20 * LINKS, `the ley lines are drawn: ${a.links} links of the tuning's ${LINKS} (${a.tris} triangles)`);
+    check(a.visible && a.current === 0 && a.links === a.areas - 1 && a.tris > 20 * a.links, `the ley line is drawn from home through every area (${a.links} sections for ${a.areas} areas), the last reached at ${a.current} (${a.tris} triangles)`);
+    check(a.cues <= Math.max(1, a.waking) && !a.after2, `only the next stone has a HUD indicator (${a.cues} for the ${a.waking} waking next${a.after2 ? "; an after-next one is still there" : ""})`);
     await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
     await sleep(2500);
     await shot(page, "62-ley-ground.png");
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(600); }
-    await page.waitForFunction(k => window.witch.view.ley.chain[0]?.cell.join(",") !== k, a.first, { timeout: 120000, polling: 200 }).catch(() => {});
+    await page.waitForFunction(k => { const L = window.witch.view.ley; return L.chain[L.current]?.cell.join(",") !== k; }, a.here, { timeout: 120000, polling: 200 }).catch(() => {});
     const b = await drawn();
-    // Two waves wake one or two stones, so the chain's start moves on past one link or two.
-    check(b.first !== a.first && (b.first === a.second || b.first === a.third || a.third === undefined) && b.links === LINKS, `two waves on, the chain has moved on (${a.first} → ${a.second} → ${a.third}, now ${b.first} → ${b.second})`);
+    // Two waves wake a stone each: the same line, the last reached moved on along it.
+    check(b.here !== a.here && b.current >= 1 && b.stones.join(";") === a.stones.join(";") && (b.here === a.next || b.here === a.after),
+      `two waves on, the same line, moved on along it (${a.here} → ${a.next} → ${a.after}, now at ${b.here}, ${b.current} behind, ${b.links - b.current} ahead)`);
     await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
@@ -343,6 +368,9 @@ async function main() {
   // black on black) in the lit frame.
   await run("trunks", { width: 960, height: 540 }, async page => {
     await page.keyboard.press("Enter");
+    // She stands a minute in wild woods for these: kept from being knocked out (the bluebell glade's shots were the
+    // knockout's black iris and her treehouse: 2026-10-07).
+    await page.evaluate(() => { window.trunkKeepAlive = setInterval(() => { const g = window.witch.game, W = g.witches[0]; if (!W.ko) W.health.hp = g.tuning.witchHealth.hits; }, 100); });
     // (The bluebell glade's smooth pale beeches drew as flat grey slabs on brown stumps: Ed, 2026-10-04.)
     for (const id of ["tangly-forest", "old-oaks", "bluebell-glade"]) {
       const at = await page.evaluate(id => {
@@ -350,11 +378,11 @@ async function main() {
         let t = -1;
         for (let i = 0; i < 64 && t < 0; i++) { try { if (window.witch.areaTypeId(i) === id) t = i; } catch { break; } }
         let best = null, bn = -1;
-        for (let cy = 0; cy < m.n; cy++) for (let cx = 0; cx < m.n; cx++) if (m.typeOf(cx, cy) === t) {
+        for (const [cx, cy] of m.cells) if (m.typeOf(cx, cy) === t) {
           const s = m.siteOf(cx, cy);
           for (let k = 0; k < 60; k++) {
             const a = k * 0.7, d = m.areaSize * (0.1 + (k % 6) * 0.07), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30) continue;
+            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30 || (B.circle && Math.hypot(x - B.circle.x, z - B.circle.z) > B.circle.r - 30)) continue;
             const q = m.areaAt(x, z);
             if (q.cell[0] !== cx || q.cell[1] !== cy || m.paths.at(x, z, 3)) continue;
             const n = g.forest.treesNear(x, z, 14).filter(p => Math.hypot(p.x - x, p.z - z) < 14).length;
@@ -365,15 +393,27 @@ async function main() {
         return best;
       }, id);
       if (!at) { results.push(`skip trunks: no ${id} on this map`); continue; }
-      await sleep(1500);
+      // The start can still be settling her at the treehouse when the first move lands, and put her back (the tangly
+      // forest's "trunks" were the home glade's, at the start, 0.1-0.6% of the screen: 2026-10-07): move her again
+      // until she's there, and say so if she never is, rather than measuring the wrong place.
+      let there = false;
+      for (let k = 0; k < 3 && !there; k++) {
+        await sleep(1500);
+        there = await page.evaluate(([x, z]) => { const g = window.witch.game; if (Math.hypot(g.witch.x - x, g.witch.z - z) < 6) return true; g.witch = { ...g.witch, seated: false, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z, intro: 0 }; return false; }, at);
+      }
+      check(there, `the witch is moved to the ${id}'s densest wooded spot for the trunk shots`);
+      if (!there) continue;
       await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
       await sleep(1500);
       const lit = await page.screenshot({ timeout: 300000 });
-      await page.evaluate(() => { window.witch.view.debugTrunks = true; });
+      // The mask frame drawn plain: the bloom, the tilt-shift's blur and the mist layer smeared the flat magenta over the
+      // ground round the trunks (the old oaks' "trunks" were half the screen, their sides compared across the blur:
+      // 2026-10-07), so they're off for that one frame.
+      await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning; v.trunkMaskSaved = { bloom: T.bloom.on, tilt: T.tiltShift.on, fx: P.fxScene }; T.bloom.on = false; T.tiltShift.on = false; P.fxScene = null; v.debugTrunks = true; });
       await sleep(1000);
       const mask = await page.screenshot({ timeout: 300000 });
-      await page.evaluate(() => { window.witch.view.debugTrunks = false; });
-      fs.writeFileSync(path.join(out, `trunks-${id}.png`), lit);
+      await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning, s = v.trunkMaskSaved; v.debugTrunks = false; T.bloom.on = s.bloom; T.tiltShift.on = s.tilt; P.fxScene = s.fx; });
+      fs.writeFileSync(path.join(out, `trunks-${id}.png`), lit); fs.writeFileSync(path.join(out, `trunks-${id}-mask.png`), mask);
       const r = await page.evaluate(async ([a, m]) => {
         const load = src => new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; const x = c.getContext("2d"); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, i.width, i.height).data); }; i.src = "data:image/png;base64," + src; });
         const A = await load(a), M = await load(m);
@@ -388,7 +428,7 @@ async function main() {
           if (on && x0 < 0) x0 = x;
           if (on || x0 < 0) continue;
           const w = x - x0, t = Math.floor(w / 3);
-          if (w >= 4) {
+          if (w >= 4 && w <= 48) { // (a single trunk's width; a longer run is several trunks side by side, where the left and right thirds are different trunks' lit sides)
             let L = 0, R = 0;
             for (let k = 0; k < t; k++) { L += luma((y * W + x0 + k) * 4); R += luma((y * W + x - 1 - k) * 4); }
             L /= t; R /= t;
@@ -397,13 +437,14 @@ async function main() {
           x0 = -1;
         }
         ratios.sort((p, q) => p - q);
-        return { share: n / (M.length / 4), readable: n ? readable / n : 0, across: ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0 };
+        return { share: n / (M.length / 4), readable: n ? readable / n : 0, across: ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0, runs: ratios.length };
       }, [lit.toString("base64"), mask.toString("base64")]);
-      check(r.share > 0.02, `trunks are drawn on the ground in the ${id} (${(r.share * 100).toFixed(1)}% of the screen)`);
+      check(r.share > 0.005, `trunks are drawn on the ground in the ${id} (${(r.share * 100).toFixed(1)}% of the screen, over 0.5%)`); // ("we have really lost our treetrunks" read 0; with the mask drawn plain, the densest spots read 1-4% in the tangly forest, 15-50% in the others)
       check(r.readable > 0.15, `the ${id}'s trunks are readable, not black on black (${(r.readable * 100).toFixed(0)}% of their pixels)`);
-      check(r.across > TRUNK_ROUND, `the ${id}'s trunks are shaded round, not flat slabs: one side over the other ${r.across.toFixed(2)}x (over ${TRUNK_ROUND}x)`);
+      check(r.runs >= 20 && r.across > TRUNK_ROUND, `the ${id}'s trunks are shaded round, not flat slabs: one side over the other ${r.across.toFixed(2)}x (over ${TRUNK_ROUND}x, over ${r.runs} single trunks' rows)`, "trunks-round");
     }
-  }, "&tilt=before");
+    await page.evaluate(() => clearInterval(window.trunkKeepAlive));
+  }, "&leg=trunks"); // (not "": that fell back to &debug, whose overlay and rulers lay over the shots and hid trunks from the mask)
 
   // Inviting and leashing: 💌s at a creature until it joins her (issue #87), gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
@@ -412,14 +453,17 @@ async function main() {
     const id = await page.evaluate(() => {
       const g = window.witch.game, w = g.witch;
       let best = null, bd = Infinity;
-      for (const c of g.creatures) { if (c.level !== 0) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } } // a baby
-      // (every area has an adult now, onto her in seconds: send the grown-ups round it away, so she can invite it)
-      for (const c of g.creatures) if (c.level > 0 && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
+      // The nearest of the youngest (areas start with no babies now: a young one then).
+      const lv = Math.min(...g.creatures.filter(c => !c.boss && c.level < 3).map(c => c.level));
+      for (const c of g.creatures) { if (c.boss || c.level !== lv) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
+      // (every area has an adult now, onto her in seconds: send the others round it away, so she can invite it)
+      for (const c of g.creatures) if (c !== best && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
       g.byArea = null;
       // 5 m west of it, facing it (with no cursor, 1 throws the way she faces).
       g.witch = { ...w, x: best.x - 5, z: best.z, vx: 0, vz: 0, facing: 1, seated: false, mode: "ground", lift: 0 };
       g.camera = { ...g.camera, tx: best.x - 5, tz: best.z };
       Object.assign(best, { rest: 99, tx: best.x, tz: best.z });
+      g.witches[0].health.hp = 1e6; // (a young one may swipe at her while she invites it)
       return best.id;
     });
     await sleep(800);
@@ -429,9 +473,14 @@ async function main() {
     await page.keyboard.down("Digit1");
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 0.5, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
-    await page.waitForFunction(i => { const g = window.witch.game; g.witch = { ...g.witch, facing: 1 }; return g.creatures[i].leashed; }, id, { timeout: 400000, polling: 100 });
+    // (#87: a full meter makes a wild one happy, and it would wander off to dance: it's held in front of her. Since 2026-10-06
+    // its sigil lies as a rune at its feet, and E beside it leashes it.)
+    await page.waitForFunction(i => { const g = window.witch.game, c = g.creatures[i]; g.witch = { ...g.witch, facing: 1 }; Object.assign(c, { x: g.witch.x + 5, z: g.witch.z, tx: g.witch.x + 5, tz: g.witch.z, anchorX: g.witch.x + 5, anchorZ: g.witch.z, dancing: false }); return c.state === "happy" || c.leashed; }, id, { timeout: 400000, polling: 100 });
     await page.keyboard.up("Digit1");
-    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter and invite it onto her sigil stack");
+    await page.evaluate(i => { const g = window.witch.game, c = g.creatures[i]; Object.assign(c, { x: g.witch.x + 0.8, z: g.witch.z, tx: g.witch.x + 0.8, tz: g.witch.z, anchorX: g.witch.x + 0.8, anchorZ: g.witch.z }); }, id);
+    await page.keyboard.press("KeyE");
+    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 60000, polling: 100 }).catch(() => {});
+    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter, and E on its rune invites it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
     for (let i = 0; i < 3; i++) {
       const before = await page.evaluate(() => window.witch.game.leash.stack.length);
@@ -457,7 +506,7 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.leash.placed.length === 0, null, { timeout: 30000 });
     // (Back on her stack: she may have talked another creature in by herself meanwhile, Ed v244, so not by the count.)
     check(await page.evaluate(id => window.witch.game.leash.stack.includes(id), placedId), "over a placed sigil, the button picks it up again");
-  }, "&tilt=before");
+  }, "");
 
   // ?debug=cull: anything that changed visibility this frame is tinted red. A strip of frames
   // flying and zooming through every step in both modes.
@@ -474,7 +523,7 @@ async function main() {
         await page.keyboard.up("ArrowRight");
       }
     }
-  }, "&debug=cull&tilt=before");
+  }, "&debug=cull");
 
   // No stutter flying into new forest: full treetop boost straight across fresh ground, timing the
   // forest's chunk building each frame (view.stats.forestMs: the rebuilds' share plus the
@@ -492,7 +541,8 @@ async function main() {
     const r = await page.evaluate(() => { const L = window.speedLog; L.stop = true; const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))] : 0; }; return { n: L.forest.length, worst: q(L.forest, 1), p99: q(L.forest, 0.99), median: q(L.forest, 0.5), frameMedian: q(L.frame, 0.5), frameWorst: q(L.frame, 1), missing: window.witch.view.stats.forestMissing }; });
     const dist = Math.hypot(s1.x - s0.x, s1.z - s0.z), speed = dist / (s1.t - s0.t);
     results.push(`info speed: ${dist.toFixed(0)} m of fresh forest at ${speed.toFixed(1)} m/s; forest building per frame: median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms over ${r.n} frames; frames here (software renderer): median ${r.frameMedian.toFixed(0)} ms, worst ${r.frameWorst.toFixed(0)} ms`);
-    check(dist > 150 && r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`);
+    check(dist > 150, `flying into new forest at full boost covers fresh ground (${dist.toFixed(0)} m)`);
+    check(r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`, "speed-build");
   });
 
   // The hills at their default (Ed, v289): from the steepest spot near home (its shot, to catch
@@ -575,16 +625,20 @@ async function main() {
       const fell = sound.hp === 0, ended = !g.party.areas.has(key), marched = besiegers.filter(c => !c.gone && !c.boss).every(c => c.siege === "home"); // (the area's legend stays to guard its own area, by design)
       const home = g.combat.sounds.get("home"); home.hp = 0.001;
       for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
-      for (let i = 0; i < 60 * 60 && !g.over; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
+      for (let i = 0; i < 60 * 60 && !g.partyOver; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
+      // The afterparty (rules/partyOver.ts): 10 s on, nothing fights or besieges, and everyone's asleep or walking home to bed.
+      for (let i = 0; i < 10 * 60 && g.partyOver; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
+      const live = g.creatures.filter(c => !c.gone), fighting = live.filter(c => c.fight?.target || c.siege).length, awake = live.filter(c => !c.asleep && !c.bed).length;
       w.manual = false;
-      return { besiegers: besiegers.length, hit, fell, ended, marched, over: !!g.over };
+      return { besiegers: besiegers.length, hit, fell, ended, marched, over: !!g.partyOver, fighting, awake, asleep: live.filter(c => c.asleep).length };
     });
     if (r.error) { check(false, `a siege: ${r.error}`); return; }
     await page.waitForFunction(() => document.getElementById("over").classList.contains("on"), null, { timeout: 120000 }).catch(() => {});
     const screen = await page.evaluate(() => document.getElementById("over").classList.contains("on"));
     await shot(page, "80-siege-over.png");
     check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
-    check(r.over && screen, `when every soundsystem has fallen the run is over and the end screen shows (${r.over}, ${screen})`);
+    check(r.over && screen, `when every soundsystem has fallen the party's over and its card shows (${r.over}, ${screen})`);
+    check(r.fighting === 0 && r.awake === 0 && r.asleep > 0, `the afterparty: nothing fights, everyone's asleep or walking home to bed (${JSON.stringify({ fighting: r.fighting, awake: r.awake, asleep: r.asleep })})`);
   });
 
   await run("boost", { width: 1900, height: 1240 }, async page => {
@@ -604,8 +658,9 @@ async function main() {
       return { hover: q(hover, 0.5), median: q(boost, 0.5), p99: q(boost, 0.99), worst: q(boost, 1), top, dist: Math.hypot(w.game.witch.x - x0, w.game.witch.z - z0) };
     });
     results.push(`info boost: ${r.dist.toFixed(0)} m north in 10 s at up to ${r.top.toFixed(0)} m/s; frame work hovering ${r.hover.toFixed(1)} ms (median), boosting median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms`);
-    check(r.top > 100 && r.p99 <= 22, `boosting over the treetops at over 100 m/s, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`);
-    check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`);
+    check(r.top > 100, `boosting over the treetops goes over 100 m/s (${r.top.toFixed(0)} m/s)`);
+    check(r.p99 <= 22, `boosting over the treetops, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`, "boost-p99");
+    check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`, "boost-worst");
   });
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
@@ -616,7 +671,7 @@ async function main() {
     const cave = await page.evaluate(() => {
       const g = window.witch.game, m = g.map, d = m.dancefloor;
       let best = null;
-      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      for (const [x, y] of m.cells) {
         if (window.witch.areaTypeId(m.typeOf(x, y)) !== "cave-mouth") continue;
         const s = m.siteOf(x, y), k = Math.hypot(s.x - d.x, s.z - d.z);
         if (!best || k < best.k) best = { x, y, k, s };
@@ -676,7 +731,8 @@ async function main() {
           const err = Math.max(0, ...[-half, half].map(s => base - h(cx + R.x * s, cz + R.z * s))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;
           if (err > out.worst) out.worst = err;
-          if (err > 1 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(1)} px`);
+          // (feet snap to whole art pixels, so one exactly a pixel off reads a hair over 1 from the height's rounding: 0.05 px of slack)
+          if (err > 1.05 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(2)} px`);
         }
       }
       return out;
@@ -703,7 +759,7 @@ async function main() {
       await shot(page, `vanish-${w}x${h}-treetop-out.png`);
       const r = await page.evaluate(() => ({ dropped: window.maxDropped, pops: window.witch.view.pops.slice(0, 12), n: window.witch.view.pops.length, trees: window.witch.view.stats.trees, radius: window.witch.view.stats.sceneryRadius, fps: window.witch.view.stats.fps }));
       check(r.dropped === 0, `${w}x${h} at DPR ${dpr}: every tree, bush and creature set is drawn (most dropped in a frame: ${r.dropped}; ${r.trees} trees now; scenery radius ${(r.radius ?? 0).toFixed(0)} m at ${(r.fps ?? 0).toFixed(1)} fps)`);
-      check(r.n === 0, `${w}x${h} at DPR ${dpr}: nothing appears or vanishes on screen in full-speed flight (${r.n})${r.n ? ": " + r.pops.join("; ") : ""}`);
+      check(r.n === 0, `${w}x${h} at DPR ${dpr}: nothing appears or vanishes on screen in full-speed flight (${r.n})${r.n ? ": " + r.pops.join("; ") : ""}`, `vanish-${w}x${h}`);
     }, "&debug=cull");
   }
 
@@ -724,6 +780,8 @@ async function main() {
   await browser.close();
   server.close();
   console.log(results.join("\n"));
+  if (known.length) console.log(`\nknown: ${known.length} (failing for a known reason, not counted: tools/smoke/smoke.cjs KNOWN)\n` + known.map(k => "- " + k).join("\n"));
+  if (fixed.length) console.log(`\nknown checks now passing (take them off KNOWN if they keep passing): ${fixed.join(", ")}`);
   if (errors.length) { console.error("\nFAILED:\n" + errors.join("\n")); process.exit(1); }
   console.log("\nsmoke test passed");
 }

@@ -10,6 +10,7 @@
 // her out throws nothing. Knobs: tuning witch.knock. No drawing here.
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
+import { keepIn, type Bounds } from "./mapShape";
 
 export interface Knock {
   /** Her knockback velocity (m/s), easing off. */
@@ -58,11 +59,11 @@ export function knockWitch(k: Knock, body: { x: number; z: number }, b: Blow, ti
  *  2026-10-05: "don't make it stop at scenery", as 💌s pass through it); when it has run out, if she'd
  *  rest inside something solid (`clear` false: a trunk, a rock, a speaker, the treehouse, a
  *  soundsystem), she's nudged to the nearest clear spot. Kept inside the map. */
-export function stepWitchKnock(k: Knock, body: WitchState, dt: number, t: Tuning, bounds: { minX: number; maxX: number; minZ: number; maxZ: number }, clear: (x: number, z: number) => boolean): WitchState {
+export function stepWitchKnock(k: Knock, body: WitchState, dt: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean): WitchState {
   if (!k.kx && !k.kz) return body;
   // (the exact distance an easing velocity covers in dt, so the whole throw is its metres, whatever the step)
   const ease = t.witch.knock.ease, decay = Math.exp(-dt * ease), go = (1 - decay) / ease;
-  const inside = (x: number, z: number) => ({ x: Math.min(bounds.maxX, Math.max(bounds.minX, x)), z: Math.min(bounds.maxZ, Math.max(bounds.minZ, z)) });
+  const inside = (x: number, z: number) => keepIn(bounds, x, z);
   let p = inside(body.x + k.kx * go, body.z + k.kz * go);
   k.kx *= decay; k.kz *= decay;
   if (Math.hypot(k.kx, k.kz) < 0.05) {

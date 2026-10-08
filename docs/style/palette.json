@@ -1,0 +1,104 @@
+{
+ "ramps": [
+  {
+   "name": "leaf (night green)",
+   "outline": "#0c301f",
+   "shadow": "#0f482e",
+   "base": "#3a7346",
+   "light": "#639e66"
+  },
+  {
+   "name": "grass and moss floor",
+   "outline": "#113626",
+   "shadow": "#155039",
+   "base": "#468056",
+   "light": "#74b07a"
+  },
+  {
+   "name": "earth and mud",
+   "outline": "#260e0c",
+   "shadow": "#38130f",
+   "base": "#594231",
+   "light": "#7a6451"
+  },
+  {
+   "name": "bark and wood",
+   "outline": "#200e0c",
+   "shadow": "#301310",
+   "base": "#4d3b2e",
+   "light": "#6a594a"
+  },
+  {
+   "name": "stone",
+   "outline": "#2d333a",
+   "shadow": "#474e56",
+   "base": "#81868a",
+   "light": "#b4bcbe"
+  },
+  {
+   "name": "heather and violet floor",
+   "outline": "#2b142b",
+   "shadow": "#3f1e40",
+   "base": "#664663",
+   "light": "#8c6b82"
+  },
+  {
+   "name": "warm coat (fox, squirrel)",
+   "outline": "#610500",
+   "shadow": "#900500",
+   "base": "#e67c40",
+   "light": "#ffae75"
+  },
+  {
+   "name": "brown coat (boar, bear, elk)",
+   "outline": "#360e09",
+   "shadow": "#500e08",
+   "base": "#805638",
+   "light": "#b08866"
+  },
+  {
+   "name": "cream and white (ram, stoat)",
+   "outline": "#5e4b44",
+   "shadow": "#8c746b",
+   "base": "#e0d7c8",
+   "light": "#fff8eb"
+  },
+  {
+   "name": "cool grey (badger, heron)",
+   "outline": "#333743",
+   "shadow": "#515663",
+   "base": "#93979e",
+   "light": "#ced6d9"
+  },
+  {
+   "name": "witch's glow, fire, lanterns",
+   "outline": "#5c1300",
+   "shadow": "#881900",
+   "base": "#d9913d",
+   "light": "#ffc476"
+  },
+  {
+   "name": "night sky and haze",
+   "outline": "#0c0a1f",
+   "shadow": "#110e2e",
+   "base": "#2c2a4a",
+   "light": "#514566"
+  }
+ ],
+ "neons": {
+  "pink": "#ff40c8",
+  "cyan": "#32ebff",
+  "acid": "#afff2d",
+  "violet": "#a55fff",
+  "orange": "#ff8723",
+  "lemon": "#ffee46",
+  "red": "#ff375f",
+  "mint": "#46ffaf",
+  "blue": "#4691ff",
+  "magenta": "#eb46ff"
+ },
+ "inks": {
+  "ink (darkest: never pure black)": "#16121e",
+  "glint (whitest)": "#fffff5"
+ }
+}

@@ -1,0 +1,38 @@
+{
+  "builder": "Foxtrot",
+  "phase": "Builder and bug hunter; overnight phase 1: housekeeping",
+  "slice": "The soundsystem alarm, ley lines with a minimum turning radius, quests that calm a wild area, and tonight's dead-code sweep, tool READMEs and a faster test suite",
+  "prs": [
+    361,
+    381,
+    385,
+    388,
+    389,
+    405
+  ],
+  "built": [
+    "The soundsystem alarm (#361): edge cues that point at a soundsystem under attack, with how hard it's being hit.",
+    "Ley lines with a minimum turning radius (#381): Dubins curves of 25 m through every runestone, with no hairpins and no V at a stone, still within Ed's crossing rules on 40 seeds.",
+    "A quest done in a wild area now calms the creatures already living there (#385).",
+    "Phase 1: the dead-code sweep (#388), a README per tools directory written from the scripts' own headers (#389), and a test suite about a quarter faster (#405)."
+  ],
+  "learned": [
+    "Curving a route changes its crossings, so the route's order and the curves have to be solved together.",
+    "Turning off per-file test isolation is cheap speed, but only once every test that changes shared state puts it back. CI found one that didn't (the bend uniforms) that my local shuffles missed.",
+    "With a dozen builders merging, a \"game unchanged\" bench goes red from a stale base as often as from a real change, so merge the prototype right before CI."
+  ],
+  "previews": [
+    {
+      "src": "media/builders/foxtrot-ley-curve.webp",
+      "caption": "The ley line before and after: hairpins gone."
+    },
+    {
+      "src": "media/builders/foxtrot-alarm-two.webp",
+      "caption": "Two alarms on screen at once."
+    },
+    {
+      "src": "media/builders/foxtrot-alarm-treetops.webp",
+      "caption": "An alarm from the treetops."
+    }
+  ]
+}

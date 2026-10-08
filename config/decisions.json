@@ -1,0 +1,135 @@
+{
+  "_note": "Ed's decisions panel (src/ui/decide.ts; ?decide or F2 in the game). Each entry: id, label, a one-line note, a control (toggle, choice of 2 to 4 options, or slider with min, max and step), the shipped default, and what it changes: a tuning knob by its path (applied live to the running game) or a URL switch (param; reload: true when the game reads it only as it loads). Confirm opens a new GitHub issue labelled decision with the choice; the coordinator acts on those.",
+  "decisions": [
+    {
+      "id": "style", "label": "Pixel style", "note": "How every sprite is baked: bold (3 hue-shifted tones, a selective outline) or ref (one tone family, a near-black outline).",
+      "control": { "type": "choice", "options": [{ "value": "bold", "label": "Bold" }, { "value": "ref", "label": "Ref" }] },
+      "default": "bold", "apply": { "param": "style", "reload": true }
+    },
+    {
+      "id": "skyBlur", "label": "Stars through the blur", "note": "How much of the tilt-shift blur the night sky takes: 0 leaves the stars sharp, 1 blurs them like the ground.",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.3, "apply": { "knob": "tiltShift.skyBlur" }
+    },
+    {
+      "id": "tiltTreetop", "label": "Tilt-shift from the treetops", "note": "The blur toward the top and bottom of the screen over the treetops (the ground's is 1.5).",
+      "control": { "type": "slider", "min": 0, "max": 8, "step": 0.5 },
+      "default": 3, "apply": { "knob": "tiltShift.treetop.strength" }
+    },
+    {
+      "id": "growth", "label": "Wild growth a wave", "note": "Creatures each wild area gains every wave (0.5: one every other wave).",
+      "control": { "type": "slider", "min": 0.25, "max": 1, "step": 0.25 },
+      "default": 0.5, "apply": { "knob": "population.growth.perWave" }
+    },
+    {
+      "id": "legendShare", "label": "Areas with a legend", "note": "The share of areas (home never) with a sleeping legend, seeded and spread out; the rest have none (no clearing, quest or legend music). A new map: it reloads.",
+      "control": { "type": "slider", "min": 0.25, "max": 1, "step": 0.05 },
+      "default": 0.5, "apply": { "knob": "legends.share", "reload": true }
+    },
+    {
+      "id": "bombard", "label": "Legend bombardment", "note": "Damage an angry legend's lob or beam does a soundsystem (of 4000) when she's out of its reach (0: none). It always goes for her first.",
+      "control": { "type": "slider", "min": 0, "max": 1000, "step": 50 },
+      "default": 150, "apply": { "knob": "legends.bombard.damage" }
+    },
+    {
+      "id": "stomp", "label": "Legend stomp", "note": "A legend turning angry stamps on its own area's soundsystem at once (Ed's 'perhaps'): it only bites if you empty a partying area of the legend's kind.",
+      "control": { "type": "toggle" },
+      "default": false, "apply": { "knob": "legends.stomp.on" }
+    },
+    {
+      "id": "stompAngryAfter", "label": "Restless time with the stomp (s)", "note": "With the stomp on: seconds a legend with none of its kind about stays restless before it angers (the time to bring one back).",
+      "control": { "type": "slider", "min": 60, "max": 240, "step": 15 },
+      "default": 120, "apply": { "knob": "legends.stomp.angryAfter" }
+    },
+    {
+      "id": "buffPower", "label": "Legend buff strength", "note": "How strong every legend's buff is, from quests and relics (1: as written, 2: twice the effect, a Fan two fans).",
+      "control": { "type": "slider", "min": 1, "max": 4, "step": 0.25 },
+      "default": 1, "apply": { "knob": "legends.buffPower" }
+    },
+    {
+      "id": "questCap", "label": "Farthest dream (areas)", "note": "A sleeping legend dreams of any other kind on the map, near or far, but none whose nearest area lies more than this many areas away (6 cuts about the farthest tenth on the ~96-area map, as 5 did on the old ~196; 0: no cap).",
+      "control": { "type": "slider", "min": 0, "max": 10, "step": 0.5 },
+      "default": 6, "apply": { "knob": "legends.questCap", "reload": true }
+    },
+    {
+      "id": "questRoll", "label": "Quest buff strength", "note": "Every done quest's buff, this many times as strong as written, however far its dream creature lived (the encounter is the gamble, not the reward). A relic's stays as written.",
+      "control": { "type": "slider", "min": 1, "max": 2, "step": 0.05 },
+      "default": 1.25, "apply": { "knob": "legends.questRoll", "reload": true }
+    },
+    {
+      "id": "questLater", "label": "Dreams from later areas", "note": "On: a legend dreams of a kind living in an area later on the route than its own (deeper in). Off: any kind on the map, as before.",
+      "control": { "type": "toggle" },
+      "default": true, "apply": { "knob": "legends.questLater", "reload": true }
+    },
+    {
+      "id": "happyRange", "label": "Happy legend reach (m)", "note": "How far a happy legend (a relic's ally) reaches from its lair to hit the enraged: about 2 areas at 420.",
+      "control": { "type": "slider", "min": 420, "max": 1500, "step": 60 },
+      "default": 420, "apply": { "knob": "legends.happyRange" }
+    },
+    {
+      "id": "grace", "label": "Grace after a hit (s)", "note": "Seconds after the witch is hit in which no other blow lands, so a pack striking together costs one hit.",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.5, "apply": { "knob": "witchHealth.grace" }
+    },
+    {
+      "id": "legendFlash", "label": "Legend hit flash", "note": "How big and long a legend's blow flashes (0: like anyone's, 0.5: twice, 1: three times).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.5, "apply": { "knob": "attackFx.legendFlash" }
+    },
+    {
+      "id": "chargeReach", "label": "Charge length", "note": "How far charges run (their time and overshoot past her), times each species' own: 1 as before round 13, 2 now.",
+      "control": { "type": "slider", "min": 1, "max": 3, "step": 0.25 },
+      "default": 2, "apply": { "knob": "fight.charge.reach" }
+    },
+    {
+      "id": "chargeChase", "label": "Charge speed vs her walk", "note": "Charges run at least this many times her walking speed, on till they catch her walking straight away: only stepping out of the lane, a blink sideways or the treetops get her clear (0: as before).",
+      "control": { "type": "slider", "min": 0, "max": 2.5, "step": 0.1 },
+      "default": 1.6, "apply": { "knob": "fight.charge.chase" }
+    },
+    {
+      "id": "chargeMiss", "label": "Winded after a missed charge (s)", "note": "Seconds a charger stands winded after a charge that hit nothing (dodged by a blink or a sidestep): the time to land your 💌s.",
+      "control": { "type": "slider", "min": 0, "max": 3, "step": 0.1 },
+      "default": 1.2, "apply": { "knob": "fight.charge.miss" }
+    },
+    {
+      "id": "leapLead", "label": "Leaps lead her", "note": "How far a leap aims ahead of her, to where she'll be when it lands (1: all the way, 0: where she was).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.1 },
+      "default": 1, "apply": { "knob": "fight.leap.lead" }
+    },
+    {
+      "id": "chargeTurn", "label": "Charge turning", "note": "How fast a charger turns as it brakes, times each species' own: lower is wider arcs (1 as before, 0.4 now).",
+      "control": { "type": "slider", "min": 0.2, "max": 1, "step": 0.1 },
+      "default": 0.4, "apply": { "knob": "fight.charge.turn" }
+    },
+    {
+      "id": "chargeBrake", "label": "Charge momentum", "note": "How hard a charger brakes after its run, times each species' own: lower carries more momentum (1 as before, 0.5 now).",
+      "control": { "type": "slider", "min": 0.2, "max": 1, "step": 0.1 },
+      "default": 0.5, "apply": { "knob": "fight.charge.brake" }
+    },
+    {
+      "id": "chargeContact", "label": "Charges hurt on touch", "note": "A charging creature hurts every foe it touches on the way (once each), not only its target as it reaches it.",
+      "control": { "type": "toggle" },
+      "default": true, "apply": { "knob": "fight.charge.contact" }
+    },
+    {
+      "id": "leapReach", "label": "Leap length", "note": "How far off a creature leaps from, times its own (1 as before, 1.5 now); pounces land through metres past her.",
+      "control": { "type": "slider", "min": 1, "max": 2.5, "step": 0.25 },
+      "default": 1.5, "apply": { "knob": "fight.leap.reach" }
+    },
+    {
+      "id": "leapThrough", "label": "Pounce carry-through (m)", "note": "Metres past her a pounce lands (the lynx's); less than 0, short of her (-1.5 before round 13).",
+      "control": { "type": "slider", "min": -1.5, "max": 10, "step": 0.5 },
+      "default": 5, "apply": { "knob": "fight.leap.through" }
+    },
+    {
+      "id": "daze", "label": "Downed stun (s)", "note": "Seconds a wild creature knocked down in a fight lies stunned (she can still invite it) before it runs off home (8 before round 13; Ed: 20).",
+      "control": { "type": "slider", "min": 4, "max": 30, "step": 1 },
+      "default": 20, "apply": { "knob": "combat.daze" }
+    },
+    {
+      "id": "pursue", "label": "Chase past their area (m)", "note": "How far past its area's edge a wild animal chases her (or her party) before it gives up and retreats home (10 before round 13; Ed: 30).",
+      "control": { "type": "slider", "min": 0, "max": 80, "step": 5 },
+      "default": 30, "apply": { "knob": "combat.leaveArea" }
+    }
+  ]
+}

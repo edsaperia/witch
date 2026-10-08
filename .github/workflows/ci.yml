@@ -2,7 +2,10 @@
 # smoke test of the built game in headless Chromium (tools/smoke/quick.cjs, a few minutes).
 name: CI
 on:
+  # Branches with a PR are checked once, through the PR (which tests the merge); pushes run only
+  # on the shared branches. Two runs per push swamped the runners with eleven builders (2026-10-05).
   push:
+    branches: [main, claude/prototype]
   pull_request:
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.ref }}

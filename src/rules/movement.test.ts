@@ -19,7 +19,7 @@ const pick = (g: Game, species: string, level: Level, dx: number, dz: number) =>
   const w = g.witch, x = w.x + dx, z = w.z + dz;
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !(k as unknown as { used?: boolean }).used && Math.hypot(k.x - w.x, k.z - w.z) > 150)!;
   (c as unknown as { used: boolean }).used = true;
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
   c.cell = g.map.cellSafe(w.x, w.z).cell as [number, number];
   g.byArea = null;
   return c;

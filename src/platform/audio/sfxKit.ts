@@ -8,6 +8,8 @@ export type SfxTuning = Tuning["sfx"];
 
 export class SfxKit {
   readonly out: GainNode;
+  /** The last node before the speakers (its limiter): the watchdog taps it. */
+  readonly final: DynamicsCompressorNode;
   readonly noise: AudioBuffer;
   private lastAt = new Map<string, number>();
   /** The legends' big space (a long generated reverb), built when one first sings. */
@@ -18,7 +20,7 @@ export class SfxKit {
     this.out = c.createGain(); this.out.gain.value = volume * T.volume;
     const limit = c.createDynamicsCompressor();
     limit.threshold.value = -10; limit.knee.value = 6; limit.ratio.value = 8; limit.attack.value = 0.003; limit.release.value = 0.12;
-    this.out.connect(limit); limit.connect(dest ?? c.destination);
+    this.out.connect(limit); limit.connect(dest ?? c.destination); this.final = limit;
     this.noise = noiseBuffer(c, 1, 777);
   }
 
@@ -49,6 +51,13 @@ export class SfxKit {
     o.type = type; o.frequency.setValueAtTime(freq, at);
     o.connect(dest); o.start(at); o.stop(at + dur + 0.05);
     return o;
+  }
+  /** The kit's noise looping at `rate` times its speed, not yet connected or started: the bed of wind, water and breath. */
+  loopNoise(rate?: number): AudioBufferSourceNode {
+    const s = this.ctx.createBufferSource();
+    s.buffer = this.noise; s.loop = true;
+    if (rate !== undefined) s.playbackRate.value = rate;
+    return s;
   }
   noiseBurst(at: number, dur: number, dest: AudioNode, offset = 0): AudioBufferSourceNode {
     const s = this.ctx.createBufferSource();

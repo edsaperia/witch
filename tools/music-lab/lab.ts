@@ -245,9 +245,39 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
     m.engine!.renderAhead({ ...quiet, forceSection: "drop" }, 0, 2 * spBar, steady);
     measure("mix: 120 m away, damaged", await oc.startRendering());
   }
+  {
+    // never silent (Ed's playtest, 2026-10-05: "the music stops playing after about 20 seconds": she
+    // had flown past farDist, where the floor's quiet and muffle took it to nothing on laptop
+    // speakers): the mix by the soundsystem, at farDist and far beyond it, weighed as heard (the
+    // lows a laptop can't play left out); the far ones no more than M.audible dB under the near
+    const M = TUNING.music, heard: number[] = [];
+    for (const d of [0, M.farDist, 4 * M.farDist]) {
+      const oc = new OfflineAudioContext(2, Math.ceil(rate * 2 * spBar), rate);
+      const m = new Music(oc, 1, style, 7);
+      m.update(mixAt(M, nearness(M, d), 0, d), { ...quiet, forceSection: "forest" }, 0, steady, true);
+      m.engine!.renderAhead({ ...quiet, forceSection: "forest" }, 0, 2 * spBar, steady);
+      const buf = await oc.startRendering();
+      measure(`mix: ${d} m from the music`, buf);
+      heard.push(heardDb(buf));
+    }
+    for (let i = 1; i < 3; i++) results[results.length - 3 + i].name += ` (${(heard[i] - heard[0]).toFixed(1)} dB as heard)`;
+    for (const [i, d] of [[1, M.farDist], [2, 4 * M.farDist]]) if (!(heard[0] - heard[i] <= M.audible)) errors.push(`mix: ${d} m away the music is ${(heard[0] - heard[i]).toFixed(1)} dB under its level by the soundsystem, as heard (more than music.audible, ${M.audible}): it would seem to stop`);
+  }
   return { ok: errors.length === 0, errors, results };
 }
 (window as unknown as { musicLabCheck: typeof musicLabCheck }).musicLabCheck = musicLabCheck;
+
+/** How loud a render is as a laptop plays it (dB): the rms above about 200 Hz (a second-order high-pass), both channels. */
+function heardDb(buf: AudioBuffer): number {
+  const w = (2 * Math.PI * 200) / buf.sampleRate, cs = Math.cos(w), al = Math.sin(w) / (2 * 0.707), a0 = 1 + al;
+  const b0 = (1 + cs) / 2 / a0, b1 = -(1 + cs) / a0, b2 = b0, a1 = (-2 * cs) / a0, a2 = (1 - al) / a0;
+  let sum = 0, n = 0;
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for (const x of buf.getChannelData(ch)) { const y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; sum += y * y; n++; }
+  }
+  return 10 * Math.log10(sum / Math.max(1, n) + 1e-12);
+}
 
 /** Measure every section (or those named): loudness, peak, bands, centroid and a spectrogram, and
  *  each part's own loudness soloed (tools/music-lab/analyse.cjs). */

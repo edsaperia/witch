@@ -1,8 +1,7 @@
 // The 💌 invite (issue #87): bursts and cooldowns from data, letters that fly, home, land, and are
-// blocked by enraged creatures and legends, and the stand-in affection that invites at full.
+// blocked by enraged creatures and legends. (The meter itself: rules/affection.ts, creatureStates.test.ts.)
 import { describe, expect, it } from "vitest";
-import { hitsNeeded, newInvites, standInAffection, stepInvites, type Affection } from "./invites";
-import { newLeash } from "./leash";
+import { newInvites, stepInvites, type Affection } from "./invites";
 import { TUNING, withTuning } from "./tuning";
 import { STEP, newGame, stepGame } from "./game";
 import type { Creature } from "./creatures";
@@ -42,7 +41,7 @@ describe("the 💌 invite (issue #87)", () => {
   it("lands on a wild creature in its path, and lets her own party through", () => {
     const wild = critter(1, 10, 0), mine = critter(2, 5, 0, { leashed: true }), A = counting();
     const { ev } = fly([wild, mine], A, [1, 0], 1);
-    expect(A.hits.get(1)).toBe(1); // (a burst lands within perAnimalHitGap: one letter's affection)
+    expect(A.hits.get(1)).toBe(TUNING.invites.burst); // (every letter that lands counts: no gap since 2026-10-06)
     expect(A.hits.get(2)).toBeUndefined();
     expect(ev.filter(e => e === "hit").length).toBe(TUNING.invites.burst);
   });
@@ -64,22 +63,6 @@ describe("the 💌 invite (issue #87)", () => {
     const { ev } = fly([critter(1, 9, 2.2)], B, [1, 0], 2, none);
     expect(B.hits.get(1)).toBeUndefined();
     expect(ev).toContain("fizzled");
-  });
-
-  it("fills a stand-in meter by level, drains it slowly, and invites at full", () => {
-    const s = newInvites(), leash = newLeash(), A = standInAffection(s, leash, TUNING), c = critter(0, 0, 0, { level: 0 });
-    const need = hitsNeeded(c, TUNING);
-    for (let i = 0; i < need - 1; i++) A.hit(c, 1, 0);
-    expect(A.affection(c)).toBeCloseTo((need - 1) / need);
-    expect(c.leashed).toBe(false);
-    A.hit(c, 1, 0);
-    expect(c.leashed).toBe(true);
-    expect(leash.stack).toContain(0);
-    const d = critter(1, 0, 0);
-    A.hit(d, 1, 0);
-    const before = A.affection(d)!;
-    stepInvites(s, {}, her, true, [c, d], A, 1, 1, TUNING);
-    expect(A.affection(d)!).toBeCloseTo(before - TUNING.invites.drain);
   });
 
   it("in the game: only on the ground and off her seat, and no proximity chat when on", () => {
@@ -118,12 +101,31 @@ describe("the 💌 invite (issue #87)", () => {
     expect(hits).toBeGreaterThan(0);
   });
 
-  it("takes affection from at most one 💌 every perAnimalHitGap: 5 letters in 0.2 s give one letter's worth", () => {
-    const t = withTuning({ invites: { ...TUNING.invites, burst: 5, burstGap: 0.04, multiShot: 1, homing: 0, perAnimalHitGap: 0.5 } });
+  it("every 💌 that lands counts (Ed, 2026-10-06: no per-creature gap): 5 letters in 0.2 s give five letters' worth", () => {
+    const t = withTuning({ invites: { ...TUNING.invites, burst: 5, burstGap: 0.04, multiShot: 1, homing: 0 } });
     const c = critter(0, 8, 0), A = counting();
     const { ev, s } = fly([c], A, [1, 0], 0.6, t);
     expect(ev.filter(e => e === "hit").length).toBe(5); // all five land (and are used up)
-    expect(A.hits.get(0)).toBe(1); // but only one counts
+    expect(A.hits.get(0)).toBe(5); // and all five count
     expect(s.letters.length).toBe(0);
+  });
+  it("one 💌 a shot: a meter fills in (hits - 1) cooldowns and a flight, every hit counting (the gap gone, 2026-10-06)", () => {
+    expect(TUNING.invites.burst).toBe(1);
+    expect(TUNING.invites.multiShot).toBe(1);
+    // Fire held at a creature 8 m off: when its nth hit lands.
+    const fill = (t: typeof TUNING, n: number) => {
+      const s = newInvites(), c = critter(0, 8, 0), A = counting();
+      for (let i = 0, time = 0; i < 60 / STEP; i++, time += STEP) {
+        s.events = [];
+        stepInvites(s, { fire: true, aimX: 1, aimZ: 0 }, her, true, [c], A, time, STEP, t);
+        if ((A.hits.get(0) ?? 0) >= n) return time;
+      }
+      return Infinity;
+    };
+    const I = TUNING.invites, flight = 8 / I.speed;
+    for (let lv = 0; lv < 4; lv++) {
+      const now = fill(TUNING, I.hits[lv]), want = (I.hits[lv] - 1) * I.cooldown + flight;
+      expect(Math.abs(now - want), `level ${lv}: ${now.toFixed(2)} s, about ${want.toFixed(2)} s`).toBeLessThan(0.03 * want + 0.1); // (the cooldown in whole steps)
+    }
   });
 });

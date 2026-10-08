@@ -4,11 +4,13 @@
 import type { Schema } from "./schema";
 
 export const TUNING_OVER: Record<string, Partial<Schema>> = {
-  fx: { enum: ["smooth", "pixel"] },
-  "tiltShift.where": { enum: ["before", "after"] },
+  "map.shape": { enum: ["circle", "square"] },
+  "music.latency": { enum: ["interactive", "balanced", "playback"] },
   "berries.cost.by": { enum: ["power", "value"] },
   "arena.curve": { enum: ["linear", "smooth"] },
   "partyObjects.home.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "partyWitches.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "grounds.radius": { additionalProperties: { type: "number", minimum: 0 } },
+  "legendClearing.species": { additionalProperties: { type: "number", minimum: 0 } },
+  "population.byRoute.profiles": { additionalProperties: { type: "array", items: { type: "number", minimum: 0 }, minItems: 3, maxItems: 3 } },
 };

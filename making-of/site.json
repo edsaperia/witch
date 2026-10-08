@@ -1,0 +1,15 @@
+{
+  "title": "The Making of Coven Rush",
+  "blurb": "How a pixel-art witch game about throwing a forest-wide party was built in a few days: the turns it took, its art, music, balance, systems and code.",
+  "chapters": [
+    { "slug": "index", "title": "The Making of Coven Rush", "kicker": "", "blurb": "How a pixel-art witch game about throwing a forest-wide party was built in a few days." },
+    { "slug": "timeline", "short": "Timeline", "title": "The Big Turns", "kicker": "Chapter 1", "blurb": "The moments the game changed shape: the circular island, the invite, leash and sigil loop, legends and their circles, the ley spiral, slow time, the beach, the Party's Over and the bedroom." },
+    { "slug": "art", "short": "Art", "title": "Growing the Art", "kicker": "Chapter 2", "blurb": "Every sprite in the game is generated from data: genomes for creatures and plants, recipes for areas, and a stylise pass that turns them into pixel art." },
+    { "slug": "music", "short": "Music", "title": "Music & Sound", "kicker": "Chapter 3", "blurb": "A soundtrack synthesised live from a seed, sound effects tuned in the music's key, and the hunt for why the music kept cutting out." },
+    { "slug": "balance", "short": "Balance", "title": "Balancing the Party", "kicker": "Chapter 4", "blurb": "Bots that play the real rules, the curves they drew build after build, and tonight's balance pass." },
+    { "slug": "systems", "short": "Systems", "title": "How the Systems Fit", "kicker": "Chapter 5", "blurb": "Waves and the Boot, the ley line, creature states, and the weight of the leash and its sigils, drawn out." },
+    { "slug": "architecture", "short": "Code", "title": "The Code", "kicker": "Chapter 6", "blurb": "Rules, render and UI layers, the art worker, the tuning file, and the safety nets that let many builders work at once." },
+    { "slug": "how", "short": "How", "title": "How It Was Made", "kicker": "Chapter 7", "blurb": "One coordinator and a team of builder sessions working in parallel, with Ed playtesting and deciding." },
+    { "slug": "builders", "short": "Builders", "title": "The Builders' Notes", "kicker": "Appendix", "blurb": "Each builder's own few lines: what they built, what they learned, and their best pictures." }
+  ]
+}

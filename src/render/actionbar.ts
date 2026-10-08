@@ -1,5 +1,5 @@
-// The action bar (Ed, 2026-10-04: MOBA style): eight slots along the bottom of the screen, 1 2 3 4
-// Q W E R, each with its key and what it does; the spell's and the dash's recharge sweep over
+// The action bar (Ed, 2026-10-04: MOBA style; keys remapped 2026-10-05 and 06): nine slots along the
+// bottom of the screen, 1 2 3 4 Q E R, Space and the right mouse button, each with its key and what it does; the spell's and the dash's recharge sweep over
 // theirs, bright when ready. Empty slots wait for more spells, items and totems.
 import type { Game } from "../rules/game";
 import { ACTION_BAR } from "../platform/input";
@@ -9,14 +9,14 @@ import { inviteCharge } from "../rules/invites";
 
 const LOOK: Record<string, { icon: string; name: string }> = {
   spell: { icon: "⚡", name: "spell: speed boost" },
-  dash: { icon: "»", name: "blink (on the ground)" },
-  invite: { icon: "💌", name: "invite: shoot 💌s at the cursor (click, or hold 1; gamepad: right stick aims, a trigger fires), on the ground" },
+  dash: { icon: "»", name: "dodge: blink toward the cursor (right click, on the ground)" },
+  rise: { icon: "↕", name: "rise to the treetops or land" },
+  cycle: { icon: "↻", name: "cycle the sigils (the bottom one, the next put down, to the top)" },
+  invite: { icon: "💌", name: "invite: shoot 💌s at the cursor (left click, or hold 1; gamepad: right stick aims, a trigger fires), on the ground" },
   sigil: { icon: "◈", name: "put down / pick up a sigil" },
   autoTalk: { icon: "💬", name: "auto-talk on or off (also T); off, hold Shift to talk" },
 };
 
-/** The sigil slot in the treetops, where E cycles the stack. */
-const CYCLE = { icon: "↻", name: "cycle the sigils (the bottom one to the top)" };
 
 export class ActionBar {
   private root = document.createElement("div");
@@ -53,11 +53,14 @@ export class ActionBar {
     const W = g.witches[0];
     ACTION_BAR.forEach((s, i) => {
       const shade = this.shades[i], el = this.slots[i];
-      if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
-      // The sigil slot shows what E does now (Ed, 2026-10-05): cycle in the treetops, put down / pick up on the ground.
-      if (s.action === "sigil") {
+      if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(232,180,106,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
+      // E puts down / picks up, only on the ground; Q cycles, with two or more to cycle (Ed, 2026-10-06).
+      if (s.action === "sigil") { el.style.opacity = W.body.mode === "ground" ? "1" : "0.5"; return; }
+      if (s.action === "cycle") { el.style.opacity = W.leash.stack.length > 1 ? "1" : "0.5"; return; }
+      // The up/down slot shows which way Space takes her now.
+      if (s.action === "rise") {
         const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;
-        const look = ground ? LOOK.sigil : CYCLE;
+        const look = ground ? { icon: "↑", name: "rise to the treetops" } : { icon: "↓", name: "land" };
         if (icon.textContent !== look.icon) { icon.textContent = look.icon; el.title = `${s.key}: ${look.name}`; }
         return;
       }
@@ -66,7 +69,15 @@ export class ActionBar {
       const on = s.action === "spell" ? spellActive(W.spells, time) : s.action === "invite" ? W.invites.burstLeft > 0 : dashing(W.dash, time);
       const usable = s.action === "dash" || s.action === "invite" ? W.body.mode === "ground" && !W.body.seated : true;
       shade.style.height = `${(1 - charge) * 100}%`;
-      el.style.borderColor = on ? "#ffffff" : charge >= 1 && usable ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)";
+      // Hare's Dash bursts: the blinks ready, a count in the corner; Bear's Wind-up: the 💌 slot glows pink as it charges.
+      if (s.action === "dash") {
+        let n = el.querySelector<HTMLElement>(".charges");
+        if (!n) { n = document.createElement("span"); n.className = "charges"; Object.assign(n.style, { position: "absolute", right: "3px", bottom: "1px", fontSize: "10px", color: "#e8b46a", zIndex: "1" }); el.append(n); }
+        const text = g.buffs.mods.charges > 0 ? String(W.dash.charges) : "";
+        if (n.textContent !== text) n.textContent = text;
+      }
+      if (s.action === "invite") el.style.boxShadow = W.invites.charge > 0 ? `0 0 ${(3 + W.invites.charge * 12).toFixed(0)}px rgba(217,120,158,${(0.3 + 0.4 * W.invites.charge).toFixed(2)})` : "";
+      el.style.borderColor = on ? "#f3dcb2" : charge >= 1 && usable ? "rgba(232,180,106,.9)" : "rgba(232,226,244,.35)";
       el.style.opacity = usable ? "1" : "0.5";
     });
   }

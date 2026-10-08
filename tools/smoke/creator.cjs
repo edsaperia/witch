@@ -25,8 +25,9 @@ const looks = {
       await page.waitForTimeout(1500);
       await page.screenshot({ path: path.join(out, `${name}.png`) });
       if (name === "high") { // no hat, then the jacket's colour picked off the rainbow
-        await page.click('button[data-hat="none"]'); await page.click('button[data-part="jacket"]');
-        const c = await page.$('canvas[data-strip="hue"]'), b = await c.boundingBox(); await page.mouse.click(b.x + b.width * .8, b.y + b.height / 2);
+        await page.click('fieldset[data-box="hat"] legend'); if (!(await page.isVisible('button[data-hat="none"]'))) await page.click('fieldset[data-box="hat"] legend');
+        await page.click('button[data-hat="none"]'); await page.click('fieldset[data-box="outfit"] legend'); await page.click('fieldset[data-box="outfit"] button[data-part="jacket"]');
+        const c = await page.$('fieldset[data-box="outfit"] canvas[data-strip="hue"]'), b = await c.boundingBox(); await page.mouse.click(b.x + b.width * .8, b.y + b.height / 2);
         await page.waitForTimeout(500); await page.screenshot({ path: path.join(out, "no-hat-picker.png") });
       }
       await page.close();

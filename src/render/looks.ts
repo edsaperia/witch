@@ -6,24 +6,24 @@
 // stars are marks drawn over the sprite.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import type { Creature } from "../rules/creatures";
+import type { Creature, CreatureState } from "../rules/creatures";
 import { LEGEND } from "../rules/creatures";
 import { cellKey } from "../rules/party";
-import { placed } from "./height";
+import { placed, shownOverBend } from "./height";
 import { stunned } from "../rules/knock";
 import { witchHeight } from "../rules/witch";
 import type { Tuning } from "../rules/tuning";
 import { bubbleScale } from "./bubbles";
 
-export type Look = "wild" | "happy" | "leashed" | "enraged" | "legend";
+export type Look = CreatureState | "legend";
 
 /** The state machine's fields (issue #87), read if present; today's flags otherwise. */
-type WithState = Creature & { state?: "wild" | "happy" | "leashed" | "enraged"; dazedUntil?: number };
+type WithState = Creature & { state?: CreatureState; dazedUntil?: number };
 
 export function isHappy(c: Creature): boolean {
   const s = (c as WithState).state;
   if (s) return s === "happy";
-  return !c.leashed && (!!c.friendly || !!c.guard); // (today: a quest-done area's creatures)
+  return !c.leashed && !!c.friendly; // (today: a quest-done area's creatures)
 }
 
 export function lookOf(c: Creature): Look {
@@ -57,7 +57,8 @@ export const isDazed = (c: Creature, time: number) => ((c as WithState).dazedUnt
 
 /** Whether it dances on the beat: party animals, and happy ones in an area with a soundsystem. */
 export function dances(g: Game, c: Creature): boolean {
-  if (c.leashed) return true;
+  if (c.asleep) return false; // (asleep: the party's over, rules/partyOver.ts)
+  if (c.leashed || c.partyLegend) return true; // (a party legend dances where it stands: the Easter egg)
   return lookOf(c) === "happy" && g.party.areas.has(cellKey(c.cell)) && !g.combat.ruined.has(cellKey(c.cell)) && !c.fight;
 }
 
@@ -71,10 +72,11 @@ function pixels(w: number, h: number, draw: (x: CanvasRenderingContext2D) => voi
   return t;
 }
 
-/** A party sparkle: a tiny white-and-pink twinkle, three pixels across. */
-const SPARKLE = (): THREE.CanvasTexture => pixels(3, 3, x => {
-  x.fillStyle = "#ffb3e6"; x.fillRect(1, 0, 1, 3); x.fillRect(0, 1, 3, 1);
-  x.fillStyle = "#ffffff"; x.fillRect(1, 1, 1, 1);
+/** A party sparkle: a tiny warm twinkle, two pixels across, in the lanterns' amber (the art director, #200: never a white
+ *  cross, which is a hit's contact star). */
+const SPARKLE = (): THREE.CanvasTexture => pixels(2, 2, x => {
+  x.fillStyle = "#e8b46a"; x.fillRect(0, 0, 2, 2);
+  x.fillStyle = "#f6d59a"; x.fillRect(0, 0, 1, 1);
 });
 const hash01 = (a: number, b: number) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
 
@@ -109,10 +111,19 @@ export class StateMarks {
     this.star = mat(STAR()); this.anger = mat(angerMark(11));
     this.sparkle = new THREE.SpriteMaterial({ map: SPARKLE(), transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending });
     this.group.renderOrder = 12;
+    // One sprite never shown, so the Bedroom's shader warm-up (View.prepare) compiles the marks' shader too; the pool's own
+    // sprites are made only as they are first needed (the first mark came at the second wave: a hitch).
+    const warm = new THREE.Sprite(this.star);
+    warm.visible = false;
+    this.group.add(warm);
     scene.add(this.group);
   }
 
+  /** The camera's position this frame: a mark past the bent horizon isn't drawn (they're drawn with no depth test). */
+  private eye: { x: number; y: number; z: number } | null = null;
+
   private put(m: THREE.SpriteMaterial, x: number, y: number, z: number, wpx: number, hpx: number, opacity = 1): void {
+    if (this.eye && !shownOverBend(x, y, z, this.eye)) return; // (nothing past the bend: Ed, 2026-10-06)
     let s = this.pool[this.used];
     if (!s) { s = new THREE.Sprite(m.clone()); s.renderOrder = 12; this.pool.push(s); this.group.add(s); }
     this.used++;
@@ -125,12 +136,13 @@ export class StateMarks {
   }
 
   /** The 💢 by the enraged, stars round the dazed, sparkles round party animals (their faces are the art's): those within `R` metres of her. `tops`: each creature's drawn height. */
-  update(g: Game, time: number, tops: Map<number, number>, R = 70): void {
-    this.used = 0;
+  update(g: Game, time: number, tops: Map<number, number>, R = 70, eye?: { x: number; y: number; z: number }): void {
+    this.used = 0; this.eye = eye ?? null;
     setTint(g.tuning);
     const A = g.tuning.looks?.anger ?? { on: true, size: 1 }, P = g.tuning.looks?.partyGlow ?? { on: true, sparkles: 4, rate: 0.9, size: 1.4, strength: 1 };
     const w = g.witch, px = 2; // (each mark pixel two game pixels: readable at a glance)
-    for (const c of g.creatures) {
+    for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
+      const c = g.creatures[i];
       if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R) continue;
       const top = tops.get(c.id);
       if (top === undefined) continue;
@@ -142,7 +154,7 @@ export class StateMarks {
           const ph = (time * P.rate + hash01(c.id, i)) % 1, lit = Math.sin(Math.min(1, ph / 0.5) * Math.PI);
           if (ph > 0.5) continue;
           const a = hash01(c.id, i + 7) * Math.PI * 2, r = 0.35 + top * 0.45, h = 0.15 + hash01(c.id, i + 13) * top;
-          this.put(this.sparkle, c.x + Math.cos(a) * r, h, c.z + Math.sin(a) * r * 0.4, 3 * px * P.size * (0.6 + 0.4 * lit), 3 * px * P.size * (0.6 + 0.4 * lit), lit * P.strength);
+          this.put(this.sparkle, c.x + Math.cos(a) * r, h, c.z + Math.sin(a) * r * 0.4, 2 * px * P.size * (0.6 + 0.4 * lit), 2 * px * P.size * (0.6 + 0.4 * lit), lit * P.strength);
         }
       }
       if (ex === "angry" && !c.boss) {
@@ -160,9 +172,9 @@ export class StateMarks {
       }
     }
     // Her too, staggered by a blow (rules/knock.ts): the daze stars round her hat.
-    if (stunned(g.witches[0].knock, time)) {
+    if (stunned(g.witches[0].knock, g.herTime)) { // (her clock: rules/slowTime.ts)
       const top = witchHeight(w, g.tuning) + 2.1;
-      for (let i = 0; i < 3; i++) { const a = time * 6 + (i / 3) * Math.PI * 2; this.put(this.star, w.x + Math.cos(a) * 0.6, top + Math.sin(a) * 0.12, w.z + Math.sin(a) * 0.3, 5 * px, 5 * px); }
+      for (let i = 0; i < 3; i++) { const a = g.herTime * 6 + (i / 3) * Math.PI * 2; this.put(this.star, w.x + Math.cos(a) * 0.6, top + Math.sin(a) * 0.12, w.z + Math.sin(a) * 0.3, 5 * px, 5 * px); }
     }
     for (let i = this.used; i < this.pool.length; i++) this.pool[i].visible = false;
   }

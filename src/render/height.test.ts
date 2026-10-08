@@ -132,3 +132,22 @@ describe("rolling ground", () => {
     for (let i = 0; i < pts.length; i++) expect(Math.abs(ha[i] - hb[i])).toBeLessThan(1e-4); // (but rounding: the sums run in another order)
   });
 });
+
+// Ed (2026-10-06): "the legend circle ought to be mostly flat": each sleeping legend's circle sits on its own terrace.
+describe("the legends' circles", () => {
+  it("are level: their ground varies by under 10 cm across, with the game's own hills (but where a path grazes one's rim, levelled across the path)", () => {
+    const real = new HeightField(map, forest, TUNING.ground.hills);
+    let worst = 0;
+    for (const c of map.legendClearings) {
+      let lo = Infinity, hi = -Infinity;
+      for (let k = 0; k < 48; k++) {
+        const a = k * 2.4, d = c.r * Math.sqrt((k + 0.5) / 48), x = c.x + Math.cos(a) * d, z = c.z + Math.sin(a) * d;
+        if (map.paths.at(x, z, Math.max(6, TUNING.ground.hills.amplitude * 0.6) + 1)) continue; // (a path levels the ground across it and a little beyond: PATH_EDGE)
+        const h = real.sourceAt(x, z); lo = Math.min(lo, h); hi = Math.max(hi, h);
+      }
+      worst = Math.max(worst, hi - lo);
+    }
+    expect(map.legendClearings.length).toBeGreaterThan(20);
+    expect(worst).toBeLessThan(0.1);
+  });
+});

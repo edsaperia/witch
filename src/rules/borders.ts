@@ -3,6 +3,7 @@
 // sampling: a coarse grid round the area, refined only in the squares the border crosses, so it
 // stays cheap. No drawing here.
 import type { ForestMap } from "./map";
+import { isInside } from "./mapShape";
 import type { Cell } from "./partition";
 
 export interface BorderPoint {
@@ -24,7 +25,7 @@ export function borderOf(map: ForestMap, cell: Cell, step: number): BorderPoint[
 export function* borderSteps(map: ForestMap, cell: Cell, step: number, out: BorderPoint[]): Generator<void> {
   const s = map.siteOf(cell[0], cell[1]), R = map.areaSize * 1.5, C = Math.max(step * 2, 8);
   const b = map.bounds, key = (x: number, z: number) => {
-    if (x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ) return "edge";
+    if (!isInside(b, x, z)) return "edge";
     const c = map.areaAt(x, z).cell;
     return `${c[0]},${c[1]}`;
   };

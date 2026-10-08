@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "types": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "treeDensity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "groundCover": {
+            "type": "object",
+            "properties": {
+              "density": {
+                "type": "number",
+                "minimum": 0
+              },
+              "kinds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "density",
+              "kinds"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "treeDensity",
+          "groundCover"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "types"
+  ],
+  "additionalProperties": false
+}

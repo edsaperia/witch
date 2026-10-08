@@ -15,3 +15,17 @@ describe("the next-stone cue's arrow (Ed, v183: it pointed the wrong way)", () =
     if (dy) expect(Math.sign(ty)).toBe(-Math.sign(dy)); else expect(Math.abs(ty)).toBeLessThan(2);
   });
 });
+
+describe("the edge cues' layout (Ed, v1628: the 🎶 distance drawn twice, \"2018m m\")", () => {
+  it("never lets two cues on the edge sit on one another, nudging the later one along the edge", async () => {
+    const { edgeLayout } = await import("./indicator");
+    edgeLayout.reset();
+    const a = edgeLayout.claim(1500, 450, 0, 50), b = edgeLayout.claim(1500, 455, 0, 50), c = edgeLayout.claim(1502, 440, 0, 50);
+    expect(a).toEqual({ x: 1500, y: 450 });
+    for (const [p, q] of [[a, b], [a, c], [b, c]]) expect(Math.hypot(p.x - q.x, p.y - q.y)).toBeGreaterThanOrEqual(100 - 1e-9);
+    expect(Math.abs(b.x - 1500)).toBeLessThan(1e-9); // (along the right edge: up or down it, not off it)
+    edgeLayout.reset();
+    expect(edgeLayout.claim(1500, 455, 0, 50)).toEqual({ x: 1500, y: 455 }); // (a new frame: nothing placed yet)
+    expect(edgeLayout.claim(1500, 455, 0, 50, false)).toEqual({ x: 1500, y: 455 }); // (over its target on screen: not nudged)
+  });
+});

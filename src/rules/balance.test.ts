@@ -3,21 +3,22 @@ import { simulate } from "./balance";
 import { generateMap } from "./map";
 import { lanchester, levelValue, powerReport } from "./power";
 import { newGame } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 describe("fighting value (rules/power.ts)", () => {
-  it("is √(hp × dps) by level: babies 0, young 15.5, adults 29, legends 76", () => {
+  it("is √(hp × dps) by level: babies 0, young 11.6, adults 40, legends 76 (the level gap, 2026-10-07)", () => {
     expect(levelValue(0)).toBe(0);
-    expect(levelValue(1)).toBeCloseTo(15.5, 1);
-    expect(levelValue(2)).toBeCloseTo(29, 0);
+    expect(levelValue(1)).toBeCloseTo(11.6, 1);
+    expect(levelValue(2)).toBeCloseTo(40, 0);
     expect(levelValue(3)).toBeCloseTo(76, 0);
     expect(lanchester(50, 30)).toBeCloseTo(40, 9);
     expect(lanchester(30, 50)).toBe(0);
   });
 
   it("reads the party and the sieges off a game", () => {
-    const g = newGame(123, TUNING), adults = g.creatures.filter(c => c.level === 2), young = adults[0], adult = adults[1];
-    young.level = 1; young.leashed = true; g.leash.stack.push(young.id);
+    const g = newGame(123, TUNING), two = g.creatures.filter(c => !c.boss && !c.leashed), young = two[0], adult = two[1];
+    young.level = 1; adult.level = 2; young.leashed = true; g.leash.stack.push(young.id);
     adult.siege = "home";
     const p = powerReport(g.creatures, g.witches, g.combat.sounds);
     expect(p.leashed).toBeCloseTo(levelValue(1), 9);
@@ -29,13 +30,13 @@ describe("fighting value (rules/power.ts)", () => {
 });
 
 describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () => {
-  const map = generateMap(1000, TUNING);
+  const map = generateMap(1000, PEOPLED);
 
   it("runs a quick idle run: sieges grow wave by wave, soundsystems fall, the same every time", () => {
     const t0 = Date.now(), a = simulate(map, { interval: 60, maxWaves: 12 });
     expect(Date.now() - t0).toBeLessThan(5000);
     expect(a.waves.length).toBeGreaterThanOrEqual(Math.min(12, a.survived));
-    expect(a.waves[0].largest).toBeGreaterThan(0); // every area has an adult (Ed, 2026-10-04)
+    expect(a.waves[0].largest).toBeGreaterThan(0); // (the first wave wakes a siege)
     expect(a.waves[a.waves.length - 1].marching).toBeGreaterThan(a.waves[0].marching);
     expect(simulate(map, { interval: 60, maxWaves: 12 })).toEqual(a); // deterministic, and the cached fighters reset
   }, 30000);
@@ -50,7 +51,8 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
 
   it("gives every woken area its own legend, besieging only its own soundsystem (Ed, 2026-10-04)", () => {
     const plain = simulate(map, { interval: 60, maxWaves: 40 }), legends = simulate(map, { interval: 60, maxWaves: 40, areaLegends: true });
-    expect(legends.waves[0].largest).toBeGreaterThanOrEqual(plain.waves[0].largest + levelValue(3) - 1);
+    // (legends.share leaves some areas without one, so the first woken area may have none: one of the first ten does)
+    expect(legends.waves.slice(0, 10).some((w, i) => w.largest >= plain.waves[i].largest + levelValue(3) - 1)).toBe(true);
     // A legend alone topples its soundsystem in about 5.6 minutes: over a few maps, the run is shorter
     // (one map can tie: seed 1000's did at 14 x 168 m areas, while 1001 to 1005 lost 2 to 7 waves).
     const total = (areaLegends: boolean) => [1000, 1001, 1002].reduce((n, seed) => n + simulate(generateMap(seed, TUNING), { interval: 60, maxWaves: 40, areaLegends }).survived, 0);

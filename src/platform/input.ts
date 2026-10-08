@@ -1,15 +1,17 @@
 // Gathers the player's input from keyboard, gamepad and touch into one set of controls per frame.
-// The bindings are all in KEYS and PAD below (Ed, 2026-10-04: MOBA style, movement on the arrow
-// keys and actions on 1 2 3 4 Q W E R). Touch: the joystick and buttons in ui/touch.ts write into
+// The bindings are all in KEYS and PAD below (Ed, 2026-10-05: WASD and the mouse, right click
+// dodges; 2026-10-06: "space for rise/land, E for place, Q for cycle. Mousewheel for zoom"; the
+// arrow keys move too). Touch: the joystick and buttons in ui/touch.ts write into
 // `touch`. The 💌 (issue #87) is aimed twin-stick: the cursor (a click fires) or the right stick (a
 // trigger fires); 1 fires toward the cursor; on touch, its button fires the way she's going.
 import type { Controls } from "../rules/game";
 
 /** Keyboard bindings: each action and the keys (KeyboardEvent.code) that do it. */
 export const KEYS = {
-  left: ["ArrowLeft"], right: ["ArrowRight"], up: ["ArrowUp"], down: ["ArrowDown"],
+  left: ["KeyA", "ArrowLeft"], right: ["KeyD", "ArrowRight"], up: ["KeyW", "ArrowUp"], down: ["KeyS", "ArrowDown"],
   rise: ["Space"],
-  spell: ["KeyQ"], dash: ["KeyW"], sigil: ["KeyE"],
+  // The dash is the right mouse button (no key: Space rises).
+  spell: ["KeyR"], dash: [] as string[], place: ["KeyE"], cycle: ["KeyQ"],
   // Auto-talk on or off (Ed's playtest, 2026-10-04); with it off, she talks while Talk is held.
   autoTalk: ["KeyT"], talk: ["ShiftLeft", "ShiftRight"],
   invite: ["Digit1"],
@@ -22,15 +24,15 @@ export const KEYS = {
 
 /** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,
  *  items and totems). */
-export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "autoTalk" | "invite" | null }[] = [
+export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "cycle" | "rise" | "autoTalk" | "invite" | null }[] = [
   { key: "1", code: "Digit1", action: "invite" }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
-  { key: "Q", code: "KeyQ", action: "spell" }, { key: "W", code: "KeyW", action: "dash" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: null },
+  { key: "Q", code: "KeyQ", action: "cycle" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: "spell" }, { key: "␣", code: "Space", action: "rise" }, { key: "RMB", code: "", action: "dash" },
 ];
 
 /** Gamepad bindings (standard mapping button numbers): left stick or d-pad moves. */
 export const PAD = { rise: [3], dash: [0], spell: [1], sigil: [2], zoomOut: [4], zoomIn: [5], invite: [6, 7], debug: [8] } as const;
 
-const GAME_KEYS = new Set<string>(Object.values(KEYS).flat());
+const GAME_KEYS = new Set<string>(Object.values(KEYS).flat() as string[]);
 
 export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; dash?: boolean; /** The action bar's auto-talk slot was clicked. */ autoTalk?: boolean; /** The 💌 button is down. */ invite?: boolean }
 
@@ -45,8 +47,15 @@ export class Input {
   /** The 💌's aim from the cursor: the world direction from her to the ground under (clientX, clientY). */
   aimFrom: ((clientX: number, clientY: number) => { x: number; z: number } | null) | null = null;
   private pointer: { x: number; y: number } | null = null;
+  /** Where the mouse is (client pixels), or null before it has moved: for the aim reticle. */
+  get cursor(): { x: number; y: number } | null { return this.pointer; }
+  /** The ground under the cursor from her at the last read (metres), or null. */
+  lastAim: { x: number; z: number } | null = null;
   private mouseDown = false;
   private mouseClicked = false;
+  private rightClicked = false;
+  /** The mouse wheel over the game since the last read, in pixels (down: zoom out). */
+  private wheel = 0;
 
   constructor(target: Window = window) {
     target.addEventListener("keydown", e => {
@@ -66,6 +75,23 @@ export class Input {
       this.mouseDown = true; this.mouseClicked = true;
     });
     target.addEventListener("pointerup", e => { if (e.pointerType === "mouse" && e.button === 0) this.mouseDown = false; });
+    // The right button dodges (the dash), over the game only, without its menu. A mousedown, not a
+    // pointerdown, so it still counts while the left button is held (a chorded press fires no pointerdown).
+    const onCanvas = (e: Event) => (e.target as HTMLElement | null)?.tagName === "CANVAS";
+    target.addEventListener("mousedown", e => {
+      if (e.button !== 2 || !onCanvas(e)) return;
+      e.preventDefault();
+      if (this.onAny?.()) return;
+      this.rightClicked = true;
+    });
+    target.addEventListener("contextmenu", e => { if (onCanvas(e)) e.preventDefault(); });
+    // The wheel zooms (Ed, 2026-10-06), over the game only (not the creator's sliders or the panels),
+    // without scrolling the page: a step a notch (about 100 px), a trackpad's small deltas adding up.
+    target.addEventListener("wheel", e => {
+      if (!onCanvas(e)) return;
+      e.preventDefault();
+      this.wheel += e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
+    }, { passive: false });
   }
 
   private isGameKey(code: string): boolean { return GAME_KEYS.has(code); }
@@ -73,6 +99,7 @@ export class Input {
   /** Forget presses not yet read (the press that started the game is not also a move). */
   clearPresses(): void {
     this.pressed.clear();
+    this.rightClicked = false; this.wheel = 0;
     const t = this.touch;
     t.toggle = false; t.zoom = 0; t.debug = false;
   }
@@ -86,13 +113,18 @@ export class Input {
     let moveZ = k(KEYS.down) - k(KEYS.up);
     let toggleMode = p(KEYS.rise);
     let zoom = (p(KEYS.zoomOut) ? 1 : 0) - (p(KEYS.zoomIn) ? 1 : 0);
+    // A notch of the wheel a zoom step (the camera eases between steps), at most one a frame.
+    if (Math.abs(this.wheel) >= 90) { zoom += Math.sign(this.wheel); this.wheel -= Math.sign(this.wheel) * 100; if (Math.abs(this.wheel) > 200) this.wheel = Math.sign(this.wheel) * 200; }
     let debug = p(KEYS.debug);
-    let sigil = p(KEYS.sigil), spell = p(KEYS.spell), dash = p(KEYS.dash);
+    let sigil = false, spell = p(KEYS.spell), dash = p(KEYS.dash) || this.rightClicked;
+    const place = p(KEYS.place), cycle = p(KEYS.cycle);
+    this.rightClicked = false;
     const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest), happyNearest = p(KEYS.happyNearest);
     // The 💌: fire with the mouse button or 1 (held, or a click since the last read); aim at the cursor.
     let fire = this.mouseDown || this.mouseClicked || k(KEYS.invite) > 0 || p(KEYS.invite);
     this.mouseClicked = false;
     const cursorAim = this.pointer && this.aimFrom ? this.aimFrom(this.pointer.x, this.pointer.y) : null;
+    this.lastAim = cursorAim;
     let aimX = cursorAim?.x ?? 0, aimZ = cursorAim?.z ?? 0;
     this.pressed.clear();
 
@@ -120,7 +152,7 @@ export class Input {
       if (any(PAD.dash)) dash = true;
       // Twin-stick: the right stick aims (screen right is east, down is south), a trigger fires.
       const rx = pad.axes[2] ?? 0, ry = pad.axes[3] ?? 0;
-      if (Math.hypot(rx, ry) > 0.3) { aimX = rx; aimZ = ry; }
+      if (Math.hypot(rx, ry) > 0.3) { aimX = rx * 20; aimZ = ry * 20; } // (as a point 20 m out that way: the dash reads a cursor's ground point)
       if (PAD.invite.some(btn)) fire = true;
       this.padPrev = pad.buttons.map(b => b.pressed);
       break;
@@ -141,6 +173,6 @@ export class Input {
     if (len > 1) { moveX /= len; moveZ /= len; }
     const toggleAutoTalk = p(KEYS.autoTalk) || this.touch.autoTalk === true, talkHeld = k(KEYS.talk) > 0;
     this.touch.autoTalk = false;
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
   }
 }

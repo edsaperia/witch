@@ -31,7 +31,9 @@ for (const page of ["/tools/art-lab/witch-art-lab.html", "/tools/art-lab/dist/wi
 await b.page.goto(b.base + "/art/headless-blank.html");
 const report = await b.page.evaluate(async () => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), res = [];
-  const stats = sp => { let n = 0, bottom = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) n++; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; return { n, bottom, w: sp.w, h: sp.h }; };
+  // (standing: something on its bottom row; or, a witch's sprite with her shadow lifted out of it (art/witch.js liftShadow: the box kept,
+  // the game stands her by her `ground` anchor and lays her shadow there), that anchor in the sprite's lower part, its bottom row her ground's)
+  const stats = sp => { let n = 0, bottom = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) n++; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; const g = sp.anchors?.ground; if (!bottom && g && g[1] >= sp.h * 0.5 && g[1] <= sp.h + 1 && g[0] >= 0 && g[0] <= sp.w) bottom = 1; return { n, bottom, w: sp.w, h: sp.h }; };
   for (const S of G.SPECIES) {
     const hs = [];
     for (const level of [0, 1, 2, 3]) for (const frame of [0, 1]) { const s = stats(G.critter(S.id, level, frame, st)); hs[level] = s.h; res.push({ what: `${S.id} level ${level} frame ${frame}`, good: s.n > 20 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
@@ -62,7 +64,7 @@ const report = await b.page.evaluate(async () => {
     for (const S of G.SPECIES) { const own = JSON.stringify(G.speciesColours(S.id, st)); for (const v of Object.keys(G.PALETTE_VARIANTS)) { const c = G.variantColours(S.id, st, v), row = G.paletteRow(c), m = G.bakeMask(G.critter(S.id, 1, 0, st), st.cOutline); if (JSON.stringify(c) === own) vb.push(`${S.id} ${v} same`); for (let i = 0; i < m.mat.length; i++) if (m.kind[i] === 1 && row[m.mat[i] * 4] === 255 && row[m.mat[i] * 4 + 1] === 0 && row[m.mat[i] * 4 + 2] === 255) { vb.push(`${S.id} ${v} magenta`); break; } } }
     res.push({ what: `palette variants: all ${Object.keys(G.PALETTE_VARIANTS).length} curated coats colour every species, no material uncoloured, each its own`, good: !vb.length, info: vb.slice(0, 5).join(", ") || "ok" });
   }
-  { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy and dazed
+  { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy, dazed and asleep
     // drawn as part of its face: each different from its neutral face, its brows showing (and standing out from its coat), no bigger than
     // neutral by more than 2 px, nothing NaN; and the away view drawn
     const bad = [], lum = c => c[0] * .3 + c[1] * .55 + c[2] * .15;
@@ -71,7 +73,7 @@ const report = await b.page.evaluate(async () => {
       if (Math.abs(lum(col[G.M.BROW]) - lum(col[G.M.BODY])) < 60) bad.push(`${S.id} brows don't stand out`);
       for (const face of G.EXPRESSIONS.filter(f => f !== "neutral")) for (const facing of ["towards", "away"]) {
         const sp = G.critter(S.id, level, 0, st, facing, { face }), base = facing === "towards" ? plain : G.critter(S.id, level, 0, st, facing), id = `${S.id} ${level} ${face} ${facing}`;
-        if (sp.w > base.w + 2 || sp.h > base.h + 2) bad.push(`${id} grew ${sp.w - base.w}x${sp.h - base.h}`);
+        const tol = Math.max(3, Math.max(base.w, base.h) * .01); if (sp.w > base.w + tol || sp.h > base.h + tol) bad.push(`${id} grew ${sp.w - base.w}x${sp.h - base.h}`); // (within 2 px, or 1% of a legend)
         if (![...sp.n].every(Number.isFinite)) bad.push(`${id} NaN`);
         if (![...sp.m].some(v => v)) bad.push(`${id} empty`);
         if (facing !== "towards") continue;
@@ -82,7 +84,25 @@ const report = await b.page.evaluate(async () => {
         if (!brow) bad.push(`${id} no brows`);
       }
     }
-    res.push({ what: `expressions: every species at every level angry, happy and dazed as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
+    res.push({ what: `expressions: every species at every level angry, happy, dazed and asleep as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger than 3 px or 1%, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
+  }
+  { // surface texture (Ed, 2026-10-05, #119): every species at every level in its fur, feathers, scales, plates, shell or bristles: textured
+    // (its coat broken into tones along its stamps), its detail (tone edges a coat pixel) growing with age (a baby's softest), the same size
+    // as untextured within 1% (2 px), every material coloured, nothing NaN; with texture 0, as before (tools/genome/compare.mjs TEXTURE=0)
+    const bad = [], off = { ...st, texture: 0 }, coat = new Set([G.M.BODYL, G.M.BODY, G.M.BODY2, G.M.BODY3, G.M.BELLY, G.M.ACCENT]);
+    const detail = sp => { let e = 0, n = 0; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const v = sp.m[y * sp.w + x]; if (!coat.has(v)) continue; n++; const r = sp.get(x + 1, y), b = sp.get(x, y + 1); if (coat.has(r) && r !== v) e++; if (coat.has(b) && b !== v) e++; } return n ? e / n : 0; };
+    for (const S of G.SPECIES) {
+      const col = G.speciesColours(S.id, st), dv = [0, 1, 2, 3].map(level => {
+        const a = G.critter(S.id, level, 0, st), b = G.critter(S.id, level, 0, off), id = `${S.id} ${level}`, tol = Math.max(2, Math.ceil(b.h * .01));
+        if (Math.abs(a.w - b.w) > tol || Math.abs(a.h - b.h) > tol) bad.push(`${id} ${a.w}x${a.h} vs ${b.w}x${b.h}`);
+        if (![...a.n].every(Number.isFinite)) bad.push(`${id} NaN`);
+        for (const v of new Set(a.m)) if (v && v !== G.M.LINE && !col[v]) bad.push(`${id} material ${v} uncoloured`);
+        return [detail(a), detail(b)];
+      });
+      if (dv[2][0] < dv[2][1] * .9) bad.push(`${S.id} adult poorer textured (${dv[2][0].toFixed(2)} vs ${dv[2][1].toFixed(2)})`);
+      if (dv[0][0] - dv[0][1] > (dv[2][0] - dv[2][1]) * 1.15) bad.push(`${S.id} baby's texture busier than its adult's (+${(dv[0][0] - dv[0][1]).toFixed(2)} vs +${(dv[2][0] - dv[2][1]).toFixed(2)})`);
+    }
+    res.push({ what: "surface texture: every species at every level in its own surface (fur, feathers, scales, plates, shell, bristles), no poorer than untextured, a baby's softest, the same size within 1%, every material coloured", good: !bad.length, info: [...new Set(bad)].slice(0, 8).join(", ") || "ok" });
   }
   { // silhouettes (#79 stage 3): at game size (each young and adult shrunk to 24 px), no two species' shapes alike: they differ by 0.15 or more
     // (1 - their overlap over their union, whichever way each faces)
@@ -101,7 +121,7 @@ const report = await b.page.evaluate(async () => {
       if (P.template === "quadruped" && (P.joints.legs.length !== 4 || P.joints.legs.some(l => !l.hip || !l.knee || !l.foot))) bad.push(`${S.id} ${level} legs`);
       if (!Object.values(P.discs).some(d => Object.keys(d).length)) bad.push(`${S.id} ${level} no discs`);
       if (level === 1) for (const [name, gear] of [["party", { collar: [255, 60, 200], hat: 0, glasses: "bar" }], ["woken", { woken: true }]]) { const G2 = G.rigParts(S.id, level, st, gear), h = G2?.pieces.head?.[2], h0 = P.pieces.head[2]; if (!h || (h0 && h.sp.m.join() === h0.sp.m.join())) bad.push(`${S.id} ${level} ${name} head as plain`); } // party gear and the woken eyes baked on its head
-      for (const face of ["angry", "happy", "dazed"]) { const f = P.faces?.[face]; if (!f || f.length !== 5 || f.some(p => !p)) bad.push(`${S.id} ${level} no ${face} head`); else if (P.pieces.head[2] && f[2].sp.m.join() === P.pieces.head[2].sp.m.join()) bad.push(`${S.id} ${level} ${face} head as neutral`); } // its head in each expression
+      for (const face of ["angry", "happy", "dazed", ...(level === 3 ? ["asleep"] : [])]) { const f = P.faces?.[face]; if (!f || f.length !== 5 || f.some(p => !p)) bad.push(`${S.id} ${level} no ${face} head`); else if (P.pieces.head[2] && f[2].sp.m.join() === P.pieces.head[2].sp.m.join()) bad.push(`${S.id} ${level} ${face} head as neutral`); } // its head in each expression
     }
     res.push({ what: "rig parts: every four-legged species and the snake, at every level, baked as torso and head pieces (the snake its head) at the five headings with their pivots near them, four two-bone legs, discs to string bones and bodies, and the head in every expression, in party gear and woken", good: !bad.length, info: bad.slice(0, 6).join(", ") || "ok" });
   }
@@ -117,6 +137,22 @@ const report = await b.page.evaluate(async () => {
         if (sp.m.some(m => m === G.M.EYE || m === G.M.IRIS || m === G.M.WOKEN)) bad.push(`asleep${i} eyes open`); });
       if (fs[0].sp.m.length === fs[1].sp.m.length && fs[0].sp.m.every((m, i) => m === fs[1].sp.m[i])) bad.push("no breath");
       res.push({ what: `sleeping legend ${id} ${facing}: asleep x2 (sunk, no taller than awake, no glow, eyes shut, breathing; drawn, standing, origin on the sprite, coloured)`, good: !bad.length, info: bad.join(", ") || `asleep ${fs[0].sp.w}x${fs[0].sp.h}, awake ${aw.w}x${aw.h}` });
+    }
+  }
+  { // every creature asleep (art/naps.js; Ed, 2026-10-06: "we will need sleeping artwork for all the creatures"): every species at every level in 2
+    // breathing frames, each drawn and standing on its bottom row, its ground origin on the sprite, no taller than it stands awake, no pupils
+    // (eyes shut), every material coloured, its two breaths different
+    for (const S of G.SPECIES) {
+      const bad = [];
+      for (let level = 0; level < 4; level++) {
+        const aw = G.critter(S.id, level, 0, st), fs = [0, 1].map(f => G.critter(S.id, level, f, st, "towards", { nap: true })), colours = G.speciesColours(S.id, st);
+        fs.forEach((sp, i) => { const s = stats(sp), o = sp.origin, miss = [...new Set(sp.m)].filter(m => m && m !== G.M.LINE && !colours[m]);
+          if (!(s.n > 20 && s.bottom > 0 && o && o[0] >= 0 && o[0] <= sp.w && o[1] >= sp.h * .5 && o[1] <= sp.h + 2 && !sp.n.some(Number.isNaN) && !miss.length)) bad.push(`L${level} f${i} ${s.w}x${s.h}${o ? " origin " + o : " no origin"}${miss.length ? " uncoloured " + miss : ""}`);
+          if (sp.h > aw.h) bad.push(`L${level} f${i} ${sp.h} taller than awake ${aw.h}`);
+          if (sp.m.some(m => m === G.M.PUPIL || m === G.M.IRIS)) bad.push(`L${level} f${i} eyes open`); });
+        if (fs[0].m.length === fs[1].m.length && fs[0].m.every((m, i) => m === fs[1].m[i])) bad.push(`L${level} no breath`);
+      }
+      res.push({ what: `${S.id} asleep (${G.napPose(S.id).kind}): baby to legend x2 breaths (drawn, standing, origin on the sprite, no taller than awake, eyes shut, coloured)`, good: !bad.length, info: bad.slice(0, 4).join(", ") || "ok" });
     }
   }
   for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) { const r = G.rng(v + 1), t = f(r, st, st.treeSize * G.uni(r, .9, 1.1)), s = stats(t.sp); res.push({ what: `tree ${key} ${v}`, good: s.n > 200 && s.bottom > 0 && t.crownY > 0 && t.crownY < s.h, info: `${s.w}x${s.h}` }); }
@@ -164,7 +200,7 @@ const report = await b.page.evaluate(async () => {
       for (let f = 0; f < P.limbo.frames; f++) { const top = G.witchModel({ pose: "limbo", frame: f }).anchors.top; if (!(top && top[1] < G.LIMBO_BAR - .02)) bad.push(`limbo ${f} top ${top && top[1].toFixed(2)} not under the bar ${G.LIMBO_BAR}`); }
     }
     const counts = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.frames])), want = { stand: 3, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2,
-      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4 };
+      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4, dj: 20 };
     res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), sit (2), and the party's 21 (7 dances with the limbo, dance with a partner, hold hands, hug, high-five, laugh, drink, run, sit on the ground, stargaze, conga, twirl and twirled, the broom limbo's two holders), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors, the limbo dancer under the bar; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
   }
   { // her lean cycle (WITCH_FLIGHT_POSES.lean): 4 frames, both facings and both headings, at her ordinary scale, standing, hand and hat-tip anchors inside; the frames differ (it moves)
@@ -272,6 +308,27 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "treehouse: towards and away, 28 to 40 m, its top storey above the 24 m treetops; its giant tree's trunk 5 m+ across and crown 11 m+; fore (the DJ table) part of the whole; top + bottom = whole, the studio below the split; windows glow; anchors inside; the seat on the studio floor, the camera over it", good: !bad.length, info: bad.join("; ") || info });
   }
+  { // the DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): the DJ
+    // table's fore frames (DJ_FRAMES of them, one size, each different: the platters turning, the LEDs chasing; the first is the
+    // whole's own table); her DJ frames, facing us, every gesture's frames different, each with an upper layer (what's over the
+    // decks: her head and arms, none of her legs); stood with her ground anchor on the seat, every hand meant for the decks lands
+    // on the decks' pixels (not the desk's front or the room behind); djFrame plays every gesture over the set, two frames a beat
+    const bad = [], T = G.treehouseSprite(st), FF = T.foreFrames, key = sp => Array.from(sp.m).join(), seat = T.anchors.seat;
+    if (FF.length !== G.DJ_FRAMES || new Set(FF.map(f => f.w + "x" + f.h)).size !== 1 || new Set(FF.map(key)).size !== FF.length) bad.push("fore frames");
+    { const f0 = FF[0]; for (let y = 0; y < f0.h; y++) for (let x = 0; x < f0.w; x++) { const v = f0.m[y * f0.w + x]; if (v && T.fore.m[(y + T.foreBox.y) * T.fore.w + x + T.foreBox.x] !== v) { bad.push("fore frame 0 not the table"); y = f0.h; break; } } }
+    const DECK = new Set([G.M.SHADES, G.M.BODY3, G.M.COLLAR, G.M.RUNE, G.M.BELLY, G.M.FRAME, G.M.WOKEN]), onDeck = (x, y) => { const f0 = FF[0]; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = Math.round(x) - T.foreBox.x + dx, Y = Math.round(y) - T.foreBox.y + dy; if (X >= 0 && Y >= 0 && X < f0.w && Y < f0.h && DECK.has(f0.m[Y * f0.w + X])) return true; } return false; };
+    const P = G.WITCH_FOOT_POSES.dj, frames = [], deckHands = [0, 1, 4, 5, 6, 7, 8, 9, 15, 16, 17, 18];
+    for (let f = 0; f < P.frames; f++) {
+      const sp = G.witchSprite(st, { pose: "dj", frame: f }), up = sp.upper, n = sp.m.filter(Boolean).length, nu = up ? up.reduce((a, v) => a + v, 0) : 0; frames.push(key(sp));
+      let lowUp = 0; if (up) for (let i = 0; i < up.length; i++) if (up[i]) lowUp = Math.max(lowUp, Math.floor(i / sp.w));
+      if (!up || nu < n * .3 || nu > n * .9 || lowUp > sp.anchors.ground[1] - 8) bad.push(`dj ${f}: upper ${nu} of ${n}, lowest row ${lowUp}`);
+      if (deckHands.includes(f)) { const hx = seat.x - sp.anchors.ground[0] + sp.anchors.hand[0], hy = seat.y - sp.anchors.ground[1] + sp.anchors.hand[1]; if (!onDeck(hx, hy)) bad.push(`dj ${f}: hand off the decks (${hx.toFixed(1)}, ${hy.toFixed(1)})`); }
+    }
+    for (const fr of Object.values(G.DJ_GESTURES)) if (frames[fr[0]] === frames[fr[1]]) bad.push(`dj ${fr}: frames alike`);
+    const played = new Set(); for (let b = 0; b < 48 * 4; b += .25) played.add(G.djFrame(b)); const ROUTINE = new Set(["cast", "needle", "chirp", "spin"]); for (const [gname, fr] of Object.entries(G.DJ_GESTURES)) if (!ROUTINE.has(gname) && !fr.every(f => played.has(f))) bad.push(`djFrame never plays ${gname}`); // (the routine's: rules/djSet.ts, its test checks every gesture it names is drawn)
+    if (!G.DJ_GESTURES.cast.includes(G.djFrame(3.2, { cast: true }))) bad.push("djFrame cast");
+    res.push({ what: "DJ booth: the table's fore frames turn (one size, each different, the first the whole's table); her DJ frames facing us, every gesture's frames different, each with an upper layer (head and arms, no legs); her deck hands on the decks' pixels; djFrame plays every gesture", good: !bad.length, info: bad.join("; ") || `${FF.length} fore frames ${FF[0].w}x${FF[0].h}, ${P.frames} DJ frames` });
+  }
   { const H = G.soundsystemHeight(st), ws = G.witchSprite(st);
     for (let v = 0; v < G.SOUNDSYSTEMS.length; v++) {
       const play = [0, 1, 2].map(frame => stats(G.soundsystemSprite(st, { variant: v, frame }))), dmg = [0, 1].map(frame => stats(G.soundsystemSprite(st, { variant: v, frame, state: "damaged" }))), dead = stats(G.soundsystemSprite(st, { variant: v, state: "destroyed" }));
@@ -335,6 +392,35 @@ const report = await b.page.evaluate(async () => {
     const fl = G.floatSigil(id, { level: 3 });
     res.push({ what: `sigil ${id}: vector, 12 px glyph, inside the box, ground draw-on, four levels grow (no ring, a dotted ring, a full ring, then a banded double ring with rays; the dotted and full rings tell apart at 14 px), floating form`, good: inside && /<(polyline|circle)/.test(svg) && ink > 40 && gn > 8 && done > 60 && early < done && grows && ringsRead && pixels(fl) > 20, info: `${strokes.length} strokes, ${ink} px at 48, ${gn} px at 12, ground ${gr.map(g => g.w + "x" + g.h).join(" < ")}` });
   }
+  // legendary sigils (Ed, 2026-10-06: "huge, twice as wide and more detailed than the normal ones", then his reference, a magic
+  // circle with the animal in the centre): every species' has detail of its own (inside its unit box); its circle's lines all in
+  // the unit square, with three medallions, runes when full and none when small, its runes seeded (no two species' alike); its
+  // SVG, glyph, ground rune and floating form LEGEND_SCALE times a normal's or a legend's across and inkier; its carving mask
+  // whole, its outer ring touching the edge; the stack carries one
+  { const bad = [], runeKeys = new Set();
+    for (const S of G.SPECIES) {
+      const id = S.id, det = G.LEGEND_DETAIL[id] || [];
+      if (!det.length) bad.push(`${id}: no detail`);
+      if (det.some(k => (k.l || (k.d ? [k.d] : [])).some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1))) bad.push(`${id}: detail outside its box`);
+      const full = G.legendSigilStrokes(id, { tier: 2 }), small = G.legendSigilStrokes(id, { tier: 0 });
+      if (!full.every(k => k.pts.every(([x, y]) => x >= 0 && x <= 1 && y >= 0 && y <= 1))) bad.push(`${id}: outside its square`);
+      const runes = full.filter(k => k.kind === "rune").length;
+      if (runes < 60 || small.some(k => k.kind === "rune") || !small.some(k => k.kind === "animal") || small.length >= full.length) bad.push(`${id}: tiers (${runes} runes)`);
+      runeKeys.add(full.filter(k => k.kind === "rune").slice(0, 12).map(k => k.pts.map(p => p.map(v => v.toFixed(3)).join(",")).join(";")).join("|"));
+      if (!/width="128" height="128"/.test(G.sigilSVG(id, { size: 64, legendary: true }))) bad.push(`${id}: SVG not ×${G.LEGEND_SCALE}`);
+      const g = G.sigilGlyph(id, 32, { legendary: true }), animal = g.m.reduce((a, v, i) => a + (v && !g.frame[i] ? 1 : 0), 0), rim = g.frame.reduce((a, v) => a + v, 0);
+      if (g.w !== 64 || g.h !== 64 || animal < 30 || rim < 150) bad.push(`${id}: glyph ${g.w}x${g.h} ${animal}/${rim}`);
+      const r = G.groundSigil(id, { legendary: true }), r3 = G.groundSigil(id, { level: 3 }), f = G.floatSigil(id, { legendary: true }), f3 = G.floatSigil(id, { level: 3 });
+      if (r.w < r3.w * 1.8 || pixels(r) <= pixels(r3)) bad.push(`${id}: ground rune ${r.w}x${r.h} vs ${r3.w}x${r3.h}`);
+      if (f.w < f3.w * 1.7 || pixels(f) <= pixels(f3)) bad.push(`${id}: floating ${f.w}x${f.h}`);
+      const m = G.legendSigilMask(id, 128), edge = [64 * 128 + 1, 64 * 128 + 126, 128 + 64, 126 * 128 + 64].map(i => Math.max(m[i], m[i - 1], m[i + 1])), lit = m.reduce((a, v) => a + (v > .5 ? 1 : 0), 0);
+      if (edge.some(v => v < .3) || lit < 1200 || m.some(v => !(v >= 0 && v <= 1))) bad.push(`${id}: mask (edge ${edge.map(v => v.toFixed(1))}, ${lit} px)`);
+    }
+    if (runeKeys.size < G.SPECIES.length) bad.push(`runes alike: ${runeKeys.size} of ${G.SPECIES.length}`);
+    const st = new G.SigilStack(), it = st.push("wolf", 3, null, { legendary: true }); st.update(0, { head: [0, 0, 0] }); const lay = st.layout()[0];
+    if (!(lay.legendary && Math.abs(lay.width - lay.size) < 1e-9 && Math.abs(it.size - G.LEGEND_SCALE * G.floatSize(3)) < 1e-9)) bad.push("the stack's legendary sigil not twice a legend's");
+    res.push({ what: "legendary sigils: every species' magic circle with its own detail and runes, inside its square, full when big and simple when small, its SVG, glyph, ground rune and floating form twice a legend's and inkier, its carving mask whole; the stack carries one", good: !bad.length, info: bad.slice(0, 6).join(", ") || `${G.SPECIES.length} species` });
+  }
   { // the leash stack: still, it stands over her head, newest at the bottom; flying right, it trails left, higher sigils further; stopped, it settles back
     const s = new G.SigilStack(); ["wolf", "owl", "stag"].forEach(id => s.push(id, 1));
     for (let i = 0; i < 240; i++) s.update(1 / 60);
@@ -356,10 +442,17 @@ const report = await b.page.evaluate(async () => {
       if (!((hidden || (count(sp, G.M.COLLAR) > 0 && hats > 0)) && stats(sp).bottom > 0 && Math.abs(sp.bodyH - plain.bodyH) <= 1)) bad.push(`${S.id} ${level} ${facing}`);
       if (S.q && level > 0 && facing === "towards" && count(sp, G.M.SHOE) === 0) bad.push(`${S.id} ${level} shoes`);
     }
+    // every party shoe style on each fitting (a hoof, a paw, a claw) shows, the body no bigger; on the rig, a shoe piece at every heading
+    for (const [id, fit] of [["boar", "hoof"], ["fox", "paw"], ["owl", "claw"]]) for (const shoes of Object.keys(G.SHOE_STYLES)) {
+      const gear = { collar: G.sigilColour(id), shoes }, sp = G.critter(id, 2, 0, st, "towards", gear), plain = G.critter(id, 2, 0, st, "towards");
+      if (count(sp, G.M.SHOE) === 0 || (shoes === "lightup" && count(sp, G.M.COLLAR) <= count(G.critter(id, 2, 0, st, "towards", { collar: gear.collar }), G.M.COLLAR)) || Math.abs(sp.bodyH - plain.bodyH) > 1) bad.push(`${id} ${shoes} (${fit})`);
+      if (fit !== "claw") { const R = G.rigParts(id, 2, st, gear); if (!R?.pieces.shoe || R.pieces.shoe.some(p => !p)) bad.push(`${id} ${shoes} rig shoe`); }
+    }
+    if (G.rigParts("fox", 2, st, { collar: [1, 2, 3] })?.pieces.shoe) bad.push("fox barefoot rig has a shoe");
     const woke = G.SPECIES.filter(S => count(G.critter(S.id, 1, 0, st, "towards", { woken: true }), G.M.WOKEN) === 0).map(S => S.id);
     const mixes = Array.from({ length: 40 }, (_, i) => JSON.stringify(G.partyGear(i, [1, 2, 3]))), same = JSON.stringify(G.partyGear(5, [1, 2, 3])) === mixes[5];
     const varied = new Set(mixes).size > 10 && mixes.some(m => m.includes('"hat":null')) && mixes.some(m => !m.includes("null"));
-    res.push({ what: "party gear on all 30 at three levels, both views (collar, hat; shoes on four-legged feet; same body size); woken eyes; partyGear seeded and varied", good: !bad.length && !woke.length && same && varied, info: [...bad, ...woke.map(w => w + " not woken")].slice(0, 60).join(", ") || "ok" });
+    res.push({ what: "party gear on all 30 at three levels, both views (collar, hat; shoes on four-legged feet; same body size); every party shoe style on a hoof, a paw and a claw, and on the rig; woken eyes; partyGear seeded and varied", good: !bad.length && !woke.length && same && varied, info: [...bad, ...woke.map(w => w + " not woken")].slice(0, 60).join(", ") || "ok" });
   }
   { // only magical things glow (Ed's playtest: glowing gorse flowers floated over the night's dark bushes)
     const magic = new Set([G.M.GLINT, G.M.MAGIC, G.M.MAGIC2, G.M.RUNE, G.M.GLOW, G.M.COLLAR, G.M.WOKEN]), extra = [...G.EMISSIVE].filter(m => !magic.has(m));
@@ -426,15 +519,112 @@ const report = await b.page.evaluate(async () => {
     for (const id of ["meadow", "moor", "heath"]) for (const b of [...G.areaAssets(id, st).small, ...G.areaAssets(id, st).big]) if (G.SWAYING_PROPS.has(b.kind) && !(b.sway && b.sway.width === b.sp.w && b.sway.height === b.sp.h)) bad.push(`${id} ${b.kind} has no sway mask`);
     res.push({ what: "ground cover and wind: every area has 3+ tufts (8 to 13 px), weights adding to 1; trees' feet still and leaves swaying (tops most), rocks still, leafy props masked", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${G.AREAS.reduce((a, A) => a + G.tuftSprites(A.id, st).length, 0)} tufts over ${G.AREAS.length} areas` });
   }
+  { // the prop generator (art/props/, #119): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, no two alike;
+    // standing stones grey slabs 3 to 6 m tall (squat and broken ones from 1.4 m), plain (lichen and moss under a third of them) and wider than deep in the picture;
+    // cairns low (under 2.2 m) and wider than tall; pools wider than tall, mostly water, 1.5 to 5 m across (at the tall pieces' 16 px a metre); a broken trunk's wood all
+    // one piece (its branch joined to it, never a stick laid beside it); and under ?props=gen the moor and the muddy forest get
+    // 3 shapes of each stood-in prop
+    const bad = [], wood = new Set([G.M.TRUNK, G.M.BARKD, G.M.BARKL, G.M.BELLY]);
+    for (const kind of G.PROP_KINDS) {
+      const seen = new Set();
+      for (let seed = 0; seed < 12; seed++) {
+        const p = G.propPiece(kind, { seed }, G.AREA_BY_ID.moor, st), sp = p.sp, n = sp.m.filter(Boolean).length, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (n < 60 || !Array.from(sp.n).every(Number.isFinite)) { bad.push(`${kind} ${seed}: ${n} px`); continue; }
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${kind} ${seed} floats`);
+        if (seen.has(key)) bad.push(`${kind} ${seed} repeats another`); seen.add(key);
+        const share = mats => sp.m.filter(m => mats.includes(m)).length / n, { height, width } = p.metres;
+        if (kind === "standingStone") { const [r, g, b] = p.colours[G.M.STONE], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0; if (sat > .22 || height < (p.variant.shape === "squat" || p.variant.top === "broken" ? 1.4 : 3) || height > 6 || share([G.M.BELLY, G.M.MOSS]) > .33) bad.push(`stone ${seed}: sat ${sat.toFixed(2)}, ${height} m, marks ${share([G.M.BELLY, G.M.MOSS]).toFixed(2)}`); }
+        if (kind === "cairn" && (height > 2.2 || width < height)) bad.push(`cairn ${seed}: ${width} x ${height} m`);
+        if (kind === "pool" && (width < 1.5 || width > 5 || sp.h >= sp.w || share([G.M.WATER, G.M.BODY2, G.M.GLINT, G.M.ACCENT, G.M.WEB]) < .5)) bad.push(`pool ${seed}: ${width} x ${height} m, water ${share([G.M.WATER, G.M.BODY2, G.M.GLINT, G.M.ACCENT, G.M.WEB]).toFixed(2)}`); // (its glints, the sky's reflection and the moonlit rim are water too)
+        if (kind === "brokenTrunk" || kind === "fallenLog") { // the wood's pieces, by 4-neighbour flood fill (splinters and fungi on it touch it)
+          const lab = new Int32Array(sp.m.length).fill(-1); let parts = 0, big = 0;
+          for (let i = 0; i < sp.m.length; i++) { if (lab[i] >= 0 || !wood.has(sp.m[i])) continue; let size = 0; const q = [i]; lab[i] = parts; while (q.length) { const j = q.pop(); size++; const x = j % sp.w, y = (j / sp.w) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy, k = yy * sp.w + xx; if (xx >= 0 && yy >= 0 && xx < sp.w && yy < sp.h && lab[k] < 0 && (wood.has(sp.m[k]) || sp.m[k] === G.M.MOSS || sp.m[k] === G.M.FLOWER)) { lab[k] = parts; q.push(k); } } } parts++; if (size > 12) big++; }
+          if (big !== 1) bad.push(`broken trunk ${seed} (${p.variant.branch}): its wood in ${big} pieces`);
+        }
+      }
+    }
+    const gst = { ...st, propGen: 1 }, moor = G.areaAssets("moor", gst), muddy = G.areaAssets("muddy-forest", gst), sizes = l => new Set(l.map(a => a.sp.w + "x" + a.sp.h)).size;
+    if (moor.walls.length < 3 || sizes(moor.walls) < 3) bad.push(`moor pools ${moor.walls.length}, ${sizes(moor.walls)} shapes`);
+    if (sizes(moor.big.filter(a => a.kind === "standingstone")) < 3 || sizes(moor.big.filter(a => a.kind === "cairn")) < 3) bad.push("moor stones and cairns not 3 shapes each");
+    if (sizes(muddy.small.filter(a => a.kind === "stump")) < 3) bad.push("muddy forest's broken trunks not 3 shapes");
+    if (Math.max(...moor.big.map(a => a.metres?.height || 0)) < 4) bad.push("the moor has nothing 4 m tall under ?props=gen");
+    if (Math.abs(moor.big.filter(a => a.kind === "standingstone").reduce((t, a) => t + (a.sparse || 0), 0) - .12) > 1e-6) bad.push("the standing stones' sparse share changed");
+    res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk and fallen log one piece; logs, mushroom rings and stone circles too; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
+  { // the legend clearings' rim kit (#235; art/props/generator.js rimPiece, areaAssets' rim): every area has RIM_PIECES pieces, each drawn, standing
+    // on its bottom row, nothing NaN, none over a metre, none glowing, at least 3 shapes of them; open and stony areas mostly stones, cairns and
+    // boulders, wooded ones mostly toadstools, stumps and posts
+    const bad = [], EM = new Set([...G.EMISSIVE]), stony = new Set(["stone", "cairn", "boulder"]);
+    for (const def of G.AREAS) {
+      const a = G.areaAssets(def.id, st), rim = a.rim || [];
+      if (rim.length !== G.RIM_PIECES) { bad.push(`${def.id}: ${rim.length} rim pieces`); continue; }
+      for (const [k, b] of rim.entries()) {
+        const p = G.rimPiece({ k, seed: G.rimSeed(def, k) }, def, st), sp = p.sp, n = sp.m.filter(Boolean).length;
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++;
+        if (n < 25 || !bottom || !Array.from(sp.n).every(Number.isFinite) || b.metres.height > 1 || Array.from(sp.m).some(m => EM.has(m)) || b.kind !== p.form) bad.push(`${def.id} rim ${k} (${p.form}): ${n} px, ${b.metres.height} m${bottom ? "" : ", floats"}`);
+      }
+      if (new Set(rim.map(b => b.sp.w + "x" + b.sp.h)).size < 3) bad.push(`${def.id}: rim pieces under 3 shapes`);
+    }
+    for (const [id, want] of [["moor", true], ["ravine", true], ["rocky-slope", true], ["fern-forest", false], ["hazel-forest", false], ["bluebell-glade", false]]) {
+      const forms = [...Array(G.RIM_PIECES).keys()].map(k => G.rimForm(G.AREA_BY_ID[id], k)), share = forms.filter(f => stony.has(f)).length / forms.length;
+      if (want ? share < .5 : share > .5) bad.push(`${id}'s rim ${forms.join(",")}`);
+    }
+    res.push({ what: "legend clearings' rim kit: every area 6 small pieces (stones, cairns, boulders, toadstools, stumps, posts), each drawn and standing, under a metre, unlit, 3+ shapes; stony areas mostly stone, wooded ones mostly wood and toadstools", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
+  { // generated bridges (art/props/bridges.js, under ?props=gen): each bridge's variants draw and stand, none alike, nothing NaN,
+    // the hand-made piece's size within a third either way (so a crossing's corridor still fits), nothing glowing
+    const bad = [], EM = new Set([...G.EMISSIVE]);
+    for (const id of G.BRIDGE_IDS) {
+      const base = G.pathPieceSprite(id, st), seen = new Set();
+      for (let k = 0; k < 8; k++) {
+        const p = G.pathPieceSprite(`${id}~${k}`, st), sp = p.sp, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (!Array.from(sp.n).every(Number.isFinite) || sp.m.filter(Boolean).length < 200) { bad.push(`${id}~${k} empty or NaN`); continue; }
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${id}~${k} floats`);
+        if (seen.has(key)) bad.push(`${id}~${k} repeats another`); seen.add(key);
+        if (sp.w < base.sp.w * .67 || sp.w > base.sp.w * 1.33) bad.push(`${id}~${k} ${sp.w} px wide, the piece ${base.sp.w}`);
+        if (Array.from(sp.m).some(m => EM.has(m))) bad.push(`${id}~${k} glows`);
+      }
+    }
+    const posts = new Set(); // the fingerposts (only generated): standing, none alike, 1.4 to 3 m tall, unlit
+    for (let k = 0; k < 8; k++) {
+      const p = G.pathPieceSprite(`fingerpost~${k}`, st), sp = p.sp, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+      let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++;
+      if (!bottom || !Array.from(sp.n).every(Number.isFinite) || posts.has(key) || p.metres.height < 1.4 || p.metres.height > 3 || Array.from(sp.m).some(m => EM.has(m))) bad.push(`fingerpost~${k}: ${p.metres.height} m${bottom ? "" : ", floats"}${posts.has(key) ? ", repeats" : ""}`);
+      posts.add(key);
+    }
+    res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit; fingerposts 8 variants, standing, none alike, 1.4 to 3 m, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
+  { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
+    // (6 to 12 m across or tall) with their origin on the sprite, one warm glowing touch at most (a lantern, embers), a punt's and a jetty's pool mostly water;
+    // and an area naming one as its set piece gets it built (setPiece3d)
+    const bad = [], EM = new Set([...G.EMISSIVE]), water = [G.M.WATER, G.M.BODY2, G.M.ACCENT, G.M.WEB, G.M.GLINT];
+    for (const kind of G.SET_PROP_KINDS) {
+      const seen = new Set();
+      for (let seed = 0; seed < 12; seed++) {
+        const p = G.genSetPiece(kind, { seed }, G.AREA_BY_ID["muddy-forest"], st), sp = p.sp, n = sp.m.filter(Boolean).length, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (n < 400 || !Array.from(sp.n).every(Number.isFinite)) { bad.push(`${kind} ${seed}: ${n} px`); continue; }
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${kind} ${seed} floats`);
+        if (seen.has(key)) bad.push(`${kind} ${seed} repeats another`); seen.add(key);
+        const big = Math.max(p.metres.width, p.metres.height), o = p.origin; if (big < 6 || big > 12) bad.push(`${kind} ${seed}: ${p.metres.width} x ${p.metres.height} m`);
+        if (!(o.x >= 0 && o.x <= sp.w && o.y >= 0 && o.y <= sp.h)) bad.push(`${kind} ${seed}: origin off it`);
+        const lit = new Set(Array.from(sp.m).filter(m => EM.has(m) && m !== G.M.GLINT)); if (lit.size > 1 || [...lit].some(m => m !== G.M.GLOW)) bad.push(`${kind} ${seed} glows in ${[...lit].join(",")}`);
+        if ((kind === "punt" || kind === "jetty") && sp.m.filter(m => water.includes(m)).length / n < .3) bad.push(`${kind} ${seed}: little water`);
+      }
+    }
+    const fake = { ...G.AREA_BY_ID["muddy-forest"], id: "test-area" }, a = G.setPiece3d("jetty", fake, st), b = G.setPiece3d("jetty", { ...fake, id: "another-area" }, st);
+    if (!a.sp || !a.origin || a.sp.w * a.sp.h === b.sp.w * b.sp.h && a.sp.w === b.sp.w) bad.push("setPiece3d: a generated kind isn't built, or two areas get the same one");
+    res.push({ what: "set-piece generator: punts, jetties, rings and heaps, 12 variants each, standing, none alike, 6 to 12 m, origin on it, one warm glow at most, punts and jetties in their pools; an area naming one gets its own", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
   { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
     // (its trees across their heights, or for the open areas the tall pieces); the tall pieces (snag, cairn, standing stone, pillar, spire, stalagmite)
-    // stand on the ground, 4.5 to 12 m tall, and are flagged sparse (a small share of the area's big objects)
+    // stand on the ground, 4.5 to 12 m tall, and are flagged sparse (a small share of the area's big objects), or big where they stand in for
+    // the area's trees (the stone shrine's great standing stones: Ed, 2026-10-06)
     const bad = [], tallest = {};
     for (const A of G.AREAS) {
-      const a = G.areaAssets(A.id, st), hs = [...a.big.filter((b, i) => A.big[i][0] !== "tree").map(b => b.sp.h / 16), ...G.areaTreeVariants(A.id, st).map(v => v.metres.height)]; tallest[A.id] = Math.max(0, ...hs); // trees: their variants, sapling to giant
+      const a = G.areaAssets(A.id, st), hs = [...a.big.filter(b => A.big[b.from][0] !== "tree").map(b => b.sp.h / 16), ...G.areaTreeVariants(A.id, st).map(v => v.metres.height)]; tallest[A.id] = Math.max(0, ...hs); // trees: their variants, sapling to giant
       if (!(tallest[A.id] >= 4)) bad.push(`${A.id} ${tallest[A.id].toFixed(1)} m`);
-      a.big.forEach((b, i) => { const [kind, o] = A.big[i]; if (!G.TALL_KINDS.includes(kind)) return; let bottom = 0; const d = b.sp.A.getContext("2d").getImageData(0, b.sp.h - 1, b.sp.w, 1).data; for (let k = 3; k < d.length; k += 4) if (d[k]) bottom++;
-        if (!(bottom > 0 && b.metres && b.metres.height >= 4.5 && b.metres.height <= 12 && o.sparse > 0 && o.sparse <= .3)) bad.push(`${A.id} ${kind} ${b.metres?.height} m${bottom ? "" : ", floating"}`); });
+      a.big.forEach(b => { const [kind, o] = A.big[b.from]; if (!G.TALL_KINDS.includes(kind)) return; let bottom = 0; const d = b.sp.A.getContext("2d").getImageData(0, b.sp.h - 1, b.sp.w, 1).data; for (let k = 3; k < d.length; k += 4) if (d[k]) bottom++;
+        if (!(bottom > 0 && b.metres && b.metres.height >= 4.5 && b.metres.height <= 12 && (o.sparse > 0 && o.sparse <= .3 || o.big))) bad.push(`${A.id} ${kind} ${b.metres?.height} m${bottom ? "" : ", floating"}`); });
     }
     const open = ["moor", "stone-shrine", "log-pile", "ravine"].map(id => `${id} ${tallest[id].toFixed(1)} m`).join(", ");
     res.push({ what: "something tall in every area: a big piece 4 m+ in each; the open areas' tall pieces stand, 4.5 to 12 m, sparse", good: !bad.length, info: bad.join("; ") || `the open areas' tallest: ${open}` });
@@ -455,7 +645,7 @@ const report = await b.page.evaluate(async () => {
       const o = x.origin, inside = o && o.x >= 0 && o.x <= x.sp.w && o.y >= 0 && o.y <= x.sp.h, tight = x.metres.height * 16 === x.sp.h || Math.abs(x.metres.height * 16 - x.sp.h) < 1; // its origin on the sprite; metres match the cropped sprite
       if (!(big >= 6 && big <= 12 && bottom > 0 && inside && tight)) bad.push(`${A.id} ${x.metres.width}x${x.metres.height} m${bottom ? "" : ", floating"}${inside ? "" : ", origin"}${tight ? "" : ", metres"}`);
     }
-    res.push({ what: "set pieces: all 30 areas have one; the 20 new ones stand on the ground, 6 to 12 m across or tall, cropped (metres match the sprite), their origin on it", good: !bad.length && sizes.length === 20, info: bad.join(", ") || `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
+    res.push({ what: "set pieces: every area has one; the new ones (20 or more) stand on the ground, 6 to 12 m across or tall, cropped (metres match the sprite), their origin on it", good: !bad.length && sizes.length >= 20, info: bad.join(", ") || `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
   }
   { // modern relics, the playground, the sports grounds: each standing (decals flat), sized, tall ones split, only the flagged ones glow; arrangements name real pieces, at most one glowing piece each; sports grounds 15 to 30 m across
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
@@ -468,7 +658,7 @@ const report = await b.page.evaluate(async () => {
     const L = G.relicLayouts(st), arr = Object.entries(L).filter(([, list]) => !list.every(p => G.RELIC_BY_ID[p.id]) || list.filter(p => G.RELIC_BY_ID[p.id].glow).length > 1).map(([n]) => n);
     res.push({ what: "modern relics (15+), the playground (6 pieces) and the sports grounds: standing, decals flat, tennis/baseball/football 15-30 m across, tall ones split, only the flagged ones glow; arrangements name real pieces, one glowing touch at most", good: !bad.length && !arr.length && fam.modern >= 15 && fam.playground === 6 && fam.sports >= 12, info: [...bad, ...arr.map(n => n + " arrangement")].join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
   }
-  { // world decorations: 12 ruins in two conditions, 8 rocks, 8 freak trees, each standing, sized for its family; tall ones split; only the flagged ones glow; the lake kit
+  { // world decorations: 12 ruins in two conditions, 8 rocks, 13 freak trees, each standing, sized for its family; tall ones split; only the flagged ones glow; the lake kit
     const bad = [], fam = { ruins: 0, rocks: 0, freak: 0 }, EM = new Set([...G.EMISSIVE]); let tallRuins = 0, glowing = 0;
     for (const d of G.DECOR) for (let variant = 0; variant < d.variants; variant++) {
       const D = G.decorSprite(d.id, st, { variant }), sp = D.whole, s2 = stats(sp), big = Math.max(D.metres.width, D.metres.height), lit = [...sp.m].some(v => EM.has(v));
@@ -479,7 +669,7 @@ const report = await b.page.evaluate(async () => {
       if (!(s2.n > (d.family === "rocks" ? 30 : 100) && s2.bottom > 0 && size && split && lit === !!d.glow && D.metres.footprint > 0)) bad.push(`${d.id}/${variant} ${D.metres.width}x${D.metres.height} m${split ? "" : " split"}${lit === !!d.glow ? "" : " glow"}`);
     }
     const L = G.lakeKit(st), lake = L.water.w === 64 && L.water.h === 48 && L.shore.w === 64 && L.shore.h === 16 && [...L.reeds, ...L.lilies].every(x => stats(x).n > 20) && [...L.water.m].filter(v => v === G.M.WATER).length > 64 * 48 * .8;
-    res.push({ what: "world decorations: 12 ruins (two conditions), 8 rocks, 8 freak trees; standing; ruins 4-14 m, a few tall enough for the treetops; tall ones split top and bottom; only the flagged ones glow (3+ ruins); the lake kit", good: !bad.length && fam.ruins === 12 && fam.rocks === 8 && fam.freak === 8 && tallRuins >= 2 && glowing >= 3 && lake, info: bad.join(", ") || `${tallRuins} tall ruins, ${glowing} glowing` });
+    res.push({ what: "world decorations: 12 ruins (two conditions), 8 rocks, 13 freak trees; standing; ruins 4-14 m, a few tall enough for the treetops; tall ones split top and bottom; only the flagged ones glow (3+ ruins); the lake kit", good: !bad.length && fam.ruins === 12 && fam.rocks === 8 && fam.freak === 13 && tallRuins >= 2 && glowing >= 3 && lake, info: bad.join(", ") || `${tallRuins} tall ruins, ${glowing} glowing` });
   }
   { // countryside and street pieces: each standing on its bottom row, its origin on it, a sane size and footprint, tall ones split, only the flagged ones glow
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
@@ -571,6 +761,28 @@ const report = await b.page.evaluate(async () => {
     const ap = G.areaPathKinds(), none = G.AREAS.filter(A => !(ap[A.id] || []).length).map(A => A.id);
     res.push({ what: "paths: 10 kinds, each strip tiling with its end, Y and T; only the magic trail glows; railway variants, points, broken end, crossing; the 3D pieces stand, only flagged ones glow; every area suits a path kind", good: !bad.length && !none.length && G.PATH_IDS.length >= 10, info: [...bad, ...none.map(a => a + " has no path kind")].join(", ") || `${G.PATH_IDS.length} kinds, ${G.PATH_PIECES.length} pieces` });
   }
+  { // every generator draws (phase 1: the ones no other check reached): every beach find and print (prints at every heading), the bedroom,
+    // every broom kind under the witch, her hat alone both ways, every species' rune stone, a party patch, every legend's sprites; each
+    // non-empty, nothing NaN in its normals, every material it uses coloured, its origin (where it has one) on the sprite
+    const bad = [], seen = { beach: 0, brooms: 0, stones: 0, legends: 0 };
+    const nan = sp => { for (let i = 0; i < sp.n.length; i++) if (Number.isNaN(sp.n[i])) return true; return false; };
+    const look = (what, sp, col, origin) => {
+      const s = stats(sp); if (!(s.n > 0)) { bad.push(`${what} empty`); return; }
+      if (nan(sp)) bad.push(`${what} NaN normals`);
+      if (col) for (const v of new Set(sp.m)) if (v && v !== G.M.LINE && !col[v]) { bad.push(`${what} material ${v} uncoloured`); break; }
+      if (origin && !(origin.x >= 0 && origin.x <= sp.w && origin.y >= 0 && origin.y <= sp.h + 1)) bad.push(`${what} origin off the sprite`);
+    };
+    const bc = G.beachColours(st);
+    for (const d of [...G.BEACH_FINDS, ...G.BEACH_PRINTS]) for (let h = 0; h < (d.kind === "print" ? G.PRINT_HEADINGS : 1); h++) { const b = G.beachSprite(d.id, st, { heading: h }); look(`beach ${d.id}${h ? " heading " + h : ""}`, b.whole, bc, b.origin); seen.beach++; }
+    { const sp = G.bedroomSprite(st); look("bedroom", sp, G.bedroomColours(st)); if (!sp.anchors?.decks || !sp.anchors?.screen) bad.push("bedroom anchors"); }
+    const wc = G.witchColours(st);
+    for (const broom of G.WITCH_AXES.broom) { look(`broom ${broom}`, G.witchSprite(st, { look: { ...G.DEFAULT_LOOK, broom } }), wc); seen.brooms++; }
+    for (const facing of ["towards", "away"]) look(`witch hat ${facing}`, G.witchHatSprite(st, { facing }), wc);
+    for (const id of Object.keys(G.SIGIL_NEON)) { const b = G.runeStone(st, { sigil: id }); if (!(b.w > 4 && b.h > 4)) bad.push(`rune stone ${id}`); seen.stones++; }
+    { const p = G.partyPatch(1, (id, o) => G.scenePlacements(id, st, o)); if (!(p.length > 10) || p.some(q => !q.ref || Number.isNaN(q.x) || Number.isNaN(q.y))) bad.push(`party patch: ${p.length} pieces`); else { const missing = p.filter(q => !G.sceneRefExists(q.ref)); if (missing.length) bad.push(`party patch: ${missing[0].ref} is no piece`); } }
+    for (const id of G.LEGEND_IDS) { const L = G.legendSprites(id, st); if (!L || !Object.keys(L).length) bad.push(`legend sprites ${id}`); seen.legends++; }
+    res.push({ what: "every generator draws: the beach's finds and prints (every heading), the bedroom, every broom, the witch's hat both ways, every species' rune stone, a party patch, every legend's sprites; none empty, nothing NaN, every material coloured", good: !bad.length && seen.beach > 0 && seen.brooms >= 18, info: bad.slice(0, 6).join("; ") || `${seen.beach} beach pieces, ${seen.brooms} brooms, ${seen.stones} rune stones, ${seen.legends} legends` });
+  }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {
     const a = G.areaAssets(A.id, st), props = [...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])];
@@ -654,10 +866,46 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     for (const o of [{ frame: 0 }, { pose: "lean", frame: 2 }, { pose: "rise", frame: 0 }, { pose: "descend", frame: 1 }, { pose: "brake", frame: 0 }, { pose: "fast", frame: 0 }, { pose: "stand", frame: 1 }, { pose: "takeoff", frame: 0 }, { pose: "twoStep", frame: 2 }]) {
       const sp = W.witchSprite(st, { ...o, look }), n = sp.m.filter(Boolean).length, a = sp.anchors || {}, inside = p => p && p[0] >= 0 && p[1] >= 0 && p[0] < sp.w && p[1] < sp.h;
       if (n < 200 || !inside(a.hand) || !inside(a.hatTip)) bad.push(`seed ${seed} ${o.pose || "hover"}: ${n} px, anchors ${JSON.stringify(a)}`);
-      if (!o.pose) { if (!sp.m.some(v => v === M.MAGIC)) bad.push(`seed ${seed}: no glowing hatband`); if (sp.h < herH * .8 || sp.h > herH * 1.7) bad.push(`seed ${seed}: ${sp.h} px tall (hers ${herH})`); const k = key(sp); if (seen.has(k)) bad.push(`seed ${seed} looks like another`); seen.add(k); }
+      if (!o.pose) { if (g.hat.shape !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.MAGIC2 || v === M.COLLAR)) bad.push(`seed ${seed}: no glowing hatband`); if (sp.h < herH * .7 || sp.h > herH * 1.7) bad.push(`seed ${seed}: ${sp.h} px tall (hers ${herH})`); const k = key(sp); if (seen.has(k)) bad.push(`seed ${seed} looks like another`); seen.add(k); }
     }
   }
-  ok(!bad.length, `witch generator: her genome draws her exactly; 20 generated witches within limits, drawn in flight and on foot, anchors inside, hatband glowing, 0.8 to 1.7 times her height, none alike${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+  ok(!bad.length, `witch generator: her genome draws her exactly; 20 generated witches within limits, drawn in flight and on foot, anchors inside, hatband glowing, 0.7 to 1.7 times her height (no hat to a wizard's), none alike${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+  // Ed (138-140): bigger brims, longer cloaks, accessories witchy and modern, and the party witches generated
+  const acc = {}, fam = new Set(); let bigBrim = 0, longCloak = 0;
+  for (let seed = 0; seed < 60; seed++) { const g = Gn.witchGenome(seed); if (g.hat.brim > 1.5) bigBrim++; if (g.cloakLength > 1.4) longCloak++; for (const [k, v] of Object.entries(g.accessories)) if (v && v !== "none") acc[k] = (acc[k] || 0) + 1; fam.add(g.accessories.familiar); }
+  const want = ["familiar", "lantern", "vial", "book", "patches", "bumbag", "wristband", "chunky", "shades", "glowsticks", "phones"], missing = want.filter(k => !acc[k]), famMissing = Gn.WITCH_AXES.familiar.filter(f => !fam.has(f));
+  const pbad = [];
+  for (let seed = 0; seed < 12; seed++) {
+    const pw = W.partyWitch(seed); if (!pw.genome || Gn.witchGenomeProblems(pw.genome).length) pbad.push(`party witch ${seed} not a generated witch`);
+    for (const [pose, P] of Object.entries(W.WITCH_FOOT_POSES)) { if (!P.party) continue; for (let frame = 0; frame < P.frames; frame++) { const sp = W.witchSprite(st, { look: pw.look, pose, frame }), a = sp.anchors || {}, inside = q => q && q[0] >= 0 && q[1] >= 0 && q[0] < sp.w && q[1] < sp.h; if (sp.m.filter(Boolean).length < 150 || !inside(a.hand)) pbad.push(`party witch ${seed} ${pose} ${frame}`); } }
+  }
+  // Ed (round 11): every hat draws on her, flying and on foot, at the slider ends too, with its tip inside the sprite and (but none) something glowing
+  for (const hat of Gn.WITCH_AXES.hatShape) for (const ex of [{}, { hatHeight: Gn.WITCH_AXES.hatHeight[1], hatBrim: Gn.WITCH_AXES.hatBrim[1] }, { hatHeight: Gn.WITCH_AXES.hatHeight[0], hatBrim: Gn.WITCH_AXES.hatBrim[0] }]) for (const o of [{ frame: 0 }, { pose: "stand", frame: 0 }, { pose: "lean", frame: 1 }]) {
+    const look = { ...Gn.genomeLook(Gn.WITCH_GENOME).look, hat, ...ex, scarf: true, scarfLength: 3, bagSize: Gn.WITCH_AXES.bagSize[1], satchel: true, backpackSize: Gn.WITCH_AXES.backpackSize[1], cloak: "long", cloakLength: Gn.WITCH_AXES.cloakLength[1] };
+    const sp = W.witchSprite(st, { ...o, look }), a = sp.anchors || {}, inside = q => q && q[0] >= 0 && q[1] >= 0 && q[0] < sp.w && q[1] < sp.h;
+    if (sp.m.filter(Boolean).length < 200 || !inside(a.hatTip) || (hat !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.MAGIC2 || v === M.COLLAR))) pbad.push(`hat ${hat} ${JSON.stringify(ex)} ${o.pose || "hover"}`);
+  }
+  ok(!missing.length && !famMissing.length && bigBrim >= 12 && longCloak >= 12 && !pbad.length, `witch variety (Ed): over 60 generated witches every accessory shows (${want.join(", ")}) and every familiar (${Gn.WITCH_AXES.familiar.slice(1).join(", ")}); ${bigBrim} brims over 1.5 times hers, ${longCloak} cloaks over 1.4 times; 12 party witches are generated witches, drawn in every party pose with their hand inside; every hat (${Gn.WITCH_AXES.hatShape.length}) draws flying and on foot at the sliders' ends, its tip inside, glowing but none, with the longest scarf, cloak, biggest bag and backpack${missing.length || famMissing.length || pbad.length ? " — " + [...missing.map(k => "no " + k), ...famMissing.map(k => "no " + k), ...pbad.slice(0, 4)].join("; ") : ""}`);
+  // Ed (2026-10-06): every broom kind (art/brooms.js) draws in every flight pose and frame, both facings, and on foot (standing, landing,
+  // taking off), nothing NaN, her hand and hat tip inside; only her own colours (every material one witchColours paints), something
+  // of the broom's own (its body or trim) showing; about her size: hovering 0.85 to 1.6 times as tall as on hers and no more than
+  // 2.4 times as wide
+  const col = W.witchColours(st), hers = W.witchSprite(st, { frame: 0 }), bbad = [];
+  for (const kind of Gn.WITCH_AXES.broom) {
+    const look = { ...Gn.genomeLook(Gn.WITCH_GENOME).look, broom: kind }, sprites = [];
+    for (const facing of ["towards", "away"]) {
+      for (const [pose, P] of Object.entries(W.WITCH_FLIGHT_POSES)) for (let frame = 0; frame < P.frames; frame++) sprites.push([`${pose} ${frame} ${facing}`, W.witchSprite(st, { look, pose: pose === "hover" ? undefined : pose, frame, facing })]);
+      for (const pose of ["stand", "land", "takeoff"]) sprites.push([`${pose} ${facing}`, W.witchSprite(st, { look, pose, frame: 1, facing })]);
+    }
+    for (const [what, sp] of sprites) {
+      const a = sp.anchors || {}, inside = q => q && q.every(Number.isFinite) && q[0] >= 0 && q[1] >= 0 && q[0] < sp.w && q[1] < sp.h, mats = new Set(sp.m.filter(Boolean));
+      const stray = [...mats].filter(v => v !== M.LINE && !col[v]);
+      if (mats.size < 4 || sp.m.filter(Boolean).length < 200 || !inside(a.hand) || !inside(a.hatTip) || stray.length || !(mats.has(M.BROOM) || mats.has(M.STRAW))) bbad.push(`${kind} ${what}${stray.length ? " (material " + stray.join(",") + ")" : ""}`);
+    }
+    const hov = sprites[0][1], kh = hov.h / hers.h, kw = hov.w / hers.w;
+    if (kh < .85 || kh > 1.6 || kw > 2.4) bbad.push(`${kind} ${kh.toFixed(2)}× as tall, ${kw.toFixed(2)}× as wide as hers`);
+  }
+  ok(!bbad.length, `broom kinds (Ed, 2026-10-06): every one of the ${Gn.WITCH_AXES.broom.length} (${Gn.WITCH_AXES.broom.join(", ")}) draws in every flight pose and frame, both facings, and on foot, her hand and hat tip inside, only her colours, its body or trim showing, about her size${bbad.length ? " — " + bbad.slice(0, 6).join("; ") : ""}`);
 }
 // area flora (art/flora/areas.js): every wooded area lists 3 to 6 real species, shares adding to 1, its main kind first (as its big
 // names it), a palette within reason (sat and val 0.6 to 1.3); the open areas list none; fantasy species are never an area's main kind
@@ -678,6 +926,70 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     const slots = floraSlots(A.id, 10); for (const [id] of sp) if (!slots.some(o => o.type === id)) bad.push(`${A.id} deals no ${id}`);
   }
   ok(!bad.length, `area flora: ${wooded} wooded areas each grow 3 to 6 species in their own palette, main kind first, fantasy only as a minority${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
+// The art lint (overnight phase 3), on the sprites as the game bakes them (style.json, the bold style): no anti-aliased pixels
+// (alpha only 0, 254 for what glows, or 255); on the pixel grid (whole-pixel sizes and anchors); within its palette (at most
+// LINT_TONES colours a material: the bold style's three tones, its outline and a glint, so a gradient or a stray colour
+// fails); and a silhouette contact sheet (art/out/silhouettes.png, every species' adult squared to its box), warning of
+// look-alikes: overlap at least LINT_LOOKALIKE and about the same proportions.
+{
+  const LINT_TONES = 5, LINT_LOOKALIKE = .8, SIL = 24;
+  await b.page.goto(b.base + "/art/headless-blank.html");
+  const r = await b.page.evaluate(async ({ LINT_TONES, SIL }) => {
+    const G = await import("/art/generator.js"), { AREAS } = await import("/art/areas.js"), style = await (await fetch("/config/style.json")).json();
+    const st = { ...G.defaultStyle(), ...style, artStyle: "bold" }, aa = [], grid = [], pal = [];
+    let n = 0;
+    const lint = (what, A, w, h, sp) => {
+      n++;
+      if (![w, h].every(Number.isInteger)) grid.push(`${what} ${w}x${h}`);
+      for (const [k, v] of Object.entries(sp?.anchors ?? {})) if (Array.isArray(v) && v.some(x => typeof x === "number" && !Number.isInteger(x))) grid.push(`${what} anchor ${k}`);
+      const d = A.getContext("2d").getImageData(0, 0, w, h).data, cols = new Set();
+      let odd = 0;
+      for (let k = 0; k < d.length; k += 4) { const a = d[k + 3]; if (a && a !== 254 && a !== 255) odd++; if (a) cols.add((d[k] << 16) | (d[k + 1] << 8) | d[k + 2]); }
+      if (odd) aa.push(`${what} ${odd} px`);
+      if (sp?.m) { const mats = new Set(); for (const m of sp.m) if (m) mats.add(m); if (cols.size > LINT_TONES * mats.size + 2) pal.push(`${what} ${cols.size} colours, ${mats.size} materials`); }
+    };
+    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) for (const [frame, away] of [[0, false], [1, false], [0, true]]) {
+      const sp = G.critter(S.id, level, frame, st, away ? "away" : undefined), bk = G.bake(sp, G.speciesColours(S.id, st), st);
+      lint(`${S.id} level ${level} frame ${frame}${away ? " away" : ""}`, bk.A, bk.w, bk.h, sp);
+    }
+    for (const A of AREAS) { const a = G.areaAssets(A.id, st); for (const x of [a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])]) if (x?.sp?.A) lint(`${A.id} asset`, x.sp.A, x.sp.w, x.sp.h, x.sp); }
+    // The silhouettes: each species' adult, its drawn box squared to SIL × SIL.
+    const sil = G.SPECIES.map(S => {
+      const sp = G.critter(S.id, 2, 0, st);
+      let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
+      for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+      const bw = x1 - x0 + 1, bh = y1 - y0 + 1, m = new Uint8Array(SIL * SIL);
+      for (let j = 0; j < SIL; j++) for (let i = 0; i < SIL; i++) m[j * SIL + i] = sp.m[(y0 + Math.floor((j + .5) * bh / SIL)) * sp.w + x0 + Math.floor((i + .5) * bw / SIL)] ? 1 : 0;
+      return { id: S.id, m: Array.from(m), aspect: bw / bh };
+    });
+    return { n, aa, grid, pal, sil };
+  }, { LINT_TONES, SIL });
+  ok(!r.aa.length, `art lint, anti-aliasing: ${r.n} baked sprites (every species at every level, both frames and turned away; every area type's assets) have no half-transparent pixels${r.aa.length ? " — " + r.aa.slice(0, 6).join("; ") : ""}`);
+  ok(!r.grid.length, `art lint, the pixel grid: every sprite's size and anchors are whole pixels${r.grid.length ? " — " + r.grid.slice(0, 6).join("; ") : ""}`);
+  ok(!r.pal.length, `art lint, palette: no sprite has more than ${LINT_TONES} colours a material (+2)${r.pal.length ? " — " + r.pal.slice(0, 6).join("; ") : ""}`);
+  const alike = [];
+  for (let a = 0; a < r.sil.length; a++) for (let c = a + 1; c < r.sil.length; c++) {
+    const A = r.sil[a], B = r.sil[c]; let i = 0, u = 0;
+    for (let k = 0; k < A.m.length; k++) { i += A.m[k] & B.m[k]; u += A.m[k] | B.m[k]; }
+    if (i / u >= LINT_LOOKALIKE && Math.min(A.aspect, B.aspect) / Math.max(A.aspect, B.aspect) >= .85) alike.push(`${A.id} ~ ${B.id} (${(i / u).toFixed(2)})`);
+  }
+  // The contact sheet, the look-alikes framed in red.
+  const { mkdirSync, writeFileSync } = await import("node:fs"), cols = 8, cell = SIL * 3 + 8, sheet = await b.page.evaluate(({ sil, alike, cols, cell, SIL }) => {
+    const rows = Math.ceil(sil.length / cols), c = document.createElement("canvas"); c.width = cols * cell; c.height = rows * (cell + 10);
+    const g = c.getContext("2d"), flagged = new Set(alike.flatMap(s => s.split(" (")[0].split(" ~ ")));
+    g.fillStyle = "#1b1726"; g.fillRect(0, 0, c.width, c.height); g.font = "9px monospace";
+    sil.forEach((s, k) => {
+      const ox = (k % cols) * cell + 4, oy = Math.floor(k / cols) * (cell + 10) + 4;
+      g.fillStyle = "#e8e0ff"; for (let j = 0; j < SIL; j++) for (let i = 0; i < SIL; i++) if (s.m[j * SIL + i]) g.fillRect(ox + i * 3, oy + j * 3, 3, 3);
+      if (flagged.has(s.id)) { g.strokeStyle = "#ff4040"; g.strokeRect(ox - 2, oy - 2, SIL * 3 + 4, SIL * 3 + 4); }
+      g.fillStyle = "#a89cc0"; g.fillText(s.id, ox, oy + SIL * 3 + 10);
+    });
+    return c.toDataURL("image/png").split(",")[1];
+  }, { sil: r.sil, alike, cols, cell, SIL });
+  mkdirSync(new URL("./out/", import.meta.url), { recursive: true });
+  writeFileSync(new URL("./out/silhouettes.png", import.meta.url), Buffer.from(sheet, "base64"));
+  console.log(`${alike.length ? "WARN" : "ok  "} art lint, silhouettes: ${r.sil.length} adults on art/out/silhouettes.png${alike.length ? "; look alike: " + alike.join(", ") : ", none alike"}`);
 }
 await b.close();
 console.log(failed ? `${failed} check(s) failed` : "all checks passed");

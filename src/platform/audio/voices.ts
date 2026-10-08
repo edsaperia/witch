@@ -41,4 +41,4 @@ export function voiceOf(c: Creature, t: Tuning): CreatureVoice {
 }
 
 /** How it speaks: happy (on her side, guarding, at peace), enraged, or a wild one's grumble. */
-export const speechMood = (c: Creature): Mood => (c.leashed || c.guard || c.friendly || c.legendState === "happy" ? "happy" : c.enraged || c.siege ? "enraged" : "grumpy");
+export const speechMood = (c: Creature): Mood => (c.leashed || c.friendly || c.legendState === "happy" ? "happy" : c.enraged || c.siege ? "enraged" : "grumpy");

@@ -10,7 +10,7 @@ const P = TUNING.party.lossPenalty, I = TUNING.party.interval;
 /** A game a few seconds in, with `left` seconds to the next wave. */
 function game(left: number): Game {
   const g = newGame(7, TUNING);
-  g.clock.paused = false;
+  g.clock.paused = false; g.witch.seated = false; // (up from the decks: the boot-up counts from then)
   for (let i = 0; i < 30; i++) stepGame(g, idle, STEP);
   g.party.nextAt = g.clock.time + left;
   return g;
@@ -52,8 +52,9 @@ describe("a soundsystem lost brings the next wave sooner (Ed, 2026-10-05)", () =
     for (let i = 0; i < 60; i++) stepGame(g, idle, STEP); // a second later
     loseSoundsystem(g, "home", 0, 0);
     expect(leftOf(g)).toBeCloseTo(200 - 1 - 2 * P, 4);
-    expect(g.waveEvents.map(e => e.cut)).toEqual([P]);
-    expect(g.waveEvents[0].left).toBeCloseTo(200 - 1 - 2 * P, 4);
+    const lost = g.waveEvents.filter(e => e.kind === "soundsystemLost");
+    expect(lost.map(e => e.cut)).toEqual([P]);
+    expect(lost[0].left).toBeCloseTo(200 - 1 - 2 * P, 4);
   });
 
   it("a woken area's soundsystem lost ends its party and hurries the wave the same way", () => {

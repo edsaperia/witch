@@ -12,6 +12,7 @@
 //   node art/preview.mjs partyobjects litter|small|furniture|set|all|<ids> art/previews/party-objects.png [scale]   (the party objects, neon ones cycling the neons; NIGHT=1 to see them glow)
 //   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
 //   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row)
+//   node art/preview.mjs naps all|<species> art/previews/naps.png [scale]   (each species asleep, art/naps.js: baby, young and adult awake, then each asleep in its 2 breathing frames, the witch for scale; LEVELS=[...] to choose; DRESSED=1: in party gear awake, then asleep bare and asleep dressed)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
 //   node art/preview.mjs genome wolf,fox,...|all art/previews/genome-palettes.png [scale]   (each species' sprite baked once as a material mask, then painted with its own palette and every curated variant: no rebake)
 //   node art/preview.mjs silhouettes young|adult art/previews/silhouettes.png [scale]   (every species' shape at game size, 24 px, as the silhouette check sees it, then its sprite; the closest pairs listed in the log)
@@ -27,6 +28,7 @@
 //   node art/preview.mjs partywitches poses|outfits|pairs|lean art/previews/party-witches.png [scale]   (her party poses, a row per facing; the party outfits; pairs put together at their anchors; her lean cycle. ANCHORS=1, POSES=...)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
+//   node art/preview.mjs runestones all|<species> art/previews/runestones.png [scale]   (each species' rune stone with its sigil in its neon; NIGHT=1; PER=n to a row)
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
 //   node art/preview.mjs sigils all art/previews/sigils.png [scale]
 //   node art/preview.mjs witch headings art/previews/witch-headings.png [scale]   (her side view, then heading straight up the screen (away) and straight down it (towards): hover x3, lean, fast x3, brake x2; ANCHORS=1 marks her hand and hat tip)
@@ -34,6 +36,8 @@
 //   node art/preview.mjs tufts all|<areas> art/previews/tufts.png [scale]   (each area's ground-cover tufts on its floor, then their sway masks in grey; weights under them)
 //   node art/preview.mjs partyrelics all|<ids> art/previews/party-relics.png [scale]   (the party relics, half-buried, with the witch; their glint's frames, ground then treetop; their one sigil, bare and in each level's frame)
 //   node art/preview.mjs wind <species> art/previews/wind.png [scale]   (each species' mature tree in the pixel wind: 6 moments of a strong gust, each region (a blob) moving whole, by whole pixels; then the same with the smooth sway; CHANGES=1 colours each pixel by how far it moved)
+//   node art/preview.mjs props all|standingStone,cairn,pool,brokenTrunk art/previews/props.png [scale]   (the prop generator: a row of seeded variants per kind, the witch for scale; PER=n, AREA=<id> its grass, BOG=1 bog pools)
+//   node art/preview.mjs areaprops moor,muddy-forest art/previews/area-props.png [scale]   (each area's props as hand-made, then from the prop generator (?props=gen), a row each, the witch for scale)
 //   node art/preview.mjs witchgen 15|<seeds> art/previews/witches.png [scale]   (ours, then generated witches from their genomes: each hovering, leaning and standing; PER to a row)
 //   node art/preview.mjs sway <areas> art/previews/sway.png [scale]   (each area's trees and leafy props beside their sway masks: black is rigid, white sways most)
 //   node art/preview.mjs disco all|<ids> art/previews/dancefloor-patterns.png [scale]   (every dancefloor pattern's key frame from above, named, grouped by kind; PER=n to a row)
@@ -61,15 +65,20 @@ if (process.env.SMALL) await b.page.addInitScript(() => { window.SMALL = true; }
 if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
+if (process.env.DRESSED) await b.page.addInitScript(() => { window.DRESSED = true; });
 if (process.env.PER) await b.page.addInitScript(n => { window.PER = n; }, +process.env.PER);
 if (process.env.VARIANTS) await b.page.addInitScript(() => { window.VARIANTS = true; });
 if (process.env.HALVES) await b.page.addInitScript(() => { window.HALVES = true; });
 if (process.env.MIRROR) await b.page.addInitScript(() => { window.MIRROR = true; });
 if (process.env.VARIANT) await b.page.addInitScript(n => { window.VARIANT = n; }, +process.env.VARIANT);
+if (process.env.GENOME) await b.page.addInitScript(g => { window.GENOME = g; }, JSON.parse(process.env.GENOME));
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.STUDIO) await b.page.addInitScript(() => { window.STUDIO = true; });
 if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = true; });
+if (process.env.AREA) await b.page.addInitScript(a => { window.AREA = a; }, process.env.AREA);
+if (process.env.BOG) await b.page.addInitScript(() => { window.BOG = true; });
+if (process.env.SEEDS) await b.page.addInitScript(l => { window.SEEDS = l; }, process.env.SEEDS.split(",").map(Number));
 if (process.env.CHANGES) await b.page.addInitScript(() => { window.CHANGES = true; });
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
@@ -251,6 +260,12 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [];
     for (const id of ids) items.push(...[0, 1, 2, 3].map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
     for (let i = 0; i < ids.length; i += per) rows.push([...items.slice(i * 4, (i + per) * 4), wit]);
+  } else if (what === "naps" && window.DRESSED) { // per species: in party gear awake (adult), asleep as before (bare), asleep dressed (Ed, 2026-10-06: sleepers keep their party gear), the witch for scale
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
+    ids.forEach((id, n) => { const gear = G.partyGear(n * 3 + 1, G.sigilColour(id)), l = 2; rows.push([G.bake(G.critter(id, l, 0, st, "towards", gear), G.speciesColours(id, st, gear), st, st.cOutline), G.bake(G.critter(id, l, 0, st, "towards", { nap: true }), G.speciesColours(id, st), st, st.cOutline), G.bake(G.critter(id, l, 0, st, "towards", { ...gear, nap: true }), G.speciesColours(id, st, gear), st, st.cOutline), wit]); });
+  } else if (what === "naps") { // per species (or listed): baby, young and adult awake, then each asleep (art/naps.js: 2 breathing frames), then the witch for scale; LEVELS to choose
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), nap = { nap: true };
+    for (const id of ids) rows.push([...(window.LEVELS || [0, 1, 2]).map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)), ...(window.LEVELS || [0, 1, 2]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, "towards", nap), G.speciesColours(id, st), st, st.cOutline))), wit]);
   } else if (what === "legends") { // per species: its sleeping legend asleep (2 breathing frames), the legend awake as it is, then the witch for scale
     const ids = list === "all" ? G.LEGEND_IDS : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...G.LEGEND_STATES.flatMap(state => [...Array(G.LEGEND_FRAMES[state]).keys()].map(frame => { const { sp, colours } = G.legendForm(id, st, { state, frame, facing }); return G.bake(sp, colours, st, st.cOutline); })), G.bake(G.critter(id, 3, 0, st, facing), G.speciesColours(id, st), st, st.cOutline), wit]);
@@ -263,9 +278,19 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       items.push({ A, N, w: n * K, h: n * K }, G.bake(sp, G.speciesColours(S.id, st), st, st.cOutline));
     }
     for (let i = 0; i < items.length; i += 12) rows.push(items.slice(i, i + 12));
+  } else if (what === "shoes") { // per species: barefoot, then in each party shoe style (creatures3d.js shoe3d), at its adult (or LEVELS), with its collar
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
+    for (const id of ids) for (const l of window.LEVELS || [2]) rows.push([null, ...Object.keys(G.SHOE_STYLES)].map(shoes => { const gear = { collar: G.sigilColour(id), shoes, face: "happy" }; return G.bake(G.critter(id, l, 0, st, "towards", gear), G.speciesColours(id, st, gear), st, st.cOutline); }));
+  } else if (what === "genome") { // a genome record not in the bestiary yet (GENOME='{...}', a species record as in art/genome/species.js): its legend, adult, young and baby, then each again angry and happy
+    const g = window.GENOME, S = G.speciesOf(g), problems = G.genomeProblems(g); if (problems.length) throw new Error(problems.join("; "));
+    rows.push((window.LEVELS || [3, 2, 1, 0]).map(l => G.bake(G.critter(S, l, 0, st), G.speciesColours(S, st), st, st.cOutline)));
+    rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => ["angry", "happy"].map(face => G.bake(G.critter(S, l, 0, st, "towards", { face }), G.speciesColours(S, st), st, st.cOutline))));
   } else if (what === "faces") { // per species: its four expressions (neutral, angry, happy, dazed) at adult, young and baby, then angry with the woken look's red eyes (enraged)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...(window.LEVELS || [2, 1, 0]).flatMap(l => G.EXPRESSIONS.map(face => G.bake(G.critter(id, l, 0, st, facing, { face }), G.speciesColours(id, st), st, st.cOutline))), G.bake(G.critter(id, 1, 0, st, facing, { face: "angry", woken: true }), G.speciesColours(id, st, { woken: true }), st, st.cOutline)]);
+  } else if (what === "textures") { // per species: its legend, adult, young and baby untextured (texture 0), then a row textured (genome/texture.js)
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), off = { ...st, texture: 0 }, on = { ...st, texture: 1 };
+    for (const id of ids) for (const s2 of [off, on]) rows.push((window.LEVELS || [3, 2, 1, 0]).map(l => G.bake(G.critter(id, l, 0, s2), G.speciesColours(id, s2), s2, s2.cOutline)));
   } else if (what === "genome") { // per species: its adult baked once, then its material mask painted with each curated palette variant (#79 stage 2)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) {
@@ -274,7 +299,7 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     }
   } else if (what === "animals") {
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
-    for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
+    for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [...Array(G.walkGait(id).frames).keys()].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline)))); // (each level's walk cycle: two frames, or its own)
   } else if (what === "witch") { // per facing: the ordinary hover frame, then rise (two frames) and descend (two frames)
     const wc = G.witchColours(st), b = o => G.bake(G.witchSprite(st, o), wc, st, st.cOutline);
     // "foot": hover, then every on-foot pose's frames (stand, land, takeoff, talk, placeSigil, liftSigil); with ANCHORS=1 her hand and hat tip marked
@@ -291,6 +316,14 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const party = Object.entries(G.WITCH_FOOT_POSES).filter(([pose, P]) => P.party && (!window.POSES || window.POSES.includes(pose)));
     if (list === "poses") for (const facing of window.FACINGS || ["towards", "away"]) rows.push(party.flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => one({ facing, pose, frame }))));
     else if (list === "lean") { for (const facing of ["towards", "away"]) rows.push([one({ facing, lean: true }), ...[0, 1, 2, 3].map(frame => one({ facing, pose: "lean", frame }))]); for (const heading of ["away", "towards"]) rows.push([one({ heading, lean: true }), ...[0, 1, 2, 3].map(frame => one({ heading, pose: "lean", frame }))]); }
+    else if (list === "hats") { // every hat (WITCH_AXES.hatShape) on our witch: hovering towards, away, standing and leaning (HATCOL=1: each in its own colours)
+      const base = G.genomeLook(G.WITCH_GENOME).look, hues = [.0, .08, .14, .3, .5, .6, .75, .9];
+      rows.push(...[0, 1].map(half => G.WITCH_AXES.hatShape.filter((_, i) => i % 2 === half).flatMap((hat, i) => { const look = { ...base, hat }, col = window.HATCOL ? G.witchColours(st, { ...G.DEFAULT_OUTFIT, hat: [hues[(i * 2 + half) % hues.length], .65, .55] }, { styleHues: false }) : G.witchColours(st); return [one({ look, frame: 0 }, col), one({ look, frame: 0, facing: "away" }, col), one({ look, pose: "stand", frame: 0 }, col)]; })));
+    }
+    else if (list === "generated") { // the generated party witches (partyWitch(seed)), four to a row: each hovering, standing and dancing (two-step, spin); SEEDS=3,7,... picks them
+      const seeds = window.SEEDS || [...Array(16).keys()];
+      for (let row = 0; row < Math.ceil(seeds.length / 4); row++) rows.push(seeds.slice(row * 4, row * 4 + 4).flatMap(seed => { const w = G.partyWitch(seed), col = w.colours(st); return [one({ look: w.look, frame: 0 }, col), one({ look: w.look, pose: "stand", frame: 0 }, col), one({ look: w.look, pose: "twoStep", frame: 1 }, col), one({ look: w.look, pose: "spin", frame: 2 }, col)]; }));
+    }
     else if (list === "pairs") { // A, and her partner (mirrored, or the conga's witch ahead) placed so their anchors meet
       const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
       for (const [pose, Pr] of Object.entries(G.WITCH_PAIRS)) {
@@ -319,6 +352,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "lights") { // the campfire's frames, the magic stones, the pond
     const L = G.lightProps(st); rows.push([...L.campfire, ...Object.values(L.stones), L.pond]);
     if (list !== "all") rows.push(list.split(",").map((id, i) => G.runeStone(st, { glow: ["cyan", "violet", "green"][i % 3], sigil: id }))); // stones carved with these creatures' sigils
+  } else if (what === "runestones") { // every species' rune stone carved with its sigil in its own neon, eight to a row (NIGHT=1 to see them glow)
+    const ids = list === "all" ? Object.keys(G.SIGIL_NEON) : list.split(","), per = +(window.PER || 8);
+    for (let i = 0; i < ids.length; i += per) rows.push(ids.slice(i, i + per).map(id => G.runeStone(st, { glow: G.sigilColour(id), sigil: id })));
   } else if (what === "speakers") { // per angle (yaw from facing us): playing x3, damaged x2, destroyed; the witch for scale
     const col = G.dancefloorSpeakerColours(), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const angle of G.DANCEFLOOR_SPEAKER_ANGLES) rows.push([...[0, 1, 2].map(frame => ({ state: "playing", frame })), ...[0, 1].map(frame => ({ state: "damaged", frame })), { state: "destroyed" }].map(o => G.bake(G.dancefloorSpeakerSprite(st, { angle, ...o }).sp, col, st, "none")).concat([wit]));
@@ -362,6 +398,18 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const one = g => { const { look, outfit } = G.genomeLook(g), col = outfit ? G.witchColours(st, outfit, { styleHues: false }) : G.witchColours(st), b = o => G.bake(G.witchSprite(st, { ...o, look }), col, st, st.cOutline); return [b({ frame: 0 }), b({ pose: "lean", frame: 1 }), b({ pose: "stand", frame: 0 })]; };
     const items = [one(G.WITCH_GENOME), ...seeds.map(s => one(G.witchGenome(s)))];
     for (let i = 0; i < items.length; i += per) rows.push(items.slice(i, i + per).flat());
+  } else if (what === "rim") { // the legend clearings' rim kit: each area (all, or listed) a row of its 6 rim pieces, the witch closing each row
+    const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
+    for (const id of ids) rows.push([...G.areaAssets(id, st).rim.map(b => b.sp), wit]);
+  } else if (what === "props") { // the prop generator (art/props/): each kind (all, or listed), a row of variants (PER, default 8) from seeds 0.., the witch closing each row; AREA=moor for its grass
+    const kinds = list === "all" ? G.PROP_KINDS : list.split(","), per = window.PER || 8, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "moor"];
+    for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.propPiece(kind, { seed, ...(window.BOG ? { bog: true } : {}) }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);
+  } else if (what === "setgen") { // the set-piece generator (art/props/sets.js): each kind (all, or listed), a row of variants (PER, default 4) from seeds 0.., the witch closing each row; AREA=fen for its ground
+    const kinds = list === "all" ? G.SET_PROP_KINDS : list.split(","), per = window.PER || 4, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "muddy-forest"];
+    for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.genSetPiece(kind, { seed }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);
+  } else if (what === "areaprops") { // each listed area's props (walls, small, big but trees) as hand-made, then under ?props=gen (the prop generator's shapes), the witch closing each row
+    const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
+    for (const id of list.split(",")) for (const g of [0, 1]) { const a = G.areaAssets(id, { ...st, propGen: g }); rows.push([...a.walls, ...a.small, ...a.big.filter(b => b.kind !== "tree" && b.kind !== "mound")].map(b => b.sp).concat([wit])); }
   } else if (what === "partyrelics") { // the party relics (all or listed ids), the witch closing the row; then their glint's frames at the ground and treetop zooms; then their sigils (bare, then as a legend's)
     const ids = list === "all" ? G.PARTY_RELIC_IDS : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     rows.push([...ids.map(id => G.bake(G.partyRelicSprite(id, st).sp, G.partyRelicColours(id, st), st, "none")), wit]);

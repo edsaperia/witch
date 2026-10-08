@@ -1,34 +1,41 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
-import { Shake } from "./render/shake";
-import { Music } from "./platform/audio/music";
-import { Sfx } from "./platform/audio/sfx";
-import { SfxCues } from "./platform/audio/sfxCues";
-import { musicMix } from "./rules/music";
-import { musicCue, type MusicCue } from "./rules/musicPlan";
-import type { MusicStyle } from "./rules/musicScore";
-import musicStyleJson from "../config/music-style.json";
-import { setupArena } from "./rules/arena";
-import { newCamera } from "./rules/camera";
-import { setupQuestDemo } from "./rules/quest";
-import { witchHeight } from "./rules/witch";
-import { areaUnderWitch, interpolated, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
-import { AREA_TYPES } from "./rules/map";
-import { waveCountdown } from "./rules/party";
+import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
+import { FrameStats } from "./platform/frameStats";
+import { musicCue } from "./rules/musicPlan";
+import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
+import { awaitingSpell } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
-import { TUNING } from "./rules/tuning";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
-import { groundHeight } from "./render/height";
-import { SPRITE_UNIFORMS } from "./render/sprites";
-import { loadStyle } from "./render/style";
-import { setupTouch } from "./ui/touch";
+import { placed } from "./render/height";
+import { Vector3 } from "three";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
+import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
-import { powerReport } from "./rules/power";
+import { StallLog } from "./platform/stallLog";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
+import { BOT_KINDS, type BotKind } from "./rules/botKinds";
+import type { Bot } from "./rules/bot";
+import type { BotTag } from "./ui/botGame";
+import { pleasingWitch } from "./ui/looks";
+import type { DecidePanel } from "./ui/decide";
+import { tuningFromLink } from "./app/linkParams";
+import { Hud } from "./app/hud";
+import { setupKnobs } from "./app/knobs";
+import { Sound } from "./app/sound";
+import { OutputMeter } from "./platform/audio/outputMeter";
+import { gameFromLink } from "./app/gameParams";
+import { styleFromLink, viewFromLink } from "./app/viewParams";
+import { setupActionBar, setupDebugKeys } from "./app/keys";
+import { ScreenShake } from "./app/shake";
+import { playerPick as makePlayerPick } from "./app/playerPick";
+import { installHooks } from "./app/hooks";
+import { PerfHud } from "./app/perfHud";
+import { installPixelUi } from "./ui/pixelUi";
+import { debugBlows } from "./rules/alarms";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -38,248 +45,58 @@ if (seed === null) {
   history.replaceState(null, "", "?" + params.toString() + location.hash);
 }
 
-// Variants as switches in the link: ?tilt=before|after|off, ?bloom=off, ?shadows=off,
-// ?canopy=off (the canopy shadow layer), ?mist=off.
-const tuning = {
-  ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift, treetop: { ...TUNING.tiltShift.treetop } },
-  shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
-  party: { ...TUNING.party }, fight: { ...TUNING.fight }, // (the fight's scale and speed change live: its own copy)
-};
-// ?px=3|4|5: the art pixel (screen pixels per art pixel; the tuning's pixelSize), per load, to compare the pixel-art
-// styles in play (docs/ART-GUIDE.md section 0: Ed picks between bold and ref at 4 or 5 in playtesting).
-{ const px = Number(params.get("px")); if ([2, 3, 4, 5, 6].includes(px)) tuning.pixelSize = px; }
-if (params.get("shadows") === "off") tuning.shadows.on = false;
-if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
-if (params.get("mist") === "off") tuning.mist.on = false;
-const tilt = params.get("tilt");
-if (tilt === "off") tuning.tiltShift.on = false;
-else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
-// ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).
-else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
-if (params.get("bloom") === "off") tuning.bloom.on = false;
-if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
-const witchesParam = Number(params.get("witches")); // debug: this many more party witches
-if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(48, Math.floor(witchesParam)) };
-if (params.get("find") === "0") tuning.find = { ...tuning.find, on: false }; // Ed, v244: compare without the find-in-the-dark looks
-// ?rune=beam|column|both: how an awake rune stone shows above it.
-const runeParam = params.get("rune");
-if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMarkers = { ...tuning.runeMarkers, awakeStyle: runeParam };
-// ?picker=noisy|near3|near3touch|nearest: how the party picks the next area to wake.
-const pickerParam = params.get("picker");
-if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
-// ?glow=<reach>,<falloff>: the witch's glow, to tune live (e.g. ?glow=50,2.5).
-const glowParam = params.get("glow")?.split(",").map(Number);
-if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
-if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
-// The music's style (config/music-style.json) sets the beat everything pulses to.
-const musicStyle = musicStyleJson as unknown as MusicStyle;
-// The beat's base tempo is the style's; each wave's tempo is its arc step's (Ed: 120 rising to about 140).
-tuning.beat = { ...tuning.beat, bpm: musicStyle.bpm, tempos: musicStyle.arc.map(a => a.bpm ?? musicStyle.bpm), blockBars: musicStyle.blockBars, rampBars: musicStyle.tempoRampBars ?? 8 };
-// ?music=off: no music; ?music=<section> plays that section of the style over and over (e.g.
-// ?music=drop); ?music=wave<N> plays wave N's music whatever the wave (e.g. ?music=wave7).
-const musicParam = params.get("music") ?? "";
-if (musicParam === "off") tuning.music = { ...tuning.music, on: false };
-let musicCueNow: MusicCue | undefined;
-{
-  const m = /^wave(\d+)$/.exec(musicParam);
-  if (m || musicStyle.sections[musicParam]) musicCueNow = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: m ? +m[1] : undefined, forceSection: m ? undefined : musicParam };
-  // a wave's music plays at that wave's tempo throughout
-  if (m) tuning.beat = { ...tuning.beat, tempos: [tuning.beat.tempos![Math.min(+m[1], tuning.beat.tempos!.length - 1)]] };
-}
-// ?blend=off: neighbouring areas' floors meet on a plain edge (to compare); ?blend=<warp>,<fine>,<band> tunes it.
-const blendParam = params.get("blend");
-if (blendParam === "off") tuning.groundBlend = { ...tuning.groundBlend, on: false };
-else if (blendParam) { const [w, f, b] = blendParam.split(",").map(Number); tuning.groundBlend = { ...tuning.groundBlend, warp: w || 0, fine: f || 0, band: b || 0 }; }
-// ?border=<twinkle>,<swapRate>,<swapBeat>: the party border's sparkle.
-const borderParam = params.get("border")?.split(",").map(Number);
-if (borderParam) { const [tw, sr, sb] = borderParam; tuning.borders = { ...tuning.borders, ...(tw >= 0 ? { twinkle: tw } : {}), ...(sr >= 0 ? { swapRate: sr } : {}), ...(sb >= 0 ? { swapBeat: sb } : {}) }; }
-// ?grass=0..2: how thick the ground cover is (0 none).
-const grassParam = params.get("grass");
-if (grassParam !== null && !isNaN(Number(grassParam))) tuning.groundCover = { ...tuning.groundCover, density: Number(grassParam) };
-// ?wind=<strength>: the wind's sway (0 still).
-const windParam = params.get("wind");
-if (windParam !== null && !isNaN(Number(windParam))) tuning.wind = { ...tuning.wind, strength: Number(windParam) };
-// ?relief=<strength>: the ground's fake relief (0 flat).
-const reliefParam = params.get("relief");
-if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { ...tuning.ground, relief: { ...tuning.ground.relief, strength: Number(reliefParam) } };
-// ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
-const hillsParam = params.get("hills");
-if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
-// ?ley=0: no ley lines through the runestones.
-if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
-if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
-// ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
-// trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
-// point lights, glow or haze, and a low raking moonlight. ?bare=2: a flat grey ground with contour
-// lines every 0.5 m and a 10 m grid, instead of its textures.
-const bare = Math.max(0, Math.min(2, Number(params.get("bare")) || 0));
-if (bare) {
-  tuning.groundCover = { ...tuning.groundCover, on: false };
-  tuning.mist = { ...tuning.mist, on: false };
-  tuning.canopyShadow = { ...tuning.canopyShadow, on: false };
-  tuning.shadows = { ...tuning.shadows, on: false };
-  tuning.stringLights = { ...tuning.stringLights, on: false };
-  tuning.bare = bare;
-}
-// ?clouds=<count>: how many clouds (0 none), to compare and to measure.
-const cloudsParam = params.get("clouds");
-if (cloudsParam !== null && !isNaN(Number(cloudsParam))) tuning.sky = { ...tuning.sky, clouds: { ...tuning.sky.clouds, count: Math.max(0, Number(cloudsParam)) } };
-// ?sky=off: no night sky over the bend (the plain dark background), to compare and to measure.
-if (params.get("sky") === "off") tuning.sky = { ...tuning.sky, on: false };
-// ?curve=<treetop>: the world's bend over the treetops (0 off), to try values live.
-const curveParam = params.get("curve");
-if (curveParam !== null && !isNaN(Number(curveParam))) tuning.camera = { ...tuning.camera, curve: { ...tuning.camera.curve, treetop: Number(curveParam) } };
-const fx = params.get("fx");
-if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
-
-// Area size and treetop speed, to play with (Ed, 2026-10-05: "compared to now, areas should be
-// fairly large, and treetop mode should be much faster than ground mode"): ?areaSize=<metres> (or
-// ?areaScale=), ?treetopSpeed=<m/s> and ?mapAreas=<n>, remembered on this browser till changed or
-// reset (in the debug overlay, ~, where treetop speed also has a live slider). Area size makes the
-// map, so it's set by the link alone. Every change goes in the playtest log.
-const WORLD_DEFAULT = { areaSize: TUNING.areaSize * TUNING.areaScale, treetopSpeed: TUNING.treetopSpeed, mapAreas: TUNING.mapAreas };
-const world = { ...WORLD_DEFAULT };
-{
-  try { const v = localStorage.getItem("witch.world"); if (v) Object.assign(world, JSON.parse(v)); } catch { /* storage blocked */ }
-  const size = Number(params.get("areaSize")), scale = Number(params.get("areaScale")), speed = Number(params.get("treetopSpeed")), n = Number(params.get("mapAreas"));
-  if (size > 0) world.areaSize = size; else if (scale > 0) world.areaSize = TUNING.areaSize * scale;
-  if (speed > 0) world.treetopSpeed = speed;
-  if (n > 0) world.mapAreas = n;
-  world.areaSize = Math.round(Math.min(560, Math.max(56, world.areaSize)));
-  world.treetopSpeed = Math.round(Math.min(300, Math.max(8, world.treetopSpeed)));
-  world.mapAreas = Math.round(Math.min(30, Math.max(6, world.mapAreas)));
-  tuning.areaScale = world.areaSize / tuning.areaSize; tuning.treetopSpeed = world.treetopSpeed; tuning.mapAreas = world.mapAreas;
-  try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
-}
-
+// The link's switches and the tuning for this load (app/linkParams.ts).
+const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
+let musicCueNow = linkMusicCue;
 const game = newGame(seed, tuning);
-// ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
-// dreams of on her stack; put its sigil down there (E) to make it happy.
-if (params.get("quest")) setupQuestDemo(game, (x, z) => {
-  game.witch = { ...game.witch, x, z, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
-  game.camera = newCamera(tuning, x, witchHeight(game.witch, tuning), z);
-  game.introFocus = undefined;
-});
-// ?arena=wolf*4,beetle*3 (Stage 5, a debug arena): hers against the wild in the home clearing,
-// no waves; J sets it up again.
-const arenaParam = params.get("arena");
-if (arenaParam) {
-  setupArena(game, arenaParam);
-  window.addEventListener("keydown", e => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); });
-}
-
-// How often the party spreads: the tuning file's interval (5 minutes), or ?wave=<seconds> (0 or
-// "off": no waves), or what this viewer last picked on the start screen.
-const WAVE_CHOICES = [30, 60, 120, 300, 600, 0];
-function setWaveInterval(sec: number): void {
-  tuning.party.interval = sec > 0 ? sec : 1e9;
-  game.party.paused = sec === 0;
-  game.party.nextAt = Math.max(game.clock.time, game.party.bootUntil) + tuning.party.startDelay + tuning.party.interval; // after the boot-up
-  document.querySelectorAll<HTMLButtonElement>("#waves button").forEach(b => b.classList.toggle("on", +b.dataset.s! === sec));
-}
-let waveChoice = tuning.party.interval;
-try { const saved = localStorage.getItem("witch.wave"); if (saved !== null && WAVE_CHOICES.includes(+saved)) waveChoice = +saved; } catch { /* storage blocked */ }
-const waveParam = params.get("wave");
-if (waveParam !== null) waveChoice = waveParam === "off" ? 0 : Math.max(0, +waveParam || 0);
-if (arenaParam) waveChoice = 0;
+// The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
+const { WAVE_CHOICES, setWaveInterval, waveChoice } = gameFromLink(game, tuning, params);
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
-const style = loadStyle();
-{ const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
-if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
+const style = styleFromLink(params, tuning); // (app/viewParams.ts)
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 // Her look (the character creator's, kept on this browser; else the classic witch).
 const savedLook = loadGenome();
+/** Whether her look has a hat to lose on a knockout (rules/hat.ts; Ed, 2026-10-06: "If she chooses no hat in character creation, then she simply doesn't have this mechanic"). */
+const hasHat = (g: unknown) => (g as { hat?: { shape?: string } } | null)?.hat?.shape !== "none";
+const wearHat = (g: unknown) => { const H = game.witches[0].hat; H.has = hasHat(g); if (!H.has) H.down = null; };
+wearHat(savedLook);
 const view = new View(canvas, game, {
   ...style, pixel: tuning.pixelSize,
   // Trees taller by treeHeight; crowns wider by crownWidth in all (treeHeight widens them too).
   treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight,
 }, savedLook);
 loadTimes.view = performance.now();
-view.debugCull = params.get("debug") === "cull";
-view.quick = params.get("quick") === "1";
-// ?scenery=<metres>: a fixed scenery radius instead of the adaptive budget.
-const sceneryAt = Number(params.get("scenery"));
-if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
+viewFromLink(view, params); // (app/viewParams.ts)
+void installPixelUi(); // (the pixel font, for the HUD's edge cues' labels too: render/indicator.ts)
+const ATTACK_DEBUG = params.get("debug") === "attack";
+let attackTick = -1;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
-document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
-document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
-setupTouch(document.body, input.touch);
-
-// Metre rulers and a ground grid: G, the debug button, or on with ?debug.
-view.rulers.on = params.has("debug");
-const toggleRulers = () => { view.rulers.on = !view.rulers.on; };
-window.addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat) toggleRulers(); });
-// M: the debug minimap (the party's spread: woken areas, the next to wake, the candidates).
-window.addEventListener("keydown", e => { if (e.code === "KeyM" && !e.repeat) view.minimap.on = !view.minimap.on; });
-document.getElementById("rulers")!.addEventListener("pointerdown", e => { e.preventDefault(); toggleRulers(); });
+const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
+/** Where a dodge would put her now (toward the cursor, rules/dash.ts), in client pixels, for the reticle's mark. */
+const landV = new Vector3();
+function dashLanding(): { x: number; y: number } | null {
+  const a = input.lastAim, D = game.buffs.tuning.dash, W = game.witch;
+  if (!a || !D.toCursor || W.mode !== "ground") return null;
+  const l = Math.hypot(a.x, a.z), dx = l >= D.aimDead ? a.x / l : W.facing, dz = l >= D.aimDead ? a.z / l : 0;
+  placed(landV.set(W.x + dx * D.distance, 0, W.z + dz * D.distance)).project(view.camera);
+  const r = canvas.getBoundingClientRect();
+  return { x: r.left + (landV.x * 0.5 + 0.5) * r.width, y: r.top + (-landV.y * 0.5 + 0.5) * r.height };
+}
+setupDebugKeys(view, input, params); // (app/keys.ts)
 // The playtest log (Ed, 2026-10-04): a sample every 10 s of play, kept on this browser; L, or
 // opening the game with ?playtest=download, saves the last few runs as JSON.
 const playtest = new PlaytestLog(game, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
 window.addEventListener("keydown", e => { if (e.code === "KeyL" && !e.repeat) playtest.download(); });
 if (params.get("playtest") === "download") setTimeout(() => playtest.download(), 500);
 
-// The fight's scale and speed (Ed's motion scale pass): live in the debug overlay (~), [ and ] for
-// scale, ; and ' for speed, with sliders and a reset; remembered on this browser; ?fightScale= and
-// ?fightSpeed= set where they start. Every change goes in the playtest log.
-const FIGHT_DEFAULT = { ...TUNING.fight };
-const knobs = document.getElementById("fight-knobs")!;
-const setFight = (scale: number, speed: number, log = true, momentum = tuning.fight.momentum) => {
-  const clamp = (x: number) => Math.round(Math.min(3, Math.max(0.25, x)) * 100) / 100;
-  tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); tuning.fight.momentum = clamp(momentum); // (shared with the buffed tuning: live mid-fight)
-  try { localStorage.setItem("witch.fight", JSON.stringify(tuning.fight)); } catch { /* fine */ }
-  for (const [k, v] of [["scale", tuning.fight.scale], ["speed", tuning.fight.speed], ["momentum", tuning.fight.momentum]] as const) {
-    (knobs.querySelector(`input[name=${k}]`) as HTMLInputElement).value = String(v);
-    knobs.querySelector(`.${k}`)!.textContent = v.toFixed(2);
-  }
-  if (log) playtest.fight(tuning.fight.scale, tuning.fight.speed, tuning.fight.momentum);
-};
-{
-  let start = { ...FIGHT_DEFAULT };
-  try { const v = localStorage.getItem("witch.fight"); if (v) start = { ...start, ...JSON.parse(v) }; } catch { /* storage blocked */ }
-  const fs = Number(params.get("fightScale")), fv = Number(params.get("fightSpeed"));
-  if (fs > 0) start.scale = fs;
-  if (fv > 0) start.speed = fv;
-  const fm = Number(params.get("fightMomentum"));
-  if (fm > 0) start.momentum = fm;
-  setFight(start.scale, start.speed, start.scale !== FIGHT_DEFAULT.scale || start.speed !== FIGHT_DEFAULT.speed || start.momentum !== FIGHT_DEFAULT.momentum, start.momentum ?? FIGHT_DEFAULT.momentum);
-}
-// Treetop speed, live (the world's knobs: see WORLD_DEFAULT above); area size and the map's are the link's.
-const setTreetop = (speed: number, log = true) => {
-  world.treetopSpeed = Math.round(Math.min(300, Math.max(8, speed)));
-  tuning.treetopSpeed = world.treetopSpeed;
-  (game.buffs as { base?: unknown }).base = undefined; // (a legend's buffed copy is made afresh with it)
-  try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
-  (knobs.querySelector("input[name=treetop]") as HTMLInputElement).value = String(world.treetopSpeed);
-  knobs.querySelector(".treetop")!.textContent = String(world.treetopSpeed);
-  knobs.querySelector(".area")!.textContent = `${world.areaSize} m, ${world.mapAreas} x ${world.mapAreas}`;
-  if (log) playtest.world(world.areaSize, world.treetopSpeed, world.mapAreas);
-};
-setTreetop(world.treetopSpeed, world.areaSize !== WORLD_DEFAULT.areaSize || world.treetopSpeed !== WORLD_DEFAULT.treetopSpeed || world.mapAreas !== WORLD_DEFAULT.mapAreas);
-knobs.querySelector(".world-reset")!.addEventListener("click", () => {
-  try { localStorage.removeItem("witch.world"); } catch { /* fine */ }
-  for (const k of ["areaSize", "areaScale", "treetopSpeed", "mapAreas"]) params.delete(k);
-  location.search = params.toString(); // (a new map: area size and the map's are made with it)
-});
-knobs.addEventListener("input", e => { const el = e.target as HTMLInputElement; if (el.name === "treetop") { setTreetop(+el.value); return; } setFight(el.name === "scale" ? +el.value : tuning.fight.scale, el.name === "speed" ? +el.value : tuning.fight.speed, true, el.name === "momentum" ? +el.value : tuning.fight.momentum); });
-knobs.querySelector(".fight-reset")!.addEventListener("click", () => setFight(FIGHT_DEFAULT.scale, FIGHT_DEFAULT.speed, true, FIGHT_DEFAULT.momentum));
-for (const ev of ["pointerdown", "keydown"]) knobs.addEventListener(ev, e => e.stopPropagation()); // (its own presses don't fly her)
-window.addEventListener("keydown", e => {
-  const k = { BracketLeft: [1 / 1.1, 1, 1], BracketRight: [1.1, 1, 1], Semicolon: [1, 1 / 1.1, 1], Quote: [1, 1.1, 1], Comma: [1, 1, 1 / 1.1], Period: [1, 1, 1.1] }[e.code];
-  if (k) setFight(tuning.fight.scale * k[0], tuning.fight.speed * k[1], true, tuning.fight.momentum * k[2]);
-});
+// The debug knobs: the fight's scale and speed, the treetop speed (app/knobs.ts).
+const knobs = setupKnobs(tuning, game, world, WORLD_DEFAULT, params, playtest);
 
-// The action bar (1 2 3 4 Q W E R, its keys and recharge) replaces the old line of controls (Ed,
-// 2026-10-04); H shows or hides it (remembered on this browser).
-let barOn = true;
-try { if (localStorage.getItem("witch.bar") === "off") { barOn = false; view.actionBar.visible = false; } } catch { /* storage blocked: shown */ }
-window.addEventListener("keydown", e => {
-  if (e.code !== "KeyH" || e.repeat) return;
-  barOn = !barOn; view.actionBar.visible = barOn;
-  try { localStorage.setItem("witch.bar", barOn ? "on" : "off"); } catch { /* fine */ }
-});
+// The action bar, H shows or hides it (app/keys.ts).
+setupActionBar(view);
 
 // Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): 1 or T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
@@ -303,36 +120,16 @@ setupStartScreen({
 });
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
-const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
-const debugButtons = document.getElementById("debug-buttons")!;
-const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector<HTMLElement>(".fill")!, waveLabel = waveEl.querySelector<HTMLElement>(".label")!;
-/** The wave countdown bar: empties toward the next wave. */
-function waveHud(): void {
-  const cd = waveCountdown(game.party, game.map, game.clock.time);
-  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
-  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
-  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
-  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
-  waveEl.classList.toggle("paused", game.party.paused);
-}
-// A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
-// bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
-let lossShown = -1;
-function showLoss(e: WaveEvent): void {
-  lossShown = e.at;
-  waveEl.classList.remove("lost"); void waveEl.offsetWidth; waveEl.classList.add("lost"); // (restart the animation)
-  waveHud(); // (the bar eases down to its new countdown)
-  const pop = document.createElement("div");
-  pop.className = "loss-pop";
-  pop.textContent = e.left <= 0 ? "wave now!" : `\u2212${Math.round(e.cut)} s`;
-  pop.style.bottom = `${Math.min(100, (e.left / tuning.party.interval) * 100)}%`;
-  waveEl.append(pop);
-  setTimeout(() => pop.remove(), 1800);
-  setTimeout(() => { if (lossShown === e.at) waveEl.classList.remove("lost"); }, 900);
-}
-let debugOn = params.has("debug");
-debugEl.classList.toggle("on", debugOn);
-debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn);
+const startEl = document.getElementById("start")!;
+/** The party spell (Ed, 2026-10-06): cast by the creator's scroll (ui/spellScroll.ts), its burst starting play; without the
+ *  creator (?creator=0&spell=wait), Enter (once play has begun, so the start screen's Enter isn't it) or her spell key casts it
+ *  on the next step. */
+let castQueued = false;
+const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
+window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
+// The clock, its pops and the debug overlay (app/hud.ts).
+const hud = new Hud(game, tuning, knobs);
+hud.setDebug(params.has("debug"));
 
 const fit = () => view.resize(window.innerWidth, window.innerHeight);
 window.addEventListener("resize", fit);
@@ -354,61 +151,79 @@ requestAnimationFrame(() => setTimeout(async () => {
   ready = true;
   loadTimes.ready = performance.now();
   startEl.classList.remove("loading");
+  if (bot) start(); // (a bot game starts itself as soon as it can)
 }, 0));
 
-// The volume (Ed's playtest, 2026-10-04): a slider in the corner, 0 mutes; remembered on this browser.
-// (The music is the only sound for now; sound effects will follow the same level.)
-let level = 0.8;
-try { const v = localStorage.getItem("witch.volume"); if (v !== null && !isNaN(+v)) level = Math.min(1, Math.max(0, +v)); } catch { /* storage blocked */ }
-const volumeEl = document.createElement("label");
-volumeEl.id = "volume";
-volumeEl.title = "volume (0 mutes)";
-Object.assign(volumeEl.style, { position: "fixed", right: "10px", bottom: "12px", zIndex: "3", display: "flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "6px", background: "rgba(14,11,28,.55)", color: "#e8e2f4", font: "12px ui-monospace, Menlo, Consolas, monospace", pointerEvents: "auto" });
-const volumeIcon = document.createElement("span"), volumeRange = document.createElement("input");
-volumeRange.type = "range"; volumeRange.min = "0"; volumeRange.max = "100"; volumeRange.value = String(Math.round(level * 100));
-volumeRange.style.width = "80px";
-const showVolume = () => { volumeIcon.textContent = level === 0 ? "🔇" : level < 0.4 ? "🔈" : "🔊"; };
-volumeRange.addEventListener("input", () => {
-  level = +volumeRange.value / 100; showVolume();
-  if (music) music.volume = tuning.music.volume * level;
-  sfx?.setVolume(tuning.music.volume * level);
-  try { localStorage.setItem("witch.volume", String(level)); } catch { /* fine */ }
-});
-for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
-volumeEl.append(volumeIcon, volumeRange); showVolume();
-document.body.append(volumeEl);
+// The sound: the volume slider in the corner, then the context, music and sound effects at the first press (app/sound.ts).
+const sound = new Sound(tuning, musicStyle, seed!);
+sound.volumeSlider();
+sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
 freeze.started = () => startEl.style.display === "none";
 
-// Browsers keep sound off until the player presses something: the start screen is that press.
-let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | null = null, sfxCues: SfxCues | null = null;
 // The character creator (Ed, 2026-10-05): at every load (and from the start screen's button);
 // ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
 // It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
 // Start waits ("getting ready") until play can begin.
-const creator = new Creator(style, savedLook);
+const creator = new Creator(style, savedLook, tuning.pixelSize);
+(window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 let lookNow = JSON.stringify(savedLook);
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
-creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); } catch { /* no sound yet */ } };
-creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); } start(); };
-if (params.get("creator") !== "0") creator.show();
+// (its room's ambience plays while it's open: overnight, 2026-10-06)
+creator.onGesture = () => sound.wake();
+creator.onStart = g => {
+  const who = playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
+  if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { botGame(who as BotKind); return; }
+  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); }
+  if (start()) queueCast();
+}; // (the scroll's burst: play, and the spell cast)
+creator.spellSound = (cue, v) => sound.sfx?.spell(cue, v);
+// The bot game (Ed, 2026-10-06: "start the game and watch the skilled bot play"; ?bot=skilled|crude, or the start
+// screen's Bot game): rules/bot.ts plays in place of her controls, a seeded witch, no character creation. The bot's code loads
+// only for a bot game (overnight phase 2: out of the game's bundle); it starts as soon as both it and the forest are ready.
+const botParam = params.get("bot") as BotKind | null;
+let bot: Bot | null = null, botTag: BotTag | null = null, botKind: BotKind | null = null;
+function botGame(kind: BotKind): void {
+  if (botKind) return;
+  botKind = kind;
+  const look = pleasingWitch(seed!);
+  lookNow = JSON.stringify(look); view.setWitch(look); wearHat(look);
+  if (creator.open) creator.hide();
+  void Promise.all([import("./rules/bot"), import("./ui/botGame")]).then(([{ BOT_GAME, newBot }, { BotTag }]) => {
+    bot = newBot(kind, BOT_GAME[kind]); // (the skilled one questing, bringing relics and feeding: rules/bot.ts BOT_GAME)
+    botTag = new BotTag(kind, () => { const u = new URL(location.href); u.searchParams.delete("bot"); location.href = u.toString(); });
+    if (ready) start(); // (else the forest's ready starts it)
+  });
+}
+if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
+else if (params.get("creator") !== "0") creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
   lookBtn.addEventListener("click", () => { if (ready && game.clock.paused) creator.show(); });
 }
+// (the bedroom has the dev "Player:" pick above in place of a Bot game button)
+// The dev "Player:" pick (app/playerPick.ts).
+const playerPick = makePlayerPick(params, creator);
+const botBtn = document.getElementById("bot-btn");
+if (botBtn) {
+  for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) botBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start of her own)
+  botBtn.addEventListener("click", () => { if (!game.clock.paused) return; botGame("skilled"); }); // (it starts as soon as it and the forest are ready)
+}
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); if (!sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } } catch { /* no sound yet anyway */ }
+  sound.start(); // (browsers keep sound off until the player presses something: the start is that press)
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
   return true;
 }
 input.onAny = start;
-freeze.onToggle = on => { try { void (on ? audio?.suspend() : audio?.resume()); } catch { /* no sound */ } };
+// The audio watchdog (app/sound.ts).
+sound.watch(() => !game.clock.paused && !freeze.frozen && !document.hidden, () => game.speakerBoot.some(t => t !== null), playtest);
+freeze.onToggle = on => sound.freeze(on);
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The wave selector on the start screen: picking one doesn't start the game.
 const wavesEl = document.getElementById("waves")!;
@@ -422,84 +237,141 @@ wavesEl.addEventListener("pointerdown", e => {
   try { localStorage.setItem("witch.wave", String(sec)); } catch { /* fine */ }
 });
 setWaveInterval(waveChoice);
-// Screen shake when she's hit (Ed, 2026-10-05; render/shake.ts), laid on the canvas as a transform.
-// For comfort it can be turned off: ?shake=0, or the start screen's toggle (remembered here).
-let shakeOn = params.get("shake") !== "0";
-try { if (params.get("shake") === null && localStorage.getItem("witch.shake") === "0") shakeOn = false; } catch { /* fine */ }
-const shake = new Shake(tuning.camera.shake, shakeOn), shakeEl = document.getElementById("shake-opt");
-const showShakeOpt = () => { if (shakeEl) shakeEl.innerHTML = `screen shake <button type="button" data-v="1" class="${shake.on ? "on" : ""}">on</button><button type="button" data-v="0" class="${shake.on ? "" : "on"}">off</button>`; };
-showShakeOpt();
-shakeEl?.addEventListener("pointerdown", e => {
-  e.stopPropagation();
-  const b = (e.target as HTMLElement).closest("button");
-  if (!b) return;
-  shake.on = b.dataset.v === "1";
-  try { localStorage.setItem("witch.shake", shake.on ? "1" : "0"); } catch { /* fine */ }
-  showShakeOpt();
-});
-let shaken = false;
-function applyShake(): void {
-  const W = game.witches[0];
-  shake.watch(W.health, !!W.ko, tuning.witchHealth.hits, game.clock.time);
-  const o = shake.offset(game.clock.time, tuning.pixelSize);
-  if (o.amount <= 0) { if (shaken) { canvas.style.transform = ""; shaken = false; } return; }
-  // Zoomed in just enough that no edge shows while it's off centre and turned.
-  const w = window.innerWidth, h = window.innerHeight, turn = Math.abs((o.rot * Math.PI) / 180) * 0.5 * Math.hypot(w, h);
-  const zoom = 1 + (2 * (Math.max(Math.abs(o.x), Math.abs(o.y)) + turn)) / Math.min(w, h);
-  canvas.style.transform = `translate(${o.x}px, ${o.y}px) rotate(${o.rot.toFixed(3)}deg) scale(${zoom.toFixed(4)})`;
-  shaken = true;
-}
+// Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
+const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = shake.option;
+// No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to
+// the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
+// (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the waves and the screen shake). The card itself shows only for a
+// run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
+if (params.get("creator") !== "0" && !botKind) {
+  const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
+  if (keys) creator.addTab("controls", "❔ Controls", [keys]);
+  if (news) creator.addTab("news", "📜 What's new", [news]);
+  creator.addTab("options", "⚙ Options", [wavesEl, ...(shakeEl ? [shakeEl] : [])]);
+} else startEl.style.display = "";
+// Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
+// only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
+// (ui/decisions.ts, app/linkParams.ts).
+let decide: DecidePanel | null = null, decideLoading = false;
+const decidePanel = (open: boolean) => {
+  if (decide || decideLoading) return;
+  decideLoading = true;
+  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: {} }, open); });
+};
+if (params.has("decide")) decidePanel(true);
+window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
 document.addEventListener("visibilitychange", () => { if (document.hidden) last = 0; });
 
 let lastDraw = 0;
-let last = 0, fps = 60, frames = 0, fpsT = 0;
+let last = 0;
+const frameStats = new FrameStats(view.renderer.getContext());
+// ?perf=1: the performance panel (app/perfHud.ts), always on.
+const perfHud = params.get("perf") === "1" ? new PerfHud(game, view, frameStats) : null;
+// Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
+const stallLog = new StallLog();
+playtest.stalls = () => stallLog.stalls;
+// The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
+// platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music
+// should be heard goes in the playtest log (L) with where she was and the nearest stall. ?micCheck=1 (debug only) also
+// listens to the microphone for dropouts after the game. It measures what the game sends: not the device's volume.
+const meter = new OutputMeter();
+const nearestStall = (pageS: number): { off: number; ms: number } | undefined => {
+  let best: { off: number; ms: number } | undefined;
+  for (const st of stallLog.stalls) { const off = Math.round((st.at - pageS) * 10) / 10; if (!best || Math.abs(off) < Math.abs(best.off)) best = { off, ms: Math.max(st.gap, st.work) }; }
+  return best;
+};
+meter.onSilence = e => {
+  const w = game.witch, ago = performance.now() / 1000 - e.start;
+  const r2 = (x: number) => Math.round(x * 100) / 100, { lastMix, music, audio } = sound;
+  playtest.silence({ cause: meter.reading.clock >= 0.9 ? "game" : "clock", t: Math.round((game.clock.time - ago) * 10) / 10, dur: Math.round(e.dur * 100) / 100, x: Math.round(w.x), z: Math.round(w.z), area: areaUnderWitch(game), mode: w.mode, mix: r2(lastMix?.volume ?? 0), gain: music ? r2((music.output as GainNode).gain.value) : 0, state: audio?.state ?? "none", clock: meter.reading.clock, back: e.db, stall: nearestStall(e.start) });
+  console.warn(`audio: the output silent for ${e.dur.toFixed(2)} s while the music should be heard`);
+};
+// each playtest sample's audio carries the clock's account too: under-runs, coarse clock steps or a true clock
+{
+  const own = playtest.audioState, cw = meter.clockWatch;
+  playtest.audioState = () => ({ ...(own?.() ?? { state: "none", volume: 0, distort: 0, distance: 0, mends: 0 }), clock: { slow: cw.slow, fast: cw.fast, drift: cw.drift, played: cw.outDrift, underruns: cw.underruns, underrunMs: cw.underrunMs, verdict: cw.verdict() } });
+}
+const micWanted = params.get("micCheck") === "1";
+let lastShedS = -1; // (the sound's safety valve, checked once a second: platform/audio/shed.ts)
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
-let manual = false;
+const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
 let overShown = false;
 document.getElementById("again")?.addEventListener("click", () => location.reload());
+document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 function frame(now: number): void {
   requestAnimationFrame(frame);
-  if (manual) return;
+  if (loop.manual) return;
   const dt = last ? (now - last) / 1000 : 0;
   last = now;
-  frames++; fpsT += dt;
-  if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
+  const work0 = performance.now();
+  frameStats.frame(dt * 1000);
   freeze.pollPad();
-  const c = input.read();
+  const human = input.read();
+  // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
+  const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
+  if (bot) botTag?.update(bot.doing);
+  if (castQueued) { c.castParty = !bot; castQueued = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
-  if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
-  view.debugReadouts = debugOn;
-  stepGame(game, c, dt);
-  // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
-  if (game.over && !overShown) {
+  if (c.debug) hud.setDebug(!hud.debugOn);
+  view.debugReadouts = hud.debugOn;
+  const step0 = performance.now();
+  stepGame(game, c, dt * (botTag?.speed ?? 1));
+  // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
+  // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
+  if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== attackTick) { attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
+  const stepMs = performance.now() - step0;
+  // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
+  // in, a small card under the clock says so, with the time she lasted, and a way to play again.
+  if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
-    game.clock.paused = true;
-    document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
+    document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.partyOver.at / 60)} min ${Math.floor(game.partyOver.at % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
+  const log0 = performance.now();
   playtest.update();
+  const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
-  music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
-  if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
+  sound.update(game, musicCueNow, creator.open);
+  if (sound.audio) {
+    meter.tap(sound.audio, [sound.music?.output, sound.music?.circleOutput, sound.sfx?.output]);
+    meter.read(performance.now(), sound.musicExpected());
+    const shedS = Math.floor(performance.now() / 1000);
+    if (shedS !== lastShedS) { lastShedS = shedS; const cw = meter.clockWatch, why = sound.shedCheck(shedS, cw.underruns, cw.drift); if (why) { playtest.audio(why); console.warn(`audio: ${why}`); } }
+    if (micWanted && !meter.mic && startEl.style.display === "none") meter.startMic(e => {
+      const pageS = performance.now() / 1000;
+      playtest.mic({ kind: e.kind, t: Math.round(game.clock.time * 10) / 10, dur: Math.round(e.dur * 100) / 100, outDb: e.outDb, micDb: e.micDb, lag: Math.round(e.lag * 1000), stall: nearestStall(pageS) });
+    });
+  }
+  const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
   if (!ready) return;
-  for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
-  waveHud();
+  hud.losses();
+  hud.clock();
+  hud.wildLeft(now);
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
-  interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
-  applyShake();
+  frameStats.beginGpu();
+  interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale))); // (the world's step is STEP x timeScale: rules/slowTime.ts)
+  frameStats.endGpu();
+  aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot, dashLanding());
+  frameStats.work(performance.now() - work0);
+  perfHud?.frame(now, dt * 1000, stepMs, !game.clock.paused && !freeze.frozen);
+  if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
+  shake.apply();
   freeze.update();
-  if (debugOn) {
+  // The overlay (app/hud.ts), four times a second.
+  hud.overlay(now, () => {
     const w = game.witch, s = view.stats;
-    debugEl.textContent = [
-      `fps    ${fps.toFixed(0)}`,
+    return [
+      ...frameStats.lines(),
+      stallLog.line(),
+      meter.line() + (sound.valve.level ? `  shed ${sound.valve.level}` : ""),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,
@@ -507,27 +379,12 @@ function frame(now: number): void {
       `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
       `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
       `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
-      ...powerLines(),
-    ].join("\n");
-  }
+      ...(game.lod ? [`sim    full ${game.lod.full}  coarse ${game.lod.coarse}  frozen ${game.lod.frozen}   marching full ${game.lod.marchFull}  coarse ${game.lod.marchCoarse}`] : []),
+    ];
+  });
 }
 requestAnimationFrame(frame);
 
-/** The power meter (Ed, 2026-10-04): fighting value, Σ √(hp × dps) (rules/power.ts), of the party
- *  (leashed and parked) against each siege and every besieger together. */
-function powerLines(): string[] {
-  const p = powerReport(game.creatures, game.witches, game.combat.sounds), n = p.counts, f = (x: number) => x.toFixed(0);
-  const sieges = p.sieges.slice(0, 4).map(s => `${s.key} ${f(s.value)} (${s.count}, ${f(s.hp)} hp)`).join("  ");
-  return [
-    `power  party ${f(p.leashed + p.parked)} = leashed ${f(p.leashed)} + parked ${f(p.parked)}   ${n[0]}b ${n[1]}y ${n[2]}a ${n[3]}L   berries ${game.tally.berries} invites ${game.tally.invites}`,
-    `wild   grown ${game.growth.grown} a wave at a time, ${game.growth.made} come out, ${game.growth.grown - game.growth.made} waiting as counts   creatures ${game.creatures.length}`,
-    `enemy  marching ${f(p.marching)}${p.sieges.length ? `   ${sieges}${p.sieges.length > 4 ? ` +${p.sieges.length - 4} more` : ""}` : ""}   (L saves the playtest log)`,
-  ];
-}
 
-// For the smoke test and for poking at in the console.
-(window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
-  /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
-  lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
-  get manual() { return manual; }, set manual(on: boolean) { manual = on; },
-  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };
+// For the smoke test, the tools and for poking at in the console (app/hooks.ts).
+installHooks({ game, view, tuning, hud, sound, meter, shake, loadTimes, loop });

@@ -6,23 +6,17 @@
 // soundsystems standing fall to a share of their peak) and what it costs the comebacks.
 //
 //   node tools/balance/endgame.mjs [--seeds 4] [--gaps 300,120] [--skills 0.1,0.25,0.5,1] [--policies defend,leash,relay,mass] [--cap 60] [--hurry 0.5,3] [--relics 0]
-import { createServer } from "vite";
+import { openRules, arg, list, mean, median, pct } from "./lib.mjs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
-const list = s => String(s).split(",");
 const SEEDS = +arg("seeds", 4), GAPS = list(arg("gaps", "300,120")).map(Number), SKILLS = list(arg("skills", "0.1,0.25,0.5,1")).map(Number);
 const POLICIES = list(arg("policies", "defend,leash,relay,mass")), CAP = +arg("cap", 60), [HURRY_AT, HURRY_X] = list(arg("hurry", "0.5,3")).map(Number);
 const RELICS = arg("relics") !== undefined ? +arg("relics") : undefined;
 
-const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-const load = p => server.ssrLoadModule(p);
+const { load, close } = await openRules();
 const { generateMap } = await load("/src/rules/map.ts");
 const { TUNING } = await load("/src/rules/tuning.ts");
 const { simulateStates } = await load("/src/rules/states.ts");
 
-const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-const median = a => { if (!a.length) return NaN; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
-const pct = x => (Number.isNaN(x) ? "–" : `${Math.round(x * 100)}%`);
 const seeds = Array.from({ length: SEEDS }, (_, i) => 1000 + i * 7919);
 const maps = seeds.map(s => generateMap(s, TUNING));
 const say = s => console.log(s), t0 = Date.now();
@@ -77,4 +71,4 @@ for (const gap of GAPS) {
   say(`**${gap} s: hurrying the sieges (×${HURRY_X} once standing ≤ ${HURRY_AT} of peak).** Lost runs end ${shorter.length ? `${median(shorter).toFixed(1)} min sooner (median; mean ${mean(shorter).toFixed(1)})` : "–"}; of the ${capped.length} runs that reached the cap, ${killed.length} lose with it (comebacks it takes away); survived waves ${mean(runs.map(x => x.r.survived)).toFixed(1)} → ${mean(runs.map(x => x.h.survived)).toFixed(1)}. (${comeback} lost runs crossed the line.)\n`);
 }
 say(`(${((Date.now() - t0) / 1000).toFixed(0)} s)`);
-await server.close();
+await close();

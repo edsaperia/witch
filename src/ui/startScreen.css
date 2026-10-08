@@ -15,7 +15,7 @@
   grid-template-areas: "head" "go" "body" "keys";
 }
 #start.full .ss-head { grid-area: head; display: flex; flex-wrap: wrap; align-items: baseline; gap: .2em 1.2em; }
-#start.full h1 { margin: 0; font-size: 3em; line-height: 1; letter-spacing: .22em; color: var(--accent); text-shadow: .06em .06em 0 #3a1240, 0 0 .5em rgba(255, 127, 208, .45); }
+#start.full h1 { margin: 0; font-size: 3em; line-height: 1; letter-spacing: .22em; color: var(--accent); text-shadow: .06em .06em 0 #3a2410, 0 0 .5em rgba(232, 180, 106, .4); }
 #start.full .ss-tagline { color: var(--ink); font-size: 1.05em; }
 #start.full .ss-stamp { color: var(--dim); font-size: .85em; margin-left: auto; }
 #start.full .ss-go { grid-area: go; display: grid; gap: .6em; padding: .8em 1em; background: rgba(14, 11, 28, .7); border: 1px solid #3a2f5c; border-radius: 8px; }

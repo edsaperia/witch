@@ -30,7 +30,7 @@ describe("berries and evolving", () => {
     const per = new Map<string, number>();
     for (const b of s.berries) { const c = map.areaAt(s.bushes[b.bush].x, s.bushes[b.bush].z).cell.join(","); per.set(c, (per.get(c) ?? 0) + 1); }
     const counts = [...per.values()];
-    expect(counts.length).toBeGreaterThan(map.n * map.n * 0.9);
+    expect(counts.length).toBeGreaterThan(map.cells.length * 0.9);
     expect(counts.every(n => n >= Math.min(lo, 1) && n <= hi)).toBe(true);
     expect(counts.filter(n => n >= lo).length / counts.length).toBeGreaterThan(0.9);
     const again = newBerries(map, t);
@@ -60,11 +60,11 @@ describe("berries and evolving", () => {
     expect(s.berries.every(b => b.claimedBy === null)).toBe(true);
   });
 
-  it("evolves after 2 and 2 berries (its strength gained, Ed 2026-10-05), on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
+  it("evolves after 3 and 8 berries (its strength gained, Ed 2026-10-05; doubled 2026-10-06; the level gap 2026-10-07), on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
     const s = newBerries(map, t), [c, wild] = spawnCreatures(map), leash = newLeash();
     Object.assign(c, { leashed: true, level: 0 });
     leash.stack.push(c.id);
-    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([2, 2, Infinity]);
+    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([3, 8, Infinity]);
     let time = 0;
     for (const level of [0, 1] as Level[]) {
       expect(c.level).toBe(level);
@@ -96,7 +96,9 @@ describe("berries and evolving", () => {
     const s = newBerries(map, t), [a, b] = spawnCreatures(map), D = t.berries.detour;
     // Lone berries, for a clean test: everything else is taken.
     for (const x of s.berries) x.claimedBy = -1;
-    const on = s.berries[0], off = s.berries[1], po = s.bushes[on.bush], pf = s.bushes[off.bush];
+    // the second the furthest from the first (two close by would put both on a's way, whatever the map)
+    const on = s.berries[0], po = s.bushes[on.bush], far = (x: typeof on) => Math.hypot(s.bushes[x.bush].x - po.x, s.bushes[x.bush].z - po.z);
+    const off = s.berries.reduce((m, x) => (far(x) > far(m) ? x : m)), pf = s.bushes[off.bush];
     on.claimedBy = off.claimedBy = null;
     // a walks towards its leash point past the first berry, 1 m off its line; b's line passes far from the second.
     Object.assign(a, { x: po.x - 5, z: po.z + 1, leashed: true, level: 0, rest: 0 });

@@ -195,7 +195,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         }
         const happy = o.areaLegends && (o.happyChance ?? 0) > 0 && hash2(a.cell[0], a.cell[1], map.seed + 991) < (o.happyChance ?? 0);
         if (happy) { const at = soundsystemFor(map, a.cell); guards.push({ key, x: at.x, z: at.z, hp: COMBAT.levels.hp[3], asleep: false }); }
-        else if (o.areaLegends) {
+        else if (o.areaLegends && (map.hasLegend?.(a.cell[0], a.cell[1]) ?? true)) {
           const site = map.siteOf(a.cell[0], a.cell[1]), L: Fighter = { ...reinforcement(-1e6 - live.length, key, site.x, site.z, map), level: 3, dps: COMBAT.levels.dps[3], value: levelValue(3), speed: t.legendSpeed * C.marchMult, reach: COMBAT.attacks[COMBAT.byLevel.melee[3]!].range, stay: true, siege: key };
           live.push(L);
         }

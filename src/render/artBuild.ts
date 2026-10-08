@@ -6,6 +6,8 @@ import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
+import { overrideFor, poseName, type Override } from "./overrides";
+import { propSprites, soundsystemSprites, treehouseSprites, witchSprites, type TreehouseArt, type WitchArt } from "./homeArt";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
@@ -16,6 +18,15 @@ export interface Frame { uv: [number, number, number, number]; w: number; h: num
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
+
+/** Where a witch frame's ground is (the art's `ground` and `shadow` anchors, art/witch.js liftShadow): the point under her on the
+ *  model's ground and her shadow's size there, in the sprite's pixels. */
+export interface FrameGround { x: number; y: number; w: number; d: number }
+/** A witch sprite's ground from its anchors (art/witch.js liftShadow), or null. */
+export function groundOf(anchors?: Record<string, number[]> | null): FrameGround | null {
+  const g = anchors?.ground, s = anchors?.shadow;
+  return g ? { x: g[0], y: g[1], w: s?.[0] ?? 0, d: s?.[1] ?? 0 } : null;
+}
 
 /** Where each of an area type's sprites sits in its atlas. A big object with a top half (a
  *  tree's crown) has `top`; one without (a mound, a boulder, a log) is drawn whole, always. */
@@ -29,9 +40,17 @@ export interface TypeLayout {
   big: Piece[];
   /** Each big object's share of the area's big objects (tree variants by height class). */
   bigWeight: number[];
+  /** The big objects of its tallest tree kinds, by index (a legend's grove grows only these: rules/forest.ts legendGrove):
+   *  giant, its biggest class (or its tallest if it has none), and tall, the next (or giant again). */
+  grove: { giant: number[]; tall: number[] };
+  /** The big object of its tree with a face in its bark (Ed 2026-10-07), if it has one: on at most two trees an area. */
+  face?: number;
   small: Piece[];
   walls: number[];
   set: Piece | null;
+  /** The rim kit round a sleeping legend's clearing (#235; art/areas.js areaAssets' rim): 6 small pieces (none over a metre),
+   *  each its frame, its form (stone, cairn, boulder, toadstools, stump, post) and its height in metres. */
+  rim: { frame: number; form: string; height: number }[];
 }
 
 interface ArtDef { id: string; leaf: number; big: [string, Record<string, unknown>][]; small: [string, Record<string, unknown>][]; set?: [string, Record<string, unknown>] }
@@ -41,7 +60,7 @@ type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: number;
 // line so it splits into a top half (shown from the treetops) and a bottom half (the trunk).
 function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: number) {
   const f = (Art.treeSpecies as (type: string) => { fn: unknown })(o.type).fn as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number }; // any species art/trees.js knows
-  const ts = { ...st, leafHue: def.leaf + (o.dark ? 0.05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs } as unknown as Style;
+  const ts = { ...st, leafHue: def.leaf + (o.dark ? 0.05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: (def as { layout?: { hang?: number } }).layout?.hang ?? 0 } as unknown as Style;
   const t = f(r, ts, st.treeSize * K * (o.scale || 1) * Art.uni(r, 0.9, 1.1));
   const c = Art.treeColours(r, ts, f) as Record<number, number[]>;
   if (o.dark) { c[Art.M.LEAF] = c[Art.M.LEAF3]; c[Art.M.LEAF3] = Art.hsv2rgb(def.leaf + 0.05, 0.7, 0.22); }
@@ -53,9 +72,9 @@ function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: numbe
  *  variants, split into halves), small objects, wall objects, set piece, and floor tile. */
 export function typeSprites(st: Style, seed: number, t: number, K: number, mk: MakeCanvas): { sprites: Baked[]; layout: TypeLayout; floor: Baked } {
   const id = LOOKS[t].id, def = (AREA_BY_ID as unknown as Record<string, ArtDef>)[id]; // (LOOKS: the area types and home's meadow)
-  const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null };
+  const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null; rim: { sp: Baked; kind: string; metres: { height: number } }[] };
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
-  const layout: TypeLayout = { big: [], bigWeight: [], small: [], walls: [], set: null };
+  const layout: TypeLayout = { big: [], bigWeight: [], grove: { giant: [], tall: [] }, small: [], walls: [], set: null, rim: [] };
   const bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, "none", mk) as Baked;
   // Anything drawn as a tree (big objects, small trees, a tree set piece) is split into crown and
   // trunk, so its crown hides in ground mode; everything else is drawn whole.
@@ -68,22 +87,50 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // of the area's trees. Anything else big (mounds, boulders, logs) is drawn whole, as before.
   // Each height class gets the area's own share of its trees (its layout's heightMix), split among
   // that class's variants; without one, the art's default weights.
-  const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
-  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
+  const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; face?: boolean; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
+  const faced = variants.filter(v => v.face), plain = variants.filter(v => !v.face); // (the bark face's tree: never dealt by weight, see below)
+  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => plain.filter(v => v.heightClass === c).length || 1;
   // Each carries its sway mask (#34), so only its leaves move in the wind.
   const withSway = (b: Baked, S?: unknown) => (S ? { ...b, S: S as Baked["A"] } : b);
-  for (const v of variants) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
-  def.big.forEach(([kind], i) => {
-    if (kind === "tree" && variants.length) return;
-    layout.big.push({ bot: add(withSway(assets.big[i].sp, (assets.big[i] as { sway?: unknown }).sway)), top: null });
+  for (const v of plain) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
+  // The grove's trees (a legend's ring of old giants, Ed 2026-10-06): the two tallest classes it has.
+  const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => plain.some(v => v.heightClass === c)), of = (c?: string) => plain.flatMap((v, i) => (v.heightClass === c ? [i] : []));
+  layout.grove.giant = of(have[have.length - 1]); layout.grove.tall = have.length > 1 ? of(have[have.length - 2]) : layout.grove.giant;
+  // The bark face's tree (art/areas.js barkFace): a big object of its own, weight 0, so it's never dealt; the view puts it on
+  // at most two trees an area (view/scenery.ts).
+  for (const v of faced.slice(0, 1)) { layout.face = layout.big.length; layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(0); }
+  // The baked pieces stand for the area's list entries (a.from): one each, or under the prop generator (?props=gen) n variants of
+  // one, each a share of that entry's weight (a.share). Walked by piece, not by entry, so each entry is its own art.
+  type Asset = { sp: Baked; sway?: unknown; sparse?: number; from: number; share?: number };
+  const bigs = assets.big as Asset[], smalls = assets.small as Asset[];
+  const firstBig = layout.big.length;
+  bigs.forEach(a => {
+    if (def.big[a.from][0] === "tree" && variants.length) return;
+    layout.big.push({ bot: add(withSway(a.sp, a.sway)), top: null });
     // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
     // sparsely: their art's own sparse share as their weight among the area's big objects (about
     // a fifth of them all), the mounds, boulders and logs at 1.
-    const sparse = (assets.big[i] as { sparse?: number }).sparse;
-    layout.bigWeight.push(variants.length ? 0.1 : sparse ?? 1);
+    layout.bigWeight.push(variants.length ? 0.1 * (a.share ?? 1) : a.sparse ?? a.share ?? 1);
   });
-  def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(withSway(assets.small[i].sp, (assets.small[i] as { sway?: unknown }).sway)), top: null }));
+  // An area with no trees (Ed, 2026-10-06: "Legend with no tall trees around it"): its legends' groves grow its two tallest big
+  // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring;
+  // every variant of each.
+  if (!variants.length && bigs.length) {
+    const tallest = new Map<number, number>(); // (an entry's tallest piece, in art pixels)
+    bigs.forEach(a => tallest.set(a.from, Math.max(tallest.get(a.from) ?? 0, a.sp.h)));
+    const byH = [...tallest].filter(([, h]) => h >= 48).sort((a, b) => b[1] - a[1]).map(([from]) => from); // (as tall as she is or more: no boulders or mounds)
+    const of = (from: number) => bigs.flatMap((a, j) => (a.from === from ? [firstBig + j] : []));
+    if (byH.length) { layout.grove.giant = of(byH[0]); layout.grove.tall = of(byH[1] ?? byH[0]); }
+  }
+  // The small objects are picked evenly, so each entry gets as many slots as the most variants any has (a plain one repeated).
+  const slots = Math.max(1, ...def.small.map((_, i) => smalls.filter(a => a.from === i).length));
+  def.small.forEach(([kind, o], i) => {
+    const mine = smalls.filter(a => a.from === i);
+    const pieces = kind === "tree" ? [tree(o as TreeOpts, 500 + i)] : mine.map(a => ({ bot: add(withSway(a.sp, a.sway)), top: null }));
+    for (let k = 0; k < slots && pieces.length; k++) layout.small.push(pieces[k % pieces.length]);
+  });
   for (const a of assets.walls) layout.walls.push(add(a.sp));
+  for (const a of assets.rim) layout.rim.push({ frame: add(a.sp), form: a.kind, height: a.metres.height });
   if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null, origin: assets.setPiece.origin };
   return { sprites, layout, floor: assets.floor.sp };
 }
@@ -91,13 +138,32 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
 /** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null): Baked[] {
   const out: Baked[] = [];
-  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
+  const n = (Art.walkGait(species) as { frames: number }).frames; // (its walk's frames: 2, or its own cycle's)
+  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < n; f++) {
+    const hand = overrideFor(species, poseName(level, f, facing === "away")); // (a hand-drawn frame: art/overrides, as it is)
+    if (hand) { out.push(bakeOverride(hand, mk)); continue; }
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
     const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
     if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
     out.push(b);
   }
   return out;
+}
+
+/** A hand-drawn frame (art/overrides/README.md) as a baked sprite: its pixels as drawn (alpha 254 glows, under 128 is empty,
+ *  the rest solid) and a flat normal facing us, so the light falls on it evenly. */
+export function bakeOverride(o: Override, mk: MakeCanvas): Baked {
+  const A = mk(o.w, o.h), N = mk(o.w, o.h);
+  const ca = A.getContext("2d") as CanvasRenderingContext2D, cn = N.getContext("2d") as CanvasRenderingContext2D;
+  const a = ca.createImageData(o.w, o.h), n = cn.createImageData(o.w, o.h);
+  for (let i = 0; i < o.w * o.h; i++) {
+    const al = o.rgba[i * 4 + 3];
+    if (al < 128) continue;
+    a.data.set([o.rgba[i * 4], o.rgba[i * 4 + 1], o.rgba[i * 4 + 2], al === 254 ? 254 : 255], i * 4);
+    n.data.set([128, 128, 255, 255], i * 4);
+  }
+  ca.putImageData(a, 0, 0); cn.putImageData(n, 0, 0);
+  return { A, N, w: o.w, h: o.h };
 }
 
 // Wild creatures' eyes (Ed, v244): packPixels gives their eye pixels alpha 253, so the sprite
@@ -109,8 +175,11 @@ function eyeMask(m: ArrayLike<number>): Uint8Array | undefined {
   for (let i = 0; i < m.length; i++) if (EYES.has(m[i])) { out[i] = 1; any = true; }
   return any ? out : undefined;
 }
-/** Towards: frames 0-7 (level x 2 + walk frame); away: the same, from 8. */
-export const creatureFrame = (level: number, f: number, away = false) => (away ? 8 : 0) + level * 2 + f;
+/** Towards: frames 0 to 4n - 1 (level x n + walk frame, n its walk's frames: 2 unless it has its own cycle); away: the
+ *  same, from 4n. */
+export const creatureFrame = (level: number, f: number, away = false, n = 2) => (away ? 4 * n : 0) + level * n + (((f % n) + n) % n);
+/** A species' walk: its frames, and how far it moves between them (a share of its sprite's width). */
+export const walkGait = (species: string): { frames: number; step: number } => Art.walkGait(species) as { frames: number; step: number };
 
 function pixels(c: AnyCanvas, w: number, h: number): Uint8ClampedArray {
   const ctx = c.getContext("2d") as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -149,11 +218,22 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
 export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear }
   /** A creature enraged by a wave (Stage 4 playtest): angry glowing red eyes and a darker tint. */
   | { kind: "woken"; id: string; species: string; style: Style }
+  /** An area legend asleep (art/legends.js legendForm): its two breathing frames, sunk and grown over. */
+  | { kind: "sleep"; id: string; species: string; style: Style }
+  | { kind: "nap"; id: string; species: string; style: Style; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
   | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
   | { kind: "decor"; id: string; style: Style }
+  /** The beach's edge of the woods (render/beach.ts): palms (split as trees are), beach shrubs and grass clumps, each with its sway mask. */
+  | { kind: "beachEdge"; id: string; style: Style; K: number }
+  /** The start's own art (render/homeArt.ts, fast start (b)): our witch's frames from her genome (id: its hash, and bare), the
+   *  light props, the soundsystems and the treehouse. */
+  | { kind: "witch"; id: string; style: Style; genome: unknown; bare: boolean }
+  | { kind: "props"; id: string; style: Style }
+  | { kind: "soundsystems"; id: string; style: Style }
+  | { kind: "treehouse"; id: string; style: Style }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
   | { kind: "pathPieces"; id: string; style: Style }
   /** Modern relics, playground and sports pieces, with the art's arrangements. */
@@ -165,7 +245,12 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** A party witch (#37): her look from partyWitch(seed) (or, seed null, our witch's own), in every party pose. */
   | { kind: "partyWitch"; id: string; seed: number | null; style: Style; /** our witch's genome (art/witchGenome.js), for seed null; else the classic witch */ genome?: unknown }
   /** Every party object (#38) in each neon and balloon palette a placement can pick (campfires in their three frames), and the clusters' layouts. */
-  | { kind: "partyObjects"; id: string; style: Style };
+  | { kind: "partyObjects"; id: string; style: Style }
+  /** The beach's decorations (art/beach.js): its finds, and each footprint at every heading. */
+  | { kind: "beach"; id: string; style: Style };
+
+/** The beach's pieces in their atlas, by id (a print by "<id>~<heading>"): frame and ground point. */
+export interface BeachArt { pieces: Record<string, { frame: number; originX: number; originY: number }>; finds: string[]; prints: string[]; headings: number }
 
 /** The party objects in their atlas, by ref ("party:<id>[@<neon>][~<palette>]"): frames (more than one: animated), ground point, decal; and each cluster's layout. */
 export interface PartyArt { pieces: Record<string, { frames: number[]; originX: number; originY: number; decal: boolean; /** Where it hangs from (hanging pieces): pixels from its top-left. */ hang?: { x: number; y: number } }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
@@ -180,7 +265,12 @@ export interface SceneArt { pieces: Record<string, { frame: number; originX: num
 export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean }
 
 /** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
-export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }> }
+/** A home speaker's runestone, times an area's rune stone (Ed: "smaller runestones"): baked at that size. */
+export const SPEAKER_STONE = 0.55;
+export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The small runestone each home speaker starts as (Ed, 2026-10-06), and its ground point. */ stone?: number; stoneOrigin?: { x: number; y: number } }
+
+/** The beach's edge of the woods in its atlas (render/beach.ts): palms as crown and trunk frames, shrubs and grass clumps whole. */
+export interface BeachEdgeArt { palms: { top: number; bot: number }[]; shrubs: number[]; grass: number[] }
 
 /** One relic in its atlas: family (modern, playground, sports), whether it's a flat ground decal, and its ground point. */
 export interface RelicArt { id: string; family: string; decal: boolean; frame: number; originX: number; originY: number }
@@ -194,7 +284,7 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
+export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt }
 
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
@@ -220,14 +310,29 @@ function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers
         speakers.frames[`${angle}:${state}:${frame}`] = sprites.push(Art.bake(r.sp, colours, st, st.cOutline, mk) as Baked) - 1;
         if (!speakers.origin[angle]) speakers.origin[angle] = r.origin;
       }
+  // the runestone it starts as (the areas' rune stone, cyan, its home rune): baked small, at SPEAKER_STONE of a rune stone's size, drawn at 1 (docs/STYLE.md rule 1)
+  const stone = (Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; makeCanvas: MakeCanvas }) => Baked)(st, { glow: "cyan", scale: SPEAKER_STONE, makeCanvas: mk });
+  speakers.stone = sprites.push(stone) - 1; speakers.stoneOrigin = { x: stone.w / 2, y: stone.h };
   return { sprites, speakers };
+}
+
+function beachSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; beach: BeachArt } {
+  const sprites: Baked[] = [], colours = Art.beachColours(st), H = Art.PRINT_HEADINGS as number;
+  const beach: BeachArt = { pieces: {}, finds: [], prints: [], headings: H };
+  const put = (key: string, id: string, heading = 0) => {
+    const r = Art.beachSprite(id, st, { heading }) as { whole: unknown; origin: { x: number; y: number } };
+    beach.pieces[key] = { frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y };
+  };
+  for (const d of Art.BEACH_FINDS as { id: string }[]) { put(d.id, d.id); beach.finds.push(d.id); }
+  for (const d of Art.BEACH_PRINTS as { id: string }[]) { for (let h = 0; h < H; h++) put(`${d.id}~${h}`, d.id, h); beach.prints.push(d.id); }
+  return { sprites, beach };
 }
 
 function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: RelicArt[]; layouts: RelicLayouts } {
   const sprites: Baked[] = [], relics: RelicArt[] = [], colours = Art.relicColours(st);
-  for (const d of Art.RELICS as { id: string; family: string; decal?: boolean }[]) {
+  for (const d of Art.RELICS as { id: string; family: string; decal?: boolean; scatter?: boolean }[]) {
     const r = Art.relicSprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
-    relics.push({ id: d.id, family: d.family, decal: !!d.decal, frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+    relics.push({ id: d.id, family: d.family === "modern" && d.scatter === false ? "unscattered" : d.family, decal: !!d.decal, frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y }); // the bits of highway kept out of the modern finds the rules scatter (Ed, round 13)
   }
   // The countryside and street pieces that stand alone (Ed, 2026-10-04) join the modern finds, after the relics' own (the rules count them in this order).
   const cc = Art.countryColours(st);
@@ -245,7 +350,30 @@ function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces
     const r = Art.pathPieceSprite(d.id, st) as { sp: unknown; origin: { x: number; y: number } };
     pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
+  // With the prop generator (the game always has it on), each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
+  if ((st as { propGen?: number }).propGen) for (const id of Art.PATH_GEN_IDS as string[]) for (let k = 0; k < (Art.BRIDGE_VARIANTS as number); k++) {
+    const r = Art.pathPieceSprite(`${id}~${k}`, st) as { sp: unknown; origin: { x: number; y: number } };
+    pieces.push({ id: `${id}~${k}`, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+  }
   return { sprites, pieces };
+}
+
+/** The beach's edge of the woods (Ed, 2026-10-06, after a photo of a real beach forest: "rounded bushes and shrubs, dense low
+ *  vegetation, pandanus and palm-like plants, clumps spilling onto the sand"): the art's palms, and its shrubs, round bushes, ferns
+ *  and grass, in a beach palette (the leaves a deep green, a little brighter than the woods' at night), with their sway masks. */
+function beachEdgeSprites(st: Style, K: number, mk: MakeCanvas): { sprites: Baked[]; beach: BeachEdgeArt } {
+  const sprites: Baked[] = [], beach: BeachEdgeArt = { palms: [], shrubs: [], grass: [] }, add = (b: Baked) => sprites.push(b) - 1;
+  const bst = { ...st, leafHue: 0.31, leafVal: 1.12, leafVariety: 0.12, bushSize: (st as { bushSize: number }).bushSize * K } as Style;
+  const sway = (b: Baked, sp: unknown) => ({ ...b, S: Art.bakeSway(sp, mk) as Baked["A"] });
+  for (let v = 0; v < 4; v++) {
+    const r = Art.rng(9100 + v * 37) as () => number, f = Art.palmTree as (r: () => number, st: Style, s: number) => unknown;
+    const t = f(r, bst, (st as { treeSize: number }).treeSize * K * (0.8 + 0.12 * v)), col = Art.treeColours(r, bst, f), parts = Art.splitTree(t) as { top: unknown; bot: unknown };
+    beach.palms.push({ top: add(sway(Art.bake(parts.top, col, bst, "none", mk) as Baked, parts.top)), bot: add(sway(Art.bake(parts.bot, col, bst, "none", mk) as Baked, parts.bot)) });
+  }
+  const kinds = ["shrub", "round", "shrub", "fern", "round", "shrub", "fern", "round"];
+  kinds.forEach((kind, i) => { const { sp, colours } = Art.bush(Art.rng(9300 + i * 41), bst, kind) as { sp: unknown; colours: unknown }; beach.shrubs.push(add(sway(Art.bake(sp, colours, bst, "none", mk) as Baked, sp))); });
+  for (let i = 0; i < 4; i++) { const { sp, colours } = Art.bush(Art.rng(9500 + i * 43), bst, "grass") as { sp: unknown; colours: unknown }; beach.grass.push(add(sway(Art.bake(sp, colours, bst, "none", mk) as Baked, sp))); }
+  return { sprites, beach };
 }
 
 function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: DecorPiece[] } {
@@ -267,6 +395,7 @@ function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; part
   type Def = { id: string; cls: string; light: string | null; frames: number; hang?: boolean };
   const refs = new Set<string>(), palettes = ["neon", "pastel", "metallic", "mixed"];
   for (const d of Art.PARTY_OBJECTS as Def[]) {
+    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only with it (the game always has it on)
     const neons = d.light === "neon" ? (Art.PARTY_LIGHT_NEONS as string[]).map(n => "@" + n) : [""];
     for (const n of neons) for (const p of d.cls === "balloon" ? palettes.map(q => "~" + q) : [""]) refs.add(`party:${d.id}${n}${p}`);
   }
@@ -332,23 +461,50 @@ function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas, genom
 
 /** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in
  *  `colour`. Happy (colour null): the gear without the collar, always at least a hat so it reads as
- *  dressed up. The party bake and the live rig's party pages (shoes aside) both wear it. */
-export function partyGearOf(seed: number, colour: number[] | null): RigGear & { shoes: string | null } {
+ *  dressed up. The party bake and the live rig's party pages both wear it. */
+export function partyGearOf(seed: number, colour: number[] | null): RigGear {
   const g = Art.partyGear(seed) as { hat: number | null; glasses: string | null; shoes: string | null };
   return { collar: colour ?? null, hat: !colour && g.hat === null ? seed % 3 : g.hat, glasses: g.glasses, shoes: g.shoes };
 }
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
+  if (job.kind === "witch") { const { sprites, witch } = witchSprites(job.style, job.genome, job.bare, mk); return { px: packPixels(sprites, 2048), ours: witch }; }
+  if (job.kind === "props") return { px: packPixels(propSprites(job.style, mk), 1024) };
+  if (job.kind === "soundsystems") return { px: packPixels(soundsystemSprites(job.style, mk), 2048) };
+  if (job.kind === "treehouse") { const { sprites, treehouse } = treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
   if (job.kind === "rig") { const r = rigSprites(job.style, job.species, job.level, mk, job.gear ?? null); return r ? { px: r.px, rig: r.meta } : { px: packPixels([], 16) }; }
+  if (job.kind === "beach") { const { sprites, beach } = beachSprites(job.style, mk); return { px: packPixels(sprites, 1024), beach }; }
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
   if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk); return { px: packPixels(sprites, 2048), speakers }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
+  if (job.kind === "beachEdge") { const { sprites, beach } = beachEdgeSprites(job.style, job.K, mk); return { px: packPixels(sprites, 2048), beachEdge: beach }; }
   // (enraged: red eyes and the angry face; dressed up: the happy face; art/genome/expressions.js)
+  if (job.kind === "sleep") {
+    const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
+    for (let f = 0; f < 2; f++) {
+      const { sp, colours } = Art.legendForm(job.species, job.style, { frame: f }) as { sp: { origin?: number[]; h: number; w: number }; colours: unknown };
+      sprites.push(Art.bake(sp, colours, job.style, "none", mk) as Baked);
+      ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
+    }
+    return { px: packPixels(sprites, 2048), ground, centre };
+  }
+  // a creature asleep (art/naps.js): each level (baby to legend) in its 2 breathing frames, towards (mirrored for the other way), with its ground line
+  if (job.kind === "nap") {
+    const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
+    // (dressed: in its party gear, Ed 2026-10-06: sleepers keep their party gear on)
+    const gear = { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true } as unknown as null;
+    for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
+      const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
+      sprites.push(Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked);
+      ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
+    }
+    return { px: packPixels(sprites, 2048), ground, centre };
+  }
   if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
   if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
   if (job.kind === "party") {
