@@ -1,0 +1,29 @@
+{
+  "builder": "Art builder 4",
+  "phase": "Art",
+  "slice": "The soundsystem generator: every area's soundsystem its own, turned to the dancefloor, bigger further out, breaking in stages",
+  "prs": [
+    541
+  ],
+  "built": [
+    "A genome per area's soundsystem (`art/soundsystemGen.js`): profile, tiers, stone, crystal, moss, runes, lean and a projector on top, dealt as one set a map so no two are alike (#541).",
+    "Each one turned along the line to the dancefloor, its front always to the camera, and from 0.8 to 1.6 times the size between 120 m and 1000 m out.",
+    "Three stages of damage from its health before it falls, each stack breaking its own way: dead cones and cracks, a block knocked off and the projector cracked, then its top tiers fallen.",
+    "Baked by the art workers at each area's own yaw and size, ahead of its wave, with a preview page of five real maps and a reroll."
+  ],
+  "learned": [
+    "\"No two alike\" needs a measure: two stacks counted as different only when they differ in at least two traits, and the set is dealt nearest first so a re-roll falls on the further one.",
+    "A wide stack turned side-on is a sliver, so the turn eases off towards its limit (a tanh) rather than stopping dead at it, a smaller limit for the widest profiles.",
+    "A colour rule beats a list of good pairs: no crystal within 60 degrees of hue of a warm stone kept every stack's glow readable."
+  ],
+  "previews": [
+    {
+      "src": "media/builders/art4-soundsystem-sheet.webp",
+      "caption": "Generated soundsystems: two dozen stacks, none alike, then three of them playing, through the three stages of damage, and destroyed."
+    },
+    {
+      "src": "media/builders/art4-soundsystem-ingame.webp",
+      "caption": "Generated soundsystems in play, from the ground camera: each turned towards the dancefloor and coloured by its own crystal."
+    }
+  ]
+}
