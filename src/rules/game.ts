@@ -1,6 +1,7 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
+import { wakeOnInvites } from "./inviteWakes";
 import { MOVEMENT } from "./movement";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
@@ -23,12 +24,12 @@ import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
-import { nextSpeakerState, type SpeakerState } from "./speakers";
+import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerStateOf, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
-import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { COMBAT, marchOn, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, questsFromStanding, stepSigilButton } from "./sigilButton";
@@ -218,8 +219,9 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
-  const d = map.dancefloor, C = tuning.combat;
-  g.combat.sounds.set("home", { hp: C.homeHealth, max: C.homeHealth, x: d.x, z: d.z, radius: C.homeRadius });
+  // Home is its ring of speakers, each its own soundsystem in the fight (Ed, 2026-10-08; rules/speakers.ts).
+  const C = tuning.combat;
+  map.dancefloor.speakers.forEach((p, i) => g.combat.sounds.set(speakerKey(i), { hp: C.speakerHealth, max: C.speakerHealth, x: p.x, z: p.z, radius: C.speakerRadius }));
   return g as Game;
 }
 
@@ -303,7 +305,7 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
   const C = g.tuning.dash.clear, near = (px: number, pz: number, r: number) => (px - x) ** 2 + (pz - z) ** 2 < r * r;
   if (g.forest.treesNear(x, z, C.tree).some(p => near(p.x, p.z, C.tree))) return false;
   if (g.forest.decorNear(x, z, C.decor).some(p => near(p.x, p.z, C.decor))) return false;
-  for (const [k, s] of g.combat.sounds) if (k !== "home" && near(s.x, s.z, C.sound)) return false;
+  for (const [k, s] of g.combat.sounds) if (!isHomeKey(k) && near(s.x, s.z, C.sound)) return false; // (home's speakers: below)
   if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, C.speaker))) return false;
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
@@ -454,6 +456,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g));
+  if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") refundDash(W.dash, ht, charges);
   questsFromPlaced(g, ht);
@@ -576,9 +579,8 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   }, COMBAT);
   for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed || c.retreat)) S.busy.add(c.id); // carried on wherever she is
   for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
-  // The home ring shows its damage speaker by speaker.
-  const home = S.sounds.get("home");
-  if (home && home.hp < home.max) { const f = 1 - home.hp / home.max, n = g.speakers.length; g.speakers = g.speakers.map((_, i) => (f >= (i + 1) / n ? "destroyed" : f >= (i + 0.5) / n ? "damaged" : "playing")); }
+  // The home ring shows each speaker's own damage (an unhurt one keeps what the debug key gave it).
+  g.speakers.forEach((_, i) => { const h = S.sounds.get(speakerKey(i)); if (h && h.hp < h.max) g.speakers[i] = speakerStateOf(h.hp, h.max); });
   // Every soundsystem down, the home ring's speakers too: the party's over (rules/partyOver.ts), the afterparty from now on.
   if (!g.partyOver && [...S.sounds.values()].every(h => h.hp <= 0)) startPartyOver(g, time);
 }
@@ -610,7 +612,7 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
     if (counts) counts.marchCoarse++;
     out.add(c);
     if (!coarseTurn(tick, c.id, L.every)) continue;
-    const key = tg?.kind === "sound" ? tg.key : c.siege!, h = S.sounds.get(key) ?? null;
+    const key0 = tg?.kind === "sound" ? tg.key : c.siege!, key = key0 === "home" ? nearestHomeSpeaker(S, c.x, c.z) ?? key0 : key0, h = S.sounds.get(key) ?? null;
     if (!h || h.hp <= 0) { c.lod = "full"; out.delete(c); continue; } // (its soundsystem fell: combat finds it the next)
     const dx = h.x - c.x, dz = h.z - c.z, dist = Math.hypot(dx, dz), step = Math.min(Math.max(0, dist - 10), c.speed * t.combat.marchMult * dt * L.every); // (over the line it's in full next step)
     if (dist > 1e-6) { c.x += (dx / dist) * step; c.z += (dz / dist) * step; }
@@ -630,8 +632,15 @@ function mapExit(map: ForestMap, x: number, z: number): { x: number; z: number }
 
 export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
   const S = g.combat, time = g.clock.time;
-  if (key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
-  else {
+  if (isHomeKey(key)) {
+    // One of home's speakers (or, "home", the whole ring at once: the debug hook): its besiegers on to the nearest standing;
+    // home is lost only with the last of them.
+    const i = speakerIndex(key), all = i < 0;
+    g.speakers.forEach((_, j) => { if (all || j === i) g.speakers[j] = "destroyed"; });
+    for (let j = 0; j < g.speakers.length; j++) if (all || j === i) marchOn(S, speakerKey(j), g.creatures);
+    if (!all && g.speakers.some((_, j) => (S.sounds.get(speakerKey(j))?.hp ?? 0) > 0)) return;
+    key = "home"; x = g.map.dancefloor.x; z = g.map.dancefloor.z;
+  } else {
     g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key);
     // Its happy babies run off home, for good (Ed, 2026-10-06); leashed ones (and parked ones) stay hers.
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) {
@@ -640,7 +649,7 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: T
       S.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); S.busy.add(c.id);
     }
   }
-  marchOn(S, key, g.creatures);
+  if (key !== "home") marchOn(S, key, g.creatures);
   const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0);
   g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
 }

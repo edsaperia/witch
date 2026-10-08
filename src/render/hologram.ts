@@ -2,7 +2,7 @@
 // they're activated, readable from the treetops but in a different character to how the leashing sigils look from
 // treetop; maybe a hologram or peppers ghost or something, replacing the laser we have now"). Each standing
 // soundsystem's projector throws a translucent cone of light up from the top of its stack to a large hologram of its
-// area's animal sigil floating over the canopy: the glyph in the area's crystal colour, pixel-sharp at the art pixel,
+// area's animal sigil floating over the canopy: the glyph in its soundsystem's crystal colour (else the sigil's), pixel-sharp at the art pixel,
 // with scanlines, a drifting interference band and a slight colour fringe, turning gently and bobbing; added as light.
 // It powers up with a flicker when the soundsystem has risen, glitches while it's damaged, and collapses to a line and
 // goes out when it's destroyed. Two instanced draws (the glyphs, the cones) for every soundsystem at once.
@@ -31,7 +31,12 @@ export interface HologramTuning {
 
 /** A soundsystem's projector, this frame: its area's key, where the top of its stack is (y: m over the ground there),
  *  its area type, when it finished rising, and how damaged it is (0 whole to 1 about to fall). */
-export interface Projector { key: string; x: number; y: number; z: number; type: number; ready: number; damage: number }
+export interface Projector {
+  key: string; x: number; y: number; z: number; type: number; ready: number; damage: number;
+  /** A generated soundsystem's own damage stage (0 playing, 1 to 3 damaged: render/soundsystemGen.ts) and crystal colour (0 to 255),
+   *  when it has them; else the stage is worked out from `damage` and the colour is the sigil's. */
+  stage?: number; rgb?: number[];
+}
 
 /** The soundsystem's damage stages (art4's, 2026-10-08: below 75%, 50% and 25% of its health, art/soundsystemGen.js's
  *  DAMAGE_STAGES), and how much the glyph glitches at each: whole, then worse with each stage. */
@@ -201,16 +206,16 @@ export class SigilHolograms {
       if (fade <= 0) continue;
       const species = AREA_TYPES[p.type]?.creature, cell = species !== undefined ? this.cellOf.get(species) : undefined;
       if (cell === undefined) continue;
-      const col = this.colourOf.get(species)!, seed = (p.x * 0.731 + p.z * 0.377) % 6.283;
+      const sc = this.colourOf.get(species)!, k = p.rgb ? 1 / 255 : 1, col = p.rgb ?? sc, seed = (p.x * 0.731 + p.z * 0.377) % 6.283;
       // Power-up: it stutters on over powerUp seconds, flashes frames on and off, then holds.
       const up = Math.min(1, since / Math.max(0.05, T.powerUp)), stutter = up >= 1 ? 1 : (frac(Math.sin(Math.floor(time * 24) * 12.9898 + seed) * 43758.5) < up ? 1 : 0.15);
       // Collapse: squashed to a line, flaring, then out.
       const c = gone === null ? 0 : Math.min(1, (time - gone) / Math.max(0.05, T.collapse)), squash = 1 - c * c, flare = 1 + 1.5 * Math.sin(Math.PI * c);
-      const glitch = Math.max(GLITCH[damageStage(p.damage)], gone === null ? 0 : 0.8);
+      const glitch = Math.max(GLITCH[Math.min(3, p.stage ?? damageStage(p.damage))], gone === null ? 0 : 0.8);
       const bright = fade * stutter * flare * (c >= 1 ? 0 : 1);
       this.at.set([p.x, p.y, p.z, T.size], n * 4);
-      this.look.set([col[0], col[1], col[2], T.glyph * bright], n * 4);
-      this.coneLook.set([col[0], col[1], col[2], T.cone * bright * (1 - c)], n * 4);
+      this.look.set([col[0] * k, col[1] * k, col[2] * k, T.glyph * bright], n * 4);
+      this.coneLook.set([col[0] * k, col[1] * k, col[2] * k, T.cone * bright * (1 - c)], n * 4);
       this.fx.set([cell % COLS, Math.floor(cell / COLS), glitch, Math.max(0.02, squash)], n * 4);
       this.sway.set([Math.sin(time * 0.6 + seed) * (T.turn * Math.PI) / 180, T.lift + Math.sin(time * 1.1 + seed * 2) * T.bob], n * 2);
       n++;

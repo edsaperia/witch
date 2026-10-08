@@ -105,6 +105,22 @@ export function soundsystemSprites(style: Style, mk: MakeCanvas): Baked[] {
   return ss;
 }
 
+/** One generated soundsystem (art/soundsystemGen.js; Ed, 2026-10-08), its genome at its own yaw and size, in two parts baked
+ *  apart (the damage only once it's hurt): "play", playing (frames 0-2); "damage", damaged at stages 1, 2 and 3 (0-1, 2-3, 4-5) and
+ *  destroyed (6); each frame's origin (its middle on the ground) and projector top (the sky hologram's anchor; null
+ *  when destroyed), in the sprite's pixels. */
+export interface SoundsystemGenArt { origins: { x: number; y: number }[]; projectors: ({ x: number; y: number } | null)[]; rgb: number[] }
+export function soundsystemGenSprites(style: Style, genome: unknown, yaw: number, size: number, mk: MakeCanvas, part: "play" | "damage" = "play"): { sprites: Baked[]; art: SoundsystemGenArt } {
+  const make = Art.soundsystemGenSprite as unknown as (st: Style, g: unknown, o: object) => { sp: never; origin: { x: number; y: number }; projector: { x: number; y: number } | null };
+  const col = (Art.soundsystemGenColours as unknown as (g: unknown) => Record<number, number[]>)(genome), sprites: Baked[] = [], art: SoundsystemGenArt = { origins: [], projectors: [], rgb: col[Art.M.GLOW] };
+  const list = part === "play" ? [{ frame: 0 }, { frame: 1 }, { frame: 2 }] : [...[1, 2, 3].flatMap(stage => [0, 1].map(frame => ({ frame, state: "damaged", stage }))), { state: "destroyed" }];
+  for (const o of list) {
+    const r = make(style, genome, { yaw, size, ...o });
+    sprites.push(Art.bake(r.sp, col, style, style.cOutline, mk) as Baked); art.origins.push(r.origin); art.projectors.push(r.projector);
+  }
+  return { sprites, art };
+}
+
 /** The treehouse's anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, the opening shot's camera, its lights;
  *  and the DJ table's frames (cropped to the box whose top-left is foreBox in the base's pixels). */
 export interface TreehouseArt { base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[]; foreFrames: number; foreBox: { x: number; y: number };
