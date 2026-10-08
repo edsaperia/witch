@@ -6,6 +6,8 @@ import { spawnCreatures } from "./creatures";
 import { AREA_TYPES, generateMap } from "./map";
 import { levelValue } from "./power";
 import { TUNING, withTuning } from "./tuning";
+import { routeOf } from "./party";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Species strength, a number (Ed, 2026-10-05: "just a number that goes up and down"), and berry
 // costs tied to it. No species has one yet, so these tests give one for a moment (and put it back).
@@ -45,9 +47,9 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
   });
 
   it("spawns a weak species' areas three times as many, worth about the same", () => {
-    const map = generateMap(123, TUNING), cell = (cx: number, cy: number) => `${cx},${cy}`;
-    const plain = spawnCreatures(map), [hx, hy] = map.centreCell;
-    const [cx, cy] = hx > 2 ? [hx - 2, hy] : [hx + 2, hy], species = AREA_TYPES[map.typeOf(cx, cy)].creature;
+    const map = generateMap(123, PEOPLED), cell = (cx: number, cy: number) => `${cx},${cy}`;
+    // (the route's last area: its threat big enough that one creature's rounding doesn't swamp the comparison)
+    const plain = spawnCreatures(map), order = routeOf(map).order, [cx, cy] = order[order.length - 1].split(",").map(Number), species = AREA_TYPES[map.typeOf(cx, cy)].creature;
     const before = plain.filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle); // (not its legend's clearing's baby: one, whatever its strength)
     const value = (l: typeof before) => l.reduce((a, c) => a + levelValue(c.level, COMBAT, c.species), 0), was = value(before);
     giving(species, 1 / 3);

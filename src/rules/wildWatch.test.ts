@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { newGame, newWitchPlayer, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { cellKey } from "./party";
-import { watcher } from "./wildWatch";
+import { aggroOf, watcher } from "./wildWatch";
 import { legendRings } from "./slowTime";
 import { napping } from "./creatures";
 
@@ -53,16 +53,54 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     expect(g.clock.time - t0).toBeGreaterThan(W.time);
   }, 120_000);
 
-  it("plays once a visit: up and down again soon doesn't start it over; after wildWatch.forget away it plays again", () => {
+  it("plays once a visit: once they've attacked, up and down again soon doesn't start it over; after wildWatch.forget away it plays again", () => {
     const { g, key, at } = overWild(), W = TUNING.wildWatch!;
     land(g, at.x, at.z); run(g, STEP);
     const first = g.wildEntry.get(key)!.at;
+    run(g, W.time + 0.5);
     rise(g); run(g, 3); land(g, at.x, at.z); run(g, STEP);
     expect(g.wildEntry.get(key)!.at, "the same visit").toBe(first);
     rise(g); run(g, W.forget + 1);
     expect(g.wildEntry.has(key), "forgotten").toBe(false);
     land(g, at.x, at.z); run(g, STEP);
     expect(g.wildEntry.get(key)!.at).toBeGreaterThan(first);
+  }, 120_000);
+
+  it("calls it off if she leaves before they make up their minds (Ed: time to run away): they settle and don't chase, and coming back starts it over", () => {
+    const { g, key, at } = overWild(), W = TUNING.wildWatch!;
+    land(g, at.x, at.z); run(g, STEP);
+    const first = g.wildEntry.get(key)!.at;
+    expect(aggroOf(g)!.k).toBeLessThan(0.05);
+    run(g, W.time * 0.5);
+    const mid = aggroOf(g)!;
+    expect(mid.k).toBeGreaterThan(0.4); expect(mid.k).toBeLessThan(0.6); expect(mid.danger).toBeGreaterThan(0);
+    rise(g); run(g, STEP);
+    expect(g.wildEntry.has(key), "called off").toBe(false);
+    expect(here(g, key).every(c => c.watchUntil === undefined), "they settle").toBe(true);
+    expect(aggroOf(g)).toBeNull();
+    let chased = false; run(g, 4, () => { chased ||= onHer(g, key); });
+    expect(chased, "and don't chase").toBe(false);
+    land(g, at.x, at.z); run(g, STEP);
+    expect(g.wildEntry.get(key)!.at, "a new watch").toBeGreaterThan(first);
+    expect(aggroOf(g)!.k).toBeLessThan(0.05);
+  }, 120_000);
+
+  it("lets her walk out on foot before they make up their minds, and nobody follows (Ed: time to run away)", () => {
+    const { g, key, at } = overWild();
+    // the area's edge due east of her landing spot: she lands 4 m inside it, by its watchers
+    let ex = at.x; while (cellKey(g.map.cellSafe(ex + 1, at.z).cell) === key && ex - at.x < 400) ex += 1;
+    for (const c of here(g, key)) { c.x = ex - 4 - 1 - (c.id % 3) * 0.5; c.z = at.z + (c.id % 2 ? 1 : -1); c.tx = c.x; c.tz = c.z; } // (right by her: within any attack's reach of the edge)
+    land(g, ex - 4, at.z); run(g, STEP);
+    expect(aggroOf(g)).not.toBeNull();
+    let chased = false, out = -1;
+    const walk: Controls = { ...idle, moveX: 1 };
+    for (let i = 0; i < 8 / STEP; i++) {
+      stepGame(g, g.clock.time - g.wildEntry.get(key)?.at! < 1 || out < 0 ? walk : idle, STEP);
+      if (out < 0 && cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key) out = g.clock.time;
+      chased ||= onHer(g, key);
+    }
+    expect(out, "she got out").toBeGreaterThan(0);
+    expect(chased, "nobody follows her out").toBe(false);
   }, 120_000);
 
   it("doesn't start over when a second witch lands in the area while it plays: they go for her as for the first", () => {

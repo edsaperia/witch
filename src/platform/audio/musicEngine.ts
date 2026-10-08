@@ -16,7 +16,16 @@ import { Conductor, bootLayers, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
-interface Channel { in: GainNode; lastFreq: number }
+/** A part's way into the mix; `lfo`: its filter's slow wobble, one for all its notes (made when first wanted). */
+interface Channel {
+  in: GainNode; lastFreq: number; lfo?: { osc: OscillatorNode; depth: GainNode };
+  /** A drum's filters, which never move: one set a part, every hit's envelope into it (made when first wanted). */
+  hitIn?: AudioNode;
+  /** A sung part's vibrato (5.2 Hz) and formant banks by vowel, shared by its notes. */
+  vib?: OscillatorNode; banks?: Map<string, AudioNode>;
+  /** What to stop when the style changes (the shared sources). */
+  running?: AudioScheduledSourceNode[];
+}
 
 /** Vowels for the synthesised voice: three formants each (Hz) and their levels. */
 const VOWELS: Record<string, [number, number][]> = {
@@ -86,6 +95,15 @@ export class MusicEngine {
   private cNext = -1;
   private cAt = 0;
   private reverbTime = 0;
+  /** Sound shed to spare the audio thread (shed.ts; Ed's under-runs, 2026-10-07): 2+ every synth and sung note one
+   *  oscillator (no unison, its first wave only) and shorter tails; 3 the reverbs short and the delay off. */
+  private shedLevel = 0;
+  get shed(): number { return this.shedLevel; }
+  set shed(level: number) {
+    if (level === this.shedLevel) return;
+    const was = this.shedLevel; this.shedLevel = level;
+    if ((was >= 3) !== (level >= 3)) { this.reverbTime = -1; this.setMix(); }
+  }
 
   constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest) {
     this.conductor = new Conductor(style);
@@ -130,13 +148,19 @@ export class MusicEngine {
   setStyle(style: MusicStyle): void {
     this.style = style;
     this.conductor.reset(style);
-    const m = style.mix;
+    this.setMix();
+    for (const ch of this.channels.values()) for (const n of [ch.lfo?.osc, ...(ch.running ?? [])]) if (n) try { n.stop(); } catch { /* stopped */ }
+    this.channels.clear();
+  }
+
+  /** The style's mix on the buses (shed 3: the reverbs cut short, the delay off). */
+  private setMix(): void {
+    const m = this.style.mix, lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
     this.out.gain.value = m.master;
     this.reverbIn.gain.value = m.reverb;
-    this.delayIn.gain.value = m.delay;
-    this.feedback.gain.value = Math.min(0.85, m.feedback);
-    if (m.reverbTime !== this.reverbTime) { this.reverbTime = m.reverbTime; this.reverb.buffer = this.impulse(m.reverbTime); this.circleVerb.buffer = this.impulse(m.reverbTime * 1.6); }
-    this.channels.clear();
+    this.delayIn.gain.value = lite ? 0 : m.delay;
+    this.feedback.gain.value = lite ? 0 : Math.min(0.85, m.feedback);
+    if (time !== this.reverbTime) { this.reverbTime = time; this.reverb.buffer = this.impulse(time); this.circleVerb.buffer = this.impulse(time * 1.6); }
   }
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
@@ -193,7 +217,7 @@ export class MusicEngine {
         const main = Math.floor(beatAt(clock, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
         const events = notesAt(this.style, plan, null, main, { seed: this.seed, siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
         const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
-        for (const e of events) this.play(e, this.cAt + swing + e.offset * sps, e.dur * sps, sps);
+        this.playAll(events, e => this.cAt + swing + e.offset * sps, sps);
       }
       this.cNext++; this.cAt += sps;
     }
@@ -231,7 +255,7 @@ export class MusicEngine {
     }
     const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
-    for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
+    this.playAll(events, e => t + swing + e.offset * sps, sps);
   }
 
   private channel(part: string, p: Patch, circle = false): Channel {
@@ -251,18 +275,35 @@ export class MusicEngine {
     return ch;
   }
 
-  private play(e: NoteEvent, t: number, dur: number, sps: number): void {
+  /** A step's notes. A synth part's chord, its notes struck together (the same time, length and velocity), shares one
+   *  filter, envelope and pair of panners: a filter's the same on their sum as on each (not with drive, a waveshaper, or
+   *  glide). A note each was the gate pad's and the stabs' cost; foxtrot's measure, #523. */
+  private playAll(events: NoteEvent[], at: (e: NoteEvent) => number, sps: number): void {
+    const taken = new Set<NoteEvent>();
+    for (let i = 0; i < events.length; i++) {
+      const e = events[i];
+      if (taken.has(e)) continue;
+      const p = this.style.patches[e.patch];
+      if (p?.kind === "synth" && !p.drive && !p.glide && e.midi !== null) {
+        const mates = events.filter((f, j) => j > i && !taken.has(f) && f.part === e.part && f.patch === e.patch && f.layer === e.layer && f.offset === e.offset && f.dur === e.dur && f.vel === e.vel && f.midi !== null);
+        if (mates.length) { for (const f of mates) taken.add(f); this.play(e, at(e), e.dur * sps, sps, mates.map(f => f.midi!)); continue; }
+      }
+      this.play(e, at(e), e.dur * sps, sps);
+    }
+  }
+
+  private play(e: NoteEvent, t: number, dur: number, sps: number, chord: number[] = []): void {
     const p = this.style.patches[e.patch];
     if (!p || (this.solo && !this.solo.has(e.part))) return;
     const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
     const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
     switch (p.kind) {
       case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
-      case "noise": this.noiseHit(t, p, peak, ch.in); break;
-      case "snare": this.snare(t, p, peak, ch.in); break;
+      case "noise": this.noiseHit(t, p, peak, ch); break;
+      case "snare": this.snare(t, p, peak, ch); break;
       case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69) * pf, ch.in); break;
-      case "synth": this.synth(t, p, peak, mtof(e.midi ?? 45) * pf, dur, ch); break;
-      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch.in); break;
+      case "synth": this.synth(t, p, peak, chord.length ? [e.midi ?? 45, ...chord].map(m => mtof(m) * pf) : mtof(e.midi ?? 45) * pf, dur, ch); break;
+      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "riser": this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in); break;
       case "impact": this.impact(t, p, peak, ch.in); break;
     }
@@ -328,24 +369,33 @@ export class MusicEngine {
     return s;
   }
 
-  private noiseHit(t: number, p: Patch, peak: number, dest: AudioNode): void {
+  /** A drum part's filters, which never move, made once and shared by its hits (each hit's envelope goes in before them:
+   *  the same sound, a filter or two fewer a hit; foxtrot's measure, #523). */
+  private hitFilters(ch: Channel, make: () => AudioNode[]): AudioNode {
+    if (!ch.hitIn) { const f = make(); this.chain(f, ch.in); ch.hitIn = f[0]; }
+    return ch.hitIn;
+  }
+
+  private noiseHit(t: number, p: Patch, peak: number, ch: Channel): void {
     const c = this.ctx, decay = p.decay ?? 0.05, bursts = p.bursts ?? 1, gap = 0.011;
-    const f = c.createBiquadFilter(); f.type = p.filter ?? "highpass"; f.frequency.value = p.cutoff ?? 8000; f.Q.value = p.q ?? 0.7;
     const g = c.createGain(), t0 = t + (bursts - 1) * gap, metal = p.source === "metal";
     g.gain.setValueAtTime(0, t);
     for (let i = 0; i < bursts - 1; i++) { g.gain.linearRampToValueAtTime(peak, t + i * gap + 0.001); g.gain.exponentialRampToValueAtTime(peak * 0.15, t + i * gap + gap * 0.9); }
     g.gain.linearRampToValueAtTime(peak, t0 + Math.max(0.001, p.attack ?? 0.001));
     g.gain.exponentialRampToValueAtTime(0.0005, t0 + (p.attack ?? 0.001) + decay);
-    const nodes: AudioNode[] = [this.noiseSource(t, t0 - t + decay + 0.06, metal), f];
-    // the 808's metal: its six tones through a band-pass at 10 kHz, then the filter (a high-pass at 7 kHz or so)
-    if (metal) { const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = 10000; b.Q.value = 0.6; nodes.splice(1, 0, b); }
-    this.chain([...nodes, g], dest);
+    // the filter (a high-pass at 7 kHz or so); the 808's metal, its six tones, through a band-pass at 10 kHz before it
+    const filters = this.hitFilters(ch, () => {
+      const f = c.createBiquadFilter(); f.type = p.filter ?? "highpass"; f.frequency.value = p.cutoff ?? 8000; f.Q.value = p.q ?? 0.7;
+      if (!metal) return [f];
+      const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = 10000; b.Q.value = 0.6;
+      return [b, f];
+    });
+    this.chain([this.noiseSource(t, t0 - t + decay + 0.06, metal), g], filters);
   }
-
-  private snare(t: number, p: Patch, peak: number, dest: AudioNode): void {
-    const c = this.ctx, decay = p.decay ?? 0.14;
-    const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.cutoff ?? 1800; f.Q.value = p.q ?? 0.7;
-    this.chain([this.noiseSource(t, decay + 0.05), f, this.env(t, peak, 0.001, decay)], dest);
+  private snare(t: number, p: Patch, peak: number, ch: Channel): void {
+    const c = this.ctx, decay = p.decay ?? 0.14, dest = ch.in;
+    const hp = this.hitFilters(ch, () => { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.cutoff ?? 1800; f.Q.value = p.q ?? 0.7; return [f]; });
+    this.chain([this.noiseSource(t, decay + 0.05), this.env(t, peak, 0.001, decay)], hp);
     // the shell: two tones, the second a little under a ninth above, each dropping into place
     for (const [k, lvl] of [[1, 0.7], [1.85, 0.35]]) {
       const o = c.createOscillator(); o.type = "triangle";
@@ -364,26 +414,32 @@ export class MusicEngine {
     for (const k of [1, p.ratio ?? 1.48]) { const o = c.createOscillator(); o.type = "square"; o.frequency.value = freq * k; o.connect(f); o.start(t); o.stop(t + decay + 0.05); }
   }
 
-  private synth(t: number, p: Patch, peak: number, freq: number, dur: number, ch: Channel): void {
-    const c = this.ctx, waves = p.waves ?? ["sawtooth"], U = Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
-    const attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
-    const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+  private synth(t: number, p: Patch, peak: number, freqOrChord: number | number[], dur: number, ch: Channel): void {
+    const freqs = Array.isArray(freqOrChord) ? freqOrChord : [freqOrChord], freq = freqs[freqs.length - 1];
+    const lite = this.shedLevel >= 2, all = p.waves ?? ["sawtooth"], waves = lite ? all.slice(0, 1) : all, U = lite ? 1 : Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
+    const c = this.ctx, attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
+    const end = t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02; // (its gain's fall has time constant release / 3: 2 releases is -52 dB, under everything)
     const g = c.createGain();
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(peak / Math.sqrt(n), t + attack);
     if (end > t + attack) g.gain.setTargetAtTime((peak / Math.sqrt(n)) * sustain, t + attack, decay / 3);
     g.gain.setTargetAtTime(0, end, release / 3);
     const nodes: AudioNode[] = [];
+    let lfoOf: GainNode | null = null, wobbled: BiquadFilterNode | null = null;
     if (p.filter) {
-      const f = c.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q ?? 0.7;
+      const f = c.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q ?? 0.7; kRate(f.frequency);
       const base = p.cutoff ?? 2000, top = Math.min(18000, base + (p.envAmt ?? 0) * peak / Math.max(0.001, p.gain));
       f.frequency.setValueAtTime(top, t);
       if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
-      // a slow wobble of the filter: pads breathe
+      // a slow wobble of the filter: pads breathe (one wobble a part, shared by its notes and let go of each as it ends:
+      // a wobble a note was a fifth of the pads' cost; foxtrot's measure, #523)
       if (p.lfoRate && p.lfoDepth) {
-        const l = c.createOscillator(), lg = c.createGain();
-        l.frequency.value = p.lfoRate; lg.gain.value = p.lfoDepth;
-        l.connect(lg); lg.connect(f.frequency); l.start(t); l.stop(stop);
+        if (!ch.lfo) {
+          const osc = c.createOscillator(), depth = c.createGain();
+          osc.frequency.value = p.lfoRate; depth.gain.value = p.lfoDepth;
+          osc.connect(depth); osc.start(); ch.lfo = { osc, depth };
+        }
+        lfoOf = ch.lfo.depth; lfoOf.connect(f.frequency); wobbled = f;
       }
       nodes.push(f);
     }
@@ -392,53 +448,86 @@ export class MusicEngine {
     this.chain(nodes, ch.in);
     // every wave as `unison` voices, detuned across ±detune cents and spread across ±width in the
     // stereo field (outer voices widest), each starting at its own point in the cycle
-    let v = 0;
-    for (const w of waves) for (let u = 0; u < U; u++, v++) {
+    // the voices spread across ±width: those on each side through one panner at their mean place (a panner a voice was
+    // the gate pad's, stab's and supersaw's biggest cost; foxtrot's measure, #523)
+    const pans: number[] = [];
+    for (let v = 0; v < n; v++) { const x = n > 1 ? (2 * v) / (n - 1) - 1 : 0; pans.push(p.width && n > 1 ? p.width * (v % 2 ? x : -x) : 0); }
+    const side = (sign: number): AudioNode | null => {
+      const on = pans.filter(q => Math.sign(q) === sign);
+      if (!on.length) return null;
+      const s = c.createStereoPanner(); s.pan.value = on.reduce((a, q) => a + q, 0) / on.length; s.connect(nodes[0]);
+      return s;
+    };
+    const left = side(-1), right = side(1);
+    // a middle voice among spread ones as a centred panner had it: -3 dB a side (a mono input alone would be copied whole to both)
+    const mid = (left || right) && pans.some(q => q === 0) ? (() => { const m = c.createGain(); m.gain.value = Math.SQRT1_2; m.connect(nodes[0]); return m; })() : nodes[0];
+    let last: OscillatorNode | null = null;
+    for (const freq of freqs) { let v = 0; for (const w of waves) for (let u = 0; u < U; u++, v++) {
       const o = c.createOscillator(), x = n > 1 ? (2 * v) / (n - 1) - 1 : 0;
       o.type = w;
       o.detune.value = (p.detune ?? 0) * x;
-      if (p.glide && ch.lastFreq > 0 && ch.lastFreq !== freq) { o.frequency.setValueAtTime(ch.lastFreq, t); o.frequency.exponentialRampToValueAtTime(freq, t + p.glide); }
+      if (p.glide && freqs.length === 1 && ch.lastFreq > 0 && ch.lastFreq !== freq) { o.frequency.setValueAtTime(ch.lastFreq, t); o.frequency.exponentialRampToValueAtTime(freq, t + p.glide); }
       else if (p.bend) { o.frequency.setValueAtTime(freq * Math.pow(2, p.bend / 12), t); o.frequency.exponentialRampToValueAtTime(freq, t + (p.bendTime ?? 0.08)); }
       else o.frequency.value = freq;
-      let src: AudioNode = o;
-      if (p.width && n > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * (v % 2 ? x : -x); o.connect(s); src = s; }
-      src.connect(nodes[0]); o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); o.stop(stop);
-    }
+      o.connect(pans[v] < 0 ? left! : pans[v] > 0 ? right! : mid); o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); o.stop(stop);
+      last = o;
+    } }
+    if (lfoOf && wobbled && last) { const l = lfoOf, f = wobbled; last.onended = () => { try { l.disconnect(f.frequency); } catch { /* gone */ } }; }
     ch.lastFreq = freq;
   }
 
   /** A sung note, synthesised: a buzzy source (saws, a touch of breath) through three formant
    *  band-passes for its vowel (chosen by the note, from the patch's vowels), with a vibrato that
    *  creeps in; unison voices spread wide make a choir. */
-  private voice(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, dest: AudioNode): void {
-    const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], vowel = VOWELS[vowels[Math.abs(step >> 2) % vowels.length]] ?? VOWELS.ah;
-    const U = Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
-    const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+  private voice(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
+    const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], name = vowels[Math.abs(step >> 2) % vowels.length], vowel = VOWELS[name] ? name : "ah";
+    const U = this.shedLevel >= 2 ? 1 : Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
+    const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 1.5 : 2) + 0.02;
+    // The part's own vowels (three formant band-passes each) and its vibrato, made once and shared by its notes: each note's
+    // envelope goes in before the formants (the same sound; a choir note's 3 band-passes and vibrato were most of the
+    // choir's cost; foxtrot's measure, #523).
+    const bank = (ch.banks ??= new Map()).get(vowel) ?? (() => {
+      const into = c.createGain();
+      for (const [f, a] of VOWELS[vowel]) {
+        const bp = c.createBiquadFilter(), bg = c.createGain();
+        bp.type = "bandpass"; bp.frequency.value = f * (p.formantShift ?? 1); bp.Q.value = p.q ?? 8; bg.gain.value = a * 3;
+        into.connect(bp); bp.connect(bg); bg.connect(ch.in);
+      }
+      ch.banks!.set(vowel, into);
+      return into;
+    })();
+    if (!ch.vib) { ch.vib = c.createOscillator(); ch.vib.frequency.value = 5.2; ch.vib.start(); (ch.running ??= []).push(ch.vib); }
     const g = c.createGain(), lvl = peak / Math.sqrt(U);
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + attack);
     if (end > t + attack) g.gain.setTargetAtTime(lvl * sustain, t + attack, decay / 3);
     g.gain.setTargetAtTime(0, end, release / 3);
-    g.connect(dest);
-    const src = c.createGain(); // the buzz, into the formants in parallel
-    for (const [f, a] of vowel) {
-      const b = c.createBiquadFilter(), bg = c.createGain();
-      b.type = "bandpass"; b.frequency.value = f * (p.formantShift ?? 1); b.Q.value = p.q ?? 8; bg.gain.value = a * 3;
-      src.connect(b); b.connect(bg); bg.connect(g);
-    }
-    // vibrato: a few cents, creeping in after the attack
-    const vib = c.createOscillator(), vg = c.createGain();
-    vib.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(p.vibrato ?? 15, t + Math.min(0.6, attack + 0.25));
-    vib.connect(vg); vib.start(t); vib.stop(stop);
+    g.connect(bank);
+    // vibrato: a few cents, creeping in after the attack (the part's wobble, this note's depth)
+    const vg = c.createGain();
+    vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(p.vibrato ?? 15, t + Math.min(0.6, attack + 0.25));
+    ch.vib.connect(vg);
+    // (the outer voices through a panner a side, the middle one straight in: as synth())
+    const spread = !!p.width && U > 1, xs = Array.from({ length: U }, (_, u) => U > 1 ? (2 * u) / (U - 1) - 1 : 0);
+    const sideOf = (sign: number): AudioNode => {
+      const on = xs.filter(x => Math.sign(x) === sign), sp = c.createStereoPanner();
+      sp.pan.value = p.width! * on.reduce((a, x) => a + x, 0) / on.length; sp.connect(g); return sp;
+    };
+    const left = spread ? sideOf(-1) : null, right = spread ? sideOf(1) : null;
+    const mid = spread && xs.includes(0) ? (() => { const m = c.createGain(); m.gain.value = Math.SQRT1_2; m.connect(g); return m; })() : g; // (as synth())
+    let last: OscillatorNode | null = null;
     for (let u = 0; u < U; u++) {
-      const o = c.createOscillator(), x = U > 1 ? (2 * u) / (U - 1) - 1 : 0;
-      o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = (p.detune ?? 0) * x;
+      const o = c.createOscillator(), x = xs[u];
+      o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = (p.detune ?? 0) * x; kRate(o.detune);
       vg.connect(o.detune);
-      let out: AudioNode = o;
-      if (p.width && U > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * x; o.connect(s); out = s; }
-      out.connect(src); o.start(t); o.stop(stop);
+      o.connect(spread && x < 0 ? left! : spread && x > 0 ? right! : mid); o.start(t); o.stop(stop);
+      last = o;
     }
-    if (p.breath) { const h = c.createBiquadFilter(); h.type = "highpass"; h.frequency.value = 2500; this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], src); }
+    // its breath: a noise of its own (a shared one sums differently over overlapping notes: 1 to 2 dB on the mix)
+    if (p.breath) { const h = c.createBiquadFilter(); h.type = "highpass"; h.frequency.value = 2500; this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], bank); }
+    // the note over (on the audio clock): let go of the part's vibrato
+    if (last) { const v = ch.vib; last.onended = () => { try { v.disconnect(vg); } catch { /* gone */ } }; }
   }
+
 
   private riser(t: number, p: Patch, dur: number, from: number, to: number, dest: AudioNode): void {
     const c = this.ctx, lo = p.cutoff ?? 400, f = c.createBiquadFilter(), g = c.createGain();
@@ -478,3 +567,8 @@ export class MusicEngine {
     return b;
   }
 }
+
+/** An AudioParam worked out once a 128-sample block rather than every sample (about 3 ms: nothing heard in a filter's sweep,
+ *  a pad's slow wobble or a vibrato): a filter whose frequency moves recomputes its coefficients every sample otherwise,
+ *  the music's biggest steady cost on the audio thread (Ed's under-runs, 2026-10-07). */
+function kRate(p: AudioParam): void { try { p.automationRate = "k-rate"; } catch { /* (an older browser: as it was) */ } }

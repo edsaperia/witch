@@ -88,3 +88,77 @@ The tip benched is 11 merges before the frozen ship tip 0ab00110 (#448): #437–
 - **To check**: the `party` lap's p99 19.7 → 52.4 ms on the ground flight (8.7 → 14.9 in the treetops), median unchanged (0.1 → 0.2): a spike, not a steady cost. The lap (`render/view.ts`, up to `this.time("party")`) covers soundsystems, lasers, the ley lines (update, grow, ring, the ley head's front) and the glades: likely the ley-line work (#351, #381), unconfirmed, one run. `heights` p99 in the treetops 15.9 → 24.9.
 
 **Pixels**: all seven scenes differ from the baseline, as expected after the night's intended visual merges; every refactor and optimisation merge through #404 matched its own parent (rounds 1–3).
+
+**Late game** (`tools/bench/late.cjs`: seed 871136, wave 28, over the treetops, 600 frames at 1280×720; the same tool on both, 818c7aec → 31d1905c; the same state, 1632 creatures):
+
+| | baseline | tip |
+|---|---|---|
+| JS heap, start / end / max | 635 / 639 / 674 MB | 649 / 656 / 665 MB |
+| draw calls, p50 / max | 150 / 157 | 154 / 159 |
+| trees drawn | 954 | 780 |
+| rules step, p50 / p95 | 4.4 / 8.9 ms | 4.7 / 9.2 ms |
+| the view's own parts (not `draw`), mean | 9.7 ms | 11.1 ms |
+
+The heap is flat over the frames in both (no leak). Down: `refresh` 1.87 → 0.76, `grass+lights` 0.66 → 0.30. **To check**: `groundTiles` 1.84 → 3.59 ms, `hud` 0.05 → 0.92 ms (the perf HUD, #419? check it isn't on by default), `leash` 0.84 → 1.38. One run each.
+
+## Round 4: 893849d2 → 31d1905c (#398–#435), 08:30–10:52
+
+27 merges, each against its first parent (in two halves, each commit with its own bench). Tests and typecheck green at both ends. Journey on 31d1905c ok: every moment reached, no errors, draw calls 49–90, `dropped` 0.
+
+- **Same** (22), every optimisation among them: #410 gc-pool, #413 audio-cpu, #414 shader-warmup, #415 perf-baseline, #416 disco-warm, #419 perf-hud, #421 perf-baseline-fix, #429 gc-glyphs, #430 swoop-upload, #431 gl-stats; and #363, #377, #411, #423, #424, #425, #426, #428, #432, #434, #435, #436.
+- **Differ, on purpose** (5):
+  - #398 creature-character-1, #417 banded-legs (360 px), #418 creature-big4: the wave fight's creatures only; the wolves redrawn, bigger and bulkier after #418, collars, hats and glow intact.
+  - #420 bench-buffs: the bench's own fingerprint (the fix for the knob false positive).
+  - #422 balance: the combat state only, 0 pixels.
+
+
+## Round 5: 31d1905c → the shipped tip 0ab00110 (#427–#449), 10:55–12:13
+
+11 merges, each against its first parent. Tests and typecheck green at 0ab00110; journey ok there (every moment reached, no errors, draw calls 49–89, `dropped` 0).
+
+- **Same** (7): #437 pages-size, #439 balance, #442 champion-bot, #443 setpiece-scale, #444 batch-uploads, #447 runestone-carving, #448 ed-notes-ravine.
+- **Differ** (4):
+  - #427 disc-outline: the creatures' leg outlines (12,681 px), on purpose.
+  - #445 sigil-spill: a soft glow round the wolf's sigil on the ground (19,899 px, at most 44 levels), on purpose.
+  - #440 p2-readback: 81 px of one sigil's edge, as its PR says (the sigil atlas drawn on the CPU, so no GPU readback: the first sigil 916 → 2.4 ms).
+  - **#449 grass-uploads** (minor): a phase-2 PR claiming the same picture, yet 45 px of the boot shot differ by 1 level (its own "game unchanged" was red when it merged). Invisible; likely overlapping tufts' order or slots; not bit-exact as claimed.
+
+## After the core design: a44fd114 (#487, #483, #492), 12:33–12:56
+
+Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, seed 123), all pass, no page or console errors:
+
+| | result |
+|---|---|
+| nothing clears by itself | none before she invites anyone |
+| the boot is 30 s | first speaker 11.5 → boot's end 41.5 (off the decks at 8.5, the first stone 3 s later) |
+| a cleared area transforms | 10,9 turned happy (4 holders): partified, its soundsystem up, one `areaCleared`, in `party.ahead`, within a second |
+| a wave at a transformed stone only celebrates | one `waveCelebrate` for 10,9 and nothing else: soundsystems 2 → 2, enraged 0 → 0 |
+| no creature spawns mid-run | 1840 at the start, 1840 after two waves and two minutes, no new id |
+
+(The next wave at an uncleared stone still wakes it: soundsystems 2 → 3, 2 enraged.) Run on #487's own head before it merged too: the same.
+
+**Journey**: every moment reached, no errors, draw calls 53–91, `dropped` 0, 1840 creatures throughout. Its step-off check fired early: since #470 she's held at the decks through the needle-drop routine; the journey now moves until she's off, and takes the boot's shot at mid-boot (half the ring), whatever the boot's length.
+
+**Untracked**: the full smoke's trunk checks ("trunks are drawn on the ground", "trunks are shaded round") fail on the prototype too, vary run to run, and aren't on `smoke.cjs`'s KNOWN list (reported by #487's author; passed to the coordinator).
+
+## Evening: 42920350 (#514), 18:23–19:12
+
+12 merges since 3f01ccf4 (#503, #501, #504, #505, #507, #506, #498, #510, #500, #511, #508, #514), ten touching the rules: no per-merge bench this time (nearly all change the game on purpose). Tests, typecheck, build green.
+
+- **Core-design check**: all pass, no errors: nothing clears by itself; the boot 30.0 s (11.0 → 41.0); 10,9 cleared transforms (soundsystem, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 2 → 2, enraged 0 → 0); 1840 creatures, no new id; the next uncleared stone still wakes (2 → 3, 2 enraged).
+- **Journey**: every moment reached, no errors, `dropped` 0, 1840 creatures throughout; off the decks 8 s after the cast, the boot caught mid-way (7 of 12 speakers). To watch: draw calls over the treetops 100, from about 90 earlier in the day. (A container restart cut the first run short; re-run whole.)
+
+## Night: 7a831333 (#518), 23:15–23:52
+
+13 merges since 42920350 (#515, #516, #521, #522, #517, #523, #519, #524, #365, #497, #513, #512, #518). Tests, typecheck, build green.
+
+- **Core-design check**: all pass, no errors (the boot 30.0 s; 10,9 cleared transforms; its wave only celebrates; no new id; the next uncleared stone still wakes).
+- **Journey**: every moment reached, no errors, `dropped` 0; draw calls over the treetops 101 (steady at the new level).
+- **To confirm**: the forest now starts with **909 creatures, from 1840** at 42920350 (the population PRs #497, #513): the test area had 3 holders where it had 4, the next wave enraged 1 where it enraged 2. Presumably the balance work's intent; passed to the coordinator for Ed.
+
+## Early morning: 78db156d (#528), 04:01–04:29
+
+2 merges since 7a831333 (#527 knockdown-bpm, #528 knockdown-cheer; plus #520, this log). Tests, typecheck, build green.
+
+- **Core-design check**: all pass, no errors (off the decks 8 s after the cast; the boot 30.0 s, 11.0 → 41.0; 10,9 cleared transforms, 3 holders; its wave only celebrates, soundsystems 2 → 2, enraged 0 → 0; the next uncleared stone wakes, 2 → 3, 1 enraged; 909 creatures, no new id).
+- **Journey**: every moment reached, no errors, `dropped` 0, 909 creatures throughout: first speaker at 12.3 s, the boot caught at 7 of 12, draw calls over the treetops 101 (steady), stargazing at the beach, the party's over. The two merges change the knockdown's sounds, which the journey doesn't reach (no knockdown in it).

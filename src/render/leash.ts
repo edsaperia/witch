@@ -2,8 +2,8 @@
 // - the stack: each leashed creature's sigil floating above the witch's head, newest at the
 //   bottom, swaying gently when she is still and trailing behind her when she flies fast;
 // - placed sigils: a neon rune on the ground, written on stroke by stroke (here: swept round);
-//   a ghost under her shows where the bottom sigil would land, red where it can't, and a blocked
-//   spot fizzles;
+//   a ghost under her shows where the bottom sigil would land (none where it can't: Ed, 2026-10-07, "no visual feedback
+//   when you can't put down a sigil, just a refusal sound");
 // - the bond, each switchable in the tuning file (bond): a glow at the creature's feet in its
 //   sigil's colour, a spark now and then from sigil to creature (staggered), and a dotted thread
 //   only while the leash is under strain;
@@ -33,6 +33,7 @@ import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, LEGEND_LEVEL
 import { drawCombat } from "./leash/combat";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
 import { drawRespawn } from "./leash/respawn";
+import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
@@ -68,7 +69,6 @@ export class LeashView {
   ruts = new Map<number, { x: number; z: number; at: number }[]>();
   evolved = new Map<number, number>();
   berryRgb: [number, number, number];
-  fizzles: { x: number; z: number; at: number }[] = [];
   /** When each sigil came to the bottom of the stack by a cycle (E in the treetops): it flares a moment. */
   cycledAt = new Map<number, number>();
   bursts: { x: number; z: number; at: number; seed: number; rgb: number[] }[] = [];
@@ -348,7 +348,6 @@ export class LeashView {
     this.drawLetters(time);
     drawCombat(this, time, camera, width, height, hatTop);
     for (const e of g.leashEvents) { // (the whole frame's, not only its last step's)
-      if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
       if (e.kind === "invited" || e.kind === "befriended") {
         // its own colour for the burst: its sigil's neon, calmed toward the night (as the HUD's, #188)
         const sc = sigilColour(g.creatures[e.id]?.species ?? "fox"), m = (sc[0] + sc[1] + sc[2]) / 3;
@@ -366,7 +365,6 @@ export class LeashView {
       }
       if (e.kind === "cycled" && e.id !== undefined) this.cycledAt.set(e.id, time);
     }
-    this.fizzles = this.fizzles.filter(f => time - f.at < 0.7);
     this.bursts = this.bursts.filter(b => time - b.at < 1.1);
     for (const [id, at] of this.joined) if (time - at > 1) this.joined.delete(id);
     // Joining the party (an invite, or made happy): a short burst in the night's party palette (the art director's: the
@@ -440,16 +438,12 @@ export class LeashView {
 
     drawProjection(this, time, dot); // (the sigils over the canopy from the treetops: render/leash/projection.ts)
 
-    // The ghost: where the bottom sigil would land, red where it can't.
-    if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
+    // The ghost: where the bottom sigil would land; none where it can't (Ed, 2026-10-07: "no visual feedback when you can't put
+    // down a sigil, just a refusal sound": the "fizzled" leash event, platform/audio).
+    if (w.mode === "ground" && s.stack.length && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
-      const no = blocked(s, w.x, w.z, t);
       const sg = this.sigilOf(c);
-      this.flat.add(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, no ? 0.85 : col.r, no ? 0.38 : col.g, no ? 0.43 : col.b, 0.22); // (can't: the HUD's loss red, #188)
-    }
-    for (const f of this.fizzles) {
-      const k = 1 - (time - f.at) / 0.7;
-      this.flat.add(f.x, 0, f.z, 3 * (1 + (1 - k) * 0.6), dot, 0.85, 0.38, 0.43, k); // (the HUD's loss red, #188)
+      this.flat.add(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
     }
 
     // Relics (#87; placeholder till the art builder's party relics are drawn): a gold mound where
@@ -471,7 +465,17 @@ export class LeashView {
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
       this.standing.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
     }
-    s.relics.forEach((id, i) => { const tw = 0.6 + 0.4 * Math.sin(time * 4 + id); this.over.add(w.x + (i - (s.relics.length - 1) / 2) * 0.6, hatTop + 2.2, w.z, 0.5, dot, 1, 0.85, 0.4, tw); });
+    // The relic sigils she carries (Ed's playtest, 2026-10-07: "the flask sigil is too small"; it was a 0.5 m glint): each its
+    // own flask sigil, as big as an adult's sigil in her stack, in its gold, beside the stack over her hat, with a soft halo
+    // and a slow twinkle, so the silhouette reads at the game's pixel size.
+    if (s.relics.length) {
+      const slot = this.slotOf("relic", 0), col = this.colours.get("relic")!, size = 2.8 * t.stack.scale, uv = this.uv(slot);
+      s.relics.forEach((id, i) => {
+        const x = w.x + size * (1.1 + i * 1.05), y = hatTop + size * 0.75 + Math.sin(time * 1.6 + id) * 0.08, tw = 0.88 + 0.12 * Math.sin(time * 3 + id);
+        this.standing.add(x, y, w.z, size * 1.6, dot, col.r, col.g, col.b, 0.22 * tw);
+        this.standing.add(x, y, w.z, size, uv, col.r * tw, col.g * tw, col.b * tw, 1);
+      });
+    }
 
     // The ruts of legends' long charges, fading.
     for (const [id, ruts] of this.ruts) {
@@ -488,6 +492,7 @@ export class LeashView {
     drawSnores(this, camera, width, height);
     drawCirclePanel(this, camera, width, height);
     drawRespawn(this, camera, width, height); // (the wait behind her decks after a knockout: render/leash/respawn.ts)
+    drawDeckBpm(this, camera, width, height); // (the party's tempo over her decks: render/leash/deckBpm.ts)
   }
 
   /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
@@ -497,6 +502,9 @@ export class LeashView {
   circlePanel: HTMLElement | null = null;
   /** The countdown at her decks after a knockout (render/leash/respawn.ts). */
   respawnEl: HTMLElement | null = null;
+  /** The tempo over her decks (render/leash/deckBpm.ts), and the knockdowns' bonus it last pulsed for. */
+  deckBpmEl: HTMLElement | null = null;
+  deckBonus = 0;
   circleFade = 0;
   circleAt = 0;
   circleLast: { legend: Creature; x: number; z: number; r: number } | null = null;

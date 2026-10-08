@@ -8,6 +8,7 @@ import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
 import { hasRune } from "./creatureStates";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, c, STEP); };
@@ -243,11 +244,17 @@ describe("knocked out (Ed, 2026-10-04)", () => {
   });
 
   it("lights a loading bar of candles on her desk, one a candleStep of the wait, the extra red, melting one after another as she scratches (Ed, 2026-10-07)", () => {
-    const { g } = setUp(), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; });
+    // (the stacking wait, 6, 8, 10, 12 s, as it was before Ed's "We can remove the extra knockdown time": still a knob)
+    const stack = { base: 6, step: 2, max: 12, cooldown: 60, minScratch: 1.5 };
+    const { g } = setUp(), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; x.knockout.respawn = stack; });
     const kos = [0, 1, 2, 3, 9].map(streak => knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak }));
     expect(kos.map(k => candleCount(k, t))).toEqual([6, 8, 10, 12, 12]); // (6, 8, 10, 12 s: the cap)
     expect(kos.map(k => candleRed(k, t))).toEqual([0, 2, 4, 6, 6]); // (the base's 6 s white)
-    const half = withTuning(x => { x.knockout.candleStep = 0.5; });
+    // today (Ed, 2026-10-07: each knockdown costs a BPM instead): every knockdown the flat base, its candles all white
+    const flat = withTuning(x => { x.knockout.candleStep = 1; });
+    const now = [0, 1, 2, 9].map(streak => knockOut(W.leash, g.creatures, 100, flat, { hatFloats: true, streak }));
+    expect(now.map(k => [candleCount(k, flat), candleRed(k, flat)])).toEqual([[6, 0], [6, 0], [6, 0], [6, 0]]);
+    const half = withTuning(x => { x.knockout.candleStep = 0.5; x.knockout.respawn = stack; });
     expect([candleCount(kos[0], half), candleCount(kos[4], half), candleRed(kos[4], half)]).toEqual([12, 24, 12]);
     const K = kos[1], n = candleCount(K, t);
     expect([0, 1, 7].map(i => candleMelt(K, K.inAt, i, t))).toEqual([0, 0, 0]); // (all whole as she arrives)
@@ -559,8 +566,8 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     g.tuning.fight.scale = 1;
   }, 60000);
 
-  it("has a wild creature chasing her give up soon after she leaves its area, and go home (Ed, 2026-10-05)", () => {
-    const g = quiet(), W = g.witches[0];
+  it("has a wild creature chasing her give up soon after she leaves its area, and go home (Ed, 2026-10-05; one not hunting her: the hunt off, rules/hunt.ts)", () => {
+    const g = quiet({ ...TUNING, hunt: { on: false } }), W = g.witches[0];
     W.health.hp = 1e6;
     const cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]], site = g.map.siteOf(cell[0], cell[1]);
     const wolf = place(g, 0, "wolf", 2, site.x, site.z);
@@ -584,7 +591,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
 
 describe("sieges far from her (found by the overnight playthrough)", () => {
   it("march from the wave on, wherever she is: their besiegers are stepped, not only once she comes near", () => {
-    const g = newGame(7, TUNING);
+    const g = newGame(7, PEOPLED);
     g.clock.paused = false;
     const B = g.map.bounds;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: B.minX + 5, z: B.minZ + 5 }; // (far off, in a corner)

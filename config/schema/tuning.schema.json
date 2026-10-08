@@ -2027,6 +2027,10 @@
         "candleStep": {
           "type": "number",
           "minimum": 0
+        },
+        "bpmStep": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2039,7 +2043,8 @@
         "hatFloat",
         "dim",
         "respawn",
-        "candleStep"
+        "candleStep",
+        "bpmStep"
       ],
       "additionalProperties": false
     },
@@ -2987,13 +2992,40 @@
         "hangBack": {
           "type": "number",
           "minimum": 0
+        },
+        "dangerF": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "on",
         "time",
         "forget",
-        "hangBack"
+        "hangBack",
+        "dangerF",
+        "tint",
+        "fade"
+      ],
+      "additionalProperties": false
+    },
+    "hunt": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on"
       ],
       "additionalProperties": false
     },
@@ -3104,6 +3136,10 @@
               "type": "number",
               "minimum": 0
             },
+            "minHostile": {
+              "type": "number",
+              "minimum": 0
+            },
             "threat": {
               "type": "array",
               "items": {
@@ -3130,6 +3166,7 @@
           "required": [
             "babies",
             "babyCap",
+            "minHostile",
             "threat",
             "profiles"
           ],
@@ -4777,6 +4814,39 @@
           ],
           "additionalProperties": false
         },
+        "aggro": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "swell": {
+              "type": "number",
+              "minimum": 0
+            },
+            "riser": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hit": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fall": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "swell",
+            "riser",
+            "hit",
+            "fall"
+          ],
+          "additionalProperties": false
+        },
         "sparkler": {
           "type": "object",
           "properties": {
@@ -5025,6 +5095,37 @@
           "required": [
             "volume",
             "gap"
+          ],
+          "additionalProperties": false
+        },
+        "nope": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "tempoUp": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
           ],
           "additionalProperties": false
         },
@@ -5415,6 +5516,7 @@
         "shoes",
         "pond",
         "picnic",
+        "aggro",
         "sparkler",
         "fireworks",
         "seaLife",
@@ -5422,6 +5524,8 @@
         "deck",
         "spell",
         "land",
+        "nope",
+        "tempoUp",
         "stir",
         "knock",
         "charge",
@@ -5444,6 +5548,14 @@
         "volume": {
           "type": "number",
           "minimum": 0
+        },
+        "latency": {
+          "type": "string",
+          "enum": [
+            "interactive",
+            "balanced",
+            "playback"
+          ]
         },
         "dropLayers": {
           "type": "number",
@@ -5575,6 +5687,7 @@
       "required": [
         "on",
         "volume",
+        "latency",
         "dropLayers",
         "nearDist",
         "farDist",
@@ -8603,6 +8716,7 @@
     "combat",
     "notice",
     "wildWatch",
+    "hunt",
     "naps",
     "guard",
     "population",

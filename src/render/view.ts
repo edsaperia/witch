@@ -7,6 +7,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
@@ -63,7 +64,7 @@ import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
-import { LeyLines, leyReveal, shaderPulse } from "./leylines";
+import { LeyLines, bootLap, leyReveal, shaderPulse } from "./leylines";
 import { bootLineAt, bootPath, bootPulseAt, bootShare } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { Wisps } from "./wisps";
@@ -233,6 +234,12 @@ export class View {
   /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
   alarms = newAlarms();
   alarmCues: AlarmIndicators | null = null;
+  /** Pointers to the last few wild animals holding the area she's in (render/view/hud.ts; rules/clear.ts wildLeft), and that
+   *  list, looked up four times a second. */
+  wildPointers: StoneIndicator[] = [];
+  wildLeftList: { at: number; list: Creature[] } = { at: -Infinity, list: [] };
+  /** The knockdowns' BPM bonus the wave pointer last pulsed for (render/view/hud.ts). */
+  pointerBonus = 0;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -469,7 +476,21 @@ export class View {
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
     // In the background where the browser can (KHR_parallel_shader_compile); nothing it draws changes.
-    this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
+    // The hidden too (Ed's playtest, 2026-10-07: stalls of 100 ms and more in play): three compiles only what's visible, so
+    // the treetops' crowns, hidden on the ground, and everything not yet showing compiled on its first frame, the driver's
+    // wait inside it (getProgramInfoLog, 0.7-2.6 s a frame in the cloud's renderer, 50-200 ms on a real GPU). Everything is
+    // shown for the call (its programs are made at once, as it's called) and hidden again before anything is drawn; then
+    // play waits for them a few seconds at most, so on a GPU that compiles in parallel they're done in the Bedroom.
+    const hidden: THREE.Object3D[] = [];
+    this.scene.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+    const compiled = this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
+    for (const o of hidden) o.visible = false;
+    await Promise.race([compiled, new Promise(r => setTimeout(r, 4000))]);
+    // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
+    // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
+    for (const p of this.renderer.info.programs ?? []) p.getUniforms();
+    // Each legend's carving (render/legendCarving.ts: 10-80 ms a kind) made in idle time now, not the first time she comes near one.
+    warmCarvings(this.game.map.legendClearings.map(c => AREA_TYPES[this.game.map.typeOf(c.cell[0], c.cell[1])].creature));
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
@@ -558,6 +579,8 @@ export class View {
   readonly evolvedAt = new Map<number, number>();
   /** Each area legend's lying down and getting up, as the view has seen its state change (render/legendSleep.ts). */
   readonly legendSleeps = new Map<number, import("./legendSleep").SleepTrack>();
+  /** Each watching creature's aggro red as last drawn and when (view/creatures.ts), so it eases out when the watch ends. */
+  readonly aggroLast = new Map<number, { a: number; at: number }>();
   /** Each creature's distance walked as drawn, for its baked walk's frames (view/creatures.ts strideFrame). */
   readonly strides = new Map<number, { x: number; z: number; d: number; at: number }>();
   /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
@@ -767,16 +790,18 @@ export class View {
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
       // the wave's pulse along the current link, by the party's clock (as the HUD's pointer); while home boots, none drawn, but the
       // line the boot branches off unlit ahead of where it will set off (as it is once the boot ends: no change as it does)
-      const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
-      this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
+      const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil, lap = bootLap(g, time);
+      this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse && lap === null);
       // None till the party spell, nor before the boot's pulse reaches where the first link leaves the home ring (Ed, v2001 and
       // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
       // (leyReveal, by the boot pulse's own progress), then on along the route.
       this.ley.near(w.x, w.z);
       this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
-        const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
-        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
+        // (Its last stone turned, its sparkler finishes the lap to where it came on to the ring and hands over to the wave's
+        // there: Ed, 2026-10-07, "The two pulses or tips don't join correctly at the top of the speaker circle".)
+        const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = (g.party.spellAt !== null && share < 1) || lap !== null;
+        this.ley.ring(lap ?? (live ? bootPulseAt(g.party, g.map, time) / B.length : null), bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
         this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
       }
     }

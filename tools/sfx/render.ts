@@ -64,6 +64,7 @@ const SOUNDS: [string, number, Play][] = [
   ["picnic", 10, () => {}],
   ["creator-room", 12, () => {}],
   ["letter-land", 1.6, () => {}],
+  ["sigil-nope", 1.4, () => {}],
   ["boot-stir", 6, s => s.stir()],
   ["legend-sleep", 5, s => s.legends(1, 1, 0)],
   ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
@@ -79,6 +80,8 @@ const SOUNDS: [string, number, Play][] = [
   ["fireworks", 9, () => {}],
   ["dolphins", 6, () => {}],
   ["kraken", 8, () => {}],
+  ["aggro-hit", 7, () => {}],
+  ["aggro-off", 5, () => {}],
 ];
 
 async function render(name: string, seconds: number, play: Play) {
@@ -112,6 +115,8 @@ async function render(name: string, seconds: number, play: Play) {
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
     at(0, () => s.knock(1)); at(1.2, () => s.knock(4)); at(2.6, () => s.knock(9));
     for (let i = 0; i < 14; i++) at(2.75 + i * 0.13, () => s.twinkle(i));
+  } else if (name === "sigil-nope") {
+    for (let i = 0; i < 2; i++) void oc.suspend(Math.round((0.1 + i * 0.6) * rate) / rate).then(() => { s.nope(i ? 0.4 : -0.4); return oc.resume(); });
   } else if (name === "letter-land") {
     // three 💌s that met no one coming down, a quarter second apart
     for (let i = 0; i < 3; i++) void oc.suspend(Math.round((0.1 + i * 0.4) * rate) / rate).then(() => { s.land(i - 1); return oc.resume(); });
@@ -132,6 +137,13 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "sea") {
     // walking down the beach to the water (two waves or so), then away up it until it's let go
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 11 ? 1 : Math.max(0, 1 - (sec - 11) / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sea(L, 0.3); return oc.resume(); }); }
+  } else if (name === "aggro-hit" || name === "aggro-off") {
+    // a wild watch over 5.5 s in a dangerous area that ends in their attack; or a mild one she breaks off at 3 s
+    const hit = name === "aggro-hit", T = 5.5;
+    for (let k = 0; k * 0.05 < seconds - 0.2; k++) {
+      const sec = k * 0.05, w = sec < 0.3 ? null : hit ? Math.min(1, (sec - 0.3) / T) : sec < 3 ? (sec - 0.3) / T : null;
+      void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.aggro(w, hit ? 0.85 : 0.3, 0.1); return oc.resume(); });
+    }
   } else if (name === "fireworks") {
     // a show over a soundsystem 60 m off: seven shells half a second apart, each bursting 1.2 s after it climbs, the cheer
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });

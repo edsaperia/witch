@@ -12,24 +12,19 @@
 // by the same arc length).
 import type { ForestMap } from "./map";
 import type { PartyState } from "./party";
-import type { Tuning } from "./tuning";
-import { departureClear, ringApproach } from "./departure";
+import { ringApproach, speakerCircle } from "./departure";
 
 type P2 = [number, number];
 type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { boot: { time: number; firstAfter?: number } } };
 
 /** A stone's bearing from the floor's middle, clockwise from north (radians, 0 to 2π): east π/2 (the camera looks north). */
 
-/** The ring's radius: the stones' mean distance from the floor's middle. */
-export const ringRadius = (map: Floor): number => {
-  const d = map.dancefloor, s = d.speakers, T = map.tuning as Partial<Tuning>;
-  // On the first line's own circle round home (rules/departure.ts: out past the speakers' feet, or at the treehouse's front if
-  // that's further), so the line leaving home runs on the ring from the treehouse and leaves it at a point on it, one path
-  // (Ed, 2026-10-06: "it doesn't connect with the leyline around the dancefloor": the ring went through the speakers, the
-  // way out round outside them).
-  if (T.dancefloor && T.leyLines) return Math.max(departureClear(map as unknown as ForestMap, T.leyLines.depart.avoid), Math.hypot(map.treehouseFront.x - d.x, map.treehouseFront.z - d.z));
-  return s.length ? s.reduce((a, p) => a + Math.hypot(p.x - d.x, p.z - d.z), 0) / s.length : d.radius;
-};
+/** The ring's radius: the stones' own circle, so the boot's pulse runs through each stone as it turns it (Ed, 2026-10-07: "The
+ *  boot leyline does not go around the dancefloor where the speakers are": it ran on the treehouse front's circle, 6.5 m outside
+ *  them, across the ground in front of the near ones). The first line's way out runs on this same circle (rules/departure.ts),
+ *  so the line leaving home is still one path with the ring, leaving it at a point on it (Ed, 2026-10-06: "it doesn't connect
+ *  with the leyline around the dancefloor"). */
+export const ringRadius = (map: Floor): number => speakerCircle(map);
 
 /** The stones in the order the pulse turns them: indices into dancefloor.speakers, the first clockwise from the top. */
 export function ringOrder(map: Floor): number[] { return bootPath(map).order; }

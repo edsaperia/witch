@@ -1,7 +1,7 @@
 // The pointers on the screen's edge (moved out of view.ts's render, unchanged): toward the wave's pulse and the next stones,
 // toward her hat where it lies, and toward a soundsystem under attack.
 import type { View } from "../view";
-import { beatTime } from "../../rules/beat";
+import { beatTime, bpmAt } from "../../rules/beat";
 import { AREA_TYPES } from "../../rules/map";
 import { waveCountdown } from "../../rules/party";
 import { hatMarker } from "../../rules/hat";
@@ -10,6 +10,10 @@ import { edgeLayout, HAT, StoneIndicator } from "../indicator";
 import { AlarmIndicators } from "../alarm";
 import { ALARM_DEFAULTS, shownAlarms, stepAlarms } from "../../rules/alarms";
 import { HAT_BESIDE, HAT_INK } from "../view";
+import { clearableAt, wildLeft } from "../../rules/clear";
+
+/** At most this many left before each gets a pointer (more would clutter the edge: the HUD's count says how many). */
+const WILD_POINTERS = 3;
 
 /** Updates the pointers for this frame. */
 export function drawPointers(v: View, time: number): void {
@@ -34,8 +38,11 @@ export function drawPointers(v: View, time: number): void {
         ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
       });
     };
-    // Pausing holds the countdown.
-    cue(v.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone);
+    // Pausing holds the countdown. Its label is the party's tempo (Ed, 2026-10-07: "The BPM is shown on the sparkler
+    // marker, and above the decks"), pulsing up when a knockdown raises it (rules/beat.ts knockdownTempo).
+    cue(v.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone, `${Math.round(bpmAt(g.beat, time))} bpm`);
+    const bonus = g.beat.bonus ?? 0;
+    if (bonus > v.pointerBonus) { v.pointerBonus = bonus; v.nextStones[0]?.pop(); }
     // Her hat on the ground (Ed, 2026-10-06: "there's a direction marker for it, so you can go back and find it"): toward it
     // off screen, over it on screen, while it lies there; in the HUD's amber.
     const H = hatMarker(g.witches[0].hat);
@@ -43,6 +50,23 @@ export function drawPointers(v: View, time: number): void {
       const P = (v.hatPointer ??= new StoneIndicator(document.body, 3));
       P.fade(H ? 1 : 0);
       P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+    }
+    // The last few wild animals holding the wild area she's in (Ed's playtest, 2026-10-07: clearing it needs every one of its
+    // own invited or run off, and some were out of sight): their sigil in a ring, toward each off screen, over it on screen.
+    {
+      const L = v.wildLeftList, now = performance.now();
+      if (now - L.at > 250) {
+        L.at = now;
+        const cell = g.partyOver || w.seated ? null : clearableAt(g.party, g.map, w.x, w.z);
+        L.list = cell ? wildLeft(g.creatures, cell) : [];
+        if (L.list.length > WILD_POINTERS) L.list = [];
+      }
+      while (v.wildPointers.length < L.list.length) v.wildPointers.push(new StoneIndicator(document.body, 2, 0.85));
+      v.wildPointers.forEach((P, i) => {
+        const c = L.list[i], colour = c && v.markerArt.colour.get(c.species);
+        P.fade(colour ? 1 : 0);
+        P.update(v.camera, cw, ch, c && colour ? { x: c.x, z: c.z, colour, species: c.species } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+      });
     }
     // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
     const AT = t.alarms ?? ALARM_DEFAULTS;

@@ -27,7 +27,7 @@ import { beachOf, type Beach } from "../../rules/mapShape";
 import { dolphinLeaps, krakenRising } from "../../rules/seaLife";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
-import { beatAt } from "../../rules/beat";
+import { beatAt, timeAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { musicMix, partyOverEase } from "../../rules/music";
@@ -40,6 +40,7 @@ export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(
 import { nightKind } from "./night";
 import { AREA_TYPES } from "../../rules/map";
 import { leyPulse, pointerShown, type P2 } from "../../rules/leypulse";
+import { aggroOf } from "../../rules/wildWatch";
 import { fireworkShells, type Shell } from "../../rules/fireworks";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
@@ -70,6 +71,9 @@ export class SfxCues {
   private stonesOn = new Set<number>();
   /** The knockout (its ko.at) whose rewind has played. */
   private cutOf: number | null = null;
+  /** Her knockdowns' tempo bonus last heard, and when the crowd's cheer for its rise is due, on her clock or the game's (tempoUp). */
+  private bonusSeen = 0;
+  private tempoUpDue: { at: number; her: boolean } | null = null;
   /** The last half-beat heard at her decks (decks). */
   private deckHalf = -1;
   /** The game time her routine's strokes were heard up to (NaN outside it), and whether her hand was up (its hype). */
@@ -107,6 +111,7 @@ export class SfxCues {
     this.soundsystems(h);
     this.booted(h);
     this.powered(h);
+    this.tempoUp(h);
     this.hurt(h);
     this.knocked(h);
     this.charges(h);
@@ -120,6 +125,7 @@ export class SfxCues {
     this.picnic(h);
     this.sea(h);
     this.sparkler(h);
+    this.aggro(h);
     this.fireworks(h);
     this.night(h);
     this.ambience(h);
@@ -143,6 +149,7 @@ export class SfxCues {
       else if (e.kind === "fizzled") S.land(pan(e.x), k); // (thrown its full range: down on the ground)
     }
     for (const e of g.leashEvents) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
+      else if (e.kind === "fizzled") S.nope(pan(e.x)); // (a sigil refused, too near one already down: Ed, 2026-10-07)
       else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 
@@ -517,6 +524,23 @@ export class SfxCues {
   }
   private shows: { at: number; x: number; z: number; cheered: boolean; cheerAt: number; shells: (Shell & { launched: boolean; popped: boolean })[] }[] = [];
 
+  /** The wild watch's warning (art builder 3's aggroOf, rules/wildWatch.ts): rising while a wild area's watchers stare at
+   *  her; when it ends, a hit if the watch ran its course (they attack) or a fall if it was called off (she rose, left or
+   *  was knocked out). aggroOf goes null on the attack's own step too, so the last k tells which (art builder 3: k reaches
+   *  1 on the step the watch ends; a call-off leaves it below about 0.98). */
+  private aggro({ g }: Here): void {
+    if (!g.tuning.sfx.aggro) return;
+    const a = aggroOf(g);
+    if (a) { this.aggroK = a.k; this.aggroDanger = a.danger; this.sfx.aggro(a.k, a.danger); return; }
+    if (this.aggroK === null) return;
+    const w = g.witches[0], attacked = this.aggroK >= 0.98 && !!w && w.body.mode === "ground" && !w.ko;
+    this.aggroK = null;
+    if (attacked) this.sfx.aggro(1, this.aggroDanger);
+    this.sfx.aggro(null);
+  }
+  private aggroK: number | null = null;
+  private aggroDanger = 0;
+
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {
     const P = g.tuning.sfx.picnic, w = g.witch, cell = g.map.areaAt(w.x, w.z).cell, key = cellKey(cell);
@@ -545,5 +569,22 @@ export class SfxCues {
     if ((this.flourished.get(id) ?? -Infinity) > time - 2) return;
     this.flourished.set(id, time);
     this.sfx.invited(g.creatures[id]?.level ?? 0, pan, k);
+  }
+
+  /** Knocked down, the party's tempo rises (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"; hotel's
+   *  rules/beat.ts knockdownTempo, g.beat.bonus), and the crowd's cheer greets her back at her decks at the faster tempo:
+   *  on her knockout's backAt (her clock), after the sad trumpet and the rewind, never over them; with no knockout under
+   *  way (a debug bump), on the bar line the rise starts from (g.beat.bonusAt). One cheer (fireworks.ts: three noise bands and a few whoops), at
+   *  sfx.tempoUp.volume. */
+  private tempoUp(h: Here): void {
+    const { g, time } = h, b = g.beat.bonus ?? 0, ko = g.witches[0]?.ko;
+    if (b > this.bonusSeen) this.tempoUpDue = ko ? { at: ko.backAt, her: true } : { at: timeAt(g.beat, g.beat.bonusAt ?? Math.ceil(beatAt(g.beat, time) - 1e-9)), her: false };
+    this.bonusSeen = b;
+    const due = this.tempoUpDue;
+    if (due && (due.her ? g.herTime : time) >= due.at) {
+      this.tempoUpDue = null;
+      const v = g.tuning.sfx.tempoUp?.volume ?? 0;
+      if (v > 0) this.sfx.fireworkCheer(0, v);
+    }
   }
 }
