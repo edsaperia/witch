@@ -2910,11 +2910,11 @@
           "type": "number",
           "minimum": 0
         },
-        "homeHealth": {
+        "speakerHealth": {
           "type": "number",
           "minimum": 0
         },
-        "homeRadius": {
+        "speakerRadius": {
           "type": "number",
           "minimum": 0
         },
@@ -2944,8 +2944,8 @@
         "fleeMult",
         "soundsystemHealth",
         "soundsystemRadius",
-        "homeHealth",
-        "homeRadius",
+        "speakerHealth",
+        "speakerRadius",
         "shake",
         "daze",
         "retreatHome"
@@ -2981,6 +2981,9 @@
         "on": {
           "type": "boolean"
         },
+        "inviteWakes": {
+          "type": "boolean"
+        },
         "time": {
           "type": "number",
           "minimum": 0
@@ -3008,6 +3011,7 @@
       },
       "required": [
         "on",
+        "inviteWakes",
         "time",
         "forget",
         "hangBack",
@@ -5923,6 +5927,52 @@
       ],
       "additionalProperties": false
     },
+    "soundsystemGen": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
+        "far": {
+          "type": "number",
+          "minimum": 0
+        },
+        "from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "to": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxYaw": {
+          "type": "number",
+          "minimum": 0
+        },
+        "toward": {
+          "type": "boolean"
+        },
+        "ahead": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "near",
+        "far",
+        "from",
+        "to",
+        "maxYaw",
+        "toward",
+        "ahead"
+      ],
+      "additionalProperties": false
+    },
     "stringLights": {
       "type": "object",
       "properties": {
@@ -8716,6 +8766,7 @@
     "alarms",
     "boot",
     "party",
+    "soundsystemGen",
     "stringLights",
     "waveNumbers",
     "dancefloor",

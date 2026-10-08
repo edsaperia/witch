@@ -8,6 +8,7 @@ import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
 import { hasRune } from "./creatureStates";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
+import { isHomeKey } from "./speakers";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -434,9 +435,9 @@ describe("sieges (Stage 4)", () => {
     expect(sound.hp).toBe(0);
     expect(g.party.areas.has(key)).toBe(false);
     expect(g.combat.ruined.has(key)).toBe(true);
-    expect(besiegers.filter(c => !c.gone).every(c => c.siege === "home")).toBe(true); // on to the next-nearest: the dancefloor
+    expect(besiegers.filter(c => !c.gone).every(c => isHomeKey(c.siege ?? ""))).toBe(true); // on to the next-nearest: one of the dancefloor's speakers
     expect(g.partyOver).toBeNull();
-    g.combat.sounds.get("home")!.hp = 0.0001;
+    for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = 0.0001;
     for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
     for (let i = 0; i < 30 / STEP && !g.partyOver; i++) stepGame(g, idle, STEP);
     expect(g.partyOver).not.toBeNull(); // every soundsystem down: the party's over
