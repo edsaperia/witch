@@ -8,6 +8,7 @@
 //   tops: in the body's pixels, the neck pivot at 0, 0 (the shoulders fill the canvas's width, 128 px; its bottom 34 px below).
 
 import { ROBE_JACKET } from "./maps/body";
+import { NECK_PENDANT, NECK_PHONES, NECK_SCARF } from "./maps/neckwear";
 import { HAIR_MAPS } from "./maps/hairStyles";
 import { POINTED_HATS } from "./maps/hatsPointed";
 import { toSprite, type PixMap } from "./maps/pixmap";
@@ -44,6 +45,13 @@ export const HAIR_ART: Record<string, (l: Look, p: Params) => { back?: Placed; f
 export const TOP_ART: Record<string, (l: Look, p: Params) => Placed[]> = {
   jacket: () => [place(ROBE_JACKET, 0, -3)],
 };
+/** What she wears round her neck over a hand-placed top (in the body's pixels, on the jacket's pivot): the scarf, headphones
+ *  resting round her neck (not while she wears them), the pendant. */
+export const NECKWEAR = (l: Look, p: Params): Placed[] => [
+  ...(l.scarf ? [place(NECK_SCARF, 0, -3)] : []),
+  ...(l.phones && p.phonesOn < 0.5 ? [place(NECK_PHONES, 0, -3)] : []),
+  ...(l.pendant ? [place(NECK_PENDANT, 0, -3)] : []),
+];
 
 /** A part the creator offers but nobody has hand-placed yet: "shapes" draws its first-round shape (bigger), "nearest" the nearest
  *  hand-placed one in its colours (DECISION FOR ED; the art direction's round 1 asks which). */
