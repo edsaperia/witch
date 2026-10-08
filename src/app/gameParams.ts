@@ -36,16 +36,15 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   }
 
   // How often the party spreads: the tuning file's interval (5 minutes), or ?wave=<seconds> (0 or
-  // "off": no waves), or what this viewer last picked on the start screen.
+  // "off": no waves); the bedroom's "Waves:" dropdown (app/wavePick.ts) changes it, never remembered (Ed, 2026-10-08).
   const WAVE_CHOICES = [30, 60, 120, 300, 600, 0];
   function setWaveInterval(sec: number): void {
     tuning.party.interval = sec > 0 ? sec : 1e9;
     game.party.paused = sec === 0;
     game.party.nextAt = Math.max(game.clock.time, game.party.bootUntil) + tuning.party.startDelay + tuning.party.interval; // after the boot-up
-    document.querySelectorAll<HTMLButtonElement>("#waves button").forEach(b => b.classList.toggle("on", +b.dataset.s! === sec));
+    const sel = document.querySelector<HTMLSelectElement>("#wave-pick select"); if (sel && [...sel.options].some(o => +o.value === sec)) sel.value = String(sec);
   }
   let waveChoice = tuning.party.interval;
-  try { const saved = localStorage.getItem("witch.wave"); if (saved !== null && WAVE_CHOICES.includes(+saved)) waveChoice = +saved; } catch { /* storage blocked */ }
   const waveParam = params.get("wave");
   if (waveParam !== null) waveChoice = waveParam === "off" ? 0 : Math.max(0, +waveParam || 0);
   if (arenaParam) waveChoice = 0;
