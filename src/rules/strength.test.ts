@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach, afterAll } from "vitest";
 import { attackOf, COMBAT, creatureMaxHp, strengthOf } from "./combat";
 import { toEvolve } from "./berries";
 import { countScale, grownAt, startCount } from "./growth";
@@ -10,10 +10,12 @@ import { routeOf } from "./party";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Species strength, a number (Ed, 2026-10-05: "just a number that goes up and down"), and berry
-// costs tied to it. No species has one yet, so these tests give one for a moment (and put it back).
-const S = COMBAT.strength!;
+// costs tied to it. These tests start with none (every species 1) and give one for a moment, then put the config's back
+// (Ed, 2026-10-08: the species have strengths by class now).
+const S = COMBAT.strength!, CONFIG = { ...S.species };
 const giving = (species: string, m: number) => { S.species[species] = m; };
-afterEach(() => { for (const k of Object.keys(S.species)) delete S.species[k]; });
+beforeEach(() => { for (const k of Object.keys(S.species)) delete S.species[k]; });
+afterAll(() => { for (const k of Object.keys(S.species)) delete S.species[k]; Object.assign(S.species, CONFIG); });
 
 describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger ones fewer)", () => {
   it("scales a species' health and damage by its number, never a legend's", () => {

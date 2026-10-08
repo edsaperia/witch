@@ -1,11 +1,18 @@
 // The wild watch (Ed, 2026-10-07): come down in a wild area and its animals stir and stare at her, then attack.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { newGame, newWitchPlayer, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { cellKey } from "./party";
 import { aggroOf, watcher } from "./wildWatch";
 import { legendRings } from "./slowTime";
 import { napping } from "./creatures";
+
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
@@ -36,6 +43,7 @@ const here = (g: Game, key: string) => g.creatures.filter(c => cellKey(c.cell) =
 const onHer = (g: Game, key: string) => g.creatures.some(c => cellKey(c.cell) === key && c.fight?.target?.kind === "witch");
 
 describe("the wild watch (Ed, 2026-10-07)", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   it("has a wild area's young and adults stand and stare at her for wildWatch.time when she comes down, then attack", () => {
     const { g, key, at } = overWild(), W = TUNING.wildWatch!;
     run(g, 5);
@@ -96,7 +104,8 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     const walk: Controls = { ...idle, moveX: 1 };
     for (let i = 0; i < 8 / STEP; i++) {
       stepGame(g, g.clock.time - g.wildEntry.get(key)?.at! < 1 || out < 0 ? walk : idle, STEP);
-      if (out < 0 && cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key) out = g.clock.time;
+      // (out once she's out of it and stays out: an area's edge is ragged, so a step out can be a step back in)
+      if (cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key) { if (out < 0) out = g.clock.time; } else out = -1;
       chased ||= onHer(g, key);
     }
     expect(out, "she got out").toBeGreaterThan(0);

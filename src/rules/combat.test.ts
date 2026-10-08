@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackOf, COMBAT, maxHp } from "./combat";
+import { attackOf, COMBAT, maxHp, strengthOf } from "./combat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
@@ -57,7 +57,7 @@ describe("combat (Stage 4)", () => {
 
   it("gives every attack of a level the same power budget (damage a second)", () => {
     for (const level of [1, 2, 3] as Level[]) {
-      const rates = AREA_TYPES.map(a => { const k = attackOf(a.creature, level)!; return k.damage / k.attack.cooldown / (k.attack.factor ?? 1); }); // (each delivery's factor allows for misses and area hits)
+      const rates = AREA_TYPES.map(a => { const k = attackOf(a.creature, level)!; return k.damage / k.attack.cooldown / (k.attack.factor ?? 1) / strengthOf(a.creature, level); }); // (each delivery's factor allows for misses and area hits; over its species' strength)
       for (const r of rates) expect(r).toBeCloseTo(COMBAT.levels.dps[level]);
     }
   });

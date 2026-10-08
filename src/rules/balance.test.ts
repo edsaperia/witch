@@ -1,9 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { simulate } from "./balance";
 import { generateMap } from "./map";
 import { lanchester, levelValue, powerReport } from "./power";
 import { newGame } from "./game";
 import { TUNING, withTuning } from "./tuning";
+
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 describe("fighting value (rules/power.ts)", () => {
@@ -21,15 +28,16 @@ describe("fighting value (rules/power.ts)", () => {
     young.level = 1; adult.level = 2; young.leashed = true; g.leash.stack.push(young.id);
     adult.siege = "home";
     const p = powerReport(g.creatures, g.witches, g.combat.sounds);
-    expect(p.leashed).toBeCloseTo(levelValue(1), 9);
+    expect(p.leashed).toBeCloseTo(levelValue(1, COMBAT, young.species), 9); // (times its species' strength)
     expect(p.parked).toBe(0);
     expect(p.counts).toEqual([0, 1, 0, 0]);
-    expect(p.sieges).toEqual([{ key: "home", value: levelValue(2), count: 1, hp: TUNING.combat.homeHealth }]);
-    expect(p.marching).toBeCloseTo(levelValue(2), 9);
+    expect(p.sieges).toEqual([{ key: "home", value: levelValue(2, COMBAT, adult.species), count: 1, hp: TUNING.combat.homeHealth }]);
+    expect(p.marching).toBeCloseTo(levelValue(2, COMBAT, adult.species), 9);
   }, 30000);
 });
 
 describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   const map = generateMap(1000, PEOPLED);
 
   it("runs a quick idle run: sieges grow wave by wave, soundsystems fall, the same every time", () => {
