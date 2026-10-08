@@ -99,7 +99,7 @@ export const GESTURES: Record<string, Seq> = {
       { t: 1.4, p: { hatRot: 0, hatY: 0, handR: hand(18, -28, "pinch", -0.4) } }, { t: 1.9, p: { handR: down(1, "pinch") } },
     ],
   },
-  // (art builder 1's: pointing, the peace sign, a shrug, a facepalm, a think, and pointing the way for a hint)
+  // (art builder 1's: pointing, the peace sign, a shrug, a facepalm, a think, a hand to her mouth, and pointing the way for a hint)
   point: {
     dur: 1.6, label: "point", keys: [
       { t: 0, p: { handR: down(1, "point") } }, { t: 0.3, p: { handR: hand(24, -8, "point", 1.35), lookX: 0.7, browY: 0.6, mouth: "grin" } },
@@ -136,6 +136,13 @@ export const GESTURES: Record<string, Seq> = {
     dur: 2.4, label: "thinking", keys: [
       { t: 0, p: { handR: down(1, "fist") } }, { t: 0.35, p: { handR: hand(7, -5, "fist", -0.3), lookX: -0.6, lookY: -0.8, mouth: "cat", browAng: 0.15, tilt: -0.06 } },
       { t: 1.9, p: { handR: hand(7, -5, "fist", -0.3), lookX: -0.4 } }, { t: 2.4, p: { handR: down(1, "fist"), lookX: 0, lookY: 0, browAng: 0, tilt: 0, mouth: "smile" } },
+    ],
+  },
+  handToMouth: {
+    dur: 1.8, label: "hand to her mouth (giggle)", keys: [
+      { t: 0, p: { handR: down(1) } }, { t: 0.3, p: { handR: hand(4, -6, "open", -0.5), eyeShape: "happy", mouth: "grin", blush: 1, tilt: 0.08 } },
+      { t: 0.5, p: { dy: -0.6 } }, { t: 0.7, p: { dy: 0 } }, { t: 0.9, p: { dy: -0.6 } }, { t: 1.1, p: { dy: 0 } },
+      { t: 1.4, p: { handR: hand(4, -6, "open", -0.5) } }, { t: 1.8, p: { handR: down(1), eyeShape: "normal", mouth: "smile", blush: 0, tilt: 0 } },
     ],
   },
 };

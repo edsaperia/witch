@@ -1,20 +1,18 @@
 import { describe, expect, it } from "vitest";
 import * as Gen from "../../../art/witchGenome.js";
 import { drawPortrait } from "./draw";
-import { FAMILIARS } from "./familiar";
 import { OTHER_HATS } from "./hats";
-import { MAT, PALETTE_SIZE, col, portraitPalette } from "./palette";
 import { GESTURES, sample } from "./poses";
 import { Raster } from "./raster";
 import { H, NEUTRAL, W, lookOf, type Params } from "./rig";
 import { OTHER_TOPS } from "./tops";
 
-// art builder 1's parts on art3's frame: the other hats, the patterned tops, the familiar, the extra gestures.
-const G = Gen.WITCH_GENOME as { hat: object; accessories: object };
+// art builder 1's parts on art3's frame: the other hats, the patterned tops, the extra gestures. (No familiar: Ed, 2026-10-08,
+// "confusing since the game is about animals".)
+const G = Gen.WITCH_GENOME as { hat: object };
 const r = new Raster(W, H);
 const draw = (g: unknown, p: Partial<Params> = {}, t = 0) => { drawPortrait(r, lookOf(g as never), { ...NEUTRAL, ...p }, t); return r.px.slice(); };
 const differ = (a: Uint8Array, b: Uint8Array) => a.reduce((n, v, i) => n + (v !== b[i] ? 1 : 0), 0);
-const uses = (px: Uint8Array, m: number) => px.some(v => v >= col(m as never, 0) && v <= col(m as never, 3));
 
 describe("the portrait's parts (art builder 1)", () => {
   it("draws every other hat as its own, all different from each other", () => {
@@ -25,20 +23,8 @@ describe("the portrait's parts (art builder 1)", () => {
     const plain = draw({ ...G, top: "jacket" });
     for (const top of Object.keys(OTHER_TOPS)) expect(differ(draw({ ...G, top }), plain), top).toBeGreaterThan(60);
   });
-  it("sits each familiar on her shoulder in its own colours, alive (moving with the clock)", () => {
-    const none = draw({ ...G, accessories: { ...G.accessories, familiar: "none" } });
-    expect(uses(none, MAT.FAMILIAR)).toBe(false);
-    for (const f of Object.keys(FAMILIARS)) {
-      const g = { ...G, accessories: { ...G.accessories, familiar: f } }, a = draw(g, {}, 0);
-      expect(differ(a, none), f).toBeGreaterThan(60);
-      expect(uses(a, MAT.FAMILIAR), f).toBe(true);
-      let moved = 0; for (let t = 0; t < 6; t += 0.05) moved = Math.max(moved, differ(draw(g, {}, t), a));
-      expect(moved, `${f} moves`).toBeGreaterThan(0);
-    }
-    const pal = portraitPalette(null); expect(pal.length).toBe(PALETTE_SIZE); expect(pal[col(MAT.FAMILIAR2, 3)] >>> 24).toBe(255);
-  });
   it("plays the new gestures and ends each back at rest", () => {
-    for (const name of ["point", "pointWay", "peace", "shrug", "facepalm", "think"]) {
+    for (const name of ["point", "pointWay", "peace", "shrug", "facepalm", "think", "handToMouth"]) {
       const s = GESTURES[name]; expect(s, name).toBeDefined();
       const end = sample(s, s.dur);
       expect(end.handL ?? null, name).toSatisfy((h: { y: number } | null) => !h || h.y >= 26);

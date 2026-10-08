@@ -3,8 +3,7 @@
 // names (HATS, HAIRS, TOPS, HANDS), so another one is an entry, and a name the tables lack falls back to hers.
 
 import { BASE, DEEP, INK, LIGHT, MAT, SHADE, col, type Mat } from "./palette";
-import { Raster, hash, inEll, mul, move, nearSeg, scale, tri, turn, type Box, type Xf } from "./raster";
-import { FAMILIARS } from "./familiar";
+import { Raster, hash, inEll, mul, move, nearSeg, tri, turn, type Box, type Xf } from "./raster";
 import { OTHER_HATS } from "./hats";
 import { OTHER_TOPS } from "./tops";
 import { HEAD, H, NECK, SHOULDER, W, type Hand, type Look, type Params } from "./rig";
@@ -256,9 +255,6 @@ export function drawPortrait(r: Raster, look: Look, p: Params, t: number): void 
     const hd = (HATS[look.hat] ?? HATS.classic)!;
     r.draw((x, y) => hd.px(x, y, look, p), hd.box(look), mul(head, mul(move(p.hatX, -15.5 + p.hatY), turn(p.hatRot + look.hatTilt * 0.05))), INK);
   }
-  // her familiar on her shoulder
-  const fam = FAMILIARS[look.familiar];
-  if (fam) r.draw((x, y) => fam.px(x, y, t), fam.box, mul(body, mul(move(-19, 8), mul(scale(1.3), move(19, -8)))), INK); // (a little bigger than life, so it reads)
   // hands in front
   for (const [hd, s] of [[p.handL, -1], [p.handR, 1]] as const) if (hd && !hd.behind) hand(hd, s);
 }
