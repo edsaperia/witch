@@ -1,12 +1,19 @@
 // Sigil weight (Ed, 2026-10-06; rules/leashWeight.ts): her stack's sigils pull her toward their creatures by how taut
 // each leash is times its weight; past a free allowance that load slows her moving away, drifts her a little toward
 // it, slows her rise, and sinks her over the treetops (to a floor while she flies on; down if she stops or it's extreme).
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { TUNING } from "./tuning";
 import { creatureWeight, leashStrain, loadOf, NO_LOAD, type LeashLoad } from "./leashWeight";
 import { newWitch, stepWitch, type WitchState } from "./witch";
 import { leashLoad, newGame } from "./game";
 import type { Creature } from "./creatures";
+
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 
 const t = TUNING, W = t.leash.weight;
 const bounds = { minX: -1e5, maxX: 1e5, minZ: -1e5, maxZ: 1e5 };
@@ -21,6 +28,7 @@ function ground(mx: number, mz: number, load: LeashLoad, s = 2): { x: number; z:
 }
 
 describe("sigil weight", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   it("pulls by how taut each leash is: nothing while near and slack, capped however far", () => {
     expect(leashStrain(0, t)).toBe(0);
     expect(leashStrain(t.leash.length * 0.8, t)).toBe(0);

@@ -1,11 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { simulateStates } from "./states";
 import { generateMap } from "./map";
 import { TUNING, withTuning } from "./tuning";
+
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // The creature-state model (issue #87): invite only, happy defenders, leashed army, enraged sieges.
 describe("the creature-state model (rules/states.ts, tools/balance/states.mjs)", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   const map = generateMap(1000, PEOPLED);
 
   it("runs the same every time, and inviting makes happy creatures (or leashed, by the policy)", () => {
