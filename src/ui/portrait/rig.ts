@@ -9,9 +9,11 @@
 /** The canvas, in art pixels (art direction round 1: 128 x 144, docs/PORTRAIT-STYLE.md). */
 export const W = 128, H = 144;
 /** The neck pivot on the canvas (the body bobs with it; the head moves by whole pixels over it). */
-export const NECK = { x: 64, y: 110 } as const;
+export const NECK = { x: 64, y: 98 } as const;
 /** The head box (64 x 64, its middle the face's middle: the hand-placed parts' frame, art/), its top-left from the neck pivot. */
-export const HEAD_BOX = { x: -32, y: -56, size: 64 } as const;
+export const HEAD_BOX = { x: -32, y: -54, size: 64 } as const;
+/** The hat's brim centre from the head's centre (the head box's middle): art builder 1's maps' anchors, round 2. */
+export const BRIM = { x: 0, y: -30 } as const;
 /** The parts still drawn as shapes (the first round's, in its smaller units) are drawn this much bigger, until each is
  *  hand-placed. */
 export const SHAPE_K = 1.75;
