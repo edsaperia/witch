@@ -27,7 +27,7 @@ import { beachOf, type Beach } from "../../rules/mapShape";
 import { dolphinLeaps, krakenRising } from "../../rules/seaLife";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
-import { beatAt } from "../../rules/beat";
+import { beatAt, timeAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { musicMix, partyOverEase } from "../../rules/music";
@@ -71,6 +71,9 @@ export class SfxCues {
   private stonesOn = new Set<number>();
   /** The knockout (its ko.at) whose rewind has played. */
   private cutOf: number | null = null;
+  /** Her knockdowns' tempo bonus last heard, and when the crowd's cheer for its rise is due, on her clock or the game's (tempoUp). */
+  private bonusSeen = 0;
+  private tempoUpDue: { at: number; her: boolean } | null = null;
   /** The last half-beat heard at her decks (decks). */
   private deckHalf = -1;
   /** The game time her routine's strokes were heard up to (NaN outside it), and whether her hand was up (its hype). */
@@ -108,6 +111,7 @@ export class SfxCues {
     this.soundsystems(h);
     this.booted(h);
     this.powered(h);
+    this.tempoUp(h);
     this.hurt(h);
     this.knocked(h);
     this.charges(h);
@@ -565,5 +569,22 @@ export class SfxCues {
     if ((this.flourished.get(id) ?? -Infinity) > time - 2) return;
     this.flourished.set(id, time);
     this.sfx.invited(g.creatures[id]?.level ?? 0, pan, k);
+  }
+
+  /** Knocked down, the party's tempo rises (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"; hotel's
+   *  rules/beat.ts knockdownTempo, g.beat.bonus), and the crowd's cheer greets her back at her decks at the faster tempo:
+   *  on her knockout's backAt (her clock), after the sad trumpet and the rewind, never over them; with no knockout under
+   *  way (a debug bump), on the beat the rise starts from. One cheer (fireworks.ts: three noise bands and a few whoops), at
+   *  sfx.tempoUp.volume. */
+  private tempoUp(h: Here): void {
+    const { g, time } = h, b = g.beat.bonus ?? 0, ko = g.witches[0]?.ko;
+    if (b > this.bonusSeen) this.tempoUpDue = ko ? { at: ko.backAt, her: true } : { at: timeAt(g.beat, Math.ceil(beatAt(g.beat, time) - 1e-9)), her: false };
+    this.bonusSeen = b;
+    const due = this.tempoUpDue;
+    if (due && (due.her ? g.herTime : time) >= due.at) {
+      this.tempoUpDue = null;
+      const v = g.tuning.sfx.tempoUp?.volume ?? 0;
+      if (v > 0) this.sfx.fireworkCheer(0, v);
+    }
   }
 }
