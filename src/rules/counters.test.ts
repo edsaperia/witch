@@ -1,8 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { setupArena } from "./arena";
 import { counterOf, maxHp, traitsOf } from "./combat";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
+
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** An arena fight for `secs`: the share of health each side has lost (the fled count as all of it). */
@@ -18,6 +25,7 @@ function fight(spec: string, secs = 30): { hers: number; wild: number; g: Game }
 }
 
 describe("traits and counters (Stage 5)", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   it("gives the first slice its traits, and each trait its counter", () => {
     expect(traitsOf("raven")).toContain("flier");
     expect(traitsOf("bat")).toEqual(expect.arrayContaining(["flier", "swarm"]));
