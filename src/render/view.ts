@@ -167,6 +167,11 @@ export class View {
   spellFx = new SpellFx();
   /** The party spell's cast already burst into sparkles (its time). */
   castSeen: number | null | undefined = undefined;
+  /** the height of her body's middle this frame (render/view/witch.ts; the claw slashes go over it) */
+  witchBodyY = 0.8;
+  /** Her feet's height and her frame's height in art pixels this frame (the slashes scale with her: render/leash/bubbles.ts). */
+  witchFeetY = 0;
+  witchFrameH = 0;
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail: WitchTrail;
   private trailAt = -1;
@@ -886,7 +891,7 @@ export class View {
     this.minimap.update(g.party, w.x, w.z);
     drawPointers(this, time);
     this.time("hud");
-    this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
+    this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     this.time("leash");
     workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
