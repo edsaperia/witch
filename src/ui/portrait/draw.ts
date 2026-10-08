@@ -67,9 +67,11 @@ function eye(x: number, y: number, p: Params, s: number): number {
   }
   const wide = sh === "wide", open = Math.max(0, p.eyeOpen) * (wide ? 1.1 : 1) * (sh === "sleepy" ? 0.45 : 1), hw = wide ? 5 : 4.8, hh = 5.6 * open;
   if (hh < 0.9) return Math.abs(x) <= 4.6 && Math.abs(y - 0.5) < 0.7 ? INK : 0; // (blinking: a line)
-  const top = -hh + 0.4;
-  if (Math.abs(x / hw) ** 3 + Math.abs((y - 0.4) / hh) ** 3 > 1) return ax > hw - 1.2 && ax < hw + 1.6 && y > top - 1 && y < top + 1.2 ? INK : 0; // (the lashes' wing)
-  if (y < top + 1.7) return INK; // (the upper lashes)
+  // the eye between an arched top (its lashes) and a rounder bottom, the outer corner a little higher
+  const u = x / hw, top = -hh + 0.6 + 1.3 * u * u - ax * 0.12, bot = hh * 0.95 + 0.6 - 2.2 * u * u + ax * 0.1;
+  if (Math.abs(u) > 1 || y < top - 0.2 || y > bot) return ax > hw - 1.4 && ax < hw + 1.8 && y > top - 1.4 && y < top + 1 ? INK : 0; // (the lashes' wing)
+  if (y < top + 1.6) return INK; // (the upper lashes, bold)
+  if (y > bot - 0.9 && ax > 0.5) return col(MAT.SKIN, DEEP); // (the lower lashes, faint)
   const ix = p.lookX * 1.4, iy = p.lookY * 1.3 + 1, irx = wide ? 2.6 : 3.4, iry = wide ? 2.6 : 4.4, dx = x - ix, dy = y - iy;
   if ((dx / irx) ** 2 + (dy / iry) ** 2 <= 1) {
     if ((dx + 1.5) ** 2 + (dy + 1.6) ** 2 < 1.5) return col(MAT.WHITE, BASE); // glints
@@ -78,7 +80,7 @@ function eye(x: number, y: number, p: Params, s: number): number {
     if ((dx / (wide ? 0.9 : 1.5)) ** 2 + (dy / (wide ? 0.9 : 2.1)) ** 2 < 1) return INK;
     return col(MAT.IRIS, dy < -1.6 ? DEEP : dy > 1.8 ? LIGHT : BASE);
   }
-  return col(MAT.WHITE, y < top + 2.8 ? SHADE : BASE);
+  return col(MAT.WHITE, y < top + 2.6 ? SHADE : BASE);
 }
 /** A brow, at the brow's centre, s the side. */
 const brow = (x: number, y: number, p: Params, s: number): number => {
@@ -252,7 +254,7 @@ export function drawPortrait(r: Raster, look: Look, p: Params, t: number): void 
   // the hat
   if (hatOn) {
     const hd = (HATS[look.hat] ?? HATS.classic)!;
-    r.draw((x, y) => hd.px(x, y, look, p), hd.box(look), mul(head, mul(move(p.hatX, -14 + p.hatY), turn(p.hatRot + look.hatTilt * 0.05))), INK);
+    r.draw((x, y) => hd.px(x, y, look, p), hd.box(look), mul(head, mul(move(p.hatX, -15.5 + p.hatY), turn(p.hatRot + look.hatTilt * 0.05))), INK);
   }
   // her familiar on her shoulder
   const fam = FAMILIARS[look.familiar];

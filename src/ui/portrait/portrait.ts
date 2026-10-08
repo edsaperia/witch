@@ -46,7 +46,7 @@ export class Portrait {
     this.fps = o.fps ?? 24; this.cps = o.cps ?? 30;
     this.canvas.width = W; this.canvas.height = H;
     Object.assign(this.canvas.style, { imageRendering: "pixelated", display: "block", flex: "0 0 auto" });
-    Object.assign(this.el.style, { position: "absolute", left: "0", bottom: "0", display: "flex", alignItems: "flex-end", pointerEvents: "none" });
+    Object.assign(this.el.style, { position: "absolute", left: "0", right: "0", bottom: "0", display: "flex", alignItems: "flex-end", pointerEvents: "none" });
     Object.assign(this.box.style, { background: "rgba(14, 9, 22, 0.62)", color: "#f0e8ff", fontFamily: '"Tiny5", ui-monospace, monospace', webkitFontSmoothing: "none", whiteSpace: "pre-wrap", overflowWrap: "break-word", visibility: "hidden" } as Partial<CSSStyleDeclaration>);
     this.box.appendChild(this.text);
     this.el.append(this.canvas, this.box);
@@ -57,11 +57,13 @@ export class Portrait {
     this.scale = Math.max(1, Math.round(s));
     const u = (n: number) => `${n * this.scale}px`;
     Object.assign(this.canvas.style, { width: u(W), height: u(H) });
-    Object.assign(this.box.style, { fontSize: u(8), lineHeight: u(10), padding: `${u(4)} ${u(6)}`, marginLeft: u(2), marginBottom: u(6), width: u(150), minHeight: u(30), maxWidth: `calc(100vw - ${u(W + 8)})`,
+    Object.assign(this.box.style, { fontSize: u(8), lineHeight: u(10), padding: `${u(4)} ${u(6)}`, marginLeft: u(2), marginBottom: u(6), flex: "0 1 auto", width: u(150), minWidth: "0", minHeight: u(30), boxSizing: "border-box",
       boxShadow: `inset 0 0 0 ${u(1)} rgba(242, 196, 106, 0.55)`,
       clipPath: `polygon(${u(1)} 0, calc(100% - ${u(1)}) 0, 100% ${u(1)}, 100% calc(100% - ${u(1)}), calc(100% - ${u(1)}) 100%, ${u(1)} 100%, 0 calc(100% - ${u(1)}), 0 ${u(1)})` });
     this.key = "";
   }
+  /** How see-through the text box is (0 clear to 1 solid). */
+  setBoxAlpha(a: number): void { this.box.style.background = `rgba(14, 9, 22, ${Math.min(1, Math.max(0, a))})`; }
   /** Her look and colours from the creator's genome (art/witchGenome.js; null: hers). */
   setGenome(g: GenomeLike | null): void { this.look = lookOf(g); this.palette = portraitPalette(g?.palette ?? null); this.key = ""; }
   say(text: string, t: number): void { this.state.say(text, t, this.cps); }
