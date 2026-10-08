@@ -147,3 +147,18 @@ Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, s
 
 - **Core-design check**: all pass, no errors: nothing clears by itself; the boot 30.0 s (11.0 → 41.0); 10,9 cleared transforms (soundsystem, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 2 → 2, enraged 0 → 0); 1840 creatures, no new id; the next uncleared stone still wakes (2 → 3, 2 enraged).
 - **Journey**: every moment reached, no errors, `dropped` 0, 1840 creatures throughout; off the decks 8 s after the cast, the boot caught mid-way (7 of 12 speakers). To watch: draw calls over the treetops 100, from about 90 earlier in the day. (A container restart cut the first run short; re-run whole.)
+
+## Night: 7a831333 (#518), 23:15–23:52
+
+13 merges since 42920350 (#515, #516, #521, #522, #517, #523, #519, #524, #365, #497, #513, #512, #518). Tests, typecheck, build green.
+
+- **Core-design check**: all pass, no errors (the boot 30.0 s; 10,9 cleared transforms; its wave only celebrates; no new id; the next uncleared stone still wakes).
+- **Journey**: every moment reached, no errors, `dropped` 0; draw calls over the treetops 101 (steady at the new level).
+- **To confirm**: the forest now starts with **909 creatures, from 1840** at 42920350 (the population PRs #497, #513): the test area had 3 holders where it had 4, the next wave enraged 1 where it enraged 2. Presumably the balance work's intent; passed to the coordinator for Ed.
+
+## Early morning: 78db156d (#528), 04:01–04:29
+
+2 merges since 7a831333 (#527 knockdown-bpm, #528 knockdown-cheer; plus #520, this log). Tests, typecheck, build green.
+
+- **Core-design check**: all pass, no errors (off the decks 8 s after the cast; the boot 30.0 s, 11.0 → 41.0; 10,9 cleared transforms, 3 holders; its wave only celebrates, soundsystems 2 → 2, enraged 0 → 0; the next uncleared stone wakes, 2 → 3, 1 enraged; 909 creatures, no new id).
+- **Journey**: every moment reached, no errors, `dropped` 0, 909 creatures throughout: first speaker at 12.3 s, the boot caught at 7 of 12, draw calls over the treetops 101 (steady), stargazing at the beach, the party's over. The two merges change the knockdown's sounds, which the journey doesn't reach (no knockdown in it).
