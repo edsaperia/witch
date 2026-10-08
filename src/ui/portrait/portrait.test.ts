@@ -35,7 +35,7 @@ describe("the witch's portrait (Ed, 2026-10-08)", () => {
     for (let s = 0; s < 30; s++) {
       const g = Gen.witchGenome(s) as { palette: Record<string, number[]> | null }, pal = portraitPalette(g.palette);
       for (let i = 1; i < pal.length; i++) expect(pal[i] >>> 24, `seed ${s} entry ${i}`).toBe(255);
-      expect(filled(draw(g))).toBeGreaterThan(W * H * 0.3);
+      expect(filled(draw(g))).toBeGreaterThan(W * H * 0.25); // (a bob with no hat over a shape-drawn top is about 27%)
     }
   });
   it("shows every expression as its own face, and every mouth shape as its own", () => {

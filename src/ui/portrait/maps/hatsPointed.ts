@@ -2,14 +2,13 @@
 // sliders: the crooked hat's cone kinks over at a fold, the floppy one's tip flops right over and its brim droops at the ends,
 // the small one is the classic hat short and narrow, and the flowers one has blossoms round its band.
 
-import { BASE, MAT, SHADE } from "../palette";
 import type { Look } from "../rig";
-import { CLASSIC_SLIDERS, HAT_CLASSIC, HAT_LEGEND, classicHat } from "./hatClassic";
+import { CLASSIC_SLIDERS, HAT_CLASSIC, classicHat } from "./hatClassic";
 import type { PixMap } from "./pixmap";
 
 type Sliders = Pick<Look, "hatHeight" | "hatBrim" | "hatTilt">;
 const grid = (m: PixMap) => m.rows.map(r => [...r]);
-const done = (m: PixMap, g: string[][], legend = m.legend): PixMap => ({ ...m, legend, rows: g.map(r => r.join("")) });
+const done = (m: PixMap, g: string[][]): PixMap => ({ ...m, rows: g.map(r => r.join("")) });
 /** The band's top row in a slid map (as far above its anchor, the brim's centre, as in the drawn classic). */
 const bandTop = (m: PixMap) => m.anchor[1] - (HAT_CLASSIC.anchor[1] - CLASSIC_SLIDERS.bandTop);
 
@@ -26,7 +25,7 @@ function bend(m: PixMap, kinkUp: number, amount: number, fold: boolean): PixMap 
     const row = out[kink - 1];
     for (let x = 0; x < row.length; x++) if (row[x] === "l" || row[x] === "p") row[x] = "q";
   }
-  return { anchor: [m.anchor[0] + pad, m.anchor[1]], legend: m.legend, rows: out.map(r => r.join("")) };
+  return { anchor: [m.anchor[0] + pad, m.anchor[1]], rows: out.map(r => r.join("")) };
 }
 
 /** The brim's ends drooping (the floppy hat): columns beyond 60% of the brim's half-width pushed down, by the square, up to `drop`. */
@@ -42,16 +41,15 @@ function droop(m: PixMap, drop: number): PixMap {
   return { ...m, rows: out.map(r => r.join("")) };
 }
 
-/** Blossoms round the band: five-petalled, in the two flower colours, gold at their hearts. */
-const BLOSSOM = [".W.W.", "WWwWW", ".wYw.", "WWwWW", ".W.W."];
-const FLOWER_LEGEND = { ...HAT_LEGEND, W: [MAT.FLOWER, BASE], w: [MAT.FLOWER, SHADE], V: [MAT.FLOWER2, BASE], v: [MAT.FLOWER2, SHADE] } as const;
+/** Blossoms round the band: five-petalled, in the two flower colours (U u, V N), gold at their hearts. */
+const BLOSSOM = [".U.U.", "UUuUU", ".uYu.", "UUuUU", ".U.U."];
 function flowers(m: PixMap): PixMap {
   const g = grid(m), top = bandTop(m), [ax] = m.anchor;
   [-15, -8, 8, 15].forEach((dx, i) => BLOSSOM.forEach((r, y) => [...r].forEach((c, x) => {
     if (c === ".") return; const X = ax + dx + x - 2, Y = top + y; if (!g[Y]?.[X] || g[Y][X] === ".") return;
-    g[Y][X] = i % 2 ? (c === "W" ? "V" : c === "w" ? "v" : c) : c;
+    g[Y][X] = i % 2 ? (c === "U" ? "V" : c === "u" ? "N" : c) : c;
   })));
-  return done(m, g, FLOWER_LEGEND);
+  return done(m, g);
 }
 
 /** The pointed hats by the creator's names, each from the creator's sliders. */
