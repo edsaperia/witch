@@ -10,7 +10,7 @@ export interface Sprite { w: number; h: number; px: Uint8Array }
 /** A part placed: its sprite and where its top-left goes (whole pixels, in the frame it's placed in). */
 export interface Placed { sprite: Sprite; x: number; y: number }
 
-/** The letters (docs/PORTRAIT-STYLE.md; art direction round 1's target maps). Free for new parts: j and the digits; add a letter here, never reuse one. */
+/** The letters (docs/PORTRAIT-STYLE.md; art direction round 1's target maps). Free for new parts: j; add a letter here, never reuse one. */
 export const LEGEND: Record<string, number> = {
   // hair: base, light, glint, shade, deep, outline; brows in its deep tone
   H: col(MAT.HAIR, BASE), h: col(MAT.HAIR, LIGHT), g: col(MAT.HAIR, HIGH), d: col(MAT.HAIR, SHADE), D: col(MAT.HAIR, DEEP), o: col(MAT.HAIR, OUTLINE), B: col(MAT.HAIR, DEEP),
@@ -32,6 +32,9 @@ export const LEGEND: Record<string, number> = {
   // (art builder 1) the top in the jacket's V; the blossoms on the flowers hat; the hat-tip hand's cuff (the trim)
   A: col(MAT.TOP, BASE), E: col(MAT.TOP, SHADE), U: col(MAT.FLOWER, BASE), u: col(MAT.FLOWER, SHADE), V: col(MAT.FLOWER2, BASE), N: col(MAT.FLOWER2, SHADE),
   m: col(MAT.TRIM, BASE), c: col(MAT.TRIM, SHADE),
+  // (art builder 1) headphones resting round her neck, and the scarf
+  "1": col(MAT.PHONES, LIGHT), "2": col(MAT.PHONES, BASE), "3": col(MAT.PHONES, SHADE), "4": col(MAT.PHONES, DEEP), "5": col(MAT.PHONES, OUTLINE),
+  "6": col(MAT.SCARF, LIGHT), "7": col(MAT.SCARF, BASE), "8": col(MAT.SCARF, SHADE), "9": col(MAT.SCARF, DEEP), "0": col(MAT.SCARF, OUTLINE),
 };
 
 /** A sprite from its grid (lines of equal width once leading and trailing blank lines are dropped; short lines padded). */

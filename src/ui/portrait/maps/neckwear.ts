@@ -1,19 +1,12 @@
 // Neckwear as hand-placed maps (art builder 1; art direction round 2): what she wears round her neck over a hand-placed top,
-// anchored on the neck pivot: headphones resting round her neck, the scarf, the pendant.
+// anchored on the neck pivot: headphones resting round her neck (sprite.ts 1 to 5), the scarf (6 to 0), the pendant (gold, its
+// stone the band's colour).
 
-import { BASE, DEEP, LIGHT, MAT, SHADE } from "../palette";
-import { OUTLINE, rows, type PixMap } from "./pixmap";
-
-export const NECK_LEGEND = {
-  "1": [MAT.PHONES, LIGHT], "2": [MAT.PHONES, BASE], "3": [MAT.PHONES, SHADE], "4": [MAT.PHONES, DEEP], "5": [MAT.PHONES, OUTLINE],
-  "6": [MAT.SCARF, LIGHT], "7": [MAT.SCARF, BASE], "8": [MAT.SCARF, SHADE], "9": [MAT.SCARF, DEEP], "0": [MAT.SCARF, OUTLINE],
-  G: [MAT.GOLD, LIGHT], Y: [MAT.GOLD, BASE], y: [MAT.GOLD, SHADE], e: [MAT.BAND, LIGHT], r: [MAT.BAND, BASE], F: [MAT.BAND, DEEP],
-} as const;
+import { rows, type PixMap } from "./pixmap";
 
 /** Headphones resting round her neck: the band behind it, a cup on each collarbone tipped up towards us. */
 export const NECK_PHONES: PixMap = {
   anchor: [21, 0],
-  legend: NECK_LEGEND,
   rows: rows(String.raw`
 .............5.............5.............
 ............55.............55............
@@ -36,7 +29,6 @@ export const NECK_PHONES: PixMap = {
 /** The scarf: wrapped round her neck in knit ribs, knotted at the front on her right, two striped tails hanging over the jacket with fringed ends. */
 export const NECK_SCARF: PixMap = {
   anchor: [14, 0],
-  legend: NECK_LEGEND,
   rows: rows(String.raw`
 .0000000000000000000000000.
 .0686687787787787787788880.
@@ -75,7 +67,6 @@ export const NECK_SCARF: PixMap = {
 /** The pendant: a fine gold chain dipping to a set stone (the band's colour) under her collar. */
 export const NECK_PENDANT: PixMap = {
   anchor: [7, -3],
-  legend: NECK_LEGEND,
   rows: rows(String.raw`
 y...........y
 yy.........yy

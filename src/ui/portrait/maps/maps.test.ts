@@ -6,13 +6,14 @@ import { POINTED_HATS } from "./hatsPointed";
 import { HAIR_MAPS } from "./hairStyles";
 import * as Gen from "../../../../art/witchGenome.js";
 import { missingLetters, type PixMap } from "./pixmap";
+import { LEGEND } from "../sprite";
 
 // Art builder 1's round-2 maps (docs/PORTRAIT-STYLE.md): well-formed, the sliders always changing something, few orphans.
 const MAPS: Record<string, PixMap> = { HAT_CLASSIC, HAIR_LONG_BACK, HAIR_LONG_FRONT, HAIR_LONG_CROWN, HAIR_LONG_HAT_SHADOW, ROBE_JACKET, HAND_HAT_TIP };
 /** Lone pixels: a material none of its eight neighbours has (the glints, and the fringe's 1 px shadow on her forehead, aside).
  *  Hand anti-aliasing (an in-between tone of the same material) isn't lone. */
 const orphans = (m: PixMap, skip = "+") => {
-  let n = 0; const mat = (c: string | undefined) => (c && c !== "." ? (m.legend as Record<string, readonly [number, number]>)[c]?.[0] : -1);
+  let n = 0; const mat = (c: string | undefined) => (c && c !== "." ? Math.floor((LEGEND[c] - 2) / 6) : -1);
   m.rows.forEach((r, y) => [...r].forEach((c, x) => {
     if (c === "." || skip.includes(c)) return;
     let same = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && mat(m.rows[y + dy]?.[x + dx]) === mat(c)) same = true;
