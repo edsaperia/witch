@@ -40,7 +40,7 @@ function backdrop(): void {
     c.fillStyle = "#2a1e1a"; c.fillRect(Math.floor(x) - 1, Math.floor(base), 2, 3);
   }
   for (let i = 0; i < 40; i++) { const hue = [300, 190, 50, 140][i % 4]; c.fillStyle = `hsla(${hue},90%,70%,${0.4 + rnd() * 0.5})`; c.fillRect(Math.floor(rnd() * w), Math.floor(h * (0.55 + rnd() * 0.4)), 1, 1); }
-  c.fillStyle = "rgba(242,196,106,0.18)"; c.beginPath(); c.arc(w * 0.62, h * 0.7, 28, 0, 7); c.fill(); // a party's glow
+  const glow = c.createRadialGradient(w * 0.62, h * 0.7, 0, w * 0.62, h * 0.7, 40); glow.addColorStop(0, "rgba(242,196,106,0.35)"); glow.addColorStop(1, "rgba(242,196,106,0)"); c.fillStyle = glow; c.fillRect(0, 0, w, h); // a party's glow
   c.fillStyle = "#e8b46a"; c.fillRect(Math.floor(w * 0.62) - 2, Math.floor(h * 0.7) - 6, 4, 6);
 }
 new ResizeObserver(backdrop).observe(stage);
@@ -60,7 +60,7 @@ const slider = (name: string, min: number, max: number, step: number, value: num
 };
 
 panel.append(el("h1", { textContent: "Witch portrait" }), el("p", { textContent: "A preview for Ed: her portrait, generated from the creator's choices, with expressions, poses, gestures and her text box. Not in the game yet." }));
-section("Size (portrait.scale)", slider("scale", 1, 8, 1, portrait.scale, v => portrait.setScale(v)));
+section("Size (portrait.scale)", slider("scale", 1, 8, 1, portrait.scale, v => portrait.setScale(v)), slider("box opacity", 0, 1, 0.02, 0.62, v => portrait.setBoxAlpha(v)));
 
 section("Expressions", buttons(Object.keys(EXPRESSIONS), n => portrait.state.setExpression(n, now()), "expr"),
   el("div", { className: "row" }, Object.assign(el("button", { textContent: "blink" }), { onclick: () => portrait.state.blink(now()) })));
