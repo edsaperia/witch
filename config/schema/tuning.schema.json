@@ -1953,13 +1953,18 @@
         "slashScale": {
           "type": "number",
           "minimum": 0
+        },
+        "slashGlow": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "hits",
         "repairTime",
         "grace",
-        "slashScale"
+        "slashScale",
+        "slashGlow"
       ],
       "additionalProperties": false
     },
