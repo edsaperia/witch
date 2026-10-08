@@ -237,6 +237,8 @@ export class View {
    *  list, looked up four times a second. */
   wildPointers: StoneIndicator[] = [];
   wildLeftList: { at: number; list: Creature[] } = { at: -Infinity, list: [] };
+  /** The knockdowns' BPM bonus the wave pointer last pulsed for (render/view/hud.ts). */
+  pointerBonus = 0;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);

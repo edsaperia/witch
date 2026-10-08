@@ -5,7 +5,6 @@ import { waveCountdown } from "../rules/party";
 import { clockSeconds, clockText } from "../rules/leypulse";
 import { powerReport } from "../rules/power";
 import { clearCue, clearableAt, wildLeft } from "../rules/clear";
-import { bpmAt } from "../rules/beat";
 
 export class Hud {
   debugOn = false;
@@ -18,9 +17,6 @@ export class Hud {
   private readonly clockEl = document.getElementById("clock")!;
   private readonly clockT = this.clockEl.querySelector<HTMLElement>(".t")!;
   private readonly clockLabel = this.clockEl.querySelector<HTMLElement>(".label")!;
-  private readonly clockBpm = this.clockEl.querySelector<HTMLElement>(".bpm");
-  /** Her knockdowns' BPM bonus last shown (rules/beat.ts knockdownTempo). */
-  private bonusShown = 0;
   private readonly wildEl = document.getElementById("wild-left");
   private lastWild = -Infinity;
 
@@ -42,7 +38,6 @@ export class Hud {
     const now = clockText(clockSeconds(game.party, game.clock.time));
     if (clockT.textContent !== now) clockT.textContent = now;
     clockEl.classList.toggle("paused", game.clock.paused);
-    this.tempo();
     const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
     const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
     clockLabel.textContent = this.debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
@@ -54,27 +49,6 @@ export class Hud {
       pop.textContent = `speakers up · wave 1 in ${clock(cd.left)}`;
       clockEl.append(pop);
       setTimeout(() => pop.remove(), 4000);
-    }
-  }
-
-  /** The party's tempo beside the clock, quietly (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): once she's
-   *  been knocked down it shows, and each knockdown's rise pulses it and pops "+1 BPM" under the clock, so the player
-   *  learns why the beat and the waves are speeding up. */
-  private tempo(): void {
-    const el = this.clockBpm, game = this.game;
-    if (!el) return;
-    const bonus = game.beat.bonus ?? 0;
-    const text = bonus > 0 ? `${Math.round(bpmAt(game.beat, game.clock.time))} bpm` : "";
-    if (el.textContent !== text) el.textContent = text;
-    if (bonus > this.bonusShown) {
-      const up = bonus - this.bonusShown;
-      this.bonusShown = bonus;
-      el.classList.remove("up"); void el.offsetWidth; el.classList.add("up"); // (restart the animation)
-      const pop = document.createElement("div");
-      pop.className = "bpm-pop";
-      pop.textContent = `+${Math.round(up * 10) / 10} BPM · the crowd is restless`;
-      this.clockEl.append(pop);
-      setTimeout(() => pop.remove(), 2200);
     }
   }
 
