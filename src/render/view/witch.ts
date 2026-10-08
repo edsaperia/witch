@@ -78,6 +78,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   let wx = w.x, wz = w.z, wyy = wy, djUpper = -1;
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
   { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
+  if (!v.leashView.seatAt && T) v.leashView.seatAt = onTreehouse(T.seat.x, T.seat.y); // (the decks' place, from the start: the tempo over them, render/leash/deckBpm.ts)
   if (v.seatK > 0) {
     const seat = onTreehouse(T.seat.x, T.seat.y), k = v.seatK * v.seatK * (3 - 2 * v.seatK);
     v.leashView.seatAt = seat; // (where she sparkles back in after a knockout)

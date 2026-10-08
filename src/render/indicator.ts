@@ -171,6 +171,8 @@ export class StoneIndicator {
   /** `scale`, `opacity`: its size and strength (only the next stone has one: Ed, 2026-10-05). */
   constructor(parent: HTMLElement, scale = SCALE, private opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
   private shown = -1;
+  /** Its label pulses up (the wave pointer's tempo rising on a knockdown: index.html's bpm-up). */
+  pop(): void { const L = this.cue.label; L.style.animation = "none"; void L.offsetWidth; L.style.animation = "bpm-up 1.4s ease-out"; }
   /** How much it shows, 0 to 1, times its own strength (the wave pointer fading in as the boot ends). */
   fade(a: number): void {
     if (Math.abs(a - this.shown) < 0.01) return;

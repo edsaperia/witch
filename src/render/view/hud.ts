@@ -1,7 +1,7 @@
 // The pointers on the screen's edge (moved out of view.ts's render, unchanged): toward the wave's pulse and the next stones,
 // toward her hat where it lies, and toward a soundsystem under attack.
 import type { View } from "../view";
-import { beatTime } from "../../rules/beat";
+import { beatTime, bpmAt } from "../../rules/beat";
 import { AREA_TYPES } from "../../rules/map";
 import { waveCountdown } from "../../rules/party";
 import { hatMarker } from "../../rules/hat";
@@ -38,8 +38,11 @@ export function drawPointers(v: View, time: number): void {
         ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
       });
     };
-    // Pausing holds the countdown.
-    cue(v.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone);
+    // Pausing holds the countdown. Its label is the party's tempo (Ed, 2026-10-07: "The BPM is shown on the sparkler
+    // marker, and above the decks"), pulsing up when a knockdown raises it (rules/beat.ts knockdownTempo).
+    cue(v.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone, `${Math.round(bpmAt(g.beat, time))} bpm`);
+    const bonus = g.beat.bonus ?? 0;
+    if (bonus > v.pointerBonus) { v.pointerBonus = bonus; v.nextStones[0]?.pop(); }
     // Her hat on the ground (Ed, 2026-10-06: "there's a direction marker for it, so you can go back and find it"): toward it
     // off screen, over it on screen, while it lies there; in the HUD's amber.
     const H = hatMarker(g.witches[0].hat);
