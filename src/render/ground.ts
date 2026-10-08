@@ -61,12 +61,11 @@ uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a ro
 uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
-uniform vec4 uCircle;
+uniform vec4 uCircle; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 uniform vec4 uBeach; // the beach round the circular map: its centre x, z, how far in from the edge the sand starts, out past it the sea (metres); off while .z is 0
 uniform float uCoast[${COAST_SAMPLES}]; // the edge's radius round (rules/mapShape.ts beachOf: from angle -pi, eased between)
 uniform float uSand[${COAST_SAMPLES}]; // the sand's width round, likewise (its bays and narrows)
 uniform vec3 uMoonRoad; // the sky's moon on the screen (its x, a fraction from the left), the picture's width (px), 1 while it's up
-uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
 // The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
 uniform vec4 uLegendRings[6];
@@ -84,7 +83,6 @@ uniform float uLegendGlint[6];
 uniform vec4 uLegendStone[6];
 uniform vec4 uLegendDebris[6];
 uniform vec4 uLegendGrowth[6];
-uniform int uSweepCount; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
 uniform vec2 uClearing; // clearingSize, clearingFalloff: where trees, and so canopy, begin
@@ -407,21 +405,6 @@ void main() {
       return;
     }
   }
-  // The party arriving: a front of glowing runes sweeping across the area, a soft glow behind it.
-  for (int i = 0; i < 4; i++) {
-    if (i >= uSweepCount) break;
-    float d = length(p - uSweeps[i].xy), front = uSweeps[i].z, k = uSweeps[i].w;
-    if (k <= 0.0 || d > front + 3.0) continue;
-    if (abs(d - front) < 2.2) {
-      vec2 cell = floor(px / 3.0);
-      if (fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453) > 0.55 && mod(px.x + px.y, 3.0) < 2.0) {
-        vec3 col = mod(cell.x + cell.y, 2.0) > 0.5 ? hsv(uCircle.x, 0.7, 1.0) : hsv(uCircle.y, 0.7, 1.0);
-        gl_FragColor = vec4(haze(col * k, vWorld), 1.0);
-        return;
-      }
-    }
-    if (d < front) c += hsv(uCircle.x, 0.6, 0.18) * k * (1.0 - smoothstep(0.0, 1.0, (front - d) / 30.0));
-  }
   float moonK = 1.0;
   if (uCanopy.x > 0.0) {
     // The canopy's shadow: a dappled layer at canopy height, cast along the moonlight onto the
@@ -516,8 +499,6 @@ export class Ground {
         uCoast: { value: new Array(COAST_SAMPLES).fill(0) },
         uSand: { value: new Array(COAST_SAMPLES).fill(0) },
         uMoonRoad: { value: new THREE.Vector3() },
-        uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
-        uSweepCount: { value: 0 },
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGlow: { value: new Array(6).fill(0) },
         uLegendRingCount: { value: 0 },
@@ -556,13 +537,6 @@ export class Ground {
     const d = this.discoTiles.image.data as Uint8Array;
     for (let i = 0; i < d.length; i += 4) { d[i] = rgbi[i]; d[i + 1] = rgbi[i + 1]; d[i + 2] = rgbi[i + 2]; d[i + 3] = Math.min(255, rgbi[i + 3] * 85); }
     this.discoTiles.needsUpdate = true;
-  }
-
-  /** The fronts of light sweeping across areas as the party arrives (up to 4). */
-  setSweeps(sweeps: { x: number; z: number; radius: number; strength: number }[]): void {
-    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uSweeps.value as THREE.Vector4[];
-    sweeps.slice(0, 4).forEach((w, i) => list[i].set(w.x, w.z, w.radius, w.strength));
-    u.uSweepCount.value = Math.min(4, sweeps.length);
   }
 
   /** The sleeping legends' clearings nearest her (up to 6): their middles, radii, ring widths, and each ring's brightening (0-1). */

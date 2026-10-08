@@ -271,8 +271,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r !== "none") continue;
       }
       if (P.move?.kind === "ambush" && !c.leashed) {
-        if (c.sprung === undefined) {
-          if (d > (P.move.trigger ?? 20) * S) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; }
+        // (Hunting her, it doesn't lie in wait: it comes for her from wherever it is in its area, springing once it's close.
+        // Ed, 2026-10-08: "the aggro creatures are at the opposite end and they don't come and attack me".)
+        if (c.sprung === undefined && d > (P.move.trigger ?? 20) * S) { if (c.hunting === undefined) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; } }
+        else if (c.sprung === undefined) {
           c.sprung = time; s.events.push({ kind: "sprung", x: c.x, z: c.z, at: time, id: c.id });
           if (P.move.strike) f.readyAt = Math.min(f.readyAt, time); // (the snake: it strikes as it springs)
         }

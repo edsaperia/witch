@@ -211,8 +211,9 @@ export class View {
   /** The ley line's brightness (the decisions panel's), and the last scale given it (the party's over fades it). */
   private leyBase = 1;
   private leyScaled = -1;
-  /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
-  private leyParty: Game["party"] | null = null;
+  /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour.
+   *  (Read by the beacons too, render/view/home.ts, so a stone's column comes up as the line it's drawn on reaches it.) */
+  leyParty: Game["party"] | null = null;
   /** The party's over (render/partyOver.ts): its look this frame, and ?partyover=<s> (debug). */
   readonly over = newPartyOverLook();
   private overDebug: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -778,7 +779,7 @@ export class View {
     this.time("uniforms");
     updateSources(this, time);
     this.time("sources");
-    // The party: soundsystems rising in partifying areas, their lights, the sweeping fronts.
+    // The party: soundsystems rising in partifying areas, and their lights.
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
@@ -786,7 +787,6 @@ export class View {
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
-    this.ground.setSweeps(party.sweeps);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
     this.lasers.update(time, w.x, w.z, this.speakerTops, g.map.dancefloor); // (the dancefloor ring's: the soundsystems project their sigils instead)
@@ -794,9 +794,8 @@ export class View {
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
       // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
-      // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
-      this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
+      this.leyParty = g.party; // (leyLines.advance is the rules' own now: rules/leylines.ts questsMove)
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
       // The party's over (rules/partyOver.ts): the line fades to partyOver.leyFloor of itself, its pulse gone.
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);

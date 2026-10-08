@@ -131,7 +131,7 @@ export class Dancefloor {
     if (off > 0) { const T = tiles.rgbi; for (let i = 0, n = 0; i < T.length; i += 4, n++) if (((n * 0.6180339887) % 1) * 0.85 < off - 0.1) T[i + 3] = 0; }
     ground.setFloorTiles(tiles.rgbi);
     const pulse = 0.75 + 0.25 * Math.sin(time * d.pulse * Math.PI * 2);
-    ground.setCircle(d.circleHue, d.circleHue2, 0.7 + 0.3 * pulse, (time * d.runeSpeed / 60) * Math.PI * 2); // the party's sweeps still use its hues
+    ground.setCircle(d.circleHue, d.circleHue2, 0.7 + 0.3 * pulse, (time * d.runeSpeed / 60) * Math.PI * 2);
     const y = d.discoHeight + Math.sin(time * 0.8) * 0.3;
     this.ball.position.set(this.centre.x, y, this.centre.z);
     this.beam.position.set(this.centre.x, y + d.discoSize / 2, this.centre.z);

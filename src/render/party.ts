@@ -13,7 +13,6 @@ import { damageStage, genKnobs, type GenDraw, type SoundsystemGenView } from "./
 
 const CRYSTAL = [new THREE.Vector3(0.25, 0.85, 1), new THREE.Vector3(0.7, 0.4, 1), new THREE.Vector3(1, 0.65, 0.2)];
 
-export interface Sweep { x: number; z: number; radius: number; strength: number }
 /** A playing soundsystem, for its laser show: where its top is, its seed, when it finished rising; and when it went full party
  *  (a wave celebrated it: its lasers fully on from then, for good), if it has. */
 export interface Playing { x: number; y: number; z: number; seed: number; ready: number; full?: number; /** Its projector's top (a generated soundsystem: render/soundsystemGen.ts), where the sky hologram rises from; else none. */ projector?: { x: number; y: number; z: number }; /** Its damage stage: 0 playing, 1 to 3 damaged, 4 destroyed (the hologram glitching more with each). */ stage?: number }
@@ -33,9 +32,9 @@ export class PartyView {
     return this.warm.rgb;
   }
 
-  /** This frame's soundsystem sprites, their lights, and the ground's sweeping fronts. */
+  /** This frame's soundsystem sprites and their lights. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, mark: (x: number, z: number, h: number) => boolean, celebrated?: ReadonlyMap<string, number>) {
-    const t = g.tuning.party, items: SpriteInstance[] = [], lights: ForestLight[] = [], sweeps: Sweep[] = [], playing: Playing[] = [], projectors: Projector[] = [];
+    const t = g.tuning.party, items: SpriteInstance[] = [], lights: ForestLight[] = [], playing: Playing[] = [], projectors: Projector[] = [];
     const M = moodOf(g.tuning), warm = M?.partyWarm.length ? this.warmOf(M.partyWarm) : null;
     // Home has no soundsystem of its own: the dancefloor's ring of speakers carries its music (Ed,
     // v183), and each of them has a single laser (lasers.ts speakerLasers; none from the disco ball, Ed).
@@ -59,11 +58,6 @@ export class PartyView {
     list.forEach((s, i) => {
       const { p, rise } = rises[i], frame = this.atlas.frames[s.variant * 3 + (Math.floor(time * 6) % 3)], I = info?.get(s.key);
       const h = I ? I.h : frame.h * this.metresPerPixel;
-      if (p < 1 && s.from) {
-        // The front starts at the border with the neighbour it came from and sweeps past the clearing.
-        const ox = (s.from.x + s.x) / 2, oz = (s.from.z + s.z) / 2, reach = Math.hypot(s.x - ox, s.z - oz) * 1.6;
-        sweeps.push({ x: ox, z: oz, radius: p * reach, strength: 1 - smoothstep((p - 0.8) / 0.2) });
-      }
       if (!gen && rise > 0 && visible(s.x, s.z, frame.w * this.metresPerPixel, h)) {
         // Each faces left or right, seeded from where it stands (Ed, 2026-10-03); the shader mirrors
         // its normal map too, and its light and lasers rise from its centre either way.
@@ -83,6 +77,6 @@ export class PartyView {
       const rgb = warm ? warm[s.variant % 3] : I ? this.rgbOf(I.rgb) : CRYSTAL[s.variant % 3];
       if (rise > 0) lights.push({ x: s.x, y: 3, z: s.z, reach: t.lightReach * (M?.partyReach ?? 1), rgb, strength: t.lightStrength * (M?.partyStrength ?? 1) * beat * rise * (1 + (1 - p) * 2) });
     });
-    return { items, lights, sweeps, playing, projectors };
+    return { items, lights, playing, projectors };
   }
 }
