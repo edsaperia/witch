@@ -2041,5 +2041,17 @@
   "src": "media/builders/qa-journey.webp",
   "caption": "The QA journey through a whole run, headless: the bedroom, the decks, the boot, wave one, the treetops, a legend circle, the beach, the party's over.",
   "chapter": "builders"
+ },
+ {
+  "src": "media/builders/art4-soundsystem-sheet.webp",
+  "caption": "Generated soundsystems: two dozen stacks, none alike, then three of them playing, through the three stages of damage, and destroyed.",
+  "chapter": "builders",
+  "pr": 541
+ },
+ {
+  "src": "media/builders/art4-soundsystem-ingame.webp",
+  "caption": "Generated soundsystems in play, from the ground camera: each turned towards the dancefloor and coloured by its own crystal.",
+  "chapter": "builders",
+  "pr": 541
  }
 ]
