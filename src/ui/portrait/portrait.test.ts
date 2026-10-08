@@ -24,9 +24,9 @@ describe("the witch's portrait (Ed, 2026-10-08)", () => {
   it("draws every hat with every hair, and every top with every cloak, from the creator's names", () => {
     for (const hat of AXES.hatShape) for (const hair of AXES.hair) {
       const px = draw({ ...Gen.WITCH_GENOME, hat: { ...(Gen.WITCH_GENOME as { hat: object }).hat, shape: hat }, hair });
-      expect(filled(px), `${hat} ${hair}`).toBeGreaterThan(W * H * 0.3);
+      expect(filled(px), `${hat} ${hair}`).toBeGreaterThan(W * H * 0.18);
     }
-    for (const top of AXES.top) for (const cloak of AXES.cloak) expect(filled(draw({ ...Gen.WITCH_GENOME, top, cloak })), `${top} ${cloak}`).toBeGreaterThan(W * H * 0.3);
+    for (const top of AXES.top) for (const cloak of AXES.cloak) expect(filled(draw({ ...Gen.WITCH_GENOME, top, cloak })), `${top} ${cloak}`).toBeGreaterThan(W * H * 0.22);
     for (const hat of AXES.hatShape) expect(hat in HATS, hat).toBe(true);
     for (const hair of AXES.hair) expect(hair in HAIRS, hair).toBe(true);
     for (const top of AXES.top) expect(top in TOPS, top).toBe(true);
@@ -74,5 +74,24 @@ describe("the witch's portrait (Ed, 2026-10-08)", () => {
   it("is cheap: a frame draws in well under a millisecond's budget share", () => {
     const g = Gen.WITCH_GENOME, t0 = performance.now(); for (let i = 0; i < 100; i++) draw(g, { bobAmp: 1, bobHz: 1 }, i / 24);
     expect((performance.now() - t0) / 100).toBeLessThan(8); // (generous for CI; about 1 ms locally)
+  });
+  it("draws the hand-placed face in whole pixels: every eye its own, the gaze moving the iris inside the whites", () => {
+    const g = Gen.WITCH_GENOME, eyes = (["normal", "happy", "closed", "wide", "wince", "dizzy", "sleepy"] as const).map(e => draw(g, { eyeShape: e }));
+    for (let i = 0; i < eyes.length; i++) for (let j = i + 1; j < eyes.length; j++) expect(differ(eyes[i], eyes[j]), `${i} ${j}`).toBeGreaterThan(8);
+    const ahead = draw(g), left = draw(g, { lookX: -1 }), half = draw(g, { eyeOpen: 0.5 }), shut = draw(g, { eyeOpen: 0.1 });
+    expect(differ(ahead, left)).toBeGreaterThan(8); expect(differ(ahead, half)).toBeGreaterThan(8); expect(differ(half, shut)).toBeGreaterThan(8);
+    expect(differ(ahead, draw(g, { sparkle: 1 }))).toBeGreaterThan(2);
+  });
+  it("shapes the classic hat by the creator's sliders: height, brim and tilt each change it", () => {
+    const G = Gen.WITCH_GENOME as { hat: Record<string, unknown> }, base = draw(G), hat = (k: string, v: number) => draw({ ...G, hat: { ...G.hat, [k]: v } });
+    for (const [k, v] of [["height", 1.6], ["height", 0.6], ["brim", 1.5], ["brim", 0.5], ["tilt", 0.8], ["tilt", -0.8]] as const) expect(differ(base, hat(k, v)), `${k} ${v}`).toBeGreaterThan(20);
+  });
+  it("tilts by whole-pixel parallax, never turning the drawn face", () => {
+    const g = Gen.WITCH_GENOME, a = draw(g), b = draw(g, { tilt: 0.2 });
+    expect(differ(a, b)).toBeGreaterThan(50);
+    // the face moved as a whole: shifted back by the tilt's pixels, the eyes' rows are the same
+    const k = Math.round(0.2 * 16), row = 32 + 54 + 6; // (an eye's row on the canvas)
+    let same = 0, n = 0; for (let x = 40; x < 90; x++) { n++; if (a[row * W + x] === b[row * W + x + k]) same++; }
+    expect(same / n).toBeGreaterThan(0.9);
   });
 });

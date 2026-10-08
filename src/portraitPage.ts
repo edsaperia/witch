@@ -8,6 +8,7 @@ import tuning from "../config/tuning.json";
 import { EXPRESSIONS } from "./ui/portrait/expressions";
 import { EYES } from "./ui/portrait/palette";
 import { GESTURES, POSES } from "./ui/portrait/poses";
+import { FALLBACK } from "./ui/portrait/parts";
 import { Portrait } from "./ui/portrait/portrait";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; [k: string]: unknown };
@@ -62,6 +63,7 @@ const slider = (name: string, min: number, max: number, step: number, value: num
 panel.append(el("h1", { textContent: "Witch portrait" }), el("p", { textContent: "A preview for Ed: her portrait, generated from the creator's choices, with expressions, poses, gestures and her text box. Not in the game yet." }));
 section("Size (portrait.scale)", slider("scale", 1, 8, 1, portrait.scale, v => portrait.setScale(v)), slider("box opacity", 0, 1, 0.02, 0.62, v => portrait.setBoxAlpha(v)));
 
+section("Parts not hand-placed yet (DECISION FOR ED)", buttons(["shapes", "nearest"], n => { FALLBACK.mode = n as "shapes" | "nearest"; portrait.setGenome(genome); }, "fallback"));
 section("Expressions", buttons(Object.keys(EXPRESSIONS), n => portrait.state.setExpression(n, now()), "expr"),
   el("div", { className: "row" }, Object.assign(el("button", { textContent: "blink" }), { onclick: () => portrait.state.blink(now()) })));
 section("Poses", buttons(POSES, n => portrait.state.setPose(n, now()), "pose"));

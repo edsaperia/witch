@@ -760,7 +760,7 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 
 ### `portrait`, `wildWatch`
 
-The witch's portrait (Ed, 2026-10-08: her drawn bust at the bottom left, talking in her text box to its right; src/ui/portrait/; previewed at portrait.html, not in the game yet): scale, every art pixel of it this many screen pixels (a whole number, so it stays crisp; the text's pixels too; DECISION FOR ED, 3, found in playtesting); fps, how often at most it's redrawn while it moves; cps, letters a second as a line types on.
+The witch's portrait (Ed, 2026-10-08: her drawn bust at the bottom left, talking in her text box to its right; src/ui/portrait/; previewed at portrait.html, not in the game yet): scale, every art pixel of it this many screen pixels (a whole number, so it stays crisp; the text's pixels too; DECISION FOR ED, 2 since the art direction's 128 x 144 canvas, found in playtesting); fps, how often at most it's redrawn while it moves; cps, letters a second as a line types on.
 
 | knob | type | range |
 |---|---|---|
