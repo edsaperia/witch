@@ -1,5 +1,6 @@
 // The party's over (Ed, 2026-10-06; rules/partyOver.ts): every soundsystem and the home ring's speakers down, the run ends in
 // a peaceful afterparty: the waves stop, nothing fights or hurts her, everyone walks home (or is home already) and sleeps.
+import { isHomeKey } from "./speakers";
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { affectionOf, hitWitch, newGame, stepGame, STEP, type Game } from "./game";
@@ -23,7 +24,7 @@ describe("the party's over", () => {
     const g = game();
     run(g, 0.5);
     expect(g.partyOver).toBeNull();
-    g.combat.sounds.get("home")!.hp = 0;
+    for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = 0; // (every one of the ring's speakers)
     run(g, STEP);
     expect(g.partyOver).not.toBeNull();
     expect(g.partyOver!.at).toBeCloseTo(g.clock.time, 1);
