@@ -201,6 +201,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const shown = hidden || v.partyWitchView.herIdle || onBeach ? 0 : (1 - 0.5 * canopyShown(w)) * (1 - v.seatK);
   v.shadow.scale.set(shown * wide + 1e-3, 1, shown + 1e-3);
 
+  v.witchBodyY = wyy + wframe.h * v.mpp * 0.45; // (her body's middle: the claw slashes go over it)
   return hatTop;
 }
 
