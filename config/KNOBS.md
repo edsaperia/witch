@@ -1827,6 +1827,19 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `coldPalette`
+
+Away from the party, colder (Ed, 2026-10-07, making the wild forest eerier: "a subtle colour shift where areas far from the party read colder, bluer and greyer, and colour returns as you approach the music"; render/post.ts): a grade of colour only, never darker, the brightest (lights, the party's far glow) and her own light spared. By how far she is from the nearest partified area's middle: none within near metres, all from far; eased over ease seconds. amount: how much of the cold grade at its fullest (0 to 1); desat: how much of the colour it takes at most.
+
+| knob | type | range |
+|---|---|---|
+| `coldPalette.on` | boolean |  |
+| `coldPalette.amount` | number | 0 to … |
+| `coldPalette.desat` | number | 0 to … |
+| `coldPalette.near` | number | 0 to … |
+| `coldPalette.far` | number | 0 to … |
+| `coldPalette.ease` | number | 0 to … |
+
 ### `watching`
 
 The trees watching her (Ed, 2026-10-07, making the wild forest eerier: "canopy tips within a few metres of her sway a beat late and slightly TOWARDS her, as if the trees lean in to watch"; render/sprites.ts uWatch): a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius. A shader nudge, nothing new drawn; keep it small.

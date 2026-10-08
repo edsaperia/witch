@@ -310,6 +310,8 @@ export interface Tuning {
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
+  /** Away from the party, colder (render/post.ts; Ed, 2026-10-07). */
+  coldPalette?: { on: boolean; amount: number; desat: number; near: number; far: number; ease: number };
   /** The trees watching her (render/sprites.ts uWatch; Ed, 2026-10-07). */
   watching?: { on: boolean; radius: number; lean: number; lag: number };
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
