@@ -95,6 +95,8 @@ export class AssetLibrary {
 
   /** The share of a crown's pixels above its cut (tuning trunkFade.crownShare; the view sets it). */
   crownShare = 0.85;
+  /** The areas' rune stones' bake scale (tuning runeMarkers.scale; the view sets it): the dancefloor ring's stones are baked at it. */
+  stoneScale = 2.25;
 
   constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null) {
     this.K = 2 / pixelSize;
@@ -266,7 +268,7 @@ export class AssetLibrary {
   }
   /** The dancefloor's speakers, or undefined (and asked for, ahead of the scenery: they're gameplay). */
   speakerArt(): (SpeakerArt & { atlas: Atlas }) | undefined {
-    if (!this.speakers) this.ask({ kind: "speakers", id: "all", style: this.style }, true);
+    if (!this.speakers) this.ask({ kind: "speakers", id: `all@${this.stoneScale}`, style: this.style, stone: this.stoneScale }, true);
     return this.speakers;
   }
   /** The paths' 3D pieces, or undefined (and asked for). */
