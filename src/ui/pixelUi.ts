@@ -53,8 +53,9 @@ const CSS = `
 #creator input[type=checkbox] { -webkit-appearance: none; appearance: none; width: ${u(7)}; height: ${u(7)}; margin: 0 ${u(1)} 0 0; background: ${INK}; box-shadow: inset 0 0 0 ${u(1)} #6a5a7a; cursor: pointer; flex: 0 0 auto; }
 #creator input[type=checkbox]:checked { background: ${GOLD}; box-shadow: inset 0 0 0 ${u(1)} ${INK}, inset 0 0 0 ${u(2)} ${GOLD}, inset 0 0 0 ${u(3)} ${GOLD_D}; }
 #creator label { gap: ${u(2)} !important; margin-right: ${u(4)} !important; }
-#creator canvas[data-strip] { height: ${u(6)} !important; border: ${u(1)} solid ${INK} !important; box-sizing: border-box; }
-#creator [data-picker] > div { gap: ${u(2)} !important; margin: ${u(1)} 0 !important; }
+#creator [data-picker] > div:not([data-grid]) { gap: ${u(2)} !important; margin: ${u(1)} 0 !important; }
+#creator [data-grid] { gap: 0 !important; border: ${u(1)} solid ${INK} !important; margin: ${u(2)} 0 !important; }
+#creator [data-grid] > [data-on] { outline: ${u(1)} solid #fff; outline-offset: ${u(-1)}; box-shadow: 0 0 0 ${u(1)} ${INK}; z-index: 1; }
 #creator [data-picker] > div > span:first-child { width: ${u(20)} !important; }
 #creator .px-extras { gap: ${u(3)} !important; }
 #creator .px-extras button { padding: ${u(2)} ${u(3)} !important; background: #3a2850 !important; height: ${u(15)} !important; display: inline-flex; align-items: center; }
