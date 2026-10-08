@@ -214,7 +214,6 @@ export class View {
   /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour.
    *  (Read by the beacons too, render/view/home.ts, so a stone's column comes up as the line it's drawn on reaches it.) */
   leyParty: Game["party"] | null = null;
-  private leySnap = NaN;
   /** The party's over (render/partyOver.ts): its look this frame, and ?partyover=<s> (debug). */
   readonly over = newPartyOverLook();
   private overDebug: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -796,13 +795,8 @@ export class View {
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
       // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
-      // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
-      { // (in "wave" mode a copy without quests done, made again whenever anything the line reads changes: a wave, an early
-        // clear, a soundsystem lost, the boot's start; a number a frame, so nothing allocated otherwise)
-        const P = g.party, k = t.leyLines.advance === "wave" ? leyKey(P) + (P.ahead?.size ?? 0) * 3 + (P.waveReached?.size ?? 0) * 11 + P.bootUntil * 17 + (P.spellAt ?? -1) * 13 : 0;
-        this.leyParty = t.leyLines.advance !== "wave" ? P : this.leyParty && this.leyParty !== P && k === this.leySnap ? this.leyParty : { ...P, leyDone: undefined };
-        this.leySnap = k; }
+      this.leyParty = g.party; // (leyLines.advance is the rules' own now: rules/leylines.ts questsMove)
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
       // The party's over (rules/partyOver.ts): the line fades to partyOver.leyFloor of itself, its pulse gone.
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);

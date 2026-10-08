@@ -650,7 +650,7 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: T
     }
   }
   if (key !== "home") marchOn(S, key, g.creatures);
-  const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0);
+  const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0, g.map); // (never so soon the pulse would skip)
   g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
 }
 

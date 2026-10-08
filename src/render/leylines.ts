@@ -13,7 +13,7 @@
 // couple of milliseconds' worth a frame; moving on along it only sets a uniform); two draws,
 // nothing allocated a frame.
 import type { PartyState } from "../rules/party";
-import { pulseProgress } from "../rules/leypulse";
+import { pulseLinks, pulseProgress } from "../rules/leypulse";
 import { bootPath, bootPulseAt, ringAlong, ringRadius } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -287,9 +287,11 @@ export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: n
     const u = end > branch.at ? Math.min(1, (at - branch.at) / (end - branch.at)) : 1;
     return branch.share + (1 - branch.share) * u;
   }
-  const k = shaderPulse(p, map, time);
-  if (k === null) return null;
-  return p.wave === 0 && branch ? 1 + (reveal - 1) * k : reveal * (p.wave + k);
+  if (shaderPulse(p, map, time) === null) return null;
+  // (reveal times as far along the route as the pulse, so it never skips either: Ed, 2026-10-08; from the boot's branch,
+  // already at the first stone, to the reveal-th as the pulse reaches the first)
+  const s = pulseLinks(p, map, time);
+  return s < 1 && branch ? 1 + (reveal - 1) * s : reveal * s;
 }
 
 export class LeyLines {

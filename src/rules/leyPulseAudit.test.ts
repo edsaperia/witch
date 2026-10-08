@@ -5,10 +5,10 @@
 // a soundsystem lost, a knockout and respawn, and what a quest done does (Ed hasn't ruled: leyLines.advance).
 import { describe, expect, it } from "vitest";
 import { hitWitch, loseSoundsystem, newGame, stepGame, type Game } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { cellKey, type PartyState } from "./party";
 import { leyChain, onAreaDone, waveReached } from "./leylines";
-import { leyReachTimes, pulseProgress } from "./leypulse";
+import { leyReachTimes, pulseLinks, pulseProgress } from "./leypulse";
 import { holdsArea } from "./clear";
 import { leyReveal } from "../render/leylines";
 
@@ -100,20 +100,93 @@ describe("the wave's pulse, drawn where the wave is (Ed, 2026-10-08)", () => {
     expect(after.stones).toEqual(before.stones); expect(after.current).toBe(before.current); onTheWave(g);
   }, 120000);
 
-  it("a quest done (as built, Ed to rule): the line moves on past its stone at once; under leyLines.advance \"wave\" (the view drops leyDone) it doesn't", () => {
-    // The next wave's stone's quest done: the pulse jumps a link ahead of the wave, at the same share of the next link.
+  it("a quest done: the line, its order and the pulse stay as they were (Ed, 2026-10-08, leyLines.advance \"wave\"); \"first\" is the old jump", () => {
     let g = game(); wave(g);
-    const next = cellKey(g.party.next[0]), before = line(g.party, g);
-    onAreaDone(g.party, g.party.next[0], g.clock.time);
-    const L = line(g.party, g);
-    expect(L.current).toBe(before.current + 1); expect(L.stones[L.current]).toBe(next); expect(L.stones).toEqual(before.stones);
-    expect(line({ ...g.party, leyDone: undefined }, g)).toEqual(before); // (what "wave" draws)
-    // A stone further on: it's taken out of the route's order and put behind the pulse, the pulse running back from it.
+    const c = leyChain(g.party, g.map), far = c.stones[c.current + 3], before = line(g.party, g);
+    onAreaDone(g.party, g.party.next[0], g.clock.time); onAreaDone(g.party, far.cell, g.clock.time);
+    expect(line(g.party, g)).toEqual(before); onTheWave(g);
+    // The old way, for comparison: the next stone's quest moves the line on a link, a farther one is pulled out of the route.
     g = game(); wave(g);
-    const c = leyChain(g.party, g.map), far = c.stones[c.current + 3], b2 = line(g.party, g);
-    onAreaDone(g.party, far.cell, g.clock.time);
-    const L2 = line(g.party, g);
-    expect(L2.stones).not.toEqual(b2.stones); expect(L2.stones[L2.current]).toBe(cellKey(far.cell)); expect(L2.stones[L2.current + 1]).toBe(cellKey(g.party.next[0]));
-    expect(line({ ...g.party, leyDone: undefined }, g)).toEqual(b2);
+    const first = { ...g.map, tuning: withTuning({ leyLines: { ...TUNING.leyLines, advance: "first" } }) } as typeof g.map, b2 = leyChain(g.party, first);
+    onAreaDone(g.party, b2.stones[b2.current + 3].cell, g.clock.time);
+    const L2 = leyChain(g.party, first);
+    expect(L2.stones.map(s => cellKey(s.cell))).not.toEqual(b2.stones.map(s => cellKey(s.cell)));
   }, 120000);
+});
+
+describe("the pulse and the line's front never skip (Ed, 2026-10-08: 'it always travels along the route at the bpm speed')", () => {
+  /** Waves every 20 s, a short boot, so a test sees several in its time. */
+  const FAST = withTuning({ party: { ...TUNING.party, interval: 20, lossPenalty: 8 }, boot: { ...TUNING.boot, time: 1, firstAfter: 0 } });
+  function fast(extra?: Parameters<typeof withTuning>[0]): Game {
+    const g = newGame(123, extra ? withTuning({ ...FAST, ...extra } as never) : FAST);
+    g.clock.paused = false; g.party.spellAt = undefined;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    g.witches[0].health.hp = 1e6;
+    return g;
+  }
+  /** Steps `secs`, `each` before every step; the pulse's and the front's distance along the route never go back, and never
+   *  move more than `most` links in a step (at most PULSE_HURRY times the pace, the front `reveal` times that). */
+  function watch(g: Game, secs: number, each?: (i: number) => void): { pulse: number; front: number } {
+    const reveal = g.map.tuning.leyLines.reveal ?? 3, per = Math.max(1, g.party.next.length), most = (per * 3.2 / g.map.tuning.party.interval) / 60;
+    let pulse = pulseLinks(g.party, g.map, g.clock.time), front = leyReveal(g.party, g.map, g.clock.time, reveal) ?? 0;
+    for (let i = 0; i < Math.round(secs * 60); i++) {
+      each?.(i); stepGame(g, still, 1 / 60);
+      const p = pulseLinks(g.party, g.map, g.clock.time), f = leyReveal(g.party, g.map, g.clock.time, reveal) ?? 0;
+      expect(p, `pulse at ${g.clock.time.toFixed(2)}`).toBeGreaterThanOrEqual(pulse - 1e-9);
+      expect(p - pulse, `pulse step at ${g.clock.time.toFixed(2)}`).toBeLessThanOrEqual(most + 1e-6);
+      expect(f, `front at ${g.clock.time.toFixed(2)}`).toBeGreaterThanOrEqual(front - 1e-9);
+      expect(f - front, `front step at ${g.clock.time.toFixed(2)}`).toBeLessThanOrEqual(reveal * most + 1e-6);
+      expect(f).toBeGreaterThanOrEqual(p - 1e-9); // (the pulse never past the front)
+      pulse = p; front = f;
+    }
+    return { pulse, front };
+  }
+
+  it("through the boot and five waves: the pulse a link a wave, the front three", () => {
+    const g = fast(), end = watch(g, 1.5 + 20 * 5);
+    expect(g.party.wave).toBe(5);
+    expect(end.pulse).toBeGreaterThan(5); expect(end.pulse).toBeLessThan(5.1);
+    expect(end.front).toBeCloseTo(3 * end.pulse, 6);
+  }, 180000);
+
+  it("a tempo change mid-link (a knockdown's BPM): the pace changes, nothing jumps, and it still arrives with the wave", () => {
+    const g = fast();
+    watch(g, 1.5 + 25, i => { if (i === 60 * 10) g.beat.bonus = 60; });
+    onTheWave(g);
+  }, 180000);
+
+  it("a soundsystem lost hurries the wave: the pulse speeds up from where it is, at most three times its pace, and arrives with it", () => {
+    const g = fast();
+    let lost = "";
+    watch(g, 1.5 + 20 * 3, i => {
+      if (i === Math.round(60 * (1.5 + 20 + 15)) && !lost) { lost = cellKey(g.party.last!); const s = g.combat.sounds.get(lost)!; s.hp = 0; loseSoundsystem(g, lost, s.x, s.z); } // (late in the link: the hurry is held to what the pulse can run)
+      if (i === Math.round(60 * (1.5 + 40 + 3))) { const k = cellKey(g.party.last!); const s = g.combat.sounds.get(k); if (s) { s.hp = 0; loseSoundsystem(g, k, s.x, s.z); } } // (early in one: the full hurry)
+    });
+    expect(lost).not.toBe("");
+    onTheWave(g);
+  }, 180000);
+
+  it("an area cleared early, and quests done for the next stone and one farther on: nothing moves", () => {
+    const g = fast();
+    watch(g, 1.5 + 20 + 5, i => {
+      if (i === 60 * 22) { const c = leyChain(g.party, g.map); empty(g, cellKey(c.stones[c.current + 2].cell)); }
+      if (i === 60 * 24) { const c = leyChain(g.party, g.map); onAreaDone(g.party, g.party.next[0], g.clock.time); onAreaDone(g.party, c.stones[c.current + 3].cell, g.clock.time); }
+    });
+    watch(g, 40); onTheWave(g);
+  }, 180000);
+
+  it("two stones a wave (two witches): the pulse runs through both in turn over the countdown, no jump as the wave lands", () => {
+    const g = fast({ party: { ...FAST.party, areasPerWave: 2 } });
+    const end = watch(g, 1.5 + 20 * 3);
+    expect(g.party.wave).toBe(3);
+    expect(end.pulse).toBeGreaterThan(6); expect(end.pulse).toBeLessThan(6.2);
+  }, 180000);
+
+  it("paused: the pulse and the front hold still", () => {
+    const g = fast(); watch(g, 10);
+    g.clock.paused = true;
+    const was = pulseLinks(g.party, g.map, g.clock.time);
+    for (let i = 0; i < 120; i++) stepGame(g, still, 1 / 60);
+    expect(pulseLinks(g.party, g.map, g.clock.time)).toBe(was);
+  }, 60000);
 });

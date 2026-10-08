@@ -40,6 +40,11 @@ export function waveReached(p: PartyState, key: string): number | undefined {
   return a.celebrated ?? a.at;
 }
 
+/** Whether a quest done moves the line on to its stone (leyLines.advance "first", the line's first design) or the line keeps
+ *  to the waves (Ed, 2026-10-08: "The pulse should never skip, it always travels along the route at the bpm speed"; "wave",
+ *  the default): then a quest's stone stays where it is on the route, and the pulse reaches it when it gets there. */
+export const questsMove = (map: ForestMap): boolean => map.tuning.leyLines?.advance === "first";
+
 /** An area's quest is done (the hook for rules/quest.ts): its stone is reached, so the line moves
  *  on from it to the next objective, without waiting for its wave. */
 export function onAreaDone(p: PartyState, cell: Cell, time: number): void {
@@ -53,7 +58,7 @@ export function onAreaDone(p: PartyState, cell: Cell, time: number): void {
  *  (home before anything else), and `ahead` of the next ones not yet reached. `current` is the last reached one's place in `stones`: the
  *  sections before it are behind her, the ones after it ahead. */
 export function leyChain(p: PartyState, map: ForestMap, ahead = Infinity, behind = Infinity): { stones: LeyStone[]; current: number } {
-  const done = p.leyDone ?? new Map<string, number>();
+  const done = (questsMove(map) ? p.leyDone : undefined) ?? new Map<string, number>(); // ("wave": quests leave the route as it is)
   const reached = (k: string) => waveReached(p, k) !== undefined || done.has(k); // (cleared early isn't reached: waveReached)
   // The stones reached, in the order they were: woken (by its wave) or done (by its quest), the
   // earlier of the two; home first.
