@@ -60,7 +60,7 @@ export const NEUTRAL: Params = {
 export interface Look {
   hat: string; hatHeight: number; hatBrim: number; hatTilt: number; hatBand: number;
   hair: string; top: string; cloak: string;
-  phones: boolean; shades: boolean; earrings: boolean; scarf: boolean; pendant: boolean; glowsticks: boolean; familiar: string;
+  phones: boolean; shades: boolean; earrings: boolean; scarf: boolean; pendant: boolean; glowsticks: boolean;
 }
 type GenomeLike = { hat?: Record<string, unknown>; hair?: unknown; top?: unknown; cloak?: unknown; accessories?: Record<string, unknown>; scarfLength?: number };
 /** The portrait's look from a genome (missing fields as hers). */
@@ -70,6 +70,6 @@ export function lookOf(g: GenomeLike | null | undefined): Look {
     hat: typeof h.shape === "string" ? h.shape : "classic", hatHeight: n(h.height, 1), hatBrim: n(h.brim, 1), hatTilt: n(h.tilt, 0), hatBand: n(h.band, 1),
     hair: typeof g?.hair === "string" ? g.hair : "long", top: typeof g?.top === "string" ? g.top : "jacket", cloak: typeof g?.cloak === "string" ? g.cloak : "none",
     phones: a.phones === undefined ? true : !!a.phones, shades: !!a.shades, earrings: !!a.earrings, scarf: !!a.scarf && (g?.scarfLength ?? 1) > 0, pendant: !!a.pendant,
-    glowsticks: !!a.glowsticks, familiar: typeof a.familiar === "string" ? a.familiar : "none",
+    glowsticks: !!a.glowsticks, // (no familiar in the portrait: Ed, 2026-10-08, "confusing since the game is about animals")
   };
 }
