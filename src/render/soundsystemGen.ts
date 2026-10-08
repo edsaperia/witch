@@ -12,6 +12,7 @@ import { cellKey } from "../rules/party";
 import type { AssetLibrary } from "./assets";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type * as THREE from "three";
+import { Vector3 } from "three";
 
 export interface SoundsystemGenKnobs { on: boolean; near: number; far: number; from: number; to: number; maxYaw: number; toward: boolean; ahead: number }
 export const SOUNDSYSTEM_GEN_DEFAULT: SoundsystemGenKnobs = { on: true, near: 0.8, far: 1.6, from: 120, to: 1000, maxYaw: 60, toward: false, ahead: 2 };
@@ -70,7 +71,9 @@ export class SoundsystemGenView {
   private batches = new Map<string, SpriteBatch>();
   private used = new Set<string>();
   private warmed = new WeakSet<object>();
-  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number, private renderer?: THREE.WebGLRenderer) {}
+  private fwd = new Vector3();
+  private up = new Vector3();
+  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number, private renderer?: THREE.WebGLRenderer, private camera?: THREE.Camera) {}
 
   /** Upload an area's atlas as soon as its bake is here (foxtrot's hitch check on #541), so its first frame on screen doesn't
    *  pay for it: for the next waves' areas that's well before they rise. */
@@ -86,6 +89,12 @@ export class SoundsystemGenView {
     for (const s of leyChain(g.party, g.map, K.ahead, 0).stones) { const sp = specs.get(cellKey(s.cell)); if (sp) this.warm(this.assets.soundsystemGenArt(sp.id, sp.genome, sp.yaw, sp.size, false)); }
     this.used.clear();
     const R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
+    // how far towards the camera a sprite's rows below its ground point land (as the relics and the ring's speakers stand):
+    // a yawed stack's front corners reach below its middle's ground point in the sprite, so it stands on its lowest drawn
+    // pixel, moved towards the camera until its middle lands where it stands (Ed's playtest, 2026-10-08: "soundsystems are
+    // sitting in the floor": shifted down the billboard instead, those rows went under the ground and were cut off)
+    let toward = 1;
+    if (this.camera) { const f = this.camera.getWorldDirection(this.fwd), up = this.up.set(0, 1, 0).applyQuaternion(this.camera.quaternion); toward = U.dot(up) / Math.max(0.2, -f.y); }
     for (const d of draws) {
       const sp = specs.get(d.key); if (!sp) continue;
       const play = this.assets.soundsystemGenArt(sp.id, sp.genome, sp.yaw, sp.size, true); if (!play) continue;
@@ -97,11 +106,13 @@ export class SoundsystemGenView {
       if (!b) { b = new SpriteBatch(art.atlas, this.mpp, { solid: true }); this.batches.set(bid, b); this.scene.add(...b.meshes); }
       const fi = !dmg ? Math.floor(d.time * 6) % 3 : d.stage >= 4 ? 6 : (d.stage - 1) * 2 + (Math.floor(d.time * (3 + d.stage * 2)) % 2), f = art.atlas.frames[fi], o = art.origins[fi], p = art.projectors[fi];
       if (!f) continue;
-      const h = f.h * this.mpp, dx = (o.x - f.w / 2) * this.mpp, dy = (f.h - o.y) * this.mpp, y = -(1 - d.rise) * h;
-      // its origin (its middle on the ground) where it stands: the sprite's bottom middle shifted by the origin's offset
-      b.set([{ x: d.x - R.x * dx - U.x * dy, y: y - R.y * dx - U.y * dy, z: d.z - R.z * dx - U.z * dy, frame: f, flip: false, fresh: d.fresh } as SpriteInstance]);
+      const h = f.h * this.mpp, pad = (f.pad ?? 0) * this.mpp, dx = (o.x - f.w / 2) * this.mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * this.mpp, y = -(1 - d.rise) * h;
+      // its lowest drawn pixel on the ground, its middle where it stands (on screen): sideways by the origin's offset, towards
+      // the camera by the rows below it, and down the billboard by the frame's empty pad
+      const bx = d.x - R.x * dx - U.x * pad, by = y - U.y * pad, bz = d.z - R.z * dx + below * toward - U.z * pad;
+      b.set([{ x: bx, y: by, z: bz, frame: f, flip: false, fresh: d.fresh } as SpriteInstance]);
       this.used.add(bid);
-      const bx = d.x - R.x * dx - U.x * dy, by = y - R.y * dx - U.y * dy, bz = d.z - R.z * dx - U.z * dy, at = (px: number, py: number) => { const a = (px - f.w / 2) * this.mpp, c = (f.h - py) * this.mpp; return { x: bx + R.x * a + U.x * c, y: by + R.y * a + U.y * c, z: bz + R.z * a + U.z * c }; };
+      const at = (px: number, py: number) => { const a = (px - f.w / 2) * this.mpp, c = (f.h - py) * this.mpp; return { x: bx + R.x * a + U.x * c, y: by + R.y * a + U.y * c, z: bz + R.z * a + U.z * c }; };
       const proj = p ? at(p.x, p.y) : null;
       out.set(d.key, { rgb: play.rgb, projector: proj, h, stage: d.stage });
     }
