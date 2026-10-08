@@ -1305,6 +1305,21 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 | `party.lightReach` | number | 0 to … |
 | `party.lightStrength` | number | 0 to … |
 
+### `soundsystemGen`
+
+The generated soundsystems (Ed, 2026-10-08: "a variety, for them all to point towards the dancefloor (like the central speaker ones do; back facing ones face outwards), and broadly for the ones further away to be larger ... we don't see any exactly identical ones on the map"; art/soundsystemGen.js, render/soundsystemGen.ts): each area's its own genome, dealt as one set a map (none alike). Sized from near times the old stacks' height (three times the witch) by the dancefloor to far times at to metres out and beyond (from metres and nearer all near), more tiers and wider the further out. Turned along the line to the dancefloor, facing it from the far side and away from it on the near side so every one shows its front, as the ring's speakers (toward: always facing it, the near ones showing their carved backs), never more than maxYaw degrees off facing us (a wide stack side-on is a sliver). Baked in the background ahead waves ahead of the party. on false: the old three stacks.
+
+| knob | type | range |
+|---|---|---|
+| `soundsystemGen.on` | boolean |  |
+| `soundsystemGen.near` | number | 0 to … |
+| `soundsystemGen.far` | number | 0 to … |
+| `soundsystemGen.from` | number | 0 to … |
+| `soundsystemGen.to` | number | 0 to … |
+| `soundsystemGen.maxYaw` | number | 0 to … |
+| `soundsystemGen.toward` | boolean |  |
+| `soundsystemGen.ahead` | number | 0 to … |
+
 ### `stringLights`
 
 Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours (areaNeon: warm white, the palette's first, two bulbs in three and the area's own neon the third, home's cyan; the art director, round 2: one neon an area plus the warm light), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
