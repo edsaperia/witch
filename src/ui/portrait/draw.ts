@@ -3,10 +3,14 @@
 // names (HATS, HAIRS, TOPS, HANDS), so another one is an entry, and a name the tables lack falls back to hers.
 
 import { BASE, DEEP, INK, LIGHT, MAT, SHADE, col, type Mat } from "./palette";
-import { Raster, hash, inEll, mul, move, nearSeg, tri, turn, type Box, type Xf } from "./raster";
+import { Raster, hash, inEll, mul, move, nearSeg, scale, tri, turn, type Box, type Xf } from "./raster";
+import { BLUSH, BROWS, EYES, FACE, IRISES, MOUTHS as MOUTH_ART, SWEAT, TEAR } from "./art/face";
+import { HEAD_SKIN, NECK as NECK_ART } from "./art/target";
+import { FALLBACK, HAIR_ART, HAT_ART, NEAREST, TOP_ART } from "./parts";
+import { LEGEND, blit, blitXf, type Placed } from "./sprite";
 import { OTHER_HATS } from "./hats";
 import { OTHER_TOPS } from "./tops";
-import { HEAD, H, NECK, SHOULDER, W, type Hand, type Look, type Params } from "./rig";
+import { HEAD_BOX, H, NECK, SHAPE_K, SHOULDER, W, type Hand, type Look, type Params } from "./rig";
 
 const TAU = Math.PI * 2;
 /** Light from the upper left: a material's tone by where (nx, ny: -1..1 across the part) a pixel is. */
@@ -48,76 +52,8 @@ export const HAIRS: Record<string, Hair> = {
 };
 const NO_WIND = { hairX: 0, hairY: 0, messy: 0 } as Params;
 
-// ---- the head ----
-/** Her face's outline (the chin narrowing) and her ears, in head coordinates. */
-const face = (x: number, y: number) => ((x / (HEAD.rx * (y > 0 ? 1 - 0.36 * (y / HEAD.ry) : 1))) ** 2 + (y / HEAD.ry) ** 2 <= 1);
-const ear = (x: number, y: number) => inEll(Math.abs(x), y, 15, 2.5, 2.4, 3.4);
-
-/** An eye, at its centre, s the side (-1 our left, 1 our right). */
-function eye(x: number, y: number, p: Params, s: number): number {
-  const sh = p.eyeShape, ax = x * s; // (ax: towards her outer corner)
-  if (sh === "happy") return Math.abs(x) <= 4.8 && Math.abs(y - (1.4 - 3.8 * (1 - (x / 4.8) ** 2))) < 0.8 ? INK : 0;
-  if (sh === "closed") return (Math.abs(x) <= 4.8 && Math.abs(y - (0.2 + 1.8 * (1 - (x / 4.8) ** 2))) < 0.75) || (ax > 4 && ax < 5.7 && Math.abs(y - 0.4) < 0.6) ? INK : 0;
-  if (sh === "wince") return nearSeg(ax, y, -3.6, 0, 4, -3.4, 0.8) || nearSeg(ax, y, -3.6, 0, 4, 3.4, 0.8) ? INK : 0;
-  if (sh === "dizzy") {
-    const r = Math.hypot(x, y), th = (Math.atan2(y, x) + Math.PI) / TAU;
-    for (let k = 0; k < 3; k++) if (Math.abs(r - (0.5 + 1.45 * (th + k))) < 0.55) return r < 5.2 ? INK : 0;
-    return 0;
-  }
-  const wide = sh === "wide", open = Math.max(0, p.eyeOpen) * (wide ? 1.1 : 1) * (sh === "sleepy" ? 0.45 : 1), hw = wide ? 5 : 4.8, hh = 5.6 * open;
-  if (hh < 0.9) return Math.abs(x) <= 4.6 && Math.abs(y - 0.5) < 0.7 ? INK : 0; // (blinking: a line)
-  // the eye between an arched top (its lashes) and a rounder bottom, the outer corner a little higher
-  const u = x / hw, top = -hh + 0.6 + 1.3 * u * u - ax * 0.12, bot = hh * 0.95 + 0.6 - 2.2 * u * u + ax * 0.1;
-  if (Math.abs(u) > 1 || y < top - 0.2 || y > bot) return ax > hw - 1.4 && ax < hw + 1.8 && y > top - 1.4 && y < top + 1 ? INK : 0; // (the lashes' wing)
-  if (y < top + 1.6) return INK; // (the upper lashes, bold)
-  if (y > bot - 0.9 && ax > 0.5) return col(MAT.SKIN, DEEP); // (the lower lashes, faint)
-  const ix = p.lookX * 1.4, iy = p.lookY * 1.3 + 1, irx = wide ? 2.6 : 3.4, iry = wide ? 2.6 : 4.4, dx = x - ix, dy = y - iy;
-  if ((dx / irx) ** 2 + (dy / iry) ** 2 <= 1) {
-    if ((dx + 1.5) ** 2 + (dy + 1.6) ** 2 < 1.5) return col(MAT.WHITE, BASE); // glints
-    if ((dx - 1.5) ** 2 + (dy - 1.5) ** 2 < 0.5 && !wide) return col(MAT.WHITE, BASE);
-    if (p.sparkle > 0.3 && ((Math.abs(dx - 1.3) < 0.5 && Math.abs(dy + 1.6) < 1.4) || (Math.abs(dy + 1.6) < 0.5 && Math.abs(dx - 1.3) < 1.4))) return col(MAT.WHITE, BASE);
-    if ((dx / (wide ? 0.9 : 1.5)) ** 2 + (dy / (wide ? 0.9 : 2.1)) ** 2 < 1) return INK;
-    return col(MAT.IRIS, dy < -1.6 ? DEEP : dy > 1.8 ? LIGHT : BASE);
-  }
-  return col(MAT.WHITE, y < top + 2.6 ? SHADE : BASE);
-}
-/** A brow, at the brow's centre, s the side. */
-const brow = (x: number, y: number, p: Params, s: number): number => {
-  const ax = x * s, yi = p.browAng * 2.6, yo = -p.browAng * 1.3; // (inner end at ax = -3.5, outer at 3.5)
-  return ax >= -3.9 && ax <= 3.9 && Math.abs(y - (yi + (yo - yi) * (ax + 3.5) / 7 - 0.8 * (1 - (ax / 3.9) ** 2))) < 0.85 ? col(MAT.HAIR, DEEP) : 0;
-};
-
-// ---- the mouth ----
-/** A mouth shape: its pixels about the mouth's centre, and whether it's an open one (outlined in ink). */
-interface Mouth { box: Box; open: boolean; px: (x: number, y: number) => number }
-const line = (f: (x: number) => number, half: number, w = 0.62): Mouth => ({ box: [-half - 1, -4, half + 1, 4], open: false, px: (x, y) => (Math.abs(x) <= half && Math.abs(y - f(x)) < w ? INK : 0) });
-/** An open mouth between a top edge and a bottom one: teeth along the top, the tongue at the bottom. */
-const open = (half: number, top: (x: number) => number, bot: (x: number) => number, teeth = 1.4, tongue = 1.8): Mouth => ({
-  box: [-half - 1, -6, half + 1, 7], open: true,
-  px: (x, y) => { if (Math.abs(x) > half || y < top(x) || y > bot(x)) return 0; if (y < top(x) + teeth) return col(MAT.WHITE, BASE); if (y > bot(x) - tongue && Math.abs(x) < half * 0.55) return col(MAT.TONGUE, BASE); return col(MAT.MOUTH, BASE); },
-});
-const oval = (rx: number, ry: number, teeth = 0, tongue = 1.2): Mouth => open(rx, x => 0.5 - ry * Math.sqrt(Math.max(0, 1 - (x / rx) ** 2)), x => 0.5 + ry * Math.sqrt(Math.max(0, 1 - (x / rx) ** 2)), teeth, tongue);
-export const MOUTHS: Record<string, Mouth> = {
-  rest: line(x => 0.4 - 0.9 * (x / 2.5) ** 2, 2.5),
-  smile: line(x => 0.9 - 2 * (x / 4) ** 2, 4),
-  frown: line(x => -0.8 + 2 * (x / 4) ** 2, 4),
-  wavy: line(x => 0.9 * Math.sin(x * 1.5), 4.5),
-  smirk: line(x => 0.2 - 0.32 * x - 0.5 * Math.max(0, x - 1.5) ** 2 * 0.4, 3.6),
-  cat: line(x => Math.sqrt(Math.max(0, 1 - ((Math.abs(x) - 1.5) / 1.5) ** 2)) - 0.2, 3),
-  M: line(() => 0, 2.6, 0.55),
-  grin: open(5, () => -1.2, x => -1.2 + 3.8 * (1 - (x / 5) ** 2), 1.4, 1.4),
-  laugh: open(5, () => -2, x => -2 + 6.2 * Math.max(0, 1 - (x / 5) ** 2) ** 0.75, 1.4, 2.4),
-  O: oval(2.1, 2.6, 0, 1.1),
-  gasp: oval(2.8, 3.6, 0, 1.6),
-  A: open(3.4, x => -1.4 + 0.4 * (x / 3.4) ** 2, x => -1.4 + 4.6 * Math.sqrt(Math.max(0, 1 - (x / 3.4) ** 2)), 1.2, 1.6),
-  E: oval(4, 1.6, 1.4, 0),
-  U: oval(1.6, 1.8, 0, 0.8),
-  F: open(3, () => -1, () => 1.2, 1.4, 0),
-  eww: {
-    box: [-6, -4, 6, 5], open: true,
-    px: (x, y) => { const t = -1.4 + 0.06 * x * x, b = 1.4 + 0.08 * x * x; if (Math.abs(x) > 4.6 || y < t || y > b) return 0; return Math.abs(y - 0.07 * x * x) < 0.45 || (Math.abs(x) % 2 < 0.5 && Math.abs(x) > 1) ? col(MAT.MOUTH, BASE) : col(MAT.WHITE, BASE); },
-  },
-};
+// ---- the face: hand-placed (art/face.ts) ----
+export { MOUTH_ART as MOUTHS };
 
 // ---- hats ----
 /** A hat, in its own coordinates (the brim's centre at 0, 0; y up negative): its pixels, and its box. */
@@ -181,18 +117,40 @@ export const HANDS: Record<string, (x: number, y: number, s: number) => number> 
   peace: (x, y, s) => (nearSeg(x, y, -0.8, -2, -2.2, -7, 0.7) || nearSeg(x, y, 0.8, -2, 2.2, -7, 0.7) ? col(MAT.SKIN, LIGHT) : HANDS.fist(x, y, s)),
 };
 
-/** Where the bust and the head are this frame (rhythm, shake, tilt), as transforms to the canvas. */
-export function frame(p: Params, t: number): { body: Xf; head: Xf } {
+/** Where the bust and the head are this frame (rhythm, shake, tilt), in whole pixels: the neck pivot (bx, by), the head box's
+ *  top-left (hx, hy), and the shape parts' transforms (their units scaled by SHAPE_K). Tilt is whole-pixel parallax: the head
+ *  moves sideways over the body, the hat a pixel further (docs/PORTRAIT-STYLE.md: drawn art never turns). */
+export function frame(p: Params, t: number): { bx: number; by: number; hx: number; hy: number; tiltPx: number; body: Xf; head: Xf } {
   const bob = p.bobAmp * Math.sin(TAU * p.bobHz * t), sway = p.swayAmp * Math.sin(TAU * p.swayHz * t), nod = p.nodAmp * Math.abs(Math.sin(Math.PI * p.nodHz * t));
   const shake = p.shake * Math.sin(t * 57) * (0.6 + 0.4 * Math.sin(t * 23));
-  const body = mul(move(Math.round(NECK.x + p.dx + sway + shake), Math.round(NECK.y + p.dy + bob)), turn(p.lean + sway * 0.012));
-  return { body, head: mul(body, mul(turn(p.tilt + sway * 0.02), move(HEAD.x, HEAD.y + Math.round(nod)))) };
+  const bx = Math.round(NECK.x + p.dx * SHAPE_K + sway + shake), by = Math.round(NECK.y + p.dy * SHAPE_K + bob);
+  const tiltPx = Math.round((p.tilt + p.lean) * 16 + sway * 0.4), hx = bx + HEAD_BOX.x + tiltPx, hy = by + HEAD_BOX.y + Math.round(nod);
+  return { bx, by, hx, hy, tiltPx, body: mul(move(bx, by), scale(SHAPE_K)), head: mul(move(hx + 32, hy + 32), scale(SHAPE_K)) };
 }
 
-/** Draws her (look, params, time in seconds) into r. */
+/** Which drawn eye her parameters pick, and which iris. */
+function eyeArt(p: Params): { eye: keyof typeof EYES; iris: keyof typeof IRISES | null } {
+  const o = p.eyeOpen, iris = p.sparkle > 0.3 ? "sparkle" : "plain";
+  switch (p.eyeShape) {
+    case "happy": case "closed": case "wince": case "dizzy": return { eye: p.eyeShape, iris: null };
+    case "sleepy": return o < 0.3 ? { eye: "shut", iris: null } : { eye: "sleepy", iris };
+    case "wide": return o < 0.3 ? { eye: "shut", iris: null } : { eye: "wide", iris: "small" };
+    default: return o < 0.3 ? { eye: "shut", iris: null } : o < 0.72 ? { eye: "half", iris } : { eye: "open", iris };
+  }
+}
+/** Which drawn brows. */
+const browArt = (p: Params): keyof typeof BROWS => (p.browAng > 0.25 ? "cross" : p.browAng < -0.25 ? "worried" : p.browY >= 1.4 ? "arched" : p.browY <= -0.4 ? "low" : "flat");
+const WHITES = new Set([LEGEND.W, LEGEND.w]);
+
+/** Draws her (look, params, time in seconds) into r: the hand-placed parts (art/, parts.ts) in whole pixels, and the parts not
+ *  yet hand-placed as their shapes (FALLBACK). */
 export function drawPortrait(r: Raster, look: Look, p: Params, t: number): void {
   r.clear();
-  const { body, head } = frame(p, t), hair = HAIRS[look.hair] ?? HAIRS.long, hatOn = p.hatOn > 0.5 && look.hat !== "none" && !!(HATS[look.hat] ?? HATS.classic);
+  const { bx, by, hx, hy, tiltPx, body, head } = frame(p, t), hatOn = p.hatOn > 0.5 && look.hat !== "none" && !!(HATS[look.hat] ?? HATS.classic);
+  const near = FALLBACK.mode === "nearest";
+  const hairArt = HAIR_ART[look.hair] ?? HAIR_ART[near ? NEAREST[look.hair] ?? "long" : ""], hairParts = hairArt?.(look, p);
+  const hair = HAIRS[look.hair] ?? HAIRS.long;
+  const at = (pl: Placed | undefined, ox: number, oy: number) => pl && blit(r, pl.sprite, ox + pl.x, oy + pl.y);
   const hand = (hd: Hand | null, s: number) => {
     if (!hd) return;
     const sx = s * SHOULDER.x, sy = SHOULDER.y, draw = HANDS[hd.shape] ?? HANDS.open;
@@ -206,57 +164,61 @@ export function drawPortrait(r: Raster, look: Look, p: Params, t: number): void 
   // the cloak's hood and the cloak (behind her)
   if (look.cloak === "hooded") r.draw((x, y) => (inEll(x, y, 0, -1, 18.5, 17.5) && y < 9 ? col(MAT.CLOAK, x > 6 ? DEEP : SHADE) : 0), [-20, -20, 20, 10], head, INK);
   if (look.cloak !== "none") r.draw((x, y) => { const bx = x - p.robeBlow * Math.max(0, y) * 0.3; return y >= 0 && Math.abs(bx) <= shoulders(y + 1) + 3 + p.robeBlow * 2 * tri(y / 5) ? lit(MAT.CLOAK, bx / 30, y / 20, 0.2) : (y > -7 && y < 4 && Math.abs(x) > 5.5 && Math.abs(x) < 12 - y * 0.3) ? col(MAT.CLOAK, SHADE) : 0; }, [-36, -8, 36, 30], body, INK);
-  // back hair
-  r.draw((x, y) => {
+  // back hair: hand-placed, or its shape
+  if (hairParts) at(hairParts.back, hx, hy);
+  else r.draw((x, y) => {
     if (!hair.back(x, y, p)) return 0;
     const n = Math.hypot(x / 18.5, (y + 1) / 17.5);
     if (y < -5 && Math.abs(n - 0.78) < 0.07 && x < 7) return col(MAT.HAIR, LIGHT);
     return col(MAT.HAIR, Math.abs(x) < 10 && y > 3 ? DEEP : x > 8 || y > 10 ? SHADE : BASE);
   }, [-30, -30, 30, 40], head, INK);
-  // the neck, the top, its collar, the scarf, headphones round her neck, the pendant
-  r.draw((x, y) => (Math.abs(x) <= 4.5 && y >= -9 && y <= 4 ? col(MAT.SKIN, y < -3 ? DEEP : SHADE) : 0), [-6, -10, 6, 5], body, INK);
-  const top = TOPS[look.top] ?? TOPS.jacket;
-  r.draw((x, y) => (y >= 3 && Math.abs(x) <= shoulders(y) ? top(x, y, p) : 0), [-30, 2, 30, 30], body, INK);
-  if (look.top !== "poncho") r.draw((x, y) => { const a = Math.abs(x), v = 7 - (y - 3) * 0.42; return y >= 2 && y < 19 && a >= v && a < v + 3.6 - (y - 2) * 0.05 ? col(look.top === "cape" ? MAT.CLOAK : MAT.JACKET, a > v + 2.2 ? BASE : LIGHT) : 0; }, [-14, 1, 14, 20], body, INK);
+  // the neck (under the collar), the top and its collar, the scarf, headphones round her neck, the pendant
+  blit(r, NECK_ART, hx, hy + 52);
+  const topArt = TOP_ART[look.top] ?? (near ? TOP_ART.jacket : undefined);
+  if (topArt) for (const pl of topArt(look, p)) at(pl, bx, by);
+  else {
+    const top = TOPS[look.top] ?? TOPS.jacket;
+    r.draw((x, y) => (y >= 3 && Math.abs(x) <= shoulders(y) ? top(x, y, p) : 0), [-30, 2, 30, 30], body, INK);
+    if (look.top !== "poncho") r.draw((x, y) => { const a = Math.abs(x), v = 7 - (y - 3) * 0.42; return y >= 2 && y < 19 && a >= v && a < v + 3.6 - (y - 2) * 0.05 ? col(look.top === "cape" ? MAT.CLOAK : MAT.JACKET, a > v + 2.2 ? BASE : LIGHT) : 0; }, [-14, 1, 14, 20], body, INK);
+  }
   if (look.scarf) r.draw((x, y) => { if (y >= 0 && y <= 5 && Math.abs(x) <= 10 - y * 0.2) return col(MAT.SCARF, Math.floor(x + 20) % 4 < 2 ? BASE : LIGHT); const tx = x - p.robeBlow * Math.max(0, y - 5) * 0.8; return y > 5 && y < 24 && tx > 3.5 && tx < 8 ? col(MAT.SCARF, y % 4 < 2 ? BASE : SHADE) : 0; }, [-12, -1, 30, 25], body, INK);
   if (look.phones && p.phonesOn < 0.5) r.draw((x, y) => { const a = Math.abs(x); if (inEll(a, y, 9, 4.5, 4.2, 3)) return y > 5.6 ? col(MAT.PHONES, DEEP) : col(MAT.PHONES, x > 0 ? SHADE : LIGHT); return a > 4.2 && a < 6.4 && y > -4 && y < 3 ? col(MAT.PHONES, DEEP) : 0; }, [-15, -5, 15, 9], body, INK);
   if (look.pendant) r.draw((x, y) => (inEll(x, y, 0, 15, 2.2, 2.2) ? (inEll(x, y, -0.4, 14.6, 0.9, 0.9) ? col(MAT.BAND, LIGHT) : col(MAT.GOLD, BASE)) : 0), [-3, 12, 3, 18], body, INK);
-  // the head: face and ears, the skin's shadow under the fringe and on its right
-  const fb = hair.fringe;
-  r.draw((x, y) => {
-    if (ear(x, y)) return col(MAT.SKIN, x > 0 ? SHADE : BASE);
-    if (!face(x, y)) return 0;
-    if (fb && y > fb(x) - 0.5 && y < fb(x) + 1.3) return col(MAT.SKIN, SHADE);
-    return col(MAT.SKIN, x > 10.5 || (y > 11 && x > 4) ? SHADE : x < -9 && y < 3 ? LIGHT : BASE);
-  }, [-19, -18, 19, 18], head, INK);
+  // her face: its skin, then the drawn features on it
+  blit(r, HEAD_SKIN, hx, hy);
+  const { eye, iris } = eyeArt(p), e = EYES[eye], gx = Math.max(-1, Math.min(1, Math.round(p.lookX * 1.2))), gy = Math.max(-1, Math.min(1, Math.round(p.lookY * 1.2)));
+  for (const [sp, [ex, ey], ix] of [[e.l, FACE.eyeL, FACE.iris[0]], [e.r, FACE.eyeR, 16 - FACE.iris[0] - 8]] as const) {
+    blit(r, sp, hx + ex, hy + ey);
+    if (iris) { const is = IRISES[iris]; blit(r, is, hx + ex + ix + gx, hy + ey + FACE.iris[1] + gy, (x, y) => WHITES.has(r.px[y * r.w + x])); }
+  }
+  blit(r, MOUTH_ART[p.mouth] ?? MOUTH_ART.smile, hx + FACE.mouth[0], hy + FACE.mouth[1]);
+  if (p.blush > 0.3) { blit(r, BLUSH.l, hx + FACE.blushL[0], hy + FACE.blushL[1]); blit(r, BLUSH.r, hx + FACE.blushR[0], hy + FACE.blushR[1]); }
+  if (p.tears > 0.3) { blit(r, TEAR, hx + FACE.tearL[0], hy + FACE.tearL[1]); blit(r, TEAR, hx + FACE.tearR[0], hy + FACE.tearR[1]); }
+  // hair in front (hand-placed), then the brows over it
+  if (hairParts) at(hairParts.front, hx, hy);
+  const b = BROWS[browArt(p)], dy = -Math.max(-2, Math.min(3, Math.round(p.browY * 0.8)));
+  blit(r, b.l, hx + FACE.browL[0], hy + FACE.browL[1] + dy); blit(r, b.r, hx + FACE.browR[0], hy + FACE.browR[1] + dy);
   if (look.earrings) r.draw((x, y) => (inEll(Math.abs(x), y, 15.5, 7.5, 1.1, 1.4) ? col(MAT.GOLD, BASE) : 0), [-18, 4, 18, 11], head, INK);
-  // the face: eyes, brows (after the fringe), nose, mouth, blush, tears
-  for (const s of [-1, 1]) r.draw((x, y) => eye(x - s * 7.3, y - 3.5, p, s), [s * 7.3 - 8, -4, s * 7.3 + 8, 11], head);
-  r.draw((x, y) => (x >= -0.5 && x < 1.2 && y >= 8 && y < 9 ? col(MAT.SKIN, DEEP) : 0), [-2, 7, 3, 10], head);
-  const m = MOUTHS[p.mouth] ?? MOUTHS.smile;
-  r.draw((x, y) => m.px(x, y - 11.5), [m.box[0], m.box[1] + 11.5, m.box[2], m.box[3] + 11.5], head, m.open ? INK : 0);
-  if (p.blush > 0.3) for (const s of [-1, 1]) r.draw((x, y) => (inEll(x, y, s * 10, 8.6, 3, 1.4) ? ((Math.round(x) + Math.round(y)) % 3 === 0 ? col(MAT.BLUSH, SHADE) : col(MAT.BLUSH, BASE)) : 0), [s * 10 - 4, 6, s * 10 + 4, 11], head);
-  if (p.tears > 0.3) for (const s of [-1, 1]) r.draw((x, y) => (inEll(x, y, s * 12, 9.5, 1.2, 1.7) ? col(MAT.SWEAT, y < 9 ? LIGHT : BASE) : 0), [s * 12 - 2, 7, s * 12 + 2, 12], head, INK);
-  // the fringe and side locks, then the brows over them
-  r.draw((x, y) => {
-    const inFringe = fb && face(x, y + 0.5) && y < fb(x), inFront = hair.front(x, y, p, hatOn);
-    if (!inFringe && !inFront) return 0;
-    if (y > -13 && y < -11.5 && x < 7 && x > -12) return col(MAT.HAIR, LIGHT);
-    return col(MAT.HAIR, x > 8 ? SHADE : fb && y > fb(x) - 1.2 && inFringe ? SHADE : BASE);
-  }, [-20, -32, 20, 28], head, INK);
-  for (const s of [-1, 1]) r.draw((x, y) => brow(x - s * 7.3, y + 3.6 + p.browY, p, s), [s * 7.3 - 5, -8.5 - p.browY, s * 7.3 + 5, 0 - p.browY], head);
-  if (p.shades > 0.5 || (look.shades && p.shades >= 0)) r.draw((x, y) => { for (const s of [-1, 1]) if (Math.abs(x - s * 7.3) <= 5.4 && y >= 0 && y <= 6) return col(MAT.SHADES, y < 1 ? LIGHT : (Math.round(x - y) % 5 === 0 ? LIGHT : BASE)); return Math.abs(x) < 2 && y >= 0.5 && y <= 1.5 ? INK : 0; }, [-14, -2, 14, 8], head, INK);
-  // headphones on her ears
-  if (p.phonesOn > 0.5) r.draw((x, y) => (inEll(Math.abs(x), y, 16.6, 2.5, 3.4, 4.8) ? col(MAT.PHONES, x > 0 ? SHADE : LIGHT) : Math.abs(Math.hypot(x, y + 1) - 18.6) < 1.1 && y < -3 ? col(MAT.PHONES, DEEP) : 0), [-21, -21, 21, 8], head, INK);
-  // sweat
-  if (p.sweat > 0.3) r.draw((x, y) => (inEll(x, y, 16.5, -8, 2, 2.2) || (y < -8 && y > -12.5 && Math.abs(x - 16.5) < (y + 12.5) * 0.45) ? col(MAT.SWEAT, x < 16 && y < -8 ? LIGHT : BASE) : 0), [13, -14, 20, -5], head, INK);
-  // the hat
+  if (p.shades > 0.5 || (look.shades && p.shades >= 0)) r.draw((x, y) => { for (const s of [-1, 1]) if (Math.abs(x - s * 7.3) <= 5.4 && y >= -1.5 && y <= 4.5) return col(MAT.SHADES, y < -0.5 ? LIGHT : (Math.round(x - y) % 5 === 0 ? LIGHT : BASE)); return Math.abs(x) < 2 && y >= -1 && y <= 0 ? INK : 0; }, [-14, -3, 14, 6], head, INK);
+  // headphones on her ears, sweat
+  if (p.phonesOn > 0.5) r.draw((x, y) => (inEll(Math.abs(x), y, 17.6, 2.5, 3.4, 4.8) ? col(MAT.PHONES, x > 0 ? SHADE : LIGHT) : Math.abs(Math.hypot(x, y + 1) - 19.6) < 1.1 && y < -3 ? col(MAT.PHONES, DEEP) : 0), [-23, -23, 23, 8], head, INK);
+  if (p.sweat > 0.3) blit(r, SWEAT, hx + FACE.sweat[0], hy + FACE.sweat[1]);
+  // the hat: hand-placed (a pixel further than the head when she tilts; turned only while it flies), or its shape
   if (hatOn) {
-    const hd = (HATS[look.hat] ?? HATS.classic)!;
-    r.draw((x, y) => hd.px(x, y, look, p), hd.box(look), mul(head, mul(move(p.hatX, -15.5 + p.hatY), turn(p.hatRot + look.hatTilt * 0.05))), INK);
+    const hatArt = HAT_ART[look.hat] ?? (near ? HAT_ART[NEAREST[look.hat] ?? "classic"] : undefined);
+    if (hatArt) {
+      const pl = hatArt(look), rot = p.hatRot, flying = Math.abs(rot) > 0.5;
+      const ox = hx + pl.x + Math.round(p.hatX * SHAPE_K + (flying ? 0 : rot * 6)) + Math.sign(tiltPx), oy = hy + pl.y + Math.round(p.hatY * SHAPE_K + (flying ? 0 : Math.abs(rot) * 5));
+      if (flying) { const cx = pl.sprite.w / 2, cy = pl.sprite.h - 6; blitXf(r, pl.sprite, mul(move(ox + cx, oy + cy), mul(turn(rot), move(-cx, -cy)))); }
+      else blit(r, pl.sprite, ox, oy);
+    } else {
+      const hd = (HATS[look.hat] ?? HATS.classic)!;
+      r.draw((x, y) => hd.px(x, y, look, p), hd.box(look), mul(head, mul(move(p.hatX, -15.5 + p.hatY), turn(p.hatRot + look.hatTilt * 0.05))), INK);
+    }
   }
   // hands in front
   for (const [hd, s] of [[p.handL, -1], [p.handR, 1]] as const) if (hd && !hd.behind) hand(hd, s);
+  void by;
 }
 
 export { W, H };

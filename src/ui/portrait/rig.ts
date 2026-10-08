@@ -6,11 +6,16 @@
 //   anchors (art pixels, the bust's own: x right, y down): the neck pivot at NECK, which the head tilts about; the head's centre
 //   HEAD above it; the eyes, brows and mouth on the head; the hat's brim; the shoulders, where the arms start.
 
-/** The canvas, in art pixels. */
-export const W = 72, H = 88;
-/** The neck pivot on the canvas (the head turns about it; the body bobs with it). */
-export const NECK = { x: 36, y: 62 } as const;
-/** The head's centre and radii, from the neck pivot. */
+/** The canvas, in art pixels (art direction round 1: 128 x 144, docs/PORTRAIT-STYLE.md). */
+export const W = 128, H = 144;
+/** The neck pivot on the canvas (the body bobs with it; the head moves by whole pixels over it). */
+export const NECK = { x: 64, y: 110 } as const;
+/** The head box (64 x 64, its middle the face's middle: the hand-placed parts' frame, art/), its top-left from the neck pivot. */
+export const HEAD_BOX = { x: -32, y: -56, size: 64 } as const;
+/** The parts still drawn as shapes (the first round's, in its smaller units) are drawn this much bigger, until each is
+ *  hand-placed. */
+export const SHAPE_K = 1.75;
+/** The shape parts' head centre and radii, from the neck pivot (in their units). */
 export const HEAD = { x: 0, y: -18, rx: 15, ry: 15.5 } as const;
 /** The shoulders (where the arms start), from the neck pivot. */
 export const SHOULDER = { x: 19, y: 9 } as const;
