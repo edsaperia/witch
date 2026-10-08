@@ -10,8 +10,7 @@ export interface Sprite { w: number; h: number; px: Uint8Array }
 /** A part placed: its sprite and where its top-left goes (whole pixels, in the frame it's placed in). */
 export interface Placed { sprite: Sprite; x: number; y: number }
 
-/** The letters (docs/PORTRAIT-STYLE.md; art direction round 1's target maps). Free for new parts: A E N U V c j m u and the
- *  digits; add a letter here, never reuse one. */
+/** The letters (docs/PORTRAIT-STYLE.md; art direction round 1's target maps). Free for new parts: j and the digits; add a letter here, never reuse one. */
 export const LEGEND: Record<string, number> = {
   // hair: base, light, glint, shade, deep, outline; brows in its deep tone
   H: col(MAT.HAIR, BASE), h: col(MAT.HAIR, LIGHT), g: col(MAT.HAIR, HIGH), d: col(MAT.HAIR, SHADE), D: col(MAT.HAIR, DEEP), o: col(MAT.HAIR, OUTLINE), B: col(MAT.HAIR, DEEP),
@@ -30,6 +29,9 @@ export const LEGEND: Record<string, number> = {
   a: col(MAT.SWEAT, LIGHT), b: col(MAT.SWEAT, BASE), v: col(MAT.SWEAT, OUTLINE),
   // the robe and its collar (the jacket's and the top's colours)
   C: col(MAT.JACKET, BASE), Z: col(MAT.JACKET, LIGHT), z: col(MAT.JACKET, SHADE), X: col(MAT.JACKET, DEEP), x: col(MAT.JACKET, OUTLINE),
+  // (art builder 1) the top in the jacket's V; the blossoms on the flowers hat; the hat-tip hand's cuff (the trim)
+  A: col(MAT.TOP, BASE), E: col(MAT.TOP, SHADE), U: col(MAT.FLOWER, BASE), u: col(MAT.FLOWER, SHADE), V: col(MAT.FLOWER2, BASE), N: col(MAT.FLOWER2, SHADE),
+  m: col(MAT.TRIM, BASE), c: col(MAT.TRIM, SHADE),
 };
 
 /** A sprite from its grid (lines of equal width once leading and trailing blank lines are dropped; short lines padded). */
