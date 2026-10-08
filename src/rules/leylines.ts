@@ -5,7 +5,7 @@
 // it, six sections, the next three and the past three). The route picker (rules/leyroute.ts) keeps
 // it from crossing itself.
 // A stone is reached when its area's wave arrives or its quest is done (onAreaDone), whichever
-// comes first, and the line moves on to the next one not yet reached. The order is the party's
+// comes first (an area cleared before its wave isn't: the line and its pulse keep their pace; waveReached), and the line moves on to the next one not yet reached. The order is the party's
 // own (party.ts): the next and after-next waves are already planned there, and the waves after
 // them are what the same seeded picker will choose once those have woken, so the line shows what
 // will happen, not a guess. Drawing them is render/leylines.ts.
@@ -26,6 +26,16 @@ function stoneOf(map: ForestMap, cell: Cell, wave: number): LeyStone {
   return { cell, x: s.x, z: s.z, wave };
 }
 
+/** When the line reached an area's stone by its wave: the wave's time; undefined while its wave is still to come, even if
+ *  the area was cleared early (Ed, 2026-10-08: clearing an area transforms its runestone at once, but the pulse keeps its
+ *  own pace along the route; its wave, when it comes, only celebrates: party.ts `ahead`, the same as its passed()).
+ *  A cleared area's wave came at `celebrated`, its partifying (`at`) being the clear. */
+export function waveReached(p: PartyState, key: string): number | undefined {
+  const a = p.areas.get(key);
+  if (!a || p.ahead?.has(key)) return undefined;
+  return a.celebrated ?? a.at;
+}
+
 /** An area's quest is done (the hook for rules/quest.ts): its stone is reached, so the line moves
  *  on from it to the next objective, without waiting for its wave. */
 export function onAreaDone(p: PartyState, cell: Cell, time: number): void {
@@ -40,11 +50,11 @@ export function onAreaDone(p: PartyState, cell: Cell, time: number): void {
  *  sections before it are behind her, the ones after it ahead. */
 export function leyChain(p: PartyState, map: ForestMap, ahead = Infinity, behind = Infinity): { stones: LeyStone[]; current: number } {
   const done = p.leyDone ?? new Map<string, number>();
-  const reached = (k: string) => p.areas.has(k) || done.has(k);
+  const reached = (k: string) => waveReached(p, k) !== undefined || done.has(k); // (cleared early isn't reached: waveReached)
   // The stones reached, in the order they were: woken (by its wave) or done (by its quest), the
   // earlier of the two; home first.
   const home = cellKey(map.centreCell), past = new Map<string, { s: LeyStone; at: number }>([[home, { s: stoneOf(map, map.centreCell, 0), at: -Infinity }]]);
-  for (const a of p.areas.values()) { const k = cellKey(a.cell); if (k !== home) past.set(k, { s: stoneOf(map, a.cell, a.wave), at: a.at }); }
+  for (const a of p.areas.values()) { const k = cellKey(a.cell), at = waveReached(p, k); if (k !== home && at !== undefined) past.set(k, { s: stoneOf(map, a.cell, a.wave), at }); }
   for (const [k, t] of done) {
     const was = past.get(k);
     if (!was || t < was.at) { const [x, y] = k.split(",").map(Number); past.set(k, { s: stoneOf(map, [x, y], was?.s.wave ?? p.wave + 1), at: t }); }
