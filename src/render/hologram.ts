@@ -33,6 +33,11 @@ export interface HologramTuning {
  *  its area type, when it finished rising, and how damaged it is (0 whole to 1 about to fall). */
 export interface Projector { key: string; x: number; y: number; z: number; type: number; ready: number; damage: number }
 
+/** The soundsystem's damage stages (art4's, 2026-10-08: below 75%, 50% and 25% of its health, art/soundsystemGen.js's
+ *  DAMAGE_STAGES), and how much the glyph glitches at each: whole, then worse with each stage. */
+const STAGES = [0.75, 0.5, 0.25], GLITCH = [0, 0.3, 0.6, 1];
+export function damageStage(damage: number): number { const share = 1 - damage; let k = 0; for (const s of STAGES) if (share < s) k++; return k; }
+
 const GLYPH = 20, CELL = 24, COLS = 8; // (the glyph's art pixels, its cell in the atlas with a margin, the atlas's columns)
 const MAX = 64;
 
@@ -78,7 +83,7 @@ void main() {
   vec2 g = floor(uv);
   float m = ink(g), r = ink(g + vec2(1.0, 0.0)), b = ink(g - vec2(1.0, 0.0)); // (the colour fringe: red one pixel right, blue left)
   // A faint field behind the glyph, round, so it reads as a projection, not a sticker.
-  float field = 0.12 * (1.0 - smoothstep(0.35, 0.5, length(vUv - 0.5)));
+  float field = 0.05 * (1.0 - smoothstep(0.35, 0.5, length(vUv - 0.5)));
   // Scanlines (every other art-pixel row of the picture) and an interference band drifting up.
   float scan = mod(floor(gl_FragCoord.y), 2.0) < 1.0 ? 1.0 : 0.55;
   float band = 0.75 + 0.5 * smoothstep(0.0, 0.08, 0.08 - abs(fract(vUv.y * 0.8 - uTime * 0.35) - 0.5) + 0.04);
@@ -86,6 +91,7 @@ void main() {
   float k = vLook.a * scan * band;
   if (k * max(col.r, max(col.g, col.b)) <= 0.004) discard;
   gl_FragColor = vec4(col * k, 1.0);
+  gl_FragDepth = 1.0; // (the sky's depth: see the material)
 }`;
 
 const CONE_VERT = /* glsl */ `
@@ -160,9 +166,12 @@ export class SigilHolograms {
       geo.setAttribute("aSway", new THREE.InstancedBufferAttribute(this.sway, 2).setUsage(THREE.DynamicDrawUsage));
       geo.instanceCount = 0;
       this.geos.push(geo);
+      // The glyph writes the far depth (and so is drawn over whatever is behind it, without a depth test): the tilt-shift
+      // takes it for sky and leaves it nearly sharp, as it does the stars, where over the leaves it smeared it into a ring.
+      const glyph = vert === GLYPH_VERT;
       const mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({
         vertexShader: vert, fragmentShader: frag, uniforms: { ...HEIGHT_UNIFORMS, uTime: this.time, ...uniforms },
-        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        transparent: true, depthWrite: glyph, depthFunc: glyph ? THREE.AlwaysDepth : THREE.LessEqualDepth, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       }));
       mesh.frustumCulled = false;
       mesh.renderOrder = 9;
@@ -197,7 +206,7 @@ export class SigilHolograms {
       const up = Math.min(1, since / Math.max(0.05, T.powerUp)), stutter = up >= 1 ? 1 : (frac(Math.sin(Math.floor(time * 24) * 12.9898 + seed) * 43758.5) < up ? 1 : 0.15);
       // Collapse: squashed to a line, flaring, then out.
       const c = gone === null ? 0 : Math.min(1, (time - gone) / Math.max(0.05, T.collapse)), squash = 1 - c * c, flare = 1 + 1.5 * Math.sin(Math.PI * c);
-      const glitch = Math.max(Math.min(1, p.damage * 1.4), gone === null ? 0 : 0.8);
+      const glitch = Math.max(GLITCH[damageStage(p.damage)], gone === null ? 0 : 0.8);
       const bright = fade * stutter * flare * (c >= 1 ? 0 : 1);
       this.at.set([p.x, p.y, p.z, T.size], n * 4);
       this.look.set([col[0], col[1], col[2], T.glyph * bright], n * 4);
