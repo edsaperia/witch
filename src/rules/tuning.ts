@@ -288,7 +288,7 @@ export interface Tuning {
   haze: { near: number; far: number };
   /** The scenery budget: scenery is drawn out to an adaptive radius round the witch (view.ts). */
   scenery: { adaptive: boolean; fps: number; hysteresis: number; sustain: number; minRadius: number; shrink: number; grow: number; fade: number };
-  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; areaNeon: boolean; twinkle: number; chaseSpeed: number };
+  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; /** palette: every colour in turn; areaNeon: warm white and the area's own neon */ mode: "palette" | "areaNeon"; twinkle: number; chaseSpeed: number };
   /** The generated soundsystems (render/soundsystemGen.ts, art/soundsystemGen.js): sizes near to far by distance, the most they turn from facing us, ahead waves baked early. */
   soundsystemGen?: { on: boolean; near: number; far: number; from: number; to: number; maxYaw: number; toward: boolean; ahead: number };
   party: {

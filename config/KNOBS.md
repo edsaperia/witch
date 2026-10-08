@@ -1332,7 +1332,7 @@ The generated soundsystems (Ed, 2026-10-08: "a variety, for them all to point to
 
 ### `stringLights`
 
-Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours (areaNeon: warm white, the palette's first, two bulbs in three and the area's own neon the third, home's cyan; the art director, round 2: one neon an area plus the warm light), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
+Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres, coloured by mode: palette cycles through all of palette's colours (Ed, 2026-10-08: 'I liked the six bright colour string lights, please bring them back'); areaNeon is warm white, the palette's first, two bulbs in three and the area's own neon the third (the art director, round 2: one neon an area plus the warm light). The light's grade leaves them their colour (light.spooky only drains what's darker than its gradePivot; measured from the treetops, the same with and without it), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
 
 | knob | type | range |
 |---|---|---|
@@ -1348,7 +1348,7 @@ Colourful string lights in every partified area, as long garlands: runsPerArea r
 | `stringLights.sag` | number | 0 to … |
 | `stringLights.bulbSpacing` | number | 0 to … |
 | `stringLights.palette` | array of string |  |
-| `stringLights.areaNeon` | boolean |  |
+| `stringLights.mode` | string | "palette" / "areaNeon" |
 | `stringLights.twinkle` | number | 0 to … |
 | `stringLights.chaseSpeed` | number | 0 to … |
 
