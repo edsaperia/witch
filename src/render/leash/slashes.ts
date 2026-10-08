@@ -15,19 +15,24 @@ export const SLASH_W = 30, SLASH_H = 32;
 
 const hash = (a: number, b: number): number => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 
-/** The three slashes' pixels (the first, top one, longest), each a jagged stroke tapering to points at both ends. */
-export function slashPixels(): SlashPixel[][] {
+/** The slashes' canvas at a geometry scale `g` (1 the full drawing; under 1, drawn smaller for a far camera, still one pixel each). */
+export const slashSize = (g = 1): { w: number; h: number } => ({ w: Math.ceil(SLASH_W * g), h: Math.ceil(SLASH_H * g) });
+
+/** The three slashes' pixels (the first, top one, longest), each a jagged stroke tapering to points at both ends; `g` draws them
+ *  smaller (a far camera: her sprite under one screen pixel per art pixel), into slashSize(g). */
+export function slashPixels(g = 1): SlashPixel[][] {
   const dx = 0.76, dy = 0.65, nx = -0.65, ny = 0.76; // (along the stroke, down to the right; across it, down to the left)
+  const { w: CW, h: CH } = slashSize(g);
   // each below the last by `gap` across the strokes and a little further along (offset), shorter
-  const GAP = 6.8, STROKES = [{ len: 24, w: 2.3, on: 0 }, { len: 20.5, w: 2.1, on: 2.2 }, { len: 17, w: 1.9, on: 4.6 }].map((s, i) => ({ ...s, x: 9 + i * GAP * nx + s.on * dx, y: 2 + i * GAP * ny + s.on * dy }));
+  const GAP = 6.8 * g, STROKES = [{ len: 24, w: 2.3, on: 0 }, { len: 20.5, w: 2.1, on: 2.2 }, { len: 17, w: 1.9, on: 4.6 }].map((s, i) => ({ len: s.len * g, w: Math.max(0.75, s.w * g), x: (9 + s.on * dx) * g + i * GAP * nx, y: (2 + s.on * dy) * g + i * GAP * ny }));
   return STROKES.map((s, i) => {
     const out: SlashPixel[] = [];
-    for (let y = 0; y < SLASH_H; y++) for (let x = 0; x < SLASH_W; x++) {
+    for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) {
       const px = x + 0.5 - s.x, py = y + 0.5 - s.y, along = px * dx + py * dy, across = px * nx + py * ny, t = along / s.len;
       if (t < 0 || t > 1) continue;
       // tapering to points, torn along both edges (each edge its own rag, in whole steps)
-      const step = Math.floor(along / 1.4), side = across < 0 ? 1 : 2;
-      const rag = (hash(i * 7 + side, step) - 0.5) * 1.1 - (hash(i * 13 + side, step) > 0.8 ? 0.9 : 0); // (torn: uneven, with a nick here and there)
+      const step = Math.floor(along / Math.max(1, 1.4 * g)), side = across < 0 ? 1 : 2;
+      const rag = ((hash(i * 7 + side, step) - 0.5) * 1.1 - (hash(i * 13 + side, step) > 0.8 ? 0.9 : 0)) * Math.min(1, g); // (torn: uneven, with a nick here and there)
       const half = s.w * Math.pow(Math.sin(Math.PI * t), 0.7) + rag * Math.pow(Math.sin(Math.PI * t), 0.8);
       if (half <= 0.15 || Math.abs(across) > half) continue;
       const k = Math.abs(across) / half;
@@ -51,9 +56,9 @@ export function slashState(h: { hp: number; repairAt: number; hurtAt: number }, 
   return { count, cut, flash, drained };
 }
 
-/** Paints the slashes into RGBA (SLASH_W x SLASH_H) for a state: every slash up to `count`, the newest cut in to `cut` and
+/** Paints the slashes into RGBA (`w` pixels wide: SLASH_W, or slashSize(g).w for smaller ones) for a state: every slash up to `count`, the newest cut in to `cut` and
  *  drained from its upper tip by `drained`, flashing white-hot by `flash`. */
-export function paintSlashes(out: Uint8ClampedArray, st: { count: number; cut: number; flash: number; drained: number }, px = slashPixels()): void {
+export function paintSlashes(out: Uint8ClampedArray, st: { count: number; cut: number; flash: number; drained: number }, px = slashPixels(), w = SLASH_W): void {
   out.fill(0);
   for (let i = 0; i < st.count; i++) {
     const newest = i === st.count - 1;
@@ -63,7 +68,7 @@ export function paintSlashes(out: Uint8ClampedArray, st: { count: number; cut: n
       if (newest && st.flash > 0) { r += (255 - r) * st.flash; g += (255 - g) * st.flash * 0.9; b += (255 - b) * st.flash * 0.85; }
       // (the draining edge: the pixel at the front of the drain a tone cooler, so it reads as fading along its length)
       if (newest && st.drained > 0 && p.t < st.drained + 0.08) { r *= 0.7; g *= 0.6; b *= 0.6; }
-      const o = (p.y * SLASH_W + p.x) * 4; out[o] = r; out[o + 1] = g; out[o + 2] = b; out[o + 3] = 255;
+      const o = (p.y * w + p.x) * 4; out[o] = r; out[o + 1] = g; out[o + 2] = b; out[o + 3] = 255;
     }
   }
 }

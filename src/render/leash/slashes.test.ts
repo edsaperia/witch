@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SLASH_H, SLASH_W, paintSlashes, slashPixels, slashState } from "./slashes";
+import { SLASH_H, SLASH_W, paintSlashes, slashPixels, slashSize, slashState } from "./slashes";
 
 // Her health as claw slashes (Ed, 2026-10-08): one per hit, the newest cutting in and draining as it heals.
 const lit = (st: Parameters<typeof paintSlashes>[1]) => { const b = new Uint8ClampedArray(SLASH_W * SLASH_H * 4); paintSlashes(b, st); let n = 0; for (let i = 3; i < b.length; i += 4) if (b[i]) n++; return n; };
@@ -32,5 +32,13 @@ describe("the claw slashes", () => {
     expect(b.cut).toBe(1); expect(b.flash).toBe(0);
     expect(c.drained).toBeCloseTo(0.5, 2);
     expect(lit(d)).toBeLessThan(lit(c)); expect(lit(c)).toBeLessThan(lit(b));
+  });
+  it("draws smaller for a far camera, still three strokes inside its canvas, each a pixel per pixel", () => {
+    for (const g of [0.25, 0.5, 0.625]) {
+      const { w, h } = slashSize(g), px = slashPixels(g);
+      expect(px.length).toBe(3);
+      for (const s of px) { expect(s.length).toBeGreaterThan(2); for (const p of s) expect(p.x >= 0 && p.x < w && p.y >= 0 && p.y < h).toBe(true); }
+      expect(px[0].length).toBeLessThan(slashPixels()[0].length);
+    }
   });
 });
