@@ -30,6 +30,7 @@ import { styleFromLink, viewFromLink } from "./app/viewParams";
 import { setupActionBar, setupDebugKeys } from "./app/keys";
 import { ScreenShake } from "./app/shake";
 import { playerPick as makePlayerPick } from "./app/playerPick";
+import { wavePick as makeWavePick } from "./app/wavePick";
 import { installHooks } from "./app/hooks";
 import { PerfHud } from "./app/perfHud";
 import { installPixelUi } from "./ui/pixelUi";
@@ -213,29 +214,21 @@ input.onAny = start;
 sound.watch(() => !game.clock.paused && !freeze.frozen && !document.hidden, () => game.speakerBoot.some(t => t !== null), playtest);
 freeze.onToggle = on => sound.freeze(on);
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
-// The wave selector on the start screen: picking one doesn't start the game.
-const wavesEl = document.getElementById("waves")!;
-wavesEl.innerHTML = "waves every " + WAVE_CHOICES.map(s => `<button type="button" data-s="${s}">${s === 0 ? "off" : s < 60 ? s + " s" : s / 60 + " min"}</button>`).join("");
-wavesEl.addEventListener("pointerdown", e => {
-  e.stopPropagation();
-  const b = (e.target as HTMLElement).closest("button");
-  if (!b) return;
-  const sec = +b.dataset.s!;
-  setWaveInterval(sec);
-  try { localStorage.setItem("witch.wave", String(sec)); } catch { /* fine */ }
-});
+// The waves' pace: a "Waves:" dropdown under the dev "Player:" pick in the bedroom's top right (app/wavePick.ts; Ed,
+// 2026-10-08), never remembered; picking one doesn't start the game.
+if (params.get("creator") !== "0") makeWavePick(creator, WAVE_CHOICES, waveChoice, !!playerPick, setWaveInterval);
 setWaveInterval(waveChoice);
 // Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
 const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = shake.option;
 // No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to
 // the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
-// (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the waves and the screen shake). The card itself shows only for a
+// (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the screen shake; the waves' pace is the top right's dropdown). The card itself shows only for a
 // run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
 if (params.get("creator") !== "0" && !botKind) {
   const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
   if (keys) creator.addTab("controls", "❔ Controls", [keys]);
   if (news) creator.addTab("news", "📜 What's new", [news]);
-  creator.addTab("options", "⚙ Options", [wavesEl, ...(shakeEl ? [shakeEl] : [])]);
+  if (shakeEl) creator.addTab("options", "⚙ Options", [shakeEl]);
 } else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
