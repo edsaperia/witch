@@ -1,13 +1,9 @@
-// The soundsystems' laser shows (rules in rules/lasers.ts): thin beams fanned from each playing
-// soundsystem's top far up into the sky, sweeping to the beat, coming and going in bursts. Drawn
-// as 1 px additive lines (glow and bloom only: no light), fading along their length and with
-// distance from the witch, so many partified areas in view stay readable. A newly partified
-// area's first burst fires as it finishes rising: the reveal.
+// The dancefloor ring's lasers: one thin beam from the top of each speaker, sweeping to the beat. Drawn as 1 px additive
+// lines (glow and bloom only: no light), fading along their length. (The soundsystems' laser shows, their reveal and their
+// celebration were replaced by their sky sigils, render/hologram.ts: Ed, 2026-10-08.)
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import { beatClock, laserShow } from "../rules/lasers";
-import type { Playing } from "./party";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 const VERT = /* glsl */ `
@@ -46,8 +42,8 @@ export class Lasers {
     scene.add(this.mesh);
   }
 
-  update(time: number, playing: Playing[], wx: number, wz: number, ring: RingSpeaker[] = [], centre = { x: 0, z: 0 }): void {
-    const t = this.game.tuning, L = t.lasers, { bar } = beatClock(t), blockLen = bar * L.blockBars;
+  update(time: number, _wx: number, _wz: number, ring: RingSpeaker[] = [], centre = { x: 0, z: 0 }): void {
+    const t = this.game.tuning, L = t.lasers;
     const verts: number[] = [], cols: number[] = [], us: number[] = [];
     // The dancefloor's ring (Ed, 2026-10-04): one laser from the top of each speaker, mostly
     // upwards, sweeping slowly on the beat, neighbours out of phase, so the ring wears a crown of
@@ -64,27 +60,6 @@ export class Lasers {
       cols.push(...c, alpha, ...c, alpha);
       us.push(0, 1);
     });
-    if (L.on) for (const s of playing) {
-      const fade = 1 - Math.min(1, Math.max(0, (Math.hypot(s.x - wx, s.z - wz) - L.fadeNear) / Math.max(1, L.fadeFar - L.fadeNear)));
-      if (fade <= 0) continue;
-      const show = laserShow(bt, s.seed, 1, t), since = time - s.ready;
-      // The reveal: a newly partified area's lasers come on as its soundsystem finishes rising.
-      const reveal = since >= 0 && since < blockLen ? Math.min(1, since / L.fadeIn) * Math.min(1, (blockLen - since) / L.fadeOut) : 0;
-      // Full party (a wave celebrated it: Ed, 2026-10-07): fully on for good, every beam, eased in as the fireworks start.
-      const full = s.full !== undefined && time >= s.full ? Math.min(1, (time - s.full) / Math.max(0.5, L.fadeIn * 8)) : 0;
-      const on = Math.max(show.on, reveal, full), n = full > 0 || reveal > show.on ? L.maxCount : show.count;
-      if (on <= 0.01) continue;
-      const spread = (L.spread * Math.PI / 180) * show.open;
-      for (let i = 0; i < n; i++) {
-        // Up into the sky, never along the ground: within maxTilt of straight up.
-        const k = n === 1 ? 0 : i / (n - 1) - 0.5, lim = (L.maxTilt * Math.PI) / 180, a = Math.max(-lim, Math.min(lim, k * spread + show.sweep));
-        const dx = Math.sin(a), dy = Math.cos(a), dz = -0.15 * Math.cos(a * 3 + s.seed);
-        const c = ramp(show.hue + i * 0.07), alpha = L.opacity * on * fade;
-        verts.push(s.x, s.y, s.z, s.x + dx * L.length, s.y + dy * L.length, s.z + dz * L.length);
-        cols.push(...c, alpha, ...c, alpha);
-        us.push(0, 1);
-      }
-    }
     if (verts.length > this.pos.length) { this.pos = new Float32Array(verts.length * 2); this.col = new Float32Array(cols.length * 2); this.u = new Float32Array(us.length * 2);
       this.geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
       this.geo.setAttribute("aCol", new THREE.BufferAttribute(this.col, 4).setUsage(THREE.DynamicDrawUsage));
