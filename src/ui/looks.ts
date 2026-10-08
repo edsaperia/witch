@@ -58,12 +58,12 @@ export const LOOKS: { id: string; name: string; note: string; patch: (g: Genome)
   } },
   { id: "forest", name: "🌿 Forest witch", note: "a floppy hat, a long cloak, a twig broom", patch: g => {
     g.hat = { ...g.hat, shape: "floppy", height: 1.1, brim: 1.4 }; g.cloak = "long"; g.cloakLength = 1.6; g.top = "poncho"; g.hair = "long"; g.broom = { ...g.broom, kind: "twig", length: 1.15, bristles: 1.3 };
-    Object.assign(g.accessories, { phones: false, satchel: true, pendant: true, familiar: "toad" });
+    Object.assign(g.accessories, { phones: false, satchel: true, pendant: true });
     g.palette = { hat: [.3, .55, .32], cloak: [.33, .5, .4], jacket: [.12, .6, .75], top: [.15, .12, .92], jeans: [.08, .45, .4], sneakers: [.07, .5, .5], hair: [.04, .7, .5], satchel: [.07, .55, .45] };
   } },
   { id: "owl", name: "🦉 Night owl", note: "a hood, a crow, deep purples", patch: g => {
     g.hat = { ...g.hat, shape: "crooked", height: 1.5 }; g.cloak = "hooded"; g.cloakLength = 1.8; g.hair = "bob"; g.broom = { ...g.broom, kind: "round" };
-    Object.assign(g.accessories, { phones: false, scarf: true, pendant: true, familiar: "crow" });
+    Object.assign(g.accessories, { phones: false, scarf: true, pendant: true });
     g.palette = { hat: [.75, .6, .3], cloak: [.72, .55, .32], jacket: [.68, .5, .55], top: [.7, .1, .85], jeans: [.7, .35, .3], sneakers: [.75, .3, .4], hair: [.6, .04, .86], scarf: [.9, .55, .85] };
   } },
   { id: "disco", name: "💃 Disco", note: "sequins, a top hat, gold and pink", patch: g => {
@@ -72,7 +72,7 @@ export const LOOKS: { id: string; name: string; note: string; patch: (g: Genome)
   } },
   { id: "cowgirl", name: "🤠 Rodeo", note: "a cowboy hat, a poncho, a fan broom", patch: g => {
     g.hat = { ...g.hat, shape: "cowboy", brim: 1.3 }; g.top = "poncho"; g.hair = "bob"; g.broom = { ...g.broom, kind: "fan" };
-    Object.assign(g.accessories, { phones: false, scarf: true, satchel: true, familiar: "cat" }); g.scarfLength = 1.4;
+    Object.assign(g.accessories, { phones: false, scarf: true, satchel: true }); g.scarfLength = 1.4;
     g.palette = { hat: [.07, .55, .4], jacket: [.02, .65, .78], top: [.12, .15, .95], jeans: [.6, .45, .5], sneakers: [.07, .55, .5], hair: [.11, .45, .88], scarf: [.0, .7, .8] };
   } },
   { id: "dj", name: "🎧 DJ", note: "big headphones, a cap of a beanie, a backpack", patch: g => {

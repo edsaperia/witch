@@ -871,9 +871,9 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   }
   ok(!bad.length, `witch generator: her genome draws her exactly; 20 generated witches within limits, drawn in flight and on foot, anchors inside, hatband glowing, 0.7 to 1.7 times her height (no hat to a wizard's), none alike${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
   // Ed (138-140): bigger brims, longer cloaks, accessories witchy and modern, and the party witches generated
-  const acc = {}, fam = new Set(); let bigBrim = 0, longCloak = 0;
-  for (let seed = 0; seed < 60; seed++) { const g = Gn.witchGenome(seed); if (g.hat.brim > 1.5) bigBrim++; if (g.cloakLength > 1.4) longCloak++; for (const [k, v] of Object.entries(g.accessories)) if (v && v !== "none") acc[k] = (acc[k] || 0) + 1; fam.add(g.accessories.familiar); }
-  const want = ["familiar", "lantern", "vial", "book", "patches", "bumbag", "wristband", "chunky", "shades", "glowsticks", "phones"], missing = want.filter(k => !acc[k]), famMissing = Gn.WITCH_AXES.familiar.filter(f => !fam.has(f));
+  const acc = {}; let bigBrim = 0, longCloak = 0;
+  for (let seed = 0; seed < 60; seed++) { const g = Gn.witchGenome(seed); if (g.hat.brim > 1.5) bigBrim++; if (g.cloakLength > 1.4) longCloak++; for (const [k, v] of Object.entries(g.accessories)) if (v && v !== "none") acc[k] = (acc[k] || 0) + 1; }
+  const want = ["lantern", "vial", "book", "patches", "bumbag", "wristband", "chunky", "shades", "glowsticks", "phones"], missing = want.filter(k => !acc[k]);
   const pbad = [];
   for (let seed = 0; seed < 12; seed++) {
     const pw = W.partyWitch(seed); if (!pw.genome || Gn.witchGenomeProblems(pw.genome).length) pbad.push(`party witch ${seed} not a generated witch`);
@@ -885,7 +885,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     const sp = W.witchSprite(st, { ...o, look }), a = sp.anchors || {}, inside = q => q && q[0] >= 0 && q[1] >= 0 && q[0] < sp.w && q[1] < sp.h;
     if (sp.m.filter(Boolean).length < 200 || !inside(a.hatTip) || (hat !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.MAGIC2 || v === M.COLLAR))) pbad.push(`hat ${hat} ${JSON.stringify(ex)} ${o.pose || "hover"}`);
   }
-  ok(!missing.length && !famMissing.length && bigBrim >= 12 && longCloak >= 12 && !pbad.length, `witch variety (Ed): over 60 generated witches every accessory shows (${want.join(", ")}) and every familiar (${Gn.WITCH_AXES.familiar.slice(1).join(", ")}); ${bigBrim} brims over 1.5 times hers, ${longCloak} cloaks over 1.4 times; 12 party witches are generated witches, drawn in every party pose with their hand inside; every hat (${Gn.WITCH_AXES.hatShape.length}) draws flying and on foot at the sliders' ends, its tip inside, glowing but none, with the longest scarf, cloak, biggest bag and backpack${missing.length || famMissing.length || pbad.length ? " — " + [...missing.map(k => "no " + k), ...famMissing.map(k => "no " + k), ...pbad.slice(0, 4)].join("; ") : ""}`);
+  ok(!missing.length && !("familiar" in Gn.WITCH_GENOME.accessories) && !Gn.WITCH_AXES.familiar && bigBrim >= 12 && longCloak >= 12 && !pbad.length, `witch variety (Ed): over 60 generated witches every accessory shows (${want.join(", ")}) and none has a familiar (Ed, 2026-10-08); ${bigBrim} brims over 1.5 times hers, ${longCloak} cloaks over 1.4 times; 12 party witches are generated witches, drawn in every party pose with their hand inside; every hat (${Gn.WITCH_AXES.hatShape.length}) draws flying and on foot at the sliders' ends, its tip inside, glowing but none, with the longest scarf, cloak, biggest bag and backpack${missing.length || pbad.length ? " — " + [...missing.map(k => "no " + k), ...pbad.slice(0, 4)].join("; ") : ""}`);
   // Ed (2026-10-06): every broom kind (art/brooms.js) draws in every flight pose and frame, both facings, and on foot (standing, landing,
   // taking off), nothing NaN, her hand and hat tip inside; only her own colours (every material one witchColours paints), something
   // of the broom's own (its body or trim) showing; about her size: hovering 0.85 to 1.6 times as tall as on hers and no more than

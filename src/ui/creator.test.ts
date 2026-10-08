@@ -45,6 +45,15 @@ describe("the character creator", () => {
     expect(applies("broomBend", { ...look, broom: "canoe" })).toBe(false);
     expect(applies("broomThickness", { ...look, broom: "canoe" })).toBe(true);
   });
+  it("loads a save with a familiar (before 2026-10-08, Ed: \"Remove familiars\") without it or its colours, still a witch", () => {
+    const old = { ...JSON.parse(JSON.stringify(Art.WITCH_GENOME)), accessories: { ...(Art.WITCH_GENOME as { accessories: object }).accessories, familiar: "cat" }, palette: { hat: [0.7, 0.4, 0.4], familiar: [0.7, 0.15, 0.14], familiar2: [0.12, 0.5, 0.9] } };
+    const g = upgrade(old);
+    expect("familiar" in g.accessories).toBe(false);
+    expect(g.palette).toEqual({ hat: [0.7, 0.4, 0.4] });
+    expect((Art.witchGenomeProblems as (g: unknown) => string[])(g)).toEqual([]);
+    expect("familiar" in (Art.WITCH_AXES as object)).toBe(false);
+    for (let seed = 0; seed < 40; seed++) expect("familiar" in (Art.witchGenome as (s: number) => { accessories: object })(seed).accessories, `seed ${seed}`).toBe(false);
+  });
   it("keeps the broom's thickness in her save, and an old save's broom as thick as hers", () => {
     const g = upgrade({ broom: { kind: "drone", length: 1.2, bend: 0, bristles: 1 } });
     expect(g.broom.thickness).toBe(1);
