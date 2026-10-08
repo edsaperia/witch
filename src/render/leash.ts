@@ -100,7 +100,6 @@ export class LeashView {
   /** her hits as claw slashes (leash/bubbles.ts drawSlashes): the canvas, what it last drew, the slashes' pixels */
   slashCanvas: HTMLCanvasElement | null = null;
   slashKey = "";
-  slashScale = 0;
   slashGeo = 0;
   slashPx: SlashPixel[][] | null = null;
   /** the height of her body's middle this frame (the slashes go over it) */
