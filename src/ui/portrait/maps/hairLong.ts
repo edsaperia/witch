@@ -11,7 +11,7 @@ import { OUTLINE, rows, type PixMap } from "./pixmap";
 
 export const HAIR_LEGEND = {
   o: [MAT.HAIR, OUTLINE], d: [MAT.HAIR, DEEP], D: [MAT.HAIR, SHADE], H: [MAT.HAIR, BASE], h: [MAT.HAIR, LIGHT],
-  "+": [MAT.WHITE, BASE], k: [MAT.SKIN, SHADE],
+  "+": [MAT.WHITE, BASE], S: [MAT.SKIN, BASE], s: [MAT.SKIN, LIGHT], k: [MAT.SKIN, SHADE], K: [MAT.SKIN, OUTLINE],
 } as const;
 
 /** Behind her head: the hair's top under the brim and the back hair behind her jaw and neck. */

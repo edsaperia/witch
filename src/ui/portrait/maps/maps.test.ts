@@ -3,6 +3,8 @@ import { ROBE_JACKET, HAND_HAT_TIP, handHatTip } from "./body";
 import { HAIR_LONG_BACK, HAIR_LONG_CROWN, HAIR_LONG_FRONT, HAIR_LONG_HAT_SHADOW } from "./hairLong";
 import { HAT_CLASSIC, classicHat } from "./hatClassic";
 import { POINTED_HATS } from "./hatsPointed";
+import { HAIR_MAPS } from "./hairStyles";
+import * as Gen from "../../../../art/witchGenome.js";
 import { missingLetters, type PixMap } from "./pixmap";
 
 // Art builder 1's round-2 maps (docs/PORTRAIT-STYLE.md): well-formed, the sliders always changing something, few orphans.
@@ -60,5 +62,17 @@ describe("the portrait's round-2 maps (art builder 1)", () => {
       for (const axis of ["hatHeight", "hatBrim", "hatTilt"] as const) expect(key(f({ ...D, [axis]: D[axis] + 0.6 })), `${name} ${axis}`).not.toBe(key(m));
     }
     expect(seen.size).toBe(Object.keys(POINTED_HATS).length);
+  });
+  it("draws every hair style the creator has, in four layers, each well formed with no lone pixels", () => {
+    for (const hair of (Gen.WITCH_AXES as unknown as { hair: string[] }).hair) {
+      const h = HAIR_MAPS[hair]; expect(h, hair).toBeDefined();
+      for (const [layer, m] of Object.entries(h) as [string, PixMap][]) {
+        expect(missingLetters(m), `${hair} ${layer}`).toEqual([]);
+        expect(new Set(m.rows.map((r: string) => r.length)).size, `${hair} ${layer}`).toBe(1);
+        expect(orphans(m, layer === "front" ? "+k" : "+"), `${hair} ${layer}`).toBe(0);
+      }
+    }
+    const fronts = Object.values(HAIR_MAPS).map(h => key(h.front));
+    expect(new Set(fronts).size).toBe(fronts.length);
   });
 });
