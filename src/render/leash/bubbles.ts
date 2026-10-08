@@ -1,5 +1,6 @@
 // What the leash view projects over the canvas as HTML (render/leash.ts): the talk's emoji bubbles, the dreams' thought
-// bubbles and their pointers, the 😴s when the party's over, a legend's circle panel, and the health pips.
+// bubbles and their pointers, the 😴s when the party's over, a legend's circle panel, and her health as claw slashes.
+import { SLASH_H, SLASH_W, paintSlashes, slashPixels, slashSize, slashState } from "./slashes";
 import { dreamStone, dreamWay, questOpen, restlessness } from "../../rules/dream";
 import { compassArrow } from "../compass";
 import * as THREE from "three";
@@ -151,24 +152,41 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
   for (let i = used; i < lv.wayEls.length; i++) lv.wayEls[i].style.display = "none";
 }
 
-/** Her hits, as pips under her feet, only once she's been hit: the next to come back fills as it repairs. */
-export function drawPips(lv: LeashView, time: number, camera: THREE.Camera, width: number, height: number): void {
-  const g = lv.game, W = g.witches[0], H = W.health, max = g.tuning.witchHealth.hits;
-  if (!lv.pips) {
-    lv.pips = document.createElement("div");
-    Object.assign(lv.pips.style, { position: "fixed", transform: "translate(-50%, 8px)", display: "none", gap: "3px", pointerEvents: "none", zIndex: "2" });
-    document.body.append(lv.pips);
+/** Her hits, as claw slashes over her body (leash/slashes.ts), screen-aligned: one per hit taken, the newest slashing in
+ *  with a flash and draining from its upper tip as its hit heals; none while she's whole or knocked out. */
+export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, width: number, height: number): void {
+  const g = lv.game, W = g.witches[0], T = g.tuning.witchHealth, px = g.tuning.pixelSize; // (px: her art pixel on screen if her frame's unknown)
+  let cv = lv.slashCanvas;
+  if (!cv) {
+    cv = document.createElement("canvas"); cv.width = SLASH_W; cv.height = SLASH_H; cv.className = "claw-slashes";
+    Object.assign(cv.style, {
+      position: "fixed", width: `${SLASH_W * px}px`, height: `${SLASH_H * px}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none",
+      mixBlendMode: "screen", filter: "drop-shadow(0 0 2px rgba(255,48,40,.95)) drop-shadow(0 0 7px rgba(255,24,24,.7))", // (its red added to the scene, glowing)
+    });
+    document.body.append(cv); lv.slashCanvas = cv;
   }
-  const el = lv.pips;
-  if (H.hp >= max || W.ko) { el.style.display = "none"; return; }
-  el.style.display = "flex";
-  while (el.children.length < max) { const p = document.createElement("div"); Object.assign(p.style, { width: "10px", height: "10px", border: "1px solid rgba(255,140,170,.9)", borderRadius: "50%", overflow: "hidden", position: "relative", background: "rgba(14,11,28,.6)" }); p.innerHTML = '<div style="position:absolute;left:0;right:0;bottom:0;background:#ff5d8f"></div>'; el.append(p); }
-  const fill = H.repairAt === Infinity ? 0 : 1 - Math.max(0, H.repairAt - time) / g.tuning.witchHealth.repairTime;
-  [...el.children].forEach((p, i) => { (p.firstChild as HTMLElement).style.height = `${i < H.hp ? 100 : i === H.hp ? fill * 100 : 0}%`; (p as HTMLElement).style.opacity = i === H.hp ? "0.85" : "1"; });
+  const st = slashState(W.health, T.hits, T.repairTime, time);
+  if (!st.count || W.ko?.out) { cv.style.display = "none"; return; } // (the third, the knockdown, shows as she goes down, until she sparkles out)
   const w = g.witch;
-  placed(lv.v.set(w.x, 0, w.z)).project(camera); // under her feet (the stack is over her hat)
-  el.style.left = `${((lv.v.x + 1) / 2) * width}px`;
-  el.style.top = `${((1 - lv.v.y) / 2) * height}px`;
+  // (sized to her, Ed 2026-10-08: "slashes: scale with her": a slash pixel is one of her art pixels as drawn on screen, her
+  // frame's height on screen over its height in art pixels, so they sit over her body in the same proportion at every camera;
+  // whole screen pixels per slash pixel while she's drawn that big, else drawn smaller at one screen pixel each, crisp either way)
+  placed(lv.v.set(w.x, lv.feetY, w.z)).project(camera); const feet = lv.v.y;
+  placed(lv.v.set(w.x, lv.hatTop, w.z)).project(camera); const top = lv.v.y;
+  const herPx = lv.frameH > 0 ? (Math.abs(top - feet) / 2) * height / lv.frameH : px;
+  const s = Math.max(1, Math.round(herPx)), geo = herPx < 0.75 ? Math.max(0.25, Math.round(herPx * 8) / 8) : 1, { w: cw, h: ch } = slashSize(geo); // (geometry in steps, so it isn't redrawn every frame)
+  if (geo !== lv.slashGeo) { lv.slashGeo = geo; lv.slashPx = slashPixels(geo); lv.slashKey = ""; cv.width = cw; cv.height = ch; }
+  if (s !== lv.slashScale || lv.slashKey === "") { lv.slashScale = s; cv.style.width = `${cw * s}px`; cv.style.height = `${ch * s}px`; }
+  const key = `${st.count}:${Math.round(st.cut * 24)}:${Math.round(st.flash * 6)}:${Math.round(st.drained * 30)}`;
+  if (key !== lv.slashKey) {
+    lv.slashKey = key;
+    const ctx = cv.getContext("2d");
+    if (ctx) { const im = ctx.createImageData(cw, ch); paintSlashes(im.data, st, (lv.slashPx ??= slashPixels(geo)), cw); ctx.putImageData(im, 0, 0); }
+  }
+  placed(lv.v.set(w.x, lv.bodyY, w.z)).project(camera); // (over her body, wherever she flies)
+  cv.style.display = lv.v.z > 1 ? "none" : "";
+  cv.style.left = `${Math.round(((lv.v.x + 1) / 2) * width - (cw * s) / 2)}px`;
+  cv.style.top = `${Math.round(((1 - lv.v.y) / 2) * height - (ch * s) / 2)}px`;
 }
 
 export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
