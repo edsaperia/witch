@@ -178,3 +178,10 @@ Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, s
 
 - **Core-design check**: all pass, no errors: off the decks 8 s after the cast; the boot 30.0 s (11.0 → 41.0); 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); 840 creatures, no new id.
 - **Journey**: every moment reached, no errors, `dropped` 0, 840 creatures throughout: first speaker at 11.7 s, the boot caught at 7 of 12, draw calls over the treetops 102 (from 100), stargazing at the beach, the party's over.
+
+## Night: 03ef258c (#570), 21:54–22:24
+
+12 merges since ac389d22 (#560, #566, #565, #564, #563, #567, #569, #572, #568, #573, #571, #570; plus #562, this log). Tests (964), typecheck, build green.
+
+- **Core-design check**: all pass, no errors: off the decks 8.5 s after the cast; the boot 30.0 s (11.5 → 41.5); 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); 840 creatures, no new id. #565 (an early clear no longer moves the ley pulse on) leaves all of this as it was.
+- **Journey**: every moment reached, no errors, `dropped` 0, 840 creatures throughout: first speaker at 12 s, the boot caught at 7 of 12, draw calls over the treetops 101, stargazing at the beach, the party's over. Not exercised: #570 (four hits to knock her out: the journey takes none), #573 (hunters come from anywhere in their area).
