@@ -4,6 +4,7 @@ import { generateMap } from "./map";
 import { lanchester, levelValue, powerReport } from "./power";
 import { newGame } from "./game";
 import { TUNING, withTuning } from "./tuning";
+import { homeHealth } from "./speakers";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 describe("fighting value (rules/power.ts)", () => {
@@ -24,7 +25,7 @@ describe("fighting value (rules/power.ts)", () => {
     expect(p.leashed).toBeCloseTo(levelValue(1), 9);
     expect(p.parked).toBe(0);
     expect(p.counts).toEqual([0, 1, 0, 0]);
-    expect(p.sieges).toEqual([{ key: "home", value: levelValue(2), count: 1, hp: TUNING.combat.homeHealth }]);
+    expect(p.sieges).toEqual([{ key: "home", value: levelValue(2), count: 1, hp: homeHealth(TUNING) }]);
     expect(p.marching).toBeCloseTo(levelValue(2), 9);
   }, 30000);
 });

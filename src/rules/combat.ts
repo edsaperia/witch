@@ -12,6 +12,7 @@ import { enrage, foes, huntsWitch, stateOf } from "./creatureStates";
 import { LEGENDS } from "./legends";
 import { FIGHT, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap } from "./movement";
 import { type Tuning } from "./tuning";
+import { isHomeKey } from "./speakers";
 import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attackOf, attackNamed, type CombatWorld } from "./combat/data";
 import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
@@ -163,6 +164,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       else if (!f.target && c.siege && !c.leashed) {
         // An angry area's creatures (its quest undone, Ed 2026-10-04) go for the nearest party animal or
         // soundsystem; a legend keeps to its own area's soundsystem.
+        if (isHomeKey(c.siege)) c.siege = nearestHomeSpeaker(s, c.x, c.z) ?? c.siege; // (home: the nearest of its speakers still standing)
         f.target = { kind: "sound", key: c.siege };
         if (!c.boss) {
           const sk = nearestSound(s, c.x, c.z), sh = sk ? s.sounds.get(sk)! : null, sd = sh ? Math.hypot(sh.x - c.x, sh.z - c.z) : Infinity;
@@ -369,6 +371,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
     }
   }
+}
+
+/** The nearest of home's speakers still standing (rules/speakers.ts), or null when none is. */
+export function nearestHomeSpeaker(s: CombatState, x: number, z: number): string | null {
+  let best: string | null = null, bd = Infinity;
+  for (const [key, h] of s.sounds) { if (h.hp <= 0 || !isHomeKey(key)) continue; const d = Math.hypot(h.x - x, h.z - z); if (d < bd) { bd = d; best = key; } }
+  return best;
 }
 
 /** A soundsystem rises (a wave woke its area): its health, and the wild creatures of the area march on it. */
