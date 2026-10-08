@@ -1827,6 +1827,23 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `holograms`
+
+The soundsystems' sky sigils (Ed, 2026-10-08: "soundsystems should project their animal sigil into the sky once they're activated, readable from the treetops but in a different character to how the leashing sigils look from treetop; maybe a hologram or peppers ghost or something, replacing the laser we have now"; render/hologram.ts): each standing soundsystem's projector throws a translucent cone of light from the top of its stack to a hologram of its area's animal sigil over the canopy, in the area's crystal colour, with scanlines, a drifting interference band and a colour fringe, turning gently and bobbing. size: the glyph (m across); lift: how high its middle floats over the projector (m); glyph, cone: how bright (added light); powerUp: the flicker as it comes on when the soundsystem has risen (s); collapse: how long it takes to fold to a line and go out when the soundsystem is destroyed (s); turn: how far it turns either way (degrees); bob: how far it bobs (m); fadeFar: it fades out towards this many metres from her. Damaged, it glitches (more the more damaged).
+
+| knob | type | range |
+|---|---|---|
+| `holograms.on` | boolean |  |
+| `holograms.size` | number | 0 to … |
+| `holograms.lift` | number | 0 to … |
+| `holograms.glyph` | number | 0 to … |
+| `holograms.cone` | number | 0 to … |
+| `holograms.powerUp` | number | 0 to … |
+| `holograms.collapse` | number | 0 to … |
+| `holograms.turn` | number | 0 to … |
+| `holograms.bob` | number | 0 to … |
+| `holograms.fadeFar` | number | 0 to … |
+
 ### `watching`
 
 The trees watching her (Ed, 2026-10-07, making the wild forest eerier: "canopy tips within a few metres of her sway a beat late and slightly TOWARDS her, as if the trees lean in to watch"; render/sprites.ts uWatch): a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius. A shader nudge, nothing new drawn; keep it small.

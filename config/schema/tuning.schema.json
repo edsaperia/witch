@@ -8356,6 +8356,63 @@
       ],
       "additionalProperties": false
     },
+    "holograms": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "glyph": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "powerUp": {
+          "type": "number",
+          "minimum": 0
+        },
+        "collapse": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turn": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bob": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fadeFar": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "size",
+        "lift",
+        "glyph",
+        "cone",
+        "powerUp",
+        "collapse",
+        "turn",
+        "bob",
+        "fadeFar"
+      ],
+      "additionalProperties": false
+    },
     "watching": {
       "type": "object",
       "properties": {
@@ -8709,6 +8766,7 @@
     "haze",
     "shadows",
     "mist",
+    "holograms",
     "watching",
     "moonbeams",
     "looks",
