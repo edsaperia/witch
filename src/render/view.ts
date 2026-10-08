@@ -59,6 +59,7 @@ import { hasRune } from "../rules/creatureStates";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
+import { coverOf, MIST_PARTS, MistCanopy } from "./mistCanopy";
 import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
@@ -261,6 +262,9 @@ export class View {
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
   mist: Mist | null = null;
+  /** Mist banks over the open areas (render/mistCanopy.ts), and a place in each area type its cover is measured at. */
+  mistCanopy: MistCanopy | null = null;
+  private typeSites = new Map<number, { x: number; z: number }>();
   /** Where she was a beat ago, for the trees watching her (render/view/frameUniforms.ts). */
   watch = { x: NaN, z: NaN, t: 0 };
   width = 1;
@@ -345,6 +349,14 @@ export class View {
     if (t.mist.on && t.mist.strength > 0) {
       this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer is half the scene's size: post.ts)
       this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
+    }
+    if (t.mistCanopy?.on) {
+      const A = this.ground.areaUniforms;
+      this.mistCanopy = new MistCanopy(t.mistCanopy, A.uAreas, A.uExtent, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer's size: post.ts)
+      (this.post.fxScene ??= new THREE.Scene()).add(...this.mistCanopy.meshes);
+      this.mistCanopy.setCover(HOME_LOOK, null); // (none over the dancefloor)
+      const m = game.map;
+      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) { const ty = m.typeOf(x, y); if (!this.typeSites.has(ty) && (x !== m.centreCell[0] || y !== m.centreCell[1])) this.typeSites.set(ty, m.siteOf(x, y)); }
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
     LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
@@ -639,6 +651,36 @@ export class View {
   }
 
   /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
+  /** The mist at canopy height (render/mistCanopy.ts): one area type's cover measured a frame, as its art arrives (its trees
+   *  in small circles across one of its areas, off the clearing, times their average crown); then it follows the view, rises with her and
+   *  parts round her and the soundsystems under attack, and the open areas' clumps stand on the forest's big objects. */
+  private mistAction: { x: number; z: number }[] = [];
+  private updateMistCanopy(x: number, z: number): void {
+    const M = this.mistCanopy!, g = this.game, w = g.witch;
+    for (const [type, site] of this.typeSites) {
+      if (!M.needs(type)) continue;
+      const art = this.assets.typeArt(type);
+      if (!art) continue;
+      // Small circles in rings round the area's centre, off its clearing, kept to those inside the area.
+      const r = 12, m = g.map;
+      let own = 0, n = 0;
+      for (const d of [45, 70, 95]) for (let k = 0; k < 8; k++) {
+        const a = (k + d / 50) * (Math.PI / 4), px = site.x + Math.cos(a) * d, pz = site.z + Math.sin(a) * d;
+        const at = m.areaAt(px, pz);
+        if (at.type !== type || at.openness < 0.25) continue;
+        n++;
+        const trees = g.forest.treesNear(px, pz, r);
+        for (let i = 0; i < trees.length; i++) if (trees[i].type === type && Math.hypot(trees[i].x - px, trees[i].z - pz) <= r) own++;
+      }
+      M.setCover(type, n ? coverOf(art, this.mpp, own, n * Math.PI * r * r) : null);
+      break; // (one a frame)
+    }
+    const A = this.mistAction;
+    A.length = 0;
+    for (const a of this.alarms.byKey.values()) if (a.fellAt === null && A.length < MIST_PARTS - 1) A.push(a);
+    M.update(x, z, canopyShown(w), g.tuning.wind.on ? g.tuning.wind.speed : 0, w, A, (bx, bz, r) => g.forest.treesNear(bx, bz, r));
+  }
+
   private updateSmoke(g: Game, time: number): void {
     const S = this.smoke, t = g.tuning, w = g.witch, R = t.smoke.range;
     S.begin();
@@ -870,6 +912,7 @@ export class View {
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
+    if (this.mistCanopy) this.updateMistCanopy(pose.tx, pose.tz);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.time("witch");
     refresh(this);

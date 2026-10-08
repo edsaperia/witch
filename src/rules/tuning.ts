@@ -310,6 +310,8 @@ export interface Tuning {
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
+  /** Mist banks over the open areas (render/mistCanopy.ts; Ed, 2026-10-07). */
+  mistCanopy?: { on: boolean; cover: number; density: number; ground: number; low: number; high: number; part: number; partAction: number; clumps: number; clumpSize: number; patches: number; patchSize: number; drift: number; reach: number };
   /** The trees watching her (render/sprites.ts uWatch; Ed, 2026-10-07). */
   watching?: { on: boolean; radius: number; lean: number; lag: number };
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */

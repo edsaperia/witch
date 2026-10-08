@@ -8356,6 +8356,83 @@
       ],
       "additionalProperties": false
     },
+    "mistCanopy": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "cover": {
+          "type": "number",
+          "minimum": 0
+        },
+        "density": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ground": {
+          "type": "number",
+          "minimum": 0
+        },
+        "low": {
+          "type": "number",
+          "minimum": 0
+        },
+        "high": {
+          "type": "number",
+          "minimum": 0
+        },
+        "part": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partAction": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clumps": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clumpSize": {
+          "type": "number",
+          "minimum": 0
+        },
+        "patches": {
+          "type": "number",
+          "minimum": 0
+        },
+        "patchSize": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "cover",
+        "density",
+        "ground",
+        "low",
+        "high",
+        "part",
+        "partAction",
+        "clumps",
+        "clumpSize",
+        "patches",
+        "patchSize",
+        "drift",
+        "reach"
+      ],
+      "additionalProperties": false
+    },
     "watching": {
       "type": "object",
       "properties": {
@@ -8709,6 +8786,7 @@
     "haze",
     "shadows",
     "mist",
+    "mistCanopy",
     "watching",
     "moonbeams",
     "looks",
