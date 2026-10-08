@@ -13,16 +13,16 @@ export const HAIR_BOB_BACK: PixMap = {
 oHHH..............................................HHHo
 ......................................................
 ......................................................
-......................................................
-......................................................
-......................................................
-......................................................
-......................................................
-......................................................
-......................................................
-......................................................
-......................................................
-......................................................
+......sssssssSSSSSSSSSSSSS..SSSSSSSSSSSSSSkkkkkk......
+......sssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkkk......
+......sssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkkk......
+......sssssssSSSS.SSSSSS......SSSSSS.SSSSSkkkkkk......
+......ss.ssssSSSS..SSSSS......SSSSS..SSSSSkkk.kk......
+......ss.ssssSSS...SSSSS......SSSSS...SSSSkkk.kk......
+......ss..sssSSS....SSS........SSS....SSSSkk..kk......
+......s....ssSS.....SSS........SSS.....SSSk....k......
+......s....ssSS......S..........S......SSSk....k......
+............sS..........................SS............
 ......................................................
 ......................................................
 ......................................................
@@ -47,7 +47,7 @@ oHHH..............................................HHHo
 .....dDDDDD................................DDDDdD.....
 .....DDDDDDd..............................DDDDdDD.....
 .....DDDDDDdD............................DDDDDdDD.....
-.....oDDDDDdDD..........................DDDDDDdDo.....
+.....DDDDDDdDD..........................DDDDDDdDD.....
 .....oDDDDdDDDDD......................dDDDDDDdDDo.....
 .....oDDDDdDDDDDDd..................DDdDDDDDDdDDo.....
 .....oDDDDdDDDDDDdDD..............DDDDdDDDDDDdDDo.....
@@ -65,52 +65,52 @@ oHHH..............................................HHHo
 
 /** bob: front. */
 export const HAIR_BOB_FRONT: PixMap = {
-  anchor: [29, 21],
+  anchor: [31, 21],
   legend: HAIR_LEGEND,
   rows: rows(String.raw`
-......HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH......
-.ohHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDHo.
-.ohHHHhhHHHHHdhHHHHHdhHHHHHdhHHHHHdhHHHHHdhhHHHHHDDdDDDHo.
-.ohHHHhhHHHHHdhHHHHHdhHHHHHdhHHHHHdhhHHHHdhhHHHHHDDdDDDHo.
-.ohHHHhhHHHHHdhHHHHHdhHHHHHdhHHHHHdhhHHHHDdhHHHHHDDdDDDHo.
-.ohHHHhhHHHHDdhHHHHHdhhHHHDdhhHHHHdhhHHHHDdhhHHHHDDdDDDHo.
-.ohHHHhhHHHHDdhHHHHHdhhHHHDdhhHHHHDdhHHHHDDkhHHHHDDdDDDHo.
-.ohHHHDhHHHHDdhHHHHDdHHHHHDdhhHHHHDdhhHHHDD.HHHHDDddDDDHo.
-.ohHHHDHHHHDDkhhHHHDDkHHHDDkkhHHHHDDkHHHDDD.kHHHDDddDDDHo.
-.ohHHHDHHHDDD.hhHHHDD.HHHDD..HHHHHDk.HHHDDk..kHHDDddDDDHo.
-.ohHHHDHHHDDk.HHHHHDk.kHDDk..HHHDDD..kHHDD....kHDkddDDDHo.
-.ohHHHDDHDDk..kHHDDD...HDk...kHHDDD...kHDD.....kH.ddDDDHo.
-.ohHHHDDHDD....HHDDD...kD.....HHDDk....kDk......k.ddDDDHo.
-.ohHHHDDHDk....HHDDk....k.....kHDD......H.........ddDDDHo.
-.ohHHHDDHk.....HHDD............HDD......k.........ddDDDHo.
-.ohHHHDDk......kHDk............kDk................ddDDDHo.
-.ohdHHDD........HD..............H.................ddDDdHo.
-.ohdHHDD........Hk..............k.................ddDDdHo.
-.ohdHHDD........k.................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohhHHHHDD......................................ddDDDDHHo.
-ohHHHHDD..........................................ddDDDDHo
-ohhHHHHDD........................................ddDDDDHHo
-ohhdHHHHDD......................................ddDDDDdHHo
-ohhdHHHHDD......................................ddDDDDdHHo
-ohhdHHdHDD......................................ddDdDDdHHo
-ohhdHHdHDD......................................ddDdDDdHHo
-ohhdHHdHDD......................................ddDdDDdHHo
-ohhdHHdHDD......................................ddDdDDdHHo
-ohhdHHdHDD......................................ddDdDDdHHo
-ohhdHHdHDD......................................ddDdDDdHHo
-ohhdHHoHDD......................................ddDoDDdHHo
-ohhdHo.oD........................................do.oDdHHo
-.ohdHo.oD........................................do.oDdHo.
-.ohoHo.oD........................................do.oDoHo.
-.oo.oo..............................................oo.oo.
-....oo..............................................oo....
-....oo..............................................oo....
+........HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH........
+...ohHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDHo...
+...ohHHHhhHHHHHHdHHdhhHHHHHHDdHHHdHHHHHHHHHDDdHHHHHDDdDDDHo...
+...ohHHHhhHHHHHHdHHdhhHHHHHHDdHHHdHHHHHHHHHDDdHHHHHDDdDDDHo...
+...ohHHHhhHHHHHDdHHdhhHHHHHHDdHHHdHHHHHHHHHDDdHHHHHDDdDDDHo...
+...ohHHHhhHHHHHDdHHdhhHHHHHHDdHHHdHHHHHHHHHDDkHHHHHDDdDDDHo...
+...ohHHHhhHHHHHDdHDdhhHHHHHHDDkHHHdHHHHHHHDDD.kHHHHDDdDDDHo...
+...ohHHHDhHHHHDDkkDdhhHHHHHHDD.HHHdHHHHHHHDDD..HHHDDddDDDHo...
+...ohHHHDHHHHHDD..HkhhHHHHHDDD.kHHdHHHHHHHDDk..kHHDDddDDDHo...
+...ohHHHDHHHDDDk..H.khhHHHHDDk..kHHHHHHHHDDk....kHDDddDDDHo...
+...ohHHHDHHHDDk...k..HHHHHHDD....kHHHHHHDDD......kHkddDDDHo...
+..ohHHHHDHHDDk.......HHHHDDDk.....kDHHHDDDk.......k.ddDDDDHo..
+..ohHHHHDHHDk........kHHHDDD.......HHHHDDk..........ddDDDDHo..
+..ohHHHHDDDD..........HHHDDk.......kHHHDD...........ddDDDDHo..
+.ohhHHHHDDDk..........HHHDD.........kHDDk...........ddDDDDHHo.
+.ohhHHHHDDk...........kHDDk..........HDk............ddDDDDHHo.
+.ohhHHHHDD.............HDk...........Hk.............ddDDDDHHo.
+.ohhHHHHDD.............kD............k..............ddDDDDHHo.
+ohhdHHHHDD..............k...........................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhhdHHHHDDD......................................dddDDDDdHHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhHHHHHDDD........................................dddDDDDDHHo
+ohhhdHHHHDDD......................................dddDDDDdHHHo
+.ohhHHHHHDDD......................................dddDDDDDHHo.
+.ohhHHHHdDDD......................................ddddDDDDHHo.
+.ohhHHHHdDDD......................................ddddDDDDHHo.
+.ohhHHHHdDDD......................................ddddDDDDHHo.
+..ohhdHHdHDD......................................ddDdDDdHHo..
+..ohhdHHdHDD......................................ddDdDDdHHo..
+..ohhdHHdHDD......................................ddDdDDdHHo..
+..ohhdHHdHDD......................................ddDdDDdHHo..
+...ohhHHoHD........................................dDoDDHHo...
+...ohdHo.oD........................................do.oDdHo...
+...ohoHo.oD........................................do.oDoHo...
+...oo.oo..............................................oo.oo...
+...o.oHo..............................................oDo.o...
+......oo..............................................oo......
 `),
 };
 
@@ -150,7 +150,7 @@ export const HAIR_BOB_HAT_SHADOW: PixMap = {
   rows: rows(String.raw`
 .oDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDo.
 oHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDdddDo
-oHDDDHHDDDDDdHDDDDDdHDDDDDdHDDDDDdHDDDDDdHHDDDDDddddddDo
+oHDDDHHDDDDDDdDDdHHDDDDDDddDDDdDDDDDDDDDdddDDDDDddddddDo
 `),
 };
 
@@ -164,16 +164,16 @@ export const HAIR_BUNS_BACK: PixMap = {
 ..oddhhhdHHHdHH..............................................HHddHHHdDDDo..
 .ohhhhhHHddHHd...............................................dHHHHHDDddDDo.
 .ohhhddHHHdHHd...............................................HHHHddDDDdDDo.
-ohhddHHHdHHdHHd.............................................dHHddDDDdDDdDDo
-ohdhHHHHHHHdHHd.............................................HHdHDDDDDDDdDDo
-ohdHHdHHHHHdHDd.............................................HHdDDdDDDDDdDdo
-ohdHHdHHHHdHDdD.............................................HHdDDdDDDDdDddo
-oHdHHHHHHddDDdD.............................................HDdDDDDDDdddddo
-oHdHHdHHHHDDdDD.............................................DDdDDdDDDDddddo
-.odHHHdHHDDdDD...............................................DdDDDdDDddddo.
-.oHdHHHddddDDD...............................................DDdDDDddddddo.
-..oodHHDDDDDD.................................................DDdDDddddoo..
-....oooDooD.....................................................Ddodooo....
+ohhddHHHdHHdHHd..sssssssSSSSSSSSSSSSS..SSSSSSSSSSSSSSkkkkkk.dHHddDDDdDDdDDo
+ohdhHHHHHHHdHHd..sssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkkk.HHdHDDDDDDDdDDo
+ohdHHdHHHHHdHDd..sssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkkk.HHdDDdDDDDDdDdo
+ohdHHdHHHHdHDdD..sssssssSSSS.SSSSSS......SSSSSS.SSSSSkkkkkk.HHdDDdDDDDdDddo
+oHdHHHHHHddDDdD..ss.ssssSSSS..SSSSS......SSSSS..SSSSSkkk.kk.HDdDDDDDDdddddo
+oHdHHdHHHHDDdDD..ss.ssssSSS...SSSSS......SSSSS...SSSSkkk.kk.DDdDDdDDDDddddo
+.odHHHdHHDDdDD...ss..sssSSS....SSS........SSS....SSSSkk..kk..DdDDDdDDddddo.
+.oHdHHHddddDDD...s....ssSS.....SSS........SSS.....SSSk....k..DDdDDDddddddo.
+..oodHHDDDDDD....s....ssSS......S..........S......SSSk....k...DDdDDddddoo..
+....oooDoDD............sS..........................SS...........Ddddooo....
 .......o...........................................................o.......
 ...........................................................................
 ...........................................................................
@@ -192,7 +192,7 @@ oHdHHdHHHHDDdDD.............................................DDdDDdDDDDddddo
 ................DDd......................................DDD...............
 ................DdDD....................................DDDd...............
 ................DdDD....................................DDDd...............
-................odDD....................................DDDo...............
+................DdDD....................................DDDd...............
 ................oDDD....................................DDdo...............
 ................oDDDD..................................DDDdo...............
 ................oDDDDD................................DDDDdo...............
@@ -213,45 +213,47 @@ oHdHHdHHHHDDdDD.............................................DDdDDdDDDDddddo
 
 /** buns: front. */
 export const HAIR_BUNS_FRONT: PixMap = {
-  anchor: [29, 21],
+  anchor: [31, 21],
   legend: HAIR_LEGEND,
   rows: rows(String.raw`
-......HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH......
-.hhHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDHH.
-.hhHHHhhHHHHHdhHHHHHdhHHHHHdhHHHHHdhHHHHHdhhHHHHHDDdDDDHH.
-.hhHHHhhHHHHHdhHHHHHdhHHHHHdhHHHHHdhhHHHHdhhHHHHHDDdDDDHH.
-.hhHHHhhHHHHHdhHHHHHdhHHHHHdhHHHHHdhhHHHHDdhHHHHHDDdDDDHH.
-.hhHHHhhHHHHDdhHHHHHdhhHHHDdhhHHHHdhhHHHHDdhhHHHHDDdDDDHH.
-.hhHHHhhHHHHDdhHHHHHdhhHHHDdhhHHHHDdhHHHHDDkhHHHHDDdDDDHH.
-.hhHHHDhHHHHDdhHHHHDdHHHHHDdhhHHHHDdhhHHHDD.HHHHDDddDDDHH.
-.hhHHHDHHHHDDkhhHHHDDkHHHDDkkhHHHHDDkHHHDDD.kHHHDDddDDDHH.
-.hhHHHDHHHDDD.hhHHHDD.HHHDD..HHHHHDk.HHHDDk..kHHDDddDDDHH.
-.hhHHHDHHHDDk.HHHHHDk.kHDDk..HHHDDD..kHHDD....kHDkddDDDHH.
-.hhHHHDDHDDk..kHHDDD...HDk...kHHDDD...kHDD.....kH.ddDDDHH.
-.hhHHHDDHDD....HHDDD...kD.....HHDDk....kDk......k.ddDDDHH.
-.ohHHHDDHDk....HHDDk....k.....kHDD......H.........ddDDDHo.
-.ohHHHDDHk.....HHDD............HDD......k.........ddDDDHo.
-.ohHHHDDk......kHDk............kDk................ddDDDHo.
-.ohdHHDD........HD..............H.................ddDDdHo.
-.ohdHHDD........Hk..............k.................ddDDdHo.
-.ohdHHDD........k.................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohdHHDD..........................................ddDDdHo.
-.ohhHHHHDD......................................ddDDDDHHo.
-ohHHHHDD..........................................ddDDDDHo
-ohhHHHHDD........................................ddDDDDHHo
-ohhdHHHHDD......................................ddDDDDdHHo
-ohhdHHHHDD......................................ddDDDDdHHo
-ohhdHHoHDD......................................ddDoDDdHHo
-.ohdHo.oD........................................do.oDdHo.
-.ohoHo.oD........................................do.oDoHo.
-.oo.oo.oD........................................do.oo.oo.
-....oo..............................................oo....
-....oo..............................................oo....
+........HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH........
+...hhHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHDDDHH...
+...hhHHHhhHHHHHHdHHdhhHHHHHHDdHHHdHHHHHHHHHDDdHHHHHDDdDDDHH...
+...hhHHHhhHHHHHHdHHdhhHHHHHHDdHHHdHHHHHHHHHDDdHHHHHDDdDDDHH...
+...hhHHHhhHHHHHDdHHdhhHHHHHHDdHHHdHHHHHHHHHDDdHHHHHDDdDDDHH...
+...hhHHHhhHHHHHDdHHdhhHHHHHHDdHHHdHHHHHHHHHDDkHHHHHDDdDDDHH...
+...hhHHHhhHHHHHDdHDdhhHHHHHHDDkHHHdHHHHHHHDDD.kHHHHDDdDDDHH...
+...hhHHHDhHHHHDDkkDdhhHHHHHHDD.HHHdHHHHHHHDDD..HHHDDddDDDHH...
+...hhHHHDHHHHHDD..HkhhHHHHHDDD.kHHdHHHHHHHDDk..kHHDDddDDDHH...
+...hhHHHDHHHDDDk..H.khhHHHHDDk..kHHHHHHHHDDk....kHDDddDDDHH...
+...hhHHHDHHHDDk...k..HHHHHHDD....kHHHHHHDDD......kHkddDDDHH...
+..hhHHHHDHHDDk.......HHHHDDDk.....kDHHHDDDk.......k.ddDDDDHH..
+..hhHHHHDHHDk........kHHHDDD.......HHHHDDk..........ddDDDDHH..
+..ohHHHHDDDD..........HHHDDk.......kHHHDD...........ddDDDDHH..
+.ohhHHHHDDDk..........HHHDD.........kHDDk...........ddDDDDHHo.
+.ohhHHHHDDk...........kHDDk..........HDk............ddDDDDHHo.
+.ohhHHHHDD.............HDk...........Hk.............ddDDDDHHo.
+.ohhHHHHDD.............kD............k..............ddDDDDHHo.
+ohhdHHHHDD..............k...........................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhhdHHHHDDD......................................dddDDDDdHHHo
+ohhdHHHHDD..........................................ddDDDDdHHo
+ohhHHHHHDDD........................................dddDDDDDHHo
+ohhhdHHHHDDD......................................dddDDDDdHHHo
+.ohhHHHHHDDD......................................dddDDDDDHHo.
+.ohhHHHHdDDD......................................ddddDDDDHHo.
+..ohoHHHoDD........................................ddoDDDoHo..
+..oo.oHo.oD........................................do.oDo.oo..
+..oo.oHo.oD........................................do.oDo.oo..
+..o..oo..o..........................................o..oo..o..
+..o..oo..o..........................................o..oo..o..
+.....oo................................................oo.....
+......o................................................o......
 `),
 };
 
@@ -291,7 +293,7 @@ export const HAIR_BUNS_HAT_SHADOW: PixMap = {
   rows: rows(String.raw`
 .oddHHHdDDDdDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDddDDDddddo.
 oHHHHHDDdHHDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDdddDDDddddddo
-oHHHddDDDHHDDDHHDDDDDdHDDDDDdHDDDDDdHDDDDDdHDDDDDdHHDDDDDddddddDDdddddddo
+oHHHddDDDHHDDDHHDDDDDDdDDdHHDDDDDDddDDDdDDDDDDDDDdddDDDDDddddddDDdddddddo
 `),
 };
 
@@ -302,16 +304,16 @@ export const HAIR_MOHAWK_BACK: PixMap = {
   rows: rows(String.raw`
 KSSSSSSSSSSSSSSSHHHHHHHHHHHSSSSSSSSSSkkkkkK
 KSSSSSSSSSSSSSSSHHHHHHHHHHHSSSSSSSSSSkkkkkK
-..SSSSSSSSSSSSSSHHHHHHHHHHHSSSSSSSSSSkkkkk.
-..ssssssSSSSSSSSSSSSS..SSSSSSSSSSSSSSkkkkk.
-..ssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkk.
-..ssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkk.
-..ssssssSSSS.SSSSSS......SSSSSS.SSSSSkkkkk.
-..s.ssssSSSS..SSSSS......SSSSS..SSSSSkkk.k.
-..s.ssssSSS...SSSSS......SSSSS...SSSSkkk.k.
-..s..sssSSS....SSS........SSS....SSSSkk..k.
-......ssSS.....SSS........SSS.....SSSk.....
-......ssSS......S..........S......SSSk.....
+.sSSSSSSSSSSSSSSHHHHHHHHHHHSSSSSSSSSSkkkkkk
+.sssssssSSSSSSSSSSSSS..SSSSSSSSSSSSSSkkkkkk
+.sssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkkk
+.sssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkkk
+.sssssssSSSS.SSSSSS......SSSSSS.SSSSSkkkkkk
+.ss.ssssSSSS..SSSSS......SSSSS..SSSSSkkk.kk
+.ss.ssssSSS...SSSSS......SSSSS...SSSSkkk.kk
+.ss..sssSSS....SSS........SSS....SSSSkk..kk
+.s....ssSS.....SSS........SSS.....SSSk....k
+.s....ssSS......S..........S......SSSk....k
 .......sS..........................SS......
 `),
 };
