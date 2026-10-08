@@ -1,12 +1,13 @@
 // The ground cover's drawing (rules/groundcover.ts): tiny tufts round the witch in one instanced
 // draw, in ground mode only. Each grid cell's tufts are worked out once, a few cells a frame,
 // nearest first, and kept; the batch is rebuilt as she moves. In the vertex shader they sway in
-// the same wind as the trees and part round the witch and nearby creatures; they fade out in an
-// ordered dither towards the edge of their radius. The tufts are the art's own (art/tufts.js,
+// the same wind as the trees and part round the witch and nearby creatures; towards the edge of their radius (and as she rises)
+// each shrinks away to nothing, smoothly, at its own distance: the edge thins out raggedly, never a ring (Ed, 2026-10-08: "you
+// can see a sharp circle around her": it was this cover's edge, faded in an ordered dither at one radius round her). The tufts are the art's own (art/tufts.js,
 // bakeTufts: each area's kinds in its palette, with their shares), lit by their normal maps; each
 // sways by its sway mask (rigid pebbles, litter and mushrooms stay still).
 import * as THREE from "three";
-import { BAYER_GLSL, PIXEL_SNAP_GLSL, VALUE_NOISE_GLSL, WIND_GUST_GLSL } from "./shaders";
+import { PIXEL_SNAP_GLSL, VALUE_NOISE_GLSL, WIND_GUST_GLSL } from "./shaders";
 import * as Art from "../../art/generator.js";
 import { LOOKS } from "../rules/map";
 import type { ForestMap } from "../rules/map";
@@ -19,6 +20,10 @@ import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SPRITE_UNIFORMS } from "./sprites";
 
+/** The cover's edge: the share of its radius it thins out over, and how far the edge wanders (a share of the radius) by a slow
+ *  noise on the ground and tuft by tuft. */
+const EDGE_IN = 0.55, EDGE_WOBBLE = 0.3, EDGE_JITTER = 0.25;
+
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
 uniform vec2 uRes;
@@ -26,6 +31,7 @@ uniform vec4 uWind;
 uniform vec4 uPart[4];      // x, z, radius, on: where tufts part (the witch, creatures)
 uniform vec4 uClear[8];     // x, z, radius, on: trampled flat round placed sigils (Ed, v233)
 uniform vec4 uGrass;        // metres per art pixel, sway, part, (unused)
+uniform vec4 uFade;         // centre x, z, radius, how much shows (0 in the treetops)
 attribute vec4 iTuft;       // x, z, size, flip
 attribute vec4 iUv;         // its frame in the tuft atlas
 attribute vec3 iPx;         // its size in art pixels (w, h), and how much it sways (from its sway mask)
@@ -46,6 +52,12 @@ ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
     if (uClear[k].w < 0.5) continue;
     s *= smoothstep(uClear[k].z, uClear[k].z + 1.2, length(base.xz - uClear[k].xy));
   }
+  // Its edge: each tuft shrinks away by its own distance, over the outer EDGE_IN of the radius, that radius wandering by a slow
+  // noise on the ground and jittered tuft by tuft, so the cover thins out raggedly rather than stopping at a line round her.
+  float R = uFade.z, d = length(base.xz - uFade.xy) + (vnoise(base.xz * 0.045) - 0.5) * R * ${EDGE_WOBBLE.toFixed(2)} + (hash(iTuft.xy * 1.37) - 0.5) * R * ${EDGE_JITTER.toFixed(2)};
+  float keep = (1.0 - smoothstep(R * ${(1 - EDGE_IN).toFixed(2)}, R, d)) * uFade.w;
+  s *= keep;
+  if (keep < 0.03) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   vec3 w = base + uRight * (position.x * iPx.x * s) + uUp * (position.y * iPx.y * s);
   float top = uv.y * iPx.z, hgt = iPx.y * s; // rigid tufts (pebbles, litter) don't sway or part
   // The same wind as the trees, stronger for their size.
@@ -78,17 +90,13 @@ ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
 const FRAG = /* glsl */ `
 uniform sampler2D uTufts, uTuftN;
 uniform vec3 uRight, uUp, uFacing;
-uniform vec4 uFade; // centre x, z, radius, how much shows (0 in the treetops)
 varying vec2 vUv;
 varying vec3 vWorld;
 varying float vMoonK;
 ${LIGHT_GLSL}
-${BAYER_GLSL}void main() {
+void main() {
   vec4 m = texture2D(uTufts, vUv);
   if (m.a < 0.5) discard;
-  // Fading out towards the edge of the cover, and as she rises, in an ordered dither.
-  float k = (1.0 - smoothstep(uFade.z * 0.7, uFade.z, length(vWorld.xz - uFade.xy))) * uFade.w;
-  if (k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
   vec4 n = texture2D(uTuftN, vUv);
   vec3 N = normalize(uRight * ((n.r * 255.0 - 128.0) / 127.0) - uUp * ((n.g * 255.0 - 128.0) / 127.0) + uFacing * n.b);
   gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), m.rgb * nightLightShaded(N, vWorld, vMoonK) * 1.25), vWorld), vWorld), 1.0);
