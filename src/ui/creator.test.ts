@@ -2,7 +2,7 @@
 // must land on a field of her genome, so a new axis the art builders add works without code here.
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
-import { applies, BOXES, boxOf, fromPicker, slot, STEPS, toPicker, upgrade } from "./creator";
+import { applies, BOXES, boxOf, GRID_COLS, GRID_ROWS, nearestSwatch, PURE_ROW, slot, snapPalette, swatchAt, upgrade } from "./creator";
 import { clear, newWalker, spotAt, type RoomFloor } from "./roomWalk";
 
 describe("the character creator", () => {
@@ -45,6 +45,15 @@ describe("the character creator", () => {
     expect(applies("broomBend", { ...look, broom: "canoe" })).toBe(false);
     expect(applies("broomThickness", { ...look, broom: "canoe" })).toBe(true);
   });
+  it("loads a save with a familiar (before 2026-10-08, Ed: \"Remove familiars\") without it or its colours, still a witch", () => {
+    const old = { ...JSON.parse(JSON.stringify(Art.WITCH_GENOME)), accessories: { ...(Art.WITCH_GENOME as { accessories: object }).accessories, familiar: "cat" }, palette: { hat: [0.7, 0.4, 0.4], familiar: [0.7, 0.15, 0.14], familiar2: [0.12, 0.5, 0.9] } };
+    const g = upgrade(old);
+    expect("familiar" in g.accessories).toBe(false);
+    expect(g.palette).toEqual({ hat: [0.7, 0.4, 0.4] });
+    expect((Art.witchGenomeProblems as (g: unknown) => string[])(g)).toEqual([]);
+    expect("familiar" in (Art.WITCH_AXES as object)).toBe(false);
+    for (let seed = 0; seed < 40; seed++) expect("familiar" in (Art.witchGenome as (s: number) => { accessories: object })(seed).accessories, `seed ${seed}`).toBe(false);
+  });
   it("keeps the broom's thickness in her save, and an old save's broom as thick as hers", () => {
     const g = upgrade({ broom: { kind: "drone", length: 1.2, bend: 0, bristles: 1 } });
     expect(g.broom.thickness).toBe(1);
@@ -54,14 +63,33 @@ describe("the character creator", () => {
     expect((Art.genomeLook as (g: unknown) => { look: Record<string, unknown> })(back).look.broomThickness).toBe(1.8);
     expect((Art.witchGenomeProblems as (g: unknown) => string[])({ ...back, broom: { ...back.broom, thickness: 9 } })).toEqual(["broomThickness 9"]);
   });
-  it("picks colours in 256 steps that come back to the same steps", () => {
-    for (let i = 0; i < STEPS; i += 17) for (const [sh, gr] of [[0, 0], [80, 0], [153, 0], [200, 0], [255, 0], [100, 128], [60, 255]]) {
-      const c = fromPicker(i, sh, gr);
-      expect(c.every(v => v >= 0 && v <= 1)).toBe(true);
-      const [h, s2, g2] = toPicker(c);
-      expect(h).toBe(i);
-      if (c[2] < .995) { expect(Math.abs(s2 - sh)).toBeLessThanOrEqual(1); expect(Math.abs(g2 - gr)).toBeLessThanOrEqual(1); }
+  it("picks colours from Ed's swatch grid: 12 hues and greys across, near-black through the pure hue to near-white down", () => {
+    expect([GRID_COLS, GRID_ROWS]).toEqual([13, 9]);
+    const rgb = Art.hsv2rgb as (h: number, s: number, v: number) => number[], lum = (c: number[]) => { const [r, g, b] = rgb(c[0], c[1], c[2]); return 0.3 * r + 0.59 * g + 0.11 * b; };
+    const seen = new Set<string>();
+    for (let col = 0; col < GRID_COLS; col++) {
+      for (let row = 0; row < GRID_ROWS; row++) {
+        const c = swatchAt(col, row);
+        expect(c.every(v => v >= 0 && v <= 1), `${col},${row}`).toBe(true);
+        expect(nearestSwatch(c), `${col},${row} is its own nearest`).toEqual([col, row]);
+        seen.add(rgb(c[0], c[1], c[2]).join());
+        if (row) expect(lum(c), `${col},${row} lighter than the row above`).toBeGreaterThan(lum(swatchAt(col, row - 1)));
+      }
+      expect(lum(swatchAt(col, 0)), "the top row near-black").toBeLessThan(45);
+      expect(lum(swatchAt(col, GRID_ROWS - 1)), "the bottom row near-white").toBeGreaterThan(200);
     }
+    expect(seen.size).toBe(GRID_COLS * GRID_ROWS); // (every swatch its own colour)
+    for (let col = 0; col < 12; col++) expect(swatchAt(col, PURE_ROW), "row 5 the pure hue").toEqual([+(col / 12).toFixed(4), 1, 1]);
+    expect([0, 4, 8].map(r => swatchAt(12, r)[1])).toEqual([0, 0, 0]); // (the right column grey)
+  });
+  it("snaps an old save's colours, and the classic witch's, to their nearest swatches (null stays the classic)", () => {
+    expect(snapPalette(null)).toBeNull();
+    const old = { hat: [0.75, 0.6, 0.45], skin: [0.07, 0.32, 0.9], hair: [0.07, 0.6, 0.33], jacket: [0.92, 0.9, 1], sneakers: [0, 0, 0.97] };
+    const snapped = snapPalette(old)!;
+    for (const [k, c] of Object.entries(snapped)) { const [col, row] = nearestSwatch(c); expect(c, k).toEqual(swatchAt(col, row)); }
+    expect(nearestSwatch(old.sneakers)[0], "white to the grey column").toBe(12);
+    expect(nearestSwatch(old.jacket), "a near-pure crimson to crimson's pure swatch").toEqual([11, PURE_ROW]);
+    for (const [k, c] of Object.entries(Art.DEFAULT_OUTFIT as Record<string, number[]>)) expect(nearestSwatch(c).every(Number.isInteger), k).toBe(true);
   });
   it("draws her bedroom at every art pixel: every glow, the banner's letters, its anchors inside, the floor clear round her", () => {
     const M = Art.M as Record<string, number>;
