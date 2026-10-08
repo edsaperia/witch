@@ -174,18 +174,21 @@ void main() {
   float link = uBright * rank * mix(1.0, 0.8, uLift);
   // Lit, or not yet (Ed, 2026-10-06: "Before and after the pulse look too similar"). Behind the pulse the line is lit: full
   // width, solid, saturated, glowing softly, its shimmer flowing on toward the front, brightest just behind the pulse. Ahead of
-  // it (drawn, not yet lit) it's a sketch, a promise: a thin dashed line of art pixels in a dim, cool, greyed version of its
-  // colour, with no glow. The pulse (its pixel head: render/leyHead.ts) lights it as it passes.
+  // it (drawn, not yet lit) it's a sketch, a promise: a dashed line of art pixels in its own colour, a little cooled, with no
+  // glow. The pulse (its sparkler: render/sparkler.ts) lights it as it passes.
   float pAlong = uPulse.y > 0.5 ? uCurrent + uPulse.x : 1e6;
   if (along > pAlong) {
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11));
     vec3 cool = mix(vec3(grey), vec3(0.55, 0.68, 1.0) * grey * 1.3, 0.55);
     // (From the treetops, a faint cool glow along it, so it still reads there.)
     if (uGlowPass > 0.5) { gl_FragColor = vec4(cool * 0.12 * halo * uLift * uStrength, 1.0); return; }
+    // (Ed, 2026-10-08: "The leyline ahead of the pulse doesn't seem to be visible anymore": once the line behind the pulse went
+    // thin and pale, a sketch of the same thin grey vanished at night. It's the line's own colour now, a little cooled, at its full
+    // core width, dashed 3 on 2 off, and not dimmed with the lit line's brightness: the way on reads, the ash behind stays dull.)
     float rip = floor(ripple(sq, vLink) * 3.0 + 0.5) / 3.0;
-    float dash = mod(floor(vS / uMpp), 4.0) < 3.0 || rip > 0.6 ? 1.0 : 0.0, thin = off < max(1.0, floor(coreN * 0.5)) ? 1.0 : 0.0;
+    float dash = mod(floor(vS / uMpp), 5.0) < 3.0 || rip > 0.6 ? 1.0 : 0.0, thin = off < max(1.0, coreN) ? 1.0 : 0.0;
     if (dash * thin < 0.5) discard;
-    gl_FragColor = vec4(min(cool * (0.75 + 0.6 * rip) * uBright * uStrength, vec3(0.75)), 1.0);
+    gl_FragColor = vec4(min(mix(vCol, cool, 0.35) * (0.8 + 0.5 * rip) * uStrength, vec3(0.9)), 1.0);
     return;
   }
   float litD = pAlong > 1e5 ? 1e6 : (pAlong - along) * vLen; // metres behind the pulse (on its own link)
