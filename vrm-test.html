@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0a16">
+  <title>VRM pixel test</title>
+  <style>
+    html, body { margin: 0; min-height: 100%; background: #0b0a16; color: #e8e2f4; font: 13px/1.35 ui-monospace, monospace; }
+    #wrap { display: flex; gap: 16px; padding: 12px; flex-wrap: wrap; align-items: flex-start; }
+    .view { position: relative; background: linear-gradient(#141030, #1d2a28); border: 1px solid #2c2448; }
+    canvas.px { image-rendering: pixelated; display: block; }
+    #small-wrap { position: relative; width: 640px; height: 400px; overflow: hidden; }
+    #small-wrap .game { position: absolute; inset: 0; background: radial-gradient(circle at 70% 70%, rgba(242,196,106,.25), transparent 40%), linear-gradient(#0d0b22 0%, #1b1838 55%, #13221c 100%); }
+    #small { position: absolute; left: 0; bottom: 0; }
+    #say { position: absolute; bottom: 10px; background: rgba(14, 9, 22, .62); box-shadow: inset 0 0 0 2px rgba(242,196,106,.55); padding: 8px 12px; font: 16px/20px "Tiny5", ui-monospace, monospace; -webkit-font-smoothing: none; white-space: pre-wrap; min-height: 40px; max-width: 280px; }
+    #panel { flex: 1 1 320px; min-width: 300px; }
+    #panel h1 { font-size: 18px; color: #f2c46a; font-weight: normal; margin: 0 0 4px; }
+    #panel h2 { font-size: 13px; color: #f2c46a; font-weight: normal; margin: 12px 0 4px; }
+    #panel p { color: #9a93b4; margin: 2px 0 6px; }
+    .row { display: flex; flex-wrap: wrap; gap: 4px; }
+    button { font: inherit; color: #e8e2f4; background: #2a2044; border: 1px solid #4a3a72; padding: 3px 8px; cursor: pointer; }
+    button.on { background: #f2c46a; color: #1a1022; }
+    label { display: flex; gap: 8px; align-items: center; margin: 3px 0; }
+    #stats { color: #9fe0b0; }
+    #drop { border: 1px dashed #4a3a72; padding: 8px; color: #9a93b4; margin-top: 6px; }
+    #drop.over { border-color: #f2c46a; color: #f2c46a; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div class="view"><canvas id="large" class="px"></canvas></div>
+    <div id="panel"></div>
+    <div class="view" id="small-wrap"><div class="game"></div><canvas id="small" class="px"></canvas><div id="say"></div></div>
+  </div>
+  <script type="module" src="/src/vrmTest/page.ts"></script>
+</body>
+</html>
