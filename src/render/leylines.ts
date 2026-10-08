@@ -548,6 +548,9 @@ export class LeyLines {
   private tipPoints: LeyTip[] = this.tipColours.map(colour => ({ x: 0, z: 0, colour, links: 0 }));
   /** The front as last drawn (for tools), or null. */
   tip: LeyTip | null = null;
+  /** Where the wave's sparkler was last drawn (front()), or null with none: the HUD's wave pointer points here, so the two
+   *  always agree (on the first link it starts where the line meets the boot ring, pulseFrom, not at the treehouse). */
+  pulseTip: LeyTip | null = null;
 
   /** Each frame after grow(): the front of the line, where it's drawn to (none with the whole line drawn, or none yet: for
    *  tools; nothing's drawn there), and the pulses' sparklers. strength: how far it's faded (the party's over). */
@@ -562,7 +565,7 @@ export class LeyLines {
     const ringPulse = ringOn ? this.pointAt(this.ringDrawn, R!.pulse!, time, 3) : null;
     const ringK = strength * (R?.strength ?? 0);
     this.sparkler.update(pulse, time, strength); this.ringSparkler.update(ringPulse, time, ringK);
-    this.tip = tip;
+    this.tip = tip; this.pulseTip = pulse;
     return tip;
   }
 

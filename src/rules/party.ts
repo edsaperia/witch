@@ -53,6 +53,9 @@ export interface PartyState {
   /** The game time each wave came (waveAt[w - 1] for wave w), whatever it did: an area's own time can be earlier (cleared
    *  before it), so the music reckons the waves from these (rules/musicPlan.ts musicCue). */
   waveAt?: number[];
+  /** When each area's wave reached it (key → the game time and the wave), whatever came of it after (its soundsystem since
+   *  lost, the area ruined): the ley line's stones reached (rules/leylines.ts waveReached). Home isn't in it. */
+  waveReached?: Map<string, { at: number; wave: number }>;
   /** Areas whose quest is done before their wave (rules/leylines.ts onAreaDone): key → game time. The ley line moves on from them. */
   leyDone?: Map<string, number>;
   /** How many areas each wave wakes: one per witch present (Ed, 2026-10-04), read at each wave. */
@@ -240,6 +243,7 @@ export function nextWave(p: PartyState, map: ForestMap): { key: string; cell: Ce
 export function spreadWave(p: PartyState, map: ForestMap, time: number, celebrate?: (a: Partified, wave: number) => void): Partified[] {
   const wave = p.wave + 1, fresh: Partified[] = [];
   for (const { key: k, cell: c, from } of nextWave(p, map)) {
+    (p.waveReached ??= new Map()).set(k, { at: time, wave });
     if (p.ahead?.delete(k)) {
       const a = p.areas.get(k);
       if (a) { a.early = undefined; a.celebrated = time; celebrate?.(a, wave); }

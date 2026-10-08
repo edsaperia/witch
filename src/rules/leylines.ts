@@ -28,9 +28,13 @@ function stoneOf(map: ForestMap, cell: Cell, wave: number): LeyStone {
 
 /** When the line reached an area's stone by its wave: the wave's time; undefined while its wave is still to come, even if
  *  the area was cleared early (Ed, 2026-10-08: clearing an area transforms its runestone at once, but the pulse keeps its
- *  own pace along the route; its wave, when it comes, only celebrates: party.ts `ahead`, the same as its passed()).
- *  A cleared area's wave came at `celebrated`, its partifying (`at`) being the clear. */
+ *  own pace along the route; its wave, when it comes, only celebrates: party.ts `ahead`, the same as its passed()). Kept
+ *  when its soundsystem is lost since (the area ruined, gone from `areas`): the line still went through its stone.
+ *  (`waveReached` is each wave's own record, party.ts spreadWave; an area partified another way, the arena's or a test's,
+ *  falls back on its own record.) */
 export function waveReached(p: PartyState, key: string): number | undefined {
+  const w = p.waveReached?.get(key);
+  if (w) return w.at;
   const a = p.areas.get(key);
   if (!a || p.ahead?.has(key)) return undefined;
   return a.celebrated ?? a.at;
@@ -55,6 +59,7 @@ export function leyChain(p: PartyState, map: ForestMap, ahead = Infinity, behind
   // earlier of the two; home first.
   const home = cellKey(map.centreCell), past = new Map<string, { s: LeyStone; at: number }>([[home, { s: stoneOf(map, map.centreCell, 0), at: -Infinity }]]);
   for (const a of p.areas.values()) { const k = cellKey(a.cell), at = waveReached(p, k); if (k !== home && at !== undefined) past.set(k, { s: stoneOf(map, a.cell, a.wave), at }); }
+  for (const [k, w] of p.waveReached ?? []) if (k !== home && !past.has(k)) { const [x, y] = k.split(",").map(Number); past.set(k, { s: stoneOf(map, [x, y], w.wave), at: w.at }); } // (ruined since: still on the line)
   for (const [k, t] of done) {
     const was = past.get(k);
     if (!was || t < was.at) { const [x, y] = k.split(",").map(Number); past.set(k, { s: stoneOf(map, [x, y], was?.s.wave ?? p.wave + 1), at: t }); }
