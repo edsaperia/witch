@@ -1852,6 +1852,26 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `lightRings`
+
+Light rings in the canopy (Ed, 2026-10-07, making the wild forest eerier: "a halo / circle optical illusion: faint concentric rings of moonlight in the canopy, visible from treetop view"; render/lightRings.ts): one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor. Centres seeded on a spacing-metre grid (a share of its cells has one), each count faint bands of moonlight out to radius metres, breathing outward at speed bands a second, laid on a level sheet plane metres up (about the crowns' tops: the crowns are upright sprites, so it's where the line of sight crosses that sheet that is ringed); strength: a band at its brightest (in the moon's hue, paled), added as light. They fade out between fadeNear and fadeFar metres from her. And the glory: rings of moonlight round her own shadow on the leaves (the halo you see round your shadow on dewy foliage), glory metres across at gloryStrength, faintly prismatic, going with her. Treetops only (fading in as she rises).
+
+| knob | type | range |
+|---|---|---|
+| `lightRings.on` | boolean |  |
+| `lightRings.strength` | number | 0 to … |
+| `lightRings.radius` | number | 0 to … |
+| `lightRings.count` | number | 0 to … |
+| `lightRings.spacing` | number | 0 to … |
+| `lightRings.share` | number | 0 to … |
+| `lightRings.above` | number | 0 to … |
+| `lightRings.speed` | number | 0 to … |
+| `lightRings.plane` | number | 0 to … |
+| `lightRings.glory` | number | 0 to … |
+| `lightRings.gloryStrength` | number | 0 to … |
+| `lightRings.fadeNear` | number | 0 to … |
+| `lightRings.fadeFar` | number | 0 to … |
+
 ### `holograms`
 
 The soundsystems' sky sigils (Ed, 2026-10-08: "soundsystems should project their animal sigil into the sky once they're activated, readable from the treetops but in a different character to how the leashing sigils look from treetop; maybe a hologram or peppers ghost or something, replacing the laser we have now"; render/hologram.ts): each standing soundsystem's projector throws a translucent cone of light from the top of its stack to a hologram of its area's animal sigil over the canopy, in the area's crystal colour, with scanlines, a drifting interference band and a colour fringe, turning gently and bobbing. size: the glyph (m across: under about 20 its one-pixel strokes are finer than the treetop view's pixels and it smears); lift: how high its middle floats over the projector (m); glyph, cone: how bright (added light; past about 0.7 the bloom swallows its outline); powerUp: the flicker as it comes on when the soundsystem has risen (s); collapse: how long it takes to fold to a line and go out when the soundsystem is destroyed (s); turn: how far it turns either way (degrees); bob: how far it bobs (m); fadeFar: it fades out towards this many metres from her. Damaged, it glitches, worse at each of the soundsystem's damage stages (below 75%, 50% and 25% of its health). The glyph is drawn at the sky's depth, so the tilt-shift leaves it nearly as sharp as the stars.
