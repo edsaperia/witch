@@ -19,6 +19,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     page.on("pageerror", e => errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 600000, polling: 500 });
+    await page.keyboard.press("Shift"); // (past the start screen: any key)
+    await page.evaluate(() => { const g = window.witch.game; g.clock.paused = false; g.party.spellAt = undefined; }); // (the game starts paused at her decks)
     await page.waitForFunction(() => window.witch.game.clock.time > 1 && document.querySelector(".deck-bpm .n")?.textContent, null, { timeout: 600000, polling: 500 });
     const read = sel => page.evaluate(s => document.querySelector(s)?.textContent ?? "", sel);
     const base = await page.evaluate(() => Math.round(window.witch.game.beat.segs.at(-1).bpmTo));
