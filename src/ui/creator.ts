@@ -12,7 +12,7 @@
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 import { shade } from "../../art/lighting.js";
-import { LOOKS, lookGenome, pleasingWitch } from "./looks";
+import { pleasingWitch } from "./looks";
 import { keysDir, newWalker, spotAt, walk, type RoomFloor, type Walker } from "./roomWalk";
 import { SpellScroll, type SpellCue } from "./spellScroll";
 import { KeyHint } from "./keyHint";
@@ -296,7 +296,6 @@ export class Creator {
   genome(): Genome { return clone(this.g); }
 
   private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.g.palette = snapPalette(this.g.palette); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
-  private look(id: string): void { this.g = upgrade(lookGenome(id)); this.g.palette = snapPalette(this.g.palette); this.build(); this.dirty = true; }
   /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour any swatch. */
   private wild(): void {
     const R = Math.random, g = upgrade(CLASSIC), any = <T>(a: T[]) => a[Math.floor(R() * a.length)];
@@ -348,12 +347,6 @@ export class Creator {
     // down the left side of the character creation pane"): its icon on the tab, its name as its tooltip and at the top of its
     // page; only the open one's page shows, its tab joined to the page like a bookmark. The open one is kept on this browser.
     const box = (id: string, name: string) => this.makeBox(id, name);
-    // Her looks to start from (ui/looks.ts)
-    const lk = row(box("looks", "👗 Looks"), "");
-    lk.firstElementChild?.remove();
-    for (const L of LOOKS) {
-      lk.append(button(L.name, () => this.look(L.id), { title: L.note, data: { look: L.id }, style: { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "rgba(255,255,255,.08)" } }));
-    }
     const get = (axis: string) => { const [part, key] = slot(axis); return part ? (g[part] as Record<string, unknown>)[key] : g[key]; };
     const set = (axis: string, v: unknown) => { const [part, key] = slot(axis); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; this.dirty = true; };
     const accs = Object.keys({ ...CLASSIC.accessories, ...g.accessories }).filter(k => !(k in AXES)); // (a choice, like the familiar, is an axis)

@@ -83,7 +83,6 @@ const PAL: Record<string, string> = {
   y: "#ffd65a", Y: "#c99a2a", s: "#f0c8a0", v: "#9a6ad8", V: "#5a3a8a", m: "#7ff0b0", M: "#3a9a6a", r: "#ff7a7a",
 };
 const ICONS: Record<string, string[]> = {
-  looks: ["...k...k...", "...kkkkk...", "...kpppk...", "..kpppppk..", "...kpPpk...", "...kpppk...", "..kpppppk..", "..kpppPpk..", ".kpppppppk.", ".kppPpPppk.", ".kkkkkkkkk."],
   hat: [".....k.....", "....kvk....", "....kvVk...", "...kvvVk...", "...kvvVk...", "..kvvvvVk..", "..kggggGk..", ".kvvvvvvVk.", "kvvvvvvvvVk", ".kkkkkkkkk.", "..........."],
   hair: ["...kkkkk...", "..kNnnnNk..", ".kNnnnnnNk.", ".kNsssssNk.", ".kNkssskNk.", ".kNsssssNk.", ".kNssPssNk.", ".kNNsssNNk.", ".kNNkkkNNk.", ".kNk...kNk.", "..k.....k.."],
   face: ["...kkkkk...", "..kyyyyyk..", ".kyyyyyyyk.", "kyykyyykyyk", "kyykyyykyyk", "kyyyyyyyyyk", "kykyyyyykyk", "kyykkkkkyyk", ".kyyyyyyyk.", "..kyyyyyk..", "...kkkkk..."],
