@@ -10,6 +10,7 @@
 import { makeCreature, type Creature, type Level } from "./creatures";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { COMBAT, strengthOf, type CombatData } from "./combat";
+import { buildSwarm, POWER_TABLE, routeShare, type PowerTable, type SwarmTuning } from "./swarm";
 import { hash2, rng } from "./random";
 
 export interface Pending { level: Level; wave: number; n: number }
@@ -53,7 +54,7 @@ export const startCount = (base: number, scale: number) => (base > 0 ? Math.max(
 export const grownAt = (wave: number, perWave: number, scale: number) => { const k = perWave * scale; return Math.floor(wave * k + 1e-9) - Math.floor((wave - 1) * k + 1e-9); };
 
 /** Pre-population by route (Ed, 2026-10-07: "pre-populate every area by its route position"; no growth on a clock): its
- *  babies, and at least minHostile young or adults; its hostile swarm is population.swarm's (Swarm). */
+ *  babies, and at least minHostile young or adults; its hostile swarm is population.swarm's (rules/swarm.ts). */
 export interface ByRoute {
   /** Babies in every area, start's included (they're 0 F: quest sigils and berries, not danger). */
   babies: number;
@@ -64,61 +65,11 @@ export interface ByRoute {
   minHostile?: number;
 }
 
-/** An area's hostile swarm (Ed, 2026-10-08): its own young and adults, the ones a wave enrages and sets marching. Its size
- *  grows with the area's place in the runestone order, the last runestone being the game's end: from `start` at the first to
- *  an average of `endAverage` at the last, along `curve` (the route's share run, to that power: 1 a straight line); its young
- *  share eases from youngShare[0] to youngShare[1] (mostly young early, mostly adults late). Picking a species never changes
- *  the challenge: each species' count is the average times 1 / its strength (combat.json strength.species, which scales its
- *  health and damage) over the mean of 1 / strength across the species, so a swarm's DPS at any place is the same whatever
- *  kind it is: fewer, bigger ones for a strong species, more, smaller ones for a weak one. */
-export interface Swarm {
-  /** The average swarm at the first runestone. */
-  start: number;
-  /** The average swarm at the last runestone (the end of the game), across the species. */
-  endAverage: number;
-  /** The curve from start to end: the route's share run, to this power (1 a straight line, more slower at first). */
-  curve: number;
-  /** The share of young at the first runestone and at the last (the rest adults). */
-  youngShare: number[];
-}
-
-/** How far along the route (0 the first runestone, 1 the last) an area at route index `index` of `length` is. */
-export const routeShare = (index: number, length: number): number => Math.max(0, Math.min(1, (index - 1) / Math.max(1, length - 1)));
-
-/** The average species' swarm at route share `f` (0 to 1): its size (fractional) and its young share. */
-export function swarmAt(f: number, S: Swarm): { size: number; young: number } {
-  const k = Math.pow(Math.max(0, Math.min(1, f)), Math.max(0.01, S.curve));
-  const [y0, y1] = [S.youngShare[0] ?? 0.5, S.youngShare[S.youngShare.length - 1] ?? 0.5];
-  return { size: S.start + (S.endAverage - S.start) * k, young: y0 + (y1 - y0) * Math.max(0, Math.min(1, f)) };
-}
-
-/** The mean of 1 / strength over `species` (the power-equalising count's divisor: the average species' count is the swarm's). */
-export const meanInverseStrength = (species: readonly string[], data: CombatData = COMBAT): number =>
-  species.length ? species.reduce((a, sp) => a + 1 / strengthOf(sp, 1, data), 0) / species.length : 1;
-
-/** A species' swarm at route share `f`: [young, adults]. Its count is the average's times its 1 / strength over the mean;
- *  whole creatures, so of the counts either side of that and every young/adult split of them it takes the one whose damage a
- *  second comes nearest the average swarm's (the nearer count on a tie), so small swarms stay as even as whole creatures allow. */
-export function swarmOf(f: number, S: Swarm, species: string, meanInv: number, data: CombatData = COMBAT): [number, number] {
-  const { size, young } = swarmAt(f, S), m = strengthOf(species, 1, data), ideal = (size / m) / Math.max(1e-6, meanInv);
-  const [dy, da] = [data.levels.dps[1], data.levels.dps[2]], target = (size * (young * dy + (1 - young) * da)) / Math.max(1e-6, meanInv);
-  let best: [number, number] = [0, 0], err = Infinity;
-  for (const n of [Math.floor(ideal), Math.ceil(ideal)]) for (let y = 0; y <= n; y++) {
-    const e = Math.abs(m * (y * dy + (n - y) * da) - target) + Math.abs(n - ideal) * 1e-6 + Math.abs(y - n * young) * 1e-9;
-    if (e < err) { err = e; best = [y, n - y]; }
-  }
-  return best;
-}
-
-/** A swarm's damage a second: its young and adults at the levels' dps (combat.json levels), times its species' strength. */
-export const swarmDps = (young: number, adults: number, species: string, data: CombatData = COMBAT): number =>
-  (young * data.levels.dps[1] + adults * data.levels.dps[2]) * strengthOf(species, 1, data);
-
 /** An area's whole starting population [babies, young, adults] (its legend and its circle's baby aside), by its place on the
- *  route (`index` of `length`): its swarm (swarmOf) over population.start's young and adults (times its count scale), at
- *  least minHostile of them; and its babies, byRoute.babies (or start's, if more), at most babyCap. */
-export function routePopulation(index: number, length: number, R: ByRoute, S: Swarm, start: { babies: number; young: number; adults: number }, species: string, meanInv: number, data: CombatData = COMBAT): [number, number, number] {
-  const scale = countScale(species), [sy, sa] = swarmOf(routeShare(index, length), S, species, meanInv, data);
+ *  route (`index` of `length`): its hostile swarm (rules/swarm.ts buildSwarm) over population.start's young and adults (times
+ *  its count scale), at least minHostile of them; and its babies, byRoute.babies (or start's, if more), at most babyCap. */
+export function routePopulation(index: number, length: number, R: ByRoute, S: SwarmTuning, start: { babies: number; young: number; adults: number }, species: string, table: PowerTable = POWER_TABLE, data: CombatData = COMBAT): [number, number, number] {
+  const scale = countScale(species), [sy, sa] = buildSwarm(routeShare(index, length), S, species, table, data);
   const babies = Math.min(Math.max(0, R.babyCap), Math.max(startCount(start.babies, scale), R.babies));
   const young = startCount(start.young, scale) + sy, adults = startCount(start.adults, scale) + sa;
   return [babies, young + Math.max(0, (R.minHostile ?? 0) - young - adults), adults]; // (at least minHostile young or adults: Ed, 2026-10-07)

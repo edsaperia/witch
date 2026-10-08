@@ -48,17 +48,18 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
     expect(sum).toBe(15);
   });
 
-  it("spawns a weak species' areas three times as many, worth about the same", () => {
-    const map = generateMap(123, PEOPLED), cell = (cx: number, cy: number) => `${cx},${cy}`;
+  it("spawns a weak species' areas three times as many, worth about the same (its cap allowing)", () => {
+    const T = withTuning({ population: { ...PEOPLED.population, swarm: { ...PEOPLED.population.swarm, caps: { default: 60 } } } }); // (no cap in the way)
+    const map = generateMap(123, T), cell = (cx: number, cy: number) => `${cx},${cy}`;
     // (the route's last area: its threat big enough that one creature's rounding doesn't swamp the comparison)
     const plain = spawnCreatures(map), order = routeOf(map).order, [cx, cy] = order[order.length - 1].split(",").map(Number), species = AREA_TYPES[map.typeOf(cx, cy)].creature;
     const before = plain.filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle); // (not its legend's clearing's baby: one, whatever its strength)
     const value = (l: typeof before) => l.reduce((a, c) => a + levelValue(c.level, COMBAT, c.species), 0), was = value(before);
     giving(species, 1 / 3);
     const after = spawnCreatures(map).filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle);
-    // (Its young and adults about three times over, its threat spent the same: rules/growth.ts routePopulation; its babies fixed.)
+    // (Its young and adults about three times over, its power the same: rules/swarm.ts buildSwarm; its babies fixed.)
     const fighters = (l: typeof before) => l.filter(c => c.level > 0).length;
-    expect(Math.abs(fighters(after) - fighters(before) * 3)).toBeLessThanOrEqual(2);
+    expect(fighters(after) / fighters(before)).toBeGreaterThan(2.6); expect(fighters(after) / fighters(before)).toBeLessThan(3.4); // (the builder's whole creatures)
     expect(value(after) / was).toBeGreaterThan(0.85); expect(value(after) / was).toBeLessThan(1.2);
   }, 30000);
 });

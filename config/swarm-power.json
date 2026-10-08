@@ -1,0 +1,6 @@
+{
+  "_": "The swarms' simulated power (Ed, 2026-10-08: \"two measures for swarm power; simple power and simulated power ... when we are making the swarms for each wave, we can use the simulated power to select the right size and ratio\"; rules/swarm.ts). Filled by Balance 2's headless sim of real swarms fighting and felling soundsystems on the real combat rules. youngShares: the grid of young shares (0 all adults, 1 all young). species: by species, sizes (the swarm sizes measured, 1 up to its cap) and power[i][j], the measured power of a swarm of sizes[i] at youngShares[j], in the same units as estimatedPower (Σhp × Σdps of the swarm, species strength included) so the two can stand in for each other. reference: the same for the challenge curve's reference swarm (a strength-1 kind), if measured. Empty: every swarm falls back to estimatedPower.",
+  "version": 1,
+  "youngShares": [0, 0.25, 0.5, 0.75, 1],
+  "species": {}
+}
