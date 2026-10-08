@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b0a16">
-  <title>Witch — prototype</title>
+  <title>Coven Rush</title>
   <style>
-    :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #ff7fd0; }
+    :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #e8b46a; --accent-dim: rgba(232, 180, 106, .45); --love: #d9789e; --loss: #d8606e; } /* the HUD in the art's palette (art review round 1): one accent, lantern amber; love (💌, hearts) and loss muted */
     html, body { margin: 0; height: 100%; background: #0b0a16; overflow: hidden; color: var(--ink); font: 14px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #game { position: fixed; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
     #seed { position: fixed; left: 10px; bottom: 8px; color: var(--dim); font-size: 12px; text-shadow: 0 1px 0 #000; pointer-events: auto; }
@@ -21,20 +21,33 @@
     #fight-knobs.on { display: grid; grid-template-columns: auto 120px 34px; gap: 4px 8px; align-items: center; }
     #fight-knobs button { grid-column: 1 / -1; font: inherit; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; padding: 3px 8px; }
     #debug-buttons button { font: inherit; font-size: 12px; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 6px 10px; }
-    #wave { position: fixed; right: 12px; top: 18%; height: 40%; width: 8px; border: 1px solid rgba(232, 226, 244, .35); border-radius: 4px; background: rgba(14, 11, 28, .45); pointer-events: none; }
-    #wave .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ff7fd0, #6fe6ff); border-radius: 3px; }
-    #wave .label { position: absolute; right: 14px; bottom: 0; white-space: nowrap; color: var(--dim); font-size: 11px; text-align: right; text-shadow: 0 1px 0 #000; }
-    #wave.paused .fill { opacity: .4; }
-    /* A soundsystem lost: the bar shrinks to its new countdown with a red flash, and the seconds taken off pop out beside it. */
-    #wave.lost { animation: wave-lost .9s ease-out; }
-    #wave.lost .fill { transition: height .45s cubic-bezier(.3, 1.6, .5, 1); animation: wave-lost-fill .9s ease-out; }
-    @keyframes wave-lost { 0%, 30% { border-color: #ff4060; box-shadow: 0 0 14px #ff4060; } }
-    @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: #ff4060; filter: brightness(1.8); } 100% { filter: none; } }
-    #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: #ff5a78; font-weight: bold; font-size: 15px; text-shadow: 0 0 6px #ff2050, 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
-    @keyframes loss-pop { 0% { opacity: 0; transform: translateY(50%) scale(1.8); } 12% { opacity: 1; transform: translateY(50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120%); } }
-    .touch #wave { top: 12%; height: 30%; }
-    #over { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); z-index: 6; }
-    #over.on { display: flex; }
+    /* The game clock (Ed, 2026-10-06: "Add a game clock at the top middle of the screen mm:ss counting up from 0"): the time
+       played, top centre, small; it stops while the game is paused. The wave timer bar that stood on the right is gone (Ed:
+       "remove the wave timer on the right of the screen"): the wave pointer's ring carries the countdown. A soundsystem lost
+       and the speakers coming up pop out under the clock. */
+    #clock { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); padding: 1px 8px; border-radius: 4px; background: rgba(14, 11, 28, .45); color: var(--ink); font-size: 13px; letter-spacing: .06em; font-variant-numeric: tabular-nums; text-shadow: 0 1px 0 #000; pointer-events: none; z-index: 2; display: none; }
+    #clock.on { display: block; }
+    #clock.paused { color: var(--dim); }
+    #clock .label { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; color: var(--dim); font-size: 11px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
+    #clock.lost { animation: clock-lost .9s ease-out; }
+    /* The wild animals still holding the area she's in (Ed's playtest, 2026-10-07: clearing an area needs every one of its own
+       invited or run off, some out of sight, asleep or lying knocked down): a quiet line under the clock. */
+    #wild-left { position: fixed; left: 50%; top: 34px; transform: translateX(-50%); padding: 1px 8px; border-radius: 4px; background: rgba(14, 11, 28, .35); color: var(--dim); font-size: 12px; white-space: nowrap; text-shadow: 0 1px 0 #000; pointer-events: none; z-index: 2; display: none; }
+    #wild-left.on { display: block; }
+    @keyframes clock-lost { 0%, 30% { color: var(--loss); box-shadow: 0 0 8px var(--loss); } }
+    @keyframes bpm-up { 0%, 30% { color: rgb(255, 120, 220); text-shadow: 0 0 8px rgb(255, 80, 200); font-size: 22px; } }
+    #clock .loss-pop, #clock .boot-pop { position: absolute; left: 50%; top: 100%; margin-top: 18px; transform: translateX(-50%); white-space: nowrap; font-size: 12px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
+    #clock .loss-pop { color: var(--loss); font-weight: bold; font-size: 13px; animation: loss-pop 1.8s ease-out forwards; }
+    #clock .boot-pop { color: var(--accent); animation: boot-pop 4s ease-out forwards; }
+    @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes loss-pop { 0% { opacity: 0; transform: translateX(-50%) scale(1.8); } 12% { opacity: 1; transform: translateX(-50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 60%); } }
+    #over { position: fixed; left: 0; right: 0; top: 58px; display: none; justify-content: center; z-index: 6; pointer-events: none; }
+    #over.on { display: flex; animation: overIn 2.4s ease-out both; }
+    #over.on .card { pointer-events: auto; background: rgba(20, 16, 38, .55); padding: 8px 14px; font-size: 12px; max-width: 24em; position: relative; }
+    #over.on h1 { font-size: 15px; }
+    #over.on button { padding: 4px 10px; margin-top: 8px; }
+    #over.on #over-close { position: absolute; top: 2px; right: 4px; margin: 0; padding: 0 6px; border: none; background: none; }
+    @keyframes overIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
     #over button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px 14px; margin-top: 14px; cursor: pointer; }
     #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); cursor: pointer; z-index: 5; }
     #start .card, #over .card { max-width: 30em; margin: 16px; padding: 22px 24px; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 10px; text-align: center; }
@@ -63,7 +76,7 @@
     #stick.on { display: block; }
     #stick .knob { position: absolute; left: 32px; top: 32px; width: 48px; height: 48px; border-radius: 50%; background: rgba(232, 226, 244, .35); }
     .tbtn { position: absolute; pointer-events: auto; border-radius: 50%; border: 2px solid rgba(232, 226, 244, .45); background: rgba(14, 11, 28, .45); color: var(--ink); display: flex; align-items: center; justify-content: center; text-align: center; }
-    .tbtn.down { background: rgba(255, 127, 208, .45); }
+    .tbtn.down { background: var(--accent-dim); }
     #rise { right: 22px; bottom: 30px; width: 86px; height: 86px; font-size: 12px; }
     #zoom-in, #zoom-out { width: 46px; height: 46px; font-size: 22px; right: 42px; }
     #zoom-in { bottom: 186px; }
@@ -83,17 +96,46 @@
     .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
-    /* A sleeping legend's dream (the first quest): the same pixel bubble, a legend's size (--px by level:
-       bubblePx in src/render/leash.ts), darkly filled, holding the sigil it wants in its level's variant.
-       A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its ink reddening. */
-    .bubble.dream { --ink: rgba(225, 215, 255, .85); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); }
-    .bubble.dream::before { background: rgba(14, 10, 30, .62); z-index: -1; }
-    .bubble.dream.nightmare::before { background: rgba(40, 6, 12, .7); }
+    /* the legend circle's explainer (render/leash.ts drawCirclePanel; Ed, 2026-10-06) */
+    .respawn { position: absolute; transform: translate(-50%, -100%) scale(calc(1 + var(--pulse, 0) * .06)); padding: 4px 12px 6px; border-radius: 10px; background: rgba(14, 11, 28, .62); box-shadow: 0 0 0 1px rgba(255, 120, 220, calc(.25 + var(--pulse, 0) * .45)); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 2; text-shadow: 0 1px 0 #000, 0 0 calc(6px + var(--pulse, 0) * 10px) rgba(255, 80, 200, .8); } /* the wait behind her decks after a knockout (render/leash/respawn.ts) */
+    .deck-bpm { position: absolute; transform: translate(-50%, -100%); padding: 1px 5px 0; border: 1px solid rgba(120, 255, 200, .45); border-radius: 2px; background: rgba(6, 14, 12, .82); color: rgb(120, 255, 200); font: 14px "Tiny5", ui-monospace, monospace; line-height: 14px; white-space: nowrap; pointer-events: none; z-index: 2; text-shadow: 0 0 4px rgba(120, 255, 200, .7); -webkit-font-smoothing: none; } /* the party's tempo over her decks, a DJ controller's display (render/leash/deckBpm.ts) */
+    .deck-bpm .u { font-size: 9px; margin-left: 3px; opacity: .75; }
+    .deck-bpm.up { animation: bpm-up 1.4s ease-out; }
+    .respawn .lead { font-size: 13px; color: rgb(140, 240, 255); letter-spacing: .04em; }
+    .respawn .n { font-size: 34px; font-weight: 700; line-height: 1; color: rgb(255, 120, 220); }
+    .legend-panel { position: absolute; max-width: 290px; padding: 10px 14px; border-radius: 10px; background: rgba(14, 11, 28, .72); box-shadow: 0 0 0 1px rgba(232, 180, 106, .25), 0 6px 24px rgba(0, 0, 0, .35); color: var(--ink); font-size: 14px; line-height: 1.35; text-shadow: 0 1px 0 #000; pointer-events: none; z-index: 2; }
+    .legend-panel p { margin: 0 0 6px; }
+    .legend-panel p:last-child { margin-bottom: 0; }
+    .legend-panel p:first-child { color: rgb(232, 196, 136); font-weight: 600; }
+    .legend-panel[data-state="restless"] p:first-child { color: rgb(236, 160, 120); }
+    .legend-panel[data-state="angry"] p:first-child { color: rgb(240, 120, 100); }
+    .legend-panel[data-state="happy"] p:first-child { color: rgb(150, 230, 170); }
+    .legend-panel p.done { opacity: .55; }
+    .legend-panel p.wrong { color: rgb(240, 150, 130); }
+    .legend-panel .icon { width: 22px; height: 22px; vertical-align: -6px; margin: 0 2px; image-rendering: pixelated; }
+    /* A dream's pointer (Ed, 2026-10-06): a pixel arrow on the bubble's edge toward the nearest runestone of the area its quest
+       animal lives in, and that way in words under the sigil (src/render/compass.ts; rules/dream.ts dreamWay). */
+    .dream-way { position: absolute; transform: translate(-50%, 0); display: flex; align-items: center; gap: calc(var(--px) / 2); padding: calc(var(--px) / 3) var(--px); background: rgba(14, 11, 28, .7); box-shadow: 0 0 0 1px rgba(232, 180, 106, .35); pointer-events: none; z-index: 2;
+      font: calc(var(--px) * 8 / 3) / 1 "Tiny5", ui-monospace, monospace; -webkit-font-smoothing: none; color: rgb(244, 226, 190); white-space: nowrap; }
+    .dream-way .dream-dir { width: calc(var(--px) * 11 / 3); height: calc(var(--px) * 11 / 3); image-rendering: pixelated; }
+    /* A sleeping legend's dream (the first quest): a thought bubble, a legend's size (--px by level: bubblePx in
+       src/render/leash.ts), holding the sigil it wants in its level's variant. Soft and round, in the HUD's amber, with two
+       small puffs rising to it from the sleeper, quieter than the art (the art director, #235: "a soft, round thought
+       bubble ... quieter than the art"). A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its
+       ink reddening. */
+    .bubble.dream { --ink: rgba(232, 180, 106, .5); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); padding: calc(var(--px) * 3) calc(var(--px) * 4); }
+    .bubble.dream::before { border: max(1px, calc(var(--px) * .5)) solid var(--ink); border-radius: 50%; clip-path: none; z-index: -1;
+      background: radial-gradient(ellipse at 50% 42%, rgba(26, 18, 34, .5), rgba(14, 10, 30, .32) 72%, rgba(14, 10, 30, .18));
+      box-shadow: 0 0 calc(var(--px) * 3) rgba(232, 180, 106, .14), inset 0 0 calc(var(--px) * 2) rgba(232, 180, 106, .1); }
+    .bubble.dream::after { left: 36%; top: calc(100% + var(--px) * .5); width: calc(var(--px) * 6); height: calc(var(--px) * 12); background:
+      radial-gradient(circle at 72% 14%, var(--ink) 0 calc(var(--px) * 1.3), transparent calc(var(--px) * 1.4)),
+      radial-gradient(circle at 30% 88%, var(--ink) 0 calc(var(--px) * .8), transparent calc(var(--px) * .9)); box-shadow: none; }
+    .bubble.dream.nightmare::before { background: radial-gradient(ellipse at 50% 42%, rgba(48, 8, 14, .6), rgba(40, 6, 12, .35) 72%, rgba(40, 6, 12, .2)); }
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
-    .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
+    .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/index-Mnyoq6kd.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-jTHfrA97.css">
+  <script type="module" crossorigin src="./assets/index-COT-a8sF.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DnShPyXc.css">
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -102,7 +144,8 @@
   <div id="debug"></div>
   <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button" class="fight-reset">reset fight scale, speed and momentum</button><span>treetop speed m/s</span><input type="range" name="treetop" min="16" max="160" step="2"><span class="treetop"></span><span>area (?areaSize=)</span><span class="area" style="grid-column: 2 / -1"></span><button type="button" class="world-reset">reset area size and treetop speed (new map)</button></div>
   <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
-  <div id="wave"><div class="fill"></div><div class="label"></div></div>
+  <div id="clock"><span class="t">00:00</span><div class="label"></div></div>
+  <div id="wild-left"></div>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
   <div id="touch">
     <div id="stick-zone"></div>
@@ -115,20 +158,25 @@
     <div class="tbtn" id="dash">dash</div>
     <div class="tbtn" id="invite">💌</div>
   </div>
-  <div id="over"><div class="card"><h1>THE PARTY'S OVER</h1><div>Every soundsystem has fallen.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
-  <div id="start" class="loading">
+  <div id="over"><div class="card"><button id="over-close" title="Hide">×</button><h1>THE PARTY'S OVER</h1><div>Everyone's gone home to sleep 😴. Wander as long as you like.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
+  <!-- The old start card (Ed, 2026-10-06: "can we skip it and go straight to the bedroom?"): hidden; shown only for a run
+       without the character creator (?creator=0: the tools and smoke runs) or a bot game. With the creator its contents
+       move into the creator's tabs (main.ts). -->
+  <div id="start" class="loading" style="display:none">
     <div class="card">
-      <h1>WITCH</h1>
+      <h1>COVEN RUSH</h1>
       <div>a prototype: fly the witch round the forest at night</div>
       <div class="go">Tap, click or press any key to start</div>
       <button type="button" id="look-btn" style="font:inherit;margin:6px 0;padding:4px 10px;border-radius:6px;border:1px solid rgba(232,226,244,.45);background:rgba(255,95,180,.18);color:inherit;cursor:pointer">👗 Change her look</button>
+      <button type="button" id="bot-btn" title="watch the skilled bot play a run (?bot=skilled; Esc comes back here)" style="font:inherit;margin:6px 0 6px 6px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,190,110,.55);background:rgba(255,190,110,.16);color:inherit;cursor:pointer">🤖 Bot game</button>
       <div id="progress"><div class="fill"></div><span class="label"></span></div>
       <div id="waves"></div>
       <div id="shake-opt"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W blink 10 m (on the ground) · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · on the ground, click (or hold 1) to throw 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
+        <b>Keyboard and mouse</b> WASD (or the arrow keys) fly · the mouse aims (the ring at the cursor glows pink within a 💌's reach, and a blue arc fills round it while the dodge recharges) · on the ground, left click (or hold 1) throws 💌 invites at the cursor: every one that lands joins a ring orbiting the creature, the gaps the hits still needed; a full ring turns to ❤️s and wins it over, its sigil dropping as a rune at its feet: stand by it and press E to leash it; left alone, the envelopes fall out of orbit one by one (enraged ones and legends block them) · right click dodges toward the cursor: a 10 m blink on the ground, to the little diamond (pressed a moment early, it goes as soon as it can) · Space rises to the treetops or lands · E on the ground puts down / picks up a sigil (knocked out, she drops her hat: the 🎩 pointer leads back to it, and E on it puts it back on, before any sigil under it) · Q cycles the stack (the bottom sigil, the next put down, to the top) · R spell (speed boost) · 2–4 empty slots for now · the mouse wheel, Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
         <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
+        <b>On screen</b> at the start, the 🎶 scroll in her room unrolls once the forest has grown: it is the party spell, so click it (or Enter) to begin · pick a bot under "Player:" in her room (or ?bot=skilled) and cast the scroll to watch it play a run instead: 1, 2, 4 its speed, Esc back here · once home's speakers are up, the 🎶 ring at the edge points along the ley line to the next wave, its circle filling as the wave comes · the clock at the top is the time played<br>
         <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>
     </div>
