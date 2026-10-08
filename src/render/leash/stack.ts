@@ -40,9 +40,9 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
     y += size / 2;
     slotPos.set(id, pos);
     const col = (lv.slotOf(c.species, c.level), lv.colours.get(c.species)!);
-    // Down to her last hit, the leash frays: the stack flickers (Ed, 2026-10-04).
-    const fray = g.witches[0].health.hp === 1 && !g.witches[0].ko ? (Math.sin(time * 23 + j * 3.1) > 0.2 ? 1 : 0.25) : 1;
-    lv.standing.add(pos.x, pos.y, pos.z, size, sg.uv, col.r, col.g, col.b, fray);
+    // (No flicker when she's hurt: Ed, 2026-10-08, "When you're hurt, your leashes sigils flash - please turn this off"; her
+    // claw slashes say how hurt she is.)
+    lv.standing.add(pos.x, pos.y, pos.z, size, sg.uv, col.r, col.g, col.b, 1);
     const cyc = lv.cycledAt.get(id);
     if (cyc !== undefined) {
       const k = (time - cyc) / 0.45;

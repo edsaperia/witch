@@ -51,14 +51,17 @@ export function slashPixels(g = 1): SlashPixel[][] {
 }
 
 /** Colours (RGB) for the tones: a hot core, the glowing red, the torn dark-blood edge (Ed's reference, #6e1a1a). */
-export const SLASH_TONES: readonly (readonly [number, number, number])[] = [[255, 118, 92], [228, 30, 38], [118, 16, 22]];
+export const SLASH_TONES: readonly (readonly [number, number, number])[] = [[214, 46, 40], [158, 14, 24], [92, 8, 14]]; // (deeper, Ed 2026-10-08: "darker red")
+/** The most slashes she shows (her fourth hit, Ed 2026-10-08, knocks her out with no fourth slash). */
+export const SLASHES = 3;
 /** How long a new slash takes to cut in (s), and its white-hot flash. */
 export const SLASH_IN = 0.12, SLASH_FLASH = 0.16;
 
 /** What shows of each slash at `time`: hits taken (0 to `hits`), the newest's cut-in (0..1), its flash (0..1), and how much of
  *  it has drained (0..1, from its upper tip) as its hit heals. */
 export function slashState(h: { hp: number; repairAt: number; hurtAt: number }, hits: number, repairTime: number, time: number): { count: number; cut: number; flash: number; drained: number } {
-  const count = Math.max(0, Math.min(hits, hits - h.hp)), since = time - h.hurtAt;
+  const count = Math.max(0, Math.min(SLASHES, hits - h.hp)), since = time - h.hurtAt; // (one a hit, three at most: the hit after the third knocks her out, Ed 2026-10-08)
+  if (hits - h.hp > SLASHES) return { count, cut: 1, flash: 0, drained: 0 }; // (the knockdown: her three slashes stand whole as she goes down)
   const cut = since >= 0 ? Math.min(1, since / SLASH_IN) : 1, flash = since >= 0 && since < SLASH_FLASH ? 1 - since / SLASH_FLASH : 0;
   const drained = count > 0 && Number.isFinite(h.repairAt) && repairTime > 0 ? Math.max(0, Math.min(1, 1 - (h.repairAt - time) / repairTime)) : 0;
   return { count, cut, flash, drained };

@@ -126,24 +126,24 @@ describe("combat (Stage 4)", () => {
 });
 
 describe("the witch's health (Ed, 2026-10-04)", () => {
-  it("takes three hits; one comes back every repairTime seconds, the timer starting over at each hit", () => {
+  it("takes four hits (three slashes, then the one that knocks her out: Ed, 2026-10-08); one comes back every repairTime seconds, the timer starting over at each hit", () => {
     const h = newHealth(TUNING), R = TUNING.witchHealth.repairTime;
-    expect(h.hp).toBe(3);
+    expect(h.hp).toBe(4);
     expect(hurt(h, 0, TUNING)).toBe(false);
     expect(hurt(h, 5, TUNING)).toBe(false);
     repair(h, 5 + R - 1, TUNING);
-    expect(h.hp).toBe(1); // not yet
+    expect(h.hp).toBe(2); // not yet
     repair(h, 5 + R, TUNING);
-    expect(h.hp).toBe(2); // one back, 20 s after the last hit
+    expect(h.hp).toBe(3); // one back, 20 s after the last hit
     expect(hurt(h, 30, TUNING)).toBe(false); // hit again: the timer starts over
     repair(h, 5 + 2 * R, TUNING);
-    expect(h.hp).toBe(1);
-    repair(h, 30 + R, TUNING);
     expect(h.hp).toBe(2);
-    repair(h, 30 + 2 * R, TUNING);
+    repair(h, 30 + R, TUNING);
     expect(h.hp).toBe(3);
-    hurt(h, 100, TUNING); hurt(h, 101, TUNING);
-    expect(hurt(h, 102, TUNING)).toBe(true); // the third: knocked out
+    repair(h, 30 + 2 * R, TUNING);
+    expect(h.hp).toBe(4);
+    hurt(h, 100, TUNING); hurt(h, 101, TUNING); hurt(h, 102, TUNING);
+    expect(hurt(h, 103, TUNING)).toBe(true); // the fourth: knocked out
   });
 });
 
