@@ -13,7 +13,7 @@
 // couple of milliseconds' worth a frame; moving on along it only sets a uniform); two draws,
 // nothing allocated a frame.
 import type { PartyState } from "../rules/party";
-import { pulseProgress } from "../rules/leypulse";
+import { pulseLinks, pulseProgress } from "../rules/leypulse";
 import { bootPath, bootPulseAt, ringAlong, ringRadius } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -290,9 +290,11 @@ export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: n
     const u = end > branch.at ? Math.min(1, (at - branch.at) / (end - branch.at)) : 1;
     return branch.share + (1 - branch.share) * u;
   }
-  const k = shaderPulse(p, map, time);
-  if (k === null) return null;
-  return p.wave === 0 && branch ? 1 + (reveal - 1) * k : reveal * (p.wave + k);
+  if (shaderPulse(p, map, time) === null) return null;
+  // (reveal times as far along the route as the pulse, so it never skips either: Ed, 2026-10-08; from the boot's branch,
+  // already at the first stone, to the reveal-th as the pulse reaches the first)
+  const s = pulseLinks(p, map, time);
+  return s < 1 && branch ? 1 + (reveal - 1) * s : reveal * s;
 }
 
 export class LeyLines {
@@ -551,6 +553,9 @@ export class LeyLines {
   private tipPoints: LeyTip[] = this.tipColours.map(colour => ({ x: 0, z: 0, colour, links: 0 }));
   /** The front as last drawn (for tools), or null. */
   tip: LeyTip | null = null;
+  /** Where the wave's sparkler was last drawn (front()), or null with none: the HUD's wave pointer points here, so the two
+   *  always agree (on the first link it starts where the line meets the boot ring, pulseFrom, not at the treehouse). */
+  pulseTip: LeyTip | null = null;
 
   /** Each frame after grow(): the front of the line, where it's drawn to (none with the whole line drawn, or none yet: for
    *  tools; nothing's drawn there), and the pulses' sparklers. strength: how far it's faded (the party's over). */
@@ -565,7 +570,7 @@ export class LeyLines {
     const ringPulse = ringOn ? this.pointAt(this.ringDrawn, R!.pulse!, time, 3) : null;
     const ringK = strength * (R?.strength ?? 0);
     this.sparkler.update(pulse, time, strength); this.ringSparkler.update(ringPulse, time, ringK);
-    this.tip = tip;
+    this.tip = tip; this.pulseTip = pulse;
     return tip;
   }
 

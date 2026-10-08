@@ -34,7 +34,7 @@ export function drawPointers(v: View, time: number): void {
         ind.fade(shown);
         if (!c || shown <= 0) { ind.update(v.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
         const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
-        const pulse = i === 0 ? leyPulse(g.party, g.map, time, v.ley.currentLink()) : null, at = pulse ?? s;
+        const pulse = i === 0 ? v.ley.pulseTip ?? leyPulse(g.party, g.map, time, v.ley.currentLink()) : null, at = pulse ?? s; // (the sparkler's own point, drawn this frame)
         ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
       });
     };

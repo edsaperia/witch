@@ -43,8 +43,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const near: { d: number; l: ForestLight }[] = [];
   // Ed (2026-10-06): "The column of light above a runestone first appears when the leyline meets it": when the line's
   // tip reaches each stone (rules/leypulse.ts, the line's own reveal), worked out again when the line changes.
-  const rk = `${leyKey(g.party)}:${g.party.spellAt ?? "-"}`;
-  if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(g.party, g.map) };
+  const lp = v.leyParty ?? g.party, rk = `${leyKey(lp)}:${g.party.spellAt ?? "-"}`; // (the line's own party: leyLines.advance)
+  if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(lp, g.map) };
   const FLARE = R.flare.time;
   for (const m of mc.list) {
     const d = Math.hypot(m.x - w.x, m.z - w.z);
