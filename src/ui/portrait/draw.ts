@@ -3,7 +3,10 @@
 // names (HATS, HAIRS, TOPS, HANDS), so another one is an entry, and a name the tables lack falls back to hers.
 
 import { BASE, DEEP, INK, LIGHT, MAT, SHADE, col, type Mat } from "./palette";
-import { Raster, hash, inEll, mul, move, nearSeg, tri, turn, type Box, type Xf } from "./raster";
+import { Raster, hash, inEll, mul, move, nearSeg, scale, tri, turn, type Box, type Xf } from "./raster";
+import { FAMILIARS } from "./familiar";
+import { OTHER_HATS } from "./hats";
+import { OTHER_TOPS } from "./tops";
 import { HEAD, H, NECK, SHOULDER, W, type Hand, type Look, type Params } from "./rig";
 
 const TAU = Math.PI * 2;
@@ -142,22 +145,11 @@ function pointed(o: { h?: number; bend?: number; brim?: number; stars?: boolean;
     },
   };
 }
-/** The other hats, plain stand-ins for now (round 1 of the portrait; the art builders can redraw any of them as an entry here). */
-const brimOnly = (B: number, ry = 2.6) => (x: number, y: number) => inEll(x, y, 0, 0.5, B, ry);
 export const HATS: Record<string, HatDraw | null> = {
   none: null,
   classic: pointed(), crooked: pointed({ bend: 1.1 }), floppy: pointed({ h: 0.8, bend: 1.6, brim: 1.15 }), small: pointed({ h: 0.62, brim: 0.72 }),
   flowers: pointed({ flowers: true }), wizard: pointed({ h: 1.25, bend: 0.15, stars: true }),
-  top: { box: () => [-18, -22, 18, 4], px: (x, y, l) => { const h = 15 * Math.min(1.8, l.hatHeight); if (Math.abs(x) <= 9 && y <= 0.5 && y >= -h) return y > -2.6 * l.hatBand - 0.5 && y < 0 && l.hatBand > 0 ? col(MAT.BAND, BASE) : col(MAT.HAT, x > 4 ? SHADE : x < -6 ? LIGHT : BASE); return brimOnly(13 + 2 * l.hatBrim)(x, y) ? col(MAT.HAT, y > 1.5 ? DEEP : SHADE) : 0; } },
-  cowboy: { box: () => [-28, -18, 28, 6], px: (x, y, l) => { const B = 16 + 6 * Math.min(2, l.hatBrim), yb = y + 0.05 * x * x * (20 / B); if (Math.abs(x) <= 9 - Math.max(0, -y - 8) * 0.25 && y <= 0 && y >= -13 * Math.min(1.8, l.hatHeight) + (Math.abs(x) < 3 ? 1.5 : 0)) return col(MAT.HAT, x > 4 ? SHADE : BASE); return Math.abs(x) <= B && Math.abs(yb - 0.5) < 2.2 ? col(MAT.HAT, yb > 1.5 ? DEEP : LIGHT) : 0; } },
-  conical: { box: () => [-32, -14, 32, 3], px: (x, y, l) => { const ht = 9 * Math.min(1.6, l.hatHeight), B = 18 + 6 * Math.min(2, l.hatBrim); return y <= 1.5 && y >= -ht && Math.abs(x) <= B * (1 - Math.max(0, -y) / ht) ? col(MAT.HAT, x > 0 ? SHADE : LIGHT) : 0; } },
-  boppers: { box: () => [-14, -22, 14, 3], px: (x, y) => { for (const s of [-1, 1]) { if (inEll(x, y, s * 9.5, -18, 2.8, 2.8)) return col(MAT.FLOWER, BASE); if (nearSeg(x, y, s * 5, 0, s * 9, -16, 0.6)) return INK; } return Math.abs(y) < 1 && Math.abs(x) < 11 ? col(MAT.HAT, BASE) : 0; } },
-  party: { box: () => [-10, -28, 10, 3], px: (x, y, l) => { const ht = 22 * Math.min(1.8, l.hatHeight), t = -y / ht; if (inEll(x, y, 0, -ht, 2.6, 2.6)) return col(MAT.FLOWER2, BASE); if (y > 0.5 || t > 1 || Math.abs(x) > 7.5 * (1 - t) + 0.6) return 0; return col(Math.floor((x - y * 0.8 + 40) / 3) % 2 ? MAT.HAT : MAT.FLOWER, x > 2 ? SHADE : BASE); } },
-  musketeer: { box: () => [-30, -26, 30, 5], px: (x, y, l) => { if (nearSeg(x, y, 6, -7, -6, -17, 2.2) || nearSeg(x, y, -6, -17, -15, -15, 1.6)) return col(MAT.PLUME, y < -14 ? LIGHT : BASE); if (inEll(x, y, 0, 0, 10, 10) && y <= 0.5) return col(MAT.HAT, x > 4 ? SHADE : BASE); return brimOnly(18 + 6 * Math.min(2, l.hatBrim), 3)(x, y) ? col(MAT.HAT, y > 1.5 ? DEEP : LIGHT) : 0; } },
-  beanie: { box: () => [-16, -14, 16, 3], px: (x, y) => { if (inEll(x, y, 0, -11.5, 3.4, 3.4)) return col(MAT.FLOWER, BASE); if (!inEll(x, y, 0, 0, 14.5, 11) || y > 1.5) return 0; return y > -2.5 ? col(MAT.HAT, Math.round(x) % 2 ? SHADE : LIGHT) : col(MAT.HAT, x > 6 ? SHADE : BASE); } },
-  crown: { box: () => [-13, -14, 13, 3], px: (x, y) => { if (Math.abs(x) > 11 || y > 1 || y < -7 - 5 * (1 - tri((x + 11) / 5.5))) return 0; if (Math.abs(y + 3) < 1.2 && Math.abs(((x + 44) % 5.5) - 2.75) < 1) return col(MAT.FLOWER, BASE); return col(MAT.GOLD, x > 5 ? SHADE : BASE); } },
-  mushroom: { box: () => [-26, -20, 26, 3], px: (x, y, l) => { const B = 18 + 3 * Math.min(2, l.hatBrim); if (!inEll(x, y, 0, 1, B, 13 * Math.min(1.6, l.hatHeight)) || y > 1.5) return 0; if (hash(Math.floor((x + 40) / 5), Math.floor((y + 40) / 4), 5) > 0.7 && Math.abs(((x + 40) % 5) - 2.5) < 1.6 && Math.abs(((y + 40) % 4) - 2) < 1.2) return col(MAT.WHITE, BASE); return col(MAT.HAT, x > B * 0.4 ? SHADE : y < -8 ? LIGHT : BASE); } },
-  traffic: { box: () => [-16, -30, 16, 3], px: (x, y, l) => { const ht = 24 * Math.min(1.8, l.hatHeight), t = -y / ht; if (Math.abs(x) <= 13 && y >= -1 && y <= 1.5) return col(MAT.HAT, SHADE); if (y > 0 || t > 1 || Math.abs(x) > 9.5 * (1 - t) + 1.2) return 0; return (t > 0.3 && t < 0.42) || (t > 0.6 && t < 0.7) ? col(MAT.WHITE, BASE) : col(MAT.HAT, x > 2 ? SHADE : BASE); } },
+  ...OTHER_HATS, // (the rest: hats.ts)
 };
 
 // ---- tops, the cloak ----
@@ -170,6 +162,7 @@ export const TOPS: Record<string, (x: number, y: number, p: Params) => number> =
   mesh: (x, y) => (Math.abs(x) < 7 - (y - 3) * 0.42 ? ((Math.round(x) + Math.round(y)) % 3 === 0 ? col(MAT.TOP, DEEP) : col(MAT.SKIN, SHADE)) : lit(MAT.JACKET, x / 27, (y - 12) / 14)),
   poncho: (x, y) => { const band = Math.floor((y + 2) / 4) % 3; return col(band === 0 ? MAT.TOP : band === 1 ? MAT.JACKET : MAT.FLOWER, x > 14 ? SHADE : BASE); },
   cape: (x, y) => (Math.abs(x) < 7 - (y - 3) * 0.42 ? col(MAT.TOP, BASE) : lit(MAT.CLOAK, x / 27, (y - 12) / 14)),
+  ...OTHER_TOPS, // (patterned: tops.ts)
 };
 
 // ---- hands ----
@@ -261,6 +254,9 @@ export function drawPortrait(r: Raster, look: Look, p: Params, t: number): void 
     const hd = (HATS[look.hat] ?? HATS.classic)!;
     r.draw((x, y) => hd.px(x, y, look, p), hd.box(look), mul(head, mul(move(p.hatX, -14 + p.hatY), turn(p.hatRot + look.hatTilt * 0.05))), INK);
   }
+  // her familiar on her shoulder
+  const fam = FAMILIARS[look.familiar];
+  if (fam) r.draw((x, y) => fam.px(x, y, t), fam.box, mul(body, mul(move(-19, 8), mul(scale(1.3), move(19, -8)))), INK); // (a little bigger than life, so it reads)
   // hands in front
   for (const [hd, s] of [[p.handL, -1], [p.handR, 1]] as const) if (hd && !hd.behind) hand(hd, s);
 }

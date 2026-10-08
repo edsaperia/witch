@@ -9,6 +9,7 @@ import { DEFAULT_OUTFIT } from "../../../art/witch.js";
 export const MAT = {
   SKIN: 0, HAIR: 1, HAT: 2, BAND: 3, JACKET: 4, TOP: 5, CLOAK: 6, SCARF: 7, PHONES: 8, SHADES: 9, GOLD: 10, IRIS: 11,
   MOUTH: 12, TONGUE: 13, WHITE: 14, BLUSH: 15, SWEAT: 16, PLUME: 17, FLOWER: 18, FLOWER2: 19, TRIM: 20, STAR: 21,
+  FAMILIAR: 22, FAMILIAR2: 23, // (her familiar: its coat, and its eyes, beak or throat; art builder 1)
 } as const;
 export type Mat = (typeof MAT)[keyof typeof MAT];
 export const BASE = 0, LIGHT = 1, SHADE = 2, DEEP = 3;
@@ -16,7 +17,7 @@ export const BASE = 0, LIGHT = 1, SHADE = 2, DEEP = 3;
 export const INK = 1;
 /** A material's tone as a palette index. */
 export const col = (m: Mat, tone = BASE): number => 2 + m * 4 + tone;
-export const PALETTE_SIZE = 2 + 22 * 4;
+export const PALETTE_SIZE = 2 + Object.keys(MAT).length * 4;
 
 export type HSV = [number, number, number];
 /** The genome's colour parts (the creator's `palette`), any of them missing. */
@@ -40,7 +41,7 @@ const abgr = ([r, g, b]: [number, number, number], a = 255) => ((a << 24) | (b <
 /** The fixed colours: the mouth, tongue, whites, blush, sweat, the stars. */
 const FIXED: Partial<Record<Mat, HSV>> = { [MAT.MOUTH]: [0.98, 0.65, 0.45], [MAT.TONGUE]: [0.99, 0.45, 0.88], [MAT.WHITE]: [0.62, 0.04, 0.99], [MAT.BLUSH]: [0.97, 0.45, 1], [MAT.SWEAT]: [0.55, 0.35, 1], [MAT.STAR]: [0.14, 0.45, 1] };
 /** Which genome part colours each material. */
-const PART: Partial<Record<Mat, string>> = { [MAT.SKIN]: "skin", [MAT.HAIR]: "hair", [MAT.HAT]: "hat", [MAT.BAND]: "band", [MAT.JACKET]: "jacket", [MAT.TOP]: "top", [MAT.CLOAK]: "cloak", [MAT.SCARF]: "scarf", [MAT.PHONES]: "headphones", [MAT.SHADES]: "shades", [MAT.GOLD]: "gold", [MAT.IRIS]: "eyes", [MAT.PLUME]: "plume", [MAT.FLOWER]: "flower", [MAT.FLOWER2]: "flower2", [MAT.TRIM]: "trim" };
+const PART: Partial<Record<Mat, string>> = { [MAT.SKIN]: "skin", [MAT.HAIR]: "hair", [MAT.HAT]: "hat", [MAT.BAND]: "band", [MAT.JACKET]: "jacket", [MAT.TOP]: "top", [MAT.CLOAK]: "cloak", [MAT.SCARF]: "scarf", [MAT.PHONES]: "headphones", [MAT.SHADES]: "shades", [MAT.GOLD]: "gold", [MAT.IRIS]: "eyes", [MAT.PLUME]: "plume", [MAT.FLOWER]: "flower", [MAT.FLOWER2]: "flower2", [MAT.TRIM]: "trim", [MAT.FAMILIAR]: "familiar", [MAT.FAMILIAR2]: "familiar2" };
 /** The eyes' colour while the creator has none (DECISION FOR ED: a warm amber-brown, as in Ed's reference). */
 export const EYES: HSV = [0.07, 0.6, 0.62];
 

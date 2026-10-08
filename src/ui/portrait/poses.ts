@@ -99,6 +99,45 @@ export const GESTURES: Record<string, Seq> = {
       { t: 1.4, p: { hatRot: 0, hatY: 0, handR: hand(18, -28, "pinch", -0.4) } }, { t: 1.9, p: { handR: down(1, "pinch") } },
     ],
   },
+  // (art builder 1's: pointing, the peace sign, a shrug, a facepalm, a think, and pointing the way for a hint)
+  point: {
+    dur: 1.6, label: "point", keys: [
+      { t: 0, p: { handR: down(1, "point") } }, { t: 0.3, p: { handR: hand(24, -8, "point", 1.35), lookX: 0.7, browY: 0.6, mouth: "grin" } },
+      { t: 0.45, p: { handR: hand(26, -8, "point", 1.4) } }, { t: 1.2, p: { handR: hand(25, -8, "point", 1.4) } }, { t: 1.6, p: { handR: down(1, "point"), lookX: 0, browY: 0, mouth: "smile" } },
+    ],
+  },
+  pointWay: {
+    dur: 2.2, label: "pointing the way (hint)", keys: [
+      { t: 0, p: { handR: down(1, "point") } }, { t: 0.35, p: { handR: hand(23, -30, "point", 0.75), lookX: 0.9, lookY: -0.5, tilt: -0.06, browY: 1, mouth: "O" } },
+      { t: 0.6, p: { handR: hand(25, -32, "point", 0.8) } }, { t: 0.85, p: { handR: hand(23, -30, "point", 0.75), mouth: "smile" } }, { t: 1.1, p: { handR: hand(25, -32, "point", 0.8) } },
+      { t: 1.7, p: { handR: hand(24, -31, "point", 0.78) } }, { t: 2.2, p: { handR: down(1, "point"), lookX: 0, lookY: 0, tilt: 0, browY: 0 } },
+    ],
+  },
+  peace: {
+    dur: 1.8, label: "peace sign", keys: [
+      { t: 0, p: { handR: down(1, "peace") } }, { t: 0.3, p: { handR: hand(15, -16, "peace", -0.2), tilt: 0.1, eyeShape: "happy", mouth: "grin", sparkle: 1 } },
+      { t: 1.4, p: { handR: hand(15, -16, "peace", -0.2) } }, { t: 1.8, p: { handR: down(1, "peace"), tilt: 0, sparkle: 0, eyeShape: "normal", mouth: "smile" } },
+    ],
+  },
+  shrug: {
+    dur: 1.8, label: "shrug", keys: [
+      { t: 0, p: { handL: down(-1), handR: down(1) } },
+      { t: 0.35, p: { handL: hand(-24, 2, "open", -1.15), handR: hand(24, 2, "open", 1.15), dy: -1.5, tilt: 0.08, browY: 1.6, browAng: -0.25, mouth: "wavy", lookX: -0.5, eyeOpen: 0.75 } },
+      { t: 1.3, p: { handL: hand(-24, 2, "open", -1.15), handR: hand(24, 2, "open", 1.15), dy: -1.5 } }, { t: 1.8, p: { handL: down(-1), handR: down(1), dy: 0, tilt: 0, browY: 0, browAng: 0, lookX: 0, eyeOpen: 1, mouth: "smile" } },
+    ],
+  },
+  facepalm: {
+    dur: 2.2, label: "facepalm", keys: [
+      { t: 0, p: { handR: down(1) } }, { t: 0.3, p: { handR: hand(5, -19, "open", -0.25), dy: 1.5, tilt: 0.1, eyeShape: "closed", mouth: "frown", browAng: -0.3 } },
+      { t: 0.45, p: { handR: hand(5, -20, "open", -0.25), dy: 2 } }, { t: 1.6, p: { handR: hand(5, -20, "open", -0.25), sweat: 1 } }, { t: 2.2, p: { handR: down(1), dy: 0, tilt: 0, sweat: 0, eyeShape: "normal", mouth: "smile", browAng: 0 } },
+    ],
+  },
+  think: {
+    dur: 2.4, label: "thinking", keys: [
+      { t: 0, p: { handR: down(1, "fist") } }, { t: 0.35, p: { handR: hand(7, -5, "fist", -0.3), lookX: -0.6, lookY: -0.8, mouth: "cat", browAng: 0.15, tilt: -0.06 } },
+      { t: 1.9, p: { handR: hand(7, -5, "fist", -0.3), lookX: -0.4 } }, { t: 2.4, p: { handR: down(1, "fist"), lookX: 0, lookY: 0, browAng: 0, tilt: 0, mouth: "smile" } },
+    ],
+  },
 };
 
 const isHand = (v: unknown): v is Hand => !!v && typeof v === "object";
