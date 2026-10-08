@@ -760,6 +760,16 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 | `notice.curious` | number | 0 to … |
 | `notice.skittish` | number | 0 to … |
 
+### `stoneIdle`
+
+Hostile creatures gather near the runestone (Ed, 2026-10-08: "if you enter a hostile area and the animals are at the very opposite end, it can be quite a long time before they reach you, and so it feels like nothing is happening. I think we can solve this by having the hostile creatures tend to idle near the runestone"): a wild area's own hostile young and adults (not its babies, its legend or its circle's baby, nor a friendly area's, nor happy, leashed or enraged ones) start, roam and nap anywhere in a disc of radius metres round its runestone, evenly spread (a loose cluster, not a ring), keeping clear metres off the stone itself; still inside their own area. Arriving at the stone means meeting them. on: false lets them roam the whole area as before.
+
+| knob | type | range |
+|---|---|---|
+| `stoneIdle.on` | boolean |  |
+| `stoneIdle.radius` | number | 0 to … |
+| `stoneIdle.clear` | number | 0 to … |
+
 ### `wildWatch`
 
 The wild watch (Ed, 2026-10-07: when she enters a dormant area its animals nap, then "stir, evade and hang back, turning to LOOK at her", then attack; every creature looks, no special art): on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. on: false: they attack at once, as before. Slower, with a warning (Ed, 2026-10-07: "make the dormant-to-attacking choreography slower, with a visible sign of aggro (e.g. red tint) rising that lets a player who wanders into a dangerous area understand what's happening and have time to run away"): time is 4 s (Ed, 2026-10-08: "Six second dormant period should be four seconds"; 5.5 before, 2 before that); leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint (Ed, 2026-10-07: the screen edges' red that went with it is gone: "remove the wild area aggro red glow"), times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one. When the watch ends (they attack, she invites one, she leaves or rises) the red eases out over fade seconds (Ed, 2026-10-07: "should fade out rather than cut out instantly"; DECISION FOR ED, 0.7). inviteWakes (Ed, 2026-10-08): a 💌 landing on one of a wild area's creatures wakes the area at once: its watch is over (or never starts), and its own young and adults, napping or not, wake with no getting up and go for her at once, by the hunt's rules (rules/inviteWakes.ts); its babies, legend and circle baby as before.

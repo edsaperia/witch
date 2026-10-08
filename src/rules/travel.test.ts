@@ -39,6 +39,7 @@ describe("travelling and posse (Ed, 2026-10-05)", () => {
     clearAround(g, sx, sz, 120);
     const mine = place(g, "wolf", 2, sx, sz, true);
     const boars = [0, 1, 2].map(i => place(g, "boar", 2, sx - 6 - i * 8, sz + (i - 1) * 3));
+    for (const b of boars) b.rest = 1e9; // (standing where they are as it passes: not wandering off to idle by their runestone, rules/creatures.ts idlesAtStone)
     let engaged = false;
     run(g, 10, () => { if (mine.fight?.target || boars.some(b => b.fight?.target?.kind === "creature" && b.fight.target.id === mine.id)) engaged = true; });
     expect(mine.travelling).toBe(true);
