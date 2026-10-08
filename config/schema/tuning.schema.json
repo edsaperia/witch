@@ -6055,8 +6055,12 @@
             "type": "string"
           }
         },
-        "areaNeon": {
-          "type": "boolean"
+        "mode": {
+          "type": "string",
+          "enum": [
+            "palette",
+            "areaNeon"
+          ]
         },
         "twinkle": {
           "type": "number",
@@ -6080,7 +6084,7 @@
         "sag",
         "bulbSpacing",
         "palette",
-        "areaNeon",
+        "mode",
         "twinkle",
         "chaseSpeed"
       ],

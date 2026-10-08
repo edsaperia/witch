@@ -8,6 +8,7 @@ export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "music.latency": { enum: ["interactive", "balanced", "playback"] },
   "berries.cost.by": { enum: ["power", "value"] },
   "arena.curve": { enum: ["linear", "smooth"] },
+  "stringLights.mode": { enum: ["palette", "areaNeon"] },
   "partyObjects.home.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "partyWitches.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "grounds.radius": { additionalProperties: { type: "number", minimum: 0 } },
