@@ -1,20 +1,23 @@
-// Hand-placed pixel maps as art builder 1 draws them (the portrait's round 2, docs/PORTRAIT-STYLE.md): a part as rows of the
-// shared letters (sprite.ts LEGEND), '.' empty, on an anchor (its reference point: the brim's centre, the head's centre, the neck
-// pivot), so the sliders can work on whole rows and columns before it becomes a Sprite. Never rotated or scaled.
+// Hand-placed pixel maps (the portrait's round 2, docs/PORTRAIT-STYLE.md): a part as rows of letters, '.' empty, each letter
+// one material at one tone through the part's legend, so the creator's colours swap without redrawing. Placed in whole pixels
+// on an anchor (the part's own reference point: the brim's centre, the head's centre, the neck pivot), never rotated or scaled.
 
-import { LEGEND, sprite, type Sprite } from "../sprite";
+import type { Mat } from "../palette";
+
+/** The outline tone (darker and richer than deep, in the material's own hue), after base 0, light 1, shade 2, deep 3. */
+export const OUTLINE = 4;
 
 export interface PixMap {
   /** where the part's reference point is, in its rows (x, y) */
   readonly anchor: readonly [number, number];
-  /** its pixels in LEGEND's letters, top row first, all the same width */
+  /** each letter's material and tone */
+  readonly legend: Readonly<Record<string, readonly [Mat, number]>>;
+  /** its pixels, top row first, all the same width */
   readonly rows: readonly string[];
 }
 
 /** A template block's rows (its blank first and last lines dropped). */
 export const rows = (s: string): string[] => s.split("\n").filter(r => r.length > 0);
-/** The map as a Sprite (its rows kept whole: blank rows included). */
-export const toSprite = (m: PixMap): Sprite => sprite(m.rows.join("\n"));
 
 /** Resamples rows a..b (inclusive) of `rows` to `n` rows (nearest), keeping the rest. */
 export function stretchRows(rs: readonly string[], a: number, b: number, n: number): string[] {
@@ -35,8 +38,8 @@ export function shear(rs: readonly string[], until: number, shift: (y: number) =
     return s > 0 ? ".".repeat(s) + row.slice(0, row.length - s) : s < 0 ? row.slice(-s) + ".".repeat(-s) : row;
   });
 }
-/** The letters a map uses that LEGEND lacks. */
+/** Every letter the map uses, and the ones its legend lacks. */
 export function missingLetters(m: PixMap): string[] {
   const seen = new Set<string>(); for (const r of m.rows) for (const c of r) if (c !== ".") seen.add(c);
-  return [...seen].filter(c => !(c in LEGEND));
+  return [...seen].filter(c => !(c in m.legend));
 }
