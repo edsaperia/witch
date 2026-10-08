@@ -303,6 +303,16 @@ export const HAIR_MOHAWK_BACK: PixMap = {
 KSSSSSSSSSSSSSSSHHHHHHHHHHHSSSSSSSSSSkkkkkK
 KSSSSSSSSSSSSSSSHHHHHHHHHHHSSSSSSSSSSkkkkkK
 ..SSSSSSSSSSSSSSHHHHHHHHHHHSSSSSSSSSSkkkkk.
+..ssssssSSSSSSSSSSSSS..SSSSSSSSSSSSSSkkkkk.
+..ssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkk.
+..ssssssSSSSSSSSSSSS....SSSSSSSSSSSSSkkkkk.
+..ssssssSSSS.SSSSSS......SSSSSS.SSSSSkkkkk.
+..s.ssssSSSS..SSSSS......SSSSS..SSSSSkkk.k.
+..s.ssssSSS...SSSSS......SSSSS...SSSSkkk.k.
+..s..sssSSS....SSS........SSS....SSSSkk..k.
+......ssSS.....SSS........SSS.....SSSk.....
+......ssSS......S..........S......SSSk.....
+.......sS..........................SS......
 `),
 };
 

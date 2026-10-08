@@ -6,7 +6,7 @@ import { BASE, DEEP, INK, LIGHT, MAT, SHADE, col, type Mat } from "./palette";
 import { Raster, hash, inEll, mul, move, nearSeg, scale, tri, turn, type Box, type Xf } from "./raster";
 import { BLUSH, BROWS, EYES, FACE, IRISES, MOUTHS as MOUTH_ART, SWEAT, TEAR } from "./art/face";
 import { HEAD_SKIN, NECK as NECK_ART } from "./art/target";
-import { FALLBACK, HAIR_ART, HAT_ART, NEAREST, TOP_ART, atAnchor } from "./parts";
+import { FALLBACK, HAIR_ART, HAT_ART, NEAREST, NECKWEAR, TOP_ART, atAnchor } from "./parts";
 import { handHatTip } from "./maps/body";
 import { LEGEND, blit, blitXf, type Placed } from "./sprite";
 import { OTHER_HATS } from "./hats";
@@ -175,17 +175,18 @@ export function drawPortrait(r: Raster, look: Look, p: Params, t: number): void 
   }, [-30, -30, 30, 40], head, INK);
   // the neck (under the collar), the top and its collar, the scarf, headphones round her neck, the pendant
   blit(r, NECK_ART, hx, hy + 52);
-  const topArt = TOP_ART[look.top] ?? (near ? TOP_ART.jacket : undefined);
+  const topArt = TOP_ART[look.top] ?? (near ? TOP_ART.jacket : undefined), placedTop = topArt !== undefined;
   if (topArt) for (const pl of topArt(look, p)) at(pl, bx, by);
   else {
     const top = TOPS[look.top] ?? TOPS.jacket;
     r.draw((x, y) => (y >= 3 && Math.abs(x) <= shoulders(y) ? top(x, y, p) : 0), [-30, 2, 30, 30], body, INK);
     if (look.top !== "poncho") r.draw((x, y) => { const a = Math.abs(x), v = 7 - (y - 3) * 0.42; return y >= 2 && y < 19 && a >= v && a < v + 3.6 - (y - 2) * 0.05 ? col(look.top === "cape" ? MAT.CLOAK : MAT.JACKET, a > v + 2.2 ? BASE : LIGHT) : 0; }, [-14, 1, 14, 20], body, INK);
   }
-  if (look.scarf) r.draw((x, y) => { if (y >= 0 && y <= 5 && Math.abs(x) <= 10 - y * 0.2) return col(MAT.SCARF, Math.floor(x + 20) % 4 < 2 ? BASE : LIGHT); const tx = x - p.robeBlow * Math.max(0, y - 5) * 0.8; return y > 5 && y < 24 && tx > 3.5 && tx < 8 ? col(MAT.SCARF, y % 4 < 2 ? BASE : SHADE) : 0; }, [-12, -1, 30, 25], body, INK);
+  if (placedTop) for (const pl of NECKWEAR(look, p)) at(pl, bx, by); // (hand-placed neckwear over a hand-placed top)
+  else if (look.scarf) r.draw((x, y) => { if (y >= 0 && y <= 5 && Math.abs(x) <= 10 - y * 0.2) return col(MAT.SCARF, Math.floor(x + 20) % 4 < 2 ? BASE : LIGHT); const tx = x - p.robeBlow * Math.max(0, y - 5) * 0.8; return y > 5 && y < 24 && tx > 3.5 && tx < 8 ? col(MAT.SCARF, y % 4 < 2 ? BASE : SHADE) : 0; }, [-12, -1, 30, 25], body, INK);
   if (look.phones && p.phonesOn < 0.5 && !topArt) r.draw( // (round 2: not over a hand-placed top until they're drawn too)
     (x, y) => { const a = Math.abs(x); if (inEll(a, y, 9, 4.5, 4.2, 3)) return y > 5.6 ? col(MAT.PHONES, DEEP) : col(MAT.PHONES, x > 0 ? SHADE : LIGHT); return a > 4.2 && a < 6.4 && y > -4 && y < 3 ? col(MAT.PHONES, DEEP) : 0; }, [-15, -5, 15, 9], body, INK);
-  if (look.pendant) r.draw((x, y) => (inEll(x, y, 0, 15, 2.2, 2.2) ? (inEll(x, y, -0.4, 14.6, 0.9, 0.9) ? col(MAT.BAND, LIGHT) : col(MAT.GOLD, BASE)) : 0), [-3, 12, 3, 18], body, INK);
+  if (look.pendant && !placedTop) r.draw((x, y) => (inEll(x, y, 0, 15, 2.2, 2.2) ? (inEll(x, y, -0.4, 14.6, 0.9, 0.9) ? col(MAT.BAND, LIGHT) : col(MAT.GOLD, BASE)) : 0), [-3, 12, 3, 18], body, INK);
   // her face: its skin, then the drawn features on it
   blit(r, HEAD_SKIN, hx, hy);
   const { eye, iris } = eyeArt(p), e = EYES[eye], gx = Math.max(-1, Math.min(1, Math.round(p.lookX * 1.2))), gy = Math.max(-1, Math.min(1, Math.round(p.lookY * 1.2)));

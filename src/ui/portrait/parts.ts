@@ -9,7 +9,8 @@
 
 import { col, type Mat } from "./palette";
 import { ROBE_JACKET } from "./maps/body";
-import { HAIR_LONG_BACK, HAIR_LONG_CROWN, HAIR_LONG_FRONT, HAIR_LONG_HAT_SHADOW } from "./maps/hairLong";
+import { NECK_PENDANT, NECK_PHONES, NECK_SCARF } from "./maps/neckwear";
+import { HAIR_MAPS } from "./maps/hairStyles";
 import { POINTED_HATS } from "./maps/hatsPointed";
 import type { PixMap } from "./maps/pixmap";
 import { BRIM, type Look, type Params } from "./rig";
@@ -33,18 +34,25 @@ const HC = { x: 32, y: 32 }, BC = { x: HC.x + BRIM.x, y: HC.y + BRIM.y };
 
 export const HAT_ART: Record<string, (l: Look) => Placed> = Object.fromEntries(Object.entries(POINTED_HATS).map(([k, f]) => [k, (l: Look) => atAnchor(f(l), BC.x, BC.y)]));
 /** A hair style's parts: drawn behind her head (back), and over her face (front). */
-export const HAIR_ART: Record<string, (l: Look, p: Params, hatOn: boolean) => { back: Placed[]; front: Placed[] }> = {
-  long: (_l, _p, hatOn) => ({
-    back: [...(hatOn ? [] : [atAnchor(HAIR_LONG_CROWN, HC.x, HC.y)]), atAnchor(HAIR_LONG_BACK, HC.x, HC.y)],
-    front: [atAnchor(HAIR_LONG_FRONT, HC.x, HC.y), ...(hatOn ? [atAnchor(HAIR_LONG_HAT_SHADOW, HC.x, HC.y)] : [])],
-  }),
-};
+export const HAIR_ART: Record<string, (l: Look, p: Params, hatOn: boolean) => { back: Placed[]; front: Placed[] }> = Object.fromEntries(
+  Object.entries(HAIR_MAPS).map(([k, h]) => [k, (_l: Look, _p: Params, hatOn: boolean) => ({
+    back: [...(hatOn ? [] : [atAnchor(h.crown, HC.x, HC.y)]), atAnchor(h.back, HC.x, HC.y)],
+    front: [atAnchor(h.front, HC.x, HC.y), ...(hatOn ? [atAnchor(h.hatShadow, HC.x, HC.y)] : [])],
+  })]),
+);
 export const TOP_ART: Record<string, (l: Look, p: Params) => Placed[]> = {
   jacket: () => [atAnchor(ROBE_JACKET, 0, 0)],
 };
+/** What she wears round her neck over a hand-placed top (in the body's pixels, like the top): the scarf, headphones resting
+ *  round her neck (not while she wears them), the pendant. */
+export const NECKWEAR = (l: Look, p: Params): Placed[] => [
+  ...(l.scarf ? [atAnchor(NECK_SCARF, 0, 0)] : []),
+  ...(l.phones && p.phonesOn < 0.5 ? [atAnchor(NECK_PHONES, 0, 0)] : []),
+  ...(l.pendant ? [atAnchor(NECK_PENDANT, 0, 0)] : []),
+];
 
 /** A part the creator offers but nobody has hand-placed yet: "shapes" draws its first-round shape (bigger), "nearest" the nearest
  *  hand-placed one in its colours (DECISION FOR ED; the art direction's round 1 asks which). */
 export const FALLBACK: { mode: "shapes" | "nearest" } = { mode: "shapes" };
 /** The nearest hand-placed hat or hair for one that isn't. */
-export const NEAREST: Record<string, string> = { wizard: "classic", bob: "long", buns: "long", mohawk: "long" };
+export const NEAREST: Record<string, string> = { wizard: "classic" };
