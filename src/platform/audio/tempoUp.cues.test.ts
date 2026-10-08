@@ -6,12 +6,12 @@ import type { Sfx } from "./sfx";
 import { SfxCues } from "./sfxCues";
 
 describe("the crowd's cheer as a knockdown speeds the party up (+1 BPM, Ed 2026-10-07)", () => {
-  it("with no knockout under way, cheers once, on the beat the tempo starts rising from", () => {
+  it("with no knockout under way, cheers once, on the bar line the tempo starts rising from", () => {
     const g = newGame(123, TUNING), cheers: number[] = [];
     let now = 0;
     const sfx = new Proxy({}, { get: (_, k) => k === "fireworkCheer" ? () => cheers.push(now) : () => {} }) as unknown as Sfx;
     const cues = new SfxCues(sfx);
-    const t0 = 10.3, rise = timeAt(g.beat, Math.ceil(beatAt(g.beat, t0)));
+    const t0 = 10.3, rise = timeAt(g.beat, Math.ceil(beatAt(g.beat, t0) / 4) * 4); // (the next bar line: #527's bonusAt)
     now = t0; cues.update(g, now);
     knockdownTempo(g.beat, g.tuning, t0);
     for (now = t0; now < rise + 2; now += 1 / 60) cues.update(g, now);

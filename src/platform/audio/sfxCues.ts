@@ -574,11 +574,11 @@ export class SfxCues {
   /** Knocked down, the party's tempo rises (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"; hotel's
    *  rules/beat.ts knockdownTempo, g.beat.bonus), and the crowd's cheer greets her back at her decks at the faster tempo:
    *  on her knockout's backAt (her clock), after the sad trumpet and the rewind, never over them; with no knockout under
-   *  way (a debug bump), on the beat the rise starts from. One cheer (fireworks.ts: three noise bands and a few whoops), at
+   *  way (a debug bump), on the bar line the rise starts from (g.beat.bonusAt). One cheer (fireworks.ts: three noise bands and a few whoops), at
    *  sfx.tempoUp.volume. */
   private tempoUp(h: Here): void {
     const { g, time } = h, b = g.beat.bonus ?? 0, ko = g.witches[0]?.ko;
-    if (b > this.bonusSeen) this.tempoUpDue = ko ? { at: ko.backAt, her: true } : { at: timeAt(g.beat, Math.ceil(beatAt(g.beat, time) - 1e-9)), her: false };
+    if (b > this.bonusSeen) this.tempoUpDue = ko ? { at: ko.backAt, her: true } : { at: timeAt(g.beat, g.beat.bonusAt ?? Math.ceil(beatAt(g.beat, time) - 1e-9)), her: false };
     this.bonusSeen = b;
     const due = this.tempoUpDue;
     if (due && (due.her ? g.herTime : time) >= due.at) {
