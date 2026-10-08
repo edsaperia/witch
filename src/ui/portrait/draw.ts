@@ -196,10 +196,10 @@ export function drawPortrait(r: Raster, look: Look, p: Params, t: number): void 
   blit(r, MOUTH_ART[p.mouth] ?? MOUTH_ART.smile, hx + FACE.mouth[0], hy + FACE.mouth[1]);
   if (p.blush > 0.3) { blit(r, BLUSH.l, hx + FACE.blushL[0], hy + FACE.blushL[1]); blit(r, BLUSH.r, hx + FACE.blushR[0], hy + FACE.blushR[1]); }
   if (p.tears > 0.3) { blit(r, TEAR, hx + FACE.tearL[0], hy + FACE.tearL[1]); blit(r, TEAR, hx + FACE.tearR[0], hy + FACE.tearR[1]); }
-  // hair in front (hand-placed), then the brows over it
-  if (hairParts) at(hairParts.front, hx, hy);
+  // the brows, then the hair in front over them (the fringe clips them: art direction round 3)
   const b = BROWS[browArt(p)], dy = -Math.max(-2, Math.min(3, Math.round(p.browY * 0.8)));
   blit(r, b.l, hx + FACE.browL[0], hy + FACE.browL[1] + dy); blit(r, b.r, hx + FACE.browR[0], hy + FACE.browR[1] + dy);
+  if (hairParts) at(hairParts.front, hx, hy);
   if (look.earrings) r.draw((x, y) => (inEll(Math.abs(x), y, 15.5, 7.5, 1.1, 1.4) ? col(MAT.GOLD, BASE) : 0), [-18, 4, 18, 11], head, INK);
   if (p.shades > 0.5 || (look.shades && p.shades >= 0)) r.draw((x, y) => { for (const s of [-1, 1]) if (Math.abs(x - s * 7.3) <= 5.4 && y >= -1.5 && y <= 4.5) return col(MAT.SHADES, y < -0.5 ? LIGHT : (Math.round(x - y) % 5 === 0 ? LIGHT : BASE)); return Math.abs(x) < 2 && y >= -1 && y <= 0 ? INK : 0; }, [-14, -3, 14, 6], head, INK);
   // headphones on her ears, sweat
