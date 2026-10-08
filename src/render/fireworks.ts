@@ -6,6 +6,9 @@
 // Cheap: a fixed pool on the GPU. A show is written once, when its event comes (every rocket and star with its start, its
 // velocity and its life; the vertex shader flies them, with drag and gravity), and nothing more until the next; a frame
 // does no work and allocates nothing.
+// An area cleared early (Ed, 2026-10-08: every hostile native invited, its runestone a soundsystem before the wave; the rules'
+// areaCleared) gets a small burst of its own here, not a show: a ring of sparks flung out round the new soundsystem's foot and a
+// puff of motes rising up it (towards where its projector and sky hologram come on), in the area's neon, over in about 1.3 s.
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { PIXEL_SNAP_GLSL } from "./shaders";
@@ -20,6 +23,8 @@ const POOL = 6144, TRAIL = 3, LAG = 0.028;
 const FROM_Y = 7;
 /** Bursts lighting the ground at once (the latest kept), how long a flash lasts (s), its reach (m) and strength. */
 const FLASHES = 12, FLASH_S = 0.9, FLASH_REACH = 40, FLASH_I = 1.6;
+/** The cleared burst: its sparks (how many, how far they fly, m, from how high) and its motes (how many, how fast they rise). */
+const CLEAR = { sparks: 56, reach: 14, y: 2.4, motes: 44, rise: 4.2, flash: 0.45 };
 
 /** The party's neons for a burst (cyan, blue, violet, magenta, pink, gold, green), along a hue 0-1. */
 const NEONS = [[0.3, 1, 1], [0.35, 0.55, 1], [0.7, 0.4, 1], [1, 0.3, 0.9], [1, 0.45, 0.6], [1, 0.82, 0.3], [0.45, 1, 0.5]];
@@ -28,7 +33,7 @@ const neon = (h: number, out: number[]) => { const c = NEONS[Math.floor(((h % 1)
 const VERT = /* glsl */ `
 attribute vec4 aFrom; // start (x, height over the ground, z) and when (s)
 attribute vec4 aVel;  // velocity (m/s) and life (s)
-attribute vec4 aLook; // colour, and its motion: 0 a rocket, 1 a star, 2 a willow's star, 3 a crackling star
+attribute vec4 aLook; // colour, and its motion: 0 a rocket, 1 a star, 2 a willow's star, 3 a crackling star, 4 a rising mote
 attribute float aLag; // its pixel's place along the streak (0 its head)
 uniform vec2 uRes;
 uniform float uMpp, uNow;
@@ -39,7 +44,8 @@ void main() {
   float mode = aLook.w, t = uNow - aFrom.w - aLag * ${LAG.toFixed(3)}, k = t / aVel.w;
   if (t < 0.0 || k >= 1.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; vCol = vec4(0.0); return; }
   // A rocket climbs straight; a star slows in the air (drag) and falls, a willow's slower and further.
-  float drag = mode < 0.5 ? 0.0 : mode > 1.5 && mode < 2.5 ? 2.6 : 1.7, grav = mode < 0.5 ? 0.0 : mode > 1.5 && mode < 2.5 ? 5.5 : 3.5;
+  // A mote (the cleared burst's) slows and floats up, lifting as it goes.
+  float drag = mode < 0.5 ? 0.0 : mode > 3.5 ? 2.2 : mode > 1.5 && mode < 2.5 ? 2.6 : 1.7, grav = mode < 0.5 ? 0.0 : mode > 3.5 ? -1.6 : mode > 1.5 && mode < 2.5 ? 5.5 : 3.5;
   float d = drag > 0.0 ? (1.0 - exp(-drag * t)) / drag : t;
   vec3 p = aFrom.xyz + aVel.xyz * d; p.y -= 0.5 * grav * t * t;
   // Its light: a white flash as it bursts, then its colour; the last third fading in steps; a crackle's glitter flickering.
@@ -47,7 +53,7 @@ void main() {
   float a = mode < 0.5 ? 0.8 : 1.0 * (1.0 - floor(max(0.0, k - 0.6) / 0.4 * 3.0) / 3.0);
   if (mode > 0.5 && k < 0.05) c = mix(mix(c, vec3(1.0), 0.55), c, k / 0.05); // (a touch of white as it bursts)
   if (mode > 0.5) { float r = min(1.0, k / 0.04); a *= r; } // (faint while they're all still together at the burst's heart: a shell's stars, added up, never bloom into one white blob)
-  if (mode > 2.5 && k > 0.45) a *= step(0.45, fh(floor(uNow * 18.0), aFrom.x * 3.1 + aVel.x * 7.7 + aLag)) * 1.4;
+  if (mode > 2.5 && mode < 3.5 && k > 0.45) a *= step(0.45, fh(floor(uNow * 18.0), aFrom.x * 3.1 + aVel.x * 7.7 + aLag)) * 1.4;
   if (aLag > 0.5) a *= aLag > 1.5 ? 0.35 : 0.6; // (the streak's tail)
   vCol = vec4(c * a, 1.0);
   vec3 g = onGround(p);
@@ -83,6 +89,8 @@ export class Fireworks {
   private nextBurst = 0;
   private lightPool: ForestLight[] = Array.from({ length: FLASHES }, () => ({ x: 0, y: 0, z: 0, reach: 0, rgb: new THREE.Vector3(), strength: 0 }));
   private lightsOut: ForestLight[] = [];
+  /** Each area's cleared burst, by when (so a frame that sees the same events again, paused, doesn't burst twice). */
+  private burstFor = new Map<string, number>();
 
   constructor(uRes: { value: THREE.Vector2 }, mpp: number) {
     const lag = new Float32Array(POOL);
@@ -143,9 +151,28 @@ export class Fireworks {
     }
   }
 
-  /** Each frame: start a show for each celebration this frame (the rules' waveCelebrate), and fly them. */
-  update(events: readonly { kind: string }[], time: number, t: Tuning): void {
+  /** An area cleared early: a ring of sparks out from the soundsystem's foot and motes rising up it, in its neon (0-255). */
+  private cleared(x: number, z: number, at: number, rgb: readonly number[]): void {
+    const r = rgb[0] / 255, g = rgb[1] / 255, b = rgb[2] / 255;
+    { const f = this.bursts[this.nextBurst]; this.nextBurst = (this.nextBurst + 1) % FLASHES; f.t = at; f.x = x; f.z = z; f.rgb.set(r * CLEAR.flash, g * CLEAR.flash, b * CLEAR.flash); }
+    for (let i = 0; i < CLEAR.sparks; i++) {
+      // round the ring, evenly, nearly level (a little up), every other one whiter
+      const a = (i / CLEAR.sparks) * Math.PI * 2 + this.rand() * 0.15, speed = CLEAR.reach * 1.7 * (0.8 + this.rand() * 0.4), up = 2 + this.rand() * 2.5, w = i % 4 ? 0.3 : 0.75; // (white-hot, tinted: they stand out against the stone's own glow in the same neon)
+      this.put(x + Math.cos(a) * 0.6, CLEAR.y, z + Math.sin(a) * 0.6, at, Math.cos(a) * speed, up, Math.sin(a) * speed, 1 + this.rand() * 0.35, r + (1 - r) * w, g + (1 - g) * w, b + (1 - b) * w, 1);
+    }
+    for (let i = 0; i < CLEAR.motes; i++) {
+      // a puff round its foot, drifting out a little and up its height, a few starting late
+      const a = this.rand() * Math.PI * 2, d = 0.4 + this.rand() * 1.8, out = 0.6 + this.rand() * 1.4;
+      this.put(x + Math.cos(a) * d, 0.3 + this.rand() * 1.5, z + Math.sin(a) * d, at + this.rand() * 0.25, Math.cos(a) * out, CLEAR.rise * (0.7 + this.rand() * 0.6), Math.sin(a) * out, 1 + this.rand() * 0.3, r * 0.8 + 0.2, g * 0.8 + 0.2, b * 0.8 + 0.2, 4);
+    }
+    this.liveTill = Math.max(this.liveTill, at + 1.6);
+  }
+
+  /** Each frame: start a show for each celebration this frame (the rules' waveCelebrate), a burst for each area cleared early
+   *  (areaCleared, in its neon: `neonOf` its area's key), and fly them. */
+  update(events: readonly { kind: string }[], time: number, t: Tuning, neonOf?: (key: string) => readonly number[]): void {
     for (const e of events) {
+      if (e.kind === "areaCleared") { const c = e as unknown as { key: string; x: number; z: number; at: number }; if (this.burstFor.get(c.key) === c.at) continue; this.burstFor.set(c.key, c.at); this.cleared(c.x, c.z, c.at, neonOf?.(c.key) ?? [50, 235, 255]); continue; }
       if (e.kind !== "waveCelebrate") continue;
       const c = e as unknown as { key: string; x: number; z: number; at: number };
       if (!this.celebrated.has(c.key)) this.celebrated.set(c.key, c.at);
