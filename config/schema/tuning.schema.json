@@ -3427,12 +3427,36 @@
             "fallback"
           ],
           "additionalProperties": false
+        },
+        "cycle": {
+          "type": "object",
+          "properties": {
+            "hold": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            },
+            "flask": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "hold",
+            "fade",
+            "flask"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "range",
         "nightmare",
-        "sleepy"
+        "sleepy",
+        "cycle"
       ],
       "additionalProperties": false
     },
