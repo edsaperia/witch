@@ -25,7 +25,7 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
    - If you've **cleared** it already, so its soundsystem plays, the wave **does nothing to the rules**: no animal is enraged and no second soundsystem comes. It **celebrates** instead (the `waveCelebrate` event: fireworks and that soundsystem's lasers). The music's next step, the ley line and the countdown carry on as normal.
    - If its early soundsystem has been lost, the wave passes it quietly.
 6. **Clearing an area** (Ed, 2026-10-07: the new core design) transforms its runestone **at once**, without waiting for its wave. An area is cleared when **none of its own wild young and adults is left**: every one of them invited, or run off. Its **babies don't count** (Ed, 2026-10-07: "Wild babies don't count; they should become party animals when the transition happens"): when it transforms they turn happy and dance, as party animals. Nor do its sleeping legend and the wild baby in its legend's circle. Only the area's **own** animals count, wherever they've wandered: a visitor from next door standing in it never holds it back, and isn't touched when its stone transforms (Ed, 2026-10-07). A few times a second the game looks (rules/clear.ts) and does just what a wave would (the `areaCleared` event): the soundsystem rises, the babies (the circle's too) turn happy and dance, a party witch comes, the area's music plays and its ley stone counts as reached. While she's in a wild area that can still be cleared, a line under the clock says how many of its own wild young and adults are left (and how many of them are asleep or knocked down: a sleeper wakes when she lands in its area, one knocked down runs off after its daze), and the last three each get a pointer, toward it off screen and over it on screen (Ed's playtest, 2026-10-07: some were out of sight). An early soundsystem **can be attacked** (besiegers marching on, an angry legend's bombard), and losing one works as any other (below).
-7. **A new soundsystem** rises at the area's runestone. It has **4000 health** (`combat.soundsystemHealth`), and the home ring has **8000** (`combat.homeHealth`). When it arrives:
+7. **A new soundsystem** rises at the area's runestone. It has **4000 health** (`combat.soundsystemHealth`). Home is its ring of **12 speakers**, each **500 health** (`combat.speakerHealth`; Ed, 2026-10-08). When it arrives:
    - the area's wild young and adults become **enraged** and **besiege** it (none, when you cleared it);
    - its wild babies turn **happy** on the spot and join the party, whether you cleared it or its wave transformed it (Ed, 2026-10-07: "Wild babies become party babies when the pulse transforms an uncleared area");
    - its happy animals come and **dance** round it, or at the area's party spots.
@@ -36,7 +36,7 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
    - every animal (yours too, and the ones that ran off) walks home or is simply there, asleep;
    - you can wander the map safely.
 
-The home ring shows its damage speaker by speaker as it loses health.
+Home's speakers are each a soundsystem in the fight: animals marching on home go for the nearest speaker still standing, and on to the next nearest when it falls. Each shows its own damage (damaged at half its health, destroyed at none). Home is lost, and the next wave hurried, only when the last speaker falls.
 
 ---
 

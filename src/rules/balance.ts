@@ -16,6 +16,7 @@ import { countScale, grownAt, growthLevel } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
 import { hash2 } from "./random";
+import { homeHealth, homeReach } from "./speakers";
 import { lanchester, levelValue } from "./power";
 
 /** A player in the model (the guesses are here): from the start of wave `fromWave` (0: from the
@@ -143,7 +144,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
   for (const l of by.values()) for (const f of l) { f.gone = false; f.siege = null; f.x = f.x0; f.z = f.z0; f.hp = undefined; f.value = levelValue(f.level) * f.m; }
   const falls: SimResult["falls"] = [], live: Fighter[] = [], sounds = new Map<string, Sound>(), party = newParty(map), waves: WaveSample[] = [];
   const d = map.dancefloor;
-  sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius });
+  sounds.set("home", { key: "home", x: d.x, z: d.z, hp: homeHealth(map.tuning), radius: homeReach(map.tuning) });
   const P = o.player, ruined = new Set<string>(), D = o.director, share = o.marchOn ?? 1, adult = levelValue(2);
   let reinforced = 0, owed = 0, nextId = -1;
   const guards: { key: string; x: number; z: number; hp: number; asleep: boolean }[] = [], GR = o.guardRadius ?? 30, LHP = COMBAT.levels.hp[3], LDPS = COMBAT.levels.dps[3];

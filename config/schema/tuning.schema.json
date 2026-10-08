@@ -2910,11 +2910,11 @@
           "type": "number",
           "minimum": 0
         },
-        "homeHealth": {
+        "speakerHealth": {
           "type": "number",
           "minimum": 0
         },
-        "homeRadius": {
+        "speakerRadius": {
           "type": "number",
           "minimum": 0
         },
@@ -2944,8 +2944,8 @@
         "fleeMult",
         "soundsystemHealth",
         "soundsystemRadius",
-        "homeHealth",
-        "homeRadius",
+        "speakerHealth",
+        "speakerRadius",
         "shake",
         "daze",
         "retreatHome"

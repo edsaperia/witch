@@ -14,6 +14,7 @@ import type { Game } from "./game";
 import type { Creature } from "./creatures";
 import { circleReach } from "./legendCircle";
 import { arcStep, type BlockPlan, type MusicStyle } from "./musicScore";
+import { isHomeKey } from "./speakers";
 
 /** Everything the conductor needs, in bars of the beat clock (bar 0 at game time 0). */
 export interface MusicCue {
@@ -151,7 +152,7 @@ export function partyNear(g: Game, at: { x: number; z: number }): number {
   if (!S) return 0;
   let best = 0, happy: Set<string> | null = null;
   for (const [key, h] of S.sounds) {
-    if (key === "home" || h.hp <= 0 || S.ruined.has(key)) continue;
+    if (isHomeKey(key) || h.hp <= 0 || S.ruined.has(key)) continue;
     const d = Math.hypot(h.x - at.x, h.z - at.z), near = 1 - Math.min(1, Math.max(0, (d - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
     if (near <= best) continue;
     if (!happy) { happy = new Set(); for (const c of g.creatures) if (c.boss && c.legendState === "happy" && !c.gone && !c.leashed) happy.add(`${c.cell[0]},${c.cell[1]}`); } // (one pass, only when one's in earshot)

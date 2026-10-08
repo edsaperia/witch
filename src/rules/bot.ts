@@ -20,6 +20,7 @@ import type { Creature } from "./creatures";
 import type { Cell } from "./partition";
 
 import { BOT_KINDS, type BotKind } from "./botKinds";
+import { isHomeKey } from "./speakers";
 export { BOT_KINDS, type BotKind };
 
 export interface BotOptions {
@@ -206,12 +207,15 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     const siegeFront = () => {
       const posse = sideValue(w.leash.stack.map(id => g.creatures[id]));
       let best = null as { key: string; h: { x: number; z: number }; near: Creature | null; n: number; home: boolean } | null, bs = 0;
-      for (const [key, h] of g.combat.sounds) {
+      // (home's speakers as one front at the dancefloor: rules/speakers.ts)
+      const fronts = new Map<string, { x: number; z: number; hp: number }>(), d0 = g.map.dancefloor;
+      for (const [key, h] of g.combat.sounds) if (!isHomeKey(key)) fronts.set(key, h); else { const f = fronts.get("home") ?? { x: d0.x, z: d0.z, hp: 0 }; f.hp += Math.max(0, h.hp); fronts.set("home", f); }
+      for (const [key, h] of fronts) {
         if (h.hp <= 0) continue;
         let f = 0, n = 0, near: Creature | null = null, nd = Infinity;
         for (const c of g.creatures) {
-          if (c.gone || c.siege !== key || c.leashed || c.fleeUntil !== undefined || c.dazed) continue;
-          const d = Math.hypot(c.x - h.x, c.z - h.z); if (d > K.siegeNear) continue;
+          if (c.gone || !c.siege || (key === "home" ? !isHomeKey(c.siege) : c.siege !== key) || c.leashed || c.fleeUntil !== undefined || c.dazed) continue;
+          const at = g.combat.sounds.get(c.siege) ?? h, d = Math.hypot(c.x - at.x, c.z - at.z); if (d > K.siegeNear) continue;
           f += creatureValue(c); n++; if (d < nd) { nd = d; near = c; }
         }
         if (f < K.siegeMin || (K.concede > 0 && f > K.concede * Math.max(posse, 1))) continue;
