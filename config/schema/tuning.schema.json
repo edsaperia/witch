@@ -2981,6 +2981,9 @@
         "on": {
           "type": "boolean"
         },
+        "inviteWakes": {
+          "type": "boolean"
+        },
         "time": {
           "type": "number",
           "minimum": 0
@@ -3008,6 +3011,7 @@
       },
       "required": [
         "on",
+        "inviteWakes",
         "time",
         "forget",
         "hangBack",

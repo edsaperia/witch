@@ -1,6 +1,7 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
+import { wakeOnInvites } from "./inviteWakes";
 import { MOVEMENT } from "./movement";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
@@ -454,6 +455,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g));
+  if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") refundDash(W.dash, ht, charges);
   questsFromPlaced(g, ht);
