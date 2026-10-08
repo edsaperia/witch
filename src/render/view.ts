@@ -48,6 +48,7 @@ import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { CombatLight } from "./combatLight";
 import { Lasers, type RingSpeaker } from "./lasers";
+import { SoundsystemGenView } from "./soundsystemGen";
 import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
@@ -383,7 +384,7 @@ export class View {
     this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
     this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
-    this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
+    this.partyView = new PartyView(this.assets.soundsystems, this.mpp, new SoundsystemGenView(this.scene, this.assets, this.mpp));
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
@@ -904,7 +905,7 @@ export class View {
     this.stats.batches = this.typeBatches.size + this.creatureBatches.size;
     this.stats.sceneryRadius = this.budget.radius; this.stats.fps = this.budget.fps;
     this.stats.scenery = this.stats.trees + this.stats.bushes;
-    this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count;
+    this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count + (this.partyView.gen?.count ?? 0);
   }
 }
 
