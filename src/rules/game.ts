@@ -4,7 +4,7 @@ import { stepHunts } from "./hunt";
 import { MOVEMENT } from "./movement";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
-import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
+import { beatAt, knockdownTempo, newBeatClock, tempoRate, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
 import { heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
@@ -289,6 +289,7 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
     const hatFloats = dropHat(w.hat, w.body.x, w.body.z, at, t.knockout.dropHat), streak = nextStreak(w.koStreak, at, t);
     w.koStreak = { n: streak, at };
     w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
+    knockdownTempo(g.beat, t, g.clock.time); // (the beat speeds up: Ed, 2026-10-07, "the BPM goes up by 1 each time you die")
     if (hatFloats) g.koEvents.push({ kind: "hatDropped", at, x: w.body.x, z: w.body.z });
     return;
   }
@@ -417,7 +418,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
   if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time, celebrate); g.party.nextAt = g.clock.time + t.party.interval; }
-  if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate);
+  if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (!over) stepLegends(g, legends, !!c.happyNearest);

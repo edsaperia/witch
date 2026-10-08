@@ -244,11 +244,17 @@ describe("knocked out (Ed, 2026-10-04)", () => {
   });
 
   it("lights a loading bar of candles on her desk, one a candleStep of the wait, the extra red, melting one after another as she scratches (Ed, 2026-10-07)", () => {
-    const { g } = setUp(), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; });
+    // (the stacking wait, 6, 8, 10, 12 s, as it was before Ed's "We can remove the extra knockdown time": still a knob)
+    const stack = { base: 6, step: 2, max: 12, cooldown: 60, minScratch: 1.5 };
+    const { g } = setUp(), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; x.knockout.respawn = stack; });
     const kos = [0, 1, 2, 3, 9].map(streak => knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak }));
     expect(kos.map(k => candleCount(k, t))).toEqual([6, 8, 10, 12, 12]); // (6, 8, 10, 12 s: the cap)
     expect(kos.map(k => candleRed(k, t))).toEqual([0, 2, 4, 6, 6]); // (the base's 6 s white)
-    const half = withTuning(x => { x.knockout.candleStep = 0.5; });
+    // today (Ed, 2026-10-07: each knockdown costs a BPM instead): every knockdown the flat base, its candles all white
+    const flat = withTuning(x => { x.knockout.candleStep = 1; });
+    const now = [0, 1, 2, 9].map(streak => knockOut(W.leash, g.creatures, 100, flat, { hatFloats: true, streak }));
+    expect(now.map(k => [candleCount(k, flat), candleRed(k, flat)])).toEqual([[6, 0], [6, 0], [6, 0], [6, 0]]);
+    const half = withTuning(x => { x.knockout.candleStep = 0.5; x.knockout.respawn = stack; });
     expect([candleCount(kos[0], half), candleCount(kos[4], half), candleRed(kos[4], half)]).toEqual([12, 24, 12]);
     const K = kos[1], n = candleCount(K, t);
     expect([0, 1, 7].map(i => candleMelt(K, K.inAt, i, t))).toEqual([0, 0, 0]); // (all whole as she arrives)

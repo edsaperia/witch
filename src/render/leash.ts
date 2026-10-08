@@ -33,6 +33,7 @@ import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, LEGEND_LEVEL
 import { drawCombat } from "./leash/combat";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
 import { drawRespawn } from "./leash/respawn";
+import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
@@ -491,6 +492,7 @@ export class LeashView {
     drawSnores(this, camera, width, height);
     drawCirclePanel(this, camera, width, height);
     drawRespawn(this, camera, width, height); // (the wait behind her decks after a knockout: render/leash/respawn.ts)
+    drawDeckBpm(this, camera, width, height); // (the party's tempo over her decks: render/leash/deckBpm.ts)
   }
 
   /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
@@ -500,6 +502,9 @@ export class LeashView {
   circlePanel: HTMLElement | null = null;
   /** The countdown at her decks after a knockout (render/leash/respawn.ts). */
   respawnEl: HTMLElement | null = null;
+  /** The tempo over her decks (render/leash/deckBpm.ts), and the knockdowns' bonus it last pulsed for. */
+  deckBpmEl: HTMLElement | null = null;
+  deckBonus = 0;
   circleFade = 0;
   circleAt = 0;
   circleLast: { legend: Creature; x: number; z: number; r: number } | null = null;

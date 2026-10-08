@@ -2027,6 +2027,10 @@
         "candleStep": {
           "type": "number",
           "minimum": 0
+        },
+        "bpmStep": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2039,7 +2043,8 @@
         "hatFloat",
         "dim",
         "respawn",
-        "candleStep"
+        "candleStep",
+        "bpmStep"
       ],
       "additionalProperties": false
     },
@@ -5111,6 +5116,19 @@
           ],
           "additionalProperties": false
         },
+        "tempoUp": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
+          ],
+          "additionalProperties": false
+        },
         "stir": {
           "type": "object",
           "properties": {
@@ -5507,6 +5525,7 @@
         "spell",
         "land",
         "nope",
+        "tempoUp",
         "stir",
         "knock",
         "charge",

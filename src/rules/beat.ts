@@ -16,6 +16,11 @@ export interface BeatClock {
   segs: TempoSegment[];
   /** The wave whose tempo it is heading for. */
   wave: number;
+  /** BPM added by her knockdowns this run (Ed, 2026-10-07: "the BPM goes up by 1 each time you die": the DJ's off the
+   *  decks, the crowd gets restless and the beat speeds up), knockout.bpmStep each, up to knockout.bpmCap; never down. */
+  bonus?: number;
+  /** The beat her latest knockdown's rise starts on (the next bar line after it): the music lands a crowd cue there. */
+  bonusAt?: number;
 }
 
 export function newBeatClock(base: number, bpm = base): BeatClock {
@@ -92,11 +97,31 @@ export function blockLineAfter(beat: number, blockBars: number): number {
   return beat - b <= 1 ? b : b + B;
 }
 
-/** A wave came at `time`: ease to its tempo from the block line its music lands on. */
+/** The tempo the clock is heading for: its wave's, plus her knockdowns' bonus. */
+export const targetTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number => waveTempo(t, c.wave) + (c.bonus ?? 0);
+
+/** How much faster than its wave's own tempo the party runs (her knockdowns' bonus over the wave's tempo): the wave
+ *  countdown and the ley line's pulse run this many times as fast (Ed, 2026-10-07: the pulse travels at the tempo). */
+export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number => 1 + (c.bonus ?? 0) / Math.max(1, waveTempo(t, c.wave));
+
+/** She's been knocked down at `time` (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): the bonus rises by
+ *  knockout.bpmStep (to knockout.bpmCap, if set), eased in over beat.knockBeats (a bar) from the next bar line (bonusAt), so
+ *  the beat never skips and the music's crowd cue lands on the line. Returns the BPM added (0 at the cap). */
+export function knockdownTempo(c: BeatClock, t: Pick<Tuning, "beat"> & { knockout: Pick<Tuning["knockout"], "bpmStep" | "bpmCap"> }, time: number): number {
+  const step = Math.max(0, t.knockout.bpmStep ?? 0), was = c.bonus ?? 0;
+  const next = Math.min(t.knockout.bpmCap ?? Infinity, was + step);
+  if (!(next > was)) return 0;
+  c.bonus = next;
+  c.bonusAt = Math.ceil(beatAt(c, time) / 4 - 1e-9) * 4; // (the next bar line)
+  rampTo(c, c.bonusAt, targetTempo(c, t), Math.max(0, t.beat.knockBeats ?? 4));
+  return next - was;
+}
+
+/** A wave came at `time`: ease to its tempo (and her knockdowns' bonus) from the block line its music lands on. */
 export function waveArrived(c: BeatClock, t: Pick<Tuning, "beat">, wave: number, time: number): void {
   if (wave === c.wave) return;
   c.wave = wave;
-  const target = waveTempo(t, wave), line = blockLineAfter(beatAt(c, time), t.beat.blockBars ?? 4);
+  const target = targetTempo(c, t), line = blockLineAfter(beatAt(c, time), t.beat.blockBars ?? 4);
   if (Math.abs(target - bpmAt(c, timeAt(c, line))) < 1e-6) return;
   rampTo(c, line, target, 4 * (t.beat.rampBars ?? 8));
 }
