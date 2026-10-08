@@ -223,7 +223,7 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
     cv = document.createElement("canvas"); cv.width = SLASH_W; cv.height = SLASH_H; cv.className = "claw-slashes";
     Object.assign(cv.style, {
       position: "fixed", width: `${SLASH_W * px}px`, height: `${SLASH_H * px}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none",
-      mixBlendMode: "screen", // (its red added to the scene; its glow is light in the scene itself, below)
+      // (opaque over her, Ed 2026-10-08: "less transparent and more opaque"; its glow is light in the scene itself, below)
     });
     document.body.append(cv); lv.slashCanvas = cv;
   }
@@ -249,7 +249,7 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
   // the scene so the bloom takes it, along every stroke that shows: a soft halo and a hot core every couple of slash pixels,
   // placed over her body as the slashes are (a slash pixel is `m` metres there; right along the camera, up the world's up).
   const m = lv.frameH > 0 && herPx > 0 ? ((lv.hatTop - lv.feetY) / lv.frameH) * (px / herPx) : 0.05, R = SPRITE_UNIFORMS.uRight.value, dot = lv.uv(0);
-  const G = T.slashGlow ?? 1, tw = 0.9 + 0.1 * Math.sin(time * 2.3), [r, gg, b] = [0.9, 0.12, 0.15];
+  const G = T.slashGlow ?? 1, tw = 0.9 + 0.1 * Math.sin(time * 2.3), [r, gg, b] = [0.62, 0.05, 0.08]; // (the slashes' deeper red)
   slashStrokes(geo).forEach((S, i) => {
     if (i >= st.count) return;
     const newest = i === st.count - 1, t0 = newest ? st.drained : 0, t1 = newest ? st.cut : 1, flash = newest ? st.flash : 0;
@@ -259,7 +259,7 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
       const sx = S.x + DX * S.len * t - cw / 2, sy = S.y + DY * S.len * t - ch / 2; // (from the canvas's middle, slash pixels)
       const x = w.x + R.x * sx * m, z = w.z + R.z * sx * m, y = lv.bodyY - sy * m;
       lv.over.add(x, y, z, S.w * 4 * m * taper, dot, r * 1.5, gg * 1.5 + flash, b * 1.5 + flash, 0.16 * G * tw * taper); // the soft halo
-      lv.over.add(x, y, z, S.w * 1.6 * m * taper, dot, 1.5 + flash, 0.25 + flash, 0.25 + flash, 0.22 * G * taper); // its warm core, just over the bloom's threshold, as a berry's
+      lv.over.add(x, y, z, S.w * 1.6 * m * taper, dot, 1.15 + flash, 0.1 + flash, 0.12 + flash, 0.22 * G * taper); // its warm core, just over the bloom's threshold, as a berry's
     }
   });
   placed(lv.v.set(w.x, lv.bodyY, w.z)).project(camera); // (over her body, wherever she flies)

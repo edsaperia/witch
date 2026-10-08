@@ -51,7 +51,7 @@ export function slashPixels(g = 1): SlashPixel[][] {
 }
 
 /** Colours (RGB) for the tones: a hot core, the glowing red, the torn dark-blood edge (Ed's reference, #6e1a1a). */
-export const SLASH_TONES: readonly (readonly [number, number, number])[] = [[255, 118, 92], [228, 30, 38], [118, 16, 22]];
+export const SLASH_TONES: readonly (readonly [number, number, number])[] = [[214, 46, 40], [158, 14, 24], [92, 8, 14]]; // (deeper, Ed 2026-10-08: "darker red")
 /** The most slashes she shows (her fourth hit, Ed 2026-10-08, knocks her out with no fourth slash). */
 export const SLASHES = 3;
 /** How long a new slash takes to cut in (s), and its white-hot flash. */
