@@ -236,7 +236,7 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
   placed(lv.v.set(w.x, lv.feetY, w.z)).project(camera); const feet = lv.v.y;
   placed(lv.v.set(w.x, lv.hatTop, w.z)).project(camera); const top = lv.v.y;
   const herPx = lv.frameH > 0 ? (Math.abs(top - feet) / 2) * height / lv.frameH : px;
-  const geo = Math.min(1, Math.max(0.25, Math.round((herPx / px) * 16) / 16)), { w: cw, h: ch } = slashSize(geo); // (in steps, so it isn't redrawn every frame)
+  const k = T.slashScale ?? 1, geo = Math.min(k, Math.max(0.25, Math.round((herPx / px) * k * 16) / 16)), { w: cw, h: ch } = slashSize(geo); // (in steps, so it isn't redrawn every frame; witchHealth.slashScale their size against her, Ed 2026-10-08: "the slashes should be twice as large")
   if (geo !== lv.slashGeo) { lv.slashGeo = geo; lv.slashPx = slashPixels(geo); lv.slashKey = ""; cv.width = cw; cv.height = ch; cv.style.width = `${cw * px}px`; cv.style.height = `${ch * px}px`; }
   const key = `${st.count}:${Math.round(st.cut * 24)}:${Math.round(st.flash * 6)}:${Math.round(st.drained * 30)}`;
   if (key !== lv.slashKey) {
