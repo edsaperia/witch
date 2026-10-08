@@ -3143,36 +3143,80 @@
             "minHostile": {
               "type": "number",
               "minimum": 0
-            },
-            "threat": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              }
-            },
-            "profiles": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "array",
-                "items": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "minItems": 3,
-                "maxItems": 3
-              }
             }
           },
           "required": [
             "babies",
             "babyCap",
-            "minHostile",
-            "threat",
-            "profiles"
+            "minHostile"
+          ],
+          "additionalProperties": false
+        },
+        "swarm": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "number",
+              "minimum": 0
+            },
+            "endAverage": {
+              "type": "number",
+              "minimum": 0
+            },
+            "curve": {
+              "type": "number",
+              "minimum": 0
+            },
+            "youngShare": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "reference": {
+              "type": "string"
+            },
+            "classes": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "cap": {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "species": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "cap",
+                  "species"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "capScales": {
+              "type": "boolean"
+            },
+            "mixTolerance": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "start",
+            "endAverage",
+            "curve",
+            "youngShare",
+            "reference",
+            "classes",
+            "capScales",
+            "mixTolerance"
           ],
           "additionalProperties": false
         },
@@ -3210,6 +3254,7 @@
       "required": [
         "start",
         "byRoute",
+        "swarm",
         "growth"
       ],
       "additionalProperties": false

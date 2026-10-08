@@ -6,8 +6,9 @@ import { affectionOf, loseSoundsystem, newGame, stepGame, type Controls, type Ga
 import { TUNING } from "./tuning";
 import { cellKey, routeOf } from "./party";
 import { clearCue, clearableAt, clearedAreas, holdsArea, wildLeft } from "./clear";
-import { countScale, routeIndex, routePopulation, threatAt, type ByRoute } from "./growth";
-import { levelValue } from "./power";
+import { routeIndex, routePopulation } from "./growth";
+import { POWER_TABLE, buildSwarm, capAt, capOf, classOf, estimatedPower, powerOf, referenceAt, swarmTotals, targetPower, type PowerTable } from "./swarm";
+import { classStrengths, strengthOf } from "./combat/data";
 import { spawnCreatures } from "./creatures";
 import { generateMap, AREA_TYPES } from "./map";
 import { befriend } from "./creatureStates";
@@ -32,44 +33,87 @@ function empty(g: Game, key: string): void {
   g.byArea = null;
 }
 
-describe("pre-population by route (Ed, 2026-10-07: no growth on a clock; Balance 2's threat curve)", () => {
-  const R: ByRoute = { babies: 2, babyCap: 2, threat: [[1, 12], [10, 90], [40, 355]], profiles: { default: [0, 0.6, 0.4], bear: [0, 0.3, 0.7], beetle: [0, 0.9, 0.1] } };
-  const S = { babies: 1, young: 1, adults: 0 }, Fy = levelValue(1), Fa = levelValue(2);
+describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm plan, phase 1)", () => {
+  const W = TUNING.population.swarm, kinds = [...new Set(AREA_TYPES.map(t => t.creature))], P5 = [0, 0.25, 0.5, 0.75, 1];
+  /** Every swarm a species could field at p (up to its cap there) and its distance from the target. */
+  const options = (p: number, sp: string) => { const T = targetPower(p, W), out: { y: number; a: number; err: number }[] = []; for (let n = 1; n <= capAt(sp, p, W); n++) for (let y = 0; y <= n; y++) out.push({ y, a: n - y, err: Math.abs(powerOf(sp, y, n - y) - T) / T }); return out; };
+  const errOf = (p: number, sp: string) => { const [y, a] = buildSwarm(p, W, sp); return Math.abs(powerOf(sp, y, a) - targetPower(p, W)) / targetPower(p, W); };
 
-  it("reads the threat curve in straight lines between its points, flat past its ends", () => {
-    expect(threatAt(0, R.threat)).toBe(12); expect(threatAt(1, R.threat)).toBe(12);
-    expect(threatAt(5.5, R.threat)).toBeCloseTo(51, 6); expect(threatAt(10, R.threat)).toBe(90);
-    expect(threatAt(25, R.threat)).toBeCloseTo(222.5, 6); expect(threatAt(99, R.threat)).toBe(355);
+  it("three classes, strength 12 / cap: strong 6 (×2), medium 12 (×1, every species not listed), light 16 (×0.75)", () => {
+    expect(Object.fromEntries(Object.entries(W.classes).map(([k, c]) => [k, c.cap]))).toEqual({ strong: 6, medium: 12, light: 16 });
+    for (const sp of kinds) { const c = classOf(sp, W); expect(strengthOf(sp, 1), sp).toBeCloseTo(12 / W.classes[c].cap, 9); expect(capOf(sp, W), sp).toBe(W.classes[c].cap); }
+    expect(classOf("bear", W)).toBe("strong"); expect(classOf("wolf", W)).toBe("medium"); expect(classOf("hedgehog", W)).toBe("light"); expect(classOf("bat", W)).toBe("light");
+    for (const sp of Object.values(W.classes).flatMap(c => c.species)) expect(kinds, sp).toContain(sp);
+    expect(Object.values(W.classes).flatMap(c => c.species).length).toBe(new Set(Object.values(W.classes).flatMap(c => c.species)).size); // (each in one class)
+    expect(classStrengths({ reference: "medium", classes: { medium: { cap: 12, species: [] }, big: { cap: 4, species: ["x"] } } })).toEqual({ x: 3 });
   });
 
-  it("spends an area's threat by its kind's profile: the same danger, a heavy kind's few adults or a swarm's many young; babies fixed", () => {
-    const value = ([, y, a]: number[]) => (y - S.young) * Fy + a * Fa;
-    for (const [sp, scale] of [["bear", 1], ["beetle", 1], ["wolf", 1], ["beetle", 3]] as const) for (const n of [1, 10, 25, 40]) {
-      const p = routePopulation(n, R, S, sp, scale, 123, [3, 4]);
-      expect(p[0], `${sp} babies`).toBe(2); // (byRoute.babies, start's included, at most babyCap)
-      expect(Math.abs(value(p) - threatAt(n, R.threat) * scale), `${sp} at ${n}`).toBeLessThan(Fa * scale); // (within a creature of the threat)
+  it("the target: a medium reference swarm of 1 + 11·p^1.3, its young share 1.0 to 0.2; growing along the order", () => {
+    expect(referenceAt(0, W)).toEqual({ size: 1, young: 1 });
+    expect(referenceAt(1, W).size).toBe(12); expect(referenceAt(1, W).young).toBeCloseTo(0.2, 9);
+    expect(referenceAt(0.5, W).size).toBeCloseTo(1 + 11 * Math.pow(0.5, 1.3), 9);
+    expect(targetPower(0, W)).toBe(45 * 3); // (one young)
+    for (let p = 0; p < 1; p += 0.1) expect(targetPower(p + 0.1, W)).toBeGreaterThan(targetPower(p, W));
+    const t = swarmTotals("bear", 1, 2); expect(t).toEqual({ hp: (45 + 320) * 2, siegeDps: (3 + 20) * 2, witchThreat: 3 }); expect(estimatedPower("bear", 1, 2)).toBe(t.hp * t.siegeDps);
+  });
+
+  it("every species at p = 0, .25, .5, .75 and 1 comes within 15% of the target (or, at the first stone, as near as one creature can)", () => {
+    for (const p of P5) for (const sp of kinds) {
+      const best = Math.min(...options(p, sp).map(o => o.err));
+      expect(errOf(p, sp), `${sp} at ${p}`).toBeLessThanOrEqual(Math.max(0.15, best + W.mixTolerance) + 1e-9);
+      if (p > 0) expect(errOf(p, sp), `${sp} at ${p}`).toBeLessThanOrEqual(0.15);
     }
-    const bear = routePopulation(40, R, S, "bear", 1, 123, [3, 4]), beetle = routePopulation(40, R, S, "beetle", 1, 123, [3, 4]);
-    expect(bear[2]).toBeGreaterThan(bear[1] - S.young); // (mostly adults)
-    expect(beetle[1] + beetle[2]).toBeGreaterThan((bear[1] + bear[2]) * 2); // (many more of them)
-    expect(routePopulation(40, { ...R, babyCap: 1 }, { ...S, babies: 3 }, "bear", 1, 1, [0, 0])[0]).toBe(1); // (the cap holds over start's)
-    expect(routePopulation(40, R, S, "bear", 1, 7, [2, 9])).toEqual(routePopulation(40, R, S, "bear", 1, 7, [2, 9]));
   });
 
-  it("peoples every area from the start, the later on the route the more, the same from the same seed; every profile a real kind", () => {
+  it("the caps hold (grown along the curve), and a mix of young and adults is chosen wherever one is within mixTolerance of the nearest", () => {
+    for (const p of [...P5, 0.1, 0.6, 0.9]) for (const sp of kinds) {
+      const [y, a] = buildSwarm(p, W, sp), o = options(p, sp), best = Math.min(...o.map(c => c.err));
+      expect(y + a, `${sp} at ${p}`).toBeLessThanOrEqual(capAt(sp, p, W)); expect(capAt(sp, p, W)).toBeLessThanOrEqual(capOf(sp, W));
+      expect(y + a, `${sp} at ${p}`).toBeGreaterThanOrEqual(1);
+      if (o.some(c => c.y > 0 && c.a > 0 && c.err <= best + W.mixTolerance)) expect(y > 0 && a > 0, `${sp} at ${p}: ${y} young, ${a} adults`).toBe(true);
+    }
+    expect(capAt("hedgehog", 1, W)).toBe(16); expect(capAt("bear", 1, W)).toBe(6); expect(capAt("wolf", 0, W)).toBe(2);
+  });
+
+  it("at the last runestone the swarms average endAverage (12), none over 16; mostly young early, mostly adults late", () => {
+    const end = kinds.map(sp => buildSwarm(1, W, sp)).map(([y, a]) => y + a);
+    expect(Math.abs(end.reduce((x, y) => x + y, 0) / end.length - W.endAverage)).toBeLessThanOrEqual(0.5);
+    expect(Math.max(...end)).toBeLessThanOrEqual(16);
+    const share = (p: number) => { const s = kinds.map(sp => buildSwarm(p, W, sp)); return s.reduce((x, [y]) => x + y, 0) / s.reduce((x, [y, a]) => x + y + a, 0); };
+    expect(share(0.25)).toBeGreaterThan(0.5); expect(share(1)).toBeLessThan(0.3);
+  });
+
+  it("powerOf reads the simulated table where it has the swarm, else the estimate; the builder follows it", () => {
+    // A wolf measured twice as strong as estimated at every size up to 12.
+    const species: PowerTable["species"] = { wolf: {} };
+    for (let n = 1; n <= 12; n++) species.wolf[String(n)] = Array.from({ length: n + 1 }, (_, y) => 2 * estimatedPower("wolf", y, n - y));
+    const table: PowerTable = { version: 1, species };
+    expect(powerOf("wolf", 2, 3, table)).toBe(2 * estimatedPower("wolf", 2, 3));
+    expect(powerOf("fox", 2, 3, table)).toBe(estimatedPower("fox", 2, 3)); // (no entry)
+    expect(powerOf("wolf", 2, 3, { version: 1, species: { wolf: { "5": [1, 2] } } })).toBe(estimatedPower("wolf", 2, 3)); // (no such young count)
+    const plain = buildSwarm(0.75, W, "wolf", { version: 1, species: {} }), sim = buildSwarm(0.75, W, "wolf", table);
+    expect(estimatedPower("wolf", ...sim)).toBeLessThan(estimatedPower("wolf", ...plain) * 0.75);
+    expect(POWER_TABLE).toEqual(expect.objectContaining({ version: 1, species: {} })); // (phase 1: estimated only)
+  });
+
+  it("the first wild area holds at least one hostile; every area has its two babies", () => {
+    const R = TUNING.population.byRoute, S = TUNING.population.start;
+    for (const sp of kinds) {
+      const p = routePopulation(1, 90, R, W, S, sp);
+      expect(p[1] + p[2], sp).toBeGreaterThanOrEqual(1);
+      expect(p[0], sp).toBe(R.babies);
+    }
+  });
+
+  it("peoples every area from the start by its place on the route, the later the more, the same from the same seed", () => {
     const map = generateMap(123, TUNING), all = spawnCreatures(map), order = routeOf(map).order, at = routeIndex(order), T = TUNING.population;
     expect(order.length).toBe(map.cells.length - 1); // (every area but home)
     const levels = (key: string) => [0, 1, 2].map(l => all.filter(c => cellKey(c.cell) === key && !c.boss && !c.circle && c.level === l).length);
-    for (const key of order) {
-      const [cx, cy] = key.split(",").map(Number), sp = AREA_TYPES[map.typeOf(cx, cy)].creature;
-      expect(levels(key), key).toEqual(routePopulation(at.get(key)!, T.byRoute, T.start, sp, countScale(sp), map.seed, [cx, cy]));
-    }
-    const F = (keys: string[]) => keys.reduce((a, k) => { const [, y, ad] = levels(k); return a + y * Fy + ad * Fa; }, 0);
-    expect(F(order.slice(-5))).toBeGreaterThan(F(order.slice(0, 5)) * 3);
+    const kind = (key: string) => { const [cx, cy] = key.split(",").map(Number); return AREA_TYPES[map.typeOf(cx, cy)].creature; };
+    for (const key of order) expect(levels(key), key).toEqual(routePopulation(at.get(key)!, at.size, T.byRoute, T.swarm, T.start, kind(key)));
+    const P = (keys: string[]) => keys.reduce((a, k) => { const [, y, ad] = levels(k); return a + estimatedPower(kind(k), y, ad); }, 0);
+    expect(P(order.slice(-5))).toBeGreaterThan(P(order.slice(0, 5)) * 10);
     expect(spawnCreatures(generateMap(123, TUNING)).map(c => [c.level, c.x, c.z])).toEqual(all.map(c => [c.level, c.x, c.z]));
-    const kinds = new Set(AREA_TYPES.map(t => t.creature));
-    for (const sp of Object.keys(T.byRoute.profiles)) if (sp !== "default") expect(kinds.has(sp), sp).toBe(true);
-    expect(T.byRoute.profiles.default).toBeDefined();
   }, 60000);
 });
 

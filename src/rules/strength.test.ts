@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach, afterAll } from "vitest";
 import { attackOf, COMBAT, creatureMaxHp, strengthOf } from "./combat";
 import { toEvolve } from "./berries";
 import { countScale, grownAt, startCount } from "./growth";
@@ -7,13 +7,16 @@ import { AREA_TYPES, generateMap } from "./map";
 import { levelValue } from "./power";
 import { TUNING, withTuning } from "./tuning";
 import { routeOf } from "./party";
+import { estimatedPower } from "./swarm";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Species strength, a number (Ed, 2026-10-05: "just a number that goes up and down"), and berry
-// costs tied to it. No species has one yet, so these tests give one for a moment (and put it back).
-const S = COMBAT.strength!;
+// costs tied to it. These tests start with none (every species 1) and give one for a moment, then put the config's back
+// (Ed, 2026-10-08: the species have strengths by class now).
+const S = COMBAT.strength!, CONFIG = { ...S.species };
 const giving = (species: string, m: number) => { S.species[species] = m; };
-afterEach(() => { for (const k of Object.keys(S.species)) delete S.species[k]; });
+beforeEach(() => { for (const k of Object.keys(S.species)) delete S.species[k]; });
+afterAll(() => { for (const k of Object.keys(S.species)) delete S.species[k]; Object.assign(S.species, CONFIG); });
 
 describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger ones fewer)", () => {
   it("scales a species' health and damage by its number, never a legend's", () => {
@@ -46,18 +49,20 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
     expect(sum).toBe(15);
   });
 
-  it("spawns a weak species' areas three times as many, worth about the same", () => {
-    const map = generateMap(123, PEOPLED), cell = (cx: number, cy: number) => `${cx},${cy}`;
+  it("spawns a weak species' areas many more, its swarm's power the same (its cap allowing)", () => {
+    const T = withTuning({ population: { ...PEOPLED.population, swarm: { ...PEOPLED.population.swarm, capScales: false, mixTolerance: 0, classes: { medium: { cap: 60, species: [] } } } } }); // (no cap in the way, the nearest swarm alone)
+    const map = generateMap(123, T), cell = (cx: number, cy: number) => `${cx},${cy}`;
     // (the route's last area: its threat big enough that one creature's rounding doesn't swamp the comparison)
     const plain = spawnCreatures(map), order = routeOf(map).order, [cx, cy] = order[order.length - 1].split(",").map(Number), species = AREA_TYPES[map.typeOf(cx, cy)].creature;
     const before = plain.filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle); // (not its legend's clearing's baby: one, whatever its strength)
-    const value = (l: typeof before) => l.reduce((a, c) => a + levelValue(c.level, COMBAT, c.species), 0), was = value(before);
+    const power = (l: typeof before) => estimatedPower(species, l.filter(c => c.level === 1).length, l.filter(c => c.level === 2).length), was = power(before);
     giving(species, 1 / 3);
     const after = spawnCreatures(map).filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle);
-    // (Its young and adults about three times over, its threat spent the same: rules/growth.ts routePopulation; its babies fixed.)
     const fighters = (l: typeof before) => l.filter(c => c.level > 0).length;
-    expect(Math.abs(fighters(after) - fighters(before) * 3)).toBeLessThanOrEqual(2);
-    expect(value(after) / was).toBeGreaterThan(0.85); expect(value(after) / was).toBeLessThan(1.2);
+    // (Its young and adults' power the same, Σhp × Σdps by its new strength: rules/swarm.ts buildSwarm; so many more of them; its babies fixed.)
+    expect(power(after) / was).toBeGreaterThan(0.9); expect(power(after) / was).toBeLessThan(1.1);
+    expect(fighters(after) / fighters(before)).toBeGreaterThan(1.5);
+    expect(after.filter(c => c.level === 0).length).toBe(before.filter(c => c.level === 0).length);
   }, 30000);
 });
 
