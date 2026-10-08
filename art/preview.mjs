@@ -11,6 +11,7 @@
 //   node art/preview.mjs landmarks cemetery|carpark|scrap|worship|castle|classical|<ids> art/previews/landmarks-worship.png [scale]   (the large scenes' pieces; buildings' two halves composed, HALVES=1 apart; PER=n to a row)
 //   node art/preview.mjs partyobjects litter|small|furniture|set|all|<ids> art/previews/party-objects.png [scale]   (the party objects, neon ones cycling the neons; NIGHT=1 to see them glow)
 //   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
+//   node art/preview.mjs sizes all|<species> art/previews/sizes.png [scale]   (each species' baby, young and adult beside the witch standing, at today's size and bigger: SCALES=1,1.2,1.35,1.5, st.creatureScale)
 //   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row)
 //   node art/preview.mjs naps all|<species> art/previews/naps.png [scale]   (each species asleep, art/naps.js: baby, young and adult awake, then each asleep in its 2 breathing frames, the witch for scale; LEVELS=[...] to choose; DRESSED=1: in party gear awake, then asleep bare and asleep dressed)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
@@ -72,6 +73,7 @@ if (process.env.HALVES) await b.page.addInitScript(() => { window.HALVES = true;
 if (process.env.MIRROR) await b.page.addInitScript(() => { window.MIRROR = true; });
 if (process.env.VARIANT) await b.page.addInitScript(n => { window.VARIANT = n; }, +process.env.VARIANT);
 if (process.env.GENOME) await b.page.addInitScript(g => { window.GENOME = g; }, JSON.parse(process.env.GENOME));
+if (process.env.SCALES) await b.page.addInitScript(l => { window.SCALES = l; }, process.env.SCALES.split(",").map(Number));
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.STUDIO) await b.page.addInitScript(() => { window.STUDIO = true; });
@@ -256,6 +258,10 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       const woken = { woken: true }; row.push(G.bake(G.critter(id, 1, 0, st, "towards", woken), G.speciesColours(id, st, woken), st, st.cOutline));
       rows.push(row);
     });
+  } else if (what === "sizes") { // per species: its baby, young and adult beside the witch standing, at each creature scale in SCALES (default today, +20%, +35%, +50%: st.creatureScale), each group led by its label
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), scales = window.SCALES || [1, 1.2, 1.35, 1.5], wit = G.bake(G.witchSprite(st, { pose: "stand" }), G.witchColours(st), st, st.cOutline);
+    const label = (t, h = 14) => { const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = 8 * t.length + 8; A.height = N.height = h; const a = A.getContext("2d"); a.font = "bold 12px monospace"; a.fillStyle = "#fff"; a.textBaseline = "top"; a.fillText(t, 2, 1); const nn = N.getContext("2d"); nn.fillStyle = "rgb(128,128,255)"; nn.fillRect(0, 0, N.width, h); return { A, N, w: A.width, h }; };
+    for (const id of ids) rows.push([label(id.padEnd(10)), ...scales.flatMap(c => { const s2 = { ...st, creatureScale: c }; return [label(c === 1 ? " today" : ` +${Math.round(c * 100 - 100)}%`), ...[0, 1, 2].map(l => G.bake(G.critter(id, l, 0, s2), G.speciesColours(id, s2), s2, s2.cOutline)), wit]; })]);
   } else if (what === "lineup") { // per species (or all): baby, young, adult and legend standing side by side, then the witch for scale; PER=n species to a row
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [];
     for (const id of ids) items.push(...[0, 1, 2, 3].map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
