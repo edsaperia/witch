@@ -1332,7 +1332,7 @@ The generated soundsystems (Ed, 2026-10-08: "a variety, for them all to point to
 
 ### `stringLights`
 
-Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours (areaNeon: warm white, the palette's first, two bulbs in three and the area's own neon the third, home's cyan; the art director, round 2: one neon an area plus the warm light), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
+Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres, coloured by mode: palette cycles through all of palette's colours (Ed, 2026-10-08: 'I liked the six bright colour string lights, please bring them back'); areaNeon is warm white, the palette's first, two bulbs in three and the area's own neon the third (the art director, round 2: one neon an area plus the warm light). The light's grade leaves them their colour (light.spooky only drains what's darker than its gradePivot; measured from the treetops, the same with and without it), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
 
 | knob | type | range |
 |---|---|---|
@@ -1348,7 +1348,7 @@ Colourful string lights in every partified area, as long garlands: runsPerArea r
 | `stringLights.sag` | number | 0 to … |
 | `stringLights.bulbSpacing` | number | 0 to … |
 | `stringLights.palette` | array of string |  |
-| `stringLights.areaNeon` | boolean |  |
+| `stringLights.mode` | string | "palette" / "areaNeon" |
 | `stringLights.twinkle` | number | 0 to … |
 | `stringLights.chaseSpeed` | number | 0 to … |
 
@@ -1851,6 +1851,23 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.strength` | number | 0 to … |
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
+
+### `holograms`
+
+The soundsystems' sky sigils (Ed, 2026-10-08: "soundsystems should project their animal sigil into the sky once they're activated, readable from the treetops but in a different character to how the leashing sigils look from treetop; maybe a hologram or peppers ghost or something, replacing the laser we have now"; render/hologram.ts): each standing soundsystem's projector throws a translucent cone of light from the top of its stack to a hologram of its area's animal sigil over the canopy, in the area's crystal colour, with scanlines, a drifting interference band and a colour fringe, turning gently and bobbing. size: the glyph (m across: under about 20 its one-pixel strokes are finer than the treetop view's pixels and it smears); lift: how high its middle floats over the projector (m); glyph, cone: how bright (added light; past about 0.7 the bloom swallows its outline); powerUp: the flicker as it comes on when the soundsystem has risen (s); collapse: how long it takes to fold to a line and go out when the soundsystem is destroyed (s); turn: how far it turns either way (degrees); bob: how far it bobs (m); fadeFar: it fades out towards this many metres from her. Damaged, it glitches, worse at each of the soundsystem's damage stages (below 75%, 50% and 25% of its health). The glyph is drawn at the sky's depth, so the tilt-shift leaves it nearly as sharp as the stars.
+
+| knob | type | range |
+|---|---|---|
+| `holograms.on` | boolean |  |
+| `holograms.size` | number | 0 to … |
+| `holograms.lift` | number | 0 to … |
+| `holograms.glyph` | number | 0 to … |
+| `holograms.cone` | number | 0 to … |
+| `holograms.powerUp` | number | 0 to … |
+| `holograms.collapse` | number | 0 to … |
+| `holograms.turn` | number | 0 to … |
+| `holograms.bob` | number | 0 to … |
+| `holograms.fadeFar` | number | 0 to … |
 
 ### `watching`
 
