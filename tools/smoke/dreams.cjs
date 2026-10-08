@@ -24,32 +24,39 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     const legend = await page.evaluate(() => {
       const g = window.witch.game, w = g.witch, near = g.creatures.filter(c => c.boss && c.legendState === "asleep" && c.quest && c.quest.done === undefined).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z))[0];
       if (!near) return null;
-      g.witch = { ...g.witch, x: near.x + 6, z: near.z + 9, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
+      g.witch = { ...g.witch, x: near.x + 8, z: near.z + 22, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
       return { id: near.id, species: near.species, wants: near.quest.species };
     });
     if (!legend) throw new Error("no dreaming legend");
     console.log("legend", JSON.stringify(legend));
-    const wait = async s => page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + s, { timeout: 600000, polling: 500 });
-    await wait(4);
+    await page.waitForTimeout(10000); // (real seconds: game time crawls in a legend's clearing)
     await page.evaluate(() => { window.witch.game.clock.paused = true; });
     // the bubble's box, and which symbol shows whole (opacity 1)
     const look = () => page.evaluate(() => {
       const e = document.querySelector(".thought.dream"); if (!e || e.style.display === "none") return null;
-      const r = e.getBoundingClientRect(), s = [...e.querySelectorAll("canvas:not(.cloud)")].find(c => c.style.display !== "none" && c.style.opacity === "1.00");
+      const r = e.getBoundingClientRect(), s = [...e.querySelectorAll("canvas:not(.cloud)")].find(c => c.style.display !== "none" && parseFloat(c.style.opacity) >= 0.4);
       return { x: r.x, y: r.y, w: r.width, h: r.height, left: e.style.left, top: e.style.top, kind: s ? ["emoji", "sigil", "flask"].find(k => s.classList.contains(k)) : null };
     });
+    // pin one symbol for a shot (a frame here takes longer than a symbol's turn): a turn long enough to hold through the shot,
+    // landing on the turn wanted (render/thoughtCloud.ts dreamSymbol: turn k = floor(now / hold + (id % 11) × 0.29), even the face)
+    const pin = (kind, id) => page.evaluate(([kind, id]) => {
+      const now = performance.now() / 1000, off = (id % 11) * 0.29, k = Math.floor(off) + (kind === "emoji" ? 2 : 3) + ((Math.floor(off) % 2) ? 1 : 0);
+      const hold = now / (k + 0.5 - off), D = window.witch.game.tuning.dreams;
+      D.cycle = { hold, fade: 0.3, flask: kind === "flask" ? 1 : 0 };
+    }, [kind, id]);
     const shoot = async (name, want, limit = 60000) => {
+      await pin(want, legend.id);
       const end = Date.now() + limit;
       let b = await look();
       while ((!b || (want && b.kind !== want)) && Date.now() < end) { await page.waitForTimeout(100); b = await look(); }
       console.log(name, JSON.stringify(b));
       if (!b || (want && b.kind !== want)) { errors.push(`${name}: no ${want || "bubble"} showing`); return; }
-      const clip = { x: Math.max(0, b.x - 30), y: Math.max(0, b.y - 30), width: b.w + 60, height: b.h + 120 };
+      const clip = { x: Math.max(0, b.x - 30), y: Math.max(0, b.y - 30), width: b.w + 150, height: b.h + 90 };
       await page.screenshot({ path: path.join(outDir, `${name}.png`), clip });
     };
     await shoot("emoji", "emoji");
     await shoot("sigil", "sigil");
-    await shoot("flask", "flask", 120000);
+    await shoot("flask", "flask");
     await page.screenshot({ path: path.join(outDir, "screen.png") });
     await page.evaluate(id => { window.witch.game.creatures[id].restlessness = 0.75; }, legend.id);
     await shoot("nightmare-emoji", "emoji");
