@@ -20,13 +20,17 @@ export const CRYSTALS = {
   cyan: [.53, .76], violet: [.75, .63], amber: [.09, .8], rose: [.94, .62], lime: [.24, .7], teal: [.47, .78], gold: [.13, .65],
   magenta: [.84, .7], ice: [.58, .38], ember: [.02, .78], jade: [.38, .66],
 };
+// (pushed apart by the art director's pass, 2026-10-08: at the game's zoom the old seven read as three; bluestone, slate's twin, gone)
 export const STONES = {
-  slate: [[78, 80, 94], [36, 36, 48]], basalt: [[58, 58, 66], [26, 26, 32]], sandstone: [[124, 102, 82], [62, 46, 38]],
-  greenstone: [[74, 88, 78], [34, 42, 38]], granite: [[104, 100, 104], [50, 46, 52]], bluestone: [[70, 82, 106], [30, 36, 54]],
-  redstone: [[106, 72, 66], [52, 32, 32]],
+  slate: [[70, 82, 108], [30, 36, 54]], basalt: [[54, 47, 44], [24, 20, 20]], sandstone: [[170, 146, 98], [94, 74, 46]],
+  greenstone: [[70, 106, 72], [30, 50, 34]], granite: [[132, 130, 134], [62, 60, 66]], redstone: [[152, 80, 58], [76, 36, 28]],
 };
 /** The damage stages (Ed, 2026-10-08): the health share below which each shows (stage 1, 2, 3); destroyed at none. */
 export const DAMAGE_STAGES = [0.75, 0.5, 0.25];
+/** The warm stones' hues (0..1): a crystal within 60° of one's hue melts into it (ember on redstone looks damaged while playing). */
+const WARM_STONES = { sandstone: .11, redstone: .04, basalt: .03 };
+/** The most a profile turns from facing us, as a share of the tuning's maxYaw (a wide wall side-on reads as a slanted fence). */
+export const PROFILE_YAW = { wall: 2 / 3, straight: 5 / 6, tower: 1, stepped: 1 };
 export const PROFILES = ["stepped", "straight", "tower", "wall"];
 export const PROJECTORS = ["lens", "crystal", "orb", "prism"];
 const SS_KINDS = ["bass", "mid", "horn", "tweet"];
@@ -41,7 +45,7 @@ export function soundsystemGenome(seed, far = 0.5, salt = 0) {
   const r = ssRng(seed, salt), f = Math.max(0, Math.min(1, far));
   const profile = ssPick(PROFILES, r(1));
   // tiers: more the further out (2 to 5), always bass at the foot; tweeters on top more often than not
-  const nT = Math.max(2, Math.min(5, Math.round(2 + f * 2.2 + (r(2) - 0.5) * 1.6)));
+  const nT = Math.max(2, Math.min(profile === "wall" ? 4 : 5, Math.round(2 + f * 2.2 + (r(2) - 0.5) * 1.6))); // (walls at most 4: taller, a fence)
   const tiers = [];
   for (let t = 0; t < nT; t++) {
     const top = t === nT - 1, u = r(10 + t);
@@ -54,9 +58,11 @@ export function soundsystemGenome(seed, far = 0.5, salt = 0) {
     const k = 0.82 + r(40 + t) * 0.36, kw = kind === "mid" ? 1 / Math.max(1, n * 0.6) : 1;
     tiers.push({ kind, n, size: [+(sz[0] * k * Math.min(1.2, kw * 1.2)).toFixed(3), +(sz[1] * (0.85 + r(50 + t) * 0.3)).toFixed(3), +(sz[2] * k).toFixed(3)] });
   }
+  const stone = ssPick(Object.keys(STONES), r(5)), warm = WARM_STONES[stone], gap = h => { const d = Math.abs(h - warm) % 1; return Math.min(d, 1 - d); };
+  const crystals = Object.keys(CRYSTALS).filter(k => warm === undefined || gap(CRYSTALS[k][0]) >= 60 / 360), crystal = ssPick(crystals, r(4));
   return {
     seed, salt, far: +f.toFixed(3), profile, tiers,
-    crystal: ssPick(Object.keys(CRYSTALS), r(4)), stone: ssPick(Object.keys(STONES), r(5)),
+    crystal, stone,
     moss: +(r(6) ** 1.4).toFixed(2), shards: 2 + Math.floor(r(7) * 7), rune: Math.floor(r(8) * 4), runeAll: r(9) < 0.3,
     lean: +((r(60) - 0.5) * 0.12).toFixed(3), shift: +((r(61) - 0.5) * 0.16).toFixed(3),
     projector: ssPick(PROJECTORS, r(62)), projectorSize: +(0.85 + r(63) * 0.4).toFixed(2),
@@ -114,7 +120,7 @@ function genModel(G, frame, state, stage = 1) {
   //   1 cracks and a flickering cone; 2 a block knocked off, a tweeter tilted, its moss scorched, its projector cracked;
   //   3 most of its top fallen, the stack leaning, its glow guttering
   const m = new Model({ blend: .02 }), st = state === "damaged" ? Math.max(1, Math.min(3, stage)) : 0, dmg = st > 0, pump = dmg ? 0 : [0, .5, 1][frame % 3];
-  const dark = i => dmg && hash2(i, frame + st * 7, 31) < [0, .25, .45, .72][st], crackW = [0, .1, .13, .17][st];
+  const dead = i => dmg && hash2(G.seed, i, 33) < [0, .22, .4, .6][st], dark = i => dead(i) || (dmg && hash2(i, frame + st * 7, 31) < [0, .2, .35, .55][st]), crackW = [0, .1, .13, .17][st]; // (some cones dead for good, the same ones every time; the rest flickering)
   let y = 0, g = 1, cone = 0, runeK = G.seed % 997 + G.rune * 211;
   const front = .3, moss = G.moss;
   const stone = (top, frontZ, k, cracks) => p => {
@@ -148,7 +154,7 @@ function genModel(G, frame, state, stage = 1) {
   // stage 2: one block knocked off (which, from the genome); stage 3: the top tiers fallen too, the stack leaning one way
   const knockT = (() => { const c = tiers.map((t, i) => i).filter(i => i > 0 && tiers[i].kind !== "tweet"); return c.length ? c[Math.floor(hash2(G.seed, 1, 82) * c.length)] : 0; })();
   const knockI = Math.floor(hash2(G.seed, 2, 82) * tiers[knockT].n), cut = st >= 3 ? Math.max(1, nT - 1 - (hash2(G.seed, 3, 82) < .5 ? 1 : 0)) : nT;
-  const lean3 = st >= 3 ? (hash2(G.seed, 4, 82) < .5 ? 1 : -1) * .06 : 0;
+  const lean3 = (hash2(G.seed, 4, 82) < .5 ? 1 : -1) * [0, .022, .035, .06][st]; // (leaning a little from the first hit, more as it breaks)
   let cx = 0, topW = w0;
   tiers.forEach(({ kind, n, size: [bw, bh, bd] }, ti) => {
     if (ti >= cut) { for (let i = 0; i < Math.min(n, 3); i++) fallen.push([cx + (i - 1) * bw * 1.6 + (hash2(G.seed, ti, 83 + i) - .5) * .3, bw, bh, bd, ti * 3 + i]); return; } // (fallen at its foot)
@@ -169,7 +175,7 @@ function genModel(G, frame, state, stage = 1) {
       }
       if (kind === "horn") {
         const my = by + bh * .25;
-        m.seg([bx, my, fz - bd * 1.5], [bx, my, fz + .03], .03, Math.min(bw, bh) * .78, M.STONED, { group: g, cut: true, paint: p => p[2] < fz - bd * .55 ? (dark(cone) ? M.STONED : M.GLOW) : undefined });
+        m.seg([bx, my, fz - bd * 1.5], [bx, my, fz + .03], .03, Math.min(bw, bh) * .78, M.STONED, { group: g, cut: true, paint: p => p[2] < fz - bd * 1.15 ? M.STONED : p[2] < fz - bd * .55 ? (dark(cone) ? M.STONED : M.GLOW) : p[2] > fz - .035 && !dark(cone) ? M.GLOW : undefined }); // (a dark throat at the back, a lit rim: it reads as a horn, not a plate)
         disc(bx, by - bh * .6, fz, bh * .22, g, cone++);
       }
       if (kind === "tweet") for (const dx of [-.5, 0, .5]) disc(bx + dx * bw * 1.15, by2, fz, bh * .55, g, cone++);
@@ -185,12 +191,12 @@ function genModel(G, frame, state, stage = 1) {
   m.box([cx, top + .03 * P, pz], [Math.min(topW, .2) * P, .03 * P, .14 * P], M.STONE, { group: pg, round: .02, rough: .004, paint: stone(top + .06 * P, pz + .14 * P, 77, dmg) }); // its plinth
   let ptop;
   if (G.projector === "lens") { // a stone ring standing up, a glowing lens in it facing the sky
-    const c = [cx, top + .16 * P, pz];
-    m.seg([cx - .1 * P, top + .06 * P, pz], [cx - .12 * P, top + .2 * P, pz], .03 * P, .025 * P, M.STONE, { group: pg + 1 });
-    m.seg([cx + .1 * P, top + .06 * P, pz], [cx + .12 * P, top + .2 * P, pz], .03 * P, .025 * P, M.STONE, { group: pg + 2 });
-    m.ell(c, [.13 * P, .035 * P, .13 * P], M.FRAME, { group: pg + 3 });
-    m.ell([c[0], c[1] + .02 * P, c[2]], [.1 * P, .03 * P, .1 * P], M.CRYSTAL, { group: pg + 4, paint: p => crackedP ? (hash2(Math.floor(p[0] * 60), Math.floor(p[2] * 60), 91) < .3 ? M.STONED : M.CRYSTAL) : Math.hypot(p[0] - c[0], p[2] - c[2]) < .05 * P ? M.MAGIC2 : M.GLOW });
-    ptop = [c[0], c[1] + .06 * P, c[2]];
+    const L = P * 1.5, c = [cx, top + .16 * L, pz]; // (half again as big as first drawn, a bright rim: the art director's pass)
+    m.seg([cx - .1 * L, top + .04 * P, pz], [cx - .12 * L, top + .2 * L, pz], .03 * L, .025 * L, M.STONE, { group: pg + 1 });
+    m.seg([cx + .1 * L, top + .04 * P, pz], [cx + .12 * L, top + .2 * L, pz], .03 * L, .025 * L, M.STONE, { group: pg + 2 });
+    m.ell(c, [.14 * L, .035 * L, .14 * L], M.GLOW, { group: pg + 3, paint: () => crackedP ? M.FRAME : undefined });
+    m.ell([c[0], c[1] + .02 * L, c[2]], [.1 * L, .03 * L, .1 * L], M.CRYSTAL, { group: pg + 4, paint: p => crackedP ? (hash2(Math.floor(p[0] * 60), Math.floor(p[2] * 60), 91) < .3 ? M.STONED : M.CRYSTAL) : Math.hypot(p[0] - c[0], p[2] - c[2]) < .05 * L ? M.MAGIC2 : M.GLOW });
+    ptop = [c[0], c[1] + .06 * L, c[2]];
   } else if (G.projector === "crystal") { // a tall crystal standing in a claw of stone
     for (const a of [0, 2.1, 4.2]) m.seg([cx + Math.cos(a) * .09 * P, top + .06 * P, pz + Math.sin(a) * .07 * P], [cx + Math.cos(a) * .05 * P, top + .2 * P, pz + Math.sin(a) * .04 * P], .03 * P, .012 * P, M.STONE, { group: pg + 1 });
     const tip = [cx + .02 * P, top + .46 * P, pz];
@@ -212,6 +218,8 @@ function genModel(G, frame, state, stage = 1) {
     if (st >= 2 && i % 2) { m.seg([x, .03, z], [x + .12, .05, z + .04], .04, .02, M.CRYSTAL, { group: 700 + i }); continue; }
     m.seg([x, 0, z], [x + lean * len, len, z + .05], .04 + len * .05, .006, M.CRYSTAL, { group: 700 + i, paint: p => p[1] > len * (.65 - pump * .1) && !dmg ? M.GLOW : undefined });
   }
+  // a spark or two off a cracked block (from stage 1: the first hit visible from range), flickering with the frame
+  if (st >= 1) for (let k = 0; k < 1 + st; k++) if (hash2(G.seed, k, 89 + frame) < .7) { const t = tiers[Math.min(nT - 1, Math.floor(hash2(G.seed, k, 90) * Math.min(cut, nT)))]; m.ell([(hash2(G.seed, k, 91) - .5) * w0 * 1.6, .2 + hash2(G.seed, k, 92) * Math.min(top, .9), front + .04], [.018, .018, .018], k % 2 ? M.MAGIC2 : M.GLOW, { group: 960 + k, extra: true }); }
   for (const [bx, bw, bh, bd, k] of fallen) { const s2 = hash2(G.seed, k, 85) < .5 ? 1 : -1, dx = s2 * (.35 + hash2(G.seed, k, 86) * .35); m.box([bx + dx, bw * .75, front + .2 + hash2(G.seed, k, 87) * .2], [bw, bh, bd], M.STONE, { group: g++, dir: [.6 * s2, .8, .2 + hash2(G.seed, k, 88) * .3], round: .035, rough: .007, paint: stone(1, 0, 9 + k, true) }); }
   return { m, top, ptop };
 }

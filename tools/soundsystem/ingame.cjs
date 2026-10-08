@@ -1,6 +1,6 @@
 // The generated soundsystems in play (render/soundsystemGen.ts; Ed, 2026-10-08): the built game (DIST, default dist/) at 1280×720,
 // WAVES waves brought on at once (the N key's nextWave), each left to rise; her by each soundsystem in turn, close, on the ground
-// (CLOSE=n of them), waiting for its art; then up in the treetops over the dancefloor, zoomed out ZOOM steps, settled and shot.
+// (CLOSE=n of them), waiting for its art; then up in the treetops between the first two, zoomed out ZOOM steps, settled and shot.
 //   npm run build && node tools/soundsystem/ingame.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -36,7 +36,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     }
     await step({ toggleMode: true }); await step({}, 60);
     for (let i = 0; i < ZOOM; i++) { await step({ zoom: 1 }); await step({}, 20); }
-    await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor; g.witch = { ...g.witch, x: d.x, z: d.z + 40, vx: 0, vz: 0 }; });
+    await page.evaluate(areas => { const g = window.witch.game, a = areas[0], b = areas[1] ?? a; g.witch = { ...g.witch, x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 + 30, vx: 0, vz: 0 }; }, areas); // (amid the first two: they're hundreds of metres from the dancefloor)
     for (let k = 0; k < 20; k++) { await step({}, 10); await page.waitForTimeout(1000); } await step({}, 2);
     await page.screenshot({ path: path.join(outDir, "map.png") });
   } finally { await browser.close(); server.close(); }

@@ -12,7 +12,7 @@ const url = await b.page.evaluate(async ([seed, N]) => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), K = 2;
   const list = [...Array(N).keys()].map(i => { const far = i / (N - 1), a = i * 2.39996 + seed; return { seed: seed * 1000 + i * 7919, far, dx: Math.sin(a), dz: Math.cos(a) }; });
   const set = G.soundsystemSet(list), cells = [];
-  set.forEach((g, i) => { const L = list[i], yaw = G.soundsystemYaw(L.dx, L.dz), size = G.soundsystemScale(L.far); const r = G.soundsystemGenSprite(st, g, { yaw, size }); cells.push({ b: G.bake(r.sp, G.soundsystemGenColours(g), st, st.cOutline), r, g, yaw, size }); });
+  set.forEach((g, i) => { const L = list[i], y0 = G.soundsystemYaw(L.dx, L.dz), lim = 60 * (G.PROFILE_YAW[g.profile] ?? 1), yaw = lim * Math.tanh(y0 / lim), size = G.soundsystemScale(L.far); const r = G.soundsystemGenSprite(st, g, { yaw, size }); cells.push({ b: G.bake(r.sp, G.soundsystemGenColours(g), st, st.cOutline), r, g, yaw, size }); });
   // three stacks through every state: playing, damaged at stages 1 to 3, destroyed
   const extra = [];
   for (const gi of [Math.floor(N * .2), Math.floor(N * .55), N - 1]) { const g0 = set[gi]; for (const [state, stage] of [["playing", 0], ["damaged", 1], ["damaged", 2], ["damaged", 3], ["destroyed", 0]]) extra.push({ g0, label: state === "damaged" ? "stage " + stage : state, r: G.soundsystemGenSprite(st, g0, { yaw: 20, size: 1.2, state, stage }) }); }

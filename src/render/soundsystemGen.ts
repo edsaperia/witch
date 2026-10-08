@@ -34,10 +34,15 @@ export function soundsystemSpecs(map: ForestMap, K: SoundsystemGenKnobs): Map<st
   }
   list.sort((a, b) => a.far - b.far); // (dealt from the middle out: a re-roll goes to the further of two alike)
   const set = (Art.soundsystemSet as unknown as (l: { seed: number; far: number }[]) => { seed: number; salt: number }[])(list), specs = new Map<string, GenSpec>();
+  const share = Art.PROFILE_YAW as unknown as Record<string, number>;
   list.forEach((a, i) => {
-    let yaw = (Art.soundsystemYaw as unknown as (dx: number, dz: number, mode: string) => number)(a.dx, a.dz, K.toward ? "toward" : "ring");
-    yaw = Math.sign(yaw) * Math.min(Math.abs(yaw), K.toward ? 180 : K.maxYaw); // (never edge-on: a wide stack seen side-on is a sliver)
-    const size = +(Art.soundsystemScale as unknown as (f: number, n: number, fk: number) => number)(a.far, K.near, K.far).toFixed(3), g = set[i];
+    const g = set[i] as { seed: number; salt: number; profile: string }, limit = (K.toward ? 180 : K.maxYaw * (share[g.profile] ?? 1)) * Math.PI / 180;
+    let yaw = (Art.soundsystemYaw as unknown as (dx: number, dz: number, mode: string) => number)(a.dx, a.dz, K.toward ? "toward" : "ring") * Math.PI / 180;
+    // a soft limit, by profile (the art director's pass, 2026-10-08): a wall turns at most 2/3 of maxYaw, straight 5/6, the rest
+    // all of it; easing towards it (tanh) rather than piling up there, so a wide stack never stands side-on
+    if (!K.toward) yaw = limit * Math.tanh(yaw / limit);
+    yaw = yaw * 180 / Math.PI;
+    const size = +(Art.soundsystemScale as unknown as (f: number, n: number, fk: number) => number)(a.far, K.near, K.far).toFixed(3);
     specs.set(a.key, { key: a.key, id: `ss-${g.seed}-${g.salt}-${Math.round(yaw)}-${size}`, genome: g, yaw: Math.round(yaw), size, far: a.far });
   });
   SETS.set(map, { knobs: kk, specs });
