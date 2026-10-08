@@ -18,13 +18,21 @@ const hash = (a: number, b: number): number => { let h = (a * 374761393 + b * 66
 /** The slashes' canvas at a geometry scale `g` (1 the full drawing; under 1, drawn smaller for a far camera, still one pixel each). */
 export const slashSize = (g = 1): { w: number; h: number } => ({ w: Math.ceil(SLASH_W * g), h: Math.ceil(SLASH_H * g) });
 
+/** The three strokes' centre lines at a geometry scale `g`, in slash pixels: each starts at (x, y), runs `len` down to the
+ *  right along (DX, DY), and is `w` half-wide at its middle (the first, top one, longest; each below shorter and offset). */
+export const DX = 0.76, DY = 0.65;
+export function slashStrokes(g = 1): { x: number; y: number; len: number; w: number }[] {
+  const nx = -0.65, ny = 0.76; // (across the strokes, down to the left)
+  // each below the last by `gap` across the strokes and a little further along (offset), shorter
+  const GAP = 6.8 * g;
+  return [{ len: 24, w: 2.3, on: 0 }, { len: 20.5, w: 2.1, on: 2.2 }, { len: 17, w: 1.9, on: 4.6 }].map((s, i) => ({ len: s.len * g, w: Math.max(0.75, s.w * g), x: (9 + s.on * DX) * g + i * GAP * nx, y: (2 + s.on * DY) * g + i * GAP * ny }));
+}
+
 /** The three slashes' pixels (the first, top one, longest), each a jagged stroke tapering to points at both ends; `g` draws them
  *  smaller (a far camera: her sprite under one screen pixel per art pixel), into slashSize(g). */
 export function slashPixels(g = 1): SlashPixel[][] {
-  const dx = 0.76, dy = 0.65, nx = -0.65, ny = 0.76; // (along the stroke, down to the right; across it, down to the left)
-  const { w: CW, h: CH } = slashSize(g);
-  // each below the last by `gap` across the strokes and a little further along (offset), shorter
-  const GAP = 6.8 * g, STROKES = [{ len: 24, w: 2.3, on: 0 }, { len: 20.5, w: 2.1, on: 2.2 }, { len: 17, w: 1.9, on: 4.6 }].map((s, i) => ({ len: s.len * g, w: Math.max(0.75, s.w * g), x: (9 + s.on * dx) * g + i * GAP * nx, y: (2 + s.on * dy) * g + i * GAP * ny }));
+  const dx = DX, dy = DY, nx = -0.65, ny = 0.76; // (along the stroke, down to the right; across it, down to the left)
+  const { w: CW, h: CH } = slashSize(g), STROKES = slashStrokes(g);
   return STROKES.map((s, i) => {
     const out: SlashPixel[] = [];
     for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) {
