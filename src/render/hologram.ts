@@ -98,11 +98,11 @@ varying vec4 vLook;
 ${HEIGHT_VERT_GLSL}
 void main() {
   // From a point at the projector up to the glyph's lower edge, as wide as the glyph there: a flat fan facing the camera.
-  float top = aSway.y - aAt.w * 0.5 * aFx.w, up = position.y + 0.5, half = mix(0.06, aAt.w * 0.42, up);
+  float top = aSway.y - aAt.w * 0.5 * aFx.w, up = position.y + 0.5, spread = mix(0.06, aAt.w * 0.42, up);
   vec3 base = onGround(vec3(aAt.x, aAt.y, aAt.z));
   vec2 toCam = normalize(cameraPosition.xz - base.xz + vec2(1e-4, 0.0));
   float a = atan(toCam.y, toCam.x) + 1.5707963;
-  vec3 w = base + vec3(cos(a), 0.0, sin(a)) * position.x * 2.0 * half + vec3(0.0, up * max(0.0, top), 0.0);
+  vec3 w = base + vec3(cos(a), 0.0, sin(a)) * position.x * 2.0 * spread + vec3(0.0, up * max(0.0, top), 0.0);
   vUv = vec2(position.x + 0.5, up); vLook = aLook;
   gl_Position = clipOf(w);
 }`;
