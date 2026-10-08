@@ -80,10 +80,10 @@ describe("a runestone's column of light (Ed, 2026-10-06: \"first appears when th
     p.spellAt = null; // waiting for the party spell
     expect(leyReachTimes(p, g.map)).toBeNull(); // the tip waits for it
     castPartySpell(p, g.map, 10);
-    const times = leyReachTimes(p, g.map)!, step = TUNING.party.interval / TIP_PACE;
+    const times = leyReachTimes(p, g.map)!, pace = TUNING.leyLines.reveal ?? TIP_PACE, step = TUNING.party.interval / pace;
     const markers = spawnMarkers(p, g.map), next = markers.find(m => m.stage === "next")!, at = times.get(next.key)!;
     expect(at).toBeCloseTo(p.bootUntil); // the first stone after home: the line branched off the boot ring and reaches it as the boot ends (Ed, 2026-10-07)
-    expect(times.get([...times.keys()][3])!).toBeCloseTo(p.bootUntil + 3 * step); // the third, as the first wave lands
+    expect(times.get([...times.keys()][3])!).toBeCloseTo(p.bootUntil + (3 <= pace ? TUNING.party.interval : 3 * step)); // the third: as the first wave lands with reveal 3, at its pace after it with less
     expect(times.get(cellKey(g.map.centreCell))).toBe(-Infinity); // home, reached from the start
     expect(columnShown(at, at - 0.01, F)).toBeNull(); // no column before the tip arrives
     const arrive = columnShown(at, at, F)!;

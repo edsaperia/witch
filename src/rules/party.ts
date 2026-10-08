@@ -312,17 +312,20 @@ export function stepParty(p: PartyState, map: ForestMap, time: number, dt: numbe
 export function hurryWave(p: PartyState, time: number, by: number, map?: ForestMap): number {
   const was = p.nextAt;
   if (!map) { p.nextAt = Math.max(time, p.nextAt - Math.max(0, by)); return was - p.nextAt; }
-  // The pulse never skips (Ed, 2026-10-08): it speeds up from where it is to arrive with the wave, at most PULSE_HURRY
-  // times its pace, so the wave can come no sooner than that lets it.
-  const share = pulseShare(p, map, time), soonest = time + ((1 - share) * map.tuning.party.interval) / PULSE_HURRY;
+  // The pulse never skips (Ed, 2026-10-08): it speeds up from where it is to arrive with the wave, at most the line's front's
+  // own pace (pulseHurry), so the wave can come no sooner than that lets it.
+  const share = pulseShare(p, map, time), soonest = time + ((1 - share) * map.tuning.party.interval) / pulseHurry(map);
   if (time < p.bootUntil) { p.nextAt = Math.max(time, p.nextAt - Math.max(0, by)); return was - p.nextAt; } // (booting: the pulse hasn't set off)
   p.nextAt = Math.max(Math.min(was, soonest), p.nextAt - Math.max(0, by));
   if (p.nextAt < was) p.pulseFrom = { share, left: p.nextAt - time };
   return was - p.nextAt;
 }
 
-/** How many times its pace the wave's pulse may run to arrive with a hurried wave (hurryWave). */
+/** How many times its pace the wave's pulse may run to arrive with a hurried wave (hurryWave), when the tuning doesn't say. */
 export const PULSE_HURRY = 3;
+/** ...the line's front's own pace (leyLines.reveal times the pulse's: Ed, 2026-10-08, 2.5), so a hurried pulse is never
+ *  faster than the front ever goes. */
+export const pulseHurry = (map: ForestMap): number => Math.max(1, map.tuning.leyLines?.reveal ?? PULSE_HURRY);
 
 /** How far along its link the wave's pulse is, 0 to 1 (Ed, 2026-10-08: "The pulse should never skip, it always travels
  *  along the route at the bpm speed"): the countdown's share run, the countdown's own pace (the tempo, pauses: rules/beat.ts

@@ -5,6 +5,7 @@
 // a soundsystem lost, a knockout and respawn, and what a quest done does (Ed hasn't ruled: leyLines.advance).
 import { describe, expect, it } from "vitest";
 import { hitWitch, loseSoundsystem, newGame, stepGame, type Game } from "./game";
+import { pulseHurry } from "./party";
 import { TUNING, withTuning } from "./tuning";
 import { cellKey, type PartyState } from "./party";
 import { leyChain, onAreaDone, waveReached } from "./leylines";
@@ -127,7 +128,7 @@ describe("the pulse and the line's front never skip (Ed, 2026-10-08: 'it always 
   /** Steps `secs`, `each` before every step; the pulse's and the front's distance along the route never go back, and never
    *  move more than `most` links in a step (at most PULSE_HURRY times the pace, the front `reveal` times that). */
   function watch(g: Game, secs: number, each?: (i: number) => void): { pulse: number; front: number } {
-    const reveal = g.map.tuning.leyLines.reveal ?? 3, per = Math.max(1, g.party.next.length), most = (per * 3.2 / g.map.tuning.party.interval) / 60;
+    const reveal = g.map.tuning.leyLines.reveal ?? 3, per = Math.max(1, g.party.next.length), most = (per * (pulseHurry(g.map) + 0.2) / g.map.tuning.party.interval) / 60;
     let pulse = pulseLinks(g.party, g.map, g.clock.time), front = leyReveal(g.party, g.map, g.clock.time, reveal) ?? 0;
     for (let i = 0; i < Math.round(secs * 60); i++) {
       each?.(i); stepGame(g, still, 1 / 60);
@@ -142,11 +143,11 @@ describe("the pulse and the line's front never skip (Ed, 2026-10-08: 'it always 
     return { pulse, front };
   }
 
-  it("through the boot and five waves: the pulse a link a wave, the front three", () => {
+  it("through the boot and five waves: the pulse a link a wave, the front leyLines.reveal times as far", () => {
     const g = fast(), end = watch(g, 1.5 + 20 * 5);
     expect(g.party.wave).toBe(5);
     expect(end.pulse).toBeGreaterThan(5); expect(end.pulse).toBeLessThan(5.1);
-    expect(end.front).toBeCloseTo(3 * end.pulse, 6);
+    expect(end.front).toBeCloseTo((g.map.tuning.leyLines.reveal ?? 3) * end.pulse, 6);
   }, 180000);
 
   it("a tempo change mid-link (a knockdown's BPM): the pace changes, nothing jumps, and it still arrives with the wave", () => {
@@ -155,7 +156,7 @@ describe("the pulse and the line's front never skip (Ed, 2026-10-08: 'it always 
     onTheWave(g);
   }, 180000);
 
-  it("a soundsystem lost hurries the wave: the pulse speeds up from where it is, at most three times its pace, and arrives with it", () => {
+  it("a soundsystem lost hurries the wave: the pulse speeds up from where it is, at most the front's pace (pulseHurry), and arrives with it", () => {
     const g = fast();
     let lost = "";
     watch(g, 1.5 + 20 * 3, i => {
