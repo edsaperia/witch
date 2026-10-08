@@ -271,9 +271,12 @@ export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean
  *  "similar to normal runestones but half the width"; it was a 0.55 miniature). */
 export const SPEAKER_STONE_WIDTH = 0.5;
 /** What a ring stone is carved with, by its place in the ring (0 at the top, clockwise): a rune glyph or a creature's sigil. One
- *  not listed carves the home rune (Ed, 2026-10-08: the carving is his to pick; each stone can take its own). */
-export const RING_STONE_CARVINGS: Record<number, { rune?: number; sigil?: string }> = {};
-const carvingKey = (c?: { rune?: number; sigil?: string }) => (c?.sigil ? `s:${c.sigil}` : c?.rune !== undefined ? `r:${c.rune}` : "");
+ *  not listed carves RING_STONE_CARVING, Ed's pick (2026-10-08): "three glowing dots in a vertical stack, hinting at the speaker
+ *  that will replace it" (its bass, mid and tweeter). */
+type Carving = { rune?: number; sigil?: string; dots?: boolean };
+export const RING_STONE_CARVING: Carving = { dots: true };
+export const RING_STONE_CARVINGS: Record<number, Carving> = {};
+const carvingKey = (c?: Carving) => (c?.sigil ? `s:${c.sigil}` : c?.rune !== undefined ? `r:${c.rune}` : "");
 /** A ring stone's frame key in SpeakerArt.stones: its drawn angle and its carving. */
 export const ringStoneKey = (i: number, angle: number): string => `${angle}|${carvingKey(RING_STONE_CARVINGS[i])}`;
 export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The runestone each home speaker starts as (Ed, 2026-10-06), turned like the speakers (Ed, 2026-10-08: "face inwards, like the ring speakers do"): by ringStoneKey, its frame and its ground point. */ stones?: Record<string, number>; stoneOrigin?: Record<string, { x: number; y: number }> }
@@ -319,12 +322,12 @@ function speakerSprites(st: Style, mk: MakeCanvas, stoneScale: number): { sprite
         speakers.frames[`${angle}:${state}:${frame}`] = sprites.push(Art.bake(r.sp, colours, st, st.cOutline, mk) as Baked) - 1;
         if (!speakers.origin[angle]) speakers.origin[angle] = r.origin;
       }
-  // the runestone it starts as (the areas' rune stone, cyan, its home rune or its own carving): baked at the areas' stones' scale, so as
+  // the runestone it starts as (the areas' rune stone, cyan, carved with its three dots or its own carving): baked at the areas' stones' scale, so as
   // tall as theirs, at SPEAKER_STONE_WIDTH of their width, at each of the speakers' angles (mirrored as they are), drawn at 1 (docs/STYLE.md rule 1)
   type Stone = Baked & { origin: { x: number; y: number } };
-  const runeStone = Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; width: number; yaw: number; rune?: number; sigil?: string; makeCanvas: MakeCanvas }) => Stone;
+  const runeStone = Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; width: number; yaw: number; rune?: number; sigil?: string; dots?: boolean; makeCanvas: MakeCanvas }) => Stone;
   speakers.stones = {}; speakers.stoneOrigin = {};
-  const carvings = new Map<string, { rune?: number; sigil?: string } | undefined>([["", undefined], ...Object.values(RING_STONE_CARVINGS).map(c => [carvingKey(c), c] as const)]);
+  const carvings = new Map<string, Carving>([["", RING_STONE_CARVING], ...Object.values(RING_STONE_CARVINGS).map(c => [carvingKey(c), c] as const)]);
   for (const angle of Art.DANCEFLOOR_SPEAKER_ANGLES as number[])
     for (const [key, c] of carvings) {
       const stone = runeStone(st, { glow: "cyan", scale: stoneScale, width: SPEAKER_STONE_WIDTH, yaw: angle, ...c, makeCanvas: mk });
