@@ -2975,6 +2975,29 @@
       ],
       "additionalProperties": false
     },
+    "portrait": {
+      "type": "object",
+      "properties": {
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fps": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cps": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "scale",
+        "fps",
+        "cps"
+      ],
+      "additionalProperties": false
+    },
     "wildWatch": {
       "type": "object",
       "properties": {
@@ -8643,6 +8666,7 @@
     "attackFx",
     "combat",
     "notice",
+    "portrait",
     "wildWatch",
     "hunt",
     "naps",

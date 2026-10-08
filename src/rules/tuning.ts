@@ -149,6 +149,8 @@ export interface Tuning {
    *  on the ground in it, so a later visit plays it again (rules/wildWatch.ts). */
   /** The hunt (Ed, 2026-10-07; rules/hunt.ts): a woken wild area's own young and adults go for her while she's in the area, till she's knocked out or they're invited; she leaves, they lose interest as before. */
   hunt?: { on: boolean };
+  /** The witch's portrait (src/ui/portrait/, previewed at portrait.html): its whole-number scale, redraws a second at most, letters a second typing on. */
+  portrait?: { scale: number; fps: number; cps: number };
   wildWatch?: { on: boolean; time: number; forget: number; hangBack: number; /** an area with watchers worth this much in a fight (F) or more is fully dangerous: its red at its fullest */ dangerF?: number; /** the red on a watching creature at full aggro in the most dangerous area (render/view/creatures.ts) */ tint?: number; /** seconds its red takes to ease out when the watch ends (render/aggro.ts aggroFadeOut) */ fade?: number };
   naps?: { on: boolean; chance: number; length: number[]; wake: number; /** A legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"): its own chance and length, roused only by a witch on the ground within reach metres of its circle's edge. */ circle?: { chance: number; length: number[]; reach: number } };
   /** The soundsystem alarm (rules/alarms.ts, render/alarm.ts). */
