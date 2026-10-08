@@ -3,7 +3,8 @@
   "phase": "Art",
   "slice": "The soundsystem generator: every area's soundsystem its own, turned to the dancefloor, bigger further out, breaking in stages",
   "prs": [
-    541
+    541,
+    554
   ],
   "built": [
     "A genome per area's soundsystem (`art/soundsystemGen.js`): profile, tiers, stone, crystal, moss, runes, lean and a projector on top, dealt as one set a map so no two are alike (#541).",
