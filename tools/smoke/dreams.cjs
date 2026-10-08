@@ -1,7 +1,7 @@
-// The sleeping legends' dream bubbles (render/leash.ts drawDreams, index.html .bubble.dream; the art director, #235: "a soft,
-// round thought bubble with a couple of small puffs leading up to it ... quieter than the art"): the built game (DIST, default
-// dist/) at 1280×720 on a seed; the witch set down on the ground beside the nearest dreaming legend, a still of its bubble. Writes
-// previews/dreams/.
+// The sleeping legends' dream bubbles (render/leash/bubbles.ts drawDreams, render/thoughtCloud.ts; Ed, 2026-10-08: pixel thought
+// bubbles, small clouds rising to a large one, one symbol at a time): the built game (DIST, default dist/) at 1280×720 on a seed;
+// the witch set down on the ground beside the nearest dreaming legend, a crop of its bubble showing each symbol (its face, the
+// sigil it dreams of, the flask), and one as a nightmare. Fails on a page error or a symbol that never shows. Writes previews/dreams/.
 //   npm run build && node tools/smoke/dreams.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -31,15 +31,29 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     console.log("legend", JSON.stringify(legend));
     const wait = async s => page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + s, { timeout: 600000, polling: 500 });
     await wait(4);
-    const shoot = async name => {
-      const b = await page.evaluate(() => { const e = document.querySelector(".bubble.dream.on"); if (!e || e.style.display === "none") return null; const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+    await page.evaluate(() => { window.witch.game.clock.paused = true; });
+    // the bubble's box, and which symbol shows whole (opacity 1)
+    const look = () => page.evaluate(() => {
+      const e = document.querySelector(".thought.dream"); if (!e || e.style.display === "none") return null;
+      const r = e.getBoundingClientRect(), s = [...e.querySelectorAll("canvas:not(.cloud)")].find(c => c.style.display !== "none" && c.style.opacity === "1.00");
+      return { x: r.x, y: r.y, w: r.width, h: r.height, left: e.style.left, top: e.style.top, kind: s ? ["emoji", "sigil", "flask"].find(k => s.classList.contains(k)) : null };
+    });
+    const shoot = async (name, want, limit = 60000) => {
+      const end = Date.now() + limit;
+      let b = await look();
+      while ((!b || (want && b.kind !== want)) && Date.now() < end) { await page.waitForTimeout(100); b = await look(); }
       console.log(name, JSON.stringify(b));
-      if (!b) throw new Error(`${name}: no dream bubble showing`);
-      const cx = b.x + b.w / 2, cy = b.y + b.h, clip = { x: Math.max(0, cx - 260), y: Math.max(0, cy - 260), width: 520, height: 400 };
+      if (!b || (want && b.kind !== want)) { errors.push(`${name}: no ${want || "bubble"} showing`); return; }
+      const clip = { x: Math.max(0, b.x - 30), y: Math.max(0, b.y - 30), width: b.w + 60, height: b.h + 120 };
       await page.screenshot({ path: path.join(outDir, `${name}.png`), clip });
-      await page.screenshot({ path: path.join(outDir, `${name}-screen.png`) });
     };
-    await shoot("dream");
+    await shoot("emoji", "emoji");
+    await shoot("sigil", "sigil");
+    await shoot("flask", "flask", 120000);
+    await page.screenshot({ path: path.join(outDir, "screen.png") });
+    await page.evaluate(id => { window.witch.game.creatures[id].restlessness = 0.75; }, legend.id);
+    await shoot("nightmare-emoji", "emoji");
+    await shoot("nightmare-sigil", "sigil");
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
 })().catch(e => { console.error(e); process.exit(1); });

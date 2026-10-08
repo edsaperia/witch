@@ -861,7 +861,7 @@ A legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower, thi
 
 ### `dreams`
 
-A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of (Ed, 2026-10-05): shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops. nightmare: a restless legend's one face (Ed, 2026-10-05), slightly sad to angry: faces[k] from restlessness at[k] on. sleepy (Ed, 2026-10-06): while it sleeps giving its quest (its dream open, no nightmare), its face beside the sigil: mostly face (😴), and now and then, for one turn of every seconds, one of faces instead; each turn its own throw per legend (seeded by its id, so legends never change together), face with chance weight. A face the browser can't draw (🫠 and 😮‍💨 are new) shows as fallback.
+A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of (Ed, 2026-10-05): shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops. nightmare: a restless legend's one face (Ed, 2026-10-05), slightly sad to angry: faces[k] from restlessness at[k] on. sleepy (Ed, 2026-10-06): while it sleeps giving its quest (its dream open, no nightmare), its face beside the sigil: mostly face (😴), and now and then, for one turn of every seconds, one of faces instead; each turn its own throw per legend (seeded by its id, so legends never change together), face with chance weight. A face the browser can't draw (🫠 and 😮‍💨 are new) shows as fallback. cycle (Ed, 2026-10-08: "just one at a time, alternating between emoji and the quest sigil, and occasionally the flask sigil"): the pixel thought bubble shows one symbol for hold seconds, the face, then the sigil it dreams of, then the face again; a flask share of the sigil's turns (seeded per legend and turn) show the flask's relic sigil instead; each fades in and out over fade seconds. A nightmare whose quest has closed shows its face alone.
 
 | knob | type | range |
 |---|---|---|
@@ -873,6 +873,9 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.sleepy.every` | number | 0 to … |
 | `dreams.sleepy.faces` | array of string |  |
 | `dreams.sleepy.fallback` | string |  |
+| `dreams.cycle.hold` | number | 0 to … |
+| `dreams.cycle.fade` | number | 0 to … |
+| `dreams.cycle.flask` | number | 0 to … |
 
 ### `legends`, `wildLegends`, `legendSpeed`
 

@@ -110,24 +110,18 @@
     .legend-panel p.done { opacity: .55; }
     .legend-panel p.wrong { color: rgb(240, 150, 130); }
     .legend-panel .icon { width: 22px; height: 22px; vertical-align: -6px; margin: 0 2px; image-rendering: pixelated; }
-    /* A dream's pointer (Ed, 2026-10-06): a pixel arrow on the bubble's edge toward the nearest runestone of the area its quest
-       animal lives in, and that way in words under the sigil (src/render/compass.ts; rules/dream.ts dreamWay). */
-    .dream-way { position: absolute; transform: translate(-50%, 0); display: flex; align-items: center; gap: calc(var(--px) / 2); padding: calc(var(--px) / 3) var(--px); background: rgba(14, 11, 28, .7); box-shadow: 0 0 0 1px rgba(232, 180, 106, .35); pointer-events: none; z-index: 2;
-      font: calc(var(--px) * 8 / 3) / 1 "Tiny5", ui-monospace, monospace; -webkit-font-smoothing: none; color: rgb(244, 226, 190); white-space: nowrap; }
-    .dream-way .dream-dir { width: calc(var(--px) * 11 / 3); height: calc(var(--px) * 11 / 3); image-rendering: pixelated; }
-    /* A sleeping legend's dream (the first quest): a thought bubble, a legend's size (--px by level: bubblePx in
-       src/render/leash.ts), holding the sigil it wants in its level's variant. Soft and round, in the HUD's amber, with two
-       small puffs rising to it from the sleeper, quieter than the art (the art director, #235: "a soft, round thought
-       bubble ... quieter than the art"). A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its
-       ink reddening. */
-    .bubble.dream { --ink: rgba(232, 180, 106, .5); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); padding: calc(var(--px) * 3) calc(var(--px) * 4); }
-    .bubble.dream::before { border: max(1px, calc(var(--px) * .5)) solid var(--ink); border-radius: 50%; clip-path: none; z-index: -1;
-      background: radial-gradient(ellipse at 50% 42%, rgba(26, 18, 34, .5), rgba(14, 10, 30, .32) 72%, rgba(14, 10, 30, .18));
-      box-shadow: 0 0 calc(var(--px) * 3) rgba(232, 180, 106, .14), inset 0 0 calc(var(--px) * 2) rgba(232, 180, 106, .1); }
-    .bubble.dream::after { left: 36%; top: calc(100% + var(--px) * .5); width: calc(var(--px) * 6); height: calc(var(--px) * 12); background:
-      radial-gradient(circle at 72% 14%, var(--ink) 0 calc(var(--px) * 1.3), transparent calc(var(--px) * 1.4)),
-      radial-gradient(circle at 30% 88%, var(--ink) 0 calc(var(--px) * .8), transparent calc(var(--px) * .9)); box-shadow: none; }
-    .bubble.dream.nightmare::before { background: radial-gradient(ellipse at 50% 42%, rgba(48, 8, 14, .6), rgba(40, 6, 12, .35) 72%, rgba(40, 6, 12, .2)); }
+    /* A dream's pointer (Ed, 2026-10-06): a pixel arrow toward the nearest runestone of the area its quest animal lives in, and
+       that way in words, under the dream's cloud (src/render/compass.ts; rules/dream.ts dreamWay); on the 3 px grid, a flat
+       panel in a 3 px amber outline like the bubbles' (Ed, 2026-10-08). */
+    .dream-way { position: absolute; display: flex; align-items: center; gap: 6px; padding: 3px 6px; background: rgb(20, 14, 34); border: 3px solid rgba(232, 180, 106, .8); pointer-events: none; z-index: 2;
+      font: 15px / 15px "Tiny5", ui-monospace, monospace; -webkit-font-smoothing: none; color: rgb(244, 226, 190); white-space: nowrap; }
+    .dream-way .dream-dir { width: 33px; height: 33px; image-rendering: pixelated; }
+    /* A sleeping legend's dream (render/thoughtCloud.ts, render/leash/bubbles.ts; Ed, 2026-10-08: "drawn in the same way as the
+       speech bubbles ... thought bubbles - small clouds going up to a large cloud"): a pixel cloud on a canvas, a one-pixel
+       outline round a flat fill, a cloud pixel 3 screen px, placed on the 3 px grid; puffs rising to it from the sleeper; one
+       symbol in it at a time (the face, the sigil it dreams of, now and then the flask). The party's-over snores the same, smaller. */
+    .thought { position: absolute; pointer-events: none; }
+    .thought canvas { position: absolute; left: 0; top: 0; image-rendering: pixelated; }
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
