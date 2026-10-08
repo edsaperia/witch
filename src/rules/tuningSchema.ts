@@ -12,4 +12,5 @@ export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "partyWitches.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "grounds.radius": { additionalProperties: { type: "number", minimum: 0 } },
   "legendClearing.species": { additionalProperties: { type: "number", minimum: 0 } },
+  "population.swarm.classes": { additionalProperties: { type: "object", properties: { cap: { type: "number", minimum: 1 }, species: { type: "array", items: { type: "string" } } }, required: ["cap", "species"], additionalProperties: false } },
 };

@@ -1,6 +1,7 @@
 // The wild watch (Ed, 2026-10-07): come down in a wild area and its animals stir and stare at her, then attack.
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { COMBAT } from "./combat";
+import { isInside } from "./mapShape";
 import { newGame, newWitchPlayer, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { cellKey } from "./party";
@@ -95,15 +96,18 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
 
   it("lets her walk out on foot before they make up their minds, and nobody follows (Ed: time to run away)", () => {
     const { g, key, at } = overWild();
-    // the area's edge due east of her landing spot: she lands 4 m inside it, by its watchers
-    let ex = at.x; while (cellKey(g.map.cellSafe(ex + 1, at.z).cell) === key && ex - at.x < 400) ex += 1;
-    for (const c of here(g, key)) { c.x = ex - 4 - 1 - (c.id % 3) * 0.5; c.z = at.z + (c.id % 2 ? 1 : -1); c.tx = c.x; c.tz = c.z; } // (right by her: within any attack's reach of the edge)
-    land(g, ex - 4, at.z); run(g, STEP);
+    // the area's edge along a straight line from her landing spot into a neighbouring area (not out to the sand and the
+    // map's edge): she lands 4 m inside it, by its watchers
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]], edgeOf = ([dx, dz]: number[]) => { let r = 0; while (cellKey(g.map.cellSafe(at.x + dx * (r + 1), at.z + dz * (r + 1)).cell) === key && r < 400) r++; return r; };
+    const [dx, dz] = dirs.find(d => { const r = edgeOf(d); return r < 400 && isInside(g.map.bounds, at.x + d[0] * (r + 40), at.z + d[1] * (r + 40), 60); })!;
+    const r = edgeOf([dx, dz]), ex = at.x + dx * r, ez = at.z + dz * r, px = -dz, pz = dx; // (the edge point, and across the way)
+    for (const c of here(g, key)) { const back = 4 + 1 + (c.id % 3) * 0.5, side = c.id % 2 ? 1 : -1; c.x = ex - dx * back + px * side; c.z = ez - dz * back + pz * side; c.tx = c.x; c.tz = c.z; } // (right by her: within any attack's reach of the edge)
+    land(g, ex - dx * 4, ez - dz * 4); run(g, STEP);
     expect(aggroOf(g)).not.toBeNull();
     let chased = false, out = -1;
-    const walk: Controls = { ...idle, moveX: 1 };
+    const walk: Controls = { ...idle, moveX: dx, moveZ: dz };
     for (let i = 0; i < 8 / STEP; i++) {
-      stepGame(g, g.clock.time - g.wildEntry.get(key)?.at! < 1 || out < 0 ? walk : idle, STEP);
+      stepGame(g, i * STEP < TUNING.wildWatch!.time * 0.6 || out < 0 ? walk : idle, STEP); // (running on while they watch: clear of a charge's reach past the edge)
       // (out once she's out of it and stays out: an area's edge is ragged, so a step out can be a step back in)
       if (cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key) { if (out < 0) out = g.clock.time; } else out = -1;
       chased ||= onHer(g, key);

@@ -7,7 +7,8 @@ import { TUNING } from "./tuning";
 import { cellKey, routeOf } from "./party";
 import { clearCue, clearableAt, clearedAreas, holdsArea, wildLeft } from "./clear";
 import { routeIndex, routePopulation } from "./growth";
-import { POWER_TABLE, buildSwarm, capOf, estimatedPower, referenceAt, swarmPower, targetPower, type PowerTable } from "./swarm";
+import { POWER_TABLE, buildSwarm, capAt, capOf, classOf, estimatedPower, powerOf, referenceAt, swarmTotals, targetPower, type PowerTable } from "./swarm";
+import { classStrengths, strengthOf } from "./combat/data";
 import { spawnCreatures } from "./creatures";
 import { generateMap, AREA_TYPES } from "./map";
 import { befriend } from "./creatureStates";
@@ -32,53 +33,67 @@ function empty(g: Game, key: string): void {
   g.byArea = null;
 }
 
-describe("the hostile swarms by the runestone order (Ed, 2026-10-08)", () => {
-  const W = TUNING.population.swarm, kinds = [...new Set(AREA_TYPES.map(t => t.creature))], F5 = [0, 0.25, 0.5, 0.75, 1];
-  /** Every swarm a species could field (up to its cap) and its distance from the target at f. */
-  const options = (f: number, sp: string) => { const T = targetPower(f, W), out: { y: number; a: number; err: number }[] = []; for (let n = 1; n <= capOf(sp, W); n++) for (let y = 0; y <= n; y++) out.push({ y, a: n - y, err: Math.abs(swarmPower(sp, y, n - y) - T) / T }); return out; };
-  const errOf = (f: number, sp: string) => { const [y, a] = buildSwarm(f, W, sp); return Math.abs(swarmPower(sp, y, a) - targetPower(f, W)) / targetPower(f, W); };
+describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm plan, phase 1)", () => {
+  const W = TUNING.population.swarm, kinds = [...new Set(AREA_TYPES.map(t => t.creature))], P5 = [0, 0.25, 0.5, 0.75, 1];
+  /** Every swarm a species could field at p (up to its cap there) and its distance from the target. */
+  const options = (p: number, sp: string) => { const T = targetPower(p, W), out: { y: number; a: number; err: number }[] = []; for (let n = 1; n <= capAt(sp, p, W); n++) for (let y = 0; y <= n; y++) out.push({ y, a: n - y, err: Math.abs(powerOf(sp, y, n - y) - T) / T }); return out; };
+  const errOf = (p: number, sp: string) => { const [y, a] = buildSwarm(p, W, sp); return Math.abs(powerOf(sp, y, a) - targetPower(p, W)) / targetPower(p, W); };
 
-  it("every species at five places along the order comes within 15% of the target (or as near as any swarm it could field)", () => {
-    for (const f of F5) for (const sp of kinds) {
-      const best = Math.min(...options(f, sp).map(o => o.err));
-      expect(errOf(f, sp), `${sp} at ${f}`).toBeLessThanOrEqual(Math.max(W.tolerance, best) + 1e-9);
-    }
-    for (const f of [0.25, 0.5, 0.75, 1]) for (const sp of kinds) expect(errOf(f, sp), `${sp} at ${f}`).toBeLessThanOrEqual(0.15);
+  it("three classes, strength 12 / cap: strong 6 (×2), medium 12 (×1, every species not listed), light 16 (×0.75)", () => {
+    expect(Object.fromEntries(Object.entries(W.classes).map(([k, c]) => [k, c.cap]))).toEqual({ strong: 6, medium: 12, light: 16 });
+    for (const sp of kinds) { const c = classOf(sp, W); expect(strengthOf(sp, 1), sp).toBeCloseTo(12 / W.classes[c].cap, 9); expect(capOf(sp, W), sp).toBe(W.classes[c].cap); }
+    expect(classOf("bear", W)).toBe("strong"); expect(classOf("wolf", W)).toBe("medium"); expect(classOf("hedgehog", W)).toBe("light"); expect(classOf("bat", W)).toBe("light");
+    for (const sp of Object.values(W.classes).flatMap(c => c.species)) expect(kinds, sp).toContain(sp);
+    expect(Object.values(W.classes).flatMap(c => c.species).length).toBe(new Set(Object.values(W.classes).flatMap(c => c.species)).size); // (each in one class)
+    expect(classStrengths({ reference: "medium", classes: { medium: { cap: 12, species: [] }, big: { cap: 4, species: ["x"] } } })).toEqual({ x: 3 });
   });
 
-  it("the caps hold, and a mix of young and adults is chosen wherever one comes within tolerance", () => {
-    for (const f of [...F5, 0.1, 0.6, 0.9]) for (const sp of kinds) {
-      const [y, a] = buildSwarm(f, W, sp);
-      expect(y + a, `${sp} at ${f}`).toBeLessThanOrEqual(capOf(sp, W));
-      if (options(f, sp).some(o => o.y > 0 && o.a > 0 && o.err <= W.tolerance)) expect(y > 0 && a > 0, `${sp} at ${f}: ${y} young, ${a} adults`).toBe(true);
+  it("the target: a medium reference swarm of 1 + 11·p^1.3, its young share 1.0 to 0.2; growing along the order", () => {
+    expect(referenceAt(0, W)).toEqual({ size: 1, young: 1 });
+    expect(referenceAt(1, W).size).toBe(12); expect(referenceAt(1, W).young).toBeCloseTo(0.2, 9);
+    expect(referenceAt(0.5, W).size).toBeCloseTo(1 + 11 * Math.pow(0.5, 1.3), 9);
+    expect(targetPower(0, W)).toBe(45 * 3); // (one young)
+    for (let p = 0; p < 1; p += 0.1) expect(targetPower(p + 0.1, W)).toBeGreaterThan(targetPower(p, W));
+    const t = swarmTotals("bear", 1, 2); expect(t).toEqual({ hp: (45 + 320) * 2, siegeDps: (3 + 20) * 2, witchThreat: 3 }); expect(estimatedPower("bear", 1, 2)).toBe(t.hp * t.siegeDps);
+  });
+
+  it("every species at p = 0, .25, .5, .75 and 1 comes within 15% of the target (or, at the first stone, as near as one creature can)", () => {
+    for (const p of P5) for (const sp of kinds) {
+      const best = Math.min(...options(p, sp).map(o => o.err));
+      expect(errOf(p, sp), `${sp} at ${p}`).toBeLessThanOrEqual(Math.max(0.15, best + W.mixTolerance) + 1e-9);
+      if (p > 0) expect(errOf(p, sp), `${sp} at ${p}`).toBeLessThanOrEqual(0.15);
     }
   });
 
-  it("at the last runestone the swarms average endAverage (12): strong kinds 5 to 6, none over 20; mostly young early, mostly adults late", () => {
+  it("the caps hold (grown along the curve), and a mix of young and adults is chosen wherever one is within mixTolerance of the nearest", () => {
+    for (const p of [...P5, 0.1, 0.6, 0.9]) for (const sp of kinds) {
+      const [y, a] = buildSwarm(p, W, sp), o = options(p, sp), best = Math.min(...o.map(c => c.err));
+      expect(y + a, `${sp} at ${p}`).toBeLessThanOrEqual(capAt(sp, p, W)); expect(capAt(sp, p, W)).toBeLessThanOrEqual(capOf(sp, W));
+      expect(y + a, `${sp} at ${p}`).toBeGreaterThanOrEqual(1);
+      if (o.some(c => c.y > 0 && c.a > 0 && c.err <= best + W.mixTolerance)) expect(y > 0 && a > 0, `${sp} at ${p}: ${y} young, ${a} adults`).toBe(true);
+    }
+    expect(capAt("hedgehog", 1, W)).toBe(16); expect(capAt("bear", 1, W)).toBe(6); expect(capAt("wolf", 0, W)).toBe(2);
+  });
+
+  it("at the last runestone the swarms average endAverage (12), none over 16; mostly young early, mostly adults late", () => {
     const end = kinds.map(sp => buildSwarm(1, W, sp)).map(([y, a]) => y + a);
-    expect(Math.abs(end.reduce((x, y) => x + y, 0) / end.length - W.endAverage)).toBeLessThanOrEqual(1);
-    for (const sp of ["bear", "boar", "elk", "stag", "badger", "ram", "beaver"]) { const [y, a] = buildSwarm(1, W, sp); expect(y + a, sp).toBeGreaterThanOrEqual(5); expect(y + a, sp).toBeLessThanOrEqual(6); }
-    expect(Math.max(...end)).toBeLessThanOrEqual(20);
-    const share = (f: number) => { const s = kinds.map(sp => buildSwarm(f, W, sp)); return s.reduce((x, [y]) => x + y, 0) / s.reduce((x, [y, a]) => x + y + a, 0); };
+    expect(Math.abs(end.reduce((x, y) => x + y, 0) / end.length - W.endAverage)).toBeLessThanOrEqual(0.5);
+    expect(Math.max(...end)).toBeLessThanOrEqual(16);
+    const share = (p: number) => { const s = kinds.map(sp => buildSwarm(p, W, sp)); return s.reduce((x, [y]) => x + y, 0) / s.reduce((x, [y, a]) => x + y + a, 0); };
     expect(share(0.25)).toBeGreaterThan(0.5); expect(share(1)).toBeLessThan(0.3);
-    for (let f = 0; f < 1; f += 0.1) { expect(targetPower(f + 0.1, W)).toBeGreaterThan(targetPower(f, W)); expect(referenceAt(f + 0.1, W).young).toBeLessThanOrEqual(referenceAt(f, W).young + 1e-9); }
-    expect(referenceAt(0, W).size).toBe(W.start); expect(referenceAt(1, W).size).toBe(W.endAverage);
   });
 
-  it("the simulated table, where it has a measurement, stands in for estimatedPower (its young shares by a straight line)", () => {
-    const shares = [0, 0.5, 1], est = (y: number, a: number) => estimatedPower("wolf", y, a);
-    // A wolf measured twice as strong as estimated at every size but 5: the builder fields a weaker swarm by the estimate.
-    const sizes = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12], table: PowerTable = { version: 1, youngShares: shares, species: { wolf: { sizes, power: sizes.map(n => shares.map(s => 2 * est(n * s, n - n * s))) } } };
-    expect(swarmPower("wolf", 2, 2, table)).toBeCloseTo(2 * est(2, 2));
-    expect(swarmPower("wolf", 1, 3, table)).toBeCloseTo(2 * (est(0, 4) + est(2, 2)) / 2); // (a quarter young: halfway between 0 and 0.5)
-    expect(swarmPower("wolf", 2, 3, table)).toBeCloseTo(est(2, 3)); // (5 not measured: estimated)
-    expect(swarmPower("fox", 2, 2, table)).toBeCloseTo(estimatedPower("fox", 2, 2)); // (no entry: estimated)
-    const plain = buildSwarm(0.5, W, "wolf", { ...table, species: {} }), sim = buildSwarm(0.5, W, "wolf", table);
-    expect(est(...sim)).toBeLessThan(est(...plain) * 0.75);
-    expect(sim[0] + sim[1]).not.toBe(5); // (only measured sizes come near)
-    // The shipped table is well formed.
-    expect(POWER_TABLE.youngShares[0]).toBe(0); expect(POWER_TABLE.youngShares[POWER_TABLE.youngShares.length - 1]).toBe(1);
-    for (const [sp, e] of Object.entries(POWER_TABLE.species)) { expect(kinds, sp).toContain(sp); expect(e.power.length, sp).toBe(e.sizes.length); for (const row of e.power) expect(row.length, sp).toBe(POWER_TABLE.youngShares.length); }
+  it("powerOf reads the simulated table where it has the swarm, else the estimate; the builder follows it", () => {
+    // A wolf measured twice as strong as estimated at every size up to 12.
+    const species: PowerTable["species"] = { wolf: {} };
+    for (let n = 1; n <= 12; n++) species.wolf[String(n)] = Array.from({ length: n + 1 }, (_, y) => 2 * estimatedPower("wolf", y, n - y));
+    const table: PowerTable = { version: 1, species };
+    expect(powerOf("wolf", 2, 3, table)).toBe(2 * estimatedPower("wolf", 2, 3));
+    expect(powerOf("fox", 2, 3, table)).toBe(estimatedPower("fox", 2, 3)); // (no entry)
+    expect(powerOf("wolf", 2, 3, { version: 1, species: { wolf: { "5": [1, 2] } } })).toBe(estimatedPower("wolf", 2, 3)); // (no such young count)
+    const plain = buildSwarm(0.75, W, "wolf", { version: 1, species: {} }), sim = buildSwarm(0.75, W, "wolf", table);
+    expect(estimatedPower("wolf", ...sim)).toBeLessThan(estimatedPower("wolf", ...plain) * 0.75);
+    expect(POWER_TABLE).toEqual(expect.objectContaining({ version: 1, species: {} })); // (phase 1: estimated only)
   });
 
   it("the first wild area holds at least one hostile; every area has its two babies", () => {

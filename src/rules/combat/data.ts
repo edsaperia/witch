@@ -1,6 +1,7 @@
 // Combat's data and shapes (split from rules/combat.ts, no change in behaviour): the attacks, levels and traits from
 // config/combat.json, strength by species, and the types the fight is made of (targets, shots, beams, events, the world it reads).
 import raw from "../../../config/combat.json";
+import TUNED from "../../../config/tuning.json";
 import { LEGEND, type Creature, type Level } from "../creatures";
 import { type State } from "../creatureStates";
 import { FIGHT } from "../movement";
@@ -58,7 +59,17 @@ export interface CombatData {
 }
 
 export type Trait = "flier" | "armoured" | "swarm" | "heavy" | "nimble" | "burrower";
+/** Species strength by class (Ed, 2026-10-08: population.swarm.classes in the tuning file): a class's species are as strong
+ *  as the reference class's cap over their class's (strength = 12 / cap: strong 6 ×2, light 16 ×0.75); the reference class
+ *  (swarm.reference, medium) and unlisted species 1. */
+export function classStrengths(swarm: { classes: Record<string, { cap: number; species: string[] }>; reference: string }): Record<string, number> {
+  const ref = swarm.classes[swarm.reference]?.cap ?? 12, out: Record<string, number> = {};
+  for (const c of Object.values(swarm.classes)) for (const sp of c.species) out[sp] = ref / Math.max(1, c.cap);
+  return out;
+}
 export const COMBAT = raw as unknown as CombatData;
+// (the classes' strengths, under any combat.json lists by species)
+COMBAT.strength = { species: { ...classStrengths((TUNED as unknown as { population: { swarm: Parameters<typeof classStrengths>[0] } }).population.swarm), ...(COMBAT.strength?.species ?? {}) } };
 /** A species' traits. */
 const TRAITS = new WeakMap<CombatData, Map<string, readonly Trait[]>>();
 /** A species' traits, worked out once a data set (two new arrays a call were a fight frame's allocator: every hit, every hurt

@@ -83,6 +83,7 @@ describe("legend clearings", () => {
     g.clock.paused = false;
     g.witches[0].health.hp = 1e6;
     const B = g.creatures.find(o => o.circle)!, k = B.circle!, dist = () => Math.hypot(B.x - k.x, B.z - k.z);
+    for (const o of g.creatures) if (o !== B && !o.boss && o.level > 0 && Math.hypot(o.x - k.x, o.z - k.z) < 150) o.gone = true; // (the wild young and adults round about out of the way: she lands by the next area's swarm)
     // invited (happy), not leashed (Ed, 2026-10-06: "happy creatures don't follow you - only leashed creatures do")
     befriend(B, g.clock.time);
     expect(B.leashed).toBe(false);

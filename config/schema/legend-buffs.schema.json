@@ -3,13 +3,317 @@
   "properties": {
     "how": {
       "type": "object",
-      "additionalProperties": {
-        "type": "object",
-        "additionalProperties": {
-          "type": "number",
-          "minimum": 0
+      "properties": {
+        "fan": {
+          "type": "object",
+          "properties": {
+            "per": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "per",
+            "spread"
+          ],
+          "additionalProperties": false
+        },
+        "rear": {
+          "type": "object",
+          "properties": {
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "spread"
+          ],
+          "additionalProperties": false
+        },
+        "ring": {
+          "type": "object",
+          "properties": {
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "letters": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "every",
+            "letters"
+          ],
+          "additionalProperties": false
+        },
+        "charge": {
+          "type": "object",
+          "properties": {
+            "after": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "letters": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "min": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "after",
+            "time",
+            "letters",
+            "spread",
+            "min"
+          ],
+          "additionalProperties": false
+        },
+        "echo": {
+          "type": "object",
+          "properties": {
+            "delay": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "delay"
+          ],
+          "additionalProperties": false
+        },
+        "charm": {
+          "type": "object",
+          "properties": {
+            "homing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "homing",
+            "cone",
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "ricochet": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "split": {
+          "type": "object",
+          "properties": {
+            "letters": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "letters",
+            "spread",
+            "range",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
+        "boomerang": {
+          "type": "object",
+          "properties": {
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "catch": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "turn",
+            "catch"
+          ],
+          "additionalProperties": false
+        },
+        "trail": {
+          "type": "object",
+          "properties": {
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "every",
+            "life",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "every",
+            "max",
+            "life",
+            "reach"
+          ],
+          "additionalProperties": false
+        },
+        "orbit": {
+          "type": "object",
+          "properties": {
+            "letters": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spin": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "respawn": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "letters",
+            "radius",
+            "spin",
+            "reach",
+            "respawn"
+          ],
+          "additionalProperties": false
+        },
+        "charges": {
+          "type": "object",
+          "properties": {
+            "chain": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "chain"
+          ],
+          "additionalProperties": false
+        },
+        "momentum": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "time",
+            "speed"
+          ],
+          "additionalProperties": false
         }
-      }
+      },
+      "required": [
+        "fan",
+        "rear",
+        "ring",
+        "charge",
+        "echo",
+        "charm",
+        "ricochet",
+        "split",
+        "boomerang",
+        "trail",
+        "cache",
+        "orbit",
+        "charges",
+        "momentum"
+      ],
+      "additionalProperties": false
     },
     "limits": {
       "type": "object",
@@ -30,35 +334,159 @@
             "type": "string"
           },
           "kind": {
-            "type": "string",
-            "enum": [
-              "shot",
-              "move"
-            ]
+            "type": "string"
+          },
+          "add": {
+            "type": "object",
+            "properties": {
+              "invites.burst": {
+                "type": "number",
+                "minimum": 0
+              },
+              "dash.gone": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [],
+            "additionalProperties": false
           },
           "label": {
             "type": "string"
           },
-          "scale": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "add": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
           "mods": {
             "type": "object",
-            "additionalProperties": {
-              "type": "number",
-              "minimum": 0
-            }
+            "properties": {
+              "fan": {
+                "type": "number",
+                "minimum": 0
+              },
+              "rear": {
+                "type": "number",
+                "minimum": 0
+              },
+              "ring": {
+                "type": "number",
+                "minimum": 0
+              },
+              "charge": {
+                "type": "number",
+                "minimum": 0
+              },
+              "echo": {
+                "type": "number",
+                "minimum": 0
+              },
+              "charm": {
+                "type": "number",
+                "minimum": 0
+              },
+              "pierce": {
+                "type": "number",
+                "minimum": 0
+              },
+              "ricochet": {
+                "type": "number",
+                "minimum": 0
+              },
+              "split": {
+                "type": "number",
+                "minimum": 0
+              },
+              "boomerang": {
+                "type": "number",
+                "minimum": 0
+              },
+              "slip": {
+                "type": "number",
+                "minimum": 0
+              },
+              "trail": {
+                "type": "number",
+                "minimum": 0
+              },
+              "cache": {
+                "type": "number",
+                "minimum": 0
+              },
+              "orbit": {
+                "type": "number",
+                "minimum": 0
+              },
+              "charges": {
+                "type": "number",
+                "minimum": 0
+              },
+              "momentum": {
+                "type": "number",
+                "minimum": 0
+              },
+              "frenzy": {
+                "type": "number",
+                "minimum": 0
+              },
+              "decoy": {
+                "type": "number",
+                "minimum": 0
+              },
+              "steady": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "scale": {
+            "type": "object",
+            "properties": {
+              "groundSpeed": {
+                "type": "number",
+                "minimum": 0
+              },
+              "dash.distance": {
+                "type": "number",
+                "minimum": 0
+              },
+              "invites.speed": {
+                "type": "number",
+                "minimum": 0
+              },
+              "invites.range": {
+                "type": "number",
+                "minimum": 0
+              },
+              "invites.cooldown": {
+                "type": "number",
+                "minimum": 0
+              },
+              "invites.radius": {
+                "type": "number",
+                "minimum": 0
+              },
+              "groundAcceleration": {
+                "type": "number",
+                "minimum": 0
+              },
+              "treetop.turnRate": {
+                "type": "number",
+                "minimum": 0
+              },
+              "treetopSpeed": {
+                "type": "number",
+                "minimum": 0
+              },
+              "riseTime": {
+                "type": "number",
+                "minimum": 0
+              },
+              "descendTime": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [],
+            "additionalProperties": false
           }
         },
         "required": [

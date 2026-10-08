@@ -3170,124 +3170,36 @@
                 "minimum": 0
               }
             },
-            "caps": {
+            "reference": {
+              "type": "string"
+            },
+            "classes": {
               "type": "object",
-              "properties": {
-                "default": {
-                  "type": "number",
-                  "minimum": 0
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "cap": {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "species": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
                 },
-                "bear": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "boar": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "elk": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "stag": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "badger": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "ram": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "beaver": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "hedgehog": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "mole": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "dormouse": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "newt": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "toad": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "snail": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "salamander": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "beetle": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "woodlouse": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "spider": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "moth": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "bat": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "glowworm": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "default",
-                "bear",
-                "boar",
-                "elk",
-                "stag",
-                "badger",
-                "ram",
-                "beaver",
-                "hedgehog",
-                "mole",
-                "dormouse",
-                "newt",
-                "toad",
-                "snail",
-                "salamander",
-                "beetle",
-                "woodlouse",
-                "spider",
-                "moth",
-                "bat",
-                "glowworm"
-              ],
-              "additionalProperties": false
+                "required": [
+                  "cap",
+                  "species"
+                ],
+                "additionalProperties": false
+              }
             },
-            "tolerance": {
-              "type": "number",
-              "minimum": 0
+            "capScales": {
+              "type": "boolean"
             },
-            "shareWeight": {
+            "mixTolerance": {
               "type": "number",
               "minimum": 0
             }
@@ -3297,9 +3209,10 @@
             "endAverage",
             "curve",
             "youngShare",
-            "caps",
-            "tolerance",
-            "shareWeight"
+            "reference",
+            "classes",
+            "capScales",
+            "mixTolerance"
           ],
           "additionalProperties": false
         },
