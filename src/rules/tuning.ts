@@ -1,6 +1,7 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
 import type { ByRoute } from "./growth";
+import type { SwarmTuning } from "./swarm";
 
 export interface CameraModeTuning { angleIn: number; angleOut: number; distanceIn: number; distanceOut: number }
 
@@ -137,7 +138,7 @@ export interface Tuning {
     leap: { reach: number; through: number; contact: boolean; /** Leading her (Ed, 2026-10-06): a leap comes down where she'll be when it lands, as she's going at take-off, this share of it (0: where she was). */ lead: number } };
   /** How attacks feel on screen (render/attackFeel.ts): the wind-up's crouch, the lunge's stretch, a hit's squash and bounce, a knock-back's tumble. */
   attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number; legendFlash: number };
-  combat: { aggro: number; witchLose: number; leaveArea: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number; /** a retreating wild creature roams again once it's back in its area within this many metres of home */ retreatHome: number; /** seconds a knocked-down wild creature lies stunned before it runs off (Ed, 2026-10-06: 20) */ daze: number };
+  combat: { aggro: number; witchLose: number; leaveArea: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; speakerHealth: number; speakerRadius: number; shake: number; /** a retreating wild creature roams again once it's back in its area within this many metres of home */ retreatHome: number; /** seconds a knocked-down wild creature lies stunned before it runs off (Ed, 2026-10-06: 20) */ daze: number };
   /** Parked party animals (at a sigil) guard within radius metres of it (Ed, 2026-10-04). */
   guard: { radius: number };
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
@@ -149,7 +150,7 @@ export interface Tuning {
    *  on the ground in it, so a later visit plays it again (rules/wildWatch.ts). */
   /** The hunt (Ed, 2026-10-07; rules/hunt.ts): a woken wild area's own young and adults go for her while she's in the area, till she's knocked out or they're invited; she leaves, they lose interest as before. */
   hunt?: { on: boolean };
-  wildWatch?: { on: boolean; time: number; forget: number; hangBack: number; /** an area with watchers worth this much in a fight (F) or more is fully dangerous: its red at its fullest */ dangerF?: number; /** the red on a watching creature at full aggro in the most dangerous area (render/view/creatures.ts) */ tint?: number; /** seconds its red takes to ease out when the watch ends (render/aggro.ts aggroFadeOut) */ fade?: number };
+  wildWatch?: { on: boolean; /** a 💌 landing on a wild creature wakes its area at once (rules/inviteWakes.ts) */ inviteWakes?: boolean; time: number; forget: number; hangBack: number; /** an area with watchers worth this much in a fight (F) or more is fully dangerous: its red at its fullest */ dangerF?: number; /** the red on a watching creature at full aggro in the most dangerous area (render/view/creatures.ts) */ tint?: number; /** seconds its red takes to ease out when the watch ends (render/aggro.ts aggroFadeOut) */ fade?: number };
   naps?: { on: boolean; chance: number; length: number[]; wake: number; /** A legend circle's baby (Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"): its own chance and length, roused only by a witch on the ground within reach metres of its circle's edge. */ circle?: { chance: number; length: number[]; reach: number } };
   /** The soundsystem alarm (rules/alarms.ts, render/alarm.ts). */
   alarms?: { linger: number; fall: number; most: number };
@@ -206,6 +207,8 @@ export interface Tuning {
     land: { volume: number; gap: number };
     /** A sigil refused (put down too near another): a soft two-note "nope" (chimes.ts nope). */
     nope: { volume: number; gap: number };
+    /** An area cleared early (chimes.ts cleared, sfxCues.ts cleared): its sting's level, heard within range metres (at least floor of it). */
+    cleared?: { volume: number; range: number; floor: number };
     /** The crowd cheering as her knockdown speeds the party up (sfxCues.ts tempoUp): its share of the fireworks' cheer. */
     tempoUp?: { volume: number };
     stir: { volume: number };
@@ -285,7 +288,9 @@ export interface Tuning {
   haze: { near: number; far: number };
   /** The scenery budget: scenery is drawn out to an adaptive radius round the witch (view.ts). */
   scenery: { adaptive: boolean; fps: number; hysteresis: number; sustain: number; minRadius: number; shrink: number; grow: number; fade: number };
-  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; areaNeon: boolean; twinkle: number; chaseSpeed: number };
+  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; /** palette: every colour in turn; areaNeon: warm white and the area's own neon */ mode: "palette" | "areaNeon"; twinkle: number; chaseSpeed: number };
+  /** The generated soundsystems (render/soundsystemGen.ts, art/soundsystemGen.js): sizes near to far by distance, the most they turn from facing us, ahead waves baked early. */
+  soundsystemGen?: { on: boolean; near: number; far: number; from: number; to: number; maxYaw: number; toward: boolean; ahead: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };
     uplight: { strength: number; pulse: number; edge: number }; interval: number; /** seconds a destroyed soundsystem takes off the next wave's countdown (Ed, 2026-10-05) */ lossPenalty: number; startDelay: number; /** areas each wave wakes: one per witch present (1 until multiplayer) */ areasPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
@@ -312,6 +317,8 @@ export interface Tuning {
   mist: { on: boolean; strength: number; height: number; wind: number };
   /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts; Ed, 2026-10-07). */
   lightRings?: { on: boolean; strength: number; radius: number; count: number; spacing: number; share: number; above: number; speed: number; plane: number; glory: number; gloryStrength: number; fadeNear: number; fadeFar: number };
+  /** The soundsystems' sky sigils (render/hologram.ts; Ed, 2026-10-08): in place of their laser shows. */
+  holograms: { on: boolean; size: number; lift: number; glyph: number; cone: number; powerUp: number; collapse: number; turn: number; bob: number; fadeFar: number };
   /** The trees watching her (render/sprites.ts uWatch; Ed, 2026-10-07). */
   watching?: { on: boolean; radius: number; lean: number; lag: number };
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
@@ -373,7 +380,7 @@ export interface Tuning {
   /** Wild creatures: every area starts with `start` and, from the first frame (Ed, 2026-10-07: no growth on a clock),
    *  byRoute's extra by its place on the waves' route (rules/growth.ts routePopulation: a threat curve spent by each
    *  kind's profile, and a fixed number of babies). `growth` is the old per-wave growth: the game no longer reads it (the balance simulators do). */
-  population: { start: { babies: number; young: number; adults: number }; byRoute: ByRoute; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
+  population: { start: { babies: number; young: number; adults: number }; byRoute: ByRoute; /** The hostile swarms by the runestone order (Ed, 2026-10-08; rules/swarm.ts). */ swarm: SwarmTuning; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
   /** Area legends (Ed, 2026-10-04): one an area, asleep till its area's wave, then a mini-boss guarding it. */
   /** A sleeping legend's dream bubble (Ed, 2026-10-05): shown only to a witch on the ground within range metres of it. */
   dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string } };

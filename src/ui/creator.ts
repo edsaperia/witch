@@ -3,15 +3,16 @@
 // to change her outfit!"). She stands in her treehouse room, big, hovering and standing, redrawn live
 // as you change her genome (art/witchGenome.js): a picker or a slider for every axis in WITCH_AXES,
 // grouped (hat, hair, outfit, broom, scarf and bags, and anything new the art builders add), a toggle per
-// accessory, and a rainbow picker per colour part. Randomise, the classic witch, and the party spell's scroll to start (ui/spellScroll.ts). Her look is kept on
+// accessory, and a swatch grid per colour part. Randomise, the classic witch, and the party spell's scroll to start (ui/spellScroll.ts). Her look is kept on
 // this browser (localStorage witch.genome) for next time. Round 2 (Ed, 2026-10-05: "the sliders ... should
 // go further, and the colours should have 256 rainbow colour pickers. scarf length, bag size, backpack ...
-// no hat, and some different hats"): the axes are wide, a hat picker with no hat first, and each colour a
-// 256-step hue strip with a shade strip and a grey strip (the bake still quantises to the art's tones).
+// no hat, and some different hats"): the axes are wide and a hat picker has no hat first. Colours (Ed, 2026-10-08, "the new
+// colour picker design"): a grid of swatches, 12 hues and a grey column across, 9 shades from near-black through the pure hue
+// to near-white down (the bake still quantises to the art's tones).
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 import { shade } from "../../art/lighting.js";
-import { LOOKS, lookGenome, pleasingWitch } from "./looks";
+import { pleasingWitch } from "./looks";
 import { keysDir, newWalker, spotAt, walk, type RoomFloor, type Walker } from "./roomWalk";
 import { SpellScroll, type SpellCue } from "./spellScroll";
 import { KeyHint } from "./keyHint";
@@ -33,6 +34,7 @@ export function loadGenome(): Genome | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const g = upgrade(JSON.parse(raw)); // a save from before round 2 gets the new fields as hers
+    g.palette = snapPalette(g.palette); // (a save from the rainbow pickers' days: each colour to its nearest swatch)
     return (Art.witchGenomeProblems as (g: unknown) => string[])(g).length ? null : g;
   } catch { return null; }
 }
@@ -44,7 +46,7 @@ export function slot(axis: string): [string | null, string] {
   if (axis === "hatShape") return ["hat", "shape"];
   if (axis === "broom") return ["broom", "kind"];
   if (axis === "bristles") return ["broom", "bristles"];
-  if (axis in (Art.WITCH_GENOME as { accessories: object }).accessories) return ["accessories", axis]; // an accessory with a choice (the familiar)
+  if (axis in (Art.WITCH_GENOME as { accessories: object }).accessories) return ["accessories", axis]; // an accessory with a choice
   for (const part of ["hat", "broom"]) if (axis.startsWith(part) && axis.length > part.length) return [part, axis[part.length].toLowerCase() + axis.slice(part.length + 1)];
   return [null, axis];
 }
@@ -63,7 +65,7 @@ export const BOXES: { id: string; name: string; axes: string[]; wear: string[]; 
   { id: "bag", name: "👜 Bag", axes: ["bagSize"], wear: ["satchel", "bumbag"], parts: ["satchel"] },
   { id: "backpack", name: "🎒 Backpack", axes: ["backpackSize"], wear: [], parts: ["backpack"] },
   { id: "phones", name: "🎧 Headphones", axes: [], wear: ["phones"], parts: ["headphones"] },
-  { id: "more", name: "✨ Magic and more", axes: ["familiar"], wear: ["lantern", "vial", "book", "glowsticks", "wristband"], parts: [] },
+  { id: "more", name: "✨ Magic and more", axes: [], wear: ["lantern", "vial", "book", "glowsticks", "wristband"], parts: [] },
 ];
 /** The box an axis, an accessory or a colour part is in (the last box for one none names). */
 export const boxOf = (kind: "axes" | "wear" | "parts", k: string): string => (BOXES.find(b => b[kind].includes(k)) ?? BOXES[BOXES.length - 1]).id;
@@ -84,17 +86,31 @@ const WEARS: Record<string, string> = { scarfLength: "scarf", bagSize: "satchel"
 /** A slider's labels at its ends, where 0 means none. */
 const NONE_AT_ZERO = new Set(["scarfLength", "backpackSize"]);
 
-/** The rainbow pickers: 256 steps each. A colour is a hue (the rainbow), a shade (dark, through the full colour, to pale) and a
- *  greyness (full colour to grey); fromPicker turns the three into the genome's hue, saturation and value, toPicker back. */
-export const STEPS = 256;
-export function fromPicker(hue: number, shade: number, grey: number): number[] {
-  const t = shade / (STEPS - 1), s0 = t <= .6 ? .9 : .9 - .85 * (t - .6) / .4, v = t <= .6 ? .08 + .92 * t / .6 : 1;
-  return [hue / STEPS, +(s0 * (1 - grey / (STEPS - 1))).toFixed(4), +v.toFixed(4)];
+/** The swatch grid (Ed, 2026-10-08, from his reference): 13 columns, the 12 hues (red, orange, yellow, yellow-green, green,
+ *  green-teal, cyan, azure, blue, violet, magenta, crimson) and a grey column at the right; 9 rows, a shade ramp from
+ *  near-black at the top through the pure hue (row 5) to near-white tints at the bottom. Each swatch is a colour as the
+ *  genome keeps it (hue, saturation, value), so whatever reads her palette (the bake, her portrait) reads it as before. */
+export const GRID_COLS = 13, GRID_ROWS = 9, PURE_ROW = 4;
+const DARKS = [.13, .3, .5, .74], TINTS = [.72, .5, .3, .12];
+export function swatchAt(col: number, row: number): number[] {
+  if (col === GRID_COLS - 1) return [0, 0, +(.06 + .94 * row / (GRID_ROWS - 1)).toFixed(4)]; // greys, black to white
+  const h = +(col / 12).toFixed(4);
+  return row < PURE_ROW ? [h, 1, DARKS[row]] : row === PURE_ROW ? [h, 1, 1] : [h, TINTS[row - PURE_ROW - 1], 1];
 }
-export function toPicker([h, s, v]: number[]): [number, number, number] {
-  const cl = (x: number) => Math.max(0, Math.min(STEPS - 1, Math.round(x * (STEPS - 1))));
-  if (v < .995) return [Math.round(h * STEPS) % STEPS, cl((v - .08) / .92 * .6), cl(1 - s / .9)];
-  return [Math.round(h * STEPS) % STEPS, cl(.6 + Math.max(0, .9 - s) / .85 * .4), 0];
+/** The swatch nearest a colour (by its red, green and blue, weighted as the eye weighs them), as [column, row]. */
+export function nearestSwatch(c: number[]): [number, number] {
+  const rgb = Art.hsv2rgb as (h: number, s: number, v: number) => number[], [r, g, b] = rgb(c[0], c[1], c[2]);
+  let best: [number, number] = [GRID_COLS - 1, 0], bd = Infinity;
+  for (let col = 0; col < GRID_COLS; col++) for (let row = 0; row < GRID_ROWS; row++) {
+    const [h, s, v] = swatchAt(col, row), [R, G, B] = rgb(h, s, v), mr = (r + R) / 2;
+    const d = (2 + mr / 256) * (r - R) ** 2 + 4 * (g - G) ** 2 + (2 + (255 - mr) / 256) * (b - B) ** 2;
+    if (d < bd) { bd = d; best = [col, row]; }
+  }
+  return best;
+}
+/** A palette with each colour moved to its nearest swatch (null stays null: the classic witch's own colours). */
+export function snapPalette(p: Record<string, number[]> | null): Record<string, number[]> | null {
+  return p && Object.fromEntries(Object.entries(p).map(([k, c]) => [k, Array.isArray(c) && c.length === 3 ? swatchAt(...nearestSwatch(c)) : c]));
 }
 
 /** The colours the classic witch shows (the style's hues over her default outfit), as a palette to start editing from. */
@@ -105,12 +121,6 @@ function classicPalette(st: Style): Record<string, number[]> {
 }
 /** The parts a player colours, and each one's swatches (hue, saturation, value). */
 const PARTS = ["hat", "plume", "jacket", "cloak", "top", "hair", "skin", "jeans", "sneakers", "headphones", "scarf", "satchel", "backpack", "broom", "bristles"].filter(k => k in (Art.DEFAULT_OUTFIT as object) || k === "backpack" || k === "plume");
-/** A few quick picks under the strips: skins, and the hair colours that aren't in a rainbow. */
-function swatches(part: string): number[][] {
-  if (part === "skin") return [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
-  if (part === "hair") return [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86]];
-  return [[0, 0, .08], [0, 0, .5], [0, 0, .97]];
-}
 const css = ([h, s, v]: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(h, s, v); return `rgb(${r | 0},${g | 0},${b | 0})`; };
 
 /** The open box, kept on this browser (localStorage witch.creator.box); at first, the hat. "" for none. */
@@ -285,14 +295,13 @@ export class Creator {
   hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); this.scroll.stop(); this.spellSound("hum", 0); }
   genome(): Genome { return clone(this.g); }
 
-  private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
-  private look(id: string): void { this.g = upgrade(lookGenome(id)); this.build(); this.dirty = true; }
-  /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour anywhere in the rainbows. */
+  private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.g.palette = snapPalette(this.g.palette); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
+  /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour any swatch. */
   private wild(): void {
     const R = Math.random, g = upgrade(CLASSIC), any = <T>(a: T[]) => a[Math.floor(R() * a.length)];
     for (const [axis, lim] of Object.entries(AXES)) { const [part, key] = slot(axis), v = typeof lim[0] === "string" ? any(lim as string[]) : (lim[0] as number) + ((lim[1] as number) - (lim[0] as number)) * R(); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; }
     for (const k of Object.keys(g.accessories)) g.accessories[k] = R() < .5;
-    g.palette = Object.fromEntries(PARTS.map(p => [p, fromPicker(Math.floor(R() * STEPS), Math.floor(R() * STEPS), Math.floor(R() * R() * STEPS))]));
+    g.palette = Object.fromEntries(PARTS.map(p => [p, swatchAt(Math.floor(R() * GRID_COLS), Math.floor(R() * GRID_ROWS))]));
     this.g = g; this.build(); this.dirty = true;
   }
   /** With no hat, the hat's sliders are greyed (they keep their places for when a hat goes back on). */
@@ -338,15 +347,9 @@ export class Creator {
     // down the left side of the character creation pane"): its icon on the tab, its name as its tooltip and at the top of its
     // page; only the open one's page shows, its tab joined to the page like a bookmark. The open one is kept on this browser.
     const box = (id: string, name: string) => this.makeBox(id, name);
-    // Her looks to start from (ui/looks.ts)
-    const lk = row(box("looks", "👗 Looks"), "");
-    lk.firstElementChild?.remove();
-    for (const L of LOOKS) {
-      lk.append(button(L.name, () => this.look(L.id), { title: L.note, data: { look: L.id }, style: { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "rgba(255,255,255,.08)" } }));
-    }
     const get = (axis: string) => { const [part, key] = slot(axis); return part ? (g[part] as Record<string, unknown>)[key] : g[key]; };
     const set = (axis: string, v: unknown) => { const [part, key] = slot(axis); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; this.dirty = true; };
-    const accs = Object.keys({ ...CLASSIC.accessories, ...g.accessories }).filter(k => !(k in AXES)); // (a choice, like the familiar, is an axis)
+    const accs = Object.keys({ ...CLASSIC.accessories, ...g.accessories }).filter(k => !(k in AXES)); // (a choice is an axis)
     const pal = () => ({ ...classicPalette(this.style), ...g.palette }), cur = (part: string) => pal()[part] ?? [.07, .5, .45];
     for (const B of BOXES) {
       const axes = Object.keys(AXES).filter(a => boxOf("axes", a) === B.id), wear = accs.filter(k => boxOf("wear", k) === B.id), parts = PARTS.filter(k => boxOf("parts", k) === B.id);
@@ -406,51 +409,46 @@ export class Creator {
     r.append(s, out);
   }
 
-  /** A box's own colour picker: a swatch per part it colours (the one being picked ringed; one part, no swatches), then that
-   *  part's 256-step strips (the rainbow, the shade: dark, full, pale; and grey), a few quick picks, and back to her classic. */
+  /** A box's own colour picker: a tab per part it colours (the one being picked ringed; one part, no tabs), then the swatch
+   *  grid (GRID_COLS x GRID_ROWS, square and gapless, the chosen one outlined in pixels: its colour's nearest, so a classic
+   *  colour shows where it sits), and back to her classic. Click or tap a swatch, or drag across the grid. */
   private picker(body: HTMLElement, id: string, parts: string[], row: (p: HTMLElement, n: string) => HTMLElement, pal: () => Record<string, number[]>, cur: (part: string) => number[]): void {
     const g = this.g, tabs = row(body, "colour"), picker = h("div", { data: { picker: id } });
     if (!parts.includes(this.picking.get(id) ?? "")) this.picking.set(id, parts[0]);
     body.append(picker);
-    const strip = (kind: "hue" | "shade" | "grey") => {
-      const c = h("canvas", { data: { strip: kind }, style: { width: "100%", height: "14px", imageRendering: "pixelated", cursor: "crosshair", borderRadius: "3px", border: "1px solid rgba(0,0,0,.6)", display: "block" } });
-      c.width = STEPS; c.height = 1;
-      return c;
-    };
     const showPart = () => {
       const part = this.picking.get(id)!;
       tabs.querySelectorAll<HTMLElement>("button").forEach(b => { if (b.dataset.part === part && parts.length > 1) b.dataset.on = ""; else delete b.dataset.on; b.style.background = css(cur(b.dataset.part!)); });
       picker.innerHTML = "";
-      const [hi, si, gi] = toPicker(cur(part)), at = { hue: hi, shade: si, grey: gi };
-      const strips = { hue: strip("hue"), shade: strip("shade"), grey: strip("grey") };
-      const paint = () => {
-        for (const [kind, c] of Object.entries(strips) as ["hue" | "shade" | "grey", HTMLCanvasElement][]) {
-          const x = c.getContext("2d")!;
-          for (let i = 0; i < STEPS; i++) { const k = { ...at, [kind]: i }; x.fillStyle = css(fromPicker(k.hue, k.shade, k.grey)); x.fillRect(i, 0, 1, 1); }
-          x.fillStyle = "#fff"; x.fillRect(at[kind], 0, 1, 1); // its marker
-        }
-      };
-      for (const [kind, c] of Object.entries(strips) as ["hue" | "shade" | "grey", HTMLCanvasElement][]) {
-        const pick = (e: PointerEvent) => {
-          const r = c.getBoundingClientRect();
-          at[kind] = Math.max(0, Math.min(STEPS - 1, Math.floor((e.clientX - r.left) / r.width * STEPS)));
-          g.palette = { ...pal(), [part]: fromPicker(at.hue, at.shade, at.grey) };
-          this.dirty = true; paint();
-          const t = tabs.querySelector<HTMLElement>(`button[data-part="${part}"]`); if (t) t.style.background = css(g.palette[part]);
-        };
-        c.addEventListener("pointerdown", e => { c.setPointerCapture(e.pointerId); pick(e); });
-        c.addEventListener("pointermove", e => { if (c.hasPointerCapture(e.pointerId)) pick(e); });
-        picker.append(h("div", { style: { display: "flex", alignItems: "center", gap: "6px", margin: "3px 0" }, html: `<span style="width:42px;opacity:.7">${kind}</span>` }, h("div", { style: { flex: "1" } }, c)));
+      const grid = h("div", { data: { grid: part }, style: { display: "grid", gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`, gap: "0", margin: "4px 0", touchAction: "none", cursor: "pointer", userSelect: "none" } });
+      const cells: HTMLElement[] = [];
+      for (let r = 0; r < GRID_ROWS; r++) for (let c = 0; c < GRID_COLS; c++) {
+        const cell = h("div", { data: { col: String(c), row: String(r) }, style: { aspectRatio: "1", background: css(swatchAt(c, r)), position: "relative" } });
+        cells.push(cell); grid.append(cell);
       }
-      paint();
+      let on = -1;
+      const mark = ([c, r]: [number, number]) => {
+        const i = r * GRID_COLS + c;
+        if (on >= 0) delete cells[on].dataset.on;
+        on = i; cells[i].dataset.on = ""; // (outlined in pixels, white inside and ink round it: ui/pixelUi.ts)
+      };
+      mark(nearestSwatch(cur(part)));
+      const pick = (e: PointerEvent) => {
+        const rc = grid.getBoundingClientRect();
+        const c = Math.max(0, Math.min(GRID_COLS - 1, Math.floor((e.clientX - rc.left) / rc.width * GRID_COLS)));
+        const r = Math.max(0, Math.min(GRID_ROWS - 1, Math.floor((e.clientY - rc.top) / rc.height * GRID_ROWS)));
+        if (r * GRID_COLS + c === on && g.palette?.[part]) return;
+        g.palette = { ...pal(), [part]: swatchAt(c, r) };
+        this.dirty = true; mark([c, r]);
+        const t = tabs.querySelector<HTMLElement>(`button[data-part="${part}"]`); if (t) t.style.background = css(g.palette[part]);
+      };
+      grid.addEventListener("pointerdown", e => { grid.setPointerCapture(e.pointerId); pick(e); });
+      grid.addEventListener("pointermove", e => { if (grid.hasPointerCapture(e.pointerId)) pick(e); });
+      picker.append(grid);
       const q = row(picker, "");
       q.firstElementChild?.remove();
-      const quick = (sw: number[], text = "") => {
-        q.append(button(text, () => { const c = classicPalette(this.style); g.palette = { ...pal(), [part]: text ? c[part] ?? [.07, .5, .45] : sw }; this.dirty = true; showPart(); },
-          { style: { minWidth: "16px", height: "16px", padding: "0 4px", font: "11px inherit", color: "#efe6ff", border: "1px solid rgba(0,0,0,.6)", borderRadius: "3px", background: text ? "rgba(255,255,255,.1)" : css(sw), cursor: "pointer" } }));
-      };
-      for (const sw of swatches(part)) quick(sw);
-      quick([], "classic");
+      q.append(button("classic", () => { const c = classicPalette(this.style)[part] ?? [.07, .5, .45]; g.palette = { ...pal(), [part]: swatchAt(...nearestSwatch(c)) }; this.dirty = true; showPart(); },
+        { style: { height: "16px", padding: "0 4px", font: "11px inherit", color: "#efe6ff", border: "1px solid rgba(0,0,0,.6)", borderRadius: "3px", background: "rgba(255,255,255,.1)", cursor: "pointer" } }));
     };
     for (const part of parts) {
       const b = button(parts.length > 1 ? PART_NAMES[part] ?? label(part) : "", () => { this.picking.set(id, part); showPart(); },

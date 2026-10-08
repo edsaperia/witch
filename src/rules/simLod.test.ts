@@ -57,13 +57,13 @@ describe("no flicker at the line", () => {
 });
 
 describe("marching besiegers", () => {
-  /** Besiegers on home's soundsystem put down `far` metres east of it, the witch over the treetops `away` metres west. */
+  /** Besiegers on home (its ring of speakers) put down `far` metres east of it, the witch over the treetops `away` metres west. */
   function siege(far: number, away: number): { g: Game; marchers: Creature[]; home: { x: number; z: number } } {
     const g = newGame(7, TUNING);
     g.clock.paused = false;
     stepGame(g, { ...idle, moveX: 1 }, STEP);
     setupArena(g, "wolf*1@2,boar*6@2!");
-    const home = g.combat.sounds.get("home")!, marchers = g.arena!.ids.map(id => g.creatures[id]).filter(c => c.siege);
+    const home = g.map.dancefloor, marchers = g.arena!.ids.map(id => g.creatures[id]).filter(c => c.siege);
     marchers.forEach((c, i) => { c.x = home.x + far; c.z = home.z + i * 3; c.fight = undefined; g.combat.busy.add(c.id); }); // (marching: a siege under way)
     for (const id of g.arena!.ids) if (!g.creatures[id].siege) g.creatures[id].gone = true; // (hers out of the way)
     g.witches[0].body = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: home.x - away, z: home.z };

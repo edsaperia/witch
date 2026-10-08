@@ -501,7 +501,7 @@ describe("creatures", () => {
     for (const [cx, cy] of map.cells.filter((_, i) => i % 9 === 0)) {
       if (cx === mx && cy === my) continue;
       const here = inCell(cx, cy), species = AREA_TYPES[map.typeOf(cx, cy)].creature, k = countScale(species);
-      const want = routePopulation(at.get(`${cx},${cy}`)!, R, S, species, k, map.seed, [cx, cy]);
+      const want = routePopulation(at.get(`${cx},${cy}`)!, at.size, R, TUNING.population.swarm, S, species);
       const n = (l: number) => here.filter(c => c.level === l && !c.circle).length; // (not its legend's clearing's baby: below)
       expect([n(0), n(1), n(2)]).toEqual(want);
       expect(n(0)).toBeLessThanOrEqual(R.babyCap);

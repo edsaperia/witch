@@ -604,12 +604,13 @@ async function main() {
   // for a builder's cloud machine (v256 there: p99 35 ms, worst 49 ms; Ed's is several times faster).
   // A siege (Stage 4), headless and frame by frame: a wave wakes the next area (its creatures grown
   // to young, as the areas round home hold only babies), they march on its new soundsystem and bring
-  // it down (its health cut short for the test); its party ends and they march on to the dancefloor;
-  // when that falls too, the run is over and the end screen shows.
+  // it down (its health cut short for the test); its party ends and they march on to the dancefloor's speakers;
+  // when they fall too, the run is over and the end screen shows.
   await run("siege", { width: 1280, height: 800 }, async page => {
     await page.keyboard.press("Enter");
     const r = await page.evaluate(async () => {
       const w = window.witch, g = w.game, dt = 1 / 60, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, yieldNow = () => new Promise(res => setTimeout(res, 0));
+      const isHomeKey = k => k === "home" || k.startsWith("home:"); // (rules/speakers.ts isHomeKey: home's speakers are home:<i>)
       w.manual = true;
       g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
       const next = g.party.next[0];
@@ -622,8 +623,8 @@ async function main() {
       for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
       let hit = false;
       for (let i = 0; i < 120 * 60 && sound.hp > 0; i++) { w.frame(idle, dt, false); hit ||= sound.hp < sound.max; if (i % 120 === 0) await yieldNow(); }
-      const fell = sound.hp === 0, ended = !g.party.areas.has(key), marched = besiegers.filter(c => !c.gone && !c.boss).every(c => c.siege === "home"); // (the area's legend stays to guard its own area, by design)
-      const home = g.combat.sounds.get("home"); home.hp = 0.001;
+      const fell = sound.hp === 0, ended = !g.party.areas.has(key), marched = besiegers.filter(c => !c.gone && !c.boss).every(c => isHomeKey(c.siege ?? "")); // (the area's legend stays to guard its own area, by design; home is its ring of speakers since #543)
+      for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = 0.001; // (every one of home's speakers nearly down)
       for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
       for (let i = 0; i < 60 * 60 && !g.partyOver; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
       // The afterparty (rules/partyOver.ts): 10 s on, nothing fights or besieges, and everyone's asleep or walking home to bed.

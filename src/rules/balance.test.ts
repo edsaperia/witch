@@ -1,9 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { simulate } from "./balance";
 import { generateMap } from "./map";
 import { lanchester, levelValue, powerReport } from "./power";
 import { newGame } from "./game";
 import { TUNING, withTuning } from "./tuning";
+
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
+import { homeHealth } from "./speakers";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 describe("fighting value (rules/power.ts)", () => {
@@ -21,15 +29,16 @@ describe("fighting value (rules/power.ts)", () => {
     young.level = 1; adult.level = 2; young.leashed = true; g.leash.stack.push(young.id);
     adult.siege = "home";
     const p = powerReport(g.creatures, g.witches, g.combat.sounds);
-    expect(p.leashed).toBeCloseTo(levelValue(1), 9);
+    expect(p.leashed).toBeCloseTo(levelValue(1, COMBAT, young.species), 9); // (times its species' strength)
     expect(p.parked).toBe(0);
     expect(p.counts).toEqual([0, 1, 0, 0]);
-    expect(p.sieges).toEqual([{ key: "home", value: levelValue(2), count: 1, hp: TUNING.combat.homeHealth }]);
-    expect(p.marching).toBeCloseTo(levelValue(2), 9);
+    expect(p.sieges).toEqual([{ key: "home", value: levelValue(2, COMBAT, adult.species), count: 1, hp: homeHealth(TUNING) }]);
+    expect(p.marching).toBeCloseTo(levelValue(2, COMBAT, adult.species), 9);
   }, 30000);
 });
 
 describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   const map = generateMap(1000, PEOPLED);
 
   it("runs a quick idle run: sieges grow wave by wave, soundsystems fall, the same every time", () => {
@@ -51,8 +60,9 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
 
   it("gives every woken area its own legend, besieging only its own soundsystem (Ed, 2026-10-04)", () => {
     const plain = simulate(map, { interval: 60, maxWaves: 40 }), legends = simulate(map, { interval: 60, maxWaves: 40, areaLegends: true });
-    // (legends.share leaves some areas without one, so the first woken area may have none: one of the first ten does)
-    expect(legends.waves.slice(0, 10).some((w, i) => w.largest >= plain.waves[i].largest + levelValue(3) - 1)).toBe(true);
+    // (legends.share leaves some areas without one, and a legend marches slowly: a 500-health soundsystem often falls before
+    // it gets there, so it shows as a bigger siege somewhere in the first twenty waves, not always by its whole value)
+    expect(legends.waves.slice(0, 20).some((w, i) => w.largest > plain.waves[i].largest)).toBe(true);
     // A legend alone topples its soundsystem in about 5.6 minutes: over a few maps, the run is shorter
     // (one map can tie: seed 1000's did at 14 x 168 m areas, while 1001 to 1005 lost 2 to 7 waves).
     const total = (areaLegends: boolean) => [1000, 1001, 1002].reduce((n, seed) => n + simulate(generateMap(seed, TUNING), { interval: 60, maxWaves: 40, areaLegends }).survived, 0);

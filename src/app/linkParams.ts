@@ -10,7 +10,7 @@ import { applyKnobParams } from "../ui/decisions";
  *  (witch.world: area size, map areas, treetop speed) and the fight's scale, speed and momentum (witch.fight). They're the
  *  link's alone now (2026-10-07: a 14 x 14 map left in Ed's browser gave every PR build 196 areas and threw off each
  *  playtest's balance), so a load forgets them. */
-export const FORGOTTEN_KEYS = ["witch.world", "witch.fight"];
+export const FORGOTTEN_KEYS = ["witch.world", "witch.fight", "witch.wave"]; // (and the waves' pace, 2026-10-08: Ed, "stop remembering it")
 export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined = globalThis.localStorage): void {
   for (const k of FORGOTTEN_KEYS) try { storage?.removeItem(k); } catch { /* storage blocked */ }
 }
