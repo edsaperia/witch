@@ -53,8 +53,15 @@ export interface PartyState {
   /** The game time each wave came (waveAt[w - 1] for wave w), whatever it did: an area's own time can be earlier (cleared
    *  before it), so the music reckons the waves from these (rules/musicPlan.ts musicCue). */
   waveAt?: number[];
+  /** When each area's wave reached it (key → the game time and the wave), whatever came of it after (its soundsystem since
+   *  lost, the area ruined): the ley line's stones reached (rules/leylines.ts waveReached). Home isn't in it. */
+  waveReached?: Map<string, { at: number; wave: number }>;
   /** Areas whose quest is done before their wave (rules/leylines.ts onAreaDone): key → game time. The ley line moves on from them. */
   leyDone?: Map<string, number>;
+  /** The wave's pulse since the countdown was last hurried (a soundsystem lost, hurryWave): its share of the way then, and
+   *  the seconds then left; it goes on from there to arrive as the wave does, faster, never jumping (Ed, 2026-10-08: "The
+   *  pulse should never skip"; pulseShare). Cleared at each wave. */
+  pulseFrom?: { share: number; left: number };
   /** How many areas each wave wakes: one per witch present (Ed, 2026-10-04), read at each wave. */
   areasPerWave: number;
   /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04; 5 minutes from her first step, 2026-10-05): the first wave's countdown starts then. */
@@ -240,6 +247,7 @@ export function nextWave(p: PartyState, map: ForestMap): { key: string; cell: Ce
 export function spreadWave(p: PartyState, map: ForestMap, time: number, celebrate?: (a: Partified, wave: number) => void): Partified[] {
   const wave = p.wave + 1, fresh: Partified[] = [];
   for (const { key: k, cell: c, from } of nextWave(p, map)) {
+    (p.waveReached ??= new Map()).set(k, { at: time, wave });
     if (p.ahead?.delete(k)) {
       const a = p.areas.get(k);
       if (a) { a.early = undefined; a.celebrated = time; celebrate?.(a, wave); }
@@ -249,7 +257,7 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number, celebrat
     p.areas.set(k, a);
     fresh.push(a);
   }
-  p.wave = wave;
+  p.wave = wave; p.pulseFrom = undefined;
   (p.waveAt ??= [])[wave - 1] = time;
   if (p.next.length) p.last = p.next[p.next.length - 1];
   // The confirmed after-next is the next now (the same as picking it afresh), unless the number of
@@ -301,10 +309,28 @@ export function stepParty(p: PartyState, map: ForestMap, time: number, dt: numbe
 /** A soundsystem lost (Ed, 2026-10-05): the next wave comes `by` seconds sooner, at once if less
  *  is left (the next step brings it); each loss takes its own `by` off, and the gap after the wave
  *  is the interval as ever. Returns the seconds it took off. */
-export function hurryWave(p: PartyState, time: number, by: number): number {
+export function hurryWave(p: PartyState, time: number, by: number, map?: ForestMap): number {
   const was = p.nextAt;
-  p.nextAt = Math.max(time, p.nextAt - Math.max(0, by));
+  if (!map) { p.nextAt = Math.max(time, p.nextAt - Math.max(0, by)); return was - p.nextAt; }
+  // The pulse never skips (Ed, 2026-10-08): it speeds up from where it is to arrive with the wave, at most PULSE_HURRY
+  // times its pace, so the wave can come no sooner than that lets it.
+  const share = pulseShare(p, map, time), soonest = time + ((1 - share) * map.tuning.party.interval) / PULSE_HURRY;
+  if (time < p.bootUntil) { p.nextAt = Math.max(time, p.nextAt - Math.max(0, by)); return was - p.nextAt; } // (booting: the pulse hasn't set off)
+  p.nextAt = Math.max(Math.min(was, soonest), p.nextAt - Math.max(0, by));
+  if (p.nextAt < was) p.pulseFrom = { share, left: p.nextAt - time };
   return was - p.nextAt;
+}
+
+/** How many times its pace the wave's pulse may run to arrive with a hurried wave (hurryWave). */
+export const PULSE_HURRY = 3;
+
+/** How far along its link the wave's pulse is, 0 to 1 (Ed, 2026-10-08: "The pulse should never skip, it always travels
+ *  along the route at the bpm speed"): the countdown's share run, the countdown's own pace (the tempo, pauses: rules/beat.ts
+ *  tempoRate, stepParty) its pace; after a hurry (pulseFrom), on from where it was then, faster, to arrive as the wave does. */
+export function pulseShare(p: PartyState, map: ForestMap, time: number): number {
+  const left = Math.max(0, p.nextAt - time), F = p.pulseFrom;
+  const s = F && F.left > 0 ? F.share + (1 - F.share) * (1 - Math.min(1, left / F.left)) : 1 - Math.min(1, left / map.tuning.party.interval);
+  return Math.max(0, Math.min(1, s));
 }
 
 /** Seconds left until the next wave, and the share of the interval gone (0-1), for the bar; while

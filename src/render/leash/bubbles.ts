@@ -1,6 +1,7 @@
 // What the leash view projects over the canvas as HTML (render/leash.ts): the talk's emoji bubbles, the dreams' thought
 // bubbles and their pointers, the 😴s when the party's over, a legend's circle panel, and her health as claw slashes.
-import { SLASH_H, SLASH_W, paintSlashes, slashPixels, slashSize, slashState } from "./slashes";
+import { DX, DY, SLASH_H, SLASH_W, paintSlashes, slashPixels, slashSize, slashState, slashStrokes } from "./slashes";
+import { SPRITE_UNIFORMS } from "../sprites";
 import { dreamStone, dreamWay, questOpen, restlessness } from "../../rules/dream";
 import { compassArrow } from "../compass";
 import * as THREE from "three";
@@ -222,7 +223,7 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
     cv = document.createElement("canvas"); cv.width = SLASH_W; cv.height = SLASH_H; cv.className = "claw-slashes";
     Object.assign(cv.style, {
       position: "fixed", width: `${SLASH_W * px}px`, height: `${SLASH_H * px}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none",
-      mixBlendMode: "screen", filter: "drop-shadow(0 0 2px rgba(255,48,40,.95)) drop-shadow(0 0 7px rgba(255,24,24,.7))", // (its red added to the scene, glowing)
+      mixBlendMode: "screen", // (its red added to the scene; its glow is light in the scene itself, below)
     });
     document.body.append(cv); lv.slashCanvas = cv;
   }
@@ -236,7 +237,7 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
   placed(lv.v.set(w.x, lv.feetY, w.z)).project(camera); const feet = lv.v.y;
   placed(lv.v.set(w.x, lv.hatTop, w.z)).project(camera); const top = lv.v.y;
   const herPx = lv.frameH > 0 ? (Math.abs(top - feet) / 2) * height / lv.frameH : px;
-  const geo = Math.min(1, Math.max(0.25, Math.round((herPx / px) * 16) / 16)), { w: cw, h: ch } = slashSize(geo); // (in steps, so it isn't redrawn every frame)
+  const k = T.slashScale ?? 1, geo = Math.min(k, Math.max(0.25, Math.round((herPx / px) * k * 16) / 16)), { w: cw, h: ch } = slashSize(geo); // (in steps, so it isn't redrawn every frame; witchHealth.slashScale their size against her, Ed 2026-10-08: "the slashes should be twice as large")
   if (geo !== lv.slashGeo) { lv.slashGeo = geo; lv.slashPx = slashPixels(geo); lv.slashKey = ""; cv.width = cw; cv.height = ch; cv.style.width = `${cw * px}px`; cv.style.height = `${ch * px}px`; }
   const key = `${st.count}:${Math.round(st.cut * 24)}:${Math.round(st.flash * 6)}:${Math.round(st.drained * 30)}`;
   if (key !== lv.slashKey) {
@@ -244,6 +245,23 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
     const ctx = cv.getContext("2d");
     if (ctx) { const im = ctx.createImageData(cw, ch); paintSlashes(im.data, st, (lv.slashPx ??= slashPixels(geo)), cw); ctx.putImageData(im, 0, 0); }
   }
+  // The glow (Ed, 2026-10-08: "The slashes should glow brighter as well - similar to the berries"): the berries' light, drawn in
+  // the scene so the bloom takes it, along every stroke that shows: a soft halo and a hot core every couple of slash pixels,
+  // placed over her body as the slashes are (a slash pixel is `m` metres there; right along the camera, up the world's up).
+  const m = lv.frameH > 0 && herPx > 0 ? ((lv.hatTop - lv.feetY) / lv.frameH) * (px / herPx) : 0.05, R = SPRITE_UNIFORMS.uRight.value, dot = lv.uv(0);
+  const G = T.slashGlow ?? 1, tw = 0.9 + 0.1 * Math.sin(time * 2.3), [r, gg, b] = [0.9, 0.12, 0.15];
+  slashStrokes(geo).forEach((S, i) => {
+    if (i >= st.count) return;
+    const newest = i === st.count - 1, t0 = newest ? st.drained : 0, t1 = newest ? st.cut : 1, flash = newest ? st.flash : 0;
+    const n = Math.max(2, Math.ceil(((t1 - t0) * S.len) / 4)); // (a dot every four slash pixels: they overlap and add up)
+    for (let j = 0; j < n && t1 > t0; j++) {
+      const t = t0 + ((j + 0.5) / n) * (t1 - t0), taper = Math.pow(Math.sin(Math.PI * t), 0.7);
+      const sx = S.x + DX * S.len * t - cw / 2, sy = S.y + DY * S.len * t - ch / 2; // (from the canvas's middle, slash pixels)
+      const x = w.x + R.x * sx * m, z = w.z + R.z * sx * m, y = lv.bodyY - sy * m;
+      lv.over.add(x, y, z, S.w * 4 * m * taper, dot, r * 1.5, gg * 1.5 + flash, b * 1.5 + flash, 0.16 * G * tw * taper); // the soft halo
+      lv.over.add(x, y, z, S.w * 1.6 * m * taper, dot, 1.5 + flash, 0.25 + flash, 0.25 + flash, 0.22 * G * taper); // its warm core, just over the bloom's threshold, as a berry's
+    }
+  });
   placed(lv.v.set(w.x, lv.bodyY, w.z)).project(camera); // (over her body, wherever she flies)
   cv.style.display = lv.v.z > 1 ? "none" : "";
   cv.style.left = `${Math.round((((lv.v.x + 1) / 2) * width) / px - cw / 2) * px}px`;

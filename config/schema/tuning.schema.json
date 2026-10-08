@@ -1949,12 +1949,22 @@
         "grace": {
           "type": "number",
           "minimum": 0
+        },
+        "slashScale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "slashGlow": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "hits",
         "repairTime",
-        "grace"
+        "grace",
+        "slashScale",
+        "slashGlow"
       ],
       "additionalProperties": false
     },

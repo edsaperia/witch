@@ -171,3 +171,10 @@ Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, s
 - **Journey**: every moment reached, no errors, `dropped` 0: first speaker at 12 s, the boot caught at 7 of 12, draw calls over the treetops 100, stargazing at the beach, and the party's over with every speaker lost.
 - **Creatures**: 840 at the start, from 909: #542's swarm populations (by place on the route, about 540 hostiles on a default map), as its tuning note says. Not exercised: #544 (a 💌 wakes its area: the journey throws none), #548/#551 (the cleared sting and burst: heard and drawn, not checked).
 - #509 fixed the full smoke's trunk checks flagged after the core design.
+
+## Evening: ac389d22 (#557), 17:09–17:50
+
+10 merges since b721b40f (#552, #554, #546, #550, #555, #556, #540, #502, #558, #557; plus #553, this log). Tests (947), typecheck, build green.
+
+- **Core-design check**: all pass, no errors: off the decks 8 s after the cast; the boot 30.0 s (11.0 → 41.0); 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); 840 creatures, no new id.
+- **Journey**: every moment reached, no errors, `dropped` 0, 840 creatures throughout: first speaker at 11.7 s, the boot caught at 7 of 12, draw calls over the treetops 102 (from 100), stargazing at the beach, the party's over.

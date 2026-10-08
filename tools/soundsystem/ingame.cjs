@@ -1,6 +1,6 @@
 // The generated soundsystems in play (render/soundsystemGen.ts; Ed, 2026-10-08): the built game (DIST, default dist/) at 1280×720,
 // WAVES waves brought on at once (the N key's nextWave), each left to rise; her by each soundsystem in turn, close, on the ground
-// (CLOSE=n of them), waiting for its art; then up in the treetops between the first two, zoomed out ZOOM steps, settled and shot.
+// (CLOSE=n of them), waiting for its art (DAMAGE=1: then at damage stages 2 and 3); then up in the treetops between the first two, zoomed out ZOOM steps, settled and shot.
 //   npm run build && node tools/soundsystem/ingame.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -33,6 +33,12 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       for (let k = 0; k < 120; k++) { await step({}, 6); if (await page.evaluate(() => window.witch.view.partyView.gen?.count > 0)) break; await page.waitForTimeout(1000); }
       await step({}, 90); await page.waitForTimeout(800); await step({}, 2);
       await page.screenshot({ path: path.join(outDir, `close-${i}.png`) });
+      // DAMAGE=1: and at damage stages 2 and 3 (its health set by hand; the damage frames baked once first needed)
+      if (process.env.DAMAGE) for (const share of [0.4, 0.1]) {
+        await page.evaluate(([a, share]) => { const g = window.witch.game; for (const [k, ar] of g.party.areas) if (ar.soundsystem && ar.soundsystem.x === a.x && ar.soundsystem.z === a.z) { const s = g.combat.sounds.get(k); if (s) s.hp = s.max * share; } }, [a, share]);
+        for (let k = 0; k < 20; k++) { await step({}, 6); await page.waitForTimeout(1000); }
+        await page.screenshot({ path: path.join(outDir, `close-${i}-hp${Math.round(share * 100)}.png`) });
+      }
     }
     await step({ toggleMode: true }); await step({}, 60);
     for (let i = 0; i < ZOOM; i++) { await step({ zoom: 1 }); await step({}, 20); }

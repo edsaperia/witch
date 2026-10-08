@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { loseSoundsystem, newGame, STEP, stepGame, type Game } from "./game";
 import { TUNING } from "./tuning";
+import { PULSE_HURRY } from "./party";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const P = TUNING.party.lossPenalty, I = TUNING.party.interval;
@@ -37,13 +38,13 @@ describe("a soundsystem lost brings the next wave sooner (Ed, 2026-10-05)", () =
     expect(g.party.nextAt).toBeCloseTo(due + I, 6); // and the one after a whole interval later
   }, 60000); // (40 s of game)
 
-  it("with less than lossPenalty left, the wave comes at once (the next step)", () => {
-    const g = game(20), at = g.clock.time;
+  it("with less than lossPenalty left, the wave comes as soon as the pulse can get there (Ed, 2026-10-08: it never skips; at most PULSE_HURRY times its pace)", () => {
+    const g = game(20); g.party.bootUntil = g.clock.time - 1; // (booted: the pulse under way)
+    const at = g.clock.time, share = 1 - 20 / I, soonest = ((1 - share) * I) / PULSE_HURRY;
     loseSoundsystem(g, "home", 0, 0);
-    expect(g.waveEvents[0]).toEqual(expect.objectContaining({ cut: expect.closeTo(20, 6), left: 0 }));
-    stepGame(g, idle, STEP);
-    expect(g.party.wave).toBe(1);
-    expect(g.party.nextAt).toBeCloseTo(at + I, 6);
+    expect(g.waveEvents[0]).toEqual(expect.objectContaining({ cut: expect.closeTo(20 - soonest, 6), left: expect.closeTo(soonest, 6) }));
+    while (g.party.wave === 0) stepGame(g, idle, STEP);
+    expect(g.clock.time - at).toBeCloseTo(soonest, 1);
   });
 
   it("two losses close together stack, each taking its own lossPenalty off", () => {
