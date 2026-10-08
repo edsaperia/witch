@@ -13,6 +13,7 @@
     "smoke:quick": "node tools/smoke/quick.cjs",
     "bench": "node tools/bench/run.mjs",
     "bench:compare": "node tools/bench/compare.cjs",
+    "swarm-calibrate": "node tools/balance/swarmCalibrate.mjs",
     "bench:quick": "node tools/bench/run.mjs --quick"
   },
   "dependencies": {
