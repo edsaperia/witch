@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0a16">
+  <title>Witch portrait</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b0a16; color: #e8e2f4; font: 14px/1.35 "Tiny5", ui-monospace, monospace; }
+    #wrap { display: flex; height: 100%; }
+    #stage { position: relative; flex: 1 1 auto; overflow: hidden; min-width: 0; }
+    #stage canvas.bg { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+    #panel { flex: 0 0 340px; overflow-y: auto; padding: 10px 12px; background: #141026; border-left: 1px solid #2c2448; box-sizing: border-box; }
+    #panel h2 { font-size: 14px; margin: 12px 0 6px; color: #f2c46a; font-weight: normal; letter-spacing: .04em; }
+    #panel h1 { font-size: 18px; margin: 0 0 4px; color: #f2c46a; font-weight: normal; }
+    #panel p { margin: 0 0 6px; color: #9a93b4; font-size: 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 4px; }
+    button { font: inherit; font-size: 13px; color: #e8e2f4; background: #2a2044; border: 1px solid #4a3a72; padding: 3px 7px; cursor: pointer; }
+    button.on { background: #f2c46a; color: #1a1022; border-color: #f2c46a; }
+    label { display: grid; grid-template-columns: 96px 1fr 40px; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; }
+    label.tog { display: inline-flex; gap: 4px; margin-right: 8px; }
+    select, input[type=text] { font: inherit; font-size: 12px; background: #1c1634; color: #e8e2f4; border: 1px solid #4a3a72; }
+    input[type=range] { width: 100%; }
+    @media (max-width: 760px) { #wrap { flex-direction: column; } #stage { flex: 0 0 62vh; } #panel { flex: 1 1 auto; border-left: none; border-top: 1px solid #2c2448; } }
+  </style>
+  <script type="module" crossorigin src="./assets/portrait-DS5RWi3K.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/Tiny5-PhpcJUFR.js">
+</head>
+<body>
+  <div id="wrap"><div id="stage"><canvas class="bg" id="bg"></canvas></div><div id="panel"></div></div>
+</body>
+</html>
