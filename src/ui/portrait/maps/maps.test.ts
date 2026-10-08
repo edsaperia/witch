@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ROBE_JACKET, HAND_HAT_TIP, handHatTip } from "./body";
 import { HAIR_LONG_BACK, HAIR_LONG_CROWN, HAIR_LONG_FRONT, HAIR_LONG_HAT_SHADOW } from "./hairLong";
 import { HAT_CLASSIC, classicHat } from "./hatClassic";
+import { POINTED_HATS } from "./hatsPointed";
 import { missingLetters, type PixMap } from "./pixmap";
 
 // Art builder 1's round-2 maps (docs/PORTRAIT-STYLE.md): well-formed, the sliders always changing something, few orphans.
@@ -48,5 +49,16 @@ describe("the portrait's round-2 maps (art builder 1)", () => {
   it("keeps the hat-tip hand on the brim's end as the brim grows", () => {
     expect(handHatTip({ hatBrim: 2 }).anchor[0]).toBe(HAND_HAT_TIP.anchor[0] - 12);
     expect(handHatTip({ hatBrim: 1 }).anchor).toEqual(HAND_HAT_TIP.anchor);
+  });
+  it("makes the other pointed hats from the classic, each its own and each still following the sliders", () => {
+    const base = key(classicHat(D)), seen = new Set<string>();
+    for (const [name, f] of Object.entries(POINTED_HATS)) {
+      const m = f(D); seen.add(key(m));
+      expect(missingLetters(m), name).toEqual([]);
+      expect(new Set(m.rows.map(r => r.length)).size, name).toBe(1);
+      if (name !== "classic") expect(key(m), name).not.toBe(base);
+      for (const axis of ["hatHeight", "hatBrim", "hatTilt"] as const) expect(key(f({ ...D, [axis]: D[axis] + 0.6 })), `${name} ${axis}`).not.toBe(key(m));
+    }
+    expect(seen.size).toBe(Object.keys(POINTED_HATS).length);
   });
 });
