@@ -19,6 +19,8 @@ export interface BeatClock {
   /** BPM added by her knockdowns this run (Ed, 2026-10-07: "the BPM goes up by 1 each time you die": the DJ's off the
    *  decks, the crowd gets restless and the beat speeds up), knockout.bpmStep each, up to knockout.bpmCap; never down. */
   bonus?: number;
+  /** The beat her latest knockdown's rise starts on (the next bar line after it): the music lands a crowd cue there. */
+  bonusAt?: number;
 }
 
 export function newBeatClock(base: number, bpm = base): BeatClock {
@@ -103,14 +105,15 @@ export const targetTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number => wa
 export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number => 1 + (c.bonus ?? 0) / Math.max(1, waveTempo(t, c.wave));
 
 /** She's been knocked down at `time` (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): the bonus rises by
- *  knockout.bpmStep (to knockout.bpmCap, if set), eased in over beat.knockBeats from the next beat, so the beat never
- *  skips. Returns the BPM added (0 at the cap). */
+ *  knockout.bpmStep (to knockout.bpmCap, if set), eased in over beat.knockBeats (a bar) from the next bar line (bonusAt), so
+ *  the beat never skips and the music's crowd cue lands on the line. Returns the BPM added (0 at the cap). */
 export function knockdownTempo(c: BeatClock, t: Pick<Tuning, "beat"> & { knockout: Pick<Tuning["knockout"], "bpmStep" | "bpmCap"> }, time: number): number {
   const step = Math.max(0, t.knockout.bpmStep ?? 0), was = c.bonus ?? 0;
   const next = Math.min(t.knockout.bpmCap ?? Infinity, was + step);
   if (!(next > was)) return 0;
   c.bonus = next;
-  rampTo(c, Math.ceil(beatAt(c, time) - 1e-9), targetTempo(c, t), Math.max(0, t.beat.knockBeats ?? 4));
+  c.bonusAt = Math.ceil(beatAt(c, time) / 4 - 1e-9) * 4; // (the next bar line)
+  rampTo(c, c.bonusAt, targetTempo(c, t), Math.max(0, t.beat.knockBeats ?? 4));
   return next - was;
 }
 
