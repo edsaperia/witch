@@ -569,8 +569,10 @@ function carveSigil(sp, sigil) {
     else if (ink(x + 1, y) || ink(x, y + 1) || ink(x + 1, y + 1)) sp.recolour(ox + x, oy + y, M.MAGIC); // its lit rim (up and left), catching the inlay's light: a dim glow, so the carving reads from mid-distance at night (Ed's note #1)
   }
 }
-function magicStone(variant, sigil, size = 1, width = 1) { // size: baked that much bigger (the game's runeMarkers.scale), never stretched; width: the slab that much narrower or wider, as carved (the dancefloor ring's stones: half; Ed, 2026-10-08)
-  const m = new Model({ blend: .04 }), k = Math.max(0, Object.keys(STONE_GLOW).indexOf(variant)), glow = Array.isArray(variant) ? [variant, variant.map(c => Math.round(c + (255 - c) * .7))] : STONE_GLOW[variant], fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
+function magicStone(variant, sigil, size = 1, width = 1, { yaw, rune } = {}) { // size: baked that much bigger (the game's runeMarkers.scale), never stretched; width: the slab that much narrower or wider, as carved (the dancefloor ring's stones: half; Ed, 2026-10-08)
+  // yaw: degrees its face is turned from facing us, as the dancefloor speakers are drawn (Ed, 2026-10-08: the ring's stones "face
+  // inwards, like the ring speakers do"); every yaw at one scale, with its ground point. rune: which rune glyph to carve (default: its glow's).
+  const m = new Model({ blend: .04 }), k = Math.max(0, Object.keys(STONE_GLOW).indexOf(variant)), glow = Array.isArray(variant) ? [variant, variant.map(c => Math.round(c + (255 - c) * .7))] : STONE_GLOW[variant], fz = .08, A = yaw === undefined ? .4 : 0; // A: turned so its face is nearly square to the viewer (or square to the yaw)
   // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
   const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
   // two jagged cracks: one down from the worn top, one up from the foot
@@ -583,7 +585,7 @@ function magicStone(variant, sigil, size = 1, width = 1) { // size: baked that m
     if (p[2] > fz - .02) { // the rune, carved into the face
       const u = (px + .17) / .34, v = (.8 - p[1]) / .5;
       if (sigil) { const su = (px + .27) / .54, sv = (.8 - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && !crack(p[0], p[1])) return FACE; } // (the sigil is stamped on after, as pixels)
-      else if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k + 1, .1)) return M.RUNE;
+      else if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, rune ?? k + 1, .1)) return M.RUNE;
     }
     if (crack(p[0], p[1])) return M.STONED; // cracks
     if (p[1] > .86 && hash2(Math.floor(px * 30), Math.floor(p[2] * 30), 3) < .3) return M.MOSS;   // lichen on the weathered top
@@ -597,7 +599,9 @@ function magicStone(variant, sigil, size = 1, width = 1) { // size: baked that m
   for (const [x, z, r] of [[-.24, .14, .08], [.2, .02, .07], [.0, .12, .07]]) m.ell([x * width, .015, z], [r * Math.sqrt(width), r * .4, r], M.MOSS, { group: 2 });
   for (let i = 0; i < 9; i++) { const x = (-.3 + i * .07) * width, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
   const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: glow[0], [M.MAGIC2]: glow[1], [M.MAGIC]: glow[0].map(c => Math.round(c * .5)), [M.LINE]: [40, 40, 50] };
-  const sp = render(m, { height: Math.round(44 * size) }).sp;
+  const H = Math.round(44 * size), R = yaw === undefined ? render(m, { height: H })
+    : render(m, { scale: render(m, { height: H, yaw: 15 * Math.PI / 180, measure: true }).s, yaw: yaw * Math.PI / 180 }), sp = R.sp; // (every yaw at the scale of the speakers' nearest angle)
+  const origin = yaw === undefined ? null : (([ox, oy]) => ({ x: +ox.toFixed(1), y: +oy.toFixed(1) }))(R.project([0, 0, 0]));
   if (sigil) carveSigil(sp, sigil);
   // a few motes drifting round it
   let n = 0;
@@ -606,7 +610,7 @@ function magicStone(variant, sigil, size = 1, width = 1) { // size: baked that m
     if (sp.get(x, y) || sp.get(x + 1, y) || sp.get(x - 1, y) || sp.get(x, y + 1) || sp.get(x, y - 1)) continue;
     sp.px(x, y, n % 2 ? M.RUNE : M.MAGIC2); n++;
   }
-  return { sp, colours: col };
+  return { sp, colours: col, origin };
 }
 function pond() {
   const m = new Model({ blend: .03 });
@@ -622,7 +626,12 @@ function pond() {
 // area's stones can carry the area creature's sigil) or, without one, a generic rune. Baked.
 // scale: baked that much bigger (the game draws it at 1: docs/STYLE.md §1). width: the slab that much narrower, carved and
 // mossed the same (the dancefloor ring's stones: an area's stone at half its width; Ed, 2026-10-08).
-export function runeStone(st, { glow = "cyan", sigil, scale = 1, width = 1, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil, scale, width); return bake(s.sp, s.colours, st, "none", makeCanvas); }
+// yaw (degrees from facing us, as dancefloorSpeakerSprite's angle) turns it, and adds its ground point under its middle as `origin`;
+// rune picks the glyph carved when there's no sigil.
+export function runeStone(st, { glow = "cyan", sigil, scale = 1, width = 1, yaw, rune, makeCanvas = defaultCanvas } = {}) {
+  const s = magicStone(glow, sigil, scale, width, { yaw, rune }), b = bake(s.sp, s.colours, st, "none", makeCanvas);
+  return s.origin ? { ...b, origin: s.origin } : b;
+}
 export function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
   const bk = (sp, col) => bake(sp, col, st, "none", makeCanvas);
   const out = { campfire: [0, 1, 2].map(f => bk(campfire(f), fireCol)), stones: {}, pond: null };
