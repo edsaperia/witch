@@ -69,20 +69,30 @@ export interface GenInfo { rgb: number[]; projector: { x: number; y: number; z: 
 export class SoundsystemGenView {
   private batches = new Map<string, SpriteBatch>();
   private used = new Set<string>();
-  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
+  private warmed = new WeakSet<object>();
+  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number, private renderer?: THREE.WebGLRenderer) {}
+
+  /** Upload an area's atlas as soon as its bake is here (foxtrot's hitch check on #541), so its first frame on screen doesn't
+   *  pay for it: for the next waves' areas that's well before they rise. */
+  private warm(a: { atlas: { albedo: THREE.Texture; normal: THREE.Texture } } | undefined): void {
+    if (!a || !this.renderer || this.warmed.has(a)) return;
+    this.warmed.add(a); this.renderer.initTexture(a.atlas.albedo); this.renderer.initTexture(a.atlas.normal);
+  }
 
   /** Ask for the next waves' art ahead (in the background), then draw this frame's. Returns, per area drawn, its light colour,
    *  its projector's top in the world (the sky hologram's anchor) and its sprite's height in metres. */
   update(g: Game, draws: GenDraw[]): Map<string, GenInfo> {
     const K = genKnobs(g), specs = soundsystemSpecs(g.map, K), out = new Map<string, GenInfo>();
-    for (const s of leyChain(g.party, g.map, K.ahead, 0).stones) { const sp = specs.get(cellKey(s.cell)); if (sp) this.assets.soundsystemGenArt(sp.id, sp.genome, sp.yaw, sp.size, false); }
+    for (const s of leyChain(g.party, g.map, K.ahead, 0).stones) { const sp = specs.get(cellKey(s.cell)); if (sp) this.warm(this.assets.soundsystemGenArt(sp.id, sp.genome, sp.yaw, sp.size, false)); }
     this.used.clear();
     const R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
     for (const d of draws) {
       const sp = specs.get(d.key); if (!sp) continue;
       const play = this.assets.soundsystemGenArt(sp.id, sp.genome, sp.yaw, sp.size, true); if (!play) continue;
+      this.warm(play);
       // hurt: its damage (stages 1 to 3, the rubble), baked once it's first needed; meanwhile its playing frames
       const dmg = d.stage > 0 ? this.assets.soundsystemGenArt(sp.id, sp.genome, sp.yaw, sp.size, true, "damage") : undefined, art = dmg ?? play, bid = dmg ? `${sp.id}-dmg` : sp.id;
+      this.warm(dmg);
       let b = this.batches.get(bid);
       if (!b) { b = new SpriteBatch(art.atlas, this.mpp, { solid: true }); this.batches.set(bid, b); this.scene.add(...b.meshes); }
       const fi = !dmg ? Math.floor(d.time * 6) % 3 : d.stage >= 4 ? 6 : (d.stage - 1) * 2 + (Math.floor(d.time * (3 + d.stage * 2)) % 2), f = art.atlas.frames[fi], o = art.origins[fi], p = art.projectors[fi];
