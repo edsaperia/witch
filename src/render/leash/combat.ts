@@ -11,7 +11,7 @@ import { LEGENDS } from "../../rules/legends";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "../sprites";
 import { SQ } from "./glyphs";
 import type { LeashView } from "../leash";
-import { drawPips } from "./bubbles";
+import { drawSlashes } from "./bubbles";
 
 /** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
  *  armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth. */
@@ -45,7 +45,7 @@ function coatOf(species: string, tone: number): { r: number; g: number; b: numbe
 
 /** Combat (rules/combat.ts) and knockouts (rules/knockout.ts): shots and their telegraphs, hits,
  *  health bars (only when hurt), puffs as beaten creatures flee, the knockout's splashing sigils
- *  and teleport, the marker on creatures walking home, and the witch's hit pips. */
+ *  and teleport, the marker on creatures walking home, and the witch's claw slashes (her hits). */
 export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
   const g = lv.game, w = g.witch, W = g.witches[0], dot = lv.uv(0), sq = lv.uv(SQ), near = 90, t = g.tuning;
   const artPx = metresPerArtPixel(t); // one art pixel, in metres (the pixel star and bits sit on it)
@@ -341,5 +341,5 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   }
   // Knocked out: dizzy stars over her while she's down.
   if (W.ko && time < W.ko.teleportAt) for (let i = 0; i < 5; i++) { const a = time * 3 + (i / 5) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.7, 1.6 + Math.sin(a * 2) * 0.1, w.z + Math.sin(a) * 0.5, 0.25, dot, 1, 0.95, 0.5, 0.9); }
-  drawPips(lv, time, camera, width, height);
+  drawSlashes(lv, time, camera, width, height);
 }

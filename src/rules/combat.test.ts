@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackOf, COMBAT, maxHp } from "./combat";
+import { attackOf, COMBAT, maxHp, strengthOf } from "./combat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
@@ -8,6 +8,7 @@ import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
 import { hasRune } from "./creatureStates";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
+import { isHomeKey } from "./speakers";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -57,7 +58,7 @@ describe("combat (Stage 4)", () => {
 
   it("gives every attack of a level the same power budget (damage a second)", () => {
     for (const level of [1, 2, 3] as Level[]) {
-      const rates = AREA_TYPES.map(a => { const k = attackOf(a.creature, level)!; return k.damage / k.attack.cooldown / (k.attack.factor ?? 1); }); // (each delivery's factor allows for misses and area hits)
+      const rates = AREA_TYPES.map(a => { const k = attackOf(a.creature, level)!; return k.damage / k.attack.cooldown / (k.attack.factor ?? 1) / strengthOf(a.creature, level); }); // (each delivery's factor allows for misses and area hits; over its species' strength)
       for (const r of rates) expect(r).toBeCloseTo(COMBAT.levels.dps[level]);
     }
   });
@@ -244,11 +245,17 @@ describe("knocked out (Ed, 2026-10-04)", () => {
   });
 
   it("lights a loading bar of candles on her desk, one a candleStep of the wait, the extra red, melting one after another as she scratches (Ed, 2026-10-07)", () => {
-    const { g } = setUp(), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; });
+    // (the stacking wait, 6, 8, 10, 12 s, as it was before Ed's "We can remove the extra knockdown time": still a knob)
+    const stack = { base: 6, step: 2, max: 12, cooldown: 60, minScratch: 1.5 };
+    const { g } = setUp(), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; x.knockout.respawn = stack; });
     const kos = [0, 1, 2, 3, 9].map(streak => knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak }));
     expect(kos.map(k => candleCount(k, t))).toEqual([6, 8, 10, 12, 12]); // (6, 8, 10, 12 s: the cap)
     expect(kos.map(k => candleRed(k, t))).toEqual([0, 2, 4, 6, 6]); // (the base's 6 s white)
-    const half = withTuning(x => { x.knockout.candleStep = 0.5; });
+    // today (Ed, 2026-10-07: each knockdown costs a BPM instead): every knockdown the flat base, its candles all white
+    const flat = withTuning(x => { x.knockout.candleStep = 1; });
+    const now = [0, 1, 2, 9].map(streak => knockOut(W.leash, g.creatures, 100, flat, { hatFloats: true, streak }));
+    expect(now.map(k => [candleCount(k, flat), candleRed(k, flat)])).toEqual([[6, 0], [6, 0], [6, 0], [6, 0]]);
+    const half = withTuning(x => { x.knockout.candleStep = 0.5; x.knockout.respawn = stack; });
     expect([candleCount(kos[0], half), candleCount(kos[4], half), candleRed(kos[4], half)]).toEqual([12, 24, 12]);
     const K = kos[1], n = candleCount(K, t);
     expect([0, 1, 7].map(i => candleMelt(K, K.inAt, i, t))).toEqual([0, 0, 0]); // (all whole as she arrives)
@@ -428,9 +435,9 @@ describe("sieges (Stage 4)", () => {
     expect(sound.hp).toBe(0);
     expect(g.party.areas.has(key)).toBe(false);
     expect(g.combat.ruined.has(key)).toBe(true);
-    expect(besiegers.filter(c => !c.gone).every(c => c.siege === "home")).toBe(true); // on to the next-nearest: the dancefloor
+    expect(besiegers.filter(c => !c.gone).every(c => isHomeKey(c.siege ?? ""))).toBe(true); // on to the next-nearest: one of the dancefloor's speakers
     expect(g.partyOver).toBeNull();
-    g.combat.sounds.get("home")!.hp = 0.0001;
+    for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = 0.0001;
     for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
     for (let i = 0; i < 30 / STEP && !g.partyOver; i++) stepGame(g, idle, STEP);
     expect(g.partyOver).not.toBeNull(); // every soundsystem down: the party's over

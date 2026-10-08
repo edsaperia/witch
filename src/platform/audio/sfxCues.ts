@@ -27,7 +27,7 @@ import { beachOf, type Beach } from "../../rules/mapShape";
 import { dolphinLeaps, krakenRising } from "../../rules/seaLife";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
-import { beatAt } from "../../rules/beat";
+import { beatAt, timeAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { musicMix, partyOverEase } from "../../rules/music";
@@ -71,6 +71,9 @@ export class SfxCues {
   private stonesOn = new Set<number>();
   /** The knockout (its ko.at) whose rewind has played. */
   private cutOf: number | null = null;
+  /** Her knockdowns' tempo bonus last heard, and when the crowd's cheer for its rise is due, on her clock or the game's (tempoUp). */
+  private bonusSeen = 0;
+  private tempoUpDue: { at: number; her: boolean } | null = null;
   /** The last half-beat heard at her decks (decks). */
   private deckHalf = -1;
   /** The game time her routine's strokes were heard up to (NaN outside it), and whether her hand was up (its hype). */
@@ -108,6 +111,7 @@ export class SfxCues {
     this.soundsystems(h);
     this.booted(h);
     this.powered(h);
+    this.tempoUp(h);
     this.hurt(h);
     this.knocked(h);
     this.charges(h);
@@ -123,6 +127,7 @@ export class SfxCues {
     this.sparkler(h);
     this.aggro(h);
     this.fireworks(h);
+    this.clears(h);
     this.night(h);
     this.ambience(h);
     this.primed = true;
@@ -490,6 +495,25 @@ export class SfxCues {
     this.sfx.sparkler(level, pan(px));
   }
 
+  /** An area cleared early (Ed, 2026-10-08; the rules' "areaCleared" in g.waveEvents, game.ts stepClear): the "cleared!"
+   *  sting from the new soundsystem, on the next half-beat after it (on the music's grid), once an event. */
+  private clears({ g, time, pan }: Here): void {
+    const C = g.tuning.sfx.cleared;
+    if (!C) return;
+    for (const e of g.waveEvents) {
+      if (e.kind !== "areaCleared" || this.clearsDue.some(d => d.key === e.key && d.at === e.at)) continue;
+      this.clearsDue.push({ key: e.key, at: e.at, x: e.x, z: e.z, play: timeAt(g.beat, Math.ceil(beatAt(g.beat, e.at) * 2 - 1e-9) / 2), done: false });
+    }
+    if (!this.clearsDue.length) return;
+    const w = g.witch;
+    for (const d of this.clearsDue) if (!d.done && time >= d.play) {
+      d.done = true;
+      this.sfx.cleared(pan(d.x), Math.max(C.floor, 1 - Math.hypot(d.x - w.x, d.z - w.z) / Math.max(1, C.range)));
+    }
+    this.clearsDue = this.clearsDue.filter(d => !d.done || time - d.at < 30);
+  }
+  private clearsDue: { key: string; at: number; x: number; z: number; play: number; done: boolean }[] = [];
+
   /** Fireworks over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate; art builder
    *  2's show, rules/fireworks.ts, the same shells the picture draws): each shell's whoosh as it launches (now and then
    *  whistling), its burst when the sound of it reaches her (sound being slower than light; a crackle shell's glitter
@@ -565,5 +589,22 @@ export class SfxCues {
     if ((this.flourished.get(id) ?? -Infinity) > time - 2) return;
     this.flourished.set(id, time);
     this.sfx.invited(g.creatures[id]?.level ?? 0, pan, k);
+  }
+
+  /** Knocked down, the party's tempo rises (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"; hotel's
+   *  rules/beat.ts knockdownTempo, g.beat.bonus), and the crowd's cheer greets her back at her decks at the faster tempo:
+   *  on her knockout's backAt (her clock), after the sad trumpet and the rewind, never over them; with no knockout under
+   *  way (a debug bump), on the bar line the rise starts from (g.beat.bonusAt). One cheer (fireworks.ts: three noise bands and a few whoops), at
+   *  sfx.tempoUp.volume. */
+  private tempoUp(h: Here): void {
+    const { g, time } = h, b = g.beat.bonus ?? 0, ko = g.witches[0]?.ko;
+    if (b > this.bonusSeen) this.tempoUpDue = ko ? { at: ko.backAt, her: true } : { at: timeAt(g.beat, g.beat.bonusAt ?? Math.ceil(beatAt(g.beat, time) - 1e-9)), her: false };
+    this.bonusSeen = b;
+    const due = this.tempoUpDue;
+    if (due && (due.her ? g.herTime : time) >= due.at) {
+      this.tempoUpDue = null;
+      const v = g.tuning.sfx.tempoUp?.volume ?? 0;
+      if (v > 0) this.sfx.fireworkCheer(0, v);
+    }
   }
 }

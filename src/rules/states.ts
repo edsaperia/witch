@@ -19,6 +19,7 @@ import { AREA_TYPES, type ForestMap } from "./map";
 import type { Cell } from "./partition";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
 import { hash2 } from "./random";
+import { homeHealth, homeReach } from "./speakers";
 import { crowdTime, INVITE_FIRE, movement, throughput, type Buff, type Limits } from "./throughput";
 
 /** How she splits her invites (issue #87): every one a defender; every third leashed; every one
@@ -203,7 +204,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   let nextId = 1e6;
 
   const party = newParty(map), sounds = new Map<string, Sound>();
-  sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius, wave: 0, at: 0 });
+  sounds.set("home", { key: "home", x: d.x, z: d.z, hp: homeHealth(map.tuning), radius: homeReach(map.tuning), wave: 0, at: 0 });
   const soundOf = (key: string) => (key === homeKey ? sounds.get("home") : sounds.get(key));
   const ruined = new Set<string>(), worked = new Set<string>(), fed = new Set<string>();
   const legends = units.filter(u => u.legend), legendStats = { angry: 0, angryAreas: [] as { wave: number; key: string; woken: boolean }[], happy: 0, relicsUsed: 0, hazardTime: 0, armyLost: 0, beaten: 0 };
@@ -301,7 +302,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       let best: Sound | null = null, bd = Infinity;
       for (const s1 of sounds.values()) { if (s1.hp <= 0 || s1.key === big) continue; const k = Math.hypot(s1.x - s0.x, s1.z - s0.z); if (k < bd) { bd = k; best = s1; } }
       // (While this one still has most of its health, stand by it.)
-      if (best && s0.hp < (s0.key === "home" ? C.homeHealth : o.soundHealth ?? C.soundsystemHealth) * 0.5) return { x: best.x, z: best.z };
+      if (best && s0.hp < (s0.key === "home" ? homeHealth(map.tuning) : o.soundHealth ?? C.soundsystemHealth) * 0.5) return { x: best.x, z: best.z };
       return { x: s0.x, z: s0.z };
     }
     const c = party.next[0];

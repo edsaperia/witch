@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
 import { FORGOTTEN_KEYS, tuningFromLink, worldFromLink } from "./linkParams";
+import { waveLabel } from "./wavePick";
 
 /** A browser's localStorage, as Ed's was: the world and the fight remembered from an earlier load. */
 function fakeStorage(items: Record<string, string>) {
@@ -15,7 +16,7 @@ afterEach(() => { g.localStorage = before; });
 
 describe("the link's world (src/app/linkParams.ts)", () => {
   it("ignores and deletes a remembered world and fight, and writes none back", () => {
-    const f = fakeStorage({ "witch.world": JSON.stringify({ areaSize: 300, treetopSpeed: 200, mapAreas: 14 }), "witch.fight": JSON.stringify({ scale: 2, speed: 2, momentum: 2 }), "witch.volume": "0.4" });
+    const f = fakeStorage({ "witch.world": JSON.stringify({ areaSize: 300, treetopSpeed: 200, mapAreas: 14 }), "witch.fight": JSON.stringify({ scale: 2, speed: 2, momentum: 2 }), "witch.wave": "30", "witch.volume": "0.4" });
     g.localStorage = f.store;
     const { tuning, world } = tuningFromLink(new URLSearchParams());
     expect(world.mapAreas).toBe(TUNING.mapAreas);
@@ -40,5 +41,10 @@ describe("the link's world (src/app/linkParams.ts)", () => {
   it("clamps the link's values", () => {
     const w = worldFromLink(new URLSearchParams("mapAreas=99&areaSize=5&treetopSpeed=1"));
     expect(w).toEqual({ mapAreas: 30, areaSize: 56, treetopSpeed: 8 });
+  });
+  it("forgets the waves' pace too (Ed, 2026-10-08), and names the dropdown's choices", () => {
+    expect(FORGOTTEN_KEYS).toContain("witch.wave");
+    expect([30, 60, 120, 300, 600, 0].map(waveLabel)).toEqual(["30 s", "1 min", "2 min", "5 min", "10 min", "off"]);
+    expect(waveLabel(90)).toBe("1.5 min"); // (a link's own pace)
   });
 });

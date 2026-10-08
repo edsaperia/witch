@@ -7,6 +7,7 @@ import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STE
 import { AREA_TYPES } from "../rules/map";
 import { musicCue, type MusicCue } from "../rules/musicPlan";
 import type { Tuning } from "../rules/tuning";
+import { isHomeKey } from "../rules/speakers";
 import type { Bot } from "../rules/bot";
 import type { View } from "../render/view";
 import { bendPoint, groundHeight, placed } from "../render/height";
@@ -31,8 +32,8 @@ export function installHooks({ game, view, tuning, hud, sound, meter, shake, loa
   (window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
     guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
-    /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
-    lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e?.kind === "soundsystemLost") hud.showLoss(e); return e; },
+    /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's whole ring, "home:<i>" one speaker), as if destroyed. */
+    lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; if (key === "home") for (const [k, h] of game.combat.sounds) if (isHomeKey(k)) h.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e?.kind === "soundsystemLost") hud.showLoss(e); return e; },
     /** A debug hook (the dropped hat's previews): a hit on her now, as a creature's would be (her last one knocks her out). */
     hit: () => { hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
     get manual() { return loop.manual; }, set manual(on: boolean) { loop.manual = on; },

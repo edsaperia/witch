@@ -1,9 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { feed, newBerries, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
 import { invitable, leashSpeed, newLeash } from "./leash";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
+
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 
 const map = generateMap(123, TUNING), t = TUNING;
 const bushesOk = (s: BerryState) => {
@@ -24,6 +31,7 @@ const run = (s: BerryState, cs: Creature[], points: Map<number, { x: number; z: 
 };
 
 describe("berries and evolving", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   it("every area has perArea berries, one per bush, and the same seed gives the same berries", () => {
     const s = newBerries(map, t), [lo, hi] = berryCounts(map, t).perArea; // (scaled to the areas' size)
     bushesOk(s);

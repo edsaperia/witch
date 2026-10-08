@@ -7,8 +7,6 @@ import { awaitingSpell } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
-import { placed } from "./render/height";
-import { Vector3 } from "three";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
@@ -32,6 +30,7 @@ import { styleFromLink, viewFromLink } from "./app/viewParams";
 import { setupActionBar, setupDebugKeys } from "./app/keys";
 import { ScreenShake } from "./app/shake";
 import { playerPick as makePlayerPick } from "./app/playerPick";
+import { wavePick as makeWavePick } from "./app/wavePick";
 import { installHooks } from "./app/hooks";
 import { PerfHud } from "./app/perfHud";
 import { installPixelUi } from "./ui/pixelUi";
@@ -75,16 +74,6 @@ let attackTick = -1;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
 const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
-/** Where a dodge would put her now (toward the cursor, rules/dash.ts), in client pixels, for the reticle's mark. */
-const landV = new Vector3();
-function dashLanding(): { x: number; y: number } | null {
-  const a = input.lastAim, D = game.buffs.tuning.dash, W = game.witch;
-  if (!a || !D.toCursor || W.mode !== "ground") return null;
-  const l = Math.hypot(a.x, a.z), dx = l >= D.aimDead ? a.x / l : W.facing, dz = l >= D.aimDead ? a.z / l : 0;
-  placed(landV.set(W.x + dx * D.distance, 0, W.z + dz * D.distance)).project(view.camera);
-  const r = canvas.getBoundingClientRect();
-  return { x: r.left + (landV.x * 0.5 + 0.5) * r.width, y: r.top + (-landV.y * 0.5 + 0.5) * r.height };
-}
 setupDebugKeys(view, input, params); // (app/keys.ts)
 // The playtest log (Ed, 2026-10-04): a sample every 10 s of play, kept on this browser; L, or
 // opening the game with ?playtest=download, saves the last few runs as JSON.
@@ -225,29 +214,21 @@ input.onAny = start;
 sound.watch(() => !game.clock.paused && !freeze.frozen && !document.hidden, () => game.speakerBoot.some(t => t !== null), playtest);
 freeze.onToggle = on => sound.freeze(on);
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
-// The wave selector on the start screen: picking one doesn't start the game.
-const wavesEl = document.getElementById("waves")!;
-wavesEl.innerHTML = "waves every " + WAVE_CHOICES.map(s => `<button type="button" data-s="${s}">${s === 0 ? "off" : s < 60 ? s + " s" : s / 60 + " min"}</button>`).join("");
-wavesEl.addEventListener("pointerdown", e => {
-  e.stopPropagation();
-  const b = (e.target as HTMLElement).closest("button");
-  if (!b) return;
-  const sec = +b.dataset.s!;
-  setWaveInterval(sec);
-  try { localStorage.setItem("witch.wave", String(sec)); } catch { /* fine */ }
-});
+// The waves' pace: a "Waves:" dropdown under the dev "Player:" pick in the bedroom's top right (app/wavePick.ts; Ed,
+// 2026-10-08), never remembered; picking one doesn't start the game.
+if (params.get("creator") !== "0") makeWavePick(creator, WAVE_CHOICES, waveChoice, !!playerPick, setWaveInterval);
 setWaveInterval(waveChoice);
 // Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
 const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = shake.option;
 // No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to
 // the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
-// (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the waves and the screen shake). The card itself shows only for a
+// (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the screen shake; the waves' pace is the top right's dropdown). The card itself shows only for a
 // run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
 if (params.get("creator") !== "0" && !botKind) {
   const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
   if (keys) creator.addTab("controls", "❔ Controls", [keys]);
   if (news) creator.addTab("news", "📜 What's new", [news]);
-  creator.addTab("options", "⚙ Options", [wavesEl, ...(shakeEl ? [shakeEl] : [])]);
+  if (shakeEl) creator.addTab("options", "⚙ Options", [shakeEl]);
 } else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
@@ -359,7 +340,7 @@ function frame(now: number): void {
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale))); // (the world's step is STEP x timeScale: rules/slowTime.ts)
   frameStats.endGpu();
-  aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot, dashLanding());
+  aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot);
   frameStats.work(performance.now() - work0);
   perfHud?.frame(now, dt * 1000, stepMs, !game.clock.paused && !freeze.frozen);
   if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });

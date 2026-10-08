@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { growthLevel, growWave, materialize, newGrowth, pendingCounts } from "./growth";
 import { generateMap } from "./map";
 import { newGame, stepGame, simRadius } from "./game";
@@ -6,11 +7,18 @@ import { spawnCreatures } from "./creatures";
 import { TUNING, withTuning } from "./tuning";
 import { cellKey } from "./party";
 
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
+
 // (the mechanism at one creature a wave, whatever the tuning file's pace)
 const T1 = withTuning({ population: { ...TUNING.population, growth: { ...TUNING.population.growth, perWave: 1 } } });
 const still = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 
 describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   const map = generateMap(123, T1);
 
   it("picks each grown creature's level by the weights, the same from the same seed", () => {

@@ -1,0 +1,143 @@
+<title>Witch Soundsystems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiny5&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a control strip, the map seen from above beside the dancefloor's numbers, then every soundsystem as a card, nearest first,
+   then three stacks through every damage stage. One deliberate night look, as in the game's forest (single theme by choice). */
+:root {
+  --bg: #0f1218; --panel: #171b24; --line: #262c38; --fg: #dfe4ee; --muted: #8b93a6; --accent: #ff4f9a; --floor: #b483ff;
+  --display: "Tiny5", "Courier New", monospace; --body: "Atkinson Hyperlegible", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 48px; display: grid; gap: 28px; }
+h1 { font: 400 clamp(30px, 6vw, 46px)/1 var(--display); letter-spacing: .02em; margin: 0; text-wrap: balance; }
+h2 { font: 400 22px/1.1 var(--display); letter-spacing: .03em; margin: 0 0 12px; }
+p.lede { margin: 8px 0 0; color: var(--muted); max-width: 66ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.controls label { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+select, button { font: 600 14px var(--mono); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; }
+button { cursor: pointer; }
+button.primary { border-color: var(--accent); color: var(--accent); }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.status { font: 12px var(--mono); color: var(--muted); }
+.overview { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 760px) { .overview { grid-template-columns: 1fr; } }
+canvas.map { width: 100%; max-width: 100%; aspect-ratio: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; image-rendering: pixelated; }
+dl.facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; font-variant-numeric: tabular-nums; }
+dl.facts dt { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+dl.facts dd { margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px; font: 12px var(--mono); color: var(--muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; min-width: 0; }
+.card canvas { width: 100%; height: 170px; object-fit: contain; image-rendering: pixelated; display: block; }
+.card .k { font: 12px/1.35 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.card .k b { color: var(--fg); font-weight: 600; }
+.stages { display: grid; gap: 12px; }
+.stage-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .stage-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.stage-row .card canvas { height: 140px; }
+.note { color: var(--muted); font-size: 13px; max-width: 70ch; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .15s; } .card:hover { border-color: var(--floor); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Witch Soundsystems</h1>
+    <p class="lede">Every area's soundsystem on a real map, as the game deals them: grown from its own genome, turned along the line to the dancefloor, and bigger the further out it stands. Reroll deals the same map a fresh set; no two in a set look alike.</p>
+  </header>
+  <div class="controls">
+    <label for="map">Map seed <select id="map"></select></label>
+    <button id="reroll" class="primary" type="button">Reroll the set</button>
+    <span class="status" id="status" aria-live="polite"></span>
+  </div>
+  <section class="overview">
+    <canvas class="map" id="plot" width="420" height="420" aria-label="The map from above: the dancefloor in the middle, each soundsystem a dot in its crystal's colour with a tick for the way it faces"></canvas>
+    <div>
+      <h2>This set</h2>
+      <dl class="facts" id="facts"></dl>
+      <div class="legend" id="legend"></div>
+      <p class="note">North is up, as the game's camera looks. Those north of the dancefloor face it; those south of it face away from it, so every one shows its front to the camera. None turns more than 60° from facing us, so a wide stack never stands side-on. Sizes run from 0.8 to 1.6 times the old stacks' height between 120 m and 1000 m out.</p>
+    </div>
+  </section>
+  <section>
+    <h2>Nearest first</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+  <section>
+    <h2>Damage stages</h2>
+    <p class="note">Three stacks from this set, playing and then at each stage of damage as their health falls below 75%, 50% and 25%, and destroyed. Each breaks in its own way, the same way every time.</p>
+    <div class="stages" id="stages"></div>
+  </section>
+</div>
+
+<script type="module">
+import { soundsystemSet, soundsystemGenSprite, soundsystemGenColours } from "../../art/soundsystemGen.js";
+import { bake, M } from "../../art/core.js";
+
+const MAPS = /*MAPS*/[]/*END*/, STYLE = /*STYLE*/{}/*END*/;
+const $ = id => document.getElementById(id), K = 2;
+let mapIx = 0, reroll = 0, job = 0;
+for (const [i, m] of MAPS.entries()) { const o = document.createElement("option"); o.value = i; o.textContent = `${m.seed} (${m.list.length} areas)`; $("map").append(o); }
+
+const cssColour = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+function makeSprite(g, o) {
+  const r = soundsystemGenSprite(STYLE, g, o), b = bake(r.sp, soundsystemGenColours(g), STYLE, STYLE.cOutline);
+  const c = document.createElement("canvas"); c.width = b.w; c.height = b.h; c.getContext("2d").drawImage(b.A, 0, 0);
+  c.style.aspectRatio = `${b.w} / ${b.h}`; return c;
+}
+function plotMap(m, set) {
+  const cv = $("plot"), x = cv.getContext("2d"), W = cv.width, R = m.radius, s = (W / 2 - 16) / R;
+  x.clearRect(0, 0, W, W); x.save(); x.translate(W / 2, W / 2);
+  x.strokeStyle = "#262c38"; x.lineWidth = 1; for (const r of [120, 500, 1000]) { x.beginPath(); x.arc(0, 0, r * s, 0, Math.PI * 2); x.stroke(); }
+  x.fillStyle = "#8b93a6"; x.font = "11px JetBrains Mono, monospace"; for (const r of [500, 1000]) x.fillText(`${r} m`, 4, -r * s - 4);
+  x.fillStyle = "#b483ff"; x.beginPath(); x.arc(0, 0, 6, 0, Math.PI * 2); x.fill();
+  m.list.forEach((a, i) => {
+    const g = set[i], col = soundsystemGenColours(g)[M.GLOW], px = a.dx * s, pz = a.dz * s, yaw = a.yaw * Math.PI / 180;
+    // the way it faces: yaw 0 faces the camera (south, down the plot); a negative yaw turns it to the east
+    const fx = -Math.sin(yaw), fz = Math.cos(yaw);
+    x.strokeStyle = cssColour(col); x.lineWidth = 2; x.beginPath(); x.moveTo(px, pz); x.lineTo(px + fx * 12, pz + fz * 12); x.stroke();
+    x.fillStyle = cssColour(col); x.beginPath(); x.arc(px, pz, 2.5 + a.size * 2.2, 0, Math.PI * 2); x.fill();
+  });
+  x.restore();
+}
+function showFacts(m, set) {
+  const n = k => new Set(set.map(g => g[k])).size;
+  const rows = [["Areas", set.length], ["Profiles", n("profile")], ["Crystals", n("crystal")], ["Stones", n("stone")], ["Projectors", n("projector")],
+    ["Tiers", `${Math.min(...set.map(g => g.tiers.length))} to ${Math.max(...set.map(g => g.tiers.length))}`], ["Sizes", `×${Math.min(...m.list.map(a => a.size)).toFixed(2)} to ×${Math.max(...m.list.map(a => a.size)).toFixed(2)}`]];
+  $("facts").replaceChildren(...rows.flatMap(([k, v]) => { const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = k; dd.textContent = v; return [dt, dd]; }));
+  const seen = new Map(); set.forEach(g => seen.set(g.crystal, soundsystemGenColours(g)[M.GLOW]));
+  $("legend").replaceChildren(...[...seen].map(([name, c]) => { const s = document.createElement("span"), i = document.createElement("i"); i.style.background = cssColour(c); s.append(i, name); return s; }));
+}
+async function drawSet() {
+  const my = ++job, m = MAPS[mapIx], list = m.list.map(a => ({ seed: a.seed + reroll * 7919, far: a.far }));
+  const set = reroll ? soundsystemSet(list) : m.list.map(a => a.genome);
+  plotMap(m, set); showFacts(m, set);
+  const order = m.list.map((a, i) => i).sort((p, q) => m.list[p].dist - m.list[q].dist), grid = $("grid"), st = $("stages");
+  grid.replaceChildren(); st.replaceChildren();
+  const cards = order.map(i => { const c = document.createElement("div"); c.className = "card"; const k = document.createElement("div"); k.className = "k"; const a = m.list[i], g = set[i];
+    k.innerHTML = `<b>${Math.round(a.dist)} m</b> · yaw ${a.yaw}° · ×${a.size.toFixed(2)}<br>${g.profile}, ${g.tiers.length} tiers<br>${g.crystal} · ${g.stone} · ${g.projector}`; c.append(k); grid.append(c); return [c, i]; });
+  for (const [n, [c, i]] of cards.entries()) {
+    if (my !== job) return;
+    $("status").textContent = `Drawing ${n + 1} of ${cards.length}`;
+    await new Promise(r => setTimeout(r, 0));
+    c.prepend(makeSprite(set[i], { yaw: m.list[i].yaw, size: m.list[i].size }));
+  }
+  for (const i of [order[Math.floor(order.length * .15)], order[Math.floor(order.length * .55)], order[order.length - 1]]) {
+    const row = document.createElement("div"); row.className = "stage-row"; st.append(row);
+    for (const [label, o] of [["playing", {}], ["stage 1", { state: "damaged", stage: 1 }], ["stage 2", { state: "damaged", stage: 2 }], ["stage 3", { state: "damaged", stage: 3 }], ["destroyed", { state: "destroyed" }]]) {
+      if (my !== job) return;
+      await new Promise(r => setTimeout(r, 0));
+      const c = document.createElement("div"); c.className = "card"; const k = document.createElement("div"); k.className = "k"; k.innerHTML = `<b>${label}</b>`;
+      c.append(makeSprite(set[i], { yaw: 20, size: 1.2, ...o }), k); row.append(c);
+    }
+  }
+  $("status").textContent = `Map ${m.seed}${reroll ? `, reroll ${reroll}` : ", as the game deals it"}`;
+}
+$("map").addEventListener("change", e => { mapIx = +e.target.value; reroll = 0; drawSet(); });
+$("reroll").addEventListener("click", () => { reroll++; drawSet(); });
+drawSet();
+</script>

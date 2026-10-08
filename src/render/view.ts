@@ -48,6 +48,8 @@ import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { CombatLight } from "./combatLight";
 import { Lasers, type RingSpeaker } from "./lasers";
+import { SigilHolograms } from "./hologram";
+import { SoundsystemGenView } from "./soundsystemGen";
 import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
@@ -59,6 +61,7 @@ import { hasRune } from "../rules/creatureStates";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
+import { LightRings } from "./lightRings";
 import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
@@ -166,6 +169,11 @@ export class View {
   spellFx = new SpellFx();
   /** The party spell's cast already burst into sparkles (its time). */
   castSeen: number | null | undefined = undefined;
+  /** the height of her body's middle this frame (render/view/witch.ts; the claw slashes go over it) */
+  witchBodyY = 0.8;
+  /** Her feet's height and her frame's height in art pixels this frame (the slashes scale with her: render/leash/bubbles.ts). */
+  witchFeetY = 0;
+  witchFrameH = 0;
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail: WitchTrail;
   private trailAt = -1;
@@ -187,6 +195,8 @@ export class View {
   private strings: StringLightsView;
   leashView: LeashView;
   private lasers: Lasers;
+  /** The soundsystems' sky sigils (render/hologram.ts), in place of their laser shows (Ed, 2026-10-08). */
+  private holograms: SigilHolograms;
   /** The wave's celebrations: fireworks over a soundsystem already cleared (render/fireworks.ts). */
   readonly fireworks: Fireworks;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
@@ -237,6 +247,8 @@ export class View {
    *  list, looked up four times a second. */
   wildPointers: StoneIndicator[] = [];
   wildLeftList: { at: number; list: Creature[] } = { at: -Infinity, list: [] };
+  /** The knockdowns' BPM bonus the wave pointer last pulsed for (render/view/hud.ts). */
+  pointerBonus = 0;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -259,6 +271,8 @@ export class View {
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
   mist: Mist | null = null;
+  /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts). */
+  lightRings: LightRings | null = null;
   /** Where she was a beat ago, for the trees watching her (render/view/frameUniforms.ts). */
   watch = { x: NaN, z: NaN, t: 0 };
   width = 1;
@@ -319,6 +333,7 @@ export class View {
     this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome);
     this.assets.crownShare = t.trunkFade.crownShare;
+    this.assets.stoneScale = t.runeMarkers.scale;
     {
       // The steepest the hills may be: the camera's shallowest pitch at any zoom, ground or treetop (Ed, v289).
       const C = t.camera, pitch = Math.min(C.ground.angleIn, C.ground.angleOut, C.treetop.angleIn, C.treetop.angleOut);
@@ -343,6 +358,10 @@ export class View {
     if (t.mist.on && t.mist.strength > 0) {
       this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer is half the scene's size: post.ts)
       this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
+    }
+    if (t.lightRings?.on && t.lightRings.strength > 0 && !t.bare) {
+      this.lightRings = new LightRings(t.lightRings, this.post.scene.depthTexture, game.map.seed);
+      (this.post.fxScene ??= new THREE.Scene()).add(this.lightRings.mesh);
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
     LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
@@ -381,11 +400,13 @@ export class View {
     this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
     this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
-    this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
+    this.partyView = new PartyView(this.assets.soundsystems, this.mpp, new SoundsystemGenView(this.scene, this.assets, this.mpp, this.renderer));
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
+    this.holograms = new SigilHolograms(t.holograms);
+    this.scene.add(this.holograms.group);
     this.fireworks = new Fireworks(SPRITE_UNIFORMS.uRes, this.mpp);
     this.scene.add(this.fireworks.mesh);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
@@ -605,7 +626,7 @@ export class View {
   private hideForBare(): void {
     for (const b of [...this.typeBatches.values(), ...this.decorBatches.values(), ...this.creatureBatches.values(), this.treehouseBatch, this.propBatch, this.markerBatch])
       for (const m of b.meshes) m.visible = false;
-    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.spellFx.trail, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
+    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.holograms.group, this.spellFx.trail, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
   }
 
   speakerFlare: (number | undefined)[] = [];
@@ -761,14 +782,15 @@ export class View {
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
-    this.fireworks.update(g.waveEvents, time, t); // (before the soundsystems: a celebrated one's lasers come on as its show starts)
+    this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }); // (before the soundsystems: a celebrated one's lasers come on as its show starts)
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated);
-    if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); }
+    if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
-    this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
+    this.lasers.update(time, w.x, w.z, this.speakerTops, g.map.dancefloor); // (the dancefloor ring's: the soundsystems project their sigils instead)
+    this.holograms.update(party.projectors, time, w.x, w.z);
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
       // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
@@ -868,6 +890,7 @@ export class View {
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
+    this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.time("witch");
     refresh(this);
@@ -882,7 +905,7 @@ export class View {
     this.minimap.update(g.party, w.x, w.z);
     drawPointers(this, time);
     this.time("hud");
-    this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
+    this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     this.time("leash");
     workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
@@ -902,7 +925,7 @@ export class View {
     this.stats.batches = this.typeBatches.size + this.creatureBatches.size;
     this.stats.sceneryRadius = this.budget.radius; this.stats.fps = this.budget.fps;
     this.stats.scenery = this.stats.trees + this.stats.bushes;
-    this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count;
+    this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count + (this.partyView.gen?.count ?? 0);
   }
 }
 

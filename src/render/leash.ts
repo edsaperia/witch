@@ -10,6 +10,7 @@
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
+import type { SlashPixel } from "./leash/slashes";
 import { ROUTE_SAMPLES, type RouteShape } from "./routeEase";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
@@ -33,6 +34,7 @@ import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, LEGEND_LEVEL
 import { drawCombat } from "./leash/combat";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
 import { drawRespawn } from "./leash/respawn";
+import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
@@ -95,7 +97,16 @@ export class LeashView {
   /** The screen shake (a legend's quake): when it started and how hard. */
   shakeAt = -Infinity;
   shakeAmp = 0;
-  pips: HTMLElement | null = null;
+  /** her hits as claw slashes (leash/bubbles.ts drawSlashes): the canvas, what it last drew, the slashes' pixels */
+  slashCanvas: HTMLCanvasElement | null = null;
+  slashKey = "";
+  slashGeo = 0;
+  slashPx: SlashPixel[][] | null = null;
+  /** the height of her body's middle this frame (the slashes go over it) */
+  bodyY = 0.8;
+  hatTop = 1.6;
+  feetY = 0;
+  frameH = 0;
   /** Each creature's height as drawn (the view sets it), so its health bar sits just over it. */
   readonly tops = new Map<number, number>();
   /** When she last hit a party legend's edge (its boing played). */
@@ -338,8 +349,9 @@ export class LeashView {
     return { uv: this.uv(this.slotOf(c.species, c.level)), scale: 1 };
   }
 
-  /** hatTop: the height of the tip of her hat this frame (the stack floats above it). */
-  update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
+  /** hatTop: the height of the tip of her hat this frame (the stack floats above it); bodyY, her body's middle, feetY her feet and frameH her frame's height in art pixels (the slashes, sized to her). */
+  update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
+    this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
     this.standing.begin(); this.flat.begin(); this.over.begin(); this.solid.begin();
     this.drawBerries(time);
@@ -491,6 +503,7 @@ export class LeashView {
     drawSnores(this, camera, width, height);
     drawCirclePanel(this, camera, width, height);
     drawRespawn(this, camera, width, height); // (the wait behind her decks after a knockout: render/leash/respawn.ts)
+    drawDeckBpm(this, camera, width, height); // (the party's tempo over her decks: render/leash/deckBpm.ts)
   }
 
   /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
@@ -500,6 +513,9 @@ export class LeashView {
   circlePanel: HTMLElement | null = null;
   /** The countdown at her decks after a knockout (render/leash/respawn.ts). */
   respawnEl: HTMLElement | null = null;
+  /** The tempo over her decks (render/leash/deckBpm.ts), and the knockdowns' bonus it last pulsed for. */
+  deckBpmEl: HTMLElement | null = null;
+  deckBonus = 0;
   circleFade = 0;
   circleAt = 0;
   circleLast: { legend: Creature; x: number; z: number; r: number } | null = null;

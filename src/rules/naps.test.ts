@@ -63,7 +63,9 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
   it("keeps them asleep with her in the treetops right over them, or on the ground in the next area, close to the border", () => {
     const { g, key } = overWild();
     run(g, 90);
-    const sleepers = wildHere(g, key).filter(c => c.asleep && c.napUntil! > g.clock.time + 5);
+    const deep = () => wildHere(g, key).filter(c => c.asleep && c.napUntil! > g.clock.time + 5);
+    for (let t = 0; t < 150 && !deep().length; t++) run(g, 1); // (until one has a while yet to sleep)
+    const sleepers = deep();
     expect(sleepers.length).toBeGreaterThan(0);
     const s = sleepers[0];
     g.witch = { ...g.witch, x: s.x, z: s.z + 2 }; // (treetops, right over it)
@@ -81,6 +83,7 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
   it("wakes them when their area is partified, and lets no one nap with naps off", () => {
     const { g, key } = overWild();
     run(g, 90);
+    for (let t = 0; t < 150 && !wildHere(g, key).some(c => c.asleep); t++) run(g, 1); // (until one sleeps)
     const sleepers = wildHere(g, key).filter(c => c.asleep);
     expect(sleepers.length).toBeGreaterThan(0);
     const [cx, cy] = key.split(",").map(Number);
