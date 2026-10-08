@@ -417,6 +417,7 @@ describe("sieges (Stage 4)", () => {
   it("sends a woken area's wild creatures against its new soundsystem; when it falls its party ends, and they march on", () => {
     const t = JSON.parse(JSON.stringify(TUNING)) as Tuning;
     t.combat.soundsystemHealth = 60;
+    t.party.interval = 1e4; // (no other wave while this siege plays out: the default's a minute, Ed 2026-10-08, shorter than the test)
     const g = newGame(77, t);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
