@@ -505,13 +505,15 @@ The sigil stack above the witch's hat: scale (of the sigils' size), offset (the 
 
 ### `witchHealth`
 
-The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight. grace: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three (balance, 2026-10-06: DECISION FOR ED, 0.5).
+The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight. grace: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three (balance, 2026-10-06: DECISION FOR ED, 0.5). slashScale: her claw slashes' size relative to her (render/leash/bubbles.ts; 1 the drawing at her art pixel, Ed 2026-10-08: "the slashes should be twice as large", 2); slashGlow: their glow, the berries' light drawn in the scene along each stroke so the bloom takes it (Ed: "The slashes should glow brighter as well - similar to the berries"; 0 none).
 
 | knob | type | range |
 |---|---|---|
 | `witchHealth.hits` | number | 0 to … |
 | `witchHealth.repairTime` | number | 0 to … |
 | `witchHealth.grace` | number | 0 to … |
+| `witchHealth.slashScale` | number | 0 to … |
+| `witchHealth.slashGlow` | number | 0 to … |
 
 ### `knockout`
 

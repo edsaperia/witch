@@ -12,7 +12,9 @@ import { classStrengths, strengthOf } from "./combat/data";
 import { spawnCreatures } from "./creatures";
 import { generateMap, AREA_TYPES } from "./map";
 import { befriend } from "./creatureStates";
-import { leyChain } from "./leylines";
+import { leyChain, waveReached } from "./leylines";
+import { leyPulse, leyReachTimes, straightLink } from "./leypulse";
+import { leyReveal } from "../render/leylines";
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, c: Controls = still) => { for (let i = 0; i < Math.round(secs * 60); i++) stepGame(g, c, 1 / 60); };
@@ -114,6 +116,40 @@ describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm p
     const P = (keys: string[]) => keys.reduce((a, k) => { const [, y, ad] = levels(k); return a + estimatedPower(kind(k), y, ad); }, 0);
     expect(P(order.slice(-5))).toBeGreaterThan(P(order.slice(0, 5)) * 10);
     expect(spawnCreatures(generateMap(123, TUNING)).map(c => [c.level, c.x, c.z])).toEqual(all.map(c => [c.level, c.x, c.z]));
+  }, 60000);
+});
+
+describe("an area cleared ahead of the pulse (Ed, 2026-10-08: 'the pulse jumps to the area's runestone')", () => {
+  // Cleared early, an area transforms at once, but the ley line and its pulse keep their own pace along the route: its
+  // stone counts as reached only when its wave comes (rules/leylines.ts waveReached, party.ts passed()).
+  const view = (g: Game, at: number) => {
+    const c = leyChain(g.party, g.map), times = leyReachTimes(g.party, g.map);
+    return { current: cellKey(c.stones[c.current].cell), stones: c.stones.map(s => cellKey(s.cell)), link: straightLink(g.party, g.map), pulse: leyPulse(g.party, g.map, at), reveal: leyReveal(g.party, g.map, at, 3), times: times && [...times] };
+  };
+
+  it("leaves the pulse, its link, the line's front and every stone's reach time as they were", () => {
+    const g = game(), order = routeOf(g.map).order;
+    stepGame(g, { ...still, nextWave: true }, 1 / 60); // (a wave in: the pulse on its way to the next stone)
+    g.party.bootUntil = Math.min(g.party.bootUntil, g.clock.time - 1); // (the boot long over: the pulse under way)
+    const at = g.clock.time + 5, chain = leyChain(g.party, g.map), key = cellKey(chain.stones[chain.current + 2].cell); // (two stones past the pulse's)
+    expect(order).toContain(key);
+    const before = view(g, at);
+    expect(before.pulse).not.toBeNull();
+    empty(g, key); run(g, 0.5);
+    expect(g.party.areas.get(key)?.early).toBe(true); // (it did transform)
+    expect(view(g, at)).toEqual(before);
+    expect(waveReached(g.party, key)).toBeUndefined();
+  }, 60000);
+
+  it("counts its stone reached when its wave comes, at the wave's time, in the route's order", () => {
+    const g = game(), key = cellKey(g.party.next[0]);
+    empty(g, key); run(g, 0.5);
+    expect(cellKey(leyChain(g.party, g.map).stones[leyChain(g.party, g.map).current].cell)).toBe(cellKey(g.map.centreCell)); // (still home's)
+    stepGame(g, { ...still, nextWave: true }, 1 / 60);
+    const c = leyChain(g.party, g.map), wave = g.party.waveAt![0];
+    expect(cellKey(c.stones[c.current].cell)).toBe(key);
+    expect(waveReached(g.party, key)).toBe(wave);
+    expect(leyReachTimes(g.party, g.map)!.get(key)).toBeLessThanOrEqual(wave);
   }, 60000);
 });
 
