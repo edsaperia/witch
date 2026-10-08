@@ -157,6 +157,35 @@ export function nope(K: SfxKit, pan = 0): void {
   }
 }
 
+/** An area cleared early (Ed, 2026-10-08; the rules' "areaCleared": every hostile native invited and its runestone a
+ *  soundsystem before the pulse came): a small "cleared!" sting, about a second, in the key's bright side: a quick rising
+ *  swoosh into a chord stab (the relative major's triad and its octave, triangles and a square through a low-pass opening
+ *  on the hit) and a sparkle trailing off. The big fireworks stay for the pulse's arrival (fireworks.ts). */
+export function cleared(K: SfxKit, pan = 0, near = 1): void {
+  const C = K.T.cleared;
+  if (!C) return;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), vol = C.volume * near, hit = at + 0.22;
+  // the swoosh: noise through a band rising into the hit
+  const bp = c.createBiquadFilter(), sg = c.createGain(); bp.type = "bandpass"; bp.Q.value = 1.4;
+  bp.frequency.setValueAtTime(600, at); bp.frequency.exponentialRampToValueAtTime(5000, hit);
+  sg.gain.setValueAtTime(0.0001, at); sg.gain.exponentialRampToValueAtTime(vol * 0.35, hit - 0.02); sg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.06);
+  bp.connect(sg); sg.connect(out); K.noiseBurst(at, 0.3, bp, 0.4);
+  // the stab: the relative major's triad over its root an octave down, opening bright on the hit and decaying
+  const lp = c.createBiquadFilter(), g = c.createGain(); lp.type = "lowpass"; lp.Q.value = 1;
+  lp.frequency.setValueAtTime(900, hit); lp.frequency.exponentialRampToValueAtTime(5200, hit + 0.04); lp.frequency.exponentialRampToValueAtTime(1600, hit + 0.7);
+  lp.connect(g); g.connect(out); K.env(g, hit, vol, 0.004, 0.75);
+  const base = K.root + 12 + 3;
+  for (const [deg, wave, l] of [[-7, "square", 0.25], [0, "triangle", 0.8], [2, "triangle", 0.7], [4, "triangle", 0.7], [7, "triangle", 0.45]] as const) {
+    const og = c.createGain(); og.gain.value = l; og.connect(lp);
+    K.osc(wave, mtof(degree(base, deg)), hit, 0.85, og);
+  }
+  // the sparkle: a few high pings stepping up after it
+  for (let i = 0; i < 3; i++) {
+    const t = hit + 0.12 + i * 0.09, pg = c.createGain(); pg.connect(out); K.env(pg, t, vol * 0.22 * (1 - i * 0.2), 0.003, 0.22);
+    K.osc("sine", mtof(degree(base + 24, 2 * i + 2)), t, 0.3, pg);
+  }
+}
+
 /** The boot-up over (home's speakers all on, the first wave's countdown begun): things stirring. A
  *  low drone breathing in under the music, the key's chord opening above it, and a few far bells
  *  waking one by one, rising, in the legends' big space: the forest waking up, gently. */

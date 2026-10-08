@@ -127,6 +127,7 @@ export class SfxCues {
     this.sparkler(h);
     this.aggro(h);
     this.fireworks(h);
+    this.clears(h);
     this.night(h);
     this.ambience(h);
     this.primed = true;
@@ -493,6 +494,25 @@ export class SfxCues {
     }
     this.sfx.sparkler(level, pan(px));
   }
+
+  /** An area cleared early (Ed, 2026-10-08; the rules' "areaCleared" in g.waveEvents, game.ts stepClear): the "cleared!"
+   *  sting from the new soundsystem, on the next half-beat after it (on the music's grid), once an event. */
+  private clears({ g, time, pan }: Here): void {
+    const C = g.tuning.sfx.cleared;
+    if (!C) return;
+    for (const e of g.waveEvents) {
+      if (e.kind !== "areaCleared" || this.clearsDue.some(d => d.key === e.key && d.at === e.at)) continue;
+      this.clearsDue.push({ key: e.key, at: e.at, x: e.x, z: e.z, play: timeAt(g.beat, Math.ceil(beatAt(g.beat, e.at) * 2 - 1e-9) / 2), done: false });
+    }
+    if (!this.clearsDue.length) return;
+    const w = g.witch;
+    for (const d of this.clearsDue) if (!d.done && time >= d.play) {
+      d.done = true;
+      this.sfx.cleared(pan(d.x), Math.max(C.floor, 1 - Math.hypot(d.x - w.x, d.z - w.z) / Math.max(1, C.range)));
+    }
+    this.clearsDue = this.clearsDue.filter(d => !d.done || time - d.at < 30);
+  }
+  private clearsDue: { key: string; at: number; x: number; z: number; play: number; done: boolean }[] = [];
 
   /** Fireworks over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate; art builder
    *  2's show, rules/fireworks.ts, the same shells the picture draws): each shell's whoosh as it launches (now and then

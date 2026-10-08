@@ -41,7 +41,7 @@ const series = (at: number, n: number, every: number, g: string, play: (s: Sfx, 
 const SCENES: Scene[] = [
   {
     // home at the start: the forest music at the dancefloor, the meadow, inviting a hare and a fox
-    name: "home", seconds: 19, section: "forest", wave: 1, distance: 10,
+    name: "home", seconds: 21, section: "forest", wave: 1, distance: 10,
     frame: (s, t) => s.meadow(Math.min(1, t / 1.5)), frameG: "home's meadow",
     cues: [
       ...chatter(2, 4),
@@ -54,6 +54,7 @@ const SCENES: Scene[] = [
       ...series(9.8, 3, 0.35, "💌s landing on the ground", (s, i) => s.land(i - 1, 0.9)),
       { at: 14.5, g: "the boot-up over (stirring)", play: s => s.stir() },
       { at: 16.5, g: "a home speaker powering on", play: s => s.power(3, 0.3, 1) },
+      { at: 18.6, g: "an area cleared early", play: s => s.cleared(0.2) },
     ],
     sounds: [
       { g: "home's meadow", kind: "ambience", at: 2, len: 12 },
@@ -67,6 +68,7 @@ const SCENES: Scene[] = [
       { g: "💌s landing on the ground", kind: "feedback", at: 9.8, len: 1 },
       { g: "the boot-up over (stirring)", kind: "sting", at: 14.5, len: 1.5 },
       { g: "a home speaker powering on", kind: "sting", at: 16.5, len: 1.4 },
+      { g: "an area cleared early", kind: "sting", at: 18.6, len: 1.1 },
     ],
   },
   {

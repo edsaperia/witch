@@ -207,6 +207,8 @@ export interface Tuning {
     land: { volume: number; gap: number };
     /** A sigil refused (put down too near another): a soft two-note "nope" (chimes.ts nope). */
     nope: { volume: number; gap: number };
+    /** An area cleared early (chimes.ts cleared, sfxCues.ts cleared): its sting's level, heard within range metres (at least floor of it). */
+    cleared?: { volume: number; range: number; floor: number };
     /** The crowd cheering as her knockdown speeds the party up (sfxCues.ts tempoUp): its share of the fireworks' cheer. */
     tempoUp?: { volume: number };
     stir: { volume: number };
