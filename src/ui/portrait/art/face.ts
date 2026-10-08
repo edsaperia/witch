@@ -7,7 +7,7 @@
 import { mirror, sprite, type Sprite } from "../sprite";
 
 /** Where each feature's box goes on the head box (top-left, whole pixels). */
-export const FACE = { eyeL: [10, 24], eyeR: [38, 24], iris: [5, 4], browL: [11, 21], browR: [43, 21], mouth: [25, 45], blushL: [15, 38], blushR: [43, 38], sweat: [54, 4], tearL: [11, 36], tearR: [49, 36] } as const;
+export const FACE = { eyeL: [10, 24], eyeR: [38, 24], iris: [6, 4], browL: [11, 21], browR: [43, 21], mouth: [25, 45], blushL: [14, 38], blushR: [42, 38], sweat: [54, 4], tearL: [11, 36], tearR: [49, 36] } as const;
 
 // ---- eyes: 16 x 13, her left (our left: the outer corner, with the lashes' flick, on the left) ----
 /** Open: a 2-3 px upper lid with its flick, whites (a cool shade under the lid), a soft lower lid in the skin's outline tone. */
@@ -21,9 +21,9 @@ L...............
 ...KWWWWWWWWWW..
 ....WWWWWWWWWW..
 ....WWWWWWWWWW..
-....WWWWWWWWWw..
-....WWWWWWWWWw..
-....wWWWWWWWWw..
+....WWWWWWWWWW..
+....WWWWWWWWWW..
+.....WWWWWWWWW..
 .....kKKKKKKk...`;
 /** Half shut (a heavy lid: smug, determined, mid-blink). */
 const HALF = `
@@ -36,9 +36,9 @@ L...............
 ...LwwwwwwwwwwK.
 ....WWWWWWWWWW..
 ....WWWWWWWWWW..
-....WWWWWWWWWw..
-....WWWWWWWWWw..
-....wWWWWWWWWw..
+....WWWWWWWWWW..
+....WWWWWWWWWW..
+.....WWWWWWWWW..
 .....kKKKKKKk...`;
 /** Sleepy: the lid low over the iris. */
 const SLEEPY = `
@@ -51,9 +51,9 @@ L...............
 .LLLLLLLLLLLLL..
 ..LLLLLLLLLLLLL.
 ...LwwwwwwwwwwK.
-....WWWWWWWWWw..
-....WWWWWWWWWw..
-....wWWWWWWWWw..
+....WWWWWWWWWW..
+....WWWWWWWWWW..
+.....WWWWWWWWW..
 .....kKKKKKKk...`;
 /** Shut (a blink): the lashes along the lid's line. */
 const SHUT = `
@@ -110,9 +110,9 @@ const WIDE = `
 ..WWWWWWWWWWWW..
 ..WWWWWWWWWWWW..
 ..WWWWWWWWWWWW..
-..WWWWWWWWWWWw..
-..wWWWWWWWWWWw..
-...wWWWWWWWWw...
+..WWWWWWWWWWWW..
+..WWWWWWWWWWWW..
+...WWWWWWWWWW...
 ....kKKKKKKk....
 ................`;
 /** Wince: > (her right eye's mirror gives <). */
@@ -145,37 +145,38 @@ const DIZZY = `
 .....LLLLL......
 ................
 ................`;
-/** The iris and pupil (8 x 8): dark at the top under the lid, light at the bottom, a 4 x 4 pupil, a 2 x 2 highlight at the upper
- *  left and a spark at the lower right. Moved 1 px at a time for her gaze, clipped to the whites. */
+/** The iris and pupil (7 x 8: the white 2 px on the outer side, 1 px on the inner, art direction round 2): dark at the top
+ *  under the lid, light at the bottom, a 4 x 4 pupil, a 2 x 2 highlight at the upper left and a spark at the lower right. Moved
+ *  1 px at a time for her gaze, clipped to the whites. */
 const IRIS = `
-JJJJJJJJ
-J**JJJJJ
-I**PPPJI
-IIPPPPII
-IIPPPPII
-IiIPPIiI
-iiiiiI*i
-IiiiiiiI`;
+JJJJJJJ
+J**JJJJ
+I**PPPI
+IIPPPPI
+IIPPPPI
+IiIPPiI
+iiiii*i
+IiiiiiI`;
 /** The iris with a sparkle (awed, aww): a second highlight and a star. */
 const IRIS_SPARKLE = `
-JJJJJJJJ
-J**JJ*JJ
-I**PP***
-IIPPPP*I
-IIP*PPII
-IiIPPIiI
-iii*iI*i
-IiiiiiiI`;
+JJJJJJJ
+J**JJ*J
+I**PP**
+IIPPPP*
+IIP*PPI
+IiIPPiI
+iii*i*i
+IiiiiiI`;
 /** The small iris (wide eyes). */
 const IRIS_SMALL = `
-........
-..JJJJ..
-.J**JJJ.
-.I*PPJI.
-.IIPPII.
-.iiiiii.
-..iIIi..
-........`;
+.......
+.JJJJ..
+J**JJJ.
+I*PPJI.
+IIPPII.
+iiiiii.
+.iIIi..
+.......`;
 const eye = (t: string) => { const l = sprite(t); return { l, r: mirror(l) }; };
 export const EYES: Record<string, { l: Sprite; r: Sprite }> = { open: eye(OPEN), half: eye(HALF), sleepy: eye(SLEEPY), shut: eye(SHUT), closed: eye(CLOSED), happy: eye(HAPPY), wide: eye(WIDE), wince: eye(WINCE), dizzy: eye(DIZZY) };
 export const IRISES = { plain: sprite(IRIS), sparkle: sprite(IRIS_SPARKLE), small: sprite(IRIS_SMALL) };
@@ -230,9 +231,9 @@ export const MOUTHS: Record<string, Sprite> = {
 ...............`),
   smile: m(`
 ...............
-...........M...
-....M.....M....
-.....MMMMM.....
+..........M....
+...M.....M.....
+....MMMMM......
 ...............
 ...............
 ...............
@@ -367,10 +368,10 @@ export const MOUTHS: Record<string, Sprite> = {
 
 // ---- blush (short diagonal strokes), sweat, tears ----
 export const BLUSH = { l: sprite(`
-.R.R.R
-R.R.R.`), r: sprite(`
-R.R.R.
-.R.R.R`) };
+.R..R..R
+R..R..R.`), r: sprite(`
+.R..R..R
+R..R..R.`) };
 export const SWEAT = sprite(`
 ..v..
 .vav.

@@ -40,6 +40,13 @@ export function tones([h, s, v]: HSV): HSV[] {
 }
 const abgr = ([r, g, b]: [number, number, number], a = 255) => ((a << 24) | (b << 16) | (g << 8) | r) >>> 0;
 
+/** Tones a material needs other than the rule's (art direction round 2): the skin's outline a mid warm brown, not near-black;
+ *  the mouth's line a deep red; the iris's dark tone a mid red-brown, so the pupil stays the darkest. */
+const OVERRIDE: Partial<Record<Mat, (t: HSV[], c: HSV) => void>> = {
+  [MAT.SKIN]: (t, [h, s, v]) => { t[4] = [towards(h, 0, 0.6), Math.min(1, s * 1.2 + 0.13), v * 0.63]; },
+  [MAT.MOUTH]: t => { t[4] = [0.94, 0.7, 0.5]; },
+  [MAT.IRIS]: (t, [h, s, v]) => { t[3] = [towards(h, 0.02, 0.4), s, v * 0.68]; },
+};
 /** The fixed colours: the mouth, tongue, whites, blush, sweat, the stars. */
 const FIXED: Partial<Record<Mat, HSV>> = { [MAT.MOUTH]: [0.98, 0.65, 0.45], [MAT.TONGUE]: [0.99, 0.45, 0.88], [MAT.WHITE]: [0.62, 0.04, 0.99], [MAT.BLUSH]: [0.97, 0.45, 1], [MAT.SWEAT]: [0.55, 0.35, 1], [MAT.STAR]: [0.14, 0.45, 1] };
 /** Which genome part colours each material. */
@@ -56,7 +63,8 @@ export function portraitPalette(colours: Colours | null | undefined): Uint32Arra
   out[INK] = abgr([26, 16, 34]);
   for (const m of Object.values(MAT) as Mat[]) {
     const part = PART[m], c = (FIXED[m] ?? (part && (colours?.[part] ?? (colours ? undefined : CLASSIC[part]) ?? def[part])) ?? (m === MAT.IRIS ? EYES : [0, 0, 0.5])) as HSV;
-    tones([c[0], c[1], c[2]]).forEach((t, i) => (out[col(m, i)] = abgr(hsv2rgb(t[0], t[1], t[2]))));
+    const ts = tones([c[0], c[1], c[2]]); OVERRIDE[m]?.(ts, [c[0], c[1], c[2]]);
+    ts.forEach((t, i) => (out[col(m, i)] = abgr(hsv2rgb(t[0], t[1], t[2]))));
   }
   return out;
 }

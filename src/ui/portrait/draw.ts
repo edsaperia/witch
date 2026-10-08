@@ -189,7 +189,7 @@ export function drawPortrait(r: Raster, look: Look, p: Params, t: number): void 
   // her face: its skin, then the drawn features on it
   blit(r, HEAD_SKIN, hx, hy);
   const { eye, iris } = eyeArt(p), e = EYES[eye], gx = Math.max(-1, Math.min(1, Math.round(p.lookX * 1.2))), gy = Math.max(-1, Math.min(1, Math.round(p.lookY * 1.2)));
-  for (const [sp, [ex, ey], ix] of [[e.l, FACE.eyeL, FACE.iris[0]], [e.r, FACE.eyeR, 16 - FACE.iris[0] - 8]] as const) {
+  for (const [sp, [ex, ey], ix] of [[e.l, FACE.eyeL, FACE.iris[0]], [e.r, FACE.eyeR, 16 - FACE.iris[0] - 7]] as const) {
     blit(r, sp, hx + ex, hy + ey);
     if (iris) { const is = IRISES[iris]; blit(r, is, hx + ex + ix + gx, hy + ey + FACE.iris[1] + gy, (x, y) => WHITES.has(r.px[y * r.w + x])); }
   }
