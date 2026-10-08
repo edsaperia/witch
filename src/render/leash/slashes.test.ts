@@ -41,4 +41,17 @@ describe("the claw slashes", () => {
       expect(px[0].length).toBeLessThan(slashPixels()[0].length);
     }
   });
+  it("glows with a ring of its own pixels, each touching a slash pixel, no soft edge", () => {
+    const b = new Uint8ClampedArray(SLASH_W * SLASH_H * 4); paintSlashes(b, { count: 3, cut: 1, flash: 0, drained: 0 });
+    const a = (x: number, y: number) => (x >= 0 && y >= 0 && x < SLASH_W && y < SLASH_H ? b[(y * SLASH_W + x) * 4 + 3] : 0);
+    let ring = 0;
+    for (let y = 0; y < SLASH_H; y++) for (let x = 0; x < SLASH_W; x++) {
+      expect([0, 254, 255]).toContain(a(x, y));
+      if (a(x, y) !== 254) continue;
+      ring++;
+      let touches = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) touches ||= a(x + dx, y + dy) === 255;
+      expect(touches).toBe(true);
+    }
+    expect(ring).toBeGreaterThan(20);
+  });
 });

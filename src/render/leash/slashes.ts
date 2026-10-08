@@ -71,4 +71,15 @@ export function paintSlashes(out: Uint8ClampedArray, st: { count: number; cut: n
       const o = (p.y * w + p.x) * 4; out[o] = r; out[o + 1] = g; out[o + 2] = b; out[o + 3] = 255;
     }
   }
+  // (the glow: a ring of dim red pixels round every lit one, on the same grid, no soft shadow: STYLE.md §1 rule 4)
+  const h = out.length / 4 / w, lit = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && out[(y * w + x) * 4 + 3] === 255;
+  const ring: number[] = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (lit(x, y)) continue;
+    for (let dy = -1; dy <= 1 && !ring.includes(y * w + x); dy++) for (let dx = -1; dx <= 1; dx++) if (lit(x + dx, y + dy)) { ring.push(y * w + x); break; }
+  }
+  for (const i of ring) { const o = i * 4; [out[o], out[o + 1], out[o + 2]] = SLASH_GLOW; out[o + 3] = 254; }
 }
+
+/** The glow ring's colour (added to the scene by the screen blend). */
+export const SLASH_GLOW: readonly [number, number, number] = [112, 12, 18];

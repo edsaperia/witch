@@ -222,7 +222,7 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
     cv = document.createElement("canvas"); cv.width = SLASH_W; cv.height = SLASH_H; cv.className = "claw-slashes";
     Object.assign(cv.style, {
       position: "fixed", width: `${SLASH_W * px}px`, height: `${SLASH_H * px}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none",
-      mixBlendMode: "screen", filter: "drop-shadow(0 0 2px rgba(255,48,40,.95)) drop-shadow(0 0 7px rgba(255,24,24,.7))", // (its red added to the scene, glowing)
+      mixBlendMode: "screen", // (its red added to the scene; its glow is a ring of its own pixels: leash/slashes.ts)
     });
     document.body.append(cv); lv.slashCanvas = cv;
   }
