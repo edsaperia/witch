@@ -25,7 +25,7 @@ export interface Talk {
 }
 
 export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle";
-export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number }
+export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number; /** a "cycled" event's: the sigil cycled was a relic's (id: the relic) */ relic?: boolean }
 
 export interface LeashState {
   /** Creatures leashed to the witch, oldest first: the last is the bottom of the stack, nearest her head. */
@@ -42,8 +42,74 @@ export interface LeashState {
   /** Legends that have given her their unimpressed look this approach: not again until she's
    *  been beyond invite.cancelDistance of them. */
   snubbed: Set<number>;
-  /** Relic sigils she carries (rules/legends.ts: ids into the game's relics), newest last. */
+  /** Relic sigils she carries (rules/legends.ts: ids into the game's relics), in the stack's order, top first. */
   relics: number[];
+  /** Where each carried relic sigil sits in the stack (Ed's playtest, 2026-10-08: "Flasks should behave like other sigils in
+   *  this regard; sit in the stack, and cycle when it cycles"): by relic id, how many of the creatures' sigils are above it.
+   *  One missing, or past the stack's end, sits at the bottom. See stackOrder. */
+  relicAt?: Record<number, number>;
+}
+
+/** One sigil in her stack: a leashed creature's, or a carried relic's. */
+export interface StackItem { kind: "creature" | "relic"; id: number }
+
+/** Her whole stack, top first, the bottom (nearest her hat: the one E puts down or gives) last: the creatures' sigils in their
+ *  order, each carried relic's sigil slotted in under as many of them as its relicAt says (relics in a slot in their own order). */
+export function stackOrder(s: LeashState): StackItem[] {
+  const out: StackItem[] = [], n = s.stack.length, at = (r: number) => Math.min(n, Math.max(0, s.relicAt?.[r] ?? n));
+  for (let k = 0; k <= n; k++) {
+    for (const r of s.relics) if (at(r) === k) out.push({ kind: "relic", id: r });
+    if (k < n) out.push({ kind: "creature", id: s.stack[k] });
+  }
+  return out;
+}
+
+/** The bottom of her stack: what the place button puts down (a creature's sigil) or gives (a relic's, by a sleeping legend). */
+export function stackBottom(s: LeashState): StackItem | null {
+  const n = s.stack.length;
+  for (let i = s.relics.length - 1; i >= 0; i--) if (Math.min(n, s.relicAt?.[s.relics[i]] ?? n) >= n) return { kind: "relic", id: s.relics[i] };
+  return n ? { kind: "creature", id: s.stack[n - 1] } : null;
+}
+
+/** Set the stack to this order (top first): the creatures' sigils, the relics' and where each relic sits. */
+function setStackOrder(s: LeashState, order: StackItem[]): void {
+  const at: Record<number, number> = {};
+  s.stack.length = 0; s.relics.length = 0;
+  for (const it of order) {
+    if (it.kind === "creature") s.stack.push(it.id);
+    else { at[it.id] = s.stack.length; s.relics.push(it.id); }
+  }
+  s.relicAt = at;
+}
+
+/** Cycle the stack (Q; the sigil button in the treetops): its bottom sigil, a creature's or a relic's, to the top. */
+export function cycleStack(s: LeashState): StackItem | null {
+  const order = stackOrder(s);
+  if (order.length < 2) return null;
+  const it = order.pop()!;
+  setStackOrder(s, [it, ...order]);
+  return it;
+}
+
+/** A creature's sigil to the very bottom of her stack, under any relics' (the bots' shortcut for cycling to it). */
+export function toBottom(s: LeashState, id: number): void {
+  const order = stackOrder(s), i = order.findIndex(it => it.kind === "creature" && it.id === id);
+  if (i < 0) return;
+  const [it] = order.splice(i, 1);
+  setStackOrder(s, [...order, it]);
+}
+
+/** A relic's sigil onto the bottom of her stack (picked up: rules/legends.ts relicButton). */
+export function carryRelic(s: LeashState, id: number): void {
+  if (!s.relics.includes(id)) s.relics.push(id);
+  (s.relicAt ??= {})[id] = s.stack.length;
+}
+
+/** A relic's sigil off her stack (given to a legend). */
+export function dropRelic(s: LeashState, id: number): void {
+  const i = s.relics.indexOf(id);
+  if (i >= 0) s.relics.splice(i, 1);
+  if (s.relicAt) delete s.relicAt[id];
 }
 
 export interface LeashControls {
@@ -64,7 +130,7 @@ export interface LeashControls {
   talk?: boolean;
 }
 
-export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set(), relics: [] });
+export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set(), relics: [], relicAt: {} });
 
 /** Seconds of talk a creature needs: babies 3, young 6, adults 12; legends can't be invited. */
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
@@ -173,10 +239,10 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // puts down next) to the top; on the ground it picks up a placed sigil she's over, else puts the
   // bottom one down. Sigils go down and come up only on the ground.
   // (Since 2026-10-06 the keyboard has a button for each: E places, Q cycles anywhere.)
-  if (((c.sigil && !onGround) || c.cycle) && s.stack.length > 1) {
-    const id = s.stack.pop()!;
-    s.stack.unshift(id);
-    s.events.push({ kind: "cycled", id, x: witch.x, z: witch.z, at: time });
+  // (Carried relics' sigils cycle with the rest: Ed's playtest, 2026-10-08.)
+  if (((c.sigil && !onGround) || c.cycle) && s.stack.length + s.relics.length > 1) {
+    const it = cycleStack(s)!;
+    s.events.push({ kind: "cycled", id: it.id, x: witch.x, z: witch.z, at: time, ...(it.kind === "relic" ? { relic: true } : {}) });
   }
   if ((c.sigil || c.place) && onGround) {
     let pick = -1, pd = L.pickRadius;
@@ -190,7 +256,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     } else if (rune) {
       // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
       inviteCreature(s, rune, rune.x, rune.z, time, "picked");
-    } else if (s.stack.length) {
+    } else if (s.stack.length && stackBottom(s)?.kind === "creature") { // (a relic's at the bottom: it's only ever given to a sleeping legend, rules/legends.ts relicButton; away from one, the button leaves it be)
       const id = s.stack[s.stack.length - 1];
       // A party legend's (the Easter egg): put down, it's let go where it stands, dancing (its rune at its feet), and she's free.
       if (byId(id).partyLegend) { s.stack.pop(); letPartyLegendGo(byId(id)); s.events.push({ kind: "placed", id, x: byId(id).x, z: byId(id).z, at: time }); }
