@@ -109,6 +109,8 @@ export class LeashView {
   frameH = 0;
   /** Each creature's height as drawn (the view sets it), so its health bar sits just over it. */
   readonly tops = new Map<number, number>();
+  /** Each creature's half-width as drawn (metres), with tops: its bounds, which a legend's dream bubble and circle panel keep clear of. */
+  readonly halfW = new Map<number, number>();
   /** When she last hit a party legend's edge (its boing played). */
   boingAt = -Infinity;
 
