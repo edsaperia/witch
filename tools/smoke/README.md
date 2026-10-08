@@ -88,7 +88,7 @@ npm run build && node tools/smoke/legendary-sigil.cjs <out dir> [seed] [species]
 
 ## `looks.cjs`
 
-A contact sheet of the character creator's looks and of six pleasing random witches, each standing on the bedroom's rug, at the room's art pixel ×6.
+A contact sheet of six pleasing random witches, each standing on the bedroom's rug, at the room's art pixel ×6.
 
 ## `magic-dodge.cjs`
 
