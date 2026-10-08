@@ -162,3 +162,12 @@ Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, s
 
 - **Core-design check**: all pass, no errors (off the decks 8 s after the cast; the boot 30.0 s, 11.0 → 41.0; 10,9 cleared transforms, 3 holders; its wave only celebrates, soundsystems 2 → 2, enraged 0 → 0; the next uncleared stone wakes, 2 → 3, 1 enraged; 909 creatures, no new id).
 - **Journey**: every moment reached, no errors, `dropped` 0, 909 creatures throughout: first speaker at 12.3 s, the boot caught at 7 of 12, draw calls over the treetops 101 (steady), stargazing at the beach, the party's over. The two merges change the knockdown's sounds, which the journey doesn't reach (no knockdown in it).
+
+## Midday: b721b40f (#549), 12:35–13:05
+
+13 merges since bcfcca36 (#225, #509, #545, #544, #543, #541, #539, #532, #542, #547, #548, #551, #549). Tests (935), typecheck, build green.
+
+- **Core-design check**: all pass, no errors: off the decks 8 s after the cast; the boot 30.0 s (11.0 → 41.0); 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); no new id. Soundsystems now count home's 12 speakers (#543: home as its ring of 12 at 500 hp), hence 13 where it was 2.
+- **Journey**: every moment reached, no errors, `dropped` 0: first speaker at 12 s, the boot caught at 7 of 12, draw calls over the treetops 100, stargazing at the beach, and the party's over with every speaker lost.
+- **Creatures**: 840 at the start, from 909: #542's swarm populations (by place on the route, about 540 hostiles on a default map), as its tuning note says. Not exercised: #544 (a 💌 wakes its area: the journey throws none), #548/#551 (the cleared sting and burst: heard and drawn, not checked).
+- #509 fixed the full smoke's trunk checks flagged after the core design.
