@@ -10,7 +10,14 @@ import { hash2 } from "./random";
 export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge" | "light";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
 export type TacticKind = "surround" | "pincer" | "hitAndRun" | "volley" | "swarm" | "flank" | "none";
-export interface Move { kind: "charge" | "ambush" | "burrow" | "leap" | "dig" | "block" | "trail" | "flash"; cooldown: number;
+export interface Move { kind: "charge" | "ambush" | "burrow" | "leap" | "dig" | "block" | "trail" | "flash" | "swoop"; cooldown: number;
+  /** A swoop (the wild flyers): it circles `radius` m round its target at `circle` m/s, `height` m up (out of reach), now and then
+   *  wavering by `jitter` of its radius (a bat's erratic flight); then telegraphs for `windup` seconds (rising to `rise` times its
+   *  height meanwhile: the raven climbing out of view, its shadow growing), dives along a line at `speed` m/s at where its target
+   *  will be (`lead` of its velocity times the dive's flight time, at the moment it lets go), on `overshoot` m past, skims low for
+   *  `bottom` seconds and climbs back up over `climb` seconds; `dives` such dives in a bout, then `cooldown` seconds circling.
+   *  Hittable (and invitable) only in the dive and at the bottom. A dive that touches her throws her `knockback` m. */
+  circle?: number; jitter?: number; rise?: number; lead?: number; bottom?: number; climb?: number; dives?: number; knockback?: number;
   /** A charge: backs off at this speed (m/s) while it lowers its head (the ram's run-up); its pack mates charge with it (the stags' pair); curled up while it rolls, taking this times the damage (the hedgehog's, the woodlouse's). */ backup?: number; pair?: boolean; curl?: number;
   /** A leap that lands a blow on its target (the lynx's pounce), not a slam round it; an ambush that strikes the moment it springs (the snake's). */ strike?: boolean;
   /** Dig in, block, trail, flash: seconds it lasts (time), the damage it takes meanwhile times armour, a slow's speed times slow, a trail's drop every seconds, a radius. */ armour?: number; slow?: number; every?: number; radius?: number; /** A charge: seconds it lowers its head first (its lane telegraphed); how fast it builds speed and brakes (m/s each second), how fast it turns braking (degrees a second), and how far it runs on past its target before braking (m). */ windup?: number; accel?: number; brake?: number; turn?: number; overshoot?: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
@@ -98,12 +105,19 @@ export interface SteerContext {
   ready: boolean;
   /** Seconds a beat lasts (the volley fires on it). */
   beat: number;
+  /** Cutting off her retreat (tuning dodge.c): it makes for a place ahead of her as she runs, `ahead` metres on along her
+   *  heading and `angle` radians to one side of it, `reach` times its attack's reach out. */
+  cutoff?: { ahead: number; angle: number; reach: number };
+  /** How far it may fire from, if further than `range` (a shooter at her, tuning dodge.b.range: it keeps its distance by `range`). */
+  fire?: number;
+  /** Where "arrive" makes for, if not `want` (committed strikes, tuning dodge.a: right in on her, striking as it comes). */
+  arriveAt?: number;
 }
 
 /** Steer a fighting creature by its profile for one step. Returns whether it may start an attack now. */
 export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   const dx = x.px - c.x, dz = x.pz - c.z, d = Math.hypot(dx, dz) || 1e-6, ux = dx / d, uz = dz / d, S = FIGHT.scale;
-  let vx = 0, vz = 0, may = d <= Math.max(x.want + 1.5 * S, x.range * 0.95); // (a shooter may strike from anywhere in its range)
+  let vx = 0, vz = 0, may = d <= Math.max(x.want + 1.5 * S, (x.fire ?? x.range) * 0.95); // (a shooter may strike from anywhere in its range)
   const add = (ax: number, az: number, w: number) => { vx += ax * w; vz += az * w; };
   const pack = x.pack, n = pack ? pack.members.length : 1, i = pack ? Math.max(0, pack.members.indexOf(c)) : 0;
   // The slot its pack's tactic gives it (if any), and whether the tactic lets it strike now.
@@ -139,13 +153,22 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     }
     default: break;
   }
+  // Cutting off her retreat (dodge.c): a place ahead of her as she runs, to one side (by its id), making for it hard whatever
+  // its tactic (or its kind's behaviours: a bat has no slot to keep), striking from there as she comes.
+  const cut = x.cutoff && x.heading ? x.cutoff : null;
+  if (cut) {
+    const h = x.heading!, side = hash2(c.id, 9, 17) < 0.5 ? 1 : -1, a = Math.atan2(h.z, h.x) + side * cut.angle, R = Math.max(x.want * cut.reach, 1);
+    slot = { x: x.px + h.x * cut.ahead + Math.cos(a) * R, z: x.pz + h.z * cut.ahead + Math.sin(a) * R };
+    const sx = slot.x - c.x, sz = slot.z - c.z, sd = Math.hypot(sx, sz) || 1e-6;
+    if (sd > 0.6 * S) add(sx / sd, sz / sd, 1.5 * Math.min(1, sd / (4 * S)));
+  }
   for (const b of P.fight) {
     switch (b.kind) {
-      case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - x.want) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
+      case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - (x.arriveAt ?? x.want)) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
       case "keepRange": { const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }
       case "orbit": { const dir = hash2(c.id, 5, 7) < 0.5 ? 1 : -1, R = x.range * (b.radius ?? 0.7); add(-uz * dir, ux * dir, b.w); add(ux * (d - R) / Math.max(1, R), uz * (d - R) / Math.max(1, R), b.w * 0.6); break; }
       case "strafe": { const dir = hash2(c.id, Math.floor(x.time / (b.swap ?? 2)), 11) < 0.5 ? 1 : -1; add(-uz * dir, ux * dir, b.w); break; }
-      case "slot": { if (slot) {
+      case "slot": { if (slot && !cut) {
         // A slot round the far side: it goes round its target, not through it.
         const ac = Math.atan2(c.z - x.pz, c.x - x.px), as = Math.atan2(slot.z - x.pz, slot.x - x.px), da = ((as - ac + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
         const sd = Math.hypot(slot.x - c.x, slot.z - c.z);
@@ -228,7 +251,8 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
     const tx = px - c.x, tz = pz - c.z, along = tx * ch.dx + tz * ch.dz;
     if (!ch.braking && (time >= ch.until || along < -(mv.overshoot ?? 8) * CH.reach * FIGHT.scale)) ch.braking = true;
     if (!ch.braking) {
-      // Building speed down its lane (its velocity swings onto the lane, no snapping).
+      // Building speed down its lane (its velocity swings onto the lane, no snapping); a heavy's lane swings toward her as it runs (ch.home).
+      if (ch.home) { const h = Math.atan2(ch.dz, ch.dx), da = ((Math.atan2(tz, tx) - h + Math.PI * 3) % (Math.PI * 2)) - Math.PI, nh = h + Math.max(-ch.home * dt, Math.min(ch.home * dt, da)); ch.dx = Math.cos(nh); ch.dz = Math.sin(nh); }
       const nv = Math.min(ch.speed, Math.max(v, 0) + accel * dt);
       vx = ch.dx * nv; vz = ch.dz * nv; v = nv;
     } else {
@@ -278,6 +302,135 @@ export function stepBurrow(c: Creature, mv: Move, px: number, pz: number, base: 
   }
   if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 10) * FIGHT.scale) { c.burrow = { until: time + (mv.time ?? 4) }; c.moving = false; return "burrowed"; }
   return "none";
+}
+
+/** A wild flyer's swoop (owl, bat, raven; hotel's phase-3 flyer table, built 2026-10-09): see Move. Each phase eases its height
+ *  from h0 to h1 over dur seconds from at; `up` while it's out of reach (rising, circling, telegraphing, climbing, landing). */
+export interface Swoop {
+  phase: "circle" | "tele" | "dive" | "low" | "climb" | "land";
+  at: number; dur: number; h0: number; h1: number;
+  /** Its angle round its target while circling, and which way round it goes. */
+  ang: number; dir: number;
+  /** Dives left in this bout. */
+  left: number;
+  /** The dive's line: from, to (its aim plus the overshoot), and its direction. */
+  fx: number; fz: number; tx: number; tz: number; dx: number; dz: number;
+  /** Whom this dive has touched (once each). */
+  hit?: number[];
+  /** Where its dive is aimed, locked `commit` seconds before it lets go (dodge.a.commit: a blink then gets her clear). */
+  aim?: [number, number];
+  up: boolean;
+}
+
+/** How high a swooping flyer is at `time` (m): its phase's ease from h0 to h1 (the dive's an ease-in, falling faster as it goes). */
+export function swoopHeight(s: Swoop, time: number): number {
+  const k = Math.max(0, Math.min(1, (time - s.at) / Math.max(1e-6, s.dur)));
+  const e = s.phase === "dive" ? k * k : k * k * (3 - 2 * k);
+  return s.h0 + (s.h1 - s.h0) * e;
+}
+/** Out of reach: no 💌, blow, touch or talk reaches it. */
+export const aloft = (c: Creature): boolean => !!c.swoop?.up;
+/** Striking at her: telegraphing, diving or at its bottom (for a cap on strikes at her at once: prototype's dodge A, #587). */
+export const swoopStriking = (c: Creature): boolean => !!c.swoop && (c.swoop.phase === "tele" || c.swoop.phase === "dive" || c.swoop.phase === "low");
+/** The height a swooping creature is drawn at, 0 for any other (render/view/creatures.ts). */
+export const flightHeight = (c: Creature, time: number): number => (c.swoop ? swoopHeight(c.swoop, time) : 0);
+
+const LOW = 0.5; // (m: the bottom of a dive, skimming the ground)
+function phase(s: Swoop, p: Swoop["phase"], time: number, dur: number, h1: number): void {
+  s.h0 = swoopHeight(s, time); s.phase = p; s.at = time; s.dur = Math.max(1e-3, dur); s.h1 = h1;
+  s.up = p !== "dive" && p !== "low";
+}
+
+/** It's done fighting (no target, invited, leashed, dazed, marching): it glides down to the ground over a second, out of reach meanwhile. */
+export function landSwoop(c: Creature, time: number): void {
+  const s = c.swoop;
+  if (!s) return;
+  if (s.phase === "land") { if (time >= s.at + s.dur) c.swoop = undefined; return; }
+  const h = swoopHeight(s, time);
+  if (h < 0.3) { c.swoop = undefined; return; }
+  phase(s, "land", time, 1 / FIGHT.speed, 0);
+}
+
+/** One step of a wild flyer's swoop at its target (px, pz), moving at (tvx, tvz). `ready`: its attack is ready (a new bout may start).
+ *  `may`: it may strike now (each dive's telegraph waits for it: the dodge work's cap on strikes at her at once, #587); a
+ *  function is asked only as a telegraph would start (so a token is taken only then).
+ *  Returns what happened this step: "tele" as it starts its telegraph, "dive" as it lets go, "low" while it can touch her (the dive and
+ *  the bottom), else "air". */
+export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0, may: boolean | (() => boolean) = true, commit = 0): "tele" | "dive" | "low" | "air" {
+  const mayNow = () => (typeof may === "function" ? may() : may); // (asked only as a telegraph would start: the cap's token is taken then)
+  const S = FIGHT.scale, V = FIGHT.speed, H = (mv.height ?? 8) * S, R = (mv.radius ?? 12) * S, cs = (mv.circle ?? 8) * V;
+  let s = c.swoop;
+  if (!s) {
+    // Up it goes, from wherever it stands, round its target the shorter way.
+    // (each its own place round the circle and its own width of it, so a swarm spreads out round her rather than piling up)
+    s = c.swoop = { phase: "circle", at: time, dur: 0.8 / V, h0: 0, h1: H, ang: Math.atan2(c.z - pz, c.x - px) + (hash2(c.id, 5, 67) - 0.5) * 2, dir: hash2(c.id, 3, 61) < 0.5 ? 1 : -1, left: 0, fx: 0, fz: 0, tx: 0, tz: 0, dx: 1, dz: 0, up: true };
+    c.moveReadyAt = Math.max(c.moveReadyAt ?? 0, time + 1.2 / V); // (a moment aloft before its first dive)
+  }
+  if (s.phase === "land") phase(s, "circle", time, 0.8 / V, H); // (back into the fight from its glide down)
+  const circling = (slow: number) => {
+    // Round its target, wavering (a bat's erratic flight), toward its place on the circle, a little faster than it goes round.
+    const wob = (mv.jitter ?? 0) * Math.sin(time * 2.7 + c.id * 1.3), r = R * (0.8 + 0.4 * hash2(c.id, 7, 71)) * (1 + wob);
+    s!.ang += (s!.dir * cs * slow * dt) / Math.max(1, r);
+    const ox = px + Math.cos(s!.ang) * r, oz = pz + Math.sin(s!.ang) * r, dx = ox - c.x, dz = oz - c.z, d = Math.hypot(dx, dz), step = Math.min(d, cs * 1.8 * dt);
+    if (d > 1e-6) { c.x += (dx / d) * step; c.z += (dz / d) * step; c.vx = (dx / d) * (step / dt); c.vz = (dz / d) * (step / dt); c.facing = dx >= 0 ? 1 : -1; }
+    c.moving = true; c.walk += dt * 6;
+  };
+  const done = time >= s.at + s.dur;
+  switch (s.phase) {
+    case "circle": {
+      circling(1);
+      if (!done) return "air";
+      if (s.left > 0) { if (!mayNow()) return "air"; phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; } // (the rest of its bout, held up for the cap)
+      if (ready && time >= (c.moveReadyAt ?? 0) && mayNow()) { s.left = Math.max(1, Math.round(mv.dives ?? 1)); phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
+      return "air";
+    }
+    case "climb": {
+      // Pulling back up and away along its line, slowing, then round again.
+      const k = Math.max(0, 1 - (time - s.at) / s.dur), sp = (mv.speed ?? 24) * V * 0.35 * k + cs * (1 - k);
+      c.x += s.dx * sp * dt; c.z += s.dz * sp * dt; c.vx = s.dx * sp; c.vz = s.dz * sp; c.moving = true; c.walk += dt * 6;
+      if (done) {
+        s.ang = Math.atan2(c.z - pz, c.x - px);
+        if (s.left > 0 && mayNow()) { phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
+        phase(s, "circle", time, 0.01, H); if (s.left <= 0) c.moveReadyAt = time + mv.cooldown / V;
+      }
+      return "air";
+    }
+    case "tele": {
+      // Telegraphing (the owl's hoot and tuck, the bat's screech, the raven climbing): circling slowly, facing her; then it lets go.
+      circling(0.4); c.facing = px >= c.x ? 1 : -1;
+      // Where she'll be when it gets there, as she's going now (lead of it: the dodge work's lead-at-release), and on past.
+      // (the flight time to where she'll be: a few steps to the intercept, so lead 1 meets her walking straight on)
+      const sp = Math.max(1, (mv.speed ?? 24) * V), lead = mv.lead ?? 0;
+      const aim = (): [number, number] => {
+        let fly = Math.hypot(px - c.x, pz - c.z) / sp;
+        for (let i = 0; i < 4; i++) fly = Math.hypot(px + tvx * fly * lead - c.x, pz + tvz * fly * lead - c.z) / sp;
+        return [px + tvx * fly * lead, pz + tvz * fly * lead];
+      };
+      // (its aim locks commit seconds before it lets go, as a strike's does: a fast dive is dodged by blinking as it locks)
+      if (commit > 0 && !s.aim && time >= s.at + s.dur - commit) s.aim = aim();
+      if (!done) return "air";
+      const [ax, az] = s.aim ?? aim(), lx = ax - c.x, lz = az - c.z, L = Math.hypot(lx, lz) || 1, past = (mv.overshoot ?? 4) * S;
+      s.aim = undefined;
+      s.fx = c.x; s.fz = c.z; s.dx = lx / L; s.dz = lz / L; s.tx = ax + s.dx * past; s.tz = az + s.dz * past; s.hit = []; s.left--;
+      phase(s, "dive", time, (L + past) / sp, LOW);
+      c.facing = s.dx >= 0 ? 1 : -1;
+      return "dive";
+    }
+    case "dive": {
+      const k = Math.min(1, (time - s.at) / s.dur);
+      c.x = s.fx + (s.tx - s.fx) * k; c.z = s.fz + (s.tz - s.fz) * k; c.vx = (s.tx - s.fx) / s.dur; c.vz = (s.tz - s.fz) / s.dur; c.moving = true; c.walk += dt * 10;
+      if (done) phase(s, "low", time, (mv.bottom ?? 0.5) / V, LOW);
+      return "low";
+    }
+    case "low": {
+      // Skimming the ground at the bottom, gliding on and slowing: the moment to catch it.
+      const sp = (mv.speed ?? 24) * V * 0.25;
+      c.x += s.dx * sp * dt; c.z += s.dz * sp * dt; c.vx = s.dx * sp; c.vz = s.dz * sp; c.moving = true;
+      if (done) phase(s, "climb", time, (mv.climb ?? 1) / V, H);
+      return "low";
+    }
+  }
+  return "air";
 }
 
 /** The leap (Stage 5: the toad): when its attack is ready and its target is between `from` and

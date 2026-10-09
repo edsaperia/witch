@@ -24,6 +24,7 @@ import { legendGlow, outlineIn } from "../legendOutline";
 import { aggroAmount, aggroFadeOut, aggroGlow } from "../aggro";
 import { cellKey } from "../../rules/party";
 import { legendRings } from "../../rules/slowTime";
+import { flightHeight } from "../../rules/movement";
 import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
@@ -32,6 +33,7 @@ const SQ = { hop: 0, x: 0, sx: 1, sy: 1, turned: false }; // (a baked frame's id
 
 const FEEL = newFeel(); // (filled per creature, never kept)
 const SLEEP: SleepPose = { sleep: 0, droop: 0 }; // (likewise)
+const FWD = new THREE.Vector3(), CAM_UP = new THREE.Vector3(); // (the camera's look and up, a frame's working)
 
 /** The baked walk's frame (0 or 1) by how far it has gone as drawn (Ed's playtest: feet walking in place, or not walking while it
  *  moves): a step every `step` metres, standing (frame 0) once it has stopped for a quarter of a second. One small record per creature. */
@@ -85,6 +87,8 @@ export function drawCreatures(v: View, time = 0): void {
   if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning, v.style);
   const WW = g.tuning.wildWatch?.on ? g.tuning.wildWatch : null; // (the wild watch's rising aggro)
   const ringOf = new Map(legendRings(g).map(r => [r.id, r])); // (each legend's circle: its outline shows only with her in it)
+  // How far towards the camera a sprite's rows below its ground line land, a metre of rows (as soundsystemGen.ts stands them, #564).
+  const U = SPRITE_UNIFORMS.uUp.value, F = v.camera.getWorldDirection(FWD), toward = U.dot(CAM_UP.set(0, 1, 0).applyQuaternion(v.camera.quaternion)) / Math.max(0.2, -F.y);
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
     const c = g.creatures[i];
     if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
@@ -174,6 +178,7 @@ export function drawCreatures(v: View, time = 0): void {
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
     let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
     hop += feel.hop; // (a tumble's arc: render/attackFeel.ts)
+    hop += flightHeight(c, time); // (a wild flyer swooping: up out of reach over its shadow, rules/movement.ts stepSwoop)
     // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
     const joined = v.leashView.joined.get(c.id);
     if (joined !== undefined && time - joined < 0.7) { const k = (time - joined) / 0.7; hop += Math.abs(Math.sin(k * Math.PI * 2)) * 0.45 * (1 - k * 0.6); }
@@ -181,8 +186,11 @@ export function drawCreatures(v: View, time = 0): void {
     // ground and no moss tint over its own. Getting up or lying down (render/legendSleep.ts) the rig draws it, sunk a little and
     // mossed by how far asleep it is; so does the baked frame, sunk, until the rig's parts are ready.
     const form = (!!slept && lying >= 0.999) || (!!napped && lying >= 0.999), fh = (frame.h - (frame.pad ?? 0)) * v.mpp * scale;
-    const sunk = form || napped ? -(frame.h - (frame.pad ?? 0) - ((slept ?? napped)!.ground?.[fi] ?? frame.h)) * v.mpp * scale * SPRITE_UNIFORMS.uUp.value.y : // (rows run up the screen, tilted: its ground row exactly on the ground)
-      st ? -W.sink * lying * fh : 0, rigSunk = st ? -(g.tuning.rig?.sink ?? 0.1) * lying * fh : 0;
+    // Its own sleeping form stands on its lowest drawn pixel, the rows below its ground line on the ground nearer the camera (Ed,
+    // 2026-10-08: legends "tend to be halfway in the floor": slid down the billboard instead, those rows went under the ground and
+    // were cut off, as the soundsystems' were, #564); its frame's empty rows (pad) taken off. Lying down without one, sunk by sink.
+    const below = form || napped ? Math.max(0, frame.h - (frame.pad ?? 0) - ((slept ?? napped)!.ground?.[fi] ?? frame.h)) * v.mpp * scale : 0, padM = (frame.pad ?? 0) * v.mpp * scale;
+    const sunk = form || napped ? -U.y * padM : st ? -W.sink * lying * fh : 0, rigSunk = st ? -(g.tuning.rig?.sink ?? 0.1) * lying * fh : 0;
     // (a legend's moss, and its outline only while she's in its circle: render/legendOutline.ts; a napping creature is itself)
     if (st && (form || lying > 0)) { const ring = ringOf.get(c.id); glow = legendGlow(form ? 0 : W.moss * lying, ring ? outlineIn(Math.hypot(g.witch.x - ring.x, g.witch.z - ring.z), ring.r) : 0); }
     // Restless in its sleep (#87, a nightmare): it tosses in bursts, and turns over when it's bad (on the rig, its legs paddle and its head jerks).
@@ -197,9 +205,11 @@ export function drawCreatures(v: View, time = 0): void {
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
       spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
       const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip !== SQ.turned, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1) + SQ.x * fh;
-      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k, y: dance + hop + sunk + SQ.hop * fh, z: c.z + R.z * k, frame, flip, fresh, glow, scale, sx: feel.sx * SQ.sx, sy: feel.sy * breathY * SQ.sy });
+      const near = below * toward - (form || napped ? U.z * padM : 0), nx = form || napped ? -U.x * padM : 0;
+      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k + nx, y: dance + hop + sunk + SQ.hop * fh, z: c.z + R.z * k + near, frame, flip, fresh, glow, scale, sx: feel.sx * SQ.sx, sy: feel.sy * breathY * SQ.sy });
     }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
+    v.leashView.halfW.set(c.id, frame.w * v.mpp * scale * 0.5);
     // Its shadow under it as drawn (its sway and a nightmare's tossing too), as big as it's drawn (a legend's size, an evolving
     // pop); off the ground (a hop, a leap, a tumble) still on the ground under it, smaller the higher it goes.
     const air = Math.max(0, dance + hop), sk = scale / (1 + air * 0.35);

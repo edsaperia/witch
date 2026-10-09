@@ -76,6 +76,18 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
   if (a.modifier === "slow") o.slowUntil = time + (a.slowTime ?? 2) * k.slow; // a new slow renews, never stacks
   // It turns on whoever hit it, if it isn't busy with another.
   if (from && o.fight && !o.fight.target) o.fight.target = { kind: "creature", id: from.id };
+  // Taunted (Ed, 2026-10-09, on #592: "Taunt seems good"): after her, and hit by one of her animals, it turns on that one for
+  // combat.taunt.time seconds (a lunge at her already under way lands first; then acquire holds it to the taunter). A wind-up on
+  // her turns to face it. Not a legend.
+  const TT = w.t.combat.taunt;
+  if (TT && from?.leashed && o.fight?.target?.kind === "witch" && !o.boss && o.level !== LEGEND && o.rand() < TT.chance) {
+    o.taunt = { by: from.id, until: time + TT.time };
+    if (!o.fight.lunge && !o.charge && !o.leap) {
+      o.fight.target = { kind: "creature", id: from.id };
+      if (o.fight.windupUntil) { o.fight.aimX = from.x; o.fight.aimZ = from.z; }
+    }
+    s.events.push({ kind: "taunted", x: o.x, z: o.z, at: time, id: o.id });
+  }
   if (o.hp <= 0 && o.boss && !o.leashed) {
     // An area legend beaten (Ed, 2026-10-04): it sinks back into the ground where it stands,
     // asleep for good; its area's soundsystem is safe from it.

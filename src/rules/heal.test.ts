@@ -7,7 +7,7 @@ import { TUNING } from "./tuning";
 import { feed } from "./berries";
 import { befriend } from "./creatureStates";
 import { inviteCreature } from "./leash";
-import { anger, cheer } from "./legends";
+import { anger, cheer, lull } from "./legends";
 import { startPartyOver } from "./partyOver";
 import { creatureMaxHp } from "./combat";
 
@@ -36,10 +36,10 @@ describe("every heal shows", () => {
     inviteCreature(g.leash, c, c.x, c.z, 7);
     expect(c.healedAt).toBe(7);
   });
-  it("a legend turning happy or angry", () => {
-    const g = game(), a = hurt(g, 4, { level: LEGEND }), b = hurt(g, 5, { level: LEGEND });
-    cheer(a, 8); anger(b, 9);
-    expect(a.healedAt).toBe(8); expect(b.healedAt).toBe(9);
+  it("a legend turning happy or angry, or back to sleep", () => {
+    const g = game(), a = hurt(g, 4, { level: LEGEND }), b = hurt(g, 5, { level: LEGEND }), z = hurt(g, 8, { level: LEGEND });
+    cheer(a, 8); anger(b, 9); lull(z, 11);
+    expect(a.healedAt).toBe(8); expect(b.healedAt).toBe(9); expect(z.healedAt).toBe(11);
   });
   it("bedtime when the party's over", () => {
     const g = game(), c = hurt(g, 6);

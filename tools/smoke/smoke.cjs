@@ -613,6 +613,7 @@ async function main() {
       const isHomeKey = k => k === "home" || k.startsWith("home:"); // (rules/speakers.ts isHomeKey: home's speakers are home:<i>)
       w.manual = true;
       g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+      g.party.paused = true; // (no wave but the one brought on below: with waves a minute apart, Ed 2026-10-08, the next one stood a soundsystem nearer than home mid-siege, and the besiegers rightly marched on to it)
       const next = g.party.next[0];
       g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]).forEach(c => { c.level = 1; });
       w.frame({ ...idle, nextWave: true }, dt, false);
