@@ -30,7 +30,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
   for (let k = order.length - 1; k >= 0; k--) {
     const it = order[k], relic = it.kind === "relic", key = stackKey(it.kind, it.id), j = order.length - 1 - k, link = lv.chain[j]; // j: 0 at the bottom
     const c = relic ? null : g.creatures[it.id], sg = c ? lv.sigilOf(c) : null;
-    const size = c ? (2 + c.level * 0.4) * S.scale * sg!.scale : 2.8 * S.scale; // (a relic's: an adult's size, Ed's playtest 2026-10-07)
+    const size = c ? (2 + c.level * 0.4) * S.scale * sg!.scale : 4.2 * S.scale; // (a relic's: half again an adult's size, Ed 2026-10-09: "+50% in the stack"; an adult's before, his playtest 2026-10-07)
     const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5) * (1 - 0.6 * LV.load);
     // (under a load it leans toward the pull, each sigil a little further: render/load.ts)
     const lean = LT.stackLean * LV.load;
