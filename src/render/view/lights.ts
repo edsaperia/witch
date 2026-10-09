@@ -10,6 +10,7 @@ import { hash2 } from "../../rules/random";
 import type { ForestLight, View } from "../view";
 import { inView } from "./culling";
 import { mark } from "./pops";
+import * as Art from "../../../art/generator.js";
 
 export function updateSources(v: View, time: number): void {
   const f = v.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], g = v.game;
@@ -94,3 +95,21 @@ export function sigilLights(v: View, time: number, hatY: number): ForestLight[] 
   return out;
 }
 const spillRgb = new Map<string, THREE.Vector3>();
+
+/** The quest relics' bottles lying in the world (render/view/scenery.ts): each lights the ground round it in its liquid's own
+ *  colour (art/partyRelics.js partyRelicLight: its reach and height, a slow pulse), as bright as a magic stone, so a found bottle
+ *  reads as magic and not scenery. Only those near her. */
+export function relicLights(v: View, time: number): ForestLight[] {
+  const g = v.game, w = g.witch, out: ForestLight[] = [], S = g.tuning.lights.stone;
+  for (const r of g.relics) {
+    if (r.state !== "lying" || Math.abs(r.x - w.x) > 160 || Math.abs(r.z - w.z) > 160) continue;
+    let rgb = relicRgb.get(r.kind);
+    if (!(Art.PARTY_RELIC_BY_ID as Record<string, unknown>)[r.kind]) continue; // (a kind with no bottle: none)
+    const L = (Art.partyRelicLight as (id: string) => { rgb: number[]; radius: number; height: number; pulse: number })(r.kind);
+    if (!rgb) relicRgb.set(r.kind, (rgb = new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255)));
+    const pulse = 0.85 + 0.15 * Math.sin((time / L.pulse) * Math.PI * 2 + r.id);
+    out.push({ x: r.x, y: L.height, z: r.z, reach: L.radius * 1.6, rgb, strength: S.strength * pulse });
+  }
+  return out;
+}
+const relicRgb = new Map<string, THREE.Vector3>();
