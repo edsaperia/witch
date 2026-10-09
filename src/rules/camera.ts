@@ -103,7 +103,7 @@ export function stepCamera(c: CameraState, zoomDelta: number, target: { x: numbe
   let circle = (c.circle ?? 0) + (inC - (c.circle ?? 0)) * ce;
   if (circle < 1e-4) circle = 0; else if (circle > 1 - 1e-4) circle = 1;
   const cx = legend ? legend.x : c.cx, cz = legend ? legend.z : c.cz; // (the last one framed, kept while it eases back out)
-  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind, bearing, circle, cx, cz };
+  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind, bearing, ...(circle > 0 || c.circle !== undefined ? { circle, cx, cz } : {}) }; // (none until she's first in a circle: the state as before)
 }
 const coast0 = (v?: CoastView | null) => (v ? clamp(v.near, 0, 1) : 0);
 
