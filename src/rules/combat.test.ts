@@ -439,8 +439,9 @@ describe("sieges (Stage 4)", () => {
     expect(besiegers.filter(c => !c.gone).every(c => isHomeKey(c.siege ?? ""))).toBe(true); // on to the next-nearest: one of the dancefloor's speakers
     expect(g.partyOver).toBeNull();
     for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = 0.0001;
-    for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
-    for (let i = 0; i < 30 / STEP && !g.partyOver; i++) stepGame(g, idle, STEP);
+    // (each beside the speaker it's on, outside the ring: dropped inside it, some kinds, the glow-worm, stand still)
+    for (const c of besiegers) if (!c.gone) { const h = g.combat.sounds.get(c.siege ?? "")!, d = Math.hypot(h.x - g.map.dancefloor.x, h.z - g.map.dancefloor.z) || 1; c.x = h.x + ((h.x - g.map.dancefloor.x) / d) * 3; c.z = h.z + ((h.z - g.map.dancefloor.z) / d) * 3; }
+    for (let i = 0; i < 120 / STEP && !g.partyOver; i++) stepGame(g, idle, STEP);
     expect(g.partyOver).not.toBeNull(); // every soundsystem down: the party's over
   }, 180000);
 });

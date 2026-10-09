@@ -27,7 +27,9 @@ function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: 
   for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - L.x, c.z - L.z) < 120) c.gone = true;
   for (const c of g.creatures) if (c.boss && c !== L && Math.hypot(c.x - L.x, c.z - L.z) < 700) c.gone = true; // (no neighbouring legend turning angry too, and charging in)
   let mate: Creature | null = null;
-  if (kin) mate = put(g, L.species, 1, site.x, site.z, L.cell);
+  // (its kin at the area's site, or beside the legend where the site lies outside the area's own shape)
+  const inside = cellKey(g.map.cellSafe(site.x, site.z).cell) === cellKey(L.cell), kx = inside ? site.x : L.x + ((site.x - L.x) / d) * 8, kz = inside ? site.z : L.z + ((site.z - L.z) / d) * 8;
+  if (kin) mate = put(g, L.species, 1, kx, kz, L.cell);
   g.byArea = null;
   g.witches[0].health.hp = 1e6;
   return { g, L, mate };
