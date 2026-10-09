@@ -192,3 +192,11 @@ Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, s
 
 - **Core-design check**: all pass, no errors: off the decks 8 s after the cast; the boot 30.0 s (11.0 → 41.0); 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); 840 creatures, no new id.
 - **Journey**: every moment reached, no errors, `dropped` 0, 840 creatures throughout: first speaker at 12 s, the boot caught at 7 of 12, the first countdown still caught before wave one with waves every minute (#577), draw calls over the treetops 103 (from 101), 88 in the legend circle (from 81; #582's legends in their circles), stargazing at the beach, the party's over. Not exercised: #587 (dodging), #579 (knockdowns add 5 BPM), #580 (hostiles idle near their stone).
+
+## Morning: 3138d3a6 (#594), 07:01–07:24
+
+6 merges since 00712ca4 (#592, #588, #598, #599, #583, #594; plus #600, this log). Tests (1001), typecheck, build green.
+
+- **Core-design check**: all pass, no errors. #594 (the ley pulse at a constant 4 m/s, boot included) changed the boot's check in `tools/qa/core.cjs` to its 179 m path at the pulse's speed: 44.7 s from the step-off (8.5 → 53.2), where it was 30 s from the first speaker. The rest as before: 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); no new id.
+- **Journey**: every moment reached, no errors, `dropped` 0: first speaker at 12.4 s, the boot caught at 6 of 12, draw calls over the treetops 104, stargazing at the beach, the party's over.
+- **Creatures**: 780 at the start, from 840: #583 puts legends in a fifth of the areas (and so fewer legends and circle babies). Not exercised: #592 (her posse defends her), #588 (flyers swoop), #599 (heal pluses).
