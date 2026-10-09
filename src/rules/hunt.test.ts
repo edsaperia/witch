@@ -111,11 +111,11 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
       expect(far.size, `${species}: some start far off`).toBeGreaterThan(0);
       run(g, (W.on ? W.time : 0) + 25, () => {
         g.witch = { ...g.witch, x: at.x, z: at.z, vx: 0, vz: 0 };
-        for (const c of natives()) if (Math.hypot(c.x - at.x, c.z - at.z) < 25) reached.add(c.id);
+        for (const c of natives()) if (Math.hypot(c.x - at.x, c.z - at.z) < 25 || (c.fight?.target?.kind === "witch" && c.fight.windupUntil > 0)) reached.add(c.id); // (near, or striking at her: a shooter may from further, tuning dodge.b.range)
       });
       const awake = natives().filter(c => far.has(c.id) && !c.asleep && !c.dazed && c.hunting === 0);
       expect(awake.length, `${species}: hunters`).toBeGreaterThan(0);
-      for (const c of awake) expect(reached.has(c.id), `${species}${c.level} #${c.id} came for her (now ${Math.hypot(c.x - at.x, c.z - at.z).toFixed(0)} m off)`).toBe(true);
+      for (const c of awake) expect(reached.has(c.id), `${species}${c.level} #${c.id} came for her or struck (now ${Math.hypot(c.x - at.x, c.z - at.z).toFixed(0)} m off)`).toBe(true);
     }
   }, 300000);
 });

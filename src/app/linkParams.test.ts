@@ -47,4 +47,12 @@ describe("the link's world (src/app/linkParams.ts)", () => {
     expect([30, 60, 120, 300, 600, 0].map(waveLabel)).toEqual(["30 s", "1 min", "2 min", "5 min", "10 min", "off"]);
     expect(waveLabel(90)).toBe("1.5 min"); // (a link's own pace)
   });
+  it("?dodge= picks which dodge changes are on (Ed, 2026-10-08), all by default", () => {
+    g.localStorage = fakeStorage({}).store;
+    const on = (q: string) => { const d = tuningFromLink(new URLSearchParams(q)).tuning.dodge!; return `${d.a.on ? "a" : ""}${d.b.on ? "b" : ""}${d.c.on ? "c" : ""}`; };
+    expect(on("")).toBe("abc");
+    expect(on("dodge=b")).toBe("b");
+    expect(on("dodge=a,c")).toBe("ac");
+    expect(on("dodge=0")).toBe("");
+  });
 });
