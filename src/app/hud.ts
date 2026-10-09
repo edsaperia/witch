@@ -1,6 +1,7 @@
 // The page's own HUD over the game: the clock top centre (with the boot's and a lost soundsystem's pops under it) and the
 // debug overlay (~), its buttons and the debug knobs shown with it. Driven by the loop (app/loop.ts in main.ts).
 import { leashLoad, type Game, type WaveEvent } from "../rules/game";
+import { freeOf } from "../rules/leashWeight";
 import { waveCountdown } from "../rules/party";
 import { clockSeconds, clockText } from "../rules/leypulse";
 import { powerReport } from "../rules/power";
@@ -84,7 +85,7 @@ function powerLines(game: Game): string[] {
   return [
     `power  party ${f(p.leashed + p.parked)} = leashed ${f(p.leashed)} + parked ${f(p.parked)}   ${n[0]}b ${n[1]}y ${n[2]}a ${n[3]}L   berries ${game.tally.berries} invites ${game.tally.invites}`,
     `wild   peopled from the start by route (no growth)   creatures ${game.creatures.length}   cleared early ${game.party.ahead?.size ?? 0}`,
-    (() => { const L = leashLoad(game), W = game.tuning.leash.weight; return `load   ${L.total.toFixed(2)} pull, ${L.over.toFixed(2)} over the free ${W.free}${L.extreme ? " EXTREME" : ""}${L.total ? `  toward ${Math.round((Math.atan2(L.x, -L.z) * 180) / Math.PI + 360) % 360}°` : ""}   stack ${game.leash.stack.length}   lift ${game.witch.lift.toFixed(2)}`; })(),
+    (() => { const L = leashLoad(game), free = freeOf(game.tuning, game.witch.mode === "ground"); return `load   ${L.total.toFixed(2)} pull, ${L.over.toFixed(2)} over the free ${free}${L.extreme ? " EXTREME" : ""}${L.total ? `  toward ${Math.round((Math.atan2(L.x, -L.z) * 180) / Math.PI + 360) % 360}°` : ""}   stack ${game.leash.stack.length}   lift ${game.witch.lift.toFixed(2)}`; })(),
     `enemy  marching ${f(p.marching)}${p.sieges.length ? `   ${sieges}${p.sieges.length > 4 ? ` +${p.sieges.length - 4} more` : ""}` : ""}   (L saves the playtest log)`,
   ];
 }
