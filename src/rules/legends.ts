@@ -7,7 +7,7 @@
 // sigil in her stack) and puts it down in the clearing of the legend she chooses (Ed, 2026-10-06). Buffs once earned are kept.
 // The legends' long, slow lobs and beams are combat's (stepLegendAttack). No drawing here.
 import raw from "../../config/legends.json";
-import type { Creature } from "./creatures";
+import { heal, type Creature } from "./creatures";
 import { inLegendClearing, type ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import { crownReach, type Plant } from "./forest";
@@ -186,17 +186,20 @@ function walkHome(c: Creature, time: number, dt: number, data: LegendsData): voi
 
 /** Restlessness run its course: angry (hostile; its health whole). */
 export function anger(c: Creature, time: number): void {
+  heal(c, time);
   Object.assign(c, { legendState: "angry", stateAt: time, enraged: true, state: "enraged", hp: undefined, fight: undefined, siege: undefined, restlessness: 1, questOpen: false });
 }
 
 /** Made happy (a relic beside it): it defends, and gives its buff for good. */
 export function cheer(c: Creature, time: number): void {
+  heal(c, time);
   Object.assign(c, { legendState: "happy", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, questOpen: false, buffed: true, charge: undefined, legend: undefined });
 }
 
 /** Back to sleep (worn down, or calmed by one of its kind back in its area), its buff (if earned)
  *  kept; away from where it lay, it walks home first (homing; Ed, 2026-10-06). */
 export function lull(c: Creature, time: number): void {
+  heal(c, time);
   const away = c.lairX !== undefined && c.lairZ !== undefined && Math.hypot(c.x - c.lairX, c.z - c.lairZ) > 0.5;
   Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0, homing: away || undefined, questOpen: false });
 }

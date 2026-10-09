@@ -11,6 +11,7 @@ import { LEGENDS } from "../../rules/legends";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "../sprites";
 import { SQ } from "./glyphs";
 import type { LeashView } from "../leash";
+import type { Creature } from "../../rules/creatures";
 import { drawSlashes } from "./bubbles";
 
 /** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
@@ -308,9 +309,9 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
         }
       }
     }
-    // Healed (a berry, or invited: Ed, 2026-10-04): a green sparkle, and its bar shows full a moment.
+    // Healed (every heal, rules/creatures.ts heal and healBy: Ed, 2026-10-09): its bar shows full a moment, and green "+"s float up off it.
     const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
-    if (healed) for (let i = 0; i < 10; i++) { const k = (time - c.healedAt!) / 0.8, a = hash2(c.id, i, 11) * Math.PI * 2; lv.standing.add(c.x + Math.cos(a) * 0.9 * (0.4 + k), 0.4 + k * 2 + hash2(c.id, i, 13), c.z + Math.sin(a) * 0.6 * (0.4 + k), 0.3, dot, 0.4, 1, 0.5, 1 - k); }
+    if (c.healedAt !== undefined && time - c.healedAt < HEAL_PLUS.span) healPluses(lv, c, time - c.healedAt, artPx, up, camera, height);
     // Health bars, only when hurt: ten squares over its head.
     const max = creatureMaxHp(c), hp = c.hp ?? max;
     // Stunned (an armoured one knocked over): stars round its head.
@@ -346,4 +347,32 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   // Knocked out: dizzy stars over her while she's down.
   if (W.ko && time < W.ko.teleportAt) for (let i = 0; i < 5; i++) { const a = time * 3 + (i / 5) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.7, 1.6 + Math.sin(a * 2) * 0.1, w.z + Math.sin(a) * 0.5, 0.25, dot, 1, 0.95, 0.5, 0.9); }
   drawSlashes(lv, time, camera, width, height);
+}
+
+/** The heal's "+"s (Ed, 2026-10-09: "green +s that float up when animals eat a berry"): 3 to 5 by its size, one after another,
+ *  each rising about its body's height and fading; pixel art on the game's grid (docs/STYLE.md §1 rule 4), each "+" built of
+ *  squares a game pixel each where it stands (whole art pixels), with a soft green light round it (rule 3: light may be
+ *  smooth). Its arms (and, for the big ones, its thickness) grow with the creature. */
+const HEAL_AT = new THREE.Vector3();
+export const HEAL_PLUS = { each: 0.18, life: 0.9, span: 0.18 * 4 + 0.9, rgb: [0.3, 1, 0.35] }; // (a cosy neon green, between the palette's acid and mint)
+function healPluses(lv: LeashView, c: Creature, since: number, artPx: number, up: boolean, camera: THREE.Camera, height: number): void {
+  const top = lv.tops.get(c.id) ?? 1.4, n = c.healedSmall ? 1 : top < 1.2 ? 3 : top < 2.6 ? 4 : 5, // (a slow mend's: one small one)
+    dot = lv.uv(0), sq = lv.uv(SQ), [r, g, b] = HEAL_PLUS.rgb;
+  // one of its pixels: a game pixel where it is (pixelSize screen pixels at its distance), in whole art pixels; from the treetops
+  // an art pixel is under a game pixel, and squares that small would pile up and add to white
+  const fov = ((camera as THREE.PerspectiveCamera).fov ?? 50) * Math.PI / 180, d = camera.position.distanceTo(HEAL_AT.set(c.x, top, c.z));
+  const game = (2 * d * Math.tan(fov / 2) * lv.game.tuning.pixelSize) / Math.max(1, height), px = artPx * Math.max(1, Math.round(game / artPx));
+  // its half-length and its thickness, in art pixels (thickness odd, so it centres on a pixel)
+  const L = top >= 2.6 ? 4 : top >= 1.2 ? 3 : 2, T = top >= 2.6 ? 3 : 1, h = (T - 1) / 2, layer = up ? lv.over : lv.standing;
+  const R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value, cell = px / 0.75; // (the square glyph fills 24 of its slot's 32 px)
+  for (let i = 0; i < n; i++) {
+    const k = (since - i * HEAL_PLUS.each) / HEAL_PLUS.life;
+    if (k < 0 || k >= 1) continue;
+    // where it starts (spread across its body, by its id and which one) and how far it has risen, in whole pixels
+    const dx = Math.round(((hash2(c.id, i, 17) - 0.5) * top * 0.9) / px) * px, rise = Math.round((top * (0.55 + k * 1.05)) / px) * px;
+    const a = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4, x = c.x + R.x * dx, y = rise + R.y * dx, z = c.z + R.z * dx + 0.2;
+    layer.add(x, y, z, (2 * L + 1) * px * 1.8, dot, r, g, b, 0.3 * a, 1, true); // its soft glow
+    const pix = (p: number, q: number) => layer.add(x + (R.x * p + U.x * q) * px, y + (R.y * p + U.y * q) * px, z + (R.z * p + U.z * q) * px, cell, sq, r, g, b, a);
+    for (let p = -L; p <= L; p++) for (let q = -h; q <= h; q++) { pix(p, q); if (Math.abs(p) > h) pix(q, p); } // across, then up (the middle once)
+  }
 }
