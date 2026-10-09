@@ -110,7 +110,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   }
   // A quest done: the dream bubble pops in sparkles, the creature brought joins its new area.
   for (const e of g.questEvents) {
-    const L = g.creatures[e.id], top = Math.min(lv.tops.get(e.id) ?? 2, 4.5) + 1.5;
+    const L = g.creatures[e.id], top = Math.min(lv.tops.get(e.id) ?? 2, 6) + 1.5; // (6 m: 4.5 before the creatures grew, Ed 2026-10-08)
     lv.fx.push({ kind: "spark", x: L.x, y: top, z: L.z, at: time, life: 1.2, r: 1, g: 0.75, b: 0.95, seed: e.at * 11 + e.id, size: 3 });
     lv.fx.push({ kind: "spark", x: L.x, y: top, z: L.z, at: time, life: 0.8, r: 1, g: 1, b: 1, seed: e.at * 13 + e.id, size: 1.6 });
     lv.fx.push({ kind: "ring", x: L.x, y: 0, z: L.z, at: time, life: 1, r: 1, g: 0.6, b: 0.85, seed: 0, size: 5 });

@@ -34,12 +34,14 @@ function wing3d(m, root, side, span, up, mat, mat2, group) {
   m.flat(v3.add(v3.lerp(root, tip, .5), v3.mul(v, -span * .14)), u, v, L * .55, span * .34, masks.wing(mat, mat2), { group, extra: true });
 }
 
-// The size a creature is drawn at: babies are chunky, about 28 to 32 pixels (the coordinator). st.creatureScale (default 1;
-// ?creatures= in the game) scales babies, young and adults alike, baked at the art pixel (docs/STYLE.md §1), for trying
-// bigger creatures (Ed, 2026-10-08: "creatures are quite hard to make out"); a legend keeps its size unless its adult
-// grows past its LEGEND_OVER_ADULT floor.
+// The size a creature is drawn at: babies are chunky, about 28 to 32 pixels (the coordinator), times st.creatureScale (Ed,
+// 2026-10-08: "creatures are quite hard to make out ... I think +50% is ok"): babies, young and adults alike, baked at the
+// art pixel (docs/STYLE.md §1; ?creatures= in the game tries others). A legend keeps its own size unless that would bring it
+// within LEGEND_OVER_SCALED of its scaled adult's full height, which keeps it 2.1+ times the adult by body height (the legend's
+// motes and crests add to its full height, not its body's).
+export const LEGEND_OVER_SCALED = 2.35;
 const drawHeight = (level, st, k = 1) => { const c = st.creatureScale || 1; return c === 1 ? drawHeight1(level, st, k)
-  : level === 3 ? Math.round(Math.max(height3d(3, st) * k, Math.round(height3d(2, st, k) * c) * LEGEND_OVER_ADULT)) : Math.round(drawHeight1(level, st, k) * c); };
+  : level === 3 ? Math.round(Math.max(height3d(3, st) * k, Math.round(height3d(2, st, k) * c) * LEGEND_OVER_SCALED)) : Math.round(drawHeight1(level, st, k) * c); };
 const drawHeight1 = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, Math.min(30 * Math.max(.75, Math.min(1.1, k)), height3d(1, st) * k * .72))) // a baby: about 30, never taller than 3/4 of its young
   : level === 2 ? height3d(2, st, k) // an adult: 1.65 times its young
   : level === 3 ? Math.round(Math.max(height3d(3, st) * k, height3d(2, st, k) * LEGEND_OVER_ADULT)) // a legend: far above its adult

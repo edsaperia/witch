@@ -282,6 +282,13 @@
             "minimum": 0
           }
         },
+        "space": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
         "factor": {
           "type": "number",
           "minimum": 0
@@ -310,6 +317,7 @@
       "required": [
         "radius",
         "level",
+        "space",
         "factor",
         "margin",
         "push",

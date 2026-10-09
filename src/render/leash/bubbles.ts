@@ -63,7 +63,7 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
     }
     const Z = g.tuning.dreams.sleepy, time = g.clock.time;
     for (const { c } of near) {
-      const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(lv.tops.get(c.id) ?? 1.5, 4) + 0.35 + bob;
+      const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(lv.tops.get(c.id) ?? 1.5, 6) + 0.35 + bob; // (capped at 6 m: 4 before the creatures grew half again, Ed 2026-10-08)
       placed(lv.v.set(c.x + Math.sin(time * 0.7 + c.id) * 0.15, y, c.z)).project(camera);
       if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
       let el = lv.snoreEls[used];
@@ -87,7 +87,7 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
   const list = w.mode !== "ground" || w.lift > 0.5 ? [] : lv.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
   let used = 0;
   for (const { c } of list) {
-    const y = Math.min(lv.tops.get(c.id) ?? 2, 4.5) + 0.5; // (low over it, so its puffs rise from just above the sleeper's head: the art director, #238)
+    const y = Math.min(lv.tops.get(c.id) ?? 2, 6) + 0.5; // (6 m: 4.5 before the creatures grew, Ed 2026-10-08) (low over it, so its puffs rise from just above the sleeper's head: the art director, #238)
     placed(lv.v.set(c.x, y, c.z)).project(camera);
     if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
     // Restless (#87: its area has none of its kind), the dream turns to a nightmare (Ed, 2026-10-05):
