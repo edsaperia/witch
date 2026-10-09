@@ -209,11 +209,10 @@ export class SfxCues {
     }
   }
 
-  /** A soundsystem lost (Ed, 2026-10-05: the next wave comes sooner): the party grinding to a halt,
-   *  then the clock jumping on; heard anywhere (rules/game.ts's soundsystemLost; home's aside:
-   *  that's the run over), more urgent when the wave comes at once (left 0). */
+  /** A soundsystem lost: the party grinding to a halt; heard anywhere (rules/game.ts's soundsystemLost; home's aside:
+   *  that's the run over). */
   private soundsystems({ g }: Here): void {
-    for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; this.sfx.lost(e.left <= 0); }
+    for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; this.sfx.lost(); }
   }
 
   /** The boot-up over (party.bootUntil passed: home's speakers all on, the first wave's countdown
