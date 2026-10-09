@@ -586,8 +586,9 @@ function magicStone(variant, sigil, size = 1, width = 1, { yaw, rune, dots } = {
     const d = v3.sub(q, C), p = [v3.dot(d, ax), v3.dot(d, ay) + .46, v3.dot(d, az)], px = p[0] / width; // in the slab's own axes (px: across, as on a full-width stone)
     if (p[2] > fz - .02) { // the rune, carved into the face
       const u = (px + .17) / .34, v = (.8 - p[1]) / .5;
-      if (dots) { // three glowing dots stacked up the face, the speaker's bass, mid and tweeter to come (Ed, 2026-10-08), each in a carved socket
-        for (const [y, r] of DOTS) { const d = Math.hypot(p[0], p[1] - y); if (d < r * .55) return M.MAGIC2; if (d < r) return M.RUNE; if (d < r + .018) return M.LINE; }
+      if (dots) { // three glowing dots stacked up the face, the speaker's bass, mid and tweeter to come (Ed, 2026-10-08), light set into the
+        // stone: a bright core, the cyan, and a dim cyan glow round it (Ed, 2026-10-09: no ink ring; docs/STYLE.md §3)
+        for (const [y, r] of DOTS) { const d = Math.hypot(p[0], p[1] - y); if (d < r * .55) return M.MAGIC2; if (d < r) return M.RUNE; if (d < r + .018) return M.MAGIC; }
       } else if (sigil) { const su = (px + .27) / .54, sv = (.8 - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && !crack(p[0], p[1])) return FACE; } // (the sigil is stamped on after, as pixels)
       else if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, rune ?? k + 1, .1)) return M.RUNE;
     }
