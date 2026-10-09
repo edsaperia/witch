@@ -743,6 +743,7 @@ How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better
 | `combat.legendRun` | number | 0 to … |
 | `combat.reaction` | number | 0 to … |
 | `combat.marchMult` | number | 0 to … |
+| `combat.marchOnRun` | number | 0 to … |
 | `combat.fleeMult` | number | 0 to … |
 | `combat.soundsystemHealth` | number | 0 to … |
 | `combat.soundsystemRadius` | number | 0 to … |

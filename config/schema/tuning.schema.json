@@ -2918,6 +2918,10 @@
           "type": "number",
           "minimum": 0
         },
+        "marchOnRun": {
+          "type": "number",
+          "minimum": 0
+        },
         "fleeMult": {
           "type": "number",
           "minimum": 0
@@ -2983,6 +2987,7 @@
         "legendRun",
         "reaction",
         "marchMult",
+        "marchOnRun",
         "fleeMult",
         "soundsystemHealth",
         "soundsystemRadius",
