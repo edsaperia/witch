@@ -32,6 +32,7 @@ import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
 import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
 import { drawCombat } from "./leash/combat";
+import { BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
 import { drawRespawn } from "./leash/respawn";
 import { drawDeckBpm } from "./leash/deckBpm";
@@ -66,6 +67,9 @@ export class LeashView {
   over: Instances;
   /** Not glowing (Ed's art director, #193): an attack's dust and the bits it throws, blended over the ground like the creatures. */
   solid: Instances;
+  /** Blood trails (leash/blood.ts): flat on the ground, blended, not glowing. */
+  blood: Instances;
+  private bloodPool: BloodPool | null = null;
   /** Where charging legends have run (churned ground, fading over RUTS seconds). */
   ruts = new Map<number, { x: number; z: number; at: number }[]>();
   evolved = new Map<number, number>();
@@ -133,7 +137,8 @@ export class LeashView {
     this.flat = new Instances(mat(1));
     this.over = new Instances(mat(0, false));
     this.solid = new Instances(mat(0, true, true));
-    scene.add(this.standing.mesh, this.flat.mesh, this.over.mesh, this.solid.mesh);
+    this.blood = new Instances(mat(1, true, true));
+    scene.add(this.standing.mesh, this.flat.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh);
     const hex = game.tuning.berries.colour.replace("#", "");
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
@@ -368,7 +373,13 @@ export class LeashView {
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
-    this.standing.begin(); this.flat.begin(); this.over.begin(); this.solid.begin();
+    this.standing.begin(); this.flat.begin(); this.over.begin(); this.solid.begin(); this.blood.begin();
+    const BK = bloodKnobs(t);
+    if (BK.on) {
+      if (!this.bloodPool || this.bloodPool.cap !== BK.cap) this.bloodPool = new BloodPool(BK.cap);
+      this.bloodPool.spawn(g.creatures, w.x, w.z, time, BK, c => this.tops.get(c.id) ?? 1.2);
+      this.bloodPool.draw(this, time, BK, camera, height);
+    }
     this.drawBerries(time);
     this.drawRingGlows(time);
     this.drawBosses(time);
@@ -513,7 +524,7 @@ export class LeashView {
 
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
-    this.standing.end(); this.flat.end(); this.over.end(); this.solid.end();
+    this.standing.end(); this.flat.end(); this.over.end(); this.solid.end(); this.blood.end();
     bubbles(this, time, camera, width, height);
     drawDreams(this, camera, width, height);
     drawSnores(this, camera, width, height);
