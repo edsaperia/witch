@@ -69,4 +69,24 @@ describe("her posse defends her", () => {
     run(g, 1);
     for (const p of posse) expect(p.fight?.target ?? null).toBeNull();
   }, 60000);
+
+  // Ed (2026-10-09): "This shouldn't affect leashed animals that are far far away - just ones that are in the same combat as you."
+  it("hers far off don't react: one parked at its sigil 120 m away, and one following but beyond combat.defendRadius of her, are never pulled into her fight", () => {
+    const { g, attackers, posse } = scene(["boar", "boar"], ["wolf", "wolf", "fox"]);
+    const w = g.witches[0].body, R = (g.tuning.combat.defendRadius ?? 30) * g.tuning.fight.scale;
+    const [, parked, lagging] = posse;
+    // one parked at its sigil far off
+    g.leash.stack = g.leash.stack.filter(id => id !== parked.id);
+    Object.assign(parked, { x: w.x - 120, z: w.z, tx: w.x - 120, tz: w.z });
+    g.leash.placed.push({ id: parked.id, x: parked.x, z: parked.z, at: g.clock.time });
+    // one following, lagging beyond defendRadius
+    Object.assign(lagging, { x: w.x - R - 12, z: w.z, tx: w.x - R - 12, tz: w.z });
+    let wrong = "";
+    run(g, 2, () => {
+      if (attackers.some(a => on(parked) === a.id)) wrong ||= `the parked one went for her attacker at ${g.clock.time.toFixed(2)}`;
+      if (Math.hypot(lagging.x - w.x, lagging.z - w.z) > R && attackers.some(a => on(lagging) === a.id && on(a) !== lagging.id)) wrong ||= `the lagging one went into her fight from ${Math.hypot(lagging.x - w.x, lagging.z - w.z).toFixed(0)} m`;
+    });
+    expect(wrong).toBe("");
+    expect(Math.hypot(parked.x - w.x, parked.z - w.z)).toBeGreaterThan(80); // (never pulled across to her fight)
+  }, 60000);
 });

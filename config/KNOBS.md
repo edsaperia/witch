@@ -749,6 +749,7 @@ How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better
 | `combat.shake` | number | 0 to … |
 | `combat.daze` | number | 0 to … |
 | `combat.retreatHome` | number | 0 to … |
+| `combat.defendRadius` | number | 0 to … |
 
 ### `notice`
 

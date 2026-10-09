@@ -117,7 +117,10 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
   // attacking you"): only creatures going for her or for one of hers; anything with her as its target (closing in, winding up
   // or striking) first; then the attacker fewest of hers are already on (claims: so they spread out, not all on one); then the
   // nearest; keeping to the one it's on unless another's clearly better (no flip-flopping).
+  // (only those in her fight: within combat.defendRadius of her; Ed, 2026-10-09, "just ones that are in the same combat as you".
+  // Farther off, following her, one fights back only at what's on it itself, and isn't pulled across to her fight.)
   const posse = c.leashed && !guarding, mine = posse && c.fight?.target?.kind === "creature" ? c.fight.target.id : -1;
+  const R = (w.t.combat.defendRadius ?? 30) * FIGHT.scale, inHerFight = posse && w.witches.some(v => v.onGround && !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R);
   let bs = Infinity;
   for (const o of grid.near(x, z, Math.max(range, legReach))) {
     if (o === c || !targetable(o) || !foes(sideOf(o), sideOf(c)) || truce(c, o) || w.asleep(o) || inviting(w, c, o) || (keep && !keep(o))) continue;
@@ -126,6 +129,7 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
     if (posse) {
       const tg = o.fight?.target;
       if (!tg || (tg.kind !== "witch" && !(tg.kind === "creature" && w.creatures[tg.id]?.leashed))) continue;
+      if (!inHerFight) { if (tg.kind === "creature" && tg.id === c.id && d < bd) { bd = d; best = { kind: "creature", id: o.id }; } continue; } // (not in her fight: only what's on it, never pulled across to her fight)
       const others = (claims?.get(o.id) ?? 0) - (o.id === mine ? 1 : 0);
       const score = (tg.kind === "witch" ? 0 : 1e4) + Math.max(0, others) * 60 + d - (o.id === mine ? 6 : 0);
       if (score < bs) { bs = score; best = { kind: "creature", id: o.id }; }

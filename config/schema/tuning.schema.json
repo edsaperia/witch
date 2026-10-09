@@ -2939,6 +2939,10 @@
         "retreatHome": {
           "type": "number",
           "minimum": 0
+        },
+        "defendRadius": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2958,7 +2962,8 @@
         "speakerRadius",
         "shake",
         "daze",
-        "retreatHome"
+        "retreatHome",
+        "defendRadius"
       ],
       "additionalProperties": false
     },
