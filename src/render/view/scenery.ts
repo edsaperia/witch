@@ -1,5 +1,6 @@
 // The scenery rebuild (from render/view.ts, issue #122): trees, undergrowth, walls, set pieces, decor,
 // path pieces, relics, grounds and scenes round the camera, rebuilt once it has moved, turned or zoomed.
+import { relicBottle } from "./lights";
 import type { Frame, Piece, RelicArt } from "../artBuild";
 import { LIGHT_UNIFORMS } from "../lighting";
 import type { Plant } from "../../rules/forest";
@@ -224,7 +225,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     // pixel like the rest (its gold rune, the pickup marker, lies sigilOffset metres south: render/leash.ts).
     for (const r of g.relics) {
       if (r.state !== "lying" || Math.abs(r.x - cx) > half || Math.abs(r.z - cz) > half) continue;
-      const a = ra.byId[`party:${r.kind}`];
+      const a = ra.byId[`party:${relicBottle(r.kind)}`];
       if (a) put(a, r.x, r.z, false);
     }
     for (const gr of g.map.grounds) {
