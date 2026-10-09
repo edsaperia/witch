@@ -607,6 +607,8 @@ function magicStone(variant, sigil, size = 1, width = 1, { yaw, rune, dots } = {
   const H = Math.round(44 * size), R = yaw === undefined ? render(m, { height: H })
     : render(m, { scale: render(m, { height: H, yaw: 15 * Math.PI / 180, measure: true }).s, yaw: yaw * Math.PI / 180 }), sp = R.sp; // (every yaw at the scale of the speakers' nearest angle)
   const origin = yaw === undefined ? null : (([ox, oy]) => ({ x: +ox.toFixed(1), y: +oy.toFixed(1) }))(R.project([0, 0, 0]));
+  // where the three dots' middles land in the sprite (art pixels), for the game's glow round them (Ed, 2026-10-09: "They should glow")
+  const dotsAt = dots && yaw !== undefined ? DOTS.map(([y]) => (([x, py]) => ({ x: +x.toFixed(1), y: +py.toFixed(1) }))(R.project(v3.add(v3.add(C, v3.mul(ay, y - .46)), v3.mul(az, fz))))) : null;
   if (sigil) carveSigil(sp, sigil);
   // a few motes drifting round it
   let n = 0;
@@ -615,7 +617,7 @@ function magicStone(variant, sigil, size = 1, width = 1, { yaw, rune, dots } = {
     if (sp.get(x, y) || sp.get(x + 1, y) || sp.get(x - 1, y) || sp.get(x, y + 1) || sp.get(x, y - 1)) continue;
     sp.px(x, y, n % 2 ? M.RUNE : M.MAGIC2); n++;
   }
-  return { sp, colours: col, origin };
+  return { sp, colours: col, origin, dots: dotsAt };
 }
 function pond() {
   const m = new Model({ blend: .03 });
@@ -632,10 +634,11 @@ function pond() {
 // scale: baked that much bigger (the game draws it at 1: docs/STYLE.md §1). width: the slab that much narrower, carved and
 // mossed the same (the dancefloor ring's stones: an area's stone at half its width; Ed, 2026-10-08).
 // yaw (degrees from facing us, as dancefloorSpeakerSprite's angle) turns it, and adds its ground point under its middle as `origin`;
-// rune picks the glyph carved when there's no sigil; dots carves three glowing dots up the face instead.
+// rune picks the glyph carved when there's no sigil; dots carves three glowing dots up the face instead (and, turned, adds their
+// middles in the sprite as `dots`, where the game draws their glow).
 export function runeStone(st, { glow = "cyan", sigil, scale = 1, width = 1, yaw, rune, dots, makeCanvas = defaultCanvas } = {}) {
   const s = magicStone(glow, sigil, scale, width, { yaw, rune, dots }), b = bake(s.sp, s.colours, st, "none", makeCanvas);
-  return s.origin ? { ...b, origin: s.origin } : b;
+  return s.origin ? { ...b, origin: s.origin, ...(s.dots ? { dots: s.dots } : {}) } : b;
 }
 export function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
   const bk = (sp, col) => bake(sp, col, st, "none", makeCanvas);
