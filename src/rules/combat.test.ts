@@ -9,6 +9,7 @@ import { invitable } from "./leash";
 import { hasRune } from "./creatureStates";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
 import { isHomeKey } from "./speakers";
+import { MOVEMENT } from "./movement";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -404,12 +405,15 @@ describe("Ed's Stage 4 rulings", () => {
     expect(invitable(baby) || hasRune(baby, g.clock.time)).toBe(true); // (happy at its soundsystem: leashed by picking up its rune, Ed 2026-10-06)
   }, 60000);
 
-  it("has kiting kinds (the raven) keep their distance while they shoot", () => {
+  it("has kiting kinds (the raven) keep their distance while they shoot (hers: wild ravens swoop, swoop.test.ts)", () => {
+    const P = MOVEMENT.profiles.raven, mv = P.move; P.move = undefined;
+    try {
     const g = quiet(), w = g.witch;
     const raven = place(g, 0, "raven", 1, w.x + 4, w.z);
     run(g, 10, { ...idle, autoTalk: false }); // (auto-talk off: she doesn't chat with it, so it shoots)
     const d = Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z), R = attackOf("raven", 1)!.attack.range;
     expect(d).toBeGreaterThan(R * COMBAT.kite.near * 0.8);
+    } finally { P.move = mv; }
   }, 60000);
 });
 

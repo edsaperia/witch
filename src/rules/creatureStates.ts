@@ -5,7 +5,7 @@
 // (leashed, enraged, a happy legend) still say the same, and stateOf reads them, so the
 // rest of the rules and the view keep working. No drawing here.
 import raw from "../../config/states.json";
-import { LEGEND, type Creature, type CreatureState } from "./creatures";
+import { LEGEND, heal, type Creature, type CreatureState } from "./creatures";
 
 /** A creature's state (its names: CREATURE_STATES, rules/creatures.ts). */
 export type State = CreatureState;
@@ -38,7 +38,7 @@ export const huntsWitch = (s: State) => s === "wild" || s === "enraged";
 export function befriend(c: Creature, time: number): void {
   c.state = "happy"; c.enraged = false; c.siege = undefined; c.fight = undefined; c.dazedUntil = undefined;
   c.affection = undefined; c.wanderTo = undefined; c.happyAt = time;
-  if (c.hp !== undefined) { c.hp = undefined; c.healedAt = time; }
+  heal(c, time);
 }
 
 /** A wave put a soundsystem in its area: enraged (its invite meter lost). Happy ones, leashed ones and babies never are. */
@@ -53,6 +53,7 @@ export function enrage(c: Creature): boolean {
  *  second step (states.leash). Enraged ones, legends and leashed ones can't. */
 export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
   if (c.asleep || c.bed) return false; // (asleep, or walking home to bed: rules/partyOver.ts)
+  if (c.swoop?.up) return false; // (a wild flyer up in the air, out of reach: 💌s pass under it; rules/movement.ts stepSwoop)
   if (data.partyEgg && partyEggOpen(c)) return true; // (the Easter egg: a happy legend takes 💌s, 100 of them)
   if (c.gone || c.leashed || (c.fleeUntil && !c.dazedUntil) || c.level === LEGEND || c.boss) return false;
   const s = stateOf(c);

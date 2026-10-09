@@ -7,7 +7,7 @@
 // Sigils can't be put down on top of one another. Leashes are elastic: creatures walk or run to
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
 // No drawing here.
-import { speedFactor, type Creature } from "./creatures";
+import { heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { befriend, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
@@ -177,7 +177,7 @@ export function inviteCreature(s: LeashState, c: Creature, x: number, z: number,
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
   c.friendly = undefined; // (taking one from a friendly area weakens it: Ed's call)
   // Invited, it's whole again (Ed, 2026-10-04), with a heal pop if it was hurt.
-  if (c.hp !== undefined) { c.hp = undefined; c.healedAt = time; }
+  heal(c, time);
   s.stack.push(c.id);
   s.events.push({ kind, id: c.id, x, z, at: time });
 }
