@@ -122,9 +122,10 @@ describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm p
 describe("an area cleared ahead of the pulse (Ed, 2026-10-08: 'the pulse jumps to the area's runestone')", () => {
   // Cleared early, an area transforms at once, but the ley line and its pulse keep their own pace along the route: its
   // stone counts as reached only when its wave comes (rules/leylines.ts waveReached, party.ts passed()).
+  const round = <T,>(v: T): T => (typeof v === "number" ? Math.round(v * 1e6) / 1e6 : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, round(x)])) : v) as T; // (to a rounding: reckoned on from the pulse's last step)
   const view = (g: Game, at: number) => {
     const c = leyChain(g.party, g.map), times = leyReachTimes(g.party, g.map);
-    return { current: cellKey(c.stones[c.current].cell), stones: c.stones.map(s => cellKey(s.cell)), link: straightLink(g.party, g.map), pulse: leyPulse(g.party, g.map, at), reveal: leyReveal(g.party, g.map, at, 3), times: times && [...times] };
+    return { current: cellKey(c.stones[c.current].cell), stones: c.stones.map(s => cellKey(s.cell)), link: straightLink(g.party, g.map), pulse: round(leyPulse(g.party, g.map, at)), reveal: round(leyReveal(g.party, g.map, at, 3)), times: times && [...times].map(([k, t]) => [k, Number.isFinite(t) ? Math.round(t * 1e4) / 1e4 : t]) }; // (to a rounding: reckoned from the pulse now)
   };
 
   it("leaves the pulse, its link, the line's front and every stone's reach time as they were", () => {

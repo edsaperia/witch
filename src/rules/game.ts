@@ -9,7 +9,7 @@ import { beatAt, knockdownTempo, newBeatClock, tempoRate, waveArrived, waveTempo
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { legendCircleNear } from "./legendCircle";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
+import { healBy, heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
 import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
@@ -19,7 +19,7 @@ import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, S
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { heldByRoutine } from "./djSet";
-import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, spreadWave, stepParty, type Partified, type PartyState } from "./party";
+import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -420,7 +420,7 @@ function fixedStep(g: Game, controls: Controls): void {
   const over = !!g.partyOver;
   if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
-  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time, celebrate); g.party.nextAt = g.clock.time + t.party.interval; }
+  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time, celebrate); resetPulse(g.party, g.map, g.clock.time); } // (the pulse on from the stone it brought on)
   if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
@@ -486,7 +486,7 @@ function stepSpacing(g: Game, dt: number): void {
   const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list = spacingList;
   list.length = 0;
   for (const c of g.creatures) {
-    if (c.gone || c.burrow || c.leap) continue;
+    if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
   spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
@@ -752,7 +752,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
     g.tally.stomps = (g.tally.stomps ?? 0) + 1;
   });
   // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
-  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += (maxHp(c.level) / LEGENDS.healTime) * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) healBy(c, (maxHp(c.level) / LEGENDS.healTime) * STEP, maxHp(c.level), g.clock.time); }
   if (happyNearest) {
     // Debug (O): the nearest sleeping legend made happy, as if a relic were put down by it.
     let best: Creature | null = null, bd = Infinity;

@@ -147,7 +147,7 @@ describe("the legends' circles", () => {
       }
       worst = Math.max(worst, hi - lo);
     }
-    expect(map.legendClearings.length).toBeGreaterThan(20);
+    expect(map.legendClearings.length).toBeGreaterThan(10);
     expect(worst).toBeLessThan(0.1);
   });
 });

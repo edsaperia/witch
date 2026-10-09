@@ -17,7 +17,7 @@ export class Hud {
   private readonly clockT = this.clockEl.querySelector<HTMLElement>(".t")!;
   private readonly clockLabel = this.clockEl.querySelector<HTMLElement>(".label")!;
 
-  constructor(private readonly game: Game, private readonly tuning: { party: { interval: number } }, private readonly knobs: HTMLElement) {}
+  constructor(private readonly game: Game, private readonly knobs: HTMLElement) {}
 
   /** The debug overlay, its buttons and the knobs, on or off. */
   setDebug(on: boolean): void {
@@ -29,17 +29,17 @@ export class Hud {
   /** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
    *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
   clock(): void {
-    const { game, tuning, clockEl, clockT, clockLabel } = this;
+    const { game, clockEl, clockT, clockLabel } = this;
     const cd = waveCountdown(game.party, game.map, game.clock.time);
     clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
     const now = clockText(clockSeconds(game.party, game.clock.time));
     if (clockT.textContent !== now) clockT.textContent = now;
     clockEl.classList.toggle("paused", game.clock.paused);
     const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
-    const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
+    const left = game.party.paused ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
     clockLabel.textContent = this.debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
     // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word under the clock.
-    if (!this.bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
+    if (!this.bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && !game.party.paused) {
       this.bootShown = true;
       const pop = document.createElement("div");
       pop.className = "boot-pop";

@@ -18,6 +18,8 @@ import { toEvolve } from "./berries";
 import { AREA_TYPES, type ForestMap } from "./map";
 import type { Cell } from "./partition";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
+import { bootSeconds } from "./bootRing";
+import { stretchSeconds } from "./pulseRoute";
 import { hash2 } from "./random";
 import { homeHealth, homeReach } from "./speakers";
 import { crowdTime, INVITE_FIRE, movement, throughput, type Buff, type Limits } from "./throughput";
@@ -34,6 +36,8 @@ export type Policy = "defend" | "third" | "leash" | "babies" | "relay" | "mass";
 export interface StatesOptions {
   /** Seconds between waves, and the waves to stop at. */
   interval: number;
+  /** The ley pulse's speed (m/s, Ed 2026-10-09: "Pure constant speed"): set, each wave's gap is its stretch of the route over it (rules/pulseRoute.ts), in place of interval. */
+  pulse?: number;
   maxWaves: number;
   policy: Policy;
   /** Her invite rate, times the game's (talk times invite.talkTime: baby 3 s, young 6, adult 12). */
@@ -313,13 +317,13 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   let hurry = 1, rushing = false, shrunk = 1, firstFall: number | null = null;
   // The gap before wave w (Ed's faster waves: a ramp over the run, and a rush once it's lost).
   const gapNow = (w: number) => {
-    let g = o.interval;
+    let g = o.pulse ? stretchSeconds(party, map, o.pulse) : o.interval; // (the ley pulse at a constant speed: the next stretch over it, Ed 2026-10-09)
     if (o.rampTo !== undefined && o.rampBy) g = Math.max(o.rampTo, o.interval - ((o.interval - o.rampTo) * w) / o.rampBy);
     else if (o.rampTo !== undefined && o.rampPct) g = Math.max(o.rampTo, o.interval * Math.pow(1 - o.rampPct, w));
     g = Math.max(Math.min(g, o.fallFloor ?? 60), g * shrunk);
     return rushing ? g * (o.rushFactor ?? 0.5) : g;
   };
-  let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval;
+  let time = 0, nextAt = bootSeconds(map) + t.party.startDelay + (o.pulse ? stretchSeconds(party, map, o.pulse) : o.interval);
   const sample = () => {
     let pool = 0, poolF = 0, happy = 0, lea = 0, aF = 0, en = 0, eF = 0;
     for (const u of units) {
@@ -343,7 +347,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       for (const lf of openLocal.values()) { lf.held = (sounds.get(lf.key)?.hp ?? 0) > 0; }
       openLocal.clear();
       if (party.wave >= o.maxWaves) break;
-      nextAt += gapNow(party.wave + 1);
+      if (!o.pulse) nextAt += gapNow(party.wave + 1);
       const wave = party.wave + 1;
       if (wave % relicEvery === 0 && relicsFound < relicCount) { relicsFound++; relicsHeld++; } // (she finds one on her travels)
       // What grows while wild (never in an area with a soundsystem).
@@ -378,6 +382,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
         const lf: LocalFight = { wave: party.wave, key, invited: all > 0 ? inv / all : 0, defendersF: defF, enragedF: enF, otherF, held: true, won: null };
         local.push(lf); openLocal.set(key, lf); if (enF > 0 && defF > 0) deciding.add(lf);
       }
+      if (o.pulse) nextAt = time + gapNow(party.wave + 1); // (the pulse on along the next stretch)
     }
 
     // Her time.

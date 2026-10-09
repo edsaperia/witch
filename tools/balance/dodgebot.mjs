@@ -107,7 +107,7 @@ function measure(seed, sp, n, level, bot, t) {
     if (process.env.SHOTS) for (const e of g.combat.events) if (e.at === time && e.kind === "shot" && mine.has(e.id)) { const c = g.creatures[e.id]; console.log("shot", bot, time.toFixed(2), "d", Math.hypot(c.x - w.body.x, c.z - w.body.z).toFixed(1)); }
     const hp = w.health.hp; if (hp < lastHp) {
       hits += lastHp - hp;
-      if (process.env.HITS) console.log("hit", bot, time.toFixed(2), "charges", w.dash.charges, "since blink", (time - lastBlink).toFixed(2), "|", ids.map(i => g.creatures[i]).filter(c => Math.hypot(c.x - w.body.x, c.z - w.body.z) < 25).map(c => `${c.fight?.lunge ? "U" : ""}${c.fight?.windupUntil ? "W" : ""}${c.charge ? "C" : ""}${Math.hypot(c.x - w.body.x, c.z - w.body.z).toFixed(1)}`).join(" "));
+      if (process.env.HITS) console.log("hit", bot, time.toFixed(2), "charges", w.dash.charges, "since blink", (time - lastBlink).toFixed(2), "|", ids.map(i => g.creatures[i]).filter(c => Math.hypot(c.x - w.body.x, c.z - w.body.z) < 25).map(c => `${c.swoop ? c.swoop.phase[0] + (c.swoop.up ? "^" : "") : ""}${c.fight?.lunge ? "U" : ""}${c.fight?.windupUntil ? "W" : ""}${c.charge ? "C" : ""}${Math.hypot(c.x - w.body.x, c.z - w.body.z).toFixed(1)}`).join(" "));
     }
     lastHp = hp;
   }
@@ -127,6 +127,16 @@ function threatOf(g, B, onHer, mine, time, t) {
     if (commit > REACT && A.delivery === "melee" && f.windupUntil > 0 && f.windupUntil - time <= commit - REACT && d <= (A.lunge ?? 0) * t.dodge.a.lunge + A.range + 3) return at(c.x, c.z);
     if (A.delivery === "pulse" && f.windupUntil > 0 && f.windupUntil - time <= 0.1 && d <= (A.radius ?? 5) + 2) return at(c.x, c.z); // (its windup seen long before)
     if (c.charge && time >= (c.charge.from ?? 0) + REACT && d < 16) { const k = Math.hypot(c.charge.dx, c.charge.dz) || 1; if (((B.x - c.x) * c.charge.dx + (B.z - c.z) * c.charge.dz) / (k * d) > 0.8) return { x: c.charge.dx / k, z: c.charge.dz / k }; }
+    // a swoop's dive (rules/movement.ts): its telegraph ring and line seen, she blinks as it drops, REACT in, if its line passes her
+    const sw = c.swoop;
+    // (its aim locked commit seconds before it drops, seen REACT after: a dive aimed where she'll be)
+    if (sw && sw.phase === "tele" && sw.aim && time >= sw.at + sw.dur - commit + REACT && Math.hypot(sw.aim[0] - B.x, sw.aim[1] - B.z) < 4) return at(c.x, c.z);
+    if (sw && (sw.phase === "dive" || sw.phase === "low") && time - sw.at >= (sw.phase === "dive" ? REACT : 0)) {
+      // (where she'll be as it passes: the dive's touch reaches 2.5 m times its size, rules/combat.ts)
+      const v = Math.hypot(c.vx ?? 0, c.vz ?? 0) || 20, ax = B.x - c.x, az = B.z - c.z, tc = Math.max(0, (ax * sw.dx + az * sw.dz) / v);
+      const rx = ax + B.vx * tc, rz = az + B.vz * tc, along = rx * sw.dx + rz * sw.dz;
+      if (along > -1 && along < 12 && Math.abs(rx * sw.dz - rz * sw.dx) < 4) return { x: sw.dx, z: sw.dz };
+    }
     if (c.leap && c.leap.lands - time <= 0.2 && Math.hypot(c.leap.tx - B.x, c.leap.tz - B.z) < 6) return at(c.x, c.z);
   }
   for (const s of g.combat.shots) {

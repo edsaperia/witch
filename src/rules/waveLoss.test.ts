@@ -7,14 +7,14 @@ import { loseSoundsystem, newGame, STEP, stepGame, type Game } from "./game";
 import { TUNING } from "./tuning";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-const I = TUNING.party.interval;
-
-/** A game a few seconds in, with `left` seconds to the next wave. */
+/** A game a few seconds in, booted, the ley pulse `left` seconds (at most its whole first link) from the first wave's stone. */
 function game(left: number): Game {
   const g = newGame(7, TUNING);
   g.clock.paused = false; g.witch.seated = false; // (up from the decks: the boot-up counts from then)
   for (let i = 0; i < 30; i++) stepGame(g, idle, STEP);
-  g.party.nextAt = g.clock.time + left;
+  const P = g.party.pulse, v = TUNING.leyLines.pulseSpeed, L = P.lens.reduce((a, b) => a + b, 0);
+  g.party.bootUntil = g.clock.time - 1; P.at = g.clock.time; P.v = v; P.d = Math.max(0, L - left * v);
+  stepGame(g, idle, STEP);
   return g;
 }
 const leftOf = (g: Game) => g.party.nextAt - g.clock.time;
@@ -39,15 +39,16 @@ describe("a soundsystem lost leaves the waves and the beat alone (Ed, 2026-10-08
     expect(bpmAt(g.beat, g.clock.time)).toBeCloseTo(bpm, 9);
     const came = untilWave(g, 20);
     expect(came - due).toBeLessThan(STEP + 1e-9); // on time
-    expect(g.party.nextAt).toBeCloseTo(due + I, 6); // and the one after a whole interval later
+    const next = g.party.pulse.lens.reduce((a, b) => a + b, 0) / g.party.pulse.v;
+    expect(g.party.nextAt - came).toBeCloseTo(next, 1); // and the one after its link's length at the pulse's speed later
   });
 
   it("two losses close together: still nothing", () => {
-    const g = game(50);
+    const g = game(30), before = leftOf(g);
     loseSoundsystem(g, "home", 0, 0);
     for (let i = 0; i < 60; i++) stepGame(g, idle, STEP); // a second later
     loseSoundsystem(g, "home", 0, 0);
-    expect(leftOf(g)).toBeCloseTo(50 - 1, 4);
+    expect(leftOf(g)).toBeCloseTo(before - 1, 4);
   });
 
   it("a woken area's soundsystem lost ends its party and leaves the countdown be", () => {

@@ -75,7 +75,7 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
     waves = times.map(bar);
   }
   return {
-    waves, nextAt: g.tuning.party.interval >= 1e9 ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
+    waves, nextAt: !Number.isFinite(p.nextAt) ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
     knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), legend: legendNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
     circle: circleCue(g, g.witch),
     speakerBars: g.speakerBoot.filter((t): t is number => t !== null).map(bar).sort((a, b) => a - b), speakers: g.speakerBoot.length,

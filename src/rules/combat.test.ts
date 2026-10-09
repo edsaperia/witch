@@ -9,6 +9,7 @@ import { invitable } from "./leash";
 import { hasRune } from "./creatureStates";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
 import { isHomeKey } from "./speakers";
+import { MOVEMENT } from "./movement";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -404,12 +405,15 @@ describe("Ed's Stage 4 rulings", () => {
     expect(invitable(baby) || hasRune(baby, g.clock.time)).toBe(true); // (happy at its soundsystem: leashed by picking up its rune, Ed 2026-10-06)
   }, 60000);
 
-  it("has kiting kinds (the raven) keep their distance while they shoot", () => {
+  it("has kiting kinds (the raven) keep their distance while they shoot (hers: wild ravens swoop, swoop.test.ts)", () => {
+    const P = MOVEMENT.profiles.raven, mv = P.move; P.move = undefined;
+    try {
     const g = quiet(), w = g.witch;
     const raven = place(g, 0, "raven", 1, w.x + 4, w.z);
     run(g, 10, { ...idle, autoTalk: false }); // (auto-talk off: she doesn't chat with it, so it shoots)
     const d = Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z), R = attackOf("raven", 1)!.attack.range;
     expect(d).toBeGreaterThan(R * COMBAT.kite.near * 0.8);
+    } finally { P.move = mv; }
   }, 60000);
 });
 
@@ -417,9 +421,8 @@ describe("sieges (Stage 4)", () => {
   it("sends a woken area's wild creatures against its new soundsystem; when it falls its party ends, and they march on", () => {
     const t = JSON.parse(JSON.stringify(TUNING)) as Tuning;
     t.combat.soundsystemHealth = 60;
-    t.party.interval = 1e4; // (no other wave while this siege plays out: the default's a minute, Ed 2026-10-08, shorter than the test)
     const g = newGame(77, t);
-    g.clock.paused = false;
+    g.clock.paused = false; g.party.paused = true; // (no other wave while this siege plays out: this one comes by hand)
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0]; // (the areas round home hold only babies, who don't attack: grow a few)
     g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss).forEach(c => { c.level = 1; }); // (its legend wakes and guards it: sleeping.test.ts)
@@ -439,8 +442,9 @@ describe("sieges (Stage 4)", () => {
     expect(besiegers.filter(c => !c.gone).every(c => isHomeKey(c.siege ?? ""))).toBe(true); // on to the next-nearest: one of the dancefloor's speakers
     expect(g.partyOver).toBeNull();
     for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = 0.0001;
-    for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
-    for (let i = 0; i < 30 / STEP && !g.partyOver; i++) stepGame(g, idle, STEP);
+    // (each beside the speaker it's on, outside the ring: dropped inside it, some kinds, the glow-worm, stand still)
+    for (const c of besiegers) if (!c.gone) { const h = g.combat.sounds.get(c.siege ?? "")!, d = Math.hypot(h.x - g.map.dancefloor.x, h.z - g.map.dancefloor.z) || 1; c.x = h.x + ((h.x - g.map.dancefloor.x) / d) * 3; c.z = h.z + ((h.z - g.map.dancefloor.z) / d) * 3; }
+    for (let i = 0; i < 120 / STEP && !g.partyOver; i++) stepGame(g, idle, STEP);
     expect(g.partyOver).not.toBeNull(); // every soundsystem down: the party's over
   }, 180000);
 });

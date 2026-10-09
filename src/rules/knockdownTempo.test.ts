@@ -53,9 +53,9 @@ describe("knockdowns speed up the beat (Ed, 2026-10-07)", () => {
   }, 120000);
 });
 
-/** A game under way, the party spell cast, her health endless, the waves a minute apart. */
+/** A game under way, the party spell cast, her health endless, the ley pulse at its own speed. */
 function start(seed: number): Game {
-  const g = newGame(seed, { ...TUNING, party: { ...TUNING.party, interval: 60 } });
+  const g = newGame(seed, TUNING);
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;

@@ -248,7 +248,7 @@ export class LeashView {
     const S = this.game.tuning.wildLegends.seen;
     if (!S || S.aura <= 0) return;
     const dot = this.uv(0), [r, gg, b] = legendNeon(c.species), br = bossBreath(time, c.id, this.game.tuning.wildLegends.breathEvery * 1.5), a = S.aura * k * (0.75 + 0.25 * br);
-    const R = Math.min(7, (this.tops.get(c.id) ?? 4) * 0.7 + 1.5); // (about its own breadth: under it, not over the whole circle)
+    const R = Math.min(9, (this.tops.get(c.id) ?? 4) * 0.7 + 1.5); // (about its own breadth: under it, not over the whole circle; 9 m, 7 before the legends grew, Ed 2026-10-08)
     this.flat.add(c.x, 0, c.z, R * 1.5, dot, r * 0.45, gg * 0.45, b * 0.45, a * 0.5); // (added light: soft, so the circle's own twilight still shows)
     this.flat.add(c.x, 0, c.z, R * 0.8, dot, r * 0.6, gg * 0.6, b * 0.6, a * 0.55);
     for (let i = 0; i < 6; i++) { // motes rising slowly off it, its dream's breath
@@ -493,10 +493,10 @@ export class LeashView {
       this.flat.add(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
     }
 
-    // Relics (#87; placeholder till the art builder's party relics are drawn): a gold mound where
-    // one lies, and its glint, only through a gap in the canopy from the treetops (Ed, 2026-10-05:
-    // "a rare find"), drawn among the scenery, never over the canopy; no markers. A gold glint
-    // over her hat for each she carries.
+    // Relics (#87): where one lies, its bottle stands among the scenery in its mound (render/view/scenery.ts, Ed 2026-10-09:
+    // "Draw at today's size and show me!"), lighting the ground in its liquid's colour (view/lights.ts relicLights). Here, its
+    // gold rune (the pickup marker) and its glint, which shows from the treetops only through a gap in the canopy (Ed,
+    // 2026-10-05: "a rare find"), never over the canopy; no markers.
     const aloft = w.lift > 0.5;
     for (const r of g.relics) {
       const dropped = r.state === "dropped"; // (put down by her off any legend's clearing: its sigil alone, where she left it)
@@ -509,7 +509,6 @@ export class LeashView {
         this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38);
       }
       if (dropped || !relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
-      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; this.standing.add(r.x + Math.cos(a) * 2.5, 0.4 + (i % 3) * 0.5, r.z + Math.sin(a) * 1.8, 1.2, dot, 1, 0.78, 0.3, 0.8); }
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
       this.standing.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
     }

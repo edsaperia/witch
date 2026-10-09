@@ -136,7 +136,7 @@ export interface Shot {
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { /** A legend's bombardment: the soundsystem it burns, and the damage a tick. */ sound?: { key: string; damage: number }; /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
 
-export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed";
+export type CombatEventKind = /** one of her posse drew it off her (rules/combat/hits.ts) */ "taunted" | "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed" | "swooped";
 /** A soundsystem's events carry its key; every other combat event its creature's id (witchHit: the witch's). */
 export type SoundEventKind = "soundHit" | "soundDestroyed";
 export interface CombatEventAt { x: number; z: number; at: number; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }

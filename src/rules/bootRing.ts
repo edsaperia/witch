@@ -6,8 +6,9 @@
 //
 // One path: from the treehouse's front down to the ring's top (due north of the floor, under the treehouse), then round
 // the ring clockwise as seen from the default camera (north up: north, east, south, west) back to the top. The pulse sets
-// off from the treehouse as she casts the party spell and runs at one pace along it, reaching the last stone as the boot
-// ends (boot.time on); each stone turns into a speaker as it passes. The line runs ahead of it at `reveal` times its pace,
+// off from the treehouse as she leaves her decks and runs along it at the ley pulse's own speed (Ed, 2026-10-09: "Pure
+// constant speed", leyLines.pulseSpeed, boot included), the boot ending as it comes round to where it came on to the ring,
+// where the first ley line's pulse takes over; each stone turns into a speaker as it passes. The line runs ahead of it at `reveal` times its pace,
 // drawing the whole ring in the first part of the boot. Measures are metres along the path (render/leylines.ts draws it
 // by the same arc length).
 import type { ForestMap } from "./map";
@@ -15,7 +16,12 @@ import type { PartyState } from "./party";
 import { ringApproach, speakerCircle } from "./departure";
 
 type P2 = [number, number];
-type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { boot: { time: number; firstAfter?: number } } };
+type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { leyLines?: { pulseSpeed?: number } } };
+
+/** The pulse's speed in the boot (m/s): the ley pulse's, at the base tempo. */
+const bootSpeed = (map: Floor): number => Math.max(0, map.tuning.leyLines?.pulseSpeed ?? 4);
+/** How long the boot takes (s): the whole boot path at the pulse's speed (179 m at 4 m/s: about 45 s); 0 with no speed. */
+export const bootSeconds = (map: Floor): number => { const v = bootSpeed(map); return v > 0 ? bootPath(map).length / v : 0; };
 
 /** A stone's bearing from the floor's middle, clockwise from north (radians, 0 to 2π): east π/2 (the camera looks north). */
 
@@ -47,21 +53,16 @@ export function bootPath(map: Floor): { path: P2[]; length: number; stoneAt: num
   return out;
 }
 
-/** Where the boot's pulse is along the path (m). Ed, 2026-10-06: "The time between the game start and the first mini-runestone
- *  turning into a speaker should be about three seconds ... after you leave your decks ... You can start the boot time from
- *  when the first speaker is activated." So: nothing before the party spell; cast, it waits at the treehouse until she
- *  leaves her decks (`p.bootFrom`); then it runs down to the first stone in `boot.firstAfter` seconds, and on round the ring
- *  from the first stone to the last over `boot.time`, the boot's minutes. */
+/** Where the boot's pulse is along the path (m): nothing before the party spell; cast, it waits at the treehouse until she
+ *  leaves her decks (`p.bootFrom`); then it runs along the path at the pulse's speed (Ed, 2026-10-09: "Pure constant speed";
+ *  the first stone, 11.5 m on, about three seconds later: Ed, 2026-10-06, "about three seconds ... after you leave your
+ *  decks"), all the way round to where it came on to the ring. */
 export function bootPulseAt(p: PartyState, map: Floor, time: number): number {
-  const B = map.tuning.boot.time, F = Math.max(0, map.tuning.boot.firstAfter ?? 0), P = bootPath(map);
+  const P = bootPath(map), v = bootSpeed(map);
   if (p.spellAt === null) return 0;
-  const first = P.order.length ? P.stoneAt[P.order[0]] : P.length, last = P.order.length ? P.stoneAt[P.order[P.order.length - 1]] : P.length;
-  if (!(B > 0) && !(F > 0)) return last;
+  if (!(v > 0)) return P.length;
   if (p.bootFrom === undefined) return 0; // (cast, but still at her decks: it waits at the treehouse)
-  const t = time - p.bootFrom;
-  if (t <= 0) return 0;
-  if (t < F) return (t / F) * first;
-  return B > 0 ? first + Math.min(1, (t - F) / B) * (last - first) : last;
+  return Math.max(0, Math.min(P.length, (time - p.bootFrom) * v));
 }
 
 /** How far the boot has run (0 to 1): 0 before the party spell (and while she's still at her decks), 1 once the last stone

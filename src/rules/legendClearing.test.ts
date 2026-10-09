@@ -152,7 +152,8 @@ describe("legend clearings", () => {
   // Ed (2026-10-06): "I think there should be an area of the tallest trees around each legend circle"; "It should blend back
   // smoothly into the rest of the forest around this area, so it doesn't stand out too much".
   it("each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, open toward the camera", () => {
-    const map = generateMap(123, TUNING), forest = new Forest(map), G = TUNING.legendClearing.grove, bins = 6, w = G.reach / bins;
+    // (half the areas with legends, as when this was written: enough clearings to average the grove's shape over, whatever legends.share)
+    const map = generateMap(123, withTuning({ legends: { ...TUNING.legends, share: 0.5 } })), forest = new Forest(map), G = TUNING.legendClearing.grove, bins = 6, w = G.reach / bins;
     const sum = new Array(bins + 1).fill(0), n = new Array(bins + 1).fill(0);
     for (const lc of map.legendClearings) {
       for (const p of forest.treesNear(lc.x, lc.z, lc.r + 1.5 + G.reach + w)) {

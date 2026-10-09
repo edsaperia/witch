@@ -2,19 +2,27 @@
 // distance they want to keep can depend on their size"). Once a step, after everything has moved
 // (roaming, following her, marching, fleeing, going home, fighting), creatures near a witch ease
 // apart from any closer than they like: each has a body radius (movement.json bodies: its kind's,
-// times its level's scale), and two keep (r1 + r2) times bodies.factor plus bodies.margin apart.
+// times its level's scale, times bodies.space for the room it keeps), and two keep (r1 + r2) times bodies.factor plus
+// bodies.margin apart.
 // Soft: a push that grows as they overlap, at most bodies.push m/s, never a hard collision, so a
 // pack still closes on its target. Cheap: a grid of the creatures in view, and at most
 // bodies.neighbours looked at for each. No drawing here.
 import { FIGHT, MOVEMENT, type MovementData } from "./movement";
 import type { Creature } from "./creatures";
 
-export interface Bodies { radius: Record<string, number>; level: number[]; factor: number; margin: number; push: number; neighbours: number; cell: number; range: number }
+export interface Bodies { radius: Record<string, number>; level: number[]; space?: number[]; factor: number; margin: number; push: number; neighbours: number; cell: number; range: number }
 
 /** A creature's body radius (m): its kind's (an adult's), times its level's scale. */
 export function bodyRadius(c: Pick<Creature, "species" | "level">, data: MovementData = MOVEMENT): number {
   const B = data.bodies;
   return (B.radius[c.species] ?? 0.6) * (B.level[c.level] ?? 1);
+}
+
+/** The room a creature keeps round it (m): its body radius times bodies.space by level, the drawn size's growth (Ed,
+ *  2026-10-08: babies, young and adults drawn half again as big; a legend's room kept, its body already 3.2 times an
+ *  adult's). Only the spacing reads it: reach and hits keep bodyRadius. */
+export function spaceRadius(c: Pick<Creature, "species" | "level">, data: MovementData = MOVEMENT): number {
+  return bodyRadius(c, data) * (data.bodies.space?.[c.level] ?? 1);
 }
 
 // The grid's buffers, kept from step to step (overnight phase 2: at a siege's thousands, a fresh Map and an array per cell
@@ -50,7 +58,7 @@ export function spaceOut(list: Creature[], dt: number, still: (c: Creature) => b
   used.fill(0);
   for (let a = 0; a < n; a++) {
     const c = list[a], i = Math.floor(c.x / size), j = Math.floor(c.z / size), h = slotAt(i, j, true);
-    radius[a] = bodyRadius(c, data); cellI[a] = i; cellJ[a] = j; slotOf[a] = h; count[h]++;
+    radius[a] = spaceRadius(c, data); cellI[a] = i; cellJ[a] = j; slotOf[a] = h; count[h]++;
   }
   // Each cell's run in `order`, in the list's order.
   let at = 0;

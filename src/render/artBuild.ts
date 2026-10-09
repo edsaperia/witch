@@ -361,6 +361,12 @@ function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: Re
     const r = Art.countrySprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
     relics.push({ id: d.id, family: "modern", decal: false, frame: sprites.push(Art.bake(r.whole, cc, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
+  // The party relics' bottles (art/partyRelics.js; Ed, 2026-10-09: "Draw at today's size and show me!"), each half-buried in its
+  // mound, under "party:<kind>": drawn where a quest relic lies (render/view/scenery.ts).
+  for (const id of Art.PARTY_RELIC_IDS as string[]) {
+    const r = Art.partyRelicSprite(id, st) as { sp: unknown; origin: { x: number; y: number } };
+    relics.push({ id: `party:${id}`, family: "party", decal: false, frame: sprites.push(Art.bake(r.sp, Art.partyRelicColours(id, st), st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+  }
   return { sprites, relics, layouts: Art.relicLayouts(st) as RelicLayouts };
 }
 

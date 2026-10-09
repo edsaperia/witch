@@ -2944,6 +2944,28 @@
         "retreatHome": {
           "type": "number",
           "minimum": 0
+        },
+        "defendRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "taunt": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "time",
+            "chance"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -2963,7 +2985,9 @@
         "speakerRadius",
         "shake",
         "daze",
-        "retreatHome"
+        "retreatHome",
+        "defendRadius",
+        "taunt"
       ],
       "additionalProperties": false
     },
@@ -3927,6 +3951,10 @@
         "on": {
           "type": "boolean"
         },
+        "pulseSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
         "reveal": {
           "type": "number",
           "minimum": 0
@@ -4005,6 +4033,7 @@
       },
       "required": [
         "on",
+        "pulseSpeed",
         "reveal",
         "far",
         "behindBright",
@@ -6069,23 +6098,13 @@
     "boot": {
       "type": "object",
       "properties": {
-        "time": {
-          "type": "number",
-          "minimum": 0
-        },
         "transform": {
-          "type": "number",
-          "minimum": 0
-        },
-        "firstAfter": {
           "type": "number",
           "minimum": 0
         }
       },
       "required": [
-        "time",
-        "transform",
-        "firstAfter"
+        "transform"
       ],
       "additionalProperties": false
     },
@@ -6143,10 +6162,6 @@
           ],
           "additionalProperties": false
         },
-        "interval": {
-          "type": "number",
-          "minimum": 0
-        },
         "startDelay": {
           "type": "number",
           "minimum": 0
@@ -6201,7 +6216,6 @@
       "required": [
         "motes",
         "uplight",
-        "interval",
         "startDelay",
         "areasPerWave",
         "picker",

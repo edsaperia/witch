@@ -9,6 +9,7 @@ import { setupQuestDemo } from "../rules/quest";
 import { witchHeight } from "../rules/witch";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
+import { PULSE_CHOICES } from "./wavePick";
 
 export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams) {
   // The party spell (Ed, 2026-10-06): she stands behind her decks until it's cast (the button, or Enter). ?creator=0 (the
@@ -35,18 +36,18 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
     window.addEventListener("keydown", e => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); });
   }
 
-  // How often the party spreads: the tuning file's interval (5 minutes), or ?wave=<seconds> (0 or
-  // "off": no waves); the bedroom's "Waves:" dropdown (app/wavePick.ts) changes it, never remembered (Ed, 2026-10-08).
-  const WAVE_CHOICES = [30, 60, 120, 300, 600, 0];
-  function setWaveInterval(sec: number): void {
-    tuning.party.interval = sec > 0 ? sec : 1e9;
-    game.party.paused = sec === 0;
-    game.party.nextAt = Math.max(game.clock.time, game.party.bootUntil) + tuning.party.startDelay + tuning.party.interval; // after the boot-up
-    const sel = document.querySelector<HTMLSelectElement>("#wave-pick select"); if (sel && [...sel.options].some(o => +o.value === sec)) sel.value = String(sec);
+  // How fast the party spreads: the ley pulse's speed (Ed, 2026-10-09: "Pure constant speed", leyLines.pulseSpeed m/s; a wave
+  // lands as it reaches its stone), or ?pulse=<m/s> (or "off": no waves; the old ?wave=off too); the bedroom's "Waves:"
+  // dropdown (app/wavePick.ts: slow, normal, fast, off) changes it, never remembered (Ed, 2026-10-08).
+  const WAVE_CHOICES = PULSE_CHOICES;
+  function setPulseSpeed(speed: number): void {
+    if (speed > 0) tuning.leyLines.pulseSpeed = speed; // (the party reads it each step, and the boot as she leaves her decks)
+    game.party.paused = !(speed > 0);
+    const sel = document.querySelector<HTMLSelectElement>("#wave-pick select"); if (sel && [...sel.options].some(o => +o.value === speed)) sel.value = String(speed);
   }
-  let waveChoice = tuning.party.interval;
-  const waveParam = params.get("wave");
-  if (waveParam !== null) waveChoice = waveParam === "off" ? 0 : Math.max(0, +waveParam || 0);
+  let waveChoice = tuning.leyLines.pulseSpeed;
+  const pulseParam = params.get("pulse") ?? (params.get("wave") === "off" ? "off" : null);
+  if (pulseParam !== null) waveChoice = pulseParam === "off" ? 0 : Math.max(0, +pulseParam || 0);
   if (arenaParam) waveChoice = 0;
-  return { WAVE_CHOICES, setWaveInterval, waveChoice };
+  return { WAVE_CHOICES, setPulseSpeed, waveChoice };
 }
