@@ -79,7 +79,7 @@ function setStackOrder(s: LeashState, order: StackItem[]): void {
     if (it.kind === "creature") s.stack.push(it.id);
     else { at[it.id] = s.stack.length; s.relics.push(it.id); }
   }
-  s.relicAt = at;
+  if (s.relics.length || s.relicAt) s.relicAt = at; // (made only once she's carried a relic: a leash without one is as it was)
 }
 
 /** Cycle the stack (Q; the sigil button in the treetops): its bottom sigil, a creature's or a relic's, to the top. */
@@ -134,7 +134,7 @@ export interface LeashControls {
   talk?: boolean;
 }
 
-export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set(), relics: [], relicAt: {} });
+export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set(), relics: [] });
 
 /** Seconds of talk a creature needs: babies 3, young 6, adults 12; legends can't be invited. */
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
