@@ -13,8 +13,8 @@ export interface HatState {
   has: boolean;
   /** Where it lies, and since when (null: on her head). */
   down: { x: number; z: number; at: number } | null;
-  /** When a press of the sigil button that did nothing began, while it's still held (putHat): null, none. */
-  hold?: number | null;
+  /** When a press of the sigil button that did nothing began, while it's still held (putHat); absent when none. */
+  hold?: number;
 }
 
 export const newHat = (has = true): HatState => ({ has, down: null });
@@ -47,10 +47,10 @@ export const hatMarker = (h: HatState | undefined): { x: number; z: number } | n
  *  down at her feet. Let go (or not on the ground: `held` false) and the hold's over. A press over it picks it up (hatButton).
  *  True on the step it goes down. */
 export function putHat(h: HatState, idle: boolean, held: boolean, x: number, z: number, at: number, hold: number | undefined): boolean {
-  if (!held || hold === undefined) { h.hold = null; return false; }
+  if (!held || hold === undefined) { if (h.hold !== undefined) delete h.hold; return false; }
   if (idle) h.hold = at;
-  if (h.hold == null || at - h.hold < hold || !wearing(h)) return false;
-  h.hold = null;
+  if (h.hold === undefined || at - h.hold < hold || !wearing(h)) return false;
+  delete h.hold;
   h.down = { x, z, at };
   return true;
 }
