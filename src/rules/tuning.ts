@@ -143,6 +143,8 @@ export interface Tuning {
   guard: { radius: number };
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
+  /** Hostile wild creatures idle round their area's runestone (rules/creatures.ts idlesAtStone): within radius metres of it, clear metres off it. */
+  stoneIdle?: { on: boolean; radius: number; clear: number };
   /** Wild idlers' naps (rules/creatures.ts NapRules). */
   /** The wild watch (Ed, 2026-10-07: a dormant area's animals "stir, evade and hang back, turning to LOOK at her", then attack):
    *  on her first coming down in a wild area, its wild young and adults hold off for `time` seconds, standing and staring at her

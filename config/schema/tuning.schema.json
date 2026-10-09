@@ -2985,6 +2985,28 @@
       ],
       "additionalProperties": false
     },
+    "stoneIdle": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clear": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "radius",
+        "clear"
+      ],
+      "additionalProperties": false
+    },
     "wildWatch": {
       "type": "object",
       "properties": {
@@ -8929,6 +8951,7 @@
     "attackFx",
     "combat",
     "notice",
+    "stoneIdle",
     "wildWatch",
     "hunt",
     "naps",

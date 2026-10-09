@@ -56,7 +56,7 @@ function calm(c: Creature): void {
 /** Where it lies down: a legend where it lay (its lair), anything else a spot in its own area (a circle's baby in its circle). */
 function bedOf(g: Game, c: Creature): { x: number; z: number } {
   if (c.boss && c.lairX !== undefined && c.lairZ !== undefined) return { x: c.lairX, z: c.lairZ };
-  const [x, z] = pointInArea(g.map, { ...c, dancing: false, leashed: false, state: undefined, enraged: false }, c.rand);
+  const [x, z] = pointInArea(g.map, { ...c, dancing: false, leashed: false, state: undefined, enraged: false, anywhere: true }, c.rand);
   return { x, z };
 }
 
