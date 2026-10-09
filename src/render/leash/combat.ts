@@ -305,7 +305,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
         }
       }
     }
-    // Healed (a berry, invited or leashed: Ed, 2026-10-04): its bar shows full a moment, and green "+"s float up off it.
+    // Healed (every heal, rules/creatures.ts heal and healBy: Ed, 2026-10-09): its bar shows full a moment, and green "+"s float up off it.
     const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
     if (c.healedAt !== undefined && time - c.healedAt < HEAL_PLUS.span) healPluses(lv, c, time - c.healedAt, artPx, up, camera, height);
     // Health bars, only when hurt: ten squares over its head.
@@ -352,7 +352,8 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
 const HEAL_AT = new THREE.Vector3();
 export const HEAL_PLUS = { each: 0.18, life: 0.9, span: 0.18 * 4 + 0.9, rgb: [0.3, 1, 0.35] }; // (a cosy neon green, between the palette's acid and mint)
 function healPluses(lv: LeashView, c: Creature, since: number, artPx: number, up: boolean, camera: THREE.Camera, height: number): void {
-  const top = lv.tops.get(c.id) ?? 1.4, n = top < 1.2 ? 3 : top < 2.6 ? 4 : 5, dot = lv.uv(0), sq = lv.uv(SQ), [r, g, b] = HEAL_PLUS.rgb;
+  const top = lv.tops.get(c.id) ?? 1.4, n = c.healedSmall ? 1 : top < 1.2 ? 3 : top < 2.6 ? 4 : 5, // (a slow mend's: one small one)
+    dot = lv.uv(0), sq = lv.uv(SQ), [r, g, b] = HEAL_PLUS.rgb;
   // one of its pixels: a game pixel where it is (pixelSize screen pixels at its distance), in whole art pixels; from the treetops
   // an art pixel is under a game pixel, and squares that small would pile up and add to white
   const fov = ((camera as THREE.PerspectiveCamera).fov ?? 50) * Math.PI / 180, d = camera.position.distanceTo(HEAL_AT.set(c.x, top, c.z));
