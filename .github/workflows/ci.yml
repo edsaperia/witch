@@ -1,5 +1,7 @@
 # Checks on every push and pull request: the tests, the type check and the build; then a quick
-# smoke test of the built game in headless Chromium (tools/smoke/quick.cjs, a few minutes).
+# smoke test of the built game in headless Chromium (tools/smoke/quick.cjs, a few minutes). The smoke
+# job builds the game itself so it runs alongside the tests instead of after them (about 5 minutes
+# a run instead of 9).
 name: CI
 on:
   # Branches with a PR are checked once, through the PR (which tests the merge); pushes run only
@@ -31,7 +33,6 @@ jobs:
           path: dist
           retention-days: 3
   smoke:
-    needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -41,10 +42,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
+          cache: npm
+      - run: npm ci
+      - run: npm run build
       # Playwright isn't one of the game's dependencies: installed on its own, with its Chromium
       # cached between runs (the system libraries it needs are installed every time).
       - uses: actions/cache@v4
@@ -60,7 +60,6 @@ jobs:
           NODE_PATH=$PWD/.pw/node_modules QUICK_OUT=quick/quick.png node tools/smoke/quick.cjs 2>&1 | tee quick/log.txt
       # The music: the Music Lab builds (esbuild, from the game's dependencies) and every section
       # renders offline in headless Chromium, none silent or clipping (tools/music-lab/check.cjs).
-      - run: npm ci
       - name: Music check
         run: NODE_PATH=$PWD/.pw/node_modules node tools/music-lab/check.cjs
       - uses: actions/upload-artifact@v4
