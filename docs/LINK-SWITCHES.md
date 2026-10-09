@@ -67,6 +67,7 @@ compare against an older look were retired on 2026-10-07 (the list at the end).
 | `relief=<strength>` | the ground's fake relief (0 flat) | app/linkParams.ts |
 | `hills=0` / `hills=<m>` | the rolling ground flat, or this tall | app/linkParams.ts |
 | `ley=0`, `trail=0`, `knock=0` | no ley lines; no trail behind her; no knockback and stagger when she's hit | app/linkParams.ts |
+| `dodge=a,b,c` / `dodge=0` | which dodge changes are on (Ed, 2026-10-08; all by default): a committed strikes, b predictive aim, c packs cutting off her retreat | app/linkParams.ts |
 | `bare=1\|2` | the terrain on its own (2: grey, with contours and a grid) | app/linkParams.ts |
 | `clouds=<n>` | how many clouds | app/linkParams.ts |
 | `curve=<k>` | the world's bend over the treetops (0 off) | app/linkParams.ts |

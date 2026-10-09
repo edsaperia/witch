@@ -105,12 +105,19 @@ export interface SteerContext {
   ready: boolean;
   /** Seconds a beat lasts (the volley fires on it). */
   beat: number;
+  /** Cutting off her retreat (tuning dodge.c): it makes for a place ahead of her as she runs, `ahead` metres on along her
+   *  heading and `angle` radians to one side of it, `reach` times its attack's reach out. */
+  cutoff?: { ahead: number; angle: number; reach: number };
+  /** How far it may fire from, if further than `range` (a shooter at her, tuning dodge.b.range: it keeps its distance by `range`). */
+  fire?: number;
+  /** Where "arrive" makes for, if not `want` (committed strikes, tuning dodge.a: right in on her, striking as it comes). */
+  arriveAt?: number;
 }
 
 /** Steer a fighting creature by its profile for one step. Returns whether it may start an attack now. */
 export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   const dx = x.px - c.x, dz = x.pz - c.z, d = Math.hypot(dx, dz) || 1e-6, ux = dx / d, uz = dz / d, S = FIGHT.scale;
-  let vx = 0, vz = 0, may = d <= Math.max(x.want + 1.5 * S, x.range * 0.95); // (a shooter may strike from anywhere in its range)
+  let vx = 0, vz = 0, may = d <= Math.max(x.want + 1.5 * S, (x.fire ?? x.range) * 0.95); // (a shooter may strike from anywhere in its range)
   const add = (ax: number, az: number, w: number) => { vx += ax * w; vz += az * w; };
   const pack = x.pack, n = pack ? pack.members.length : 1, i = pack ? Math.max(0, pack.members.indexOf(c)) : 0;
   // The slot its pack's tactic gives it (if any), and whether the tactic lets it strike now.
@@ -146,13 +153,22 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     }
     default: break;
   }
+  // Cutting off her retreat (dodge.c): a place ahead of her as she runs, to one side (by its id), making for it hard whatever
+  // its tactic (or its kind's behaviours: a bat has no slot to keep), striking from there as she comes.
+  const cut = x.cutoff && x.heading ? x.cutoff : null;
+  if (cut) {
+    const h = x.heading!, side = hash2(c.id, 9, 17) < 0.5 ? 1 : -1, a = Math.atan2(h.z, h.x) + side * cut.angle, R = Math.max(x.want * cut.reach, 1);
+    slot = { x: x.px + h.x * cut.ahead + Math.cos(a) * R, z: x.pz + h.z * cut.ahead + Math.sin(a) * R };
+    const sx = slot.x - c.x, sz = slot.z - c.z, sd = Math.hypot(sx, sz) || 1e-6;
+    if (sd > 0.6 * S) add(sx / sd, sz / sd, 1.5 * Math.min(1, sd / (4 * S)));
+  }
   for (const b of P.fight) {
     switch (b.kind) {
-      case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - x.want) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
+      case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - (x.arriveAt ?? x.want)) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
       case "keepRange": { const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }
       case "orbit": { const dir = hash2(c.id, 5, 7) < 0.5 ? 1 : -1, R = x.range * (b.radius ?? 0.7); add(-uz * dir, ux * dir, b.w); add(ux * (d - R) / Math.max(1, R), uz * (d - R) / Math.max(1, R), b.w * 0.6); break; }
       case "strafe": { const dir = hash2(c.id, Math.floor(x.time / (b.swap ?? 2)), 11) < 0.5 ? 1 : -1; add(-uz * dir, ux * dir, b.w); break; }
-      case "slot": { if (slot) {
+      case "slot": { if (slot && !cut) {
         // A slot round the far side: it goes round its target, not through it.
         const ac = Math.atan2(c.z - x.pz, c.x - x.px), as = Math.atan2(slot.z - x.pz, slot.x - x.px), da = ((as - ac + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
         const sd = Math.hypot(slot.x - c.x, slot.z - c.z);
@@ -235,7 +251,8 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
     const tx = px - c.x, tz = pz - c.z, along = tx * ch.dx + tz * ch.dz;
     if (!ch.braking && (time >= ch.until || along < -(mv.overshoot ?? 8) * CH.reach * FIGHT.scale)) ch.braking = true;
     if (!ch.braking) {
-      // Building speed down its lane (its velocity swings onto the lane, no snapping).
+      // Building speed down its lane (its velocity swings onto the lane, no snapping); a heavy's lane swings toward her as it runs (ch.home).
+      if (ch.home) { const h = Math.atan2(ch.dz, ch.dx), da = ((Math.atan2(tz, tx) - h + Math.PI * 3) % (Math.PI * 2)) - Math.PI, nh = h + Math.max(-ch.home * dt, Math.min(ch.home * dt, da)); ch.dx = Math.cos(nh); ch.dz = Math.sin(nh); }
       const nv = Math.min(ch.speed, Math.max(v, 0) + accel * dt);
       vx = ch.dx * nv; vz = ch.dz * nv; v = nv;
     } else {

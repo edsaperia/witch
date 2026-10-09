@@ -28,7 +28,7 @@ export const LEGENDS = raw as unknown as LegendsData;
 
 /** A relic: a giant half-buried party object (its kind: the art's party relic id), lying at (x, z)
  *  until she picks it up; then carried (in her leash's relics), then put down by a legend. */
-export interface Relic { id: number; kind: string; x: number; z: number; cell: [number, number]; state: "lying" | "carried" | "used"; legend?: number;
+export interface Relic { id: number; kind: string; x: number; z: number; cell: [number, number]; state: "lying" | "carried" | "used" | /** put down on the ground by her, off any legend's clearing (Ed, 2026-10-08): only its sigil lies there, at (sx, sz), to pick up again */ "dropped"; legend?: number;
   /** Its relic sigil on the ground, sigilOffset metres south of it (Ed, 2026-10-06): she picks the relic up by standing on this, like any sigil. */
   sx: number; sz: number }
 
@@ -213,7 +213,7 @@ export const buffing = (c: Creature): boolean => !!c.buffed || c.legendState ===
 export function relicButton(relics: Relic[], carried: number[], creatures: Creature[], legendIds: number[], x: number, z: number, time: number, pickRadius: number, map: ForestMap, data: LegendsData = LEGENDS): { picked: Relic } | { placed: Relic; legend: Creature } | { outside: Creature } | null {
   // Standing on a relic's sigil (as on any placed sigil: within the leash's pickRadius of it) picks the relic up.
   let pick: Relic | null = null, pd = pickRadius;
-  for (const r of relics) if (r.state === "lying") { const d = Math.hypot(r.sx - x, r.sz - z); if (d <= pd) { pd = d; pick = r; } }
+  for (const r of relics) if (r.state === "lying" || r.state === "dropped") { const d = Math.hypot(r.sx - x, r.sz - z); if (d <= pd) { pd = d; pick = r; } }
   if (pick) { pick.state = "carried"; carried.push(pick.id); return { picked: pick }; }
   if (!carried.length) return null;
   let best: Creature | null = null, near: Creature | null = null, nd = Infinity;

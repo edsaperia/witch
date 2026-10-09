@@ -7,7 +7,7 @@ import type { Controls, Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
 import { heldByCombat } from "./creatures";
-import { stepLeash, type LeashEvent } from "./leash";
+import { carryRelic, dropRelic, stackBottom, stepLeash, type LeashEvent } from "./leash";
 import { relicButton } from "./legends";
 import { runeNear } from "./creatureStates";
 import { hatButton } from "./hat";
@@ -31,7 +31,13 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht }); // (after the leash's step, which starts its events afresh)
   }
   if ((sigil || place) && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.runeRadius, g.map);
+    // (A relic's sigil sits in her stack like the rest, Ed's playtest 2026-10-08: only the one at its bottom is given, in a
+    // legend's clearing, or put down on the ground elsewhere (rules/leash.ts); with a creature's at the bottom the button puts
+    // that down, in a legend's clearing too, for its quest.)
+    const bottom = stackBottom(g.leash), give = bottom?.kind === "relic" ? [bottom.id] : [];
+    const r = relicButton(g.relics, give, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.runeRadius, g.map);
+    if (r && "picked" in r) carryRelic(g.leash, r.picked.id);
+    else if (r && "placed" in r) dropRelic(g.leash, r.placed.id);
     if (r) {
       sigil = false; place = false;
       if ("picked" in r) relicEvents.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: ht });
@@ -39,7 +45,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
   // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
   // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.

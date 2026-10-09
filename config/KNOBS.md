@@ -547,6 +547,7 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `dash.gone` | number | 0 to … |
 | `dash.cooldown` | number | 0 to … |
 | `dash.buffer` | number | 0 to … |
+| `dash.charges` | number | 0 to … |
 | `dash.toCursor` | boolean |  |
 | `dash.aimDead` | number | 0 to … |
 | `dash.clear.tree` | number | 0 to … |
@@ -759,6 +760,55 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 | `notice.radius` | number | 0 to … |
 | `notice.curious` | number | 0 to … |
 | `notice.skittish` | number | 0 to … |
+
+### `dodge`
+
+Dodging matters (Ed, 2026-10-08: "almost all animals are easily evaded simply by walking backwards, even large swarms. Ideally good play should require effective use of dodge"; he picked all three): against the witch only (fights between creatures as before). a, committed strikes: a creature closes on her at chase times its sprint (combat.pursuitRun, or its kind's pursuit: so a slow kind can still be outwalked), a melee one surges on at surge times its sprint while it winds up (no gliding to a stop), tracking her, aiming where she'll be when its blow arrives (her velocity times that time, times lead), until commit seconds before it lets go, when its aim locks (a blink then, or during its lunge, gets her clear), lunging lunge times its attack's lunge, its blow reaching width times its attack's range; heavy (Ed, 2026-10-09: "Maybe heavies can have a higher top speed, but slow acceleration?"): chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, glow-worm, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: shots aim at release where she'll be when they arrive (times lead), lobs where she'll be when they land (times lobLead), charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); a shot at her flies speed times as fast (chasing her at her walk it closes at only its speed less hers); a shot or lob at her reaches range times as far, the shooter keeping its usual distance, (Ed, 2026-10-09: "shooters should have longer range") and winds up at most windup seconds (a beam as before: a sweep a blink can't outrun keeps its long warning). c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
+
+| knob | type | range |
+|---|---|---|
+| `dodge.a.on` | boolean |  |
+| `dodge.a.lead` | number | 0 to … |
+| `dodge.a.commit` | number | 0 to … |
+| `dodge.a.chase` | number | 0 to … |
+| `dodge.a.lunge` | number | 0 to … |
+| `dodge.a.surge` | number | 0 to … |
+| `dodge.a.width` | number | 0 to … |
+| `dodge.a.gone` | number | 0 to … |
+| `dodge.a.tokens` | number | 0 to … |
+| `dodge.a.swarm` | number | 0 to … |
+| `dodge.a.swarmTokens` | number | 0 to … |
+| `dodge.a.gap` | number | 0 to … |
+| `dodge.a.heavy.species` | array of string |  |
+| `dodge.a.heavy.speed` | number | 0 to … |
+| `dodge.a.heavy.accel` | number | 0 to … |
+| `dodge.a.heavy.home` | number | 0 to … |
+| `dodge.b.on` | boolean |  |
+| `dodge.b.lead` | number | 0 to … |
+| `dodge.b.lobLead` | number | 0 to … |
+| `dodge.b.chargeLead` | number | 0 to … |
+| `dodge.b.life` | number | 0 to … |
+| `dodge.b.windup` | number | 0 to … |
+| `dodge.b.range` | number | 0 to … |
+| `dodge.b.speed` | number | 0 to … |
+| `dodge.c.on` | boolean |  |
+| `dodge.c.species` | array of string |  |
+| `dodge.c.moving` | number | 0 to … |
+| `dodge.c.share` | number | 0 to … |
+| `dodge.c.angle` | number | 0 to … |
+| `dodge.c.reach` | number | 0 to … |
+| `dodge.c.ahead` | number | 0 to … |
+| `dodge.c.sprint` | number | 0 to … |
+
+### `stoneIdle`
+
+Hostile creatures gather near the runestone (Ed, 2026-10-08: "if you enter a hostile area and the animals are at the very opposite end, it can be quite a long time before they reach you, and so it feels like nothing is happening. I think we can solve this by having the hostile creatures tend to idle near the runestone"): a wild area's own hostile young and adults (not its babies, its legend or its circle's baby, nor a friendly area's, nor happy, leashed or enraged ones) start, roam and nap anywhere in a disc of radius metres round its runestone, evenly spread (a loose cluster, not a ring), keeping clear metres off the stone itself; still inside their own area. Arriving at the stone means meeting them. on: false lets them roam the whole area as before.
+
+| knob | type | range |
+|---|---|---|
+| `stoneIdle.on` | boolean |  |
+| `stoneIdle.radius` | number | 0 to … |
+| `stoneIdle.clear` | number | 0 to … |
 
 ### `wildWatch`
 
@@ -1296,7 +1346,7 @@ At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power
 
 ### `party`
 
-lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds after home's boot (the first after startDelay more; every 3 minutes, Ed 2026-10-07, from 5), each waking areasPerWave areas (one per witch: Ed, 2026-10-04), chosen by picker. An area cleared of its own wild creatures before its wave (Ed, 2026-10-07: every one invited or run off; its legend and its circle's baby don't count) is partified at once, as its wave would (rules/clear.ts); the waves keep to the route all the same, and the wave that comes to a stone already playing changes nothing in the rules but celebrates (the waveCelebrate event). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all crosses itself at most a few times, within Ed's rules: a spiral (Ed, 2026-10-06, of the mock-up: "This last example looks great!"; out from home ring by ring, the same way round, a little lobe, a few crossings); noisy (the picker before it, and the route's own fallback past the crossing rules) chooses among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
+motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds after home's boot (the first after startDelay more; every 3 minutes, Ed 2026-10-07, from 5), each waking areasPerWave areas (one per witch: Ed, 2026-10-04), chosen by picker. An area cleared of its own wild creatures before its wave (Ed, 2026-10-07: every one invited or run off; its legend and its circle's baby don't count) is partified at once, as its wave would (rules/clear.ts); the waves keep to the route all the same, and the wave that comes to a stone already playing changes nothing in the rules but celebrates (the waveCelebrate event). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all crosses itself at most a few times, within Ed's rules: a spiral (Ed, 2026-10-06, of the mock-up: "This last example looks great!"; out from home ring by ring, the same way round, a little lobe, a few crossings); noisy (the picker before it, and the route's own fallback past the crossing rules) chooses among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
 
 | knob | type | range |
 |---|---|---|
@@ -1308,7 +1358,6 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 | `party.uplight.pulse` | number | 0 to … |
 | `party.uplight.edge` | number | 0 to … |
 | `party.interval` | number | 0 to … |
-| `party.lossPenalty` | number | 0 to … |
 | `party.startDelay` | number | 0 to … |
 | `party.areasPerWave` | number | 0 to … |
 | `party.picker` | string |  |
@@ -1421,7 +1470,7 @@ The camera and the view (drawing only): framing, pixel size, culling, fading, fi
 
 ### `camera`
 
-shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 4 steps and startZoom 1 the start is a third of the way out, so the defaults are ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with one step in and two out from each.
+shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 4 steps and startZoom 1 the start is a third of the way out, so the defaults are ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with one step in and two out from each. circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off.
 
 | knob | type | range |
 |---|---|---|
@@ -1457,6 +1506,12 @@ shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake wh
 | `camera.intro.distance` | number | 0 to … |
 | `camera.intro.angle` | number | 0 to … |
 | `camera.intro.ease` | number | 0 to … |
+| `camera.circle.on` | boolean |  |
+| `camera.circle.angle` | number | 0 to … |
+| `camera.circle.distance` | number | 0 to … |
+| `camera.circle.ease` | number | 0 to … |
+| `camera.circle.frame` | number | 0 to … |
+| `camera.circle.look` | number | 0 to … |
 
 ### `pixelSize`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`
 
