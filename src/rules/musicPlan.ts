@@ -43,6 +43,10 @@ export interface MusicCue {
   dropLayers?: number;
   /** In a sleeping legend's clearing on the ground (Ed, 2026-10-06): its species, the layer's level 0-1. */
   circle?: { species: string; level: number };
+  /** Each knockdown (Ed, 2026-10-09: "the music stops when she gets knocked down, and she comes back to restart it by putting
+   *  on a new record"): the bar she went down in (`at`: the record scratched, silence from there) and the bar line her new
+   *  record starts on (`back`: the music from the top, re-seeded; formClock, silentAt). */
+  knockdowns?: { at: number; back: number }[];
   /** ?music= previews: always this section; or this wave's arc step whatever the wave. */
   forceSection?: string;
   forceWave?: number;
@@ -77,7 +81,7 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
   return {
     waves, nextAt: !Number.isFinite(p.nextAt) ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
     knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), legend: legendNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
-    circle: circleCue(g, g.witch),
+    circle: circleCue(g, g.witch), knockdowns: prev?.knockdowns?.length === g.knockdowns.length ? prev.knockdowns : g.knockdowns.map(k => ({ at: bar(k.at), back: Math.round(bar(k.back) * 1e4) / 1e4 })),
     speakerBars: g.speakerBoot.filter((t): t is number => t !== null).map(bar).sort((a, b) => a - b), speakers: g.speakerBoot.length,
     dropBar: ((end: number | null) => end === null ? undefined : bar(end))(djIntroEnd(g)), dropLayers: g.tuning.music.dropLayers ?? 1,
   };
@@ -176,20 +180,42 @@ function walk(seq: [string, number][], k: number): { section: string; offset: nu
   return null;
 }
 
-/** The plan for the block starting at bar `bar` (a multiple of style.blockBars), from the cue as
- *  known now. The same style, cue and bar always give the same plan. */
-export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockPlan {
+/** The wave the music is at in bar `bar`, the bar it arrived on and the bar the next is due (a wave due by then counts
+ *  as come: the build leads straight into it). */
+function waveState(style: MusicStyle, cue: MusicCue, bar: number): { w: number; arrival: number; next: number } {
   const B = style.blockBars;
-  // the wave at that bar (a wave due by then counts as come: the build leads straight into it)
   let w = 0;
   while (w < cue.waves.length && blockAfter(cue.waves[w], B) <= bar) w++;
   let next = w < cue.waves.length ? cue.waves[w] : cue.nextAt;
   let arrival = w > 0 ? cue.waves[w - 1] : cue.bootUntil;
   if (w >= cue.waves.length && Number.isFinite(next) && blockAfter(next, B) <= bar && bar >= cue.bootUntil) { arrival = next; next = Infinity; w++; }
+  return { w, arrival, next };
+}
+
+/** The form's clock in bar `bar` (Ed, 2026-10-09: the 32-bar ABAC form, its melodies and its sections): the bar it last
+ *  started on (from bar 0 through the boot, then on the block line each wave lands on, and on the bar line each knockdown's
+ *  new record starts on), and how many knockdowns' new records are playing by then (musicScore.ts musicSeed). */
+export function formClock(style: MusicStyle, cue: MusicCue, bar: number): { start: number; n: number } {
+  const B = style.blockBars;
+  const landed = (b: number) => b < cue.bootUntil ? 0 : blockAfter(waveState(style, cue, b).arrival, B);
+  let n = 0, line = -Infinity;
+  for (const k of cue.knockdowns ?? []) { const at = Math.ceil(k.back - 1e-3); if (at > bar) break; n++; line = at; }
+  return { start: Math.max(landed(bar), line), n };
+}
+
+/** Whether the music is silent in bar `bar` (fractional): from a knockdown till its new record starts (Ed, 2026-10-09: "the
+ *  music stops when she gets knocked down"; her needle drop and scratching on the new record fill the wait: rules/djSet.ts). */
+export const silentAt = (cue: MusicCue, bar: number): boolean => (cue.knockdowns ?? []).some(k => bar >= k.at && bar < Math.ceil(k.back - 1e-3));
+
+/** The plan for the block starting at bar `bar` (a multiple of style.blockBars), from the cue as
+ *  known now. The same style, cue and bar always give the same plan. */
+export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockPlan {
+  const B = style.blockBars;
+  const { w, arrival, next } = waveState(style, cue, bar);
   const arc = cue.forceWave ?? w, step = arcStep(style, arc);
   const plan = (section: string, start: number, bars: number): BlockPlan => ({ section, start, bars, wave: w, arc });
   if (cue.forceSection && style.sections[cue.forceSection]) return plan(cue.forceSection, bar - (bar % 16), 16);
-  if (cue.knockedOut) return plan(style.knockout, bar - (bar % (2 * B)), 2 * B);
+  if (cue.knockedOut && !style.form) return plan(style.knockout, bar - (bar % (2 * B)), 2 * B); // (with the form, silence instead: silentAt)
   // the boot: the intro, its parts coming in as the speakers power on
   if (bar < cue.bootUntil) return plan(style.intro, 0, Math.max(B, blockAfter(cue.bootUntil, B)));
   // the build into the next wave
@@ -198,13 +224,23 @@ export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockP
     const drop = blockAfter(next, B);
     if (drop > bar && drop - bar <= buildBars) return plan(step.build, drop - buildBars, buildBars);
   }
+  // the form's sections (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections
+  // breakbeats, and the fourth a breakdown"): from the form's start, round and round, a new section of each kind each pass
+  const S = step.sections, F = style.form;
+  if (S && F) {
+    const fs = formClock(style, cue, bar).start, L = F.order.length * F.phraseBars, P = F.phraseBars, k = bar - fs;
+    const pass = Math.floor(k / L), pos = k - pass * L, at = fs + pass * L, of = (l: string[]) => l[pass % l.length];
+    if (pos < 2 * P) return { ...plan(pass === 0 && S.land ? S.land : of(S.four), at, 2 * P), pass };
+    if (pos < 3 * P) return { ...plan(of(S.breaks), at + 2 * P, P), pass };
+    return { ...plan(of(S.breakdown), at + 3 * P, L - 3 * P), pass };
+  }
   // the wave's own sections: its arrival, then its loop
   const k = Math.max(0, bar - blockAfter(arrival, B));
-  const arrive = step.arrive.reduce((n, [, b]) => n + b, 0);
-  const first = walk(step.arrive, k);
+  const arrive = (step.arrive ?? []).reduce((n, [, b]) => n + b, 0);
+  const first = walk(step.arrive ?? [], k);
   if (first) return plan(first.section, bar - first.offset, first.bars);
   // then round the loop, a variant each pass (overnight, 2026-10-06: a long wave mustn't loop audibly)
-  const loops = [step.loop, ...(step.variants ?? [])], len = (l: [string, number][]) => Math.max(1, l.reduce((n, [, b]) => n + b, 0));
+  const loops = [step.loop ?? [], ...(step.variants ?? [])], len = (l: [string, number][]) => Math.max(1, l.reduce((n, [, b]) => n + b, 0));
   let j = k - arrive, pass = 0;
   while (j >= len(loops[pass % loops.length])) { j -= len(loops[pass % loops.length]); pass++; }
   const hit = walk(loops[pass % loops.length], j)!;
@@ -217,7 +253,10 @@ export class Conductor {
   constructor(public style: MusicStyle) {}
   /** The plan for the block holding `bar`. */
   plan(cue: MusicCue, bar: number): BlockPlan {
-    const B = this.style.blockBars, b = Math.floor(bar / B) * B;
+    const B = this.style.blockBars;
+    let b = Math.floor(bar / B) * B;
+    // (a knockdown's new record starts a block of its own on its bar line, wherever that falls: Ed, 2026-10-09)
+    for (const k of cue.knockdowns ?? []) { const at = Math.ceil(k.back - 1e-3); if (at > b && at <= bar) b = at; }
     let p = this.cache.get(b);
     if (!p) {
       p = planBlock(this.style, cue, b);

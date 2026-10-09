@@ -2582,6 +2582,10 @@
           "type": "number",
           "minimum": 0
         },
+        "hatHold": {
+          "type": "number",
+          "minimum": 0
+        },
         "runePull": {
           "type": "object",
           "properties": {
@@ -2677,6 +2681,7 @@
         "pickRadius",
         "spacing",
         "runeRadius",
+        "hatHold",
         "runePull",
         "weight"
       ],
@@ -5379,6 +5384,14 @@
             "needle": {
               "type": "number",
               "minimum": 0
+            },
+            "knock": {
+              "type": "number",
+              "minimum": 0
+            },
+            "respawn": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -5387,7 +5400,9 @@
             "hiss",
             "stroke",
             "hype",
-            "needle"
+            "needle",
+            "knock",
+            "respawn"
           ],
           "additionalProperties": false
         },
@@ -6223,6 +6238,55 @@
         "transition",
         "lightReach",
         "lightStrength"
+      ],
+      "additionalProperties": false
+    },
+    "blood": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "style": {
+          "type": "string",
+          "enum": [
+            "prints",
+            "prints+drops",
+            "drops"
+          ]
+        },
+        "colour": {
+          "type": "string",
+          "enum": [
+            "red",
+            "neon"
+          ]
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "style",
+        "colour",
+        "fade",
+        "rate",
+        "cap",
+        "range"
       ],
       "additionalProperties": false
     },
@@ -9238,6 +9302,7 @@
     "alarms",
     "boot",
     "party",
+    "blood",
     "soundsystemGen",
     "stringLights",
     "waveNumbers",

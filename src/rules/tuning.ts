@@ -213,7 +213,7 @@ export interface Tuning {
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
     seaLife: { volume: number; splash: number; groan: number; pour: number; range: number };
     sadTrumpet: { volume: number; duck: number; bare: number; rewind: number; cutAfter: number };
-    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number; needle: number };
+    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number; needle: number; /** The record scratched as she goes down: its level, times a stroke's (Ed, 2026-10-09). */ knock?: number; /** Her needle and scratching on the new record in her wait after a knockdown, the music silent: times her strokes' level. */ respawn?: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
     spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
     land: { volume: number; gap: number };
@@ -302,6 +302,8 @@ export interface Tuning {
   scenery: { adaptive: boolean; fps: number; hysteresis: number; sustain: number; minRadius: number; shrink: number; grow: number; fade: number };
   stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; /** palette: every colour in turn; areaNeon: warm white and the area's own neon */ mode: "palette" | "areaNeon"; twinkle: number; chaseSpeed: number };
   /** The generated soundsystems (render/soundsystemGen.ts, art/soundsystemGen.js): sizes near to far by distance, the most they turn from facing us, ahead waves baked early. */
+  /** Blood trails (render/leash/blood.ts): prints and drops, their colour, fade, rate, pool cap and range. */
+  blood?: { on: boolean; style: "prints" | "prints+drops" | "drops"; colour: "red" | "neon"; fade: number; rate: number; cap: number; range: number };
   soundsystemGen?: { on: boolean; near: number; far: number; from: number; to: number; maxYaw: number; toward: boolean; ahead: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };
@@ -382,7 +384,7 @@ export interface Tuning {
   invites: { on: boolean; burst: number; burstGap: number; cooldown: number; range: number; speed: number; /** The lob's rise (m) over the line from her hand down to the ground at the range (drawn only). */ arc?: number; homing: number; homingCone: number; homingRange: number; multiShot: number; spread: number; radius: number; amount: number; hits: number[]; drain: number; /** Her ground speed while firing, times (Ram's Steady takes it away). */ fireSlow?: number; /** A 💌 that met no one rests on the ground this many seconds (drawn only), fading over the last lingerFade; at most lingerMax at once. */ linger: number; lingerFade: number; lingerMax: number; /** Turns a second a 💌 spins in flight, flat like a frisbee (drawn only). */ spin: number; /** The 💌 ring round a creature (drawn only): scale x its body radius + gap metres, at least min. */ orbit: { scale: number; gap: number; min: number } };
   invite: { talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
   /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
-  leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number; /** How near (m) she picks up a happy creature's rune, a relic's sigil or her hat. */ runeRadius: number; /** On the ground the nearest rune within radius (m) comes to her: its creature trots over at speed (m/s), stopping stop (m) away. */ runePull: { radius: number; speed: number; stop: number };
+  leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number; /** How near (m) she picks up a happy creature's rune, a relic's sigil or her hat. */ runeRadius: number; /** Seconds she holds the sigil button on the ground, with nothing it picks up or puts down, to put her hat down (rules/hat.ts; absent: never). */ hatHold?: number; /** On the ground the nearest rune within radius (m) comes to her: its creature trots over at speed (m/s), stopping stop (m) away. */ runePull: { radius: number; speed: number; stop: number };
     /** Sigil weight (rules/leashWeight.ts): free allowance, levels' weights, drag, drift, rise, sink, sinkMax, floor, extreme, maxTension. */
     weight: { free: number; levels: number[]; drag: number; drift: number; rise: number; sink: number; sinkMax: number; floor: number; extreme: number; maxTension: number } };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, from threadArcSlack when slack to threadArcTaut at full strain, up to threadArcMax. */ threadArcSlack: number; threadArcTaut: number; threadArcMax: number };

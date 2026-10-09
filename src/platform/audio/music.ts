@@ -107,7 +107,8 @@ export class Music {
   /** The legend circle's layer, which reaches the speakers on its own (the measured output taps it too). */
   get circleOutput(): AudioNode { return this.circleGain; }
   /** Whether it should be heard now: its volume turned up. */
-  get audible(): boolean { return this.master.gain.value > 0.02; }
+  /** Not shut by a knockdown (the engine's gate: her silence till the new record, Ed 2026-10-09) and turned up. */
+  get audible(): boolean { return this.master.gain.value > 0.02 && !this.engine?.gated; }
   /** Silenced for good and let go (the watchdog building afresh). */
   dispose(): void { try { this.master.disconnect(); this.circleGain.disconnect(); } catch { /* gone */ } }
 

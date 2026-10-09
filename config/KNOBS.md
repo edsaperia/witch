@@ -655,7 +655,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 
 ### `leash`
 
-length: metres her creatures follow within; runSpeed: how fast one out of range hurries back (m/s); pickRadius: how near (m) she picks up one of her own placed sigils; runeRadius: how near (m) she picks up a happy creature's rune, a relic's sigil or her hat (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures and relics are difficult to pick up": bigger than pickRadius, which stays under spacing, and less than a relic's sigilOffset, so standing on the relic itself doesn't); runePull: on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her; spacing: how far apart (m) sigils can be put down. weight, sigil weight (Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down"; rules/leashWeight.ts): each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength). Less free (the first few sigils' worth, so early play feels the same), that's her load (weight units, a young on a taut leash being 1). drag: moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers); drift: she drifts toward the pull at up to that share of her top speed, reached at an extreme load; rise: rising takes 1 + rise x load times as long; sink: over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it.
+hatHold (Ed, 2026-10-09: "If you are in ground mode and hold down the drop / pick up sigil button and there are no sigils to pick up, you put down your hat"): seconds she holds the sigil button on the ground, with nothing it picks up or puts down, to put her hat down at her feet (just a marker; a press over it puts it back on; rules/hat.ts putHat). length: metres her creatures follow within; runSpeed: how fast one out of range hurries back (m/s); pickRadius: how near (m) she picks up one of her own placed sigils; runeRadius: how near (m) she picks up a happy creature's rune, a relic's sigil or her hat (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures and relics are difficult to pick up": bigger than pickRadius, which stays under spacing, and less than a relic's sigilOffset, so standing on the relic itself doesn't); runePull: on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her; spacing: how far apart (m) sigils can be put down. weight, sigil weight (Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down"; rules/leashWeight.ts): each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength). Less free (the first few sigils' worth, so early play feels the same), that's her load (weight units, a young on a taut leash being 1). drag: moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers); drift: she drifts toward the pull at up to that share of her top speed, reached at an extreme load; rise: rising takes 1 + rise x load times as long; sink: over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it.
 
 | knob | type | range |
 |---|---|---|
@@ -664,6 +664,7 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.pickRadius` | number | 0 to … |
 | `leash.spacing` | number | 0 to … |
 | `leash.runeRadius` | number | 0 to … |
+| `leash.hatHold` | number | 0 to … |
 | `leash.runePull.radius` | number | 0 to … |
 | `leash.runePull.speed` | number | 0 to … |
 | `leash.runePull.stop` | number | 0 to … |
@@ -1235,6 +1236,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.deck.stroke` | number | 0 to … |
 | `sfx.deck.hype` | number | 0 to … |
 | `sfx.deck.needle` | number | 0 to … |
+| `sfx.deck.knock` | number | 0 to … |
+| `sfx.deck.respawn` | number | 0 to … |
 | `sfx.spell.volume` | number | 0 to … |
 | `sfx.spell.hum` | number | 0 to … |
 | `sfx.spell.rustle` | number | 0 to … |
@@ -1369,6 +1372,20 @@ motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, r
 | `party.transition` | number | 0 to … |
 | `party.lightReach` | number | 0 to … |
 | `party.lightStrength` | number | 0 to … |
+
+### `blood`
+
+Blood trails (Ed, 2026-10-09: "hurt creatures leave a little trail of blood, the more hurt they are the more blood they leave? The blood vanishes over time" and "bloody footprints perhaps"; render/leash/blood.ts): a hurt creature within range metres of her leaves small dark-red pixel marks on the ground as it moves, fading over fade seconds; the more hurt, the more often and the redder. style: prints (footprints at its stride, left and right; four-legged ones in pairs, insects a tiny track; flyers, birds and snakes drip drops instead), prints+drops (and drops when badly hurt) or drops (drops only). rate: drops a second at none of its health left (by how hurt, squared). colour: red (a dark red on the night palette) or neon (a deep shade of the creature's own neon). cap: marks at once (the oldest gives way). Healed, it stops.
+
+| knob | type | range |
+|---|---|---|
+| `blood.on` | boolean |  |
+| `blood.style` | string | "prints" / "prints+drops" / "drops" |
+| `blood.colour` | string | "red" / "neon" |
+| `blood.fade` | number | 0 to … |
+| `blood.rate` | number | 0 to … |
+| `blood.cap` | number | 0 to … |
+| `blood.range` | number | 0 to … |
 
 ### `soundsystemGen`
 

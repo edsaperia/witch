@@ -6,6 +6,8 @@ import { TUNING } from "./tuning";
 import { checkStyle, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
 
 const style = styleJson as unknown as MusicStyle;
+/** The section a wave lands on (the form's first block, Ed 2026-10-09). */
+const landOf = (a: MusicStyle["arc"][number]) => a.sections!.land ?? a.sections!.four[0];
 const bpm = style.bpm, spBar = barSeconds(bpm);
 
 /** The cue as the game knows it at `time`: boot, then a wave every `interval` seconds (or at `times`). */
@@ -55,14 +57,14 @@ describe("music sections", () => {
     const bootBars = 60 / spBar; // 30 bars: the intro to the block line after
     for (let bar = 0; bar < 32; bar++) expect(plans[bar].section).toBe(style.intro);
     expect(bootBars).toBe(30);
-    expect(plans[32].section).toBe(style.arc[0].arrive[0][0]);
+    expect(plans[32].section).toBe(landOf(style.arc[0]));
     expect(plans[32].wave).toBe(0);
     // wave 1 at 360 s (bar 180), wave 2 at 660 s (bar 330, so its drop's block line is bar 332)
     for (const [w, drop] of [[1, 180], [2, 332], [3, 480]]) {
       const prev = style.arc[w - 1], buildBars = prev.buildBars ?? style.buildBars;
       for (let bar = drop - buildBars; bar < drop; bar++) { expect(plans[bar].section).toBe(prev.build); expect(plans[bar].wave).toBe(w - 1); }
       expect(plans[drop - buildBars - 1].section).not.toBe(prev.build);
-      expect(plans[drop].section).toBe(style.arc[w].arrive[0][0]);
+      expect(plans[drop].section).toBe(landOf(style.arc[w]));
       expect(plans[drop].wave).toBe(w);
       expect(plans[drop].start).toBe(drop);
     }
@@ -83,18 +85,18 @@ describe("music sections", () => {
     expect(plans[200].wave).toBe(0);
     expect(plans[203].wave).toBe(0);
     expect(plans[204].wave).toBe(1);
-    expect(plans[204].section).toBe(style.arc[1].arrive[0][0]);
+    expect(plans[204].section).toBe(landOf(style.arc[1]));
   });
 
   it("lets a wave a moment late still land on the line it was due on", () => {
     const plans = run(200, t => cueAt(t, 60, 300, [360.05, 9999]));
     expect(plans[180].wave).toBe(1);
-    expect(plans[180].section).toBe(style.arc[1].arrive[0][0]);
+    expect(plans[180].section).toBe(landOf(style.arc[1]));
   });
 
   it("never builds with waves off, and starts straight in the forest with no boot", () => {
     const plans = run(400, t => ({ ...cueAt(t, 0, 1e9), nextAt: Infinity }));
-    expect(plans[0].section).toBe(style.arc[0].arrive[0][0]);
+    expect(plans[0].section).toBe(landOf(style.arc[0]));
     expect(plans.some(p => p.section === style.arc[0].build)).toBe(false);
   });
 
@@ -102,7 +104,8 @@ describe("music sections", () => {
     const c = new Conductor(style);
     const before = c.plan(cueAt(370), 184);
     expect(c.plan({ ...cueAt(370), knockedOut: true }, 186)).toEqual(before);
-    expect(c.plan({ ...cueAt(370), knockedOut: true }, 188).section).toBe(style.knockout);
+    // (knocked out, the music is silent rather than the knockout section: Ed, 2026-10-09, silentAt; its plans go on)
+    expect(c.plan({ ...cueAt(370), knockedOut: true }, 188).section).not.toBe(style.knockout);
   });
 
   it("previews: ?music=<section> loops it, ?music=wave<N> plays wave N's music", () => {
@@ -123,7 +126,7 @@ describe("music score", () => {
         for (let step = 0; step < 16 * 8; step++) {
           const notes = notesAt(style, plan, null, step, { seed: 42, siege: 0 });
           expect(notesAt(style, plan, null, step, { seed: 42, siege: 0 })).toEqual(notes);
-          const a = style.arc[arc], scale = style.scales[a.scale ?? style.scale];
+          const a = style.arc[arc], scale = style.scales[style.scale];
           for (const e of notes) {
             n++;
             expect(e.vel).toBeGreaterThan(0);
@@ -196,34 +199,15 @@ describe("variety over a long run (overnight, 2026-10-06: a 30-minute run should
     const plans = run(2 * 60 / spBar + 300 / spBar, t => cueAt(t, 0, 1e6)); // the first wave's music held for many passes
     const passes = new Set(plans.map(p => p.pass ?? 0)), sections = new Set(plans.map(p => p.section));
     expect(passes.size).toBeGreaterThan(2);
-    for (const v of style.arc[0].variants ?? []) for (const [s] of v) expect(sections.has(s)).toBe(true);
+    const S = style.arc[0].sections!;
+    for (const s of [...S.four, ...S.breaks, ...S.breakdown]) expect(sections.has(s)).toBe(true);
   });
 
-  it("never plays a pass's block note for note again on the next pass", () => {
-    for (const arc of [0, 3, 7]) {
-      const a = style.arc[arc], loops = [a.loop, ...(a.variants ?? [])];
-      for (let pass = 0; pass < 4; pass++) {
-        // the same section's first block on two passes in a row, wherever it falls in each
-        const [section, bars] = loops[pass % loops.length][0], next = loops[(pass + 1) % loops.length].find(([s]) => s === section);
-        if (!next) continue;
-        const p0: BlockPlan = { section, start: 0, bars, wave: arc, arc, pass }, p1: BlockPlan = { ...p0, pass: pass + 1 };
-        expect(block(p1), `${a.name} ${section} pass ${pass}`).not.toBe(block(p0));
-      }
-    }
-  });
-
-  it("turns a new phrase every 16 bars through the boot's long intro, and leaves a wave's short blocks be", () => {
-    const bars = 128, intro: BlockPlan = { section: style.intro, start: 0, bars, wave: 0, arc: 0 };
-    // the melodies (motif parts) of 16 bars from bar `from`
+  it("plays the form's melody wherever a block falls (Ed, 2026-10-09: the 32-bar ABAC form, on the music's bars)", () => {
     const melody = (p: BlockPlan, from: number) => Array.from({ length: 16 * 16 }, (_, i) => notesAt(style, p, null, (p.start + from) * 16 + i, { seed: 7, siege: 0 })
-      .filter(e => style.parts[e.part].role === "motif").map(e => `${i}:${e.part}:${e.midi}`)).flat();
-    // late in the boot, with the pluck in: each 16 bars' melody mostly new (it was almost all the same before)
-    for (let k = 4; k < bars / 16 - 1; k++) {
-      const was = new Set(melody(intro, k * 16)), now = melody(intro, (k + 1) * 16);
-      expect(now.length).toBeGreaterThan(0);
-      expect(now.filter(x => was.has(x)).length / now.length, `phrase ${k + 1}`).toBeLessThan(0.5);
-    }
+      .filter(e => e.part === style.form!.sung.part || style.parts[e.part]?.role === "motif").map(e => `${i}:${e.part}:${e.midi}`)).flat();
     const short: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 };
+    expect(melody(short, 16).length).toBeGreaterThan(0);
     expect(melody(short, 16)).toEqual(melody({ ...short, start: 16, bars: 16 }, 0));
   });
 

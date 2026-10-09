@@ -22,7 +22,7 @@ import { rewind, sadTrumpet } from "./knockdown";
 import { Sparkler } from "./sparkler";
 import { Aggro } from "./aggro";
 import * as fireworks from "./fireworks";
-import { chirp, needle, scratch, spinBack } from "./deck";
+import { chirp, needle, recordScratch, scratch, spinBack, technique } from "./deck";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
 import { SfxKit, type SfxTuning } from "./sfxKit";
@@ -134,17 +134,26 @@ export class Sfx {
    *  rewind as she's whisked to her decks, a backwards scratch cutting the trumpet off (never before its last note has had
    *  sadTrumpet.cutAfter seconds). */
   sadTrumpet(full = true, pan = 0): void { this.trumpet = sadTrumpet(this.k, full, pan); }
+  /** Knocked down (Ed, 2026-10-09): the old record scratched to a stop, the music stopping under it (deck.ts). */
+  recordScratch(pan = 0): void { recordScratch(this.k, pan); }
   rewind(pan = 0): void {
     const t = this.trumpet, now = this.k.ctx.currentTime + 0.01;
     rewind(this.k, t ? Math.max(now, t.lastAt + this.k.T.sadTrumpet.cutAfter) : now, t ? t.gain : null, pan);
+    this.trumpet = null;
+  }
+  /** The trumpet faded out if it's still going (the needle dropping on her new record, Ed 2026-10-09). */
+  trumpetOff(): void {
+    const t = this.trumpet, now = this.k.ctx.currentTime;
+    if (t) { t.gain.gain.cancelScheduledValues(now); t.gain.gain.setValueAtTime(t.gain.gain.value, now); t.gain.gain.setTargetAtTime(0, now, 0.04); }
     this.trumpet = null;
   }
   private trumpet: { gain: GainNode; lastAt: number } | null = null;
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
   /** Her routine's strokes (art/witch.js DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
-  deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype", pan = 0, near = 1): void {
+  deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype" | "trans" | "flare" | "tear" | "stab", pan = 0, near = 1): void {
     if (stroke === "hype") this.babble.whoop(pan, near);
+    else if (stroke === "trans" || stroke === "flare" || stroke === "tear" || stroke === "stab") technique(this.k, stroke, pan, near);
     else if (stroke === "lift" || stroke === "drop") needle(this.k, stroke, pan, near);
     else if (stroke === "chirp") chirp(this.k, pan, near);
     else if (stroke === "spin") spinBack(this.k, pan, near);
