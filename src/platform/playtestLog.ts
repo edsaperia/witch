@@ -34,7 +34,7 @@ export interface PlaytestSample {
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
+export interface PlaytestRun { seed: number; build: string; started: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -49,7 +49,7 @@ export class PlaytestLog {
   /** The sound as it is now, for each sample (main.ts sets it). */
   audioState?: () => PlaytestSample["audio"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
   constructor(private game: Game, build: string) {
-    this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.party.interval, samples: [] };
+    this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.leyLines.pulseSpeed, samples: [] };
   }
   /** Call once a frame: takes a sample whenever another logEvery seconds of game time have gone. */
   update(): void {
@@ -57,7 +57,7 @@ export class PlaytestLog {
     if (g.clock.time < this.next) return;
     this.next = Math.floor(g.clock.time / EVERY) * EVERY + EVERY;
     const p = powerReport(g.creatures, g.witches, g.combat.sounds);
-    this.run.interval = g.tuning.party.interval; // (the start screen's choice)
+    this.run.interval = g.party.paused ? 0 : g.tuning.leyLines.pulseSpeed; // (the start screen's choice: the ley pulse's speed, m/s, 0 off; Ed 2026-10-09)
     this.run.samples.push({
       t: Math.round(g.clock.time), wave: g.party.wave, standing: [...g.combat.sounds.values()].filter(h => h.hp > 0).length,
       leashed: round(p.leashed), parked: round(p.parked), counts: p.counts,

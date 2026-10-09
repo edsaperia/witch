@@ -19,7 +19,7 @@ import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, S
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { heldByRoutine } from "./djSet";
-import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, spreadWave, stepParty, type Partified, type PartyState } from "./party";
+import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -420,7 +420,7 @@ function fixedStep(g: Game, controls: Controls): void {
   const over = !!g.partyOver;
   if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
-  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time, celebrate); g.party.nextAt = g.clock.time + t.party.interval; }
+  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time, celebrate); resetPulse(g.party, g.map, g.clock.time); } // (the pulse on from the stone it brought on)
   if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);

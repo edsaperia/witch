@@ -15,6 +15,8 @@ import { spawnCreatures, type Creature, type Level } from "./creatures";
 import { countScale, grownAt, growthLevel } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
+import { bootSeconds } from "./bootRing";
+import { stretchSeconds } from "./pulseRoute";
 import { hash2 } from "./random";
 import { homeHealth, homeReach } from "./speakers";
 import { lanchester, levelValue } from "./power";
@@ -54,6 +56,8 @@ export interface SimDirector { base: number; perWave: number; alpha: number; exp
 export interface SimOptions {
   /** Seconds between waves. */
   interval: number;
+  /** The ley pulse's speed (m/s, Ed 2026-10-09: "Pure constant speed"): set, each wave's gap is its stretch of the route over it (rules/pulseRoute.ts), in place of interval. */
+  pulse?: number;
   /** Attrition on the march (a pacing variant): the share of a fallen soundsystem's besiegers
    *  that march on to the next (the rest scatter home and leave the fight). 1, as in the game. */
   marchOn?: number;
@@ -150,7 +154,8 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
   const guards: { key: string; x: number; z: number; hp: number; asleep: boolean }[] = [], GR = o.guardRadius ?? 30, LHP = COMBAT.levels.hp[3], LDPS = COMBAT.levels.dps[3];
   const LG = o.logistics, defences: SimDefence[] = [];
   let posse = { x: d.x, z: d.z }, witch = { x: d.x, z: d.z }, pending: { key: string; at: number } | null = null, lastSound = { x: d.x, z: d.z, at: 0 };
-  let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval, playerF = 0, busyUntil = 0, lost: SimResult["lost"] = null;
+  const gap = () => (o.pulse ? stretchSeconds(party, map, o.pulse) : o.interval); // (the ley pulse at a constant speed: each gap its stretch over it, Ed 2026-10-09)
+  let time = 0, nextAt = bootSeconds(map) + t.party.startDelay + gap(), playerF = 0, busyUntil = 0, lost: SimResult["lost"] = null;
   const nearest = (x: number, z: number) => {
     let best: string | null = null, bd = Infinity;
     for (const s of sounds.values()) { if (s.hp <= 0) continue; const k = Math.hypot(s.x - x, s.z - z); if (k < bd) { bd = k; best = s.key; } }
@@ -171,7 +176,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
     if (time >= nextAt) {
       if (party.wave >= 1) sample();
       if (party.wave >= o.maxWaves) break;
-      nextAt += o.interval;
+      if (!o.pulse) nextAt += o.interval;
       for (const a of spreadWave(party, map, time)) {
         const key = cellKey(a.cell), at = soundsystemFor(map, a.cell);
         sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius, wave: party.wave, at: time });
@@ -201,9 +206,10 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
           live.push(L);
         }
       }
+      if (o.pulse) nextAt = time + gap(); // (the pulse on along the next stretch)
       // The director: reinforcements for the areas the next wave wakes, by the player's progress.
       if (D && party.next.length) {
-        const start = t.boot.time + t.party.startDelay, expected = (D.expected * Math.max(0, time - start)) / 60;
+        const start = bootSeconds(map) + t.party.startDelay, expected = (D.expected * Math.max(0, time - start)) / 60;
         const k = Math.max(0, 1 + D.alpha * ((expected > 0 ? playerF / expected : 1) - 1)), w = D.byTime ? Math.max(0, time - start) / 60 : party.wave, budget = (D.base + D.perWave * Math.pow(w, D.power ?? 1)) * k * (D.byTime ? o.interval / 60 : 1);
         owed += budget;
         for (; owed >= adult; owed -= adult) {

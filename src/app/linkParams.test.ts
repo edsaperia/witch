@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
 import { FORGOTTEN_KEYS, tuningFromLink, worldFromLink } from "./linkParams";
-import { waveLabel } from "./wavePick";
+import { PULSE_CHOICES, waveLabel } from "./wavePick";
 
 /** A browser's localStorage, as Ed's was: the world and the fight remembered from an earlier load. */
 function fakeStorage(items: Record<string, string>) {
@@ -44,8 +44,8 @@ describe("the link's world (src/app/linkParams.ts)", () => {
   });
   it("forgets the waves' pace too (Ed, 2026-10-08), and names the dropdown's choices", () => {
     expect(FORGOTTEN_KEYS).toContain("witch.wave");
-    expect([30, 60, 120, 300, 600, 0].map(waveLabel)).toEqual(["30 s", "1 min", "2 min", "5 min", "10 min", "off"]);
-    expect(waveLabel(90)).toBe("1.5 min"); // (a link's own pace)
+    expect(PULSE_CHOICES.map(waveLabel)).toEqual(["slow · 2.5 m/s", "normal · 4 m/s", "fast · 6 m/s", "off"]); // (the ley pulse's speed: Ed, 2026-10-09)
+    expect(waveLabel(3)).toBe("3 m/s"); // (a link's own pace)
   });
   it("?dodge= picks which dodge changes are on (Ed, 2026-10-08), all by default", () => {
     g.localStorage = fakeStorage({}).store;

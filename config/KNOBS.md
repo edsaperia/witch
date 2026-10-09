@@ -985,6 +985,7 @@ The music's clock (beats per minute): the lasers sweep to it and party animals d
 |---|---|---|
 | `beat.bpm` | number | 0 to … |
 | `leyLines.on` | boolean |  |
+| `leyLines.pulseSpeed` | number | 0 to … |
 | `leyLines.reveal` | number | 0 to … |
 | `leyLines.far` | array of number |  |
 | `leyLines.behindBright` | number | 0 to … |
@@ -1339,17 +1340,15 @@ The soundsystem alarm (Ed, 2026-10-06: "We should have an indicator for when a s
 
 ### `boot`
 
-At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Thirty seconds (Ed, 2026-10-07, his new core design; five minutes before, Ed 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'), counted from her first step off the decks: no wave till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker. The boot runs from the party spell (golf: rules/party.ts castPartySpell; Ed, 2026-10-06): its pulse goes from the treehouse round the home ring clockwise from the top (rules/bootRing.ts), each stone turning into a speaker as it passes, the last as the boot's time is up; the ley line runs ahead of it at leyLines.reveal times its pace. firstAfter (Ed, 2026-10-06: "The time between the game start and the first mini-runestone turning into a speaker should be about three seconds ... after you leave your decks ... You can start the boot time from when the first speaker is activated"): seconds from her leaving the decks (the party spell cast) to the first stone turning; the boot's time then runs from that first speaker to the last.
+At the start the home speaker ring boots up (Ed, 2026-10-04): its pulse runs from the treehouse's front down to the ring and once round it at the ley pulse's own speed (Ed, 2026-10-09: "Pure constant speed", boot included; leyLines.pulseSpeed: the 179 m path in about 45 s at 4 m/s, the first stone about 3 s off the decks, as Ed asked on 2026-10-06), each stone turning into its speaker as it passes; only then does the first wave's pulse set off: time to find and invite your first creatures. It waits for her first step off the decks, the party spell cast (golf: rules/party.ts castPartySpell; rules/bootRing.ts). The ley line runs ahead of it at leyLines.reveal times its pace. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker.
 
 | knob | type | range |
 |---|---|---|
-| `boot.time` | number | 0 to … |
 | `boot.transform` | number | 0 to … |
-| `boot.firstAfter` | number | 0 to … |
 
 ### `party`
 
-motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds after home's boot (the first after startDelay more; every 3 minutes, Ed 2026-10-07, from 5), each waking areasPerWave areas (one per witch: Ed, 2026-10-04), chosen by picker. An area cleared of its own wild creatures before its wave (Ed, 2026-10-07: every one invited or run off; its legend and its circle's baby don't count) is partified at once, as its wave would (rules/clear.ts); the waves keep to the route all the same, and the wave that comes to a stone already playing changes nothing in the rules but celebrates (the waveCelebrate event). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all crosses itself at most a few times, within Ed's rules: a spiral (Ed, 2026-10-06, of the mock-up: "This last example looks great!"; out from home ring by ring, the same way round, a little lobe, a few crossings); noisy (the picker before it, and the route's own fallback past the crossing rules) chooses among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
+motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave each time the ley pulse reaches the next stone on the route (Ed, 2026-10-09: "Pure constant speed"; leyLines.pulseSpeed: no fixed interval, each gap its link's length over the speed), setting off startDelay seconds after home's boot, each waking areasPerWave areas (one per witch: Ed, 2026-10-04), chosen by picker. An area cleared of its own wild creatures before its wave (Ed, 2026-10-07: every one invited or run off; its legend and its circle's baby don't count) is partified at once, as its wave would (rules/clear.ts); the waves keep to the route all the same, and the wave that comes to a stone already playing changes nothing in the rules but celebrates (the waveCelebrate event). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all crosses itself at most a few times, within Ed's rules: a spiral (Ed, 2026-10-06, of the mock-up: "This last example looks great!"; out from home ring by ring, the same way round, a little lobe, a few crossings); noisy (the picker before it, and the route's own fallback past the crossing rules) chooses among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
 
 | knob | type | range |
 |---|---|---|
@@ -1360,7 +1359,6 @@ motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, r
 | `party.uplight.strength` | number | 0 to … |
 | `party.uplight.pulse` | number | 0 to … |
 | `party.uplight.edge` | number | 0 to … |
-| `party.interval` | number | 0 to … |
 | `party.startDelay` | number | 0 to … |
 | `party.areasPerWave` | number | 0 to … |
 | `party.picker` | string |  |
