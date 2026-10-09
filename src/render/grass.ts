@@ -41,13 +41,18 @@ ${HEIGHT_VERT_GLSL}
 ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
   float s = iTuft.z * uGrass.x;
   vec3 base = onGround(vec3(iTuft.x, 0.0, iTuft.y)); // on the rolling ground
-  // Round a placed sigil the cover is trampled: none over its rune, short and flattened just beyond.
+  // Round a placed sigil the cover is trampled: none under the middle of its rune, flattened short over the rest of it and
+  // just beyond, so the floor keeps its own tone round the rune (Ed, 2026-10-09: "There is still a dark patch underneath placed
+  // sigils": cleared out to past the rune, the bare floor under the cover showed, unlit and near black, a band behind them).
+  float flat = 1.0;
   for (int k = 0; k < 8; k++) {
     if (uClear[k].w < 0.5) continue;
-    s *= smoothstep(uClear[k].z, uClear[k].z + 1.2, length(base.xz - uClear[k].xy));
+    float d = length(base.xz - uClear[k].xy), r = uClear[k].z;
+    s *= smoothstep(r * 0.35, r * 0.6, d);
+    flat = min(flat, mix(0.3, 1.0, smoothstep(r, r + 1.2, d)));
   }
-  vec3 w = base + uRight * (position.x * iPx.x * s) + uUp * (position.y * iPx.y * s);
-  float top = uv.y * iPx.z, hgt = iPx.y * s; // rigid tufts (pebbles, litter) don't sway or part
+  vec3 w = base + uRight * (position.x * iPx.x * s) + uUp * (position.y * iPx.y * s * flat);
+  float top = uv.y * iPx.z, hgt = iPx.y * s * flat; // rigid tufts (pebbles, litter) don't sway or part
   // The same wind as the trees, stronger for their size.
   vec2 q = base.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
   float gust = windGust(q);
