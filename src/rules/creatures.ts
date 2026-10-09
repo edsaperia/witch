@@ -207,7 +207,7 @@ export function population(map: ForestMap): AreaPopulation {
 export function makeCreature(map: ForestMap, cell: [number, number], level: Level, id: number, r: () => number, at?: [number, number]): Creature {
   const t = map.tuning, type = AREA_TYPES[map.typeOf(cell[0], cell[1])], home = map.siteOf(cell[0], cell[1]);
   const range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, home.x, home.z, range);
-  const base = { cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ };
+  const base = { cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ, level };
   const [x, z] = at ?? pointInArea(map, base, r);
   // One shape for every creature, built as one literal (every field, in CREATURE_OPTIONAL's order after the required ones):
   // phase 2's GC churn wanted one shape (35 shapes among a late game's creatures made each c.x read allocate); setting the
@@ -301,8 +301,25 @@ export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => numbe
   return [k.x, k.z + k.r * 0.3];
 }
 
-export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged">> & { dancing?: boolean }, r: () => number): [number, number] {
+/** Whether it idles round its area's runestone (Ed, 2026-10-08: "if you enter a hostile area and the animals are at the very
+ *  opposite end, it can be quite a long time before they reach you ... having the hostile creatures tend to idle near the
+ *  runestone"): one of a wild area's own hostile young or adults (not a baby, a legend, a friendly area's, a happy, leashed
+ *  or enraged one, or one dancing). */
+export const idlesAtStone = (c: Partial<Pick<Creature, "level" | "boss" | "friendly" | "leashed" | "state" | "enraged" | "circle">> & { dancing?: boolean }) =>
+  (c.level ?? 0) > 0 && c.level !== LEGEND && !c.boss && !c.friendly && !c.leashed && !c.enraged && !c.dancing && !c.circle && c.state !== "happy";
+
+export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly">> & { dancing?: boolean; anywhere?: boolean }, r: () => number): [number, number] {
   if (keepsToCircle(c)) return pointInCircle(c.circle!, r); // (the circle's baby, wild or happy)
+  // A hostile one idles in a loose cluster round its area's runestone: anywhere in a disc of stoneIdle.radius metres round it
+  // (evenly, so they spread), keeping stoneIdle.clear metres off the stone itself; the rest of the area as before.
+  const S = map.tuning.stoneIdle;
+  if (S?.on && !c.anywhere && idlesAtStone(c)) {
+    const st = map.soundsystemSpot(c.cell[0], c.cell[1]);
+    for (let i = 0; i < 12; i++) {
+      const a = r() * Math.PI * 2, d = Math.sqrt(S.clear ** 2 + r() * (S.radius ** 2 - S.clear ** 2)), x = st.x + Math.cos(a) * d, z = st.z + Math.sin(a) * d;
+      if (inCell(map, x, z, c.cell)) return [x, z];
+    }
+  }
   // (a dancing one keeps round its party spot, its anchor: rules/partyGuests.ts)
   const cx = c.dancing ? c.anchorX : c.homeX, cz = c.dancing ? c.anchorZ : c.homeZ;
   for (let i = 0; i < 12; i++) {

@@ -18,7 +18,7 @@ import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, S
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { heldByRoutine } from "./djSet";
-import { castPartySpell, cellKey, clearArea, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type Partified, type PartyState } from "./party";
+import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -171,7 +171,7 @@ export interface Game {
  *  of its wild creatures, its soundsystem rising (rules/clear.ts); a wave come to an area whose soundsystem stands already
  *  (cleared before it, Ed 2026-10-07: it changes nothing in the rules; the view's fireworks and lasers). */
 export type WaveEvent =
-  | { kind: "soundsystemLost"; key: string; x: number; z: number; at: number; cut: number; left: number }
+  | { kind: "soundsystemLost"; key: string; x: number; z: number; at: number }
   | { kind: "areaCleared"; key: string; x: number; z: number; at: number }
   | { kind: "waveCelebrate"; key: string; x: number; z: number; at: number; wave: number };
 
@@ -578,7 +578,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
   }, COMBAT);
   for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed || c.retreat)) S.busy.add(c.id); // carried on wherever she is
-  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
+  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z);
   // The home ring shows each speaker's own damage (an unhurt one keeps what the debug key gave it).
   g.speakers.forEach((_, i) => { const h = S.sounds.get(speakerKey(i)); if (h && h.hp < h.max) g.speakers[i] = speakerStateOf(h.hp, h.max); });
   // Every soundsystem down, the home ring's speakers too: the party's over (rules/partyOver.ts), the afterparty from now on.
@@ -622,15 +622,14 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
   return out;
 }
 
-/** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers
- *  marching on, and the next wave sooner (Ed, 2026-10-05: a loss takes party.lossPenalty seconds
- *  off the countdown, "all waves sooner is the wrong kind of penalty"). */
 /** Where something running off the map heads: just past its nearest edge. */
 function mapExit(map: ForestMap, x: number, z: number): { x: number; z: number } {
   return exitPoint(map.bounds, x, z, 30);
 }
 
-export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
+/** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers marching on. Nothing
+ *  else (Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown", "doesn't affect the bpm"). */
+export function loseSoundsystem(g: Game, key: string, x: number, z: number): void {
   const S = g.combat, time = g.clock.time;
   if (isHomeKey(key)) {
     // One of home's speakers (or, "home", the whole ring at once: the debug hook): its besiegers on to the nearest standing;
@@ -650,8 +649,7 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: T
     }
   }
   if (key !== "home") marchOn(S, key, g.creatures);
-  const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0, g.map); // (never so soon the pulse would skip)
-  g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
+  g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time });
 }
 
 /** The party witches: one for each soundsystem playing (oldest first), and the player idling in. */

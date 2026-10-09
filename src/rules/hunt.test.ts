@@ -82,7 +82,8 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
     expect(g.witches[0].ko).toBeTruthy();
     run(g, 0.1);
     for (const c of hunters) expect(c.hunting).toBeUndefined();
-    expect(hunters.some(c => c.retreat)).toBe(true);
+    // they give up on her: each heads home, or is home already (idling by its runestone, rules/creatures.ts idlesAtStone)
+    for (const c of hunters) expect(c.fight?.target?.kind === "witch" && !c.retreat, `${c.id} gave up`).toBe(false);
     expect(g.wildEntry.has(key)).toBe(false);
   }, 120000);
 
