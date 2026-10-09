@@ -10,7 +10,7 @@ import { LEGEND, type Creature } from "./creatures";
 import { type Cell } from "./partition";
 import { enrage, foes, huntsWitch, stateOf } from "./creatureStates";
 import { LEGENDS } from "./legends";
-import { FIGHT, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap } from "./movement";
+import { FIGHT, landSwoop, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap, stepSwoop, swoopStriking } from "./movement";
 import { type Tuning } from "./tuning";
 import { isHomeKey } from "./speakers";
 import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attackOf, attackNamed, type CombatWorld, type Target } from "./combat/data";
@@ -18,6 +18,9 @@ import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, 
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
 import { stepLegendAttack, stepLegend } from "./combat/legend";
 // (split into rules/combat/: data, targeting, hits, legend; everything public is still exported from here)
+/** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
+const swoops = (c: Creature): boolean => !c.leashed && profileOf(c.species)?.move?.kind === "swoop" && (stateOf(c) === "wild" || stateOf(c) === "enraged");
+
 export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, attackOf, scaled, attackNamed, maxHp, creatureMaxHp } from "./combat/data";
 export type { Delivery, Modifier, Attack, CombatData, Trait, Target, Fight, Shot, Beam, CombatEventKind, CombatEvent, SoundHealth, CombatState, Trail, CombatWorld } from "./combat/data";
 export { fighting, targetable, truce, guardOf, nearestSound } from "./combat/targeting";
@@ -126,7 +129,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     onHer.set(tg.id, (onHer.get(tg.id) ?? 0) + 1);
     // (winding up, lunging, or let go within the last dodge.a.gap seconds: so strikes at her come no faster than a dodge can answer)
     const f = o.fight!, cd = attackOf(o.species, o.level, data)?.attack.cooldown ?? 0;
-    if (f.windupUntil > 0 || f.lunge || time - (f.readyAt - cd) < DA.gap) striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1);
+    if (f.windupUntil > 0 || f.lunge || swoopStriking(o) || time - (f.readyAt - cd) < DA.gap) striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1); // (a swoop telegraphing, diving or at its bottom too: rules/movement.ts)
   }
   /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. */
   const token = (tg: Target): boolean => {
@@ -161,6 +164,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   for (const c of w.active) {
     stepKnock(c, dt);
     if (c.gone) continue;
+    // A flyer swooping that's no longer a wild one in a fight (invited, leashed, dazed, running off, asleep) glides down (rules/movement.ts).
+    if (c.swoop && (!swoops(c) || !fighting(c) || w.asleep(c))) landSwoop(c, time);
     if (c.dazed) {
       // Dazed: it lies still till its daze is over (invited meanwhile, it's whole and happy: states.befriend), then runs off.
       if (stateOf(c) !== "wild") { c.dazed = false; c.dazedUntil = undefined; }
@@ -235,6 +240,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if ((w.inArea(c, c.x, c.z) && left <= C.retreatHome * FIGHT.scale) || time - c.retreatFrom > 30) { c.retreat = undefined; c.retreatFrom = undefined; c.tx = c.x; c.tz = c.z; c.fight = undefined; }
         continue;
       }
+      if (c.swoop) landSwoop(c, time); // (a flyer glides down)
       c.sprung = undefined; // (an ambusher lies in wait again)
       if (c.burrow) c.burrow = undefined; // (a burrower comes up)
       if (c.leap) { c.x = c.leap.tx; c.z = c.leap.tz; c.leap = undefined; } // (a leaper comes down)
@@ -298,6 +304,21 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         // Contact (Ed, 2026-10-06: "damaging whenever they're touched while in attack mode"): its run hurts every foe it touches, once each.
         if (r === "charging" && t.fight.charge?.contact && c.charge && !c.charge.braking && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
         if (r === "charging") continue;
+      }
+      if (P.move?.kind === "swoop" && swoops(c)) {
+        // A wild flyer (the owl, the bat, the raven: hotel's phase-3 flyer table): it circles out of reach, telegraphs, dives along a
+        // line at where its target will be and pulls back up; only in the dive and at its bottom can it be hit or invited.
+        const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
+        const r = stepSwoop(c, P.move, p.x, p.z, time >= f.readyAt, time, dt, tv?.vx ?? 0, tv?.vz ?? 0, () => token(f.target!), f.target.kind === "witch" && DA ? DA.commit : 0); // (each dive takes a strike's token at her: dodge.a)
+        if (r === "tele") { f.readyAt = time + A.cooldown; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
+        if (r === "dive") s.events.push({ kind: "swooped", x: c.x, z: c.z, at: time, id: c.id });
+        if (r === "low" && c.swoop?.hit) {
+          // Its dive touches every foe it passes (once each); a soundsystem it's after, at the bottom.
+          const dive: Attack = { ...A, delivery: "melee", range: 2.5 * S, ...(P.move.knockback ? { modifier: "knockback" as const, knockback: P.move.knockback * S } : {}) };
+          touch(w, s, c, atk.damage, dive, grid, c.swoop.hit);
+          if (f.target.kind === "sound" && !c.swoop.hit.includes(-1e9) && Math.hypot(p.x - c.x, p.z - c.z) <= p.r + 2 * S) { c.swoop.hit.push(-1e9); land(w, s, c, f.target, atk.damage, dive, c.x, c.z); }
+        }
+        continue;
       }
       if (P.move?.kind === "burrow") {
         // The mole: under the ground (untouchable, a moving mound) to its target, then up, striking at once.
@@ -389,6 +410,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       continue;
     }
+    if (c.swoop) landSwoop(c, time); // (a flyer marching on a soundsystem far off, or a party one: on the ground)
     if (f.windupUntil === 0) {
       if (d > want) { moveToward(c, p.x, p.z, want, marching ? c.speed * C.marchMult : speed, dt); continue; }
       // A kiter backs off when its target comes too close, keeping its distance while it shoots.

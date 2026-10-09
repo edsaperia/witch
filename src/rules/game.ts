@@ -9,7 +9,7 @@ import { beatAt, knockdownTempo, newBeatClock, tempoRate, waveArrived, waveTempo
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { legendCircleNear } from "./legendCircle";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
+import { healBy, heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
 import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
@@ -486,7 +486,7 @@ function stepSpacing(g: Game, dt: number): void {
   const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list = spacingList;
   list.length = 0;
   for (const c of g.creatures) {
-    if (c.gone || c.burrow || c.leap) continue;
+    if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
   spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
@@ -752,7 +752,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
     g.tally.stomps = (g.tally.stomps ?? 0) + 1;
   });
   // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
-  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += (maxHp(c.level) / LEGENDS.healTime) * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) healBy(c, (maxHp(c.level) / LEGENDS.healTime) * STEP, maxHp(c.level), g.clock.time); }
   if (happyNearest) {
     // Debug (O): the nearest sleeping legend made happy, as if a relic were put down by it.
     let best: Creature | null = null, bd = Infinity;
