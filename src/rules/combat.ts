@@ -132,8 +132,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     striking.set(tg.id, n + 1);
     return true;
   };
-  /** Its windup: a shot, lob or beam at her winds up at most dodge.b.windup. */
-  const windupOf = (A: Attack, tg: Target) => (DB && tg.kind === "witch" && (A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam") ? Math.min(A.windup, DB.windup) : A.windup);
+  /** Its windup: a shot or lob at her winds up at most dodge.b.windup (a beam as before: a sweep a blink can't outrun needs its warning). */
+  const windupOf = (A: Attack, tg: Target) => (DB && tg.kind === "witch" && (A.delivery === "shot" || A.delivery === "lob") ? Math.min(A.windup, DB.windup) : A.windup);
   /** A committed strike's reach at her, times its attack's range (dodge.a.width). */
   const widthOf = (tg: Target) => (DA && tg.kind === "witch" ? DA.width : 1);
   /** Her velocity (the witch tg), or none. */
@@ -418,7 +418,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       s.events.push({ kind: "shot", x: c.x, z: c.z, at: time, id: c.id });
     } else if (A.delivery === "beam") {
       const dur = A.duration ?? 0.8, tick = A.tick ?? 0.2, ticks = Math.max(1, Math.round(dur / tick));
-      s.beams.push({ id: s.nextShot++, from: c.id, angle: DB && f.target.kind === "witch" ? Math.atan2(p.z - c.z, p.x - c.x) : Math.atan2(f.aimZ - c.z, f.aimX - c.x), length: A.range, width: A.width ?? 1, until: time + dur, nextTick: time, tick, damage: dmg / ticks, side: sideOf(c), species: c.species, attack: atk.name, target: f.target });
+      s.beams.push({ id: s.nextShot++, from: c.id, angle: Math.atan2(f.aimZ - c.z, f.aimX - c.x), length: A.range, width: A.width ?? 1, until: time + dur, nextTick: time, tick, damage: dmg / ticks, side: sideOf(c), species: c.species, attack: atk.name, target: f.target });
       s.events.push({ kind: "beam", x: c.x, z: c.z, at: time, id: c.id });
     } else {
       // The quake (a legend's), or a pulse (Stage 5: a bat's screech, a mole's upheaval): everything
