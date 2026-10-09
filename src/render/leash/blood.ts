@@ -6,7 +6,7 @@
 // then). The more hurt, the more often and the redder: lightly, a faint print now and then; badly, every step and drips.
 // Healed (a berry: rules/creatures.ts heal), it stops. Pixel art flat on the ground (docs/STYLE.md §1 rule 4): squares of
 // whole art pixels on the world's pixel grid, 1 to 3 across, blended (never glowing) in a dark red on the night palette or,
-// with colour "neon", a deep shade of the creature's own neon; each fading over blood.fade seconds. A fixed pool (blood.cap,
+// with colour "neon", a deep shade of the creature's own neon; drawn over the grass tufts (BLOOD_PULL); each fading over blood.fade seconds. A fixed pool (blood.cap,
 // the oldest giving way), made only for creatures within blood.range of her; drawing only, seeded (no Math.random).
 import { GENOMES } from "../../../art/genome/species.js";
 import { sigilColour } from "../../../art/generator.js";
@@ -22,6 +22,9 @@ const AT = new THREE.Vector3();
 
 export interface BloodKnobs { on: boolean; style: "prints" | "prints+drops" | "drops"; colour: "red" | "neon"; fade: number; rate: number; cap: number; range: number }
 export const BLOOD_DEFAULT: BloodKnobs = { on: true, style: "prints+drops", colour: "red", fade: 8, rate: 3, cap: 600, range: 60 };
+/** How far nearer the camera the marks are drawn, along their own ray (metres): about a grass tuft's depth, so the ground cover
+ *  doesn't hide them (Ed, 2026-10-09: "draw over grass tufts"); still flat on the ground on screen and on the pixel grid. */
+export const BLOOD_PULL = 0.6;
 /** The dark red (linear, before the haze): deep enough to sit on the night ground, not black, not a bright red. */
 export const BLOOD_RED = [0.5, 0.02, 0.06];
 
