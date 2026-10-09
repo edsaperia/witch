@@ -10170,6 +10170,7 @@ label.check input { accent-color: var(--accent); }
         return;
       }
       const knocks = cue2.knockdowns?.length ?? 0;
+      if (knocks < this.knocksHeard) this.knocksHeard = knocks;
       if (knocks > this.knocksHeard) {
         this.knocksHeard = knocks;
         if (silentAt(cue2, stepNow / 16)) {
@@ -11272,7 +11273,7 @@ label.check input { accent-color: var(--accent); }
       knockdownTempo(c, { ...beatTuning(), knockout: { bpmStep: 5 } }, 14.2 * spBar);
       waveArrived(c, beatTuning(), 7, 20 * spBar);
       if (Math.abs(bpmAt(c, timeAt(c, 4 * 32)) - (bpmAt(c, 0) + 5)) > 1e-6) errors.push("the tempo isn't 5 bpm up after a knockdown, and steady through a wave");
-      e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5, knockdowns: [14.2] }, 8 * spBar, 24 * spBar, c);
+      e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5, knockdowns: [{ at: 14.2, back: 17 }] }, 8 * spBar, 24 * spBar, c);
       measure("run: into wave 7, a knockdown, siege", await oc.startRendering());
     }
     {

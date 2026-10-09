@@ -217,15 +217,15 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
   }
   {
     // a run: wave 7 due at bar 20, the tempo holding through it (Ed, 2026-10-09: 120 but for her knockdowns), a knockdown
-    // in bar 14 (5 bpm faster from the next bar line, the music re-seeded from bar 16); render bars 8 to 32 (the build, the
-    // drop), under siege
+    // in bar 14 (5 bpm faster from the next bar line, silent till her new record starts on bar 17, re-seeded); render bars 8
+    // to 32 (the knockdown, the new record, the build, the drop), under siege
     const oc = new OfflineAudioContext(2, Math.ceil(rate * 24 * spBar), rate);
     const e = new MusicEngine(oc, oc.destination, style, 7), c = newBeatClock(style.bpm, waveTempo(beatTuning(), 6));
     c.wave = 6;
     knockdownTempo(c, { ...beatTuning(), knockout: { bpmStep: 5 } }, 14.2 * spBar);
     waveArrived(c, beatTuning(), 7, 20 * spBar);
     if (Math.abs(bpmAt(c, timeAt(c, 4 * 32)) - (bpmAt(c, 0) + 5)) > 1e-6) errors.push("the tempo isn't 5 bpm up after a knockdown, and steady through a wave");
-    e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5, knockdowns: [14.2] }, 8 * spBar, 24 * spBar, c);
+    e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5, knockdowns: [{ at: 14.2, back: 17 }] }, 8 * spBar, 24 * spBar, c);
     measure("run: into wave 7, a knockdown, siege", await oc.startRendering());
   }
   {
