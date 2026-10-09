@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
 import { bpmAt, waveArrived, waveTempo } from "./beat";
 import { hitWitch, newGame } from "./game";
-import { musicCue } from "./musicPlan";
-import { formBars, formChord, formInstrument, formNoteAt, formPhrase, formSeedAt, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
+import { Conductor, formClock, musicCue, type MusicCue } from "./musicPlan";
+import { formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";
 
 const style = styleJson as unknown as MusicStyle, F = style.form!;
@@ -114,20 +114,24 @@ describe("the tempo: 120, and 5 more a knockdown", () => {
 });
 
 describe("a knockdown re-seeds the music", () => {
+  const cue = (knockdowns: number[], waves: number[] = []): MusicCue => ({ waves, nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, knockdowns });
   it("changes the seed from the next phrase line, its form starting there with a new A", () => {
     const base = 77, P8 = F.phraseBars;
-    expect(formSeedAt(style, base, [], 100)).toEqual({ seed: base, formStart: 0 });
-    const k = formSeedAt(style, base, [13.2], 15), after = formSeedAt(style, base, [13.2], 16);
-    expect(k).toEqual({ seed: base, formStart: 0 }); // (till the phrase line)
-    expect(after.formStart).toBe(2 * P8);
-    expect(after.seed).not.toBe(base);
-    const twice = formSeedAt(style, base, [13.2, 40], 48);
-    expect(twice.seed).not.toBe(after.seed);
-    expect(twice.seed).not.toBe(base);
+    expect(formClock(style, cue([]), 100)).toEqual({ start: 0, n: 0 });
+    expect(formClock(style, cue([13.2]), 15)).toEqual({ start: 0, n: 0 }); // (till the phrase line)
+    const after = formClock(style, cue([13.2]), 16);
+    expect(after).toEqual({ start: 2 * P8, n: 1 });
+    expect(formClock(style, cue([13.2, 40]), 48)).toEqual({ start: 48, n: 2 });
+    expect(musicSeed(base, 1)).not.toBe(base);
+    expect(musicSeed(base, 2)).not.toBe(musicSeed(base, 1));
+    // a wave landing starts the form again (the seed as it was)
+    expect(formClock(style, cue([13.2], [37]), 40)).toEqual({ start: 40, n: 1 });
+    // its phrase lines after a wave: the form's, from where the wave landed
+    expect(formClock(style, cue([42], [37]), 48)).toEqual({ start: 48, n: 1 });
     // the melody after it is new (seeded anew, not the old one's A)
     const plan: BlockPlan = { section: "forest", start: 16, bars: 32, wave: 1, arc: 0 };
     const play = (ctx: { seed: number; formStart: number }) => Array.from({ length: 8 * 16 }, (_, i) => notesAt(style, plan, null, 16 * 16 + i, { ...ctx, siege: 0 }).map(e => `${e.part}:${e.midi}`).join()).join("|");
-    expect(play(after)).not.toBe(play({ seed: base, formStart: 0 }));
+    expect(play({ seed: musicSeed(base, 1), formStart: 16 })).not.toBe(play({ seed: base, formStart: 0 }));
   });
 
   it("is in the game's music cue, by the bars the knockdowns came in", () => {
@@ -138,5 +142,69 @@ describe("a knockdown re-seeds the music", () => {
     const cue = musicCue(g);
     expect(cue.knockdowns!.length).toBe(1);
     expect(cue.knockdowns![0]).toBeCloseTo(15, 3); // (30 s at 120: 15 bars)
+  });
+});
+
+describe("the melodies' pace (Ed, 2026-10-09: \"keep the melodies relatively slow, but not always. Use whole notes and triplets quite often\")", () => {
+  it("is mostly slow, with whole notes and triplets often, and some busier bars", () => {
+    let notes = 0, whole = 0, triplet = 0, short = 0, phrases = 0;
+    for (let seed = 0; seed < 60; seed++) for (const L of "ABC") {
+      phrases++;
+      for (const n of formPhrase(style, seed, L)) if (n) {
+        notes++;
+        if (n.dur >= 12) whole++;
+        if (n.dur % 1) triplet++;
+        if (n.dur <= 2) short++;
+      }
+    }
+    const perBar = notes / (phrases * 8);
+    expect(perBar).toBeLessThan(3.5); // (relatively slow: a few notes a bar)
+    expect(whole / phrases).toBeGreaterThan(1); // (a whole note or more a phrase)
+    expect(triplet / notes).toBeGreaterThan(0.15);
+    expect(short).toBeGreaterThan(0); // (not always slow)
+  });
+
+  it("plays triplets straight, three in the time of two", () => {
+    for (const seed of seeds) {
+      const ph = formPhrase(style, seed, "A");
+      for (const n of ph) if (n && n.off) { expect(n.dur % 1).not.toBe(0); expect(n.off).toBeGreaterThan(0); expect(n.off).toBeLessThan(1); }
+    }
+    const plan: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 };
+    const ev = Array.from({ length: 32 * 16 }, (_, s) => notesAt(style, plan, null, s, { seed: 7, siege: 0 })).flat().filter(e => e.straight);
+    expect(ev.length).toBeGreaterThan(0);
+    for (const e of ev) expect(e.dur % 1).not.toBe(0);
+  });
+});
+
+describe("the form's sections (Ed, 2026-10-09: \"ABAC; the first two sections should be 4 on the floor, the third sections breakbeats, and the fourth a breakdown\")", () => {
+  const KICKS = ["kick", "softkick", "hardkick", "boom"];
+  /** The bars of a section's kick-drum patterns, each as 16 steps hit or not. */
+  const kicks = (section: string) => Object.entries(resolveSection(style, section).parts).filter(([k]) => KICKS.includes(k))
+    .map(([k, u]) => style.parts[k].patterns[typeof u === "string" ? u : u.p]);
+  const fourOnTheFloor = (pat: string) => Array.from({ length: pat.length / 16 }, (_, b) => pat.slice(b * 16, b * 16 + 16)).every(bar => [...bar].every((c, i) => (i % 4 === 0) === (c !== "." && c !== "-")));
+  it("names a four-on-the-floor, a breakbeat and a breakdown section for every wave", () => {
+    for (const a of style.arc) {
+      const S = a.sections!;
+      for (const s of [S.land!, ...S.four]) expect(kicks(s).some(fourOnTheFloor), `${a.name} ${s}`).toBe(true);
+      for (const s of S.breaks) {
+        expect(kicks(s).length, `${a.name} ${s}`).toBeGreaterThan(0);
+        expect(kicks(s).some(fourOnTheFloor), `${a.name} ${s}`).toBe(false);
+        expect(Object.keys(resolveSection(style, s).parts).some(k => k === "snare"), `${a.name} ${s}`).toBe(true);
+      }
+      for (const s of S.breakdown) expect(kicks(s), `${a.name} ${s}`).toEqual([]);
+      // the melody plays in all of them
+      for (const s of [S.land!, ...S.four, ...S.breaks, ...S.breakdown]) expect(Object.keys(resolveSection(style, s).parts).some(k => style.parts[k]?.role === "motif"), `${a.name} ${s}`).toBe(true);
+    }
+  });
+
+  it("plays them on the form: A and B four on the floor, A breakbeats, C a breakdown, from where each wave lands", () => {
+    const c = new Conductor(style), landed = 36; // (wave 1 at bar 36: the build before it, then the form)
+    const cue: MusicCue = { waves: [landed], nextAt: Infinity, bootUntil: 8, knockedOut: false, siege: 0 }, S = style.arc[1].sections!;
+    for (let pass = 0; pass < 3; pass++) for (let b = 0; b < 32; b++) {
+      const bar = landed + pass * 32 + b, p = c.plan(cue, bar), kind = b < 16 ? "four" : b < 24 ? "breaks" : "breakdown";
+      const want = kind === "four" ? (pass === 0 ? S.land! : S.four[pass % S.four.length]) : S[kind][pass % S[kind].length];
+      expect(p.section, `bar ${bar}`).toBe(want);
+      expect(formClock(style, cue, bar).start).toBe(landed);
+    }
   });
 });

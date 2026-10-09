@@ -12,9 +12,9 @@
 // kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
 // supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
-import { Conductor, bootLayers, type MusicCue } from "../../rules/musicPlan";
+import { Conductor, bootLayers, formClock, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
-import { formSeedAt, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
+import { musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
 /** A part's way into the mix; `lfo`: its filter's slow wobble, one for all its notes (made when first wanted). */
 interface Channel {
@@ -215,9 +215,9 @@ export class MusicEngine {
     while (this.cAt < now + ahead) {
       if (this.cAt >= now) {
         const main = Math.floor(beatAt(clock, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
-        const events = notesAt(this.style, plan, null, main, { ...formSeedAt(this.style, this.seed, cue.knockdowns, Math.floor(main / 16)), siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
+        const events = notesAt(this.style, plan, null, main, { ...this.formAt(cue, Math.floor(main / 16)), siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
         const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
-        this.playAll(events, e => this.cAt + swing + e.offset * sps, sps);
+        this.playAll(events, e => this.cAt + (e.straight ? 0 : swing) + e.offset * sps, sps);
       }
       this.cNext++; this.cAt += sps;
     }
@@ -253,9 +253,15 @@ export class MusicEngine {
       this.tone.frequency.setValueAtTime(f0, t);
       if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { ...formSeedAt(S, this.seed, cue.knockdowns, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
+    const events = notesAt(S, plan, next, step, { ...this.formAt(cue, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
-    this.playAll(events, e => t + swing + e.offset * sps, sps);
+    this.playAll(events, e => t + (e.straight ? 0 : swing) + e.offset * sps, sps);
+  }
+
+  /** The music's seed and its form's start in bar `bar` (each knockdown re-seeds it: Ed, 2026-10-09). */
+  private formAt(cue: MusicCue, bar: number): { seed: number; formStart: number } {
+    const f = formClock(this.style, cue, bar);
+    return { seed: musicSeed(this.seed, f.n), formStart: f.start };
   }
 
   private channel(part: string, p: Patch, circle = false): Channel {

@@ -210,8 +210,8 @@ label.check input { accent-color: var(--accent); }
       lgPurr: { kind: "synth", gain: 0.2, waves: ["sawtooth"], attack: 0.8, decay: 0.6, sustain: 0.6, release: 1.8, filter: "lowpass", cutoff: 380, q: 4, lfoRate: 24, lfoDepth: 180, reverb: 0.6 }
     },
     parts: {
-      kick: { patch: "kick", role: "drum", patterns: { four: "x...x...x...x...", drive: "X...x...X...x..." } },
-      softkick: { patch: "softKick", role: "drum", patterns: { heart: "x.....x.x.......", soft: "x.......x.......", four: "x...x...x...x..." } },
+      kick: { patch: "kick", role: "drum", patterns: { four: "x...x...x...x...", drive: "X...x...X...x...", break: "x.........x.....x.x.......x..x.." } },
+      softkick: { patch: "softKick", role: "drum", patterns: { heart: "x.....x.x.......", soft: "x.......x.......", four: "x...x...x...x...", break: "x.........x.....x.x.......x..x.." } },
       boom: { patch: "kick808", role: "drum", patterns: { phonk: "x.....x...x..x..x.....x...x.....", four: "x...x...x...x..." } },
       clap: { patch: "clap", role: "drum", patterns: { back: "....x.......x...", backGhost: "....x.......x..o" } },
       snare: { patch: "snare", role: "drum", patterns: { back: "....x.......x...", break: "....x..o.o..x..o.o..x.......x.o.", roll: "x...x...x...x...x...x...x...x...x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrrrrrrrrrrrrrrrrrr...." } },
@@ -259,7 +259,7 @@ label.check input { accent-color: var(--accent); }
       breakdown: { feel: "The kick drops out: strings and a long pad, the filter half shut.", progression: "lift", chordBars: 2, sevenths: true, cutoff: [1200, 5e3], ending: "none", parts: { pad: "hold", strings: "swell", pluck: { p: "sparse", level: 0.7 }, sub: { p: "long", level: 0.6 }, shaker: { p: "eighth", level: 0.5 }, choir: { p: "hold", level: 0.7 } } },
       build: { feel: "The build into a wave: a snare roll, hats in sixteenths, a riser, the filter sweeping open.", base: "deep", cutoff: [700, 18e3], riser: true, ending: "mute", parts: { clap: null, hat: "sixteen", snare: "roll" } },
       drop: { feel: "The wave lands: everything in, a supersaw hook.", base: "deep", impact: true, cutoff: 18e3, parts: { hat: "busy", ohat: { p: "off", level: 0.6 }, clap: "back", lead: "hook", strings: { p: "long", level: 0.5 } } },
-      dark: { feel: "Dark synth-electro: a driving octave saw bass, gated pads, a snare on two and four.", progression: "dark", chordBars: 1, cutoff: 16e3, parts: { kick: "drive", snare: "back", hat: { p: "sixteen", level: 0.7 }, darkbass: "octaves", gatepad: "gate", clank: { p: "off", level: 0.7 } } },
+      dark: { feel: "Dark synth-electro: a driving octave saw bass, gated pads, a snare on two and four.", progression: "dark", chordBars: 1, cutoff: 16e3, parts: { kick: "drive", snare: "back", hat: { p: "sixteen", level: 0.7 }, darkbass: "octaves", gatepad: "gate", clank: { p: "off", level: 0.7 }, lead: { p: "long", level: 0.5 } } },
       darkDrop: { feel: "The dark drop: the supersaw hook over the octave bass.", base: "dark", impact: true, cutoff: 18e3, parts: { lead: "hook", ohat: { p: "off", level: 0.5 }, darkbass: "drive" } },
       chip: { feel: "Chiptune electro: square arps, a bouncing octave bass, a chip melody.", progression: "chip", chordBars: 1, cutoff: 16e3, parts: { kick: "four", clap: "back", hat: "off", chipbass: "bounce", arp: "sixteen", pad: { p: "pump", level: 0.6 }, chiplead: { p: "melody", energy: 0.5 } } },
       chipDrop: { feel: "Bubblegum drop: galloping bass, a running chip lead and the supersaw.", base: "chip", impact: true, cutoff: 18e3, parts: { hat: "busy", chipbass: "gallop", chiplead: "run", lead: { p: "long", level: 0.7 } } },
@@ -275,10 +275,14 @@ label.check input { accent-color: var(--accent); }
       forestStrings: { base: "forestBeat", feel: "The forest's beat with long strings over it, a voice in place of the choir.", parts: { strings: { p: "long", level: 0.5 }, choir: null, vox: { p: "sparse", level: 0.55 } } },
       deepWalk: { base: "deep", feel: "The clearing's groove with a walking bass, busier plucks, ghosted claps, the strings swelling.", parts: { bass: "walk", pluck: "busy", clap: { p: "backGhost", level: 0.8, energy: 0.4 }, strings: { p: "swell", level: 0.4 } } },
       dropStrings: { base: "drop", feel: "The drop with its long lead and an arp in place of the hook.", parts: { lead: "long", arp: { p: "eighth", level: 0.5 } } },
-      darkBreaks: { base: "dark", feel: "Night drive broken up: breakbeat hats and snare, pushed stabs.", parts: { hat: "breaks", snare: "break", stab: { p: "push", level: 0.6 } } },
+      darkBreaks: { base: "dark", feel: "Night drive broken up: a breakbeat kick, snare and hats, pushed stabs.", parts: { kick: "break", hat: "breaks", snare: "break", stab: { p: "push", level: 0.6 } } },
       industrialBreak: { base: "industrial", feel: "The factory on a breakbeat, the voice in chops.", parts: { hardkick: "break", vox: { p: "chops", energy: 0.5, level: 0.8 } } },
       breaksDark: { base: "breaks", feel: "The breaks over the dark bass and a gated pad in place of the reese.", parts: { reese: null, darkbass: "octaves", gatepad: { p: "gate", level: 0.7 } } },
-      phonkGlide: { base: "phonk", feel: "Phonk with a long lead gliding over it and the choir under, the hats in sixteenths.", parts: { lead: { p: "long", level: 0.6 }, choir: { p: "hold", level: 0.5 }, hat: "sixteen" } }
+      phonkGlide: { base: "phonk", feel: "Phonk with a long lead gliding over it and the choir under, the hats in sixteenths.", parts: { lead: { p: "long", level: 0.6 }, choir: { p: "hold", level: 0.5 }, hat: "sixteen" } },
+      forestBreaks: { base: "forestBeat", feel: "The forest's beat broken up (the form's third phrase: Ed, 2026-10-09): a soft breakbeat kick, a light snare, broken hats.", parts: { softkick: "break", snare: { p: "break", level: 0.55 }, hat: { p: "breaks", level: 0.5 } } },
+      deepBreaks: { base: "deep", feel: "The deep groove on a breakbeat (the form's third phrase): the kick and snare broken, the hats rolling.", parts: { kick: "break", snare: { p: "break", level: 0.8 }, hat: "breaks", clap: null } },
+      phonkFour: { base: "phonk", feel: "Phonk with its 808 four on the floor (the form's first two phrases).", parts: { boom: "four" } },
+      phonkFourDrop: { base: "phonkDrop", feel: "The phonk drop with its 808 four on the floor.", parts: { boom: "four" } }
     },
     intro: "intro",
     knockout: "knockout",
@@ -300,29 +304,25 @@ label.check input { accent-color: var(--accent); }
       sung: { part: "sung", patch: "soprano", octave: 3 },
       range: [-1, 8],
       cells: {
-        slow: ["x-------x-------", "x---x---x-------", "x-----x-x-------", "x-------x---x---", "x---x-x-x-------", "....x---x-------"],
-        sung: ["x-------x-------", "x---x---x-------", "x-----x-x-------", "x---x-x-x-------", "x-x-x---x-------", "....x---x---x---"],
-        mid: ["x-x-x---x-x-x---", "x--x--x-x-------", "x---x-x-x--x----", "x-x---x-x---x-x-", "x--x--x---x-x---", "..x-x-x-x---x---"],
-        busy: ["x-xxx-x-x-xxx-x-", "xxx-x-x-xxx-x---", "x-x-xx-xx-x-x---", "x-xxx-xxx-x-x-x-"]
+        slow: ["x---------------", "x---------------", "x-------x-------", "x-----x-x-------", "x-----------x---", "x---x---x-------", "T_______x-------", "x-------T_______", "x-------x---x---", "....x-----------", "x-------x-----x-"],
+        mid: ["x---x---T_______", "x-x-x---x-------", "x--x--x-x-------", "x---x-x-x---x---", "t___x---x-------", "..x-x---x---x---", "x-x-x-x-x-------", "x-----x-x---x---"]
       },
       cadence: {
-        slow: ["x-------........", "x---x---........", "x-x-x---........"],
-        sung: ["x-------........", "x---x---........", "x-x-x---........"],
-        mid: ["x-x-x-x-........", "x--x--x-........", "x---x-x-........"],
-        busy: ["x-xxx-x-........", "xxx-x-x-........", "x-x-xx-x........"]
+        slow: ["x-------........", "x---x---........", "x-----x-........", "T_______........"],
+        mid: ["x-x-x---........", "t___x---........", "x--x--x-........"]
       },
-      busy: { pluck: "mid", lead: "mid", chiplead: "busy", vox: "mid", bell: "mid", lgHorn: "slow", sung: "sung" }
+      pace: { default: 0.25, pluck: 0.35, lead: 0.3, chiplead: 0.5, vox: 0.3, bell: 0.35, lgHorn: 0.1, sung: 0.2 }
     },
     arc: [
-      { name: "Forest", energy: 0.2, progression: "forest", arrive: [["forest", 16]], loop: [["forest", 16], ["forestBeat", 16], ["whisper", 8], ["forestBeat", 16]], build: "rise", variants: [[["forestArp", 16], ["forestBeat", 16], ["whisper", 8], ["forestStrings", 16]], [["forest", 16], ["forestStrings", 16], ["ether", 8], ["forestBeat", 16]]] },
-      { name: "Clearing", energy: 0.3, arrive: [["deep", 16]], loop: [["deep", 16], ["breakdown", 8], ["deep", 16], ["forestBeat", 8]], build: "rise", variants: [[["deepWalk", 16], ["breakdown", 8], ["deep", 16], ["forestArp", 8]], [["deep", 16], ["ether", 8], ["deepWalk", 16], ["forestBeat", 8]]] },
-      { name: "Lanterns", energy: 0.45, arrive: [["drop", 16]], loop: [["deep", 16], ["breakdown", 8], ["drop", 16]], build: "build", variants: [[["deepWalk", 16], ["breakdown", 8], ["dropStrings", 16]], [["drop", 16], ["ether", 8], ["deep", 16]]] },
-      { name: "Night drive", energy: 0.6, arrive: [["darkDrop", 16]], loop: [["dark", 16], ["whisper", 8], ["darkDrop", 16]], build: "build", variants: [[["darkBreaks", 16], ["whisper", 8], ["darkDrop", 16]], [["dark", 16], ["ether", 8], ["darkBreaks", 16]]] },
-      { name: "Industrial", energy: 0.7, arrive: [["industrialDrop", 16]], loop: [["industrial", 16], ["ether", 8], ["industrialDrop", 16]], build: "build", variants: [[["industrialBreak", 16], ["ether", 8], ["industrialDrop", 16]], [["industrial", 16], ["whisper", 8], ["industrialBreak", 16]]] },
-      { name: "Breakbeat", energy: 0.8, arrive: [["breaksDrop", 16]], loop: [["breaks", 16], ["ether", 8], ["breaksDrop", 16]], build: "build", variants: [[["breaksDark", 16], ["ether", 8], ["breaksDrop", 16]], [["breaks", 16], ["whisper", 8], ["breaksDark", 16]]] },
-      { name: "Frenzy", energy: 0.88, arrive: [["breaksDrop", 16]], loop: [["breaks", 16], ["chipDrop", 8], ["industrialDrop", 16], ["ether", 4], ["breaksDrop", 16]], build: "build", variants: [[["breaksDark", 16], ["chipDrop", 8], ["industrialBreak", 16], ["ether", 4], ["breaksDrop", 16]]] },
-      { name: "Phonk", energy: 0.95, arrive: [["phonkDrop", 16]], loop: [["phonk", 16], ["whisper", 4], ["phonkDrop", 16]], build: "build", variants: [[["phonkGlide", 16], ["whisper", 4], ["phonkDrop", 16]], [["phonk", 16], ["ether", 4], ["phonkGlide", 16]]] },
-      { name: "Finale", energy: 1, arrive: [["phonkDrop", 16]], loop: [["phonkDrop", 16], ["breaksDrop", 8], ["industrialDrop", 8]], build: "build", buildBars: 4, variants: [[["phonkDrop", 16], ["breaksDark", 8], ["industrialBreak", 8]], [["breaksDrop", 16], ["phonkGlide", 8], ["industrialDrop", 8]]] }
+      { name: "Forest", energy: 0.2, progression: "forest", sections: { land: "forestBeat", four: ["forestBeat", "forestStrings"], breaks: ["forestBreaks"], breakdown: ["breakdown", "whisper", "ether"] }, build: "rise" },
+      { name: "Clearing", energy: 0.3, sections: { land: "deep", four: ["deep", "deepWalk"], breaks: ["deepBreaks"], breakdown: ["breakdown", "ether"] }, build: "rise" },
+      { name: "Lanterns", energy: 0.45, sections: { land: "drop", four: ["deep", "dropStrings", "deepWalk"], breaks: ["deepBreaks"], breakdown: ["breakdown", "ether"] }, build: "build" },
+      { name: "Night drive", energy: 0.6, sections: { land: "darkDrop", four: ["dark"], breaks: ["darkBreaks"], breakdown: ["whisper", "ether"] }, build: "build" },
+      { name: "Industrial", energy: 0.7, sections: { land: "industrialDrop", four: ["industrial"], breaks: ["industrialBreak"], breakdown: ["ether", "whisper"] }, build: "build" },
+      { name: "Breakbeat", energy: 0.8, sections: { land: "industrialDrop", four: ["industrial", "chip"], breaks: ["breaks", "breaksDark"], breakdown: ["ether"] }, build: "build" },
+      { name: "Frenzy", energy: 0.88, sections: { land: "chipDrop", four: ["chip", "industrial"], breaks: ["breaksDrop", "breaksDark"], breakdown: ["ether", "whisper"] }, build: "build" },
+      { name: "Phonk", energy: 0.95, sections: { land: "phonkFourDrop", four: ["phonkFour"], breaks: ["breaksDark", "darkBreaks"], breakdown: ["whisper"] }, build: "build" },
+      { name: "Finale", energy: 1, sections: { land: "phonkFourDrop", four: ["industrialDrop", "phonkFourDrop", "dropStrings"], breaks: ["breaksDrop", "breaksDark"], breakdown: ["ether", "whisper"] }, build: "build", buildBars: 4 }
     ]
   };
 
@@ -9309,6 +9309,8 @@ label.check input { accent-color: var(--accent); }
     boot: { transform: 0.9 },
     _party: `motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave each time the ley pulse reaches the next stone on the route (Ed, 2026-10-09: "Pure constant speed"; leyLines.pulseSpeed: no fixed interval, each gap its link's length over the speed), setting off startDelay seconds after home's boot, each waking areasPerWave areas (one per witch: Ed, 2026-10-04), chosen by picker. An area cleared of its own wild creatures before its wave (Ed, 2026-10-07: every one invited or run off; its legend and its circle's baby don't count) is partified at once, as its wave would (rules/clear.ts); the waves keep to the route all the same, and the wave that comes to a stone already playing changes nothing in the rules but celebrates (the waveCelebrate event). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all crosses itself at most a few times, within Ed's rules: a spiral (Ed, 2026-10-06, of the mock-up: "This last example looks great!"; out from home ring by ring, the same way round, a little lobe, a few crossings); noisy (the picker before it, and the route's own fallback past the crossing rules) chooses among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).`,
     party: { motes: { perPatch: 4, from: 10, to: 34, speed: 1.2 }, uplight: { strength: 0.13, pulse: 0.04, edge: 10 }, startDelay: 0, areasPerWave: 1, picker: "route", noisy: { wobble: 0.8, lobeSize: 500, candidates: 3, spreadFromLast: true }, transition: 2.5, lightReach: 30, lightStrength: 1.6 },
+    _blood: `Blood trails (Ed, 2026-10-09: "hurt creatures leave a little trail of blood, the more hurt they are the more blood they leave? The blood vanishes over time" and "bloody footprints perhaps"; render/leash/blood.ts): a hurt creature within range metres of her leaves small dark-red pixel marks on the ground as it moves, fading over fade seconds; the more hurt, the more often and the redder. style: prints (footprints at its stride, left and right; four-legged ones in pairs, insects a tiny track; flyers, birds and snakes drip drops instead), prints+drops (and drops when badly hurt) or drops (drops only). rate: drops a second at none of its health left (by how hurt, squared). colour: red (a dark red on the night palette) or neon (a deep shade of the creature's own neon). cap: marks at once (the oldest gives way). Healed, it stops.`,
+    blood: { on: true, style: "prints+drops", colour: "red", fade: 8, rate: 3, cap: 600, range: 60 },
     _soundsystemGen: `The generated soundsystems (Ed, 2026-10-08: "a variety, for them all to point towards the dancefloor (like the central speaker ones do; back facing ones face outwards), and broadly for the ones further away to be larger ... we don't see any exactly identical ones on the map"; art/soundsystemGen.js, render/soundsystemGen.ts): each area's its own genome, dealt as one set a map (none alike). Sized from near times the old stacks' height (three times the witch) by the dancefloor to far times at to metres out and beyond (from metres and nearer all near), more tiers and wider the further out. Turned along the line to the dancefloor, facing it from the far side and away from it on the near side so every one shows its front, as the ring's speakers (toward: always facing it, the near ones showing their carved backs), never more than maxYaw degrees off facing us (a wide stack side-on is a sliver). Baked in the background ahead waves ahead of the party. on false: the old three stacks.`,
     soundsystemGen: { on: true, near: 0.8, far: 1.6, from: 120, to: 1e3, maxYaw: 60, toward: false, ahead: 2 },
     _stringLights: "Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres, coloured by mode: palette cycles through all of palette's colours (Ed, 2026-10-08: 'I liked the six bright colour string lights, please bring them back'); areaNeon is warm white, the palette's first, two bulbs in three and the area's own neon the third (the art director, round 2: one neon an area plus the warm light). The light's grade leaves them their colour (light.spooky only drains what's darker than its gradePivot; measured from the treetops, the same with and without it), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.",
@@ -9588,15 +9590,14 @@ label.check input { accent-color: var(--accent); }
   }
   function formPhrase(style2, seed2, letter) {
     const F = style2.form, P2 = F.phraseBars, salt = letter.charCodeAt(0) * 13;
-    const part = letter === "A" ? formInstrument(F, seed2) : F.sung.part, busy = F.busy[part] ?? "slow";
-    const cells = F.cells[busy] ?? F.cells.slow, cads = F.cadence[busy] ?? F.cadence.slow;
+    const part = letter === "A" ? formInstrument(F, seed2) : F.sung.part, pace = F.pace[part] ?? F.pace.default ?? 0.25;
     const at2 = F.order.indexOf(letter) * P2;
     const rhythm = [];
     for (let b = 0; b < P2; b++) {
-      const r = hash2(seed2 + b * 31, 419, salt), half = Math.floor(P2 / 2);
-      if (b % half === half - 1) rhythm.push(pick2(cads, r));
+      const r = hash2(seed2 + b * 31, 419, salt), half = Math.floor(P2 / 2), kind = hash2(seed2 + b * 17, 423, salt) < pace ? "mid" : "slow";
+      if (b % half === half - 1) rhythm.push(pick2(F.cadence[kind], r));
       else if (b >= half && hash2(seed2 + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]);
-      else rhythm.push(pick2(cells, r));
+      else rhythm.push(pick2(F.cells[kind], r));
     }
     const [lo, hi] = F.range, out = new Array(P2 * 16).fill(null), onsets = [];
     let v = 2 + Math.floor(hash2(seed2, 431, salt) * 3);
@@ -9610,15 +9611,23 @@ label.check input { accent-color: var(--accent); }
     };
     for (let b = 0; b < P2; b++) {
       const tones = formChord(style2, seed2, at2 + b).tones.map((t) => mod(t, 7)), cell = rhythm[b];
-      for (let s = 0; s < 16; s++) {
-        if (cell[s] !== "x") continue;
-        let dur = 1;
-        while (s + dur < 16 && cell[s + dur] === "-") dur++;
-        const i = b * 16 + s, r = hash2(seed2 + i * 7919, 433, salt);
-        if (s % 4 === 0) v = nearest(v + pick2([-2, -1, 0, 1, 2, 3], r), (d) => tones.includes(mod(d, 7)));
+      const note = (pos, dur, strong) => {
+        const i = b * 16 + Math.floor(pos), r = hash2(seed2 + i * 7919, 433, salt);
+        if (strong) v = nearest(v + pick2([-2, -1, 0, 1, 2, 3], r), (d) => tones.includes(mod(d, 7)));
         else v = Math.max(lo, Math.min(hi, v + pick2([-2, -1, -1, 1, 1, 2], r)));
-        out[i] = { deg: v, dur };
+        out[i] = { deg: v, dur, off: pos - Math.floor(pos) };
         onsets.push(i);
+      };
+      for (let s = 0; s < 16; s++) {
+        const c = cell[s];
+        if (c === "x") {
+          let dur = 1;
+          while (s + dur < 16 && cell[s + dur] === "-") dur++;
+          note(s, dur, s % 4 === 0);
+        } else if (c === "T" || c === "t") {
+          const span = c === "T" ? 8 : 4;
+          for (let k = 0; k < 3; k++) note(s + k * span / 3, span / 3, k === 0 && s % 4 === 0);
+        }
       }
     }
     const last = onsets[onsets.length - 1];
@@ -9640,25 +9649,13 @@ label.check input { accent-color: var(--accent); }
     return p;
   }
   var musicSeed = (base, n) => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 2147483647);
-  function formSeedAt(style2, base, knockdowns, bar2) {
-    const P2 = style2.form?.phraseBars ?? 8;
-    let n = 0, formStart = 0;
-    for (const k of knockdowns ?? []) {
-      const from = (Math.floor(k / P2) + 1) * P2;
-      if (from <= bar2) {
-        n++;
-        formStart = from;
-      }
-    }
-    return { seed: musicSeed(base, n), formStart };
-  }
   function formNoteAt(style2, seed2, formStep) {
     const F = style2.form, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
     const n = phraseFor(style2, seed2, letter)[fs % (F.phraseBars * 16)];
     if (!n) return null;
     const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed2), def = style2.parts[part];
     const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
-    return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style2, style2.scales[style2.scale], n.deg, oct, 0), dur: n.dur, letter };
+    return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style2, style2.scales[style2.scale], n.deg, oct, 0), dur: n.dur, off: n.off, letter };
   }
   function sectionCutoff(sec, progress) {
     const c = sec.cutoff ?? 18e3;
@@ -9777,7 +9774,7 @@ label.check input { accent-color: var(--accent); }
     }
     if (onlyCircle) return out;
     const fn = melody > 0 ? formNoteAt(style2, ctx2.seed, formBar * 16 + s) : null;
-    if (fn) out.push({ part: fn.part, patch: fn.patch, step: step2, offset: 0, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 ? 0.9 : 0.78) * melody });
+    if (fn) out.push({ part: fn.part, patch: fn.patch, step: step2, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 && !fn.off ? 0.9 : 0.78) * melody, ...fn.dur % 1 ? { straight: true } : {} });
     if (s === 0 && barIn === 0 && sec.impact && style2.patches.impact) out.push({ part: "impact", patch: "impact", step: step2, offset: 0, dur: 16, midi: null, vel: 1 });
     if (s === 0 && sec.riser && style2.patches.riser) out.push({ part: "riser", patch: "riser", step: step2, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
     return out;
@@ -9821,15 +9818,24 @@ label.check input { accent-color: var(--accent); }
       for (const n of [...F.a, ...F.b]) if (!style2.progressions[n]) errs.push(`form: no progression "${n}"`);
       for (const n of F.instruments) if (!style2.parts[n]) errs.push(`form: no part "${n}"`);
       if (!style2.patches[F.sung.patch]) errs.push(`form: no patch "${F.sung.patch}"`);
-      for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) if (c.length !== 16 || c[0] === "-") errs.push(`form: cell ${k} "${c}" not one bar`);
+      const tripletsWhole = (c) => [...c].every((ch, i) => ch !== "T" && ch !== "t" || c.slice(i + 1, i + (ch === "T" ? 8 : 4)) === "_".repeat(ch === "T" ? 7 : 3)) && [...c].filter((ch) => ch === "_").length === [...c].reduce((n, ch) => n + (ch === "T" ? 7 : ch === "t" ? 3 : 0), 0);
+      for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) {
+        if (c.length !== 16 || c[0] === "-" || c[0] === "_" || /[^x\-._Tt]/.test(c)) errs.push(`form: cell ${k} "${c}" not one bar`);
+        else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
+      }
       for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
     }
     style2.arc.forEach((a, i) => {
-      for (const [s, bars] of [...a.arrive, ...a.loop, ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style2.buildBars]]) {
+      for (const [s, bars] of [...a.arrive ?? [], ...a.loop ?? [], ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style2.buildBars]]) {
         if (!style2.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
         if (!(bars > 0) || bars % B !== 0) errs.push(`arc ${i} (${a.name}): ${s} is ${bars} bars, not a multiple of ${B}`);
       }
-      if (!a.loop.length || (a.variants ?? []).some((v) => !v.length)) errs.push(`arc ${i} (${a.name}): nothing to loop`);
+      const S = a.sections;
+      if (S) {
+        if (!F) errs.push(`arc ${i} (${a.name}): sections without a form`);
+        if (!S.four.length || !S.breaks.length || !S.breakdown.length) errs.push(`arc ${i} (${a.name}): a kind of section missing`);
+        for (const s of [S.land, ...S.four, ...S.breaks, ...S.breakdown]) if (s !== void 0 && !style2.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
+      } else if (!a.loop?.length || (a.variants ?? []).some((v) => !v.length)) errs.push(`arc ${i} (${a.name}): nothing to loop`);
       if (a.progression && !style2.progressions[a.progression]) errs.push(`arc ${i} (${a.name}): no progression "${a.progression}"`);
     });
     return errs;
@@ -9856,7 +9862,7 @@ label.check input { accent-color: var(--accent); }
     }
     return null;
   }
-  function planBlock(style2, cue2, bar2) {
+  function waveState(style2, cue2, bar2) {
     const B = style2.blockBars;
     let w = 0;
     while (w < cue2.waves.length && blockAfter(cue2.waves[w], B) <= bar2) w++;
@@ -9867,6 +9873,23 @@ label.check input { accent-color: var(--accent); }
       next = Infinity;
       w++;
     }
+    return { w, arrival, next };
+  }
+  function formClock(style2, cue2, bar2) {
+    const P2 = style2.form?.phraseBars ?? 8, B = style2.blockBars;
+    const landed = (b) => b < cue2.bootUntil ? 0 : blockAfter(waveState(style2, cue2, b).arrival, B);
+    let n = 0, line = -Infinity;
+    for (const k of cue2.knockdowns ?? []) {
+      const kb = Math.floor(k), s0 = Math.max(landed(kb), line), at2 = s0 + (Math.floor((kb - s0) / P2) + 1) * P2;
+      if (at2 > bar2) break;
+      n++;
+      line = at2;
+    }
+    return { start: Math.max(landed(bar2), line), n };
+  }
+  function planBlock(style2, cue2, bar2) {
+    const B = style2.blockBars;
+    const { w, arrival, next } = waveState(style2, cue2, bar2);
     const arc = cue2.forceWave ?? w, step2 = arcStep(style2, arc);
     const plan = (section, start2, bars) => ({ section, start: start2, bars, wave: w, arc });
     if (cue2.forceSection && style2.sections[cue2.forceSection]) return plan(cue2.forceSection, bar2 - bar2 % 16, 16);
@@ -9877,11 +9900,19 @@ label.check input { accent-color: var(--accent); }
       const drop = blockAfter(next, B);
       if (drop > bar2 && drop - bar2 <= buildBars) return plan(step2.build, drop - buildBars, buildBars);
     }
+    const S = step2.sections, F = style2.form;
+    if (S && F) {
+      const fs = formClock(style2, cue2, bar2).start, L2 = F.order.length * F.phraseBars, P2 = F.phraseBars, k2 = bar2 - fs;
+      const pass2 = Math.floor(k2 / L2), pos = k2 - pass2 * L2, at2 = fs + pass2 * L2, of = (l) => l[pass2 % l.length];
+      if (pos < 2 * P2) return { ...plan(pass2 === 0 && S.land ? S.land : of(S.four), at2, 2 * P2), pass: pass2 };
+      if (pos < 3 * P2) return { ...plan(of(S.breaks), at2 + 2 * P2, P2), pass: pass2 };
+      return { ...plan(of(S.breakdown), at2 + 3 * P2, L2 - 3 * P2), pass: pass2 };
+    }
     const k = Math.max(0, bar2 - blockAfter(arrival, B));
-    const arrive = step2.arrive.reduce((n, [, b]) => n + b, 0);
-    const first = walk(step2.arrive, k);
+    const arrive = (step2.arrive ?? []).reduce((n, [, b]) => n + b, 0);
+    const first = walk(step2.arrive ?? [], k);
     if (first) return plan(first.section, bar2 - first.offset, first.bars);
-    const loops = [step2.loop, ...step2.variants ?? []], len = (l) => Math.max(1, l.reduce((n, [, b]) => n + b, 0));
+    const loops = [step2.loop ?? [], ...step2.variants ?? []], len = (l) => Math.max(1, l.reduce((n, [, b]) => n + b, 0));
     let j = k - arrive, pass = 0;
     while (j >= len(loops[pass % loops.length])) {
       j -= len(loops[pass % loops.length]);
@@ -10184,9 +10215,9 @@ label.check input { accent-color: var(--accent); }
       while (this.cAt < now + ahead) {
         if (this.cAt >= now) {
           const main = Math.floor(beatAt(clock2, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue2, Math.floor(main / 16));
-          const events = notesAt(this.style, plan, null, main, { ...formSeedAt(this.style, this.seed, cue2.knockdowns, Math.floor(main / 16)), siege: 0, circle: cue2.circle, only: "circle", circleStep: this.cNext });
+          const events = notesAt(this.style, plan, null, main, { ...this.formAt(cue2, Math.floor(main / 16)), siege: 0, circle: cue2.circle, only: "circle", circleStep: this.cNext });
           const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
-          this.playAll(events, (e) => this.cAt + swing + e.offset * sps, sps);
+          this.playAll(events, (e) => this.cAt + (e.straight ? 0 : swing) + e.offset * sps, sps);
         }
         this.cNext++;
         this.cAt += sps;
@@ -10221,9 +10252,14 @@ label.check input { accent-color: var(--accent); }
         this.tone.frequency.setValueAtTime(f0, t);
         if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
       }
-      const events = notesAt(S, plan, next, step2, { ...formSeedAt(S, this.seed, cue2.knockdowns, bar2), siege: cue2.siege, party: cue2.party, legend: cue2.legend, only: "main", build: cue2.speakerBars !== void 0 ? bootLayers(cue2, bar2) : void 0 });
+      const events = notesAt(S, plan, next, step2, { ...this.formAt(cue2, bar2), siege: cue2.siege, party: cue2.party, legend: cue2.legend, only: "main", build: cue2.speakerBars !== void 0 ? bootLayers(cue2, bar2) : void 0 });
       const swing = step2 % 2 === 1 ? S.swing * sps : 0;
-      this.playAll(events, (e) => t + swing + e.offset * sps, sps);
+      this.playAll(events, (e) => t + (e.straight ? 0 : swing) + e.offset * sps, sps);
+    }
+    /** The music's seed and its form's start in bar `bar` (each knockdown re-seeds it: Ed, 2026-10-09). */
+    formAt(cue2, bar2) {
+      const f = formClock(this.style, cue2, bar2);
+      return { seed: musicSeed(this.seed, f.n), formStart: f.start };
     }
     channel(part, p, circle = false) {
       const key = circle ? `circle:${part}` : part;

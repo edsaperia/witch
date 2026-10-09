@@ -178,16 +178,38 @@ function walk(seq: [string, number][], k: number): { section: string; offset: nu
   return null;
 }
 
-/** The plan for the block starting at bar `bar` (a multiple of style.blockBars), from the cue as
- *  known now. The same style, cue and bar always give the same plan. */
-export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockPlan {
+/** The wave the music is at in bar `bar`, the bar it arrived on and the bar the next is due (a wave due by then counts
+ *  as come: the build leads straight into it). */
+function waveState(style: MusicStyle, cue: MusicCue, bar: number): { w: number; arrival: number; next: number } {
   const B = style.blockBars;
-  // the wave at that bar (a wave due by then counts as come: the build leads straight into it)
   let w = 0;
   while (w < cue.waves.length && blockAfter(cue.waves[w], B) <= bar) w++;
   let next = w < cue.waves.length ? cue.waves[w] : cue.nextAt;
   let arrival = w > 0 ? cue.waves[w - 1] : cue.bootUntil;
   if (w >= cue.waves.length && Number.isFinite(next) && blockAfter(next, B) <= bar && bar >= cue.bootUntil) { arrival = next; next = Infinity; w++; }
+  return { w, arrival, next };
+}
+
+/** The form's clock in bar `bar` (Ed, 2026-10-09: the 32-bar ABAC form, its melodies and its sections): the bar it last
+ *  started on (from bar 0 through the boot, then on the block line each wave lands on, and on the next phrase line after
+ *  each knockdown), and how many knockdowns have re-seeded the music by then (musicScore.ts musicSeed). */
+export function formClock(style: MusicStyle, cue: MusicCue, bar: number): { start: number; n: number } {
+  const P = style.form?.phraseBars ?? 8, B = style.blockBars;
+  const landed = (b: number) => b < cue.bootUntil ? 0 : blockAfter(waveState(style, cue, b).arrival, B);
+  let n = 0, line = -Infinity;
+  for (const k of cue.knockdowns ?? []) {
+    const kb = Math.floor(k), s0 = Math.max(landed(kb), line), at = s0 + (Math.floor((kb - s0) / P) + 1) * P; // (the form running then: its next phrase line)
+    if (at > bar) break;
+    n++; line = at;
+  }
+  return { start: Math.max(landed(bar), line), n };
+}
+
+/** The plan for the block starting at bar `bar` (a multiple of style.blockBars), from the cue as
+ *  known now. The same style, cue and bar always give the same plan. */
+export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockPlan {
+  const B = style.blockBars;
+  const { w, arrival, next } = waveState(style, cue, bar);
   const arc = cue.forceWave ?? w, step = arcStep(style, arc);
   const plan = (section: string, start: number, bars: number): BlockPlan => ({ section, start, bars, wave: w, arc });
   if (cue.forceSection && style.sections[cue.forceSection]) return plan(cue.forceSection, bar - (bar % 16), 16);
@@ -200,13 +222,23 @@ export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockP
     const drop = blockAfter(next, B);
     if (drop > bar && drop - bar <= buildBars) return plan(step.build, drop - buildBars, buildBars);
   }
+  // the form's sections (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections
+  // breakbeats, and the fourth a breakdown"): from the form's start, round and round, a new section of each kind each pass
+  const S = step.sections, F = style.form;
+  if (S && F) {
+    const fs = formClock(style, cue, bar).start, L = F.order.length * F.phraseBars, P = F.phraseBars, k = bar - fs;
+    const pass = Math.floor(k / L), pos = k - pass * L, at = fs + pass * L, of = (l: string[]) => l[pass % l.length];
+    if (pos < 2 * P) return { ...plan(pass === 0 && S.land ? S.land : of(S.four), at, 2 * P), pass };
+    if (pos < 3 * P) return { ...plan(of(S.breaks), at + 2 * P, P), pass };
+    return { ...plan(of(S.breakdown), at + 3 * P, L - 3 * P), pass };
+  }
   // the wave's own sections: its arrival, then its loop
   const k = Math.max(0, bar - blockAfter(arrival, B));
-  const arrive = step.arrive.reduce((n, [, b]) => n + b, 0);
-  const first = walk(step.arrive, k);
+  const arrive = (step.arrive ?? []).reduce((n, [, b]) => n + b, 0);
+  const first = walk(step.arrive ?? [], k);
   if (first) return plan(first.section, bar - first.offset, first.bars);
   // then round the loop, a variant each pass (overnight, 2026-10-06: a long wave mustn't loop audibly)
-  const loops = [step.loop, ...(step.variants ?? [])], len = (l: [string, number][]) => Math.max(1, l.reduce((n, [, b]) => n + b, 0));
+  const loops = [step.loop ?? [], ...(step.variants ?? [])], len = (l: [string, number][]) => Math.max(1, l.reduce((n, [, b]) => n + b, 0));
   let j = k - arrive, pass = 0;
   while (j >= len(loops[pass % loops.length])) { j -= len(loops[pass % loops.length]); pass++; }
   const hit = walk(loops[pass % loops.length], j)!;

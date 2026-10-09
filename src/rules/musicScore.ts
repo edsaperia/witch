@@ -105,9 +105,14 @@ export interface ArcStep {
    *  one now (the tempo stays at the style's 120 but for her knockdowns, rules/beat.ts knockdownTempo). Every step plays
    *  in the style's one scale (dorian: Ed, the same day, "Keep it all in the dorian"). */
   bpm?: number;
+  /** Its sections on the form (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections
+   *  breakbeats, and the fourth a breakdown"): A and B one four-on-the-floor block (`land` the first time round, as the
+   *  wave lands), the second A a breakbeat one, C a breakdown; each list taken in turn on later passes. With these,
+   *  `arrive`, `loop` and `variants` aren't used. */
+  sections?: { land?: string; four: string[]; breaks: string[]; breakdown: string[] };
   /** The sections played as the wave arrives, then the ones looped till the next wave: [name, bars]. */
-  arrive: [string, number][];
-  loop: [string, number][];
+  arrive?: [string, number][];
+  loop?: [string, number][];
   /** Other loops taken in turn on later passes (overnight, 2026-10-06: a 30-minute run shouldn't
    *  loop audibly): pass 0 plays `loop`, pass 1 `variants[0]`, and so on round. */
   variants?: [string, number][][];
@@ -182,12 +187,14 @@ export interface FormDef {
   sung: { part: string; patch: string; octave: number };
   /** The melody's range in scale steps above the root (in its part's octave). */
   range: [number, number];
-  /** Rhythm cells, a bar each (x a note, - held, . a rest), by how busy a part is; `cadence` cells end a half-phrase
-   *  (its 4th and 8th bars) on rests, so every phrase breathes. */
-  cells: Record<string, string[]>;
-  cadence: Record<string, string[]>;
-  /** How busy each instrument plays (its cells), the sung part's too ("slow" if not listed). */
-  busy: Record<string, string>;
+  /** Rhythm cells, a bar each (x a note, - held, . a rest, T a quarter-note triplet: three notes over the 8 sixteenths
+   *  it and its 7 _ fill, t an eighth-note triplet over 4), "slow" (whole and half notes, quarter triplets: Ed, 2026-10-09,
+   *  "keep the melodies relatively slow, but not always. Use whole notes and triplets quite often") and "mid";
+   *  `cadence` cells end a half-phrase (its 4th and 8th bars) on rests, so every phrase breathes. */
+  cells: { slow: string[]; mid: string[] };
+  cadence: { slow: string[]; mid: string[] };
+  /** The share of each part's bars taken from the "mid" cells (the rest "slow"); `default` for any not listed. */
+  pace: Record<string, number>;
 }
 
 /** What the conductor has chosen for a block of bars. */
@@ -218,6 +225,8 @@ export interface NoteEvent {
   midi: number | null;
   /** 0-1, the part's level in it. */
   vel: number;
+  /** Played straight, without the swing (a triplet's notes). */
+  straight?: boolean;
   /** Risers: the build's progress from and to over this note (0-1). */
   from?: number;
   to?: number;
@@ -324,24 +333,24 @@ export function formChord(style: MusicStyle, seed: number, formBar: number, seve
   return { root, tones };
 }
 
-/** A note of a phrase: scale steps above the root, and its length in sixteenths. */
-export interface PhraseNote { deg: number; dur: number }
+/** A note of a phrase: scale steps above the root, its length in sixteenths, and how far after its sixteenth it starts
+ *  (a triplet's: a fraction of a sixteenth). */
+export interface PhraseNote { deg: number; dur: number; off: number }
 
 /** One phrase of the form for a seed: a note or null (a rest or a held note) on each of its sixteenths. A seeded walk
- *  over the form's chords, landing on chord tones on the beats, in bar-long rhythm cells by how busy its part plays
+ *  over the form's chords, landing on chord tones on the beats, in bar-long rhythm cells (mostly slow: whole notes, halves and triplets; its part's `pace` of them busier)
  *  (the 2nd half-phrase's echoing the 1st's now and then), each half-phrase ending on rests; A ends open (a chord tone
  *  not the root), B on a question (the 2nd or 5th), C answering it on the root. */
 export function formPhrase(style: MusicStyle, seed: number, letter: string): (PhraseNote | null)[] {
   const F = style.form!, P = F.phraseBars, salt = letter.charCodeAt(0) * 13;
-  const part = letter === "A" ? formInstrument(F, seed) : F.sung.part, busy = F.busy[part] ?? "slow";
-  const cells = F.cells[busy] ?? F.cells.slow, cads = F.cadence[busy] ?? F.cadence.slow;
+  const part = letter === "A" ? formInstrument(F, seed) : F.sung.part, pace = F.pace[part] ?? F.pace.default ?? 0.25;
   const at = F.order.indexOf(letter) * P; // (its chords: its first place in the form)
   const rhythm: string[] = [];
   for (let b = 0; b < P; b++) {
-    const r = hash2(seed + b * 31, 419, salt), half = Math.floor(P / 2);
-    if (b % half === half - 1) rhythm.push(pick(cads, r));
+    const r = hash2(seed + b * 31, 419, salt), half = Math.floor(P / 2), kind = hash2(seed + b * 17, 423, salt) < pace ? "mid" : "slow";
+    if (b % half === half - 1) rhythm.push(pick(F.cadence[kind], r));
     else if (b >= half && hash2(seed + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]); // (the answer echoing the call)
-    else rhythm.push(pick(cells, r));
+    else rhythm.push(pick(F.cells[kind], r));
   }
   const [lo, hi] = F.range, out: (PhraseNote | null)[] = new Array(P * 16).fill(null), onsets: number[] = [];
   let v = 2 + Math.floor(hash2(seed, 431, salt) * 3);
@@ -352,15 +361,23 @@ export function formPhrase(style: MusicStyle, seed: number, letter: string): (Ph
   };
   for (let b = 0; b < P; b++) {
     const tones = formChord(style, seed, at + b).tones.map(t => mod(t, 7)), cell = rhythm[b];
-    for (let s = 0; s < 16; s++) {
-      if (cell[s] !== "x") continue;
-      let dur = 1;
-      while (s + dur < 16 && cell[s + dur] === "-") dur++;
-      const i = b * 16 + s, r = hash2(seed + i * 7919, 433, salt);
-      if (s % 4 === 0) v = nearest(v + pick([-2, -1, 0, 1, 2, 3], r), d => tones.includes(mod(d, 7))); // (the beats: a chord tone)
+    const note = (pos: number, dur: number, strong: boolean) => {
+      const i = b * 16 + Math.floor(pos), r = hash2(seed + i * 7919, 433, salt);
+      if (strong) v = nearest(v + pick([-2, -1, 0, 1, 2, 3], r), d => tones.includes(mod(d, 7))); // (the beats: a chord tone)
       else v = Math.max(lo, Math.min(hi, v + pick([-2, -1, -1, 1, 1, 2], r)));
-      out[i] = { deg: v, dur };
+      out[i] = { deg: v, dur, off: pos - Math.floor(pos) };
       onsets.push(i);
+    };
+    for (let s = 0; s < 16; s++) {
+      const c = cell[s];
+      if (c === "x") {
+        let dur = 1;
+        while (s + dur < 16 && cell[s + dur] === "-") dur++;
+        note(s, dur, s % 4 === 0);
+      } else if (c === "T" || c === "t") {
+        const span = c === "T" ? 8 : 4; // (three notes in the time of two)
+        for (let k = 0; k < 3; k++) note(s + (k * span) / 3, span / 3, k === 0 && s % 4 === 0);
+      }
     }
   }
   const last = onsets[onsets.length - 1];
@@ -383,24 +400,14 @@ function phraseFor(style: MusicStyle, seed: number, letter: string): (PhraseNote
 /** The music's seed for knockdown `n` of a run (0: the run's own seed). */
 export const musicSeed = (base: number, n: number): number => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 0x7fffffff);
 
-/** The music's seed in bar `bar`, and the bar its form began on: each knockdown (`knockdowns`, the bars they came in)
- *  re-seeds it from the next phrase line after it (Ed, 2026-10-09: "Being knocked down changes the music to a random new
- *  seed"), its form starting there with a new A. */
-export function formSeedAt(style: MusicStyle, base: number, knockdowns: readonly number[] | undefined, bar: number): { seed: number; formStart: number } {
-  const P = style.form?.phraseBars ?? 8;
-  let n = 0, formStart = 0;
-  for (const k of knockdowns ?? []) { const from = (Math.floor(k / P) + 1) * P; if (from <= bar) { n++; formStart = from; } }
-  return { seed: musicSeed(base, n), formStart };
-}
-
 /** The form's note (if one starts) on the form's sixteenth `formStep`: its part, patch and MIDI note, and its length. */
-export function formNoteAt(style: MusicStyle, seed: number, formStep: number): { part: string; patch: string; midi: number; dur: number; letter: string } | null {
+export function formNoteAt(style: MusicStyle, seed: number, formStep: number): { part: string; patch: string; midi: number; dur: number; off: number; letter: string } | null {
   const F = style.form!, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
   const n = phraseFor(style, seed, letter)[fs % (F.phraseBars * 16)];
   if (!n) return null;
   const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed), def = style.parts[part];
   const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
-  return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style, style.scales[style.scale], n.deg, oct, 0), dur: n.dur, letter };
+  return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style, style.scales[style.scale], n.deg, oct, 0), dur: n.dur, off: n.off, letter };
 }
 
 /** The section's low-pass now (Hz), at `progress` (0-1) through it. */
@@ -538,7 +545,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   if (onlyCircle) return out;
   // the form's melody: A on its instrument, B and C sung
   const fn = melody > 0 ? formNoteAt(style, ctx.seed, formBar * 16 + s) : null;
-  if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: 0, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 ? 0.9 : 0.78) * melody });
+  if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 && !fn.off ? 0.9 : 0.78) * melody, ...(fn.dur % 1 ? { straight: true } : {}) });
   // the section's own events: a crash on its first beat, a riser over a build (one note a bar)
   if (s === 0 && barIn === 0 && sec.impact && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 });
   if (s === 0 && sec.riser && style.patches.riser) out.push({ part: "riser", patch: "riser", step, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
@@ -581,15 +588,25 @@ export function checkStyle(style: MusicStyle): string[] {
     for (const n of [...F.a, ...F.b]) if (!style.progressions[n]) errs.push(`form: no progression "${n}"`);
     for (const n of F.instruments) if (!style.parts[n]) errs.push(`form: no part "${n}"`);
     if (!style.patches[F.sung.patch]) errs.push(`form: no patch "${F.sung.patch}"`);
-    for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) if (c.length !== 16 || c[0] === "-") errs.push(`form: cell ${k} "${c}" not one bar`);
+    const tripletsWhole = (c: string) => [...c].every((ch, i) => ch !== "T" && ch !== "t" || c.slice(i + 1, i + (ch === "T" ? 8 : 4)) === "_".repeat(ch === "T" ? 7 : 3))
+      && [...c].filter(ch => ch === "_").length === [...c].reduce((n, ch) => n + (ch === "T" ? 7 : ch === "t" ? 3 : 0), 0);
+    for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) {
+      if (c.length !== 16 || c[0] === "-" || c[0] === "_" || /[^x\-._Tt]/.test(c)) errs.push(`form: cell ${k} "${c}" not one bar`);
+      else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
+    }
     for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
   }
   style.arc.forEach((a, i) => {
-    for (const [s, bars] of [...a.arrive, ...a.loop, ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style.buildBars] as [string, number]]) {
+    for (const [s, bars] of [...(a.arrive ?? []), ...(a.loop ?? []), ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style.buildBars] as [string, number]]) {
       if (!style.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
       if (!(bars > 0) || bars % B !== 0) errs.push(`arc ${i} (${a.name}): ${s} is ${bars} bars, not a multiple of ${B}`);
     }
-    if (!a.loop.length || (a.variants ?? []).some(v => !v.length)) errs.push(`arc ${i} (${a.name}): nothing to loop`);
+    const S = a.sections;
+    if (S) {
+      if (!F) errs.push(`arc ${i} (${a.name}): sections without a form`);
+      if (!S.four.length || !S.breaks.length || !S.breakdown.length) errs.push(`arc ${i} (${a.name}): a kind of section missing`);
+      for (const s of [S.land, ...S.four, ...S.breaks, ...S.breakdown]) if (s !== undefined && !style.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
+    } else if (!a.loop?.length || (a.variants ?? []).some(v => !v.length)) errs.push(`arc ${i} (${a.name}): nothing to loop`);
     if (a.progression && !style.progressions[a.progression]) errs.push(`arc ${i} (${a.name}): no progression "${a.progression}"`);
   });
   return errs;
