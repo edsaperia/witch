@@ -244,10 +244,6 @@ export class View {
   /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
   alarms = newAlarms();
   alarmCues: AlarmIndicators | null = null;
-  /** Pointers to the last few wild animals holding the area she's in (render/view/hud.ts; rules/clear.ts wildLeft), and that
-   *  list, looked up four times a second. */
-  wildPointers: StoneIndicator[] = [];
-  wildLeftList: { at: number; list: Creature[] } = { at: -Infinity, list: [] };
   /** The knockdowns' BPM bonus the wave pointer last pulsed for (render/view/hud.ts). */
   pointerBonus = 0;
   readonly minimap: Minimap;

@@ -162,6 +162,19 @@ export class LeashView {
    *  the canopy; the ring of how near a party animal is to evolving; and evolving itself: motes
    *  spiralling up through the bar, a flash on the bar line as it becomes its next level, a burst
    *  of party sparkles. */
+  /** The ring stones' glowing dots this frame (render/view/home.ts drawSpeakers): each one's middle in the world and how bright. */
+  ringGlows: { x: number; y: number; z: number; k: number }[] = [];
+  /** Their glow (Ed, 2026-10-09: "They should glow"): a soft cyan halo round each dot, smooth as the berries' (docs/STYLE.md §1
+   *  rule 3: light may be smooth), and a core bright enough for the bloom; the dot's own pixels stay on the grid in the sprite. */
+  drawRingGlows(time: number): void {
+    const dot = this.uv(0);
+    for (const [i, q] of this.ringGlows.entries()) {
+      const tw = 0.9 + 0.1 * Math.sin(time * 1.7 + i * 0.9);
+      this.standing.add(q.x, q.y, q.z + 0.15, 1.6, dot, 0.3 * 1.5, 0.9 * 1.5, 1.5, 0.8 * q.k * tw); // the soft halo
+      this.standing.add(q.x, q.y, q.z + 0.16, 0.32, dot, 0.6 * 1.8, 1.8, 1.8, 0.75 * q.k); // its bright core, for the bloom
+    }
+  }
+
   drawBerries(time: number): void {
     const g = this.game, B = g.berries, t = g.tuning, w = g.witch, dot = this.uv(0), [r, gg, b] = this.berryRgb, glow = t.berries.glow;
     const treetops = w.lift > 0.5, near = treetops ? 260 : 90, beat = 60 / t.beat.bpm;
@@ -355,6 +368,7 @@ export class LeashView {
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
     this.standing.begin(); this.flat.begin(); this.over.begin(); this.solid.begin();
     this.drawBerries(time);
+    this.drawRingGlows(time);
     this.drawBosses(time);
     this.drawLetters(time);
     drawCombat(this, time, camera, width, height, hatTop);

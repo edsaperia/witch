@@ -18,7 +18,7 @@
     "homeInset": 14,
     "clearOfTreehouse": 40,
     "candidates": 16,
-    "sigilOffset": 4,
+    "sigilOffset": 6,
     "clearOfCircle": 10
   },
   "attack": {
