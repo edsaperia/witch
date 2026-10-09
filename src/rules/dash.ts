@@ -52,6 +52,9 @@ export function refundDash(d: DashState, time: number, max: number): void {
   d.readyAt = Math.min(d.readyAt, time);
 }
 
+/** How long a blink keeps her gone (dash.gone; with committed strikes on, long enough to blink through a lunge: dodge.a.gone). */
+export const blinkGone = (t: Tuning): number => (t.dodge?.a.on ? Math.max(t.dash.gone, t.dodge.a.gone) : t.dash.gone);
+
 /** Mid-blink: she's gone (not drawn, can't be hit). */
 export const dashing = (d: DashState, time: number) => time >= d.at && time < d.until;
 
@@ -62,6 +65,12 @@ export function dashCharge(d: DashState, time: number): number {
   return total > 0 ? Math.max(0, Math.min(1, (time - d.at) / total)) : 1;
 }
 
+
+/** How far the next charge has come back (0 just spent, 1 full: every charge there), for the cursor's arc. */
+export function nextCharge(d: DashState, time: number, max: number, cooldown: number): number {
+  if (d.charges >= max || d.chargeAt === Infinity) return 1;
+  return cooldown > 0 ? Math.max(0, Math.min(1, 1 - (d.chargeAt - time) / cooldown)) : 1;
+}
 
 /** The dash button: blink if she's on the ground, off her seat and it's ready, toward the cursor
  *  (`aimX`, `aimZ`: the ground under it from her, metres; 0, 0 with none) or, with none, the way she
@@ -78,7 +87,7 @@ export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: num
   if (len < 0.1) { dx = w.vx; dz = w.vz; len = Math.hypot(dx, dz); }
   if (len < 0.1) { dx = w.facing; dz = 0; len = 1; }
   const D = t.dash;
-  d.dx = dx / len; d.dz = dz / len; d.at = time; d.until = time + D.gone;
+  d.dx = dx / len; d.dz = dz / len; d.at = time; d.until = time + blinkGone(t);
   if (d.charges >= max) d.chargeAt = time + D.cooldown;
   d.charges--;
   d.readyAt = d.charges >= 1 ? time + chain : d.chargeAt;

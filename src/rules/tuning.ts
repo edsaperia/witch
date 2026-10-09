@@ -143,6 +143,16 @@ export interface Tuning {
   guard: { radius: number };
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
+  /** Dodging matters (Ed, 2026-10-08: "almost all animals are easily evaded simply by walking backwards ... good play should
+   *  require effective use of dodge"): against the witch, a: committed strikes (closing while winding up, a lead at release,
+   *  a longer lunge, a longer untouchable blink, at most `tokens` winding up on her at once); b: predictive aim (shots, lobs and
+   *  charges aimed at release where she'll be, shots living longer, ranged windups shorter); c: packs cutting off her retreat
+   *  (rules/combat.ts, rules/movement.ts). ?dodge=a,b,c picks which. */
+  dodge?: {
+    a: { on: boolean; lead: number; lunge: number; surge: number; gone: number; tokens: number; swarm: number; swarmTokens: number; gap: number };
+    b: { on: boolean; lead: number; lobLead: number; chargeLead: number; life: number; windup: number };
+    c: { on: boolean; species: string[]; moving: number; share: number; angle: number; reach: number; ahead: number; sprint: number };
+  };
   /** Wild idlers' naps (rules/creatures.ts NapRules). */
   /** The wild watch (Ed, 2026-10-07: a dormant area's animals "stir, evade and hang back, turning to LOOK at her", then attack):
    *  on her first coming down in a wild area, its wild young and adults hold off for `time` seconds, standing and staring at her
@@ -160,7 +170,7 @@ export interface Tuning {
   knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean; dropHat: boolean; /** Her hat's float to the ground (s), the knockout's first phase. */ hatFloat?: number; /** The wait from going down to moving again (rules/knockout.ts respawnWait). */ respawn?: { base: number; step: number; max: number; cooldown: number; minScratch: number }; /** Drawing only (Ed, 2026-10-07): how much the screen dims round her from the knockdown to her sparkle away, her hat floating off (0 none; no hat, no dim). */ dim?: number; /** Seconds of the wait a candle on her desk (rules/knockout.ts candleCount), 1 by default. */ candleStep?: number; /** BPM each knockdown adds to the party's tempo (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"; rules/beat.ts knockdownTempo); 0 or absent: none. */ bpmStep?: number; /** The most BPM knockdowns can add in a run (absent: no cap). */ bpmCap?: number };
   /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
    *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
-  dash: { distance: number; gone: number; cooldown: number; buffer: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
+  dash: { distance: number; gone: number; cooldown: number; buffer: number; /** blinks before the cooldown (Ed, 2026-10-08: two), each back one at a time, cooldown seconds apart */ charges?: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
   spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
   trail: { on: boolean; ground: number; treetops: number; from: number; curve: number; width: number[]; bright: number; fade: number; grow: number; shrink: number; colourEase: number; sparks: boolean };
   /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */

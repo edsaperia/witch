@@ -2,10 +2,10 @@
 // arrow, where the mouse aims her 💌s. On the ground it says whether the ground under it is within
 // a 💌's range (bright and whole inside, dim and broken beyond; just a dot in the treetops or
 // sitting, where she can't throw), and while her dodge recharges a thin arc fills round it, so the
-// eye on the aim sees both. (The diamond marking where a dodge would land is gone: Ed, 2026-10-08.)
+// eye on the aim sees both; under it, a pip for each blink she has (two, Ed 2026-10-08), lit while ready. (The diamond marking where a dodge would land is gone: Ed, 2026-10-08.)
 // DOM only, laid over the canvas; nothing in the rules.
 import type { Game } from "../rules/game";
-import { dashCharge } from "../rules/dash";
+import { nextCharge } from "../rules/dash";
 
 const NS = "http://www.w3.org/2000/svg";
 const SIZE = 36, C = SIZE / 2, RING = 7, ARC = 12;
@@ -16,6 +16,8 @@ export class AimHud {
   private ring: SVGCircleElement;
   private dot: SVGCircleElement;
   private arc: SVGCircleElement;
+  private pips: SVGRectElement[] = [];
+  private svg: SVGSVGElement;
   private over = false;
   private flashUntil = 0;
   private wasCharging = false;
@@ -24,7 +26,7 @@ export class AimHud {
     this.root = document.createElement("div");
     this.root.id = "aim";
     Object.assign(this.root.style, { position: "fixed", left: "0", top: "0", width: `${SIZE}px`, height: `${SIZE}px`, pointerEvents: "none", zIndex: "2", display: "none", filter: "drop-shadow(0 0 2px rgba(0,0,0,.9))" });
-    const svg = document.createElementNS(NS, "svg");
+    const svg = (this.svg = document.createElementNS(NS, "svg"));
     svg.setAttribute("width", `${SIZE}`); svg.setAttribute("height", `${SIZE}`); svg.setAttribute("viewBox", `0 0 ${SIZE} ${SIZE}`);
     const circle = (r: number) => { const el = document.createElementNS(NS, "circle"); el.setAttribute("cx", `${C}`); el.setAttribute("cy", `${C}`); el.setAttribute("r", `${r}`); el.setAttribute("fill", "none"); svg.append(el); return el; };
     this.arc = circle(ARC);
@@ -56,8 +58,10 @@ export class AimHud {
     this.ring.style.opacity = canThrow ? "1" : "0";
     this.dot.setAttribute("fill", ink);
     this.dot.setAttribute("r", canThrow ? "1.4" : "2.2"); // (alone in the treetops: a little bigger, so the mouse isn't lost)
-    // The dodge's recharge: an arc filling round the ring, a short flash as it comes ready.
-    const charge = dashCharge(W.dash, time), charging = charge < 1 && b.mode === "ground" && !b.seated;
+    // The dodge's recharge: an arc filling round the ring as the next blink comes back, a short flash as it does; a pip for each.
+    const max = (t.dash.charges ?? 1) + g.buffs.mods.charges, ground = b.mode === "ground" && !b.seated;
+    const charge = nextCharge(W.dash, time, max, t.dash.cooldown), charging = charge < 1 && ground;
+    this.showPips(max, ground ? W.dash.charges : 0, ground && max > 1);
     if (this.wasCharging && !charging) this.flashUntil = performance.now() + 180;
     this.wasCharging = charging;
     const flash = performance.now() < this.flashUntil;
@@ -67,5 +71,20 @@ export class AimHud {
       const fill = flash ? 1 : charge;
       this.arc.setAttribute("stroke-dasharray", `${(fill * ARC_LEN).toFixed(1)} ${ARC_LEN.toFixed(1)}`);
     } else this.arc.style.opacity = "0";
+  }
+
+  /** A pip for each blink (2 px squares on whole pixels, under the arc), lit while it's ready. */
+  private showPips(max: number, ready: number, show: boolean): void {
+    while (this.pips.length < max) {
+      const r = document.createElementNS(NS, "rect");
+      r.setAttribute("width", "3"); r.setAttribute("height", "3"); r.setAttribute("y", `${SIZE - 4}`);
+      this.svg.append(r); this.pips.push(r);
+    }
+    this.pips.forEach((r, i) => {
+      if (!show || i >= max) { r.style.display = "none"; return; }
+      r.style.display = "";
+      r.setAttribute("x", `${Math.round(C - (max * 5 - 2) / 2 + i * 5)}`);
+      r.setAttribute("fill", i < ready ? "rgba(111,230,255,.95)" : "rgba(232,226,244,.25)");
+    });
   }
 }

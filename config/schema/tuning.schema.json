@@ -2077,6 +2077,10 @@
           "type": "number",
           "minimum": 0
         },
+        "charges": {
+          "type": "number",
+          "minimum": 0
+        },
         "toCursor": {
           "type": "boolean"
         },
@@ -2123,6 +2127,7 @@
         "gone",
         "cooldown",
         "buffer",
+        "charges",
         "toCursor",
         "aimDead",
         "clear"
@@ -2982,6 +2987,155 @@
         "radius",
         "curious",
         "skittish"
+      ],
+      "additionalProperties": false
+    },
+    "dodge": {
+      "type": "object",
+      "properties": {
+        "a": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "lead": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lunge": {
+              "type": "number",
+              "minimum": 0
+            },
+            "surge": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tokens": {
+              "type": "number",
+              "minimum": 0
+            },
+            "swarm": {
+              "type": "number",
+              "minimum": 0
+            },
+            "swarmTokens": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "lead",
+            "lunge",
+            "surge",
+            "gone",
+            "tokens",
+            "swarm",
+            "swarmTokens",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "b": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "lead": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lobLead": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chargeLead": {
+              "type": "number",
+              "minimum": 0
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            },
+            "windup": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "lead",
+            "lobLead",
+            "chargeLead",
+            "life",
+            "windup"
+          ],
+          "additionalProperties": false
+        },
+        "c": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "species": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "moving": {
+              "type": "number",
+              "minimum": 0
+            },
+            "share": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ahead": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sprint": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "species",
+            "moving",
+            "share",
+            "angle",
+            "reach",
+            "ahead",
+            "sprint"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "a",
+        "b",
+        "c"
       ],
       "additionalProperties": false
     },
@@ -8929,6 +9083,7 @@
     "attackFx",
     "combat",
     "notice",
+    "dodge",
     "wildWatch",
     "hunt",
     "naps",

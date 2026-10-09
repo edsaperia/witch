@@ -547,6 +547,7 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `dash.gone` | number | 0 to … |
 | `dash.cooldown` | number | 0 to … |
 | `dash.buffer` | number | 0 to … |
+| `dash.charges` | number | 0 to … |
 | `dash.toCursor` | boolean |  |
 | `dash.aimDead` | number | 0 to … |
 | `dash.clear.tree` | number | 0 to … |
@@ -759,6 +760,36 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 | `notice.radius` | number | 0 to … |
 | `notice.curious` | number | 0 to … |
 | `notice.skittish` | number | 0 to … |
+
+### `dodge`
+
+Dodging matters (Ed, 2026-10-08: "almost all animals are easily evaded simply by walking backwards, even large swarms. Ideally good play should require effective use of dodge"; he picked all three): against the witch only (fights between creatures as before). a, committed strikes: a melee creature keeps closing on her at its fight speed while it winds up (no gliding to a stop), and at release aims at where she'll be (her velocity times the lunge's time, times lead), lunging lunge times its attack's lunge; her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: shots aim at release where she'll be when they arrive (times lead), lobs where she'll be when they land (times lobLead), charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); a shot, lob or beam at her winds up at most windup seconds. c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
+
+| knob | type | range |
+|---|---|---|
+| `dodge.a.on` | boolean |  |
+| `dodge.a.lead` | number | 0 to … |
+| `dodge.a.lunge` | number | 0 to … |
+| `dodge.a.surge` | number | 0 to … |
+| `dodge.a.gone` | number | 0 to … |
+| `dodge.a.tokens` | number | 0 to … |
+| `dodge.a.swarm` | number | 0 to … |
+| `dodge.a.swarmTokens` | number | 0 to … |
+| `dodge.a.gap` | number | 0 to … |
+| `dodge.b.on` | boolean |  |
+| `dodge.b.lead` | number | 0 to … |
+| `dodge.b.lobLead` | number | 0 to … |
+| `dodge.b.chargeLead` | number | 0 to … |
+| `dodge.b.life` | number | 0 to … |
+| `dodge.b.windup` | number | 0 to … |
+| `dodge.c.on` | boolean |  |
+| `dodge.c.species` | array of string |  |
+| `dodge.c.moving` | number | 0 to … |
+| `dodge.c.share` | number | 0 to … |
+| `dodge.c.angle` | number | 0 to … |
+| `dodge.c.reach` | number | 0 to … |
+| `dodge.c.ahead` | number | 0 to … |
+| `dodge.c.sprint` | number | 0 to … |
 
 ### `wildWatch`
 
