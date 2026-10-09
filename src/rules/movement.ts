@@ -317,6 +317,8 @@ export interface Swoop {
   fx: number; fz: number; tx: number; tz: number; dx: number; dz: number;
   /** Whom this dive has touched (once each). */
   hit?: number[];
+  /** Where its dive is aimed, locked `commit` seconds before it lets go (dodge.a.commit: a blink then gets her clear). */
+  aim?: [number, number];
   up: boolean;
 }
 
@@ -354,7 +356,7 @@ export function landSwoop(c: Creature, time: number): void {
  *  function is asked only as a telegraph would start (so a token is taken only then).
  *  Returns what happened this step: "tele" as it starts its telegraph, "dive" as it lets go, "low" while it can touch her (the dive and
  *  the bottom), else "air". */
-export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0, may: boolean | (() => boolean) = true): "tele" | "dive" | "low" | "air" {
+export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0, may: boolean | (() => boolean) = true, commit = 0): "tele" | "dive" | "low" | "air" {
   const mayNow = () => (typeof may === "function" ? may() : may); // (asked only as a telegraph would start: the cap's token is taken then)
   const S = FIGHT.scale, V = FIGHT.speed, H = (mv.height ?? 8) * S, R = (mv.radius ?? 12) * S, cs = (mv.circle ?? 8) * V;
   let s = c.swoop;
@@ -396,13 +398,19 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
     case "tele": {
       // Telegraphing (the owl's hoot and tuck, the bat's screech, the raven climbing): circling slowly, facing her; then it lets go.
       circling(0.4); c.facing = px >= c.x ? 1 : -1;
-      if (!done) return "air";
       // Where she'll be when it gets there, as she's going now (lead of it: the dodge work's lead-at-release), and on past.
       // (the flight time to where she'll be: a few steps to the intercept, so lead 1 meets her walking straight on)
       const sp = Math.max(1, (mv.speed ?? 24) * V), lead = mv.lead ?? 0;
-      let fly = Math.hypot(px - c.x, pz - c.z) / sp;
-      for (let i = 0; i < 4; i++) fly = Math.hypot(px + tvx * fly * lead - c.x, pz + tvz * fly * lead - c.z) / sp;
-      const ax = px + tvx * fly * lead, az = pz + tvz * fly * lead, lx = ax - c.x, lz = az - c.z, L = Math.hypot(lx, lz) || 1, past = (mv.overshoot ?? 4) * S;
+      const aim = (): [number, number] => {
+        let fly = Math.hypot(px - c.x, pz - c.z) / sp;
+        for (let i = 0; i < 4; i++) fly = Math.hypot(px + tvx * fly * lead - c.x, pz + tvz * fly * lead - c.z) / sp;
+        return [px + tvx * fly * lead, pz + tvz * fly * lead];
+      };
+      // (its aim locks commit seconds before it lets go, as a strike's does: a fast dive is dodged by blinking as it locks)
+      if (commit > 0 && !s.aim && time >= s.at + s.dur - commit) s.aim = aim();
+      if (!done) return "air";
+      const [ax, az] = s.aim ?? aim(), lx = ax - c.x, lz = az - c.z, L = Math.hypot(lx, lz) || 1, past = (mv.overshoot ?? 4) * S;
+      s.aim = undefined;
       s.fx = c.x; s.fz = c.z; s.dx = lx / L; s.dz = lz / L; s.tx = ax + s.dx * past; s.tz = az + s.dz * past; s.hit = []; s.left--;
       phase(s, "dive", time, (L + past) / sp, LOW);
       c.facing = s.dx >= 0 ? 1 : -1;
