@@ -73,13 +73,15 @@ describe("the melodies' 32-bar ABAC form", () => {
   });
 });
 
-describe("everything in A dorian", () => {
-  const dorian = new Set(style.scales.dorian.map(d => (d + style.root) % 12));
+describe("everything in dorian, each stage in its own key", () => {
   it("every arc step, section and layer", () => {
     expect(style.scale).toBe("dorian");
-    for (const a of style.arc) { expect(a).not.toHaveProperty("scale"); expect(a).not.toHaveProperty("transpose"); }
+    // (the key changes between stages stay: Ed, 2026-10-09, via the coordinator)
+    expect(style.arc.map(a => a.transpose ?? 0)).toEqual([0, 0, 0, 0, 2, 3, 5, 0, 1]);
+    for (const a of style.arc) expect(a).not.toHaveProperty("scale");
     for (const section of Object.keys(style.sections)) for (const arc of [0, 4, 5, 8]) {
-      const plan: BlockPlan = { section, start: 0, bars: 32, wave: arc, arc };
+      const plan: BlockPlan = { section, start: 0, bars: 32, wave: arc, arc }, tr = style.arc[arc].transpose ?? 0;
+      const dorian = new Set(style.scales.dorian.map(d => (d + style.root + tr) % 12));
       for (let step = 0; step < 32 * 16; step += 1) {
         for (const e of notesAt(style, plan, null, step, { seed: 5 + arc, siege: 1, party: 1, legend: 1, circle: { species: "elk", level: 1 } })) {
           if (e.midi !== null) expect(dorian.has(e.midi % 12), `${section} ${e.part} ${e.midi}`).toBe(true);

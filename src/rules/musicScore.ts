@@ -101,9 +101,11 @@ export interface ArcStep {
   /** 0 calm to 1 frantic: "?" hits and parts that need energy. */
   energy: number;
   progression?: string;
+  /** Semitones above the style's root: the stage's key (its scale is the style's one, dorian: Ed, 2026-10-09, "Keep it all
+   *  in the dorian"; the key changes between stages stay). */
+  transpose?: number;
   /** Its tempo (bpm; the style's bpm if none): the beat clock eases to it as the wave lands. Ed, 2026-10-09: none has
-   *  one now (the tempo stays at the style's 120 but for her knockdowns, rules/beat.ts knockdownTempo). Every step plays
-   *  in the style's one scale (dorian: Ed, the same day, "Keep it all in the dorian"). */
+   *  one now (the tempo stays at the style's 120 but for her knockdowns, rules/beat.ts knockdownTempo). */
   bpm?: number;
   /** Its sections on the form (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections
    *  breakbeats, and the fourth a breakdown"): A and B one four-on-the-floor block (`land` the first time round, as the
@@ -401,13 +403,13 @@ function phraseFor(style: MusicStyle, seed: number, letter: string): (PhraseNote
 export const musicSeed = (base: number, n: number): number => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 0x7fffffff);
 
 /** The form's note (if one starts) on the form's sixteenth `formStep`: its part, patch and MIDI note, and its length. */
-export function formNoteAt(style: MusicStyle, seed: number, formStep: number): { part: string; patch: string; midi: number; dur: number; off: number; letter: string } | null {
+export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0): { part: string; patch: string; midi: number; dur: number; off: number; letter: string } | null {
   const F = style.form!, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
   const n = phraseFor(style, seed, letter)[fs % (F.phraseBars * 16)];
   if (!n) return null;
   const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed), def = style.parts[part];
   const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
-  return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style, style.scales[style.scale], n.deg, oct, 0), dur: n.dur, off: n.off, letter };
+  return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style, style.scales[style.scale], n.deg, oct, transpose), dur: n.dur, off: n.off, letter };
 }
 
 /** The section's low-pass now (Hz), at `progress` (0-1) through it. */
@@ -471,7 +473,7 @@ export function circleParts(style: MusicStyle, species: string): [string, { p: s
 export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
   const bar = Math.floor(step / 16), s = step - bar * 16, barIn = bar - plan.start;
   const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc);
-  const scale = style.scales[style.scale], transpose = 0; // (one scale for the whole run: Ed, 2026-10-09)
+  const scale = style.scales[style.scale], transpose = a.transpose ?? 0; // (one scale, dorian, in each stage's key: Ed, 2026-10-09)
   const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
   // the form's chords (Ed, 2026-10-09: the 32-bar ABAC form), or, with none, the section's own, a step on each pass round the loop
   const formBar = bar - (ctx.formStart ?? 0), form = style.form;
@@ -544,7 +546,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   }
   if (onlyCircle) return out;
   // the form's melody: A on its instrument, B and C sung
-  const fn = melody > 0 ? formNoteAt(style, ctx.seed, formBar * 16 + s) : null;
+  const fn = melody > 0 ? formNoteAt(style, ctx.seed, formBar * 16 + s, transpose) : null;
   if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 && !fn.off ? 0.9 : 0.78) * melody, ...(fn.dur % 1 ? { straight: true } : {}) });
   // the section's own events: a crash on its first beat, a riser over a build (one note a bar)
   if (s === 0 && barIn === 0 && sec.impact && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 });

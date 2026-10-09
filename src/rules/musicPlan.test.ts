@@ -125,7 +125,7 @@ describe("music score", () => {
         for (let step = 0; step < 16 * 8; step++) {
           const notes = notesAt(style, plan, null, step, { seed: 42, siege: 0 });
           expect(notesAt(style, plan, null, step, { seed: 42, siege: 0 })).toEqual(notes);
-          const scale = style.scales[style.scale];
+          const a = style.arc[arc], scale = style.scales[style.scale];
           for (const e of notes) {
             n++;
             expect(e.vel).toBeGreaterThan(0);
@@ -134,7 +134,7 @@ describe("music score", () => {
             if (e.midi !== null) {
               expect(e.midi).toBeGreaterThanOrEqual(21);
               expect(e.midi).toBeLessThanOrEqual(108);
-              const pc = (((e.midi - style.root) % 12) + 12) % 12;
+              const pc = (((e.midi - style.root - (a.transpose ?? 0)) % 12) + 12) % 12;
               expect(scale).toContain(pc);
             }
           }

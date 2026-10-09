@@ -166,10 +166,10 @@
     {"name": "Clearing", "energy": 0.3, "sections": {"land": "deep", "four": ["deep", "deepWalk"], "breaks": ["deepBreaks"], "breakdown": ["breakdown", "ether"]}, "build": "rise"},
     {"name": "Lanterns", "energy": 0.45, "sections": {"land": "drop", "four": ["deep", "dropStrings", "deepWalk"], "breaks": ["deepBreaks"], "breakdown": ["breakdown", "ether"]}, "build": "build"},
     {"name": "Night drive", "energy": 0.6, "sections": {"land": "darkDrop", "four": ["dark"], "breaks": ["darkBreaks"], "breakdown": ["whisper", "ether"]}, "build": "build"},
-    {"name": "Industrial", "energy": 0.7, "sections": {"land": "industrialDrop", "four": ["industrial"], "breaks": ["industrialBreak"], "breakdown": ["ether", "whisper"]}, "build": "build"},
-    {"name": "Breakbeat", "energy": 0.8, "sections": {"land": "industrialDrop", "four": ["industrial", "chip"], "breaks": ["breaks", "breaksDark"], "breakdown": ["ether"]}, "build": "build"},
-    {"name": "Frenzy", "energy": 0.88, "sections": {"land": "chipDrop", "four": ["chip", "industrial"], "breaks": ["breaksDrop", "breaksDark"], "breakdown": ["ether", "whisper"]}, "build": "build"},
+    {"name": "Industrial", "energy": 0.7, "transpose": 2, "sections": {"land": "industrialDrop", "four": ["industrial"], "breaks": ["industrialBreak"], "breakdown": ["ether", "whisper"]}, "build": "build"},
+    {"name": "Breakbeat", "energy": 0.8, "transpose": 3, "sections": {"land": "industrialDrop", "four": ["industrial", "chip"], "breaks": ["breaks", "breaksDark"], "breakdown": ["ether"]}, "build": "build"},
+    {"name": "Frenzy", "energy": 0.88, "transpose": 5, "sections": {"land": "chipDrop", "four": ["chip", "industrial"], "breaks": ["breaksDrop", "breaksDark"], "breakdown": ["ether", "whisper"]}, "build": "build"},
     {"name": "Phonk", "energy": 0.95, "sections": {"land": "phonkFourDrop", "four": ["phonkFour"], "breaks": ["breaksDark", "darkBreaks"], "breakdown": ["whisper"]}, "build": "build"},
-    {"name": "Finale", "energy": 1, "sections": {"land": "phonkFourDrop", "four": ["industrialDrop", "phonkFourDrop", "dropStrings"], "breaks": ["breaksDrop", "breaksDark"], "breakdown": ["ether", "whisper"]}, "build": "build", "buildBars": 4}
+    {"name": "Finale", "energy": 1, "transpose": 1, "sections": {"land": "phonkFourDrop", "four": ["industrialDrop", "phonkFourDrop", "dropStrings"], "breaks": ["breaksDrop", "breaksDark"], "breakdown": ["ether", "whisper"]}, "build": "build", "buildBars": 4}
   ]
 }
