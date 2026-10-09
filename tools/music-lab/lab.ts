@@ -7,7 +7,7 @@ import styleJson from "../../config/music-style.json";
 import { Music } from "../../src/platform/audio/music";
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { mixAt, nearness } from "../../src/rules/music";
-import { beatAt, bpmAt, newBeatClock, rampTo, timeAt, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
+import { beatAt, bpmAt, knockdownTempo, newBeatClock, rampTo, timeAt, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
 import { barAt, barSeconds, planBlock, type MusicCue } from "../../src/rules/musicPlan";
 import { arcStep, checkStyle, resolveSection, type MusicStyle, type Patch } from "../../src/rules/musicScore";
 import { TUNING } from "../../src/rules/tuning";
@@ -142,7 +142,7 @@ function changed(now = false): void {
 function buildKnobs(): void {
   const fs = $("f-style"), fm = $("f-mix"), fp = $("f-patches");
   for (const f of [fs, fm, fp]) f.querySelectorAll(":scope > :not(legend)").forEach(n => n.remove());
-  knob(fs, "Tempo (first wave; the rest keep their rise)", style.bpm, 70, 180, 1, v => {
+  knob(fs, "Tempo (the whole run's, but for knockdowns)", style.bpm, 70, 180, 1, v => {
     const d = v - style.bpm;
     style.bpm = v;
     for (const a of style.arc) if (a.bpm !== undefined) a.bpm += d;
@@ -155,11 +155,7 @@ function buildKnobs(): void {
   const roots: [string, string][] = [];
   for (let m = 28; m <= 39; m++) roots.push([String(m), NOTE_NAMES[m % 12]]);
   select(fs, "Key (root)", roots, String(style.root), v => { style.root = +v; changed(); });
-  select(fs, "Scale", [["", "each wave's own"], ...Object.keys(style.scales).map(s => [s, s] as [string, string])], "", v => {
-    style.arc.forEach((a, i) => { a.scale = v || REPO_STYLE.arc[i]?.scale; });
-    if (v) style.scale = v; else style.scale = REPO_STYLE.scale;
-    changed();
-  });
+  select(fs, "Scale (the whole run's)", Object.keys(style.scales).map(s => [s, s] as [string, string]), style.scale, v => { style.scale = v; changed(); });
   knob(fs, "Seed (the run's tunes)", seed, 1, 99, 1, v => { seed = v; if (music?.engine) music.engine.seed = v; });
   const m = style.mix;
   knob(fm, "Master", m.master, 0, 1.5, 0.01, v => { m.master = v; changed(); });
@@ -220,15 +216,17 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
     measure(name, await oc.startRendering());
   }
   {
-    // a run: wave 7 due at bar 20, its tempo easing in from there; render bars 8 to 32 (the build,
-    // the drop and the ramp), under siege
+    // a run: wave 7 due at bar 20, the tempo holding through it (Ed, 2026-10-09: 120 but for her knockdowns), a knockdown
+    // in bar 14 (5 bpm faster from the next bar line, silent till her new record starts on bar 17, re-seeded); render bars 8
+    // to 32 (the knockdown, the new record, the build, the drop), under siege
     const oc = new OfflineAudioContext(2, Math.ceil(rate * 24 * spBar), rate);
     const e = new MusicEngine(oc, oc.destination, style, 7), c = newBeatClock(style.bpm, waveTempo(beatTuning(), 6));
     c.wave = 6;
+    knockdownTempo(c, { ...beatTuning(), knockout: { bpmStep: 5 } }, 14.2 * spBar);
     waveArrived(c, beatTuning(), 7, 20 * spBar);
-    if (!(bpmAt(c, timeAt(c, 4 * 32)) > bpmAt(c, 0))) errors.push("the tempo doesn't rise with a wave");
-    e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5 }, 8 * spBar, 24 * spBar, c);
-    measure("run: into wave 7, tempo rising, siege", await oc.startRendering());
+    if (Math.abs(bpmAt(c, timeAt(c, 4 * 32)) - (bpmAt(c, 0) + 5)) > 1e-6) errors.push("the tempo isn't 5 bpm up after a knockdown, and steady through a wave");
+    e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5, knockdowns: [{ at: 14.2, back: 17 }] }, 8 * spBar, 24 * spBar, c);
+    measure("run: into wave 7, a knockdown, siege", await oc.startRendering());
   }
   {
     // a woken area that has joined the party, close by: the style's party parts over a quiet section

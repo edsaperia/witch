@@ -255,17 +255,17 @@ export class SfxCues {
     const me = g.witches[0], O = g.tuning.sfx.ouch;
     if (!me) return;
     const hp = me.health.hp, down = !!me.ko;
-    if (down && !this.down && this.primed) { this.sfx.knockdown(); this.duck(O.duck, O.duckTime * 2); }
+    // (Ed, 2026-10-09: "a record scratch on being knocked down": the old record scratched to a stop, the music cut under it)
+    if (down && !this.down && this.primed) { this.sfx.knockdown(); this.sfx.recordScratch(); this.duck(O.duck, O.duckTime * 2); }
     // the sad trumpet as her hat drops (Ed, 2026-10-07; hotel's knockout timeline), the music dipped under it; no hat to drop,
     // its shorter "wah-waaah" (sadTrumpet.bare)
     if (this.primed) {
       const T = g.tuning.sfx.sadTrumpet, ev = g.koEvents, hat = ev.some(e => e.kind === "hatDropped");
       if (hat || (T.bare > 0 && ev.some(e => e.kind === "down"))) { this.sfx.sadTrumpet(hat); this.duck(T.duck, hat ? 3.6 : 2); }
-      // (Ed, 2026-10-07: the hat's scene turns into her decks with a rewind) a backwards scratch cutting the trumpet's last
-      // note off, on art builder 3's rewind frame: the teleport's midpoint, (teleportAt + inAt) / 2 on her clock (its
-      // knockout event "cut"), once a knockout
+      // the trumpet let go as she's back at her decks and the needle drops on her new record (Ed, 2026-10-09: the record
+      // scratched as she went down; the rewind at the cut that was here would scratch twice), once a knockout
       const ko = me.ko;
-      if (ko && this.cutOf !== ko.at && g.herTime >= (ko.teleportAt + ko.inAt) / 2) { this.cutOf = ko.at; this.sfx.rewind(); }
+      if (ko && this.cutOf !== ko.at && typeof ko.inAt === "number" && g.herTime >= ko.inAt) { this.cutOf = ko.at; this.sfx.trumpetOff(); }
     }
     else if (this.primed && hp < this.hp && !down) { this.sfx.ouch(1 - Math.max(0, hp - 1) / Math.max(1, g.tuning.witchHealth.hits - 1)); this.duck(O.duck, O.duckTime); }
     this.hp = hp; this.down = down;
@@ -334,7 +334,9 @@ export class SfxCues {
     if (r) {
       const from = Number.isNaN(this.deckUpTo) ? (time - r.start < 0.15 ? r.start - 1e-6 : time) : this.deckUpTo;
       this.deckUpTo = time; this.deckHalf = Math.floor(beatAt(g.beat, time) * 2);
-      if (this.primed) for (const s of djStrokes(g, from + 1e-9, time + 1e-9)) this.sfx.deck(s.stroke, 0.1);
+      // (her wait after a knockdown, the music silent: her scratching on the new record the show, sfx.deck.respawn louder)
+      const loud = g.witches[0]?.ko ? g.tuning.sfx.deck.respawn ?? 1 : 1;
+      if (this.primed) for (const s of djStrokes(g, from + 1e-9, time + 1e-9)) this.sfx.deck(s.stroke, 0.1, loud);
       const hype = r.gesture === "hype";
       if (hype && !this.deckHype && this.primed) this.sfx.whoop(0.1);
       this.deckHype = hype;

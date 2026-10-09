@@ -213,7 +213,7 @@ export interface Tuning {
     room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number; decks: number };
     seaLife: { volume: number; splash: number; groan: number; pour: number; range: number };
     sadTrumpet: { volume: number; duck: number; bare: number; rewind: number; cutAfter: number };
-    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number; needle: number };
+    deck: { volume: number; scratch: number; hiss: number; stroke: number; hype: number; needle: number; /** The record scratched as she goes down: its level, times a stroke's (Ed, 2026-10-09). */ knock?: number; /** Her needle and scratching on the new record in her wait after a knockdown, the music silent: times her strokes' level. */ respawn?: number };
     /** The party spell's scroll (platform/audio/spell.ts): its hum as she nears it, the paper's rustle, the grow's crackle and the burst. */
     spell: { volume: number; hum: number; rustle: number; crackle: number; burst: number };
     land: { volume: number; gap: number };
