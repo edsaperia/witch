@@ -1370,6 +1370,20 @@ motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, r
 | `party.lightReach` | number | 0 to … |
 | `party.lightStrength` | number | 0 to … |
 
+### `blood`
+
+Blood trails (Ed, 2026-10-09: "hurt creatures leave a little trail of blood, the more hurt they are the more blood they leave? The blood vanishes over time" and "bloody footprints perhaps"; render/leash/blood.ts): a hurt creature within range metres of her leaves small dark-red pixel marks on the ground as it moves, fading over fade seconds; the more hurt, the more often and the redder. style: prints (footprints at its stride, left and right; four-legged ones in pairs, insects a tiny track; flyers, birds and snakes drip drops instead), prints+drops (and drops when badly hurt) or drops (drops only). rate: drops a second at none of its health left (by how hurt, squared). colour: red (a dark red on the night palette) or neon (a deep shade of the creature's own neon). cap: marks at once (the oldest gives way). Healed, it stops.
+
+| knob | type | range |
+|---|---|---|
+| `blood.on` | boolean |  |
+| `blood.style` | string | "prints" / "prints+drops" / "drops" |
+| `blood.colour` | string | "red" / "neon" |
+| `blood.fade` | number | 0 to … |
+| `blood.rate` | number | 0 to … |
+| `blood.cap` | number | 0 to … |
+| `blood.range` | number | 0 to … |
+
 ### `soundsystemGen`
 
 The generated soundsystems (Ed, 2026-10-08: "a variety, for them all to point towards the dancefloor (like the central speaker ones do; back facing ones face outwards), and broadly for the ones further away to be larger ... we don't see any exactly identical ones on the map"; art/soundsystemGen.js, render/soundsystemGen.ts): each area's its own genome, dealt as one set a map (none alike). Sized from near times the old stacks' height (three times the witch) by the dancefloor to far times at to metres out and beyond (from metres and nearer all near), more tiers and wider the further out. Turned along the line to the dancefloor, facing it from the far side and away from it on the near side so every one shows its front, as the ring's speakers (toward: always facing it, the near ones showing their carved backs), never more than maxYaw degrees off facing us (a wide stack side-on is a sliver). Baked in the background ahead waves ahead of the party. on false: the old three stacks.
