@@ -2944,6 +2944,28 @@
         "retreatHome": {
           "type": "number",
           "minimum": 0
+        },
+        "defendRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "taunt": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "time",
+            "chance"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -2963,7 +2985,9 @@
         "speakerRadius",
         "shake",
         "daze",
-        "retreatHome"
+        "retreatHome",
+        "defendRadius",
+        "taunt"
       ],
       "additionalProperties": false
     },

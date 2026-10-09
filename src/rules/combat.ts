@@ -111,6 +111,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   const partyList = w.active.filter(o => foes("enraged", sideOf(o)) && targetable(o) && !w.asleep(o)); // (what besiegers go for: the leashed and the happy)
   // Packs (Stage 5): creatures of a kind going for the same target, and their tactic.
   const packs = packsOf(w.active.filter(c => c.fight?.target && fighting(c)).map(c => ({ c, target: JSON.stringify(c.fight!.target) })), time);
+  // How many of her posse are on each creature (acquire spreads them over her attackers: Ed, 2026-10-09).
+  const claims = new Map<number, number>();
+  for (const o of w.active) if (o.leashed && o.fight?.target?.kind === "creature" && !w.parked(o.id)) claims.set(o.fight.target.id, (claims.get(o.fight.target.id) ?? 0) + 1);
+  const claim = (tg: { kind: string; id?: number } | null | undefined, k: number) => { if (tg?.kind === "creature" && tg.id !== undefined) claims.set(tg.id, (claims.get(tg.id) ?? 0) + k); };
 
   // Dodging matters (Ed, 2026-10-08; tuning dodge): against the witch, committed strikes (a), predictive aim (b), packs
   // cutting off her retreat (c). Committed strikes' tokens: how many wind up or strike at each witch now, how many go for her.
@@ -199,9 +203,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const had = !!f.target;
     if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z))) f.target = null; }
     if (!f.target || f.windupUntil === 0) {
-      let near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, happy ? o => w.inArea(c, o.x, o.z) : undefined);
+      let near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, happy ? o => w.inArea(c, o.x, o.z) : undefined, claims);
       // Retreating, it takes up a fight again only with someone back in its own area (no flip-flopping at the band's edge).
       if (near && c.retreat) { const q = targetPos(w, s, near); if (q && w.inArea(c, q.x, q.z)) c.retreat = undefined; else near = null; }
+      if (near && c.leashed && !guarding) { claim(f.target, -1); claim(near, 1); } // (her posse's claims kept up as they choose)
       if (near) f.target = near;
       else if (!f.target && c.siege && !c.leashed) {
         // An angry area's creatures (its quest undone, Ed 2026-10-04) go for the nearest party animal or
@@ -252,7 +257,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
       c.x += L.dx * step; c.z += L.dz * step; L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
       c.vx = L.dx * v; c.vz = L.dz * v;
-      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) land(w, s, c, f.target, atk.damage, A, c.x, c.z); }
+      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) land(w, s, c, f.target, atk.damage, A, c.x, c.z); if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
       continue;
     }
     // Just noticed: it turns to look a moment before it goes (combat.reaction).
