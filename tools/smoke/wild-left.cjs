@@ -1,7 +1,7 @@
 // What's left to clear an area (Ed's playtest, 2026-10-07: "When I invite all the animals in an area ... the soundsystem
 // doesn't transform": some of its own were out of sight, asleep or lying knocked down). The built game (DIST, default dist/)
 // at 1600×900: she lands in a wild area, all but two of its own are made happy; the line under the clock must say "2 wild
-// animals left here" and two pointers must show; then the last two too: the line goes and its soundsystem rises. Fails on a
+// animals left here" (no pointers: Ed, 2026-10-09, "we should remove these"); then the last two too: the line goes and its soundsystem rises. Fails on a
 // script error or any of those. Writes <out dir>/wild-left.png.
 //   npm run build && node tools/smoke/wild-left.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -45,11 +45,9 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await happy(2);
     await wait(1);
     const text = await page.evaluate(() => document.getElementById("wild-left")?.textContent ?? "");
-    const pointers = await page.evaluate(() => window.witch.view.wildPointers.filter(p => p["cue"].canvas.style.display !== "none" && +p["cue"].canvas.style.opacity > 0).length);
     await page.screenshot({ path: path.join(outDir, "wild-left.png") });
-    console.log("two left:", JSON.stringify({ key, text, pointers }));
+    console.log("two left:", JSON.stringify({ key, text }));
     if (!/^2 wild animals left here/.test(text)) bad.push(`the line says "${text}", wanted "2 wild animals left here"`);
-    if (pointers < 2) bad.push(`${pointers} pointers, wanted 2`);
     await happy(0);
     await wait(1.5);
     const after = await page.evaluate(k => ({ text: document.getElementById("wild-left")?.textContent ?? "", cleared: window.witch.game.party.areas.has(k) }), key);
