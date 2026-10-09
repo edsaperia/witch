@@ -2985,6 +2985,28 @@
       ],
       "additionalProperties": false
     },
+    "stoneIdle": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clear": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "radius",
+        "clear"
+      ],
+      "additionalProperties": false
+    },
     "wildWatch": {
       "type": "object",
       "properties": {
@@ -5915,10 +5937,6 @@
           "type": "number",
           "minimum": 0
         },
-        "lossPenalty": {
-          "type": "number",
-          "minimum": 0
-        },
         "startDelay": {
           "type": "number",
           "minimum": 0
@@ -5974,7 +5992,6 @@
         "motes",
         "uplight",
         "interval",
-        "lossPenalty",
         "startDelay",
         "areasPerWave",
         "picker",
@@ -8967,6 +8984,7 @@
     "attackFx",
     "combat",
     "notice",
+    "stoneIdle",
     "wildWatch",
     "hunt",
     "naps",

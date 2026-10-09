@@ -13,6 +13,7 @@
 // clock, no Math.random; the same game and the same steps give the same controls.
 import { AREA_TYPES } from "./map";
 import { cellKey } from "./party";
+import { stackBottom, toBottom } from "./leash";
 import { runeNear } from "./creatureStates";
 import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
@@ -289,7 +290,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     const putDown = () => {
       let near: { x: number; z: number } | null = null, nd = Math.max(t.leash.pickRadius, t.leash.spacing) * 1.1; // (and far enough that the next isn't blocked by it)
       for (const p of w.leash.placed) { const d = Math.hypot(p.x - b.x, p.z - b.z); if (d < nd) { nd = d; near = p; } }
-      if (!near) { sigil = true; return; }
+      if (!near) { if (stackBottom(w.leash)?.kind === "relic") cycle = true; else sigil = true; return; } // (a relic's sigil at the bottom: cycled past first)
       if (nd > 0.01) { mx = (b.x - near.x) / nd; mz = (b.z - near.z) / nd; } else { mx = 1; mz = 0; }
     };
     /** Toward (x, z): over the treetops when far, landing there if `land`; true once on the ground within `within` m. */
@@ -321,7 +322,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       // a press of the cycle button a step, as a player would).
       const { L, id } = calm, at = map.siteOf(L.cell[0], L.cell[1]);
       bot.doing = `bringing ${article(L.species)} home to the ${L.legendState} ${L.species} legend`;
-      if (goTo(at.x, at.z, true, 6)) { const st = w.leash.stack, qi = st.indexOf(id); if (qi === st.length - 1) putDown(); else if (qi >= 0) cycle = true; }
+      if (goTo(at.x, at.z, true, 6)) { const st = w.leash.stack, qi = st.indexOf(id), bt = stackBottom(w.leash); if (bt?.kind === "creature" && bt.id === id) putDown(); else if (qi >= 0) cycle = true; }
     } else if (o.siege && careful && (front = siegeFront())) {
       // The champion's siege response: to the soundsystem with the most marching on it, standing between it and the
       // nearest of them, so her posse meets them there; kiting what comes for her.
@@ -351,7 +352,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         const lc = qi >= 0 ? map.legendClearing(cell[0], cell[1]) : null, at = lc ? { x: lc.x, z: lc.z + lc.r * 0.35 } : s;
         bot.doing = there(at.x, at.z) ? `defending wave ${wave}` : `flying to defend wave ${wave}`;
         if (goTo(at.x, at.z, true)) {
-          if (qi >= 0 && qi !== st.length - 1) { st.push(st.splice(qi, 1)[0]); } // (cycling the stack, as the sigil button does in the treetops)
+          if (qi >= 0) toBottom(w.leash, st[qi]); // (cycling the stack, as the sigil button does in the treetops)
           if (qi >= 0) { putDown(); bot.doing = `doing the ${g.creatures[L!].species} legend's quest`; }
           else if (!parkedAt.has(key) && st.length > KEEP) {
             // (not the creature a quest she's on wants: it goes to the top of the stack, out of the way)
@@ -374,7 +375,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           const score = (c: Creature) => P === "home" ? Math.hypot(c.x - d0.x, c.z - d0.z) : P === "far" ? -Math.hypot(c.x - d0.x, c.z - d0.z) : P === "front" ? (next.has(cellKey(c.cell)) ? Math.hypot(c.x - b.x, c.z - b.z) : 1e6 + Math.hypot(c.x - d0.x, c.z - d0.z)) : Math.hypot(c.x - b.x, c.z - b.z);
           const L = [...LO.values()].map(id => g.creatures[id]).filter(c => !c.gone && (c.legendState === "asleep" || c.legendState === "restless")).sort((a, c) => score(a) - score(c))[0];
           if (!L) rjob = null;
-          else if (goTo(...spotBy(L), true, 4)) { if (w.leash.relics.length < rjob.n!) { bot.done.relics.push({ at: time, id: L.id }); relicCount++; rjob = null; relicAgain = time + 30; } else sigil = true; }
+          else if (goTo(...spotBy(L), true, 4)) { if (w.leash.relics.length < rjob.n!) { bot.done.relics.push({ at: time, id: L.id }); relicCount++; rjob = null; relicAgain = time + 30; } else if (stackBottom(w.leash)?.kind === "relic") sigil = true; else cycle = true; } // (the relic's sigil cycled to the bottom first, as a player would)
           if (rjob && time - (rjob.since ?? time) > 150) { rjob = null; relicAgain = time + 60; }
         }
       } else if (o.quests && careful && (qjob || (time >= questAgain && questCount < (o.questMax ?? Infinity) && questTries < (o.questMax ?? Infinity) * 2))) {
@@ -404,7 +405,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           } else if (goTo(...spotBy(L), true, 4)) {
             const st = w.leash.stack, qi = st.indexOf(want.id);
             if (qi < 0) { qjob = null; questAgain = time + 10; }
-            else { if (qi !== st.length - 1) st.push(st.splice(qi, 1)[0]); putDown(); } // (cycling it to the bottom, as the sigil button does in the treetops)
+            else { toBottom(w.leash, st[qi]); putDown(); } // (cycling it to the bottom, as the sigil button does in the treetops)
           }
         }
       } else if (o.feed && careful && (feeding || (time >= feedAgain && w.leash.stack.filter(id => g.creatures[id].level < 2).length >= K.feedMin))) {
