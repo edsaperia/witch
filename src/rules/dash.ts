@@ -66,12 +66,6 @@ export function dashCharge(d: DashState, time: number): number {
 }
 
 
-/** How far the next charge has come back (0 just spent, 1 full: every charge there), for the cursor's arc. */
-export function nextCharge(d: DashState, time: number, max: number, cooldown: number): number {
-  if (d.charges >= max || d.chargeAt === Infinity) return 1;
-  return cooldown > 0 ? Math.max(0, Math.min(1, 1 - (d.chargeAt - time) / cooldown)) : 1;
-}
-
 /** The dash button: blink if she's on the ground, off her seat and it's ready, toward the cursor
  *  (`aimX`, `aimZ`: the ground under it from her, metres; 0, 0 with none) or, with none, the way she
  *  steers. `clear(x, z)` says whether she can stand there. Returns whether she did. */

@@ -69,11 +69,11 @@ export class ActionBar {
       const on = s.action === "spell" ? spellActive(W.spells, time) : s.action === "invite" ? W.invites.burstLeft > 0 : dashing(W.dash, time);
       const usable = s.action === "dash" || s.action === "invite" ? W.body.mode === "ground" && !W.body.seated : true;
       shade.style.height = `${(1 - charge) * 100}%`;
-      // Her blinks ready (two, Ed 2026-10-08; more with Hare's Dash bursts), a count in the corner; Bear's Wind-up: the 💌 slot glows pink as it charges.
+      // Hare's Dash bursts: the blinks ready, a count in the corner; Bear's Wind-up: the 💌 slot glows pink as it charges.
       if (s.action === "dash") {
         let n = el.querySelector<HTMLElement>(".charges");
         if (!n) { n = document.createElement("span"); n.className = "charges"; Object.assign(n.style, { position: "absolute", right: "3px", bottom: "1px", fontSize: "10px", color: "#e8b46a", zIndex: "1" }); el.append(n); }
-        const text = (g.buffs.tuning.dash.charges ?? 1) + g.buffs.mods.charges > 1 ? String(W.dash.charges) : "";
+        const text = g.buffs.mods.charges > 0 ? String(W.dash.charges) : "";
         if (n.textContent !== text) n.textContent = text;
       }
       if (s.action === "invite") el.style.boxShadow = W.invites.charge > 0 ? `0 0 ${(3 + W.invites.charge * 12).toFixed(0)}px rgba(217,120,158,${(0.3 + 0.4 * W.invites.charge).toFixed(2)})` : "";
