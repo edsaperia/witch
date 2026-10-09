@@ -23,6 +23,9 @@ export interface CameraState {
   lift: number;
   /** Drawn back with treetop speed: a share of the distance, eased. */
   pull?: number;
+  /** In a legend's circle (Ed, 2026-10-08: "consider lowering the camera angle while you're in the circle to make them seem more
+   *  looming"): 0 out of it to 1 in it, eased over camera.circle.ease seconds; and the legend it frames (x, z). */
+  circle?: number; cx?: number; cz?: number;
   /** The opening shot (Ed, v171): 1 while she sits on the treehouse, close in on her seat
    *  (camera.intro), running down to 0 over camera.intro.ease seconds once she leaves it. */
   intro?: number;
@@ -68,7 +71,7 @@ function spring(x: number, v: number, to: number, w: number, dt: number): [numbe
 
 /** Follow the witch: `target` is where she is, `vel` how fast she flies, `lift` her height (0-1).
  *  While she's `seated`, it frames `focus` (her seat, as drawn) for the opening shot. */
-export function stepCamera(c: CameraState, zoomDelta: number, target: { x: number; y: number; z: number }, vel: { x: number; z: number }, lift: number, dt: number, t: Tuning, seated = false, focus?: { x: number; y: number; z: number } | null, coast?: CoastView | null): CameraState {
+export function stepCamera(c: CameraState, zoomDelta: number, target: { x: number; y: number; z: number }, vel: { x: number; z: number }, lift: number, dt: number, t: Tuning, seated = false, focus?: { x: number; y: number; z: number } | null, coast?: CoastView | null, legend?: { x: number; z: number } | null): CameraState {
   const cam = t.camera, steps = Math.max(1, cam.zoomSteps);
   const intro = seated ? (c.intro ?? 0) : Math.max(0, (c.intro ?? 0) - dt / Math.max(0.05, cam.intro.ease));
   if (seated && focus) target = focus;
@@ -95,7 +98,12 @@ export function stepCamera(c: CameraState, zoomDelta: number, target: { x: numbe
   if (gaze < 1e-4) gaze = 0; else if (gaze > 1 - 1e-4) gaze = 1;
   const seaBehind = coast ? clamp(coast.seaBehind ?? 0, 0, 1) : (c.seaBehind ?? 0); // (by bearing: changes only as slowly as she walks)
   const bearing = coast?.bearing ?? c.bearing;
-  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind, bearing };
+  // In a legend's circle: towards the lower view, eased in and out (camera.circle; none with it off, or over the treetops).
+  const C = cam.circle, inC = C?.on && legend && lift < 0.5 ? 1 : 0, ce = 1 - Math.exp(-3 * dt / Math.max(0.05, C?.ease ?? 1));
+  let circle = (c.circle ?? 0) + (inC - (c.circle ?? 0)) * ce;
+  if (circle < 1e-4) circle = 0; else if (circle > 1 - 1e-4) circle = 1;
+  const cx = legend ? legend.x : c.cx, cz = legend ? legend.z : c.cz; // (the last one framed, kept while it eases back out)
+  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind, bearing, ...(circle > 0 || c.circle !== undefined ? { circle, cx, cz } : {}) }; // (none until she's first in a circle: the state as before)
 }
 const coast0 = (v?: CoastView | null) => (v ? clamp(v.near, 0, 1) : 0);
 
@@ -142,6 +150,13 @@ export function cameraPose(c: CameraState, lift: number, t: Tuning): CameraPose 
     look = G.look * v.gaze; // (aimed a little over her, so she lies low in the picture under the sky)
     side = G.side * v.gaze;
   }
-  const a = (angle * Math.PI) / 180, ty = c.ty + look, tx = c.tx + side;
-  return { angle, distance, x: tx, y: ty + Math.sin(a) * distance, z: c.tz + Math.cos(a) * distance, tx, ty, tz: c.tz };
+  // In a legend's circle: lower and a little closer, aimed part way to the legend and up a little, so it looms over her.
+  const C = t.camera.circle, ck = C?.on ? smoothstep(c.circle ?? 0) * (1 - m) : 0;
+  let tz = c.tz, cxs = 0;
+  if (C && ck > 0) {
+    angle = lerp(angle, C.angle, ck); distance *= lerp(1, C.distance, ck); look += C.look * ck;
+    if (c.cx !== undefined && c.cz !== undefined) { cxs = (c.cx - c.tx) * C.frame * ck; tz = lerp(c.tz, c.cz, C.frame * ck); }
+  }
+  const a = (angle * Math.PI) / 180, ty = c.ty + look, tx = c.tx + side + cxs;
+  return { angle, distance, x: tx, y: ty + Math.sin(a) * distance, z: tz + Math.cos(a) * distance, tx, ty, tz };
 }
