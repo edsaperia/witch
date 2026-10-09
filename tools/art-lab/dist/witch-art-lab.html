@@ -5562,8 +5562,15 @@ function wing3d(m, root, side, span, up, mat, mat2, group) {
   m.flat(v3.add(v3.lerp(root, tip, .5), v3.mul(v, -span * .14)), u, v, L * .55, span * .34, masks.wing(mat, mat2), { group, extra: true });
 }
 
-// The size a creature is drawn at: babies are chunky, about 28 to 32 pixels (the coordinator).
-const drawHeight = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, Math.min(30 * Math.max(.75, Math.min(1.1, k)), height3d(1, st) * k * .72))) // a baby: about 30, never taller than 3/4 of its young
+// The size a creature is drawn at: babies are chunky, about 28 to 32 pixels (the coordinator), times st.creatureScale (Ed,
+// 2026-10-08: "creatures are quite hard to make out ... I think +50% is ok"): babies, young and adults alike, baked at the
+// art pixel (docs/STYLE.md §1; ?creatures= in the game tries others). A legend keeps its own size unless that would bring it
+// within LEGEND_OVER_SCALED of its scaled adult's full height, which keeps it 2.1+ times the adult by body height (the legend's
+// motes and crests add to its full height, not its body's).
+const LEGEND_OVER_SCALED = 2.35;
+const drawHeight = (level, st, k = 1) => { const c = st.creatureScale || 1; return c === 1 ? drawHeight1(level, st, k)
+  : level === 3 ? Math.round(Math.max(height3d(3, st) * k, Math.round(height3d(2, st, k) * c) * LEGEND_OVER_SCALED)) : Math.round(drawHeight1(level, st, k) * c); };
+const drawHeight1 = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, Math.min(30 * Math.max(.75, Math.min(1.1, k)), height3d(1, st) * k * .72))) // a baby: about 30, never taller than 3/4 of its young
   : level === 2 ? height3d(2, st, k) // an adult: 1.65 times its young
   : level === 3 ? Math.round(Math.max(height3d(3, st) * k, height3d(2, st, k) * LEGEND_OVER_ADULT)) // a legend: far above its adult
   : height3d(level, st) * k;
@@ -6453,7 +6460,7 @@ const levelHeight = (level, st) => height3d(level, st);
 // facing: "towards" (head turned to the viewer) or "away" (we see the rump and back of the head).
 // Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
 // (a lab session changes lighting and colour knobs far more often than these).
-const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur", "texture"], cache = new Map();
+const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur", "texture", "creatureScale"], cache = new Map();
 // gear (optional): party gear, the woken look and the expression, { collar, hat, glasses, shoes, woken, face }:
 //   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
 //   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true;
@@ -12611,6 +12618,7 @@ const KNOBS = [
   { k: "growth", g: "Creatures", label: "Legend vs baby height", min: 5, max: 25, step: 1, v: 20 },
   { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
   { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
+  { k: "creatureScale", g: "Creatures", label: "Creature size: babies, young and adults (Ed, 2026-10-08: +50%; legends stay well above their adults)", min: 1, max: 2, step: .05, v: 1.5 },
   { k: "texture", g: "Creatures", label: "Fur, feathers and scales (genome/texture.js; 0 off)", min: 0, max: 1, step: 1, v: 1 },
   { k: "texDetail", g: "Creatures", label: "Texture detail (0 cel shapes, 1 fine strokes)", min: 0, max: 1, step: 0.05, v: 0.3 },
   { k: "hueShift", g: "Creatures", label: "Hue-shifted ramps (warm lights, red-brown shadows)", min: 0, max: 1, step: 0.05, v: 0 },

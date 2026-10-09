@@ -67,14 +67,14 @@ A new area takes its floor from one of the 12 ramps' families and hue-shifts it;
 
 ![scale lineup: each species' baby, young, adult and legend, the witch for scale (bold)](style/scale-lineup.png)
 
-The witch is the unit (about 4.2 m; body 45 art px at px 3).
+The witch is the unit (about 4.2 m; body 45 art px at px 3). Creatures are drawn at the style's `creatureScale`, 1.5 since Ed's pick (2026-10-08: "creatures are quite hard to make out ... I think +50% is ok"): babies, young and adults half again as big as before, legends kept at least 2.35 × their adult's full height (2.1 × by body), about 30% bigger than before. Before it, a baby was about 0.65 × her, a young about 1 × and an adult about 2 × (the big species' check 1.45 to 2.1 ×, times `creatureScale` now).
 
 | Thing | Size | Rule from |
 |---|---|---|
-| Baby | about 0.65 × her (wolf 30 px body) | art/check.mjs level steps |
-| Young | about 1 × her (45 px) | young ≥ 1.3 × baby |
-| Adult | about 1.6 × her (75 px); the bigger species 1.45 to 2.1 × (elk, stag to 2.5 ×) | adult ≥ 1.55 × young |
-| Legend | about 4.5 × her (203 px) | legend ≥ 2.1 × adult |
+| Baby | about 1.1 × her (wolf 50 px body) | art/check.mjs level steps |
+| Young | about 1.7 × her (76 px) | young ≥ 1.3 × baby |
+| Adult | about 3 × her (135 px); the bigger species 2.2 to 3.15 × (elk, stag to 3.75 ×) | adult ≥ 1.55 × young |
+| Legend | about 6.6 × her (296 px) | legend ≥ 2.1 × adult |
 | Dancefloor speaker | about 2.6 × her (11 m) | check.mjs |
 | Soundsystem | about 3 × her (12.7 m) | check.mjs |
 | Set pieces | 6 to 12 m (1.4 to 2.9 ×) | check.mjs |
