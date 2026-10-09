@@ -474,6 +474,7 @@ export function stepNotice(list: Iterable<Creature>, witches: { x: number; z: nu
   const N = t.notice;
   for (const c of list) {
     if (c.leashed || c.gone || heldByCombat(c) || c.asleep || c.wakeUntil !== undefined) continue;
+    if (c.boss && c.legendState === "asleep") continue; // (a sleeping legend lies as it was laid, never turning to her: Ed, 2026-10-09)
     let w: { x: number; z: number } | null = null, d = N.radius;
     for (const v of witches) { if (!v.onGround) continue; const k = Math.hypot(v.x - c.x, v.z - c.z); if (k < d) { d = k; w = v; } }
     if (!w) continue;
