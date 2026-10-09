@@ -104,7 +104,8 @@ describe("music sections", () => {
     const c = new Conductor(style);
     const before = c.plan(cueAt(370), 184);
     expect(c.plan({ ...cueAt(370), knockedOut: true }, 186)).toEqual(before);
-    expect(c.plan({ ...cueAt(370), knockedOut: true }, 188).section).toBe(style.knockout);
+    // (knocked out, the music is silent rather than the knockout section: Ed, 2026-10-09, silentAt; its plans go on)
+    expect(c.plan({ ...cueAt(370), knockedOut: true }, 188).section).not.toBe(style.knockout);
   });
 
   it("previews: ?music=<section> loops it, ?music=wave<N> plays wave N's music", () => {

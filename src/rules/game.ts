@@ -5,7 +5,7 @@ import { wakeOnInvites } from "./inviteWakes";
 import { MOVEMENT } from "./movement";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
-import { beatAt, knockdownTempo, newBeatClock, tempoRate, waveArrived, waveTempo, type BeatClock } from "./beat";
+import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { legendCircleNear } from "./legendCircle";
 import { MAX_STEP, newClock, type Clock } from "./clock";
@@ -152,9 +152,11 @@ export interface Game {
   speakerBoot: (number | null)[];
   /** The beat clock: beats by game time, its tempo rising wave by wave (rules/beat.ts). */
   beat: BeatClock;
-  /** The game time of every knockdown (any witch's), in order: each re-seeds the music (Ed, 2026-10-09: "Being knocked
-   *  down changes the music to a random new seed"; rules/musicPlan.ts musicCue, rules/musicScore.ts formSeedAt). */
-  knockdowns: number[];
+  /** Every knockdown (any witch's), in order (Ed, 2026-10-09): `at` when she went down (the record scratched, the music
+   *  stopped) and `back` when her wait behind the decks ends (a bar line: she's put a new record on, and its music starts
+   *  from the top, re-seeded: "Being knocked down changes the music to a random new seed"), in game time. rules/musicPlan.ts
+   *  musicCue and formClock, rules/djSet.ts (her scratching on the new record). */
+  knockdowns: { at: number; back: number }[];
   /** The dancefloor's tile lights (rules/dancefloor.ts). */
   floor: FloorState;
   /** The legend buffs on now, and the tuning they make (rules/buffs.ts): the game plays by buffs.tuning. */
@@ -218,7 +220,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
-    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as number[],
+    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[],
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
     combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
@@ -295,7 +297,14 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
     const hatFloats = dropHat(w.hat, w.body.x, w.body.z, at, t.knockout.dropHat), streak = nextStreak(w.koStreak, at, t);
     w.koStreak = { n: streak, at };
     w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
-    knockdownTempo(g.beat, t, g.clock.time); g.knockdowns.push(g.clock.time); // (the beat speeds up: Ed, 2026-10-07, "the BPM goes up by 1 each time you die")
+    knockdownTempo(g.beat, t, g.clock.time); // (the beat speeds up: Ed, 2026-10-07, "the BPM goes up by 1 each time you die")
+    // her wait ends on a bar line at the new tempo, the nearest to it (never under knockout.respawn.minScratch of scratching):
+    // her scratching on the new record leads straight into its first downbeat (Ed, 2026-10-09)
+    const off = g.clock.time - g.herTime, ko = w.ko, min = ko.inAt + (t.knockout.respawn?.minScratch ?? 0) + off;
+    let bar = Math.round(beatAt(g.beat, ko.backAt + off) / 4);
+    while (timeAt(g.beat, bar * 4) < min - 1e-6) bar++;
+    ko.backAt = timeAt(g.beat, bar * 4) - off;
+    g.knockdowns.push({ at: g.clock.time, back: ko.backAt + off });
     if (hatFloats) g.koEvents.push({ kind: "hatDropped", at, x: w.body.x, z: w.body.z });
     return;
   }

@@ -6,7 +6,7 @@ import style from "../../config/music-style.json";
 import { voiceOf } from "../../src/platform/audio/voices";
 import type { Creature } from "../../src/rules/creatures";
 import type { NightKind } from "../../src/platform/audio/night";
-import { DJ_ROUTINE } from "../../src/rules/djSet";
+import { DJ_ROUTINE, scratchRoutine } from "../../src/rules/djSet";
 
 const v = (species: string, level: number) => voiceOf({ species, level, boss: level === 3 } as unknown as Creature, TUNING);
 
@@ -77,6 +77,9 @@ const SOUNDS: [string, number, Play][] = [
   ["sad-trumpet-bare", 2.4, s => s.sadTrumpet(false)],
   ["sad-trumpet-cut", 4, () => {}],
   ["deck-routine", 9, () => {}],
+  ["record-scratch", 1.6, s => s.recordScratch()],
+  ["respawn-routine-1", 5.5, () => {}],
+  ["respawn-routine-2", 5.5, () => {}],
   ["sparkler", 10, () => {}],
   ["fireworks", 9, () => {}],
   ["dolphins", 6, () => {}],
@@ -96,6 +99,15 @@ async function render(name: string, seconds: number, play: Play) {
     // her routine at the decks (rules/djSet.ts DJ_ROUTINE) at 120 bpm: the needle dropped, baby scratches, chirps, the spin-back, her hype
     for (const e of DJ_ROUTINE) if (e.stroke) void oc.suspend(Math.round(e.at * 0.5 * rate) / rate).then(() => { s.deck(e.stroke!); return oc.resume(); });
     void oc.suspend(Math.round(12 * 0.5 * rate) / rate).then(() => { s.whoop(); return oc.resume(); });
+  } else if (name.startsWith("respawn-routine-")) {
+    // knocked down at 125 bpm (+5): the record scratched, silence, then back at her decks the needle on the new record and her
+    // scratch routine from its seed (rules/djSet.ts scratchRoutine; two seeds, two routines) to the downbeat at 5.3 s
+    const spb = 60 / 125, at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0.05, () => s.recordScratch());
+    const back = 1.7, lead = 1, beats = 6, seed = name.endsWith("1") ? 1234 : 98765;
+    const loud = TUNING.sfx.deck.respawn ?? 1;
+    at(back, () => s.deck("drop", 0, loud));
+    for (const e of scratchRoutine(seed, beats)) if (e.stroke) at(back + (lead + e.at) * spb, () => s.deck(e.stroke!, 0, loud));
   } else if (name === "deck-scratch") {
     // her scratch bars at the decks: two bars of strokes on the half-beats at 120 bpm, forward on the beat, back off it
     for (let k = 0; k < 16; k++) void oc.suspend(Math.round(k * 0.25 * rate) / rate).then(() => { s.scratch(k % 2 === 0); return oc.resume(); });

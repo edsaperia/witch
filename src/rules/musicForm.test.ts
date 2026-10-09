@@ -4,9 +4,9 @@
 // down, in which case it gains 5bpm. Being knocked down changes the music to a random new seed."
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { bpmAt, waveArrived, waveTempo } from "./beat";
+import { bpmAt, timeAt, waveArrived, waveTempo } from "./beat";
 import { hitWitch, newGame } from "./game";
-import { Conductor, formClock, musicCue, type MusicCue } from "./musicPlan";
+import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./musicPlan";
 import { formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";
 
@@ -115,35 +115,48 @@ describe("the tempo: 120, and 5 more a knockdown", () => {
   });
 });
 
-describe("a knockdown re-seeds the music", () => {
-  const cue = (knockdowns: number[], waves: number[] = []): MusicCue => ({ waves, nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, knockdowns });
-  it("changes the seed from the next phrase line, its form starting there with a new A", () => {
-    const base = 77, P8 = F.phraseBars;
+describe("a knockdown: the record scratched, silence, a new record from the top (Ed, 2026-10-09)", () => {
+  const cue = (knockdowns: { at: number; back: number }[], waves: number[] = []): MusicCue => ({ waves, nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, knockdowns });
+  it("is silent from the knockdown till the new record, which starts its form there on a new seed", () => {
+    const base = 77;
     expect(formClock(style, cue([]), 100)).toEqual({ start: 0, n: 0 });
-    expect(formClock(style, cue([13.2]), 15)).toEqual({ start: 0, n: 0 }); // (till the phrase line)
-    const after = formClock(style, cue([13.2]), 16);
-    expect(after).toEqual({ start: 2 * P8, n: 1 });
-    expect(formClock(style, cue([13.2, 40]), 48)).toEqual({ start: 48, n: 2 });
+    const k = cue([{ at: 13.2, back: 17 }]);
+    expect(silentAt(k, 13.1)).toBe(false);
+    expect(silentAt(k, 13.2)).toBe(true);
+    expect(silentAt(k, 16.99)).toBe(true);
+    expect(silentAt(k, 17)).toBe(false);
+    expect(formClock(style, k, 16)).toEqual({ start: 0, n: 0 });
+    expect(formClock(style, k, 17)).toEqual({ start: 17, n: 1 });
+    expect(formClock(style, cue([{ at: 13.2, back: 17 }, { at: 40.5, back: 43 }]), 48)).toEqual({ start: 43, n: 2 });
     expect(musicSeed(base, 1)).not.toBe(base);
     expect(musicSeed(base, 2)).not.toBe(musicSeed(base, 1));
-    // a wave landing starts the form again (the seed as it was)
-    expect(formClock(style, cue([13.2], [37]), 40)).toEqual({ start: 40, n: 1 });
-    // its phrase lines after a wave: the form's, from where the wave landed
-    expect(formClock(style, cue([42], [37]), 48)).toEqual({ start: 48, n: 1 });
+    // a wave landing later starts the form again (the seed as it was)
+    expect(formClock(style, cue([{ at: 13.2, back: 17 }], [37]), 40)).toEqual({ start: 40, n: 1 });
+    // the new record plays from the top: the wave's landing section, its form's A
+    const c = new Conductor(style), wave: MusicCue = { ...cue([{ at: 50.3, back: 53 }], [36]) };
+    expect(c.plan(wave, 53)).toMatchObject({ section: style.arc[1].sections!.land, start: 53, pass: 0 });
     // the melody after it is new (seeded anew, not the old one's A)
     const plan: BlockPlan = { section: "forest", start: 16, bars: 32, wave: 1, arc: 0 };
     const play = (ctx: { seed: number; formStart: number }) => Array.from({ length: 8 * 16 }, (_, i) => notesAt(style, plan, null, 16 * 16 + i, { ...ctx, siege: 0 }).map(e => `${e.part}:${e.midi}`).join()).join("|");
     expect(play({ seed: musicSeed(base, 1), formStart: 16 })).not.toBe(play({ seed: base, formStart: 0 }));
   });
 
-  it("is in the game's music cue, by the bars the knockdowns came in", () => {
+  it("goes down and comes back in the game: her wait ends on a bar line, the cue silent till then", () => {
     const g = newGame(3, TUNING), W = g.witches[0];
     expect(musicCue(g).knockdowns).toEqual([]);
-    W.health.hp = 1; g.clock.time = g.herTime = 30;
-    hitWitch(g, 0, 30);
-    const cue = musicCue(g);
-    expect(cue.knockdowns!.length).toBe(1);
-    expect(cue.knockdowns![0]).toBeCloseTo(15, 3); // (30 s at 120: 15 bars)
+    W.health.hp = 1; g.clock.time = g.herTime = 30.3;
+    hitWitch(g, 0, 30.3);
+    const ko = W.ko!, cue = musicCue(g), [k] = cue.knockdowns!;
+    expect(k.at).toBeCloseTo(30.3 / 2, 3); // (30.3 s at 120: 15.15 bars)
+    expect(k.back % 1).toBeCloseTo(0, 3); // a bar line, at the new tempo
+    expect(timeAt(g.beat, k.back * 4)).toBeCloseTo(ko.backAt, 6);
+    expect(ko.backAt).toBeGreaterThanOrEqual(ko.inAt! + TUNING.knockout.respawn!.minScratch - 1e-6);
+    expect(Math.abs(ko.backAt - (30.3 + TUNING.knockout.respawn!.base))).toBeLessThan(2.1); // (the nearest bar line to the wait: one bar is 2 s or less)
+    expect(silentAt(cue, k.at)).toBe(true);
+    expect(silentAt(cue, k.back - 0.01)).toBe(true);
+    expect(silentAt(cue, k.back)).toBe(false);
+    expect(formClock(style, cue, k.back)).toEqual({ start: k.back, n: 1 });
+    expect(g.knockdowns).toEqual([{ at: 30.3, back: ko.backAt }]);
   });
 });
 

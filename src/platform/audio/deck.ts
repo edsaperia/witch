@@ -13,8 +13,8 @@ import { degree, mtof } from "./dsp";
 
 /** One stroke of the record: `forward` pushed (rising, brighter), else pulled back (lower, duller); `len` times a stroke's
  *  length, `up` how fast her hand takes it at its fastest (times the record's own speed). */
-export function scratch(K: SfxKit, forward: boolean, pan = 0, near = 1, len = 1, up = forward ? 1.5 : 1.15): void {
-  const D = K.T.deck, c = K.ctx, at = c.currentTime + 0.005, dur = D.stroke * len * (0.9 + 0.2 * Math.random());
+export function scratch(K: SfxKit, forward: boolean, pan = 0, near = 1, len = 1, up = forward ? 1.5 : 1.15, wait = 0, cuts = 0): void {
+  const D = K.T.deck, c = K.ctx, at = c.currentTime + 0.005 + wait, dur = D.stroke * len * (0.9 + 0.2 * Math.random());
   const vol = D.volume * D.scratch * near;
   if (vol <= 0.0005) return;
   const out = K.voice(pan), g = c.createGain(), lp = c.createBiquadFilter();
@@ -25,6 +25,11 @@ export function scratch(K: SfxKit, forward: boolean, pan = 0, near = 1, len = 1,
   g.gain.setValueAtTime(0.0001, at);
   g.gain.exponentialRampToValueAtTime(vol, peakAt);
   g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  // the crossfader: `cuts` clicks off through the stroke (a transformer's pulses, a flare's one click)
+  if (cuts > 0) {
+    const fader = c.createGain(); lp.disconnect(); lp.connect(fader); fader.connect(g);
+    for (let k = 0; k < cuts; k++) { const t0 = at + ((k + 0.5) / (cuts + 0.5)) * dur; fader.gain.setValueAtTime(1, t0 - 0.004); fader.gain.linearRampToValueAtTime(0, t0); fader.gain.setValueAtTime(0, t0 + dur / (cuts * 4 + 2)); fader.gain.linearRampToValueAtTime(1, t0 + dur / (cuts * 4 + 2) + 0.004); }
+  }
   const root = mtof(degree(K.root - 12, 0));
   for (const [m, type, v] of [[1, "sawtooth", 0.55], [1.5, "square", 0.25], [2, "sawtooth", 0.2]] as [number, OscillatorType, number][]) {
     const o = c.createOscillator(), og = c.createGain();
@@ -46,6 +51,26 @@ export function scratch(K: SfxKit, forward: boolean, pan = 0, near = 1, len = 1,
 
 /** A chirp: a forward stroke the crossfader cuts off near its top (short, bright, clipped). */
 export function chirp(K: SfxKit, pan = 0, near = 1): void { scratch(K, true, pan, near, 0.45, 1.6); }
+
+/** The respawn routine's techniques (rules/djSet.ts scratchRoutine; Ed, 2026-10-09): a transformer (a long forward stroke
+ *  the fader chops into pulses), a flare (a stroke clicked off once in its middle), a tear (a forward stroke in two pushes),
+ *  a stab (a short, hard push). */
+export function technique(K: SfxKit, kind: "trans" | "flare" | "tear" | "stab", pan = 0, near = 1): void {
+  if (kind === "trans") scratch(K, true, pan, near, 1.6, 1.4, 0, 3);
+  else if (kind === "flare") scratch(K, true, pan, near, 1.1, 1.55, 0, 1);
+  else if (kind === "tear") { scratch(K, true, pan, near, 0.55, 1.2); scratch(K, true, pan, near * 0.9, 0.6, 1.6, D_TEAR); }
+  else scratch(K, true, pan, near * 1.15, 0.3, 1.9);
+}
+const D_TEAR = 0.07;
+
+/** The record scratched as she's knocked down (Ed, 2026-10-09: "there should be a record scratch on being knocked down"):
+ *  the old record dragged back and forth under a hand, louder than her routine (sfx.deck.knock times it), and dragged to a
+ *  stop; about 0.8 s. The music stops under it (musicEngine.ts, its gate). */
+export function recordScratch(K: SfxKit, pan = 0): void {
+  const k = K.T.deck.knock ?? 3;
+  const strokes: [boolean, number, number, number][] = [[true, 0, 1.3, 1.9], [false, 0.16, 1.2, 1.3], [true, 0.3, 1.0, 1.7], [false, 0.42, 1.6, 1.1], [false, 0.6, 2.2, 0.7]];
+  for (const [fwd, wait, len, up] of strokes) scratch(K, fwd, pan, k, len, up, wait);
+}
 
 /** The spin-back: the record wound back by hand, its sound rushing down from past full speed to nothing. */
 export function spinBack(K: SfxKit, pan = 0, near = 1): void {

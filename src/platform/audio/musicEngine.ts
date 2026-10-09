@@ -12,7 +12,7 @@
 // kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
 // supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
-import { Conductor, bootLayers, formClock, type MusicCue } from "../../rules/musicPlan";
+import { Conductor, bootLayers, formClock, silentAt, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
@@ -46,6 +46,13 @@ export class MusicEngine {
   /** Only these parts sound (the Music Lab's analysis); null: all. */
   solo: Set<string> | null = null;
   private out: GainNode;
+  /** Shut from a knockdown till its new record starts (Ed, 2026-10-09: "the music stops when she gets knocked down"): cut at
+   *  once on the audio clock when the knockdown is heard of (what's already scheduled ahead with it), opened on the new
+   *  record's first downbeat. */
+  private gate: GainNode;
+  /** Knockdowns heard of so far, and whether the gate is shut (as scheduled: on the audio clock, ahead of now). */
+  private knocksHeard = 0;
+  gated = false;
   private tone: BiquadFilterNode;
   private duckBus: GainNode;
   private dryBus: GainNode;
@@ -122,7 +129,8 @@ export class MusicEngine {
     const reverbLow = c.createBiquadFilter(); reverbLow.type = "highpass"; reverbLow.frequency.value = 220;
     this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
     this.delayIn.connect(this.delay); this.delay.connect(delayTone); delayTone.connect(this.feedback); this.feedback.connect(this.delay); delayTone.connect(this.tone);
-    this.tone.connect(limit); limit.connect(this.out); this.out.connect(dest);
+    this.gate = c.createGain();
+    this.tone.connect(limit); limit.connect(this.gate); this.gate.connect(this.out); this.out.connect(dest);
     // the legend's clearing layer: not through the section's low-pass, its own reverb and a limiter
     this.circleIn = c.createGain(); this.circleVerbIn = c.createGain(); this.circleVerb = c.createConvolver();
     const circleLimit = c.createDynamicsCompressor();
@@ -168,6 +176,13 @@ export class MusicEngine {
   update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.6, rate = 1, pitch = 1): void {
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
     if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; this.lastNow = -1; return; }
+    // a knockdown just heard of: the record scratched (sfx), the music cut now, notes already scheduled with it
+    const knocks = cue.knockdowns?.length ?? 0;
+    if (knocks < this.knocksHeard) this.knocksHeard = knocks; // (a new run)
+    if (knocks > this.knocksHeard) {
+      this.knocksHeard = knocks;
+      if (silentAt(cue, stepNow / 16)) { this.gate.gain.cancelScheduledValues(now); this.gate.gain.setValueAtTime(this.gate.gain.value, now); this.gate.gain.setTargetAtTime(0, now, 0.03); this.gated = true; }
+    }
     // Game time as heard: running on from where it was at the old rate, then at the new one (the
     // world slowing in a legend's circle). The music never waits for the game (Ed's playtest, 2026-10-06:
     // "The music cuts in and out a lot": a frame over the rules' MAX_STEP loses game time, and re-anchoring
@@ -215,6 +230,7 @@ export class MusicEngine {
     while (this.cAt < now + ahead) {
       if (this.cAt >= now) {
         const main = Math.floor(beatAt(clock, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
+        if (silentAt(cue, main / 16)) { this.cNext++; this.cAt += sps; continue; }
         const events = notesAt(this.style, plan, null, main, { ...this.formAt(cue, Math.floor(main / 16)), siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
         const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
         this.playAll(events, e => this.cAt + (e.straight ? 0 : swing) + e.offset * sps, sps);
@@ -239,6 +255,9 @@ export class MusicEngine {
   /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
   private step(cue: MusicCue, step: number, t: number, sps: number): void {
     const S = this.style, B = S.blockBars, bar = Math.floor(step / 16), s = step - bar * 16;
+    // knocked down: nothing till her new record starts, then the gate open on its first sixteenth
+    if (silentAt(cue, step / 16)) { if (!this.gated) { this.gate.gain.setTargetAtTime(0, t, 0.03); this.gated = true; } return; }
+    if (this.gated) { this.gate.gain.cancelScheduledValues(t); this.gate.gain.setValueAtTime(1, t); this.gated = false; }
     const plan = this.conductor.plan(cue, bar);
     // in a block's last bar, the next block's plan (for the fill): fixed a bar early
     const next = bar % B === B - 1 ? this.conductor.plan(cue, bar + 1) : null;

@@ -1235,6 +1235,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.deck.stroke` | number | 0 to … |
 | `sfx.deck.hype` | number | 0 to … |
 | `sfx.deck.needle` | number | 0 to … |
+| `sfx.deck.knock` | number | 0 to … |
+| `sfx.deck.respawn` | number | 0 to … |
 | `sfx.spell.volume` | number | 0 to … |
 | `sfx.spell.hum` | number | 0 to … |
 | `sfx.spell.rustle` | number | 0 to … |

@@ -453,6 +453,391 @@ label.check input { accent-color: var(--accent); }
     rampTo(c, line, target, 4 * (t.beat.rampBars ?? 8));
   }
 
+  // config/creature-voices.json
+  var creature_voices_default = {
+    _readme: "Each creature's call, blended into its babble (Ed, 2026-10-05: you can tell what's talking): a family's call style, and a species' tweaks over it. A new creature picks a family (and tweaks if it likes). Fields: pitch (times the babble's pitch), formants (times its formants), wave (the voice's source), pure (a whistled tone, no vowels), glide (each syllable's pitch at its end, times its start; 1 flat), trill ([rate Hz, cents]: a fast warble), am ([rate Hz, depth 0-1]: a buzz or a croak's rattle), noise (0-1: breath, a hiss), dur and gap (times a syllable's length and the pause after), extra (more syllables a burst), consonant (0-1: how often a syllable starts with a click or breath), vowel (always this one: 0 ah, 1 eh, 2 ee, 3 oh, 4 oo), turn (a call when it turns enraged: howl), volume (times its loudness, to balance the families). Legends sing whale song instead.",
+    families: {
+      bird: { pitch: 2.2, formants: 1.4, wave: "triangle", pure: true, glide: 1.5, trill: [18, 110], dur: 0.55, gap: 0.4, extra: 1, consonant: 0.2 },
+      canid: { pitch: 1, formants: 1, wave: "sawtooth", glide: 0.72, dur: 0.6, gap: 1.3, consonant: 0.25, vowel: 0, turn: "howl" },
+      big: { pitch: 0.6, formants: 0.78, wave: "sawtooth", glide: 0.85, am: [26, 0.45], noise: 0.35, dur: 1, gap: 1.1, consonant: 0.1 },
+      small: { pitch: 2.4, formants: 1.35, wave: "triangle", pure: true, glide: 1.3, dur: 0.45, gap: 0.35, extra: 2, consonant: 0.15 },
+      bug: { pitch: 1.4, formants: 1.45, wave: "square", glide: 1.05, am: [85, 0.8], dur: 0.6, gap: 0.6, consonant: 1 },
+      snake: { pitch: 1, formants: 1.5, wave: "sawtooth", glide: 0.9, noise: 0.9, dur: 1.3, gap: 0.8, consonant: 0.8, vowel: 2 },
+      amphibian: { pitch: 0.6, formants: 0.72, wave: "square", glide: 1.18, am: [34, 0.9], dur: 0.9, gap: 1.2, consonant: 0, vowel: 3 },
+      bat: { pitch: 3.2, formants: 1.6, wave: "triangle", pure: true, glide: 1.6, dur: 0.35, gap: 0.4, extra: 1, consonant: 0 },
+      whistler: { pitch: 2, formants: 1.3, wave: "sine", pure: true, glide: 1.4, trill: [7, 40], dur: 0.7, gap: 0.6, consonant: 0 },
+      cat: { pitch: 1.1, formants: 1.05, wave: "sawtooth", glide: 0.8, dur: 1.2, gap: 1, consonant: 0.1, vowel: 2 }
+    },
+    species: {
+      raven: { family: "bird", pitch: 0.55, pure: false, wave: "sawtooth", trill: [0, 0], glide: 0.85, vowel: 0, volume: 1.3 },
+      owl: { family: "bird", pitch: 0.45, trill: [0, 0], glide: 0.93, dur: 1.6, gap: 1.6, vowel: 4, wave: "sine", volume: 0.4 },
+      wolf: { family: "canid" },
+      fox: { family: "canid", pitch: 1.5, glide: 0.8 },
+      bear: { family: "big", pitch: 0.8 },
+      boar: { family: "big", pitch: 1.2, noise: 0.55, am: [40, 0.6], volume: 1.3 },
+      elk: { family: "big", pitch: 1.4, glide: 1.25, dur: 1.5, noise: 0.15, am: [0, 0], volume: 0.8 },
+      stag: { family: "big", pitch: 1.2, glide: 0.8, dur: 1.6, noise: 0.2 },
+      ram: { family: "big", pitch: 1.6, am: [12, 0.5], vowel: 1, noise: 0.1 },
+      badger: { family: "big", pitch: 1.8, dur: 0.6 },
+      hare: { family: "small" },
+      squirrel: { family: "small", pitch: 1.2, extra: 3, gap: 0.25, volume: 0.75 },
+      dormouse: { family: "small", pitch: 1.3 },
+      mole: { family: "small", pitch: 0.8, noise: 0.3 },
+      hedgehog: { family: "small", pitch: 0.9, noise: 0.4, pure: false, wave: "sawtooth" },
+      stoat: { family: "small", pitch: 1.1, trill: [24, 80] },
+      marten: { family: "small", pitch: 0.9, trill: [20, 60] },
+      beetle: { family: "bug", pitch: 0.7, am: [60, 0.9], volume: 1.5 },
+      moth: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
+      woodlouse: { family: "bug", pitch: 1.1, dur: 0.4, extra: 1, volume: 1.3 },
+      spider: { family: "bug", pitch: 0.9, am: [45, 0.7], noise: 0.25, volume: 1.2 },
+      glowworm: { family: "bug", pitch: 1.6, am: [140, 0.6], pure: true },
+      snake: { family: "snake" },
+      toad: { family: "amphibian" },
+      salamander: { family: "amphibian", pitch: 1.6, am: [48, 0.7] },
+      heron: { family: "bird", pitch: 0.5, pure: false, wave: "sawtooth", trill: [0, 0], glide: 0.8, vowel: 1, volume: 0.9 },
+      newt: { family: "amphibian", pitch: 1.9, am: [56, 0.6] },
+      snail: { family: "amphibian", pitch: 1.2, am: [8, 0.4], noise: 0.3, dur: 1.3 },
+      bat: { family: "bat" },
+      otter: { family: "whistler", volume: 0.7 },
+      beaver: { family: "whistler", pitch: 0.8, trill: [4, 30], volume: 0.7 },
+      lynx: { family: "cat", volume: 0.4 }
+    }
+  };
+
+  // src/rules/musicScore.ts
+  var resolvedCache = /* @__PURE__ */ new WeakMap();
+  function resolveSection(style2, name) {
+    let cache = resolvedCache.get(style2);
+    if (!cache) resolvedCache.set(style2, cache = /* @__PURE__ */ new Map());
+    const hit = cache.get(name);
+    if (hit) return hit;
+    const chain = [];
+    for (let n = name, i = 0; n && i < 8; i++) {
+      const s = style2.sections[n];
+      if (!s) throw new Error(`music style: no section "${n}"`);
+      chain.unshift(s);
+      n = s.base;
+    }
+    const out = { progression: "", chordBars: 2, parts: {} };
+    for (const s of chain) {
+      const { parts, ...rest } = s;
+      Object.assign(out, rest);
+      for (const [k, v] of Object.entries(parts ?? {})) {
+        if (v === null) delete out.parts[k];
+        else out.parts[k] = v;
+      }
+    }
+    delete out.base;
+    cache.set(name, out);
+    return out;
+  }
+  var arcStep = (style2, arc) => style2.arc[Math.max(0, Math.min(style2.arc.length - 1, arc))];
+  var use = (u) => typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 };
+  function degreeToMidi(style2, scale, degree, octave, transpose) {
+    const n = scale.length, o = Math.floor(degree / n), d = degree - o * n;
+    let m = style2.root + transpose + 12 * (octave + o) + scale[d];
+    while (m > 96) m -= 12;
+    return m;
+  }
+  function motif(seed2, arc, part) {
+    let salt = 0;
+    for (let i = 0; i < part.length; i++) salt = salt * 31 + part.charCodeAt(i) | 0;
+    const out = [];
+    let v = [0, 2, 4][Math.floor(hash2(seed2, arc, salt) * 3)];
+    for (let i = 0; i < 32; i++) {
+      const r = hash2(seed2 + i * 7919, arc, salt);
+      if (i % 4 === 0) v = [0, 2, 4, 7, 4, 2][Math.floor(r * 6)] + (v > 6 && r < 0.5 ? -7 : 0);
+      else v += [-2, -1, -1, 1, 1, 2, 0, 3][Math.floor(r * 8)];
+      v = Math.max(-2, Math.min(9, v));
+      out.push(v);
+    }
+    for (let i = 16; i < 28; i++) if (hash2(seed2 + i, arc, salt + 1) < 0.6) out[i] = out[i - 16];
+    return out;
+  }
+  var motifCache = /* @__PURE__ */ new Map();
+  function motifFor(seed2, arc, part) {
+    const k = `${seed2}|${arc}|${part}`;
+    let m = motifCache.get(k);
+    if (!m) {
+      if (motifCache.size > 256) motifCache.clear();
+      motifCache.set(k, m = motif(seed2, arc, part));
+    }
+    return m;
+  }
+  function chordAt(style2, sec, step2, barIn) {
+    const prog = style2.progressions[sec.progression || step2.progression || ""] ?? style2.progressions[Object.keys(style2.progressions)[0]];
+    const root = prog[Math.floor(barIn / Math.max(1, sec.chordBars)) % prog.length];
+    const tones = [root, root + 2, root + 4];
+    if (sec.sevenths) tones.push(root + 6);
+    return { root, tones };
+  }
+  var pick = (xs, r) => xs[Math.min(xs.length - 1, Math.floor(r * xs.length))];
+  var mod = (a, n) => (a % n + n) % n;
+  var formBars = (F) => F.order.length * F.phraseBars;
+  var formInstrument = (F, seed2) => pick(F.instruments, hash2(seed2, 401, 7));
+  function formChord(style2, seed2, formBar, sevenths = false) {
+    const F = style2.form, fb = mod(formBar, formBars(F)), letter = F.order[Math.floor(fb / F.phraseBars)];
+    const progOf = (names, salt) => style2.progressions[pick(names, hash2(seed2, 409, salt))] ?? [0];
+    const A2 = progOf(F.a, 1), B = progOf(F.b, 2), cb = Math.max(1, F.chordBars), n = Math.ceil(F.phraseBars / cb);
+    const k = Math.floor(fb % F.phraseBars / cb);
+    const root = letter === "B" ? k === n - 1 ? F.question : B[k % B.length] : letter === "C" ? k === n - 1 ? F.answer : k === n - 2 ? F.question : A2[k % A2.length] : A2[k % A2.length];
+    const tones = [root, root + 2, root + 4];
+    if (sevenths) tones.push(root + 6);
+    return { root, tones };
+  }
+  function formPhrase(style2, seed2, letter) {
+    const F = style2.form, P2 = F.phraseBars, salt = letter.charCodeAt(0) * 13;
+    const part = letter === "A" ? formInstrument(F, seed2) : F.sung.part, pace = F.pace[part] ?? F.pace.default ?? 0.25;
+    const at2 = F.order.indexOf(letter) * P2;
+    const rhythm = [];
+    for (let b = 0; b < P2; b++) {
+      const r = hash2(seed2 + b * 31, 419, salt), half = Math.floor(P2 / 2), kind = hash2(seed2 + b * 17, 423, salt) < pace ? "mid" : "slow";
+      if (b % half === half - 1) rhythm.push(pick(F.cadence[kind], r));
+      else if (b >= half && hash2(seed2 + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]);
+      else rhythm.push(pick(F.cells[kind], r));
+    }
+    const [lo, hi] = F.range, out = new Array(P2 * 16).fill(null), onsets = [];
+    let v = 2 + Math.floor(hash2(seed2, 431, salt) * 3);
+    const nearest = (want, ok) => {
+      let best = want, bd = Infinity;
+      for (let d = lo; d <= hi; d++) if (ok(d) && Math.abs(d - want) < bd) {
+        bd = Math.abs(d - want);
+        best = d;
+      }
+      return best;
+    };
+    for (let b = 0; b < P2; b++) {
+      const tones = formChord(style2, seed2, at2 + b).tones.map((t) => mod(t, 7)), cell = rhythm[b];
+      const note = (pos, dur, strong) => {
+        const i = b * 16 + Math.floor(pos), r = hash2(seed2 + i * 7919, 433, salt);
+        if (strong) v = nearest(v + pick([-2, -1, 0, 1, 2, 3], r), (d) => tones.includes(mod(d, 7)));
+        else v = Math.max(lo, Math.min(hi, v + pick([-2, -1, -1, 1, 1, 2], r)));
+        out[i] = { deg: v, dur, off: pos - Math.floor(pos) };
+        onsets.push(i);
+      };
+      for (let s = 0; s < 16; s++) {
+        const c = cell[s];
+        if (c === "x") {
+          let dur = 1;
+          while (s + dur < 16 && cell[s + dur] === "-") dur++;
+          note(s, dur, s % 4 === 0);
+        } else if (c === "T" || c === "t") {
+          const span = c === "T" ? 8 : 4;
+          for (let k = 0; k < 3; k++) note(s + k * span / 3, span / 3, k === 0 && s % 4 === 0);
+        }
+      }
+    }
+    const last = onsets[onsets.length - 1];
+    if (last !== void 0) {
+      const n = out[last], chordEnd = formChord(style2, seed2, at2 + P2 - 1).tones.map((t) => mod(t, 7));
+      const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : chordEnd.filter((t) => t !== 0);
+      n.deg = nearest(n.deg, (d) => ends.includes(mod(d, 7)));
+    }
+    return out;
+  }
+  var phraseCache = /* @__PURE__ */ new Map();
+  function phraseFor(style2, seed2, letter) {
+    const k = `${seed2}|${letter}`;
+    let p = phraseCache.get(k);
+    if (!p) {
+      if (phraseCache.size > 64) phraseCache.clear();
+      phraseCache.set(k, p = formPhrase(style2, seed2, letter));
+    }
+    return p;
+  }
+  var musicSeed = (base, n) => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 2147483647);
+  function formNoteAt(style2, seed2, formStep, transpose = 0) {
+    const F = style2.form, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
+    const n = phraseFor(style2, seed2, letter)[fs % (F.phraseBars * 16)];
+    if (!n) return null;
+    const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed2), def = style2.parts[part];
+    const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
+    return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style2, style2.scales[style2.scale], n.deg, oct, transpose), dur: n.dur, off: n.off, letter };
+  }
+  function sectionCutoff(sec, progress) {
+    const c = sec.cutoff ?? 18e3;
+    if (typeof c === "number") return c;
+    return c[0] * Math.pow(c[1] / c[0], Math.max(0, Math.min(1, progress)));
+  }
+  function hitAt(pat, i) {
+    const n = pat.length, ch = pat[i % n];
+    let dur = 1;
+    while (dur < n && pat[(i + dur) % n] === "-" && i % n + dur < n) dur++;
+    return { ch, dur };
+  }
+  var VEL = { X: 1, x: 0.8, o: 0.45, r: 0.7, "?": 0.75 };
+  var BASS = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
+  var VOICE_FAMILIES = creature_voices_default.species;
+  var nameHash = (name) => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = h * 31 + name.charCodeAt(i) >>> 0;
+    return h;
+  };
+  function circleParts(style2, species) {
+    const C2 = style2.circle;
+    if (!C2) return [];
+    const fam = VOICE_FAMILIES[species]?.family ?? "big", h = nameHash(species), out = [];
+    for (const [name, u] of [...Object.entries(C2.every), ...Object.entries(C2.families[fam] ?? C2.families.big ?? {})]) {
+      const ps = Array.isArray(u.p) ? u.p : [u.p];
+      out.push([name, { p: ps[(h + nameHash(name)) % ps.length], level: u.level ?? 1 }]);
+    }
+    return out;
+  }
+  function notesAt(style2, plan, next, step2, ctx2) {
+    const bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16, barIn = bar2 - plan.start;
+    const sec = resolveSection(style2, plan.section), a = arcStep(style2, plan.arc);
+    const scale = style2.scales[style2.scale], transpose = a.transpose ?? 0;
+    const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
+    const formBar = bar2 - (ctx2.formStart ?? 0), form = style2.form;
+    const chord = form ? formChord(style2, ctx2.seed, formBar, !!sec.sevenths) : chordAt(style2, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+    let melody = 0;
+    const phrase = pass + (plan.bars > 32 ? Math.floor(barIn / 16) : 0);
+    const out = [];
+    const ending = next !== null && (next.section !== plan.section || next.start !== plan.start) ? sec.ending ?? "fill" : "none";
+    const fillBar = ending === "fill";
+    const muted = ending !== "none" && s >= 12 ? style2.fill.mute : [];
+    const onlyCircle = ctx2.only === "circle";
+    const parts = onlyCircle ? [] : Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
+    if (onlyCircle) {
+    } else if (ctx2.siege > 0.01) for (const [k, u] of Object.entries(style2.siege)) parts.push([k, u, ctx2.siege]);
+    if ((ctx2.party ?? 0) > 0.01) {
+      for (const [k, u] of Object.entries(style2.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.party]);
+    }
+    if ((ctx2.legend ?? 0) > 0.01) {
+      for (const [k, u] of Object.entries(style2.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.legend]);
+    }
+    const build = ctx2.build ?? 1, building = ctx2.build !== void 0 && plan.section === style2.intro;
+    const circle = ctx2.circle && ctx2.circle.level > 0.01 && ctx2.only !== "main" ? ctx2.circle : null, layer = /* @__PURE__ */ new Set();
+    if (circle) {
+      for (const [k, u] of circleParts(style2, circle.species)) if (!sec.parts[k]) {
+        parts.push([k, u, circle.level]);
+        layer.add(k);
+      }
+    }
+    if (fillBar && !onlyCircle) parts.push([style2.fill.part, { p: "__fill" }, 1]);
+    for (const [name, u0, scaleLevel] of parts) {
+      const def = style2.parts[name];
+      if (!def) continue;
+      const u = use(u0);
+      const own = layer.has(name);
+      if (!own && (building ? build <= 0 || build < u.from : progress < u.from)) continue;
+      if (!own && (a.energy < u.energy || muted.includes(name))) continue;
+      if (form && !own && def.role === "motif") {
+        melody = Math.max(melody, u.level * scaleLevel * (building ? 0.45 + 0.55 * build : 1));
+        continue;
+      }
+      if (fillBar && name === style2.fill.part && u.p !== "__fill") continue;
+      const pat = u.p === "__fill" ? style2.fill.pattern : def.patterns[u.p];
+      if (!pat) continue;
+      const sh = own ? nameHash(circle.species) : 0, phase = own ? sh % 8 * 2 : 0;
+      const at2 = own && ctx2.circleStep !== void 0 ? ctx2.circleStep : barIn * 16 + s;
+      const i = (at2 + phase) % pat.length;
+      const { ch, dur } = hitAt(pat, i);
+      if (ch === "." || ch === "-") continue;
+      const seed2 = own ? ctx2.seed + nameHash(circle.species) : ctx2.seed;
+      const r = hash2(own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed2 + phrase * 7919);
+      if (ch === "?" && r >= a.energy) continue;
+      const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1);
+      const base = { part: name, patch: def.patch, step: own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, offset: 0, dur, ...own ? { layer: "circle" } : {} };
+      if (def.role === "drum") {
+        if (ch === "r") {
+          out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level });
+          continue;
+        }
+        out.push({ ...base, midi: null, vel: (VEL[ch] ?? 0.8) * level });
+        continue;
+      }
+      const oct = def.octave ?? 0, accent = ch === ch.toUpperCase() && ch !== ch.toLowerCase() ? 1 : s % 4 === 0 ? 0.9 : 0.78;
+      if (def.role === "bass") {
+        const k = BASS[ch] ?? (ch.toLowerCase() === "x" ? 0 : BASS[ch.toLowerCase()] ?? 0);
+        out.push({ ...base, midi: degreeToMidi(style2, scale, chord.root + k, oct, transpose), vel: (ch in BASS ? 0.85 : VEL[ch] ?? 0.85) * level });
+      } else if (def.role === "chord") {
+        for (const t of chord.tones) out.push({ ...base, midi: degreeToMidi(style2, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
+      } else if (def.role === "arp") {
+        let k = 0;
+        const b0 = at2 - at2 % 16;
+        for (let j = b0; j < at2; j++) {
+          const c = pat[(j + (own ? phase : 0)) % pat.length];
+          if (c !== "." && c !== "-") k++;
+        }
+        const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
+        out.push({ ...base, midi: degreeToMidi(style2, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
+      } else {
+        const m = motifFor(seed2 + phrase * 104729, plan.arc, name), pos = (at2 % 64 + (own ? sh % 29 : 0)) % 32;
+        const vary = barIn % 4 === 3 && s >= 8 ? hash2(bar2, plan.arc, ctx2.seed + 5) < 0.5 ? 2 : -1 : 0;
+        const lift = own ? [0, 2, 4][(sh >>> 3) % 3] : 0, octOwn = own ? oct + (sh >>> 5) % 2 - (oct > 2 ? 1 : 0) : oct;
+        out.push({ ...base, midi: degreeToMidi(style2, scale, chord.root + m[pos] + vary + lift, octOwn, transpose), vel: (VEL[ch] ?? accent) * level });
+      }
+    }
+    if (onlyCircle) return out;
+    const fn = melody > 0 ? formNoteAt(style2, ctx2.seed, formBar * 16 + s, transpose) : null;
+    if (fn) out.push({ part: fn.part, patch: fn.patch, step: step2, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 && !fn.off ? 0.9 : 0.78) * melody, ...fn.dur % 1 ? { straight: true } : {} });
+    if (s === 0 && barIn === 0 && sec.impact && style2.patches.impact) out.push({ part: "impact", patch: "impact", step: step2, offset: 0, dur: 16, midi: null, vel: 1 });
+    if (s === 0 && sec.riser && style2.patches.riser) out.push({ part: "riser", patch: "riser", step: step2, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
+    return out;
+  }
+  function checkStyle(style2) {
+    const errs = [], B = style2.blockBars;
+    const checkUse = (where, name, u) => {
+      const def = style2.parts[name];
+      if (!def) {
+        errs.push(`${where}: no part "${name}"`);
+        return;
+      }
+      const p = use(u).p;
+      if (!def.patterns[p]) errs.push(`${where}: part "${name}" has no pattern "${p}"`);
+    };
+    for (const [n, d] of Object.entries(style2.parts)) {
+      if (!style2.patches[d.patch]) errs.push(`part ${n}: no patch "${d.patch}"`);
+      for (const [pn, p] of Object.entries(d.patterns)) if (p.length % 16 !== 0) errs.push(`part ${n}, pattern ${pn}: ${p.length} steps, not whole bars`);
+    }
+    for (const n of Object.keys(style2.sections)) {
+      try {
+        const r = resolveSection(style2, n);
+        for (const [pn, u] of Object.entries(r.parts)) checkUse(`section ${n}`, pn, u);
+        const prog = r.progression;
+        if (prog && !style2.progressions[prog]) errs.push(`section ${n}: no progression "${prog}"`);
+      } catch (e) {
+        errs.push(String(e.message));
+      }
+    }
+    for (const [pn, u] of Object.entries(style2.siege)) checkUse("siege", pn, u);
+    for (const [pn, u] of Object.entries(style2.party ?? {})) checkUse("party", pn, u);
+    for (const [pn, u] of Object.entries(style2.legend ?? {})) checkUse("legend", pn, u);
+    const circleUses = [...Object.entries(style2.circle?.every ?? {}), ...Object.values(style2.circle?.families ?? {}).flatMap((f) => Object.entries(f))];
+    for (const [pn, u] of circleUses) for (const p of Array.isArray(u.p) ? u.p : [u.p]) checkUse("circle", pn, { p });
+    if (style2.fill.pattern.length !== 16) errs.push("fill: not one bar");
+    if (!style2.parts[style2.fill.part]) errs.push(`fill: no part "${style2.fill.part}"`);
+    for (const n of [style2.intro, style2.knockout]) if (!style2.sections[n]) errs.push(`no section "${n}"`);
+    if (!style2.scales[style2.scale]) errs.push(`no scale "${style2.scale}"`);
+    const F = style2.form;
+    if (F) {
+      for (const n of [...F.a, ...F.b]) if (!style2.progressions[n]) errs.push(`form: no progression "${n}"`);
+      for (const n of F.instruments) if (!style2.parts[n]) errs.push(`form: no part "${n}"`);
+      if (!style2.patches[F.sung.patch]) errs.push(`form: no patch "${F.sung.patch}"`);
+      const tripletsWhole = (c) => [...c].every((ch, i) => ch !== "T" && ch !== "t" || c.slice(i + 1, i + (ch === "T" ? 8 : 4)) === "_".repeat(ch === "T" ? 7 : 3)) && [...c].filter((ch) => ch === "_").length === [...c].reduce((n, ch) => n + (ch === "T" ? 7 : ch === "t" ? 3 : 0), 0);
+      for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) {
+        if (c.length !== 16 || c[0] === "-" || c[0] === "_" || /[^x\-._Tt]/.test(c)) errs.push(`form: cell ${k} "${c}" not one bar`);
+        else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
+      }
+      for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
+    }
+    style2.arc.forEach((a, i) => {
+      for (const [s, bars] of [...a.arrive ?? [], ...a.loop ?? [], ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style2.buildBars]]) {
+        if (!style2.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
+        if (!(bars > 0) || bars % B !== 0) errs.push(`arc ${i} (${a.name}): ${s} is ${bars} bars, not a multiple of ${B}`);
+      }
+      const S = a.sections;
+      if (S) {
+        if (!F) errs.push(`arc ${i} (${a.name}): sections without a form`);
+        if (!S.four.length || !S.breaks.length || !S.breakdown.length) errs.push(`arc ${i} (${a.name}): a kind of section missing`);
+        for (const s of [S.land, ...S.four, ...S.breaks, ...S.breakdown]) if (s !== void 0 && !style2.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
+      } else if (!a.loop?.length || (a.variants ?? []).some((v) => !v.length)) errs.push(`arc ${i} (${a.name}): nothing to loop`);
+      if (a.progression && !style2.progressions[a.progression]) errs.push(`arc ${i} (${a.name}): no progression "${a.progression}"`);
+    });
+    return errs;
+  }
+
   // src/rules/djSet.ts
   var groove = (at2) => [{ at: at2, gesture: "groove", frame: 0 }, { at: at2 + 0.5, gesture: "groove", frame: 1 }];
   var sc = (at2, s) => ({ at: at2, gesture: "scratch", frame: s === "f" ? 1 : 0, stroke: s });
@@ -532,7 +917,7 @@ label.check input { accent-color: var(--accent); }
     };
   }
   var uni = (r, a, b) => a + (b - a) * r();
-  var pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+  var pick2 = (r, arr) => arr[Math.floor(r() * arr.length)];
   function hash22(x, y, s) {
     let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(s | 0, 2147483647);
     h = Math.imul(h ^ h >>> 13, 1274126177);
@@ -4219,7 +4604,7 @@ label.check input { accent-color: var(--accent); }
       for (let k = 0; k < 8; k++) {
         const y = Math.round(uni(r, y0, H - 3)), rs = runs(y);
         if (rs.length) {
-          const q = pick(r, rs), side = r() < 0.5 ? -1 : 1;
+          const q = pick2(r, rs), side = r() < 0.5 ? -1 : 1;
           return { x: side < 0 ? q[0] : q[1], y, side };
         }
       }
@@ -4310,11 +4695,11 @@ label.check input { accent-color: var(--accent); }
       };
       const nMoss = cols.length ? Math.round(hang * (6 + cols.length / (2.5 * s))) : 0, nVine = cols.length ? Math.round(hang * (2 + cols.length / (7 * s))) : 0;
       for (let k = 0; k < nMoss; k++) {
-        const x = pick(r, cols), L2 = Math.round(uni(r, 8, 20) * s * (0.6 + hang * 0.6)), n = 2 + (r() < 0.5 ? 1 : 0), w = r() * 6;
+        const x = pick2(r, cols), L2 = Math.round(uni(r, 8, 20) * s * (0.6 + hang * 0.6)), n = 2 + (r() < 0.5 ? 1 : 0), w = r() * 6;
         for (let j = 0; j < n; j++) strand(x + j - 1, under[Math.max(0, Math.min(W - 1, x + j - 1))] + 1 || under[x] + 1, Math.round(L2 * (1 - j * 0.25)), M.MOSS, M.LEAF2, w + j);
       }
       for (let k = 0; k < nVine; k++) {
-        const x = pick(r, cols), L2 = Math.round(uni(r, 20, 42) * s * (0.6 + hang * 0.6)), w = r() * 6;
+        const x = pick2(r, cols), L2 = Math.round(uni(r, 20, 42) * s * (0.6 + hang * 0.6)), w = r() * 6;
         strand(x, under[x] + 1, L2, M.LEAF3, M.LEAF3, w);
         for (let y = under[x] + 3; y < under[x] + L2 - 2; y += Math.max(3, Math.round(4 * s))) {
           const xx = x + Math.round(Math.sin((y - under[x]) * 0.35 + w) * ((y - under[x]) / L2) * 1.5) + (hash22(x, y, 21) < 0.5 ? -1 : 1), i = y * W + xx;
@@ -9301,7 +9686,7 @@ label.check input { accent-color: var(--accent); }
     runeMarkers: { laser: { opacity: 0.55, width: 0.25, length: 70 }, scale: 2.25, beamHeight: 46, lightRange: 160, dormant: { glow: 0.8, light: 0.55, reach: 12, beam: 0.1 }, awake: { glow: [0.7, 1], light: 0.9, lightBuild: 1, reach: 18, beam: 0.3, motes: 8, moteBuild: 12 }, flare: { time: 1.6, light: 3.5 } },
     _music: `latency: the audio context's latencyHint (Ed, 2026-10-07: "the music is still cutting out"): interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED). Music by proximity (Ed, 2026-10-04): one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone (Ed's playtest, 2026-10-05: "The music stops playing after about 20 seconds": at 0.08 and 380 Hz it was, flying away from home; audible: the most dB it may fall from by a soundsystem to anywhere far off, as a laptop plays it, checked by tools/music-lab/check.cjs); a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort. volume: the master. src: an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it. circle: in a sleeping legend's clearing on the ground (Ed, 2026-10-06), the music muffled to muffle Hz and quiet times its volume, eased in and out with a time constant of ease seconds, and the legend's own layer (the music style's circle) over it at level; radius: the clearing's metres round a legend where the map draws none. dropLayers: when her needle-drop routine ends after the party spell (Ed, 2026-10-07: the first music drops straight after it, before she steps off), that many of the intro's layers come in on the next bar line, each home speaker then adding its own on top.`,
     _sfx: `The sound effects, all synthesised in the music's key (2026-10-05): volume over the music's, hear metres (a sound fades to nothing that far from her). voice: the babble (Ed, 2026-10-05: \u{1F48C}s are her speech, attacks the animals'). witch: each \u{1F48C} a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase); animals: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way (only to one swapBy nearer, at most one every swapGap seconds: a crowd otherwise cut itself off many times a second), duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a \u{1F48C} hit's answering syllable, its volume share). hit: a \u{1F48C} landing (a spent one a faint tick); fill: the affection tick, climbing octaves as the meter fills; invited: the flourish (fuller by level); enraged: the growl when one turns (gap: at most one every gap seconds, a crowd turning at once one heavier growl); happy: the pop; snore: a sleeping legend within range metres moaning softly in its dreams (volume); nightmare: its moans when restless (volume); windup: a legend's attack winding up, its whale song swelling for length seconds before it fires; lost: a soundsystem lost, the sting heard anywhere (volume); land: a \u{1F48C} that met no one landing on the ground, a soft puff (at most one every gap seconds); stir: the boot-up over, the first wave's countdown begun, things stirring (volume); roar: a legend turning angry, its roar (heard twice as far); power: a runestone crackling into life as a speaker or soundsystem (Ed, 2026-10-06), heard within range metres: its static (crackle), a capacitor's whine, the mains buzz, the cone's thump and the clean tone it settles into, each the home ring's next step up the scale, the last a chord; at most one every gap seconds (volume); lament: a restless legend calling out sadly (Ed, 2026-10-06), its own call lowered (pitch) and slowed (slow) into the legends' space, heard within range metres from the way of its clearing and muffled with distance; a call about every every seconds, down to urgent as its restlessness runs out; at most max restless legends call, the nearest, at least gap seconds apart (volume); shoes: dancers within range metres tapping their party shoes on the beat, at most max at once; pond: by a pond within range metres, water lapping (lap), a frog every frogEvery seconds or so (frogs), a drip every dripEvery (drips); picnic: by a picnic in a partified area within range metres, its party-goers' murmur and cups clinking every clinkEvery seconds or so; aggro: the wild watch's warning (Ed, 2026-10-07; art builder 3's aggroOf), while a wild area's watchers stand looking at her before they attack: a low swell in the music's key (swell) opening up and throbbing faster as the watch runs, a gritty riser over it (riser) by the area's danger, a hit as they attack (hit); called off, it sags and falls away over fall seconds; times volume; sparkler: by the ley line's pulse, its tip a burning sparkler (art builder 2's #491), its fizz within range metres (louder as she nears it): a flickering hiss (hiss) and a crackle of pops (pops), rate sparks a second, a share fork of them forking into a double tick, times volume; fireworks: over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate, art builder 2's shells): each shell's climb (whoosh, now and then whistling), its burst (boom, its echo into the night echo, its stars' crackle), heard within range metres and late by the distance over speed metres a second, and the party under it cheering as the finale bursts (cheer) within cheerRange; the shells are rules/fireworks.ts's, the ones drawn, times volume; ambience: each area's own soundscape in play (Ed, 2026-10-07: "Each area gets its own ambient soundscape that gives it individual character": a ravine's gusts, a marsh's frogs and drips, standing stones' low hum, old oaks creaking), the afterparty night's layers without their pad and bells (bed 0), its noise and sounds at noise and sounds, times volume; near the party it keeps only quiet of itself, by how loud the music is there, and gives way to the night once the party's over; sadTrumpet: knocked down, a muted trumpet's "wah-wah-wah-waaah" as her hat drops (Ed, 2026-10-07: "a sad trumpet sound"), the music dipped by duck under it; knocked down with no hat to drop, its shorter "wah-waaah" if bare is 1 (0: none); and as she's whisked to her decks (the teleport's midpoint, the knockout's cut; Ed, 2026-10-07: the hat's scene turns into her decks with a rewind) a backwards record scratch (rewind, times volume) cuts its last note off, never before that note has had cutAfter seconds; seaLife: what lives in the sea off the beach (Ed, 2026-10-07), heard within range metres of it, under the music and the waves: a dolphin leaping off the east coast (splash: its blow and its splash back in), the kraken off the west coast (groan: a deep distant moan; room: the creator's room in the treehouse while it's open, its hum, a record's crackle, the timber creaking every creakEvery seconds or so, and after the spell, at her decks before the first home speaker, at decks times its level; deck: her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her "woo-hoo!" when she throws a hand up (hype), and in her routine (Ed, 2026-10-07: the needle dropped and a little scratching) the tonearm's tick and the needle's drop (needle), times volume; impact: a lobbed shot landing, a thud (small times volume) or a legend's boom (volume), heard from the lob's landing spot (a legend's twice as far); knock: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle); charge: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres; relic: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach; meadow: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres; ouch: the witch hurt, her cry and a thump (volume; knocked down, her "whoa-oh" at knockdown times that), the music dipped by duck for duckTime seconds (twice that knocked down); whale: the legends' voice (Ed, 2026-10-05: "whale song; deep and slow"): volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless). nope (Ed, 2026-10-07: a sigil refused, put down too near one already down, now heard and not drawn): a soft two-note "uh-uh" at volume, at most one each gap seconds. tempoUp (Ed, 2026-10-07: the BPM up by 1 each knockdown): the crowd cheering on the beat the party starts speeding up, at volume (a share of the fireworks' cheer; 0 off). cleared (Ed, 2026-10-08: an area cleared before the pulse came): a small "cleared!" sting on the next half-beat, at volume, from the new soundsystem, fading over range metres to no less than floor of itself (she cleared it: she hears it).`,
-    sfx: { on: true, volume: 1, hear: 70, voice: { witch: { volume: 0.2, pitch: 330, range: 0.3, pace: 0.09, timbre: 1.15, phraseGap: 0.3 }, animals: { volume: 0.28, pitch: 240, maxVoices: 4, duck: 0.6, syllables: [2, 4], gap: 0.7, reply: 0.35, swapBy: 0.15, swapGap: 0.25 } }, hit: { volume: 0.2, gap: 0.05 }, fill: { volume: 0.07, octaves: 1 }, invited: { volume: 0.3 }, enraged: { volume: 0.32, gap: 0.4 }, happy: { volume: 0.36, gap: 0.15 }, snore: { volume: 0.045, range: 40 }, nightmare: { volume: 0.06 }, windup: { volume: 0.4, length: 1 }, lost: { volume: 0.28 }, ouch: { volume: 0.28, knockdown: 0.45, duck: 0.35, duckTime: 0.45 }, impact: { volume: 0.6, small: 0.8 }, roar: { volume: 0.1 }, power: { volume: 0.65, crackle: 0.5, whine: 0.06, buzz: 0.35, thump: 0.8, tone: 0.3, gap: 0.1, range: 160 }, lament: { volume: 0.42, pitch: 0.8, slow: 1.6, every: 14, urgent: 5, range: 160, gap: 3, max: 2 }, shoes: { volume: 0.4, range: 30, max: 4 }, pond: { volume: 0.2, lap: 0.6, frogs: 0.5, frogEvery: 6, drips: 0.2, dripEvery: 2.5, range: 30 }, picnic: { volume: 0.18, murmur: 0.5, clinks: 0.3, clinkEvery: 6, range: 25 }, aggro: { volume: 0.45, swell: 1, riser: 0.5, hit: 1, fall: 0.6 }, sparkler: { volume: 0.07, hiss: 0.5, pops: 1, rate: 60, fork: 0.4, range: 45 }, fireworks: { volume: 0.55, whoosh: 0.7, boom: 1, echo: 0.4, crackle: 0.35, cheer: 0.8, range: 400, cheerRange: 150, speed: 343 }, seaLife: { volume: 0.3, splash: 0.5, groan: 0.25, pour: 0.2, range: 300 }, room: { volume: 0.2, hum: 0.4, crackle: 0.5, creak: 0.3, creakEvery: 9, decks: 0.5 }, deck: { volume: 0.3, scratch: 1.1, hiss: 0.6, stroke: 0.16, hype: 0.7, needle: 1 }, spell: { volume: 0.4, hum: 0.2, rustle: 0.3, crackle: 0.45, burst: 0.6 }, land: { volume: 0.6, gap: 0.06 }, nope: { volume: 0.5, gap: 0.25 }, cleared: { volume: 0.3, range: 300, floor: 0.4 }, tempoUp: { volume: 0.45 }, stir: { volume: 0.45 }, knock: { volume: 0.6, whoosh: 1, twinkle: 0.16, twinkleEvery: 0.13 }, charge: { volume: 0.5, bellow: 0.28, hooves: 0.8, rumble: 0.5, skid: 0.35, trot: 0.35, range: 140 }, relic: { volume: 0.145, spot: 30, spotTreetop: 18, reach: 4 }, meadow: { volume: 0.18, breeze: 0.5, bees: 0.06, birds: 0.35, birdEvery: 3.5, fade: 30, murmur: 0.25, clinks: 0.25, clinkEvery: 7, balloons: 0.15, squeakEvery: 9 }, whale: { volume: 0.11, speed: 1, depth: 62, reverb: 0.7, sleepEvery: 9 }, waves: { volume: 0.3, every: 7, wash: 0.5, range: 260 }, ambience: { volume: 0.35, bed: 0, noise: 0.1, sounds: 0.3, quiet: 0.25 }, sadTrumpet: { volume: 0.18, duck: 0.55, bare: 1, rewind: 0.9, cutAfter: 0.35 }, night: { volume: 0.5, bed: 0.05, noise: 0.12, sounds: 0.3, from: 0.6, snore: { volume: 0.3, gap: 1.2, range: 40, max: 3 } } },
+    sfx: { on: true, volume: 1, hear: 70, voice: { witch: { volume: 0.2, pitch: 330, range: 0.3, pace: 0.09, timbre: 1.15, phraseGap: 0.3 }, animals: { volume: 0.28, pitch: 240, maxVoices: 4, duck: 0.6, syllables: [2, 4], gap: 0.7, reply: 0.35, swapBy: 0.15, swapGap: 0.25 } }, hit: { volume: 0.2, gap: 0.05 }, fill: { volume: 0.07, octaves: 1 }, invited: { volume: 0.3 }, enraged: { volume: 0.32, gap: 0.4 }, happy: { volume: 0.36, gap: 0.15 }, snore: { volume: 0.045, range: 40 }, nightmare: { volume: 0.06 }, windup: { volume: 0.4, length: 1 }, lost: { volume: 0.28 }, ouch: { volume: 0.28, knockdown: 0.45, duck: 0.35, duckTime: 0.45 }, impact: { volume: 0.6, small: 0.8 }, roar: { volume: 0.1 }, power: { volume: 0.65, crackle: 0.5, whine: 0.06, buzz: 0.35, thump: 0.8, tone: 0.3, gap: 0.1, range: 160 }, lament: { volume: 0.42, pitch: 0.8, slow: 1.6, every: 14, urgent: 5, range: 160, gap: 3, max: 2 }, shoes: { volume: 0.4, range: 30, max: 4 }, pond: { volume: 0.2, lap: 0.6, frogs: 0.5, frogEvery: 6, drips: 0.2, dripEvery: 2.5, range: 30 }, picnic: { volume: 0.18, murmur: 0.5, clinks: 0.3, clinkEvery: 6, range: 25 }, aggro: { volume: 0.45, swell: 1, riser: 0.5, hit: 1, fall: 0.6 }, sparkler: { volume: 0.07, hiss: 0.5, pops: 1, rate: 60, fork: 0.4, range: 45 }, fireworks: { volume: 0.55, whoosh: 0.7, boom: 1, echo: 0.4, crackle: 0.35, cheer: 0.8, range: 400, cheerRange: 150, speed: 343 }, seaLife: { volume: 0.3, splash: 0.5, groan: 0.25, pour: 0.2, range: 300 }, room: { volume: 0.2, hum: 0.4, crackle: 0.5, creak: 0.3, creakEvery: 9, decks: 0.5 }, deck: { volume: 0.3, scratch: 1.1, hiss: 0.6, stroke: 0.16, hype: 0.7, needle: 1, knock: 3, respawn: 3 }, spell: { volume: 0.4, hum: 0.2, rustle: 0.3, crackle: 0.45, burst: 0.6 }, land: { volume: 0.6, gap: 0.06 }, nope: { volume: 0.5, gap: 0.25 }, cleared: { volume: 0.3, range: 300, floor: 0.4 }, tempoUp: { volume: 0.45 }, stir: { volume: 0.45 }, knock: { volume: 0.6, whoosh: 1, twinkle: 0.16, twinkleEvery: 0.13 }, charge: { volume: 0.5, bellow: 0.28, hooves: 0.8, rumble: 0.5, skid: 0.35, trot: 0.35, range: 140 }, relic: { volume: 0.145, spot: 30, spotTreetop: 18, reach: 4 }, meadow: { volume: 0.18, breeze: 0.5, bees: 0.06, birds: 0.35, birdEvery: 3.5, fade: 30, murmur: 0.25, clinks: 0.25, clinkEvery: 7, balloons: 0.15, squeakEvery: 9 }, whale: { volume: 0.11, speed: 1, depth: 62, reverb: 0.7, sleepEvery: 9 }, waves: { volume: 0.3, every: 7, wash: 0.5, range: 260 }, ambience: { volume: 0.35, bed: 0, noise: 0.1, sounds: 0.3, quiet: 0.25 }, sadTrumpet: { volume: 0.18, duck: 0.55, bare: 1, rewind: 0.9, cutAfter: 0.35 }, night: { volume: 0.5, bed: 0.05, noise: 0.12, sounds: 0.3, from: 0.6, snore: { volume: 0.3, gap: 1.2, range: 40, max: 3 } } },
     music: { on: true, volume: 0.5, latency: "balanced", dropLayers: 3, nearDist: 25, farDist: 260, floor: 0.3, muffle: 1e3, audible: 15, circle: { muffle: 320, quiet: 0.85, ease: 0.35, level: 1.3, radius: 14 }, slow: { on: true, pitch: 0.35, floor: 0.5 }, clear: 16e3, distort: 1, src: "", over: { stop: 0.6, floor: 0.15 }, beach: { fade: 140, quiet: 0.08 } },
     _alarms: `The soundsystem alarm (Ed, 2026-10-06: "We should have an indicator for when a soundsystem or speaker is being attacked offscreen. It can look like the \u{1F3B6} indicator, but with \u{1F507}"): a soundsystem (or the home ring's speakers) hit while off screen shows a \u{1F507} at the screen's edge toward it, its ring its health, shaking at each blow. linger: seconds it stays after the last blow; fall: seconds a fallen one stays, flashing then fading; most: how many show at once (the most recently hit).`,
     alarms: { linger: 4, fall: 1.2, most: 3 },
@@ -9456,391 +9841,6 @@ label.check input { accent-color: var(--accent); }
   var pushX = new Float64Array(0);
   var pushZ = new Float64Array(0);
 
-  // config/creature-voices.json
-  var creature_voices_default = {
-    _readme: "Each creature's call, blended into its babble (Ed, 2026-10-05: you can tell what's talking): a family's call style, and a species' tweaks over it. A new creature picks a family (and tweaks if it likes). Fields: pitch (times the babble's pitch), formants (times its formants), wave (the voice's source), pure (a whistled tone, no vowels), glide (each syllable's pitch at its end, times its start; 1 flat), trill ([rate Hz, cents]: a fast warble), am ([rate Hz, depth 0-1]: a buzz or a croak's rattle), noise (0-1: breath, a hiss), dur and gap (times a syllable's length and the pause after), extra (more syllables a burst), consonant (0-1: how often a syllable starts with a click or breath), vowel (always this one: 0 ah, 1 eh, 2 ee, 3 oh, 4 oo), turn (a call when it turns enraged: howl), volume (times its loudness, to balance the families). Legends sing whale song instead.",
-    families: {
-      bird: { pitch: 2.2, formants: 1.4, wave: "triangle", pure: true, glide: 1.5, trill: [18, 110], dur: 0.55, gap: 0.4, extra: 1, consonant: 0.2 },
-      canid: { pitch: 1, formants: 1, wave: "sawtooth", glide: 0.72, dur: 0.6, gap: 1.3, consonant: 0.25, vowel: 0, turn: "howl" },
-      big: { pitch: 0.6, formants: 0.78, wave: "sawtooth", glide: 0.85, am: [26, 0.45], noise: 0.35, dur: 1, gap: 1.1, consonant: 0.1 },
-      small: { pitch: 2.4, formants: 1.35, wave: "triangle", pure: true, glide: 1.3, dur: 0.45, gap: 0.35, extra: 2, consonant: 0.15 },
-      bug: { pitch: 1.4, formants: 1.45, wave: "square", glide: 1.05, am: [85, 0.8], dur: 0.6, gap: 0.6, consonant: 1 },
-      snake: { pitch: 1, formants: 1.5, wave: "sawtooth", glide: 0.9, noise: 0.9, dur: 1.3, gap: 0.8, consonant: 0.8, vowel: 2 },
-      amphibian: { pitch: 0.6, formants: 0.72, wave: "square", glide: 1.18, am: [34, 0.9], dur: 0.9, gap: 1.2, consonant: 0, vowel: 3 },
-      bat: { pitch: 3.2, formants: 1.6, wave: "triangle", pure: true, glide: 1.6, dur: 0.35, gap: 0.4, extra: 1, consonant: 0 },
-      whistler: { pitch: 2, formants: 1.3, wave: "sine", pure: true, glide: 1.4, trill: [7, 40], dur: 0.7, gap: 0.6, consonant: 0 },
-      cat: { pitch: 1.1, formants: 1.05, wave: "sawtooth", glide: 0.8, dur: 1.2, gap: 1, consonant: 0.1, vowel: 2 }
-    },
-    species: {
-      raven: { family: "bird", pitch: 0.55, pure: false, wave: "sawtooth", trill: [0, 0], glide: 0.85, vowel: 0, volume: 1.3 },
-      owl: { family: "bird", pitch: 0.45, trill: [0, 0], glide: 0.93, dur: 1.6, gap: 1.6, vowel: 4, wave: "sine", volume: 0.4 },
-      wolf: { family: "canid" },
-      fox: { family: "canid", pitch: 1.5, glide: 0.8 },
-      bear: { family: "big", pitch: 0.8 },
-      boar: { family: "big", pitch: 1.2, noise: 0.55, am: [40, 0.6], volume: 1.3 },
-      elk: { family: "big", pitch: 1.4, glide: 1.25, dur: 1.5, noise: 0.15, am: [0, 0], volume: 0.8 },
-      stag: { family: "big", pitch: 1.2, glide: 0.8, dur: 1.6, noise: 0.2 },
-      ram: { family: "big", pitch: 1.6, am: [12, 0.5], vowel: 1, noise: 0.1 },
-      badger: { family: "big", pitch: 1.8, dur: 0.6 },
-      hare: { family: "small" },
-      squirrel: { family: "small", pitch: 1.2, extra: 3, gap: 0.25, volume: 0.75 },
-      dormouse: { family: "small", pitch: 1.3 },
-      mole: { family: "small", pitch: 0.8, noise: 0.3 },
-      hedgehog: { family: "small", pitch: 0.9, noise: 0.4, pure: false, wave: "sawtooth" },
-      stoat: { family: "small", pitch: 1.1, trill: [24, 80] },
-      marten: { family: "small", pitch: 0.9, trill: [20, 60] },
-      beetle: { family: "bug", pitch: 0.7, am: [60, 0.9], volume: 1.5 },
-      moth: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
-      woodlouse: { family: "bug", pitch: 1.1, dur: 0.4, extra: 1, volume: 1.3 },
-      spider: { family: "bug", pitch: 0.9, am: [45, 0.7], noise: 0.25, volume: 1.2 },
-      glowworm: { family: "bug", pitch: 1.6, am: [140, 0.6], pure: true },
-      snake: { family: "snake" },
-      toad: { family: "amphibian" },
-      salamander: { family: "amphibian", pitch: 1.6, am: [48, 0.7] },
-      heron: { family: "bird", pitch: 0.5, pure: false, wave: "sawtooth", trill: [0, 0], glide: 0.8, vowel: 1, volume: 0.9 },
-      newt: { family: "amphibian", pitch: 1.9, am: [56, 0.6] },
-      snail: { family: "amphibian", pitch: 1.2, am: [8, 0.4], noise: 0.3, dur: 1.3 },
-      bat: { family: "bat" },
-      otter: { family: "whistler", volume: 0.7 },
-      beaver: { family: "whistler", pitch: 0.8, trill: [4, 30], volume: 0.7 },
-      lynx: { family: "cat", volume: 0.4 }
-    }
-  };
-
-  // src/rules/musicScore.ts
-  var resolvedCache = /* @__PURE__ */ new WeakMap();
-  function resolveSection(style2, name) {
-    let cache = resolvedCache.get(style2);
-    if (!cache) resolvedCache.set(style2, cache = /* @__PURE__ */ new Map());
-    const hit = cache.get(name);
-    if (hit) return hit;
-    const chain = [];
-    for (let n = name, i = 0; n && i < 8; i++) {
-      const s = style2.sections[n];
-      if (!s) throw new Error(`music style: no section "${n}"`);
-      chain.unshift(s);
-      n = s.base;
-    }
-    const out = { progression: "", chordBars: 2, parts: {} };
-    for (const s of chain) {
-      const { parts, ...rest } = s;
-      Object.assign(out, rest);
-      for (const [k, v] of Object.entries(parts ?? {})) {
-        if (v === null) delete out.parts[k];
-        else out.parts[k] = v;
-      }
-    }
-    delete out.base;
-    cache.set(name, out);
-    return out;
-  }
-  var arcStep = (style2, arc) => style2.arc[Math.max(0, Math.min(style2.arc.length - 1, arc))];
-  var use = (u) => typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 };
-  function degreeToMidi(style2, scale, degree, octave, transpose) {
-    const n = scale.length, o = Math.floor(degree / n), d = degree - o * n;
-    let m = style2.root + transpose + 12 * (octave + o) + scale[d];
-    while (m > 96) m -= 12;
-    return m;
-  }
-  function motif(seed2, arc, part) {
-    let salt = 0;
-    for (let i = 0; i < part.length; i++) salt = salt * 31 + part.charCodeAt(i) | 0;
-    const out = [];
-    let v = [0, 2, 4][Math.floor(hash2(seed2, arc, salt) * 3)];
-    for (let i = 0; i < 32; i++) {
-      const r = hash2(seed2 + i * 7919, arc, salt);
-      if (i % 4 === 0) v = [0, 2, 4, 7, 4, 2][Math.floor(r * 6)] + (v > 6 && r < 0.5 ? -7 : 0);
-      else v += [-2, -1, -1, 1, 1, 2, 0, 3][Math.floor(r * 8)];
-      v = Math.max(-2, Math.min(9, v));
-      out.push(v);
-    }
-    for (let i = 16; i < 28; i++) if (hash2(seed2 + i, arc, salt + 1) < 0.6) out[i] = out[i - 16];
-    return out;
-  }
-  var motifCache = /* @__PURE__ */ new Map();
-  function motifFor(seed2, arc, part) {
-    const k = `${seed2}|${arc}|${part}`;
-    let m = motifCache.get(k);
-    if (!m) {
-      if (motifCache.size > 256) motifCache.clear();
-      motifCache.set(k, m = motif(seed2, arc, part));
-    }
-    return m;
-  }
-  function chordAt(style2, sec, step2, barIn) {
-    const prog = style2.progressions[sec.progression || step2.progression || ""] ?? style2.progressions[Object.keys(style2.progressions)[0]];
-    const root = prog[Math.floor(barIn / Math.max(1, sec.chordBars)) % prog.length];
-    const tones = [root, root + 2, root + 4];
-    if (sec.sevenths) tones.push(root + 6);
-    return { root, tones };
-  }
-  var pick2 = (xs, r) => xs[Math.min(xs.length - 1, Math.floor(r * xs.length))];
-  var mod = (a, n) => (a % n + n) % n;
-  var formBars = (F) => F.order.length * F.phraseBars;
-  var formInstrument = (F, seed2) => pick2(F.instruments, hash2(seed2, 401, 7));
-  function formChord(style2, seed2, formBar, sevenths = false) {
-    const F = style2.form, fb = mod(formBar, formBars(F)), letter = F.order[Math.floor(fb / F.phraseBars)];
-    const progOf = (names, salt) => style2.progressions[pick2(names, hash2(seed2, 409, salt))] ?? [0];
-    const A2 = progOf(F.a, 1), B = progOf(F.b, 2), cb = Math.max(1, F.chordBars), n = Math.ceil(F.phraseBars / cb);
-    const k = Math.floor(fb % F.phraseBars / cb);
-    const root = letter === "B" ? k === n - 1 ? F.question : B[k % B.length] : letter === "C" ? k === n - 1 ? F.answer : k === n - 2 ? F.question : A2[k % A2.length] : A2[k % A2.length];
-    const tones = [root, root + 2, root + 4];
-    if (sevenths) tones.push(root + 6);
-    return { root, tones };
-  }
-  function formPhrase(style2, seed2, letter) {
-    const F = style2.form, P2 = F.phraseBars, salt = letter.charCodeAt(0) * 13;
-    const part = letter === "A" ? formInstrument(F, seed2) : F.sung.part, pace = F.pace[part] ?? F.pace.default ?? 0.25;
-    const at2 = F.order.indexOf(letter) * P2;
-    const rhythm = [];
-    for (let b = 0; b < P2; b++) {
-      const r = hash2(seed2 + b * 31, 419, salt), half = Math.floor(P2 / 2), kind = hash2(seed2 + b * 17, 423, salt) < pace ? "mid" : "slow";
-      if (b % half === half - 1) rhythm.push(pick2(F.cadence[kind], r));
-      else if (b >= half && hash2(seed2 + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]);
-      else rhythm.push(pick2(F.cells[kind], r));
-    }
-    const [lo, hi] = F.range, out = new Array(P2 * 16).fill(null), onsets = [];
-    let v = 2 + Math.floor(hash2(seed2, 431, salt) * 3);
-    const nearest = (want, ok) => {
-      let best = want, bd = Infinity;
-      for (let d = lo; d <= hi; d++) if (ok(d) && Math.abs(d - want) < bd) {
-        bd = Math.abs(d - want);
-        best = d;
-      }
-      return best;
-    };
-    for (let b = 0; b < P2; b++) {
-      const tones = formChord(style2, seed2, at2 + b).tones.map((t) => mod(t, 7)), cell = rhythm[b];
-      const note = (pos, dur, strong) => {
-        const i = b * 16 + Math.floor(pos), r = hash2(seed2 + i * 7919, 433, salt);
-        if (strong) v = nearest(v + pick2([-2, -1, 0, 1, 2, 3], r), (d) => tones.includes(mod(d, 7)));
-        else v = Math.max(lo, Math.min(hi, v + pick2([-2, -1, -1, 1, 1, 2], r)));
-        out[i] = { deg: v, dur, off: pos - Math.floor(pos) };
-        onsets.push(i);
-      };
-      for (let s = 0; s < 16; s++) {
-        const c = cell[s];
-        if (c === "x") {
-          let dur = 1;
-          while (s + dur < 16 && cell[s + dur] === "-") dur++;
-          note(s, dur, s % 4 === 0);
-        } else if (c === "T" || c === "t") {
-          const span = c === "T" ? 8 : 4;
-          for (let k = 0; k < 3; k++) note(s + k * span / 3, span / 3, k === 0 && s % 4 === 0);
-        }
-      }
-    }
-    const last = onsets[onsets.length - 1];
-    if (last !== void 0) {
-      const n = out[last], chordEnd = formChord(style2, seed2, at2 + P2 - 1).tones.map((t) => mod(t, 7));
-      const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : chordEnd.filter((t) => t !== 0);
-      n.deg = nearest(n.deg, (d) => ends.includes(mod(d, 7)));
-    }
-    return out;
-  }
-  var phraseCache = /* @__PURE__ */ new Map();
-  function phraseFor(style2, seed2, letter) {
-    const k = `${seed2}|${letter}`;
-    let p = phraseCache.get(k);
-    if (!p) {
-      if (phraseCache.size > 64) phraseCache.clear();
-      phraseCache.set(k, p = formPhrase(style2, seed2, letter));
-    }
-    return p;
-  }
-  var musicSeed = (base, n) => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 2147483647);
-  function formNoteAt(style2, seed2, formStep, transpose = 0) {
-    const F = style2.form, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
-    const n = phraseFor(style2, seed2, letter)[fs % (F.phraseBars * 16)];
-    if (!n) return null;
-    const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed2), def = style2.parts[part];
-    const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
-    return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style2, style2.scales[style2.scale], n.deg, oct, transpose), dur: n.dur, off: n.off, letter };
-  }
-  function sectionCutoff(sec, progress) {
-    const c = sec.cutoff ?? 18e3;
-    if (typeof c === "number") return c;
-    return c[0] * Math.pow(c[1] / c[0], Math.max(0, Math.min(1, progress)));
-  }
-  function hitAt(pat, i) {
-    const n = pat.length, ch = pat[i % n];
-    let dur = 1;
-    while (dur < n && pat[(i + dur) % n] === "-" && i % n + dur < n) dur++;
-    return { ch, dur };
-  }
-  var VEL = { X: 1, x: 0.8, o: 0.45, r: 0.7, "?": 0.75 };
-  var BASS = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
-  var VOICE_FAMILIES = creature_voices_default.species;
-  var nameHash = (name) => {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = h * 31 + name.charCodeAt(i) >>> 0;
-    return h;
-  };
-  function circleParts(style2, species) {
-    const C2 = style2.circle;
-    if (!C2) return [];
-    const fam = VOICE_FAMILIES[species]?.family ?? "big", h = nameHash(species), out = [];
-    for (const [name, u] of [...Object.entries(C2.every), ...Object.entries(C2.families[fam] ?? C2.families.big ?? {})]) {
-      const ps = Array.isArray(u.p) ? u.p : [u.p];
-      out.push([name, { p: ps[(h + nameHash(name)) % ps.length], level: u.level ?? 1 }]);
-    }
-    return out;
-  }
-  function notesAt(style2, plan, next, step2, ctx2) {
-    const bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16, barIn = bar2 - plan.start;
-    const sec = resolveSection(style2, plan.section), a = arcStep(style2, plan.arc);
-    const scale = style2.scales[style2.scale], transpose = a.transpose ?? 0;
-    const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
-    const formBar = bar2 - (ctx2.formStart ?? 0), form = style2.form;
-    const chord = form ? formChord(style2, ctx2.seed, formBar, !!sec.sevenths) : chordAt(style2, sec, a, barIn + pass * Math.max(1, sec.chordBars));
-    let melody = 0;
-    const phrase = pass + (plan.bars > 32 ? Math.floor(barIn / 16) : 0);
-    const out = [];
-    const ending = next !== null && (next.section !== plan.section || next.start !== plan.start) ? sec.ending ?? "fill" : "none";
-    const fillBar = ending === "fill";
-    const muted = ending !== "none" && s >= 12 ? style2.fill.mute : [];
-    const onlyCircle = ctx2.only === "circle";
-    const parts = onlyCircle ? [] : Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
-    if (onlyCircle) {
-    } else if (ctx2.siege > 0.01) for (const [k, u] of Object.entries(style2.siege)) parts.push([k, u, ctx2.siege]);
-    if ((ctx2.party ?? 0) > 0.01) {
-      for (const [k, u] of Object.entries(style2.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.party]);
-    }
-    if ((ctx2.legend ?? 0) > 0.01) {
-      for (const [k, u] of Object.entries(style2.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.legend]);
-    }
-    const build = ctx2.build ?? 1, building = ctx2.build !== void 0 && plan.section === style2.intro;
-    const circle = ctx2.circle && ctx2.circle.level > 0.01 && ctx2.only !== "main" ? ctx2.circle : null, layer = /* @__PURE__ */ new Set();
-    if (circle) {
-      for (const [k, u] of circleParts(style2, circle.species)) if (!sec.parts[k]) {
-        parts.push([k, u, circle.level]);
-        layer.add(k);
-      }
-    }
-    if (fillBar && !onlyCircle) parts.push([style2.fill.part, { p: "__fill" }, 1]);
-    for (const [name, u0, scaleLevel] of parts) {
-      const def = style2.parts[name];
-      if (!def) continue;
-      const u = use(u0);
-      const own = layer.has(name);
-      if (!own && (building ? build <= 0 || build < u.from : progress < u.from)) continue;
-      if (!own && (a.energy < u.energy || muted.includes(name))) continue;
-      if (form && !own && def.role === "motif") {
-        melody = Math.max(melody, u.level * scaleLevel * (building ? 0.45 + 0.55 * build : 1));
-        continue;
-      }
-      if (fillBar && name === style2.fill.part && u.p !== "__fill") continue;
-      const pat = u.p === "__fill" ? style2.fill.pattern : def.patterns[u.p];
-      if (!pat) continue;
-      const sh = own ? nameHash(circle.species) : 0, phase = own ? sh % 8 * 2 : 0;
-      const at2 = own && ctx2.circleStep !== void 0 ? ctx2.circleStep : barIn * 16 + s;
-      const i = (at2 + phase) % pat.length;
-      const { ch, dur } = hitAt(pat, i);
-      if (ch === "." || ch === "-") continue;
-      const seed2 = own ? ctx2.seed + nameHash(circle.species) : ctx2.seed;
-      const r = hash2(own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed2 + phrase * 7919);
-      if (ch === "?" && r >= a.energy) continue;
-      const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1);
-      const base = { part: name, patch: def.patch, step: own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, offset: 0, dur, ...own ? { layer: "circle" } : {} };
-      if (def.role === "drum") {
-        if (ch === "r") {
-          out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level });
-          continue;
-        }
-        out.push({ ...base, midi: null, vel: (VEL[ch] ?? 0.8) * level });
-        continue;
-      }
-      const oct = def.octave ?? 0, accent = ch === ch.toUpperCase() && ch !== ch.toLowerCase() ? 1 : s % 4 === 0 ? 0.9 : 0.78;
-      if (def.role === "bass") {
-        const k = BASS[ch] ?? (ch.toLowerCase() === "x" ? 0 : BASS[ch.toLowerCase()] ?? 0);
-        out.push({ ...base, midi: degreeToMidi(style2, scale, chord.root + k, oct, transpose), vel: (ch in BASS ? 0.85 : VEL[ch] ?? 0.85) * level });
-      } else if (def.role === "chord") {
-        for (const t of chord.tones) out.push({ ...base, midi: degreeToMidi(style2, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
-      } else if (def.role === "arp") {
-        let k = 0;
-        const b0 = at2 - at2 % 16;
-        for (let j = b0; j < at2; j++) {
-          const c = pat[(j + (own ? phase : 0)) % pat.length];
-          if (c !== "." && c !== "-") k++;
-        }
-        const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
-        out.push({ ...base, midi: degreeToMidi(style2, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
-      } else {
-        const m = motifFor(seed2 + phrase * 104729, plan.arc, name), pos = (at2 % 64 + (own ? sh % 29 : 0)) % 32;
-        const vary = barIn % 4 === 3 && s >= 8 ? hash2(bar2, plan.arc, ctx2.seed + 5) < 0.5 ? 2 : -1 : 0;
-        const lift = own ? [0, 2, 4][(sh >>> 3) % 3] : 0, octOwn = own ? oct + (sh >>> 5) % 2 - (oct > 2 ? 1 : 0) : oct;
-        out.push({ ...base, midi: degreeToMidi(style2, scale, chord.root + m[pos] + vary + lift, octOwn, transpose), vel: (VEL[ch] ?? accent) * level });
-      }
-    }
-    if (onlyCircle) return out;
-    const fn = melody > 0 ? formNoteAt(style2, ctx2.seed, formBar * 16 + s, transpose) : null;
-    if (fn) out.push({ part: fn.part, patch: fn.patch, step: step2, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 && !fn.off ? 0.9 : 0.78) * melody, ...fn.dur % 1 ? { straight: true } : {} });
-    if (s === 0 && barIn === 0 && sec.impact && style2.patches.impact) out.push({ part: "impact", patch: "impact", step: step2, offset: 0, dur: 16, midi: null, vel: 1 });
-    if (s === 0 && sec.riser && style2.patches.riser) out.push({ part: "riser", patch: "riser", step: step2, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
-    return out;
-  }
-  function checkStyle(style2) {
-    const errs = [], B = style2.blockBars;
-    const checkUse = (where, name, u) => {
-      const def = style2.parts[name];
-      if (!def) {
-        errs.push(`${where}: no part "${name}"`);
-        return;
-      }
-      const p = use(u).p;
-      if (!def.patterns[p]) errs.push(`${where}: part "${name}" has no pattern "${p}"`);
-    };
-    for (const [n, d] of Object.entries(style2.parts)) {
-      if (!style2.patches[d.patch]) errs.push(`part ${n}: no patch "${d.patch}"`);
-      for (const [pn, p] of Object.entries(d.patterns)) if (p.length % 16 !== 0) errs.push(`part ${n}, pattern ${pn}: ${p.length} steps, not whole bars`);
-    }
-    for (const n of Object.keys(style2.sections)) {
-      try {
-        const r = resolveSection(style2, n);
-        for (const [pn, u] of Object.entries(r.parts)) checkUse(`section ${n}`, pn, u);
-        const prog = r.progression;
-        if (prog && !style2.progressions[prog]) errs.push(`section ${n}: no progression "${prog}"`);
-      } catch (e) {
-        errs.push(String(e.message));
-      }
-    }
-    for (const [pn, u] of Object.entries(style2.siege)) checkUse("siege", pn, u);
-    for (const [pn, u] of Object.entries(style2.party ?? {})) checkUse("party", pn, u);
-    for (const [pn, u] of Object.entries(style2.legend ?? {})) checkUse("legend", pn, u);
-    const circleUses = [...Object.entries(style2.circle?.every ?? {}), ...Object.values(style2.circle?.families ?? {}).flatMap((f) => Object.entries(f))];
-    for (const [pn, u] of circleUses) for (const p of Array.isArray(u.p) ? u.p : [u.p]) checkUse("circle", pn, { p });
-    if (style2.fill.pattern.length !== 16) errs.push("fill: not one bar");
-    if (!style2.parts[style2.fill.part]) errs.push(`fill: no part "${style2.fill.part}"`);
-    for (const n of [style2.intro, style2.knockout]) if (!style2.sections[n]) errs.push(`no section "${n}"`);
-    if (!style2.scales[style2.scale]) errs.push(`no scale "${style2.scale}"`);
-    const F = style2.form;
-    if (F) {
-      for (const n of [...F.a, ...F.b]) if (!style2.progressions[n]) errs.push(`form: no progression "${n}"`);
-      for (const n of F.instruments) if (!style2.parts[n]) errs.push(`form: no part "${n}"`);
-      if (!style2.patches[F.sung.patch]) errs.push(`form: no patch "${F.sung.patch}"`);
-      const tripletsWhole = (c) => [...c].every((ch, i) => ch !== "T" && ch !== "t" || c.slice(i + 1, i + (ch === "T" ? 8 : 4)) === "_".repeat(ch === "T" ? 7 : 3)) && [...c].filter((ch) => ch === "_").length === [...c].reduce((n, ch) => n + (ch === "T" ? 7 : ch === "t" ? 3 : 0), 0);
-      for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) {
-        if (c.length !== 16 || c[0] === "-" || c[0] === "_" || /[^x\-._Tt]/.test(c)) errs.push(`form: cell ${k} "${c}" not one bar`);
-        else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
-      }
-      for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
-    }
-    style2.arc.forEach((a, i) => {
-      for (const [s, bars] of [...a.arrive ?? [], ...a.loop ?? [], ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style2.buildBars]]) {
-        if (!style2.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
-        if (!(bars > 0) || bars % B !== 0) errs.push(`arc ${i} (${a.name}): ${s} is ${bars} bars, not a multiple of ${B}`);
-      }
-      const S = a.sections;
-      if (S) {
-        if (!F) errs.push(`arc ${i} (${a.name}): sections without a form`);
-        if (!S.four.length || !S.breaks.length || !S.breakdown.length) errs.push(`arc ${i} (${a.name}): a kind of section missing`);
-        for (const s of [S.land, ...S.four, ...S.breaks, ...S.breakdown]) if (s !== void 0 && !style2.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
-      } else if (!a.loop?.length || (a.variants ?? []).some((v) => !v.length)) errs.push(`arc ${i} (${a.name}): nothing to loop`);
-      if (a.progression && !style2.progressions[a.progression]) errs.push(`arc ${i} (${a.name}): no progression "${a.progression}"`);
-    });
-    return errs;
-  }
-
   // src/rules/musicPlan.ts
   function bootLayers(cue2, bar2) {
     if (!cue2.speakerBars || !cue2.speakers) return 1;
@@ -9876,24 +9876,25 @@ label.check input { accent-color: var(--accent); }
     return { w, arrival, next };
   }
   function formClock(style2, cue2, bar2) {
-    const P2 = style2.form?.phraseBars ?? 8, B = style2.blockBars;
+    const B = style2.blockBars;
     const landed = (b) => b < cue2.bootUntil ? 0 : blockAfter(waveState(style2, cue2, b).arrival, B);
     let n = 0, line = -Infinity;
     for (const k of cue2.knockdowns ?? []) {
-      const kb = Math.floor(k), s0 = Math.max(landed(kb), line), at2 = s0 + (Math.floor((kb - s0) / P2) + 1) * P2;
+      const at2 = Math.ceil(k.back - 1e-3);
       if (at2 > bar2) break;
       n++;
       line = at2;
     }
     return { start: Math.max(landed(bar2), line), n };
   }
+  var silentAt = (cue2, bar2) => (cue2.knockdowns ?? []).some((k) => bar2 >= k.at && bar2 < Math.ceil(k.back - 1e-3));
   function planBlock(style2, cue2, bar2) {
     const B = style2.blockBars;
     const { w, arrival, next } = waveState(style2, cue2, bar2);
     const arc = cue2.forceWave ?? w, step2 = arcStep(style2, arc);
     const plan = (section, start2, bars) => ({ section, start: start2, bars, wave: w, arc });
     if (cue2.forceSection && style2.sections[cue2.forceSection]) return plan(cue2.forceSection, bar2 - bar2 % 16, 16);
-    if (cue2.knockedOut) return plan(style2.knockout, bar2 - bar2 % (2 * B), 2 * B);
+    if (cue2.knockedOut && !style2.form) return plan(style2.knockout, bar2 - bar2 % (2 * B), 2 * B);
     if (bar2 < cue2.bootUntil) return plan(style2.intro, 0, Math.max(B, blockAfter(cue2.bootUntil, B)));
     const buildBars = step2.buildBars ?? style2.buildBars;
     if (Number.isFinite(next)) {
@@ -9929,7 +9930,12 @@ label.check input { accent-color: var(--accent); }
     cache = /* @__PURE__ */ new Map();
     /** The plan for the block holding `bar`. */
     plan(cue2, bar2) {
-      const B = this.style.blockBars, b = Math.floor(bar2 / B) * B;
+      const B = this.style.blockBars;
+      let b = Math.floor(bar2 / B) * B;
+      for (const k of cue2.knockdowns ?? []) {
+        const at2 = Math.ceil(k.back - 1e-3);
+        if (at2 > b && at2 <= bar2) b = at2;
+      }
       let p = this.cache.get(b);
       if (!p) {
         p = planBlock(this.style, cue2, b);
@@ -10010,8 +10016,10 @@ label.check input { accent-color: var(--accent); }
       delayTone.connect(this.feedback);
       this.feedback.connect(this.delay);
       delayTone.connect(this.tone);
+      this.gate = c.createGain();
       this.tone.connect(limit);
-      limit.connect(this.out);
+      limit.connect(this.gate);
+      this.gate.connect(this.out);
       this.out.connect(dest);
       this.circleIn = c.createGain();
       this.circleVerbIn = c.createGain();
@@ -10055,6 +10063,13 @@ label.check input { accent-color: var(--accent); }
     /** Only these parts sound (the Music Lab's analysis); null: all. */
     solo = null;
     out;
+    /** Shut from a knockdown till its new record starts (Ed, 2026-10-09: "the music stops when she gets knocked down"): cut at
+     *  once on the audio clock when the knockdown is heard of (what's already scheduled ahead with it), opened on the new
+     *  record's first downbeat. */
+    gate;
+    /** Knockdowns heard of so far, and whether the gate is shut (as scheduled: on the audio clock, ahead of now). */
+    knocksHeard = 0;
+    gated = false;
     tone;
     duckBus;
     dryBus;
@@ -10154,6 +10169,16 @@ label.check input { accent-color: var(--accent); }
         this.lastNow = -1;
         return;
       }
+      const knocks = cue2.knockdowns?.length ?? 0;
+      if (knocks > this.knocksHeard) {
+        this.knocksHeard = knocks;
+        if (silentAt(cue2, stepNow / 16)) {
+          this.gate.gain.cancelScheduledValues(now);
+          this.gate.gain.setValueAtTime(this.gate.gain.value, now);
+          this.gate.gain.setTargetAtTime(0, now, 0.03);
+          this.gated = true;
+        }
+      }
       rate = Math.max(0.01, rate);
       if (rate !== this.rate) {
         if (Number.isFinite(this.g0)) {
@@ -10215,6 +10240,11 @@ label.check input { accent-color: var(--accent); }
       while (this.cAt < now + ahead) {
         if (this.cAt >= now) {
           const main = Math.floor(beatAt(clock2, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue2, Math.floor(main / 16));
+          if (silentAt(cue2, main / 16)) {
+            this.cNext++;
+            this.cAt += sps;
+            continue;
+          }
           const events = notesAt(this.style, plan, null, main, { ...this.formAt(cue2, Math.floor(main / 16)), siege: 0, circle: cue2.circle, only: "circle", circleStep: this.cNext });
           const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
           this.playAll(events, (e) => this.cAt + (e.straight ? 0 : swing) + e.offset * sps, sps);
@@ -10241,6 +10271,18 @@ label.check input { accent-color: var(--accent); }
     /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
     step(cue2, step2, t, sps) {
       const S = this.style, B = S.blockBars, bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16;
+      if (silentAt(cue2, step2 / 16)) {
+        if (!this.gated) {
+          this.gate.gain.setTargetAtTime(0, t, 0.03);
+          this.gated = true;
+        }
+        return;
+      }
+      if (this.gated) {
+        this.gate.gain.cancelScheduledValues(t);
+        this.gate.gain.setValueAtTime(1, t);
+        this.gated = false;
+      }
       const plan = this.conductor.plan(cue2, bar2);
       const next = bar2 % B === B - 1 ? this.conductor.plan(cue2, bar2 + 1) : null;
       this.current = { plan, bar: bar2, step: step2 };
@@ -10822,8 +10864,9 @@ label.check input { accent-color: var(--accent); }
       return this.circleGain;
     }
     /** Whether it should be heard now: its volume turned up. */
+    /** Not shut by a knockdown (the engine's gate: her silence till the new record, Ed 2026-10-09) and turned up. */
     get audible() {
-      return this.master.gain.value > 0.02;
+      return this.master.gain.value > 0.02 && !this.engine?.gated;
     }
     /** Silenced for good and let go (the watchdog building afresh). */
     dispose() {

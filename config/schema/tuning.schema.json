@@ -5379,6 +5379,14 @@
             "needle": {
               "type": "number",
               "minimum": 0
+            },
+            "knock": {
+              "type": "number",
+              "minimum": 0
+            },
+            "respawn": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -5387,7 +5395,9 @@
             "hiss",
             "stroke",
             "hype",
-            "needle"
+            "needle",
+            "knock",
+            "respawn"
           ],
           "additionalProperties": false
         },

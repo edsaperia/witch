@@ -1,7 +1,8 @@
 // The 32-bar ABAC form, rendered: node tools/music-lab/form.mjs [section|form] [seed] [bars] [knockdown bar] [wave]
 // (default the form's own sections, seed 7, 32 bars, no knockdown, wave 1). Renders tools/music-lab/form.ts offline in
 // headless Chromium: the wave's music on the game's mix (its sections on the form, or one section looped) with the form's
-// melody over it, and with a knockdown bar, 5 bpm faster from the next bar
+// melody over it, and with a knockdown bar, the knockdown as the game plays it (the record scratched, silence, the needle on a
+// new record and her seeded scratching, the new record from the top 5 bpm faster); before, 5 bpm faster from the next bar
 // line and the music re-seeded from the next phrase line. Prints each phrase (its letter, A's instrument, the seed); fails
 // on a script error, NaN or clipping. Writes previews/music/form-<section>-<seed>.mp3 (the WAV if there's no ffmpeg).
 import { build } from "esbuild";
