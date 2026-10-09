@@ -89,4 +89,23 @@ describe("her posse defends her", () => {
     expect(wrong).toBe("");
     expect(Math.hypot(parked.x - w.x, parked.z - w.z)).toBeGreaterThan(80); // (never pulled across to her fight)
   }, 60000);
+
+  // Ed (2026-10-09, on #592): "Taunt seems good."
+  it("taunt: a creature after her, hit by one of hers, turns on that one for combat.taunt.time, then may come back to her", () => {
+    const { g, attackers, posse } = scene(["badger"], ["wolf"]); // (a badger: one her wolf can catch; a charging boar's rarely hit)
+    const [badger] = attackers, [wolf] = posse, TT = g.tuning.combat.taunt!;
+    badger.hunting = 0; // (after her and nothing else: rules/hunt.ts)
+    let at = -1, held = true, until = 0;
+    run(g, 6, () => {
+      if (at < 0 && badger.taunt) { at = g.clock.time; until = badger.taunt.until; }
+      if (at >= 0 && badger.taunt && g.clock.time > at + 0.1 && g.clock.time < until - 0.05 && !badger.fight?.lunge && on(badger) !== null && on(badger) !== wolf.id) held = false;
+    });
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(until - at).toBeCloseTo(TT.time, 1);
+    expect(held).toBe(true); // (on the wolf the whole taunt, from the step after the hit, but for a lunge at her already under way)
+    // and it isn't for good: once it's over, it's dropped (and it may go for her again)
+    badger.taunt = { by: wolf.id, until: g.clock.time + 0.1 };
+    run(g, 0.5);
+    expect(badger.taunt === undefined || badger.taunt.until !== g.clock.time + 0.1).toBe(true);
+  }, 60000);
 });

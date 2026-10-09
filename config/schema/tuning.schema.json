@@ -2943,6 +2943,24 @@
         "defendRadius": {
           "type": "number",
           "minimum": 0
+        },
+        "taunt": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "time",
+            "chance"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -2963,7 +2981,8 @@
         "shake",
         "daze",
         "retreatHome",
-        "defendRadius"
+        "defendRadius",
+        "taunt"
       ],
       "additionalProperties": false
     },
