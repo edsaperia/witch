@@ -59,13 +59,15 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
   }, 30000);
 
   it("gives every woken area its own legend, besieging only its own soundsystem (Ed, 2026-10-04)", () => {
-    const plain = simulate(map, { interval: 60, maxWaves: 40 }), legends = simulate(map, { interval: 60, maxWaves: 40, areaLegends: true });
+    // (half the areas with legends, as when this was written: the mechanism, not legends.share's balance, Ed 2026-10-08's 0.2)
+    const half = withTuning({ population: PEOPLED.population, legends: { ...TUNING.legends, share: 0.5 } }), hmap = generateMap(1000, half);
+    const plain = simulate(hmap, { interval: 60, maxWaves: 40 }), legends = simulate(hmap, { interval: 60, maxWaves: 40, areaLegends: true });
     // (legends.share leaves some areas without one, and a legend marches slowly: a 500-health soundsystem often falls before
     // it gets there, so it shows as a bigger siege somewhere in the first twenty waves, not always by its whole value)
     expect(legends.waves.slice(0, 20).some((w, i) => w.largest > plain.waves[i].largest)).toBe(true);
     // A legend alone topples its soundsystem in about 5.6 minutes: over a few maps, the run is shorter
     // (one map can tie: seed 1000's did at 14 x 168 m areas, while 1001 to 1005 lost 2 to 7 waves).
-    const total = (areaLegends: boolean) => [1000, 1001, 1002].reduce((n, seed) => n + simulate(generateMap(seed, TUNING), { interval: 60, maxWaves: 40, areaLegends }).survived, 0);
+    const total = (areaLegends: boolean) => [1000, 1001, 1002].reduce((n, seed) => n + simulate(generateMap(seed, half), { interval: 60, maxWaves: 40, areaLegends }).survived, 0);
     expect(total(true)).toBeLessThan(total(false));
   }, 120000);
 

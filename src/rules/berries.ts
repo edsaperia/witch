@@ -10,7 +10,7 @@
 // own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
 import { COMBAT, creatureMaxHp, strengthOf } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
-import { LEGEND, type Creature, type Level } from "./creatures";
+import { LEGEND, heal, type Creature, type Level } from "./creatures";
 import { gaitRate, leashSpeed } from "./leash";
 import type { ForestMap } from "./map";
 import { rng } from "./random";
@@ -166,7 +166,7 @@ function release(s: BerryState, id: number): void {
 /** Count one berry eaten; at the threshold, start evolving on the next bar line. */
 export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?: BeatClock): void {
   // A berry heals a party animal to full (Ed, 2026-10-04), as well as counting toward evolving.
-  if (c.leashed && hurtNow(c)) { c.hp = undefined; c.healedAt = time; }
+  if (c.leashed && hurtNow(c)) heal(c, time);
   if (c.level >= TOP_LEVEL || s.evolving.has(c.id)) return;
   const n = (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);

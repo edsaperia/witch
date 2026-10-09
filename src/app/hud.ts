@@ -4,7 +4,6 @@ import { leashLoad, type Game, type WaveEvent } from "../rules/game";
 import { waveCountdown } from "../rules/party";
 import { clockSeconds, clockText } from "../rules/leypulse";
 import { powerReport } from "../rules/power";
-import { clearCue, clearableAt, wildLeft } from "../rules/clear";
 
 export class Hud {
   debugOn = false;
@@ -17,10 +16,8 @@ export class Hud {
   private readonly clockEl = document.getElementById("clock")!;
   private readonly clockT = this.clockEl.querySelector<HTMLElement>(".t")!;
   private readonly clockLabel = this.clockEl.querySelector<HTMLElement>(".label")!;
-  private readonly wildEl = document.getElementById("wild-left");
-  private lastWild = -Infinity;
 
-  constructor(private readonly game: Game, private readonly tuning: { party: { interval: number } }, private readonly knobs: HTMLElement) {}
+  constructor(private readonly game: Game, private readonly knobs: HTMLElement) {}
 
   /** The debug overlay, its buttons and the knobs, on or off. */
   setDebug(on: boolean): void {
@@ -32,17 +29,17 @@ export class Hud {
   /** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
    *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
   clock(): void {
-    const { game, tuning, clockEl, clockT, clockLabel } = this;
+    const { game, clockEl, clockT, clockLabel } = this;
     const cd = waveCountdown(game.party, game.map, game.clock.time);
     clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
     const now = clockText(clockSeconds(game.party, game.clock.time));
     if (clockT.textContent !== now) clockT.textContent = now;
     clockEl.classList.toggle("paused", game.clock.paused);
     const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
-    const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
+    const left = game.party.paused ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
     clockLabel.textContent = this.debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
     // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word under the clock.
-    if (!this.bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
+    if (!this.bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && !game.party.paused) {
       this.bootShown = true;
       const pop = document.createElement("div");
       pop.className = "boot-pop";
@@ -52,30 +49,18 @@ export class Hud {
     }
   }
 
-  /** How many of the wild area's own animals still hold it, under the clock, four times a second, while she's in a wild
-   *  area its clearing would transform (rules/clear.ts); hidden elsewhere, and once the party's over. */
-  wildLeft(now: number): void {
-    const el = this.wildEl, game = this.game;
-    if (!el || now - this.lastWild <= 250) return;
-    this.lastWild = now;
-    const w = game.witch, cell = game.partyOver || w.seated ? null : clearableAt(game.party, game.map, w.x, w.z);
-    const text = cell ? clearCue(wildLeft(game.creatures, cell)).text : "";
-    if (el.textContent !== text) el.textContent = text;
-    el.classList.toggle("on", !!text);
-  }
-
   /** Every soundsystem lost since the last shown. */
   losses(): void { for (const e of this.game.waveEvents) if (e.kind === "soundsystemLost" && e.at > this.lossShown) this.showLoss(e); }
 
-  /** A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner; the clock flashes and the seconds taken off pop out
-   *  under it ("−60 s", "wave now!"), and the wave pointer's ring jumps on. */
+  /** A soundsystem lost: the clock flashes and "soundsystem lost" pops out under it (the countdown and the tempo go on as
+   *  they were: Ed, 2026-10-08). */
   showLoss(e: Extract<WaveEvent, { kind: "soundsystemLost" }>): void {
     const clockEl = this.clockEl;
     this.lossShown = e.at;
     clockEl.classList.remove("lost"); void clockEl.offsetWidth; clockEl.classList.add("lost"); // (restart the animation)
     const pop = document.createElement("div");
     pop.className = "loss-pop";
-    pop.textContent = e.left <= 0 ? "wave now!" : `−${Math.round(e.cut)} s`;
+    pop.textContent = "soundsystem lost";
     clockEl.append(pop);
     setTimeout(() => pop.remove(), 1800);
     setTimeout(() => { if (this.lossShown === e.at) clockEl.classList.remove("lost"); }, 900);

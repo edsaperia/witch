@@ -66,8 +66,8 @@ import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
-import { LeyLines, bootLap, leyReveal, shaderPulse } from "./leylines";
-import { bootLineAt, bootPath, bootPulseAt, bootShare } from "../rules/bootRing";
+import { LeyLines, leyReveal, shaderPulse } from "./leylines";
+import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
@@ -83,7 +83,7 @@ import { checkPops, drawGhosts } from "./view/pops";
 import { refresh } from "./view/scenery";
 import { drawBerries, drawCreatures } from "./view/creatures";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./view/home";
-import { setLights, sigilLights, updateSources } from "./view/lights";
+import { relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
 import { drawWitch } from "./view/witch";
@@ -182,7 +182,7 @@ export class View {
   private buffHud = new BuffHud(document.body);
   shadow: THREE.Mesh;
   mpp: number; // metres per art pixel
-  lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
+  lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 };
   /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
   budget: SceneryBudget;
   /** ?scenery=<metres>: a fixed scenery radius instead of the adaptive one. */
@@ -244,10 +244,6 @@ export class View {
   /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
   alarms = newAlarms();
   alarmCues: AlarmIndicators | null = null;
-  /** Pointers to the last few wild animals holding the area she's in (render/view/hud.ts; rules/clear.ts wildLeft), and that
-   *  list, looked up four times a second. */
-  wildPointers: StoneIndicator[] = [];
-  wildLeftList: { at: number; list: Creature[] } = { at: -Infinity, list: [] };
   /** The knockdowns' BPM bonus the wave pointer last pulsed for (render/view/hud.ts). */
   pointerBonus = 0;
   readonly minimap: Minimap;
@@ -802,18 +798,19 @@ export class View {
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
       // the wave's pulse along the current link, by the party's clock (as the HUD's pointer); while home boots, none drawn, but the
       // line the boot branches off unlit ahead of where it will set off (as it is once the boot ends: no change as it does)
-      const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil, lap = bootLap(g, time);
-      this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse && lap === null);
+      const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
+      this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
       // None till the party spell, nor before the boot's pulse reaches where the first link leaves the home ring (Ed, v2001 and
       // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
       // (leyReveal, by the boot pulse's own progress), then on along the route.
       this.ley.near(w.x, w.z);
       this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
-        // (Its last stone turned, its sparkler finishes the lap to where it came on to the ring and hands over to the wave's
-        // there: Ed, 2026-10-07, "The two pulses or tips don't join correctly at the top of the speaker circle".)
-        const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = (g.party.spellAt !== null && share < 1) || lap !== null;
-        this.ley.ring(lap ?? (live ? bootPulseAt(g.party, g.map, time) / B.length : null), bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
+        // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
+        // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at
+        // the top of the speaker circle"; 2026-10-09, "Pure constant speed", boot included.)
+        const B = bootPath(g.map), live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
+        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
         this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
       }
     }
@@ -878,14 +875,14 @@ export class View {
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     { const H = g.witches[0].hat.down; if (H && g.witches[0].hat.has) clear.push({ x: H.x + HAT_BESIDE, z: H.z, r: t.groundCover.sigilClear }); } // (her hat where it lies)
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
-    for (const r of g.relics) if (r.state === "lying" && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
+    for (const r of g.relics) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
-    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...this.forestLights], w.x, w.z);
+    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);

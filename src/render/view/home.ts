@@ -42,9 +42,10 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   };
   const near: { d: number; l: ForestLight }[] = [];
   // Ed (2026-10-06): "The column of light above a runestone first appears when the leyline meets it": when the line's
-  // tip reaches each stone (rules/leypulse.ts, the line's own reveal), worked out again when the line changes.
-  const lp = v.leyParty ?? g.party, rk = `${leyKey(lp)}:${g.party.spellAt ?? "-"}`; // (the line's own party: leyLines.advance)
-  if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(lp, g.map) };
+  // tip reaches each stone (rules/leypulse.ts, the line's own reveal), worked out again when the line changes, and twice a second
+  // (its times ahead are by the pulse's speed now, which a knockdown's BPM raises).
+  const lp = v.leyParty ?? g.party, rk = `${leyKey(lp)}:${g.party.spellAt ?? "-"}:${g.party.bootUntil}:${Math.floor(g.clock.time * 2)}`; // (the line's own party: leyLines.advance)
+  if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(lp, g.map, g.clock.time) };
   const FLARE = R.flare.time;
   for (const m of mc.list) {
     const d = Math.hypot(m.x - w.x, m.z - w.z);
@@ -166,7 +167,8 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   const mpp = v.mpp, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
   const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(v.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
   const beat = (beatTime(g.beat, time) * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
-  const list: SpriteInstance[] = [];
+  const list: SpriteInstance[] = [], glows = v.leashView.ringGlows;
+  glows.length = 0;
   // Where a sprite stands so its ground point (o, art pixels in its frame; mirrored with it) lands on the spot: the part drawn below
   // the ground point lies on the ground nearer the camera.
   const standAt = (sp: { x: number; z: number }, f: { w: number; h: number; pad?: number }, o: { x: number; y: number }, flip: boolean) => {
@@ -182,6 +184,12 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
       if (!inView(v, p.x, p.z, f.w * mpp, f.h * mpp, 6)) return;
       if (c > 0) lights.push({ x: sp.x, y: 1.5, z: sp.z, reach: 8, rgb: new THREE.Vector3(0.3, 0.9, 1), strength: 1.5 * c });
       list.push({ x: p.x - U.x * d, y: -U.y * d, z: p.z - U.z * d, frame: f, flip: face.flip, sx: 1 - STRETCH.thin * c, sy: 1 + STRETCH.up * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
+      // its dots' glow (Ed, 2026-10-09: "They should glow"): each dot's middle in the world, stretched with the stone, for the
+      // soft halos LeashView draws (drawRingGlows), brighter as it charges
+      for (const q of A.stoneDots?.[sk] ?? []) {
+        const a = ((face.flip ? f.w - q.x : q.x) - f.w / 2) * mpp * (1 - STRETCH.thin * c), b = (f.h - q.y) * mpp * (1 + STRETCH.up * c);
+        glows.push({ x: p.x - U.x * d + R.x * a + U.x * b, y: -U.y * d + R.y * a + U.y * b, z: p.z - U.z * d + R.z * a + U.z * b, k: 1 + c });
+      }
       return;
     }
     const u = si === undefined ? 1 : Math.min(1, (k - TURN) / (1 - TURN)), rise = u >= 1 ? 1 : 1 - Math.pow(1 - u, 3) * Math.cos(u * 4.2); // springs up, past full, settles

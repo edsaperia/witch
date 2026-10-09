@@ -41,4 +41,10 @@ describe("the claw slashes", () => {
       expect(px[0].length).toBeLessThan(slashPixels()[0].length);
     }
   });
+  it("shows three slashes at most: the fourth hit knocks her out, the three standing whole", () => {
+    expect(slashState({ hp: 1, repairAt: 30, hurtAt: 10 }, 4, 20, 11).count).toBe(3);
+    const down = slashState({ hp: 0, repairAt: 32, hurtAt: 12 }, 4, 20, 12.02);
+    expect(down).toEqual({ count: 3, cut: 1, flash: 0, drained: 0 });
+    const b = new Uint8ClampedArray(SLASH_W * SLASH_H * 4); expect(() => paintSlashes(b, down)).not.toThrow();
+  });
 });

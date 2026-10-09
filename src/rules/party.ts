@@ -2,11 +2,12 @@
 // `interval` seconds a wave comes and wakes one area (Ed, v149), chosen as soon as the previous one
 // woke (see pickNext), which gets a soundsystem and is partified. Seeded and deterministic; no
 // drawing here.
-import { stonesTurned } from "./bootRing";
+import { bootSeconds, stonesTurned } from "./bootRing";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
 import { addCrossings, leyRoute, spiralOrder, spiralWith, type LeyRoute } from "./leyroute";
+import { pulseSpeed, stretchLengths } from "./pulseRoute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -58,10 +59,6 @@ export interface PartyState {
   waveReached?: Map<string, { at: number; wave: number }>;
   /** Areas whose quest is done before their wave (rules/leylines.ts onAreaDone): key → game time. The ley line moves on from them. */
   leyDone?: Map<string, number>;
-  /** The wave's pulse since the countdown was last hurried (a soundsystem lost, hurryWave): its share of the way then, and
-   *  the seconds then left; it goes on from there to arrive as the wave does, faster, never jumping (Ed, 2026-10-08: "The
-   *  pulse should never skip"; pulseShare). Cleared at each wave. */
-  pulseFrom?: { share: number; left: number };
   /** How many areas each wave wakes: one per witch present (Ed, 2026-10-04), read at each wave. */
   areasPerWave: number;
   /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04; 5 minutes from her first step, 2026-10-05): the first wave's countdown starts then. */
@@ -71,9 +68,13 @@ export interface PartyState {
    *  the game time she cast it. Set by the boot-up's own rules; read by the HUD (rules/leypulse.ts clockStart). */
   spellAt?: number | null;
   /** When she left her decks (Ed, 2026-10-06), the spell cast (or in a build without it, her first step): the boot's pulse
-   *  sets off from the treehouse then, turns the first stone boot.firstAfter seconds later, and the boot's minutes run
-   *  from that first speaker (rules/bootRing.ts). Undefined until then. */
+   *  sets off from the treehouse then, running down to the home ring and round it at the pulse's speed (rules/bootRing.ts).
+   *  Undefined until then. */
   bootFrom?: number;
+  /** The wave's pulse (Ed, 2026-10-09: "Pure constant speed"): metres `d` run along the current stretch (the links from
+   *  the last stone reached through each of the next wave's in turn, `lens`, rules/pulseRoute.ts) as of game time `at`,
+   *  running on at `v` m/s (leyLines.pulseSpeed times the tempo) from then. Before `at` it waits (the boot). */
+  pulse: { d: number; at: number; v: number; lens: number[] };
 }
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
@@ -103,11 +104,33 @@ export const heldBySpell = (p: PartyState, time: number): boolean => p.spellAt =
 
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
-  const boot = map.tuning.boot.time + Math.max(0, map.tuning.boot.firstAfter ?? 0); // (from her leaving the decks: the first stone's seconds, then the boot)
-  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: [], last: null, bootUntil: boot, afterNext: [], areasPerWave: Math.max(1, map.tuning.party.areasPerWave) };
+  const boot = bootSeconds(map); // (from her leaving the decks: the boot's pulse down to the ring and round it)
+  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: Infinity, paused: false, next: [], last: null, bootUntil: boot, afterNext: [], areasPerWave: Math.max(1, map.tuning.party.areasPerWave), pulse: { d: 0, at: 0, v: 0, lens: [] } };
   p.next = pickSet(p, map, p.areasPerWave);
   planAhead(p, map);
+  resetPulse(p, map, boot + map.tuning.party.startDelay);
   return p;
+}
+
+/** The pulse sets off (again) from the last stone reached at game time `at`, on the next wave's stretch: after the boot, after
+ *  each wave, after a wave brought on by hand (the debug key). `carry`: metres it has run past the stone already. */
+export function resetPulse(p: PartyState, map: ForestMap, at: number, carry = 0): void {
+  p.pulse = { d: carry, at, v: pulseSpeed(map), lens: stretchLengths(p, map) };
+  p.nextAt = pulseDue(p, at);
+}
+/** The stretch's whole length (m). */
+const stretchOf = (p: PartyState): number => { let L = 0; for (const l of p.pulse.lens) L += l; return L; };
+/** Metres the pulse has run along its stretch at `time` (on from its last reckoning at its speed then, never past the end). */
+export function pulseMetres(p: PartyState, time: number): number {
+  const P = p.pulse;
+  if (!P) return 0;
+  return Math.max(0, Math.min(stretchOf(p), P.d + (p.paused ? 0 : P.v * Math.max(0, time - P.at))));
+}
+/** When the pulse will reach the stretch's end (the next wave), at its speed now; Infinity with no speed or no stretch. */
+function pulseDue(p: PartyState, time: number): number {
+  const P = p.pulse, L = stretchOf(p);
+  if (!L || !(P.v > 0) || p.paused) return Infinity;
+  return Math.max(time, P.at) + Math.max(0, L - pulseMetres(p, Math.max(time, P.at))) / P.v;
 }
 
 /** Every area's cell, its soundsystem's distance from the dancefloor and its noisy picker's cost
@@ -257,7 +280,7 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number, celebrat
     p.areas.set(k, a);
     fresh.push(a);
   }
-  p.wave = wave; p.pulseFrom = undefined;
+  p.wave = wave;
   (p.waveAt ??= [])[wave - 1] = time;
   if (p.next.length) p.last = p.next[p.next.length - 1];
   // The confirmed after-next is the next now (the same as picking it afresh), unless the number of
@@ -292,53 +315,44 @@ export function clearArea(p: PartyState, map: ForestMap, cell: Cell, time: numbe
  *  the party spell cast (or in a game without it, `spellAt` undefined: the tools and tests, as soon as she's off them):
  *  then `bootFrom` is set and the boot's end and the first wave's countdown are reckoned from it. */
 export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false, celebrate?: (a: Partified, wave: number) => void, rate = 1): Partified[] {
+  const P = p.pulse;
   if (p.bootFrom === undefined && p.spellAt !== null && !seated) {
-    const left = p.nextAt - p.bootUntil; // (the countdown after the boot, as it was set)
-    p.bootFrom = time; p.bootUntil = time + Math.max(0, map.tuning.boot.firstAfter ?? 0) + map.tuning.boot.time; p.nextAt = p.bootUntil + left;
+    p.bootFrom = time; p.bootUntil = time + bootSeconds(map); P.at = p.bootUntil + map.tuning.party.startDelay; P.d = 0;
   }
   const waiting = p.bootFrom === undefined;
-  if (p.paused || (waiting && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
-  // The countdown runs at the party's tempo (rules/beat.ts tempoRate: faster for her knockdowns), so the wave and the ley
-  // line's pulse come sooner, smoothly: the time left shrinks the faster from now on, never jumping.
-  if (rate !== 1 && time >= p.bootUntil) p.nextAt -= dt * (rate - 1);
-  if (time < p.nextAt) return [];
-  p.nextAt += map.tuning.party.interval;
-  return spreadWave(p, map, time, celebrate);
+  if (waiting) { P.at += dt; p.bootUntil += dt; p.nextAt = pulseDue(p, time); return []; } // (still at her decks: the boot waits)
+  if (p.paused) { if (time < p.bootUntil) { p.bootFrom = (p.bootFrom ?? time) + dt; p.bootUntil += dt; } P.at += dt; p.nextAt = pulseDue(p, time); return []; } // (held where it is, the boot too)
+  // At a constant speed along the route (Ed, 2026-10-09: "Pure constant speed", leyLines.pulseSpeed m/s), times the party's
+  // tempo (rules/beat.ts tempoRate: faster for her knockdowns): reckoned on to now at its speed so far, then at the new one.
+  if (time >= P.at) { P.d = pulseMetres(p, time); P.at = time; P.v = pulseSpeed(map) * rate; }
+  // A wave lands as the pulse reaches the stretch's last stone; it runs straight on along the next stretch.
+  let fresh: Partified[] = [];
+  for (let guard = 0; guard < 4 && p.pulse.lens.length && p.pulse.d >= stretchOf(p) - 1e-9; guard++) {
+    const over = p.pulse.d - stretchOf(p);
+    fresh = fresh.concat(spreadWave(p, map, time, celebrate));
+    resetPulse(p, map, time, over); p.pulse.v = pulseSpeed(map) * rate;
+  }
+  p.nextAt = pulseDue(p, time);
+  return fresh;
 }
 
-/** A soundsystem lost (Ed, 2026-10-05): the next wave comes `by` seconds sooner, at once if less
- *  is left (the next step brings it); each loss takes its own `by` off, and the gap after the wave
- *  is the interval as ever. Returns the seconds it took off. */
-export function hurryWave(p: PartyState, time: number, by: number, map?: ForestMap): number {
-  const was = p.nextAt;
-  if (!map) { p.nextAt = Math.max(time, p.nextAt - Math.max(0, by)); return was - p.nextAt; }
-  // The pulse never skips (Ed, 2026-10-08): it speeds up from where it is to arrive with the wave, at most PULSE_HURRY
-  // times its pace, so the wave can come no sooner than that lets it.
-  const share = pulseShare(p, map, time), soonest = time + ((1 - share) * map.tuning.party.interval) / PULSE_HURRY;
-  if (time < p.bootUntil) { p.nextAt = Math.max(time, p.nextAt - Math.max(0, by)); return was - p.nextAt; } // (booting: the pulse hasn't set off)
-  p.nextAt = Math.max(Math.min(was, soonest), p.nextAt - Math.max(0, by));
-  if (p.nextAt < was) p.pulseFrom = { share, left: p.nextAt - time };
-  return was - p.nextAt;
+/** How far along its stretch the wave's pulse is, in links (0 to the stretch's count: one a wave, a link a stone): the links
+ *  it has passed, and its share of the one it's on by length (Ed, 2026-10-09: "Pure constant speed"). Nothing else moves it
+ *  (Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown"). */
+export function pulseLinksIn(p: PartyState, time: number): number {
+  const lens = p.pulse?.lens ?? [];
+  let d = pulseMetres(p, time);
+  for (let i = 0; i < lens.length; i++) { if (d < lens[i] || i === lens.length - 1) return i + Math.min(1, d / Math.max(1e-9, lens[i])); d -= lens[i]; }
+  return 0;
 }
 
-/** How many times its pace the wave's pulse may run to arrive with a hurried wave (hurryWave). */
-export const PULSE_HURRY = 3;
-
-/** How far along its link the wave's pulse is, 0 to 1 (Ed, 2026-10-08: "The pulse should never skip, it always travels
- *  along the route at the bpm speed"): the countdown's share run, the countdown's own pace (the tempo, pauses: rules/beat.ts
- *  tempoRate, stepParty) its pace; after a hurry (pulseFrom), on from where it was then, faster, to arrive as the wave does. */
-export function pulseShare(p: PartyState, map: ForestMap, time: number): number {
-  const left = Math.max(0, p.nextAt - time), F = p.pulseFrom;
-  const s = F && F.left > 0 ? F.share + (1 - F.share) * (1 - Math.min(1, left / F.left)) : 1 - Math.min(1, left / map.tuning.party.interval);
-  return Math.max(0, Math.min(1, s));
-}
-
-/** Seconds left until the next wave, and the share of the interval gone (0-1), for the bar; while
- *  the home speakers boot up (booting), how far the boot has got (0-1) and its seconds left. */
+/** Seconds left until the next wave (the stretch's metres left over the pulse's speed now), and the share of the stretch run
+ *  (0-1), for the bar; while the home speakers boot up (booting), how far the boot has got (0-1) and its seconds left. */
 export function waveCountdown(p: PartyState, map: ForestMap, time: number): { left: number; gone: number; booting: boolean; boot: number; bootLeft: number } {
-  const left = Math.max(0, p.nextAt - time), interval = map.tuning.party.interval, B = map.tuning.boot.time;
+  const L = stretchOf(p), d = pulseMetres(p, time), v = p.pulse?.v || pulseSpeed(map), B = bootSeconds(map);
+  const left = !L || p.paused || !(v > 0) ? Infinity : Math.max(0, p.pulse.at - time) + (L - d) / v;
   const bootLeft = Math.max(0, p.bootUntil - time);
-  return { left, gone: 1 - Math.min(1, left / interval), booting: bootLeft > 0, boot: B > 0 ? 1 - Math.min(1, bootLeft / B) : 1, bootLeft };
+  return { left, gone: L > 0 ? Math.min(1, d / L) : 0, booting: bootLeft > 0, boot: B > 0 ? 1 - Math.min(1, bootLeft / B) : 1, bootLeft };
 }
 
 /** How many of the home ring's `count` speakers have turned on by `time`: each as the boot's pulse reaches its stone,

@@ -12,7 +12,7 @@
 // sight. Her leashed ones are let go and sleep where they stand. Asleep is the one shared state (Creature.asleep, with the
 // naps and the sleeping art): still, out of every fight, no rune, no 💌s. No drawing here.
 import type { Game } from "./game";
-import type { Creature } from "./creatures";
+import { heal, type Creature } from "./creatures";
 import { pointInArea } from "./creatures";
 import { letPartyLegendGo } from "./leash";
 
@@ -43,7 +43,8 @@ function sleep(c: Creature, time: number): void {
 }
 
 /** Out of whatever it was doing: no fight, siege, flight, daze, charge or walk; not enraged. */
-function calm(c: Creature): void {
+function calm(c: Creature, time: number): void {
+  heal(c, time);
   Object.assign(c, {
     fight: undefined, siege: undefined, enraged: false, fleeUntil: undefined, fleeX: undefined, fleeZ: undefined, dazed: false, dazedUntil: undefined,
     charge: undefined, run: undefined, leap: undefined, burrow: undefined, legend: undefined, aims: undefined, kx: 0, kz: 0, stunUntil: undefined, slowUntil: undefined,
@@ -56,7 +57,7 @@ function calm(c: Creature): void {
 /** Where it lies down: a legend where it lay (its lair), anything else a spot in its own area (a circle's baby in its circle). */
 function bedOf(g: Game, c: Creature): { x: number; z: number } {
   if (c.boss && c.lairX !== undefined && c.lairZ !== undefined) return { x: c.lairX, z: c.lairZ };
-  const [x, z] = pointInArea(g.map, { ...c, dancing: false, leashed: false, state: undefined, enraged: false }, c.rand);
+  const [x, z] = pointInArea(g.map, { ...c, dancing: false, leashed: false, state: undefined, enraged: false, anywhere: true }, c.rand);
   return { x, z };
 }
 
@@ -74,21 +75,21 @@ export function startPartyOver(g: Game, time: number): void {
       if (!c) continue;
       if (c.partyLegend) letPartyLegendGo(c); else { c.leashed = false; c.state = "happy"; }
       c.lairX = c.boss ? c.x : c.lairX; c.lairZ = c.boss ? c.z : c.lairZ;
-      calm(c); sleep(c, time);
+      calm(c, time); sleep(c, time);
     }
     w.leash.stack = []; w.leash.placed = []; w.leash.talk = null; w.pinned = null;
     w.health.hp = g.tuning.witchHealth.hits; w.knock = undefined; w.slowUntil = undefined;
   }
   for (const c of g.creatures) {
-    if (c.asleep) { calm(c); sleep(c, time); continue; } // (a napper too: asleep for good now, its nap's end gone)
+    if (c.asleep) { calm(c, time); sleep(c, time); continue; } // (a napper too: asleep for good now, its nap's end gone)
     if (c.gone) {
       // Ran off earlier: back home, already asleep (the record was kept: its species, level and area).
-      c.gone = false; calm(c);
+      c.gone = false; calm(c, time);
       const b = bedOf(g, c); c.x = c.tx = b.x; c.z = c.tz = b.z;
       sleep(c, time);
       continue;
     }
-    calm(c);
+    calm(c, time);
     const b = bedOf(g, c);
     // A party legend sleeps where it stands (it never moves); one in its lair or out of sight is in bed at once.
     if (c.partyLegend) { c.lairX = c.x; c.lairZ = c.z; sleep(c, time); continue; }
@@ -109,7 +110,7 @@ export function stepPartyOver(g: Game, dt: number): void {
   for (const c of g.creatures) {
     if (c.gone) continue;
     if (c.asleep) { if (c.napUntil !== undefined) sleep(c, time); continue; }
-    if (!c.bed) { calm(c); if (c.leashed) c.leashed = false; const b = bedOf(g, c); c.bed = b; }
+    if (!c.bed) { calm(c, time); if (c.leashed) c.leashed = false; const b = bedOf(g, c); c.bed = b; }
     const b = c.bed!, dx = b.x - c.x, dz = b.z - c.z, d = Math.hypot(dx, dz), step = c.speed * g.tuning.partyOver.walk * dt;
     if (d <= Math.max(step, 0.05) || unseen(g, c.x, c.z)) { c.x = c.tx = b.x; c.z = c.tz = b.z; sleep(c, time); continue; }
     c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = b.x; c.tz = b.z;

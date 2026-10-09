@@ -13,7 +13,7 @@
 // couple of milliseconds' worth a frame; moving on along it only sets a uniform); two draws,
 // nothing allocated a frame.
 import type { PartyState } from "../rules/party";
-import { pulseLinks, pulseProgress } from "../rules/leypulse";
+import { frontMetres, metresToLinks, pulseProgress, routeLengths } from "../rules/leypulse";
 import { bootPath, bootPulseAt, ringAlong, ringRadius } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -27,7 +27,6 @@ import { curveLink, stoneWays, tightestTurn, wayThrough } from "../rules/leycurv
 import { routeOf } from "../rules/party";
 import { leyRadius } from "../rules/leyroute";
 import type { ForestMap } from "../rules/map";
-import type { Game } from "../rules/game";
 
 export interface LeyTuning {
   on: boolean;
@@ -174,8 +173,8 @@ void main() {
   float link = uBright * rank * mix(1.0, 0.8, uLift);
   // Lit, or not yet (Ed, 2026-10-06: "Before and after the pulse look too similar"). Behind the pulse the line is lit: full
   // width, solid, saturated, glowing softly, its shimmer flowing on toward the front, brightest just behind the pulse. Ahead of
-  // it (drawn, not yet lit) it's a sketch, a promise: a dashed line of art pixels in its own colour, a little cooled, with no
-  // glow. The pulse (its sparkler: render/sparkler.ts) lights it as it passes.
+  // it (drawn, not yet lit) it's a sketch, a promise: a thin dashed line of art pixels in crisp silver, with no glow. The
+  // pulse (its sparkler: render/sparkler.ts) lights it as it passes.
   float pAlong = uPulse.y > 0.5 ? uCurrent + uPulse.x : 1e6;
   if (along > pAlong) {
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11));
@@ -183,12 +182,14 @@ void main() {
     // (From the treetops, a faint cool glow along it, so it still reads there.)
     if (uGlowPass > 0.5) { gl_FragColor = vec4(cool * 0.12 * halo * uLift * uStrength, 1.0); return; }
     // (Ed, 2026-10-08: "The leyline ahead of the pulse doesn't seem to be visible anymore": once the line behind the pulse went
-    // thin and pale, a sketch of the same thin grey vanished at night. It's the line's own colour now, a little cooled, at its full
-    // core width, dashed 3 on 2 off, and not dimmed with the lit line's brightness: the way on reads, the ash behind stays dull.)
+    // thin and pale, the old dim grey sketch vanished beside it at night; and then "I preferred it when it was thinner and
+    // silver". So it's thin and silver as before, but bright: a near-white cool silver, not dimmed with the lit line's
+    // brightness, so it stands out against the dull warm ash behind by brightness, not width or colour.)
     float rip = floor(ripple(sq, vLink) * 3.0 + 0.5) / 3.0;
-    float dash = mod(floor(vS / uMpp), 5.0) < 3.0 || rip > 0.6 ? 1.0 : 0.0, thin = off < max(1.0, coreN) ? 1.0 : 0.0;
+    float dash = mod(floor(vS / uMpp), 4.0) < 3.0 || rip > 0.6 ? 1.0 : 0.0, thin = off < max(1.0, floor(coreN * 0.5)) ? 1.0 : 0.0;
     if (dash * thin < 0.5) discard;
-    gl_FragColor = vec4(min(mix(vCol, cool, 0.35) * (0.8 + 0.5 * rip) * uStrength, vec3(0.9)), 1.0);
+    vec3 silver = mix(vec3(0.74, 0.79, 0.88), cool / max(grey, 0.05) * 0.8, 0.12);
+    gl_FragColor = vec4(min(silver * (0.9 + 0.25 * rip) * uStrength, vec3(0.95)), 1.0);
     return;
   }
   float litD = pAlong > 1e5 ? 1e6 : (pAlong - along) * vLen; // metres behind the pulse (on its own link)
@@ -246,24 +247,10 @@ interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; current: { v
 
 /** The pulse's place along the current link for the shader (0-1), or null for none: the HUD's wave pointer's own
  *  (rules/leypulse.ts pulseProgress, so the two agree), but none while home boots up (Ed, 2026-10-06: "during boot up
- *  phase, there's no leyline") or with no wave clock (?wave=off: paused, or no interval). */
+ *  phase, there's no leyline") or with the waves off (paused: ?pulse=off). */
 export function shaderPulse(p: PartyState, map: ForestMap, time: number): number | null {
-  const iv = map.tuning.party.interval;
-  if (p.paused || !(iv > 0) || iv >= 1e8 || time < p.bootUntil) return null;
+  if (p.paused || time < p.bootUntil) return null;
   return pulseProgress(p, map, time);
-}
-
-/** The boot ring's sparkler finishing its lap (Ed, 2026-10-07: "The two pulses or tips don't join correctly at the top of the
- *  speaker circle"): its last stone turns as the boot ends, a little short of where the path came on to the ring; from there it
- *  runs on at the boot's own pace to that point, where the wave's sparkler takes over (pulseFrom). Its place along the boot
- *  path (a share of it) while it does; null before and after. Drawing only: the stones and the boot's end are the rules'. */
-export function bootLap(g: Pick<Game, "party" | "map" | "partyOver">, time: number): number | null {
-  const p = g.party, T = g.map.tuning.boot;
-  if (p.spellAt === null || g.partyOver || !(time >= p.bootUntil)) return null;
-  const P = bootPath(g.map), o = P.order;
-  if (!o.length || !(T.time > 0)) return null;
-  const first = P.stoneAt[o[0]], last = P.stoneAt[o[o.length - 1]], at = last + ((last - first) / T.time) * (time - p.bootUntil);
-  return at < P.length ? at / P.length : null;
 }
 
 /** Where the first link leaves the boot ring: its share of that link (0-1, the ring's own line before it) and how far along
@@ -291,10 +278,9 @@ export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: n
     return branch.share + (1 - branch.share) * u;
   }
   if (shaderPulse(p, map, time) === null) return null;
-  // (reveal times as far along the route as the pulse, so it never skips either: Ed, 2026-10-08; from the boot's branch,
-  // already at the first stone, to the reveal-th as the pulse reaches the first)
-  const s = pulseLinks(p, map, time);
-  return s < 1 && branch ? 1 + (reveal - 1) * s : reveal * s;
+  // (reveal times as far along the route as the pulse, in metres, so it never skips either: Ed, 2026-10-08, 2026-10-09; from
+  // the boot's branch, already at the first stone, till reveal times the pulse catches up: rules/leypulse.ts frontMetres)
+  return metresToLinks(routeLengths(p, map), frontMetres(p, map, time, reveal, !!branch));
 }
 
 export class LeyLines {
@@ -563,7 +549,7 @@ export class LeyLines {
     const g = this.growTo, D = this.drawn, on = this.T.on, P = this.u.uPulse.value;
     // The front of the line (none drawn while it's all shown), and its pulse (lighting it as it passes).
     const tip = on && g !== null && g > 0 && g < D.length ? this.pointAt(D, g, time, 0) : null;
-    const at = this.current + (this.current === 0 ? Math.max(P.x, this.pulseFrom) : P.x);
+    const at = this.current + (this.current === 0 ? this.pulseFrom + (1 - this.pulseFrom) * Math.min(1, P.x) + Math.max(0, P.x - 1) : P.x); // (the first link timed from the ring: rules/pulseRoute.ts departureFromRing)
     const pulse = on && this.pulseHead && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, at), time, 1) : null;
     // The boot's ring: its pulse, while it boots.
     const R = this.ringLive, ringOn = !!R && R.pulse !== null;

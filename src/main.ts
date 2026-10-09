@@ -49,7 +49,7 @@ const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tun
 let musicCueNow = linkMusicCue;
 const game = newGame(seed, tuning);
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
-const { WAVE_CHOICES, setWaveInterval, waveChoice } = gameFromLink(game, tuning, params);
+const { WAVE_CHOICES, setPulseSpeed, waveChoice } = gameFromLink(game, tuning, params);
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = styleFromLink(params, tuning); // (app/viewParams.ts)
@@ -117,7 +117,7 @@ let castQueued = false;
 const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
 window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
 // The clock, its pops and the debug overlay (app/hud.ts).
-const hud = new Hud(game, tuning, knobs);
+const hud = new Hud(game, knobs);
 hud.setDebug(params.has("debug"));
 
 const fit = () => view.resize(window.innerWidth, window.innerHeight);
@@ -216,8 +216,8 @@ freeze.onToggle = on => sound.freeze(on);
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The waves' pace: a "Waves:" dropdown under the dev "Player:" pick in the bedroom's top right (app/wavePick.ts; Ed,
 // 2026-10-08), never remembered; picking one doesn't start the game.
-if (params.get("creator") !== "0") makeWavePick(creator, WAVE_CHOICES, waveChoice, !!playerPick, setWaveInterval);
-setWaveInterval(waveChoice);
+if (params.get("creator") !== "0") makeWavePick(creator, WAVE_CHOICES, waveChoice, !!playerPick, setPulseSpeed);
+setPulseSpeed(waveChoice);
 // Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
 const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = shake.option;
 // No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to
@@ -331,7 +331,6 @@ function frame(now: number): void {
   if (!ready) return;
   hud.losses();
   hud.clock();
-  hud.wildLeft(now);
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;

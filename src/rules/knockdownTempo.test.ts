@@ -43,7 +43,7 @@ describe("knockdowns speed up the beat (Ed, 2026-10-07)", () => {
     const left = steady.party.nextAt - steady.clock.time;
     for (let i = 0; i < 3; i++) knockdownTempo(fast.beat, fast.tuning, fast.clock.time);
     const rate = tempoRate(fast.beat, fast.tuning);
-    expect(rate).toBeCloseTo(1 + 3 / fast.beat.base, 6);
+    expect(rate).toBeCloseTo(1 + (3 * (TUNING.knockout.bpmStep ?? 0)) / fast.beat.base, 6);
     const from = fast.clock.time, wave = fast.party.wave;
     runUntil(fast, () => fast.party.wave > wave);
     expect(fast.clock.time - from).toBeCloseTo(left / rate, 0); // (within a second)
@@ -53,9 +53,9 @@ describe("knockdowns speed up the beat (Ed, 2026-10-07)", () => {
   }, 120000);
 });
 
-/** A game under way, the party spell cast, her health endless, the waves a minute apart. */
+/** A game under way, the party spell cast, her health endless, the ley pulse at its own speed. */
 function start(seed: number): Game {
-  const g = newGame(seed, { ...TUNING, party: { ...TUNING.party, interval: 60 } });
+  const g = newGame(seed, TUNING);
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;

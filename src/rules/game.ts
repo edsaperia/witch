@@ -7,8 +7,9 @@ import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
 import { beatAt, knockdownTempo, newBeatClock, tempoRate, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
+import { legendCircleNear } from "./legendCircle";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
+import { healBy, heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
 import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
@@ -18,7 +19,7 @@ import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, S
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { heldByRoutine } from "./djSet";
-import { castPartySpell, cellKey, clearArea, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type Partified, type PartyState } from "./party";
+import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -171,7 +172,7 @@ export interface Game {
  *  of its wild creatures, its soundsystem rising (rules/clear.ts); a wave come to an area whose soundsystem stands already
  *  (cleared before it, Ed 2026-10-07: it changes nothing in the rules; the view's fireworks and lasers). */
 export type WaveEvent =
-  | { kind: "soundsystemLost"; key: string; x: number; z: number; at: number; cut: number; left: number }
+  | { kind: "soundsystemLost"; key: string; x: number; z: number; at: number }
   | { kind: "areaCleared"; key: string; x: number; z: number; at: number }
   | { kind: "waveCelebrate"; key: string; x: number; z: number; at: number; wave: number };
 
@@ -390,7 +391,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.spell) castSpell(g.spells, ht, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
-  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = 1 + M.charges;
+  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = (t.dash.charges ?? 1) + M.charges; // (two blinks before the cooldown, Ed 2026-10-08; Hare's Dash bursts more)
   // Her speed: the boost spell, a slow, Momentum (Boar) after a blink, and firing (no slowing: Ram's Steady).
   const firing = W.invites.burstLeft > 0 || (!!c.fire && t.invites.on && g.witch.mode === "ground" && !g.witch.seated);
   const boost = speedMultiplier(g.spells, ht, t) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1)
@@ -414,12 +415,12 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
-  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g));
+  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null); // (in a legend's circle: the lower view, camera.circle)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
   const over = !!g.partyOver;
   if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
-  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time, celebrate); g.party.nextAt = g.clock.time + t.party.interval; }
+  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time, celebrate); resetPulse(g.party, g.map, g.clock.time); } // (the pulse on from the stone it brought on)
   if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
@@ -485,7 +486,7 @@ function stepSpacing(g: Game, dt: number): void {
   const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list = spacingList;
   list.length = 0;
   for (const c of g.creatures) {
-    if (c.gone || c.burrow || c.leap) continue;
+    if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
   spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
@@ -578,7 +579,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
   }, COMBAT);
   for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed || c.retreat)) S.busy.add(c.id); // carried on wherever she is
-  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
+  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z);
   // The home ring shows each speaker's own damage (an unhurt one keeps what the debug key gave it).
   g.speakers.forEach((_, i) => { const h = S.sounds.get(speakerKey(i)); if (h && h.hp < h.max) g.speakers[i] = speakerStateOf(h.hp, h.max); });
   // Every soundsystem down, the home ring's speakers too: the party's over (rules/partyOver.ts), the afterparty from now on.
@@ -622,15 +623,14 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
   return out;
 }
 
-/** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers
- *  marching on, and the next wave sooner (Ed, 2026-10-05: a loss takes party.lossPenalty seconds
- *  off the countdown, "all waves sooner is the wrong kind of penalty"). */
 /** Where something running off the map heads: just past its nearest edge. */
 function mapExit(map: ForestMap, x: number, z: number): { x: number; z: number } {
   return exitPoint(map.bounds, x, z, 30);
 }
 
-export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
+/** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers marching on. Nothing
+ *  else (Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown", "doesn't affect the bpm"). */
+export function loseSoundsystem(g: Game, key: string, x: number, z: number): void {
   const S = g.combat, time = g.clock.time;
   if (isHomeKey(key)) {
     // One of home's speakers (or, "home", the whole ring at once: the debug hook): its besiegers on to the nearest standing;
@@ -650,8 +650,7 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: T
     }
   }
   if (key !== "home") marchOn(S, key, g.creatures);
-  const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0, g.map); // (never so soon the pulse would skip)
-  g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
+  g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time });
 }
 
 /** The party witches: one for each soundsystem playing (oldest first), and the player idling in. */
@@ -753,7 +752,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
     g.tally.stomps = (g.tally.stomps ?? 0) + 1;
   });
   // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
-  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += (maxHp(c.level) / LEGENDS.healTime) * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) healBy(c, (maxHp(c.level) / LEGENDS.healTime) * STEP, maxHp(c.level), g.clock.time); }
   if (happyNearest) {
     // Debug (O): the nearest sleeping legend made happy, as if a relic were put down by it.
     let best: Creature | null = null, bd = Infinity;

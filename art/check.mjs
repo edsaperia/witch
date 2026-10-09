@@ -42,7 +42,7 @@ const report = await b.page.evaluate(async () => {
     // the adult at least 1.55 times the young, the legend at least 2.1 times the adult, so they can't drift back together
     { const bh = [0, 1, 2, 3].map(l => G.critter(S.id, l, 0, st).bodyH), r = [bh[1] / bh[0], bh[2] / bh[1], bh[3] / bh[2]];
       res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
-    if (["wolf", "boar", "stag", "bear", "elk", "lynx"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, hi = ["elk", "stag"].includes(S.id) ? 2.5 : 2.1; res.push({ what: `${S.id}: an adult clearly bigger than the witch (1.45 to ${hi} times, body without antlers; the elk and stag stand taller)`, good: k >= 1.45 && k <= hi, info: k.toFixed(2) }); }
+    if (["wolf", "boar", "stag", "bear", "elk", "lynx"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, c = st.creatureScale || 1, lo = 1.45 * c, hi = (["elk", "stag"].includes(S.id) ? 2.5 : 2.1) * c; res.push({ what: `${S.id}: an adult clearly bigger than the witch (${lo.toFixed(2)} to ${hi.toFixed(2)} times, body without antlers; the elk and stag stand taller; 1.45 to 2.1 before creatureScale ${c})`, good: k >= lo && k <= hi, info: k.toFixed(2) }); }
   }
   { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
     // its hash its own; the builders' species are the records' (speciesOf)

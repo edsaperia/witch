@@ -1,7 +1,7 @@
 // The leash itself (render/leash.ts): the sigil stack over her hat, the bond to each leashed creature (its glow, sparks, travel
 // route and the thread under strain), and her broom straining under the sigils' weight (render/load.ts).
 import * as THREE from "three";
-import { leashPoint } from "../../rules/leash";
+import { leashPoint, stackOrder } from "../../rules/leash";
 import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
@@ -10,20 +10,27 @@ import { easeRoute } from "../routeEase";
 /** Seconds a travelling animal's drawn route takes to settle onto a re-plan (render/routeEase.ts). */
 const ROUTE_EASE = 0.3;
 
+/** A stacked sigil's key in the view's maps: a creature's id, a carried relic's -(id + 1). */
+export const stackKey = (kind: "creature" | "relic", id: number): number => (kind === "relic" ? -(id + 1) : id);
+
 /** The stack above her hat: newest at the bottom. A chain of springs: each sigil follows the one below with lag, so the stack
  *  trails behind her flight in proportion to speed, overshoots when she stops or turns, and settles into a gentle idle sway;
- *  higher ones swing more. Returns where each stacked sigil is drawn (the bond's threads start there). */
+ *  higher ones swing more. A carried relic's sigil (the flask, in gold) is one of the chain in its place (Ed's playtest,
+ *  2026-10-08: "Flasks should ... sit in the stack, and cycle when it cycles"; rules/leash.ts stackOrder), as big as an adult's,
+ *  with a soft halo and a slow twinkle. Returns where each stacked creature's sigil is drawn (the bond's threads start there). */
 export function drawStack(lv: LeashView, time: number, hatTop: number, dot: number[]): Map<number, THREE.Vector3> {
   const g = lv.game, s = g.leash, t = g.tuning, w = g.witch;
   const S = t.stack, dt = Math.min(0.1, Math.max(0, time - lv.lastTime)), slotPos = new Map<number, THREE.Vector3>();
   const LV = lv.load, LT = t.load ?? LOAD_DEFAULT;
   lv.lastTime = time;
-  while (lv.chain.length < s.stack.length) lv.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
+  const order = stackOrder(s), keys = new Set(order.map(it => stackKey(it.kind, it.id)));
+  while (lv.chain.length < order.length) lv.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
   let below = { x: 0, z: 0 }, y = hatTop;
-  for (const id of [...lv.stackY.keys()]) if (!s.stack.includes(id)) lv.stackY.delete(id);
-  for (let k = s.stack.length - 1; k >= 0; k--) {
-    const id = s.stack[k], c = g.creatures[id], j = s.stack.length - 1 - k, link = lv.chain[j]; // j: 0 at the bottom
-    const sg = lv.sigilOf(c), size = (2 + c.level * 0.4) * S.scale * sg.scale;
+  for (const id of [...lv.stackY.keys()]) if (!keys.has(id)) lv.stackY.delete(id);
+  for (let k = order.length - 1; k >= 0; k--) {
+    const it = order[k], relic = it.kind === "relic", key = stackKey(it.kind, it.id), j = order.length - 1 - k, link = lv.chain[j]; // j: 0 at the bottom
+    const c = relic ? null : g.creatures[it.id], sg = c ? lv.sigilOf(c) : null;
+    const size = c ? (2 + c.level * 0.4) * S.scale * sg!.scale : 4.2 * S.scale; // (a relic's: half again an adult's size, Ed 2026-10-09: "+50% in the stack"; an adult's before, his playtest 2026-10-07)
     const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5) * (1 - 0.6 * LV.load);
     // (under a load it leans toward the pull, each sigil a little further: render/load.ts)
     const lean = LT.stackLean * LV.load;
@@ -34,20 +41,28 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
     y += ((j === 0 ? S.offset * size : S.gap * size) + size / 2) * (1 - LT.stackSag * LV.load); // (and sags, its gaps closing)
     // Each sigil eases to its height in the stack, so when the cycle button sends the bottom one
     // to the top (Ed, 2026-10-04) it rises past the others and they settle down a place.
-    const rel = y - hatTop, had = lv.stackY.get(id), sy = had === undefined ? rel : had + (rel - had) * (1 - Math.exp(-dt * 9));
-    lv.stackY.set(id, sy);
+    const rel = y - hatTop, had = lv.stackY.get(key), sy = had === undefined ? rel : had + (rel - had) * (1 - Math.exp(-dt * 9));
+    lv.stackY.set(key, sy);
     const pos = new THREE.Vector3(w.x + link.x, hatTop + sy, w.z + link.z);
     y += size / 2;
-    slotPos.set(id, pos);
-    const col = (lv.slotOf(c.species, c.level), lv.colours.get(c.species)!);
-    // Down to her last hit, the leash frays: the stack flickers (Ed, 2026-10-04).
-    const fray = g.witches[0].health.hp === 1 && !g.witches[0].ko ? (Math.sin(time * 23 + j * 3.1) > 0.2 ? 1 : 0.25) : 1;
-    lv.standing.add(pos.x, pos.y, pos.z, size, sg.uv, col.r, col.g, col.b, fray);
-    const cyc = lv.cycledAt.get(id);
+    let col: { r: number; g: number; b: number };
+    if (c) {
+      slotPos.set(it.id, pos);
+      col = (lv.slotOf(c.species, c.level), lv.colours.get(c.species)!);
+      // (No flicker when she's hurt: Ed, 2026-10-08, "When you're hurt, your leashes sigils flash - please turn this off"; her
+      // claw slashes say how hurt she is.)
+      lv.standing.add(pos.x, pos.y, pos.z, size, sg!.uv, col.r, col.g, col.b, 1);
+    } else {
+      const slot = lv.slotOf("relic", 0), tw = 0.88 + 0.12 * Math.sin(time * 3 + it.id);
+      col = lv.colours.get("relic")!;
+      lv.standing.add(pos.x, pos.y, pos.z, size * 1.6, dot, col.r, col.g, col.b, 0.22 * tw); // (its halo)
+      lv.standing.add(pos.x, pos.y, pos.z, size, lv.uv(slot), col.r * tw, col.g * tw, col.b * tw, 1);
+    }
+    const cyc = lv.cycledAt.get(key);
     if (cyc !== undefined) {
-      const k = (time - cyc) / 0.45;
-      if (k >= 1 || k < 0) lv.cycledAt.delete(id);
-      else lv.standing.add(pos.x, pos.y, pos.z, size * (2 + k * 1.6), dot, col.r, col.g, col.b, 0.75 * (1 - k)); // (its flare: a halo of its neon, opening and fading)
+      const q = (time - cyc) / 0.45;
+      if (q >= 1 || q < 0) lv.cycledAt.delete(key);
+      else lv.standing.add(pos.x, pos.y, pos.z, size * (2 + q * 1.6), dot, col.r, col.g, col.b, 0.75 * (1 - q)); // (its flare: a halo of its neon, opening and fading)
     }
   }
   lv.lastSlots = slotPos;
