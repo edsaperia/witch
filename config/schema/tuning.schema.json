@@ -3003,11 +3003,23 @@
               "type": "number",
               "minimum": 0
             },
+            "commit": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chase": {
+              "type": "number",
+              "minimum": 0
+            },
             "lunge": {
               "type": "number",
               "minimum": 0
             },
             "surge": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
               "type": "number",
               "minimum": 0
             },
@@ -3035,8 +3047,11 @@
           "required": [
             "on",
             "lead",
+            "commit",
+            "chase",
             "lunge",
             "surge",
+            "width",
             "gone",
             "tokens",
             "swarm",

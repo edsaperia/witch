@@ -149,7 +149,7 @@ export interface Tuning {
    *  charges aimed at release where she'll be, shots living longer, ranged windups shorter); c: packs cutting off her retreat
    *  (rules/combat.ts, rules/movement.ts). ?dodge=a,b,c picks which. */
   dodge?: {
-    a: { on: boolean; lead: number; lunge: number; surge: number; gone: number; tokens: number; swarm: number; swarmTokens: number; gap: number };
+    a: { on: boolean; lead: number; commit: number; chase: number; lunge: number; surge: number; width: number; gone: number; tokens: number; swarm: number; swarmTokens: number; gap: number };
     b: { on: boolean; lead: number; lobLead: number; chargeLead: number; life: number; windup: number };
     c: { on: boolean; species: string[]; moving: number; share: number; angle: number; reach: number; ahead: number; sprint: number };
   };

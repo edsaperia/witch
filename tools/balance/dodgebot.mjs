@@ -6,8 +6,9 @@
 //   still   stands where she is
 //   back    walks straight away from the middle of her three nearest attackers (bending to stay in the area)
 //   strafe  walks sideways round the nearest, a little outward when it's close
-//   dodger  strafes, and blinks (both charges, tuning dash.charges) when a blow at her is about to land: a lunge let go at her
-//           (not before: a strike aims as it lets go) or a pulse about to go off, a shot about to hit, a lob about to land on her, a charge or a leap about to arrive;
+//   dodger  strafes, and blinks (both charges, tuning dash.charges) when a blow at her is about to land: a melee strike whose aim
+//           has locked (dodge.a.commit before it lets go; blinking sooner, it aims where she lands), a lunge let go at her, a pulse
+//           about to go off, a shot about to hit, a lob about to land on her, a charge or a leap about to arrive;
 //           sideways to it, the side that keeps her in the area and furthest from the rest
 // For each set of the dodge changes (tuning dodge: a committed strikes, b predictive aim, c packs cutting off her retreat) it
 // prints the hits a minute by group and bot, and how they stand against the targets (Ed, 2026-10-08): backing off and
@@ -90,7 +91,7 @@ function measure(seed, sp, n, level, bot, t) {
       mx = ax; mz = az;
     }
     if (bot === "dodger" && w.dash.charges >= 1 && time >= w.dash.until) {
-      const threat = threatOf(g, B, onHer, mine, time);
+      const threat = threatOf(g, B, onHer, mine, time, t);
       if (threat) {
         // sideways to it: of the two sides, the one in the area and furthest from the rest of them
         const px = -threat.z, pz = threat.x;
@@ -99,6 +100,7 @@ function measure(seed, sp, n, level, bot, t) {
         dash = true; aimX = px * s * 10; aimZ = pz * s * 10;
       }
     }
+    if (process.env.DBG && f % 30 === 0) { const c = g.creatures[ids[0]]; console.log(bot, time.toFixed(1), "d", Math.hypot(c.x - B.x, c.z - B.z).toFixed(1), "v", Math.hypot(B.vx, B.vz).toFixed(1), "cv", Math.hypot(c.vx ?? 0, c.vz ?? 0).toFixed(1), c.fight?.target?.kind ?? "-", c.fight?.windupUntil ? "W" : "", c.fight?.lunge ? "L" : "", c.retreat ? "R" : "", c.hunting ?? "", "watch", c.watchUntil !== undefined && c.watchUntil > time ? "y" : ""); }
     const was = w.dash.at;
     stepGame(g, { moveX: mx, moveZ: mz, toggleMode: false, zoom: 0, dash, aimX, aimZ }, dt);
     if (w.dash.at !== was) { if (w.dash.at - lastBlink < t.dash.cooldown) doubles++; blinks++; lastBlink = w.dash.at; } // (a second blink before the first's cooldown: both charges used)
@@ -112,13 +114,16 @@ function measure(seed, sp, n, level, bot, t) {
 }
 
 /** The blow about to land on her, as the way it comes at her (a unit vector), or null. */
-function threatOf(g, B, onHer, mine, time) {
+function threatOf(g, B, onHer, mine, time, t) {
+  const commit = t.dodge?.a.on ? t.dodge.a.commit : 0;
   const at = (x, z) => { const dx = B.x - x, dz = B.z - z, d = Math.hypot(dx, dz) || 1; return { x: dx / d, z: dz / d }; };
   for (const c of onHer) {
     const f = c.fight, d = Math.hypot(c.x - B.x, c.z - B.z), A = attackOf(c.species, c.level)?.attack;
     if (!A) continue;
     // a lunge let go at her and about to reach her (blinking before it lets go, it aims where she lands), or a pulse about to go off
     if (f.lunge && time - (f.readyAt - A.cooldown) >= REACT && d < f.lunge.left + A.range + 2) return { x: f.lunge.dx, z: f.lunge.dz };
+    // committed strikes: its aim locked (dodge.a.commit before it lets go), seen REACT after, within its reach
+    if (commit > REACT && A.delivery === "melee" && f.windupUntil > 0 && f.windupUntil - time <= commit - REACT && d <= (A.lunge ?? 0) * t.dodge.a.lunge + A.range + 3) return at(c.x, c.z);
     if (A.delivery === "pulse" && f.windupUntil > 0 && f.windupUntil - time <= 0.1 && d <= (A.radius ?? 5) + 2) return at(c.x, c.z); // (its windup seen long before)
     if (c.charge && time >= (c.charge.from ?? 0) + REACT && d < 16) { const k = Math.hypot(c.charge.dx, c.charge.dz) || 1; if (((B.x - c.x) * c.charge.dx + (B.z - c.z) * c.charge.dz) / (k * d) > 0.8) return { x: c.charge.dx / k, z: c.charge.dz / k }; }
     if (c.leap && c.leap.lands - time <= 0.2 && Math.hypot(c.leap.tx - B.x, c.leap.tz - B.z) < 6) return at(c.x, c.z);
@@ -126,9 +131,10 @@ function threatOf(g, B, onHer, mine, time) {
   for (const s of g.combat.shots) {
     if (!mine.has(s.from)) continue; // (a shot in flight is seen coming: dodged 0.2 s out)
     if (s.lob) { if (s.lob.lands - time <= 0.2 && Math.hypot(s.lob.tx - B.x, s.lob.tz - B.z) < (s.radius ?? 4) + 1.5) return at(s.lob.fx, s.lob.fz); continue; }
-    const rx = B.x - s.x, rz = B.z - s.z, v2 = s.vx * s.vx + s.vz * s.vz || 1, tc = (rx * s.vx + rz * s.vz) / v2;
+    // (closest approach as she moves: the shot's velocity relative to hers)
+    const rx = B.x - s.x, rz = B.z - s.z, ux = s.vx - B.vx, uz = s.vz - B.vz, v2 = ux * ux + uz * uz || 1, tc = (rx * ux + rz * uz) / v2;
     if (tc < 0 || tc > 0.2) continue;
-    const mxs = rx - s.vx * tc, mzs = rz - s.vz * tc;
+    const mxs = rx - ux * tc, mzs = rz - uz * tc;
     if (Math.hypot(mxs, mzs) < (s.radius ?? 0.6) + 1.5) { const v = Math.sqrt(v2); return { x: s.vx / v, z: s.vz / v }; }
   }
   for (const b of g.combat.beams) if (mine.has(b.from)) { const c = g.creatures[b.from]; if (Math.hypot(c.x - B.x, c.z - B.z) < b.length + 1) return at(c.x, c.z); }

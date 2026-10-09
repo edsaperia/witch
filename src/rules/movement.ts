@@ -101,6 +101,8 @@ export interface SteerContext {
   /** Cutting off her retreat (tuning dodge.c): it makes for a place ahead of her as she runs, `ahead` metres on along her
    *  heading and `angle` radians to one side of it, `reach` times its attack's reach out. */
   cutoff?: { ahead: number; angle: number; reach: number };
+  /** Where "arrive" makes for, if not `want` (committed strikes, tuning dodge.a: right in on her, striking as it comes). */
+  arriveAt?: number;
 }
 
 /** Steer a fighting creature by its profile for one step. Returns whether it may start an attack now. */
@@ -153,7 +155,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   }
   for (const b of P.fight) {
     switch (b.kind) {
-      case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - x.want) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
+      case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - (x.arriveAt ?? x.want)) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
       case "keepRange": { const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }
       case "orbit": { const dir = hash2(c.id, 5, 7) < 0.5 ? 1 : -1, R = x.range * (b.radius ?? 0.7); add(-uz * dir, ux * dir, b.w); add(ux * (d - R) / Math.max(1, R), uz * (d - R) / Math.max(1, R), b.w * 0.6); break; }
       case "strafe": { const dir = hash2(c.id, Math.floor(x.time / (b.swap ?? 2)), 11) < 0.5 ? 1 : -1; add(-uz * dir, ux * dir, b.w); break; }

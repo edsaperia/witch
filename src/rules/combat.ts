@@ -134,6 +134,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   };
   /** Its windup: a shot, lob or beam at her winds up at most dodge.b.windup. */
   const windupOf = (A: Attack, tg: Target) => (DB && tg.kind === "witch" && (A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam") ? Math.min(A.windup, DB.windup) : A.windup);
+  /** A committed strike's reach at her, times its attack's range (dodge.a.width). */
+  const widthOf = (tg: Target) => (DA && tg.kind === "witch" ? DA.width : 1);
   /** Her velocity (the witch tg), or none. */
   const velOf = (tg: Target) => { const v = tg.kind === "witch" ? w.witches[tg.id] : undefined; return { vx: v?.vx ?? 0, vz: v?.vz ?? 0 }; };
   for (const c of w.active) {
@@ -233,7 +235,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
       c.x += L.dx * step; c.z += L.dz * step; L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
       c.vx = L.dx * v; c.vz = L.dz * v;
-      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, atk.damage, A, c.x, c.z); }
+      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) land(w, s, c, f.target, atk.damage, A, c.x, c.z); }
       continue;
     }
     // Just noticed: it turns to look a moment before it goes (combat.reaction).
@@ -241,7 +243,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // Its speed in a fight (Ed's motion scale pass: about the witch's): its profile's, else combat.fightRun; slowed, or a legend's.
     // Closing in from afar (Ed: "the creatures in it should be onto me in a few seconds"), it sprints at combat.pursuitRun.
     const slow = c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1, own = c.level === LEGEND ? C.legendRun : profileOf(c.species)?.speed ?? C.fightRun;
-    const speed = (c.level !== LEGEND && d > 30 * S ? Math.max(own, profileOf(c.species)?.pursuit ?? C.pursuitRun) : own) * FIGHT.speed * slow;
+    // (Committed strikes, dodge.a: at her it closes at dodge.a.chase times its sprint wherever she is, so a fast kind can't be outwalked; a slow one still can.)
+    const sprint = profileOf(c.species)?.pursuit ?? C.pursuitRun, chasing = !!DA && f.target.kind === "witch" && c.level !== LEGEND;
+    const speed = (chasing ? Math.max(own, sprint * DA!.chase) : c.level !== LEGEND && d > 30 * S ? Math.max(own, sprint) : own) * FIGHT.speed * slow;
     // A wild legend fights by its move set (Stage 5): long, telegraphed moves in a pattern, and a second phase.
     if (c.level === LEGEND && !c.leashed && !(f.target.kind === "sound" && d > 40 * S)) { stepLegend(w, s, c, f, p, d, legendSetOf(c.species), data, grid); continue; }
     const P = profileOf(c.species), marching = (f.target.kind === "sound" || (!!c.siege && !c.leashed)) && d > 40 * S; // (a besieger far off marches)
@@ -354,7 +358,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         const { vx, vz } = velOf(f.target), her = Math.hypot(vx, vz), i = pk.members.indexOf(c);
         if (her > DC.moving * FIGHT.walk * FIGHT.speed && Math.floor((i + 1) * DC.share) > Math.floor(i * DC.share)) cutoff = { ahead: her * DC.ahead, angle: DC.angle, reach: DC.reach };
       }
-      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff });
+      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" ? A.range + p.r : undefined });
       if (may && time >= f.readyAt && token(f.target)) {
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
@@ -374,8 +378,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     // Winding up: it telegraphs (gliding to a stop, with momentum), then the blow lands, the shot flies, or the ground quakes.
     // (Committed strikes, dodge.a: a melee one winding up at her surges on at its sprint instead, dodge.a.surge of it.)
+    // It tracks her as it winds up, aiming where she'll be by the time its blow arrives (lead of it), until dodge.a.commit seconds
+    // before it lets go: then its aim is locked, and a blink then (or during the lunge) gets her clear.
+    if (DA && A.delivery === "melee" && f.target.kind === "witch" && time < f.windupUntil - DA.commit) {
+      const { vx, vz } = velOf(f.target), ahead = DA.commit + Math.min(0.6, d / 50);
+      f.aimX = p.x + vx * ahead * DA.lead; f.aimZ = p.z + vz * ahead * DA.lead;
+    }
     if (DA && A.delivery === "melee" && f.target.kind === "witch" && d > A.range + p.r && !(c.dug !== undefined && time < c.dug)) { // (not dug in: rooted)
-      const surge = c.level === LEGEND ? speed : Math.max(speed, (profileOf(c.species)?.pursuit ?? C.pursuitRun) * FIGHT.speed * DA.surge * slow);
+      const surge = c.level === LEGEND ? speed : Math.max(speed, sprint * FIGHT.speed * DA.surge * slow);
       const step = Math.min(d - A.range - p.r, surge * dt), ux = (p.x - c.x) / d, uz = (p.z - c.z) / d;
       c.x += ux * step; c.z += uz * step; c.vx = ux * surge; c.vz = uz * surge; c.moving = true; c.walk += dt * 8; c.facing = ux >= 0 ? 1 : -1;
     } else { const vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
@@ -387,16 +397,11 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (A.delivery === "melee") {
       // The lunge (Ed's motion scale pass: 12 to 16 m, a dash-strike): down the line to where it aimed
       // when it wound up, so stepping aside dodges it; the blow lands at its end (above).
-      // Committed (dodge.a): at her, it aims as it strikes, where she'll be by the time it gets there (lead of it), and
-      // lunges dodge.a.lunge times as far: only a change of course or a blink gets her clear.
-      let aimX = f.aimX, aimZ = f.aimZ, reach = A.lunge ?? 0;
-      if (DA && f.target.kind === "witch") {
-        const { vx, vz } = velOf(f.target), tl = Math.min(0.6, Math.hypot(p.x - c.x, p.z - c.z) / 50);
-        aimX = p.x + vx * tl * DA.lead; aimZ = p.z + vz * tl * DA.lead; reach *= DA.lunge;
-      }
+      // Committed (dodge.a): at her, down the line it locked as it wound up (above), lunging dodge.a.lunge times as far.
+      const aimX = f.aimX, aimZ = f.aimZ, reach = (A.lunge ?? 0) * (DA && f.target.kind === "witch" ? DA.lunge : 1);
       const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), L = c.dug !== undefined && time < c.dug ? 0 : Math.min(reach, Math.max(0, ad - A.range * 0.5)); // (dug in: no lunge)
       if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L, v: Math.hypot(c.vx ?? 0, c.vz ?? 0) };
-      else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
+      else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
     }
     else if (A.delivery === "shot") {
       // Predictive aim (dodge.b): at her, it aims as it fires, where she'll be when the shot gets there (lead of it), and flies further.

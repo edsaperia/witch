@@ -142,7 +142,7 @@ describe("walking away is no escape (Ed, 2026-10-06: \"Charging creatures can ea
         if (coming && !blinked && near < (how === "side" ? 8 : 5)) { blinked = true; const ax = c.x - g.witch.x, az = c.z - g.witch.z, ad = Math.hypot(ax, az) || 1; ctl = how === "side" ? { ...idle, moveZ: 1, dash: true } : { ...idle, moveX: ax / ad, moveZ: az / ad, dash: true }; }
         stepGame(g, ctl, STEP);
         if (c.stunUntil !== undefined && g.clock.time < c.stunUntil) winded = true;
-        if (ran && !c.charge && !winded) break;
+        if (ran && !c.charge) break; // (its charge over: what it does next is another fight, committed strikes and all, tuning dodge.a)
       }
       expect(blinked, sp).toBe(true);
       expect(W.health.hp, `${sp}: blinked ${how}`).toBe(hp0);
