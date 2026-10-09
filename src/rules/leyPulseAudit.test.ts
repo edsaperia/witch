@@ -5,9 +5,9 @@
 // a soundsystem lost, a knockout and respawn, and what a quest done does (Ed hasn't ruled: leyLines.advance).
 import { describe, expect, it } from "vitest";
 import { hitWitch, loseSoundsystem, newGame, stepGame, type Game } from "./game";
-import { pulseHurry } from "./party";
 import { TUNING, withTuning } from "./tuning";
 import { cellKey, type PartyState } from "./party";
+import { tempoRate } from "./beat";
 import { leyChain, onAreaDone, waveReached } from "./leylines";
 import { leyReachTimes, pulseLinks, pulseProgress } from "./leypulse";
 import { holdsArea } from "./clear";
@@ -74,7 +74,7 @@ describe("the wave's pulse, drawn where the wave is (Ed, 2026-10-08)", () => {
     expect(g.party.areas.has(key)).toBe(false); expect(g.party.ruined?.has(key)).toBe(true);
     const after = line(g.party, g);
     expect(after.stones).toEqual(before.stones); expect(after.current).toBe(before.current);
-    expect(after.pulse).toBeGreaterThanOrEqual(before.pulse); // (on: the loss brings the wave sooner, party.lossPenalty)
+    expect(after.pulse).toBeCloseTo(before.pulse, 9); // (the loss leaves the countdown be: Ed, 2026-10-08)
     expect(waveReached(g.party, key)).toBe(at); expect(leyReachTimes(g.party, g.map)!.get(key)).toBeLessThanOrEqual(at!);
     onTheWave(g); wave(g); onTheWave(g);
   }, 120000);
@@ -117,7 +117,7 @@ describe("the wave's pulse, drawn where the wave is (Ed, 2026-10-08)", () => {
 
 describe("the pulse and the line's front never skip (Ed, 2026-10-08: 'it always travels along the route at the bpm speed')", () => {
   /** Waves every 20 s, a short boot, so a test sees several in its time. */
-  const FAST = withTuning({ party: { ...TUNING.party, interval: 20, lossPenalty: 8 }, boot: { ...TUNING.boot, time: 1, firstAfter: 0 } });
+  const FAST = withTuning({ party: { ...TUNING.party, interval: 20 }, boot: { ...TUNING.boot, time: 1, firstAfter: 0 } });
   function fast(extra?: Parameters<typeof withTuning>[0]): Game {
     const g = newGame(123, extra ? withTuning({ ...FAST, ...extra } as never) : FAST);
     g.clock.paused = false; g.party.spellAt = undefined;
@@ -126,12 +126,15 @@ describe("the pulse and the line's front never skip (Ed, 2026-10-08: 'it always 
     return g;
   }
   /** Steps `secs`, `each` before every step; the pulse's and the front's distance along the route never go back, and never
-   *  move more than `most` links in a step (at most PULSE_HURRY times the pace, the front `reveal` times that). */
+   *  move more than `most` links in a step (the countdown's pace, its tempo's rate, rules/beat.ts tempoRate; the front
+   *  `reveal` times that). */
   function watch(g: Game, secs: number, each?: (i: number) => void): { pulse: number; front: number } {
-    const reveal = g.map.tuning.leyLines.reveal ?? 3, per = Math.max(1, g.party.next.length), most = (per * (pulseHurry(g.map) + 0.2) / g.map.tuning.party.interval) / 60;
+    const reveal = g.map.tuning.leyLines.reveal ?? 3, per = Math.max(1, g.party.next.length);
     let pulse = pulseLinks(g.party, g.map, g.clock.time), front = leyReveal(g.party, g.map, g.clock.time, reveal) ?? 0;
     for (let i = 0; i < Math.round(secs * 60); i++) {
-      each?.(i); stepGame(g, still, 1 / 60);
+      each?.(i);
+      const most = (per * (tempoRate(g.beat, g.map.tuning) + 0.05) / g.map.tuning.party.interval) / 60;
+      stepGame(g, still, 1 / 60);
       const p = pulseLinks(g.party, g.map, g.clock.time), f = leyReveal(g.party, g.map, g.clock.time, reveal) ?? 0;
       expect(p, `pulse at ${g.clock.time.toFixed(2)}`).toBeGreaterThanOrEqual(pulse - 1e-9);
       expect(p - pulse, `pulse step at ${g.clock.time.toFixed(2)}`).toBeLessThanOrEqual(most + 1e-6);
@@ -156,12 +159,15 @@ describe("the pulse and the line's front never skip (Ed, 2026-10-08: 'it always 
     onTheWave(g);
   }, 180000);
 
-  it("a soundsystem lost hurries the wave: the pulse speeds up from where it is, at most the front's pace (pulseHurry), and arrives with it", () => {
+  it("a soundsystem lost: the pulse keeps its pace and arrives with the wave, which comes on time (Ed, 2026-10-08)", () => {
     const g = fast();
-    let lost = "";
+    let lost = "", due = 0;
     watch(g, 1.5 + 20 * 3, i => {
-      if (i === Math.round(60 * (1.5 + 20 + 15)) && !lost) { lost = cellKey(g.party.last!); const s = g.combat.sounds.get(lost)!; s.hp = 0; loseSoundsystem(g, lost, s.x, s.z); } // (late in the link: the hurry is held to what the pulse can run)
-      if (i === Math.round(60 * (1.5 + 40 + 3))) { const k = cellKey(g.party.last!); const s = g.combat.sounds.get(k); if (s) { s.hp = 0; loseSoundsystem(g, k, s.x, s.z); } } // (early in one: the full hurry)
+      if (i === Math.round(60 * (1.5 + 20 + 15)) && !lost) {
+        lost = cellKey(g.party.last!); const s = g.combat.sounds.get(lost)!; s.hp = 0; due = g.party.nextAt;
+        loseSoundsystem(g, lost, s.x, s.z);
+        expect(g.party.nextAt).toBe(due);
+      }
     });
     expect(lost).not.toBe("");
     onTheWave(g);

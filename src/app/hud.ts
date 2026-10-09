@@ -67,15 +67,15 @@ export class Hud {
   /** Every soundsystem lost since the last shown. */
   losses(): void { for (const e of this.game.waveEvents) if (e.kind === "soundsystemLost" && e.at > this.lossShown) this.showLoss(e); }
 
-  /** A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner; the clock flashes and the seconds taken off pop out
-   *  under it ("−60 s", "wave now!"), and the wave pointer's ring jumps on. */
+  /** A soundsystem lost: the clock flashes and "soundsystem lost" pops out under it (the countdown and the tempo go on as
+   *  they were: Ed, 2026-10-08). */
   showLoss(e: Extract<WaveEvent, { kind: "soundsystemLost" }>): void {
     const clockEl = this.clockEl;
     this.lossShown = e.at;
     clockEl.classList.remove("lost"); void clockEl.offsetWidth; clockEl.classList.add("lost"); // (restart the animation)
     const pop = document.createElement("div");
     pop.className = "loss-pop";
-    pop.textContent = e.left <= 0 ? "wave now!" : `−${Math.round(e.cut)} s`;
+    pop.textContent = "soundsystem lost";
     clockEl.append(pop);
     setTimeout(() => pop.remove(), 1800);
     setTimeout(() => { if (this.lossShown === e.at) clockEl.classList.remove("lost"); }, 900);
