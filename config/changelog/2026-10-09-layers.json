@@ -1,0 +1,1 @@
+{ "version": null, "items": ["For hunting picture bugs: add ?layers=-cutout,-mist (any of the layer names) to the link to switch layers off one at a time, and ?debug=cam to show where you and the camera are"] }

@@ -15,6 +15,7 @@ export function styleFromLink(params: URLSearchParams, tuning: Tuning) {
 
 export function viewFromLink(view: View, params: URLSearchParams): void {
   view.debugCull = params.get("debug") === "cull";
+  view.debugCam = params.get("debug") === "cam"; // (?debug=cam: where she and the camera are, top right: render/camReadout.ts)
   // ?debug=shadows: every shadow a flat magenta tint, to see each against what casts it (render/shadows.ts).
   if (params.get("debug") === "shadows") view.debugShadows();
   view.quick = params.get("quick") === "1";
