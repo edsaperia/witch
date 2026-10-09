@@ -9,7 +9,7 @@
 //    merging at all (every survivor scatters), to show what the snowball costs;
 //  - the catch-up check: players starting late.
 //
-//   node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300] [--skills 10,30,50,70,100] [--cap 60]
+//   node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300|4m/s] [--skills 10,30,50,70,100] [--cap 60]
 //     [--growth 30,50,70] [--starts 0,3,6,9,12,15,20] [--waves 30] [--fight 30]
 //     [--attrition 0.5] [--director base,perWave,power] [--by-wave] [--happy 0.1,0.2,...] [--expected 50] [--alphas 0,0.3,0.6]
 //     [--spread lo,hi] [--areas 20] [--area-scale 4] [--start babies,young,adults] [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 6000] [--quick] [--json out.json]
@@ -19,12 +19,16 @@
 // the director's budget by waves rather than by minutes; --no-area-legends leaves out every area's
 // own legend (Ed, 2026-10-04) and keeps the map's wild legends as today; --happy compares, in place
 // of the pacing variants, legends happy with each chance p (guarding their areas against sieges).
+// A gap written as a speed (4m/s) runs the ley pulse at that speed along the route instead (Ed, 2026-10-09: "Pure
+// constant speed": each wave's gap its link's length over it).
 // It loads the game's own rules modules through Vite (no build needed).
 import { openRules, arg, nums as list } from "./lib.mjs";
 import { writeFileSync } from "node:fs";
 
 const flag = name => process.argv.includes(`--${name}`);
-const SEEDS = +arg("seeds", 12), GAPS = list(arg("gaps", "60,300")), GROWTH = list(arg("growth", "30,50,70")), SKILLS = list(arg("skills", "10,30,50,70,100"));
+/** A gap's options: seconds, or a ley pulse speed ("4m/s"). */
+const pace = g => (/m\/s$/.test(g) ? { pulse: parseFloat(g), interval: 60 } : { interval: +g });
+const SEEDS = +arg("seeds", 12), GAPS = String(arg("gaps", "60,300")).split(","), GROWTH = list(arg("growth", "30,50,70")), SKILLS = list(arg("skills", "10,30,50,70,100"));
 const WAVES = +arg("waves", 30), CAP = +arg("cap", 60), IDLE_CAP = +arg("idle-cap", 80), FIGHT = +arg("fight", 30), STARTS = list(arg("starts", "0,3,6,9,12,15,20"));
 const ATTRITION = +arg("attrition", 0.5), [DBASE, DPER, DPOW = 1] = list(arg("director", "0,4,1.5")), EXPECTED = +arg("expected", 50), ALPHAS = list(arg("alphas", "0,0.3,0.6"));
 const SPREAD = arg("spread", null), AREAS = arg("areas", null), AREA_SCALE = arg("area-scale", null), START = arg("start", null), OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
@@ -78,9 +82,9 @@ say(`Player model (a guess): their party's F grows by g a minute from the wave t
 
 for (const gap of GAPS) {
   const g = (out.gaps[gap] = { variants: {} });
-  say(`### Waves every ${gap} s\n`);
+  say(/m\/s$/.test(gap) ? `### The ley pulse at ${gap}\n` : `### Waves every ${gap} s\n`);
   // Idle player and the enemy curve, variant a.
-  const idle = runAll({ interval: gap, maxWaves: IDLE_CAP }), lostRuns = idle.filter(r => r.lost);
+  const idle = runAll({ ...pace(gap), maxWaves: IDLE_CAP }), lostRuns = idle.filter(r => r.lost);
   say(`**Idle player** (does nothing), variant a: loses at wave ${idle.map(r => (r.lost ? r.lost.wave : `>${IDLE_CAP}`)).join(", ")}; mean ${lostRuns.length ? mean(lostRuns.map(r => r.lost.wave)).toFixed(1) : "–"} at ${lostRuns.length ? mmss(mean(lostRuns.map(r => r.lost.time))) : "–"}${idle.length - lostRuns.length ? ` (of the ${lostRuns.length} that lose; ${idle.length - lostRuns.length} last past wave ${IDLE_CAP})` : ""}.\n`);
   const W = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50].filter(w => w <= IDLE_CAP);
   say(`**Enemy fighting value**, idle player, variant a, at the end of each wave (mean over the seeds still going):\n`);
@@ -106,7 +110,7 @@ for (const gap of GAPS) {
   for (const v of VARIANTS) {
     const row = [], res = {};
     for (const s of [0, ...SKILLS]) {
-      const runs = runAll({ interval: gap, maxWaves: CAP, ...v.o, ...(s > 0 ? { player: { growth: s, fromWave: 0, fightTime: FIGHT } } : {}) });
+      const runs = runAll({ ...pace(gap), maxWaves: CAP, ...v.o, ...(s > 0 ? { player: { growth: s, fromWave: 0, fightTime: FIGHT } } : {}) });
       const waves = mean(runs.map(r => r.survived)), all = runs.every(r => !r.lost);
       res[s] = { waves, time: mean(runs.map(lastTime)), all, runs: runs.map(r => ({ seed: r.seed, survived: r.survived, lost: r.lost })) };
       row.push(all ? `${CAP}+` : `${waves.toFixed(1)} (${mmss(res[s].time)})`);
@@ -125,7 +129,7 @@ for (const gap of GAPS) {
     const cells = [];
     let worst = null;
     for (const s of STARTS) {
-      const runs = runAll({ interval: gap, maxWaves: WAVES, player: { growth, fromWave: s, fightTime: FIGHT } }), all = runs.every(r => !r.lost);
+      const runs = runAll({ ...pace(gap), maxWaves: WAVES, player: { growth, fromWave: s, fightTime: FIGHT } }), all = runs.every(r => !r.lost);
       cells.push(all ? `✓ ${WAVES}` : `${mean(runs.map(r => r.survived)).toFixed(1)} (${runs.filter(r => !r.lost).length}/${runs.length})`);
       if (!all && worst === null) worst = s;
     }

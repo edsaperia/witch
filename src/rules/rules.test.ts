@@ -1,5 +1,6 @@
 import { STATES, stateOf } from "./creatureStates";
-import { ringOrder } from "./bootRing";
+import { bootPath, bootSeconds, ringOrder } from "./bootRing";
+import { stretchLengths } from "./pulseRoute";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
@@ -618,36 +619,37 @@ describe("the party", () => {
     }
     expect(besideLast).toBeLessThan(couldAvoid * 0.5);
   });
-  it("boots the home speakers up first, one by one, then counts down to the first wave (Ed, 2026-10-04; the first speaker 3 s off the decks, 2026-10-06)", () => {
-    const p = newParty(map), B = TUNING.boot.time, F = TUNING.boot.firstAfter, n = map.dancefloor.speakers.length;
-    expect(F).toBe(3);
+  it("boots the home speakers up first, one by one, at the ley pulse's speed, then the pulse sets off for the first wave (Ed, 2026-10-04; the first speaker about 3 s off the decks, 2026-10-06; the pulse's speed, 2026-10-09)", () => {
+    const p = newParty(map), v = TUNING.leyLines.pulseSpeed, P = bootPath(map), B = bootSeconds(map), n = map.dancefloor.speakers.length;
+    const F = P.stoneAt[P.order[0]] / v, last = P.stoneAt[P.order[n - 1]] / v;
+    expect(v).toBe(4); expect(P.length).toBeCloseTo(179, 0); expect(B).toBeCloseTo(P.length / v, 9); // (179 m at 4 m/s: about 45 s)
+    expect(F).toBeGreaterThan(2.5); expect(F).toBeLessThan(3.5); // (about three seconds off the decks)
     stepParty(p, map, 0, 0); // (off the decks at once)
-    expect(p.bootFrom).toBe(0); expect(p.bootUntil).toBe(F + B);
+    expect(p.bootFrom).toBe(0); expect(p.bootUntil).toBeCloseTo(B, 9);
     expect(speakersOn(p, map, 0, n)).toBe(0);
     expect(speakersOn(p, map, F - 0.05, n)).toBe(0);
-    expect(speakersOn(p, map, F, n)).toBe(1); // the first stone turns three seconds off the decks
-    const counts = Array.from({ length: 61 }, (_, i) => speakersOn(p, map, F + (i / 60) * B, n));
+    expect(speakersOn(p, map, F + 1e-9, n)).toBe(1);
+    const counts = Array.from({ length: 61 }, (_, i) => speakersOn(p, map, F + (i / 60) * (last - F), n));
     for (let i = 1; i < counts.length; i++) expect(counts[i]).toBeGreaterThanOrEqual(counts[i - 1]); // one by one, never off again
     expect(counts[30]).toBeGreaterThan(2); expect(counts[30]).toBeLessThan(n);
-    expect(speakersOn(p, map, F + B, n)).toBe(n);
-    const cd = waveCountdown(p, map, F + B / 2);
+    expect(speakersOn(p, map, last + 1e-9, n)).toBe(n);
+    const cd = waveCountdown(p, map, B / 2);
     expect(cd.booting).toBe(true); expect(cd.boot).toBeCloseTo(0.5); expect(cd.gone).toBe(0);
-    expect(waveCountdown(p, map, F + B + 1).booting).toBe(false);
-    expect(p.nextAt).toBe(F + B + TUNING.party.startDelay + TUNING.party.interval);
+    expect(waveCountdown(p, map, B + 1).booting).toBe(false);
+    expect(p.nextAt).toBeCloseTo(B + TUNING.party.startDelay + stretchLengths(p, map).reduce((a, b) => a + b, 0) / v, 6); // (the first stretch at the pulse's speed)
     // Pausing during the boot holds it too.
-    p.paused = true; stepParty(p, map, B / 2, 5); expect(p.bootUntil).toBe(F + B + 5);
+    p.paused = true; stepParty(p, map, B / 2, 5); expect(p.bootUntil).toBeCloseTo(B + 5, 9);
   });
-  it("waits for her to get up from the decks: the first speaker 3 s after her first step, then boot.time (30 s: Ed, 2026-10-07; it was five minutes)", () => {
-    expect(TUNING.boot.time).toBe(30);
-    const p = newParty(map), B = TUNING.boot.time, F = TUNING.boot.firstAfter, due = p.nextAt, n = map.dancefloor.speakers.length;
+  it("waits for her to get up from the decks: the first speaker about 3 s after her first step, the boot at the pulse's speed (Ed, 2026-10-09)", () => {
+    const P = bootPath(map), v = TUNING.leyLines.pulseSpeed, p = newParty(map), B = bootSeconds(map), F = P.stoneAt[P.order[0]] / v, due = p.nextAt, n = map.dancefloor.speakers.length;
     for (let s = 0; s < 40; s++) stepParty(p, map, s, 1, true); // (40 s sitting behind the decks)
     expect(p.bootFrom).toBeUndefined(); expect(speakersOn(p, map, 40, n)).toBe(0);
-    expect(p.bootUntil).toBe(F + B + 40); expect(p.nextAt).toBe(due + 40);
+    expect(p.bootUntil).toBeCloseTo(B + 40, 9); expect(p.nextAt).toBeCloseTo(due + 40, 9);
     stepParty(p, map, 40, 1, false); // (up: the boot runs from here)
-    expect(p.bootFrom).toBe(40); expect(p.bootUntil).toBe(40 + F + B);
-    expect(speakersOn(p, map, 40 + F - 0.05, n)).toBe(0); expect(speakersOn(p, map, 40 + F, n)).toBe(1);
-    stepParty(p, map, B + F + 41, 1, true); // (sitting again once it's done holds nothing)
-    expect(p.nextAt).toBe(due + 40);
+    expect(p.bootFrom).toBe(40); expect(p.bootUntil).toBeCloseTo(40 + B, 9);
+    expect(speakersOn(p, map, 40 + F - 0.05, n)).toBe(0); expect(speakersOn(p, map, 40 + F + 1e-9, n)).toBe(1);
+    stepParty(p, map, B + 41, 1, true); // (sitting again once it's done holds nothing)
+    expect(p.nextAt).toBeCloseTo(due + 40, 6);
   });
   it("forecasts two waves ahead, confirmed (Ed, 2026-10-04)", () => {
     const p = newParty(map);
@@ -693,11 +695,12 @@ describe("the party", () => {
     expect(spreadWave(p, map, 10).length).toBe(2);
     expect(spawnMarkers(p, map).filter(m => m.stage === "next").length).toBe(2);
   });
-  it("comes in waves every interval seconds, and pauses", () => {
-    const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay + TUNING.boot.firstAfter + TUNING.boot.time;
+  it("comes in waves as the pulse reaches each stone at its speed (Ed, 2026-10-09: \"Pure constant speed\"), and pauses", () => {
+    const p = newParty(map), start = TUNING.party.startDelay + bootSeconds(map);
     stepParty(p, map, 0, 0); // (off the decks at once)
-    expect(stepParty(p, map, start + I - 0.1, 0.1)).toEqual([]);
-    expect(stepParty(p, map, start + I, 0.1).length).toBeGreaterThan(0);
+    const I = stretchLengths(p, map).reduce((a, b) => a + b, 0) / TUNING.leyLines.pulseSpeed; // (the first link's length at the pulse's speed)
+    for (let t = 0.1; t < start + I - 0.1; t += 0.1) expect(stepParty(p, map, t, 0.1)).toEqual([]);
+    expect(stepParty(p, map, start + I + 1e-6, 0.1).length).toBeGreaterThan(0);
     p.paused = true;
     expect(stepParty(p, map, start + 3 * I, 0.1)).toEqual([]);
     expect(p.wave).toBe(1);
@@ -1349,7 +1352,7 @@ describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
     expect(g.speakerBoot.every(b => b === null)).toBe(true); // seated: all stones
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
     const to = (time: number) => { while (g.clock.time < time) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60); };
-    to(g.party.bootUntil - TUNING.boot.time / 2);
+    to(g.party.bootUntil - bootSeconds(g.map) / 2);
     const order = ringOrder(g.map), half = g.speakerBoot.filter(b => b !== null).length; // (rules/bootRing.ts: clockwise from the top)
     expect(half).toBeGreaterThan(3); expect(half).toBeLessThan(9);
     const i = order[half - 1], at = g.speakerBoot[i]!; // the latest one, turning
@@ -1386,7 +1389,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
     expect(m.seen.size).toBeGreaterThan(0);
     expect([...m.seen].every(c => P.includes(c))).toBe(true); // no neon
     expect(m.max).toBeLessThanOrEqual(2);
-    g.party.nextAt = g.clock.time; // the first wave, now
+    { const P = g.party.pulse; g.party.bootUntil = g.clock.time - 1; P.at = g.clock.time; P.d = P.lens.reduce((a, b) => a + b, 0); } // the ley pulse at the first wave's stone: the first wave, now
     for (let i = 0; i < 3 && g.party.wave === 0; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     expect(g.party.wave).toBeGreaterThan(0);
     const on = g.floor.on;
@@ -1475,11 +1478,11 @@ describe("ground cover (Ed, v171)", () => {
 describe("music by proximity (Ed, 2026-10-04)", () => {
   const M = TUNING.music;
   const g0 = newGame(6, TUNING), map = g0.map; // the game's own map
-  g0.party.bootFrom = 0; g0.party.bootUntil = TUNING.boot.firstAfter + TUNING.boot.time; // (off her decks at the start)
+  g0.party.bootFrom = 0; g0.party.bootUntil = bootSeconds(map); // (off her decks at the start)
   const atW = (x: number, z: number, time: number) => { const g = at(x, z, time); return [g, g.witch] as const; };
   const at = (x: number, z: number, time: number) => { const g = { ...g0, speakers: [...g0.speakers], clock: { ...g0.clock, time } }; g.witch = { ...g.witch, x, z, seated: false }; return g; };
   it("is full and clear by the playing dancefloor, quiet and muffled in the deep forest", () => {
-    const d = map.dancefloor, after = TUNING.boot.firstAfter + TUNING.boot.time + 1;
+    const d = map.dancefloor, after = bootSeconds(map) + 1;
     const g = at(d.x, d.z, after), near = musicMix(g, g.witch);
     expect(near.volume).toBeCloseTo(1); expect(near.cutoff).toBeCloseTo(M.clear);
     const far = musicMix(...atW(d.x + M.farDist + 50, d.z, after));
@@ -1491,8 +1494,8 @@ describe("music by proximity (Ed, 2026-10-04)", () => {
   it("grows as the home speakers boot up, and is distorted by damage close by", () => {
     const d = map.dancefloor;
     expect(musicMix(...atW(d.x, d.z, 0)).volume).toBeCloseTo(M.floor); // none on yet
-    expect(musicMix(...atW(d.x, d.z, TUNING.boot.time / 2)).volume).toBeLessThan(musicMix(...atW(d.x, d.z, TUNING.boot.firstAfter + TUNING.boot.time + 1)).volume);
-    const g = at(d.x, d.z, TUNING.boot.firstAfter + TUNING.boot.time + 1);
+    expect(musicMix(...atW(d.x, d.z, bootSeconds(map) / 3)).volume).toBeLessThan(musicMix(...atW(d.x, d.z, bootSeconds(map) + 1)).volume);
+    const g = at(d.x, d.z, bootSeconds(map) + 1);
     expect(musicMix(g, g.witch).distort).toBe(0);
     g.speakers = g.speakers.map(() => "damaged");
     expect(musicMix(g, g.witch).distort).toBeGreaterThan(0.3);

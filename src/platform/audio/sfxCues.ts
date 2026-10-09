@@ -220,7 +220,7 @@ export class SfxCues {
   private booted({ g }: Here): void {
     if (this.boot) return;
     const over = g.party.bootUntil > 0 && g.clock.time >= g.party.bootUntil;
-    if (over && this.primed && g.tuning.party.interval < 1e9) this.sfx.stir();
+    if (over && this.primed && !g.party.paused) this.sfx.stir();
     if (over) this.boot = true;
   }
 

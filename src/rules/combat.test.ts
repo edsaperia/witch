@@ -417,9 +417,8 @@ describe("sieges (Stage 4)", () => {
   it("sends a woken area's wild creatures against its new soundsystem; when it falls its party ends, and they march on", () => {
     const t = JSON.parse(JSON.stringify(TUNING)) as Tuning;
     t.combat.soundsystemHealth = 60;
-    t.party.interval = 1e4; // (no other wave while this siege plays out: the default's a minute, Ed 2026-10-08, shorter than the test)
     const g = newGame(77, t);
-    g.clock.paused = false;
+    g.clock.paused = false; g.party.paused = true; // (no other wave while this siege plays out: this one comes by hand)
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0]; // (the areas round home hold only babies, who don't attack: grow a few)
     g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss).forEach(c => { c.level = 1; }); // (its legend wakes and guards it: sleeping.test.ts)

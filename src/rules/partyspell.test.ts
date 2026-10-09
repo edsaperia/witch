@@ -8,6 +8,7 @@ import { newGame, stepGame, STEP } from "./game";
 import { PARTY_CAST } from "./party";
 import { clockSeconds, pointerShown } from "./leypulse";
 import { djIntroEnd } from "./djSet";
+import { bootSeconds } from "./bootRing";
 
 const run = (g: ReturnType<typeof newGame>, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
 
@@ -47,11 +48,11 @@ describe("the party spell", () => {
     expect(g.witch.x).toBeGreaterThan(x0 + 1);
     expect(g.witch.seated).toBeFalsy();
     expect(clockSeconds(g.party, g.clock.time)).toBeGreaterThan(end - at + 0.9);
-    // off her decks: the first stone turns boot.firstAfter later, the boot's minutes from it
+    // off her decks: the boot's pulse sets off, down to the ring and round it at the ley pulse's speed (Ed, 2026-10-09)
     const from = g.party.bootFrom!;
     expect(from).toBeGreaterThanOrEqual(end - 2 * STEP); expect(from).toBeLessThan(end + 0.1);
-    expect(g.party.bootUntil).toBeCloseTo(from + TUNING.boot.firstAfter + TUNING.boot.time, 5);
-    expect(g.party.nextAt - g.party.bootUntil).toBeCloseTo(TUNING.party.startDelay + TUNING.party.interval, 5);
+    expect(g.party.bootUntil).toBeCloseTo(from + bootSeconds(g.map), 5);
+    expect(g.party.pulse.at - g.party.bootUntil).toBeCloseTo(TUNING.party.startDelay, 5);
     // a second press does nothing
     run(g, STEP, { castParty: true });
     expect(g.party.spellAt).toBe(at);

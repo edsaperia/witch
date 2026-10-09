@@ -4,7 +4,9 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame } from "./game";
-import { awaitingSpell, clockSeconds, clockStart, clockText, columnShown, leyPulse, leyReachTimes, TIP_PACE, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
+import { awaitingSpell, clockSeconds, clockStart, clockText, columnShown, leyPulse, leyReachTimes, routeLengths, TIP_PACE, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
+import { bootSeconds } from "./bootRing";
+import { stretchLengths } from "./pulseRoute";
 import { castPartySpell, cellKey, spawnMarkers, waveCountdown } from "./party";
 
 describe("the game clock", () => {
@@ -41,12 +43,13 @@ describe("the wave pointer's target, the ley line's pulse", () => {
     expect(pointAlong(line, 1)).toEqual({ x: 10, z: 30 });
     expect(pointAlong(line, 2)).toEqual({ x: 10, z: 30 });
   });
-  it("runs from the last stone reached to the next as the countdown runs, along the link as drawn", () => {
-    const g = newGame(123, TUNING), p = g.party, map = g.map;
-    p.bootUntil = 0; // (past the boot: the countdown to wave 1)
-    const link = straightLink(p, map);
+  it("runs from the last stone reached to the next at the pulse's speed (Ed, 2026-10-09: \"Pure constant speed\"), along the link as drawn", () => {
+    const g = newGame(123, TUNING), p = g.party, map = g.map, v = map.tuning.leyLines.pulseSpeed;
+    p.bootUntil = 0; p.pulse.at = 0; p.pulse.d = 0; p.pulse.v = v; // (past the boot: the pulse on its way to wave 1's stone)
+    const link = straightLink(p, map), L = stretchLengths(p, map).reduce((a, b) => a + b, 0);
     expect(link, "a next stone to run toward").not.toBeNull();
-    const I = map.tuning.party.interval, at = (gone: number) => p.nextAt - I * (1 - gone);
+    p.nextAt = L / v;
+    const at = (gone: number) => (gone * L) / v; // (by its length: a share of the link at a constant speed)
     expect(pulseProgress(p, map, at(0))).toBeCloseTo(0, 5);
     expect(pulseProgress(p, map, at(0.5))).toBeCloseTo(0.5, 5);
     expect(pulseProgress(p, map, p.nextAt)).toBe(1);
@@ -59,7 +62,7 @@ describe("the wave pointer's target, the ley line's pulse", () => {
     expect(leyPulse(p, map, at(0.5), drawn)).toMatchObject(pointAlong(drawn, 0.5));
   });
   it("hides while home boots up, then sets off from the link's start and fades in (Ed: \"first appears when bootup finishes\")", () => {
-    const g = newGame(123, TUNING), p = g.party, map = g.map, B = map.tuning.boot.time;
+    const g = newGame(123, TUNING), p = g.party, map = g.map, B = bootSeconds(map);
     expect(B, "a boot to test").toBeGreaterThan(0);
     const mid = p.bootUntil - B / 2;
     expect(pointerShown(p, map, mid)).toBe(0);
@@ -80,10 +83,12 @@ describe("a runestone's column of light (Ed, 2026-10-06: \"first appears when th
     p.spellAt = null; // waiting for the party spell
     expect(leyReachTimes(p, g.map)).toBeNull(); // the tip waits for it
     castPartySpell(p, g.map, 10);
-    const times = leyReachTimes(p, g.map)!, pace = TUNING.leyLines.reveal ?? TIP_PACE, step = TUNING.party.interval / pace;
+    const times = leyReachTimes(p, g.map)!, pace = TUNING.leyLines.reveal ?? TIP_PACE, v = TUNING.leyLines.pulseSpeed, step = 100 / (pace * v); // (a 100 m link at the front's pace)
     const markers = spawnMarkers(p, g.map), next = markers.find(m => m.stage === "next")!, at = times.get(next.key)!;
     expect(at).toBeCloseTo(p.bootUntil); // the first stone after home: the line branched off the boot ring and reaches it as the boot ends (Ed, 2026-10-07)
-    expect(times.get([...times.keys()][3])!).toBeCloseTo(p.bootUntil + (3 <= pace ? TUNING.party.interval : 3 * step)); // the third: as the first wave lands with reveal 3, at its pace after it with less
+    // the third: when the front (pace times the pulse's distance along the route, from the first stone till that catches up) gets there
+    const lens = routeLengths(p, g.map), C1 = lens[0], C3 = lens[0] + lens[1] + lens[2], m3 = C3 < pace * C1 ? (C3 - C1) / (pace - 1) : C3 / pace;
+    expect(times.get([...times.keys()][3])!).toBeCloseTo(p.pulse.at + m3 / v, 6);
     expect(times.get(cellKey(g.map.centreCell))).toBe(-Infinity); // home, reached from the start
     expect(columnShown(at, at - 0.01, F)).toBeNull(); // no column before the tip arrives
     const arrive = columnShown(at, at, F)!;

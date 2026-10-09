@@ -19,7 +19,7 @@ describe("?tuning=pre-overnight: the old balance written over the config as it l
     const P = preOvernight as unknown as { tuning: { population: unknown; invites: { hits: number[] }; party: { interval: number } }; combat: { levels: unknown } };
     expect(into.tuning.population).toMatchObject(P.tuning.population as object); // (keeping what it doesn't hold: population.byRoute, 2026-10-07)
     expect(into.tuning.invites.hits).toEqual(P.tuning.invites.hits);
-    expect(into.tuning.party.interval).toBe(P.tuning.party.interval);
+    expect((into.tuning.party as { interval?: number }).interval).toBe(P.tuning.party.interval); // (written over as it holds it, though the game no longer reads it: the ley pulse sets the pace, Ed 2026-10-09)
     expect(into.combat.levels).toEqual(P.combat.levels);
     expect(into.combat.levels).not.toEqual(combat.levels); // (the level gap: the old numbers differ)
     expect(into.tuning.camera).toEqual(tuning.camera); // (what the preset doesn't hold is the file's own)

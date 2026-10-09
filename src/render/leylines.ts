@@ -13,7 +13,7 @@
 // couple of milliseconds' worth a frame; moving on along it only sets a uniform); two draws,
 // nothing allocated a frame.
 import type { PartyState } from "../rules/party";
-import { pulseLinks, pulseProgress } from "../rules/leypulse";
+import { frontMetres, metresToLinks, pulseProgress, routeLengths } from "../rules/leypulse";
 import { bootPath, bootPulseAt, ringAlong, ringRadius } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -27,7 +27,6 @@ import { curveLink, stoneWays, tightestTurn, wayThrough } from "../rules/leycurv
 import { routeOf } from "../rules/party";
 import { leyRadius } from "../rules/leyroute";
 import type { ForestMap } from "../rules/map";
-import type { Game } from "../rules/game";
 
 export interface LeyTuning {
   on: boolean;
@@ -248,24 +247,10 @@ interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; current: { v
 
 /** The pulse's place along the current link for the shader (0-1), or null for none: the HUD's wave pointer's own
  *  (rules/leypulse.ts pulseProgress, so the two agree), but none while home boots up (Ed, 2026-10-06: "during boot up
- *  phase, there's no leyline") or with no wave clock (?wave=off: paused, or no interval). */
+ *  phase, there's no leyline") or with the waves off (paused: ?pulse=off). */
 export function shaderPulse(p: PartyState, map: ForestMap, time: number): number | null {
-  const iv = map.tuning.party.interval;
-  if (p.paused || !(iv > 0) || iv >= 1e8 || time < p.bootUntil) return null;
+  if (p.paused || time < p.bootUntil) return null;
   return pulseProgress(p, map, time);
-}
-
-/** The boot ring's sparkler finishing its lap (Ed, 2026-10-07: "The two pulses or tips don't join correctly at the top of the
- *  speaker circle"): its last stone turns as the boot ends, a little short of where the path came on to the ring; from there it
- *  runs on at the boot's own pace to that point, where the wave's sparkler takes over (pulseFrom). Its place along the boot
- *  path (a share of it) while it does; null before and after. Drawing only: the stones and the boot's end are the rules'. */
-export function bootLap(g: Pick<Game, "party" | "map" | "partyOver">, time: number): number | null {
-  const p = g.party, T = g.map.tuning.boot;
-  if (p.spellAt === null || g.partyOver || !(time >= p.bootUntil)) return null;
-  const P = bootPath(g.map), o = P.order;
-  if (!o.length || !(T.time > 0)) return null;
-  const first = P.stoneAt[o[0]], last = P.stoneAt[o[o.length - 1]], at = last + ((last - first) / T.time) * (time - p.bootUntil);
-  return at < P.length ? at / P.length : null;
 }
 
 /** Where the first link leaves the boot ring: its share of that link (0-1, the ring's own line before it) and how far along
@@ -293,10 +278,9 @@ export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: n
     return branch.share + (1 - branch.share) * u;
   }
   if (shaderPulse(p, map, time) === null) return null;
-  // (reveal times as far along the route as the pulse, so it never skips either: Ed, 2026-10-08; from the boot's branch,
-  // already at the first stone, to the reveal-th as the pulse reaches the first)
-  const s = pulseLinks(p, map, time);
-  return s < 1 && branch ? 1 + (reveal - 1) * s : reveal * s;
+  // (reveal times as far along the route as the pulse, in metres, so it never skips either: Ed, 2026-10-08, 2026-10-09; from
+  // the boot's branch, already at the first stone, till reveal times the pulse catches up: rules/leypulse.ts frontMetres)
+  return metresToLinks(routeLengths(p, map), frontMetres(p, map, time, reveal, !!branch));
 }
 
 export class LeyLines {
@@ -565,7 +549,7 @@ export class LeyLines {
     const g = this.growTo, D = this.drawn, on = this.T.on, P = this.u.uPulse.value;
     // The front of the line (none drawn while it's all shown), and its pulse (lighting it as it passes).
     const tip = on && g !== null && g > 0 && g < D.length ? this.pointAt(D, g, time, 0) : null;
-    const at = this.current + (this.current === 0 ? Math.max(P.x, this.pulseFrom) : P.x);
+    const at = this.current + (this.current === 0 ? this.pulseFrom + (1 - this.pulseFrom) * Math.min(1, P.x) + Math.max(0, P.x - 1) : P.x); // (the first link timed from the ring: rules/pulseRoute.ts departureFromRing)
     const pulse = on && this.pulseHead && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, at), time, 1) : null;
     // The boot's ring: its pulse, while it boots.
     const R = this.ringLive, ringOn = !!R && R.pulse !== null;
