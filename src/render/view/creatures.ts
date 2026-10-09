@@ -24,6 +24,7 @@ import { legendGlow, outlineIn } from "../legendOutline";
 import { aggroAmount, aggroFadeOut, aggroGlow } from "../aggro";
 import { cellKey } from "../../rules/party";
 import { legendRings } from "../../rules/slowTime";
+import { flightHeight } from "../../rules/movement";
 import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
@@ -174,6 +175,7 @@ export function drawCreatures(v: View, time = 0): void {
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
     let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
     hop += feel.hop; // (a tumble's arc: render/attackFeel.ts)
+    hop += flightHeight(c, time); // (a wild flyer swooping: up out of reach over its shadow, rules/movement.ts stepSwoop)
     // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
     const joined = v.leashView.joined.get(c.id);
     if (joined !== undefined && time - joined < 0.7) { const k = (time - joined) / 0.7; hop += Math.abs(Math.sin(k * Math.PI * 2)) * 0.45 * (1 - k * 0.6); }

@@ -12,7 +12,7 @@ export const fighting = (c: Creature) => !c.gone && !c.asleep && !c.bed && !c.fl
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
-export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow && !c.partyLegend && !c.asleep; // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
+export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.swoop?.up && !c.burrow && !c.partyLegend && !c.asleep; // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
 
 /** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
 export const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/creatureStates.ts)
