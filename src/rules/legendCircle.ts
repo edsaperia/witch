@@ -74,7 +74,7 @@ export function circleLines(c: Creature): CircleLine[] {
   if (st === "happy") return [{ text: "This elder is your ally now." }, { text: "It guards its area and anyone partying in it." }, ...(boon?.done ? [boon] : [])];
   if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its kin back, and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
   if (st === "restless") return [{ text: "This elder is restless." }, ...(boon ? [boon] : []), ally, { text: "Bring one of its kin back here to calm it." }];
-  return [{ text: "This is a slumbering elder." }, ...(boon ? [boon] : []), ally, { text: "It becomes angered if none of its kin are nearby." }];
+  return [{ text: `This is a slumbering elder ${NAMES[c.species] ?? c.species}.` }, ...(boon ? [boon] : []), ally, { text: "It becomes angered if none of its kin are nearby." }];
 }
 
 /** The panel's fade: towards 1 inside a circle and 0 outside, over `fade` seconds. */
