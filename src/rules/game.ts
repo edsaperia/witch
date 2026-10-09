@@ -195,6 +195,8 @@ export interface Controls extends Intent, Partial<LeashControls>, InviteControls
   cycleSpeakers?: boolean;
   /** The spell button: cast the equipped spell. */
   spell?: boolean;
+  /** The sigil button (E, the pad's, touch's) is down this frame: held long enough with nothing to do, she puts her hat down (rules/hat.ts putHat). */
+  sigilHeld?: boolean;
   /** The dash button (rules/dash.ts). */
   dash?: boolean;
 }

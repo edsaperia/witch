@@ -115,3 +115,43 @@ describe("her dropped hat", () => {
     expect(W.hat.down).toBeNull();
   });
 });
+
+// Putting it down (Ed, 2026-10-09: "If you are in ground mode and hold down the 'drop / pick up sigil' button and there are
+// no sigils to pick up, you put down your hat"): held leash.hatHold seconds with nothing to do, it goes down at her feet;
+// a short press does nothing; with a sigil to put down, that goes down instead; a press over it picks it up again.
+describe("putting her hat down", () => {
+  const hold = (g: Game, s: number) => { stepGame(g, { ...C, place: true, sigilHeld: true }, 1 / 60); for (let i = 0; i < Math.round(s * 60); i++) stepGame(g, { ...C, sigilHeld: true }, 1 / 60); stepGame(g, C, 1 / 60); };
+  const clear = (g: Game) => { const W = g.witches[0]; W.leash.stack.length = 0; W.leash.placed.length = 0; W.leash.relics.length = 0; };
+  const home = (g: Game) => { const d = g.map.dancefloor; at(g, d.x + 40, d.z + 40); };
+
+  it("held with nothing to pick up or put down, she puts it down at her feet; a press over it puts it back on", () => {
+    const g = game(), W = g.witches[0];
+    home(g); clear(g);
+    const x = g.witch.x, z = g.witch.z;
+    hold(g, TUNING.leash.hatHold! + 0.1);
+    expect(W.hat.down).toMatchObject({ x, z });
+    expect(wearing(W.hat)).toBe(false);
+    press(g);
+    expect(wearing(W.hat)).toBe(true);
+  });
+
+  it("a short press does nothing", () => {
+    const g = game(), W = g.witches[0];
+    home(g); clear(g);
+    hold(g, TUNING.leash.hatHold! * 0.5);
+    expect(wearing(W.hat)).toBe(true);
+  });
+
+  it("not in the treetops, and no hat (the creator's none) puts nothing down", () => {
+    const g = game(), W = g.witches[0];
+    home(g); clear(g);
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    hold(g, TUNING.leash.hatHold! + 0.1);
+    expect(wearing(W.hat)).toBe(true);
+    const g2 = game(), W2 = g2.witches[0];
+    home(g2); clear(g2);
+    W2.hat.has = false;
+    hold(g2, TUNING.leash.hatHold! + 0.1);
+    expect(W2.hat.down).toBeNull();
+  });
+});

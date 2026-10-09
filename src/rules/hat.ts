@@ -13,6 +13,8 @@ export interface HatState {
   has: boolean;
   /** Where it lies, and since when (null: on her head). */
   down: { x: number; z: number; at: number } | null;
+  /** When a press of the sigil button that did nothing began, while it's still held (putHat): null, none. */
+  hold?: number | null;
 }
 
 export const newHat = (has = true): HatState => ({ has, down: null });
@@ -38,3 +40,17 @@ export function hatButton(h: HatState, x: number, z: number, radius: number): bo
 
 /** Where the marker points (her hat on the ground), or null when there's nothing to find. */
 export const hatMarker = (h: HatState | undefined): { x: number; z: number } | null => (h?.has && h.down ? { x: h.down.x, z: h.down.z } : null);
+
+/** Putting it down (Ed, 2026-10-09: "If you are in ground mode and hold down the 'drop / pick up sigil' button and there are
+ *  no sigils to pick up, you put down your hat"; just a marker, nothing in the rules reads it): a press of the sigil button
+ *  that did nothing (`idle`: nothing picked up or put down) starts the hold; held `hold` seconds on, wearing it, she puts it
+ *  down at her feet. Let go (or not on the ground: `held` false) and the hold's over. A press over it picks it up (hatButton).
+ *  True on the step it goes down. */
+export function putHat(h: HatState, idle: boolean, held: boolean, x: number, z: number, at: number, hold: number | undefined): boolean {
+  if (!held || hold === undefined) { h.hold = null; return false; }
+  if (idle) h.hold = at;
+  if (h.hold == null || at - h.hold < hold || !wearing(h)) return false;
+  h.hold = null;
+  h.down = { x, z, at };
+  return true;
+}
