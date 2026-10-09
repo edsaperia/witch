@@ -101,6 +101,8 @@ export interface SteerContext {
   /** Cutting off her retreat (tuning dodge.c): it makes for a place ahead of her as she runs, `ahead` metres on along her
    *  heading and `angle` radians to one side of it, `reach` times its attack's reach out. */
   cutoff?: { ahead: number; angle: number; reach: number };
+  /** How far it may fire from, if further than `range` (a shooter at her, tuning dodge.b.range: it keeps its distance by `range`). */
+  fire?: number;
   /** Where "arrive" makes for, if not `want` (committed strikes, tuning dodge.a: right in on her, striking as it comes). */
   arriveAt?: number;
 }
@@ -108,7 +110,7 @@ export interface SteerContext {
 /** Steer a fighting creature by its profile for one step. Returns whether it may start an attack now. */
 export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   const dx = x.px - c.x, dz = x.pz - c.z, d = Math.hypot(dx, dz) || 1e-6, ux = dx / d, uz = dz / d, S = FIGHT.scale;
-  let vx = 0, vz = 0, may = d <= Math.max(x.want + 1.5 * S, x.range * 0.95); // (a shooter may strike from anywhere in its range)
+  let vx = 0, vz = 0, may = d <= Math.max(x.want + 1.5 * S, (x.fire ?? x.range) * 0.95); // (a shooter may strike from anywhere in its range)
   const add = (ax: number, az: number, w: number) => { vx += ax * w; vz += az * w; };
   const pack = x.pack, n = pack ? pack.members.length : 1, i = pack ? Math.max(0, pack.members.indexOf(c)) : 0;
   // The slot its pack's tactic gives it (if any), and whether the tactic lets it strike now.
@@ -242,7 +244,8 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
     const tx = px - c.x, tz = pz - c.z, along = tx * ch.dx + tz * ch.dz;
     if (!ch.braking && (time >= ch.until || along < -(mv.overshoot ?? 8) * CH.reach * FIGHT.scale)) ch.braking = true;
     if (!ch.braking) {
-      // Building speed down its lane (its velocity swings onto the lane, no snapping).
+      // Building speed down its lane (its velocity swings onto the lane, no snapping); a heavy's lane swings toward her as it runs (ch.home).
+      if (ch.home) { const h = Math.atan2(ch.dz, ch.dx), da = ((Math.atan2(tz, tx) - h + Math.PI * 3) % (Math.PI * 2)) - Math.PI, nh = h + Math.max(-ch.home * dt, Math.min(ch.home * dt, da)); ch.dx = Math.cos(nh); ch.dz = Math.sin(nh); }
       const nv = Math.min(ch.speed, Math.max(v, 0) + accel * dt);
       vx = ch.dx * nv; vz = ch.dz * nv; v = nv;
     } else {

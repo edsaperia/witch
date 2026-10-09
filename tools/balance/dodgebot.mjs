@@ -100,10 +100,11 @@ function measure(seed, sp, n, level, bot, t) {
         dash = true; aimX = px * s * 10; aimZ = pz * s * 10;
       }
     }
-    if (process.env.DBG && f % 30 === 0) { const c = g.creatures[ids[0]]; console.log(bot, time.toFixed(1), "d", Math.hypot(c.x - B.x, c.z - B.z).toFixed(1), "v", Math.hypot(B.vx, B.vz).toFixed(1), "cv", Math.hypot(c.vx ?? 0, c.vz ?? 0).toFixed(1), c.fight?.target?.kind ?? "-", c.fight?.windupUntil ? "W" : "", c.fight?.lunge ? "L" : "", c.retreat ? "R" : "", c.hunting ?? "", "watch", c.watchUntil !== undefined && c.watchUntil > time ? "y" : ""); }
+    if (process.env.DBG && f % 30 === 0) { const c = g.creatures[ids[0]]; console.log(bot, time.toFixed(1), "d", Math.hypot(c.x - B.x, c.z - B.z).toFixed(1), "v", Math.hypot(B.vx, B.vz).toFixed(1), "cv", Math.hypot(c.vx ?? 0, c.vz ?? 0).toFixed(1), c.fight?.target?.kind ?? "-", c.fight?.windupUntil ? "W" : "", c.fight?.lunge ? "L" : "", c.retreat ? "R" : "", c.hunting ?? "", "watch", c.watchUntil !== undefined && c.watchUntil > time ? "y" : "", c.charge ? "CHARGE" : "", c.stunUntil !== undefined && c.stunUntil > time ? "STUN" : "", "hp", w.health.hp, "ready", c.fight ? (time - c.fight.readyAt).toFixed(1) : "-"); }
     const was = w.dash.at;
     stepGame(g, { moveX: mx, moveZ: mz, toggleMode: false, zoom: 0, dash, aimX, aimZ }, dt);
     if (w.dash.at !== was) { if (w.dash.at - lastBlink < t.dash.cooldown) doubles++; blinks++; lastBlink = w.dash.at; } // (a second blink before the first's cooldown: both charges used)
+    if (process.env.SHOTS) for (const e of g.combat.events) if (e.at === time && e.kind === "shot" && mine.has(e.id)) { const c = g.creatures[e.id]; console.log("shot", bot, time.toFixed(2), "d", Math.hypot(c.x - w.body.x, c.z - w.body.z).toFixed(1)); }
     const hp = w.health.hp; if (hp < lastHp) {
       hits += lastHp - hp;
       if (process.env.HITS) console.log("hit", bot, time.toFixed(2), "charges", w.dash.charges, "since blink", (time - lastBlink).toFixed(2), "|", ids.map(i => g.creatures[i]).filter(c => Math.hypot(c.x - w.body.x, c.z - w.body.z) < 25).map(c => `${c.fight?.lunge ? "U" : ""}${c.fight?.windupUntil ? "W" : ""}${c.charge ? "C" : ""}${Math.hypot(c.x - w.body.x, c.z - w.body.z).toFixed(1)}`).join(" "));

@@ -134,6 +134,22 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   };
   /** Its windup: a shot or lob at her winds up at most dodge.b.windup (a beam as before: a sweep a blink can't outrun needs its warning). */
   const windupOf = (A: Attack, tg: Target) => (DB && tg.kind === "witch" && (A.delivery === "shot" || A.delivery === "lob") ? Math.min(A.windup, DB.windup) : A.windup);
+  /** A shot or lob at her reaches dodge.b.range times as far (Ed, 2026-10-09: "I think shooters should have longer range"). */
+  const longer = new Map<Attack, Attack>();
+  const reachOf = (A: Attack, tg: Target): Attack => {
+    if (!DB || tg.kind !== "witch" || (A.delivery !== "shot" && A.delivery !== "lob") || DB.range === 1) return A;
+    let L = longer.get(A);
+    if (!L) longer.set(A, (L = { ...A, range: A.range * DB.range }));
+    return L;
+  };
+  /** The heavies (dodge.a.heavy; Ed, 2026-10-09: "Maybe heavies can have a higher top speed, but slow acceleration?"): chasing her,
+   *  a top speed above her walk built up slowly, so a burst or a blink gets clear and a long straight retreat is run down. */
+  const heavyProfiles = new Map<string, NonNullable<ReturnType<typeof profileOf>>>();
+  const heavyOf = (c: Creature, P: NonNullable<ReturnType<typeof profileOf>>) => {
+    let H = heavyProfiles.get(c.species);
+    if (!H) heavyProfiles.set(c.species, (H = { ...P, accel: DA!.heavy.accel }));
+    return H;
+  };
   /** A committed strike's reach at her, times its attack's range (dodge.a.width). */
   const widthOf = (tg: Target) => (DA && tg.kind === "witch" ? DA.width : 1);
   /** Her velocity (the witch tg), or none. */
@@ -222,8 +238,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     const p = targetPos(w, s, f.target);
     if (!p) { f.target = null; f.windupUntil = 0; continue; } // (it fell this very step)
-    const d = Math.hypot(p.x - c.x, p.z - c.z), A = atk.attack, K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
-    const want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
+    const d = Math.hypot(p.x - c.x, p.z - c.z), A = reachOf(atk.attack, f.target), K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
+    // (a shooter keeps its usual distance, A0's, however far it may now fire at her: so she can still reach it with her 💌s)
+    const A0 = atk.attack, want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A0.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
     // Its lunge under way: a dash-strike down the line it wound up on; at its end the blow lands, if it's still there.
     if (f.lunge) {
       // (At a creature it homes in: creatures can't read a telegraph; but not at a flier, which flits up out of its way.
@@ -245,7 +262,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const slow = c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1, own = c.level === LEGEND ? C.legendRun : profileOf(c.species)?.speed ?? C.fightRun;
     // (Committed strikes, dodge.a: at her it closes at dodge.a.chase times its sprint wherever she is, so a fast kind can't be outwalked; a slow one still can.)
     const sprint = profileOf(c.species)?.pursuit ?? C.pursuitRun, chasing = !!DA && f.target.kind === "witch" && c.level !== LEGEND;
-    const speed = (chasing ? Math.max(own, sprint * DA!.chase) : c.level !== LEGEND && d > 30 * S ? Math.max(own, sprint) : own) * FIGHT.speed * slow;
+    const heavy = chasing && DA!.heavy.species.includes(c.species); // (a heavy: its top speed, built up at its slow acceleration in steer)
+    const speed = (heavy ? DA!.heavy.speed : chasing ? Math.max(own, sprint * DA!.chase) : c.level !== LEGEND && d > 30 * S ? Math.max(own, sprint) : own) * FIGHT.speed * slow;
     // A wild legend fights by its move set (Stage 5): long, telegraphed moves in a pattern, and a second phase.
     if (c.level === LEGEND && !c.leashed && !(f.target.kind === "sound" && d > 40 * S)) { stepLegend(w, s, c, f, p, d, legendSetOf(c.species), data, grid); continue; }
     const P = profileOf(c.species), marching = (f.target.kind === "sound" || (!!c.siege && !c.leashed)) && d > 40 * S; // (a besieger far off marches)
@@ -260,6 +278,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           const lx = p.x + vx * arrive * DB.chargeLead - c.x, lz = p.z + vz * arrive * DB.chargeLead - c.z, ld = Math.hypot(lx, lz);
           if (ld > 0.01) { ch.dx = lx / ld; ch.dz = lz / ld; }
         }
+        if (heavy && !was && c.charge) c.charge.home = (DA!.heavy.home * Math.PI) / 180; // (a heavy runs her down: its lane swings toward her)
         // A charge that missed (Ed, 2026-10-06: "reward skilful use of blink and accurate invitation aiming"): it stands
         // winded for fight.charge.miss seconds, stars round its head, an opening for her 💌s.
         if (was && !c.charge && !was.struck && !was.hit?.length && (FIGHT.charge.miss ?? 0) > 0) { c.stunUntil = time + FIGHT.charge.miss!; c.vx = 0; c.vz = 0; s.events.push({ kind: "stunned", x: c.x, z: c.z, at: time, id: c.id }); }
@@ -358,7 +377,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         const { vx, vz } = velOf(f.target), her = Math.hypot(vx, vz), i = pk.members.indexOf(c);
         if (her > DC.moving * FIGHT.walk * FIGHT.speed && Math.floor((i + 1) * DC.share) > Math.floor(i * DC.share)) cutoff = { ahead: her * DC.ahead, angle: DC.angle, reach: DC.reach };
       }
-      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" ? A.range + p.r : undefined });
+      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: p.x, pz: p.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" ? A.range + p.r : undefined });
       if (may && time >= f.readyAt && token(f.target)) {
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
@@ -368,7 +387,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (f.windupUntil === 0) {
       if (d > want) { moveToward(c, p.x, p.z, want, marching ? c.speed * C.marchMult : speed, dt); continue; }
       // A kiter backs off when its target comes too close, keeping its distance while it shoots.
-      if (kites && d < A.range * K.near && d > 0.01) { c.x -= ((p.x - c.x) / d) * speed * dt; c.z -= ((p.z - c.z) / d) * speed * dt; c.moving = true; c.walk += dt * 6; c.facing = p.x >= c.x ? 1 : -1; if (time < f.readyAt) continue; }
+      if (kites && d < A0.range * K.near && d > 0.01) { c.x -= ((p.x - c.x) / d) * speed * dt; c.z -= ((p.z - c.z) / d) * speed * dt; c.moving = true; c.walk += dt * 6; c.facing = p.x >= c.x ? 1 : -1; if (time < f.readyAt) continue; }
       c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
       if (time >= f.readyAt && token(f.target)) {
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z;
@@ -385,7 +404,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       f.aimX = p.x + vx * ahead * DA.lead; f.aimZ = p.z + vz * ahead * DA.lead;
     }
     if (DA && A.delivery === "melee" && f.target.kind === "witch" && d > A.range + p.r && !(c.dug !== undefined && time < c.dug)) { // (not dug in: rooted)
-      const surge = c.level === LEGEND ? speed : Math.max(speed, sprint * FIGHT.speed * DA.surge * slow);
+      const surge = c.level === LEGEND ? speed : heavy ? Math.max(own * FIGHT.speed * slow, Math.hypot(c.vx ?? 0, c.vz ?? 0)) : Math.max(speed, sprint * FIGHT.speed * DA.surge * slow); // (a heavy carries on at the speed it has built up)
       const step = Math.min(d - A.range - p.r, surge * dt), ux = (p.x - c.x) / d, uz = (p.z - c.z) / d;
       c.x += ux * step; c.z += uz * step; c.vx = ux * surge; c.vz = uz * surge; c.moving = true; c.walk += dt * 8; c.facing = ux >= 0 ? 1 : -1;
     } else { const vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
@@ -405,7 +424,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     else if (A.delivery === "shot") {
       // Predictive aim (dodge.b): at her, it aims as it fires, where she'll be when the shot gets there (lead of it), and flies further.
-      const v = A.speed ?? 9, at = DB && f.target.kind === "witch";
+      const at = DB && f.target.kind === "witch", v = (A.speed ?? 9) * (at ? DB.speed : 1); // (faster at her: a shot chasing her down at her walk closes at only its speed less hers)
       let tx = f.aimX, tz = f.aimZ;
       if (at) { const hv = velOf(f.target); tx = p.x; tz = p.z; for (let k = 0; k < 2; k++) { const tt = Math.hypot(tx - c.x, tz - c.z) / v; tx = p.x + hv.vx * tt * DB.lead; tz = p.z + hv.vz * tt * DB.lead; } }
       const ax = tx - c.x, az = tz - c.z, ad = Math.hypot(ax, az) || 1;
