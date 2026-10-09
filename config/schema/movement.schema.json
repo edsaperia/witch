@@ -112,7 +112,8 @@
                   "dig",
                   "block",
                   "trail",
-                  "flash"
+                  "flash",
+                  "swoop"
                 ]
               },
               "cooldown": {
@@ -192,12 +193,43 @@
               "slow": {
                 "type": "number",
                 "minimum": 0
+              },
+              "circle": {
+                "type": "number",
+                "minimum": 0
+              },
+              "jitter": {
+                "type": "number",
+                "minimum": 0
+              },
+              "rise": {
+                "type": "number",
+                "minimum": 0
+              },
+              "lead": {
+                "type": "number",
+                "minimum": 0
+              },
+              "bottom": {
+                "type": "number",
+                "minimum": 0
+              },
+              "climb": {
+                "type": "number",
+                "minimum": 0
+              },
+              "dives": {
+                "type": "number",
+                "minimum": 0
+              },
+              "knockback": {
+                "type": "number",
+                "minimum": 0
               }
             },
             "required": [
               "kind",
-              "cooldown",
-              "time"
+              "cooldown"
             ],
             "additionalProperties": false
           },

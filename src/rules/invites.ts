@@ -261,7 +261,7 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     // The first creature its path this step passes within reach of: a hit, a block, or nothing (it passes through).
     let first: Creature | null = null, ft = Infinity;
     for (const k of near) {
-      if (L.hit.includes(k.id)) continue;
+      if (L.hit.includes(k.id) || k.swoop?.up) continue; // (a flyer aloft: it passes under, rules/movement.ts stepSwoop)
       const hitR = L.r + bodyRadius(k), dx = L.x - px, dz = L.z - pz, len2 = dx * dx + dz * dz;
       const f = len2 > 0 ? Math.max(0, Math.min(1, ((k.x - px) * dx + (k.z - pz) * dz) / len2)) : 0;
       if (Math.hypot(px + dx * f - k.x, pz + dz * f - k.z) > hitR || f >= ft) continue;

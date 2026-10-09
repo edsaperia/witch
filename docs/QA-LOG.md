@@ -185,3 +185,10 @@ Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, s
 
 - **Core-design check**: all pass, no errors: off the decks 8.5 s after the cast; the boot 30.0 s (11.5 → 41.5); 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); 840 creatures, no new id. #565 (an early clear no longer moves the ley pulse on) leaves all of this as it was.
 - **Journey**: every moment reached, no errors, `dropped` 0, 840 creatures throughout: first speaker at 12 s, the boot caught at 7 of 12, draw calls over the treetops 101, stargazing at the beach, the party's over. Not exercised: #570 (four hits to knock her out: the journey takes none), #573 (hunters come from anywhere in their area).
+
+## Small hours: 00712ca4 (#597), 02:28–02:57
+
+14 merges since 03ef258c (#577, #576, #584, #581, #586, #580, #579, #590, #589, #593, #595, #582, #587, #597; plus #578, this log). Tests (979), typecheck, build green.
+
+- **Core-design check**: all pass, no errors: off the decks 8 s after the cast; the boot 30.0 s (11.0 → 41.0); 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); 840 creatures, no new id.
+- **Journey**: every moment reached, no errors, `dropped` 0, 840 creatures throughout: first speaker at 12 s, the boot caught at 7 of 12, the first countdown still caught before wave one with waves every minute (#577), draw calls over the treetops 103 (from 101), 88 in the legend circle (from 81; #582's legends in their circles), stargazing at the beach, the party's over. Not exercised: #587 (dodging), #579 (knockdowns add 5 BPM), #580 (hostiles idle near their stone).

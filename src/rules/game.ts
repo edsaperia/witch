@@ -391,7 +391,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.spell) castSpell(g.spells, ht, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
-  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = 1 + M.charges;
+  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = (t.dash.charges ?? 1) + M.charges; // (two blinks before the cooldown, Ed 2026-10-08; Hare's Dash bursts more)
   // Her speed: the boost spell, a slow, Momentum (Boar) after a blink, and firing (no slowing: Ram's Steady).
   const firing = W.invites.burstLeft > 0 || (!!c.fire && t.invites.on && g.witch.mode === "ground" && !g.witch.seated);
   const boost = speedMultiplier(g.spells, ht, t) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1)
@@ -486,7 +486,7 @@ function stepSpacing(g: Game, dt: number): void {
   const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list = spacingList;
   list.length = 0;
   for (const c of g.creatures) {
-    if (c.gone || c.burrow || c.leap) continue;
+    if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
   spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
