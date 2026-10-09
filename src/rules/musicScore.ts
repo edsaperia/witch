@@ -44,6 +44,8 @@ export interface Patch {
   /** voice: the vowels it sings in turn (ah, oh, oo, eh, ee), their formants scaled by formantShift,
    *  vibrato depth in cents, and how much breath (noise). */
   vowels?: string[];
+  /** voice: sixteenths a vowel lasts before the next (4, a beat; 1: a new vowel each note, the soprano's). */
+  vowelStep?: number;
   formantShift?: number;
   vibrato?: number;
   breath?: number;
@@ -98,11 +100,10 @@ export interface ArcStep {
   name: string;
   /** 0 calm to 1 frantic: "?" hits and parts that need energy. */
   energy: number;
-  scale?: string;
   progression?: string;
-  /** Semitones above the style's root. */
-  transpose?: number;
-  /** Its tempo (bpm; the style's bpm if none): the beat clock eases to it as the wave lands. */
+  /** Its tempo (bpm; the style's bpm if none): the beat clock eases to it as the wave lands. Ed, 2026-10-09: none has
+   *  one now (the tempo stays at the style's 120 but for her knockdowns, rules/beat.ts knockdownTempo). Every step plays
+   *  in the style's one scale (dorian: Ed, the same day, "Keep it all in the dorian"). */
   bpm?: number;
   /** The sections played as the wave arrives, then the ones looped till the next wave: [name, bars]. */
   arrive: [string, number][];
@@ -155,7 +156,38 @@ export interface MusicStyle {
    *  over the muffled music, every legend's (`every`) and its voice family's (`families`, by
    *  config/creature-voices.json); a part's `p` one pattern, or several for its species to pick from. */
   circle?: { every: Record<string, CircleUse>; families: Record<string, Record<string, CircleUse>> };
+  /** The melodies' form (Ed, 2026-10-09): every section's melodic parts give way to one line in 8-bar phrases, ABAC. */
+  form?: FormDef;
   arc: ArcStep[];
+}
+
+/** The melodies' form (Ed, 2026-10-09: "Melodies should be 8 bars long, with a 32 bar ABAC structure, and include rests.
+ *  The B and C melodies should be (simulated) female voice, with the A a random instrument from (pluck, lead, chip, voice,
+ *  bell or horn)"). A section's melodic parts (role motif) no longer play their own walks: they say whether the melody
+ *  plays there and how loud, and the form's line plays, its chords the form's too (bass, arps and pads follow them). */
+export interface FormDef {
+  /** The phrases in turn (A comes back the same) and each phrase's bars. */
+  order: string;
+  phraseBars: number;
+  /** Bars each chord lasts. */
+  chordBars: number;
+  /** The progressions A takes one of (by the seed), and B's; B ends on the question chord, C (A's opening, then the
+   *  question) on the answer. */
+  a: string[];
+  b: string[];
+  question: number;
+  answer: number;
+  /** The parts A may play on (one taken by the seed), and the part and patch B and C sing on, and its octave. */
+  instruments: string[];
+  sung: { part: string; patch: string; octave: number };
+  /** The melody's range in scale steps above the root (in its part's octave). */
+  range: [number, number];
+  /** Rhythm cells, a bar each (x a note, - held, . a rest), by how busy a part is; `cadence` cells end a half-phrase
+   *  (its 4th and 8th bars) on rests, so every phrase breathes. */
+  cells: Record<string, string[]>;
+  cadence: Record<string, string[]>;
+  /** How busy each instrument plays (its cells), the sung part's too ("slow" if not listed). */
+  busy: Record<string, string>;
 }
 
 /** What the conductor has chosen for a block of bars. */
@@ -258,13 +290,117 @@ function motifFor(seed: number, arc: number, part: string): number[] {
   return m;
 }
 
-/** The chord (scale degrees) a section plays in bar `barIn` of itself. */
+/** The chord (scale degrees) a section plays in bar `barIn` of itself (its own progression: the music
+ *  without a form, the Music Lab's older styles). */
 export function chordAt(style: MusicStyle, sec: Resolved, step: ArcStep, barIn: number): { root: number; tones: number[] } {
   const prog = style.progressions[sec.progression || step.progression || ""] ?? style.progressions[Object.keys(style.progressions)[0]];
   const root = prog[Math.floor(barIn / Math.max(1, sec.chordBars)) % prog.length];
   const tones = [root, root + 2, root + 4];
   if (sec.sevenths) tones.push(root + 6);
   return { root, tones };
+}
+
+const pick = <T>(xs: readonly T[], r: number): T => xs[Math.min(xs.length - 1, Math.floor(r * xs.length))];
+const mod = (a: number, n: number) => ((a % n) + n) % n;
+
+/** The form's length in bars (32). */
+export const formBars = (F: FormDef) => F.order.length * F.phraseBars;
+
+/** The part A plays on for a seed. */
+export const formInstrument = (F: FormDef, seed: number): string => pick(F.instruments, hash2(seed, 401, 7));
+
+/** The form's chord in bar `formBar` (bars since the seed's form began): A's progression, B's ending on the question, C
+ *  taking A's opening then the question and answer. */
+export function formChord(style: MusicStyle, seed: number, formBar: number, sevenths = false): { root: number; tones: number[] } {
+  const F = style.form!, fb = mod(formBar, formBars(F)), letter = F.order[Math.floor(fb / F.phraseBars)];
+  const progOf = (names: string[], salt: number) => style.progressions[pick(names, hash2(seed, 409, salt))] ?? [0];
+  const A = progOf(F.a, 1), B = progOf(F.b, 2), cb = Math.max(1, F.chordBars), n = Math.ceil(F.phraseBars / cb);
+  const k = Math.floor((fb % F.phraseBars) / cb);
+  const root = letter === "B" ? (k === n - 1 ? F.question : B[k % B.length])
+    : letter === "C" ? (k === n - 1 ? F.answer : k === n - 2 ? F.question : A[k % A.length])
+    : A[k % A.length];
+  const tones = [root, root + 2, root + 4];
+  if (sevenths) tones.push(root + 6);
+  return { root, tones };
+}
+
+/** A note of a phrase: scale steps above the root, and its length in sixteenths. */
+export interface PhraseNote { deg: number; dur: number }
+
+/** One phrase of the form for a seed: a note or null (a rest or a held note) on each of its sixteenths. A seeded walk
+ *  over the form's chords, landing on chord tones on the beats, in bar-long rhythm cells by how busy its part plays
+ *  (the 2nd half-phrase's echoing the 1st's now and then), each half-phrase ending on rests; A ends open (a chord tone
+ *  not the root), B on a question (the 2nd or 5th), C answering it on the root. */
+export function formPhrase(style: MusicStyle, seed: number, letter: string): (PhraseNote | null)[] {
+  const F = style.form!, P = F.phraseBars, salt = letter.charCodeAt(0) * 13;
+  const part = letter === "A" ? formInstrument(F, seed) : F.sung.part, busy = F.busy[part] ?? "slow";
+  const cells = F.cells[busy] ?? F.cells.slow, cads = F.cadence[busy] ?? F.cadence.slow;
+  const at = F.order.indexOf(letter) * P; // (its chords: its first place in the form)
+  const rhythm: string[] = [];
+  for (let b = 0; b < P; b++) {
+    const r = hash2(seed + b * 31, 419, salt), half = Math.floor(P / 2);
+    if (b % half === half - 1) rhythm.push(pick(cads, r));
+    else if (b >= half && hash2(seed + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]); // (the answer echoing the call)
+    else rhythm.push(pick(cells, r));
+  }
+  const [lo, hi] = F.range, out: (PhraseNote | null)[] = new Array(P * 16).fill(null), onsets: number[] = [];
+  let v = 2 + Math.floor(hash2(seed, 431, salt) * 3);
+  const nearest = (want: number, ok: (d: number) => boolean) => {
+    let best = want, bd = Infinity;
+    for (let d = lo; d <= hi; d++) if (ok(d) && Math.abs(d - want) < bd) { bd = Math.abs(d - want); best = d; }
+    return best;
+  };
+  for (let b = 0; b < P; b++) {
+    const tones = formChord(style, seed, at + b).tones.map(t => mod(t, 7)), cell = rhythm[b];
+    for (let s = 0; s < 16; s++) {
+      if (cell[s] !== "x") continue;
+      let dur = 1;
+      while (s + dur < 16 && cell[s + dur] === "-") dur++;
+      const i = b * 16 + s, r = hash2(seed + i * 7919, 433, salt);
+      if (s % 4 === 0) v = nearest(v + pick([-2, -1, 0, 1, 2, 3], r), d => tones.includes(mod(d, 7))); // (the beats: a chord tone)
+      else v = Math.max(lo, Math.min(hi, v + pick([-2, -1, -1, 1, 1, 2], r)));
+      out[i] = { deg: v, dur };
+      onsets.push(i);
+    }
+  }
+  const last = onsets[onsets.length - 1];
+  if (last !== undefined) {
+    const n = out[last]!, chordEnd = formChord(style, seed, at + P - 1).tones.map(t => mod(t, 7));
+    const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : chordEnd.filter(t => t !== 0);
+    n.deg = nearest(n.deg, d => ends.includes(mod(d, 7)));
+  }
+  return out;
+}
+
+const phraseCache = new Map<string, (PhraseNote | null)[]>();
+function phraseFor(style: MusicStyle, seed: number, letter: string): (PhraseNote | null)[] {
+  const k = `${seed}|${letter}`;
+  let p = phraseCache.get(k);
+  if (!p) { if (phraseCache.size > 64) phraseCache.clear(); phraseCache.set(k, p = formPhrase(style, seed, letter)); }
+  return p;
+}
+
+/** The music's seed for knockdown `n` of a run (0: the run's own seed). */
+export const musicSeed = (base: number, n: number): number => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 0x7fffffff);
+
+/** The music's seed in bar `bar`, and the bar its form began on: each knockdown (`knockdowns`, the bars they came in)
+ *  re-seeds it from the next phrase line after it (Ed, 2026-10-09: "Being knocked down changes the music to a random new
+ *  seed"), its form starting there with a new A. */
+export function formSeedAt(style: MusicStyle, base: number, knockdowns: readonly number[] | undefined, bar: number): { seed: number; formStart: number } {
+  const P = style.form?.phraseBars ?? 8;
+  let n = 0, formStart = 0;
+  for (const k of knockdowns ?? []) { const from = (Math.floor(k / P) + 1) * P; if (from <= bar) { n++; formStart = from; } }
+  return { seed: musicSeed(base, n), formStart };
+}
+
+/** The form's note (if one starts) on the form's sixteenth `formStep`: its part, patch and MIDI note, and its length. */
+export function formNoteAt(style: MusicStyle, seed: number, formStep: number): { part: string; patch: string; midi: number; dur: number; letter: string } | null {
+  const F = style.form!, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
+  const n = phraseFor(style, seed, letter)[fs % (F.phraseBars * 16)];
+  if (!n) return null;
+  const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed), def = style.parts[part];
+  const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
+  return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style, style.scales[style.scale], n.deg, oct, 0), dur: n.dur, letter };
 }
 
 /** The section's low-pass now (Hz), at `progress` (0-1) through it. */
@@ -302,6 +438,8 @@ export interface ScoreContext {
    *  sixteenths, the music's `step` giving only the chords. Left out: both, on the music's steps. */
   only?: "main" | "circle";
   circleStep?: number;
+  /** The bar the seed's form began on (0; a knockdown's new seed starts its form on a phrase line: Ed, 2026-10-09). */
+  formStart?: number;
 }
 
 const VOICE_FAMILIES = (voices as unknown as { species: Record<string, { family?: string }> }).species;
@@ -326,11 +464,12 @@ export function circleParts(style: MusicStyle, species: string): [string, { p: s
 export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
   const bar = Math.floor(step / 16), s = step - bar * 16, barIn = bar - plan.start;
   const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc);
-  const scale = style.scales[a.scale ?? style.scale] ?? style.scales[style.scale];
-  const transpose = a.transpose ?? 0;
+  const scale = style.scales[style.scale], transpose = 0; // (one scale for the whole run: Ed, 2026-10-09)
   const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
-  // each pass round the loop the chords start a step on (the same progression, a new turn of it)
-  const chord = chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  // the form's chords (Ed, 2026-10-09: the 32-bar ABAC form), or, with none, the section's own, a step on each pass round the loop
+  const formBar = bar - (ctx.formStart ?? 0), form = style.form;
+  const chord = form ? formChord(style, ctx.seed, formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  let melody = 0; // (the form's melody: the loudest of the melodic parts playing here)
   // a long block (the boot's intro, up to five minutes) turns a new phrase every 16 bars: new melodies, its ? hits falling anew
   const phrase = pass + (plan.bars > 32 ? Math.floor(barIn / 16) : 0);
   const out: NoteEvent[] = [];
@@ -355,6 +494,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const own = layer.has(name);
     if (!own && (building ? build <= 0 || build < u.from : progress < u.from)) continue;
     if (!own && (a.energy < u.energy || muted.includes(name))) continue;
+    if (form && !own && def.role === "motif") { melody = Math.max(melody, u.level * scaleLevel * (building ? 0.45 + 0.55 * build : 1)); continue; }
     // in a fill bar, the fill part plays the fill instead of its pattern
     if (fillBar && name === style.fill.part && u.p !== "__fill") continue;
     const pat = u.p === "__fill" ? style.fill.pattern : def.patterns[u.p];
@@ -395,8 +535,11 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       out.push({ ...base, midi: degreeToMidi(style, scale, chord.root + m[pos] + vary + lift, octOwn, transpose), vel: (VEL[ch] ?? accent) * level });
     }
   }
-  // the section's own events: a crash on its first beat, a riser over a build (one note a bar)
   if (onlyCircle) return out;
+  // the form's melody: A on its instrument, B and C sung
+  const fn = melody > 0 ? formNoteAt(style, ctx.seed, formBar * 16 + s) : null;
+  if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: 0, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 ? 0.9 : 0.78) * melody });
+  // the section's own events: a crash on its first beat, a riser over a build (one note a bar)
   if (s === 0 && barIn === 0 && sec.impact && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 });
   if (s === 0 && sec.riser && style.patches.riser) out.push({ part: "riser", patch: "riser", step, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
   return out;
@@ -433,13 +576,20 @@ export function checkStyle(style: MusicStyle): string[] {
   if (!style.parts[style.fill.part]) errs.push(`fill: no part "${style.fill.part}"`);
   for (const n of [style.intro, style.knockout]) if (!style.sections[n]) errs.push(`no section "${n}"`);
   if (!style.scales[style.scale]) errs.push(`no scale "${style.scale}"`);
+  const F = style.form;
+  if (F) {
+    for (const n of [...F.a, ...F.b]) if (!style.progressions[n]) errs.push(`form: no progression "${n}"`);
+    for (const n of F.instruments) if (!style.parts[n]) errs.push(`form: no part "${n}"`);
+    if (!style.patches[F.sung.patch]) errs.push(`form: no patch "${F.sung.patch}"`);
+    for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) if (c.length !== 16 || c[0] === "-") errs.push(`form: cell ${k} "${c}" not one bar`);
+    for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
+  }
   style.arc.forEach((a, i) => {
     for (const [s, bars] of [...a.arrive, ...a.loop, ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style.buildBars] as [string, number]]) {
       if (!style.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
       if (!(bars > 0) || bars % B !== 0) errs.push(`arc ${i} (${a.name}): ${s} is ${bars} bars, not a multiple of ${B}`);
     }
     if (!a.loop.length || (a.variants ?? []).some(v => !v.length)) errs.push(`arc ${i} (${a.name}): nothing to loop`);
-    if (a.scale && !style.scales[a.scale]) errs.push(`arc ${i} (${a.name}): no scale "${a.scale}"`);
     if (a.progression && !style.progressions[a.progression]) errs.push(`arc ${i} (${a.name}): no progression "${a.progression}"`);
   });
   return errs;

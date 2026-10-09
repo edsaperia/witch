@@ -14,7 +14,7 @@
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
 import { Conductor, bootLayers, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
-import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
+import { formSeedAt, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
 /** A part's way into the mix; `lfo`: its filter's slow wobble, one for all its notes (made when first wanted). */
 interface Channel {
@@ -215,7 +215,7 @@ export class MusicEngine {
     while (this.cAt < now + ahead) {
       if (this.cAt >= now) {
         const main = Math.floor(beatAt(clock, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
-        const events = notesAt(this.style, plan, null, main, { seed: this.seed, siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
+        const events = notesAt(this.style, plan, null, main, { ...formSeedAt(this.style, this.seed, cue.knockdowns, Math.floor(main / 16)), siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
         const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
         this.playAll(events, e => this.cAt + swing + e.offset * sps, sps);
       }
@@ -253,7 +253,7 @@ export class MusicEngine {
       this.tone.frequency.setValueAtTime(f0, t);
       if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
+    const events = notesAt(S, plan, next, step, { ...formSeedAt(S, this.seed, cue.knockdowns, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
     this.playAll(events, e => t + swing + e.offset * sps, sps);
   }
@@ -480,7 +480,7 @@ export class MusicEngine {
    *  band-passes for its vowel (chosen by the note, from the patch's vowels), with a vibrato that
    *  creeps in; unison voices spread wide make a choir. */
   private voice(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
-    const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], name = vowels[Math.abs(step >> 2) % vowels.length], vowel = VOWELS[name] ? name : "ah";
+    const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], name = vowels[Math.floor(Math.abs(step) / Math.max(1, p.vowelStep ?? 4)) % vowels.length], vowel = VOWELS[name] ? name : "ah";
     const U = this.shedLevel >= 2 ? 1 : Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
     const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 1.5 : 2) + 0.02;
     // The part's own vowels (three formant band-passes each) and its vibrato, made once and shared by its notes: each note's

@@ -5,7 +5,7 @@
   "tempoRampBars": 8,
   "swing": 0.08,
   "root": 33,
-  "scale": "aeolian",
+  "scale": "dorian",
   "scales": {
     "aeolian": [0, 2, 3, 5, 7, 8, 10],
     "dorian": [0, 2, 3, 5, 7, 9, 10],
@@ -43,6 +43,7 @@
     "clank": {"kind": "noise", "source": "metal", "gain": 8, "filter": "highpass", "cutoff": 3000, "q": 1.5, "decay": 0.12, "reverb": 0.4, "hp": 300, "pan": -0.2},
     "choir": {"kind": "voice", "gain": 0.2, "vowels": ["oo", "ah", "oh"], "unison": 3, "detune": 12, "width": 0.8, "attack": 0.8, "decay": 1, "sustain": 0.9, "release": 1.5, "q": 7, "vibrato": 12, "breath": 0.06, "reverb": 0.6, "hp": 200, "duck": true},
     "vox": {"kind": "voice", "gain": 0.35, "vowels": ["ah", "eh", "oo", "ee"], "formantShift": 1.1, "attack": 0.005, "decay": 0.18, "sustain": 0.3, "release": 0.1, "q": 9, "vibrato": 8, "breath": 0.04, "delay": 0.35, "reverb": 0.4, "hp": 300, "pan": 0.2},
+    "soprano": {"kind": "voice", "gain": 0.3, "vowels": ["ah", "oh", "ee", "eh", "oo"], "vowelStep": 1, "formantShift": 1.18, "attack": 0.06, "decay": 0.4, "sustain": 0.85, "release": 0.3, "q": 10, "vibrato": 24, "breath": 0.05, "reverb": 0.55, "delay": 0.2, "hp": 250, "pan": -0.1},
     "reese": {"kind": "synth", "gain": 0.4, "waves": ["sawtooth", "sawtooth"], "detune": 22, "attack": 0.01, "decay": 0.4, "sustain": 0.8, "release": 0.1, "filter": "lowpass", "cutoff": 700, "q": 2, "envAmt": 800, "lfoRate": 0.5, "lfoDepth": 300, "drive": 0.6, "duck": true},
     "stab": {"kind": "synth", "gain": 0.7, "waves": ["sawtooth"], "unison": 3, "detune": 14, "width": 0.7, "attack": 0.003, "decay": 0.12, "sustain": 0, "release": 0.08, "filter": "lowpass", "cutoff": 5000, "q": 1, "envAmt": 3000, "reverb": 0.3, "hp": 250},
     "tension": {"kind": "synth", "gain": 0.06, "waves": ["square"], "attack": 0.002, "decay": 0.06, "sustain": 0, "release": 0.03, "filter": "bandpass", "cutoff": 3000, "q": 4, "pan": -0.3},
@@ -78,7 +79,7 @@
     "pad": {"patch": "pad", "role": "chord", "octave": 2, "patterns": {"hold": "x---------------", "pump": "x-------x-------"}},
     "gatepad": {"patch": "gatePad", "role": "chord", "octave": 2, "patterns": {"gate": "x-.x-.x-.x-.x-x-", "stabs": "..x...x...x...x."}},
     "pluck": {"patch": "marimba", "role": "motif", "octave": 3, "patterns": {"sparse": "x.....x.....x...", "flow": "x..x..x.x..x..x.", "busy": "x.xx.xx.x.xx.x.x"}},
-    "strings": {"patch": "strings", "role": "motif", "octave": 2, "patterns": {"long": "x-------x-------", "swell": "x---------------x-------x-------"}},
+    "strings": {"patch": "strings", "role": "chord", "octave": 2, "patterns": {"long": "x-------x-------", "swell": "x---------------x-------x-------"}},
     "lead": {"patch": "supersaw", "role": "motif", "octave": 3, "patterns": {"hook": "x-.x-.x-x-.x-.x-", "long": "x---x---x-x-x---"}},
     "chiplead": {"patch": "chip", "role": "motif", "octave": 4, "patterns": {"melody": "x.x.xx.x.x.xx.x.", "run": "xxxxx.x.xxxxx.x."}},
     "arp": {"patch": "arp", "role": "arp", "octave": 3, "patterns": {"sixteen": "xxxxxxxxxxxxxxxx", "eighth": "x.x.x.x.x.x.x.x."}},
@@ -101,7 +102,7 @@
     "lgPurr": {"patch": "lgPurr", "role": "bass", "octave": 1, "patterns": {"purr": "1-----------------------........5-----------------------........"}}
   },
   "sections": {
-    "intro": {"feel": "The home speakers boot up, one layer a speaker (Ed, 2026-10-06: \"sounding incomplete, and becomes gradually more complete until the last of the 12\"): a pad, the choir, the sub, a heartbeat kick, plucks, a shaker, strings, an offbeat hat, snaps, voice chops, a soft lead, gated stabs; the low-pass opening as they come.", "progression": "forest", "chordBars": 2, "cutoff": [600, 9000], "ending": "none", "parts": {"pad": {"p": "hold", "from": 0.04}, "choir": {"p": "hold", "from": 0.12, "level": 0.7}, "sub": {"p": "long", "from": 0.21, "level": 0.6}, "softkick": {"p": "heart", "from": 0.29, "level": 0.7}, "pluck": {"p": "sparse", "from": 0.37, "level": 0.8}, "shaker": {"p": "eighth", "from": 0.46, "level": 0.6}, "strings": {"p": "long", "from": 0.54, "level": 0.5}, "hat": {"p": "off", "from": 0.62, "level": 0.45}, "snap": {"p": "lazy", "from": 0.71, "level": 0.55}, "vox": {"p": "sparse", "from": 0.79, "level": 0.5}, "lead": {"p": "long", "from": 0.87, "level": 0.35}, "gatepad": {"p": "stabs", "from": 0.96, "level": 0.4}}},
+    "intro": {"feel": "The home speakers boot up, one layer a speaker (Ed, 2026-10-06: \"sounding incomplete, and becomes gradually more complete until the last of the 12\"): a pad, the choir, the sub, a heartbeat kick, the melody (its form: Ed, 2026-10-09), a shaker, strings, an offbeat hat, snaps, an arp, an open hat, gated stabs; the low-pass opening as they come.", "progression": "forest", "chordBars": 2, "cutoff": [600, 9000], "ending": "none", "parts": {"pad": {"p": "hold", "from": 0.04}, "choir": {"p": "hold", "from": 0.12, "level": 0.7}, "sub": {"p": "long", "from": 0.21, "level": 0.6}, "softkick": {"p": "heart", "from": 0.29, "level": 0.7}, "pluck": {"p": "sparse", "from": 0.37, "level": 0.8}, "shaker": {"p": "eighth", "from": 0.46, "level": 0.6}, "strings": {"p": "long", "from": 0.54, "level": 0.5}, "hat": {"p": "off", "from": 0.62, "level": 0.45}, "snap": {"p": "lazy", "from": 0.71, "level": 0.55}, "arp": {"p": "eighth", "from": 0.79, "level": 0.35}, "ohat": {"p": "off", "from": 0.87, "level": 0.4}, "gatepad": {"p": "stabs", "from": 0.96, "level": 0.4}}},
     "forest": {"feel": "Gentle and mysterious: a heartbeat kick, marimba, shaker, warm pad.", "progression": "forest", "chordBars": 2, "cutoff": 7000, "ending": "none", "parts": {"pad": {"p": "hold", "level": 0.6}, "pluck": "flow", "shaker": {"p": "eighth", "level": 0.7}, "softkick": {"p": "heart", "level": 0.7}, "sub": {"p": "roots", "level": 0.6}, "choir": {"p": "hold", "level": 0.7}}},
     "forestBeat": {"feel": "The forest finds a pulse: four soft kicks and an offbeat hat.", "base": "forest", "cutoff": 9000, "parts": {"softkick": {"p": "four", "level": 0.75}, "hat": {"p": "off", "level": 0.5}}},
     "whisper": {"feel": "A minimal, dark breakdown: finger snaps over a long sub.", "progression": "home", "chordBars": 2, "cutoff": 2600, "ending": "none", "parts": {"pad": {"p": "hold", "level": 0.6}, "sub": "long", "snap": "lazy", "pluck": {"p": "sparse", "level": 0.7}, "vox": {"p": "sparse", "level": 0.6}}},
@@ -138,15 +139,37 @@
   "party": {"ohat": {"p": "off", "level": 0.55}, "shaker": {"p": "sixteen", "level": 0.5}, "pluck": {"p": "flow", "level": 0.55}, "clap": {"p": "back", "level": 0.45}},
   "legend": {"reese": {"p": "long", "level": 0.45}, "choir": {"p": "hold", "level": 0.45}},
   "circle": {"_": "A sleeping legend's clearing, heard on the ground (Ed, 2026-10-06): the music muffled under it (and, as the world slows there, slowed with it), and the legend's own layer over it in the same key and chords, on its own clock at full speed (it starts in step with the music): slow and spacious, four-bar phrases of long notes. every: parts every legend's circle has; families: each voice family's parts (config/creature-voices.json), a part's p one pattern or several (a species takes one by its name), level its share.", "every": {"lgDrone": {"p": ["root", "fifth"], "level": 0.8}}, "families": {"big": {"lgHorn": {"p": ["call", "slow"], "level": 1}, "lgPurr": {"p": "purr", "level": 0.5}}, "bird": {"lgFlute": {"p": ["hoot", "song"], "level": 1}, "lgBell": {"p": ["drops", "lone"], "level": 0.5}}, "canid": {"lgHowl": {"p": ["howl", "pair"], "level": 1}, "lgBell": {"p": "lone", "level": 0.4}}, "small": {"lgBell": {"p": ["rain", "drops"], "level": 0.9}, "lgGlass": {"p": "twinkle", "level": 0.5}}, "bug": {"lgBuzz": {"p": "swell", "level": 0.8}, "lgGlass": {"p": "twinkle", "level": 0.7}}, "snake": {"lgHiss": {"p": ["hiss", "rattle"], "level": 0.8}, "lgHorn": {"p": "slow", "level": 0.6}}, "amphibian": {"lgCroak": {"p": ["croak", "pulse"], "level": 0.9}, "lgFlute": {"p": "whistle", "level": 0.5}}, "bat": {"lgGlass": {"p": "twinkle", "level": 0.9}, "lgBell": {"p": "drops", "level": 0.5}}, "whistler": {"lgFlute": {"p": ["whistle", "song"], "level": 1}, "lgBell": {"p": "rain", "level": 0.4}}, "cat": {"lgPurr": {"p": "purr", "level": 0.9}, "lgHowl": {"p": "pair", "level": 0.6}}}},
+  "form": {
+    "_": "The melodies' form (Ed, 2026-10-09: \"Melodies should be 8 bars long, with a 32 bar ABAC structure, and include rests. The B and C melodies should be (simulated) female voice, with the A a random instrument from (pluck, lead, chip, voice, bell or horn).\"): a section's melodic parts say where the melody plays and how loud, and the form's line plays: A on one instrument the seed picks, B and C sung (the soprano), A coming back the same. Its chords (A's progression; B's ending on the question; C's opening as A's, then the question and the answer) are every part's. A knockdown re-seeds it all (Ed, the same day).",
+    "order": "ABAC", "phraseBars": 8, "chordBars": 2,
+    "a": ["forest", "home", "dark", "phonk"], "b": ["chip", "lift", "home"],
+    "question": 4, "answer": 0,
+    "instruments": ["pluck", "lead", "chiplead", "vox", "bell", "lgHorn"],
+    "sung": {"part": "sung", "patch": "soprano", "octave": 3},
+    "range": [-1, 8],
+    "cells": {
+      "slow": ["x-------x-------", "x---x---x-------", "x-----x-x-------", "x-------x---x---", "x---x-x-x-------", "....x---x-------"],
+      "sung": ["x-------x-------", "x---x---x-------", "x-----x-x-------", "x---x-x-x-------", "x-x-x---x-------", "....x---x---x---"],
+      "mid": ["x-x-x---x-x-x---", "x--x--x-x-------", "x---x-x-x--x----", "x-x---x-x---x-x-", "x--x--x---x-x---", "..x-x-x-x---x---"],
+      "busy": ["x-xxx-x-x-xxx-x-", "xxx-x-x-xxx-x---", "x-x-xx-xx-x-x---", "x-xxx-xxx-x-x-x-"]
+    },
+    "cadence": {
+      "slow": ["x-------........", "x---x---........", "x-x-x---........"],
+      "sung": ["x-------........", "x---x---........", "x-x-x---........"],
+      "mid": ["x-x-x-x-........", "x--x--x-........", "x---x-x-........"],
+      "busy": ["x-xxx-x-........", "xxx-x-x-........", "x-x-xx-x........"]
+    },
+    "busy": {"pluck": "mid", "lead": "mid", "chiplead": "busy", "vox": "mid", "bell": "mid", "lgHorn": "slow", "sung": "sung"}
+  },
   "arc": [
-    {"name": "Forest", "bpm": 120, "energy": 0.2, "scale": "dorian", "progression": "forest", "arrive": [["forest", 16]], "loop": [["forest", 16], ["forestBeat", 16], ["whisper", 8], ["forestBeat", 16]], "build": "rise", "variants": [[["forestArp", 16], ["forestBeat", 16], ["whisper", 8], ["forestStrings", 16]], [["forest", 16], ["forestStrings", 16], ["ether", 8], ["forestBeat", 16]]]},
-    {"name": "Clearing", "bpm": 122, "energy": 0.3, "scale": "dorian", "arrive": [["deep", 16]], "loop": [["deep", 16], ["breakdown", 8], ["deep", 16], ["forestBeat", 8]], "build": "rise", "variants": [[["deepWalk", 16], ["breakdown", 8], ["deep", 16], ["forestArp", 8]], [["deep", 16], ["ether", 8], ["deepWalk", 16], ["forestBeat", 8]]]},
-    {"name": "Lanterns", "bpm": 124, "energy": 0.45, "arrive": [["drop", 16]], "loop": [["deep", 16], ["breakdown", 8], ["drop", 16]], "build": "build", "variants": [[["deepWalk", 16], ["breakdown", 8], ["dropStrings", 16]], [["drop", 16], ["ether", 8], ["deep", 16]]]},
-    {"name": "Night drive", "bpm": 126, "energy": 0.6, "scale": "harmonicMinor", "arrive": [["darkDrop", 16]], "loop": [["dark", 16], ["whisper", 8], ["darkDrop", 16]], "build": "build", "variants": [[["darkBreaks", 16], ["whisper", 8], ["darkDrop", 16]], [["dark", 16], ["ether", 8], ["darkBreaks", 16]]]},
-    {"name": "Industrial", "bpm": 128, "energy": 0.7, "scale": "harmonicMinor", "transpose": 2, "arrive": [["industrialDrop", 16]], "loop": [["industrial", 16], ["ether", 8], ["industrialDrop", 16]], "build": "build", "variants": [[["industrialBreak", 16], ["ether", 8], ["industrialDrop", 16]], [["industrial", 16], ["whisper", 8], ["industrialBreak", 16]]]},
-    {"name": "Breakbeat", "bpm": 131, "energy": 0.8, "scale": "aeolian", "transpose": 3, "arrive": [["breaksDrop", 16]], "loop": [["breaks", 16], ["ether", 8], ["breaksDrop", 16]], "build": "build", "variants": [[["breaksDark", 16], ["ether", 8], ["breaksDrop", 16]], [["breaks", 16], ["whisper", 8], ["breaksDark", 16]]]},
-    {"name": "Frenzy", "bpm": 134, "energy": 0.88, "scale": "aeolian", "transpose": 5, "arrive": [["breaksDrop", 16]], "loop": [["breaks", 16], ["chipDrop", 8], ["industrialDrop", 16], ["ether", 4], ["breaksDrop", 16]], "build": "build", "variants": [[["breaksDark", 16], ["chipDrop", 8], ["industrialBreak", 16], ["ether", 4], ["breaksDrop", 16]]]},
-    {"name": "Phonk", "bpm": 137, "energy": 0.95, "scale": "phrygian", "arrive": [["phonkDrop", 16]], "loop": [["phonk", 16], ["whisper", 4], ["phonkDrop", 16]], "build": "build", "variants": [[["phonkGlide", 16], ["whisper", 4], ["phonkDrop", 16]], [["phonk", 16], ["ether", 4], ["phonkGlide", 16]]]},
-    {"name": "Finale", "bpm": 140, "energy": 1, "scale": "phrygian", "transpose": 1, "arrive": [["phonkDrop", 16]], "loop": [["phonkDrop", 16], ["breaksDrop", 8], ["industrialDrop", 8]], "build": "build", "buildBars": 4, "variants": [[["phonkDrop", 16], ["breaksDark", 8], ["industrialBreak", 8]], [["breaksDrop", 16], ["phonkGlide", 8], ["industrialDrop", 8]]]}
+    {"name": "Forest", "energy": 0.2, "progression": "forest", "arrive": [["forest", 16]], "loop": [["forest", 16], ["forestBeat", 16], ["whisper", 8], ["forestBeat", 16]], "build": "rise", "variants": [[["forestArp", 16], ["forestBeat", 16], ["whisper", 8], ["forestStrings", 16]], [["forest", 16], ["forestStrings", 16], ["ether", 8], ["forestBeat", 16]]]},
+    {"name": "Clearing", "energy": 0.3, "arrive": [["deep", 16]], "loop": [["deep", 16], ["breakdown", 8], ["deep", 16], ["forestBeat", 8]], "build": "rise", "variants": [[["deepWalk", 16], ["breakdown", 8], ["deep", 16], ["forestArp", 8]], [["deep", 16], ["ether", 8], ["deepWalk", 16], ["forestBeat", 8]]]},
+    {"name": "Lanterns", "energy": 0.45, "arrive": [["drop", 16]], "loop": [["deep", 16], ["breakdown", 8], ["drop", 16]], "build": "build", "variants": [[["deepWalk", 16], ["breakdown", 8], ["dropStrings", 16]], [["drop", 16], ["ether", 8], ["deep", 16]]]},
+    {"name": "Night drive", "energy": 0.6, "arrive": [["darkDrop", 16]], "loop": [["dark", 16], ["whisper", 8], ["darkDrop", 16]], "build": "build", "variants": [[["darkBreaks", 16], ["whisper", 8], ["darkDrop", 16]], [["dark", 16], ["ether", 8], ["darkBreaks", 16]]]},
+    {"name": "Industrial", "energy": 0.7, "arrive": [["industrialDrop", 16]], "loop": [["industrial", 16], ["ether", 8], ["industrialDrop", 16]], "build": "build", "variants": [[["industrialBreak", 16], ["ether", 8], ["industrialDrop", 16]], [["industrial", 16], ["whisper", 8], ["industrialBreak", 16]]]},
+    {"name": "Breakbeat", "energy": 0.8, "arrive": [["breaksDrop", 16]], "loop": [["breaks", 16], ["ether", 8], ["breaksDrop", 16]], "build": "build", "variants": [[["breaksDark", 16], ["ether", 8], ["breaksDrop", 16]], [["breaks", 16], ["whisper", 8], ["breaksDark", 16]]]},
+    {"name": "Frenzy", "energy": 0.88, "arrive": [["breaksDrop", 16]], "loop": [["breaks", 16], ["chipDrop", 8], ["industrialDrop", 16], ["ether", 4], ["breaksDrop", 16]], "build": "build", "variants": [[["breaksDark", 16], ["chipDrop", 8], ["industrialBreak", 16], ["ether", 4], ["breaksDrop", 16]]]},
+    {"name": "Phonk", "energy": 0.95, "arrive": [["phonkDrop", 16]], "loop": [["phonk", 16], ["whisper", 4], ["phonkDrop", 16]], "build": "build", "variants": [[["phonkGlide", 16], ["whisper", 4], ["phonkDrop", 16]], [["phonk", 16], ["ether", 4], ["phonkGlide", 16]]]},
+    {"name": "Finale", "energy": 1, "arrive": [["phonkDrop", 16]], "loop": [["phonkDrop", 16], ["breaksDrop", 8], ["industrialDrop", 8]], "build": "build", "buildBars": 4, "variants": [[["phonkDrop", 16], ["breaksDark", 8], ["industrialBreak", 8]], [["breaksDrop", 16], ["phonkGlide", 8], ["industrialDrop", 8]]]}
   ]
 }

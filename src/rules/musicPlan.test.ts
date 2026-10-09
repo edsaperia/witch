@@ -123,7 +123,7 @@ describe("music score", () => {
         for (let step = 0; step < 16 * 8; step++) {
           const notes = notesAt(style, plan, null, step, { seed: 42, siege: 0 });
           expect(notesAt(style, plan, null, step, { seed: 42, siege: 0 })).toEqual(notes);
-          const a = style.arc[arc], scale = style.scales[a.scale ?? style.scale];
+          const scale = style.scales[style.scale];
           for (const e of notes) {
             n++;
             expect(e.vel).toBeGreaterThan(0);
@@ -132,7 +132,7 @@ describe("music score", () => {
             if (e.midi !== null) {
               expect(e.midi).toBeGreaterThanOrEqual(21);
               expect(e.midi).toBeLessThanOrEqual(108);
-              const pc = (((e.midi - style.root - (a.transpose ?? 0)) % 12) + 12) % 12;
+              const pc = (((e.midi - style.root) % 12) + 12) % 12;
               expect(scale).toContain(pc);
             }
           }
@@ -206,24 +206,19 @@ describe("variety over a long run (overnight, 2026-10-06: a 30-minute run should
         // the same section's first block on two passes in a row, wherever it falls in each
         const [section, bars] = loops[pass % loops.length][0], next = loops[(pass + 1) % loops.length].find(([s]) => s === section);
         if (!next) continue;
-        const p0: BlockPlan = { section, start: 0, bars, wave: arc, arc, pass }, p1: BlockPlan = { ...p0, pass: pass + 1 };
+        // (a loop round later: the form's melody and chords run on through the music's bars, Ed's 32-bar ABAC, 2026-10-09)
+        const round = loops[pass % loops.length].reduce((n, [, b]) => n + b, 0);
+        const p0: BlockPlan = { section, start: 0, bars, wave: arc, arc, pass }, p1: BlockPlan = { ...p0, start: round, pass: pass + 1 };
         expect(block(p1), `${a.name} ${section} pass ${pass}`).not.toBe(block(p0));
       }
     }
   });
 
-  it("turns a new phrase every 16 bars through the boot's long intro, and leaves a wave's short blocks be", () => {
-    const bars = 128, intro: BlockPlan = { section: style.intro, start: 0, bars, wave: 0, arc: 0 };
-    // the melodies (motif parts) of 16 bars from bar `from`
+  it("plays the form's melody wherever a block falls (Ed, 2026-10-09: the 32-bar ABAC form, on the music's bars)", () => {
     const melody = (p: BlockPlan, from: number) => Array.from({ length: 16 * 16 }, (_, i) => notesAt(style, p, null, (p.start + from) * 16 + i, { seed: 7, siege: 0 })
-      .filter(e => style.parts[e.part].role === "motif").map(e => `${i}:${e.part}:${e.midi}`)).flat();
-    // late in the boot, with the pluck in: each 16 bars' melody mostly new (it was almost all the same before)
-    for (let k = 4; k < bars / 16 - 1; k++) {
-      const was = new Set(melody(intro, k * 16)), now = melody(intro, (k + 1) * 16);
-      expect(now.length).toBeGreaterThan(0);
-      expect(now.filter(x => was.has(x)).length / now.length, `phrase ${k + 1}`).toBeLessThan(0.5);
-    }
+      .filter(e => e.part === style.form!.sung.part || style.parts[e.part]?.role === "motif").map(e => `${i}:${e.part}:${e.midi}`)).flat();
     const short: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 };
+    expect(melody(short, 16).length).toBeGreaterThan(0);
     expect(melody(short, 16)).toEqual(melody({ ...short, start: 16, bars: 16 }, 0));
   });
 
