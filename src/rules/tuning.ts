@@ -302,6 +302,8 @@ export interface Tuning {
   scenery: { adaptive: boolean; fps: number; hysteresis: number; sustain: number; minRadius: number; shrink: number; grow: number; fade: number };
   stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; /** palette: every colour in turn; areaNeon: warm white and the area's own neon */ mode: "palette" | "areaNeon"; twinkle: number; chaseSpeed: number };
   /** The generated soundsystems (render/soundsystemGen.ts, art/soundsystemGen.js): sizes near to far by distance, the most they turn from facing us, ahead waves baked early. */
+  /** Blood trails (render/leash/blood.ts): prints and drops, their colour, fade, rate, pool cap and range. */
+  blood?: { on: boolean; style: "prints" | "prints+drops" | "drops"; colour: "red" | "neon"; fade: number; rate: number; cap: number; range: number };
   soundsystemGen?: { on: boolean; near: number; far: number; from: number; to: number; maxYaw: number; toward: boolean; ahead: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };

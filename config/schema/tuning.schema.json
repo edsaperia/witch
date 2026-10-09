@@ -6226,6 +6226,55 @@
       ],
       "additionalProperties": false
     },
+    "blood": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "style": {
+          "type": "string",
+          "enum": [
+            "prints",
+            "prints+drops",
+            "drops"
+          ]
+        },
+        "colour": {
+          "type": "string",
+          "enum": [
+            "red",
+            "neon"
+          ]
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "style",
+        "colour",
+        "fade",
+        "rate",
+        "cap",
+        "range"
+      ],
+      "additionalProperties": false
+    },
     "soundsystemGen": {
       "type": "object",
       "properties": {
@@ -9238,6 +9287,7 @@
     "alarms",
     "boot",
     "party",
+    "blood",
     "soundsystemGen",
     "stringLights",
     "waveNumbers",
