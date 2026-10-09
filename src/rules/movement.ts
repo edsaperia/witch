@@ -360,13 +360,14 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
   let s = c.swoop;
   if (!s) {
     // Up it goes, from wherever it stands, round its target the shorter way.
-    s = c.swoop = { phase: "circle", at: time, dur: 0.8 / V, h0: 0, h1: H, ang: Math.atan2(c.z - pz, c.x - px), dir: hash2(c.id, 3, 61) < 0.5 ? 1 : -1, left: 0, fx: 0, fz: 0, tx: 0, tz: 0, dx: 1, dz: 0, up: true };
+    // (each its own place round the circle and its own width of it, so a swarm spreads out round her rather than piling up)
+    s = c.swoop = { phase: "circle", at: time, dur: 0.8 / V, h0: 0, h1: H, ang: Math.atan2(c.z - pz, c.x - px) + (hash2(c.id, 5, 67) - 0.5) * 2, dir: hash2(c.id, 3, 61) < 0.5 ? 1 : -1, left: 0, fx: 0, fz: 0, tx: 0, tz: 0, dx: 1, dz: 0, up: true };
     c.moveReadyAt = Math.max(c.moveReadyAt ?? 0, time + 1.2 / V); // (a moment aloft before its first dive)
   }
   if (s.phase === "land") phase(s, "circle", time, 0.8 / V, H); // (back into the fight from its glide down)
   const circling = (slow: number) => {
     // Round its target, wavering (a bat's erratic flight), toward its place on the circle, a little faster than it goes round.
-    const wob = (mv.jitter ?? 0) * Math.sin(time * 2.7 + c.id * 1.3), r = R * (1 + wob);
+    const wob = (mv.jitter ?? 0) * Math.sin(time * 2.7 + c.id * 1.3), r = R * (0.8 + 0.4 * hash2(c.id, 7, 71)) * (1 + wob);
     s!.ang += (s!.dir * cs * slow * dt) / Math.max(1, r);
     const ox = px + Math.cos(s!.ang) * r, oz = pz + Math.sin(s!.ang) * r, dx = ox - c.x, dz = oz - c.z, d = Math.hypot(dx, dz), step = Math.min(d, cs * 1.8 * dt);
     if (d > 1e-6) { c.x += (dx / d) * step; c.z += (dz / d) * step; c.vx = (dx / d) * (step / dt); c.vz = (dz / d) * (step / dt); c.facing = dx >= 0 ? 1 : -1; }

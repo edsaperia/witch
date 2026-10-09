@@ -87,8 +87,8 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
   }, 60000);
 
   it("takes its turn in the dodge's cap on strikes at her (dodge.a: one at a time), each dive its own token", () => {
-    const { g, ids } = arena("bat*4@2"), bats = ids.map(i => g.creatures[i]), cap = TUNING.dodge.a.tokens;
-    expect(TUNING.dodge.a.on).toBe(true);
+    const { g, ids } = arena("bat*4@2"), bats = ids.map(i => g.creatures[i]), cap = TUNING.dodge!.a.tokens;
+    expect(TUNING.dodge!.a.on).toBe(true);
     let most = 0, dives = 0, was = new Set<number>();
     run(g, 25, idle, undefined, () => {
       const now = bats.filter(b => swoopStriking(b) && b.fight?.target?.kind === "witch");
