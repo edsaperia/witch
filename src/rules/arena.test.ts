@@ -17,7 +17,8 @@ describe("the debug arena (Stage 5)", () => {
     const ids = g.arena!.ids, hers = ids.filter(id => g.creatures[id].leashed), wild = ids.filter(id => !g.creatures[id].leashed);
     expect(hers.length).toBe(4); expect(wild.length).toBe(3);
     expect(g.leash.placed.length).toBe(4);
-    for (let i = 0; i < 15 / STEP; i++) stepGame(g, idle, STEP);
+    // 30 s: on this seed's map (legends.share 0.2) the ravens kite and dodge (#587) a while before the first hit lands.
+    for (let i = 0; i < 30 / STEP; i++) stepGame(g, idle, STEP);
     const hurt = ids.filter(id => { const c = g.creatures[id]; return c.hp !== undefined || c.fleeUntil || c.gone; });
     expect(hurt.length).toBeGreaterThan(0);
     // Again: the last lot go, a fresh lot comes.
