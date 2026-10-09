@@ -56,7 +56,7 @@ export class ActionBar {
       if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(232,180,106,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
       // E puts down / picks up, only on the ground; Q cycles, with two or more to cycle (Ed, 2026-10-06).
       if (s.action === "sigil") { el.style.opacity = W.body.mode === "ground" ? "1" : "0.5"; return; }
-      if (s.action === "cycle") { el.style.opacity = W.leash.stack.length > 1 ? "1" : "0.5"; return; }
+      if (s.action === "cycle") { el.style.opacity = W.leash.stack.length + W.leash.relics.length > 1 ? "1" : "0.5"; return; }
       // The up/down slot shows which way Space takes her now.
       if (s.action === "rise") {
         const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;

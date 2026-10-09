@@ -19,7 +19,7 @@ import { drawSigil, sigilColour, LEGEND_SCALE } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 
-import { blocked, talkTime } from "../rules/leash";
+import { blocked, stackBottom, talkTime } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { hasRune, runeNear } from "../rules/creatureStates";
@@ -35,7 +35,7 @@ import { drawCombat } from "./leash/combat";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
 import { drawRespawn } from "./leash/respawn";
 import { drawDeckBpm } from "./leash/deckBpm";
-import { drawBond, drawStack, drawStrain } from "./leash/stack";
+import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
@@ -374,7 +374,12 @@ export class LeashView {
         if (e.kind === "placed") this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 0.62, g: 0.4, b: 0.2, seed: 0, size: R * 0.8, n: 20, dot: 0.8 }); // (a deep amber: its dots overlap and add up, and it mustn't reach white)
         this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: e.kind === "placed" ? 0.9 : 0.7, r: col.r, g: col.g, b: col.b, seed: e.at * 53 + e.id!, size: e.kind === "placed" ? R * 0.35 : R * 0.25, tx: e.kind === "placed" ? 3 : 4.5 });
       }
-      if (e.kind === "cycled" && e.id !== undefined) this.cycledAt.set(e.id, time);
+      if (e.kind === "relicDropped") { // (a flask's sigil put down: the same amber ring, and gold motes)
+        const col = (this.slotOf("relic", 0), this.colours.get("relic")!);
+        this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 0.62, g: 0.4, b: 0.2, seed: 0, size: 4.8, n: 20, dot: 0.8 });
+        this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: 0.9, r: col.r, g: col.g, b: col.b, seed: e.at * 53 + e.id, size: 2, tx: 3 });
+      }
+      if (e.kind === "cycled" && e.id !== undefined) this.cycledAt.set(stackKey(e.relic ? "relic" : "creature", e.id), time);
     }
     this.bursts = this.bursts.filter(b => time - b.at < 1.1);
     for (const [id, at] of this.joined) if (time - at > 1) this.joined.delete(id);
@@ -449,9 +454,13 @@ export class LeashView {
 
     drawProjection(this, time, dot); // (the sigils over the canopy from the treetops: render/leash/projection.ts)
 
-    // The ghost: where the bottom sigil would land; none where it can't (Ed, 2026-10-07: "no visual feedback when you can't put
+    // The ghost: where the bottom sigil would land; none where it can't (a relic's at the bottom: its own) (Ed, 2026-10-07: "no visual feedback when you can't put
     // down a sigil, just a refusal sound": the "fizzled" leash event, platform/audio).
-    if (w.mode === "ground" && s.stack.length && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
+    const bottomRelic = stackBottom(s)?.kind === "relic";
+    if (w.mode === "ground" && bottomRelic && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !g.relics.some(r => (r.state === "lying" || r.state === "dropped") && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) {
+      const col = (this.slotOf("relic", 0), this.colours.get("relic")!); // (a flask's at the bottom: its ghost, Ed 2026-10-08: "it's what you put down when you press e")
+      this.flat.add(w.x, 0, w.z, 3.4, this.uv(this.slotOf("relic", 0)), col.r, col.g, col.b, 0.22);
+    } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const sg = this.sigilOf(c);
       this.flat.add(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
@@ -463,7 +472,8 @@ export class LeashView {
     // over her hat for each she carries.
     const aloft = w.lift > 0.5;
     for (const r of g.relics) {
-      if (r.state !== "lying" || Math.abs(r.x - w.x) > 400 || Math.abs(r.z - w.z) > 400) continue;
+      const dropped = r.state === "dropped"; // (put down by her off any legend's clearing: its sigil alone, where she left it)
+      if ((r.state !== "lying" && !dropped) || Math.abs(r.sx - w.x) > 400 || Math.abs(r.sz - w.z) > 400) continue;
       // Its relic sigil on the ground south of it, written like any placed sigil (Ed, 2026-10-06:
       // stand on it and press the sigil button to pick the relic up), gold.
       {
@@ -471,22 +481,12 @@ export class LeashView {
         this.flat.add(r.sx, 0.02, r.sz, 3.4, this.uv(this.slotOf("relic", 0)), col.r * pulse, col.g * pulse, col.b * pulse, 1);
         this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38);
       }
-      if (!relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
+      if (dropped || !relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
       for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; this.standing.add(r.x + Math.cos(a) * 2.5, 0.4 + (i % 3) * 0.5, r.z + Math.sin(a) * 1.8, 1.2, dot, 1, 0.78, 0.3, 0.8); }
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
       this.standing.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
     }
-    // The relic sigils she carries (Ed's playtest, 2026-10-07: "the flask sigil is too small"; it was a 0.5 m glint): each its
-    // own flask sigil, as big as an adult's sigil in her stack, in its gold, beside the stack over her hat, with a soft halo
-    // and a slow twinkle, so the silhouette reads at the game's pixel size.
-    if (s.relics.length) {
-      const slot = this.slotOf("relic", 0), col = this.colours.get("relic")!, size = 2.8 * t.stack.scale, uv = this.uv(slot);
-      s.relics.forEach((id, i) => {
-        const x = w.x + size * (1.1 + i * 1.05), y = hatTop + size * 0.75 + Math.sin(time * 1.6 + id) * 0.08, tw = 0.88 + 0.12 * Math.sin(time * 3 + id);
-        this.standing.add(x, y, w.z, size * 1.6, dot, col.r, col.g, col.b, 0.22 * tw);
-        this.standing.add(x, y, w.z, size, uv, col.r * tw, col.g * tw, col.b * tw, 1);
-      });
-    }
+    // (The relic sigils she carries are in her stack: render/leash/stack.ts.)
 
     // The ruts of legends' long charges, fading.
     for (const [id, ruts] of this.ruts) {
