@@ -8,6 +8,7 @@ import { canopyShown, witchHeight } from "../../rules/witch";
 import { groundHeight, placed } from "../height";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { SPRITE_UNIFORMS } from "../sprites";
+import { layerOff } from "../layers";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
 export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void {
@@ -67,7 +68,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   // to a lantern's few metres (treetopReach), dimmed (treetopGlow), eased in as she rises; the canopy stays moonlit, warm
   // only close round her.
   const NL = t.nightLight, rise = Math.max(0, Math.min(1, g.witch.lift));
-  if (NL) {
+  if (NL && !layerOff("nightlight")) { // (?layers=-nightlight: render/layers.ts)
     const R0 = Math.min(LIGHT_UNIFORMS.uGlowR.value, NL.maxReach); // (never more than a lantern's metres, however far the camera: stargazing, zoomed out)
     const R1 = R0 + (Math.min(R0, NL.treetopReach) - R0) * rise;
     LIGHT_UNIFORMS.uGlowR.value = R1 + (Math.min(R1, NL.gazeReach ?? R1) - R1) * coastView(g.camera).gaze; // (lying on the sand to stargaze, the camera low and far: her own small pool, eased with the bend)

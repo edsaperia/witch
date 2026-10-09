@@ -61,6 +61,8 @@ import { hasRune } from "../rules/creatureStates";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
+import { layersAtStart, layersEachFrame } from "./layers";
+import { drawCamReadout } from "./camReadout";
 import { LightRings } from "./lightRings";
 import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
@@ -138,7 +140,7 @@ export class View {
   /** Real clouds over the bend, with lightning. */
   clouds: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
-  private smoke: Smoke;
+  smoke: Smoke;
   /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
   private mounds: number[] = [];
   private moundsAt = { x: Infinity, z: Infinity };
@@ -196,13 +198,13 @@ export class View {
   leashView: LeashView;
   private lasers: Lasers;
   /** The soundsystems' sky sigils (render/hologram.ts), in place of their laser shows (Ed, 2026-10-08). */
-  private holograms: SigilHolograms;
+  holograms: SigilHolograms;
   /** The wave's celebrations: fireworks over a soundsystem already cleared (render/fireworks.ts). */
   readonly fireworks: Fireworks;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   ley: LeyLines;
   /** The sleeping legends' clearings: their twilight and rising motes. */
-  private glades: Glades;
+  glades: Glades;
   /** Will-o'-the-wisps drifting through the wild areas (render/wisps.ts). */
   private wisps: Wisps | null = null;
   private gladeTime = 0;
@@ -281,6 +283,8 @@ export class View {
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
    *  just vanished with a red frame for a second. */
   debugCull = false;
+  /** ?debug=cam: the camera readout (render/camReadout.ts). */
+  debugCam = false;
   /** ?quick=1, for the quick smoke test in CI: no drawing the rest of the map's art ahead of need. */
   quick = false;
   ghosts: { x: number; z: number; h: number; until: number }[] = [];
@@ -295,6 +299,7 @@ export class View {
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
     const t = game.tuning;
+    layersAtStart(t); // (?layers=: render/layers.ts)
     this.budget = newBudget(t);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(1);
@@ -912,6 +917,8 @@ export class View {
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
     if (t.bare) this.hideForBare();
+    if (this.debugCam) drawCamReadout(this);
+    layersEachFrame(this); // (?layers=-name: a layer turned off, to find what draws a stray edge: render/layers.ts)
     this.post.render(this.scene, this.camera);
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
