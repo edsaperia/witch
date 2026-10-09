@@ -10,7 +10,7 @@ import { LEGEND, type Creature } from "./creatures";
 import { type Cell } from "./partition";
 import { enrage, foes, huntsWitch, stateOf } from "./creatureStates";
 import { LEGENDS } from "./legends";
-import { FIGHT, landSwoop, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap, stepSwoop } from "./movement";
+import { FIGHT, landSwoop, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap, stepSwoop, swoopStriking } from "./movement";
 import { type Tuning } from "./tuning";
 import { isHomeKey } from "./speakers";
 import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attackOf, attackNamed, type CombatWorld, type Target } from "./combat/data";
@@ -125,7 +125,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     onHer.set(tg.id, (onHer.get(tg.id) ?? 0) + 1);
     // (winding up, lunging, or let go within the last dodge.a.gap seconds: so strikes at her come no faster than a dodge can answer)
     const f = o.fight!, cd = attackOf(o.species, o.level, data)?.attack.cooldown ?? 0;
-    if (f.windupUntil > 0 || f.lunge || time - (f.readyAt - cd) < DA.gap) striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1);
+    if (f.windupUntil > 0 || f.lunge || swoopStriking(o) || time - (f.readyAt - cd) < DA.gap) striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1); // (a swoop telegraphing, diving or at its bottom too: rules/movement.ts)
   }
   /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. */
   const token = (tg: Target): boolean => {
@@ -304,7 +304,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         // A wild flyer (the owl, the bat, the raven: hotel's phase-3 flyer table): it circles out of reach, telegraphs, dives along a
         // line at where its target will be and pulls back up; only in the dive and at its bottom can it be hit or invited.
         const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
-        const r = stepSwoop(c, P.move, p.x, p.z, time >= f.readyAt, time, dt, tv?.vx ?? 0, tv?.vz ?? 0);
+        const r = stepSwoop(c, P.move, p.x, p.z, time >= f.readyAt, time, dt, tv?.vx ?? 0, tv?.vz ?? 0, () => token(f.target!)); // (each dive takes a strike's token at her: dodge.a)
         if (r === "tele") { f.readyAt = time + A.cooldown; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
         if (r === "dive") s.events.push({ kind: "swooped", x: c.x, z: c.z, at: time, id: c.id });
         if (r === "low" && c.swoop?.hit) {

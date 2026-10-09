@@ -350,10 +350,12 @@ export function landSwoop(c: Creature, time: number): void {
 }
 
 /** One step of a wild flyer's swoop at its target (px, pz), moving at (tvx, tvz). `ready`: its attack is ready (a new bout may start).
- *  `may`: it may strike now (each dive's telegraph waits for it: the dodge work's cap on strikes at her at once, #587).
+ *  `may`: it may strike now (each dive's telegraph waits for it: the dodge work's cap on strikes at her at once, #587); a
+ *  function is asked only as a telegraph would start (so a token is taken only then).
  *  Returns what happened this step: "tele" as it starts its telegraph, "dive" as it lets go, "low" while it can touch her (the dive and
  *  the bottom), else "air". */
-export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0, may = true): "tele" | "dive" | "low" | "air" {
+export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0, may: boolean | (() => boolean) = true): "tele" | "dive" | "low" | "air" {
+  const mayNow = () => (typeof may === "function" ? may() : may); // (asked only as a telegraph would start: the cap's token is taken then)
   const S = FIGHT.scale, V = FIGHT.speed, H = (mv.height ?? 8) * S, R = (mv.radius ?? 12) * S, cs = (mv.circle ?? 8) * V;
   let s = c.swoop;
   if (!s) {
@@ -374,9 +376,9 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
   switch (s.phase) {
     case "circle": {
       circling(1);
-      if (!done || !may) return "air";
-      if (s.left > 0) { phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; } // (the rest of its bout, held up for the cap)
-      if (ready && time >= (c.moveReadyAt ?? 0)) { s.left = Math.max(1, Math.round(mv.dives ?? 1)); phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
+      if (!done) return "air";
+      if (s.left > 0) { if (!mayNow()) return "air"; phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; } // (the rest of its bout, held up for the cap)
+      if (ready && time >= (c.moveReadyAt ?? 0) && mayNow()) { s.left = Math.max(1, Math.round(mv.dives ?? 1)); phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
       return "air";
     }
     case "climb": {
@@ -385,7 +387,7 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
       c.x += s.dx * sp * dt; c.z += s.dz * sp * dt; c.vx = s.dx * sp; c.vz = s.dz * sp; c.moving = true; c.walk += dt * 6;
       if (done) {
         s.ang = Math.atan2(c.z - pz, c.x - px);
-        if (s.left > 0 && may) { phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
+        if (s.left > 0 && mayNow()) { phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
         phase(s, "circle", time, 0.01, H); if (s.left <= 0) c.moveReadyAt = time + mv.cooldown / V;
       }
       return "air";

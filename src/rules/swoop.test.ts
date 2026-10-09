@@ -86,6 +86,20 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
     expect(teled).toBe(true); expect(swoopStriking(b)).toBe(true);
   }, 60000);
 
+  it("takes its turn in the dodge's cap on strikes at her (dodge.a: one at a time), each dive its own token", () => {
+    const { g, ids } = arena("bat*4@2"), bats = ids.map(i => g.creatures[i]), cap = TUNING.dodge.a.tokens;
+    expect(TUNING.dodge.a.on).toBe(true);
+    let most = 0, dives = 0, was = new Set<number>();
+    run(g, 25, idle, undefined, () => {
+      const now = bats.filter(b => swoopStriking(b) && b.fight?.target?.kind === "witch");
+      most = Math.max(most, now.length);
+      for (const b of bats) if (b.swoop?.phase === "dive" && !was.has(b.id)) dives++;
+      was = new Set(bats.filter(b => b.swoop?.phase === "dive").map(b => b.id));
+    });
+    expect(dives).toBeGreaterThan(3); // (they do strike, in turn)
+    expect(most).toBeLessThanOrEqual(cap);
+  }, 60000);
+
   it("hers don't swoop: a leashed owl fights on the ground as before", () => {
     const g = newGame(5, TUNING);
     g.clock.paused = false; g.party.paused = true;
