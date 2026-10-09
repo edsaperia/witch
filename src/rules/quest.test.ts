@@ -86,8 +86,9 @@ describe("the first quest (Ed, 2026-10-04)", () => {
 
 describe("legends.questCap: dreams from anywhere but the truly far (Ed, 2026-10-06: quests are a gamble)", () => {
   /** Each legend's distance (in areas) to the nearest area of the kind it dreams of, and its quest's far. */
+  // (half the areas with legends, as when this was written: enough dreams to see the spread, whatever legends.share, Ed 2026-10-08)
   const dists = (questCap: number, seed = 8919) => {
-    const map = generateMap(seed, withTuning({ legends: { ...TUNING.legends, questCap, questLater: false } })), out: { d: number; far: number }[] = [];
+    const map = generateMap(seed, withTuning({ legends: { ...TUNING.legends, questCap, questLater: false, share: 0.5 } })), out: { d: number; far: number }[] = [];
     for (const L of spawnCreatures(map).filter(c => c.boss && c.quest)) {
       const s = map.siteOf(L.cell[0], L.cell[1]);
       out.push({ far: L.quest!.far!, d: Math.min(...map.cells.filter(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature === L.quest!.species).map(([cx, cy]) => { const t = map.siteOf(cx, cy); return Math.hypot(t.x - s.x, t.z - s.z); })) / map.areaSize });

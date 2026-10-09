@@ -92,12 +92,15 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
     const start = JSON.stringify(b), t0 = g.clock.time, commit = 0.18;
     for (const lock of [commit, 0]) {
       Object.assign(b, JSON.parse(start));
-      let t = t0, px = w.x, r = "";
-      // To the telegraph, then on to its end; she blinks 10 m sideways just after the aim would lock.
-      for (let i = 0; i < 3 / STEP && r !== "tele"; i++, t += STEP) r = stepSwoop(b, mv, px, w.z, true, t, STEP, 0, 0, true, lock);
+      let t = t0, px = w.x, pz = w.z, r = "";
+      // To the telegraph, then on to its end; she blinks 10 m sideways (across its line to her) just after the aim would lock.
+      for (let i = 0; i < 3 / STEP && r !== "tele"; i++, t += STEP) r = stepSwoop(b, mv, px, pz, true, t, STEP, 0, 0, true, lock);
       const end = b.swoop!.at + b.swoop!.dur;
-      for (let i = 0; i < 3 / STEP && r !== "dive"; i++, t += STEP) { if (t > end - commit + 0.05) px = w.x + 10; r = stepSwoop(b, mv, px, w.z, true, t, STEP, 0, 0, true, lock); }
-      const s = b.swoop!, miss = Math.abs((px - s.fx) * s.dz - (w.z - s.fz) * s.dx);
+      for (let i = 0; i < 3 / STEP && r !== "dive"; i++, t += STEP) {
+        if (t > end - commit + 0.05 && px === w.x) { const d = Math.hypot(w.x - b.x, w.z - b.z) || 1; px = w.x - ((w.z - b.z) / d) * 10; pz = w.z + ((w.x - b.x) / d) * 10; }
+        r = stepSwoop(b, mv, px, pz, true, t, STEP, 0, 0, true, lock);
+      }
+      const s = b.swoop!, miss = Math.abs((px - s.fx) * s.dz - (pz - s.fz) * s.dx);
       if (lock) expect(miss).toBeGreaterThan(5); else expect(miss).toBeLessThan(1);
     }
   }, 60000);
