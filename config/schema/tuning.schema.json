@@ -6623,6 +6623,43 @@
             "ease"
           ],
           "additionalProperties": false
+        },
+        "circle": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            },
+            "frame": {
+              "type": "number",
+              "minimum": 0
+            },
+            "look": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "angle",
+            "distance",
+            "ease",
+            "frame",
+            "look"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -6640,7 +6677,8 @@
         "startZoom",
         "shake",
         "follow",
-        "intro"
+        "intro",
+        "circle"
       ],
       "additionalProperties": false
     },

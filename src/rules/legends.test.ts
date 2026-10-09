@@ -450,3 +450,19 @@ describe("legends going back to sleep (Ed, 2026-10-06)", () => {
     expect(L.legendState).toBe("asleep");
   }), 60000);
 });
+
+// Ed, 2026-10-09: "sleeping legends seem to change direction to face you, which doesn't make sense as they are sleeping".
+describe("a sleeping legend's facing", () => {
+  it("stays as it was laid while she walks round it", () => {
+    const { g, L } = beside();
+    const facing = L.facing, away = L.away;
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2;
+      g.witch = { ...g.witch, x: L.x + Math.cos(a) * 6, z: L.z + Math.sin(a) * 6, vx: 0, vz: 0 };
+      run(g, 0.5);
+      expect(L.legendState).toBe("asleep");
+      expect(L.facing).toBe(facing);
+      expect(L.away).toBe(away);
+    }
+  });
+});
