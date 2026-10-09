@@ -7,7 +7,10 @@ import { TUNING, withTuning, type Tuning } from "./tuning";
 // the moment it feels like they always stop short. They should be damaging whenever they're touched
 // while in attack mode. Charging creatures should have much more momentum, travelling in wide arcs."
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, brake: 1, contact: false, chase: 0, miss: 0 }, leap: { reach: 1, through: -1.5, contact: false, lead: 0 } } });
+const D = TUNING.dodge!;
+/** The dodge changes off (Ed, 2026-10-08; tuning dodge): the heavies' homing run and committed strikes as before. */
+const NO_DODGE = withTuning({ dodge: { a: { ...D.a, on: false }, b: { ...D.b, on: false }, c: { ...D.c, on: false } } });
+const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, brake: 1, contact: false, chase: 0, miss: 0 }, leap: { reach: 1, through: -1.5, contact: false, lead: 0 } }, dodge: NO_DODGE.dodge });
 
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
 function quiet(t: Tuning = TUNING): Game {
@@ -127,8 +130,12 @@ describe("walking away is no escape (Ed, 2026-10-06: \"Charging creatures can ea
     for (const sp of ["boar", "stag"]) for (const d of [15, 30]) expect(escape(sp, d, "away"), `${sp} ${d} m`).toBe(true);
     expect(escape("boar", 30, "away", OLD)).toBe(false); // (as it was: she walked clear)
   }, 120000);
-  it("still misses her if she steps out of its lane at its tell", () => {
-    for (const sp of ["boar", "stag"]) expect(escape(sp, 25, "aside"), sp).toBe(false);
+  it("still misses her if she steps out of its lane at its tell (with the dodge changes off: a heavy's run swings after her, so a blink beats it, below)", () => {
+    for (const sp of ["boar", "stag"]) expect(escape(sp, 25, "aside", NO_DODGE), sp).toBe(false);
+  }, 120000);
+  it("runs her down as she walks aside, a heavy's lane swinging after her (Ed, 2026-10-09: \"heavies can have a higher top speed, but slow acceleration\")", () => {
+    expect(D.a.heavy.species).toContain("boar");
+    expect(escape("boar", 25, "aside")).toBe(true);
   }, 120000);
   it("is beaten by a blink at the right moment, sideways or straight through, and it stands winded after (Ed, 2026-10-06: \"reward skilful use of blink\")", () => {
     expect(TUNING.fight.charge.miss).toBeGreaterThan(0);
@@ -142,7 +149,7 @@ describe("walking away is no escape (Ed, 2026-10-06: \"Charging creatures can ea
         if (coming && !blinked && near < (how === "side" ? 8 : 5)) { blinked = true; const ax = c.x - g.witch.x, az = c.z - g.witch.z, ad = Math.hypot(ax, az) || 1; ctl = how === "side" ? { ...idle, moveZ: 1, dash: true } : { ...idle, moveX: ax / ad, moveZ: az / ad, dash: true }; }
         stepGame(g, ctl, STEP);
         if (c.stunUntil !== undefined && g.clock.time < c.stunUntil) winded = true;
-        if (ran && !c.charge && !winded) break;
+        if (ran && !c.charge) break; // (its charge over: what it does next is another fight, committed strikes and all, tuning dodge.a)
       }
       expect(blinked, sp).toBe(true);
       expect(W.health.hp, `${sp}: blinked ${how}`).toBe(hp0);

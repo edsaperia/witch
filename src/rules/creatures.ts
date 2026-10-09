@@ -95,7 +95,7 @@ export interface Creature {
   lairZ?: number;
   /** A legend gone back to sleep away from where it lay, walking home to lie down there (Ed, 2026-10-06; rules/legends.ts). */
   homing?: boolean;
-  charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number };
+  charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number; /** a heavy running her down (tuning dodge.a.heavy.home): its lane swings toward her at this many radians a second as it runs */ home?: number };
   /** Dug in (a badger) or braced behind its tail (a beaver) until then: rooted, taking less. */
   dug?: number;
   /** A party animal travelling (rules/travel.ts: far from her on the ground or its sigil, quiet both
