@@ -87,7 +87,10 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
   const list = w.mode !== "ground" || w.lift > 0.5 ? [] : lv.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
   let used = 0;
   for (const { c } of list) {
-    const y = Math.min(lv.tops.get(c.id) ?? 2, 6) + 0.5; // (6 m: 4.5 before the creatures grew, Ed 2026-10-08) (low over it, so its puffs rise from just above the sleeper's head: the art director, #238)
+    // Its puffs rise from just above the sleeper's head (the art director, #238), its whole height: held to 4.5 m before, a big
+    // legend's bubble sat on its back (Ed, 2026-10-08: "their speech bubble and the helper text obscure them").
+    const head = lv.tops.get(c.id) ?? 2, y = head + 0.4;
+    const B = legendBounds(lv, camera, c.x, c.z, head, lv.halfW.get(c.id) ?? 1.5, width, height);
     placed(lv.v.set(c.x, y, c.z)).project(camera);
     if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
     // Restless (#87: its area has none of its kind), the dream turns to a nightmare (Ed, 2026-10-05):
@@ -117,7 +120,14 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
     else showSymbol(el, S, "sigil", `${q.species}:${q.level}`, () => sigilCanvas(q.species, q.level, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r));
     const bx = ((lv.v.x + 1) / 2) * width, ly = ((1 - lv.v.y) / 2) * height;
     const shake = faces ? snap(ire * 3 * Math.sin(performance.now() * 0.05 + c.id)) : 0; // (a nightmare shakes, a whole grid step)
-    const left = snap(bx - (S.foot.x + 0.5) * GRID) + shake, top = Math.max(snap(ly - (S.foot.y + 0.5) * GRID), 57); // (its smallest puff over the sleeper; kept on screen when she's close, below the top edge's cues)
+    let left = snap(bx - (S.foot.x + 0.5) * GRID) + shake, top = snap(ly - (S.foot.y + 0.5) * GRID); // (its smallest puff over the sleeper)
+    if (top < 57) {
+      // no room over it on screen (close, or a big legend): kept below the top edge's cues, beside its body rather than over it,
+      // its puffs reaching in from the left (the side they trail from), or from the right when there's no room on the left
+      top = 57;
+      const cw = (S.box.x + S.box.n) * GRID;
+      left = B.left - cw - GRID * 2 >= 8 ? snap(B.left - cw - GRID * 2) : snap(Math.min(width - S.w * GRID - 8, B.right + GRID * 2 - S.box.x * GRID));
+    }
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
     tiltFilter(el, top + S.box.y * GRID + S.box.n * GRID * 0.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
@@ -137,7 +147,10 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
       const cv = cap.firstChild as HTMLCanvasElement, text = cap.lastChild as HTMLElement, akey = wy.word === "here" ? "here" : `${wy.point}:${rgb}`;
       if (cv.dataset.k !== akey) { cv.dataset.k = akey; compassArrow(cv, wy.word === "here" ? -1 : wy.point, rgb); }
       if (text.textContent !== wy.word) text.textContent = wy.word;
-      cap.style.left = `${left + snap(S.box.x * GRID + S.box.n * GRID * 0.4)}px`; cap.style.top = `${top + snap(S.box.y * GRID + S.box.n * GRID + GRID * 6)}px`; // (under the big cloud, right of its puffs, on the grid)
+      // (beside the big cloud, level with it, on the grid: under it, it fell on the legend's head)
+      const right = left + (S.box.x + S.box.n) * GRID + GRID * 3, capW = 57 + wy.word.length * 9; // (its arrow, padding and text, about: no layout read a frame)
+      cap.style.left = `${right + capW <= width - 8 ? right : Math.max(8, snap(left + S.box.x * GRID - GRID * 3 - capW))}px`;
+      cap.style.top = `${top + snap(S.box.y * GRID + S.box.n * GRID * 0.5) - 18}px`;
       cap.style.display = "";
     } else cap.style.display = "none";
     used++;
@@ -147,6 +160,14 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
 }
 
 /** A thought bubble's element: its cloud on one canvas (a cloud pixel to GRID screen px) and its symbols over the big cloud. */
+/** A legend's bounds on screen (pixels): its feet to its head (metres over the ground), half its drawn width either side. */
+export function legendBounds(lv: LeashView, camera: THREE.Camera, x: number, z: number, head: number, half: number, width: number, height: number): { left: number; right: number; top: number; bottom: number } {
+  const R = SPRITE_UNIFORMS.uRight.value, sx = (v: THREE.Vector3) => ((v.x + 1) / 2) * width, sy = (v: THREE.Vector3) => ((1 - v.y) / 2) * height;
+  placed(lv.v.set(x - R.x * half, 0, z - R.z * half)).project(camera); const l = sx(lv.v), b = sy(lv.v);
+  placed(lv.v.set(x + R.x * half, head, z + R.z * half)).project(camera); const r = sx(lv.v), t = sy(lv.v);
+  return { left: Math.min(l, r), right: Math.max(l, r), top: Math.min(t, b), bottom: Math.max(t, b) };
+}
+
 function thoughtEl(cls: string): HTMLElement {
   const el = document.createElement("div"), cv = document.createElement("canvas");
   el.className = cls; cv.className = "cloud"; el.append(cv);
@@ -318,7 +339,18 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
   if (left + w > width - 8) left = cx - rx - gap - w; // (off the right edge: the other side)
   if (left < 8) left = width - w - 24; // (the circle wider than the screen: by its right edge)
   left = Math.max(8, Math.min(width - w - 8, left));
-  const top = Math.max(56, Math.min(height - h - 70, Math.max(height * .3, Math.min(height * .6, cy)) - h / 2)); // (about level with the circle's middle, clear of the clock and the action bar)
+  let top = Math.max(56, Math.min(height - h - 70, Math.max(height * .3, Math.min(height * .6, cy)) - h / 2)); // (about level with the circle's middle, clear of the clock and the action bar)
+  // never over the legend itself (Ed, 2026-10-08: "the helper text obscure[s] them"): if it lands on its body (and a little
+  // round it), to its other side, else above or below it, wherever there's room
+  if (!c.gone) {
+    const B = legendBounds(lv, camera, c.x, c.z, lv.tops.get(c.id) ?? 3, lv.halfW.get(c.id) ?? 2, width, height), m = 12;
+    const hits = (L: number, T: number) => L < B.right + m && L + w > B.left - m && T < B.bottom + m && T + h > B.top - m;
+    if (hits(left, top)) {
+      const tries: [number, number][] = [[B.right + m + gap, top], [B.left - m - gap - w, top], [left, B.bottom + m], [left, B.top - m - h]];
+      const ok = tries.map(([L, T]) => [Math.max(8, Math.min(width - w - 8, L)), Math.max(56, Math.min(height - h - 70, T))] as [number, number]).find(([L, T]) => !hits(L, T));
+      if (ok) [left, top] = ok;
+    }
+  }
   el.style.left = `${Math.round(left)}px`; el.style.top = `${Math.round(top)}px`;
   el.style.opacity = lv.circleFade.toFixed(2);
 }
