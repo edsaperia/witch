@@ -57,7 +57,13 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
     // getting up: no fight taken up before wake is over
     const wake = TUNING.naps!.wake;
     run(g, wake * 0.6, () => { for (const c of sleepers) expect(c.fight?.target ?? null).toBeNull(); });
-    run(g, 20, () => { for (const c of wildHere(g, key).filter(notBaby)) expect(c.asleep, "no new nap with her on the ground here").toBeFalsy(); });
+    let here = 0;
+    run(g, 20, () => {
+      if (cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key) return; // (a blow can knock her over its border: committed strikes, tuning dodge.a)
+      here++;
+      for (const c of wildHere(g, key).filter(notBaby)) expect(c.asleep, "no new nap with her on the ground here").toBeFalsy();
+    });
+    expect(here, "she was there a while").toBeGreaterThan(60);
   }, 120_000);
 
   it("keeps them asleep with her in the treetops right over them, or on the ground in the next area, close to the border", () => {

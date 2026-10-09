@@ -11,7 +11,7 @@ import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, h
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor, type Creature } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
-import { dashing, newDash, startDash } from "./dash";
+import { blinkGone, dashing, newDash, startDash } from "./dash";
 import { newParty, routeOf, spreadWave, stepParty, spawnMarkers, nextWave, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
 import { countScale, routeIndex, routePopulation, startCount } from "./growth";
 import { segmentsCross, stringsFor } from "./strings";
@@ -1683,7 +1683,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(true); // gone: not drawn, not hit
-    run(g, Math.ceil(g.buffs.tuning.dash.gone / STEP) + 1); // (the home legend's buff may be Curl)
+    run(g, Math.ceil(blinkGone(g.buffs.tuning) / STEP) + 1); // (the home legend's buff may be Curl; committed strikes make it longer)
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(false);
     const z1 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
@@ -1757,7 +1757,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     const before = hp();
     hitWitch(g, 0, g.clock.time);
     expect(hp()).toBe(before);
-    run(g, Math.ceil(g.buffs.tuning.dash.gone / STEP) + 1); // (the home legend's buff may be Curl)
+    run(g, Math.ceil(blinkGone(g.buffs.tuning) / STEP) + 1); // (the home legend's buff may be Curl; committed strikes make it longer)
     hitWitch(g, 0, g.clock.time + 0.01); // back: hittable as ever
     expect(hp()).not.toBe(before);
   });

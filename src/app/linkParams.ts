@@ -97,6 +97,13 @@ export function tuningFromLink(params: URLSearchParams) {
   if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
   if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };
   if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
+  // ?dodge=a,b,c: which of the dodge changes are on (Ed, 2026-10-08; tuning dodge: a committed strikes, b predictive aim,
+  // c packs cutting off her retreat), the rest off; ?dodge=0 none of them.
+  const dodgeParam = params.get("dodge");
+  if (dodgeParam !== null && tuning.dodge) {
+    const on = new Set(dodgeParam.toLowerCase().split(",").map(k => k.trim()));
+    tuning.dodge = { a: { ...tuning.dodge.a, on: on.has("a") }, b: { ...tuning.dodge.b, on: on.has("b") }, c: { ...tuning.dodge.c, on: on.has("c") } };
+  }
   // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
   // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
   // point lights, glow or haze, and a low raking moonlight. ?bare=2: a flat grey ground with contour

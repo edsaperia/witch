@@ -547,6 +547,7 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `dash.gone` | number | 0 to … |
 | `dash.cooldown` | number | 0 to … |
 | `dash.buffer` | number | 0 to … |
+| `dash.charges` | number | 0 to … |
 | `dash.toCursor` | boolean |  |
 | `dash.aimDead` | number | 0 to … |
 | `dash.clear.tree` | number | 0 to … |
@@ -759,6 +760,45 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 | `notice.radius` | number | 0 to … |
 | `notice.curious` | number | 0 to … |
 | `notice.skittish` | number | 0 to … |
+
+### `dodge`
+
+Dodging matters (Ed, 2026-10-08: "almost all animals are easily evaded simply by walking backwards, even large swarms. Ideally good play should require effective use of dodge"; he picked all three): against the witch only (fights between creatures as before). a, committed strikes: a creature closes on her at chase times its sprint (combat.pursuitRun, or its kind's pursuit: so a slow kind can still be outwalked), a melee one surges on at surge times its sprint while it winds up (no gliding to a stop), tracking her, aiming where she'll be when its blow arrives (her velocity times that time, times lead), until commit seconds before it lets go, when its aim locks (a blink then, or during its lunge, gets her clear), lunging lunge times its attack's lunge, its blow reaching width times its attack's range; heavy (Ed, 2026-10-09: "Maybe heavies can have a higher top speed, but slow acceleration?"): chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, glow-worm, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: shots aim at release where she'll be when they arrive (times lead), lobs where she'll be when they land (times lobLead), charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); a shot at her flies speed times as fast (chasing her at her walk it closes at only its speed less hers); a shot or lob at her reaches range times as far, the shooter keeping its usual distance, (Ed, 2026-10-09: "shooters should have longer range") and winds up at most windup seconds (a beam as before: a sweep a blink can't outrun keeps its long warning). c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
+
+| knob | type | range |
+|---|---|---|
+| `dodge.a.on` | boolean |  |
+| `dodge.a.lead` | number | 0 to … |
+| `dodge.a.commit` | number | 0 to … |
+| `dodge.a.chase` | number | 0 to … |
+| `dodge.a.lunge` | number | 0 to … |
+| `dodge.a.surge` | number | 0 to … |
+| `dodge.a.width` | number | 0 to … |
+| `dodge.a.gone` | number | 0 to … |
+| `dodge.a.tokens` | number | 0 to … |
+| `dodge.a.swarm` | number | 0 to … |
+| `dodge.a.swarmTokens` | number | 0 to … |
+| `dodge.a.gap` | number | 0 to … |
+| `dodge.a.heavy.species` | array of string |  |
+| `dodge.a.heavy.speed` | number | 0 to … |
+| `dodge.a.heavy.accel` | number | 0 to … |
+| `dodge.a.heavy.home` | number | 0 to … |
+| `dodge.b.on` | boolean |  |
+| `dodge.b.lead` | number | 0 to … |
+| `dodge.b.lobLead` | number | 0 to … |
+| `dodge.b.chargeLead` | number | 0 to … |
+| `dodge.b.life` | number | 0 to … |
+| `dodge.b.windup` | number | 0 to … |
+| `dodge.b.range` | number | 0 to … |
+| `dodge.b.speed` | number | 0 to … |
+| `dodge.c.on` | boolean |  |
+| `dodge.c.species` | array of string |  |
+| `dodge.c.moving` | number | 0 to … |
+| `dodge.c.share` | number | 0 to … |
+| `dodge.c.angle` | number | 0 to … |
+| `dodge.c.reach` | number | 0 to … |
+| `dodge.c.ahead` | number | 0 to … |
+| `dodge.c.sprint` | number | 0 to … |
 
 ### `stoneIdle`
 
