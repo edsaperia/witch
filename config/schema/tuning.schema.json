@@ -5937,10 +5937,6 @@
           "type": "number",
           "minimum": 0
         },
-        "lossPenalty": {
-          "type": "number",
-          "minimum": 0
-        },
         "startDelay": {
           "type": "number",
           "minimum": 0
@@ -5996,7 +5992,6 @@
         "motes",
         "uplight",
         "interval",
-        "lossPenalty",
         "startDelay",
         "areasPerWave",
         "picker",
