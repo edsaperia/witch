@@ -2582,6 +2582,10 @@
           "type": "number",
           "minimum": 0
         },
+        "hatHold": {
+          "type": "number",
+          "minimum": 0
+        },
         "runePull": {
           "type": "object",
           "properties": {
@@ -2677,6 +2681,7 @@
         "pickRadius",
         "spacing",
         "runeRadius",
+        "hatHold",
         "runePull",
         "weight"
       ],
