@@ -7,7 +7,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { targetable } from "./combat";
 import { invitableNow } from "./creatureStates";
-import { MOVEMENT, swoopHeight } from "./movement";
+import { MOVEMENT, stepSwoop, swoopHeight, swoopStriking } from "./movement";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
@@ -73,6 +73,17 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
     run(g, 20, idle, () => n >= dives, () => { const p = b.swoop?.phase ?? ""; if (p === "dive" && last !== "dive") n++; last = p; });
     expect(n).toBe(dives);
     expect(dives).toBeGreaterThan(1);
+  }, 60000);
+
+  it("waits to strike while it may not (a cap on strikes at her at once: #587's token), then goes", () => {
+    const { g, ids } = arena("bat*1@2"), b = g.creatures[ids[0]], mv = MOVEMENT.profiles.bat.move!, w = g.witch;
+    run(g, 10, idle, () => !!b.swoop?.up && b.swoop.phase === "circle");
+    let t = g.clock.time;
+    for (let i = 0; i < 6 / STEP; i++, t += STEP) expect(stepSwoop(b, mv, w.x, w.z, true, t, STEP, 0, 0, false)).toBe("air");
+    expect(swoopStriking(b)).toBe(false);
+    let teled = false;
+    for (let i = 0; i < 3 / STEP && !teled; i++, t += STEP) teled = stepSwoop(b, mv, w.x, w.z, true, t, STEP, 0, 0, true) === "tele";
+    expect(teled).toBe(true); expect(swoopStriking(b)).toBe(true);
   }, 60000);
 
   it("hers don't swoop: a leashed owl fights on the ground as before", () => {

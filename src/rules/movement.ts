@@ -311,6 +311,8 @@ export function swoopHeight(s: Swoop, time: number): number {
 }
 /** Out of reach: no 💌, blow, touch or talk reaches it. */
 export const aloft = (c: Creature): boolean => !!c.swoop?.up;
+/** Striking at her: telegraphing, diving or at its bottom (for a cap on strikes at her at once: prototype's dodge A, #587). */
+export const swoopStriking = (c: Creature): boolean => !!c.swoop && (c.swoop.phase === "tele" || c.swoop.phase === "dive" || c.swoop.phase === "low");
 /** The height a swooping creature is drawn at, 0 for any other (render/view/creatures.ts). */
 export const flightHeight = (c: Creature, time: number): number => (c.swoop ? swoopHeight(c.swoop, time) : 0);
 
@@ -331,9 +333,10 @@ export function landSwoop(c: Creature, time: number): void {
 }
 
 /** One step of a wild flyer's swoop at its target (px, pz), moving at (tvx, tvz). `ready`: its attack is ready (a new bout may start).
+ *  `may`: it may strike now (each dive's telegraph waits for it: the dodge work's cap on strikes at her at once, #587).
  *  Returns what happened this step: "tele" as it starts its telegraph, "dive" as it lets go, "low" while it can touch her (the dive and
  *  the bottom), else "air". */
-export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0): "tele" | "dive" | "low" | "air" {
+export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0, may = true): "tele" | "dive" | "low" | "air" {
   const S = FIGHT.scale, V = FIGHT.speed, H = (mv.height ?? 8) * S, R = (mv.radius ?? 12) * S, cs = (mv.circle ?? 8) * V;
   let s = c.swoop;
   if (!s) {
@@ -354,7 +357,9 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
   switch (s.phase) {
     case "circle": {
       circling(1);
-      if (done && ready && time >= (c.moveReadyAt ?? 0)) { s.left = Math.max(1, Math.round(mv.dives ?? 1)); phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
+      if (!done || !may) return "air";
+      if (s.left > 0) { phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; } // (the rest of its bout, held up for the cap)
+      if (ready && time >= (c.moveReadyAt ?? 0)) { s.left = Math.max(1, Math.round(mv.dives ?? 1)); phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
       return "air";
     }
     case "climb": {
@@ -363,8 +368,8 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
       c.x += s.dx * sp * dt; c.z += s.dz * sp * dt; c.vx = s.dx * sp; c.vz = s.dz * sp; c.moving = true; c.walk += dt * 6;
       if (done) {
         s.ang = Math.atan2(c.z - pz, c.x - px);
-        if (s.left > 0) { phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
-        phase(s, "circle", time, 0.01, H); c.moveReadyAt = time + mv.cooldown / V;
+        if (s.left > 0 && may) { phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
+        phase(s, "circle", time, 0.01, H); if (s.left <= 0) c.moveReadyAt = time + mv.cooldown / V;
       }
       return "air";
     }
