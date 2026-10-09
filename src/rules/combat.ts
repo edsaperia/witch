@@ -412,7 +412,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     if (c.swoop) landSwoop(c, time); // (a flyer marching on a soundsystem far off, or a party one: on the ground)
     if (f.windupUntil === 0) {
-      if (d > want) { moveToward(c, p.x, p.z, want, marching ? c.speed * C.marchMult : speed, dt); continue; }
+      if (d > want) { moveToward(c, p.x, p.z, want, marching ? marchSpeed(c, w.t) : speed, dt); continue; }
       // A kiter backs off when its target comes too close, keeping its distance while it shoots.
       if (kites && d < A0.range * K.near && d > 0.01) { c.x -= ((p.x - c.x) / d) * speed * dt; c.z -= ((p.z - c.z) / d) * speed * dt; c.moving = true; c.walk += dt * 6; c.facing = p.x >= c.x ? 1 : -1; if (time < f.readyAt) continue; }
       c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
@@ -492,6 +492,14 @@ export function startSiege(s: CombatState, key: string, at: { x: number; z: numb
   s.sounds.set(key, { hp: t.combat.soundsystemHealth, max: t.combat.soundsystemHealth, x: at.x, z: at.z, radius: t.combat.soundsystemRadius });
   // Its wild creatures are enraged (#87: part-invited ones too, their meters lost; happy ones never) and besiege it.
   if (besiege) for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && !c.fleeUntil && !c.dazed && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0 && enrage(c)) c.siege = key;
+}
+
+/** A besieger's marching pace (m/s): its own times combat.marchMult; marching on from a fallen soundsystem (a siege outside
+ *  its own area: marchOn), at combat.marchOnRun at least, so it plainly leaves for the next (Ed's playtest, 2026-10-09:
+ *  "Enraged creatures don't seem to be leaving their area"; at under 1 m/s it took minutes to). */
+export function marchSpeed(c: Creature, t: Tuning): number {
+  const own = c.speed * t.combat.marchMult;
+  return c.siege && !c.boss && c.siege !== `${c.cell[0]},${c.cell[1]}` ? Math.max(own, t.combat.marchOnRun ?? 0) : own;
 }
 
 /** After a soundsystem falls: the survivors march on to the next-nearest still standing. */

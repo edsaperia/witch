@@ -29,7 +29,7 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
    - the area's wild young and adults become **enraged** and **besiege** it (none, when you cleared it);
    - its wild babies turn **happy** on the spot and join the party, whether you cleared it or its wave transformed it (Ed, 2026-10-07: "Wild babies become party babies when the pulse transforms an uncleared area");
    - its happy animals come and **dance** round it, or at the area's party spots.
-8. **Losing a soundsystem**: the area is **ruined** and its party ends for good. Its happy babies run off the map for good, and its besiegers march on to the **next-nearest standing soundsystem**, home included. A loss touches neither the wave countdown nor the tempo (Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown", "doesn't affect the bpm").
+8. **Losing a soundsystem**: the area is **ruined** and its party ends for good. Its happy babies run off the map for good, and its besiegers march on to the **next-nearest standing soundsystem**, home included, at a run (`combat.marchOnRun`, 5 m/s; an area's own siege still comes at its amble, `marchMult` times its own speed, under 1 m/s). A loss touches neither the wave countdown nor the tempo (Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown", "doesn't affect the bpm").
 9. **The party's over** once every soundsystem *and* the home ring are down (rules/partyOver.ts):
    - the waves stop and nothing fights;
    - the lights and music wind down over 6 s (`partyOver.ease`);
