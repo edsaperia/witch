@@ -103,7 +103,7 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
  *  attack range or she's on the ground in its area (Ed's playtest, 2026-10-04). A party animal following her takes on only
  *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
  *  parked one, anything within guard.radius of its sigil. */
-export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean): Target | null {
+export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean, claims?: Map<number, number>): Target | null {
   // A hunter goes for her and nothing else, wherever she is (rules/hunt.ts): none while she's out of its reach (over the
   // treetops, knocked out, sheltered in a calm circle) or inviting it.
   if (c.hunting !== undefined && huntsWitch(sideOf(c))) {
@@ -113,14 +113,24 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
   // (an enraged one goes for a happy legend within legends.attack.wornReach: it wears it down)
   const legReach = sideOf(c) === "enraged" ? LEGENDS.attack.wornReach * FIGHT.scale : 0;
   let best: Target | null = null, bd = Math.max(range, legReach);
+  // Her posse (leashed, following her) defends her (Ed, 2026-10-09: "Animals that are leashed should attack animals that are
+  // attacking you"): only creatures going for her or for one of hers; anything with her as its target (closing in, winding up
+  // or striking) first; then the attacker fewest of hers are already on (claims: so they spread out, not all on one); then the
+  // nearest; keeping to the one it's on unless another's clearly better (no flip-flopping).
+  const posse = c.leashed && !guarding, mine = posse && c.fight?.target?.kind === "creature" ? c.fight.target.id : -1;
+  let bs = Infinity;
   for (const o of grid.near(x, z, Math.max(range, legReach))) {
     if (o === c || !targetable(o) || !foes(sideOf(o), sideOf(c)) || truce(c, o) || w.asleep(o) || inviting(w, c, o) || (keep && !keep(o))) continue;
     if (Math.hypot(o.x - x, o.z - z) > range && !(o.boss && o.legendState === "happy")) continue;
-    if (c.leashed && !guarding) {
+    const d = Math.hypot(o.x - x, o.z - z);
+    if (posse) {
       const tg = o.fight?.target;
       if (!tg || (tg.kind !== "witch" && !(tg.kind === "creature" && w.creatures[tg.id]?.leashed))) continue;
+      const others = (claims?.get(o.id) ?? 0) - (o.id === mine ? 1 : 0);
+      const score = (tg.kind === "witch" ? 0 : 1e4) + Math.max(0, others) * 60 + d - (o.id === mine ? 6 : 0);
+      if (score < bs) { bs = score; best = { kind: "creature", id: o.id }; }
+      continue;
     }
-    const d = Math.hypot(o.x - x, o.z - z);
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
   if (huntsWitch(sideOf(c)) && !(c.watchUntil !== undefined && w.time < c.watchUntil)) for (const v of w.witches) { // (not while it's still watching her: rules/wildWatch.ts)
