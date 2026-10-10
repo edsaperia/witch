@@ -11,7 +11,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Losing:** she goes to bed, and can play the same island again.
 - **Winning:** every legend on the island wakes and joins the party. Each legend tells of a different island: these are the next maps, unlocked on the sea chart.
 - **Phases** (Ed, 2026-10-10): how far an island is from the first, and so how hard, is its *phase*: phase 1 is the first island, phase 2 the islands its legends tell of, and so on. A **fixed number of phases, four or five** (Ed). (The moon: phase 1 full, waning to new; see the archipelago below.)
-- **The archipelago** (Ed, 2026-10-10): **each kind of legend tells of its own island**, always the same one: about 100 islands, one per legend kind (so about 100 creature kinds in the end; 32 today). Rarer legends live further out, so the stories lead outward.
+- **The archipelago** (Ed, 2026-10-10): **each kind of legend tells of its own island**, always the same one: **about 64 islands**, one per legend kind (so about 64 creature kinds; 32 today). More kinds can come later as expansions without changing any rule. Rarer legends live further out, so the stories lead outward.
   - **Home plus five phases** (Ed, 2026-10-10: small enough to clear them all): phase islands are **10 / 20 / 30 / 40 / 50 areas** (2 / 4 / 6 / 8 / 10 legends); home grows from about 10 areas to ~100 and is the endgame. The moon wanes outward (home full; then gibbous to new across the phases). About 1 minute of route per area at 4 m/s, so 10 to 50 minute nights, less on faster records.
   - Island counts (proposed, ~100 in all, one per legend kind): **home 1, then 8 / 12 / 18 / 25 / 36**, i.e. new kinds introduced: 8 at home (their islands are phase 1), 12 in phase 1, 18 in phase 2, 25 in phase 3, 36 in phase 4, none in phase 5. A kind appears in the phase before its own island's and every phase after, so many islands point to the same next one; with only 2 to 10 legends a night, replays open the rest.
   - **Every legend kind exists by phase 3–4** (Ed: no new legends in the last phase): the last phase's legends tell of islands already found (a way back across the chart).
@@ -96,7 +96,9 @@ A third axis of progress, separate from the other two:
 
 **Arriving** (Ed, 2026-10-10): on a new island the Ent stands on the back of **a party legend of that island's kind**, sitting north of the dancefloor where the treehouse stands today. Story: it was so impressed by her last party that it brought her back to its home island.
 
-**Home's size** (agreed): one area per known kind at least, growing past that by repeating kinds to about 100 areas at the end, so the finale is today's tested map, playing the whole master curve.
+**Home's size** (Ed, 2026-10-10): **one area of each creature**, so about **64 areas** at the end (about 64 islands, one per legend kind), playing the master curve to wave ~64 (open: whether the curve is squeezed so wave 64 reaches today's peak).
+
+**Relics: one per 10 areas** (Ed; today's maps have six whatever their size).
 
 **The dancefloor is a spell** (Ed): on arriving she casts the party spell and the dancefloor and speaker ring rise out of the island (today's opening cast and boot, as they are). Only the house travels.
 
