@@ -4,7 +4,9 @@
 // can all walk home naturally." "I think they can vanish. If they are coming back from vanishing, they can just appear
 // wherever their home is."
 //
-// The rules: once every soundsystem and the home ring's speakers are down (rules/game.ts stepFights), g.partyOver is set
+// The rules: once the home ring's last speaker is down (rules/game.ts stepFights; Ed, 2026-10-10: "The party should end when
+// all your home speakers are destroyed, not all speakers+soundsystems. When the party ends, undestroyed soundsystems should just
+// switch off (sound and lights)": any still standing stay standing, silent and dark, `homeDown`), g.partyOver is set
 // and eases in over partyOver.ease seconds (`ease`, 0 to 1: the view's lights, the music's wind-down). From then on the
 // waves stop for good, nothing fights or attacks her, and every creature, wild or not, legends and her leashed ones too,
 // goes to sleep: the ones in her sight walk home to a spot in their own area at their own pace and lie down there, the rest
@@ -12,12 +14,21 @@
 // sight. Her leashed ones are let go and sleep where they stand. Asleep is the one shared state (Creature.asleep, with the
 // naps and the sleeping art): still, out of every fight, no rune, no 💌s. No drawing here.
 import type { Game } from "./game";
+import type { CombatState } from "./combat/data";
+import { isHomeKey } from "./speakers";
 import { heal, type Creature } from "./creatures";
 import { pointInArea } from "./creatures";
 import { letPartyLegendGo } from "./leash";
 
+/** Whether the party's over by the fight: every one of the home ring's speakers down (Ed, 2026-10-10), whatever else stands. */
+export function homeDown(S: Pick<CombatState, "sounds">): boolean {
+  let n = 0;
+  for (const [key, h] of S.sounds) if (isHomeKey(key)) { if (h.hp > 0) return false; n++; }
+  return n > 0;
+}
+
 export interface PartyOver {
-  /** The world-clock time the last soundsystem fell. */
+  /** The world-clock time the home ring's last speaker fell. */
   at: number;
   /** 0 to 1 over partyOver.ease seconds from `at` (smoothstep): for the view and the music. */
   ease: number;
@@ -120,11 +131,10 @@ export function stepPartyOver(g: Game, dt: number): void {
   }
 }
 
-/** Debug (?partyover=1): every soundsystem and the home ring's speakers down at once, so the party's over now. */
+/** Debug (?partyover=1): the home ring's speakers down at once, so the party's over now (any other soundsystem switching off). */
 export function endParty(g: Game): void {
-  for (const h of g.combat.sounds.values()) h.hp = 0;
+  for (const [key, h] of g.combat.sounds) if (isHomeKey(key)) h.hp = 0;
   g.speakers = g.speakers.map(() => "destroyed");
-  for (const [key] of g.party.areas) if (!g.combat.sounds.has(key)) g.combat.ruined.add(key);
   startPartyOver(g, g.clock.time);
 }
 

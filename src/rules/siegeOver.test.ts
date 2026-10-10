@@ -51,7 +51,7 @@ describe("a siege lost, and the party's over (the full smoke's siege, #577's min
     left.forEach((c, i) => expect(d0[i] - dist(c), c.species).toBeGreaterThan(60));
   }, 120000);
 
-  it("with another soundsystem standing nearer than home (a second wave's), they march on to that one instead, and the party goes on", () => {
+  it("with another soundsystem standing nearer than home (a second wave's), they march on to that one instead; home's speakers down, the party's over all the same", () => {
     const g = newGame(123, TUNING);
     g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
@@ -72,7 +72,13 @@ describe("a siege lost, and the party's over (the full smoke's siege, #577's min
     const standing = [...g.combat.sounds].filter(([, h]) => h.hp > 0), left = besiegers.filter(c => !c.gone);
     for (const c of left) { const best = standing.reduce((m, [k, h]) => (Math.hypot(h.x - c.x, h.z - c.z) < m.d ? { k, d: Math.hypot(h.x - c.x, h.z - c.z) } : m), { k: "", d: Infinity }); expect(c.siege).toBe(best.k); }
     expect(left.length).toBeGreaterThan(0); expect(left.every(c => c.siege === second)).toBe(true);
+    // Home's last speaker down: the party's over, the second wave's still standing, switched off (Ed, 2026-10-10: "The party
+    // should end when all your home speakers are destroyed, not all speakers+soundsystems").
     for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = 0;
-    expect(g.partyOver).toBeNull(); // (one still stands)
+    stepGame(g, idle, STEP);
+    expect(g.partyOver).not.toBeNull();
+    expect(s2.hp).toBeGreaterThan(0);
+    expect(g.party.areas.has(second)).toBe(true);
+    expect(g.creatures.some(c => c.siege === second)).toBe(false); // (nothing besieges it: everyone's off to bed)
   }, 120000);
 });
