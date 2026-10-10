@@ -2,7 +2,7 @@
 // thin dark wire hanging in a sag between two trunks, with bulbs every bulbSpacing metres:
 // single glowing pixels (two when near) cycling through a party palette, twinkling, now and then a
 // chase running along, swaying with the wind. Each bulb switches on as the party's front passes.
-// Also the party's motes: glowing specks drifting up round each partified area's soundsystem.
+// Also the party's motes: glowing specks drifting up round each partified area's soundsystem, twinkling in its neon.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { stringsFor, type StringLine } from "../rules/strings";
@@ -78,29 +78,32 @@ void main() {
 
 const MOTE_VERT = /* glsl */ `
 attribute vec4 aMote; // phase, rise speed, drift, time it appears
+attribute vec3 aColour; // its area's neon
 uniform float uTime, uRise;
-varying vec3 vWorld;
-varying float vA;
+varying vec3 vWorld, vColour;
+varying float vA, vTw;
 ${HEIGHT_VERT_GLSL}
 void main() {
   float t = uTime + aMote.x * 20.0, y = mod(t * aMote.y + aMote.x * uRise, uRise), k = y / uRise;
   vec3 p = onGround(position) + vec3(sin(t * 0.7 + aMote.x * 9.0) * aMote.z, y, cos(t * 0.5 + aMote.x * 5.0) * aMote.z);
   vWorld = p;
   vA = (uTime >= aMote.w ? 1.0 : 0.0) * smoothstep(0.0, 0.15, k) * (1.0 - smoothstep(0.7, 1.0, k));
+  // Twinkling (Ed, 2026-10-10): each its own rate, mostly dim with a sharp sparkle now and then.
+  vTw = 0.25 + 1.5 * pow(0.5 + 0.5 * sin(uTime * (2.0 + 5.0 * fract(aMote.x * 7.31)) + aMote.x * 40.0), 6.0);
+  vColour = aColour;
   vec4 mv = viewMatrix * vec4(bendW(p), 1.0);
   gl_Position = projectionMatrix * mv;
   gl_PointSize = vA > 0.3 ? 1.0 : 0.0;
 }`;
 
 const MOTE_FRAG = /* glsl */ `
-uniform vec3 uMoteColour;
-varying float vA;
-varying vec3 vWorld;
+varying float vA, vTw;
+varying vec3 vWorld, vColour;
 ${LIGHT_GLSL}
 void main() {
   float po = partyOff(vWorld); // (the party's over: they fade as the front passes)
   if (vA < 0.3 || po > 0.95) discard;
-  gl_FragColor = vec4(haze(uMoteColour * (0.6 + 0.6 * vA) * (1.0 - po), vWorld), 1.0);
+  gl_FragColor = vec4(haze(vColour * (0.6 + 0.6 * vA) * vTw * (1.0 - po), vWorld), 1.0);
 }`;
 
 interface Built { lines: StringLine[]; group: THREE.Group; on: number }
@@ -120,7 +123,7 @@ export class StringLightsView {
     const shared = { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uWind: { value: game.tuning.canopyShadow.wind * 1.5 } };
     this.bulbMat = new THREE.ShaderMaterial({ vertexShader: BULB_VERT, fragmentShader: BULB_FRAG, uniforms: { ...shared, uRes: SPRITE_UNIFORMS.uRes, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed } } });
     this.wireMat = new THREE.ShaderMaterial({ vertexShader: WIRE_VERT, fragmentShader: WIRE_FRAG, uniforms: shared });
-    this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uMoteColour: { value: new THREE.Color(1, 0.85, 1) }, uRise: { value: game.tuning.party.motes.to - game.tuning.party.motes.from } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRise: { value: game.tuning.party.motes.to - game.tuning.party.motes.from } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   }
 
   /** The lines of one area, and when each bulb switches on (as the party's front passes it). */
@@ -151,18 +154,21 @@ export class StringLightsView {
     // Party motes, sparse over the whole area (Ed, 2026-10-03), rising from just under the crowns
     // to above them: from the treetops a partified area isn't plain dark forest. They come on as
     // the party's front passes.
-    const M = this.game.tuning.party.motes, map = this.game.map, mp: number[] = [], md: number[] = [];
+    // In the area's own neon, twinkling (Ed, 2026-10-10: "Make the rising motes in party areas twinkle and be the area colour").
+    const M = this.game.tuning.party.motes, map = this.game.map, mp: number[] = [], md: number[] = [], mc: number[] = [];
+    const neon = (NEON as Record<string, number[]>)[areaNeons(map, cell as [number, number])[0]] ?? [255, 217, 255];
     const R = map.areaSize * 1.1, n = Math.round(((Math.PI * R * R) / 400) * M.perPatch);
     for (let i = 0; i < n; i++) {
       const h = (k: number) => { const v = Math.sin(seed * 12.9898 + i * 78.233 + k * 37.719) * 43758.5453; return v - Math.floor(v); };
       const a = h(1) * Math.PI * 2, d = Math.sqrt(h(2)) * R, x = centre.x + Math.cos(a) * d, z = centre.z + Math.sin(a) * d;
       const c = map.areaAt(x, z).cell;
       if (c[0] !== cell[0] || c[1] !== cell[1]) continue;
-      mp.push(x, M.from, z); md.push(h(3), M.speed * (0.6 + h(4) * 0.8), 0.3 + h(5) * 0.8, on(x, z));
+      mp.push(x, M.from, z); md.push(h(3), M.speed * (0.6 + h(4) * 0.8), 0.3 + h(5) * 0.8, on(x, z)); mc.push(neon[0] / 255, neon[1] / 255, neon[2] / 255);
     }
     const mg = new THREE.BufferGeometry();
     mg.setAttribute("position", new THREE.Float32BufferAttribute(mp, 3));
     mg.setAttribute("aMote", new THREE.Float32BufferAttribute(md, 4));
+    mg.setAttribute("aColour", new THREE.Float32BufferAttribute(mc, 3));
     const motes = new THREE.Points(mg, this.moteMat);
     motes.frustumCulled = false;
     g.add(motes);

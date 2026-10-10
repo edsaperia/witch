@@ -7,7 +7,7 @@ import { placed } from "../height";
 import type { LeashView } from "../leash";
 
 const v = new THREE.Vector3();
-/** Its height over her seat (m): above her and the decks, under the respawn countdown (3.4). */
+/** Its height over her seat (m): above her and the decks. */
 const LIFT = 2.5;
 
 export function drawDeckBpm(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
