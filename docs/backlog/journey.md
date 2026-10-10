@@ -39,6 +39,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 
 - **The world is a flat disc**, round like the map, the sea streaming off its edges into space. Home is at its centre; every island lies around it.
 - **The sea chart is the same circle:** home in the middle, each island drawn in its **true shape** (worked out in advance from its seed, so only its land and water need making, not its whole forest), with the **sigil of its legend's animal** on it.
+- **Sigils light up as kinds are discovered** (Ed): the chart starts with a ring of about 10 lit sigils round home (the kinds she knows); an island's sigil lights when its animal is discovered. **Each voyage draws a line** from the island it set out from to the new one, so the chart shows the paths taken. **Home grows on the chart** too, gradually, as it gains areas.
 - **Home's sigil is the World Tree**: symbolically the Ent legend's placed sigil. It shows on the dancefloor before the party spell wakes it.
 - **In the treehouse** the chart is a miniature of the world itself: a water feature, the disc with its islands, its sea pouring off the rim into a pool in the floor.
 - Fits what's drawn today: the world's bend already curves the ground away toward the horizon.
