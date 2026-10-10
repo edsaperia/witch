@@ -94,6 +94,10 @@ A third axis of progress, separate from the other two:
 
 **The house is a treehouse Ent** (Ed, 2026-10-10): an ancient magic walking tree, itself a legend, with the treehouse in its branches. **It is the first (full-moon) island's legend**, the first legend she befriended, and her home ever since. It sleeps rooted while she parties, with a face in its bark that wakes when they set off. **On the voyage the Ent rides the island legend's back** (trees can't swim), roots gripping its shell or fur. **Its pose is Atlas** (Ed): the Ent kneels, holding the treehouse up above it in its branches. It never needs to walk: to travel, **the legend comes up beneath it and lifts it**, Ent, house and all, and carries it away (and sets it down the same way). Built on today's 3D treehouse model (art/treehouse.js): the kneeling Ent with a face in its bark (asleep and awake), baked like the rest; the voyage needs only the legend drawn huge, rising, and swimming or flying.
 
+**Arriving** (Ed, 2026-10-10): on a new island the Ent stands on the back of **a party legend of that island's kind**, sitting north of the dancefloor where the treehouse stands today. Story: it was so impressed by her last party that it brought her back to its home island.
+
+**Home's size** (agreed): one area per known kind at least, growing past that by repeating kinds to about 100 areas at the end, so the finale is today's tested map, playing the whole master curve.
+
 **The dancefloor is a spell** (Ed): on arriving she casts the party spell and the dancefloor and speaker ring rise out of the island (today's opening cast and boot, as they are). Only the house travels.
 
 The bedroom becomes **the whole treehouse**: rooms she walks between, each with its own job. Before the party she can wander the house freely; **she can't leave until the party starts**, and the party starts when she takes a record to the DJ booth.
