@@ -11,9 +11,9 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Losing:** she goes to bed, and can play the same island again.
 - **Winning:** every legend on the island wakes and joins the party. Each legend tells of a different island: these are the next maps, unlocked on the sea chart.
 - **Phases** (Ed, 2026-10-10): how far an island is from the first, and so how hard, is its *phase*: phase 1 is the first island, phase 2 the islands its legends tell of, and so on. A **fixed number of phases, four or five** (Ed). (The moon: phase 1 full, waning to new; see the archipelago below.)
-- **The archipelago** (Ed, 2026-10-10): **each kind of legend tells of its own island**, always the same one: about 100 islands, one per legend kind (so about 100 creature kinds in the end; 32 today). Rarer legends live further out, so the stories lead outward.
+- **The archipelago** (Ed, 2026-10-10): **each kind of legend tells of its own island**, always the same one: **about 64 islands**, one per legend kind (so about 64 creature kinds; 32 today). More kinds can come later as expansions without changing any rule. Rarer legends live further out, so the stories lead outward.
   - **Home plus five phases** (Ed, 2026-10-10: small enough to clear them all): phase islands are **10 / 20 / 30 / 40 / 50 areas** (2 / 4 / 6 / 8 / 10 legends); home grows from about 10 areas to ~100 and is the endgame. The moon wanes outward (home full; then gibbous to new across the phases). About 1 minute of route per area at 4 m/s, so 10 to 50 minute nights, less on faster records.
-  - Island counts (proposed, ~100 in all, one per legend kind): **home 1, then 8 / 12 / 18 / 25 / 36**, i.e. new kinds introduced: 8 at home (their islands are phase 1), 12 in phase 1, 18 in phase 2, 25 in phase 3, 36 in phase 4, none in phase 5. A kind appears in the phase before its own island's and every phase after, so many islands point to the same next one; with only 2 to 10 legends a night, replays open the rest.
+  - Island counts (proposed, ~64 in all, one per legend kind): **home, then 10 / 10 / 12 / 14 / 18** islands in phases 1 to 5, i.e. new kinds introduced: about 10 at home (the starting ring of sigils; their islands are phase 1), 10 in phase 1, 12 in phase 2, 14 in phase 3, 18 in phase 4, none in phase 5. A kind appears in the phase before its own island's and every phase after; with only 2 to 10 legends a night, replays open the rest.
   - **Every legend kind exists by phase 3–4** (Ed: no new legends in the last phase): the last phase's legends tell of islands already found (a way back across the chart).
   - **Legends decide the creatures** (Ed): a kind of creature lives in a phase only if its legend does. A kind first appears in the phase before its own island's (so phase 1, with 6 legends, has about 6 kinds of creature: an easy start with few to learn), and stays in every phase after.
   - **The tutorial has 8 kinds** (Ed: slightly more than 6).
@@ -21,12 +21,12 @@ Where this overrides older notes: the record crate no longer picks the map's see
     - **Home** (the Ent's island, round, full moon): one area per kind she knows (about 8 to 10 at first, ~100 at the end); roster = every kind she knows. A short tutorial at first (2 legends a night), the complete gallery and **the endgame challenge** at the end.
     - Winning home opens the islands of the legends dealt that night; **replaying home deals different legends**, opening the rest of phase 1 over a few short nights.
     - **Phase islands:** fixed size by phase (10 / 20 / 30 / 40 / 50), roster from that phase's kinds (below).
-  - **Rosters** (proposed, 2026-10-10). A kind of creature *is* an area type (each area type has its species), so a roster is an island's mix of area types. Each kind gets two hand-set facts: its **biome** (temperate = today's 32; north/cold, south/hot, east/rocky, west/jungle; blends on the diagonals) and the **phase it's introduced in** (home 8, phase 1 16, phase 2 28, phase 3 47). Its own island lies one phase later, in its biome's direction. For kind K's island (phase p), from the island's seed:
+  - **Rosters** (proposed, 2026-10-10). A kind of creature *is* an area type (each area type has its species), so a roster is an island's mix of area types. Each kind gets two hand-set facts: its **biome** (temperate = today's 32; north/cold, south/hot, east/rocky, west/jungle; blends on the diagonals) and the **phase it's introduced in** (home 10, phase 1 10, phase 2 12, phase 3 14, phase 4 18). Its own island lies one phase later, in its biome's direction. For kind K's island (phase p), from the island's seed:
     1. Eligible: kinds introduced in phase p or earlier.
     2. Always: **K itself, plentiful** (about 1 area in 6: its home); **3–5 kinds new to phase p** from nearby on the chart (so it has legends telling of new islands).
     3. The rest by weight: own biome strongly, neighbouring biomes some, temperate commons a little, the opposite biome almost never; recently introduced kinds favoured.
     4. About a third as many kinds as areas (10 areas ≈ 4 kinds, 50 ≈ 17), each about three times.
-    5. Biome-themed share of areas grows with phase: about 1/4, 1/2, 3/4, nearly all.
+    5. Biome-themed share of areas grows with phase: home and phases 1–2 are essentially temperate (Ed); biomes come in from phase 3 (about half), phase 4 (three-quarters), phase 5 (nearly all).
     - Each night's legends (1 in 5 areas) are dealt from the roster, favouring kinds whose islands aren't found yet, never K.
     - Authoring: a table of ~100 kinds, each with a biome and a phase; the rest is the generator.
 - **Biomes by direction** (Ed): the sea chart is a compass. **North** gets colder (pine forests, eventually tundra); **south** hotter (eventually desert); **east** rockier (eventually volcanic); **west** becomes jungle. The further out, the more of an island's areas are themed by its biome (today's 32 area types are the temperate middle). Proposed: the diagonals blend (north-east mountains and glaciers, south-east badlands, south-west mangrove swamp, north-west cold rainforest), and each biome brings its own creatures, legends and record genre.
@@ -66,11 +66,17 @@ Not designed properly until every meta-system is settled (each will own a place 
 
 Using only today's 32 kinds and art:
 1. **Small islands:** a map size by area count (10 / 20 / ...), round, with the swarm curve indexed by wave number (above).
-2. **Rosters:** an island's area types drawn by the roster rule from a table giving each of the 32 kinds a phase (home 8, phase 1 12, phase 2 the other 12; biomes later).
+2. **Rosters:** an island's area types drawn by the roster rule from a table giving each of the 32 kinds a phase (home 10, phase 1 10, phase 2 the other 12; biomes later).
 3. **Winning:** survive every wave with no enraged creature left; the legends dealt that night wake.
 4. **The sea chart:** a bare page: home in the middle, islands appearing as their legends are woken, click one to play it; progress saved in the browser.
 5. **Home** growing by one area per kind found.
 Not yet: the Ent, the voyage, treehouse rooms, records, lakes, biomes.
+
+### Mushrooms on the journey (Ed, 2026-10-10)
+
+- Six mushroom kinds (the cauldron's 56 recipes): **two temperate kinds grow on home** from the start; **one kind per biome direction** (north, south, east, west) grows only on **phase-3-and-beyond islands** of that direction (home and phases 1–2 are essentially temperate).
+- **Find a kind once and it grows at home from then on**, as animals do: its basket in the kitchen fills, a first cluster sprouts on home. Brewing works on any island (the kitchen travels with the Ent).
+- So the cauldron opens up as you explore in every direction: a fourth reward, for exploring widely.
 
 ## 2. Records
 
@@ -93,6 +99,12 @@ A third axis of progress, separate from the other two:
 **The same treehouse on every island; a legend carries it** (Ed, 2026-10-10). Each island is the home of one kind of legend. When she sets off for an island, its legend comes for the house: the giant tree rides **on the creature's back** across the sea, through the night while she sleeps (a short dreamy voyage: moonlight, the legend swimming or flying, the moon's phase changing). She wakes on its island and gets dressed. Proposed: the tree keeps souvenirs of where it's been (snow from the north, sand from the south).
 
 **The house is a treehouse Ent** (Ed, 2026-10-10): an ancient magic walking tree, itself a legend, with the treehouse in its branches. **It is the first (full-moon) island's legend**, the first legend she befriended, and her home ever since. It sleeps rooted while she parties, with a face in its bark that wakes when they set off. **On the voyage the Ent rides the island legend's back** (trees can't swim), roots gripping its shell or fur. **Its pose is Atlas** (Ed): the Ent kneels, holding the treehouse up above it in its branches. It never needs to walk: to travel, **the legend comes up beneath it and lifts it**, Ent, house and all, and carries it away (and sets it down the same way). Built on today's 3D treehouse model (art/treehouse.js): the kneeling Ent with a face in its bark (asleep and awake), baked like the rest; the voyage needs only the legend drawn huge, rising, and swimming or flying.
+
+**Arriving** (Ed, 2026-10-10): on a new island the Ent stands on the back of **a party legend of that island's kind**, sitting north of the dancefloor where the treehouse stands today. Story: it was so impressed by her last party that it brought her back to its home island.
+
+**Home's size** (Ed, 2026-10-10): **one area of each creature**, so about **64 areas** at the end (about 64 islands, one per legend kind), playing the master curve to wave ~64 (open: whether the curve is squeezed so wave 64 reaches today's peak).
+
+**Relics: one per 10 areas** (Ed; today's maps have six whatever their size).
 
 **The dancefloor is a spell** (Ed): on arriving she casts the party spell and the dancefloor and speaker ring rise out of the island (today's opening cast and boot, as they are). Only the house travels.
 
