@@ -30,9 +30,9 @@ export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" |
 ];
 
 /** Gamepad bindings (standard mapping button numbers; PlayStation names): left stick or d-pad moves. Ed, 2026-10-10:
- *  cross (0) or the right trigger (7) invites, square (2) or the left trigger (6) blinks, circle (1) picks up and puts
- *  down, triangle (3) rises or lands. The speed spell moves to the right stick's click (11). */
-export const PAD = { rise: [3], dash: [2, 6], spell: [11], sigil: [1], zoomOut: [4], zoomIn: [5], invite: [0, 7], debug: [8] } as const;
+ *  cross (0) rises or lands, square (2) picks up and puts down (held: her hat), triangle (3) cycles the stack, circle (1)
+ *  boosts (the speed spell), the right trigger (7) invites, the left trigger (6) blinks. */
+export const PAD = { rise: [0], dash: [6], spell: [1], sigil: [2], cycle: [3], zoomOut: [4], zoomIn: [5], invite: [7], debug: [8] } as const;
 
 const GAME_KEYS = new Set<string>(Object.values(KEYS).flat() as string[]);
 
@@ -119,7 +119,7 @@ export class Input {
     if (Math.abs(this.wheel) >= 90) { zoom += Math.sign(this.wheel); this.wheel -= Math.sign(this.wheel) * 100; if (Math.abs(this.wheel) > 200) this.wheel = Math.sign(this.wheel) * 200; }
     let debug = p(KEYS.debug);
     let sigil = false, spell = p(KEYS.spell), dash = p(KEYS.dash) || this.rightClicked;
-    const place = p(KEYS.place), cycle = p(KEYS.cycle);
+    const place = p(KEYS.place); let cycle = p(KEYS.cycle);
     let sigilHeld = k(KEYS.place) > 0;
     this.rightClicked = false;
     const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest), happyNearest = p(KEYS.happyNearest);
@@ -153,6 +153,7 @@ export class Input {
       if (any(PAD.sigil)) sigil = true;
       if (PAD.sigil.some(btn)) sigilHeld = true;
       if (any(PAD.spell)) spell = true;
+      if (any(PAD.cycle)) cycle = true;
       if (any(PAD.dash)) dash = true;
       // Twin-stick: the right stick aims (screen right is east, down is south), a trigger fires.
       const rx = pad.axes[2] ?? 0, ry = pad.axes[3] ?? 0;
