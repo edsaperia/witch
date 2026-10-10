@@ -47,7 +47,7 @@ import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
-import { startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
+import { homeDown, startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
  *  body (where she is and how she flies), her leash, her spell. */
@@ -596,8 +596,9 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z);
   // The home ring shows each speaker's own damage (an unhurt one keeps what the debug key gave it).
   g.speakers.forEach((_, i) => { const h = S.sounds.get(speakerKey(i)); if (h && h.hp < h.max) g.speakers[i] = speakerStateOf(h.hp, h.max); });
-  // Every soundsystem down, the home ring's speakers too: the party's over (rules/partyOver.ts), the afterparty from now on.
-  if (!g.partyOver && [...S.sounds.values()].every(h => h.hp <= 0)) startPartyOver(g, time);
+  // The home ring's last speaker down: the party's over (rules/partyOver.ts), the afterparty from now on, whatever soundsystems
+  // still stand (Ed, 2026-10-10: "The party should end when all your home speakers are destroyed"; they switch off).
+  if (!g.partyOver && homeDown(S)) startPartyOver(g, time);
 }
 
 /** The besiegers to march coarsely this step (rules/simLod.ts): marching on a soundsystem (nothing

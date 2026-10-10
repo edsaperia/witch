@@ -33,7 +33,10 @@ export class PartyView {
   }
 
   /** This frame's soundsystem sprites and their lights. */
-  update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, mark: (x: number, z: number, h: number) => boolean, celebrated?: ReadonlyMap<string, number>) {
+  update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, mark: (x: number, z: number, h: number) => boolean, celebrated?: ReadonlyMap<string, number>, offAt?: (x: number, z: number) => number) {
+    // (the party's over, render/partyOver.ts: one still standing switches off as the front passes it, still and its glow out;
+    // its lights, lasers and hologram go with the rest in the view)
+    const off = (x: number, z: number) => !!offAt && offAt(x, z) >= 0.5;
     const t = g.tuning.party, items: SpriteInstance[] = [], lights: ForestLight[] = [], playing: Playing[] = [], projectors: Projector[] = [];
     const M = moodOf(g.tuning), warm = M?.partyWarm.length ? this.warmOf(M.partyWarm) : null;
     // Home has no soundsystem of its own: the dancefloor's ring of speakers carries its music (Ed,
@@ -52,17 +55,17 @@ export class PartyView {
     if (gen) list.forEach((s, i) => {
       if (rises[i].rise <= 0 || !visible(s.x, s.z, 12, 14)) return;
       const hp = g.combat.sounds.get(s.key), stage = damageStage(hp ? hp.hp / Math.max(1, hp.max) : 1, g.combat.ruined.has(s.key));
-      draws.push({ key: s.key, x: s.x, z: s.z, rise: rises[i].rise, stage, time, fresh: mark(s.x, s.z, 12) });
+      draws.push({ key: s.key, x: s.x, z: s.z, rise: rises[i].rise, stage, time, fresh: mark(s.x, s.z, 12), off: off(s.x, s.z) });
     });
     const info = gen ? gen.update(g, draws) : null;
     list.forEach((s, i) => {
-      const { p, rise } = rises[i], frame = this.atlas.frames[s.variant * 3 + (Math.floor(time * 6) % 3)], I = info?.get(s.key);
+      const { p, rise } = rises[i], dark = off(s.x, s.z), frame = this.atlas.frames[s.variant * 3 + (dark ? 0 : Math.floor(time * 6) % 3)], I = info?.get(s.key);
       const h = I ? I.h : frame.h * this.metresPerPixel;
       if (!gen && rise > 0 && visible(s.x, s.z, frame.w * this.metresPerPixel, h)) {
         // Each faces left or right, seeded from where it stands (Ed, 2026-10-03); the shader mirrors
         // its normal map too, and its light and lasers rise from its centre either way.
         const flip = hash2(Math.round(s.x * 10), Math.round(s.z * 10), 911) < 0.5;
-        items.push({ x: s.x, y: -(1 - rise) * h, z: s.z, frame, flip, fresh: mark(s.x, s.z, h) });
+        items.push({ x: s.x, y: -(1 - rise) * h, z: s.z, frame, flip, fresh: mark(s.x, s.z, h), glow: dark ? -0.5 : undefined });
       }
       // Its projector (render/hologram.ts): the sky sigil comes on as it finishes rising. A generated soundsystem in view gives its
       // projector's top, its crystal colour and its damage stage (render/soundsystemGen.ts), and none when it's destroyed (so the

@@ -639,7 +639,7 @@ async function main() {
     const screen = await page.evaluate(() => document.getElementById("over").classList.contains("on"));
     await shot(page, "80-siege-over.png");
     check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
-    check(r.over && screen, `when every soundsystem has fallen the party's over and its card shows (${r.over}, ${screen})`);
+    check(r.over && screen, `when home's speakers have fallen the party's over and its card shows (${r.over}, ${screen})`);
     check(r.fighting === 0 && r.awake === 0 && r.asleep > 0, `the afterparty: nothing fights, everyone's asleep or walking home to bed (${JSON.stringify({ fighting: r.fighting, awake: r.awake, asleep: r.asleep })})`);
   });
 
