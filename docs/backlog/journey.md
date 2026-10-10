@@ -26,7 +26,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
     2. Always: **K itself, plentiful** (about 1 area in 6: its home); **3–5 kinds new to phase p** from nearby on the chart (so it has legends telling of new islands).
     3. The rest by weight: own biome strongly, neighbouring biomes some, temperate commons a little, the opposite biome almost never; recently introduced kinds favoured.
     4. About a third as many kinds as areas (10 areas ≈ 4 kinds, 50 ≈ 17), each about three times.
-    5. Biome-themed share of areas grows with phase: about 1/4, 1/2, 3/4, nearly all.
+    5. Biome-themed share of areas grows with phase: home and phases 1–2 are essentially temperate (Ed); biomes come in from phase 3 (about half), phase 4 (three-quarters), phase 5 (nearly all).
     - Each night's legends (1 in 5 areas) are dealt from the roster, favouring kinds whose islands aren't found yet, never K.
     - Authoring: a table of ~100 kinds, each with a biome and a phase; the rest is the generator.
 - **Biomes by direction** (Ed): the sea chart is a compass. **North** gets colder (pine forests, eventually tundra); **south** hotter (eventually desert); **east** rockier (eventually volcanic); **west** becomes jungle. The further out, the more of an island's areas are themed by its biome (today's 32 area types are the temperate middle). Proposed: the diagonals blend (north-east mountains and glaciers, south-east badlands, south-west mangrove swamp, north-west cold rainforest), and each biome brings its own creatures, legends and record genre.
@@ -71,6 +71,12 @@ Using only today's 32 kinds and art:
 4. **The sea chart:** a bare page: home in the middle, islands appearing as their legends are woken, click one to play it; progress saved in the browser.
 5. **Home** growing by one area per kind found.
 Not yet: the Ent, the voyage, treehouse rooms, records, lakes, biomes.
+
+### Mushrooms on the journey (Ed, 2026-10-10)
+
+- Six mushroom kinds (the cauldron's 56 recipes): **two temperate kinds grow on home** from the start; **one kind per biome direction** (north, south, east, west) grows only on **phase-3-and-beyond islands** of that direction (home and phases 1–2 are essentially temperate).
+- **Find a kind once and it grows at home from then on**, as animals do: its basket in the kitchen fills, a first cluster sprouts on home. Brewing works on any island (the kitchen travels with the Ent).
+- So the cauldron opens up as you explore in every direction: a fourth reward, for exploring widely.
 
 ## 2. Records
 
