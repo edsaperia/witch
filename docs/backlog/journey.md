@@ -12,20 +12,20 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Winning:** every legend on the island wakes and joins the party. Each legend tells of a different island: these are the next maps, unlocked on the sea chart.
 - **Phases** (Ed, 2026-10-10): how far an island is from the first, and so how hard, is its *phase*: phase 1 is the first island, phase 2 the islands its legends tell of, and so on. A **fixed number of phases, four or five** (Ed). (The moon: phase 1 full, waning to new; see the archipelago below.)
 - **The archipelago** (Ed, 2026-10-10): **each kind of legend tells of its own island**, always the same one: about 100 islands, one per legend kind (so about 100 creature kinds in the end; 32 today). Rarer legends live further out, so the stories lead outward.
-  - **Home plus four phases**, the moon waning as you go: home under the full moon, then phase 1 gibbous, 2 half, 3 crescent, 4 new (each phase darker). Phase islands are **40 / 50 / 60 / 70 areas** (8 / 10 / 12 / 14 legends); home is 30 areas growing to ~100 (below). About 1 minute of route per area at 4 m/s (measured on today's ~100-area maps), so roughly 30 to 70 minute nights, less on faster records.
-  - Island counts (proposed): **home 1, then 8 / 16 / 28 / 47** (about 100, one per legend kind). New kinds introduced: 8 at home (their islands are phase 1), 16 in phase 1 (islands in phase 2), 28 in phase 2, 47 in phase 3; none in phase 4. A kind appears in the phase before its own island's and every phase after, so many islands can point to the same next one.
+  - **Home plus five phases** (Ed, 2026-10-10: small enough to clear them all): phase islands are **10 / 20 / 30 / 40 / 50 areas** (2 / 4 / 6 / 8 / 10 legends); home grows from about 10 areas to ~100 and is the endgame. The moon wanes outward (home full; then gibbous to new across the phases). About 1 minute of route per area at 4 m/s, so 10 to 50 minute nights, less on faster records.
+  - Island counts (proposed, ~100 in all, one per legend kind): **home 1, then 8 / 12 / 18 / 25 / 36**, i.e. new kinds introduced: 8 at home (their islands are phase 1), 12 in phase 1, 18 in phase 2, 25 in phase 3, 36 in phase 4, none in phase 5. A kind appears in the phase before its own island's and every phase after, so many islands point to the same next one; with only 2 to 10 legends a night, replays open the rest.
   - **Every legend kind exists by phase 3–4** (Ed: no new legends in the last phase): the last phase's legends tell of islands already found (a way back across the chart).
   - **Legends decide the creatures** (Ed): a kind of creature lives in a phase only if its legend does. A kind first appears in the phase before its own island's (so phase 1, with 6 legends, has about 6 kinds of creature: an easy start with few to learn), and stays in every phase after.
   - **The tutorial has 8 kinds** (Ed: slightly more than 6).
   - **One rule for every island** (Ed, 2026-10-10): an island is a **size** and a **roster** of kinds; its areas are filled from the roster, kinds repeating when there are more areas than kinds. Legends are **1 in 5 areas everywhere, dealt at random each night** from the kinds on the island (no two of one kind).
-    - **Home** (the Ent's island, round, full moon): size = the larger of 30 and the number of kinds she knows; roster = every kind she knows. So home always has at least one area of each known kind: a 30-area tutorial at first (8 kinds, each about 4 times; 6 legends), the complete gallery at the end (one area per kind, ~100).
-    - Winning home opens the islands of the legends dealt that night; **replaying home deals different legends**, opening the rest of phase 1 in two or three nights.
-    - **Phase islands:** fixed size by phase (40 / 50 / 60 / 70), roster from that phase's kinds (below).
+    - **Home** (the Ent's island, round, full moon): one area per kind she knows (about 8 to 10 at first, ~100 at the end); roster = every kind she knows. A short tutorial at first (2 legends a night), the complete gallery and **the endgame challenge** at the end.
+    - Winning home opens the islands of the legends dealt that night; **replaying home deals different legends**, opening the rest of phase 1 over a few short nights.
+    - **Phase islands:** fixed size by phase (10 / 20 / 30 / 40 / 50), roster from that phase's kinds (below).
   - **Rosters** (proposed, 2026-10-10). A kind of creature *is* an area type (each area type has its species), so a roster is an island's mix of area types. Each kind gets two hand-set facts: its **biome** (temperate = today's 32; north/cold, south/hot, east/rocky, west/jungle; blends on the diagonals) and the **phase it's introduced in** (home 8, phase 1 16, phase 2 28, phase 3 47). Its own island lies one phase later, in its biome's direction. For kind K's island (phase p), from the island's seed:
     1. Eligible: kinds introduced in phase p or earlier.
     2. Always: **K itself, plentiful** (about 1 area in 6: its home); **3–5 kinds new to phase p** from nearby on the chart (so it has legends telling of new islands).
     3. The rest by weight: own biome strongly, neighbouring biomes some, temperate commons a little, the opposite biome almost never; recently introduced kinds favoured.
-    4. About a third as many kinds as areas (40 areas ≈ 13 kinds, 70 ≈ 23), each about three times.
+    4. About a third as many kinds as areas (10 areas ≈ 4 kinds, 50 ≈ 17), each about three times.
     5. Biome-themed share of areas grows with phase: about 1/4, 1/2, 3/4, nearly all.
     - Each night's legends (1 in 5 areas) are dealt from the roster, favouring kinds whose islands aren't found yet, never K.
     - Authoring: a table of ~100 kinds, each with a biome and a phase; the rest is the generator.
@@ -42,6 +42,26 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Animals route over the area map** (Ed chose this): a path from area to area that skips water areas, as travelling party animals already route along area borders (`rules/travel.ts`); used by besiegers marching on and her followers. Straight lines within an area, as now.
 - Unchanged: areas, the wave route (it rings outward by distance on any set of areas), creatures, combat, legends, sieges.
 - Watch: the ley line crossing a lake; home must stay well inland.
+
+### Difficulty: one master curve (Ed, 2026-10-10)
+
+- Today's swarm curve (`swarm`: 1 young creature at the first stone up to about 12, mostly adults, at the last; `endAverage` 12, `curve` 1.3, `youngShare` 1 → 0.2) becomes **the master curve over waves 1 to 100**, indexed by wave number rather than by share of the route.
+- **Every island plays the curve from wave 1**, as far as it has areas: phase 1 waves 1–10, phase 2 1–20, ... phase 5 1–50. Only **home**, grown to ~100 areas, plays the whole curve to 100: today's balanced map is the endgame.
+- So every night starts gentle; bigger islands climb higher. Other dials (darkness, shape, creature strength) stay mild and mostly visual, so the curve stays the main, readable lever. An easy game is fine as long as progression is constant (Ed).
+
+### The treehouse, for now
+
+Not designed properly until every meta-system is settled (each will own a place in it). Meanwhile: **one big octagonal room with an object for each system** (Ed).
+
+### First prototype (after the token reset; Ed: "trying out smaller islands and unlocking the map seems like a good idea to start")
+
+Using only today's 32 kinds and art:
+1. **Small islands:** a map size by area count (10 / 20 / ...), round, with the swarm curve indexed by wave number (above).
+2. **Rosters:** an island's area types drawn by the roster rule from a table giving each of the 32 kinds a phase (home 8, phase 1 12, phase 2 the other 12; biomes later).
+3. **Winning:** survive every wave with no enraged creature left; the legends dealt that night wake.
+4. **The sea chart:** a bare page: home in the middle, islands appearing as their legends are woken, click one to play it; progress saved in the browser.
+5. **Home** growing by one area per kind found.
+Not yet: the Ent, the voyage, treehouse rooms, records, lakes, biomes.
 
 ## 2. Records
 
