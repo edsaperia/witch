@@ -77,6 +77,7 @@ Not yet: the Ent, the voyage, treehouse rooms, records, lakes, biomes.
 - Six mushroom kinds (the cauldron's 56 recipes): **two temperate kinds grow on home** from the start; **one kind per biome direction** (north, south, east, west) grows only on **phase-3-and-beyond islands** of that direction (home and phases 1–2 are essentially temperate).
 - **Find a kind once and it grows at home from then on**, as animals do: its basket in the kitchen fills, a first cluster sprouts on home. Brewing works on any island (the kitchen travels with the Ent).
 - So the cauldron opens up as you explore in every direction: a fourth reward, for exploring widely.
+- **The tutorial recipes** (the two home mushrooms, A and B; Ed): **AAA Superhot** (good: time moves only while she moves; the wave countdown still creeps while she's still), **AAB Orbit** (neutral: treetops three times higher, the forest like a planet from space), **ABB Drift** (bad: her controls slowly rotate, with a dizzy sway and swirl), **BBB Mirror Floor** (neutral: the ground a dark mirror). Moderate on purpose: with two plentiful mushrooms they're easy to make. The strong trips (Bullet Time and the like) need biome mushrooms.
 
 ## 2. Records
 
