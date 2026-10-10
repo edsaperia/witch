@@ -1,4 +1,4 @@
-// The party's over (Ed, 2026-10-06; rules/partyOver.ts): every soundsystem and the home ring's speakers down, the run ends in
+// The party's over (Ed, 2026-10-06, 2026-10-10; rules/partyOver.ts): the home ring's speakers down, the run ends in
 // a peaceful afterparty: the waves stop, nothing fights or hurts her, everyone walks home (or is home already) and sleeps.
 import { isHomeKey } from "./speakers";
 import { describe, expect, it } from "vitest";
@@ -20,7 +20,7 @@ function game(): Game {
 const inOwnArea = (g: Game, c: Creature) => cellKey(g.map.cellSafe(c.x, c.z).cell) === cellKey(c.cell);
 
 describe("the party's over", () => {
-  it("starts when every soundsystem is down, the dancefloor's ring too, and not before", () => {
+  it("starts when the dancefloor's ring of speakers is down, and not before", () => {
     const g = game();
     run(g, 0.5);
     expect(g.partyOver).toBeNull();
@@ -28,6 +28,20 @@ describe("the party's over", () => {
     run(g, STEP);
     expect(g.partyOver).not.toBeNull();
     expect(g.partyOver!.at).toBeCloseTo(g.clock.time, 1);
+  });
+
+  it("?partyover=1 (endParty) downs only home's speakers: a soundsystem still standing stays standing, switched off (Ed, 2026-10-10)", () => {
+    const g = game();
+    run(g, 0.5);
+    run(g, STEP, { nextWave: true } as Partial<typeof C>);
+    const [key] = [...g.party.areas].find(([k, a]) => a.soundsystem && g.combat.sounds.has(k)) ?? [];
+    expect(key).toBeTruthy();
+    endParty(g);
+    expect(g.partyOver).not.toBeNull();
+    expect(g.combat.sounds.get(key!)!.hp).toBeGreaterThan(0);
+    expect(g.combat.ruined.has(key!)).toBe(false);
+    run(g, 5);
+    expect(g.combat.sounds.get(key!)!.hp).toBeGreaterThan(0); // (nothing fights it)
   });
 
   it("eases in over partyOver.ease seconds", () => {

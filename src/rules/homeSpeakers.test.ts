@@ -60,7 +60,7 @@ describe("home's speakers (Ed, 2026-10-08)", () => {
     expect(home.hp).toBeCloseTo(homeKeys(g).reduce((a, k) => a + Math.max(0, g.combat.sounds.get(k)!.hp), 0), 6);
   }, 180_000);
 
-  it("home is lost only when the last speaker falls: then soundsystemLost (home) and, every other one down, the party's over", () => {
+  it("home is lost only when the last speaker falls: then soundsystemLost (home) and the party's over", () => {
     const g = siege(), keys = homeKeys(g);
     for (const k of keys.slice(1)) g.combat.sounds.get(k)!.hp = 0;
     stepGame(g, idle, STEP);

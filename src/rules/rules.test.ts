@@ -942,13 +942,13 @@ describe("inviting and leashing", () => {
     const all = fresh(), s = newLeash(), { c, w } = inviteOne(all, s, 0);
     const to = { x: w.x + 60, z: w.z + 20 };
     stepLeash(s, all, { sigil: true }, to, true, 50, 0.1, TUNING);
-    const L = TUNING.leash.length;
+    const L = TUNING.leash.length, rest = { x: to.x, z: to.z - (TUNING.leash.restAbove ?? 0) }; // (parked, it rests north of its sigil)
     let arrived = -1, px = c.x, pz = c.z, outside = 0;
     for (let i = 0; i < 1200; i++) {
       stepLeash(s, all, none, { x: 0, z: 0 }, true, 50 + i * 0.1, 0.1, TUNING);
       expect(Math.hypot(c.x - px, c.z - pz)).toBeLessThanOrEqual(TUNING.leash.runSpeed * 0.1 + 1e-6);
       px = c.x; pz = c.z;
-      const d = Math.hypot(c.x - to.x, c.z - to.z);
+      const d = Math.hypot(c.x - rest.x, c.z - rest.z);
       if (arrived < 0 && d <= L) arrived = i;
       if (arrived >= 0 && d > L + 0.01) outside++;
     }
