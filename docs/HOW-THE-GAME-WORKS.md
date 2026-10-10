@@ -86,7 +86,6 @@ Babies weigh 0.3, young 0.8, adults 2 and legends 3 (`leash.weight.levels`). So 
 | Debug overlay | ~ | Back/Select | three-finger tap |
 
 - **Cast the party spell**: the on-screen scroll, or Enter, or the spell key.
-- **The action bar** along the bottom shows 1 (💌), 2–4 (empty for now), Q, E, R, Space and RMB.
 - **Playtest keys**: N next wave now, P pause the wave timer, B feed the nearest party animal a berry, O make the nearest legend happy, I invite the nearest animal, K cycle the speakers' damage, J reset the debug arena.
 
 ---

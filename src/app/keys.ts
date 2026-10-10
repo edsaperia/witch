@@ -17,15 +17,3 @@ export function setupDebugKeys(view: View, input: Input, params: URLSearchParams
   window.addEventListener("keydown", e => { if (e.code === "KeyM" && !e.repeat) view.minimap.on = !view.minimap.on; });
   document.getElementById("rulers")!.addEventListener("pointerdown", e => { e.preventDefault(); toggleRulers(); });
 }
-
-export function setupActionBar(view: View): void {
-  // The action bar (1 2 3 4 Q W E R, its keys and recharge) replaces the old line of controls (Ed,
-  // 2026-10-04); H shows or hides it (remembered on this browser).
-  let barOn = true;
-  try { if (localStorage.getItem("witch.bar") === "off") { barOn = false; view.actionBar.visible = false; } } catch { /* storage blocked: shown */ }
-  window.addEventListener("keydown", e => {
-    if (e.code !== "KeyH" || e.repeat) return;
-    barOn = !barOn; view.actionBar.visible = barOn;
-    try { localStorage.setItem("witch.bar", barOn ? "on" : "off"); } catch { /* fine */ }
-  });
-}

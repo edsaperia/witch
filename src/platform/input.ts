@@ -22,13 +22,6 @@ export const KEYS = {
   nextWave: ["KeyN"], pauseWaves: ["KeyP"], cycleSpeakers: ["KeyK"], inviteNearest: ["KeyI"], feedNearest: ["KeyB"], happyNearest: ["KeyO"],
 } as const;
 
-/** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,
- *  items and totems). */
-export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "cycle" | "rise" | "autoTalk" | "invite" | null }[] = [
-  { key: "1", code: "Digit1", action: "invite" }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
-  { key: "Q", code: "KeyQ", action: "cycle" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: "spell" }, { key: "␣", code: "Space", action: "rise" }, { key: "RMB", code: "", action: "dash" },
-];
-
 /** Gamepad bindings (standard mapping button numbers; PlayStation names): left stick or d-pad moves. Ed, 2026-10-10:
  *  cross (0) rises or lands, square (2) picks up and puts down (held: her hat), triangle (3) cycles the stack, circle (1)
  *  boosts (the speed spell), the right trigger (7) invites, the left trigger (6) blinks. */
