@@ -39,7 +39,7 @@
     #clock .boot-pop { color: var(--accent); animation: boot-pop 4s ease-out forwards; }
     @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes loss-pop { 0% { opacity: 0; transform: translateX(-50%) scale(1.8); } 12% { opacity: 1; transform: translateX(-50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 60%); } }
-    #over { position: fixed; left: 0; right: 0; top: 58px; display: none; justify-content: center; z-index: 6; pointer-events: none; }
+    #over { position: fixed; inset: 0; display: none; justify-content: center; align-items: center; z-index: 6; pointer-events: none; } /* in the middle of the screen (Ed, 2026-10-10) */
     #over.on { display: flex; animation: overIn 2.4s ease-out both; }
     #over.on .card { pointer-events: auto; background: rgba(20, 16, 38, .55); padding: 8px 14px; font-size: 12px; max-width: 24em; position: relative; }
     #over.on h1 { font-size: 15px; }
