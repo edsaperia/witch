@@ -34,7 +34,6 @@ import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, LEGEND_LEVEL
 import { drawCombat } from "./leash/combat";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
-import { drawRespawn } from "./leash/respawn";
 import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
@@ -528,7 +527,6 @@ export class LeashView {
     drawDreams(this, camera, width, height);
     drawSnores(this, camera, width, height);
     drawCirclePanel(this, camera, width, height);
-    drawRespawn(this, camera, width, height); // (the wait behind her decks after a knockout: render/leash/respawn.ts)
     drawDeckBpm(this, camera, width, height); // (the party's tempo over her decks: render/leash/deckBpm.ts)
   }
 
@@ -537,8 +535,6 @@ export class LeashView {
    *  in (on the ground), on its right on screen, or its left if that would run off; fading in and out (circleShown). Its icons:
    *  the sigil the legend dreams of, at its level, and a relic sigil in gold. */
   circlePanel: HTMLElement | null = null;
-  /** The countdown at her decks after a knockout (render/leash/respawn.ts). */
-  respawnEl: HTMLElement | null = null;
   /** The tempo over her decks (render/leash/deckBpm.ts), and the knockdowns' bonus it last pulsed for. */
   deckBpmEl: HTMLElement | null = null;
   deckBonus = 0;
