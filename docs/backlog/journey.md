@@ -21,6 +21,14 @@ Where this overrides older notes: the record crate no longer picks the map's see
     - **Home** (the Ent's island, round, full moon): size = the larger of 30 and the number of kinds she knows; roster = every kind she knows. So home always has at least one area of each known kind: a 30-area tutorial at first (8 kinds, each about 4 times; 6 legends), the complete gallery at the end (one area per kind, ~100).
     - Winning home opens the islands of the legends dealt that night; **replaying home deals different legends**, opening the rest of phase 1 in two or three nights.
     - **Phase islands:** fixed size by phase (40 / 50 / 60 / 70), roster from that phase's kinds (below).
+  - **Rosters** (proposed, 2026-10-10). A kind of creature *is* an area type (each area type has its species), so a roster is an island's mix of area types. Each kind gets two hand-set facts: its **biome** (temperate = today's 32; north/cold, south/hot, east/rocky, west/jungle; blends on the diagonals) and the **phase it's introduced in** (home 8, phase 1 16, phase 2 28, phase 3 47). Its own island lies one phase later, in its biome's direction. For kind K's island (phase p), from the island's seed:
+    1. Eligible: kinds introduced in phase p or earlier.
+    2. Always: **K itself, plentiful** (about 1 area in 6: its home); **3–5 kinds new to phase p** from nearby on the chart (so it has legends telling of new islands).
+    3. The rest by weight: own biome strongly, neighbouring biomes some, temperate commons a little, the opposite biome almost never; recently introduced kinds favoured.
+    4. About a third as many kinds as areas (40 areas ≈ 13 kinds, 70 ≈ 23), each about three times.
+    5. Biome-themed share of areas grows with phase: about 1/4, 1/2, 3/4, nearly all.
+    - Each night's legends (1 in 5 areas) are dealt from the roster, favouring kinds whose islands aren't found yet, never K.
+    - Authoring: a table of ~100 kinds, each with a biome and a phase; the rest is the generator.
 - **Biomes by direction** (Ed): the sea chart is a compass. **North** gets colder (pine forests, eventually tundra); **south** hotter (eventually desert); **east** rockier (eventually volcanic); **west** becomes jungle. The further out, the more of an island's areas are themed by its biome (today's 32 area types are the temperate middle). Proposed: the diagonals blend (north-east mountains and glaciers, south-east badlands, south-west mangrove swamp, north-west cold rainforest), and each biome brings its own creatures, legends and record genre.
 - **Harder further out.** The further an island is from the first, the more areas it has, the more irregular its shape, and the rarer its animals.
   - Further from home, the more **fantastical** the creatures (dragons, pegasi...); directions are biomes (below). Many more creatures are planned.
