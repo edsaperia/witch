@@ -75,12 +75,12 @@ Babies weigh 0.3, young 0.8, adults 2 and legends 3 (`leash.weight.levels`). So 
 |---|---|---|---|
 | Move | WASD or arrows | left stick or d-pad | joystick where your left thumb lands |
 | Aim 💌s | mouse cursor | right stick | the way she's going |
-| Throw 💌s | left click (hold) or 1 | either trigger | 💌 button (hold) |
-| Blink | right click | A | dash |
-| Rise / land | Space | Y | rise / descend |
-| Place / pick up sigil | E | X (cycles in the treetops) | sigil (cycles in the treetops) |
+| Throw 💌s | left click (hold) or 1 | cross or right trigger | 💌 button (hold) |
+| Blink | right click | square or left trigger | dash |
+| Rise / land | Space | triangle | rise / descend |
+| Place / pick up sigil | E | circle (cycles in the treetops) | sigil (cycles in the treetops) |
 | Cycle the sigil stack | Q (on the ground or in the treetops) | — | — |
-| Speed spell | R | B | spell |
+| Speed spell | R | right stick click | spell |
 | Zoom | mouse wheel, Z / X, + / − | LB / RB | + / − |
 | Debug overlay | ~ | Back/Select | three-finger tap |
 
