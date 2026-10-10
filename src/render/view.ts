@@ -37,7 +37,6 @@ import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
 import { LOAD_DEFAULT, loadView } from "./load";
 import { InviteView } from "./invites";
 import { StateMarks } from "./looks";
-import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
@@ -178,7 +177,6 @@ export class View {
   private trail: WitchTrail;
   private trailAt = -1;
   private trailRgb = new THREE.Vector3();
-  readonly actionBar = new ActionBar(document.body);
   private buffHud = new BuffHud(document.body);
   shadow: THREE.Mesh;
   mpp: number; // metres per art pixel
@@ -858,7 +856,6 @@ export class View {
       loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
       const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
-    this.actionBar.update(g, ht);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
