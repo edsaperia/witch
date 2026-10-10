@@ -27,7 +27,7 @@ import { Sound } from "./app/sound";
 import { OutputMeter } from "./platform/audio/outputMeter";
 import { gameFromLink } from "./app/gameParams";
 import { styleFromLink, viewFromLink } from "./app/viewParams";
-import { setupActionBar, setupDebugKeys } from "./app/keys";
+import { setupDebugKeys } from "./app/keys";
 import { ScreenShake } from "./app/shake";
 import { playerPick as makePlayerPick } from "./app/playerPick";
 import { wavePick as makeWavePick } from "./app/wavePick";
@@ -84,17 +84,12 @@ if (params.get("playtest") === "download") setTimeout(() => playtest.download(),
 // The debug knobs: the fight's scale and speed, the treetop speed (app/knobs.ts).
 const knobs = setupKnobs(tuning, game, world, WORLD_DEFAULT, params, playtest);
 
-// The action bar, H shows or hides it (app/keys.ts).
-setupActionBar(view);
-
 // Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): 1 or T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
 let autoTalk = true;
 try { if (localStorage.getItem("witch.autotalk") === "off") autoTalk = false; } catch { /* storage blocked: on */ }
-view.actionBar.autoTalk = autoTalk;
-view.actionBar.onAutoTalk = () => { input.touch.autoTalk = true; };
 const setAutoTalk = (on: boolean) => {
-  autoTalk = on; view.actionBar.autoTalk = on;
+  autoTalk = on;
   try { localStorage.setItem("witch.autotalk", on ? "on" : "off"); } catch { /* fine */ }
 };
 
