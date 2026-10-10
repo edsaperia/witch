@@ -44,6 +44,15 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **In the treehouse** the chart is a miniature of the world itself: a water feature, the disc with its islands, its sea pouring off the rim into a pool in the floor.
 - Fits what's drawn today: the world's bend already curves the ground away toward the horizon.
 
+### The end of the route (Ed, 2026-10-10)
+
+1. **Last call:** the wave pointer's 🎶 becomes **🎉** for the final stone.
+2. **Victory lap:** when the last wave has landed and **no enraged creature is left**, the pulse races back along the whole ley line to home, **each runestone shooting fireworks as it passes**; the music (every soundsystem already plays the same track) turns to **special victory music**.
+3. **Stragglers first:** none of this happens while enraged animals live. Until then a pointer shows the way to the enraged animal **closest to the centre** (there may be many).
+4. **The win:** the World Tree sigil on the dancefloor flares; the legends dealt that night wake and come to dance as party legends; fireworks from every soundsystem.
+5. **Telling without words:** each woken legend's dream bubble shows the shape of its home island with its sigil, the same picture that lights up on the sea chart.
+6. Then the afterparty, stargazing, bed and the voyage.
+
 ### Irregular islands and lakes
 
 - **Build the land out of areas.** Grow the island outward from home over the area grid with seeded noise (arms, bays, peninsulas); some interior areas are water: **lakes**. The coast follows the areas' fractal borders.
