@@ -10,6 +10,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Winning an island** means surviving every wave on its route *and* leaving no enraged creature standing. (Today the pulse simply stops after the last stone and nothing ends the run but losing; this is the missing win state.)
 - **Losing:** she goes to bed, and can play the same island again.
 - **Winning:** every legend on the island wakes and joins the party. Each legend tells of a different island: these are the next maps, unlocked on the sea chart.
+- **Phases** (Ed, 2026-10-10): how far an island is from the first, and so how hard, is its *phase*: phase 1 is the first island, phase 2 the islands its legends tell of, and so on. (Proposed: phases of the moon, the night sky showing that phase's moon, waxing toward full as you go further out.)
 - **Harder further out.** The further an island is from the first, the more areas it has, the more irregular its shape, and the rarer its animals.
   - Directions on the chart may drift into **biomes** (desert, volcano, tundra...), and/or the further from home the more **fantastical** the creatures (dragons, pegasi...). Rarity and the new creatures come later; many more creatures are planned.
 - **Replay:** islands already won can be won again, to explore the chart in other directions (each legend points somewhere new) or to finish their quests (records, below).
@@ -54,8 +55,7 @@ The bedroom becomes **the whole treehouse**: rooms she walks between, each with 
 | **Observation tower** | look out over the actual island and its dancefloor, before the party and during it (the real game camera, from the treehouse) |
 | **Computer room / telephone** | multiplayer: call friends to the party (lobby, party code) |
 | **Kitchen** | the cauldron: brew mushroom trips (6 baskets, 56 recipes) |
-| **DJ booth** | start the party (put on the record); where she respawns today |
-| **Respawn room?** | maybe a ritual circle where she comes back after a knockdown (open: or keep the DJ booth, with its needle drop and scratch routine) |
+| **DJ booth** | start the party (put on the record). A **ritual circle** surrounds it (Ed, 2026-10-10): after a knockdown she comes back inside it, and its candles count down the respawn wait (6 s), going out or lighting one by one before she drops the needle |
 
 Also on the walls: **the poster** of her biggest party.
 
@@ -64,7 +64,6 @@ Also on the walls: **the poster** of her biggest party.
 
 ## Open questions
 
-- The respawn room: a ritual circle, or the DJ booth as now.
 - Which rooms are open during the party.
 - How a legend "tells" of its island without text (a dream bubble showing the island's shape?).
 - Biomes by direction, fantastical by distance, or both.
