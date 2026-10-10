@@ -49,7 +49,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 1. **Last call:** the wave pointer's 🎶 becomes **🎉** for the final stone.
 2. **Victory lap:** when the last wave has landed and **no enraged creature is left**, the pulse races back along the whole ley line to home, **each runestone shooting fireworks as it passes**; the music (every soundsystem already plays the same track) turns to **special victory music**.
 3. **Stragglers first:** none of this happens while enraged animals live. Until then a pointer shows the way to the enraged animal **closest to the centre** (there may be many).
-4. **The win:** the World Tree sigil on the dancefloor flares; the legends dealt that night wake and come to dance as party legends; fireworks from every soundsystem.
+4. **The win:** **the island's own sigil** (its legend kind's) flares on the dancefloor; the legends dealt that night wake and come to dance as party legends; **every animal on the island becomes a party animal**, and they all join **a giant conga line**; fireworks from every soundsystem.
 5. **Telling without words:** each woken legend's dream bubble shows the shape of its home island with its sigil, the same picture that lights up on the sea chart.
 6. Then the afterparty, stargazing, bed and the voyage.
 
