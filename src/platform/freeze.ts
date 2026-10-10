@@ -1,5 +1,5 @@
 // The freeze (Ed, 2026-10-05: "a pause control … to help me take screenshots" for debugging):
-// Escape, gamepad Start or the ❚❚ button stops the game dead, music and all, as a true still;
+// Escape or gamepad Start stops (the ❚❚ button went: Ed, 2026-10-10) the game dead, music and all, as a true still;
 // while frozen, . steps one fixed step (Shift+. ten), and a stamp says exactly what is on screen
 // (version, seed, game time, where she is, the area, the camera) with a link to copy. P stays the
 // waves' own pause; this one stops everything.
@@ -15,7 +15,6 @@ export class Freeze {
   private readonly marker = document.createElement("div");
   private readonly stamp = document.createElement("pre");
   private readonly copy = document.createElement("button");
-  readonly button = document.createElement("div");
   /** Whether the game has started (Escape on the start screen starts it, like any key). */
   started = () => true;
   /** Told on every freeze and thaw (the music's audio stops dead). */
@@ -29,12 +28,7 @@ export class Freeze {
     Object.assign(this.copy.style, { marginTop: "6px", font: "inherit", pointerEvents: "auto", cursor: "pointer" });
     this.copy.textContent = "copy link";
     this.copy.addEventListener("click", () => this.copyLink());
-    Object.assign(this.button.style, { position: "fixed", right: "10px", bottom: "44px", zIndex: "3", padding: "2px 8px", borderRadius: "6px", background: "rgba(14,11,28,.55)", color: "#e8e2f4", font: "14px ui-monospace, Menlo, Consolas, monospace", cursor: "pointer", userSelect: "none", pointerEvents: "auto" });
-    this.button.id = "freeze";
-    this.button.title = "pause (Esc)";
-    this.button.textContent = "❚❚";
-    this.button.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); this.toggle(); });
-    document.body.append(this.marker, this.stamp, this.button);
+    document.body.append(this.marker, this.stamp);
     // Before the game's own input (capture), so a press while frozen never starts or flies anything.
     window.addEventListener("keydown", e => {
       if (e.code === "Escape" && !e.repeat && this.started()) { e.preventDefault(); this.toggle(); }
@@ -50,8 +44,6 @@ export class Freeze {
     if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; }
     else g.clock.paused = this.wasPaused;
     this.marker.style.display = this.stamp.style.display = this.frozen ? "block" : "none";
-    this.button.textContent = this.frozen ? "▶" : "❚❚";
-    this.button.title = this.frozen ? "resume (Esc)" : "pause (Esc)";
     this.onToggle(this.frozen);
   }
 
