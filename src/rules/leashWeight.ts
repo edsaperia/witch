@@ -6,7 +6,9 @@
 // a far traveller can't pin her by distance alone) times its weight (its level's, times its species' strength). The
 // summed pull, less a free allowance (the first few sigils weigh almost nothing), is her load: rules/witch.ts slows
 // her moving away from it, drifts her a little toward it, slows her rise and, over the treetops, sinks her slowly (to
-// a floor while she flies on; all the way down if she stops or the load is extreme). Knobs: tuning leash.weight.
+// a floor while she flies on; all the way down if she stops or the load is extreme). On the ground she's stronger (Ed,
+// 2026-10-09: "extra free allowance on the ground should be the equivalent of one adult"): the free allowance there
+// gains one adult's weight (leash.weight.levels' adult, at normal strength). Knobs: tuning leash.weight.
 // No drawing here; the view reads leashLoad (rules/game.ts).
 import type { Creature } from "./creatures";
 import type { Tuning } from "./tuning";
@@ -15,7 +17,7 @@ import { strengthOf } from "./combat";
 export interface LeashLoad {
   /** The summed pull's size, in weight units (a young creature of normal strength on a fully taut leash is 1). */
   total: number;
-  /** What drags: total less leash.weight.free, at least 0. */
+  /** What drags: total less leash.weight.free (plus an adult's weight on the ground), at least 0. */
   over: number;
   /** The pull's direction from her toward her creatures (a unit vector; 0, 0 with none). */
   x: number;
@@ -33,8 +35,11 @@ export const creatureWeight = (c: Pick<Creature, "species" | "level">, t: Tuning
  *  length's worth to leash.weight.maxTension, and no further however far (a far traveller included). */
 export const leashStrain = (d: number, t: Tuning) => Math.max(0, Math.min(t.leash.weight.maxTension, (d - t.leash.length * 0.85) / Math.max(1e-6, t.leash.length)));
 
-/** Her load from the sigils in her stack (`stack`: creature ids), at (x, z). */
-export function loadOf(stack: readonly number[], creatures: readonly Creature[], at: { x: number; z: number }, t: Tuning): LeashLoad {
+/** Her free allowance: leash.weight.free, plus one adult's weight (at normal strength) when she's on the ground. */
+export const freeOf = (t: Tuning, ground: boolean) => t.leash.weight.free + (ground ? t.leash.weight.levels[2] ?? 0 : 0);
+
+/** Her load from the sigils in her stack (`stack`: creature ids), at (x, z); `at.mode` "ground" gives the ground's allowance. */
+export function loadOf(stack: readonly number[], creatures: readonly Creature[], at: { x: number; z: number; mode?: string }, t: Tuning): LeashLoad {
   if (!stack.length) return NO_LOAD;
   let px = 0, pz = 0;
   for (const id of stack) {
@@ -47,6 +52,6 @@ export function loadOf(stack: readonly number[], creatures: readonly Creature[],
   }
   const total = Math.hypot(px, pz), W = t.leash.weight;
   if (total < 1e-9) return NO_LOAD;
-  const over = Math.max(0, total - W.free);
+  const over = Math.max(0, total - freeOf(t, at.mode === "ground"));
   return { total, over, x: px / total, z: pz / total, extreme: over >= W.extreme };
 }

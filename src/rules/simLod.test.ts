@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { setupArena } from "./arena";
 import { stepCreaturesNear, type Creature } from "./creatures";
 import { newGame, STEP, stepGame, type Game } from "./game";
+import { marchSpeed } from "./combat";
 import { inFull } from "./simLod";
 import { TUNING } from "./tuning";
 
@@ -93,6 +94,7 @@ describe("marching besiegers", () => {
     (b.g as { tuning: typeof TUNING }).tuning = { ...b.g.tuning, simLod: { ...L, every: 1 } }; // (every step: all in full)
     for (let i = 0; i < 60 * 8; i++) { stepGame(a.g, idle, STEP); stepGame(b.g, idle, STEP); }
     const da = Math.hypot(a.marchers[0].x - a.home.x, a.marchers[0].z - a.home.z), db = Math.hypot(b.marchers[0].x - b.home.x, b.marchers[0].z - b.home.z);
-    expect(Math.abs(da - db)).toBeLessThan(L.every * STEP * a.marchers[0].speed * TUNING.combat.marchMult * 1.5);
+    // (within a coarse turn's march, and full's combat.reaction pause before it sets off, at its marching pace: rules/combat.ts marchSpeed)
+    expect(Math.abs(da - db)).toBeLessThan((L.every * STEP + TUNING.combat.reaction) * marchSpeed(a.marchers[0], TUNING) * 1.5);
   }, 120_000);
 });

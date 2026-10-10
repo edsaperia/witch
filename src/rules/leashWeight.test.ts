@@ -4,7 +4,7 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { COMBAT } from "./combat";
 import { TUNING } from "./tuning";
-import { creatureWeight, leashStrain, loadOf, NO_LOAD, type LeashLoad } from "./leashWeight";
+import { creatureWeight, freeOf, leashStrain, loadOf, NO_LOAD, type LeashLoad } from "./leashWeight";
 import { newWitch, stepWitch, type WitchState } from "./witch";
 import { leashLoad, newGame } from "./game";
 import type { Creature } from "./creatures";
@@ -59,6 +59,15 @@ describe("sigil weight", () => {
     // Inside the allowance she moves exactly as unloaded.
     const free = loadOf([0, 1], [crit(0, 20, 0), crit(1, 20, 1)], { x: 0, z: 0 }, t);
     expect(ground(-1, 0, free)).toEqual(ground(-1, 0, NO_LOAD));
+  });
+
+  it("on the ground she's stronger: an adult's weight more is free there than in the treetops (Ed, 2026-10-09)", () => {
+    const cs = [0, 1, 2, 3].map(i => crit(i, 20, i)), ids = cs.map(c => c.id);
+    const air = loadOf(ids, cs, { x: 0, z: 0, mode: "treetop" }, t), feet = loadOf(ids, cs, { x: 0, z: 0, mode: "ground" }, t);
+    expect(feet.total).toBeCloseTo(air.total, 9);
+    expect(air.over).toBeGreaterThan(0);
+    expect(feet.over).toBeCloseTo(Math.max(0, air.over - W.levels[2]), 9);
+    expect(freeOf(t, true) - freeOf(t, false)).toBeCloseTo(W.levels[2], 9);
   });
 
   it("loaded, she's slower moving away from the pull, not toward it or across it much, and drifts a little toward it", () => {

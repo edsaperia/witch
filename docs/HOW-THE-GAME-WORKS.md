@@ -29,7 +29,7 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
    - the area's wild young and adults become **enraged** and **besiege** it (none, when you cleared it);
    - its wild babies turn **happy** on the spot and join the party, whether you cleared it or its wave transformed it (Ed, 2026-10-07: "Wild babies become party babies when the pulse transforms an uncleared area");
    - its happy animals come and **dance** round it, or at the area's party spots.
-8. **Losing a soundsystem**: the area is **ruined** and its party ends for good. Its happy babies run off the map for good, and its besiegers march on to the **next-nearest standing soundsystem**, home included. A loss touches neither the wave countdown nor the tempo (Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown", "doesn't affect the bpm").
+8. **Losing a soundsystem**: the area is **ruined** and its party ends for good. Its happy babies run off the map for good, and its besiegers march on to the **next-nearest standing soundsystem**, home included, at a run (`combat.marchOnRun`, 5 m/s; an area's own siege still comes at its amble, `marchMult` times its own speed, under 1 m/s). A loss touches neither the wave countdown nor the tempo (Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown", "doesn't affect the bpm").
 9. **The party's over** once every soundsystem *and* the home ring are down (rules/partyOver.ts):
    - the waves stop and nothing fights;
    - the lights and music wind down over 6 s (`partyOver.ease`);
@@ -59,7 +59,7 @@ Home's speakers are each a soundsystem in the fight: animals marching on home go
 - rising takes longer;
 - over the treetops she's slowly pulled down.
 
-Babies weigh 0.5, young 1, adults 2 and legends 3 (`leash.weight.levels`). So you can't just drag a huge army everywhere.
+Babies weigh 0.3, young 0.8, adults 2 and legends 3 (`leash.weight.levels`). So you can't just drag a huge army everywhere.
 
 **Knocked out.** At zero hits she collapses.
 - Her carried sigils come off one a second, bottom first (`knockout.releaseEach`). **Each is put down where its animal stands, so they stay hers** as a parked group.
@@ -104,8 +104,8 @@ Babies weigh 0.5, young 1, adults 2 and legends 3 (`leash.weight.levels`). So yo
 (`config/combat.json` `levels`.) Some species shoot (owl, bat, raven, moth, glow-worm, spider, toad, salamander, snake, woodlouse). The rest bite, maul or charge. Every attack is telegraphed with a wind-up, and you can step aside or blink out of it. A charge that misses leaves the animal winded for 1.2 s, which is a free window for 💌s (`fight.charge.miss`).
 
 **Wild flyers swoop** (the owl, the bat and the raven; `movement.json` `swoop`, `rules/movement.ts` `stepSwoop`). Hostile ones rise and circle her out of reach, drawn up in the air over their shadows: 💌s pass under them, and no blow or talk reaches them. Then each telegraphs, with a red ring tightening round its shadow, and dives along a straight line at where she'll be when it gets there (`lead` of her velocity at the moment it lets go). Its aim locks `dodge.a.commit` (0.18 s) before it drops, as a strike's does: a bat's dive reaches her in about a tenth of a second, so the blink that beats it comes as its aim locks. Walking straight on gets her caught; turning or blinking as it lets go beats it. It skims low at the bottom and climbs back up. Only in the dive and at the bottom can it be hit or invited.
-- **Owl:** a slow, wide circle 8 m up, then one heavy dive after a 1.5 s telegraph, open for the dive and 0.6 s at the bottom.
-- **Bat:** fast and erratic, 6 m up, with three quick dives a bout, each telegraphed for 0.5 s with a screech, open for 0.3 s at the bottom.
+- **Owl:** a slow, wide circle 8 m up, then one heavy dive after a 1.5 s telegraph, open for the dive and 2 s at the bottom.
+- **Bat:** fast and erratic, 6 m up, with three quick dives a bout, each telegraphed for 0.5 s with a screech, open for 1 s at the bottom.
 - **Raven:** climbs to nearly twice its 9 m while it telegraphs, so its shadow grows, then dives hard and throws her back.
 
 Her own flyers, leashed or happy, fight on the ground as before.

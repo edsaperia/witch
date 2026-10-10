@@ -200,3 +200,10 @@ Tests, typecheck, build green. **The core-design check** (`tools/qa/core.cjs`, s
 - **Core-design check**: all pass, no errors. #594 (the ley pulse at a constant 4 m/s, boot included) changed the boot's check in `tools/qa/core.cjs` to its 179 m path at the pulse's speed: 44.7 s from the step-off (8.5 → 53.2), where it was 30 s from the first speaker. The rest as before: 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); no new id.
 - **Journey**: every moment reached, no errors, `dropped` 0: first speaker at 12.4 s, the boot caught at 6 of 12, draw calls over the treetops 104, stargazing at the beach, the party's over.
 - **Creatures**: 780 at the start, from 840: #583 puts legends in a fifth of the areas (and so fewer legends and circle babies). Not exercised: #592 (her posse defends her), #588 (flyers swoop), #599 (heal pluses).
+
+## Midday: b6467278 (#609), 11:29–12:01
+
+8 merges since 3138d3a6 (#585, #596, #601, #605, #604, #606, #608, #609; plus #603, this log). Tests (1020), typecheck, build green.
+
+- **Core-design check**: all pass, no errors: the boot 44.7 s at the pulse's 4 m/s (8.5 → 53.2); 10,9 cleared transforms (3 holders, one `areaCleared`, `party.ahead`); its wave only celebrates (soundsystems 13 → 13, enraged 0 → 0); the next uncleared stone wakes (13 → 14, 1 enraged); 780 creatures, no new id.
+- **Journey**: every moment reached, no errors, `dropped` 0: first speaker at 12 s, the boot caught at 7 of 12, draw calls over the treetops 105 (from 104, with #585's creatures half again as big), stargazing at the beach, the party's over. Not exercised: #601 (blood trails behind hurt creatures: Ed's ask, 2026-10-09), #606 (putting her hat down), #608 (stronger on the ground), #609 (besiegers march on at a run), #604 (the music's new form).

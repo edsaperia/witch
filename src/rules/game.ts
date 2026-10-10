@@ -30,7 +30,7 @@ import { moonState } from "./moon";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
-import { COMBAT, marchOn, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, questsFromStanding, stepSigilButton } from "./sigilButton";
@@ -629,7 +629,7 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
     if (!coarseTurn(tick, c.id, L.every)) continue;
     const key0 = tg?.kind === "sound" ? tg.key : c.siege!, key = key0 === "home" ? nearestHomeSpeaker(S, c.x, c.z) ?? key0 : key0, h = S.sounds.get(key) ?? null;
     if (!h || h.hp <= 0) { c.lod = "full"; out.delete(c); continue; } // (its soundsystem fell: combat finds it the next)
-    const dx = h.x - c.x, dz = h.z - c.z, dist = Math.hypot(dx, dz), step = Math.min(Math.max(0, dist - 10), c.speed * t.combat.marchMult * dt * L.every); // (over the line it's in full next step)
+    const dx = h.x - c.x, dz = h.z - c.z, dist = Math.hypot(dx, dz), step = Math.min(Math.max(0, dist - 10), marchSpeed(c, t) * dt * L.every); // (over the line it's in full next step)
     if (dist > 1e-6) { c.x += (dx / dist) * step; c.z += (dz / dist) * step; }
     if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
     c.away = dz < -Math.abs(dx); c.moving = step > 0; c.walk += dt * L.every * 5;

@@ -41,6 +41,16 @@ describe("a siege lost, and the party's over (the full smoke's siege, #577's min
     expect(g.partyOver).not.toBeNull();
   }, 120000);
 
+  it("its besiegers leave for the next one at once (Ed's playtest, 2026-10-09: they seemed not to leave their area): marching on at combat.marchOnRun", () => {
+    const { g, besiegers } = siege(), left = besiegers.filter(c => !c.gone);
+    expect(left.length).toBeGreaterThan(0);
+    const dist = (c: (typeof left)[number]) => { const h = g.combat.sounds.get(c.siege!)!; return Math.hypot(h.x - c.x, h.z - c.z); };
+    const d0 = left.map(dist);
+    for (let i = 0; i < 20 / STEP; i++) stepGame(g, idle, STEP);
+    // 20 s on, each is well on its way: at its old amble (its speed times marchMult, under 1 m/s) it had gone some 15 m; at marchOnRun's 5 m/s, 100.
+    left.forEach((c, i) => expect(d0[i] - dist(c), c.species).toBeGreaterThan(60));
+  }, 120000);
+
   it("with another soundsystem standing nearer than home (a second wave's), they march on to that one instead, and the party goes on", () => {
     const g = newGame(123, TUNING);
     g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
