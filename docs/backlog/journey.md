@@ -35,6 +35,15 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Replay:** islands already won can be won again, to explore the chart in other directions (each legend points somewhere new) or to finish their quests (records, below).
 - **How it could work:** each island is a point on the sea chart, its seed made from its position; its size, irregularity, biome and animals all follow from its distance and direction from the start. The save is only which islands are won and which records are earned.
 
+### The world and the sea chart (Ed, 2026-10-10)
+
+- **The world is a flat disc**, round like the map, the sea streaming off its edges into space. Home is at its centre; every island lies around it.
+- **The sea chart is the same circle:** home in the middle, each island drawn in its **true shape** (worked out in advance from its seed, so only its land and water need making, not its whole forest), with the **sigil of its legend's animal** on it.
+- **Sigils light up as kinds are discovered** (Ed): the chart starts with a ring of about 10 lit sigils round home (the kinds she knows); an island's sigil lights when its animal is discovered. **Each voyage draws a line** from the island it set out from to the new one, so the chart shows the paths taken. **Home grows on the chart** too, gradually, as it gains areas.
+- **Home's sigil is the World Tree**: symbolically the Ent legend's placed sigil. It shows on the dancefloor before the party spell wakes it.
+- **In the treehouse** the chart is a miniature of the world itself: a water feature, the disc with its islands, its sea pouring off the rim into a pool in the floor.
+- Fits what's drawn today: the world's bend already curves the ground away toward the horizon.
+
 ### Irregular islands and lakes
 
 - **Build the land out of areas.** Grow the island outward from home over the area grid with seeded noise (arms, bays, peninsulas); some interior areas are water: **lakes**. The coast follows the areas' fractal borders.
@@ -95,7 +104,7 @@ The bedroom becomes **the whole treehouse**: rooms she walks between, each with 
 | **Wardrobe** | get dressed: Next / Back, one piece at a time, from her nightie (creator plan: face, hair, top, jeans, shoes, jacket, scarf; a working mirror) |
 | **Hat room** | the hats she's unlocked; choose one (spares here for swapping during the party) |
 | **Broom room** | the brooms she's unlocked; choose one |
-| **Map room** | the sea chart: islands found, won, and their records; choose tonight's island |
+| **Map room** | the sea chart: the miniature world (a water feature pouring into a floor pool), islands found and won with their sigils; choose tonight's island |
 | **Studio** | the record collection: choose tonight's record (genre and tempo) |
 | **Observation tower** | see the whole island: a near-overhead view from high above the treehouse (looking straight down, so the north-facing camera never turns) |
 | **Computer room / telephone** | multiplayer: call friends to the party (lobby, party code) |
