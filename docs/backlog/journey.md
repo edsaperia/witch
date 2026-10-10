@@ -62,12 +62,14 @@ The bedroom becomes **the whole treehouse**: rooms she walks between, each with 
 | **Broom room** | the brooms she's unlocked; choose one |
 | **Map room** | the sea chart: islands found, won, and their records; choose tonight's island |
 | **Studio** | the record collection: choose tonight's record (genre and tempo) |
-| **Observation tower** | look out over the actual island and its dancefloor, before the party and during it (the real game camera, from the treehouse) |
+| **Observation tower** | see the whole island: a near-overhead view from high above the treehouse (looking straight down, so the north-facing camera never turns) |
 | **Computer room / telephone** | multiplayer: call friends to the party (lobby, party code) |
 | **Kitchen** | the cauldron: brew mushroom trips (6 baskets, 56 recipes) |
 | **DJ booth** | start the party (put on the record). A **ritual circle** surrounds it (Ed, 2026-10-10): after a knockdown she comes back inside it, and its candles count down the respawn wait (6 s), going out or lighting one by one before she drops the needle |
 
 Also on the walls: **the poster** of her biggest party.
+
+**The balcony shot** (Ed, 2026-10-10): the treehouse stays 5 m north of the dancefloor (it never hides the party from the north-facing camera), so the balcony isn't seen *from*: it's filmed **low, through the party, up to the balcony**, with the crowd and the floor in front and her at the rail above, like a DJ over the crowd (close to today's opening shot). The camera never turns round.
 
 - Rooms visited during the party slow time and add their own music (as decided for the kitchen and the old upstairs bedroom). Open: which rooms can be visited mid-party.
 - One button per room (E at the thing), no menus where a thing in the room will do.
