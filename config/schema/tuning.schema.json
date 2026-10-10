@@ -2586,6 +2586,10 @@
           "type": "number",
           "minimum": 0
         },
+        "restAbove": {
+          "type": "number",
+          "minimum": 0
+        },
         "runePull": {
           "type": "object",
           "properties": {
@@ -2682,6 +2686,7 @@
         "spacing",
         "runeRadius",
         "hatHold",
+        "restAbove",
         "runePull",
         "weight"
       ],

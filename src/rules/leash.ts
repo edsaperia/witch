@@ -285,7 +285,10 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
 
   // (A party animal busy with a berry, or evolving, is moved by rules/berries.ts instead.)
   for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
-  for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z, dt, t);
+  // Parked, it rests restAbove metres north of its sigil (up the screen, -z), so the sigil stays in sight and easy to pick up
+  // (Ed, 2026-10-10: "Leashed animals should come to rest 10m above their placed sigil").
+  const above = t.leash.restAbove ?? 0;
+  for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z - above, dt, t);
 }
 
 /** Whether a sigil put down at (x, z) would land on another. */
