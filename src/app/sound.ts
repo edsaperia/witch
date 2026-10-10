@@ -1,5 +1,5 @@
 // The game's sound on the page: the AudioContext (made at the first press: browsers keep sound off till then), the music,
-// the sound effects and their cues, the volume slider in the corner, and the audio watchdog. One a page.
+// the sound effects and their cues, and the audio watchdog. One a page.
 import { beatAt, timeAt } from "../rules/beat";
 import { PARTY_CAST } from "../rules/party";
 import { djIntroEnd } from "../rules/djSet";
@@ -22,7 +22,7 @@ export class Sound {
   sfxCues: SfxCues | null = null;
   /** The ley line's drawn current link (the view's), for the pulse's fizz (SfxCues.leyLink). */
   leyLink: SfxCues["leyLink"] = null;
-  /** The volume, 0 to 1 (0 mutes); remembered on this browser. */
+  /** The volume, 0 to 1 (fixed: the corner slider went, Ed 2026-10-10). */
   level = 0.8;
   /** The music's last mix (by how near she is to a playing soundsystem): the playtest log reads it. */
   lastMix: ReturnType<typeof musicMix> | null = null;
@@ -31,29 +31,8 @@ export class Sound {
   readonly valve = new ShedValve(audioParam());
 
   constructor(private readonly tuning: Tuning, private readonly style: MusicStyle, private readonly seed: number) {
-    try { const v = localStorage.getItem("witch.volume"); if (v !== null && !isNaN(+v)) this.level = Math.min(1, Math.max(0, +v)); } catch { /* storage blocked */ }
   }
 
-  /** The volume (Ed's playtest, 2026-10-04): a slider in the corner, 0 mutes; remembered on this browser. */
-  volumeSlider(): void {
-    const volumeEl = document.createElement("label");
-    volumeEl.id = "volume";
-    volumeEl.title = "volume (0 mutes)";
-    Object.assign(volumeEl.style, { position: "fixed", right: "10px", bottom: "12px", zIndex: "3", display: "flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "6px", background: "rgba(14,11,28,.55)", color: "#e8e2f4", font: "12px ui-monospace, Menlo, Consolas, monospace", pointerEvents: "auto" });
-    const volumeIcon = document.createElement("span"), volumeRange = document.createElement("input");
-    volumeRange.type = "range"; volumeRange.min = "0"; volumeRange.max = "100"; volumeRange.value = String(Math.round(this.level * 100));
-    volumeRange.style.width = "80px";
-    const showVolume = () => { volumeIcon.textContent = this.level === 0 ? "🔇" : this.level < 0.4 ? "🔈" : "🔊"; };
-    volumeRange.addEventListener("input", () => {
-      this.level = +volumeRange.value / 100; showVolume();
-      if (this.music) this.music.volume = this.tuning.music.volume * this.level;
-      this.sfx?.setVolume(this.tuning.music.volume * this.level);
-      try { localStorage.setItem("witch.volume", String(this.level)); } catch { /* fine */ }
-    });
-    for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
-    volumeEl.append(volumeIcon, volumeRange); showVolume();
-    document.body.append(volumeEl);
-  }
 
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
   ensureSfx(): void {
