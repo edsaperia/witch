@@ -29,8 +29,10 @@ export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" |
   { key: "Q", code: "KeyQ", action: "cycle" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: "spell" }, { key: "␣", code: "Space", action: "rise" }, { key: "RMB", code: "", action: "dash" },
 ];
 
-/** Gamepad bindings (standard mapping button numbers): left stick or d-pad moves. */
-export const PAD = { rise: [3], dash: [0], spell: [1], sigil: [2], zoomOut: [4], zoomIn: [5], invite: [6, 7], debug: [8] } as const;
+/** Gamepad bindings (standard mapping button numbers; PlayStation names): left stick or d-pad moves. Ed, 2026-10-10:
+ *  cross (0) or the right trigger (7) invites, square (2) or the left trigger (6) blinks, circle (1) picks up and puts
+ *  down, triangle (3) rises or lands. The speed spell moves to the right stick's click (11). */
+export const PAD = { rise: [3], dash: [2, 6], spell: [11], sigil: [1], zoomOut: [4], zoomIn: [5], invite: [0, 7], debug: [8] } as const;
 
 const GAME_KEYS = new Set<string>(Object.values(KEYS).flat() as string[]);
 
