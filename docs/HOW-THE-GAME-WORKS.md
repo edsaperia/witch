@@ -36,6 +36,20 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
    - any soundsystem still standing switches off as the lights go out across the map: silent and dark, still standing, not destroyed;
    - every animal (yours too, and the ones that ran off) walks home or is simply there, asleep;
    - you can wander the map safely.
+10. **The night won**: the end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, tuning `win`):
+   - **Last call:** while the next wave's stone is the route's last, the wave pointer shows 🎉 instead of 🎶.
+   - **Stragglers first:** once the last wave has landed, while any enraged animal lives, a pointer shows the way to the one **nearest the centre** (re-picked four times a second). Enraged **legends don't count**: they never hold the win up.
+   - **The victory lap:** with none left, the pulse (its sparkler) races back along the ley line to home at **120 m/s** (`win.lapSpeed`), the pointer following it with 🎉, each stone shooting **fireworks** as it passes, the music on to its **victory** section from that block (the music style's `victory`; the drop until it has one).
+   - **The win**, as the lap reaches home:
+     - the night's legends (the dealt kinds', `map.legendKinds`) wake and come home to dance as **party legends**, in a ring 22 m round the dancefloor (`win.legendRing`); they don't join the conga;
+     - an enraged legend calms and goes back to sleep in its clearing instead, and **its island isn't found**;
+     - every other animal on the island becomes a party animal, and they all join **one conga line** round the dancefloor (2.5 m/s, 2.4 m apart, a circle at least 34 m across or as big as the line needs: `win.conga*`), walking to their places (out of her sight, they're simply there); her leash lets go of hers to join it;
+     - **fireworks** from every soundsystem still standing;
+     - **the island's sigil flares on the dancefloor** (its kind's, home's the World Tree: rules/rosters.ts), drawn on again over 3 s and held 16 s (`win.flareDraw`, `win.flare`), then the party's patterns again;
+     - each woken legend's **dream bubble shows its home island**: its coast with its sigil, the picture the sea chart shows;
+     - nothing fights and no more waves come.
+   - About 20 s later (`win.cardAfter`) the **Night won** card lists the islands found (the woken legends' kinds) and those an angry legend kept hidden, with a button on to a new island (the sea chart's, to come).
+   - Losing still comes first: if home's speakers all fall before the lap reaches home, the party's over as above.
 
 Home's speakers are each a soundsystem in the fight: animals marching on home go for the nearest speaker still standing, and on to the next nearest when it falls. Each shows its own damage (damaged at half its health, destroyed at none). Home is lost, and the next wave hurried, only when the last speaker falls; and with it the party's over.
 

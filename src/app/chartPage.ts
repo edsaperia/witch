@@ -12,12 +12,15 @@ import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, REAL_KINDS 
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { SeaChart, type ChartIsland } from "../render/chart/seaChart";
-import { allSave, clearSave, loadSave, unlocked } from "./chartSave";
+import { allSave, loadSave, newCampaign, unlocked, worldSeed } from "./chartSave";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 
 const params = new URLSearchParams(location.search), showAll = params.get("chart") === "all" || params.has("all");
 let save = showAll ? allSave() : loadSave();
+// The world (golf, #685; Ed, 2026-10-11): the campaign's own seed, or ?world= for this look (shared links); the islands' links carry it on.
+const linkWorld = params.get("world"), worldNow = () => (linkWorld ? worldSeed(linkWorld) : save.world);
+const sailHref = (island: string) => `./?island=${island}${linkWorld ? `&world=${worldNow()}` : ""}`;
 const $ = (id: string) => document.getElementById(id)!;
 const canvas = $("chart") as HTMLCanvasElement;
 const chart = new SeaChart(canvas, TUNING as unknown as ConstructorParameters<typeof SeaChart>[1]);
@@ -25,16 +28,18 @@ let islands: ChartIsland[] = [];
 
 /** Every island, always: home and each found with its sigil, sailable; the rest bare land, the placeholders dimmest. */
 function build(): void {
-  const open = new Set(unlocked(save)), won = new Set(save.won);
+  const open = new Set(unlocked(save)), won = new Set(save.won), w = worldNow();
   const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
-    const at = islandAt(id)!, unknown = isPlaceholder(id);
+    const at = islandAt(id, w)!, unknown = isPlaceholder(id);
     return { id, x: at.x, y: at.y, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
   };
-  islands = [one("home", islandCoast({ kind: "home", areas: homeIsland(0).size }, TUNING.map?.coast).radii, islandSigil("home"))];
-  for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k)!), TUNING.islands?.coast).radii, k));
+  islands = [one("home", islandCoast(coastSpec(homeIsland(w)), TUNING.map?.coast).radii, islandSigil("home"))];
+  for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
   chart.set(islands, save.voyages);
   const n = save.found.filter(k => !isPlaceholder(k)).length;
   $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
+  $("world").textContent = `World seed: ${w}${linkWorld ? " (from the link)" : ""}`;
+  ($("home") as HTMLAnchorElement).href = sailHref("home");
 }
 
 /** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
@@ -44,14 +49,14 @@ function choose(id: string | null, instant = false): void {
   const card = $("card"), sail = $("sail") as HTMLAnchorElement;
   if (!isl) { card.hidden = true; return; }
   card.hidden = false;
-  const phase = id === "home" ? 0 : islandOf(id!)?.phase ?? 0;
+  const phase = id === "home" ? 0 : islandOf(id!, worldNow())?.phase ?? 0;
   $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
   $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
   $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "wake its legend to find it";
   sail.hidden = !isl.sail;
-  sail.href = `./?island=${id}`;
+  sail.href = sailHref(id!);
 }
-const sailTo = (id: string | null) => { const isl = islands.find(i => i.id === id); if (isl?.sail) location.href = `./?island=${id}`; };
+const sailTo = (id: string | null) => { const isl = islands.find(i => i.id === id); if (isl?.sail) location.href = sailHref(id!); };
 
 // Pointer: tap or click an island to choose it, again to sail; drag nothing (the camera only follows the choice); the wheel
 // or a pinch zooms.
@@ -79,6 +84,7 @@ $("zoom-out").addEventListener("click", () => chart.zoom(1.33));
 // Keys: the arrows step island to island, Enter or Space sails, + and - zoom.
 const step = (dx: number, dy: number) => { const next = stepTo(islands, chart.selected ?? "home", dx, dy); if (next) choose(next); };
 addEventListener("keydown", e => {
+  if ((e.target as HTMLElement)?.closest?.("input")) return; // (typing a seed)
   if ((e.target as HTMLElement)?.closest?.("button, a") && (e.key === "Enter" || e.key === " ")) return; // (a focused button's own)
   const dir: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
   if (dir[e.key]) { e.preventDefault(); step(...dir[e.key]); }
@@ -99,10 +105,15 @@ function pad(dt: number): void {
   if (b(4)) chart.zoom(1 + dt); if (b(5)) chart.zoom(1 - dt * 0.8);
 }
 
-$("start-over").addEventListener("click", () => {
-  if (!confirm("Start over? This forgets every island you've found and won.")) return;
-  clearSave();
-  if (showAll) location.search = ""; else { save = loadSave(); build(); choose("home"); }
+// Start over (golf, #685; Ed, 2026-10-11): a new campaign in a new world, its seed random or typed / pasted in, after an are-you-sure.
+const panel = $("new-world"), field = $("new-seed") as HTMLInputElement;
+$("start-over").addEventListener("click", () => { field.value = ""; panel.hidden = false; field.focus(); });
+$("new-cancel").addEventListener("click", () => { panel.hidden = true; });
+$("new-go").addEventListener("click", () => {
+  if (!confirm("Start over in a new world? This forgets every island you've found and won.")) return;
+  save = newCampaign(worldSeed(field.value));
+  panel.hidden = true;
+  if (showAll || linkWorld) location.search = ""; else { build(); choose("home"); }
 });
 
 const fit = () => chart.resize(innerWidth, innerHeight);

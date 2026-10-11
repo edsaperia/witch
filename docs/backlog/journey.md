@@ -35,6 +35,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Losing** (Ed, 2026-10-11): the next night she can replay the same island, or pick any other island she has unlocked on the sea chart. Nothing is lost.
 - **Replay:** islands already won can be won again, to explore the chart in other directions (each legend points somewhere new) or to finish their quests (records, below).
 - **How it could work:** each island is a point on the sea chart, its seed made from its position; its size, irregularity, biome and animals all follow from its distance and direction from the start. The save is only which islands are won and which records are earned.
+- **The world seed** (Ed, 2026-10-11; built: `rules/rosters.ts`, `rules/map.ts`, `app/chartSave.ts`): **one a campaign**. The sea chart shows it (to share) and **Start over** begins a new campaign in a new world, its seed random or typed / pasted in; `?world=<seed>` plays or charts another world for one look (its nights not saved to this campaign). An island's **shape** is fixed within a campaign, from the world seed and its kind: its coast, its areas and their types (its roster), and where it lies on the chart (its kind's bearing, nudged a few degrees by the world). **Home's** shape too, from the world seed (no longer the run's). Its **insides** change every night, from the night's own seed (the run's): trees, paths, scenery and set pieces, creatures, the night's legends. No save means world 0, the first world, with the table's bearings as given. `islandOf(kind, world)`, `homeIsland(world)`, `coastSpec`; the map's `map.world` (`tuning.map.world`, from the save); the map's shape from `shapeSeed`, everything else from `map.seed` (the night).
 
 ### The world and the sea chart (Ed, 2026-10-10)
 
@@ -53,6 +54,11 @@ Where this overrides older notes: the record crate no longer picks the map's see
 4. **The win:** **the island's own sigil** (its legend kind's) flares on the dancefloor; the legends dealt that night wake and come to dance as party legends; **every animal on the island becomes a party animal**, and they all join **a giant conga line**; fireworks from every soundsystem.
 5. **Telling without words:** each woken legend's dream bubble shows the shape of its home island with its sigil, the same picture that lights up on the sea chart.
 6. Then the afterparty, stargazing, bed and the voyage.
+
+Decisions (Ed, 2026-10-11, approving the plan):
+- **Legends don't join the conga**, but they do come home: the woken dealt legends walk to the home area and dance there as party legends, in a ring round the dancefloor. The conga is the party animals only.
+- **Enraged legends don't block the win**: the straggler pointer and the "no enraged left" check ignore them (only non-legend enraged animals count). At the win they calm and go back to sleep in their clearing, and **an enraged legend's island is not unlocked**: the night's islands found are the dealt legends woken, not those still enraged at the end (`g.win.found` and `g.win.lost`, by kind: the card's and, later, the sea chart's).
+- Built (PR 1, rules/win.ts): last call (🎉 on the wave pointer), the stragglers' pointer, the victory lap (the pointer follows its pulse home, each stone's fireworks as it passes, the music's victory hook), the win (legends home, the conga, fireworks from every soundsystem, her leash let go, nothing fights), the Night won card (its button: a new island until the sea chart). Placeholders: the island's sigil (home's), the dealt legends (every legend on the island, until part A's rosters), the victory music (the drop), the dream bubbles and the island outlines (art4), the conga's look (art1).
 
 ### Irregular islands and lakes
 

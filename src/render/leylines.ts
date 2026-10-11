@@ -325,6 +325,9 @@ export class LeyLines {
   /** The wave's pulse on the current link: how far it's got (0-1), or null for none (leyPulse). */
   /** `head` false: lit only to there, with no pulse drawn (the boot: the wave's pulse waits at the treehouse, so the line the
    *  boot branches off is drawn as it will be when the boot ends, the not-yet-lit sketch, its tip running out ahead). */
+  /** The victory lap's pulse (rules/win.ts winPulse): its place along the route as drawn (links from home), or null. */
+  lap(links: number | null): void { this.lapAt = links; }
+  private lapAt: number | null = null;
   pulse(p: number | null, head = true): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); this.pulseHead = head; }
   /** Where on the first link the wave's sparkler is first drawn (a share of it): where it meets the boot ring, as the ring's own
    *  sparkler, done its lap, hands over there (Ed, 2026-10-07: "The two pulses or tips don't join correctly at the top of the
@@ -550,7 +553,7 @@ export class LeyLines {
     // The front of the line (none drawn while it's all shown), and its pulse (lighting it as it passes).
     const tip = on && g !== null && g > 0 && g < D.length ? this.pointAt(D, g, time, 0) : null;
     const at = this.current + (this.current === 0 ? this.pulseFrom + (1 - this.pulseFrom) * Math.min(1, P.x) + Math.max(0, P.x - 1) : P.x); // (the first link timed from the ring: rules/pulseRoute.ts departureFromRing)
-    const pulse = on && this.pulseHead && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, at), time, 1) : null;
+    const pulse = this.lapAt !== null ? this.pointAt(D, Math.max(0, Math.min(D.length, this.lapAt)), time, 1) : on && this.pulseHead && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, at), time, 1) : null; // (the victory lap's runs home along the whole route: rules/win.ts)
     // The boot's ring: its pulse, while it boots.
     const R = this.ringLive, ringOn = !!R && R.pulse !== null;
     const ringPulse = ringOn ? this.pointAt(this.ringDrawn, R!.pulse!, time, 3) : null;

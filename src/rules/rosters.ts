@@ -35,23 +35,34 @@ export const homeKinds = (): string[] => KIND_NAMES.filter(k => KINDS[k].phase =
 /** How far apart two bearings are, 0 to 180 degrees. */
 const apart = (a: number, b: number) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return d > 180 ? 360 - d : d; };
 
-/** An island's seed from where it lies: its bearing and its phase ring. */
-export const islandSeed = (phase: number, bearing: number) => Math.floor(hash2(Math.round(bearing * 10), phase, 7331) * 2147483646) + 1;
+// The world seed (Ed, 2026-10-11): one a campaign, chosen when it starts (the sea chart's Start over; app/chartSave.ts). Within
+// a campaign every island's shape is fixed (its coast, areas and roster, and where it lies on the chart): from the world seed and
+// its kind. What's inside it (trees, scenery, creatures, the night's legends) changes each night, from the night's own seed (the
+// run's: rules/map.ts generateMap). World 0 is the table's own world (bearings as the table gives them): the first campaign's.
 
-/** Kind K's island: phase its kind's + 1, on its bearing; null for a kind not in the table. */
-export function islandOf(kind: string): Island | null {
-  const info = KINDS[kind];
-  if (!info) return null;
-  const phase = info.phase + 1, size = sizeOfPhase(phase), seed = islandSeed(phase, info.bearing);
-  return { kind, phase, bearing: info.bearing, size, seed, roster: rosterOf(kind, phase, info.bearing, size, seed) };
+/** An island's seed from where it lies (its bearing and its phase ring) in the world. */
+export const islandSeed = (phase: number, bearing: number, world = 0) => Math.floor(hash2(Math.round(bearing * 10), phase, 7331 + world) * 2147483646) + 1;
+
+/** Where kind K's island lies in the world: its table bearing, nudged up to 7 degrees either way by the world seed (world 0: as given). */
+export function bearingOf(kind: string, world = 0): number {
+  const b = KINDS[kind]?.bearing ?? 0;
+  return world ? (((b + (hash2(KIND_NAMES.indexOf(kind), world, 7361) - 0.5) * 14) % 360) + 360) % 360 : b;
 }
 
-/** Home's island (the Ent's): one area per kind she knows, `size` areas (repeating them, in turn, past that many), on the run's
- *  seed (home's shape isn't fixed yet). */
-export function homeIsland(seed: number, size = homeKinds().length, known: readonly string[] = homeKinds()): Island {
+/** Kind K's island in the world: phase its kind's + 1, on its bearing; null for a kind not in the table. */
+export function islandOf(kind: string, world = 0): Island | null {
+  const info = KINDS[kind];
+  if (!info) return null;
+  const phase = info.phase + 1, size = sizeOfPhase(phase), bearing = bearingOf(kind, world), seed = islandSeed(phase, bearing, world);
+  return { kind, phase, bearing, size, seed, roster: rosterOf(kind, phase, bearing, size, seed) };
+}
+
+/** Home's island (the Ent's) in the world: one area per kind she knows, `size` areas (repeating them, in turn, past that many);
+ *  its shape fixed for the campaign (its seed the world's, as an island in the middle). */
+export function homeIsland(world = 0, size = homeKinds().length, known: readonly string[] = homeKinds()): Island {
   const counts = new Map<string, number>();
   for (let i = 0; i < size; i++) { const k = known[i % known.length]; counts.set(k, (counts.get(k) ?? 0) + 1); }
-  return { kind: "home", phase: 0, bearing: 0, size, seed, roster: [...counts].map(([kind, areas]) => ({ kind, areas })) };
+  return { kind: "home", phase: 0, bearing: 0, size, seed: islandSeed(0, 0, world), roster: [...counts].map(([kind, areas]) => ({ kind, areas })) };
 }
 
 /** Kind K's island's roster (the rule above), seeded. */
@@ -107,7 +118,7 @@ export function dealLegends(island: Island, night: number, found: ReadonlySet<st
 }
 
 /** What rules/islandShape.ts islandCoast needs to draw an island's outline as the map makes it (the sea chart, the dreams): its
- *  kind, its kind's phase, its own seed and its areas (home's: the run's seed, its size). With tuning.islands.coast for a kind's
+ *  kind, its kind's phase, its own seed (the world's: islandOf(kind, world), homeIsland(world)) and its areas. With tuning.islands.coast for a kind's
  *  island (the map's own for home). */
 export const coastSpec = (island: Island): { kind: string; phase: number; seed: number; areas: number } =>
   ({ kind: island.kind, phase: Math.max(0, island.phase - 1), seed: island.seed, areas: island.size });
