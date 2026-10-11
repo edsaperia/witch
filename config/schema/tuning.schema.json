@@ -29,6 +29,67 @@
         "found": {
           "type": "array"
         },
+        "phase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shapes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lobes": {
+                "type": "number",
+                "minimum": 0
+              },
+              "harmonics": {
+                "type": "number",
+                "minimum": 0
+              },
+              "arms": {
+                "type": "number",
+                "minimum": 0
+              },
+              "armCount": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "armWidth": {
+                "type": "number",
+                "minimum": 0
+              },
+              "bays": {
+                "type": "number",
+                "minimum": 0
+              },
+              "bayCount": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "jitter": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "lobes",
+              "harmonics",
+              "arms",
+              "armCount",
+              "armWidth",
+              "bays",
+              "bayCount",
+              "jitter"
+            ],
+            "additionalProperties": false
+          }
+        },
         "buffer": {
           "type": "number",
           "minimum": 0
@@ -75,6 +136,8 @@
         "islandAreas",
         "island",
         "found",
+        "phase",
+        "shapes",
         "buffer",
         "push",
         "drift",
