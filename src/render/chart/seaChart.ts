@@ -19,7 +19,13 @@ export const CHART_SCALE = 100;
 /** An island's box across on the flat chart (chartLayout BOX), here. */
 const BOX_UNITS = 0.17 * CHART_SCALE;
 /** The real outlines' metres per unit: the biggest islands (phase 5, about 3.5 km across) fill the box as the round coasts did. */
-const METRES = 3600 / BOX_UNITS;
+const METRES = 3000 / BOX_UNITS;
+/** A sigil's width on its island (units), the same on every island (Ed, 2026-10-11: "large enough that the animal sigils show
+ *  clearly on the islands"); home's a little bigger. */
+const SIGIL_UNITS = 6.4, HOME_SIGIL_UNITS = 7.4;
+/** Its glyph's pixels, and the art pixels it spans on screen: when the chart opens, and at the furthest the camera goes (it
+ *  never zooms out past where a sigil reads: the camera glides island to island instead of showing the whole world). */
+const SIGIL_PX = 32, SIGIL_OPEN_PX = 34, SIGIL_MIN_PX = 22;
 
 /** An island's real outline (rules/islandShape.ts islandOutline, made by app/chartOutlines.worker.ts): its loops, x and z
  *  interleaved in metres from its home's middle, `sea` its coast (one loop for each piece of land), else a lake's shore. */
@@ -172,6 +178,10 @@ export class SeaChart {
   /** How far the camera stands from what it looks at (units); `zoomTo` eases it. */
   private dist = 130;
   private distTo = 130;
+  /** The camera's distance when the chart opens, and the furthest it goes, by the screen's height (resize). */
+  private distOpen = 130;
+  private distMax = 200;
+  private sized = false;
   /** How steeply the camera looks down (radians from level). */
   private pitch = 0.95;
   selected: string | null = null;
@@ -256,13 +266,13 @@ export class SeaChart {
     const shelf = new THREE.Mesh(new THREE.ShapeGeometry(shape(1.22)).rotateX(-Math.PI / 2).translate(0, 0.05, 0), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.1, 0.2, 0.32).multiplyScalar(dim), transparent: true, opacity: 0.85 }));
     g.add(shelf);
     let reach = 0; for (const l of seas) for (const p of l.pts) reach = Math.max(reach, p.length());
-    const top = H * 1.9 + 1.2, reach0 = reach;
+    const top = H * 1.9 + 1.2;
     const isle: Isle = { d, group: g, pick: body, x, z, top, reach };
     if (d.sail) { // its sigil, lying on the land and glowing as a placed sigil does, a halo of its light under it
-      const c = sigilColour(d.sigil), s = BOX_UNITS * (home ? 0.34 : 0.28) * Math.min(1, 0.55 + reach0 / BOX_UNITS);
-      const sg = new THREE.Mesh(new THREE.PlaneGeometry(s, s).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: sigilTexture(d.sigil), color: col(c, 1.05), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const c = sigilColour(d.sigil), s = home ? HOME_SIGIL_UNITS : SIGIL_UNITS;
+      const sg = new THREE.Mesh(new THREE.PlaneGeometry(s, s).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: sigilTexture(d.sigil, SIGIL_PX), color: col(c, 0.9), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
       sg.position.y = top + 0.3; g.add(sg); isle.sigil = sg;
-      const halo = new THREE.Mesh(new THREE.PlaneGeometry(s * 1.9, s * 1.9).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: col(c, 0.35), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const halo = new THREE.Mesh(new THREE.PlaneGeometry(s * 1.9, s * 1.9).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: col(c, 0.22), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
       halo.position.y = top + 0.2; g.add(halo); isle.glow = halo;
     }
     if (d.won) { // won: a gold ring on the water round it
@@ -300,7 +310,7 @@ export class SeaChart {
     if (instant) this.focus.copy(this.aim);
   }
   /** Nearer or further (a share of the default), within reason. */
-  zoom(k: number): void { this.distTo = Math.max(35, Math.min(320, this.distTo * k)); }
+  zoom(k: number): void { this.distTo = Math.max(45, Math.min(this.distMax, this.distTo * k)); }
 
   /** The island under a point on the canvas (CSS pixels), or null. */
   pick(clientX: number, clientY: number): string | null {
@@ -331,6 +341,12 @@ export class SeaChart {
     this.canvas.style.width = `${this.w * p}px`; this.canvas.style.height = `${this.h * p}px`;
     this.camera.aspect = this.w / this.h; this.camera.updateProjectionMatrix();
     (this.skyU.uRes.value as THREE.Vector2).set(this.w, this.h);
+    // how far the camera stands for a sigil to span so many art pixels across (a flat sigil keeps its width as it tilts away)
+    const at = (px: number) => (SIGIL_UNITS * this.h) / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2) * px);
+    const was = this.distOpen;
+    this.distOpen = at(SIGIL_OPEN_PX); this.distMax = at(SIGIL_MIN_PX);
+    if (!this.sized) { this.dist = this.distTo = this.distOpen; this.sized = true; }
+    else { this.distTo = Math.max(45, Math.min(this.distMax, this.distTo * (this.distOpen / was))); this.dist = this.distTo; }
   }
 
   /** A frame: the camera eases toward the chosen island, the sea moves, the sigils pulse. */
@@ -341,11 +357,11 @@ export class SeaChart {
     // tilted down, looking north (-z), never turning (as the game's camera)
     this.camera.position.set(this.focus.x, this.focus.y + Math.sin(this.pitch) * this.dist, this.focus.z + Math.cos(this.pitch) * this.dist);
     this.camera.lookAt(this.focus.x, 0, this.focus.z + this.dist * 0.035); // (the chosen island a little above the middle, clear of its card)
-    this.post.lift = 1; // (the treetops' tilt-shift: the chart is seen from high up)
+    this.post.lift = 0; // (the ground's gentler tilt-shift: the sigils off the middle still read)
     for (const i of this.isles.values()) {
       const pulse = 0.85 + 0.15 * Math.sin(time * 1.6 + i.x * 0.1), chosen = i.d.id === this.selected;
       if (i.sigil) (i.sigil.material as THREE.MeshBasicMaterial).opacity = pulse;
-      if (i.glow) (i.glow.material as THREE.MeshBasicMaterial).opacity = (chosen ? 1 : 0.7) * pulse;
+      if (i.glow) (i.glow.material as THREE.MeshBasicMaterial).opacity = (chosen ? 0.85 : 0.7) * pulse;
       i.group.position.y = chosen ? Math.sin(time * 2) * 0.12 : 0;
     }
     const sel = this.selected ? this.isles.get(this.selected) : null;
