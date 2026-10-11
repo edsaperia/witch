@@ -9,6 +9,7 @@ import { formClock, type planBlock, type MusicCue } from "../../../src/rules/mus
 import { arcStep, formChord, musicSeed, resolveSection, tuneSeed, type MusicStyle, type NoteEvent } from "../../../src/rules/musicScore";
 import { BREAKDOWN, FRAMES, FRAME_IDS, frameHit, KIT, PITCH, PRESENCE_DB, VOCALISE_GAIN, VOWELS } from "../ingredients";
 import { heard, type LabState } from "./settings";
+import { VoiceFx } from "../../../src/platform/audio/voiceFx";
 
 type Hooked = {
   play: (ev: NoteEvent, t: number, dur: number, sps: number, chord?: number[]) => void;
@@ -30,6 +31,11 @@ export class Player {
   private wow: GainNode; private flutter: GainNode; private tapeTone: BiquadFilterNode; private crackle: GainNode;
   private droneGain: GainNode; private droneOsc: OscillatorNode[] = [];
   private presence: BiquadFilterNode;
+  /** The recorded and Pink Trombone voices' effects (the FOF voice's are the engine's own), and the settings they're at. */
+  private fx: VoiceFx;
+  private fxKey = "";
+  private whispered = false;
+  private lastSung = -Infinity;
   private throatNext = 0;
   private wasBreakdown = false;
   /** Pink Trombone's notes, sung by a worker, by pitch, length and vowel. */
@@ -68,7 +74,8 @@ export class Player {
     for (const det of [-4, 4, 0, 2]) { const o = c.createOscillator(); o.type = "sawtooth"; o.detune.value = det; o.connect(lp); o.start(); this.droneOsc.push(o); }
     lp.connect(this.droneGain).connect(this.bus);
     this.presence = c.createBiquadFilter(); this.presence.type = "peaking"; this.presence.frequency.value = 3000; this.presence.Q.value = 0.8; this.presence.gain.value = PRESENCE_DB;
-    this.presence.connect(this.bus);
+    this.fx = new VoiceFx(c, {}, () => this.style?.bpm ?? 120);
+    this.presence.connect(this.fx.input); this.fx.output.connect(this.bus);
   }
 
   get playing(): boolean { return this.engine !== null; }
@@ -90,8 +97,10 @@ export class Player {
     h.play = (ev, t, dur, sps, chord) => this.note(ev, t, dur, sps, chord, play);
     h.step = (cue, n, t, sps) => { step(cue, n, t, sps); if (n % 16 === 0 && e.current?.step === n) this.bar(Math.floor(n / 16), t, sps, e.current.plan, cue); };
     this.engine = e;
+    e.setRecordings(this.samples); // (the game's singer, a recording: Ed, 2026-10-11)
+    if (this.whispered && this.samples.whispers) e.setWhisper(this.samples.whispers);
     this.startedAt = this.ctx.currentTime + 0.1;
-    this.throatNext = 0; this.wasBreakdown = false;
+    this.throatNext = 0; this.wasBreakdown = false; this.lastSung = -Infinity;
     this.master.gain.cancelScheduledValues(this.ctx.currentTime);
     this.master.gain.setTargetAtTime(1, this.ctx.currentTime, 0.01);
   }
@@ -123,10 +132,15 @@ export class Player {
     this.tapeTone.frequency.setTargetAtTime(tape > 0 ? Math.max(4000, 20000 - 10500 * Math.min(1.5, tape)) : 20000, t, 0.05);
     this.crackle.gain.setTargetAtTime(tape, t, 0.05);
     this.droneGain.gain.setTargetAtTime(0.09 * L("drone"), t, 0.08);
+    // the voice effects, as the sliders have them: the recorded voices' here, the FOF voice's the engine's; the whisper vocoder
+    // once its recording's loaded
+    const key = JSON.stringify(s.voiceFx);
+    if (key !== this.fxKey) { this.fxKey = key; this.fx.set(s.voiceFx); this.engine?.setVoiceFx(s.voiceFx); }
+    if (s.voiceFx.whisper > 0 && !this.whispered && this.samples.whispers) { this.whispered = true; this.fx.whisper(this.samples.whispers); this.engine?.setWhisper(this.samples.whispers); }
     if (!this.engine) return;
     const h = this.engine as unknown as Hooked;
     for (const [part, ch] of h.channels) if (!part.startsWith("circle:")) {
-      const lvl = part === this.style.form?.sung.part ? (s.voice === "synth" ? L("vocalise") : 0) : heard(s, part, s.parts[part] ?? 1);
+      const lvl = part === this.style.form?.sung.part ? (s.voice === "synth" || s.voice === "fof" ? L("vocalise") : 0) : heard(s, part, s.parts[part] ?? 1);
       ch.in.gain.setTargetAtTime(lvl, t, 0.02);
     }
     const game = Math.max(0, t - this.startedAt);
@@ -136,7 +150,7 @@ export class Player {
   /** A note the engine is about to play: the kit's sample for a synth drum, a voice for the sung melody, else as it was. */
   private note(ev: NoteEvent, t: number, dur: number, sps: number, chord: number[] | undefined, play: Hooked["play"]): void {
     const s = this.state(), S = this.style, part = ev.part;
-    if (S.form && part === S.form.sung.part && s.voice !== "synth") { this.sing(ev, t, dur); return; }
+    if (S.form && part === S.form.sung.part && s.voice !== "synth" && s.voice !== "fof") { this.sing(ev, t, dur); return; } // (the FOF voice is the engine's)
     if (s.witchHouse && S.parts[part]?.role === "drum") return; // (the half-time beat instead)
     const kit = heard(s, "kit", s.layers.kit), k = KIT[part];
     if (kit > 0 && k) {
@@ -254,6 +268,18 @@ export class Player {
   }
 
   private voiced(b: AudioBuffer, at: number, len: number, rate: number, gain: number, offset = 0): void {
+    // a phrase (after a rest of a beat or more): the last one's end frozen, a swell rising into this one, as the effects ask
+    const beat = 60 / (this.style?.bpm ?? 120);
+    if (at - this.lastSung > beat) {
+      if (Number.isFinite(this.lastSung)) this.fx.release(this.lastSung);
+      const swell = Math.min(4 * beat, Math.max(beat, at - (Number.isFinite(this.lastSung) ? this.lastSung : at - 4 * beat) - 0.1));
+      if (this.fx.s.swells > 0 && at - swell > this.ctx.currentTime) {
+        const sw = this.ctx.createBufferSource(), sg = this.ctx.createGain();
+        sw.buffer = b; sw.playbackRate.value = rate; sw.loop = true; sw.loopStart = Math.min(0.3, b.duration / 4); sw.loopEnd = Math.min(1.6, b.duration);
+        sw.connect(sg).connect(this.fx.wetIn); this.fx.swellEnvelope(sg, at, swell, gain); sw.start(at - swell); sw.stop(at + 0.05);
+      }
+    }
+    this.lastSung = Math.max(this.lastSung, at + len);
     const src = this.ctx.createBufferSource(), g = this.ctx.createGain();
     src.buffer = b; src.playbackRate.value = rate;
     g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(gain, at + 0.03);

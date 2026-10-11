@@ -382,7 +382,7 @@ async function main() {
           const s = m.siteOf(cx, cy);
           for (let k = 0; k < 60; k++) {
             const a = k * 0.7, d = m.areaSize * (0.1 + (k % 6) * 0.07), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30 || (B.circle && Math.hypot(x - B.circle.x, z - B.circle.z) > B.circle.r - 30)) continue;
+            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30 || (B.land && B.land.distAt(x, z) < 30)) continue;
             const q = m.areaAt(x, z);
             if (q.cell[0] !== cx || q.cell[1] !== cy || m.paths.at(x, z, 3)) continue;
             const n = g.forest.treesNear(x, z, 14).filter(p => Math.hypot(p.x - x, p.z - z) < 14).length;

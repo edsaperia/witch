@@ -8,7 +8,7 @@ import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
 
 const at = (island: string, world: number, areas = 10): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, world, islandAreas: areas } });
-const shape = (m: ReturnType<typeof generateMap>) => ({ cells: m.cells, types: m.cells.map(([x, y]) => AREA_TYPES[m.typeOf(x, y)].id), r: m.bounds.circle!.r, coast: [0, 1, 2, 3, 4, 5].map(a => m.coast(a)) });
+const shape = (m: ReturnType<typeof generateMap>) => ({ cells: m.cells, types: m.cells.map(([x, y]) => AREA_TYPES[m.typeOf(x, y)].id), r: m.bounds.land!.box, coast: [0, 1, 2, 3, 4, 5].map(a => m.coast(a)) });
 const insides = (m: ReturnType<typeof generateMap>) => JSON.stringify({ scenes: m.scenes, grounds: m.grounds, legends: m.legendKinds, paths: m.paths.lines?.length ?? 0 });
 
 describe("the world seed", () => {

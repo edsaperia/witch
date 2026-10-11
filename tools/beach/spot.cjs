@@ -28,15 +28,15 @@ server.listen(0, "127.0.0.1", async () => {
   if (process.env.COAST) await page.evaluate(k => { window.witch.game.tuning.beach.camera.curve = k; }, Number(process.env.COAST)); // (the coast camera's own bend: the view takes the larger)
   // SET="beach.stargazeCurve=6;beach.camera.curve=4": any tuning numbers, set on the running game
   if (process.env.SET) await page.evaluate(set => { for (const kv of set.split(";").filter(Boolean)) { const [path, v] = kv.split("="), keys = path.split("."); let o = window.witch.game.tuning; for (const k of keys.slice(0, -1)) o = o[k]; o[keys[keys.length - 1]] = Number(v); } }, process.env.SET);
-  const out0 = await page.evaluate(([x, z]) => { const g = window.witch.game, c = g.map.bounds.circle; g.witch = { ...g.witch, x, z, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 }; const d = Math.hypot(x - c.x, z - c.z) || 1; return { nx: (x - c.x) / d, nz: (z - c.z) / d }; }, [Number(X), Number(Z)]);
+  const out0 = await page.evaluate(([x, z]) => { const g = window.witch.game, s = g.map.bounds.land.shore(x, z); g.witch = { ...g.witch, x, z, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 }; return { nx: s.nx, nz: s.nz }; }, [Number(X), Number(Z)]); // (out to sea from there)
   const step = (n, o = {}) => page.evaluate(([n, o]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60, i === n - 1); return !!w.game.witch.stargazing; }, [n, o]);
   let lying = false;
   for (let i = 0; i < 80 && !lying; i++) lying = await step(10, { moveX: out0.nx * 0.4, moveZ: out0.nz * 0.4 });
   await page.waitForFunction(() => window.witch.view.assets.partyWitchArt(null), null, { timeout: 180000, polling: 250 });
   await step(240); await page.waitForTimeout(800); await step(2);
-  const info = await page.evaluate(() => { const w = window.witch, g = w.game; return { area: w.areaUnderWitch ? w.areaUnderWitch() : null, x: Math.round(g.witch.x), z: Math.round(g.witch.z), c: g.map.bounds.circle }; });
+  const info = await page.evaluate(() => { const w = window.witch, g = w.game; return { area: w.areaUnderWitch ? w.areaUnderWitch() : null, x: Math.round(g.witch.x), z: Math.round(g.witch.z), c: { x: g.map.dancefloor.x, z: g.map.dancefloor.z, r: g.map.bounds.land.distAt(g.map.dancefloor.x, g.map.dancefloor.z) } }; });
   await page.screenshot({ path: out });
-  console.log(`${lying ? "lying" : "NOT lying"} at ${info.x}, ${info.z}; the overlay's area: ${info.area} (the map's centre ${Math.round(info.c.x)}, ${Math.round(info.c.z)}, radius ${Math.round(info.c.r)}); ${errors.length ? "errors: " + errors.slice(0, 2).join(" | ") : "no page errors"} → ${out}`);
+  console.log(`${lying ? "lying" : "NOT lying"} at ${info.x}, ${info.z}; the overlay's area: ${info.area} (home ${Math.round(info.c.x)}, ${Math.round(info.c.z)}, ${Math.round(info.c.r)} m from the sea); ${errors.length ? "errors: " + errors.slice(0, 2).join(" | ") : "no page errors"} → ${out}`);
   await browser.close(); server.close();
   process.exit(lying && !errors.length ? 0 : 1);
 });

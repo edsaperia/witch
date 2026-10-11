@@ -256,7 +256,7 @@ const WORSHIP = {
     m.chain([[-.55, 1.4, .5, .07], [-.75, 2.0, .6, .05], [-.8, 2.4, .5, .03]], M.TRUNK, { group: 9, rough: .01 }); ctCrown(m, [-.8, 2.5, .5], [.45, .32, .4], 10); m.chain([[-.55, 1.4, .5, .04], [-.3, .9, .9, .03], [-.1, .6, 1.1, .02]], M.TRUNK, { group: 9 }); // a tree rooted in the dome
     ctTufts(m, 18, 2.6, 11, 109);
   } },
-  "greek-temple": { desc: "a Greek temple: a stepped base, a peristyle of fluted columns, some fallen in drums, a broken architrave and the corner of a pediment", halves: .9, split: 2.4, build(m) {
+  "greek-temple": { desc: "a Greek temple: a stepped base, a peristyle of fluted columns, some fallen in drums, a broken architrave and the corner of a pediment", halves: .9, build(m) {
     for (let i = 0; i < 3; i++) ldBlock(m, [0, .06 + i * .12, 0], [2.4 - i * .12, .06, 1.4 - i * .12], 1, { mat: M.BELLY, courses: 0, moss: .25 });
     const top = .36, H = 1.9, cols = [];
     for (let i = 0; i < 7; i++) for (const z of [-1.05, 1.05]) cols.push([-1.95 + i * .65, z]); for (const x of [-1.95, 1.95]) for (const z of [-.35, .35]) cols.push([x, z]);
@@ -304,7 +304,7 @@ const LANDMARK_CASTLE = {
 
 // ---------------- classical ruins ----------------
 const LANDMARK_CLASSICAL = {
-  "column": { desc: "a fluted marble column still standing, its capital chipped", split: 2.0, build(m) { ldColumn(m, [0, 0, 0], 2.5, .2, 1); ctIvy(m, [-.18, 0, .1], [-.1, 1.4, .18], 3, 128); ctTufts(m, 8, .8, 4, 129); } },
+  "column": { desc: "a fluted marble column still standing, its capital chipped", build(m) { ldColumn(m, [0, 0, 0], 2.5, .2, 1); ctIvy(m, [-.18, 0, .1], [-.1, 1.4, .18], 3, 128); ctTufts(m, 8, .8, 4, 129); } },
   "column-broken": { desc: "a column snapped off at a man's height, its top jagged", build(m) { ldColumn(m, [0, 0, 0], 1.1, .2, 1, { capital: false }); m.ell([.05, 1.1, 0], [.18, .1, .18], M.BELLY, { group: 1, rough: .03 }); ctTufts(m, 8, .8, 4, 130); } },
   "column-drums": { desc: "a column fallen in a line of drums, its capital at the end", build(m) {
     for (let i = 0; i < 4; i++) m.seg([-1.2 + i * .62, .2, (ctHash(i) - .5) * .12], [-.75 + i * .62, .2, (ctHash(i + 1) - .5) * .12], .2, .2, M.BELLY, { group: 1 + (i % 2), paint: p => Math.abs(Math.sin(Math.atan2(p[2], p[1] - .2) * 9)) > .9 ? M.STONED : ldStone(0, .3)(p) });
@@ -336,13 +336,117 @@ const LANDMARK_CLASSICAL = {
     m.seg([.22, 1.6, .05], [.3, 1.3, .15], .07, .06, M.BELLY, { group: 4 }); m.seg([-.22, 1.6, 0], [-.3, 1.15, .05], .07, .06, M.BELLY, { group: 4 }); m.seg([-.3, 1.15, .05], [-.2, 1.0, .25], .06, .05, M.BELLY, { group: 4 });
     m.seg([.6, .06, .5], [.85, .07, .7], .06, .05, M.BELLY, { group: 5 }); ctIvy(m, [-.38, 0, .32], [-.2, 1.2, .32], 6, 133); ctTufts(m, 10, 1.0, 7, 134);
   } },
-  "arch-ruin": { desc: "a single arch of a fallen arcade, its keystone slipped", split: 2.2, build(m) {
+  "arch-ruin": { desc: "a single arch of a fallen arcade, its keystone slipped", build(m) {
     for (const x of [-1.0, 1.0]) ldBlock(m, [x, 1.0, 0], [.25, 1.0, .3], 1, { mat: M.BELLY, courses: 5 });
     for (let i = 0; i <= 8; i++) { const a = Math.PI * (1 - i / 8), c = [Math.cos(a) * 1.0, 2.0 + Math.sin(a) * .85 - (i === 4 ? .12 : 0), 0]; ldBlock(m, c, [.2, .14, .3], 2 + (i % 2), { mat: M.BELLY, courses: 0, dir: [-Math.sin(a), Math.cos(a), 0] }); }
     ldBlock(m, [-.4, 3.0, 0], [.8, .1, .32], 4, { mat: M.BELLY, courses: 0 }); // what is left of the entablature
     ldRubble(m, [.8, 0, .6], 8, .6, 5, 135, M.BELLY); ctIvy(m, [-1.2, 0, .3], [-.9, 2.2, .3], 8, 136); ctTufts(m, 12, 1.8, 9, 137);
   } },
 };
+
+// ---------------- classical ruins from a seed ----------------
+// (Ed, 2026-10-11: the temple ruins on most islands, "we should have more variations of these kinds"; "they can also be smaller,
+// for example just a few columns"): plans built from a seed, each its own collapse (how much has fallen) and overgrowth (how far
+// the forest has taken it), so no two islands' ruins look the same. Large: a round tholos, a long colonnade (a stoa), a temple on its
+// stepped podium, a fallen pediment among stumps, a portico half buried in a mound, an overgrown theatre. Small (scattered more
+// widely): a few columns, a lone column with its capital fallen, a doorway frame, an altar on its steps. Each is "<plan>~<k>". Like every
+// classical piece, drawn whole, never split into a top hidden on the ground like a tree's crown (Ed, 2026-10-11).
+const crng = seed => { let x = (seed * 2654435761) % 2147483647 || 1; return () => (x = (x * 48271) % 2147483647) / 2147483647; };
+const cuni = (r, a, b) => a + r() * (b - a);
+// a column fallen as a row of drums, from c along angle a
+const ldFallen = (m, c, a, n, r, g) => { for (let i = 0; i < n; i++) { const d = .1 + i * r * 3.2, jit = (ctHash(i, Math.round(a * 100)) - .5) * .25; m.seg([c[0] + Math.cos(a + jit) * d, r, c[2] + Math.sin(a + jit) * d], [c[0] + Math.cos(a + jit) * (d + r * 2.6), r, c[2] + Math.sin(a + jit) * (d + r * 2.6)], r, r, M.BELLY, { group: g, paint: p => Math.abs(Math.sin(p[1] * 30 + p[0] * 9)) > .93 ? M.STONED : ldStone(0, .3)(p) }); } };
+// the forest's claim on a ruin: tufts, ivy, a few bushes (and, well overgrown, a young tree)
+const ldOvergrow = (m, o, R, g, seed, tops = []) => {
+  ctTufts(m, Math.round(8 + o * 26), R, g, seed);
+  for (let i = 0; i < Math.round(o * 4); i++) { const a = ctHash(seed, i + 40) * 6.283, d = R * (.5 + .5 * ctHash(i, seed + 41)); ctCrown(m, [Math.cos(a) * d, .25, Math.sin(a) * d * .7], [.35, .28, .3], g + 1); }
+  tops.forEach((t, i) => { if (ctHash(seed, i + 60) < o) ctIvy(m, [t[0] - .15, .1, t[2] + .15], [t[0] - .1, t[1], t[2] + .16], g + 2, seed + i); });
+  if (o > .6 && R > 2) { const x = (ctHash(seed, 77) - .5) * R, z = (ctHash(77, seed) - .5) * R * .6; m.chain([[x, 0, z, .07], [x + .1, .9, z, .05], [x + .05, 1.6, z, .03]], M.TRUNK, { group: g + 3, rough: .01 }); ctCrown(m, [x + .05, 1.9, z], [.5, .4, .45], g + 4); }
+};
+const CLASSICAL_PLANS = {
+  tholos: { size: "large", desc: "a round temple (a tholos): a ring of columns on a round stepped base, some fallen, a stub of its inner wall", build(m, r) {
+    const R = cuni(r, 1.4, 1.9), n = 8 + Math.floor(r() * 5), H = cuni(r, 1.7, 2.2), fall = cuni(r, .15, .55), o = r(), tops = [];
+    for (let i = 0; i < 3; i++) ctCyl(m, [0, i * .12, 0], [0, .12 + i * .12, 0], R + .45 - i * .15, M.BELLY, 1, { paint: ldStone(0, .3) });
+    const top = .36, standing = [];
+    for (let i = 0; i < n; i++) {
+      const a = i / n * 6.283, x = Math.cos(a) * R, z = Math.sin(a) * R * .9, h = r();
+      if (h < fall) { ldFallen(m, [x, 0, z], a + (r() - .5) * .8, 3, .14, 6); continue; }
+      const broken = h > 1 - fall * .6, hh = broken ? H * cuni(r, .3, .6) : H; ldColumn(m, [x, top, z], hh, .14, 2 + (z > 0 ? 1 : 0), { capital: !broken }); tops.push([x, top + hh, z]); if (!broken) standing.push([x, z, a]);
+    }
+    for (let i = 0; i + 1 < standing.length; i++) { const [x0, z0] = standing[i], [x1, z1] = standing[i + 1]; if (Math.hypot(x1 - x0, z1 - z0) < 2 * R * Math.sin(Math.PI / n) * 1.3 && r() > fall) ldBlock(m, [(x0 + x1) / 2, top + H + .2, (z0 + z1) / 2], [Math.hypot(x1 - x0, z1 - z0) / 2 + .1, .09, .12], 4, { mat: M.BELLY, courses: 0, dir: [x1 - x0, 0, z1 - z0] }); }
+    for (let i = 0; i < 6; i++) if (r() > fall) { const a = (i / 6 + .3) * 6.283; ldBlock(m, [Math.cos(a) * R * .45, top + .35, Math.sin(a) * R * .4], [.3, .35 * cuni(r, .5, 1.3), .1], 5, { mat: M.BELLY, courses: 3, dir: [-Math.sin(a), 0, Math.cos(a)] }); }
+    ldOvergrow(m, o, R + 1, 8, 201, tops);
+  } },
+  colonnade: { size: "large", desc: "a long colonnade (a stoa): two rows of columns before a back wall, the rows gapped where columns fell, stretches of architrave still up", build(m, r) {
+    const n = 6 + Math.floor(r() * 3), sp = .72, L = (n - 1) * sp / 2, H = cuni(r, 1.6, 2.0), fall = cuni(r, .15, .5), o = r(), tops = [];
+    ldBlock(m, [0, .08, -.2], [L + .5, .08, 1.0], 1, { mat: M.BELLY, courses: 0, moss: .3 });
+    for (let x = -L - .3; x < L + .3; x += .6) { const h = r() < fall ? cuni(r, .2, .7) : cuni(r, 1.0, 1.8); ldBlock(m, [x + .3, .16 + h / 2, -1.0], [.3, h / 2, .12], 5, { courses: 5, mat: M.STONE }); } // the back wall
+    for (const z of [-.4, .55]) { let prev = null;
+      for (let i = 0; i < n; i++) { const x = -L + i * sp, h = r();
+        if (h < fall) { ldFallen(m, [x, 0, z], 1.4 + (r() - .5) * .6, 3, .13, 6); prev = null; continue; }
+        const broken = h > 1 - fall * .5, hh = broken ? H * cuni(r, .3, .6) : H; ldColumn(m, [x, .16, z], hh, .13, z > 0 ? 3 : 2, { capital: !broken }); tops.push([x, .16 + hh, z]);
+        if (!broken && prev !== null && r() > fall * .8) ldBlock(m, [(prev + x) / 2, .16 + H + .18, z], [sp / 2 + .12, .09, .14], 4, { mat: M.BELLY, courses: 0 }); prev = broken ? null : x; } }
+    ldOvergrow(m, o, L + 1, 8, 211, tops);
+  } },
+  podium: { size: "large", desc: "a temple on its high stepped podium, steps up its front, four columns of its porch, the cella's walls broken down", build(m, r) {
+    const ph = cuni(r, .6, 1.0), W = cuni(r, 1.6, 2.1), D = cuni(r, 1.0, 1.3), H = cuni(r, 1.6, 2.0), fall = cuni(r, .1, .45), o = r(), tops = [];
+    ldBlock(m, [0, ph / 2, 0], [W, ph / 2, D], 1, { courses: 4, mat: M.STONE, moss: .2 }); ldBlock(m, [0, ph + .05, 0], [W + .06, .05, D + .06], 1, { mat: M.BELLY, courses: 0 });
+    for (let i = 0; i < 5; i++) ldBlock(m, [0, (i + .5) * ph / 5, D + .18 + (4 - i) * .14], [.9, ph / 10, .08], 2, { mat: M.BELLY, courses: 0 }); // the front steps
+    for (let i = 0; i < 4; i++) { const x = -1.05 + i * .7, h = r(); if (h < fall) { ldFallen(m, [x, 0, D + 1.0], .3 + r() * 2.5, 3, .13, 6); continue; } const broken = h > 1 - fall * .5, hh = broken ? H * cuni(r, .3, .6) : H; ldColumn(m, [x, ph + .1, D - .35], hh, .13, 3, { capital: !broken }); tops.push([x, ph + .1 + hh, D - .35]); }
+    if (r() > fall) ldBlock(m, [0, ph + H + .3, D - .35], [1.25, .1, .15], 4, { mat: M.BELLY, courses: 0 });
+    for (const [x, z, w, d] of [[0, -D + .15, W - .2, .1], [-W + .25, -.2, .1, D - .4], [W - .25, -.2, .1, D - .4]]) { const h = cuni(r, .3, 1.6) * (1 - fall * .6); ldBlock(m, [x, ph + .1 + h / 2, z], [w, h / 2, d], 5, { courses: 5, mat: M.STONE }); }
+    ldRubble(m, [W * .7, 0, D + .6], 7, .6, 7, 215, M.BELLY); ldOvergrow(m, o, W + 1, 8, 216, tops);
+  } },
+  pediment: { size: "large", desc: "a temple's great pediment fallen flat on its face among the stumps of its columns, an architrave block tipped beside it", build(m, r) {
+    const n = 5 + Math.floor(r() * 3), o = r(), tops = [];
+    for (let i = 0; i < n; i++) { const x = -1.6 + i * 3.2 / (n - 1), hh = cuni(r, .25, 1.1); ldColumn(m, [x, 0, -.9], hh, .15, 2, { capital: false }); m.ell([x, hh + .1, -.9], [.17, .07, .17], M.BELLY, { group: 2, rough: .03 }); tops.push([x, hh, -.9]); }
+    let k = mark(m); m.flat([0, .5, 0], [1, 0, 0], [0, 1, 0], 1.9, .55, (s, t) => ldTriangle(M.BELLY, 5, .08, 3)(s, t), { group: 3, bend: .02 }); m.box([0, 0, 0], [1.95, .1, .25], M.BELLY, { round: .02, group: 3, paint: ldStone(0, .3) }); place(m, k, { roll: cuni(r, -1.1, -.7), yaw: cuni(r, -.25, .25), at: [cuni(r, -.4, .4), .2, .6] });
+    k = mark(m); ldBlock(m, [0, 0, 0], [.9, .14, .18], 4, { mat: M.BELLY, courses: 0 }); place(m, k, { roll: cuni(r, -.5, .5), yaw: cuni(r, .6, 1.2), at: [2.3, .2, .2] });
+    ldFallen(m, [-2.2, 0, .3], 1.9, 4, .15, 6); ldRubble(m, [.8, 0, -.2], 9, 1.0, 7, 221, M.BELLY); ldOvergrow(m, o, 2.6, 8, 222, tops);
+  } },
+  portico: { size: "large", desc: "a portico half buried in a grassy mound: the tops of its columns, their capitals and the pediment over them coming out of the earth", build(m, r) {
+    const n = 4 + Math.floor(r() * 3), sink = cuni(r, .5, 1.0), o = .4 + r() * .6, tops = [], w = (n - 1) * .6 / 2;
+    for (let i = 0; i < n; i++) { const x = -w + i * .6, hh = 1.9 - sink + (r() - .5) * .2; ldColumn(m, [x, 0, -.3], hh, .14, 2, { capital: r() > .15 }); tops.push([x, hh, -.3]); }
+    ldBlock(m, [0, 1.95 - sink + .15, -.3], [w + .25, .1, .2], 3, { mat: M.BELLY, courses: 0 });
+    const k = mark(m); m.flat([0, 0, 0], [1, 0, 0], [0, 1, 0], w + .3, .5, (s, t) => ldTriangle(M.BELLY, 5, .12, 7)(s, t), { group: 4, bend: .02 }); place(m, k, { roll: cuni(r, -.15, .15), at: [0, 2.25 - sink + .2, -.3] });
+    m.ell([0, 0, .35], [w + 1.2, .9 - sink * .2, 1.0], M.LEAF2, { group: 5, rough: .05, paint: p => ctCell(p, 9, 3) < .3 ? M.LEAF : ctCell(p, 5, 4) < .12 ? M.BARK2 : undefined }); // the mound over its lower half
+    ldOvergrow(m, o, w + 1.5, 8, 231, tops);
+  } },
+  theatre: { size: "large", desc: "an overgrown theatre: tiers of stone seats in a half ring round a stage, gapped and grassed, stumps of the stage front's columns", build(m, r) {
+    const tiers = 4 + Math.floor(r() * 2), fall = cuni(r, .1, .4), o = .3 + r() * .7, R0 = 1.1;
+    for (let t = 0; t < tiers; t++) { const Rt = R0 + t * .42, steps = 7 + t * 2; for (let i = 0; i <= steps; i++) { if (r() < fall) continue; const a = Math.PI * (1.05 + .9 * i / steps), c = [Math.cos(a) * Rt * 1.3, .1 + t * .2, Math.sin(a) * Rt * .75]; ldBlock(m, c, [.22, .1 + t * .1, .17], 1 + (t % 2), { mat: M.BELLY, courses: 0, dir: [-Math.sin(a), 0, Math.cos(a)], moss: .3 }); } }
+    ldBlock(m, [0, .1, .9], [1.3, .1, .45], 3, { mat: M.STONE, courses: 0, moss: .3 }); // the stage
+    for (let i = 0; i < 5; i++) { const x = -1.1 + i * .55, hh = r() < fall ? cuni(r, .2, .5) : cuni(r, .6, 1.4); ldColumn(m, [x, .2, 1.25], hh, .1, 4, { capital: hh > 1.1 }); }
+    ldOvergrow(m, o, 2.8, 8, 241, []);
+  } },
+  // the small ones
+  columns: { size: "small", desc: "a few columns still standing in a row, an architrave across two of them, one broken", build(m, r) {
+    const n = 2 + Math.floor(r() * 3), H = cuni(r, 1.5, 2.1), tops = []; let prev = null;
+    for (let i = 0; i < n; i++) { const x = (i - (n - 1) / 2) * .72, broken = i > 0 && r() < .3, hh = broken ? H * cuni(r, .35, .65) : H; ldColumn(m, [x, 0, 0], hh, .13, 2 + (i % 2), { capital: !broken }); tops.push([x, hh, 0]); if (!broken && prev !== null && r() < .7) ldBlock(m, [(prev + x) / 2, H + .18, 0], [.48, .09, .15], 4, { mat: M.BELLY, courses: 0 }); prev = broken ? null : x; }
+    if (r() < .6) ldFallen(m, [(n / 2) * .72, 0, .3], .4, 3, .13, 5); ldOvergrow(m, r() * .7, 1.4, 6, 251, tops);
+  } },
+  lone: { size: "small", desc: "a lone column standing on its own, its capital fallen at its foot", build(m, r) {
+    const H = cuni(r, 1.6, 2.4); ldColumn(m, [0, 0, 0], H, .15, 2, { capital: false }); m.ell([0, H + .06, 0], [.17, .06, .17], M.BELLY, { group: 2, rough: .03 });
+    const k = mark(m); m.box([0, 0, 0], [.22, .08, .22], M.BELLY, { round: .02, group: 3, paint: ldStone(0, .4) }); place(m, k, { roll: cuni(r, .4, 1.0), yaw: r() * 3, at: [cuni(r, .45, .7), .12, cuni(r, .1, .4)] });
+    if (r() < .5) ldFallen(m, [-.3, 0, .3], 2.6, 2, .14, 4); ldOvergrow(m, r() * .8, 1.0, 6, 261, [[0, H, 0]]);
+  } },
+  doorway: { size: "small", desc: "a doorway frame standing alone: two jambs and a lintel, the wall round it gone, a step before it", build(m, r) {
+    const H = cuni(r, 1.6, 2.1), w = cuni(r, .45, .65), slip = r() < .4 ? cuni(r, .08, .25) : 0;
+    for (const x of [-w, w]) ldBlock(m, [x, H / 2, 0], [.14, H / 2, .2], 2, { mat: M.BELLY, courses: 6 });
+    const k = mark(m); ldBlock(m, [0, 0, 0], [w + .3, .13, .22], 3, { mat: M.BELLY, courses: 0 }); place(m, k, { roll: slip, at: [0, H + .12 - slip * .5, 0] });
+    ldBlock(m, [0, .06, .35], [w + .2, .06, .15], 4, { mat: M.STONE, courses: 0 }); for (const s of [-1, 1]) if (r() < .6) ldBlock(m, [s * (w + .45), cuni(r, .15, .4), 0], [.25, cuni(r, .15, .4), .18], 5, { courses: 3 });
+    ldRubble(m, [.2, 0, .4], 5, .5, 5, 271, M.BELLY); ldOvergrow(m, r() * .9, 1.2, 6, 272, [[-w, H, 0], [w, H, 0]]);
+  } },
+  altar: { size: "small", desc: "an altar on its steps: a carved block with a moulded top, a shallow bowl worn into it, on three stone steps", build(m, r) {
+    const s = cuni(r, .9, 1.15);
+    for (let i = 0; i < 3; i++) ldBlock(m, [0, (.06 + i * .12) * s, 0], [(.85 - i * .17) * s, .06 * s, (.6 - i * .13) * s], 1, { mat: M.STONE, courses: 0, moss: .25 });
+    ldBlock(m, [0, .62 * s, 0], [.32 * s, .26 * s, .26 * s], 2, { mat: M.BELLY, courses: 0 }); ldBlock(m, [0, .9 * s, 0], [.38 * s, .05 * s, .32 * s], 3, { mat: M.BELLY, courses: 0 });
+    m.ell([0, .95 * s, 0], [.16 * s, .04, .12 * s], M.STONED, { group: 3, cut: true });
+    if (r() < .5) ldFallen(m, [.8, 0, .2], .3, 2, .12, 4); ldOvergrow(m, r() * .9, 1.0, 6, 281, [[-.3, .9 * s, .2]]);
+  } },
+};
+export const CLASSICAL_VARIANTS = 3; // seeds per plan
+export const CLASSICAL_PLAN_IDS = Object.keys(CLASSICAL_PLANS);
+const LANDMARK_CLASSICAL_GEN = Object.fromEntries(Object.entries(CLASSICAL_PLANS).flatMap(([plan, d]) => [...Array(CLASSICAL_VARIANTS).keys()].map(k => [`${plan}~${k}`, { desc: d.desc, plan, planSize: d.size, split: null, build(m) { d.build(m, crng(CLASSICAL_PLAN_IDS.indexOf(plan) * 7919 + k * 104729 + 17)); } }])));
 
 // ---------------- the table ----------------
 // family: cemetery | carpark | scrap | worship | castle | classical; size: a factor on the witch's scale; split: the model height above
@@ -355,6 +459,7 @@ const table = [
   ...Object.entries(WORSHIP).map(([id, d]) => ({ id, family: "worship", ...d })),
   ...Object.entries(LANDMARK_CASTLE).map(([id, d]) => ({ id, family: "castle", ...d })),
   ...Object.entries(LANDMARK_CLASSICAL).map(([id, d]) => ({ id, family: "classical", ...d })),
+  ...Object.entries(LANDMARK_CLASSICAL_GEN).map(([id, d]) => ({ id, family: "classical", ...d })),
 ];
 export const LANDMARKS = table.flatMap(d => {
   const base = { size: 1, split: null, ...d };

@@ -27,7 +27,7 @@ function draw(map, box, W, label) {
     const fill = c[0] === C[0] && c[1] === C[1] ? "#6a5520" : map.playable(c[0], c[1]) ? `hsl(${(t * 137.5) % 360},${30 + v * 4}%,${26 + v * 3}%)` : map.inBuffer(c[0], c[1]) ? `rgb(${44 + v * 4},${44 + v * 4},${50 + v * 4})` : `rgb(${16 + v * 2},${15 + v * 2},${22 + v * 2})`;
     p.push(`<rect x="${X(x)}" y="${Z(z)}" width="${(step * k + 0.6).toFixed(1)}" height="${(step * k + 0.6).toFixed(1)}" fill="${fill}"/>`);
   }
-  if (b.circle) { const c = b.circle, pts = []; for (let i = 0; i < 360; i++) { const a = (i / 360) * Math.PI * 2, r = c.r * map.coast(a); pts.push(`${X(c.x + Math.cos(a) * r)},${Z(c.z + Math.sin(a) * r)}`); } p.push(`<polygon points="${pts.join(" ")}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`); }
+  for (const l of b.land?.loops ?? []) { const pts = []; for (let i = 0; i < l.pts.length; i += 8) pts.push(`${X(l.pts[i])},${Z(l.pts[i + 1])}`); p.push(`<polygon points="${pts.join(" ")}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`); } // (the island's coast: rules/land.ts)
   else p.push(`<rect x="${X(b.minX)}" y="${Z(b.minZ)}" width="${((b.maxX - b.minX) * k).toFixed(1)}" height="${((b.maxZ - b.minZ) * k).toFixed(1)}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`);
   p.push(`<rect x="${X(e.minX)}" y="${Z(e.minZ)}" width="${((e.maxX - e.minX) * k).toFixed(1)}" height="${((e.maxZ - e.minZ) * k).toFixed(1)}" fill="none" stroke="#555" stroke-dasharray="4 4"/>`);
   for (const lc of map.legendClearings) p.push(`<circle cx="${X(lc.x)}" cy="${Z(lc.z)}" r="${Math.max(1.5, lc.r * k).toFixed(1)}" fill="#8fd18f" fill-opacity=".7"/>`);
@@ -46,7 +46,7 @@ for (const seed of nums(arg("seeds", "1,123,925469"))) {
   const half = Math.max(ci.extent.maxX - ci.extent.minX, sq.extent.maxX - sq.extent.minX) / 2;
   const boxOf = m => ({ minX: m.dancefloor.x - half, maxX: m.dancefloor.x + half, minZ: m.dancefloor.z - half, maxZ: m.dancefloor.z + half });
   let buffer = 0; for (let y = 0; y < ci.n; y++) for (let x = 0; x < ci.n; x++) if (ci.inBuffer(x, y)) buffer++;
-  console.log(`seed ${seed}: square ${sq.cells.length} playable; circle ${ci.cells.length} playable, ${buffer} in the buffer ring, flight radius ${ci.bounds.circle.r.toFixed(0)} m`);
+  console.log(`seed ${seed}: square ${sq.cells.length} playable; circle ${ci.cells.length} playable, ${buffer} in the buffer ring, coast ${ci.bounds.land.loops.filter(l => l.sea).reduce((t, l) => t + l.length, 0).toFixed(0)} m round`);
   const legend = `<div style="font:13px monospace;color:#ccc;padding:4px 10px">seed ${seed} · colour: playable areas (gold: home) · grey: buffer ring · dark: past her flight's edge (pink) · dashed: the forest's extent · cyan: runestones · green: legends' clearings · yellow: relics</div>`;
   pages.push({ seed, html: `<body style="margin:0;background:#07060c"><div style="display:flex;gap:8px">${draw(sq, boxOf(sq), 640, "before (square)")}${draw(ci, boxOf(ci), 640, "after (circle)")}</div>${legend}</body>` });
 }

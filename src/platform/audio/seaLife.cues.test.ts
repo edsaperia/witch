@@ -6,12 +6,12 @@ import { newGame } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { beachOf } from "../../rules/mapShape";
 import { SfxCues } from "./sfxCues";
+import { facing } from "../../test/coast";
 import type { Sfx } from "./sfx";
 
 const heard = (at: "east" | "west" | "inland", secs: number) => {
-  const g = newGame(123, TUNING), B = beachOf(g.map.bounds, g.tuning)!, a = at === "east" ? 0 : Math.PI;
-  const r = at === "inland" ? 200 : B.edge(a) - 5;
-  g.witch = { ...g.witch, x: B.x + Math.cos(a) * r, z: B.z + Math.sin(a) * r, seated: false, mode: "ground", lift: 0, stargazing: true };
+  const g = newGame(123, TUNING), B = beachOf(g.map.bounds, g.tuning)!, p = facing(B.land, at === "west" ? Math.PI : 0), d = at === "inland" ? 600 : 5;
+  g.witch = { ...g.witch, x: p.x - p.nx * d, z: p.z - p.nz * d, seated: false, mode: "ground", lift: 0, stargazing: true };
   const n = { splash: 0, groan: 0, pour: 0 };
   const sfx = new Proxy({}, { get: (_, k: string) => k === "splash" ? () => n.splash++ : k === "krakenGroan" ? () => n.groan++ : k === "krakenPour" ? () => n.pour++ : () => {} }) as unknown as Sfx;
   const cues = new SfxCues(sfx);

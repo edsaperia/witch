@@ -36,13 +36,13 @@ export interface CameraState {
   gaze?: number;
   /** How much the open sea lies behind the camera (0 to 1: the south coast, the camera always looking north). */
   seaBehind?: number;
-  /** Her bearing round the coast from the map's middle (radians, 0 north, clockwise), for the stargazing table. */
+  /** Her bearing round the coast: the way out to the water from her (radians, 0 north, clockwise), for the stargazing table. */
   bearing?: number;
 }
 
 /** What the camera needs of the beach each step: how near the water she is (0 at beach.camera.approach metres, 1 at its
  *  edge) and whether she's lying stargazing. */
-export interface CoastView { near: number; gazing: boolean; /** how much the open sea lies behind the camera, 0 to 1 */ seaBehind?: number; /** her bearing from the map's middle (radians, 0 north, clockwise) */ bearing?: number }
+export interface CoastView { near: number; gazing: boolean; /** how much the open sea lies behind the camera, 0 to 1 */ seaBehind?: number; /** the way out to the water from her (radians, 0 north, clockwise) */ bearing?: number }
 
 export interface CameraPose {
   /** Degrees below the horizontal. */

@@ -56,8 +56,14 @@ describe("the melodies' 32-bar ABAC form", () => {
       expect(parts).toEqual(new Set([inst, F.sung.part]));
     }
     expect([...seen].sort()).toEqual(["bell", "chiplead", "lead", "lgHorn", "pluck", "vox"]);
-    expect(style.patches[F.sung.patch].kind).toBe("voice");
-    expect(style.patches[F.sung.patch].formantShift!).toBeGreaterThan(style.patches.vox.formantShift!); // (a higher voice than the old vox)
+    // (a woman's voice: since Ed's pick, 2026-10-11, "e Recorded + ethereal", a recording of one, sung "laa" and "loo"; the formant
+    // soprano before it, higher than the old vox, still singing till the recording loads)
+    const sung = style.patches[F.sung.patch];
+    expect(sung.kind).toBe("sample");
+    expect(sung.sample).toBe("female-note");
+    expect(sung.onset).toBe("l");
+    expect(sung.vowels).toEqual(["aa", "aa", "oo"]);
+    expect(style.patches.soprano.formantShift!).toBeGreaterThan(style.patches.vox.formantShift!);
   });
 
   it("asks a question in B and answers it on the root in C", () => {
