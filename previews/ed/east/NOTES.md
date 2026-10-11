@@ -1,5 +1,10 @@
 # East biome: concept sheets (art builder 4, 2026-10-11)
 
+## Ed's decisions (2026-10-11)
+1. **All four kinds and their areas: yes, as drawn.**
+2. **The Cinder Wyrm grows wings.** They're a new evolution feature in the art kit (`wings`, art/creatures3d.js; PR into claude/prototype): nubs on the young, full leathery wings from adult up, the legend's biggest. `wyrm.png` and `area-wyrm.png` are redrawn with them.
+3. **The vulture stays on the raven builder for now**; no new bird builder.
+
 East runs rockier, then volcanic, further out. South-east blends into badlands. These are concepts only: nothing here is wired into the game.
 
 - The creatures are drawn by the real art generator, as genome records on existing templates and builders (`genomes.json`; `GENOME='…' node art/preview.mjs genome`).
@@ -27,13 +32,13 @@ East runs rockier, then volcanic, further out. South-east blends into badlands. 
 
 ## Cinder Wyrm: the Caldera (far east, volcanic; the fantastical kind). Phase 4.
 - **Feel:** a small dragon. The baby is a lizard with a ridge. From adult on, its crest burns with flame wisps. Its legend has twisted horns, a full fiery crest, claws and glowing eyes.
-- **Note:** it's wingless here (the quadruped template has no wings). Wings would mean a new feature kind on the evolution kit.
+- **Wings** (Ed's decision): the new `wings` evolution feature. Folded nubs on the young; leathery wings, bones with a scalloped membrane, from adult up; the legend's biggest.
 - **Fights:** spits embers (a short-range `shot`). Its signature move: it breathes a flame line (the long beam, telegraphed). Its legend breathes the line, then a fire ring round itself (the upheaval ring).
 - **Sigil idea:** a coiled wyrm, nose to tail, with a single flame at its crest.
 - **Area:** black basalt with ember cracks, cinder ash on the boulders. Set piece: a fire-pit ring where the wyrm sleeps.
 
 ## What a real build would need
-- **New builders or features:** a bald-headed vulture bird; wings as an evolution feature, for the wyrm.
+- **New builders or features:** the wyrm's wings are done (the `wings` feature). A bald-headed vulture bird is not wanted for now (Ed).
 - **Area recipes:** four new ones (`art/recipes/`) with ground genomes in these palettes.
 - **Flora:** rock-garden plants (saxifrage, thrift, dwarf pine) for the scree, and nothing living in the caldera except ember lichen.
 - **Sigils:** in `art/sigils.js`.
