@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b0a16">
   <title>Coven Rush</title>
+  <!-- ?chart (or ?chart=all): the sea chart, its own page (chart.html; wave 2 part C). -->
+  <script>if (new URLSearchParams(location.search).has("chart")) location.replace("chart.html" + location.search);</script>
   <style>
     :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #e8b46a; --accent-dim: rgba(232, 180, 106, .45); --love: #d9789e; --loss: #d8606e; } /* the HUD in the art's palette (art review round 1): one accent, lantern amber; love (💌, hearts) and loss muted */
     html, body { margin: 0; height: 100%; background: #0b0a16; overflow: hidden; color: var(--ink); font: 14px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -39,6 +41,13 @@
     #clock .boot-pop { color: var(--accent); animation: boot-pop 4s ease-out forwards; }
     @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes loss-pop { 0% { opacity: 0; transform: translateX(-50%) scale(1.8); } 12% { opacity: 1; transform: translateX(-50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 60%); } }
+    #won { position: fixed; inset: 0; display: none; justify-content: center; align-items: center; z-index: 6; pointer-events: none; }
+    #won.on { display: flex; animation: overIn 2.4s ease-out both; }
+    #won.on .card { pointer-events: auto; background: rgba(20, 16, 38, .6); padding: 10px 16px; font-size: 12px; max-width: 26em; position: relative; }
+    #won h1 { font-size: 15px; }
+    #won #won-found { margin-top: 6px; }
+    #won button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 4px 10px; margin-top: 8px; cursor: pointer; }
+    #won #won-close { position: absolute; top: 2px; right: 4px; margin: 0; padding: 0 6px; border: none; background: none; }
     #over { position: fixed; inset: 0; display: none; justify-content: center; align-items: center; z-index: 6; pointer-events: none; } /* in the middle of the screen (Ed, 2026-10-10) */
     #over.on { display: flex; animation: overIn 2.4s ease-out both; }
     #over.on .card { pointer-events: auto; background: rgba(20, 16, 38, .55); padding: 8px 14px; font-size: 12px; max-width: 24em; position: relative; }
@@ -119,8 +128,9 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/index-DdALzES3.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DnShPyXc.css">
+  <script type="module" crossorigin src="./assets/main-D658ga7M.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/chartSave-CnVl9myv.js">
+  <link rel="stylesheet" crossorigin href="./assets/main-DnShPyXc.css">
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -142,7 +152,9 @@
     <div class="tbtn" id="dash">dash</div>
     <div class="tbtn" id="invite">💌</div>
   </div>
-  <div id="over"><div class="card"><button id="over-close" title="Hide">×</button><h1>THE PARTY'S OVER</h1><div>Everyone's gone home to sleep 😴. Wander as long as you like.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
+  <!-- The night won (rules/win.ts; Ed, 2026-10-10): the islands its legends showed, and on to the sea chart (chart.html). -->
+  <div id="won"><div class="card"><button id="won-close" title="Hide">×</button><h1>NIGHT WON</h1><div>The whole island's dancing 🎉</div><div id="won-found"></div><button id="won-sail">Sail on</button></div></div>
+  <div id="over"><div class="card"><button id="over-close" title="Hide">×</button><h1>THE PARTY'S OVER</h1><div>Everyone's gone home to sleep 😴. Wander as long as you like.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="chart-open">Sea chart</button> <button id="fresh">A new forest</button></div></div>
   <!-- The old start card (Ed, 2026-10-06: "can we skip it and go straight to the bedroom?"): hidden; shown only for a run
        without the character creator (?creator=0: the tools and smoke runs) or a bot game. With the creator its contents
        move into the creator's tabs (main.ts). -->
