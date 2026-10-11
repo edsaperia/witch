@@ -1,6 +1,6 @@
 // The legend relics' places (Ed, 2026-10-06: "each one should appear on the map once. One appears
 // near an edge of the home area, the rest are scattered across the map, none can be within 150m of
-// another"), over many seeds: one of each kind, one just inside home's edge, every pair minGap
+// another"; Ed, 2026-10-11: one per ten areas, twelve kinds), over many seeds: the count, no kind twice, one just inside home's edge, every pair minGap
 // apart, none in a cleared place, all in bounds; and the same map gives the same relics.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
@@ -16,8 +16,11 @@ describe("legend relics on the map", () => {
     const R = LEGENDS.relics;
     for (const seed of SEEDS) {
       const map = generateMap(seed, TUNING), relics = placeRelics(map, new Forest(map));
-      expect(relics.length, `seed ${seed}`).toBe(R.kinds.length);
-      expect([...relics.map(r => r.kind)].sort(), `seed ${seed}`).toEqual([...R.kinds].sort());
+      // One per relics.perAreas areas the waves reach (Ed, 2026-10-11), each its own kind while the twelve last.
+      const count = Math.max(1, Math.round((map.cells.length - 1) / R.perAreas!));
+      expect(relics.length, `seed ${seed}`).toBe(count);
+      expect(new Set(relics.map(r => r.kind)).size, `seed ${seed}: no kind twice`).toBe(Math.min(count, R.kinds.length));
+      for (const r of relics) expect(R.kinds).toContain(r.kind);
       const C = map.centreCell, home = map.siteOf(C[0], C[1]);
       const inHome = relics.filter(r => r.cell[0] === C[0] && r.cell[1] === C[1]);
       expect(inHome.length, `seed ${seed}: one in the home area`).toBe(1);
@@ -53,6 +56,20 @@ describe("legend relics on the map", () => {
     expect(r.state).toBe("carried");
     expect(g.leash.relics).toEqual([r.id]);
   }, 60000);
+
+  it("one per relics.perAreas areas on the islands (Ed, 2026-10-11): 1 on 10, 2 on 20, 5 on 50, 6 on 64, no kind twice", () => {
+    for (const [areas, want] of [[10, 1], [20, 2], [30, 3], [50, 5], [64, 6]]) for (const seed of [1, 123]) {
+      const map = generateMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
+      expect(relics.length, `${areas} areas, seed ${seed}`).toBe(want);
+      expect(new Set(relics.map(r => r.kind)).size).toBe(want);
+    }
+  }, 120000);
+
+  it("has twelve kinds: the six bottles and their mirror images (Ed, 2026-10-11)", () => {
+    const K = LEGENDS.relics.kinds;
+    expect(K.length).toBe(12); expect(new Set(K).size).toBe(12);
+    for (const k of K.filter(k => k.endsWith("Flip"))) expect(K).toContain(k.replace(/Flip$/, ""));
+  });
 
   it("are the same for the same seed", () => {
     const a = generateMap(123, TUNING), b = generateMap(123, TUNING);

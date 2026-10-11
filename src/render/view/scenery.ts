@@ -1,6 +1,6 @@
 // The scenery rebuild (from render/view.ts, issue #122): trees, undergrowth, walls, set pieces, decor,
 // path pieces, relics, grounds and scenes round the camera, rebuilt once it has moved, turned or zoomed.
-import { relicBottle } from "./lights";
+import { relicBottle, relicFlipped } from "./lights";
 import type { Frame, Piece, RelicArt } from "../artBuild";
 import { LIGHT_UNIFORMS } from "../lighting";
 import type { Plant } from "../../rules/forest";
@@ -226,7 +226,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     for (const r of g.relics) {
       if (r.state !== "lying" || Math.abs(r.x - cx) > half || Math.abs(r.z - cz) > half) continue;
       const a = ra.byId[`party:${relicBottle(r.kind)}`];
-      if (a) put(a, r.x, r.z, false);
+      if (a) put(a, r.x, r.z, relicFlipped(r.kind));
     }
     for (const gr of g.map.grounds) {
       if (Math.abs(gr.x - cx) > half + gr.r || Math.abs(gr.z - cz) > half + gr.r) continue;

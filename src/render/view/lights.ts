@@ -101,11 +101,16 @@ const spillRgb = new Map<string, THREE.Vector3>();
  *  place in legends.json relics.kinds (wine, partyHat, discoBall, gramophone, present, mask: the kinds' names from before the
  *  bottles; the rules seed their order by name, so they stay). */
 export function relicBottle(kind: string): string {
+  kind = kind.replace(/Flip$/, ""); // (a mirrored kind draws its own bottle, flipped: relicFlipped)
   const ids = Art.PARTY_RELIC_IDS as string[];
   if (ids.includes(kind)) return kind;
   const i = LEGENDS.relics.kinds.indexOf(kind);
   return ids[(i >= 0 ? i : 0) % ids.length];
 }
+
+/** Whether a relic kind is one of the six mirror images (Ed, 2026-10-11: "flip the current kinds so there are now 12 kinds";
+ *  legends.json relics.kinds, `<kind>Flip`): its bottle drawn mirrored. */
+export const relicFlipped = (kind: string): boolean => kind.endsWith("Flip");
 
 /** The quest relics' bottles lying in the world (render/view/scenery.ts): each lights the ground round it in its liquid's own
  *  colour (art/partyRelics.js partyRelicLight: its reach and height, a slow pulse), as bright as a magic stone, so a found bottle

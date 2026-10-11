@@ -15,6 +15,16 @@ export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined
   for (const k of FORGOTTEN_KEYS) try { storage?.removeItem(k); } catch { /* storage blocked */ }
 }
 
+/** ?island= (Ed, 2026-10-11): a number of areas (1 to 200), "home" (the home island's size, `home`), "off" (0: the radius map);
+ *  null when it's not given or not understood. */
+export function islandFromLink(v: string | null, home: number): number | null {
+  if (v === null) return null;
+  if (v === "off" || v === "0") return 0;
+  if (v === "home") return home > 0 ? home : 10;
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n > 0 ? Math.min(200, n) : null;
+}
+
 /** The world's shape and travel speed for this load: the tuning's, unless the link says otherwise (?areaSize= or ?areaScale=,
  *  ?treetopSpeed=, ?mapAreas=), clamped. Never from what an earlier load saw. */
 export function worldFromLink(params: URLSearchParams, defaults = { areaSize: TUNING.areaSize * TUNING.areaScale, treetopSpeed: TUNING.treetopSpeed, mapAreas: TUNING.mapAreas }) {
@@ -144,8 +154,11 @@ export function tuningFromLink(params: URLSearchParams) {
   {
     tuning.areaScale = world.areaSize / tuning.areaSize; tuning.treetopSpeed = world.treetopSpeed; tuning.mapAreas = world.mapAreas;
     // (the circular map: about mapAreas x mapAreas areas in its circle, when that's been changed)
-    if (tuning.map && world.mapAreas !== WORLD_DEFAULT.mapAreas) tuning.map = { ...tuning.map, radius: world.mapAreas / Math.sqrt(Math.PI) };
+    if (tuning.map && world.mapAreas !== WORLD_DEFAULT.mapAreas) tuning.map = { ...tuning.map, radius: world.mapAreas / Math.sqrt(Math.PI), islandAreas: 0 };
   }
+  // The island's size (Ed, 2026-10-11, the journey's first step): ?island=10|20|30|40|50 (any 1 to 200) areas the waves reach,
+  // home (the home island's: map.islandAreas, 10 for now) or off (the radius map, about 100 areas, as before islands).
+  { const n = islandFromLink(params.get("island"), tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n }; }
 
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
   // where footpaths come into a clearing (placed with the map, so set before it is made).
