@@ -535,15 +535,26 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
   const order: [number, number, number][] = [];
   for (const [cx, cy] of cells) if (!(cx === centreCell[0] && cy === centreCell[1])) order.push([cx, cy, hash2(cx, cy, seed + 881)]);
   order.sort((a, b) => a[2] - b[2]);
+  const placeScene = (id: string, cx: number, cy: number): boolean => {
+    const r = sceneFootprint(id, tuning), a = hash2(cx, cy, seed + 885) * Math.PI * 2, site = siteOf(cx, cy);
+    for (const d of [r + 8, r + 16, r + 26]) for (let k = 0; k < 12; k++) {
+      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
+      if (inCell(x, z, cx, cy) && !reserved(x, z, r) && !map.paths.at(x, z, r * 0.7)) { scenes.push({ id, x, z, r, mirror: hash2(cx, cy, seed + 887) < 0.5 }); usedScenes.add(id); return true; }
+    }
+    return false;
+  };
+  // A featured scene, one of its ids (Ed, 2026-10-11: the temple ruins on most islands, the Greek temple or the classical ruins): on a map at its chance, in the first area it suits that has
+  // room, else in any area that has room (an island of 10 areas often has none of the types it suits).
+  const FS = SC.featured, pool = (FS?.ids ?? []).filter(id => SCENES.some(sc => sc.id === id));
+  if (FS && pool.length && hash2(seed, 7, seed + 889) < FS.chance) {
+    const fid = pool[Math.floor(hash2(seed, 9, seed + 891) * pool.length)], suits = SCENES.find(sc => sc.id === fid)!.suits ?? [], fit = (c: [number, number, number]) => (suits.includes(AREA_TYPES[typeOf(c[0], c[1])].id) ? 0 : 1);
+    for (const [cx, cy] of [...order].sort((p, q) => fit(p) - fit(q) || p[2] - q[2])) if (placeScene(fid, cx, cy)) break;
+  }
   for (const [cx, cy, roll] of order) {
     if (roll >= SC.chance) continue;
     const id = AREA_TYPES[typeOf(cx, cy)].id, fits = SCENES.filter(sc => !usedScenes.has(sc.id) && (sc.suits ?? []).includes(id));
     if (!fits.length) continue;
-    const sc = fits[Math.floor(hash2(cx, cy, seed + 883) * fits.length)], r = sceneFootprint(sc.id, tuning), a = hash2(cx, cy, seed + 885) * Math.PI * 2, site = siteOf(cx, cy);
-    search: for (const d of [r + 8, r + 16, r + 26]) for (let k = 0; k < 12; k++) {
-      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
-      if (inCell(x, z, cx, cy) && !reserved(x, z, r) && !map.paths.at(x, z, r * 0.7)) { scenes.push({ id: sc.id, x, z, r, mirror: hash2(cx, cy, seed + 887) < 0.5 }); usedScenes.add(sc.id); break search; }
-    }
+    placeScene(fits[Math.floor(hash2(cx, cy, seed + 883) * fits.length)].id, cx, cy);
   }
   // Each area's sleeping legend's clearing (Ed, 2026-10-06: "Sleeping legends should be in a small
   // circular clearing, where they sit near the top of the circle"): out from the area's middle
