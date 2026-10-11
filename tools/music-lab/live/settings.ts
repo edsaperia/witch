@@ -11,7 +11,15 @@ export const LAYER_NAMES: Record<Layer, string> = {
   vocalise: "Vocalise (the B and C melodies)", choir: "Recorded choir", whispers: "Whispers (breakdowns)", throat: "Throat-sung drone",
 };
 /** Who sings the form's melody: the game's synth soprano, Pink Trombone (5), or the recorded woman's note (5b). */
-export const VOICES = ["synth", "pinkTrombone", "recorded"] as const;
+export const VOICES = ["synth", "fof", "pinkTrombone", "recorded"] as const;
+/** The voice line's ethereal effects (src/platform/audio/voiceFx.ts; Ed, 2026-10-11), a level each, 0 off. */
+export const FX = ["chorus", "saturation", "air", "delay", "hall", "shimmer", "duck", "swells", "freeze", "whisper", "octave"] as const;
+export type Fx = typeof FX[number];
+export const FX_NAMES: Record<Fx, string> = {
+  chorus: "Chorus (ensemble)", saturation: "Saturation", air: "Air (high shelf)", delay: "Ping-pong delay (dotted eighths)", hall: "Dark hall",
+  shimmer: "Shimmer (octave-up reverb)", duck: "Ducked by the kick", swells: "Reverse swells into phrases", freeze: "Freeze phrase ends",
+  whisper: "Whisper vocoder", octave: "Octave double",
+};
 export type Voice = typeof VOICES[number];
 export const MODES = ["dorian", "aeolian", "phrygian"] as const;
 
@@ -31,6 +39,10 @@ export interface LabState {
   /** The set view's night (rules/musicSet.ts): its waves and island ("home": the first home night is the hand-picked one at
    *  10), or null. */
   night: { waves: number; island: string } | null;
+  /** The voice line's effects (on the sung melody, whoever sings it). */
+  voiceFx: Record<Fx, number>;
+  /** The choir part's chords on the FOF voice (fofChoir) rather than the synth choir. */
+  fofChoir: boolean;
 }
 
 export interface Defaults { bpm: number; mode: string; parts: string[]; victory: { transpose: number; layers: Record<string, number> } }
@@ -40,7 +52,7 @@ export function defaultState(d: Defaults): LabState {
     wave: 2, section: "", seed: 7, bpm: d.bpm, mode: d.mode, witchHouse: false,
     layers: Object.fromEntries(LAYERS.map(l => [l, l === "vocalise" ? 1 : 0])) as Record<Layer, number>, voice: "synth",
     parts: Object.fromEntries(d.parts.map(p => [p, 1])), mute: [], solo: [],
-    victory: { transpose: d.victory.transpose, layers: { ...d.victory.layers } }, night: null,
+    victory: { transpose: d.victory.transpose, layers: { ...d.victory.layers } }, night: null, voiceFx: Object.fromEntries(FX.map(f => [f, 0])) as Record<Fx, number>, fofChoir: false,
   };
 }
 
@@ -70,6 +82,9 @@ export function settingsJson(s: LabState, d: Defaults): string {
   const vl = changed(s.victory.layers, base.victory.layers);
   if (s.victory.transpose !== base.victory.transpose || some(vl)) out.victory = { ...(s.victory.transpose !== base.victory.transpose ? { transpose: s.victory.transpose } : {}), ...(some(vl) ? { layers: vl } : {}) };
   if (s.night) out.night = { ...s.night };
+  const fx = changed(s.voiceFx, base.voiceFx);
+  if (some(fx)) out.voiceFx = fx;
+  if (s.fofChoir) out.fofChoir = true;
   // one key a line, what's under it on the same line: short enough to paste in a message, easy to read
   return `{\n${Object.entries(out).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v).replace(/([,:])(?=["{\[\d-])/g, "$1 ")}`).join(",\n")}\n}`;
 }
@@ -103,6 +118,8 @@ export function parseSettings(text: string, d: Defaults, sections: string[]): { 
         levels(vic?.layers, s.victory.layers, l => l in s.victory.layers);
         break;
       }
+      case "voiceFx": levels(v, s.voiceFx, f => (FX as readonly string[]).includes(f), 1); break;
+      case "fofChoir": s.fofChoir = v === true; break;
       case "night": {
         const n = v as { waves?: unknown; island?: unknown } | null;
         s.night = n && typeof n === "object" ? { waves: Math.round(num(n.waves, 1, 64, 10)), island: typeof n.island === "string" ? n.island.slice(0, 24) : "home" } : null;

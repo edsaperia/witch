@@ -108,6 +108,12 @@ input[type=range].wide { width: 100%; height: 44px; accent-color: var(--accent);
         <div id="layers"></div>
       </section>
       <section class="card">
+        <h2>Voice effects</h2>
+        <p class="note">On the sung melody, whoever sings it: the FOF voice (Faust's singing model), Pink Trombone or the recorded voice. Each 0 (off) to 100%. Pick the FOF voice under Vocalise to hear it.</p>
+        <div class="seg"><button id="fx-ethereal" class="primary">Ethereal preset</button><button id="fx-off">All off</button></div>
+        <div id="fx"></div>
+      </section>
+      <section class="card">
         <h2>Victory</h2>
         <p class="note">An island won. Its key change over the night's track, and its own layers.</p>
         <label class="f">Key change: <span id="vt-val"></span> semitones<input id="vt" class="wide" type="range" min="-5" max="7" step="1"></label>
