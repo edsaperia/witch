@@ -76,7 +76,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
   const leashed = [...s.stack, ...s.placed.map(p => p.id)];
   for (const id of leashed) {
     const c = g.creatures[id], col = lv.colours.get(c.species);
-    if (!col) continue;
+    if (!col || c.level === 0) continue; // (no leash drawn for a baby: Ed, 2026-10-11)
     const lp = leashPoint(s, id, w.x, w.z)!;
     if (B.rim) lv.flat.add(c.x, 0, c.z, 1.8, dot, col.r, col.g, col.b, 0.35);
     const from = slotPos.get(id) ?? new THREE.Vector3(lp.x, 0.2, lp.z);

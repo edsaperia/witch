@@ -67,6 +67,7 @@ export function strengthGain(level: Level, species: string | undefined, t: Tunin
  *  legends don't evolve. */
 export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
   if (level >= TOP_LEVEL) return Infinity;
+  if (level === 0 && t.berries.babyCost !== undefined) return Math.max(1, t.berries.babyCost); // (one berry makes a baby a youth: Ed, 2026-10-11)
   const C = t.berries.cost;
   return Math.max(1, Math.round((strengthGain(level, species, t) / C.per) * (C.scale ?? 1)));
 };
@@ -182,7 +183,21 @@ export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?
 
 /** One step. `leashPointOf` says where each party animal's leash is fixed (the witch, or its
  *  sigil); a feeding animal is moved here (the leash leaves it alone while it has a berry). */
-export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning, clock?: BeatClock): void {
+/** The nearest unclaimed berry within `reach` metres of a baby's placed sigil at (sx, sz) (Ed, 2026-10-11: a baby eats only there). */
+export function babyBerry(s: BerryState, sx: number, sz: number, reach: number): Berry | null {
+  let best: Berry | null = null, bd = reach * reach;
+  for (const b of s.berries) {
+    if (b.claimedBy !== null) continue;
+    const p = s.bushes[b.bush], d = (p.x - sx) ** 2 + (p.z - sz) ** 2;
+    if (d <= bd) { bd = d; best = b; }
+  }
+  return best;
+}
+
+/** One step. `leashPointOf` says where each party animal's leash is fixed (the witch, or its
+ *  sigil); a feeding animal is moved here (the leash leaves it alone while it has a berry). `sigilOf` says where its
+ *  sigil lies when it's put down (null while it follows her): a baby eats only then (Ed, 2026-10-11). */
+export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning, clock?: BeatClock, sigilOf?: (id: number) => { x: number; z: number } | null): void {
   s.events = [];
   const B = t.berries;
   // Evolving: on its bar line, it goes up a level (and stays a party animal, legends too).
@@ -196,7 +211,7 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
   // Animals busy with a berry: give it up if pulled away or no longer a party animal; else walk to it and eat it.
   for (const [id, f] of s.feeding) {
     const c = creatures[id], b = s.berries[f.berry], p = s.bushes[b.bush], lp = leashPointOf(id);
-    if (!canEat(c, s) || !lp || Math.hypot(p.x - lp.x, p.z - lp.z) > t.leash.length + B.detour * 2) { release(s, id); continue; } // left behind
+    if (!canEat(c, s) || !lp || Math.hypot(p.x - lp.x, p.z - lp.z) > t.leash.length + B.detour * 2 || (sigilOf && c.level === 0 && !sigilOf(id))) { release(s, id); continue; } // left behind (or a baby taken up again)
     const dx = p.x - c.x, dz = p.z - c.z + 0.6, d = Math.hypot(dx, dz); // it stands just in front of the bush
     if (!f.eating) {
       if (d > 0.3) {
@@ -226,7 +241,10 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
     if (!canEat(c, s) || s.feeding.has(c.id)) continue;
     const lp = leashPointOf(c.id);
     if (!lp) continue;
-    const b = berryFor(s, c.x, c.z, lp, t);
+    // A baby eats only at its placed sigil, a berry within berries.babyReach of it; following her, never (Ed, 2026-10-11).
+    const sg = sigilOf && c.level === 0 ? sigilOf(c.id) : null;
+    if (sigilOf && c.level === 0 && !sg) continue;
+    const b = sg ? babyBerry(s, sg.x, sg.z, B.babyReach ?? 10) : berryFor(s, c.x, c.z, lp, t);
     if (!b) continue;
     const p = s.bushes[b.bush];
     b.claimedBy = c.id;
