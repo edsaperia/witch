@@ -377,9 +377,7 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
     for (const k of landCells) { const [cx, cy] = k.split(",").map(Number), s = siteOf(cx, cy); x0 = Math.min(x0, s.x); x1 = Math.max(x1, s.x); z0 = Math.min(z0, s.z); z1 = Math.max(z1, s.z); }
     const isLand = (x: number, z: number) => { const [u, v] = toPart(x, z), c = partition.partition(u, v); return landCells.has(cellKey(c[0], c[1])); };
-    const T0 = performance.now();
     land = makeLand(isLand, { minX: x0 - A, maxX: x1 + A, minZ: z0 - A, maxZ: z1 + A }, LAND_STEP, 64, (A * 0.5) ** 2, 2); // (crumbs under a quarter of an area's square taken as what's round them; slivers under about 16 m smoothed)
-    (globalThis as { landMs?: number }).landMs = performance.now() - T0;
   }
   const areaAt = (x: number, z: number): AreaSample => {
     // (toPart inline: no [u, v] tuple a call; phase 2's GC audit, the same sums)
