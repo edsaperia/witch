@@ -6,29 +6,28 @@ Where this overrides older notes: the record crate no longer picks the map's see
 
 ## 1. Islands
 
-- **The first island** is small (about 30 areas), round, and not too hard to win.
+- **The first island is home** (the Ent's island): small (about 10 areas), round, and not too hard to win.
 - **Winning an island** means surviving every wave on its route *and* leaving no enraged creature standing. (Today the pulse simply stops after the last stone and nothing ends the run but losing; this is the missing win state.)
 - **Losing:** she goes to bed, and can play the same island again.
 - **Winning:** every legend on the island wakes and joins the party. Each legend tells of a different island: these are the next maps, unlocked on the sea chart.
-- **Phases** (Ed, 2026-10-10): how far an island is from the first, and so how hard, is its *phase*: phase 1 is the first island, phase 2 the islands its legends tell of, and so on. A **fixed number of phases, four or five** (Ed). (The moon: phase 1 full, waning to new; see the archipelago below.)
+- **Phases** (Ed, 2026-10-10): how far an island is from home, and so how hard, is its *phase*: phase 1 is the islands home's legends tell of, phase 2 the islands theirs tell of, and so on: **home plus five phases**. The moon: full at home, waning phase by phase to new at phase 5.
 - **The archipelago** (Ed, 2026-10-10): **each kind of legend tells of its own island**, always the same one: **about 64 islands**, one per legend kind (so about 64 creature kinds; 32 today). More kinds can come later as expansions without changing any rule. Rarer legends live further out, so the stories lead outward.
-  - **Home plus five phases** (Ed, 2026-10-10: small enough to clear them all): phase islands are **10 / 20 / 30 / 40 / 50 areas** (2 / 4 / 6 / 8 / 10 legends); home grows from about 10 areas to ~100 and is the endgame. The moon wanes outward (home full; then gibbous to new across the phases). About 1 minute of route per area at 4 m/s, so 10 to 50 minute nights, less on faster records.
+  - **Home plus five phases** (Ed, 2026-10-10: small enough to clear them all): phase islands are **10 / 20 / 30 / 40 / 50 areas** (2 / 4 / 6 / 8 / 10 legends); home grows from about 10 areas to 64 and is the endgame. The moon wanes outward (home full; then gibbous to new across the phases). About 1 minute of route per area at 4 m/s, so 10 to 50 minute nights, less on faster records.
   - Island counts (proposed, ~64 in all, one per legend kind): **home, then 10 / 10 / 12 / 14 / 18** islands in phases 1 to 5, i.e. new kinds introduced: about 10 at home (the starting ring of sigils; their islands are phase 1), 10 in phase 1, 12 in phase 2, 14 in phase 3, 18 in phase 4, none in phase 5. A kind appears in the phase before its own island's and every phase after; with only 2 to 10 legends a night, replays open the rest.
-  - **Every legend kind exists by phase 3–4** (Ed: no new legends in the last phase): the last phase's legends tell of islands already found (a way back across the chart).
-  - **Legends decide the creatures** (Ed): a kind of creature lives in a phase only if its legend does. A kind first appears in the phase before its own island's (so phase 1, with 6 legends, has about 6 kinds of creature: an easy start with few to learn), and stays in every phase after.
-  - **The tutorial has 8 kinds** (Ed: slightly more than 6).
+  - **Every legend kind exists by phase 4** (Ed: no new legends in the last phase): the last phase's legends tell of islands already found (a way back across the chart).
+  - **Legends decide the creatures** (Ed): a kind of creature lives in a phase only if its legend does. A kind first appears in the phase before its own island's, and stays in every phase after (so home starts with about 10 kinds: an easy start with few to learn).
   - **One rule for every island** (Ed, 2026-10-10): an island is a **size** and a **roster** of kinds; its areas are filled from the roster, kinds repeating when there are more areas than kinds. Legends are **1 in 5 areas everywhere, dealt at random each night** from the kinds on the island (no two of one kind).
-    - **Home** (the Ent's island, round, full moon): one area per kind she knows (about 8 to 10 at first, ~100 at the end); roster = every kind she knows. A short tutorial at first (2 legends a night), the complete gallery and **the endgame challenge** at the end.
+    - **Home** (the Ent's island, round, full moon): one area per kind she knows (about 10 at first, 64 at the end); roster = every kind she knows. A short tutorial at first (2 legends a night), the complete gallery and **the endgame challenge** at the end.
     - Winning home opens the islands of the legends dealt that night; **replaying home deals different legends**, opening the rest of phase 1 over a few short nights.
     - **Phase islands:** fixed size by phase (10 / 20 / 30 / 40 / 50), roster from that phase's kinds (below).
   - **Rosters** (proposed, 2026-10-10). A kind of creature *is* an area type (each area type has its species), so a roster is an island's mix of area types. Each kind gets two hand-set facts: its **biome** (temperate = today's 32; north/cold, south/hot, east/rocky, west/jungle; blends on the diagonals) and the **phase it's introduced in** (home 10, phase 1 10, phase 2 12, phase 3 14, phase 4 18). Its own island lies one phase later, in its biome's direction. For kind K's island (phase p), from the island's seed:
     1. Eligible: kinds introduced in phase p or earlier.
-    2. Always: **K itself, plentiful** (about 1 area in 6: its home); **3–5 kinds new to phase p** from nearby on the chart (so it has legends telling of new islands).
+    2. Always: **K itself, plentiful** (about 1 area in 6: its home); **1–3 kinds new to phase p** (more on bigger islands) from nearby on the chart (so it has legends telling of new islands).
     3. The rest by weight: own biome strongly, neighbouring biomes some, temperate commons a little, the opposite biome almost never; recently introduced kinds favoured.
     4. About a third as many kinds as areas (10 areas ≈ 4 kinds, 50 ≈ 17), each about three times.
     5. Biome-themed share of areas grows with phase: home and phases 1–2 are essentially temperate (Ed); biomes come in from phase 3 (about half), phase 4 (three-quarters), phase 5 (nearly all).
     - Each night's legends (1 in 5 areas) are dealt from the roster, favouring kinds whose islands aren't found yet, never K.
-    - Authoring: a table of ~100 kinds, each with a biome and a phase; the rest is the generator.
+    - Authoring: a table of ~64 kinds, each with a biome and a phase; the rest is the generator.
 - **Biomes by direction** (Ed): the sea chart is a compass. **North** gets colder (pine forests, eventually tundra); **south** hotter (eventually desert); **east** rockier (eventually volcanic); **west** becomes jungle. The further out, the more of an island's areas are themed by its biome (today's 32 area types are the temperate middle). Proposed: the diagonals blend (north-east mountains and glaciers, south-east badlands, south-west mangrove swamp, north-west cold rainforest), and each biome brings its own creatures, legends and record genre.
 - **Harder further out.** The further an island is from the first, the more areas it has, the more irregular its shape, and the rarer its animals.
   - Further from home, the more **fantastical** the creatures (dragons, pegasi...); directions are biomes (below). Many more creatures are planned.
@@ -63,8 +62,8 @@ Where this overrides older notes: the record crate no longer picks the map's see
 
 ### Difficulty: one master curve (Ed, 2026-10-10)
 
-- Today's swarm curve (`swarm`: 1 young creature at the first stone up to about 12, mostly adults, at the last; `endAverage` 12, `curve` 1.3, `youngShare` 1 → 0.2) becomes **the master curve over waves 1 to 100**, indexed by wave number rather than by share of the route.
-- **Every island plays the curve from wave 1**, as far as it has areas: phase 1 waves 1–10, phase 2 1–20, ... phase 5 1–50. Only **home**, grown to ~100 areas, plays the whole curve to 100: today's balanced map is the endgame.
+- Today's swarm curve (`swarm`: 1 young creature at the first stone up to about 12, mostly adults, at the last; `endAverage` 12, `curve` 1.3, `youngShare` 1 → 0.2) becomes **the master curve over waves 1 to 64**, indexed by wave number rather than by share of the route, and **squeezed so wave 64 reaches today's final difficulty** (Ed, 2026-10-11).
+- **Every island plays the curve from wave 1**, as far as it has areas: phase 1 waves 1–10, phase 2 1–20, ... phase 5 1–50. Only **home**, grown to 64 areas (one of each creature), plays the whole curve to 64, ending at today's hardest waves.
 - So every night starts gentle; bigger islands climb higher. Other dials (darkness, shape, creature strength) stay mild and mostly visual, so the curve stays the main, readable lever. An easy game is fine as long as progression is constant (Ed).
 
 ### The treehouse, for now
@@ -96,10 +95,10 @@ A third axis of progress, separate from the other two:
 |---|---|---|
 | Islands | winning an island | defence and survival |
 | Hats and brooms | achievements (one per run) | trying the mechanics |
-| **Records** | **completing every legend quest on an island** | the optional layer: exploring, the right creatures, map awareness |
+| **Records** | **completing every legend quest dealt on an island in one night** | the optional layer: exploring, the right creatures, map awareness |
 
 - She starts with two records: **Slow** and **Normal**.
-- **An island's record** (its genre, matching its biome) is earned by completing every legend quest on it. A player can win an island first and come back for its quests later.
+- **An island's record** (its genre, matching its biome) is earned by completing **every legend quest dealt that night, in a single run** (Ed, 2026-10-11). A player can win an island first and come back another night for its record.
 - **Tempo = difficulty.** The record's bpm drives the music *and* the pulse's speed (pulse speed = 4 m/s × bpm / 120; replaces today's separate Waves menu). Knockdowns still add 5 bpm.
 - **Records from further islands are faster.** A fast record played on an easy island makes a hard night: difficulty becomes a choice.
 - Keep the first island's quests gentle enough that a new player can finish them (the early easy quest helps).
@@ -112,13 +111,13 @@ A third axis of progress, separate from the other two:
 
 **Arriving** (Ed, 2026-10-10): on a new island the Ent stands on the back of **a party legend of that island's kind**, sitting north of the dancefloor where the treehouse stands today. Story: it was so impressed by her last party that it brought her back to its home island.
 
-**Home's size** (Ed, 2026-10-10): **one area of each creature**, so about **64 areas** at the end (about 64 islands, one per legend kind), playing the master curve to wave ~64 (open: whether the curve is squeezed so wave 64 reaches today's peak).
+**Home's size** (Ed, 2026-10-10): **one area of each creature**, so about **64 areas** at the end (about 64 islands, one per legend kind), playing the whole master curve (squeezed to 64 waves).
 
 **Relics: one per 10 areas** (Ed; today's maps have six whatever their size).
 
-**The dancefloor is a spell** (Ed): on arriving she casts the party spell and the dancefloor and speaker ring rise out of the island (today's opening cast and boot, as they are). Only the house travels.
+**The dancefloor is a spell** (Ed): **putting the record on at the DJ booth casts the party spell** (Ed, 2026-10-11): the needle drops and the dancefloor and speaker ring rise out of the island (today's opening cast and boot). Only the house travels.
 
-The bedroom becomes **the whole treehouse**: rooms she walks between, each with its own job. Before the party she can wander the house freely; **she can't leave until the party starts**, and the party starts when she takes a record to the DJ booth.
+**Later (once every meta-system is settled; for now the octagon above):** the bedroom becomes **the whole treehouse**: rooms she walks between, each with its own job. Before the party she can wander the house freely; **she can't leave until the party starts**, and the party starts when she takes a record to the DJ booth.
 
 | Room | What you do there |
 |---|---|
@@ -143,5 +142,4 @@ Also on the walls: **the poster** of her biggest party.
 ## Open questions
 
 - Which rooms are open during the party.
-- How a legend "tells" of its island without text (a dream bubble showing the island's shape?).
-- Biomes by direction, fantastical by distance, or both.
+
