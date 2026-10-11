@@ -18,13 +18,26 @@ export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
   /** Going back to sleep away from where it lay (Ed, 2026-10-06): it walks home at homeSpeed m/s first. */
   homeSpeed: number;
-  relics: { kinds: string[]; /** one relic per this many areas (the ones the waves reach), at least one (Ed, 2026-10-11); 0 or none, one of each kind */ perAreas?: number; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number; clearOfCircle?: number };
+  relics: { kinds: string[]; /** one relic per this many areas (the ones the waves reach), at least one (Ed, 2026-10-11); 0 or none, one of each kind */ perAreas?: number; /** the bottles' colours (Ed, 2026-10-11): the i-th plain kind's own the i-th; each kind in each (relicKinds) */ colours?: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number; clearOfCircle?: number };
   attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[]; };
   healTime: number;
   charge: { species: string[]; windup: number; laneShown: number; speed: number; accel: number; turn: number; brake: number; arc: number; laneWidth: number; damage: number; knockback: number; returnSpeed: number; rest: number };
   closeMoves: boolean;
 }
 export const LEGENDS = raw as unknown as LegendsData;
+
+/** Every relic kind (Ed, 2026-10-11): each bottle of relics.kinds (mirrored ones end Flip) in each of relics.colours (the i-th
+ *  plain bottle's own colour the i-th: written as the bottle alone, any other as `<kind>~<colour>`); `look` is its bottle and
+ *  colour, mirrored or not, the pair a map never holds twice. */
+export function relicKinds(R: LegendsData["relics"]): { kind: string; look: string }[] {
+  const plain = R.kinds.filter(k => !k.endsWith("Flip")), cols = R.colours ?? [], out: { kind: string; look: string }[] = [];
+  for (const kind of R.kinds) {
+    const base = kind.replace(/Flip$/, ""), own = cols[plain.indexOf(base)];
+    if (!cols.length) { out.push({ kind, look: base }); continue; }
+    for (const c of cols) out.push({ kind: c === own ? kind : `${kind}~${c}`, look: `${base}~${c}` });
+  }
+  return out;
+}
 
 /** A relic: a giant half-buried party object (its kind: the art's party relic id), lying at (x, z)
  *  until she picks it up; then carried (in her leash's relics), then put down by a legend. */
@@ -59,11 +72,17 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
   const woods = (px: number, pz: number) => forest.treesNear(px, pz, 14).filter(t => Math.hypot(t.x - px, t.z - pz) < 14).length >= 3;
   const out: Relic[] = [];
   const gapTo = (x: number, z: number) => out.reduce((m, r) => Math.min(m, Math.hypot(r.x - x, r.z - z)), Infinity);
-  // The kinds in a seeded order: the first for home's, the rest for the map.
-  const kinds = [...R.kinds].sort((a, k) => hash2(a.length, a.charCodeAt(0) + a.charCodeAt(a.length - 1) * 7, map.seed + 7731) - hash2(k.length, k.charCodeAt(0) + k.charCodeAt(k.length - 1) * 7, map.seed + 7731));
-  // How many (Ed, 2026-10-11: one per relics.perAreas areas the waves reach, at least home's), each a kind of its own while
-  // the kinds last (twelve: the six bottles and their mirror images), then round again.
-  const count = R.perAreas && R.perAreas > 0 ? Math.max(1, Math.round((map.cells.length - 1) / R.perAreas)) : kinds.length;
+  // How many (Ed, 2026-10-11: one per relics.perAreas areas the waves reach, at least home's), and which: the kinds in a seeded
+  // order (relicKinds: bottle, mirrored or not, colour), never one bottle twice in a colour while they last (Ed: "We shouldn't use
+  // the same colour reflected on the same map"), then round again. The first is home's.
+  const all = relicKinds(R), count = R.perAreas && R.perAreas > 0 ? Math.max(1, Math.round((map.cells.length - 1) / R.perAreas)) : R.kinds.length;
+  const hashOf = (k: string) => { let h = 7; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) % 1000003; return hash2(h, k.length, map.seed + 7731); };
+  const order = all.map(k => ({ ...k, h: hashOf(k.kind) })).sort((a, c) => a.h - c.h), kinds: string[] = [];
+  for (let seen = new Set<string>(); kinds.length < count; seen = new Set()) {
+    const before = kinds.length;
+    for (const k of order) if (kinds.length < count && !seen.has(k.look)) { seen.add(k.look); kinds.push(k.kind); }
+    if (kinds.length === before) break;
+  }
   const put = (kind: string, x: number, z: number) => { const c = map.cellSafe(x, z).cell; out.push({ id: out.length, kind, x, z, cell: [c[0], c[1]], state: "lying", sx: x, sz: Math.min(b.maxZ - 1, z + R.sigilOffset) }); };
 
   // Home's: round from a seeded bearing, out along each ray to where the home area ends, then back
@@ -110,7 +129,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
   for (const [cx, cy] of map.cells) { const s = map.siteOf(cx, cy); if (map.remoteness(cx, cy) >= R.minRemoteness && !(cx === map.centreCell[0] && cy === map.centreCell[1]) && inside(s.x, s.z)) cells.push([cx, cy]); }
   cells.sort((a, c) => hash2(a[0], a[1], map.seed + 7717) - hash2(c[0], c[1], map.seed + 7717));
   const used = new Set<string>([cellKey(out[0].cell)]);
-  for (let i = 1; i < count; i++) {
+  for (let i = 1; i < kinds.length; i++) {
     let pick: { x: number; z: number; d: number; key: string } | null = null, tried = 0;
     const consider = (cell: [number, number]) => {
       const key = cellKey(cell);
@@ -128,9 +147,9 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
     if (!pick || (pick as { d: number }).d < R.minGap) for (const c of cells) consider(c);
     if (!pick) continue;
     const p = pick as { x: number; z: number; d: number; key: string };
-    if (p.d < R.minGap) console.warn(`relics: seed ${map.seed}: ${kinds[i % kinds.length]} only ${p.d.toFixed(0)} m from another (minGap ${R.minGap})`);
+    if (p.d < R.minGap) console.warn(`relics: seed ${map.seed}: ${kinds[i]} only ${p.d.toFixed(0)} m from another (minGap ${R.minGap})`);
     used.add(p.key);
-    put(kinds[i % kinds.length], p.x, p.z);
+    put(kinds[i], p.x, p.z);
   }
   return out;
 }

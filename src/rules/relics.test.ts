@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { generateMap } from "./map";
 import { Forest } from "./forest";
-import { LEGENDS, placeRelics } from "./legends";
+import { LEGENDS, placeRelics, relicKinds } from "./legends";
+import { PARTY_RELICS } from "../../art/partyRelics.js";
 import { newGame, stepGame } from "./game";
 
 const SEEDS = [1, 2, 3, 7, 42, 123, 999, 4242, 31337, 165272, 922199, 2026];
@@ -19,8 +20,9 @@ describe("legend relics on the map", () => {
       // One per relics.perAreas areas the waves reach (Ed, 2026-10-11), each its own kind while the twelve last.
       const count = Math.max(1, Math.round((map.cells.length - 1) / R.perAreas!));
       expect(relics.length, `seed ${seed}`).toBe(count);
-      expect(new Set(relics.map(r => r.kind)).size, `seed ${seed}: no kind twice`).toBe(Math.min(count, R.kinds.length));
-      for (const r of relics) expect(R.kinds).toContain(r.kind);
+      const looks = new Map(relicKinds(R).map(k => [k.kind, k.look]));
+      for (const r of relics) expect(looks.has(r.kind), r.kind).toBe(true);
+      expect(new Set(relics.map(r => looks.get(r.kind))).size, `seed ${seed}: no bottle twice in a colour`).toBe(Math.min(count, new Set(looks.values()).size));
       const C = map.centreCell, home = map.siteOf(C[0], C[1]);
       const inHome = relics.filter(r => r.cell[0] === C[0] && r.cell[1] === C[1]);
       expect(inHome.length, `seed ${seed}: one in the home area`).toBe(1);
@@ -61,7 +63,8 @@ describe("legend relics on the map", () => {
     for (const [areas, want] of [[10, 1], [20, 2], [30, 3], [50, 5], [64, 6]]) for (const seed of [1, 123]) {
       const map = generateMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
       expect(relics.length, `${areas} areas, seed ${seed}`).toBe(want);
-      expect(new Set(relics.map(r => r.kind)).size).toBe(want);
+      const looks = new Map(relicKinds(LEGENDS.relics).map(k => [k.kind, k.look]));
+      expect(new Set(relics.map(r => looks.get(r.kind))).size).toBe(want);
     }
   }, 120000);
 
@@ -70,6 +73,34 @@ describe("legend relics on the map", () => {
     expect(K.length).toBe(12); expect(new Set(K).size).toBe(12);
     for (const k of K.filter(k => k.endsWith("Flip"))) expect(K).toContain(k.replace(/Flip$/, ""));
   });
+
+  it("come in every bottle, mirrored or not, in every colour (Ed, 2026-10-11): 72 kinds, 36 looks; a bottle in its own glass written bare", () => {
+    const R = LEGENDS.relics, K = relicKinds(R);
+    expect(R.colours!.length).toBe(6);
+    expect(K.length).toBe(R.kinds.length * R.colours!.length);
+    expect(new Set(K.map(k => k.kind)).size).toBe(K.length);
+    expect(new Set(K.map(k => k.look)).size).toBe(36);
+    for (const k of R.kinds) expect(K.map(x => x.kind)).toContain(k); // (each in its own glass: as before)
+    // a look is a bottle and a colour: its plain and mirrored kinds share it
+    expect(K.find(k => k.kind === "wine")!.look).toBe(K.find(k => k.kind === "wineFlip")!.look);
+    expect(K.find(k => k.kind === "wine~ruby")!.look).toBe(K.find(k => k.kind === "wineFlip~ruby")!.look);
+    expect(K.find(k => k.kind === "wine~ruby")!.look).not.toBe(K.find(k => k.kind === "wine")!.look);
+  });
+
+  it("lists the colours in the bottles' order, each its own bottle's glass (art/partyRelics.js)", () => {
+    const plain = LEGENDS.relics.kinds.filter(k => !k.endsWith("Flip"));
+    expect(plain.length).toBe(PARTY_RELICS.length);
+    PARTY_RELICS.forEach((b: { glass: string }, i: number) => expect(LEGENDS.relics.colours![i], `${plain[i]}: ${b.glass}`).toBe(b.glass));
+  });
+
+  it("never lays a bottle and its mirror image in the same colour on one map (Ed, 2026-10-11), on 30 seeds of each size", () => {
+    const looks = new Map(relicKinds(LEGENDS.relics).map(k => [k.kind, k.look]));
+    for (const areas of [20, 50]) for (let seed = 1; seed <= 30; seed++) {
+      const map = generateMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
+      const seen = relics.map(r => looks.get(r.kind)!);
+      expect(new Set(seen).size, `${areas} areas, seed ${seed}: ${relics.map(r => r.kind).join(", ")}`).toBe(seen.length);
+    }
+  }, 600000);
 
   it("are the same for the same seed", () => {
     const a = generateMap(123, TUNING), b = generateMap(123, TUNING);

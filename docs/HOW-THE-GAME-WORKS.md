@@ -168,7 +168,7 @@ No animal ever fights its own kind. Nobody dies: they "run off".
 - It **calms back to sleep as soon as one of its kind is back** in its area. Worn down in a fight, it also goes back to sleep. Either way it walks home to its spot first.
 - (A "stomp" variant, where a legend turning angry flattens its own area's soundsystem, exists but is switched off: `legends.stomp.on` false.)
 
-**Relics.** Giant half-buried bottles lie on each map, **one per 10 areas** the waves reach, at least one (`legends.json` `relics.perAreas`; Ed, 2026-10-11): one just inside the edge of home, the rest scattered far out, at least 150 m apart. There are **twelve kinds**, the six bottles and their mirror images, and no kind lies twice while they last. You can spot their glint from the treetops only through gaps in the canopy.
+**Relics.** Giant half-buried bottles lie on each map, **one per 10 areas** the waves reach, at least one (`legends.json` `relics.perAreas`; Ed, 2026-10-11): one just inside the edge of home, the rest scattered far out, at least 150 m apart. Each is one of the six bottles, mirrored or not, in one of six colours (its glass and glowing liquid; `relics.colours`): **72 kinds** (Ed, 2026-10-11). A map never holds the same bottle in the same colour twice, mirrored or not, while there are looks to spare (36). You can spot their glint from the treetops only through gaps in the canopy.
 - Stand on a relic's sigil and press E to carry it.
 - Press E inside a sleeping or restless legend's circle and the relic makes that legend **happy**.
 

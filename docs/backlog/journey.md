@@ -73,7 +73,7 @@ Not designed properly until every meta-system is settled (each will own a place 
 ### First prototype (after the token reset; Ed: "trying out smaller islands and unlocking the map seems like a good idea to start")
 
 Using only today's 32 kinds and art:
-1. **Small islands:** a map size by area count (10 / 20 / ...), round, with the swarm curve indexed by wave number (above). **Built** (2026-10-11): `map.islandAreas` (10 by default, `?island=`), `population.swarm.waves` 64, and relics one per 10 areas over twelve kinds (the six bottles and their mirror images).
+1. **Small islands:** a map size by area count (10 / 20 / ...), round, with the swarm curve indexed by wave number (above). **Built** (2026-10-11): `map.islandAreas` (10 by default, `?island=`), `population.swarm.waves` 64, and relics one per 10 areas, each a bottle, mirrored or not, in one of six colours, never the same bottle and colour twice on a map.
 2. **Rosters:** an island's area types drawn by the roster rule from a table giving each of the 32 kinds a phase (home 10, phase 1 10, phase 2 the other 12; biomes later).
 3. **Winning:** survive every wave with no enraged creature left; the legends dealt that night wake.
 4. **The sea chart:** a bare page: home in the middle, islands appearing as their legends are woken, click one to play it; progress saved in the browser.
