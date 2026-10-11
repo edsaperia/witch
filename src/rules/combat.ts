@@ -281,7 +281,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (f.windupUntil === 0 && P && !marching) {
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
       const run = speed;
-      if (P.move?.kind === "charge") {
+      if (P.move?.kind === "charge" && f.target.kind !== "sound") { // (at a soundsystem its ordinary attack, not one blow a charge: Ed, 2026-10-11)
         const was = c.charge, r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
         // Predictive aim (dodge.b): a charge at her runs down the lane to where she'll be when it gets there.
         if (DB && !was && c.charge && f.target.kind === "witch") {
@@ -305,7 +305,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r === "charging" && t.fight.charge?.contact && c.charge && !c.charge.braking && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
         if (r === "charging") continue;
       }
-      if (P.move?.kind === "swoop" && swoops(c)) {
+      if (P.move?.kind === "swoop" && swoops(c) && f.target.kind !== "sound") { // (at a soundsystem it lands and attacks as usual: Ed, 2026-10-11)
         // A wild flyer (the owl, the bat, the raven: hotel's phase-3 flyer table): it circles out of reach, telegraphs, dives along a
         // line at where its target will be and pulls back up; only in the dive and at its bottom can it be hit or invited.
         const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
@@ -313,10 +313,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r === "tele") { f.readyAt = time + A.cooldown; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
         if (r === "dive") s.events.push({ kind: "swooped", x: c.x, z: c.z, at: time, id: c.id });
         if (r === "low" && c.swoop?.hit) {
-          // Its dive touches every foe it passes (once each); a soundsystem it's after, at the bottom.
+          // Its dive touches every foe it passes (once each). (A soundsystem it never swoops at: above.)
           const dive: Attack = { ...A, delivery: "melee", range: 2.5 * S, ...(P.move.knockback ? { modifier: "knockback" as const, knockback: P.move.knockback * S } : {}) };
           touch(w, s, c, atk.damage, dive, grid, c.swoop.hit);
-          if (f.target.kind === "sound" && !c.swoop.hit.includes(-1e9) && Math.hypot(p.x - c.x, p.z - c.z) <= p.r + 2 * S) { c.swoop.hit.push(-1e9); land(w, s, c, f.target, atk.damage, dive, c.x, c.z); }
         }
         continue;
       }
@@ -494,13 +493,17 @@ export function startSiege(s: CombatState, key: string, at: { x: number; z: numb
   if (besiege) for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && !c.fleeUntil && !c.dazed && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0 && enrage(c)) c.siege = key;
 }
 
-/** A besieger's marching pace (m/s): its own times combat.marchMult; marching on from a fallen soundsystem (a siege outside
- *  its own area: marchOn), at combat.marchOnRun at least, so it plainly leaves for the next (Ed's playtest, 2026-10-09:
- *  "Enraged creatures don't seem to be leaving their area"; at under 1 m/s it took minutes to). */
-export function marchSpeed(c: Creature, t: Tuning): number {
-  const own = c.speed * t.combat.marchMult;
-  return c.siege && !c.boss && c.siege !== `${c.cell[0]},${c.cell[1]}` ? Math.max(own, t.combat.marchOnRun ?? 0) : own;
+/** A kind's top speed (m/s): its fight run, its movement profile's (movement.json speed) else combat.fightRun, a legend's
+ *  combat.legendRun, at the fight's speed (fight.speed). */
+export function topSpeedOf(species: string, level: number, t: Tuning): number {
+  return (level === LEGEND ? t.combat.legendRun : profileOf(species)?.speed ?? t.combat.fightRun) * (t.fight?.speed ?? 1);
 }
+
+/** A besieger's marching pace (m/s), on its own area's soundsystem or marching on after a fall: combat.marchShare of its top
+ *  speed (Ed's playtest, 2026-10-11: "Animals seem to walk very slowly when they're going towards soundsystems"; it was its
+ *  walk times marchMult, under 1 m/s, and 5 m/s marching on). */
+export const marchSpeedOf = (species: string, level: number, t: Tuning): number => topSpeedOf(species, level, t) * (t.combat.marchShare ?? 0.5);
+export const marchSpeed = (c: Creature, t: Tuning): number => marchSpeedOf(c.species, c.level, t);
 
 /** After a soundsystem falls: the survivors march on to the next-nearest still standing. */
 export function marchOn(s: CombatState, key: string, creatures: Creature[], centre?: { x: number; z: number }): void {
