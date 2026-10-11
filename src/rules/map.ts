@@ -16,7 +16,7 @@ export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.
 import { PathNetwork } from "./paths";
 import { routeOf } from "./party";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
-import { dealLegends, homeIsland, islandOf, type Island } from "./rosters";
+import { dealLegends, homeIsland, islandOf, playableIsland, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -230,7 +230,7 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
   // The journey's islands by roster (Ed, 2026-10-11; rules/rosters.ts): map.island a kind plays that kind's island, its shape and
   // areas from its own seed (where it lies on the sea chart) and its size by phase; "home" plays home's (one area per kind she
   // knows, on the run's seed). The run's seed deals the night's legends.
-  const rosterIsland = !round ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(runSeed, Math.round(MS.islandAreas!)) : null) : MS.island ? islandOf(MS.island) : null;
+  const rosterIsland = !round ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(runSeed, Math.round(MS.islandAreas!)) : null) : MS.island && playableIsland(MS.island) ? islandOf(MS.island) : null; // (never a placeholder's: rules/rosters.ts)
   const seed = rosterIsland && rosterIsland.kind !== "home" ? rosterIsland.seed : runSeed;
   // An island of so many areas (Ed, 2026-10-11, the journey's first step: map.islandAreas): home and exactly that many more, the
   // nearest home's (found below, once the areas are cut); until then a radius sure to hold them sizes the grid and the forest.

@@ -8,9 +8,17 @@
 import KINDS_JSON from "../../config/kinds.json";
 import { hash2, rng } from "./random";
 
-export interface KindInfo { phase: number; bearing: number; dir: string }
+export interface KindInfo { phase: number; bearing: number; dir: string; /** the theme its island's direction suggests */ biome?: string; /** a kind not designed yet (Ed, 2026-10-11: shown as '?'): its island is on the sea chart only */ placeholder?: boolean }
 export const KINDS: Record<string, KindInfo> = (KINDS_JSON as { kinds: Record<string, KindInfo> }).kinds;
+/** Every kind, placeholders too (about 64: one island each). */
 export const KIND_NAMES = Object.keys(KINDS);
+/** A kind not designed yet (unknown-NN): its island has a seed, size and coast, shown as '?' on the chart, but it's never played,
+ *  dealt or put on a playable island. */
+export const isPlaceholder = (k: string): boolean => !!KINDS[k]?.placeholder;
+/** The kinds that are designed: creatures, area types and legends. */
+export const REAL_KINDS = KIND_NAMES.filter(k => !isPlaceholder(k));
+/** Whether an island ("home" or a kind) can be played. */
+export const playableIsland = (island: string): boolean => island === "home" || (!!KINDS[island] && !isPlaceholder(island));
 
 /** An island: its legend kind ("home" for home), phase (0 home), bearing (degrees from north), size (areas the waves reach),
  *  seed (its shape and areas) and roster (each kind with how many areas it has, adding up to size). */
@@ -48,13 +56,14 @@ export function homeIsland(seed: number, size = homeKinds().length, known: reado
 
 /** Kind K's island's roster (the rule above), seeded. */
 export function rosterOf(K: string, phase: number, bearing: number, size: number, seed: number): { kind: string; areas: number }[] {
-  const r = rng(seed ^ 0x5eed), eligible = KIND_NAMES.filter(k => KINDS[k].phase <= phase);
+  // (only designed kinds: a placeholder's island's roster is made of the designed kinds alone, never itself)
+  const r = rng(seed ^ 0x5eed), eligible = REAL_KINDS.filter(k => KINDS[k].phase <= phase), real = !isPlaceholder(K);
   const want = Math.max(2, Math.min(eligible.length, Math.ceil(size / 3)));
-  const chosen: string[] = [K];
+  const chosen: string[] = real ? [K] : [];
   // 1-3 kinds new to this phase (more on bigger islands), the nearest on the chart first, a little seeded jitter
   const fresh = eligible.filter(k => k !== K && KINDS[k].phase === phase)
     .map(k => ({ k, d: apart(KINDS[k].bearing, bearing) + r() * 30 })).sort((a, b) => a.d - b.d).map(x => x.k);
-  const nFresh = Math.min(fresh.length, want - 1, Math.max(1, Math.min(3, Math.round(size / 15))));
+  const nFresh = Math.min(fresh.length, want - chosen.length, Math.max(1, Math.min(3, Math.round(size / 15))));
   chosen.push(...fresh.slice(0, nFresh));
   // the rest by weight: near bearings strongly, opposite ones almost never; recently introduced kinds favoured
   const weight = (k: string) => {
@@ -70,17 +79,25 @@ export function rosterOf(K: string, phase: number, bearing: number, size: number
     chosen.push(rest.splice(i, 1)[0]);
   }
   // K plentiful (about 1 area in 6, at least 2), the other areas shared as evenly as they go, the extras by the seed
+  if (!real) return shareOut(chosen, size, seed);
   const own = Math.min(size - (chosen.length - 1), Math.max(2, Math.round(size / 6)));
   const left = size - own, others = chosen.slice(1), base = Math.floor(left / others.length);
   const extra = left - base * others.length, order = others.map((k, i) => ({ k, h: hash2(i, seed, 7349) })).sort((a, b) => a.h - b.h).map(x => x.k);
   return [{ kind: K, areas: own }, ...others.map(k => ({ kind: k, areas: base + (order.indexOf(k) < extra ? 1 : 0) }))];
 }
 
+/** `size` areas shared among `kinds` as evenly as they go, the extras by the seed. */
+function shareOut(kinds: string[], size: number, seed: number): { kind: string; areas: number }[] {
+  const base = Math.floor(size / kinds.length), extra = size - base * kinds.length;
+  const order = kinds.map((k, i) => ({ k, h: hash2(i, seed, 7349) })).sort((a, b) => a.h - b.h).map(x => x.k);
+  return kinds.map(k => ({ kind: k, areas: base + (order.indexOf(k) < extra ? 1 : 0) }));
+}
+
 /** The night's legends on an island: legendsFor(size) kinds dealt from its roster, never its own kind, no two alike; kinds whose
  *  islands aren't `found` yet first (a found one only to make up the number); `prefer` (kinds she can quest for early: the
  *  route's first areas) has one dealt where it can. Seeded by the night. */
 export function dealLegends(island: Island, night: number, found: ReadonlySet<string> = new Set(), prefer: readonly string[] = []): string[] {
-  const pool = island.roster.map(x => x.kind).filter(k => k !== island.kind);
+  const pool = island.roster.map(x => x.kind).filter(k => k !== island.kind && !isPlaceholder(k));
   const n = Math.min(pool.length, legendsFor(island.size));
   const keyed = pool.map((k, i) => ({ k, h: hash2(i, night, 7351 + island.seed % 1000) + (found.has(k) ? 1 : 0) })).sort((a, b) => a.h - b.h).map(x => x.k);
   const dealt = keyed.slice(0, n);
