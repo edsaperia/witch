@@ -28,6 +28,9 @@ describe("the link's world (src/app/linkParams.ts)", () => {
     expect(tuningFromLink(new URLSearchParams("mapAreas=14")).tuning.map?.islandAreas).toBe(0); // (the radius map's size: no island)
     // a kind's island by name (rules/rosters.ts); home by roster; a number, random areas
     expect(tuningFromLink(new URLSearchParams("island=fox")).tuning.map?.island).toBe("fox");
+    expect(tuningFromLink(new URLSearchParams("world=55")).tuning.map?.world).toBe(55); // (the world seed: rules/rosters.ts)
+    expect(tuningFromLink(new URLSearchParams("")).tuning.map?.world).toBe(0); // (no save: the first world)
+    expect(tuningFromLink(new URLSearchParams("island=unknown-01")).tuning.map?.island).toBe("home"); // (a placeholder's island isn't played)
     expect(tuningFromLink(new URLSearchParams("island=home")).tuning.map?.island).toBe("home");
     expect(tuningFromLink(new URLSearchParams("island=30")).tuning.map?.island).toBe("");
     expect(tuningFromLink(new URLSearchParams("")).tuning.map?.island).toBe("home");
