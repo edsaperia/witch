@@ -6,6 +6,7 @@
 // almost never, recently introduced kinds favoured), about a third as many kinds as areas. Each night's legends (1 in 5 areas)
 // are dealt from the roster, favouring kinds whose islands aren't found yet, never K. Home: one area per kind she knows.
 import KINDS_JSON from "../../config/kinds.json";
+import { AREAS } from "../../art/areas.js";
 import { hash2, rng } from "./random";
 
 export interface KindInfo { phase: number; bearing: number; dir: string; /** the theme its island's direction suggests */ biome?: string; /** a kind not designed yet (Ed, 2026-10-11: shown as '?'): its island is on the sea chart only */ placeholder?: boolean }
@@ -57,12 +58,26 @@ export function islandOf(kind: string, world = 0): Island | null {
   return { kind, phase, bearing, size, seed, roster: rosterOf(kind, phase, bearing, size, seed) };
 }
 
-/** Home's island (the Ent's) in the world: one area per kind she knows, `size` areas (repeating them, in turn, past that many);
- *  its shape fixed for the campaign (its seed the world's, as an island in the middle). */
-export function homeIsland(world = 0, size = homeKinds().length, known: readonly string[] = homeKinds()): Island {
-  const counts = new Map<string, number>();
-  for (let i = 0; i < size; i++) { const k = known[i % known.length]; counts.set(k, (counts.get(k) ?? 0) + 1); }
-  return { kind: "home", phase: 0, bearing: 0, size, seed: islandSeed(0, 0, world), roster: [...counts].map(([kind, areas]) => ({ kind, areas })) };
+/** The kinds with an area type (art/areas.js: an area's creature): only they can have areas (every designed kind has one today;
+ *  a kind designed before its area would wait for it). */
+export const AREA_KINDS: ReadonlySet<string> = new Set((AREAS as unknown as { creature: string }[]).map(a => a.creature));
+
+/** The kinds she knows (Ed, 2026-10-10, journey.md "Home's size"): home's 10, then each kind whose island she's found (its legend
+ *  woken: app/chartSave.ts found), in the order found; designed kinds with an area type only, none twice. */
+export function knownKinds(found: readonly string[] = []): string[] {
+  const known = homeKinds();
+  for (const k of found) if (KINDS[k] && !isPlaceholder(k) && AREA_KINDS.has(k) && !known.includes(k)) known.push(k);
+  return known;
+}
+
+/** Home's island (the Ent's) in the world: one area per kind she knows (knownKinds: 10 at first, growing as islands are found,
+ *  about 64 at the end); its shape fixed for the campaign (its seed the world's, as an island in the middle), growing outward
+ *  (rules/map.ts: its first areas keep their places and kinds, each new kind an area further out). */
+export function homeIsland(world = 0, known: readonly string[] = homeKinds(), size = known.length): Island {
+  // (at least `size` areas: past one each, the kinds again in turn, the old ?island=20 home)
+  const counts = new Map<string, number>(), n = Math.max(size, known.length);
+  for (let i = 0; i < n; i++) { const k = known[i % known.length]; counts.set(k, (counts.get(k) ?? 0) + 1); }
+  return { kind: "home", phase: 0, bearing: 0, size: n, seed: islandSeed(0, 0, world), roster: [...counts].map(([kind, areas]) => ({ kind, areas })) };
 }
 
 /** Kind K's island's roster (the rule above), seeded. */

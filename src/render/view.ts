@@ -477,7 +477,7 @@ export class View {
     // There are only 30 area types and 30 creatures: draw them all in the background now, so
     // the forest ahead is ready however fast she flies; the area types nearest her first.
     const m = this.game.map, w = this.game.witch, near = new Map<number, number>();
-    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
       const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - w.x, s.z - w.z);
       if (!(near.get(t)! <= d)) near.set(t, d);
     }
@@ -780,7 +780,7 @@ export class View {
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
-    this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }); // (before the soundsystems: a celebrated one's lasers come on as its show starts)
+    this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }, at => !!g.win && g.win.lapAt !== undefined && at >= g.win.lapAt); // (the win's, from its victory lap on: the finale's palette; before the soundsystems: a celebrated one's lasers come on as its show starts)
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated, offAt);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);

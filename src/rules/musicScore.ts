@@ -4,6 +4,7 @@
 // plays the notes. The same seed and section always give the same notes.
 import { hash2 } from "./random";
 import voices from "../../config/creature-voices.json";
+import type { CuratedStep, FamilyDef, SetDef } from "./musicSet";
 
 /** A synth patch: how one part sounds. Every field but kind and gain is optional. */
 export interface Patch {
@@ -123,6 +124,17 @@ export interface ArcStep {
   /** The section leading into the next wave, and its bars. */
   build: string;
   buildBars?: number;
+  /** A night's set (rules/musicSet.ts; Ed, 2026-10-11: "Each night should be a full set"): the step's own mode (a breakdown
+   *  dropping to a darker one; the style's scale if none), the instrument its melody's A plays on (the form's seeded pick if
+   *  none), its singer for B and C (a voice patch, or "none": the A instrument plays them too), the patch its bass parts
+   *  play on, a salt for its tune (new melodies and chords each wave), and what the planner made of it. */
+  scale?: string;
+  lead?: string;
+  vocal?: string;
+  bass?: string;
+  tune?: number;
+  family?: string;
+  role?: string;
 }
 
 /** A part in a legend's clearing layer: its pattern (or patterns, one taken by the species) and level. */
@@ -169,6 +181,11 @@ export interface MusicStyle {
   circle?: { every: Record<string, CircleUse>; families: Record<string, Record<string, CircleUse>> };
   /** The melodies' form (Ed, 2026-10-09): every section's melodic parts give way to one line in 8-bar phrases, ABAC. */
   form?: FormDef;
+  /** A night's set (rules/musicSet.ts; Ed, 2026-10-11): the genre families a night's arc is dealt from, the set's rules, and
+   *  the first home night, hand-picked. The `arc` below plays without them (the labs, a style without a set). */
+  families?: Record<string, FamilyDef>;
+  set?: SetDef;
+  curated?: { island: string; waves: number; steps: CuratedStep[] };
   arc: ArcStep[];
 }
 
@@ -407,14 +424,20 @@ function phraseFor(style: MusicStyle, seed: number, letter: string): (PhraseNote
 export const musicSeed = (base: number, n: number): number => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 0x7fffffff);
 
 /** The form's note (if one starts) on the form's sixteenth `formStep`: its part, patch and MIDI note, and its length. */
-export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0): { part: string; patch: string; midi: number; dur: number; off: number; letter: string } | null {
+export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">): { part: string; patch: string; midi: number; dur: number; off: number; letter: string } | null {
   const F = style.form!, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
   const n = phraseFor(style, seed, letter)[fs % (F.phraseBars * 16)];
   if (!n) return null;
-  const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed), def = style.parts[part];
+  // (a night's set: the step's own instrument for A, its own singer for B and C, or none, the A instrument playing them too)
+  const lead = step?.lead && style.parts[step.lead] ? step.lead : formInstrument(F, seed), voice = step?.vocal ?? F.sung.patch;
+  const sung = letter !== "A" && voice !== "none" && !!style.patches[voice], part = sung ? F.sung.part : lead, def = style.parts[part];
   const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
-  return { part, patch: sung ? F.sung.patch : def?.patch ?? "", midi: degreeToMidi(style, style.scales[style.scale], n.deg, oct, transpose), dur: n.dur, off: n.off, letter };
+  const scale = style.scales[step?.scale ?? style.scale] ?? style.scales[style.scale];
+  return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style, scale, n.deg, oct, transpose), dur: n.dur, off: n.off, letter };
 }
+
+/** A wave's own tune in a night's set (ArcStep.tune): the music's seed salted, so each wave has its own melodies and chords. */
+export const tuneSeed = (seed: number, tune: number): number => tune ? Math.floor(hash2(seed, 449 + tune, tune * 104729) * 0x7fffffff) : seed;
 
 /** The section's low-pass now (Hz), at `progress` (0-1) through it. */
 export function sectionCutoff(sec: SectionDef, progress: number): number {
@@ -477,7 +500,8 @@ export function circleParts(style: MusicStyle, species: string): [string, { p: s
 export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
   const bar = Math.floor(step / 16), s = step - bar * 16, barIn = bar - plan.start;
   const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc);
-  const scale = style.scales[style.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0); // (one scale, dorian, in each stage's key: Ed, 2026-10-09; a section's own lift on top, the victory's)
+  const scale = style.scales[a.scale ?? style.scale] ?? style.scales[style.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0); // (one scale, dorian, in each stage's key: Ed, 2026-10-09; a section's own lift on top, the victory's; a night's set may darken a step's: rules/musicSet.ts)
+  ctx = a.tune ? { ...ctx, seed: tuneSeed(ctx.seed, a.tune) } : ctx; // (a night's set: each wave its own tune)
   const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
   // the form's chords (Ed, 2026-10-09: the 32-bar ABAC form), or, with none, the section's own, a step on each pass round the loop
   const formBar = bar - (ctx.formStart ?? 0), form = style.form;
@@ -523,7 +547,8 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const r = hash2(own && ctx.circleStep !== undefined ? ctx.circleStep : step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed + phrase * 7919);
     if (ch === "?" && r >= a.energy) continue;
     const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1); // (the boot's few speakers quieter, filling out to the twelfth)
-    const base = { part: name, patch: def.patch, step: own && ctx.circleStep !== undefined ? ctx.circleStep : step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}) };
+    const patch = a.bass && def.role === "bass" && sec.parts[name] && !own && style.patches[a.bass] ? a.bass : def.patch; // (a night's set: the step's bass patch on the section's own bass parts)
+    const base = { part: name, patch, step: own && ctx.circleStep !== undefined ? ctx.circleStep : step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}) };
     if (def.role === "drum") {
       if (ch === "r") { out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level }); continue; }
       out.push({ ...base, midi: null, vel: (VEL[ch] ?? 0.8) * level });
@@ -550,7 +575,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   }
   if (onlyCircle) return out;
   // the form's melody: A on its instrument, B and C sung
-  const fn = melody > 0 ? formNoteAt(style, ctx.seed, formBar * 16 + s, transpose) : null;
+  const fn = melody > 0 ? formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a) : null;
   if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 && !fn.off ? 0.9 : 0.78) * melody, ...(fn.dur % 1 ? { straight: true } : {}) });
   // the section's own events: a crash on its first beat, a riser over a build (one note a bar)
   if (s === 0 && barIn === 0 && sec.impact && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 });

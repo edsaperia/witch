@@ -229,7 +229,7 @@ function decorOddsMax(map: ForestMap): number {
   let v = decorOdds.get(map);
   if (v === undefined) {
     const D = map.tuning.decor;
-    v = (D.ruins + D.rocks + D.freak) * 1.5 * Math.max(1, ...AREA_TYPES.map(t => (t.layout.decor ? t.layout.decor.rate / 0.3 : 1)));
+    v = (D.ruins + D.rocks + D.freak) * 1.5 * Math.max(1, ...Object.values(D.mix ?? {})) * Math.max(1, ...AREA_TYPES.map(t => (t.layout.decor ? t.layout.decor.rate / 0.3 : 1)));
     decorOdds.set(map, v);
   }
   return v;
@@ -248,14 +248,16 @@ function decorCandidate(map: ForestMap, i: number, j: number): Cand<Decor> | nul
   const L = AREA_TYPES[a.type].layout, ad = L.decor, rate = ad ? ad.rate / 0.3 : 1, rocky = L.terrain?.includes("rocky") ? 2 : 1;
   const w = ad ? [ad.ruins, ad.rocks * rocky, ad.freak] : [D.ruins, D.rocks * rocky, D.freak], sum = w[0] + w[1] + w[2] || 1;
   const total = (D.ruins + D.rocks + D.freak) * rate * (ad ? (ad.ruins + ad.rocks + ad.freak) / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 1) * (rocky > 1 ? 1.5 : 1);
-  if (roll >= total) return null;
+  // the families' mix (Ed, 2026-10-11: ruins doubled, rocks and freak trees cut): each family's share times its own factor
+  const mx = D.mix ?? {}, wm = [w[0] * (mx.ruins ?? 1), w[1] * (mx.rocks ?? 1), w[2] * (mx.freak ?? 1)], sumM = wm[0] + wm[1] + wm[2], totalM = total * sumM / sum;
+  if (roll >= totalM) return null;
   if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) return null;
   if (map.reserved(x, z, D.footprint)) return null; // its whole footprint clear of the gameplay and set pieces
   if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 6) return null;
   // Open ground keeps them all; dense canopy only some.
   const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
   if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) return null;
-  const f = (roll / total) * sum, family: DecorFamily = f < w[0] ? "ruins" : f < w[0] + w[1] ? "rocks" : "freak";
+  const f = (roll / totalM) * sumM, family: DecorFamily = f < wm[0] ? "ruins" : f < wm[0] + wm[1] ? "rocks" : "freak";
   return { x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5, rank: hash2(i, j, s + 507), i, j };
 }
 
@@ -333,9 +335,12 @@ function uniques(map: ForestMap): Uniques {
   let u = UNIQUES.get(map);
   if (u) return u;
   const b = map.extent, s = map.seed;
-  const pass = <T extends { x: number; z: number; rank: number; i: number; j: number }>(cand: (i: number, j: number) => T | null, sp: number, gap: number, pool: (c: T) => [string, number] | null, assign: (c: T, k: number) => number): Map<string, number> => {
+  // islandFirst: the finds go to the island's own areas before the land beyond its edge (Ed, 2026-10-11: ruins twice on the small
+  // islands, whose few ids were going to spots past the flight's edge first); a map without an island is all its own areas.
+  const own = (c: { x: number; z: number }) => { const cell = map.areaAt(c.x, c.z).cell; return map.playable(cell[0], cell[1]) ? 1 : 0; };
+  const pass = <T extends { x: number; z: number; rank: number; i: number; j: number }>(cand: (i: number, j: number) => T | null, sp: number, gap: number, pool: (c: T) => [string, number] | null, assign: (c: T, k: number) => number, islandFirst = false): Map<string, number> => {
     const memo = new Map<string, T | null>(), m = (i: number, j: number) => { const k = i + "," + j; let c = memo.get(k); if (c === undefined) memo.set(k, (c = cand(i, j))); return c; };
-    const all = spaced(m, sp, gap, Math.floor(b.minX / sp), Math.ceil(b.maxX / sp) + 1, Math.floor(b.minZ / sp), Math.ceil(b.maxZ / sp) + 1).sort((p, q) => q.rank - p.rank);
+    const all = spaced(m, sp, gap, Math.floor(b.minX / sp), Math.ceil(b.maxX / sp) + 1, Math.floor(b.minZ / sp), Math.ceil(b.maxZ / sp) + 1).sort((p, q) => (islandFirst ? own(q) - own(p) : 0) || q.rank - p.rank);
     const used = new Map<string, Set<number>>(), out = new Map<string, number>();
     for (const c of all) {
       const p = pool(c);
@@ -353,7 +358,7 @@ function uniques(map: ForestMap): Uniques {
   const D = map.tuning.decor, R = map.tuning.relics;
   u = {
     decor: pass((i, j) => decorCandidate(map, i, j), D.spacing, D.minGap, c => (c.family === "ruins" ? ["ruins", ruinStarts.length] : c.family === "freak" ? ["freak", freakCount] : null),
-      (c, k) => (c.family === "ruins" ? ruinStarts[k] + (c.variant % ruinVariants[k]) : k)),
+      (c, k) => (c.family === "ruins" ? ruinStarts[k] + (c.variant % ruinVariants[k]) : k), true),
     relics: pass((i, j) => relicCandidate(map, i, j), R.spacing, R.minGap, () => ["modern", modernCount], (_c, k) => k),
   };
   UNIQUES.set(map, u);
