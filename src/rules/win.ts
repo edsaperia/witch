@@ -104,14 +104,15 @@ function lapStones(g: Game, from: number, speed: number): WinState["lap"] {
 }
 
 /** Where the lap's pulse is: between which stones and how far (0 to 1), or null outside the lap. */
-export function winPulse(g: Game): { from: { x: number; z: number }; to: { x: number; z: number }; share: number; x: number; z: number } | null {
+/** (`links`: its place along the ley route as drawn, home's stone 0 and the route's j-th stone j: the stone it left, less the share.) */
+export function winPulse(g: Game): { from: { x: number; z: number }; to: { x: number; z: number }; share: number; x: number; z: number; links: number } | null {
   const w = g.win;
   if (!w || w.phase !== "lap" || w.lap.length < 2) return null;
   const t = g.clock.time;
   let i = 0;
   while (i < w.lap.length - 2 && t >= w.lap[i + 1].at) i++;
   const a = w.lap[i], b = w.lap[i + 1], share = Math.max(0, Math.min(1, (t - a.at) / Math.max(1e-6, b.at - a.at)));
-  return { from: a, to: b, share, x: a.x + (b.x - a.x) * share, z: a.z + (b.z - a.z) * share };
+  return { from: a, to: b, share, x: a.x + (b.x - a.x) * share, z: a.z + (b.z - a.z) * share, links: w.lap.length - 1 - i - share };
 }
 
 /** The conga's dancers: every animal on the island but the legends, in their places' order (round from the leader). */
