@@ -2,14 +2,6 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
-## `ab.mjs`
-
-A/B renders for Ed: node tools/music-lab/ab.mjs [out dir] [wave] [seed] [bars].
-
-## `ab.ts`
-
-A/B renders for Ed's music research: one fixed passage of the game's music, then the same with one ingredient added at a time, so each step can be judged against the last.
-
 ## `analyse.cjs`
 
 Measure the music: builds the Music Lab, renders every section offline in headless Chromium, and prints each one's loudness, peak, bands and centroid and each part's own loudness; saves a spectrogram per section.
@@ -73,14 +65,6 @@ The music's continuity through the frames' hitches: Loads the built game in head
 ```
 node tools/music-lab/flight.cjs [dist dir] [seconds]
 ```
-
-## `form.mjs`
-
-The 32-bar ABAC form, rendered: node tools/music-lab/form.mjs [section|form] [seed] [bars] [knockdown bar] [wave].
-
-## `form.ts`
-
-The 32-bar ABAC form: a wave's music on the game's mix, its sections on the form or one section looped, the form's melody over it, and, if asked, a knockdown as the game plays it: the record scratched and the music stopped, 5 bpm faster, the wait, the…
 
 ## `lab.ts`
 
