@@ -11,7 +11,9 @@ import { isHomeKey } from "./speakers";
 import styleJson from "../../config/music-style.json";
 import { barAt, musicCue, planBlock } from "./musicPlan";
 import type { MusicStyle } from "./musicScore";
-import { congaPlace, finalStone, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winPulse, winTarget } from "./win";
+import { composeFloor, newFloor } from "./dancefloor";
+import { floorInputs } from "./game";
+import { congaPlace, finalStone, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winPulse, winTarget } from "./win";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const W = { ...WIN_DEFAULT, ...(TUNING.win ?? {}) };
@@ -85,6 +87,13 @@ describe("the end of the route (rules/win.ts)", () => {
     for (let i = 0; i < 120 / STEP && g.win?.phase !== "won"; i++) { keepAngry(); stepGame(g, idle, STEP); }
     const w = g.win!;
     expect(w.phase).toBe("won");
+    // the island's sigil flares on the dancefloor: drawn on, held, then the party's patterns again
+    run(g, 1);
+    const f = winFlare(g)!;
+    expect(f.sigil).toBe(w.sigil); expect(w.sigil).toBe("worldTree");
+    expect(f.drawn).toBeGreaterThan(0); expect(f.drawn).toBeLessThan(1);
+    const lit = composeFloor({ ...newFloor(), on: 0 }, floorInputs(g), g.tuning);
+    expect([...lit.rgbi].some((v, i) => i % 4 === 3 && v > 0)).toBe(true);
     expect(w.lost).toEqual([angry.species]);
     expect(w.found.sort()).toEqual(legends.filter(c => c !== angry).map(c => c.species).sort());
     expect(angry.legendState).toBe("asleep");
@@ -104,6 +113,7 @@ describe("the end of the route (rules/win.ts)", () => {
     for (const c of legends) if (c !== angry) expect(Math.abs(Math.hypot(c.x - d0.x, c.z - d0.z) - W.legendRing)).toBeLessThan(4);
     expect(g.creatures.some(c => c.fight?.target)).toBe(false);
     expect(w.card).toBe(true);
+    expect(winFlare(g)).toBeNull(); // (held win.flare seconds, then gone)
     expect(g.partyOver).toBeNull();
   }, 120000);
 

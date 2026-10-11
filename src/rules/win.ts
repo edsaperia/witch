@@ -15,6 +15,7 @@ import type { Creature } from "./creatures";
 import { LEGEND } from "./creatures";
 import { befriend } from "./creatureStates";
 import { lull } from "./legends";
+import { islandSigilOf } from "./dancefloor";
 
 export type WinPhase = "stragglers" | "lap" | "won";
 
@@ -56,12 +57,15 @@ export interface WinTuning {
   seen: number;
   /** The woken legends' ring round the dancefloor (m). */
   legendRing: number;
+  /** The island's sigil on the dancefloor as it's won: seconds to draw it on, and how long it holds. */
+  flareDraw: number;
+  flare: number;
   /** Seconds from the win to the card; how often the stragglers' pointer re-picks. */
   cardAfter: number;
   retarget: number;
 }
 
-export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, legendRing: 22, cardAfter: 20, retarget: 0.25 };
+export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, legendRing: 22, flareDraw: 3, flare: 16, cardAfter: 20, retarget: 0.25 };
 const tuningOf = (g: Game): WinTuning => ({ ...WIN_DEFAULT, ...(g.tuning.win ?? {}) });
 
 /** A legend (an area's, or any at the legend level). */
@@ -90,8 +94,18 @@ export const winTarget = (g: Game): Creature | null => (g.win?.phase === "stragg
 /** The night's dealt legends (part A's rosters to come: every area legend on this island for now). */
 export const dealtLegends = (g: Game): Creature[] => g.creatures.filter(c => !!c.boss);
 
-/** The island's own sigil (part A: its legend kind's; for now home's, the World Tree). */
-export const islandSigil = (_g: Game): string => "worldTree";
+/** The island's own sigil (art/sigils.js islandSigil by rules/dancefloor.ts islandOf: home's, the World Tree, till islands
+ *  get their own legend kinds). */
+export const islandSigil = (g: Game): string => islandSigilOf(g.map);
+
+/** The island's sigil flaring on the dancefloor as the night's won: drawn on again over win.flareDraw seconds, held for
+ *  win.flare seconds (then the floor's party patterns again), or null. */
+export function winFlare(g: Game): { sigil: string; drawn: number } | null {
+  const w = g.win;
+  if (w?.phase !== "won" || w.wonAt === undefined) return null;
+  const T = tuningOf(g), since = g.clock.time - w.wonAt;
+  return since < T.flare ? { sigil: w.sigil, drawn: Math.min(1, since / Math.max(1e-3, T.flareDraw)) } : null;
+}
 
 /** The lap's stones: the route's, last reached first, then home. */
 function lapStones(g: Game, from: number, speed: number): WinState["lap"] {

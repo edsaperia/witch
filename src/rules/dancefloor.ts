@@ -127,6 +127,8 @@ export interface FloorInputs {
   /** The island's sigil (art/sigils.js islandSigil: home's the World Tree) and how far it's drawn on (0 to 1, the boot's share,
    *  rules/bootRing.ts bootShare): through the boot the floor shows it in place of the moon (Ed, 2026-10-11). */
   island?: { sigil: string; drawn: number };
+  /** The night won (rules/win.ts): the island's sigil flaring on the floor over everything, drawn on again (0 to 1). */
+  flare?: { sigil: string; drawn: number };
 }
 
 /** Advance the sequence and the witch's marks to `time` (call every frame). */
@@ -182,6 +184,7 @@ export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: U
     else if (inp.moon) moonTiles(rgbi, inp.moon.phase, time, t);
     return summary(rgbi);
   }
+  if (inp.flare && t.dancefloor.island.on) { islandTiles(rgbi, inp.flare.sigil, inp.flare.drawn, beat, t); return summary(rgbi); } // (the night won: rules/win.ts)
   const set = (n: number, c: Rgb, i: number, add = false) => {
     if (!MASK[n] || i <= 0) return;
     const k = n * 4, cur = rgbi[k + 3];

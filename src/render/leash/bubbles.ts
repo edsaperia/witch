@@ -84,6 +84,7 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
 export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
   const host = lv.bubbleWitch?.parentElement, g = lv.game, w = g.witch, range = g.tuning.dreams.range;
   if (!host) return;
+  if (g.win?.phase === "won") { drawIslandDreams(lv, camera, width, height, host); return; }
   const list = w.mode !== "ground" || w.lift > 0.5 ? [] : lv.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
   let used = 0;
   for (const { c } of list) {
@@ -426,4 +427,30 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
   bc.classList.add("on");
   bc.style.opacity = turn % 2 === 1 ? "1" : "0.6";
   void time;
+}
+
+/** The night won (rules/win.ts; Ed, 2026-10-10: "each woken legend's dream bubble shows the shape of its home island with its
+ *  sigil, the same picture that lights up on the sea chart"): over each woken legend dancing at home, the nearest few, a dream
+ *  bubble of its island. Its sigil for now; art4's island outline joins it when it lands (`islandOutline`). */
+function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, height: number, host: HTMLElement): void {
+  const g = lv.game, w = g.witch, range = g.tuning.dreams.range * 2;
+  const list = g.creatures.filter(c => !c.gone && c.finale !== undefined && c.finale < 0).map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 6);
+  let used = 0;
+  for (const { c } of list) {
+    const head = lv.tops.get(c.id) ?? 2;
+    placed(lv.v.set(c.x, head + 0.4, c.z)).project(camera);
+    if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
+    let el = lv.dreamEls[used];
+    if (!el) { el = thoughtEl("thought dream"); host.append(el); lv.dreamEls.push(el); }
+    el.style.display = "";
+    const S = thoughtShape(DREAM_INNER, 3);
+    paintCloud(el, S, DREAM_INK, DREAM_FILL);
+    showSymbol(el, S, "sigil", `island:${c.species}`, () => sigilCanvas(c.species, null, sigilColour(c.species), DREAM_INNER), 1);
+    const left = snap(((lv.v.x + 1) / 2) * width - (S.foot.x + 0.5) * GRID), top = Math.max(57, snap(((1 - lv.v.y) / 2) * height - (S.foot.y + 0.5) * GRID));
+    el.style.left = `${left}px`; el.style.top = `${top}px`;
+    tiltFilter(el, top + S.box.y * GRID + S.box.n * GRID * 0.5);
+    used++;
+  }
+  for (let i = used; i < lv.dreamEls.length; i++) lv.dreamEls[i].style.display = "none";
+  for (const cap of lv.wayEls) cap.style.display = "none";
 }
