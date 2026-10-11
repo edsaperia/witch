@@ -4,7 +4,7 @@
 // down, in which case it gains 5bpm. Being knocked down changes the music to a random new seed."
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { beatAt, bpmAt, timeAt, waveArrived, waveTempo } from "./beat";
+import { bpmAt, timeAt, waveArrived, waveTempo } from "./beat";
 import { hitWitch, newGame } from "./game";
 import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./musicPlan";
 import { formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
@@ -91,26 +91,25 @@ describe("everything in dorian, each stage in its own key", () => {
   });
 });
 
-describe("the tempo: the night's set's, a wave each, and 5 more a knockdown", () => {
+describe("the tempo: 120, and 5 more a knockdown", () => {
   const t: Tuning = { ...TUNING, beat: { ...TUNING.beat, bpm: style.bpm, tempos: style.arc.map(a => a.bpm ?? style.bpm) } };
-  it("follows the night's set (Ed, 2026-10-11: a tempo step a wave), the style's 120 without one", () => {
+  it("stays at 120 through every wave", () => {
     expect(style.bpm).toBe(120);
     for (let w = 0; w < 40; w++) expect(waveTempo(t, w)).toBe(120);
-    const g = newGame(3, t), tempos = g.musicSet!.steps.map(s => s.bpm);
-    expect(g.beat.tempos).toEqual(tempos);
-    expect(bpmAt(g.beat, 0)).toBe(tempos[0]);
-    for (let w = 1; w < tempos.length; w++) { waveArrived(g.beat, t, w, w * 60); expect(bpmAt(g.beat, w * 60 + 50)).toBeCloseTo(tempos[w], 6); }
+    const g = newGame(3, t);
+    for (let w = 1; w <= 9; w++) waveArrived(g.beat, t, w, w * 60);
+    expect(bpmAt(g.beat, 1000)).toBe(120);
   });
 
   it("gains 5 a knockdown, with no cap", () => {
     expect(t.knockout.bpmStep).toBe(5);
-    const g = newGame(3, t), W = g.witches[0], from = bpmAt(g.beat, 0);
+    const g = newGame(3, t), W = g.witches[0];
     for (let k = 1; k <= 6; k++) {
       W.ko = null; W.health.hp = 1; W.health.hurtAt = -Infinity; W.dash = { ...W.dash, until: -Infinity } as typeof W.dash;
       g.clock.time = g.herTime = k * 40;
       hitWitch(g, 0, g.clock.time, t);
       expect(W.ko, `knockdown ${k}`).toBeTruthy();
-      expect(bpmAt(g.beat, k * 40 + 30)).toBeCloseTo(from + 5 * k, 6);
+      expect(bpmAt(g.beat, k * 40 + 30)).toBeCloseTo(120 + 5 * k, 6);
     }
     expect(g.knockdowns.length).toBe(6);
   });
@@ -148,7 +147,7 @@ describe("a knockdown: the record scratched, silence, a new record from the top 
     W.health.hp = 1; g.clock.time = g.herTime = 30.3;
     hitWitch(g, 0, 30.3);
     const ko = W.ko!, cue = musicCue(g), [k] = cue.knockdowns!;
-    expect(k.at).toBeCloseTo(beatAt(g.beat, 30.3) / 4, 3); // (30.3 s at the night's first tempo, in bars)
+    expect(k.at).toBeCloseTo(30.3 / 2, 3); // (30.3 s at 120: 15.15 bars)
     expect(k.back % 1).toBeCloseTo(0, 3); // a bar line, at the new tempo
     expect(timeAt(g.beat, k.back * 4)).toBeCloseTo(ko.backAt, 6);
     expect(ko.backAt).toBeGreaterThanOrEqual(ko.inAt! + TUNING.knockout.respawn!.minScratch - 1e-6);

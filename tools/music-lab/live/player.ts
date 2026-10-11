@@ -4,7 +4,7 @@
 // sound (the CC0 kit for the synth drums, a voice for the sung melody) and its bars as they're scheduled (the frame drums,
 // the drone's key, the recorded voices, the witch-house beat), and sets each part's level on its channel.
 import { MusicEngine } from "../../../src/platform/audio/musicEngine";
-import { newBeatClock, rampTo, type BeatClock } from "../../../src/rules/beat";
+import { newBeatClock, type BeatClock } from "../../../src/rules/beat";
 import { formClock, type planBlock, type MusicCue } from "../../../src/rules/musicPlan";
 import { arcStep, formChord, musicSeed, resolveSection, tuneSeed, type MusicStyle, type NoteEvent } from "../../../src/rules/musicScore";
 import { BREAKDOWN, FRAMES, FRAME_IDS, frameHit, KIT, PITCH, PRESENCE_DB, VOCALISE_GAIN, VOWELS } from "../ingredients";
@@ -73,18 +73,18 @@ export class Player {
 
   get playing(): boolean { return this.engine !== null; }
 
-  /** A night in miniature (the set view): `bars` bars a wave, each wave at its own tempo; null: the passage. */
-  private night: { bars: number; tempos: number[] } | null = null;
+  /** A night in miniature (the set view): `bars` bars a wave, `waves` of them; null: the passage. */
+  private night: { bars: number; waves: number } | null = null;
 
   /** Start from the top of the passage with this style (its tempo, seed and wave from the settings); with `night`, the whole
-   *  night in miniature (the style's arc a night's set: a wave every `bars` bars, each at its tempo, eased in over a beat). */
-  start(style: MusicStyle, night: { bars: number; tempos: number[] } | null = null): void {
+   *  night in miniature (the style's arc a night's set: a wave every `bars` bars, at the style's tempo: the gameplay sets the
+   *  game's, Ed 2026-10-11, so the lab's bpm is a preview of what it might be). */
+  start(style: MusicStyle, night: { bars: number; waves: number } | null = null): void {
     this.stop();
     const s = this.state();
     this.style = style;
     this.night = night;
-    this.clock = newBeatClock(style.bpm, night ? night.tempos[0] : style.bpm);
-    if (night) night.tempos.forEach((bpm, w) => { if (w > 0) rampTo(this.clock, w * night.bars * 4, bpm, 4); });
+    this.clock = newBeatClock(style.bpm);
     const e = new MusicEngine(this.ctx, this.bus, style, s.seed), h = e as unknown as Hooked;
     const play = h.play.bind(e), step = h.step.bind(e);
     h.play = (ev, t, dur, sps, chord) => this.note(ev, t, dur, sps, chord, play);
@@ -111,7 +111,7 @@ export class Player {
 
   cue(): MusicCue {
     const s = this.state(), N = this.night;
-    if (N) return { waves: N.tempos.slice(1).map((_, i) => (i + 1) * N.bars), nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
+    if (N) return { waves: Array.from({ length: N.waves }, (_, i) => (i + 1) * N.bars), nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
     return { waves: Array.from({ length: s.wave }, () => 0), nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: s.wave, forceSection: s.section || undefined };
   }
 

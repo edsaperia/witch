@@ -7,7 +7,7 @@ import { MusicEngine } from "../../../src/platform/audio/musicEngine";
 import { newBeatClock } from "../../../src/rules/beat";
 import type { MusicStyle, NoteEvent, PartUse } from "../../../src/rules/musicScore";
 import { Player } from "./player";
-import { nightStyle, nightTempos, planNight, type NightSet } from "../../../src/rules/musicSet";
+import { nightStyle, planNight, type NightSet } from "../../../src/rules/musicSet";
 import { defaultState, heard, LAYERS, LAYER_NAMES, MODES, parseSettings, settingsJson, VOICES, type Defaults, type LabState, type Layer, type Voice } from "./settings";
 
 const BASE = styleJson as unknown as MusicStyle;
@@ -97,7 +97,7 @@ async function play(): Promise<void> {
   restart();
 }
 
-/** The set view's night in miniature: this many bars a wave (Ed's renders: about 20 s a wave at its own tempo). */
+/** The set view's night in miniature: this many bars a wave, at the tempo slider's bpm (the gameplay sets the game's). */
 const NIGHT_BARS = 8;
 /** Whether the night's playing (the set view's button), not the passage. */
 let nightPlaying = false;
@@ -109,7 +109,7 @@ function restart(): void {
   // (in miniature each wave lands on its own section, its build cut to a block: the game's 8-bar builds would fill its 8 bars)
   const n = nightPlaying ? nightOf() : null, night = n ? nightStyle(styleFor(state), n) : null;
   const st = night ? { ...night, arc: night.arc.map(a => ({ ...a, buildBars: BASE.blockBars })) } : styleFor(state);
-  player.start(st, n ? { bars: NIGHT_BARS, tempos: nightTempos(n) } : null);
+  player.start(st, n ? { bars: NIGHT_BARS, waves: n.waves } : null);
   player.prewarm(sungNotes(st));
   showTransport();
 }
@@ -140,7 +140,7 @@ function frame(): void {
 }
 let shownWave = -1;
 
-// ---- the set view: the night's waves, its energy curve, each wave's genre, key, tempo, lead, bass and voice ----
+// ---- the set view: the night's waves, its energy curve, each wave's genre, key, lead, bass and voice ----
 const NOTE = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 const ROLE_COLOUR: Record<string, string> = { warm: "#4fe0ff", build: "#9b93ab", peak: "#ff5fc8", breakdown: "#7d8aff", climax: "#ffd35f" };
 function showNight(): void {
@@ -158,7 +158,7 @@ function showNight(): void {
     const row = el("div", { cls: `step${st.wave === shownWave ? " now" : ""}` },
       el("b", { textContent: st.wave ? `w${st.wave}` : "start" }),
       el("span", { cls: "role", textContent: st.role }),
-      el("span", { textContent: `${f?.name ?? st.family} · ${key} · ${st.bpm} bpm · ${st.lead} / ${st.bass} / ${st.vocal}` }));
+      el("span", { textContent: `${f?.name ?? st.family} · ${key} · ${st.lead} / ${st.bass} / ${st.vocal}` }));
     (row.firstChild as HTMLElement).style.color = ROLE_COLOUR[st.role];
     box.append(row);
   }

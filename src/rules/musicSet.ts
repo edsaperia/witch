@@ -10,8 +10,10 @@
 //   middle techno, electro and breakbeat, the late industrial, phonk, hyperpop and hard. A 10-wave island is a full set in
 //   the early palette; only home at 64 travels the whole range.
 // - DJ-ish rules: never a family twice running; a neighbouring key (a fifth either way, or the same), lifted a step or two
-//   into peaks and darker in breakdowns; the tempo rising with the palette and the energy, eased back in breakdowns; the
-//   lead, bass patch and voice dealt so each wave differs from the last in at least two ways.
+//   into peaks and darker in breakdowns; the lead, bass patch and voice dealt so each wave differs from the last in at least
+//   two ways (genre, key, lead, bass, voice, density). The tempo is never the set's: it's the gameplay's (Ed, 2026-10-11:
+//   "tempo is set by the gameplay": rules/beat.ts), so each family sounds right at any of its tempos (a half-time feel where
+//   the genre wants a slower pulse: dub, witch house, phonk).
 // - The first home night (10 waves) is hand-picked (the style's `curated`).
 // Deterministic: the same seed, island and waves give the same set. Numbers only: the conductor (musicPlan.ts) plays the
 // night's arc as it played the style's.
@@ -33,8 +35,6 @@ export interface FamilyDef {
   energy: [number, number];
   /** A breakdown wave's family. */
   calm?: boolean;
-  /** Bpm over the night's tempo (a half-time feel slower, jungle faster). */
-  tempo?: number;
   /** Its own mode (witch house's phrygian). */
   scale?: string;
   land?: string; four: string[]; breaks: string[]; breakdown: string[];
@@ -50,7 +50,6 @@ export interface SetDef {
   darker: string;
   keyRange: [number, number];
   lift: number[];
-  tempo: { from: number; to: number; spread: number; breakdown: number; climax: number; min: number; max: number };
   leads: string[];
   vocals: string[];
 }
@@ -65,7 +64,6 @@ export interface NightStep {
   energy: number;
   transpose: number;
   scale: string;
-  bpm: number;
   lead: string;
   bass: string;
   vocal: string;
@@ -73,7 +71,7 @@ export interface NightStep {
   at: number;
 }
 
-export interface CuratedStep { family: string; role: Role; energy: number; transpose: number; bpm: number; lead: string; bass: string; vocal: string; scale?: string }
+export interface CuratedStep { family: string; role: Role; energy: number; transpose: number; lead: string; bass: string; vocal: string; scale?: string }
 
 /** The night's set: its steps (0 the countdown after the boot, then a step a wave), how many cycles, whether hand-picked. */
 export interface NightSet { island: string; waves: number; seed: number; curated: boolean; cycles: number; steps: NightStep[] }
@@ -172,7 +170,7 @@ export function planNight(style: MusicStyle, o: NightOptions): NightSet {
   if (isCurated(style, o)) {
     return { island: o.island, waves: N, seed: o.seed, curated: true, cycles: 1, steps: style.curated!.steps.map((c, i) => ({
       wave: i, family: c.family, role: c.role, energy: c.energy, transpose: c.transpose, scale: c.scale ?? F[c.family]?.scale ?? style.scale,
-      bpm: c.bpm, lead: c.lead, bass: c.bass, vocal: c.vocal, at: at[i],
+      lead: c.lead, bass: c.bass, vocal: c.vocal, at: at[i],
     })) };
   }
   const energy = at.map((u, i) => i === n - 1 ? 1 : energyAt(u, cycles)), roles = rolesOf(at, energy, cycles); // (the climax, the last wave: all in)
@@ -208,16 +206,11 @@ export function planNight(style: MusicStyle, o: NightOptions): NightSet {
       transpose = norm(transpose, S.keyRange);
     }
     const scale = f.scale ?? (role === "breakdown" ? S.darker : style.scale);
-    // its tempo: the palette's, spread by the energy, eased back in a breakdown and pushed at the climax; never the last's
-    const T = S.tempo;
-    let bpm = Math.round(T.from + (T.to - T.from) * p + T.spread * (e - 0.5) + (f.tempo ?? 0) + (role === "breakdown" ? T.breakdown : 0) + (role === "climax" ? T.climax : 0));
-    if (prev && bpm === prev.bpm) bpm += e >= prev.energy ? 1 : -1;
-    bpm = clamp(bpm, T.min, T.max);
     const lead = pickOther((f.leads ?? S.leads).filter(l => style.parts[l]), prev?.lead, rnd(i, 3));
     const bass = pickOther(f.bass.filter(b => style.patches[b]), prev?.bass, rnd(i, 4));
     const voices = (f.vocals ?? S.vocals).filter(v => v === "none" || style.patches[v]);
     const vocal = role === "breakdown" && voices.includes("breathy") && prev?.vocal !== "breathy" ? "breathy" : pickOther(voices, prev?.vocal, rnd(i, 5));
-    steps.push({ wave: i, family, role, energy: Math.round(e * 100) / 100, transpose, scale, bpm, lead, bass, vocal, at: at[i] });
+    steps.push({ wave: i, family, role, energy: Math.round(e * 100) / 100, transpose, scale, lead, bass, vocal, at: at[i] });
   }
   return { island: o.island, waves: N, seed: o.seed, curated: false, cycles, steps };
 }
@@ -226,7 +219,7 @@ export function planNight(style: MusicStyle, o: NightOptions): NightSet {
 export function arcStepOf(style: MusicStyle, s: NightStep): ArcStep {
   const f = style.families![s.family];
   return {
-    name: `${f?.name ?? s.family} · ${s.role}`, energy: s.energy, transpose: s.transpose, bpm: s.bpm,
+    name: `${f?.name ?? s.family} · ${s.role}`, energy: s.energy, transpose: s.transpose,
     ...(s.scale !== style.scale ? { scale: s.scale } : {}),
     lead: s.lead, vocal: s.vocal, bass: s.bass, tune: s.wave + 1, family: s.family, role: s.role,
     sections: { land: f.land, four: f.four, breaks: f.breaks, breakdown: f.breakdown }, build: f.build, ...(f.buildBars ? { buildBars: f.buildBars } : {}),
@@ -244,10 +237,8 @@ export function nightStyle(style: MusicStyle, set: NightSet | null | undefined):
   return s;
 }
 
-/** The night's tempos, a step a wave (the beat clock's: rules/beat.ts). */
-export const nightTempos = (set: NightSet): number[] => set.steps.map(s => s.bpm);
-
-/** How two steps differ (Ed: each wave must change at least two of these). */
+/** How two steps differ (Ed: each wave must change at least two of these; the tempo isn't one, being the gameplay's): its
+ *  genre, key, lead, bass, voice, and density (its energy, which parts and "?" hits play, by a tenth or more). */
 export function stepChanges(a: NightStep, b: NightStep): string[] {
   const out: string[] = [];
   if (a.family !== b.family) out.push("genre");
@@ -255,7 +246,7 @@ export function stepChanges(a: NightStep, b: NightStep): string[] {
   if (a.lead !== b.lead) out.push("lead");
   if (a.bass !== b.bass) out.push("bass");
   if (a.vocal !== b.vocal) out.push("vocal");
-  if (a.bpm !== b.bpm) out.push("tempo");
+  if (Math.abs(a.energy - b.energy) >= 0.1) out.push("density");
   return out;
 }
 

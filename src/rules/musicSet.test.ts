@@ -20,7 +20,7 @@ describe("a night's set", () => {
     for (const n of nights().slice(0, 12)) expect(checkStyle(nightStyle(style, n))).toEqual([]);
   });
 
-  it("changes at least two of genre, key, lead, bass, voice and tempo every wave, and never the genre twice running", () => {
+  it("changes at least two of genre, key, lead, bass, voice and density every wave (never the tempo: the gameplay's), and never the genre twice running", () => {
     for (const n of nights()) {
       expect(n.steps.length).toBe(n.waves + 1);
       for (let i = 1; i < n.steps.length; i++) {
@@ -47,14 +47,13 @@ describe("a night's set", () => {
         if (inCycle.length) peaks.push(Math.max(...inCycle.map(s => s.energy)));
       }
       for (let c = 1; c < peaks.length; c++) expect(peaks[c]).toBeGreaterThan(peaks[c - 1] - 1e-9);
-      // gentle at first; breakdowns calm and slower than the wave before; the tempo higher at the climax than the start
+      // gentle at first; breakdowns calm, a drop from the wave before, darker
       expect(S[0].energy).toBeLessThan(0.3);
       for (let i = 1; i < S.length; i++) if (S[i].role === "breakdown") {
         expect(style.families![S[i].family].calm, `${n.waves} wave ${i}`).toBe(true);
-        expect(S[i].bpm).toBeLessThan(S[i - 1].bpm);
         expect(S[i].energy).toBeLessThan(S[i - 1].energy);
+        expect(S[i].scale).not.toBe(style.scale);
       }
-      expect(last.bpm).toBeGreaterThan(S[0].bpm);
     }
     for (const C of [1, 2, 3, 6]) { expect(energyAt(0, C)).toBeLessThan(0.2); expect(energyAt(1, C)).toBeCloseTo(1, 6); }
   });
@@ -64,7 +63,6 @@ describe("a night's set", () => {
     for (const s of early.steps) expect(F[s.family].palette[0], s.family).toBeLessThanOrEqual(0.1);
     const home = planNight(style, { seed: 3, island: "home", waves: 64 }), late = home.steps.slice(-12).map(s => s.family);
     expect(late.some(f => F[f].palette[0] >= 0.55), late.join()).toBe(true);
-    expect(home.steps[64].bpm).toBeGreaterThan(home.steps[0].bpm + 25);
   });
 
   it("plans by the night's time: a long wave counts for more of the night", () => {
@@ -85,7 +83,8 @@ describe("a night's set", () => {
     expect(g.map.island?.kind).toBe("home");
     expect(g.musicSet?.curated).toBe(true);
     expect(g.musicSet?.waves).toBe(10);
-    expect(g.beat.tempos).toEqual(style.curated!.steps.map(c => c.bpm));
+    expect(g.beat.segs.length).toBe(1); // (the tempo the gameplay's: Ed, "tempo is set by the gameplay")
+    for (const a of nightStyle(style, g.musicSet).arc) expect(a.bpm).toBeUndefined();
   });
 
   it("is the same for the same seed, island and waves, and different for another seed", () => {

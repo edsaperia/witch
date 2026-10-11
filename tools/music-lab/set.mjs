@@ -1,6 +1,6 @@
-// A night's set in miniature, rendered: node tools/music-lab/set.mjs [island] [waves] [seed] [bars a wave] [encore bars]
+// A night's set in miniature, rendered: node tools/music-lab/set.mjs [island] [waves] [seed] [bars a wave] [encore bars] [bpm]
 // (default home, 10 waves (the hand-picked first home night), seed 7, 12 bars a wave (about 20 to 25 s), 16 bars of the
-// victory's encore). Renders tools/music-lab/set.ts offline in headless Chromium: every wave of the night (rules/musicSet.ts)
+// victory's encore; 120 bpm, the style's: the gameplay sets the game's). Renders tools/music-lab/set.ts offline in headless Chromium: every wave of the night (rules/musicSet.ts)
 // at its own tempo, then the victory. Prints each wave (its time, role, family, key, tempo, lead, bass, voice and sections);
 // fails on a script error, NaN, clipping or silence. Writes previews/music/sets/<island>-<waves>-<seed>.mp3 (the WAV with no
 // ffmpeg) and its wave list beside it (.txt).
@@ -12,7 +12,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url)), root = resolve(here, "../..");
-const [island = "home", waves = "10", seed = "7", bars = "12", encore = "16"] = process.argv.slice(2);
+const [island = "home", waves = "10", seed = "7", bars = "12", encore = "16", bpm = "120"] = process.argv.slice(2);
 const require = createRequire(import.meta.url);
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -25,12 +25,12 @@ page.on("pageerror", e => errors.push(String(e)));
 await page.setContent("<!doctype html><meta charset=utf-8><body></body>");
 const seedJs = "window.seedRandom = () => { let r = 12345; Math.random = () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 4294967296); }; window.seedRandom();";
 await page.addScriptTag({ content: seedJs + "\n" + code });
-const r = await page.evaluate(o => window.setRender(o), { island, waves: +waves, seed: +seed, bars: +bars, encore: +encore });
+const r = await page.evaluate(o => window.setRender(o), { island, waves: +waves, seed: +seed, bars: +bars, encore: +encore, bpm: +bpm });
 await browser.close();
 ok(errors.length === 0, `no script errors${errors.length ? ": " + errors.join(" | ") : ""}`);
 const NOTE = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"], mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-const lines = [`${island}, ${waves} waves, seed ${seed}${r.curated ? " (the hand-picked first home night)" : ""}; ${bars} bars a wave, then the victory at ${mmss(r.encoreAt)}`];
-for (const w of r.waves) lines.push(`${mmss(w.start).padStart(5)}  ${(w.wave ? `wave ${w.wave}` : "start").padEnd(7)} ${w.role.padEnd(9)} ${w.family.padEnd(10)} ${(NOTE[(((33 + w.transpose) % 12) + 12) % 12] + " " + w.scale).padEnd(12)} ${w.bpm} bpm  e ${w.energy.toFixed(2)}  ${w.lead} / ${w.bass} / ${w.vocal}  [${w.sections.join(", ")}]`);
+const lines = [`${island}, ${waves} waves, seed ${seed}${r.curated ? " (the hand-picked first home night)" : ""}; ${bars} bars a wave at ${bpm} bpm, then the victory at ${mmss(r.encoreAt)}`];
+for (const w of r.waves) lines.push(`${mmss(w.start).padStart(5)}  ${(w.wave ? `wave ${w.wave}` : "start").padEnd(7)} ${w.role.padEnd(9)} ${w.family.padEnd(10)} ${(NOTE[(((33 + w.transpose) % 12) + 12) % 12] + " " + w.scale).padEnd(12)} e ${w.energy.toFixed(2)}  ${w.lead} / ${w.bass} / ${w.vocal}  [${w.sections.join(", ")}]`);
 for (const l of lines) console.log("     " + l);
 ok(r.nan === 0, "no NaN");
 ok(r.peak < 0.99, `no clipping (peak ${r.peak.toFixed(2)})`);
