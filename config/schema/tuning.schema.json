@@ -23,6 +23,12 @@
           "type": "number",
           "minimum": 0
         },
+        "island": {
+          "type": "string"
+        },
+        "found": {
+          "type": "array"
+        },
         "buffer": {
           "type": "number",
           "minimum": 0
@@ -67,10 +73,44 @@
         "shape",
         "radius",
         "islandAreas",
+        "island",
+        "found",
         "buffer",
         "push",
         "drift",
         "edge",
+        "coast"
+      ],
+      "additionalProperties": false
+    },
+    "islands": {
+      "type": "object",
+      "properties": {
+        "coast": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "detail"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
         "coast"
       ],
       "additionalProperties": false
@@ -2658,6 +2698,10 @@
           "type": "number",
           "minimum": 0
         },
+        "placedThrough": {
+          "type": "number",
+          "minimum": 0
+        },
         "restAbove": {
           "type": "number",
           "minimum": 0
@@ -2819,6 +2863,7 @@
         "spacing",
         "runeRadius",
         "hatHold",
+        "placedThrough",
         "restAbove",
         "hex",
         "runePull",
@@ -3054,11 +3099,7 @@
           "type": "number",
           "minimum": 0
         },
-        "marchMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "marchOnRun": {
+        "marchShare": {
           "type": "number",
           "minimum": 0
         },
@@ -3126,8 +3167,7 @@
         "fightRun",
         "legendRun",
         "reaction",
-        "marchMult",
-        "marchOnRun",
+        "marchShare",
         "fleeMult",
         "soundsystemHealth",
         "soundsystemRadius",
@@ -9420,6 +9460,7 @@
   "required": [
     "mapAreas",
     "map",
+    "islands",
     "beach",
     "areaSize",
     "areaScale",

@@ -11,8 +11,8 @@
 // dazedTime first, a knob); no new creatures grow in an area with a soundsystem. A headless model
 // on the real map, its creatures, growth and wave order, like rules/balance.ts, with the witch's
 // time spent flying, landing and talking. Read by tools/balance/states.mjs and states.test.ts.
-import { attackOf, COMBAT, strengthOf } from "./combat";
-import { spawnCreatures, speedFactor, LEGEND, type CreatureState, type LegendState, type Level } from "./creatures";
+import { attackOf, COMBAT, marchSpeedOf, strengthOf } from "./combat";
+import { spawnCreatures, LEGEND, type CreatureState, type LegendState, type Level } from "./creatures";
 import { countScale, grownAt, growthLevel } from "./growth";
 import { toEvolve } from "./berries";
 import { AREA_TYPES, type ForestMap } from "./map";
@@ -196,12 +196,12 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   const make = (id: number, species: string, cell: string, x: number, z: number, level: Level): Unit => {
     const legend = level === LEGEND, m = strengthOf(species, level), A = attackOf(species, level, COMBAT)?.attack;
     const reach = !A ? 0 : A.delivery === "shot" ? A.range * 0.8 : A.range + (A.lunge ?? 0) - 0.3; // (babies don't attack)
-    return { id, species, cell, x, z, level, m, hp: fullHp(level, m), dps: COMBAT.levels.dps[level] * m, reach, speed: (legend ? t.legendSpeed : t.creatureSpeed * speedFactor(species, level, t)) * C.marchMult, state: "wild", target: null, legend };
+    return { id, species, cell, x, z, level, m, hp: fullHp(level, m), dps: COMBAT.levels.dps[level] * m, reach, speed: marchSpeedOf(species, level, t), state: "wild", target: null, legend };
   };
   const homeKey = cellKey(map.centreCell);
   for (const c of spawnCreatures(map)) {
     const u = make(c.id, c.species, cellKey(c.cell), c.x, c.z, c.level);
-    u.speed = c.speed * C.marchMult; // (its own, as combat.ts marches it)
+    u.speed = marchSpeedOf(c.species, c.level, t); // (as combat.ts marches it)
     if (u.legend) { u.state = c.legendState === "happy" ? "happy" : "wild"; u.mood = "asleep"; if (u.state === "happy") u.hp *= LD; }
     add(u);
   }
