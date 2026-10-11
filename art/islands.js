@@ -34,10 +34,15 @@ export function islandPixels(kind, radii, { n = 30, sigil = islandSigil(kind), c
   return { w: n, h: n, rgba };
 }
 
-/** The coastline as a closed path in a unit box (its middle .5, .5; the radius 1 reaching .48, or the furthest point if it's further), as SVG path data, for the sea
- *  chart: north up, sizes by phase kept. */
-export function islandPath(radii, { steps = radii.length } = {}) {
+/** The coastline as points in a unit box (its middle .5, .5; the radius 1 reaching .48, or the furthest point if it's further):
+ *  [[x, y], ...], north up (y down), sizes by phase kept. The sea chart's outline (islandPath) and its 3D landmass both read it. */
+export function islandPoints(radii, { steps = radii.length } = {}) {
   const pts = [], k0 = .48 / Math.max(1, ...radii); // (the biggest, home past its round radius, still inside the box)
-  for (let k = 0; k < steps; k++) { const a = -Math.PI + (k / steps) * Math.PI * 2, r = k0 * radiusAt(radii, a); pts.push(`${(.5 + r * Math.cos(a)).toFixed(4)},${(.5 + r * Math.sin(a)).toFixed(4)}`); }
-  return `M${pts.join("L")}Z`;
+  for (let k = 0; k < steps; k++) { const a = -Math.PI + (k / steps) * Math.PI * 2, r = k0 * radiusAt(radii, a); pts.push([.5 + r * Math.cos(a), .5 + r * Math.sin(a)]); }
+  return pts;
+}
+
+/** The coastline as a closed path in a unit box (islandPoints), as SVG path data, for the sea chart: north up, sizes by phase kept. */
+export function islandPath(radii, opts = {}) {
+  return `M${islandPoints(radii, opts).map(([x, y]) => `${x.toFixed(4)},${y.toFixed(4)}`).join("L")}Z`;
 }
