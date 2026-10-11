@@ -4,6 +4,8 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked shipped; don't buil
 
 ## Babies
 
+**Shipped (golf, 2026-10-11, Ed's go on the plan):** everything below — single file (gap 1.6 m), scatter (8 m), no drawn leashes, very fast offscreen (past 35 m, 40 m/s), berries only at a placed sigil within 10 m (and the glow), one berry to a youth, and the weight (baby 0.3 treetops / 0.56 ground; strength ignored). See `src/rules/babies.ts`.
+
 - **Single file:** leashed, on the ground, babies line up behind her in single file along where she's been, in stack order. How tight the line is is a knob.
 - **They scatter in combat.**
 - **No drawn leashes** for babies.
