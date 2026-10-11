@@ -1051,6 +1051,15 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyWitches.limboPass` | number | 0 to … |
 | `partyWitches.floorShare` | number | 0 to … |
 | `partyWitches.debugExtra` | number | 0 to … |
+| `partyWitches.gaze.from` | number | 0 to … |
+| `partyWitches.gaze.to` | number | 0 to … |
+| `partyWitches.gaze.gap` | number | 0 to … |
+| `partyWitches.gaze.stagger` | number | 0 to … |
+| `partyWitches.gaze.length` | number | 0 to … |
+| `partyWitches.gaze.threes` | number | 0 to … |
+| `partyWitches.gaze.apart` | number | 0 to … |
+| `partyWitches.gaze.meet` | number | 0 to … |
+| `partyWitches.gaze.turn` | number | 0 to … |
 | `speakerLasers.on` | boolean |  |
 | `speakerLasers.tilt` | number | 0 to … |
 | `speakerLasers.sweep` | number | 0 to … |

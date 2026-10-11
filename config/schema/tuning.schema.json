@@ -4289,6 +4289,59 @@
         "debugExtra": {
           "type": "number",
           "minimum": 0
+        },
+        "gaze": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "number",
+              "minimum": 0
+            },
+            "to": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stagger": {
+              "type": "number",
+              "minimum": 0
+            },
+            "length": {
+              "type": "number",
+              "minimum": 0
+            },
+            "threes": {
+              "type": "number",
+              "minimum": 0
+            },
+            "apart": {
+              "type": "number",
+              "minimum": 0
+            },
+            "meet": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "from",
+            "to",
+            "gap",
+            "stagger",
+            "length",
+            "threes",
+            "apart",
+            "meet",
+            "turn"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4316,7 +4369,8 @@
         "pairGap",
         "limboPass",
         "floorShare",
-        "debugExtra"
+        "debugExtra",
+        "gaze"
       ],
       "additionalProperties": false
     },

@@ -25,7 +25,7 @@ import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
-import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerStateOf, type SpeakerState } from "./speakers";
+import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, speakerStateOf, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
@@ -678,7 +678,9 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell);
   // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
   const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
-  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t);
+  // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11).
+  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear, ring: speakerRadius(t) + t.dancefloor.speakers.footprint }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t,
+    { ruined: g.party.ruined, over: !!g.partyOver });
 }
 
 const neonOf = neon;
