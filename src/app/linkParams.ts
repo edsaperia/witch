@@ -1,6 +1,7 @@
 // The link's switches (?px=, ?tilt=, ?music=, ?hills=, ?shape=, ...): the tuning for this load, made from the tuning file
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
+import { islandOf } from "../rules/rosters";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
@@ -15,7 +16,7 @@ export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined
   for (const k of FORGOTTEN_KEYS) try { storage?.removeItem(k); } catch { /* storage blocked */ }
 }
 
-/** ?island= (Ed, 2026-10-11): a number of areas (1 to 200), "home" (the home island's size, `home`), "off" (0: the radius map);
+/** ?island= (Ed, 2026-10-11): a number of areas (1 to 200), "home" (the home island's size, `home`), "off" (0: the radius map), or a kind (its island: rules/rosters.ts, handled by the caller);
  *  null when it's not given or not understood. */
 export function islandFromLink(v: string | null, home: number): number | null {
   if (v === null) return null;
@@ -158,7 +159,13 @@ export function tuningFromLink(params: URLSearchParams) {
   }
   // The island's size (Ed, 2026-10-11, the journey's first step): ?island=10|20|30|40|50 (any 1 to 200) areas the waves reach,
   // home (the home island's: map.islandAreas, 10 for now) or off (the radius map, about 100 areas, as before islands).
-  { const n = islandFromLink(params.get("island"), tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n }; }
+  // A kind's name plays that kind's island (Ed, 2026-10-11, rules/rosters.ts: ?island=fox); home, home's by roster; a number, that
+  // many areas of random types.
+  {
+    const v = params.get("island");
+    if (v && islandOf(v) && tuning.map) tuning.map = { ...tuning.map, island: v };
+    else { const n = islandFromLink(v, tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n, island: v === "home" ? "home" : "" }; }
+  }
 
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
   // where footpaths come into a clearing (placed with the map, so set before it is made).
