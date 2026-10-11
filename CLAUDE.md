@@ -31,6 +31,14 @@ Samples are allowed (Ed, 2026-10-11; docs/backlog/music.md, docs/music/research.
   - stale credits;
   - the size budget passed (3 MB in all, the first kit 300 KB).
 - The first kit is 19 one-shots from VCSL (CC0), about 83 KB. The dance kicks stay synthesised: no ripped drum machines.
+- **Voices** (`samples/voices/`, about 414 KB): five CC0 recordings from Freesound, each its uploader's own, its licence checked on its page. The file is its public high-quality preview (the original needs a login).
+  - a crowd singing "uh" on F (measured at MIDI 53.2);
+  - four whispering voices;
+  - soft female vocal chops (their key not yet measured, so unused);
+  - throat singing in a cave (about 42.8);
+  - a low kargyraa chant (about 37.1).
+
+  Uploads that are a commercial product's output (a choir plugin's demo, a Pocket Operator kit) are left out, CC0 or not.
 
 **Voices**: `tools/voice/sing.mjs` sings a note list offline with Pink Trombone, vendored in `tools/voice/pink-trombone/` (MIT; changes marked "Witch:"):
 - vowels gliding, the voice firming up through each note, vibrato creeping in;

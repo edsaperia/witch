@@ -23,3 +23,23 @@ Written by tools/samples/credits.mjs from samples/manifest.json: never edit by h
 - `vcsl/shaker-up.ogg`: Small shaker, up. Source: https://github.com/sgossner/VCSL/blob/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/Idiophones/Struck%20Idiophones/Shaker%2C%20Small/Mid_ShakerDouble_Up_rr1.wav
 - `vcsl/snare.ogg`: Snare drum, snares on. Source: https://github.com/sgossner/VCSL/blob/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/Membranophones/Struck%20Membranophones/Snare%20Drum%2C%20Modern%201/Snare2_HitSN_v5_rr1_Mid.wav
 - `vcsl/tambourine.ogg`: Tambourine, hit. Source: https://github.com/sgossner/VCSL/blob/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/Idiophones/Struck%20Idiophones/Tambourine%201/Tamb1_Hit_v2_rr1_Mid.wav
+
+## ShangusBurger (CC0-1.0)
+
+- `voices/crowd-uh-f.ogg`: A medium-sized crowd singing "uh" on a concert F (GameSoundCon 2024 walla, Shane Vincent). Source: https://freesound.org/people/ShangusBurger/sounds/764344/
+
+## chenny0607 (CC0-1.0)
+
+- `voices/female-chops.ogg`: Soft female vocal chops (the uploader's own singing). Source: https://freesound.org/people/chenny0607/sounds/437584/
+
+## Hjaarlmarch (CC0-1.0)
+
+- `voices/kargyraa.ogg`: Kargyraa throat chant, low register (the uploader's own). Source: https://freesound.org/people/Hjaarlmarch/sounds/732443/
+
+## ItsThatRoboGuy (CC0-1.0)
+
+- `voices/throat-cave.ogg`: Throat singing in a cave (the uploader's own). Source: https://freesound.org/people/ItsThatRoboGuy/sounds/816640/
+
+## geoneo0 (CC0-1.0)
+
+- `voices/whispers.ogg`: Four voices whispering (the uploader's own, layered). Source: https://freesound.org/people/geoneo0/sounds/193812/
