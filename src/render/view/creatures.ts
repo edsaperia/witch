@@ -12,6 +12,7 @@ import type { RigGear } from "../rig/rigBuild";
 import type { ShadowInstance } from "../shadows";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { beatTime } from "../../rules/beat";
+import { congaBody, congaPose, newCongaPose } from "../conga";
 import { bossBreath, legendNeon } from "../leash";
 import { dormant } from "../../rules/game";
 import { hash2 } from "../../rules/random";
@@ -30,6 +31,7 @@ import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
 import { legendSleep, newSleepTrack, type SleepPose } from "../legendSleep";
 const SQ = { hop: 0, x: 0, sx: 1, sy: 1, turned: false }; // (a baked frame's idle quirk, filled each creature: no allocation)
+const CP = newCongaPose(); // (a conga dancer's step, filled each creature: no allocation)
 
 const FEEL = newFeel(); // (filled per creature, never kept)
 const SLEEP: SleepPose = { sleep: 0, droop: 0 }; // (likewise)
@@ -150,6 +152,15 @@ export function drawCreatures(v: View, time = 0): void {
       else if (style === "bob") { dance = Math.abs(Math.sin(ph * 2)) * 0.12; sway = Math.sin(ph * 0.25) * 0.06; }
       if (style !== "hop") tap = (Math.floor(b) % 2 ? 1 : -1) * (k < 0.4 ? Math.sin((k / 0.4) * Math.PI) : 0); // left foot, right foot
     }
+    // The win's conga (rules/win.ts: c.finale its place in the line, going anticlockwise round the dancefloor): its body's step on the
+    // beat instead of its dance (render/conga.ts), leaning forward along the line onto the back of the one ahead, swaying across it.
+    let cx = 0, cz = 0, csx = 1, csy = 1;
+    if (c.finale !== undefined && c.finale >= 0 && g.win?.phase === "won" && lying <= 0) {
+      const P = congaPose(congaBody(c.species), bt / beat, c.finale, CP), hM = (frame.h - (frame.pad ?? 0)) * v.mpp, wM = frame.w * v.mpp;
+      const d0 = g.map.dancefloor, a = Math.atan2(c.z - d0.z, c.x - d0.x), fx = -Math.sin(a), fz = Math.cos(a); // (along the line, and across it: out from the floor)
+      dance = P.y * hM; sway = 0; tap = P.tap; csx = P.sx; csy = P.sy;
+      cx = fx * P.lean * wM + Math.cos(a) * P.sway * hM; cz = fz * P.lean * wM + Math.sin(a) * P.sway * hM;
+    }
     // Evolving: glowing white, pulsing on the beat, brighter toward the bar line; then the flash
     // as it becomes its next level, and a pop from 1.3 times its size back to its own.
     const ev = g.berries.evolving.get(c.id), done = v.evolvedAt.get(c.id);
@@ -201,19 +212,19 @@ export function drawCreatures(v: View, time = 0): void {
     const watching = c.watchUntil !== undefined && g.clock.time < c.watchUntil; // (a wild area watching her come down, rules/wildWatch.ts: still, no idle quirk, turned to her)
     const quirkK = standing && !watching ? quirkAt(c.id, ch, time) : -1;
     if (standing && (look === "leashed" || look === "happy") && !c.boss) hop += bounceAt(c.id, time);
-    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy * breathY, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined }))) // the rig draws it, if it can
+    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx * csx, sy: feel.sy * breathY * csy, dx: cx, dz: cz, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined }))) // the rig draws it, if it can
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
       spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
       const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip !== SQ.turned, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1) + SQ.x * fh;
       const near = below * toward - (form || napped ? U.z * padM : 0), nx = form || napped ? -U.x * padM : 0;
-      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k + nx, y: dance + hop + sunk + SQ.hop * fh, z: c.z + R.z * k + near, frame, flip, fresh, glow, scale, sx: feel.sx * SQ.sx, sy: feel.sy * breathY * SQ.sy });
+      l.push({ x: c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k + nx, y: dance + hop + sunk + SQ.hop * fh, z: c.z + cz + R.z * k + near, frame, flip, fresh, glow, scale, sx: feel.sx * SQ.sx * csx, sy: feel.sy * breathY * SQ.sy * csy });
     }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     v.leashView.halfW.set(c.id, frame.w * v.mpp * scale * 0.5);
     // Its shadow under it as drawn (its sway and a nightmare's tossing too), as big as it's drawn (a legend's size, an evolving
     // pop); off the ground (a hop, a leap, a tumble) still on the ground under it, smaller the higher it goes.
     const air = Math.max(0, dance + hop), sk = scale / (1 + air * 0.35);
-    creatureShadows.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), z: c.z, w: frame.w * v.mpp * 0.7 * sk, d: frame.w * v.mpp * 0.25 * sk });
+    creatureShadows.push({ x: c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id), z: c.z + cz, w: frame.w * v.mpp * 0.7 * sk, d: frame.w * v.mpp * 0.25 * sk });
     n++;
   }
   v.rig?.end();
