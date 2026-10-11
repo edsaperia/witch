@@ -18,7 +18,7 @@
 // the art's boot sequence, then the first pattern on the next bar line.
 // No drawing here: the view makes the tiles a texture and the floor's light from `average`.
 import { DISCO_GRID, DISCO_MASK, DISCO_RADIUS, DISCO_TRANSITIONS, discoPatterns, discoTransition } from "../../art/dancefloor.js";
-import { NEON } from "../../art/sigils.js";
+import { NEON, islandSigil, sigilArrival, sigilColour } from "../../art/sigils.js";
 import { hash2, vnoise } from "./random";
 import type { Tuning } from "./tuning";
 
@@ -124,6 +124,9 @@ export interface FloorInputs {
   dancers: { x: number; y: number; rgb: Rgb }[];
   /** The moon's phase (rules/moon.ts: 0 new, 0.5 full): before the first wave the floor shows only the moon (Ed, 2026-10-06). */
   moon?: { phase: number };
+  /** The island's sigil (art/sigils.js islandSigil: home's the World Tree) and how far it's drawn on (0 to 1, the boot's share,
+   *  rules/bootRing.ts bootShare): through the boot the floor shows it in place of the moon (Ed, 2026-10-11). */
+  island?: { sigil: string; drawn: number };
 }
 
 /** Advance the sequence and the witch's marks to `time` (call every frame). */
@@ -174,7 +177,11 @@ export interface FloorTiles {
 export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: Uint8Array): FloorTiles {
   const D = t.dancefloor.tiles, rgbi = out ?? new Uint8Array(GRID * GRID * 4), level = inp.level, time = inp.time, beat = beatOf(time, t, inp);
   rgbi.fill(0);
-  if (f.on === null) { if (inp.moon) moonTiles(rgbi, inp.moon.phase, time, t); return summary(rgbi); }
+  if (f.on === null) {
+    if (inp.island && inp.island.drawn > 0 && t.dancefloor.island.on) islandTiles(rgbi, inp.island.sigil, inp.island.drawn, beat, t);
+    else if (inp.moon) moonTiles(rgbi, inp.moon.phase, time, t);
+    return summary(rgbi);
+  }
   const set = (n: number, c: Rgb, i: number, add = false) => {
     if (!MASK[n] || i <= 0) return;
     const k = n * 4, cur = rgbi[k + 3];
@@ -287,5 +294,32 @@ export function moonTiles(rgbi: Uint8Array, phase: number, time: number, t: Tuni
       const h = hash2(n, 0, 71), on = hash2(n, Math.floor(time / (2.5 + 3 * h) + h * 9), 73) < F.stars;
       if (on) set(n, h > 0.7 ? P[2] : P[0], 1);
     }
+  }
+}
+
+/** Which island a map is (journey.md: every island its own legend kind, its own sigil): every map is home for now. The hook for
+ *  when islands come: give the map its island and its sigil in art/sigils.js ISLAND_SIGILS. */
+export const islandOf = (map: object): string => (map as { island?: string }).island ?? "home";
+/** The sigil of a map's island (home's: the World Tree). */
+export const islandSigilOf = (map: object): string => islandSigil(islandOf(map));
+
+const arrivals = new Map<string, Float64Array>(), ISLAND_STROKE = 0.045; // (a thinner line than the sigil's own, so its branches stay apart on the 30 tiles)
+/** The floor through the boot (Ed, 2026-10-11: "During the boot, the dancefloor should show the sigil of the island"): the island's
+ *  sigil written on stroke by stroke as the boot's pulse goes round the ring (`drawn`, 0 to 1), roots, trunk, crown and then its
+ *  ring, its pen tip white; the strokes still to come faint in the moon's dusky violet, as if carved; written, the sap rises up
+ *  it from the roots every `island.sapBars` bars until the first wave switches the floor on. */
+export function islandTiles(rgbi: Uint8Array, sigil: string, drawn: number, beat: number, t: Tuning): void {
+  let at = arrivals.get(sigil);
+  if (!at) arrivals.set(sigil, at = sigilArrival(sigil, GRID, { stroke: ISLAND_STROKE }) as Float64Array);
+  const I = t.dancefloor.island, ghost = t.moon.floor.palette[0], c = sigilColour(sigil) as Rgb, lit = c.map(v => Math.round(v + (255 - v) * 0.3)), tip = c.map(v => Math.round(v + (255 - v) * 0.8));
+  const cycle = Math.max(1, I.sapBars) * 4, k = (beat % cycle) / 4, sap = drawn >= 1 && k < 1 ? GRID + 2 - k * (GRID + 4) : -99; // (the sap's row, rising over a bar)
+  const set = (n: number, col: number[], i: number) => { rgbi[n * 4] = col[0]; rgbi[n * 4 + 1] = col[1]; rgbi[n * 4 + 2] = col[2]; rgbi[n * 4 + 3] = i; };
+  for (let n = 0; n < GRID * GRID; n++) {
+    const a = at[n];
+    if (!MASK[n] || a === Infinity) continue;
+    if (a > drawn) { if ((n % GRID + Math.floor(n / GRID)) % 2 === 0) set(n, ghost, 1); continue; } // to come: faint, an even dither
+    if (drawn < 1 && drawn - a < 0.04) set(n, tip, 3); // the pen
+    else if (Math.abs(Math.floor(n / GRID) + 0.5 - sap) < 1.5) set(n, tip, 3);
+    else set(n, lit, 2);
   }
 }
