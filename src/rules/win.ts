@@ -32,7 +32,7 @@ export interface WinState {
   lap: { key: string; x: number; z: number; at: number }[];
   /** Fired so far (the lap's stones passed). */
   fired: number;
-  /** The island's sigil (its legend kind's; home's own for now: "worldTree", art4's islandSigil hook). */
+  /** The island's sigil (islandSigil: a kind's island its kind's, home the World Tree's). */
   sigil: string;
   /** The night's dealt legends won (woken, their islands found: the card's, and the sea chart's), and those still enraged at the
    *  end (calmed, back to sleep; their islands not found), by kind (species). */
