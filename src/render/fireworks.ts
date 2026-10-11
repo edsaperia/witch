@@ -190,12 +190,13 @@ export class Fireworks {
 
   /** Each frame: start a show for each celebration this frame (the rules' waveCelebrate), a burst for each area cleared early
    *  (areaCleared, in its neon: `neonOf` its area's key), and fly them. */
-  update(events: readonly { kind: string }[], time: number, t: Tuning, neonOf?: (key: string) => readonly number[]): void {
+  update(events: readonly { kind: string }[], time: number, t: Tuning, neonOf?: (key: string) => readonly number[], /** a celebration that's the win's (its victory lap, the win itself): the finale's palette */ winShow?: (at: number) => boolean): void {
     for (const e of events) {
       if (e.kind === "areaCleared") { const c = e as unknown as { key: string; x: number; z: number; at: number }; if (this.burstFor.get(c.key) === c.at) continue; this.burstFor.set(c.key, c.at); this.cleared(c.x, c.z, c.at, neonOf?.(c.key) ?? [50, 235, 255]); continue; }
       if (e.kind !== "waveCelebrate") continue;
       const c = e as unknown as { key: string; x: number; z: number; at: number };
       if (!this.celebrated.has(c.key)) this.celebrated.set(c.key, c.at);
+      if (winShow?.(c.at)) { this.finale(c.x, c.z, c.at, t); continue; }
       const shells = fireworkShells(c.x, c.z, c.at, t);
       for (const s of shells) this.shell(s, c.x, c.z);
       this.liveTill = Math.max(this.liveTill, showEnds(shells));
