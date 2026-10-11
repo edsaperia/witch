@@ -282,6 +282,7 @@ function stepGazer(s: PartyWitches, w: PartyWitch, players: PlayerView[], dt: nu
 /** Players keeping still by a stargazer: the nearest gets up and they take their turns (MEET_SEQUENCE), as on the beach. */
 function meetGazers(s: PartyWitches, players: PlayerView[], time: number, dt: number, t: Tuning): void {
   const P = t.partyWitches, G = P.gaze!, gz = s.list.filter(w => w.state === "gazing" && w.bed);
+  if (!gz.length && !s.gaze) return; // (nobody stargazing yet: nothing kept)
   const gaze = (s.gaze ??= []);
   players.forEach((p, i) => {
     const I = (gaze[i] ??= { still: 0, activity: null, pose: null, partner: null, until: 0, facing: 1 });

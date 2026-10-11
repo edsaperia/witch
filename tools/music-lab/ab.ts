@@ -16,6 +16,15 @@ const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
 export interface AbOptions {
   wave: number; seed: number; bars: number;
   drone?: boolean; chant?: boolean; frames?: boolean; tape?: boolean; kit?: boolean; vocalise?: boolean; witch?: boolean;
+  /** Recorded voices from Freesound (samples/voices, CC0): a crowd's "uh" retuned to the chords as a choir, whispers in the
+   *  breakdown, and throat singing as a drone voice on the tonic (the kargyraa, an octave lower, for the witch-house take). */
+  recorded?: boolean;
+  /** false: the game's music left out (a stem: only the ingredients asked for). */
+  music?: boolean;
+  /** The vocalise from a recording instead of Pink Trombone: a woman's steady sung note (samples/voices/female-note, G4,
+   *  measured at MIDI 67.2) retuned to each of the sung part's notes, like a sampler (Ed, 2026-10-11: "try a recorded voice
+   *  as an alternative vocalise"). */
+  sampledVocalise?: boolean;
   /** Base64 WAVs sung by Node (tools/voice/sing.mjs): the chant and the vocalise, from time 0. */
   voices?: { chant?: string; vocalise?: string };
   /** Base64 Ogg samples by id (samples/vcsl). */
@@ -58,6 +67,12 @@ const KIT: Record<string, { ids: string[]; gain: number; soft?: string }> = {
 const KICKS = ["kick", "softkick", "hardkick", "boom"];
 /** The frame drums' ritual pattern over the beat (a bar: L large open, M large muted, H small open, d doum, t tek). */
 const FRAMES = ["L..t..H.M.t.H..t", "L..t..H.M.t.d.tt"];
+/** The frame drums' level: 3.2 times their first renders' (Ed: "I can't hear the frame drums"; their stem measured -25 LUFS
+ *  against the music's -13.5, buried under the kick). */
+const FRAMES_UP = 3.2;
+/** The vocalise's level and its presence lift (Ed: "I can't hear ... the vocalise"; it was in, at about the old soprano's
+ *  level, so it didn't stand out): twice the first renders', a 3 kHz lift. */
+const VOCALISE_GAIN = 1.1, PRESENCE_DB = 6;
 const FRAME_IDS: Record<string, string> = { L: "frame-low", M: "frame-low-muted", H: "frame-high", d: "darbuka-doum", t: "darbuka-tek" };
 
 async function abRender(o: AbOptions) {
@@ -92,7 +107,8 @@ async function abRender(o: AbOptions) {
   const play = (e as unknown as { play: (ev: NoteEvent, t: number, dur: number, sps: number, chord?: number[]) => void }).play.bind(e);
   let rr = 0;
   (e as unknown as { play: typeof play }).play = (ev, t, dur, sps, chord) => {
-    if (o.vocalise && ev.part === style.form!.sung.part) return; // (the vocalise sings these)
+    if (o.music === false) return; // (a stem)
+    if ((o.vocalise || o.sampledVocalise) && ev.part === style.form!.sung.part) return; // (the vocalise sings these)
     if (o.witch && drums.has(ev.part)) return; // (the half-time beat below instead)
     const k = o.kit ? KIT[ev.part] : undefined;
     if (k) { const id = k.soft && ev.vel < 0.6 ? k.soft : k.ids[rr++ % k.ids.length]; hit(id, t, k.gain * ev.vel, 1, ev.part === "hat" ? 0.15 : ev.part === "shaker" ? -0.2 : 0); return; }
@@ -115,7 +131,7 @@ async function abRender(o: AbOptions) {
   if (o.frames) for (let bar = 0; bar < o.bars; bar++) {
     if (/breakdown|ether|whisper/.test(score.sections[bar])) continue;
     const pat = FRAMES[bar % FRAMES.length];
-    for (let s = 0; s < 16; s++) { const ch = pat[s]; if (ch !== ".") hit(FRAME_IDS[ch], (bar * 16 + s) * spb + (s % 2 ? style.swing * spb : 0), ch === "L" ? 0.55 : ch === "t" ? 0.28 : 0.4, 1, ch === "t" ? 0.3 : ch === "H" ? -0.25 : 0); }
+    for (let s = 0; s < 16; s++) { const ch = pat[s]; if (ch !== ".") hit(FRAME_IDS[ch], (bar * 16 + s) * spb + (s % 2 ? style.swing * spb : 0), FRAMES_UP * (ch === "L" ? 0.55 : ch === "t" ? 0.28 : 0.4), 1, ch === "t" ? 0.3 : ch === "H" ? -0.25 : 0); }
   }
   // the witch-house beat: half time (the kick on 1, the snare and clap on 3), trap hats in sixteenths with rolls, an 808-ish sub
   if (o.witch) for (let bar = 0; bar < o.bars; bar++) {
@@ -125,8 +141,44 @@ async function abRender(o: AbOptions) {
     hit("snare", t0 + 8 * spb, 0.55); hit("clap-1", t0 + 8 * spb, 0.45);
     for (let s = 0; s < 16; s++) { if (bar % 4 === 3 && s >= 12) { for (let k = 0; k < 3; k++) hit("hat-closed-soft", t0 + (s + k / 3) * spb, 0.25); } else hit(s % 4 === 2 ? "hat-closed" : "hat-closed-soft", t0 + s * spb, 0.3); }
   }
+  // recorded voices (Freesound, CC0): each a stretch of its file, retuned by playback rate (their pitches measured: the crowd
+  // sings F3 a little sharp, 53.2; the cave's throat singing holds about 42.8; the kargyraa about 37.1), faded in and out
+  const seg = (id: string, at: number, offset: number, dur: number, rate: number, gain: number, pan = 0, fade = 0.3) => {
+    const b = samples[id]; if (!b) return;
+    const src = oc.createBufferSource(), g = oc.createGain(), p = oc.createStereoPanner();
+    src.buffer = b; src.playbackRate.value = rate; p.pan.value = pan;
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(gain, at + fade); g.gain.setValueAtTime(gain, at + dur - fade); g.gain.linearRampToValueAtTime(0, at + dur);
+    src.connect(g).connect(p).connect(bus); src.start(at, offset, dur * rate + 0.05);
+  };
+  if (o.recorded) {
+    const near = (m: number, to: number) => { let x = m; while (x < to - 6) x += 12; while (x > to + 6) x -= 12; return x; };
+    const bar = score.barSeconds;
+    // the choir: the crowd's "uh" on each two bars' chord root and its fifth
+    for (let b = 0; b < o.bars; b += 2) {
+      const quiet = /drop|Drop/.test(score.sections[b]) ? 0.5 : 1, root = near(score.roots[b], 53.2);
+      for (const [m, g, pan] of [[root, 0.32, -0.3], [root + 7, 0.2, 0.3]] as [number, number, number][]) seg("crowd-uh-f", b * bar, 1.5, Math.min(2 * bar, 4.3 / (2 ** ((m - 53.2) / 12))), 2 ** ((m - 53.2) / 12), g * quiet, pan, 0.4);
+    }
+    // whispers over the breakdown
+    for (let b = 0; b < o.bars; b++) if (/breakdown|ether|whisper/.test(score.sections[b]) && (b === 0 || !/breakdown|ether|whisper/.test(score.sections[b - 1]))) seg("whispers", b * bar, 0, Math.min(9, (o.bars - b) * bar), 1, 0.3, 0.2, 0.8);
+    // a throat-sung drone on the tonic (the cave's an octave above the root; the kargyraa at the root, for the witch-house take)
+    const [id, pitch, len] = o.witch ? ["kargyraa", 37.1, 10] : ["throat-cave", 42.8, 12], to = o.witch ? score.root : score.root + 12, rate = 2 ** ((to - pitch) / 12);
+    for (let t = 0; t < o.bars * bar; t += (len / rate) - 2) seg(id, t, 0.6, Math.min(len / rate - 0.6, o.bars * bar - t), rate, 0.22, 0, 1);
+  }
   // the voices Node sang: the chant (pitched down for the witch-house take) and the vocalise
-  for (const [k, gain] of [["chant", 0.5], ["vocalise", 0.55]] as const) {
+  // the sampled vocalise: the woman's note retuned to each sung note, a short attack and release, the same presence lift
+  if (o.sampledVocalise) {
+    const pres = oc.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 3000; pres.Q.value = 0.8; pres.gain.value = PRESENCE_DB;
+    pres.connect(bus);
+    for (const n of score.sung) {
+      const rate = 2 ** ((n.midi - 67.2) / 12), len = Math.min(n.dur * 0.97, 1.75 / rate);
+      const b = samples["female-note"]; if (!b || len < 0.05) continue;
+      const src = oc.createBufferSource(), g = oc.createGain();
+      src.buffer = b; src.playbackRate.value = rate;
+      g.gain.setValueAtTime(0, n.at); g.gain.linearRampToValueAtTime(VOCALISE_GAIN, n.at + 0.03); g.gain.setValueAtTime(VOCALISE_GAIN, n.at + Math.max(0.03, len - 0.08)); g.gain.linearRampToValueAtTime(0, n.at + len);
+      src.connect(g).connect(pres); src.start(n.at, 0, len * rate + 0.02);
+    }
+  }
+  for (const [k, gain] of [["chant", 0.5], ["vocalise", VOCALISE_GAIN]] as const) {
     const data = o.voices?.[k];
     if (!data || (k === "chant" && !o.chant) || (k === "vocalise" && !o.vocalise)) continue;
     const b = await oc.decodeAudioData(b64(data)), s = oc.createBufferSource(), g = oc.createGain(), send = oc.createConvolver(), sg = oc.createGain();
@@ -135,7 +187,8 @@ async function abRender(o: AbOptions) {
     const ir = oc.createBuffer(2, RATE * 2, RATE); for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] = (rq() * 2 - 1) * Math.exp(-i / (RATE * 0.45)); }
     send.buffer = ir; sg.gain.value = 0.25;
     s.buffer = b; if (o.witch && k === "chant") s.playbackRate.value = 0.75; g.gain.value = gain;
-    s.connect(g).connect(bus); g.connect(sg).connect(send).connect(bus); s.start(0);
+    const pres = oc.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 3000; pres.Q.value = 0.8; pres.gain.value = k === "vocalise" ? PRESENCE_DB : 0;
+    s.connect(pres).connect(g).connect(bus); g.connect(sg).connect(send).connect(bus); s.start(0);
   }
   const buf = await oc.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1);
   let peak = 0, nan = 0; for (const d of [L, R]) for (const x of d) { if (!Number.isFinite(x)) nan++; else peak = Math.max(peak, Math.abs(x)); }

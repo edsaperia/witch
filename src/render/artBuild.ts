@@ -363,9 +363,13 @@ function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: Re
   }
   // The party relics' bottles (art/partyRelics.js; Ed, 2026-10-09: "Draw at today's size and show me!"), each half-buried in its
   // mound, under "party:<kind>": drawn where a quest relic lies (render/view/scenery.ts).
+  // Each in its own glass ("party:<kind>") and every other ("party:<kind>~<glass>": Ed, 2026-10-11, recoloured for more kinds).
   for (const id of Art.PARTY_RELIC_IDS as string[]) {
     const r = Art.partyRelicSprite(id, st) as { sp: unknown; origin: { x: number; y: number } };
-    relics.push({ id: `party:${id}`, family: "party", decal: false, frame: sprites.push(Art.bake(r.sp, Art.partyRelicColours(id, st), st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+    for (const glass of ["", ...(Art.PARTY_RELIC_GLASSES as string[])]) {
+      if (glass && glass === (Art.PARTY_RELIC_BY_ID as Record<string, { glass: string }>)[id].glass) continue;
+      relics.push({ id: `party:${id}${glass ? "~" + glass : ""}`, family: "party", decal: false, frame: sprites.push(Art.bake(r.sp, Art.partyRelicColours(id, st, glass || undefined), st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+    }
   }
   return { sprites, relics, layouts: Art.relicLayouts(st) as RelicLayouts };
 }

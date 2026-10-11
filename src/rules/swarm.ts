@@ -26,6 +26,9 @@ export interface SwarmTuning {
   start: number;
   /** Its size at the last (the end of the game): what a medium species fields there, the swarms' average. */
   endAverage: number;
+  /** The master curve's length in waves (Ed, 2026-10-10, 2026-10-11): an area's p is (its wave − 1)/(waves − 1), so this wave
+   *  brings the final swarm, whatever the map's size (left out: the route's own length, as before). */
+  waves?: number;
   /** The size curve's power k: n(p) = start + (endAverage − start)·p^k. */
   curve: number;
   /** The reference swarm's young share at the first runestone and at the last (the rest adults). */

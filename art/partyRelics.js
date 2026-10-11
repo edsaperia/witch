@@ -98,8 +98,12 @@ export const PARTY_RELIC_IDS = PARTY_RELICS.map(r => r.id);
 // surface MAGIC2 and the motes GLOW, lighter), over a shared earth (dug soil, moss, grass), a cork (WOOD) and gold wax (ACCENT).
 const PR_GLASS = { amethyst: [150, 80, 210], ruby: [210, 40, 80], emerald: [40, 180, 100], sapphire: [50, 100, 230], amber: [230, 150, 40], rose: [240, 120, 170] };
 const prMix = (c, t, k) => c.map((v, i) => Math.round(v + (t[i] - v) * k));
-export function partyRelicColours(id, st = {}) {
-  const leaf = st.leafHue ?? .3, trunk = st.trunkHue ?? .07, R = PARTY_RELIC_BY_ID[id], g = PR_GLASS[R?.glass] || PR_GLASS.amethyst, l = R?.liquid || [255, 220, 140];
+// A bottle recoloured (Ed, 2026-10-11: "We can also recolour today's bottles for more variants"): `glass` another bottle's glass,
+// its liquid that bottle's own (amethyst glass and violet light, ruby and rose-pink...); left out, its own.
+const prLiquidOf = glass => PARTY_RELICS.find(r => r.glass === glass)?.liquid;
+export const PARTY_RELIC_GLASSES = Object.keys(PR_GLASS);
+export function partyRelicColours(id, st = {}, glass) {
+  const leaf = st.leafHue ?? .3, trunk = st.trunkHue ?? .07, R = PARTY_RELIC_BY_ID[id], gl = glass && PR_GLASS[glass] ? glass : R?.glass, g = PR_GLASS[gl] || PR_GLASS.amethyst, l = (gl !== R?.glass && prLiquidOf(gl)) || R?.liquid || [255, 220, 140];
   return {
     [M.TRUNK]: hsv2rgb(trunk, .5, .3), [M.BARKD]: hsv2rgb(trunk + .02, .5, .17), [M.STONE]: [96, 94, 100], [M.MOSS]: hsv2rgb(.26, .45, .42),
     [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .6), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .28), [M.NOSE]: [16, 12, 20], [M.LINE]: [24, 22, 30],
@@ -111,7 +115,7 @@ export function partyRelicColours(id, st = {}) {
 // The light a relic gives the ground round it (for the lighting pass, like the magic stones'): its liquid's colour, how far it
 // reaches and how high it sits (metres), and a slow pulse (seconds a breath).
 // Its light on the ground: 3 m round, from 1 m up in the glass (Ed, 2026-10-11: scaled down with the bottle, a third of its size; it was 10, from 2.5 m).
-export const partyRelicLight = id => ({ rgb: PARTY_RELIC_BY_ID[id].liquid, radius: 3, height: 1, pulse: 3.2 });
+export const partyRelicLight = (id, glass) => ({ rgb: (glass && glass !== PARTY_RELIC_BY_ID[id].glass && prLiquidOf(glass)) || PARTY_RELIC_BY_ID[id].liquid, radius: 3, height: 1, pulse: 3.2 });
 export const PARTY_RELIC_FRAMES = 3; // the motes' frames, at about 4 fps
 
 // One relic, drawn: { sp, origin (its middle on the ground, in px), glint (where it catches the light: its highest highlight), light,

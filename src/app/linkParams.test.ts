@@ -2,7 +2,7 @@
 // debug overlay gave every PR build 196 areas, 1,909 creatures and 98 legends, and threw off each playtest's balance).
 import { afterEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { FORGOTTEN_KEYS, tuningFromLink, worldFromLink } from "./linkParams";
+import { FORGOTTEN_KEYS, islandFromLink, tuningFromLink, worldFromLink } from "./linkParams";
 import { PULSE_CHOICES, waveLabel } from "./wavePick";
 
 /** A browser's localStorage, as Ed's was: the world and the fight remembered from an earlier load. */
@@ -15,6 +15,19 @@ const before = g.localStorage;
 afterEach(() => { g.localStorage = before; });
 
 describe("the link's world (src/app/linkParams.ts)", () => {
+  it("takes the island's size from ?island= (Ed, 2026-10-11): areas, home, off; ?mapAreas= the radius map", () => {
+    g.localStorage = fakeStorage({}).store;
+    expect(islandFromLink(null, 10)).toBeNull();
+    expect(islandFromLink("20", 10)).toBe(20);
+    expect(islandFromLink("home", 10)).toBe(10);
+    expect(islandFromLink("off", 10)).toBe(0);
+    expect(islandFromLink("999", 10)).toBe(200);
+    expect(islandFromLink("fish", 10)).toBeNull();
+    expect(tuningFromLink(new URLSearchParams("island=30")).tuning.map?.islandAreas).toBe(30);
+    expect(tuningFromLink(new URLSearchParams("island=off")).tuning.map?.islandAreas).toBe(0);
+    expect(tuningFromLink(new URLSearchParams("mapAreas=14")).tuning.map?.islandAreas).toBe(0); // (the radius map's size: no island)
+  });
+
   it("ignores and deletes a remembered world and fight, and writes none back", () => {
     const f = fakeStorage({ "witch.world": JSON.stringify({ areaSize: 300, treetopSpeed: 200, mapAreas: 14 }), "witch.fight": JSON.stringify({ scale: 2, speed: 2, momentum: 2 }), "witch.wave": "30", "witch.volume": "0.4" });
     g.localStorage = f.store;

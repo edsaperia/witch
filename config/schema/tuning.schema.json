@@ -19,6 +19,10 @@
           "type": "number",
           "minimum": 0
         },
+        "islandAreas": {
+          "type": "number",
+          "minimum": 0
+        },
         "buffer": {
           "type": "number",
           "minimum": 0
@@ -62,6 +66,7 @@
       "required": [
         "shape",
         "radius",
+        "islandAreas",
         "buffer",
         "push",
         "drift",
@@ -3521,6 +3526,10 @@
               "type": "number",
               "minimum": 0
             },
+            "waves": {
+              "type": "number",
+              "minimum": 0
+            },
             "curve": {
               "type": "number",
               "minimum": 0
@@ -3569,6 +3578,7 @@
           "required": [
             "start",
             "endAverage",
+            "waves",
             "curve",
             "youngShare",
             "reference",

@@ -12,7 +12,7 @@
 //   node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300|4m/s] [--skills 10,30,50,70,100] [--cap 60]
 //     [--growth 30,50,70] [--starts 0,3,6,9,12,15,20] [--waves 30] [--fight 30]
 //     [--attrition 0.5] [--director base,perWave,power] [--by-wave] [--happy 0.1,0.2,...] [--expected 50] [--alphas 0,0.3,0.6]
-//     [--spread lo,hi] [--areas 20] [--area-scale 4] [--start babies,young,adults] [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 6000] [--quick] [--json out.json]
+//     [--island 10|20|...|off] [--spread lo,hi] [--areas 20] [--area-scale 4] [--start babies,young,adults] [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 6000] [--quick] [--json out.json]
 // --weights (the grown creatures' baby, young, adult shares), --per-wave (how many a wave), --health
 // and --home (soundsystems' and home's health, the whole ring's) try numbers without editing the tuning file;
 // --quick leaves out the catch-up check; --by-wave sets
@@ -31,7 +31,7 @@ const pace = g => (/m\/s$/.test(g) ? { pulse: parseFloat(g), interval: 60 } : { 
 const SEEDS = +arg("seeds", 12), GAPS = String(arg("gaps", "60,300")).split(","), GROWTH = list(arg("growth", "30,50,70")), SKILLS = list(arg("skills", "10,30,50,70,100"));
 const WAVES = +arg("waves", 30), CAP = +arg("cap", 60), IDLE_CAP = +arg("idle-cap", 80), FIGHT = +arg("fight", 30), STARTS = list(arg("starts", "0,3,6,9,12,15,20"));
 const ATTRITION = +arg("attrition", 0.5), [DBASE, DPER, DPOW = 1] = list(arg("director", "0,4,1.5")), EXPECTED = +arg("expected", 50), ALPHAS = list(arg("alphas", "0,0.3,0.6"));
-const SPREAD = arg("spread", null), AREAS = arg("areas", null), AREA_SCALE = arg("area-scale", null), START = arg("start", null), OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
+const ISLAND = arg("island", null), SPREAD = arg("spread", null), AREAS = arg("areas", null), AREA_SCALE = arg("area-scale", null), START = arg("start", null), OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
 
 const { load, close } = await openRules();
 const { generateMap } = await load("/src/rules/map.ts");
@@ -50,7 +50,7 @@ if (SPREAD) {
 }
 const G0 = TUNING.population.growth, growth = { ...G0, ...(WEIGHTS ? { weights: list(WEIGHTS) } : {}), ...(PER_WAVE ? { perWave: +PER_WAVE } : {}) };
 const start = START ? (([babies, young, adults]) => ({ babies, young, adults }))(list(START)) : TUNING.population.start;
-const tuning = { ...TUNING, ...(AREAS ? { mapAreas: +AREAS, map: { ...TUNING.map, radius: +AREAS / Math.sqrt(Math.PI) } } : {}), // (the circular map, #281: N areas across sizes its radius, N / √π areas)
+const tuning = { ...TUNING, ...(AREAS ? { mapAreas: +AREAS, map: { ...TUNING.map, radius: +AREAS / Math.sqrt(Math.PI), islandAreas: 0 } } : {}), ...(ISLAND !== null ? { map: { ...TUNING.map, islandAreas: ISLAND === "off" ? 0 : +ISLAND } } : {}), // (--island N|off: the journey's islands, Ed 2026-10-11; map.islandAreas, 10 by default) // (the circular map, #281: N areas across sizes its radius, N / √π areas)
   ...(AREA_SCALE ? { areaScale: +AREA_SCALE } : {}), population: { ...TUNING.population, start, growth }, combat: { ...TUNING.combat, ...(HEALTH ? { soundsystemHealth: +HEALTH } : {}), ...(HOME ? { speakerHealth: +HOME / TUNING.dancefloor.speakers.count } : {}) } };
 
 const mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);

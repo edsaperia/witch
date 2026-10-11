@@ -1,7 +1,8 @@
 {
   "_": "The samples to fetch and how (node tools/samples/build.mjs): each from a source repository at a pinned commit, trimmed to `max` seconds (the tail faded), mono, peak-normalised, Opus in Ogg at `kbps`. The build writes samples/<set>/<id>.ogg and samples/manifest.json; never edit the manifest by hand. Licences: only CC0, public domain or CC-BY with a credit line (tools/samples/check.mjs). Ed, 2026-10-11 (docs/backlog/music.md): samples allowed, especially drums and voices; no NC, no ripped drum machines.",
   "repos": {
-    "vcsl": { "name": "Versilian Community Sample Library (VCSL)", "url": "https://github.com/sgossner/VCSL", "raw": "https://raw.githubusercontent.com/sgossner/VCSL", "commit": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e", "licence": "CC0-1.0", "author": "Versilian Studios LLC and contributors" }
+    "vcsl": { "name": "Versilian Community Sample Library (VCSL)", "url": "https://github.com/sgossner/VCSL", "raw": "https://raw.githubusercontent.com/sgossner/VCSL", "commit": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e", "licence": "CC0-1.0", "author": "Versilian Studios LLC and contributors" },
+    "freesound": { "name": "Freesound", "url": "https://freesound.org", "_": "Each sound's own page, licence and uploader (checked on its page); the file is its public high-quality preview (128 kbps mp3: the original needs a login)." }
   },
   "kbps": 64,
   "sets": {
@@ -25,6 +26,14 @@
       { "id": "log-high", "path": "Idiophones/Struck Idiophones/Slit Drum/LogDrumHi_MedM_v2_rr1_Sum.wav", "max": 0.8, "what": "Slit drum, high" },
       { "id": "bass-drum", "path": "Membranophones/Struck Membranophones/Bass Drum 2/bassdrum_hit_mf1.wav", "max": 1.2, "what": "Concert bass drum, medium hit" },
       { "id": "claves", "path": "Idiophones/Struck Idiophones/Claves/Claves1_Hit_v2_rr1_Mid.wav", "max": 0.3, "what": "Claves (bones' stand-in)" }
+    ],
+    "voices": [
+      { "id": "crowd-uh-f", "repo": "freesound", "sound": 764344, "user": "ShangusBurger", "preview": "https://cdn.freesound.org/previews/764/764344_11744683-hq.mp3", "licence": "CC0-1.0", "max": 6, "bed": true, "what": "A medium-sized crowd singing \"uh\" on a concert F (GameSoundCon 2024 walla, Shane Vincent)" },
+      { "id": "whispers", "repo": "freesound", "sound": 193812, "user": "geoneo0", "preview": "https://cdn.freesound.org/previews/193/193812_2000738-hq.mp3", "licence": "CC0-1.0", "max": 9, "bed": true, "what": "Four voices whispering (the uploader's own, layered)" },
+      { "id": "female-chops", "repo": "freesound", "sound": 437584, "user": "chenny0607", "preview": "https://cdn.freesound.org/previews/437/437584_5351456-hq.mp3", "licence": "CC0-1.0", "max": 15, "bed": true, "what": "Soft female vocal chops (the uploader's own singing)" },
+      { "id": "throat-cave", "repo": "freesound", "sound": 816640, "user": "ItsThatRoboGuy", "preview": "https://cdn.freesound.org/previews/816/816640_8175042-hq.mp3", "licence": "CC0-1.0", "max": 12, "bed": true, "what": "Throat singing in a cave (the uploader's own)" },
+      { "id": "female-note", "repo": "freesound", "sound": 628817, "user": "owstu", "preview": "https://cdn.freesound.org/previews/628/628817_1690102-hq.mp3", "licence": "CC0-1.0", "start": 0.3, "max": 1.8, "bed": true, "what": "A woman singing one steady note, G4 (from the uploader's own single-note improvisation)" },
+      { "id": "kargyraa", "repo": "freesound", "sound": 732443, "user": "Hjaarlmarch", "preview": "https://cdn.freesound.org/previews/732/732443_3699553-hq.mp3", "licence": "CC0-1.0", "max": 10, "bed": true, "what": "Kargyraa throat chant, low register (the uploader's own)" }
     ]
   }
 }
