@@ -8,6 +8,8 @@ import { isPlaceholder, KINDS, playableIsland, REAL_KINDS } from "../rules/roste
 export const SAVE_KEY = "witch.chart";
 
 export interface ChartSave {
+  /** The campaign's world seed (Ed, 2026-10-11; rules/rosters.ts): every island's shape. 0 (none saved) is the first world. */
+  world: number;
   /** The kinds whose islands she's found (their legends woken), oldest first. */
   found: string[];
   /** The islands she's won ("home" or a kind). */
@@ -18,7 +20,17 @@ export interface ChartSave {
   voyages: { from: string; to: string }[];
 }
 
-export const emptySave = (): ChartSave => ({ found: [], won: [], played: [], voyages: [] });
+export const emptySave = (world = 0): ChartSave => ({ world, found: [], won: [], played: [], voyages: [] });
+
+/** A world seed from what's typed or pasted (a whole number, or any text hashed), or a random one for nothing. */
+export function worldSeed(text?: string | null): number {
+  const t = (text ?? "").trim();
+  if (!t) return 1 + Math.floor(Math.random() * 2147483646);
+  if (/^\d+$/.test(t)) return Number(t) % 2147483647; // (0: the first world)
+  let h = 2166136261;
+  for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 16777619);
+  return (h >>> 0) % 2147483647 || 1;
+}
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
@@ -30,7 +42,9 @@ export function loadSave(storage?: Store | null): ChartSave {
     const raw = storeOf(storage)?.getItem(SAVE_KEY);
     if (!raw) return emptySave();
     const o = JSON.parse(raw) as Partial<ChartSave>, island = playableIsland, kind = (k: string) => !!KINDS[k] && !isPlaceholder(k);
+    const w = Number(o.world);
     return {
+      world: Number.isInteger(w) && w >= 0 && w < 2147483647 ? w : 0,
       found: strings(o.found).filter(kind),
       won: strings(o.won).filter(island),
       played: strings(o.played).filter(island),
@@ -48,12 +62,19 @@ export function clearSave(storage?: Store | null): void {
   try { storeOf(storage)?.removeItem(SAVE_KEY); } catch { /* storage blocked */ }
 }
 
+/** Start a new campaign in the world `world` (Start over on the sea chart): nothing found, nothing won. */
+export function newCampaign(world: number, storage?: Store | null): ChartSave {
+  const save = emptySave(world);
+  storeSave(save, storage);
+  return save;
+}
+
 /** The night's end on `island` ("home" or a kind; anything else isn't an island of the chart and records nothing): played; if
  *  won, marked won, and the islands of the legends it woke (`found`: rules/win.ts) found from it, each with its voyage (an
  *  island already found keeps its first voyage). A new save; the old one unchanged. */
 export function recordNight(save: ChartSave, island: string, result: { won: boolean; found?: readonly string[] }): ChartSave {
   if (!playableIsland(island)) return save;
-  const next: ChartSave = { found: [...save.found], won: [...save.won], played: [...save.played], voyages: [...save.voyages] };
+  const next: ChartSave = { world: save.world, found: [...save.found], won: [...save.won], played: [...save.played], voyages: [...save.voyages] };
   if (!next.played.includes(island)) next.played.push(island);
   if (!result.won) return next;
   if (!next.won.includes(island)) next.won.push(island);
@@ -73,7 +94,7 @@ export const unlocked = (save: ChartSave): string[] => ["home", ...save.found];
 export function allSave(): ChartSave {
   const kinds = Object.keys(KINDS), found = [...kinds];
   const voyages = found.map(k => ({ from: KINDS[k].phase === 0 ? "home" : nearestOf(k, kinds.filter(x => KINDS[x].phase === KINDS[k].phase - 1)), to: k }));
-  return { found, won: ["home"], played: ["home", ...REAL_KINDS], voyages };
+  return { world: 0, found, won: ["home"], played: ["home", ...REAL_KINDS], voyages };
 }
 
 /** Of `from`, the kind whose island lies nearest `k`'s bearing (a plausible voyage for the testing chart). */
@@ -82,9 +103,12 @@ function nearestOf(k: string, from: string[]): string {
   return from.reduce((best, x) => (apart(KINDS[x].bearing, KINDS[k].bearing) < apart(KINDS[best].bearing, KINDS[k].bearing) ? x : best), from[0] ?? "home");
 }
 
-/** The night's over (the game's hook: won, its legends' islands found, or lost): recorded in this browser's save. */
-export function nightOver(island: string, result: { won: boolean; found?: readonly string[] }, storage?: Store | null): ChartSave {
-  const next = recordNight(loadSave(storage), island, result);
+/** The night's over (the game's hook: won, its legends' islands found, or lost): recorded in this browser's save, if it was
+ *  played in the save's world (`world`, when known: a night in a world from someone's link isn't this campaign's). */
+export function nightOver(island: string, result: { won: boolean; found?: readonly string[] }, storage?: Store | null, world?: number): ChartSave {
+  const save = loadSave(storage);
+  if (world !== undefined && world !== save.world) return save;
+  const next = recordNight(save, island, result);
   storeSave(next, storage);
   return next;
 }

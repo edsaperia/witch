@@ -305,10 +305,10 @@ function frame(now: number): void {
   // The night won (rules/win.ts, the finale's): its legends' islands found on the sea chart (app/chartSave.ts), once, as its card
   // comes up; the enraged legends' (win.lost) not.
   const won = (game as { win?: { card?: boolean; found?: string[] } }).win;
-  if (won?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: won.found ?? [] }); }
+  if (won?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: won.found ?? [] }, undefined, tuning.map?.world ?? 0); }
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
-    nightOver(tuning.map?.island ?? "", { won: false }); // (the sea chart: played; losing loses nothing)
+    nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); // (the sea chart: played; losing loses nothing)
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.partyOver.at / 60)} min ${Math.floor(game.partyOver.at % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }

@@ -2,7 +2,7 @@
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
 import { islandOf, playableIsland } from "../rules/rosters";
-import { loadSave } from "./chartSave";
+import { loadSave, worldSeed } from "./chartSave";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
@@ -173,6 +173,7 @@ export function tuningFromLink(params: URLSearchParams) {
   tuning.paths = { ...tuning.paths, fingerposts: true };
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
-  if (tuning.map) tuning.map = { ...tuning.map, found: loadSave().found };
+  // and the campaign's world seed (every island's shape), unless ?world= names one for this load
+  if (tuning.map) { const save = loadSave(), w = params.get("world"); tuning.map = { ...tuning.map, found: save.found, world: w ? worldSeed(w) : save.world }; }
   return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };
 }
