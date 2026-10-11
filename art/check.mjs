@@ -842,11 +842,11 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     if (!snow.length) { bad.push(id + " no snow"); continue; }
     const at = i => sp.m[i] === M.WEB, lone = snow.filter(i => { const x = i % w; return !(x && at(i - 1)) && !(x < w - 1 && at(i + 1)) && !(i >= w && at(i - w)) && !(i + w < sp.m.length && at(i + w)); });
     if (lone.length) bad.push(`${id} ${lone.length} lone flecks`);
-    const top = Math.min(...snow.map(i => Math.floor(i / w))), foot = h, mid = (top + foot) / 2, up = snow.filter(i => Math.floor(i / w) < mid).length;
-    if (up < snow.length / 2) bad.push(`${id} snow low (${up} of ${snow.length} above the middle)`);
+    const meanY = l => l.reduce((a, i) => a + Math.floor(i / w), 0) / l.length, leaves = []; before.forEach((v, i) => { if (LEAVES.has(v)) leaves.push(i); });
+    if (meanY(snow) > meanY(leaves)) bad.push(`${id} snow low (lower on average than its leaves)`); // on the upper faces: higher than the leaves as a whole
     const sw = W.swayMask(sp); if (snow.some(i => !sw[i])) bad.push(id + " snow doesn't sway");
   }
-  ok(!bad.length, `snow crowns: ${n} leafy species hold snow, laden, on their leaves only, mostly up top, swaying with them, no lone flecks; untouched at 0${bad.length ? " — " + bad.slice(0, 8).join(", ") : ""}`);
+  ok(!bad.length, `snow crowns: ${n} leafy species hold snow, laden, on their leaves only, higher than its leaves as a whole, swaying with them, no lone flecks; untouched at 0${bad.length ? " — " + bad.slice(0, 8).join(", ") : ""}`);
 }
 // pixel wind (art/sway.js): every species' sway code keeps the trunk's foot still; the genome generator's trees sway by their
 // blobs (3+ regions, 3+ phases among them); with no wind a tree draws exactly as baked; in a strong gust every region moves whole,

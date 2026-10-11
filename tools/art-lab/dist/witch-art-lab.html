@@ -1603,7 +1603,7 @@ function bush(r, st, kind = pick(r, BUSH_KINDS)) { // (kind: one of BUSH_GENOMES
 // Snow-laden crowns (the north's snowy areas, Ed 2026-10-11): snow lies on each clump's upper face, where the light falls, and
 // deepest on the crown's open top, in the pale tone M.WEB (225, 225, 232 in every tree's colours; leafy, so it sways with the
 // leaves and stays on them in the pixel wind). amount 0..1: 0 none (the tree exactly as before), about .4 a dusting, 1 laden.
-// Leaves only (never bark or flowers), in runs of 2 pixels or more across (no lone flecks). A tree's options: an area's `snow`
+// Leaves only (never bark or flowers, nor the life below the crown, which it shelters), in runs of 2 pixels or more across (no lone flecks). A tree's options: an area's `snow`
 // (areas.js), or a tree recipe's own.
 const SNOW_ON = new Set([M.LEAF, M.LEAF2, M.LEAF3]);
 function snowCrown(sp, amount, seed = 1) {
@@ -1611,15 +1611,16 @@ function snowCrown(sp, amount, seed = 1) {
   const { w, h } = sp, src = sp.m, snow = new Uint8Array(w * h), k = Math.min(1, amount);
   const face = .8 - .5 * k, cap = 1 + Math.round(k * 2); // how squarely up a pixel must face to hold snow; the open top's depth
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const i = y * w + x; if (!SNOW_ON.has(src[i])) continue;
+    const i = y * w + x; if (!SNOW_ON.has(src[i]) || sp.low?.[i]) continue; // (not the life below the crown: the crown keeps it off)
     const above = y ? src[i - w] : 0;
     if (!above) { const d = cap + (hash2(x, seed) < .35 ? -1 : hash2(x, seed + 7) > .8 ? 1 : 0); for (let j = 0; j < d && y + j < h && SNOW_ON.has(src[i + j * w]); j++) snow[i + j * w] = 1; continue; } // the open top
     if (src[i] !== M.LEAF3 && -sp.n[i * 3 + 1] > face && hash2(x * 3 + y, seed + 3) < .55 + .45 * k) snow[i] = 1; // a clump's lit top
   }
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { // no lone flecks: a run across of 2 or more, or under more snow
-    const i = y * w + x; if (!snow[i]) continue;
-    if ((x && snow[i - 1]) || (x < w - 1 && snow[i + 1]) || (y && snow[i - w])) sp.m[i] = M.WEB;
+  for (let changed = true; changed;) { // no lone flecks: every snow pixel touches another, side by side or above and below
+    changed = false;
+    for (let i = 0; i < w * h; i++) if (snow[i]) { const x = i % w; if (!(x && snow[i - 1]) && !(x < w - 1 && snow[i + 1]) && !(i >= w && snow[i - w]) && !(i + w < w * h && snow[i + w])) { snow[i] = 0; changed = true; } }
   }
+  for (let i = 0; i < w * h; i++) if (snow[i]) sp.m[i] = M.WEB;
   return sp;
 }
 
