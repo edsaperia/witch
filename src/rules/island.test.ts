@@ -14,16 +14,19 @@ import { spawnCreatures } from "./creatures";
 const island = (n: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: n } });
 
 describe("islands by area count (map.islandAreas)", () => {
-  it("is home and exactly that many areas, the nearest home's, round, with everything for play inside her flight", () => {
+  it("is home and exactly that many areas grown from home (its phase's shape: rules/islandGrowth.ts), with everything for play inside her flight", () => {
     for (const n of [10, 20, 30, 40, 50]) for (const seed of [1, 7, 123, 4242]) {
       const map = generateMap(seed, island(n)), home = map.siteOf(map.centreCell[0], map.centreCell[1]);
       expect(map.cells.length, `${n} areas, seed ${seed}`).toBe(n + 1);
       expect(map.cells.some(([x, y]) => x === map.centreCell[0] && y === map.centreCell[1])).toBe(true);
-      // the nearest home's: every playable area nearer than every buffer one
       const far = Math.max(...map.cells.map(([x, y]) => { const s = map.siteOf(x, y); return Math.hypot(s.x - home.x, s.z - home.z); }));
       for (const [x, y] of map.cells) { const s = map.siteOf(x, y); expect(isInside(map.bounds, s.x, s.z, 0), `seed ${seed}: area ${x},${y} inside`).toBe(true); }
-      expect(map.bounds.circle!.r).toBeGreaterThan(far);
-      expect(map.bounds.circle!.r).toBeLessThan(far + (TUNING.map!.buffer + 2) * map.areaSize * 1.2); // (round it, not the old map's)
+      // (its coast round them, not the old map's: no further out than the buffer's depth and an area past it)
+      const coast = map.bounds.land!.loops.find(l => l.sea)!.pts;
+      let most = 0;
+      for (let k = 0; k < coast.length; k += 2) most = Math.max(most, Math.hypot(coast[k] - home.x, coast[k + 1] - home.z));
+      expect(most).toBeGreaterThan(far);
+      expect(most).toBeLessThan(far + (TUNING.map!.buffer + 2.5) * map.areaSize * 1.2);
     }
   }, 240000);
 

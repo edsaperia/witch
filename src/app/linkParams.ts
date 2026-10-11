@@ -167,6 +167,13 @@ export function tuningFromLink(params: URLSearchParams) {
     const v = params.get("island");
     if (v && v !== "home" && playableIsland(v) && islandOf(v) && tuning.map) tuning.map = { ...tuning.map, island: v }; // (a placeholder's island isn't played)
     else { const n = islandFromLink(v, tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n, island: v === "home" ? "home" : "" }; }
+    // ?phase=0 to 5 (Ed, 2026-10-11, the journey's irregular islands: rules/islandGrowth.ts): an island of that phase's shape, of
+    // random types (10 areas a phase, home's 10 for 0) unless ?island= gives a number; a kind's island keeps its own.
+    const ph = params.get("phase"), p = ph === null ? NaN : Math.round(Number(ph));
+    if (Number.isFinite(p) && p >= 0 && p <= 5 && tuning.map && !(v && v !== "home" && playableIsland(v))) {
+      const sized = v !== null && v !== "home" && islandFromLink(v, 0) !== null;
+      tuning.map = { ...tuning.map, phase: p, island: "", islandAreas: sized ? tuning.map.islandAreas : p === 0 ? (tuning.map.islandAreas || 10) : 10 * p };
+    }
   }
 
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts

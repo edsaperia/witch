@@ -25,7 +25,7 @@ for (const seed of seeds) {
   const map = generateMap(seed, tuning), forest = new Forest(map), b = map.bounds, cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2, half = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) / 2 + 40;
   const k = S / (2 * half), X = x => (x - cx + half) * k, Z = z => (z - cz + half) * k, own = p => { const c = map.areaAt(p.x, p.z).cell; return map.playable(c[0], c[1]); };
   const pts = { featured: [], scene: [], ground: [], set: [], ruins: [], rocks: [], freak: [], relic: [], path: [], wall: [], pond: [], campfire: [], prelic: [], beach: [] };
-  for (const s of map.scenes) ((tuning.scenes.featured?.ids ?? []).includes(s.id) ? pts.featured : pts.scene).push(s);
+  for (const s of map.scenes) ((tuning.scenes.featured?.ids ?? []).some(id => (id.endsWith("*") ? s.id.startsWith(id.slice(0, -1)) : s.id === id)) ? pts.featured : pts.scene).push(s);
   pts.ground.push(...map.grounds); pts.set.push(...forest.setPiecesNear(cx, cz, half));
   for (const d of forest.decorNear(cx, cz, half)) pts[d.family].push(d);
   pts.relic.push(...forest.relicsNear(cx, cz, half)); pts.path.push(...map.paths.pieces);
