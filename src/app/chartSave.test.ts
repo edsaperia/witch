@@ -48,8 +48,11 @@ describe("the sea chart's save", () => {
 
   it("opens the whole chart for ?chart=all", () => {
     const s = allSave();
-    expect([...s.found].sort()).toEqual([...KIND_NAMES].sort());
-    expect(discovered(s).size).toBe(KIND_NAMES.length);
+    expect([...s.found].sort()).toEqual([...KIND_NAMES].sort()); // (all 64: the placeholders' '?' islands too)
     expect(s.voyages.length).toBe(KIND_NAMES.length);
+    // a real save never holds a placeholder: none found, none played
+    expect(recordNight(emptySave(), "unknown-01", { won: true, found: ["fox"] })).toEqual(emptySave());
+    expect(recordNight(emptySave(), "home", { won: true, found: ["unknown-01", "fox"] }).found).toEqual(["fox"]);
+    expect(loadSave(memory({ [SAVE_KEY]: JSON.stringify({ found: ["unknown-01", "fox"] }) })).found).toEqual(["fox"]);
   });
 });

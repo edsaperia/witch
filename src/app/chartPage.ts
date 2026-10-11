@@ -6,7 +6,7 @@
 import { ISLAND_LOOK, islandPath } from "../../art/islands.js";
 import { islandSigil, sigilArrival, sigilColour } from "../../art/sigils.js";
 import { islandCoast } from "../rules/islandShape";
-import { coastSpec, homeIsland, homeKinds, islandOf, KIND_NAMES } from "../rules/rosters";
+import { coastSpec, homeIsland, homeKinds, isPlaceholder, islandOf, KIND_NAMES, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { allSave, clearSave, discovered, loadSave, unlocked } from "./chartSave";
 import { BOX, islandAt, ringOf } from "./chartLayout";
@@ -60,16 +60,19 @@ function draw(): void {
     el("image", { href: sigilImage(k), x: at.x - s / 2, y: at.y - s / 2, width: s, height: s }, g);
   }
   for (const isl of islands) {
-    const at = islandAt(isl.id)!, a = el("a", { href: `./?island=${isl.id}`, class: "island", tabindex: 0 });
-    el("title", {}, a).textContent = `${isl.id === "home" ? "Home" : `The ${isl.id}'s island`}${won.has(isl.id) ? " (won)" : ""}: sail there`;
+    // (a placeholder's island, a kind not designed yet: drawn with '?', not sailable: Ed, 2026-10-11)
+    const unknown = isPlaceholder(isl.id), at = islandAt(isl.id)!;
+    const a = unknown ? el("g", { opacity: 0.75 }) : el("a", { href: `./?island=${isl.id}`, class: "island", tabindex: 0 });
+    el("title", {}, a).textContent = unknown ? "Not yet charted" : `${isl.id === "home" ? "Home" : `The ${isl.id}'s island`}${won.has(isl.id) ? " (won)" : ""}: sail there`;
     const g = el("g", { transform: `translate(${at.x - BOX / 2} ${at.y - BOX / 2}) scale(${BOX})` }, a);
     el("path", { d: islandPath(isl.radii), class: "land", fill: rgb(ISLAND_LOOK.land2), stroke: rgb(ISLAND_LOOK.sand), "stroke-width": 1.5, "vector-effect": "non-scaling-stroke" }, g);
     const s = isl.id === "home" ? 0.06 : 0.045;
-    el("image", { href: sigilImage(isl.sigil), x: at.x - s / 2, y: at.y - s / 2, width: s, height: s }, a);
+    if (unknown) { const q = el("text", { x: at.x, y: at.y, "text-anchor": "middle", "dominant-baseline": "central", "font-size": 0.05, "font-weight": "bold", fill: "#9a93b4" }, a); q.textContent = "?"; }
+    else el("image", { href: sigilImage(isl.sigil), x: at.x - s / 2, y: at.y - s / 2, width: s, height: s }, a);
     if (won.has(isl.id)) { const star = el("text", { x: at.x + 0.045, y: at.y - 0.04, "font-size": 0.05, fill: "#e8b46a" }, a); star.textContent = "✦"; }
   }
-  const n = save.found.length;
-  document.getElementById("status")!.textContent = `${n ? `${n} of ${KIND_NAMES.length} islands found` : `${homeKinds().length} kinds known: wake their legends at home to find their islands`}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
+  const n = save.found.filter(k => !isPlaceholder(k)).length;
+  document.getElementById("status")!.textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : `${homeKinds().length} kinds known: wake their legends at home to find their islands`}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
 }
 
 document.getElementById("start-over")!.addEventListener("click", () => {

@@ -3,7 +3,7 @@
 // dealt ones: rules/win.ts found; an enraged legend's island stays hidden), each found from the island she set out from (a
 // voyage, a line on the chart); won islands are marked; kinds she's met light their sigils. Losing loses nothing (Ed,
 // 2026-10-11): the night's island is only played. Every storage access is try/caught: blocked storage plays with nothing saved.
-import { homeKinds, islandOf, KINDS } from "../rules/rosters";
+import { homeKinds, isPlaceholder, islandOf, KINDS, playableIsland, REAL_KINDS } from "../rules/rosters";
 
 export const SAVE_KEY = "witch.chart";
 
@@ -29,12 +29,12 @@ export function loadSave(storage?: Store | null): ChartSave {
   try {
     const raw = storeOf(storage)?.getItem(SAVE_KEY);
     if (!raw) return emptySave();
-    const o = JSON.parse(raw) as Partial<ChartSave>, island = (k: string) => k === "home" || !!KINDS[k];
+    const o = JSON.parse(raw) as Partial<ChartSave>, island = playableIsland, kind = (k: string) => !!KINDS[k] && !isPlaceholder(k);
     return {
-      found: strings(o.found).filter(k => !!KINDS[k]),
+      found: strings(o.found).filter(kind),
       won: strings(o.won).filter(island),
       played: strings(o.played).filter(island),
-      voyages: (Array.isArray(o.voyages) ? o.voyages : []).filter(v => v && typeof v.from === "string" && typeof v.to === "string" && island(v.from) && !!KINDS[v.to]).map(v => ({ from: v.from, to: v.to })),
+      voyages: (Array.isArray(o.voyages) ? o.voyages : []).filter(v => v && typeof v.from === "string" && typeof v.to === "string" && island(v.from) && kind(v.to)).map(v => ({ from: v.from, to: v.to })),
     };
   } catch { return emptySave(); }
 }
@@ -52,13 +52,13 @@ export function clearSave(storage?: Store | null): void {
  *  won, marked won, and the islands of the legends it woke (`found`: rules/win.ts) found from it, each with its voyage (an
  *  island already found keeps its first voyage). A new save; the old one unchanged. */
 export function recordNight(save: ChartSave, island: string, result: { won: boolean; found?: readonly string[] }): ChartSave {
-  if (island !== "home" && !KINDS[island]) return save;
+  if (!playableIsland(island)) return save;
   const next: ChartSave = { found: [...save.found], won: [...save.won], played: [...save.played], voyages: [...save.voyages] };
   if (!next.played.includes(island)) next.played.push(island);
   if (!result.won) return next;
   if (!next.won.includes(island)) next.won.push(island);
   for (const k of result.found ?? []) {
-    if (!KINDS[k] || k === island || next.found.includes(k)) continue;
+    if (!KINDS[k] || isPlaceholder(k) || k === island || next.found.includes(k)) continue;
     next.found.push(k);
     next.voyages.push({ from: island, to: k });
   }
@@ -77,11 +77,12 @@ export function discovered(save: ChartSave): Set<string> {
   return out;
 }
 
-/** Every island found, won and played, every kind met (?chart=all, for testing): a save with the whole chart open. */
+/** Every island found, won and played, every kind met (?chart=all, for testing): a save with the whole chart open, the
+ *  placeholders' '?' islands too (their voyages from the island nearest them a phase in). */
 export function allSave(): ChartSave {
-  const kinds = Object.keys(KINDS), found = kinds.filter(k => KINDS[k].phase >= 0);
+  const kinds = Object.keys(KINDS), found = [...kinds];
   const voyages = found.map(k => ({ from: KINDS[k].phase === 0 ? "home" : nearestOf(k, kinds.filter(x => KINDS[x].phase === KINDS[k].phase - 1)), to: k }));
-  return { found, won: ["home"], played: ["home", ...found], voyages };
+  return { found, won: ["home"], played: ["home", ...REAL_KINDS], voyages };
 }
 
 /** Of `from`, the kind whose island lies nearest `k`'s bearing (a plausible voyage for the testing chart). */
