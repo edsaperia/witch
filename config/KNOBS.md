@@ -8,7 +8,7 @@ The map and its places: the areas, their size and shape, the beach, glades, path
 
 ### `mapAreas`
 
-The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger). areaSizeVariance (0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed (2026-10-05: "make areas larger; each is effectively a fighting arena"): 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m. arena: every area is mostly open within radius metres of its centre and its soundsystem, for fights (they range 15 to 45 m), and (Ed: softer edges; then, at v473, a smaller clearing and a long soft gradient from the area's edge to near its runestone) the woods thicken over a band band metres wide beyond it, across most of the area, along curve (linear: thinning in from right past the open middle; smooth: a slow start), lone trees and bushes thinning out into the clearing, its edge wobbled by noise (a share of the band) so it's no ring; both times fight.scale. bushes and tufts: the share of the undergrowth and the ground cover left in its open middle.
+The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger). areaSizeVariance (0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed (2026-10-05: "make areas larger; each is effectively a fighting arena"): 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m. arena: every area is mostly open within radius metres of its centre and its soundsystem, for fights (they range 15 to 45 m), and (Ed: softer edges; then, at v473, a smaller clearing and a long soft gradient from the area's edge to near its runestone) the woods thicken over a band band metres wide beyond it, across most of the area, along curve (linear: thinning in from right past the open middle; smooth: a slow start), lone trees and bushes thinning out into the clearing, its edge wobbled by noise (a share of the band) so it's no ring; both times fight.scale. bushes and tufts: the share of the undergrowth and the ground cover left in its open middle. map.island (Ed, 2026-10-11, the journey's rosters; rules/rosters.ts, config/kinds.json): "home" plays home by roster, one area per kind she knows (the 10 kinds introduced at home, islandAreas of them, the run's seed), its legends dealt each night, 1 in 5 areas; a kind's name (?island=fox) plays that kind's island, its own seed (where it lies on the sea chart) and size by phase (10 a phase), its roster that kind plentiful, 1-3 kinds new to its phase and the rest by bearing; empty, areas of random types as before. map.found: the kinds whose islands she's found (the night's legends favour the others).
 
 | knob | type | range |
 |---|---|---|
@@ -23,6 +23,8 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.shape` | string | "circle" / "square" |
 | `map.radius` | number | 0 to … |
 | `map.islandAreas` | number | 0 to … |
+| `map.island` | string |  |
+| `map.found` | array of any |  |
 | `map.buffer` | number | 0 to … |
 | `map.push` | number | 0 to … |
 | `map.drift` | number | 0 to … |
