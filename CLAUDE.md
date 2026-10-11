@@ -35,6 +35,7 @@ Samples are allowed (Ed, 2026-10-11; docs/backlog/music.md, docs/music/research.
   - a crowd singing "uh" on F (measured at MIDI 53.2);
   - four whispering voices;
   - soft female vocal chops (their key not yet measured, so unused);
+  - a woman's steady sung note (G4, measured at MIDI 67.2), for a sampled vocalise;
   - throat singing in a cave (about 42.8);
   - a low kargyraa chant (about 37.1).
 
@@ -47,7 +48,7 @@ Samples are allowed (Ed, 2026-10-11; docs/backlog/music.md, docs/music/research.
 
 The library itself runs on a ScriptProcessor, so the game would need an AudioWorklet port first.
 
-**A/B renders**: `node tools/music-lab/ab.mjs [out] [wave] [seed] [bars]` renders one passage of the game's music as it is, then with one ingredient more each time. The steps are a drone, a chant, frame drums, tape, the CC0 kit, the vocalise, and a witch-house take. Every render is loudness-matched, into `previews/ed/music/` (`tools/music-lab/ab.ts`, lab-only: it lays the ingredients over the engine without changing the game).
+**A/B renders**: `node tools/music-lab/ab.mjs [out] [wave] [seed] [bars]` renders one passage of the game's music as it is, then with one ingredient more each time. The steps are a drone, frame drums, tape, the CC0 kit, and the vocalise (Pink Trombone, or a recorded woman's note retuned to each note), then recorded voices, and a witch-house take. Ed cut the chant, 2026-10-11. Every render is loudness-matched. There are also solo stems at the level each plays in the mix. All of it goes into `previews/ed/music/` (`tools/music-lab/ab.ts`, lab-only: it lays the ingredients over the engine without changing the game).
 
 ## What's new
 

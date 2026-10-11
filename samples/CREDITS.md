@@ -32,6 +32,10 @@ Written by tools/samples/credits.mjs from samples/manifest.json: never edit by h
 
 - `voices/female-chops.ogg`: Soft female vocal chops (the uploader's own singing). Source: https://freesound.org/people/chenny0607/sounds/437584/
 
+## owstu (CC0-1.0)
+
+- `voices/female-note.ogg`: A woman singing one steady note, G4 (from the uploader's own single-note improvisation). Source: https://freesound.org/people/owstu/sounds/628817/
+
 ## Hjaarlmarch (CC0-1.0)
 
 - `voices/kargyraa.ogg`: Kargyraa throat chant, low register (the uploader's own). Source: https://freesound.org/people/Hjaarlmarch/sounds/732443/

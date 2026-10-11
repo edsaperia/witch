@@ -233,6 +233,17 @@
       "bytes": 121878
     },
     {
+      "file": "voices/female-note.ogg",
+      "what": "A woman singing one steady note, G4 (from the uploader's own single-note improvisation)",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "mono, leading silence trimmed, cut to 1.8 s with a 0.18 s fade, peak-normalised to -1 dBFS (+10.2 dB), Opus 64 kbps",
+      "bytes": 21381
+    },
+    {
       "file": "voices/kargyraa.ogg",
       "what": "Kargyraa throat chant, low register (the uploader's own)",
       "source": "https://freesound.org/people/Hjaarlmarch/sounds/732443/",
