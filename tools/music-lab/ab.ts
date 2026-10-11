@@ -111,6 +111,7 @@ async function abRender(o: AbOptions) {
     play(ev, t, dur, sps, chord);
   };
   if (o.fof && o.fx?.whisper && samples.whispers) e.setWhisper(samples.whispers);
+  e.setRecordings(samples); if (samples.whispers) e.setWhisper(samples.whispers); // (the game's singer, a recording: its own and the vocoder's)
   e.renderAhead(cueFor(o), 0, o.bars * 16 * spb, newBeatClock(style.bpm));
   // a drone: the tonic and its fifth, low, held through, a slow filter breathing (organum, hurdy-gurdy-like)
   if (o.drone) {
