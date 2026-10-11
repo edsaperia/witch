@@ -198,7 +198,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.
     // (Ed's motion scale pass: party animals chase about 40 m from her or their sigil before giving up)
-    const S = FIGHT.scale, reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
+    // (parked with its sigil in the home area, it guards all of that area and nothing outside it: Ed, 2026-10-11)
+    const H = c.leashed && guarding && lp && w.home?.inside(lp.x, lp.z) ? w.home : null;
+    const S = FIGHT.scale, reachX = H ? H.x : lp ? lp.x : c.x, reachZ = H ? H.z : lp ? lp.z : c.z, reach = H ? H.r : (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
     if (f.target && !valid(w, s, c, f.target)) {
       // Lost her (or her party) past its band, or she rose (Ed, 2026-10-06: "instead they should retreat
       // and go back to idling"): a wild one that isn't besieging gives up and heads home.
@@ -206,9 +208,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       f.target = null;
     }
     const had = !!f.target;
-    if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z))) f.target = null; }
+    if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || (H ? !H.inside(p.x, p.z) : Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z)))) f.target = null; }
     if (!f.target || f.windupUntil === 0) {
-      let near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, happy ? o => w.inArea(c, o.x, o.z) : undefined, claims);
+      let near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, H ? o => H.inside(o.x, o.z) : happy ? o => w.inArea(c, o.x, o.z) : undefined, claims);
       // Retreating, it takes up a fight again only with someone back in its own area (no flip-flopping at the band's edge).
       if (near && c.retreat) { const q = targetPos(w, s, near); if (q && w.inArea(c, q.x, q.z)) c.retreat = undefined; else near = null; }
       if (near && c.leashed && !guarding) { claim(f.target, -1); claim(near, 1); } // (her posse's claims kept up as they choose)

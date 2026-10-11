@@ -868,7 +868,7 @@ The hunt (Ed, 2026-10-07: "When I go to a wild area, after they are awoken all o
 
 ### `guard`
 
-Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it.
+Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead (Ed, 2026-10-11: "Animals leashed inside the home area should aggro enemy creatures within that area"): any wild or enraged creature anywhere in it, never one outside it, whatever radius says.
 
 | knob | type | range |
 |---|---|---|
