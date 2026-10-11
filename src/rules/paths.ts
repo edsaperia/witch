@@ -184,7 +184,9 @@ export class PathNetwork {
   /** The 3D pieces: seeded, from the lines alone; placed once the map has put its gameplay spots
    *  (soundsystems, set pieces, grounds), which they keep clear of. */
   placePieces(): void {
-    const m = this.map, s = m.seed, T = m.tuning.paths, add = (id: string, x: number, z: number, r: number) => {
+    const m = this.map, s = m.seed, T = m.tuning.paths;
+    if (T.pieces === false) return; // (Ed, 2026-10-11: none on the small islands)
+    const add = (id: string, x: number, z: number, r: number) => {
       // Pieces keep apart (several crossings close together make one bridge, not a row of them).
       if (m.hardClear(x, z) || m.reserved(x, z, r) || this.pieces.some(q => Math.hypot(q.x - x, q.z - z) < Math.max(T.pieceGap, q.r + r))) return;
       const p = { id, x, z, r };

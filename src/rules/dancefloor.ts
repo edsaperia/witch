@@ -32,6 +32,8 @@ export const neon = (name: string | undefined): Rgb => ((NEON as unknown as Reco
 export interface FloorPattern {
   id: string; kind: string; level: number; beats: number; fpb: number; palette: string[];
   frames?: Uint8Array[]; area?: string;
+  /** An area's shape: its creature's kind; a sigil's shape (an area's, the World Tree's): its sigil. */
+  creature?: string; sigil?: string;
   /** A procedural pattern: the palette index at tile (x, y) (from the centre, in tiles) at beat b. */
   gen?: (x: number, y: number, b: number) => number;
 }
@@ -101,11 +103,12 @@ export function switchOn(f: FloorState, time: number): void {
 }
 
 /** Pick the pattern after `cur`: seeded, suited to the level, never the same one twice running. */
-export function pickPattern(cur: number, played: number, level: number, partifiedAreas: ReadonlySet<string>, seed: number): number {
+export function pickPattern(cur: number, played: number, level: number, partifiedAreas: ReadonlySet<string>, seed: number, kinds?: ReadonlySet<string>): number {
   const lib = floorPatterns(), ok: number[] = [];
   lib.forEach((p, i) => {
     if (i === cur || p.level > level) return;
     if (p.kind === "area" && !(p.area && partifiedAreas.has(p.area))) return; // an area's shape once it has the party
+    if (p.kind === "area" && kinds && !(p.creature && kinds.has(p.creature))) return; // and only a kind found on this island (Ed, 2026-10-11; the World Tree's, kind "island", always)
     ok.push(i);
   });
   if (!ok.length) return cur;
@@ -118,6 +121,8 @@ export interface FloorInputs {
   beatAt?: (time: number) => number;
   /** The area types (ids) that have the party: their shapes join the mix. */
   partifiedAreas: ReadonlySet<string>;
+  /** The kinds found on this island (islandKinds): only their sigils' shapes show (Ed, 2026-10-11), and the World Tree's. */
+  kinds?: ReadonlySet<string>;
   /** The witch on the grid (tile units), her lift (0 ground, 1 treetops) and glow colour. */
   witch: { x: number; y: number; lift: number; rgb: Rgb };
   /** Creatures dancing on the floor, on the grid, in their colours. */
@@ -127,6 +132,8 @@ export interface FloorInputs {
   /** The island's sigil (art/sigils.js islandSigil: home's the World Tree) and how far it's drawn on (0 to 1, the boot's share,
    *  rules/bootRing.ts bootShare): through the boot the floor shows it in place of the moon (Ed, 2026-10-11). */
   island?: { sigil: string; drawn: number };
+  /** The night won (rules/win.ts): the island's sigil flaring on the floor over everything, drawn on again (0 to 1). */
+  flare?: { sigil: string; drawn: number };
 }
 
 /** Advance the sequence and the witch's marks to `time` (call every frame). */
@@ -134,11 +141,11 @@ export function stepFloor(f: FloorState, inp: FloorInputs, t: Tuning): void {
   const D = t.dancefloor.tiles, beat = beatOf(inp.time, t, inp);
   if (f.on === null) return;
   const bootEnd = beatOf(f.on, t, inp) + BOOT_BEATS();
-  if (beat < bootEnd) { f.from = Math.ceil(bootEnd / 4) * 4; f.pattern = pickPattern(-1, 0, inp.level, inp.partifiedAreas, inp.seed); return; }
+  if (beat < bootEnd) { f.from = Math.ceil(bootEnd / 4) * 4; f.pattern = pickPattern(-1, 0, inp.level, inp.partifiedAreas, inp.seed, inp.kinds); return; }
   // On a bar line once the pattern has played its length (held longer at lower levels), the next comes in.
   const lib = floorPatterns(), p = lib[f.pattern], hold = p.beats * (inp.level >= 4 ? 1 : inp.level >= 2 ? 2 : 3), bar = Math.floor(beat / 4) * 4;
   if (!f.transition && beat >= f.from && bar >= f.from + Math.max(4, hold) && bar === Math.floor(beat / 4) * 4) {
-    const next = pickPattern(f.pattern, f.played + 1, inp.level, inp.partifiedAreas, inp.seed);
+    const next = pickPattern(f.pattern, f.played + 1, inp.level, inp.partifiedAreas, inp.seed, inp.kinds);
     const tr = (DISCO_TRANSITIONS as { id: string; beats: number }[])[Math.floor(hash2(f.played, inp.seed, 979) * DISCO_TRANSITIONS.length)];
     f.next = next; f.transition = { id: tr.id, start: bar, beats: tr.beats, angle: hash2(f.played, inp.seed, 981) * Math.PI * 2 };
   }
@@ -182,6 +189,7 @@ export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: U
     else if (inp.moon) moonTiles(rgbi, inp.moon.phase, time, t);
     return summary(rgbi);
   }
+  if (inp.flare && t.dancefloor.island.on) { islandTiles(rgbi, inp.flare.sigil, inp.flare.drawn, beat, t); return summary(rgbi); } // (the night won: rules/win.ts)
   const set = (n: number, c: Rgb, i: number, add = false) => {
     if (!MASK[n] || i <= 0) return;
     const k = n * 4, cur = rgbi[k + 3];
@@ -299,7 +307,7 @@ export function moonTiles(rgbi: Uint8Array, phase: number, time: number, t: Tuni
 
 /** Which island a map is (journey.md: every island its own legend kind, its own sigil): every map is home for now. The hook for
  *  when islands come: give the map its island and its sigil in art/sigils.js ISLAND_SIGILS. */
-export const islandOf = (map: object): string => (map as { island?: string }).island ?? "home";
+export const islandOf = (map: object): string => { const i = (map as { island?: string | { kind: string } | null }).island; return typeof i === "string" ? i : i?.kind ?? "home"; }; // (the rosters' Island, rules/rosters.ts: its kind)
 /** The sigil of a map's island (home's: the World Tree). */
 export const islandSigilOf = (map: object): string => islandSigil(islandOf(map));
 
@@ -322,4 +330,18 @@ export function islandTiles(rgbi: Uint8Array, sigil: string, drawn: number, beat
     else if (Math.abs(Math.floor(n / GRID) + 0.5 - sap) < 1.5) set(n, tip, 3);
     else set(n, lit, 2);
   }
+}
+
+const KINDS_OF = new WeakMap<object, ReadonlySet<string>>();
+/** The kinds found on a map's island (Ed, 2026-10-11: "The sigils shown on the dancefloor during the game should only include ones
+ *  that are found on that island, plus the world tree"): an island by roster (rules/rosters.ts; home's, the kinds she knows), its
+ *  roster's kinds; else the creatures of its playable areas. Home's own cell (no roster deals its type, and its kind doesn't live there)
+ *  adds nothing. */
+export function islandKinds(map: { island: { roster: readonly { kind: string }[] } | null; cells: readonly (readonly [number, number])[]; centreCell: readonly [number, number]; playable(cx: number, cy: number): boolean; typeOf(cx: number, cy: number): number }, creatureOf: (type: number) => string): ReadonlySet<string> {
+  let k = KINDS_OF.get(map);
+  if (!k) {
+    k = map.island ? new Set(map.island.roster.map(r => r.kind)) : new Set(map.cells.filter(([x, y]) => map.playable(x, y) && (x !== map.centreCell[0] || y !== map.centreCell[1])).map(([x, y]) => creatureOf(map.typeOf(x, y))));
+    KINDS_OF.set(map, k);
+  }
+  return k;
 }

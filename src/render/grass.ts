@@ -166,6 +166,8 @@ export class GrassView {
         uTufts: { value: this.atlas.albedo }, uTuftN: { value: this.atlas.normal }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
         uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() },
         uCanopy: ground?.uCanopy ?? { value: new THREE.Vector4() }, uClearing: ground?.uClearing ?? { value: new THREE.Vector2(1, 1) } },
+      // its pixels marked in the stencil's second bit (scenery's is the first, sprites.ts), so the placed sigils show through it (render/leash.ts)
+      stencilWrite: true, stencilRef: 2, stencilWriteMask: 2, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp,
     });
     this.mesh = new THREE.Mesh(this.geo, this.mat);
     this.mesh.frustumCulled = false;

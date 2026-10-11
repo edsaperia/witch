@@ -8,7 +8,7 @@ import type { Beach } from "./mapShape";
 
 /** The knobs (tuning beach.decor): finds a sector on average, a trail's chance a sector, its prints (fewest, most), the
  *  edge left clear inland (the woods' ragged edge), sectors round the coast; the prints' weights (foot, paw, hoof, bird). */
-export interface BeachDecorKnobs { on: boolean; finds: number; trails: number; prints: number[]; clear: number; sectors: number; kinds: number[] }
+export interface BeachDecorKnobs { on: boolean; finds: number; /** the finds' size, times (Ed, 2026-10-11: twice); not the footprints */ findScale?: number; trails: number; prints: number[]; clear: number; sectors: number; kinds: number[] }
 
 /** One piece on the sand: an art id (a print's "<id>~<heading>"), where, mirrored or not, its size (a fading print smaller). */
 export interface BeachItem { id: string; x: number; z: number; flip: boolean; scale: number; print: boolean }
@@ -54,7 +54,7 @@ export class BeachDecor {
       const a = a0 + r() * span, p = this.onSand(a, r());
       if (!p) continue;
       const id = pick(rocky > 0.4 ? ROCKY : FINDS, r());
-      list.push({ id, x: p.x, z: p.z, flip: r() < 0.5, scale: 0.85 + r() * 0.3, print: false });
+      list.push({ id, x: p.x, z: p.z, flip: r() < 0.5, scale: (0.85 + r() * 0.3) * (K.findScale ?? 1), print: false });
     }
     // Now and then a trail of footprints, wandering along the sand and fading out.
     if (r() < K.trails) this.trail(list, a0 + r() * span, r);

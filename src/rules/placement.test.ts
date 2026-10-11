@@ -6,7 +6,9 @@ import { TUNING } from "./tuning";
 
 // Gameplay first, then scenery (Ed, 2026-10-03: set pieces were landing on soundsystems).
 describe("scenery placement", () => {
-  const t = TUNING, R = t.setPieceFootprint * t.setPieceScale;
+  // (set pieces are off on the small islands, Ed 2026-10-11: their placement is still checked, with them on as they were; the
+  // sports grounds and the decor's every family too)
+  const t = { ...TUNING, setPieceChance: 0.25, grounds: { ...TUNING.grounds, kinds: ["playground", "tennis", "baseball", "football", "basketball"] }, decor: { ...TUNING.decor, mix: { ruins: 1, rocks: 1, freak: 1 } } }, R = t.setPieceFootprint * t.setPieceScale;
   for (const seed of [1, 123, 4242, 90210, 777777]) {
     it(`no set piece's, decoration's, relic's or ground's footprint touches a soundsystem, the dancefloor, the treehouse or a set piece (seed ${seed})`, () => {
       const map = generateMap(seed, t), forest = new Forest(map), d = map.dancefloor;

@@ -23,6 +23,12 @@
           "type": "number",
           "minimum": 0
         },
+        "island": {
+          "type": "string"
+        },
+        "found": {
+          "type": "array"
+        },
         "buffer": {
           "type": "number",
           "minimum": 0
@@ -67,10 +73,44 @@
         "shape",
         "radius",
         "islandAreas",
+        "island",
+        "found",
         "buffer",
         "push",
         "drift",
         "edge",
+        "coast"
+      ],
+      "additionalProperties": false
+    },
+    "islands": {
+      "type": "object",
+      "properties": {
+        "coast": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "detail"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
         "coast"
       ],
       "additionalProperties": false
@@ -133,6 +173,10 @@
               "type": "number",
               "minimum": 0
             },
+            "findScale": {
+              "type": "number",
+              "minimum": 0
+            },
             "trails": {
               "type": "number",
               "minimum": 0,
@@ -168,6 +212,7 @@
           "required": [
             "on",
             "finds",
+            "findScale",
             "trails",
             "prints",
             "clear",
@@ -979,12 +1024,33 @@
         "pad": {
           "type": "number",
           "minimum": 0
+        },
+        "featured": {
+          "type": "object",
+          "properties": {
+            "ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ids",
+            "chance"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "chance",
         "scale",
-        "pad"
+        "pad",
+        "featured"
       ],
       "additionalProperties": false
     },
@@ -1294,6 +1360,29 @@
           "type": "number",
           "minimum": 0
         },
+        "mix": {
+          "type": "object",
+          "properties": {
+            "ruins": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rocks": {
+              "type": "number",
+              "minimum": 0
+            },
+            "freak": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ruins",
+            "rocks",
+            "freak"
+          ],
+          "additionalProperties": false
+        },
         "minGap": {
           "type": "number",
           "minimum": 0
@@ -1316,6 +1405,7 @@
         "ruins",
         "rocks",
         "freak",
+        "mix",
         "minGap",
         "clearing",
         "pathGap",
@@ -1391,6 +1481,9 @@
           "type": "number",
           "minimum": 0
         },
+        "pieces": {
+          "type": "boolean"
+        },
         "fingerposts": {
           "type": "boolean"
         },
@@ -1422,6 +1515,7 @@
         "landmarkChance",
         "vergeSpacing",
         "pieceGap",
+        "pieces",
         "fingerposts",
         "treesOnBroken",
         "edgeBushes",
@@ -2609,6 +2703,14 @@
           "type": "number",
           "minimum": 0
         },
+        "flareDraw": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flare": {
+          "type": "number",
+          "minimum": 0
+        },
         "cardAfter": {
           "type": "number",
           "minimum": 0
@@ -2626,6 +2728,8 @@
         "joinSpeed",
         "seen",
         "legendRing",
+        "flareDraw",
+        "flare",
         "cardAfter",
         "retarget"
       ],
@@ -2655,6 +2759,10 @@
           "minimum": 0
         },
         "hatHold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "placedThrough": {
           "type": "number",
           "minimum": 0
         },
@@ -2819,6 +2927,7 @@
         "spacing",
         "runeRadius",
         "hatHold",
+        "placedThrough",
         "restAbove",
         "hex",
         "runePull",
@@ -3054,11 +3163,7 @@
           "type": "number",
           "minimum": 0
         },
-        "marchMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "marchOnRun": {
+        "marchShare": {
           "type": "number",
           "minimum": 0
         },
@@ -3126,8 +3231,7 @@
         "fightRun",
         "legendRun",
         "reaction",
-        "marchMult",
-        "marchOnRun",
+        "marchShare",
         "fleeMult",
         "soundsystemHealth",
         "soundsystemRadius",
@@ -9420,6 +9524,7 @@
   "required": [
     "mapAreas",
     "map",
+    "islands",
     "beach",
     "areaSize",
     "areaScale",

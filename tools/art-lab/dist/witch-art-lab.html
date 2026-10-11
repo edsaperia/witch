@@ -6724,10 +6724,10 @@ const ROOTS = [
 const TRUNK = [bezier([.43, .69], [.47, .6], [.46, .45], [.43, .36]), bezier([.58, .69], [.54, .6], [.55, .44], [.57, .36]), L([.505, .7], [.5, .34])];
 const WORLD_TREE = [...ROOTS, ...TRUNK, ...CROWN, ...knotBand()];
 SIGILS.worldTree = WORLD_TREE;
-// Each island's sigil (island -> sigil id): only home's for now, the World Tree, every map's (Ed, 2026-10-11: every map is the
-// home island until islands get their own legend kinds; add theirs here).
-const ISLAND_SIGILS = { home: "worldTree" };
-const islandSigil = (island = "home") => ISLAND_SIGILS[island] || ISLAND_SIGILS.home;
+// Each island's sigil (island or legend kind -> sigil id): home's (the Ent's) the World Tree, every map's for now (Ed, 2026-10-11).
+// Every other island is the home of one kind of legend (journey.md), and its sigil is that kind's own.
+const ISLAND_SIGILS = { home: "worldTree", ent: "worldTree" };
+const islandSigil = (island = "home") => ISLAND_SIGILS[island] || (SIGILS[island] ? island : ISLAND_SIGILS.home);
 
 // ---- legendary sigils ----
 // (Ed, 2026-10-06: "let's have the legendary sigils be huge, twice as wide and more detailed than the normal ones, with a
@@ -11787,7 +11787,8 @@ function areaPathKinds() { return pathKindsByArea(AREAS); }
 // Data:
 //   discoPatterns(): the pattern library. Each { id, name, kind, level, beats, fpb, palette, frames, key, area? }:
 //     kind: "shape" (a figure that holds and pulses), "loop" (motion that repeats), "fill" (texture for
-//       between shapes), "area" (an area's own shape, from its creature's sigil; area: the area's id),
+//       between shapes), "area" (an area's own shape, from its creature's sigil; area: the area's id; creature: its kind),
+//       "island" (the World Tree, home's sigil, on every island),
 //       "boot" (the switch-on sequence at game start).
 //     level: 1 (simple, calm) to 4 (full rave), so the engine can suit patterns to the party's intensity.
 //     beats: its length in beats (whole); fpb: frames per beat (1, 2 or 4); frames.length = beats * fpb.
@@ -12001,18 +12002,26 @@ function discoBoot() {
 // ================= each area's own shape: its creature's sigil, drawn on stroke by stroke then pulsing =================
 const discoContrast = name => ({ lemon: "violet", acid: "magenta", mint: "pink", cyan: "orange", blue: "lemon" }[name] || "lemon");
 function discoAreaPattern(A) {
-  const neon = SIGIL_NEON[A.creature] || "cyan", G = 22, off = (DISCO_GRID - G) / 2;
-  const arrive = sigilArrival(A.creature, G); // (once: each step of the draw-on is it up to that step, as sigilGlyph's progress)
+  return discoSigilPattern("area-" + A.id, A.name, "area", A.creature, SIGIL_NEON[A.creature] || "cyan", { area: A.id, creature: A.creature });
+}
+// A sigil's shape on the floor: drawn on stroke by stroke over 8 frames, then pulsing with a halo on the off-beats and the rim on the
+// bar; G tiles across (a creature's 22; the World Tree's 30, at the thinner line the boot writes it in, so its branches stay apart).
+function discoSigilPattern(id, name, kind, sigil, neon, extra, { G = 22, stroke } = {}) {
+  const off = (DISCO_GRID - G) / 2;
+  const arrive = sigilArrival(sigil, G, stroke ? { stroke } : undefined); // (once: each step of the draw-on is it up to that step, as sigilGlyph's progress)
   const glyphs = Array.from({ length: 8 }, (_, k) => ({ m: arrive.map(a => (a <= (k + 1) / 8 ? 1 : 0)) })), full = glyphs[7];
   const at = (g, x, y) => { const i = Math.floor(x + DC - off), j = Math.floor(y + DC - off); return i >= 0 && j >= 0 && i < G && j < G && g.m[j * G + i]; };
   const halo = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => at(full, x + dx, y + dy));
-  return discoPattern("area-" + A.id, A.name, "area", 2, 4, 4, [neon, discoContrast(neon)], k => (x, y) => {
+  return discoPattern(id, name, kind, 2, 4, 4, [neon, discoContrast(neon)], k => (x, y) => {
     if (k < 8) return at(glyphs[k], x, y) ? 1 : 0; // drawn on, stroke by stroke
     if (at(full, x, y)) return 1;
     if (k % 2 && halo(x, y)) return 2; // then pulsing, a halo on the off-beats
     if (k % 4 === 0 && Math.abs(Math.hypot(x, y) - 14.3) < .55) return 2;
-  }, { area: A.id, creature: A.creature });
+  }, { sigil, ...extra });
 }
+// The World Tree (Ed, 2026-10-11: "The sigils shown on the dancefloor during the game should only include ones that are found on that
+// island, plus the world tree"): home's sigil among the party's shapes on every island.
+const discoWorldTree = () => discoSigilPattern("island-worldTree", "The World Tree", "island", "worldTree", SIGIL_NEON.worldTree || "mint", {}, { G: 30, stroke: .045 });
 
 let discoLib = null;
 // The whole library, built once: the general patterns, the switch-on sequence, and one per area.
@@ -12020,7 +12029,7 @@ function discoPatterns() {
   if (discoLib) return discoLib;
   const general = [discoPentagram, discoMoon, discoEye, discoSpiral, discoRipples, discoRuneBand, discoSun, discoTriquetra, discoMushrooms, discoPaws, discoLightning, discoHeart, discoHand, discoKey, discoHat, discoRosette, discoStars,
     discoChecker, discoSparkle, discoSweep, discoWaves, discoKaleido, discoStrobe, discoPulse].map(f => f());
-  discoLib = [...general, discoBoot(), ...AREAS.map(discoAreaPattern)];
+  discoLib = [...general, discoBoot(), ...AREAS.map(discoAreaPattern), discoWorldTree()];
   return discoLib;
 }
 const discoPatternById = id => discoPatterns().find(p => p.id === id);

@@ -15,6 +15,7 @@ import type { Creature } from "./creatures";
 import { LEGEND } from "./creatures";
 import { befriend } from "./creatureStates";
 import { lull } from "./legends";
+import { islandSigilOf } from "./dancefloor";
 
 export type WinPhase = "stragglers" | "lap" | "won";
 
@@ -56,12 +57,15 @@ export interface WinTuning {
   seen: number;
   /** The woken legends' ring round the dancefloor (m). */
   legendRing: number;
+  /** The island's sigil on the dancefloor as it's won: seconds to draw it on, and how long it holds. */
+  flareDraw: number;
+  flare: number;
   /** Seconds from the win to the card; how often the stragglers' pointer re-picks. */
   cardAfter: number;
   retarget: number;
 }
 
-export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, legendRing: 22, cardAfter: 20, retarget: 0.25 };
+export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, legendRing: 22, flareDraw: 3, flare: 16, cardAfter: 20, retarget: 0.25 };
 const tuningOf = (g: Game): WinTuning => ({ ...WIN_DEFAULT, ...(g.tuning.win ?? {}) });
 
 /** A legend (an area's, or any at the legend level). */
@@ -87,11 +91,22 @@ export function nearestStraggler(g: Game): Creature | null {
 /** The stragglers' pointer's creature, while there are stragglers. */
 export const winTarget = (g: Game): Creature | null => (g.win?.phase === "stragglers" && g.win.target !== null ? g.creatures[g.win.target] : null);
 
-/** The night's dealt legends (part A's rosters to come: every area legend on this island for now). */
-export const dealtLegends = (g: Game): Creature[] => g.creatures.filter(c => !!c.boss);
+/** The night's dealt legends (rules/rosters.ts dealLegends: the map's legendKinds, each a legend in an area of its kind); a map
+ *  dealt none (no rosters: the radius map, old seeds' tools) has every area legend. */
+export const dealtLegends = (g: Game): Creature[] => { const K = g.map.legendKinds ?? []; return g.creatures.filter(c => !!c.boss && (!K.length || K.includes(c.species))); };
 
-/** The island's own sigil (part A: its legend kind's; for now home's, the World Tree). */
-export const islandSigil = (_g: Game): string => "worldTree";
+/** The island's own sigil (art/sigils.js islandSigil of rules/dancefloor.ts islandOf: the rosters' island's kind, its legend
+ *  kind's sigil; home's, the World Tree). */
+export const islandSigil = (g: Game): string => islandSigilOf(g.map);
+
+/** The island's sigil flaring on the dancefloor as the night's won: drawn on again over win.flareDraw seconds, held for
+ *  win.flare seconds (then the floor's party patterns again), or null. */
+export function winFlare(g: Game): { sigil: string; drawn: number } | null {
+  const w = g.win;
+  if (w?.phase !== "won" || w.wonAt === undefined) return null;
+  const T = tuningOf(g), since = g.clock.time - w.wonAt;
+  return since < T.flare ? { sigil: w.sigil, drawn: Math.min(1, since / Math.max(1e-3, T.flareDraw)) } : null;
+}
 
 /** The lap's stones: the route's, last reached first, then home. */
 function lapStones(g: Game, from: number, speed: number): WinState["lap"] {
@@ -104,14 +119,15 @@ function lapStones(g: Game, from: number, speed: number): WinState["lap"] {
 }
 
 /** Where the lap's pulse is: between which stones and how far (0 to 1), or null outside the lap. */
-export function winPulse(g: Game): { from: { x: number; z: number }; to: { x: number; z: number }; share: number; x: number; z: number } | null {
+/** (`links`: its place along the ley route as drawn, home's stone 0 and the route's j-th stone j: the stone it left, less the share.) */
+export function winPulse(g: Game): { from: { x: number; z: number }; to: { x: number; z: number }; share: number; x: number; z: number; links: number } | null {
   const w = g.win;
   if (!w || w.phase !== "lap" || w.lap.length < 2) return null;
   const t = g.clock.time;
   let i = 0;
   while (i < w.lap.length - 2 && t >= w.lap[i + 1].at) i++;
   const a = w.lap[i], b = w.lap[i + 1], share = Math.max(0, Math.min(1, (t - a.at) / Math.max(1e-6, b.at - a.at)));
-  return { from: a, to: b, share, x: a.x + (b.x - a.x) * share, z: a.z + (b.z - a.z) * share };
+  return { from: a, to: b, share, x: a.x + (b.x - a.x) * share, z: a.z + (b.z - a.z) * share, links: w.lap.length - 1 - i - share };
 }
 
 /** The conga's dancers: every animal on the island but the legends, in their places' order (round from the leader). */

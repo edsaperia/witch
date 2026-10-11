@@ -11,13 +11,16 @@
     "Each one turned along the line to the dancefloor, its front always to the camera, and from 0.8 to 1.6 times the size between 120 m and 1000 m out.",
     "Three stages of damage from its health before it falls, each stack breaking its own way: dead cones and cracks, a block knocked off and the projector cracked, then its top tiers fallen.",
     "Baked by the art workers at each area's own yaw and size, ahead of its wave, with a preview page of five real maps and a reroll.",
-    "The World Tree, home's island sigil (`art/sigils.js` `ISLAND_SIGILS`): a Celtic tree of life in the sigils' stroke family, its crown climbing into a band of knotwork, two strands weaving over and under, its roots spreading low and flat, drawn freehand rather than mirrored; through the boot the dancefloor writes it on stroke by stroke as the pulse goes round the ring (`islandTiles`)."
+    "The World Tree, home's island sigil (`art/sigils.js` `ISLAND_SIGILS`): a Celtic tree of life in the sigils' stroke family, its crown climbing into a band of knotwork, two strands weaving over and under, its roots spreading low and flat, drawn freehand rather than mirrored; through the boot the dancefloor writes it on stroke by stroke as the pulse goes round the ring (`islandTiles`).",
+    "Every island's picture for the legends' dreams and the sea chart (`art/islands.js`, `src/rules/islandShape.ts`): its coastline by the map's own coast maths, seeded by its kind and sized by its phase, a dark island in a rim of sand with its legend's sigil on it, whole pixels at a bubble's 30, or a path for the chart.",
+    "The dancefloor's sigils keep to the island (`islandKinds`, `rules/dancefloor.ts`): only the shapes of kinds on its roster come round, and the World Tree joins them; home's own cell, whose type no roster deals, had been slipping a stranger's sigil in."
   ],
   "learned": [
     "\"No two alike\" needs a measure: two stacks counted as different only when they differ in at least two traits, and the set is dealt nearest first so a re-roll falls on the further one.",
     "A wide stack turned side-on is a sliver, so the turn eases off towards its limit (a tanh) rather than stopping dead at it, a smaller limit for the widest profiles.",
     "A colour rule beats a list of good pairs: no crystal within 60 degrees of hue of a warm stone kept every stack's glow readable.",
-    "A sigil for 30 floor tiles wants a thinner line than the sigils' own: at the usual stroke the branches merged into a block, at two-thirds of it they stay apart and the dark lobes either side of the trunk carry the shape."
+    "A sigil for 30 floor tiles wants a thinner line than the sigils' own: at the usual stroke the branches merged into a block, at two-thirds of it they stay apart and the dark lobes either side of the trunk carry the shape.",
+    "An island drawn at the map's own 8% wobble is a coin at 30 pixels: it took a coastline nearly four times as rough before 32 islands could be told apart by shape alone."
   ],
   "previews": [
     {

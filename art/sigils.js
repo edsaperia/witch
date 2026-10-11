@@ -165,10 +165,10 @@ const ROOTS = [
 const TRUNK = [bezier([.43, .69], [.47, .6], [.46, .45], [.43, .36]), bezier([.58, .69], [.54, .6], [.55, .44], [.57, .36]), L([.505, .7], [.5, .34])];
 export const WORLD_TREE = [...ROOTS, ...TRUNK, ...CROWN, ...knotBand()];
 SIGILS.worldTree = WORLD_TREE;
-// Each island's sigil (island -> sigil id): only home's for now, the World Tree, every map's (Ed, 2026-10-11: every map is the
-// home island until islands get their own legend kinds; add theirs here).
-export const ISLAND_SIGILS = { home: "worldTree" };
-export const islandSigil = (island = "home") => ISLAND_SIGILS[island] || ISLAND_SIGILS.home;
+// Each island's sigil (island or legend kind -> sigil id): home's (the Ent's) the World Tree, every map's for now (Ed, 2026-10-11).
+// Every other island is the home of one kind of legend (journey.md), and its sigil is that kind's own.
+export const ISLAND_SIGILS = { home: "worldTree", ent: "worldTree" };
+export const islandSigil = (island = "home") => ISLAND_SIGILS[island] || (SIGILS[island] ? island : ISLAND_SIGILS.home);
 
 // ---- legendary sigils ----
 // (Ed, 2026-10-06: "let's have the legendary sigils be huge, twice as wide and more detailed than the normal ones, with a

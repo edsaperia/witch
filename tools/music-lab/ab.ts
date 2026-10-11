@@ -8,6 +8,7 @@ import { newBeatClock } from "../../src/rules/beat";
 import { Conductor, formClock, type MusicCue } from "../../src/rules/musicPlan";
 import { formChord, musicSeed, type MusicStyle, type NoteEvent } from "../../src/rules/musicScore";
 import styleJson from "../../config/music-style.json";
+import { FRAMES, FRAME_IDS, FRAMES_UP, KIT, PRESENCE_DB, VOCALISE_GAIN } from "./ingredients";
 
 const RATE = 44100;
 const base = styleJson as unknown as MusicStyle;
@@ -57,23 +58,6 @@ function witchStyle(): MusicStyle {
   s.mix = { ...s.mix, reverb: Math.min(1, s.mix.reverb * 1.8), reverbTime: 6 };
   return s;
 }
-
-/** The drum parts the CC0 kit replaces (the kicks stay synthesised: no ripped drum machines), each a sample or two. */
-const KIT: Record<string, { ids: string[]; gain: number; soft?: string }> = {
-  hat: { ids: ["hat-closed"], gain: 0.5, soft: "hat-closed-soft" }, ohat: { ids: ["hat-open"], gain: 0.35 },
-  clap: { ids: ["clap-1", "clap-2"], gain: 0.6 }, snare: { ids: ["snare"], gain: 0.6 }, snap: { ids: ["rimshot"], gain: 0.5 },
-  shaker: { ids: ["shaker-down", "shaker-up"], gain: 0.4 }, clank: { ids: ["claves", "log-high"], gain: 0.4 },
-};
-const KICKS = ["kick", "softkick", "hardkick", "boom"];
-/** The frame drums' ritual pattern over the beat (a bar: L large open, M large muted, H small open, d doum, t tek). */
-const FRAMES = ["L..t..H.M.t.H..t", "L..t..H.M.t.d.tt"];
-/** The frame drums' level: 3.2 times their first renders' (Ed: "I can't hear the frame drums"; their stem measured -25 LUFS
- *  against the music's -13.5, buried under the kick). */
-const FRAMES_UP = 3.2;
-/** The vocalise's level and its presence lift (Ed: "I can't hear ... the vocalise"; it was in, at about the old soprano's
- *  level, so it didn't stand out): twice the first renders', a 3 kHz lift. */
-const VOCALISE_GAIN = 1.1, PRESENCE_DB = 6;
-const FRAME_IDS: Record<string, string> = { L: "frame-low", M: "frame-low-muted", H: "frame-high", d: "darbuka-doum", t: "darbuka-tek" };
 
 async function abRender(o: AbOptions) {
   const style = o.witch ? witchStyle() : base, spb = 60 / style.bpm / 4, seconds = o.bars * 16 * spb + 3;
