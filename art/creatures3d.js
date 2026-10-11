@@ -712,6 +712,30 @@ export function beetle3d(S, level, frame, st, facing = "towards") {
   return finish(m, S, level, st, .5, facing);
 }
 
+// The scarab (Ed, 2026-10-11: the south's sun scarab, "a domed beetle with a horn"): a high round dome of wing cases split down the
+// middle, a broad shield behind its head, a rake of teeth across its face, one horn curving up off its head (longer each level),
+// stout toothed front legs for digging; a legend (feature sunBall) rolls a glowing ball of light ahead of it.
+export function scarab3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
+  for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six legs, the front pair stout and toothed for digging
+    const x = .28 - i * .27, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .2, side * .22], w = i === 0 ? .04 : .03;
+    m.chain([[...base, w], [x + ph + (1 - i) * .08, .28, side * .44, w * .85], [x + ph * 1.5 + (1 - i) * .16, .02, side * .54, w * .5]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
+    if (i === 0) for (const k of [.35, .65]) m.ell([x + (ph + .08) * k * 1.4, .28 - .26 * k, side * (.44 + .1 * k)], [.03, .015, .02], M.BODY3, { group: side > 0 ? 7 : 2 });
+  }
+  m.ell([-.1, .38, 0], [.42, .3, .34], M.BODY, { paint: p => Math.abs(p[2]) < .016 && p[1] > .45 ? M.LINE : p[1] > .58 && p[2] > .04 && p[2] < .16 ? M.BELLY : undefined }); // the dome: its wing cases, a seam, a sheen
+  m.ell([.3, .34, 0], [.16, .2, .3], M.BODY, { group: 1, paint: p => p[1] > .48 && p[2] > .02 && p[2] < .14 ? M.BELLY : undefined }); // the shield behind its head
+  const hc = [.48, .26, 0];
+  m.ell(hc, [.1, .08, .18], M.BODY2, { group: 1 });
+  for (let t = -2; t <= 2; t++) m.ell([hc[0] + .1, hc[1] - .02, t * .055], [.03, .02, .022], M.BODY3, { group: 1 }); // the rake of teeth across its face
+  const hl = [.16, .3, .46, .56][level], hm = legend ? M.MAGIC : M.BODY3; // its horn, curving up and back
+  m.chain([[hc[0] + .08, hc[1] + .04, 0, .06], [hc[0] + .16, hc[1] + .04 + hl * .55, 0, .042], [hc[0] + .1, hc[1] + .04 + hl, 0, .016]], hm, { group: 8 });
+  eyesOn(m, hc, [.1, .08, .18], [[.4, .3, .85], [.4, .3, -.85]], .03, legend ? M.MAGIC2 : M.EYE, 9);
+  m.anchors.head = { c: hc, r: [.1, .08, .18], top: [hc[0], hc[1] + .08, 0] };
+  if (has("sunBall")) m.ell([hc[0] + .62, .26, 0], [.25, .25, .25], M.GLOW, { group: 10, extra: true, paint: p => spotty(p, 14, .25) ? M.BELLY : undefined }); // the sun it rolls
+  if (has("crystals")) crystals3d(m, [[[-.3, .62, .1], .3], [[-.05, .66, -.08], .42], [[.15, .58, .1], .32]]);
+  return finish(m, S, level, st, .55, facing);
+}
+
 // The snail: its foot, eye stalks and shell. Its genome levels shape it (each level its own design: docs/art-guide/EVOLUTIONS.md):
 // body.shell { turns, cone (0 a flat spiral seen side on, 1+ raised into a tower), r (its mouth's whorl radius), ridge (a ridge on
 // each whorl), bands (stripes per turn, amber and umber), pale (a baby's near-clear shell), glow (its mouth glowing amber),
