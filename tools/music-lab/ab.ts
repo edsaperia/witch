@@ -16,6 +16,9 @@ const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
 export interface AbOptions {
   wave: number; seed: number; bars: number;
   drone?: boolean; chant?: boolean; frames?: boolean; tape?: boolean; kit?: boolean; vocalise?: boolean; witch?: boolean;
+  /** Recorded voices from Freesound (samples/voices, CC0): a crowd's "uh" retuned to the chords as a choir, whispers in the
+   *  breakdown, and throat singing as a drone voice on the tonic (the kargyraa, an octave lower, for the witch-house take). */
+  recorded?: boolean;
   /** Base64 WAVs sung by Node (tools/voice/sing.mjs): the chant and the vocalise, from time 0. */
   voices?: { chant?: string; vocalise?: string };
   /** Base64 Ogg samples by id (samples/vcsl). */
@@ -124,6 +127,29 @@ async function abRender(o: AbOptions) {
     for (const s of [0, 10]) { hit("bass-drum", t0 + s * spb, 0.8); const sub = oc.createOscillator(), sg = oc.createGain(); sub.frequency.setValueAtTime(110, t0 + s * spb); sub.frequency.exponentialRampToValueAtTime(440 * 2 ** ((score.roots[bar] - 69) / 12), t0 + s * spb + 0.12); sg.gain.setValueAtTime(0.5, t0 + s * spb); sg.gain.exponentialRampToValueAtTime(0.001, t0 + s * spb + 1.4); sub.connect(sg).connect(bus); sub.start(t0 + s * spb); sub.stop(t0 + s * spb + 1.5); }
     hit("snare", t0 + 8 * spb, 0.55); hit("clap-1", t0 + 8 * spb, 0.45);
     for (let s = 0; s < 16; s++) { if (bar % 4 === 3 && s >= 12) { for (let k = 0; k < 3; k++) hit("hat-closed-soft", t0 + (s + k / 3) * spb, 0.25); } else hit(s % 4 === 2 ? "hat-closed" : "hat-closed-soft", t0 + s * spb, 0.3); }
+  }
+  // recorded voices (Freesound, CC0): each a stretch of its file, retuned by playback rate (their pitches measured: the crowd
+  // sings F3 a little sharp, 53.2; the cave's throat singing holds about 42.8; the kargyraa about 37.1), faded in and out
+  const seg = (id: string, at: number, offset: number, dur: number, rate: number, gain: number, pan = 0, fade = 0.3) => {
+    const b = samples[id]; if (!b) return;
+    const src = oc.createBufferSource(), g = oc.createGain(), p = oc.createStereoPanner();
+    src.buffer = b; src.playbackRate.value = rate; p.pan.value = pan;
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(gain, at + fade); g.gain.setValueAtTime(gain, at + dur - fade); g.gain.linearRampToValueAtTime(0, at + dur);
+    src.connect(g).connect(p).connect(bus); src.start(at, offset, dur * rate + 0.05);
+  };
+  if (o.recorded) {
+    const near = (m: number, to: number) => { let x = m; while (x < to - 6) x += 12; while (x > to + 6) x -= 12; return x; };
+    const bar = score.barSeconds;
+    // the choir: the crowd's "uh" on each two bars' chord root and its fifth
+    for (let b = 0; b < o.bars; b += 2) {
+      const quiet = /drop|Drop/.test(score.sections[b]) ? 0.5 : 1, root = near(score.roots[b], 53.2);
+      for (const [m, g, pan] of [[root, 0.32, -0.3], [root + 7, 0.2, 0.3]] as [number, number, number][]) seg("crowd-uh-f", b * bar, 1.5, Math.min(2 * bar, 4.3 / (2 ** ((m - 53.2) / 12))), 2 ** ((m - 53.2) / 12), g * quiet, pan, 0.4);
+    }
+    // whispers over the breakdown
+    for (let b = 0; b < o.bars; b++) if (/breakdown|ether|whisper/.test(score.sections[b]) && (b === 0 || !/breakdown|ether|whisper/.test(score.sections[b - 1]))) seg("whispers", b * bar, 0, Math.min(9, (o.bars - b) * bar), 1, 0.3, 0.2, 0.8);
+    // a throat-sung drone on the tonic (the cave's an octave above the root; the kargyraa at the root, for the witch-house take)
+    const [id, pitch, len] = o.witch ? ["kargyraa", 37.1, 10] : ["throat-cave", 42.8, 12], to = o.witch ? score.root : score.root + 12, rate = 2 ** ((to - pitch) / 12);
+    for (let t = 0; t < o.bars * bar; t += (len / rate) - 2) seg(id, t, 0.6, Math.min(len / rate - 0.6, o.bars * bar - t), rate, 0.22, 0, 1);
   }
   // the voices Node sang: the chant (pitched down for the witch-house take) and the vocalise
   for (const [k, gain] of [["chant", 0.5], ["vocalise", 0.55]] as const) {

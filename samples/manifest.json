@@ -209,6 +209,61 @@
       "sourceSha256": "885ebf1d70f8e888f576682e4e4112b92b69649162f392c83b3379c91a09cf41",
       "processing": "mono, leading silence trimmed, cut to 0.6 s with a 0.15 s fade, peak-normalised to -1 dBFS (+17.5 dB), Opus 64 kbps",
       "bytes": 4409
+    },
+    {
+      "file": "voices/crowd-uh-f.ogg",
+      "what": "A medium-sized crowd singing \"uh\" on a concert F (GameSoundCon 2024 walla, Shane Vincent)",
+      "source": "https://freesound.org/people/ShangusBurger/sounds/764344/",
+      "licence": "CC0-1.0",
+      "author": "ShangusBurger",
+      "credit": "\"A medium-sized crowd singing \"uh\" on a concert F (GameSoundCon 2024 walla, Shane Vincent)\" by ShangusBurger on Freesound (CC0-1.0)",
+      "sourceSha256": "5d57877ef1980aaf4fc8b14d62ca4ea7c86ac6f125bd5ce9940b5c58cd01c160",
+      "processing": "mono, leading silence trimmed, cut to 6 s with a 0.50 s fade, peak-normalised to -1 dBFS (+15.4 dB), Opus 64 kbps",
+      "bytes": 49928
+    },
+    {
+      "file": "voices/female-chops.ogg",
+      "what": "Soft female vocal chops (the uploader's own singing)",
+      "source": "https://freesound.org/people/chenny0607/sounds/437584/",
+      "licence": "CC0-1.0",
+      "author": "chenny0607",
+      "credit": "\"Soft female vocal chops (the uploader's own singing)\" by chenny0607 on Freesound (CC0-1.0)",
+      "sourceSha256": "11c327701fc450eb0322412d51e5b22db3c2093810be59985d0f0c045ee560d3",
+      "processing": "mono, leading silence trimmed, cut to 15 s with a 0.50 s fade, peak-normalised to -1 dBFS (+11.5 dB), Opus 64 kbps",
+      "bytes": 121878
+    },
+    {
+      "file": "voices/kargyraa.ogg",
+      "what": "Kargyraa throat chant, low register (the uploader's own)",
+      "source": "https://freesound.org/people/Hjaarlmarch/sounds/732443/",
+      "licence": "CC0-1.0",
+      "author": "Hjaarlmarch",
+      "credit": "\"Kargyraa throat chant, low register (the uploader's own)\" by Hjaarlmarch on Freesound (CC0-1.0)",
+      "sourceSha256": "71b14fe8c1e2a9b90ade5dc18c97d4a69702c7c367f95ce2bc076a41763fd4b9",
+      "processing": "mono, leading silence trimmed, cut to 10 s with a 0.50 s fade, peak-normalised to -1 dBFS (-0.7 dB), Opus 64 kbps",
+      "bytes": 82315
+    },
+    {
+      "file": "voices/throat-cave.ogg",
+      "what": "Throat singing in a cave (the uploader's own)",
+      "source": "https://freesound.org/people/ItsThatRoboGuy/sounds/816640/",
+      "licence": "CC0-1.0",
+      "author": "ItsThatRoboGuy",
+      "credit": "\"Throat singing in a cave (the uploader's own)\" by ItsThatRoboGuy on Freesound (CC0-1.0)",
+      "sourceSha256": "8324e267cb60f1118edb172c102332bd8be8a807ea950da2b399620292652bdb",
+      "processing": "mono, leading silence trimmed, cut to 12 s with a 0.50 s fade, peak-normalised to -1 dBFS (+9.7 dB), Opus 64 kbps",
+      "bytes": 105299
+    },
+    {
+      "file": "voices/whispers.ogg",
+      "what": "Four voices whispering (the uploader's own, layered)",
+      "source": "https://freesound.org/people/geoneo0/sounds/193812/",
+      "licence": "CC0-1.0",
+      "author": "geoneo0",
+      "credit": "\"Four voices whispering (the uploader's own, layered)\" by geoneo0 on Freesound (CC0-1.0)",
+      "sourceSha256": "cd661aee23a325860861ac3b3e5fa017169d0fffd5ea9e904fea94a2b99d68bf",
+      "processing": "mono, leading silence trimmed, cut to 9 s with a 0.50 s fade, peak-normalised to -1 dBFS (+14.4 dB), Opus 64 kbps",
+      "bytes": 64459
     }
   ]
 }

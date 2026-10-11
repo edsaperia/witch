@@ -4,12 +4,13 @@
 // headless Chromium, then again with one ingredient more each time:
 //   0 the music as it is; 1 + a drone; 2 + a chant (Pink Trombone, a low voice, syllables); 3 + frame drums (VCSL);
 //   4 + tape wobble and crackle; 5 + the CC0 kit in the synthesised drums' place (the kicks stay); 6 + the vocalise (Pink
-//   Trombone, a soprano) singing B and C; and a bonus witch-house take (Phrygian, half-time drums, the chant pitched down,
-//   a huge reverb). Each loudness-matched (ffmpeg loudnorm, -16 LUFS) so louder doesn't win, as mp3; and the voices alone
+//   Trombone, a soprano) singing B and C; 7 + recorded voices (Freesound, CC0: a crowd's choir on the chords, whispers,
+//   throat singing on the tonic); and a bonus witch-house take (Phrygian, half-time drums, the chant pitched down, the
+//   kargyraa, a huge reverb). Each loudness-matched (ffmpeg loudnorm, -16 LUFS) so louder doesn't win, as mp3; and the voices alone
 //   and the kit's samples in a row. Fails on a script error, NaN or silence. Nothing here touches the game.
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,7 +32,7 @@ page.on("pageerror", e => errors.push(String(e)));
 await page.setContent("<!doctype html><meta charset=utf-8><body></body>");
 await page.addScriptTag({ content: code });
 const base = { wave: +wave, seed: +seed, bars: +bars };
-const samples = Object.fromEntries(readdirSync(join(root, "samples/vcsl")).filter(f => f.endsWith(".ogg")).map(f => [f.replace(/\.ogg$/, ""), readFileSync(join(root, "samples/vcsl", f)).toString("base64")]));
+const samples = Object.fromEntries(["vcsl", "voices"].flatMap(d => readdirSync(join(root, "samples", d)).filter(f => f.endsWith(".ogg")).map(f => [f.replace(/\.ogg$/, ""), readFileSync(join(root, "samples", d, f)).toString("base64")])));
 
 // the voices, sung in Node to the passage's score: the vocalise to the sung part's notes, the chant on each bar's root
 const VOWELS = ["ah", "oh", "ee", "eh", "ah", "oo"], ONSETS = ["m", "n", "l", "m"];
@@ -64,7 +65,8 @@ const steps = [
   ["ab-4-tape", { drone: true, chant: true, frames: true, tape: true }],
   ["ab-5-cc0-kit", { drone: true, chant: true, frames: true, tape: true, kit: true }],
   ["ab-6-vocalise", { drone: true, chant: true, frames: true, tape: true, kit: true, vocalise: true }],
-  ["ab-bonus-witch-house", { witch: true, drone: true, chant: true, tape: true, vocalise: true }],
+  ["ab-7-recorded-voices", { drone: true, chant: true, frames: true, tape: true, kit: true, vocalise: true, recorded: true }],
+  ["ab-bonus-witch-house", { witch: true, drone: true, chant: true, tape: true, vocalise: true, recorded: true }],
 ];
 for (const [name, flags] of steps) {
   const v = flags.witch ? witchy : plain;
@@ -79,7 +81,14 @@ for (const [name, flags] of steps) {
 await browser.close();
 // the voices alone, and the kit's samples one after another
 for (const [name, b] of [["voice-vocalise", plain.vocalise], ["voice-chant", plain.chant]]) { const f = join(out, `${name}.wav`); writeFileSync(f, b); enc(f, name); }
-const list = join(out, "kit.txt"), ids = Object.keys(samples).sort(), parts = [];
+// the recorded voices as they are, one after another
+{ const vs = readdirSync(join(root, "samples/voices")).filter(f => f.endsWith(".ogg")).sort(), parts = [], list = join(out, "voices.txt");
+  for (const v of vs) { const p = join(out, `rv-${v}.wav`); execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", join(root, "samples/voices", v), "-af", "apad=pad_dur=0.6", "-ar", "48000", "-ac", "1", p]); parts.push(p); }
+  writeFileSync(list, parts.map(p => `file '${p}'\n`).join(""));
+  execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", list, "-b:a", "128k", join(out, "recorded-voices.mp3")]);
+  for (const p of [list, ...parts]) unlinkSync(p);
+  console.log(`     wrote ${join(outArg, "recorded-voices.mp3")} (${vs.join(", ")})`); }
+const list = join(out, "kit.txt"), ids = Object.keys(samples).filter(id => existsSync(join(root, "samples/vcsl", id + ".ogg"))).sort(), parts = [];
 for (const id of ids) { const p = join(out, `kit-${id}.wav`); execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", join(root, "samples/vcsl", id + ".ogg"), "-af", "apad=pad_dur=0.35", "-ar", "48000", "-ac", "1", p]); parts.push(p); }
 writeFileSync(list, parts.map(p => `file '${p}'\n`).join(""));
 execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", list, "-b:a", "160k", join(out, "kit-samples.mp3")]);
