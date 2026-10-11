@@ -97,7 +97,7 @@ function measure(seed, sp, n, level, bot, t) {
         const px = -threat.z, pz = threat.x;
         const score = s => { const x = B.x + px * s * 10, z = B.z + pz * s * 10; return (inArea(x, z) ? 0 : -1e6) + Math.min(1e3, ...onHer.map(c => Math.hypot(c.x - x, c.z - z))); };
         const s = score(1) >= score(-1) ? 1 : -1;
-        dash = true; aimX = px * s * 10; aimZ = pz * s * 10;
+        dash = true; mx = px * s; mz = pz * s; aimX = mx * 10; aimZ = mz * 10; // (a blink goes the way she's moving)
       }
     }
     if (process.env.DBG && f % 30 === 0) { const c = g.creatures[ids[0]]; console.log(bot, time.toFixed(1), "d", Math.hypot(c.x - B.x, c.z - B.z).toFixed(1), "v", Math.hypot(B.vx, B.vz).toFixed(1), "cv", Math.hypot(c.vx ?? 0, c.vz ?? 0).toFixed(1), c.fight?.target?.kind ?? "-", c.fight?.windupUntil ? "W" : "", c.fight?.lunge ? "L" : "", c.retreat ? "R" : "", c.hunting ?? "", "watch", c.watchUntil !== undefined && c.watchUntil > time ? "y" : "", c.charge ? "CHARGE" : "", c.stunUntil !== undefined && c.stunUntil > time ? "STUN" : "", "hp", w.health.hp, "ready", c.fight ? (time - c.fight.readyAt).toFixed(1) : "-"); }
