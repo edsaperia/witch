@@ -110,7 +110,8 @@ export function partyRelicColours(id, st = {}) {
 }
 // The light a relic gives the ground round it (for the lighting pass, like the magic stones'): its liquid's colour, how far it
 // reaches and how high it sits (metres), and a slow pulse (seconds a breath).
-export const partyRelicLight = id => ({ rgb: PARTY_RELIC_BY_ID[id].liquid, radius: 10, height: 2.5, pulse: 3.2 });
+// Its light on the ground: 3 m round, from 1 m up in the glass (Ed, 2026-10-11: scaled down with the bottle, a third of its size; it was 10, from 2.5 m).
+export const partyRelicLight = id => ({ rgb: PARTY_RELIC_BY_ID[id].liquid, radius: 3, height: 1, pulse: 3.2 });
 export const PARTY_RELIC_FRAMES = 3; // the motes' frames, at about 4 fps
 
 // One relic, drawn: { sp, origin (its middle on the ground, in px), glint (where it catches the light: its highest highlight), light,
