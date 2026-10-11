@@ -539,12 +539,12 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
     }
     return false;
   };
-  // A featured scene (Ed, 2026-10-11: the temple ruins on most islands): on a map at its chance, in the first area it suits that has
+  // A featured scene, one of its ids (Ed, 2026-10-11: the temple ruins on most islands, the Greek temple or the classical ruins): on a map at its chance, in the first area it suits that has
   // room, else in any area that has room (an island of 10 areas often has none of the types it suits).
-  const FS = SC.featured;
-  if (FS && SCENES.some(sc => sc.id === FS.id) && hash2(seed, 7, seed + 889) < FS.chance) {
-    const suits = SCENES.find(sc => sc.id === FS.id)!.suits ?? [], fit = (c: [number, number, number]) => (suits.includes(AREA_TYPES[typeOf(c[0], c[1])].id) ? 0 : 1);
-    for (const [cx, cy] of [...order].sort((p, q) => fit(p) - fit(q) || p[2] - q[2])) if (placeScene(FS.id, cx, cy)) break;
+  const FS = SC.featured, pool = (FS?.ids ?? []).filter(id => SCENES.some(sc => sc.id === id));
+  if (FS && pool.length && hash2(seed, 7, seed + 889) < FS.chance) {
+    const fid = pool[Math.floor(hash2(seed, 9, seed + 891) * pool.length)], suits = SCENES.find(sc => sc.id === fid)!.suits ?? [], fit = (c: [number, number, number]) => (suits.includes(AREA_TYPES[typeOf(c[0], c[1])].id) ? 0 : 1);
+    for (const [cx, cy] of [...order].sort((p, q) => fit(p) - fit(q) || p[2] - q[2])) if (placeScene(fid, cx, cy)) break;
   }
   for (const [cx, cy, roll] of order) {
     if (roll >= SC.chance) continue;

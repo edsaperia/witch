@@ -356,7 +356,7 @@ export interface Tuning {
    *  sized to the legend), a soft edge ring edge metres wide, the legend lying top of the radius toward its far (north) side. */
   legendClearing: { radius: number; edge: number; top: number; minFromStone: number; minFromOtherStones?: number; floor: { on: boolean; overgrowth: number; slab: number; glint: number }; rim: { spacing: number; chance: number; out: number; spread: number; gap: number }; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number> };
   /** Scenes (art/scenes.js): the share of areas that get one (if an unused scene suits them); footprint = farthest piece's authored offset times scale, plus pad metres. */
-  scenes: { chance: number; scale: number; pad: number; /** one scene placed on most maps (Ed, 2026-10-11: the temple ruins), at this chance a map, suited areas first, then any */ featured?: { id: string; chance: number } };
+  scenes: { chance: number; scale: number; pad: number; /** one scene placed on most maps (Ed, 2026-10-11: the temple ruins), at this chance a map, suited areas first, then any */ featured?: { ids: string[]; chance: number } };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };

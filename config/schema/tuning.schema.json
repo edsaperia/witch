@@ -1028,8 +1028,11 @@
         "featured": {
           "type": "object",
           "properties": {
-            "id": {
-              "type": "string"
+            "ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
             "chance": {
               "type": "number",
@@ -1037,7 +1040,7 @@
             }
           },
           "required": [
-            "id",
+            "ids",
             "chance"
           ],
           "additionalProperties": false

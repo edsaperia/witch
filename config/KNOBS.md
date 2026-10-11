@@ -231,14 +231,14 @@ Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circ
 
 ### `scenes`, `grounds`, `legendClearing`
 
-Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own). featured: one scene placed on a map at its chance, in an area it suits if there is room, else in any (Ed, 2026-10-11: the temple ruins on most islands; DECISION FOR ED: greek-temple, or classical-ruins).
+Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own). featured: one of ids (seeded) placed on a map at its chance, in an area it suits if there is room, else in any (Ed, 2026-10-11: the temple ruins on most islands, "both": the Greek temple or the classical ruins).
 
 | knob | type | range |
 |---|---|---|
 | `scenes.chance` | number | 0 to … |
 | `scenes.scale` | number | 0 to … |
 | `scenes.pad` | number | 0 to … |
-| `scenes.featured.id` | string |  |
+| `scenes.featured.ids` | array of string |  |
 | `scenes.featured.chance` | number | 0 to … |
 | `grounds.chance` | number | 0 to … |
 | `grounds.kinds` | array of string |  |
