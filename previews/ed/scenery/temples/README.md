@@ -14,7 +14,7 @@ These sit on about 80% of islands:
 - **temple-portico**: a portico half buried in a grassy mound, with only the tops of its columns and its pediment showing.
 - **temple-theatre**: an overgrown theatre, with tiers of seats in a half ring round a stage.
 
-Each large one has a few fallen pieces round it (drums, a pediment corner, a statue), chosen by its seed.
+Each large one has a few fallen pieces round it (drums, a pediment corner, the headless statue), chosen by its seed.
 
 ## `small.png`: scattered in many more area types
 - **ruin-columns**: a few columns in a row.
@@ -23,6 +23,10 @@ Each large one has a few fallen pieces round it (drums, a pediment corner, a sta
 - **ruin-altar**: an altar on its steps.
 
 Each small one has rubble and a fallen drum beside it.
+
+## Ed's notes on #698 (2026-10-11)
+- **The stone head is gone.** The statue's toppled head with its faintly lit eyes no longer appears in any scene (classical-ruins has a fallen drum in its place) or in the ruins scattered over the map. The headless statue stays.
+- **They appear both ways.** Every temple-* and ruin-* scene is mirrored at random like the other scenes: 123 of 259 placed over 200 maps were mirrored.
 
 ## How they draw
 None of them is split into a top half that hides like the canopy (Ed: "none of these need their top halves to be hidden"). This applies to every classical piece and the Greek temple too.
