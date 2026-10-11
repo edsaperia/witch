@@ -23,6 +23,7 @@ import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, 
 import { clearedAreas } from "./clear";
 import { bootShare, stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
+import { homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
 import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, speakerStateOf, type SpeakerState } from "./speakers";
@@ -268,14 +269,20 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
  *  "pickup", rules/leash.ts), or by filling it again (the old "again"). How many letters fill it is the tuning's invites.hits (buffs change it);
  *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace); it drains at the
  *  tuning's invites.drain (buffs change it; states.json's affection.drain only when that's missing), after states.json's drainDelay. */
+/** Napping (rules/creatures.ts stepNaps): asleep with a nap's end, so a letter can rouse it; not the party's over's sleep. */
+const napper = (c: Creature): boolean => !!c.asleep && c.napUntil !== undefined;
+
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, E = t.legends;
   const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain } };
   return {
-    invitable: c => !c.asleep && invitableNow(c, data), // (a sleeper isn't to be invited: she wakes it by landing in its area)
+    // A napper takes them (Ed, 2026-10-11: "Letters wake them"): the 💌 rouses it, wherever she is, and lands as any other (hit,
+    // below). One asleep for good (the party's over: no napUntil) still lets them by.
+    invitable: c => (napper(c) ? invitableNow({ ...c, asleep: false }, data) : invitableNow(c, data)), // (as if up: the letter wakes it)
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
     hit(c, amount, at) {
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
+      if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
       hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time) }, c, amount, time, data);
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
@@ -590,6 +597,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),
     centre: g.map.dancefloor,
+    home: homeArea(g.map),
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },

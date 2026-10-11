@@ -226,6 +226,9 @@ export interface CombatWorld {
   centre?: { x: number; z: number };
   /** Whether (x, z) is out of every witch's sight (far beyond the haze): a fleeing creature there is gone. */
   unseen: (x: number, z: number) => boolean;
+  /** The home area (the dancefloor's): whether (x, z) is in it, and a circle (x, z, r) holding all of it. A party animal parked
+   *  with its sigil in it guards the whole of it (Ed, 2026-10-11). */
+  home?: { inside: (x: number, z: number) => boolean; x: number; z: number; r: number };
   /** Whether (x, z) is in the creature's own area. */
   inArea: (c: Creature, x: number, z: number) => boolean;
   /** A wild creature still asleep (a dormant legend): no fighting. */
