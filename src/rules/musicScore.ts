@@ -12,7 +12,7 @@ export interface Patch {
    *  tone; synth: oscillators through a filter; bell: two square tones (a cowbell, pitched);
    *  riser: noise swept up over a build; impact: a noise burst and a falling sub; voice: a sung
    *  note, synthesised (a buzz through vowel formants, vibrato, breath). */
-  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact";
+  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact" | "fof";
   gain: number;
   /** synth: oscillator shapes (one oscillator each, spread by detune cents). */
   waves?: OscillatorType[];
@@ -50,6 +50,14 @@ export interface Patch {
   formantShift?: number;
   vibrato?: number;
   breath?: number;
+  /** The FOF singing voice (kind "fof": Mike Olsen's pm.SFFormantModelFofSmooth, platform/audio/fof; Ed, 2026-10-11): its
+   *  type (alto, bass, countertenor, soprano, tenor), its unison's detune (cents), its vibrato's depth (cents here; the
+   *  formant voice's are its own), rate (Hz) and delay (s), and an octave-up double's level (formants kept). Its vowels morph
+   *  note to note (and to the next within a long note); `vibrato`, `breath`, `attack` and `release` as above. */
+  voiceType?: string;
+  vibratoRate?: number;
+  vibratoDelay?: number;
+  octave?: number;
   /** The part's channel: a high-pass (Hz) to keep the low end clear, and its place left (-1) to right (1). */
   hp?: number;
   pan?: number;
@@ -184,6 +192,9 @@ export interface MusicStyle {
   /** A night's set (rules/musicSet.ts; Ed, 2026-10-11): the genre families a night's arc is dealt from, the set's rules, and
    *  the first home night, hand-picked. The `arc` below plays without them (the labs, a style without a set). */
   families?: Record<string, FamilyDef>;
+  /** The voice line's ethereal effects (platform/audio/voiceFx.ts; Ed, 2026-10-11): each a level 0 (off) to 1, on the form's
+   *  sung part and the parts listed in `parts`. None: the voice dry, as before. */
+  voiceFx?: { parts?: string[]; chorus?: number; saturation?: number; air?: number; delay?: number; hall?: number; shimmer?: number; duck?: number; swells?: number; freeze?: number; whisper?: number; octave?: number };
   set?: SetDef;
   curated?: { island: string; waves: number; steps: CuratedStep[] };
   arc: ArcStep[];

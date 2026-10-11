@@ -8,7 +8,8 @@ import { newBeatClock } from "../../../src/rules/beat";
 import type { MusicStyle, NoteEvent, PartUse } from "../../../src/rules/musicScore";
 import { Player } from "./player";
 import { nightStyle, planNight, type NightSet } from "../../../src/rules/musicSet";
-import { defaultState, heard, LAYERS, LAYER_NAMES, MODES, parseSettings, settingsJson, VOICES, type Defaults, type LabState, type Layer, type Voice } from "./settings";
+import { defaultState, FX, FX_NAMES, heard, LAYERS, LAYER_NAMES, MODES, parseSettings, settingsJson, VOICES, type Defaults, type Fx, type LabState, type Layer, type Voice } from "./settings";
+import { fofReady } from "../../../src/platform/audio/fof/fof";
 
 const BASE = styleJson as unknown as MusicStyle;
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
@@ -52,6 +53,10 @@ function styleFor(s: LabState): MusicStyle {
   st.bpm = s.bpm; st.scale = s.mode;
   st.arc = st.arc.map(a => ({ ...a, bpm: undefined }));
   if (s.witchHouse) st.mix = { ...st.mix, reverb: Math.min(1, st.mix.reverb * 1.8), reverbTime: 6 };
+  // the voice: the FOF singer for the melody (Ed, 2026-10-11), the FOF choir on the choir part's chords, the voice effects
+  if (s.voice === "fof" && st.form && st.patches.fofSoprano) st.form = { ...st.form, sung: { ...st.form.sung, patch: "fofSoprano" } };
+  if (s.fofChoir && st.parts.choir && st.patches.fofChoir) st.parts = { ...st.parts, choir: { ...st.parts.choir, patch: "fofChoir" } };
+  if (FX.some(f => s.voiceFx[f] > 0)) st.voiceFx = { ...s.voiceFx };
   const v = st.sections[VICTORY];
   if (v) {
     v.transpose = s.victory.transpose;
@@ -94,8 +99,12 @@ async function play(): Promise<void> {
   await ctx.resume();
   $("play").textContent = "Loading…";
   await loading;
+  await fofReady(ctx); // (the FOF voice's worklet: with none, the formant voice sings its notes)
   restart();
 }
+
+/** The voice effects' ethereal preset (the voices' A/B's: tools/music-lab/voices.mjs). */
+const ETHEREAL: Record<Fx, number> = { chorus: 0.5, saturation: 0.15, air: 0.5, delay: 0.35, hall: 0.6, shimmer: 0.5, duck: 0.3, swells: 0.6, freeze: 0.5, whisper: 0.25, octave: 0.3 };
 
 /** The set view's night in miniature: this many bars a wave, at the tempo slider's bpm (the gameplay sets the game's). */
 const NIGHT_BARS = 8;
@@ -211,7 +220,7 @@ let lastStyleKey = "";
 function changed(): void {
   save();
   showSettings();
-  const key = JSON.stringify([state.mode, state.witchHouse, state.victory]);
+  const key = JSON.stringify([state.mode, state.witchHouse, state.victory, state.voice, state.fofChoir, FX.map(f => state.voiceFx[f] > 0)]); // (a voice effect's level is set live; one turned on or off rebuilds the voice's chain)
   if (key !== lastStyleKey) { lastStyleKey = key; if (player?.playing) player.setStyle(styleFor(state)); }
 }
 
@@ -249,9 +258,14 @@ function build(): void {
   $("witch").append(choice(["off", "on"] as const, o => (o === "on" ? "On" : "Off"), () => (state.witchHouse ? "on" : "off"), o => { state.witchHouse = o === "on"; if (o === "on" && state.mode === BASE.scale) state.mode = "phrygian"; }));
   // the ingredients
   for (const l of LAYERS) {
-    const voice = l === "vocalise" ? choice(VOICES, (v: Voice) => ({ synth: "Synth soprano", pinkTrombone: "Pink Trombone (5)", recorded: "Recorded voice (5b)" })[v], () => state.voice, v => { state.voice = v; if (player?.playing) player.prewarm(sungNotes(styleFor(state))); }) : undefined;
+    const voice = l === "vocalise" ? choice(VOICES, (v: Voice) => ({ synth: "Synth soprano", fof: "FOF voice", pinkTrombone: "Pink Trombone (5)", recorded: "Recorded voice (5b)" })[v], () => state.voice, v => { state.voice = v; if (player?.playing) player.prewarm(sungNotes(styleFor(state))); }) : undefined;
     $("layers").append(row(LAYER_NAMES[l], l, () => state.layers[l as Layer], v => { state.layers[l as Layer] = v; }, 1.5, l === "vocalise" ? 1 : 0, voice));
   }
+  // the voice effects
+  $("fx").append(el("label", { cls: "f", textContent: "Choir chords" }), choice(["synth", "fof"] as const, o => (o === "fof" ? "FOF choir" : "Synth choir"), () => (state.fofChoir ? "fof" : "synth"), o => { state.fofChoir = o === "fof"; }));
+  for (const f of FX) $("fx").append(row(FX_NAMES[f], `fx:${f}`, () => state.voiceFx[f as Fx], v => { state.voiceFx[f as Fx] = v; }, 1, 0, undefined, false));
+  $("fx-ethereal").onclick = () => { Object.assign(state.voiceFx, ETHEREAL); changed(); showAll(); };
+  $("fx-off").onclick = () => { for (const f of FX) state.voiceFx[f] = 0; changed(); showAll(); };
   // the victory
   const vt = $("vt") as HTMLInputElement;
   vt.oninput = () => { state.victory.transpose = Number(vt.value); $("vt-val").textContent = `${state.victory.transpose >= 0 ? "+" : ""}${state.victory.transpose}`; changed(); };
@@ -286,7 +300,7 @@ function build(): void {
   $("reset").onclick = () => { if (!confirm("Put every slider back as the game has it?")) return; state = defaultState(DEFAULTS); changed(); showAll(); if (player?.playing) restart(); };
   $("unsolo").onclick = () => { state.solo = []; state.mute = []; changed(); showAll(); };
   showAll();
-  lastStyleKey = JSON.stringify([state.mode, state.witchHouse, state.victory]);
+  lastStyleKey = JSON.stringify([state.mode, state.witchHouse, state.victory, state.voice, state.fofChoir, FX.map(f => state.voiceFx[f] > 0)]);
 }
 
 build();
