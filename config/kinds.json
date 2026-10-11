@@ -1,0 +1,165 @@
+{
+  "_": "Every kind of creature (each is an area type's species and a legend), with the phase it's introduced in (0 home: its island is phase 1; 1 phase 1; 2 phase 2) and its island's planned bearing on the sea chart, degrees clockwise from north (Ed, 2026-10-11, docs/backlog/journey.md 'Rosters' and 'Biomes by direction': north cold, south hot, east rocky, west jungle, the diagonals blending; today's 32 are temperate, so the bearing only places its island). dir is the bearing's compass point, for reading. Home 10, phase 1 10, phase 2 12: the easiest and most familiar at home, tougher and stranger later. DRAFT FOR ED.",
+  "kinds": {
+    "hedgehog": {
+      "phase": 0,
+      "bearing": 170,
+      "dir": "S"
+    },
+    "squirrel": {
+      "phase": 0,
+      "bearing": 285,
+      "dir": "WNW"
+    },
+    "hare": {
+      "phase": 0,
+      "bearing": 0,
+      "dir": "N"
+    },
+    "fox": {
+      "phase": 0,
+      "bearing": 40,
+      "dir": "NE"
+    },
+    "owl": {
+      "phase": 0,
+      "bearing": 345,
+      "dir": "NNW"
+    },
+    "toad": {
+      "phase": 0,
+      "bearing": 250,
+      "dir": "WSW"
+    },
+    "mole": {
+      "phase": 0,
+      "bearing": 80,
+      "dir": "E"
+    },
+    "snail": {
+      "phase": 0,
+      "bearing": 215,
+      "dir": "SW"
+    },
+    "dormouse": {
+      "phase": 0,
+      "bearing": 310,
+      "dir": "NW"
+    },
+    "beetle": {
+      "phase": 0,
+      "bearing": 130,
+      "dir": "SE"
+    },
+    "badger": {
+      "phase": 1,
+      "bearing": 70,
+      "dir": "ENE"
+    },
+    "boar": {
+      "phase": 1,
+      "bearing": 300,
+      "dir": "WNW"
+    },
+    "otter": {
+      "phase": 1,
+      "bearing": 270,
+      "dir": "W"
+    },
+    "heron": {
+      "phase": 1,
+      "bearing": 240,
+      "dir": "WSW"
+    },
+    "newt": {
+      "phase": 1,
+      "bearing": 225,
+      "dir": "SW"
+    },
+    "woodlouse": {
+      "phase": 1,
+      "bearing": 110,
+      "dir": "ESE"
+    },
+    "moth": {
+      "phase": 1,
+      "bearing": 160,
+      "dir": "SSE"
+    },
+    "bat": {
+      "phase": 1,
+      "bearing": 195,
+      "dir": "SSW"
+    },
+    "stoat": {
+      "phase": 1,
+      "bearing": 15,
+      "dir": "NNE"
+    },
+    "raven": {
+      "phase": 1,
+      "bearing": 35,
+      "dir": "NE"
+    },
+    "elk": {
+      "phase": 2,
+      "bearing": 0,
+      "dir": "N"
+    },
+    "wolf": {
+      "phase": 2,
+      "bearing": 25,
+      "dir": "NNE"
+    },
+    "lynx": {
+      "phase": 2,
+      "bearing": 50,
+      "dir": "NE"
+    },
+    "ram": {
+      "phase": 2,
+      "bearing": 75,
+      "dir": "ENE"
+    },
+    "salamander": {
+      "phase": 2,
+      "bearing": 100,
+      "dir": "E"
+    },
+    "spider": {
+      "phase": 2,
+      "bearing": 135,
+      "dir": "SE"
+    },
+    "snake": {
+      "phase": 2,
+      "bearing": 170,
+      "dir": "S"
+    },
+    "glowworm": {
+      "phase": 2,
+      "bearing": 205,
+      "dir": "SSW"
+    },
+    "stag": {
+      "phase": 2,
+      "bearing": 265,
+      "dir": "W"
+    },
+    "beaver": {
+      "phase": 2,
+      "bearing": 290,
+      "dir": "WNW"
+    },
+    "bear": {
+      "phase": 2,
+      "bearing": 320,
+      "dir": "NW"
+    },
+    "marten": {
+      "phase": 2,
+      "bearing": 335,
+      "dir": "NNW"
+    }
+  }
+}

@@ -133,3 +133,18 @@ describe("the end of the route (rules/win.ts)", () => {
     expect(play()).toBe(play());
   }, 120000);
 });
+
+describe("the win and the rosters (rules/rosters.ts)", () => {
+  it("the night's legends are the dealt kinds' (map.legendKinds); the island's sigil is its island's kind's, home's the World Tree", async () => {
+    const { dealtLegends, islandSigil } = await import("./win");
+    const { islandOf } = await import("./dancefloor");
+    const g = newGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    const K = g.map.legendKinds ?? [];
+    for (const c of dealtLegends(g)) if (K.length) expect(K).toContain(c.species);
+    const kind = islandOf(g.map);
+    expect(typeof kind).toBe("string");
+    expect(islandSigil(g)).toBe(kind === "home" ? "worldTree" : kind);
+    expect(islandOf({ island: { kind: "wolf" } })).toBe("wolf");
+    expect(islandOf({ island: null })).toBe("home");
+  });
+});

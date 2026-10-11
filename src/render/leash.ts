@@ -62,6 +62,9 @@ export class LeashView {
   colours = new Map<string, THREE.Color>();
   standing: Instances;
   flat: Instances;
+  /** The placed sigils again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
+   *  something nearer is drawn and it is scenery or ground cover (their stencil marks), never the witch, at leash.placedThrough. */
+  through: Instances;
   /** Drawn over everything (no depth test): the berries' glints seen from the treetops. */
   over: Instances;
   /** Not glowing (Ed's art director, #193): an attack's dust and the bits it throws, blended over the ground like the creatures. */
@@ -135,9 +138,12 @@ export class LeashView {
     this.standing = new Instances(mat(0));
     this.flat = new Instances(mat(1));
     this.over = new Instances(mat(0, false));
+    const thr = mat(1);
+    Object.assign(thr, { depthFunc: THREE.GreaterDepth, stencilWrite: true, stencilRef: 0, stencilFuncMask: 3, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp });
+    this.through = new Instances(thr); this.through.mesh.renderOrder = 13; // (scenery marks 1, grass 2: sprites.ts, grass.ts; she clears it)
     this.solid = new Instances(mat(0, true, true));
     this.blood = new Instances(mat(1, true, true, BLOOD_PULL)); // (over the grass tufts: Ed's pick, 2026-10-09)
-    scene.add(this.standing.mesh, this.flat.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh);
+    scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh);
     const hex = game.tuning.berries.colour.replace("#", "");
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
@@ -379,7 +385,7 @@ export class LeashView {
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
-    this.standing.begin(); this.flat.begin(); this.over.begin(); this.solid.begin(); this.blood.begin();
+    this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin();
     const BK = bloodKnobs(t);
     if (BK.on) {
       if (!this.bloodPool || this.bloodPool.cap !== BK.cap) this.bloodPool = new BloodPool(BK.cap);
@@ -445,10 +451,12 @@ export class LeashView {
 
     // Placed sigils, written on the ground, a little brighter than they were so they read in the
     // grass (Ed, v233; the grass is trampled clear round them, grass.ts).
+    const seeThrough = t.leash.placedThrough ?? 0;
     for (const p of s.placed) {
       const c = g.creatures[p.id], sg = this.sigilOf(c), col = this.colours.get(c.species)!;
       const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
       this.flat.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
+      if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, Math.min(1, (time - p.at) / 0.8));
       this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
@@ -529,7 +537,7 @@ export class LeashView {
 
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
-    this.standing.end(); this.flat.end(); this.over.end(); this.solid.end(); this.blood.end();
+    this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end();
     bubbles(this, time, camera, width, height);
     drawDreams(this, camera, width, height);
     drawSnores(this, camera, width, height);

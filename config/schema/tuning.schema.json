@@ -23,6 +23,12 @@
           "type": "number",
           "minimum": 0
         },
+        "island": {
+          "type": "string"
+        },
+        "found": {
+          "type": "array"
+        },
         "buffer": {
           "type": "number",
           "minimum": 0
@@ -67,6 +73,8 @@
         "shape",
         "radius",
         "islandAreas",
+        "island",
+        "found",
         "buffer",
         "push",
         "drift",
@@ -2700,6 +2708,10 @@
           "type": "number",
           "minimum": 0
         },
+        "placedThrough": {
+          "type": "number",
+          "minimum": 0
+        },
         "restAbove": {
           "type": "number",
           "minimum": 0
@@ -2861,6 +2873,7 @@
         "spacing",
         "runeRadius",
         "hatHold",
+        "placedThrough",
         "restAbove",
         "hex",
         "runePull",

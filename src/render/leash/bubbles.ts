@@ -17,6 +17,7 @@ import { GRID, dreamSymbol, paintThought, snap, thoughtShape, type DreamSymbol, 
 import type { LeashView } from "../leash";
 import { islandPixels } from "../../../art/islands.js";
 import { islandCoast } from "../../rules/islandShape";
+import { coastSpec, islandOf } from "../../rules/rosters";
 
 /** The party's over: 😴 bubbles over at most this many sleepers, within this many metres of her. */
 const SNORES = 6, SNORE_RANGE = 40;
@@ -223,9 +224,10 @@ function sigilCanvas(id: string, level: number | null, colour: number[], n: numb
   return cv;
 }
 
-/** A kind's home island (art/islands.js islandPixels), `n` pixels across. */
+/** A kind's home island (art/islands.js islandPixels), `n` pixels across: its real coast (rules/rosters.ts coastSpec, the island's own
+ *  seed and size, as the sea chart draws it). */
 function islandCanvas(kind: string, coast: Parameters<typeof islandCoast>[1], n: number): HTMLCanvasElement {
-  const cv = document.createElement("canvas"), P = islandPixels(kind, islandCoast({ kind }, coast).radii, { n }) as { w: number; h: number; rgba: Uint8ClampedArray };
+  const cv = document.createElement("canvas"), isle = islandOf(kind), P = islandPixels(kind, islandCoast(isle ? coastSpec(isle) : { kind }, coast).radii, { n }) as { w: number; h: number; rgba: Uint8ClampedArray };
   cv.width = P.w; cv.height = P.h;
   cv.getContext("2d")?.putImageData(new ImageData(new Uint8ClampedArray(P.rgba), P.w, P.h), 0, 0);
   return cv;

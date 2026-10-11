@@ -91,11 +91,12 @@ export function nearestStraggler(g: Game): Creature | null {
 /** The stragglers' pointer's creature, while there are stragglers. */
 export const winTarget = (g: Game): Creature | null => (g.win?.phase === "stragglers" && g.win.target !== null ? g.creatures[g.win.target] : null);
 
-/** The night's dealt legends (part A's rosters to come: every area legend on this island for now). */
-export const dealtLegends = (g: Game): Creature[] => g.creatures.filter(c => !!c.boss);
+/** The night's dealt legends (rules/rosters.ts dealLegends: the map's legendKinds, each a legend in an area of its kind); a map
+ *  dealt none (no rosters: the radius map, old seeds' tools) has every area legend. */
+export const dealtLegends = (g: Game): Creature[] => { const K = g.map.legendKinds ?? []; return g.creatures.filter(c => !!c.boss && (!K.length || K.includes(c.species))); };
 
-/** The island's own sigil (art/sigils.js islandSigil by rules/dancefloor.ts islandOf: home's, the World Tree, till islands
- *  get their own legend kinds). */
+/** The island's own sigil (art/sigils.js islandSigil of rules/dancefloor.ts islandOf: the rosters' island's kind, its legend
+ *  kind's sigil; home's, the World Tree). */
 export const islandSigil = (g: Game): string => islandSigilOf(g.map);
 
 /** The island's sigil flaring on the dancefloor as the night's won: drawn on again over win.flareDraw seconds, held for
