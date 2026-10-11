@@ -7,7 +7,7 @@
 // Sigils can't be put down on top of one another. Leashes are elastic: creatures walk or run to
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
 // No drawing here.
-import { attackerNear, babiesOf, isBaby, scatterSpot, stepBaby, trailPoint, updateTrail } from "./babies";
+import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, scatterSpot, stepBaby, trailPoint, updateTrail } from "./babies";
 import { heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { befriend, invitableNow, stateOf } from "./creatureStates";
@@ -45,8 +45,9 @@ export interface LeashState {
   snubbed: Set<number>;
   /** Her trail on the ground while babies follow her (rules/babies.ts): breadcrumbs, newest first, flat x, z pairs. Made only then. */
   trail?: number[];
-  /** While she's in a fight with babies following (rules/babies.ts): the attacker, and the way from it to her when it began. */
-  scatter?: { foe: number; x: number; z: number };
+  /** While she's in a fight with babies following (rules/babies.ts): the way from the first attacker to her when it began,
+   *  kept the whole fight, and when it's over (babies.calm seconds after the last thing went for her or hers). */
+  scatter?: { x: number; z: number; until: number };
   /** Relic sigils she carries (rules/legends.ts: ids into the game's relics), in the stack's order, top first. */
   relics: number[];
   /** Where each carried relic sigil sits in the stack (Ed's playtest, 2026-10-08: "Flasks should behave like other sigils in
@@ -296,14 +297,18 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   else if (s.trail) s.trail = undefined;
   const herSpeed = Math.hypot((witch as { vx?: number }).vx ?? 0, (witch as { vz?: number }).vz ?? 0);
   const foe = babies.length ? attackerNear(creatures, witch.x, witch.z, (t.combat.defendRadius ?? 30) * (t.fight?.scale ?? 1)) : null;
-  if (!foe) { if (s.scatter) s.scatter = undefined; }
-  else if (s.scatter?.foe !== foe.id) { const dx = witch.x - foe.x, dz = witch.z - foe.z, d = Math.hypot(dx, dz) || 1; s.scatter = { foe: foe.id, x: dx / d, z: dz / d }; }
+  // (scattered from the moment something goes for her or hers, closing in or winding up, for the whole fight, one way, until
+  // nothing has for babies.calm seconds; Ed, 2026-10-11)
+  if (foe) {
+    if (!s.scatter) { const dx = witch.x - foe.x, dz = witch.z - foe.z, d = Math.hypot(dx, dz) || 1; s.scatter = { x: dx / d, z: dz / d, until: 0 }; }
+    s.scatter.until = time + (BB.calm ?? BABIES_DEFAULT.calm);
+  } else if (s.scatter && (!babies.length || time >= s.scatter.until)) s.scatter = undefined;
   for (let i = s.stack.length - 1, k = 0; i >= 0; i--) {
     const id = s.stack[i], c = byId(id);
     if (!babies.length || !isBaby(c)) continue;
     const slot = k++;
     if (busy(id)) continue;
-    const to = foe && s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter) : trailPoint(s.trail, witch.x, witch.z, (slot + 1) * BB.gap);
+    const to = s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter) : trailPoint(s.trail, witch.x, witch.z, (slot + 1) * BB.gap);
     stepBaby(c, to.x, to.z, witch.x, witch.z, leashSpeed(c, t) * (t.leash.pace ?? 1), herSpeed, dt, t);
   }
   for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend && !(babies.length && isBaby(byId(id)))) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)

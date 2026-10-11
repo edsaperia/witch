@@ -2704,6 +2704,10 @@
               "type": "number",
               "minimum": 0
             },
+            "calm": {
+              "type": "number",
+              "minimum": 0
+            },
             "farAt": {
               "type": "number",
               "minimum": 0
@@ -2716,6 +2720,7 @@
           "required": [
             "gap",
             "scatter",
+            "calm",
             "farAt",
             "farSpeed"
           ],

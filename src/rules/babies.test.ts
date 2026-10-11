@@ -50,25 +50,38 @@ describe("babies on her leash", () => {
     });
   }, 60000);
 
-  it("scatter while she's in a fight, babies.scatter off to the side away from the attacker, and fall back into line once it's over", () => {
-    const { g, babies } = scene(3), S = babiesOf(g.tuning).scatter;
+  it("scatter for the whole fight: from when something goes for her (before any hit), one way throughout, back into line only babies.calm seconds after it's over", () => {
+    const { g, babies } = scene(3), B = babiesOf(g.tuning), S = B.scatter;
     run(g, 2, { ...idle, moveX: 1 });
     run(g, 0.5); // (she stops)
     const w = g.witch;
-    // a wild boar after her, 10 m east of her
+    // a wild boar coming for her, 10 m east of her, a long way off its first strike (no hit in this test)
     const boar = g.creatures.find(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - w.x, c.z - w.z) > 300)!;
     Object.assign(boar, { species: "boar", level: 1 as Level, x: w.x + 10, z: w.z, tx: w.x + 10, tz: w.z, anchorX: w.x + 10, anchorZ: w.z, cell: g.map.cellSafe(w.x, w.z).cell, gone: false, hp: undefined, hunting: 0, fight: { target: { kind: "witch", id: 0 }, readyAt: 1e9, windupUntil: 0, aimX: 0, aimZ: 0 } });
     g.byArea = null;
+    const hp = g.witches[0].health;
     let spread = 0;
-    run(g, 1.5, idle, () => { spread = Math.max(spread, Math.min(...babies.map(c => Math.hypot(c.x - g.witch.x, c.z - g.witch.z)))); });
+    const lowest = () => Math.min(...babies.map(c => Math.hypot(c.x - g.witch.x, c.z - g.witch.z)));
+    run(g, 1.5, idle, () => { spread = Math.max(spread, lowest()); });
+    expect(g.witches[0].health).toEqual(hp); // (scattered before anything landed)
     // (all of them off the line, babies.scatter or so from her, away from where it came at her: it charges through her, so not a side check)
     expect(spread).toBeGreaterThan(S * 0.5);
     for (const c of babies) expect(Math.hypot(c.x - g.witch.x, c.z - g.witch.z)).toBeGreaterThan(S * 0.5);
+    const way = { ...g.leash.scatter! };
+    // a lull in the fight shorter than calm: still scattered, the same way, not hopping back into line and out again
     boar.gone = true;
-    run(g, 2);
+    run(g, B.calm! * 0.5, idle, () => { expect(g.leash.scatter).toBeDefined(); });
+    boar.gone = false;
+    run(g, 1, idle, () => { expect(g.leash.scatter!.x).toBe(way.x); expect(g.leash.scatter!.z).toBe(way.z); });
+    for (const c of babies) expect(Math.hypot(c.x - g.witch.x, c.z - g.witch.z)).toBeGreaterThan(S * 0.5);
+    // over: still scattered until calm seconds have gone by, then back in line
+    boar.gone = true;
+    run(g, B.calm! - 0.3);
+    expect(g.leash.scatter).toBeDefined();
+    run(g, 2.3);
+    expect(g.leash.scatter).toBeUndefined();
     const w2 = g.witch;
-    const gap = babiesOf(g.tuning).gap;
-    [...babies].reverse().forEach((c, k) => { const want = trailPoint(g.leash.trail, w2.x, w2.z, (k + 1) * gap); expect(Math.hypot(c.x - want.x, c.z - want.z)).toBeLessThan(1); });
+    [...babies].reverse().forEach((c, k) => { const want = trailPoint(g.leash.trail, w2.x, w2.z, (k + 1) * B.gap); expect(Math.hypot(c.x - want.x, c.z - want.z)).toBeLessThan(1); });
   }, 60000);
 
   it("one far off (200 m, out of sight) is back with her in seconds", () => {

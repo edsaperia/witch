@@ -1,13 +1,14 @@
 // Babies behave differently (Ed, 2026-10-11; docs/backlog/gameplay.md "Babies"): leashed and following her on the ground they
 // walk in single file along where she's been, in stack order (the stack's bottom baby first, leash.babies.gap metres apart);
-// while she's in a fight they scatter, leash.babies.scatter metres off to the side away from the nearest attacker; and one
+// while she's in a fight they scatter, leash.babies.scatter metres off to the side away from the first attacker, from the moment
+// something goes for her or hers (closing in or winding up, not on the hit) until nothing has for leash.babies.calm seconds; and one
 // more than leash.babies.farAt metres from her (about off the screen) moves at leash.babies.farSpeed, so it's always with
 // her in seconds. Berries, evolving and weight: rules/berries.ts and rules/leashWeight.ts. No drawing here.
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 import type { Tuning } from "./tuning";
 
-export const BABIES_DEFAULT = { gap: 1.6, scatter: 8, farAt: 35, farSpeed: 40 };
+export const BABIES_DEFAULT = { gap: 1.6, scatter: 8, calm: 3, farAt: 35, farSpeed: 40 };
 export const babiesOf = (t: Tuning) => t.leash.babies ?? BABIES_DEFAULT;
 
 /** A baby on her leash: level 0, and not a party legend. */
