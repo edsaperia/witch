@@ -1848,7 +1848,7 @@ describe("the small islands' scenery (Ed, 2026-10-11)", () => {
       const decor = f.decorNear(cx, cz, half);
       for (const d of decor) expect(d.family).toBe("ruins");
       ruins += decor.filter(d => { const c = m.areaAt(d.x, d.z).cell; return m.playable(c[0], c[1]); }).length;
-      if (m.scenes.some(s => GAME_TUNING.scenes.featured?.ids.includes(s.id))) featured++;
+      if (m.scenes.some(s => (GAME_TUNING.scenes.featured?.ids ?? []).some(id => (id.endsWith("*") ? s.id.startsWith(id.slice(0, -1)) : s.id === id)))) featured++;
     }
     expect(featured).toBeGreaterThanOrEqual(6);
     expect(ruins / maps.length).toBeGreaterThan(4);
