@@ -187,7 +187,7 @@ if (lookBtn) {
   lookBtn.addEventListener("click", () => { if (ready && game.clock.paused) creator.show(); });
 }
 // (the bedroom has the dev "Player:" pick above in place of a Bot game button)
-// The dev "Player:" pick (app/playerPick.ts).
+// The dev "Player:" pick (app/playerPick.ts), shown with the debug overlay only.
 const playerPick = makePlayerPick(params, creator);
 const botBtn = document.getElementById("bot-btn");
 if (botBtn) {
@@ -208,9 +208,9 @@ input.onAny = start;
 sound.watch(() => !game.clock.paused && !freeze.frozen && !document.hidden, () => game.speakerBoot.some(t => t !== null), playtest);
 freeze.onToggle = on => sound.freeze(on);
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
-// The waves' pace: a "Waves:" dropdown under the dev "Player:" pick in the bedroom's top right (app/wavePick.ts; Ed,
-// 2026-10-08), never remembered; picking one doesn't start the game.
-if (params.get("creator") !== "0") makeWavePick(creator, WAVE_CHOICES, waveChoice, !!playerPick, setPulseSpeed);
+// The waves' pace: a "Waves:" dropdown in the bedroom's top right (app/wavePick.ts; Ed, 2026-10-08), the dev "Player:" pick
+// under it with the debug overlay on (Ed, 2026-10-11), never remembered; picking one doesn't start the game.
+if (params.get("creator") !== "0") makeWavePick(creator, WAVE_CHOICES, waveChoice, false, setPulseSpeed);
 setPulseSpeed(waveChoice);
 // Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
 const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = shake.option;

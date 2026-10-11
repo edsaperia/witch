@@ -98,7 +98,8 @@ describe("legend clearings", () => {
     // leashed, it follows her out of its circle
     inviteCreature(g.leash, B, B.x, B.z, g.clock.time);
     g.witch = { ...g.witch, x: k.x + k.r + 40, z: k.z, mode: "ground", lift: 0 };
-    run(g, 25);
+    // (the next area's swarm, made real as she comes near, kept off her: in a fight a baby scatters instead, rules/babies.ts)
+    run(g, 25, () => { for (const o of g.creatures) if (!o.leashed && !o.boss && o.level > 0 && o.fight?.target?.kind === "witch") o.gone = true; });
     expect(dist()).toBeGreaterThan(k.r + 10);
   });
 

@@ -219,7 +219,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (isHomeKey(c.siege)) c.siege = nearestHomeSpeaker(s, c.x, c.z) ?? c.siege; // (home: the nearest of its speakers still standing)
         f.target = { kind: "sound", key: c.siege };
         if (!c.boss) {
-          const sk = nearestSound(s, c.x, c.z), sh = sk ? s.sounds.get(sk)! : null, sd = sh ? Math.hypot(sh.x - c.x, sh.z - c.z) : Infinity;
+          const sk = nearestSound(s, c.x, c.z, w.centre, c.siege), sh = sk ? s.sounds.get(sk)! : null, sd = sh ? Math.hypot(sh.x - c.x, sh.z - c.z) : Infinity; // (inward: Ed, 2026-10-11)
           let best: Creature | null = null, bd = sd;
           for (const o of partyList) { const dd = Math.hypot(o.x - c.x, o.z - c.z); if (dd < bd && !truce(c, o)) { bd = dd; best = o; } }
           f.target = best ? { kind: "creature", id: best.id } : sk ? { kind: "sound", key: sk } : f.target;
@@ -503,6 +503,7 @@ export function marchSpeed(c: Creature, t: Tuning): number {
 }
 
 /** After a soundsystem falls: the survivors march on to the next-nearest still standing. */
-export function marchOn(s: CombatState, key: string, creatures: Creature[]): void {
-  for (const c of creatures) if (c.siege === key && !c.gone) { c.siege = c.boss ? undefined : nearestSound(s, c.x, c.z) ?? undefined; if (c.fight) c.fight.target = null; } // (a legend stays to guard its area)
+export function marchOn(s: CombatState, key: string, creatures: Creature[], centre?: { x: number; z: number }): void {
+  // (inward, given the map's centre: Ed, 2026-10-11, "never target a soundsystem further from the centre than they are")
+  for (const c of creatures) if (c.siege === key && !c.gone) { c.siege = c.boss ? undefined : nearestSound(s, c.x, c.z, centre) ?? undefined; if (c.fight) c.fight.target = null; } // (a legend stays to guard its area)
 }

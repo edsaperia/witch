@@ -273,9 +273,9 @@ export class Creator {
     this.scroll.onCast = () => { saveGenome(this.g); this.onGesture(); };
     this.scroll.onBurst = () => { this.hide(); this.onStart(this.genome()); };
     this.scroll.sound = (cue, v) => this.spellSound(cue, v);
-    // While it's open, its keys are its own (Enter casts the party spell, R randomises, WASD or the arrows walk her about); nothing reaches the game.
+    // While it's open, its keys are its own but the debug overlay's ` (Enter casts the party spell, R randomises, WASD or the arrows walk her about); nothing reaches the game.
     window.addEventListener("keydown", e => {
-      if (!this.open) return;
+      if (!this.open || e.code === "Backquote") return; // (bar the debug overlay's key: the Player pick shows with it, app/playerPick.ts)
       e.stopPropagation();
       if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); this.keyHint.pressed(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;

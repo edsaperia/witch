@@ -1793,6 +1793,10 @@
       "type": "number",
       "minimum": 0
     },
+    "riseCooldown": {
+      "type": "number",
+      "minimum": 0
+    },
     "groundHeight": {
       "type": "number",
       "minimum": 0
@@ -2366,6 +2370,14 @@
         "glow": {
           "type": "number",
           "minimum": 0
+        },
+        "babyReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "babyCost": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2376,7 +2388,9 @@
         "eatTime",
         "cost",
         "colour",
-        "glow"
+        "glow",
+        "babyReach",
+        "babyCost"
       ],
       "additionalProperties": false
     },
@@ -2595,6 +2609,29 @@
           "type": "number",
           "minimum": 0
         },
+        "hex": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speaker": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "size",
+            "stone",
+            "speaker"
+          ],
+          "additionalProperties": false
+        },
         "runePull": {
           "type": "object",
           "properties": {
@@ -2667,6 +2704,10 @@
             "maxTension": {
               "type": "number",
               "minimum": 0
+            },
+            "babyGround": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -2679,7 +2720,41 @@
             "sinkMax",
             "floor",
             "extreme",
-            "maxTension"
+            "maxTension",
+            "babyGround"
+          ],
+          "additionalProperties": false
+        },
+        "babies": {
+          "type": "object",
+          "properties": {
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scatter": {
+              "type": "number",
+              "minimum": 0
+            },
+            "calm": {
+              "type": "number",
+              "minimum": 0
+            },
+            "farAt": {
+              "type": "number",
+              "minimum": 0
+            },
+            "farSpeed": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "gap",
+            "scatter",
+            "calm",
+            "farAt",
+            "farSpeed"
           ],
           "additionalProperties": false
         }
@@ -2692,8 +2767,10 @@
         "runeRadius",
         "hatHold",
         "restAbove",
+        "hex",
         "runePull",
-        "weight"
+        "weight",
+        "babies"
       ],
       "additionalProperties": false
     },
@@ -4299,6 +4376,59 @@
         "debugExtra": {
           "type": "number",
           "minimum": 0
+        },
+        "gaze": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "number",
+              "minimum": 0
+            },
+            "to": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stagger": {
+              "type": "number",
+              "minimum": 0
+            },
+            "length": {
+              "type": "number",
+              "minimum": 0
+            },
+            "threes": {
+              "type": "number",
+              "minimum": 0
+            },
+            "apart": {
+              "type": "number",
+              "minimum": 0
+            },
+            "meet": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "from",
+            "to",
+            "gap",
+            "stagger",
+            "length",
+            "threes",
+            "apart",
+            "meet",
+            "turn"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4326,7 +4456,8 @@
         "pairGap",
         "limboPass",
         "floorShare",
-        "debugExtra"
+        "debugExtra",
+        "gaze"
       ],
       "additionalProperties": false
     },
@@ -9273,6 +9404,7 @@
     "facing",
     "riseTime",
     "descendTime",
+    "riseCooldown",
     "groundHeight",
     "treetopHeight",
     "witch",

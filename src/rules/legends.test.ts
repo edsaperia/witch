@@ -320,22 +320,23 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     const { g, L, target, inLane } = angryBoar();
     g.witch = { ...g.witch, mode: "ground", lift: 0, x: L.x + 60, z: L.z }; // (its target: nearer than her posse's wolf)
     const pins = inLane.map(c => [c, c.x] as const);
-    const hits = new Map<number, number>(); let witchHits = 0, x0 = 0, z0 = 0, ran = false, done = false;
+    const hits = new Map<number, number>(); let witchHits = 0, x0 = 0, z0 = 0, t0 = 0, thrown = -1, ran = false, done = false;
     run(g, 30, idle, () => {
       if (L.run?.phase === "home" && ran && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
       for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
       if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
         if (e.kind === "hit" && e.id !== undefined && (e.id !== target.id || e.big)) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (its target: only the legend's own hits; the trampled wild may go for it after)
-        if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; }
+        if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; t0 = g.clock.time; }
       }
       if (L.run?.phase === "run") ran = true;
       if (L.run?.phase === "windup") g.witch = { ...g.witch, x: L.x + 60, z: L.z }; // (she stands in its lane till it sets off)
+      if (x0 && thrown < 0 && g.clock.time >= t0 + 1) thrown = Math.hypot(g.witch.x - x0, g.witch.z - z0); // (a second on: her throw over, before the fight round her moves her on)
     });
     expect(ran).toBe(true);
     for (const c of inLane) expect(hits.get(c.id), c.species).toBe(1);
     expect(hits.get(target.id) ?? 0).toBeLessThanOrEqual(1);
     expect(witchHits).toBe(1);
-    expect(Math.hypot(g.witch.x - x0, g.witch.z - z0)).toBeGreaterThan(LEGENDS.charge.knockback * 0.3); // (thrown, away from it: aside or on along its lane, by where it caught her)
+    expect(thrown).toBeGreaterThan(LEGENDS.charge.knockback * 0.3); // (thrown, away from it: aside or on along its lane, by where it caught her)
   }, 120000);
   it("curves toward its target, brakes in a wide arc past it, walks home, and charges again only once it's back", () => {
     const { g, L, target } = angryBoar(70);

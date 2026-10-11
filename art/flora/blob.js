@@ -83,6 +83,8 @@ function frondCrown(sp, r, st, s, k, top, C, gy) {
       if (j % 2 === 0 && f > .08) { const l = Math.round((1 - f * .7) * (F.leaflet ?? 4) * s), nx = -Math.sin(ang), ny = Math.cos(ang); for (const sd of [-1, 1]) for (let q = 1; q <= l; q++) { put(p[0] + nx * q * sd, p[1] + ny * q * sd + q * .35, m, i + 1); put(p[0] + nx * q * sd, p[1] + ny * q * sd + q * .35 + 1, back ? mats[0] : m, i + 1); } }
     }
   }
+  if (F.fruit) { const fm = matOf(F.fruit.mat || "BARKL"), fd = matOf(F.fruit.dark || "BARKD"), fn = Math.round(uni(r, ...F.fruit.n)), fr = Math.max(1, (F.fruit.r ?? 1.6) * s); // a palm's dates or coconuts, bunched under the fronds
+    for (let i = 0; i < fn; i++) { const x = top[0] + (r() - .5) * 5 * s, y = top[1] + 2 * s + r() * 4 * s; sp.ellipse(x, y, fr, fr, i % 3 ? fm : fd, { round: 1 }); } }
   if (st.artStyle === "bold" || st.artStyle === "ref") { clusterLeaves(sp); sp.stylised = st.artStyle; }
   return trim(sp, sp.w / 2, Math.min(gy - 6 * s, top[1] + 6 * s));
 }
@@ -167,6 +169,14 @@ export function blobTree(r, st, s, P) {
     grow(trunk, len, tw, 0);
     if (t === 0 && st.treeHollow) { const h = lerp2(base, trunk.end, .38); sp.ellipse(h[0], h[1], tw * .28, tw * .5, M.NOSE, { round: .3 }); }
   }
+  // stilts: a mangrove's prop roots, arching out and down from low on the trunk into the mud, the far ones in shadow
+  if (T.stilts) { const S = T.stilts, tr = trunks0[0], cnt = Math.round(uni(r, ...S.n)), dark = matOf(S.mat || "BARKD");
+    for (let i = 0; i < cnt; i++) {
+      const side = i % 2 ? 1 : -1, back = i % 4 > 1, p0 = along(tr.pts, uni(r, ...S.at)), reach = uni(r, ...S.reach) * s, foot = [p0[0] + side * (tw * .6 + reach), gy - 1 - r() * 2 * s - (back ? 2 * s : 0)];
+      const c = [p0[0] + side * reach * (S.arch ?? .75), p0[1] - reach * .15], w0 = tw * (S.w ?? .32), pts = [];
+      for (let j = 0; j <= 8; j++) { const t = j / 8, u = 1 - t; pts.push([u * u * p0[0] + 2 * u * t * c[0] + t * t * foot[0], u * u * p0[1] + 2 * u * t * c[1] + t * t * foot[1], Math.max(1, w0 * (1 - t * .35))]); }
+      sp.limb(pts, back ? dark : tmat, { group: 12, round: st.round, cap: .6, capEnd: 1 });
+    } }
   if (T.roots !== 0) roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s * (T.roots || 1), tmat);
   if (T.smooth) smoothBark(sp, r, s); else bark(sp, st);
   // the trunk's own marks: bands (a birch's black marks across its white bark, two pixels tall so they read), upper (the share of

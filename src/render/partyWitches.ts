@@ -67,7 +67,7 @@ export class PartyWitchView {
   bubbles(g: Game, time: number, camera: THREE.Camera, width: number, height: number, list = g.partyWitches.list): void {
     let n = 0;
     for (const w of list) {
-      if (w.state !== "floor" || w.activity !== "chat" || w.partner === null || n >= 8) continue;
+      if ((w.state !== "floor" && w.state !== "gazing") || w.activity !== "chat" || w.partner === null || n >= 8) continue;
       const turn = Math.floor(time / 1.4 + (w.lead ? 0 : 0.5));
       if ((turn + (w.lead ? 0 : 1)) % 2) continue; // their turn or their partner's
       let el = this.bubblePool[n];
@@ -88,7 +88,7 @@ export class PartyWitchView {
     for (let i = n; i < this.bubblePool.length; i++) this.bubblePool[i].style.display = "none";
   }
 
-  update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, group: WitchGroup = { list: g.partyWitches.list, her: g.partyWitches.players[0] }): void {
+  update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, group: WitchGroup = { list: g.partyWitches.list, her: g.partyWitches.gaze?.[0]?.activity ? g.partyWitches.gaze[0] : g.partyWitches.players[0] }): void {
     const per = new Map<string, { art: WitchArt; list: SpriteInstance[] }>(), bpm = g.tuning.beat.bpm, bt = beatTime(g.beat, time), R = SPRITE_UNIFORMS.uRight.value;
     const placed = new Map<number, { x: number; z: number; frame: number; art: WitchArt; flip: boolean; pose: string }>();
     const put = (key: string, art: WitchArt, inst: SpriteInstance) => { let e = per.get(key); if (!e) per.set(key, (e = { art, list: [] })); e.list.push(inst); };
@@ -107,7 +107,7 @@ export class PartyWitchView {
     for (const w of list) {
       const art = lookOf(w);
       if (!art) continue;
-      const flying = w.state !== "floor" || w.activity === "fly" || w.y > 0.2;
+      const flying = (w.state !== "floor" && w.state !== "gazing") || w.activity === "fly" || w.y > 0.2;
       let fi: number, x = w.x, z = w.z;
       const flip = w.facing < 0;
       if (flying) fi = art.hover[w.away ? "away" : "towards"][Math.floor(time * 4 + w.id) % 3];

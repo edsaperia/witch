@@ -5,6 +5,7 @@ import { freeOf } from "../rules/leashWeight";
 import { waveCountdown } from "../rules/party";
 import { clockSeconds, clockText } from "../rules/leypulse";
 import { powerReport } from "../rules/power";
+import { showPlayerPick } from "./playerPick";
 
 export class Hud {
   debugOn = false;
@@ -20,11 +21,12 @@ export class Hud {
 
   constructor(private readonly game: Game, private readonly knobs: HTMLElement) {}
 
-  /** The debug overlay, its buttons and the knobs, on or off. */
+  /** The debug overlay, its buttons, the knobs and the bedroom's Player pick, on or off. */
   setDebug(on: boolean): void {
     this.debugOn = on;
     this.debugEl.classList.toggle("on", on);
     this.debugButtons.classList.toggle("on", on); this.knobs.classList.toggle("on", on);
+    showPlayerPick(on); // (the dev Player pick: debug only)
   }
 
   /** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the

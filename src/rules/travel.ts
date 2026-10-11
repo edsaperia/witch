@@ -9,6 +9,7 @@ import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
 import { FIGHT } from "./movement";
 import { gaitRate, leashSpeed } from "./leash";
+import { babiesOf, isBaby } from "./babies";
 import type { Tuning } from "./tuning";
 
 export interface TravelData { posse: number; leave: number; engaged: number; speed: number; clear: number; step: number; replan: number }
@@ -110,7 +111,9 @@ export function planRoute(map: ForestMap, sx: number, sz: number, tx: number, tz
 export function stepTraveller(c: Creature, tx: number, tz: number, map: ForestMap, dt: number, t: Tuning, pace = 1, data: TravelData = TRAVEL): void {
   const r = c.route;
   if (!r || Math.hypot(r.tx - tx, r.tz - tz) > data.replan * FIGHT.scale) c.route = { points: planRoute(map, c.x, c.z, tx, tz, data), next: 1, tx, tz };
-  const R = c.route!, speed = leashSpeed(c, t) * data.speed * pace;
+  // (a baby far from her, about off the screen, hurries at leash.babies.farSpeed: it's always with her in seconds; Ed, 2026-10-11)
+  const B = babiesOf(t), hurry = isBaby(c) && c.leashed && Math.hypot(c.x - tx, c.z - tz) > B.farAt;
+  const R = c.route!, speed = hurry ? Math.max(B.farSpeed, leashSpeed(c, t) * data.speed * pace) : leashSpeed(c, t) * data.speed * pace;
   if (R.next >= R.points.length) { c.moving = false; c.vx = 0; c.vz = 0; return; } // (there: it waits for its target to move on)
   let left = speed * dt;
   while (left > 1e-6 && R.next < R.points.length) {
