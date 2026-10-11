@@ -11,3 +11,10 @@ The same generated melody (the form's B and C phrases, sung: wave 2, seed 7, 32 
 The ethereal preset, each 0 to 1 (the Music Lab's Voice effects card starts from it with "Ethereal preset"): chorus 0.5, saturation 0.15, air 0.5, ping-pong delay 0.35, dark hall 0.6, shimmer 0.5, ducked by the kick 0.3, reverse swells into phrases 0.6, freeze phrase ends 0.5, whisper vocoder 0.25, octave double 0.3.
 
 The game's singer is unchanged until Ed picks. Tune it live in the Music Lab: choose the FOF voice under Vocalise, the FOF choir under Voice effects, move the sliders, then Copy my settings.
+
+## The game's singer (Ed picked e)
+
+- **f-game-singer-laa**: the recorded voice through the ethereal effects as the game plays it, singing "laa" and "loo" (Ed: "stick to aa and oo ... Can it go laa?"), about 3 dB under e over the music.
+- **g-game-singer-quieter-wetter**: Ed: "make it quieter and have even more reverb". Another 2 dB down, with hall 0.85, shimmer 0.7 and freeze 0.65. This is what the game plays.
+
+FOF: its vowels' formants measure right (a at 880 Hz and 2.9 kHz, i at 2.2 kHz, u low), but its line came out about 10 dB under the recorded voice and was buried in the mix. It's kept out of the game.
