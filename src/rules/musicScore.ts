@@ -12,7 +12,7 @@ export interface Patch {
    *  tone; synth: oscillators through a filter; bell: two square tones (a cowbell, pitched);
    *  riser: noise swept up over a build; impact: a noise burst and a falling sub; voice: a sung
    *  note, synthesised (a buzz through vowel formants, vibrato, breath). */
-  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact" | "fof";
+  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact" | "fof" | "sample";
   gain: number;
   /** synth: oscillator shapes (one oscillator each, spread by detune cents). */
   waves?: OscillatorType[];
@@ -55,6 +55,14 @@ export interface Patch {
    *  formant voice's are its own), rate (Hz) and delay (s), and an octave-up double's level (formants kept). Its vowels morph
    *  note to note (and to the next within a long note); `vibrato`, `breath`, `attack` and `release` as above. */
   voiceType?: string;
+  /** A recorded voice (kind "sample": Ed, 2026-10-11, the game's singer): the recording (samples/voices/<sample>.ogg, given to
+   *  the engine as it loads), the MIDI note it sings (measured), retuned to each note like a sampler, and a presence lift (dB
+   *  at 3 kHz). The formant voice sings its notes until it's loaded. */
+  sample?: string;
+  root?: number;
+  presence?: number;
+  /** A consonant opening each note ("l": Ed, 2026-10-11, "Can it go laa?"), shaped by a filter opening over its first moment. */
+  onset?: string;
   vibratoRate?: number;
   vibratoDelay?: number;
   octave?: number;
