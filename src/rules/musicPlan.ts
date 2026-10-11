@@ -27,6 +27,8 @@ export interface MusicCue {
   /** Hooks: the witch is knocked out; how much a soundsystem nearby is under siege (0-1). */
   knockedOut: boolean;
   siege: number;
+  /** The bar the victory lap set off on (rules/win.ts): its music from there on. */
+  victory?: number;
   /** How near a woken area that has joined the party is (0-1): its soundsystem on, its happy animals dancing. */
   party?: number;
   /** How near an angry legend is (0-1): charging, or shooting from afar. */
@@ -80,6 +82,7 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
   }
   return {
     waves, nextAt: !Number.isFinite(p.nextAt) ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
+    victory: g.win?.lapAt !== undefined ? bar(g.win.lapAt) : undefined,
     knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), legend: legendNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
     circle: circleCue(g, g.witch), knockdowns: prev?.knockdowns?.length === g.knockdowns.length ? prev.knockdowns : g.knockdowns.map(k => ({ at: bar(k.at), back: Math.round(bar(k.back) * 1e4) / 1e4 })),
     speakerBars: g.speakerBoot.filter((t): t is number => t !== null).map(bar).sort((a, b) => a - b), speakers: g.speakerBoot.length,
@@ -215,6 +218,8 @@ export function planBlock(style: MusicStyle, cue: MusicCue, bar: number): BlockP
   const arc = cue.forceWave ?? w, step = arcStep(style, arc);
   const plan = (section: string, start: number, bars: number): BlockPlan => ({ section, start, bars, wave: w, arc });
   if (cue.forceSection && style.sections[cue.forceSection]) return plan(cue.forceSection, bar - (bar % 16), 16);
+  // the night won: the victory section (the music builder's; till then the drop), from the block the lap set off in
+  if (cue.victory !== undefined && bar >= cue.victory - (cue.victory % B)) { const V = style.victory && style.sections[style.victory] ? style.victory : style.sections.drop ? "drop" : style.intro; return plan(V, bar - (bar % B), B); }
   if (cue.knockedOut && !style.form) return plan(style.knockout, bar - (bar % (2 * B)), 2 * B); // (with the form, silence instead: silentAt)
   // the boot: the intro, its parts coming in as the speakers power on
   if (bar < cue.bootUntil) return plan(style.intro, 0, Math.max(B, blockAfter(cue.bootUntil, B)));

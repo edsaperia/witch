@@ -1,7 +1,7 @@
 // The link's switches (?px=, ?tilt=, ?music=, ?hills=, ?shape=, ...): the tuning for this load, made from the tuning file
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
-import { islandOf } from "../rules/rosters";
+import { islandOf, playableIsland } from "../rules/rosters";
 import { loadSave } from "./chartSave";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
@@ -164,7 +164,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // many areas of random types.
   {
     const v = params.get("island");
-    if (v && islandOf(v) && tuning.map) tuning.map = { ...tuning.map, island: v };
+    if (v && v !== "home" && playableIsland(v) && islandOf(v) && tuning.map) tuning.map = { ...tuning.map, island: v }; // (a placeholder's island isn't played)
     else { const n = islandFromLink(v, tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n, island: v === "home" ? "home" : "" }; }
   }
 

@@ -6,7 +6,8 @@ import { AREA_TYPES } from "../../rules/map";
 import { waveCountdown } from "../../rules/party";
 import { hatMarker } from "../../rules/hat";
 import { leyPulse, pointerShown } from "../../rules/leypulse";
-import { edgeLayout, HAT, StoneIndicator } from "../indicator";
+import { edgeLayout, HAT, PARTY, StoneIndicator } from "../indicator";
+import { finalStone, winPulse, winTarget } from "../../rules/win";
 import { AlarmIndicators } from "../alarm";
 import { ALARM_DEFAULTS, shownAlarms, stepAlarms } from "../../rules/alarms";
 import { HAT_BESIDE, HAT_INK } from "../view";
@@ -37,7 +38,7 @@ export function drawPointers(v: View, time: number): void {
         if (!c || shown <= 0) { ind.update(v.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
         const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
         const pulse = i === 0 ? v.ley.pulseTip ?? leyPulse(g.party, g.map, time, v.ley.currentLink()) : null, at = pulse ?? s; // (the sparkler's own point, drawn this frame)
-        ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
+        ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0, glyph: i === 0 && finalStone(g) ? PARTY : undefined }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
       });
     };
     // Pausing holds the countdown. Its label is the party's tempo (Ed, 2026-10-07: "The BPM is shown on the sparkler
@@ -52,6 +53,15 @@ export function drawPointers(v: View, time: number): void {
       const P = (v.hatPointer ??= new StoneIndicator(document.body, 3));
       P.fade(H ? calm : 0);
       P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+    }
+    // The end of the route (rules/win.ts): toward the enraged animal nearest the centre while any lives (its sigil, in its
+    // neon), then toward the victory lap's pulse racing home (🎉).
+    const S = winTarget(g), L = winPulse(g);
+    if (S || L || v.winPointer) {
+      const P = (v.winPointer ??= new StoneIndicator(document.body, 3));
+      P.fade(S || L ? calm : 0);
+      const at = S ? { x: S.x, z: S.z, colour: v.markerArt.colour.get(S.species)!, species: S.species } : L ? { x: L.x, z: L.z, colour: v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(g.map.centreCell[0], g.map.centreCell[1])].creature) ?? HAT_INK, species: "", glyph: PARTY } : null;
+      P.update(v.camera, cw, ch, at, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
     // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
     const AT = t.alarms ?? ALARM_DEFAULTS;
