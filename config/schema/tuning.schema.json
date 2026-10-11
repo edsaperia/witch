@@ -3009,11 +3009,7 @@
           "type": "number",
           "minimum": 0
         },
-        "marchMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "marchOnRun": {
+        "marchShare": {
           "type": "number",
           "minimum": 0
         },
@@ -3081,8 +3077,7 @@
         "fightRun",
         "legendRun",
         "reaction",
-        "marchMult",
-        "marchOnRun",
+        "marchShare",
         "fleeMult",
         "soundsystemHealth",
         "soundsystemRadius",

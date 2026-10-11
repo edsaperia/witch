@@ -77,7 +77,7 @@ describe("marching besiegers", () => {
     expect(g.lod!.marchCoarse).toBe(marchers.length);
     const dist = (c: Creature) => Math.hypot(c.x - home.x, c.z - home.z), d0 = marchers.map(dist);
     for (let i = 0; i < 60 * 30; i++) stepGame(g, idle, STEP);
-    marchers.forEach((c, i) => expect(d0[i] - dist(c)).toBeGreaterThan(c.speed * TUNING.combat.marchMult * 30 * 0.8)); // (marching on, at their pace)
+    marchers.forEach((c, i) => expect(d0[i] - dist(c)).toBeGreaterThan(Math.min(marchSpeed(c, TUNING) * 30 * 0.8, d0[i] - L.action - 40))); // (marching on, at their pace: or there by now)
     for (let i = 0; i < 60 * 90; i++) stepGame(g, idle, STEP);
     expect(g.lod!.marchCoarse).toBe(0); // (in full near the soundsystem)
   }, 120_000);
