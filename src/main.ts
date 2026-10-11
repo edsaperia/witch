@@ -35,6 +35,7 @@ import { installHooks } from "./app/hooks";
 import { PerfHud } from "./app/perfHud";
 import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
+import { wonText } from "./app/wonCard";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -271,7 +272,9 @@ let lastShedS = -1; // (the sound's safety valve, checked once a second: platfor
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
-let overShown = false;
+let overShown = false, wonShown = false;
+document.getElementById("won-close")?.addEventListener("click", () => document.getElementById("won")!.classList.remove("on"));
+document.getElementById("won-sail")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 document.getElementById("again")?.addEventListener("click", () => location.reload());
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
@@ -300,6 +303,13 @@ function frame(now: number): void {
   const stepMs = performance.now() - step0;
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
+  // The night won (rules/win.ts): its card, the islands its woken legends showed (part C's sea chart will light them; till then,
+  // on to a new island).
+  if (game.win?.card && !wonShown) {
+    wonShown = true;
+    document.getElementById("won-found")!.textContent = wonText(game.win);
+    document.getElementById("won")!.classList.add("on");
+  }
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.partyOver.at / 60)} min ${Math.floor(game.partyOver.at % 60)} s and ${game.party.wave} waves.`;
