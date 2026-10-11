@@ -8,12 +8,15 @@ import { islandSigil, sigilArrival, sigilColour } from "../../art/sigils.js";
 import { islandCoast } from "../rules/islandShape";
 import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
-import { allSave, clearSave, loadSave, unlocked } from "./chartSave";
+import { allSave, loadSave, newCampaign, unlocked, worldSeed } from "./chartSave";
 import { BOX, islandAt, ringOf } from "./chartLayout";
 
 const NS = "http://www.w3.org/2000/svg";
 const params = new URLSearchParams(location.search), showAll = params.get("chart") === "all" || params.has("all");
 let save = showAll ? allSave() : loadSave();
+// The world (Ed, 2026-10-11): the campaign's own seed, or ?world= for this look (shared links); the islands' links carry it on.
+const linkWorld = params.get("world"), worldNow = () => (linkWorld ? worldSeed(linkWorld) : save.world);
+const sailTo = (island: string) => `./?island=${island}${linkWorld ? `&world=${worldNow()}` : ""}`;
 const svg = document.getElementById("chart") as unknown as SVGSVGElement;
 const el = <K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number>, parent: Element = svg): SVGElementTagNameMap[K] => {
   const e = document.createElementNS(NS, tag);
@@ -44,7 +47,7 @@ function draw(): void {
   }
   // the voyages, under the islands
   for (const v of save.voyages) {
-    const a = islandAt(v.from), b = islandAt(v.to);
+    const a = islandAt(v.from, worldNow()), b = islandAt(v.to, worldNow());
     if (a && b) el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "rgba(232,180,106,.55)", "stroke-width": 1.5, "stroke-dasharray": "1 4", "stroke-linecap": "round", "vector-effect": "non-scaling-stroke" });
   }
   // Every island, always (Ed, 2026-10-11: "You can always see all the islands - you only see sigils on the ones that you can
@@ -52,11 +55,12 @@ function draw(): void {
   // (the placeholders' too; under ?chart=all those show a '?').
   const open = new Set(unlocked(save)), won = new Set(save.won);
   const islands: { id: string; radii: Float32Array; sigil: string }[] = [];
-  islands.push({ id: "home", radii: islandCoast({ kind: "home", areas: homeIsland(0).size }, TUNING.map?.coast).radii, sigil: islandSigil("home") });
-  for (const k of KIND_NAMES) islands.push({ id: k, radii: islandCoast(coastSpec(islandOf(k)!), TUNING.islands?.coast).radii, sigil: k });
+  const w = worldNow();
+  islands.push({ id: "home", radii: islandCoast(coastSpec(homeIsland(w)), TUNING.map?.coast).radii, sigil: islandSigil("home") });
+  for (const k of KIND_NAMES) islands.push({ id: k, radii: islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, sigil: k });
   for (const isl of islands) {
-    const at = islandAt(isl.id)!, unknown = isPlaceholder(isl.id), sail = open.has(isl.id) && !unknown;
-    const a = sail ? el("a", { href: `./?island=${isl.id}`, class: "island", tabindex: 0 }) : el("g", { opacity: 0.55 });
+    const at = islandAt(isl.id, w)!, unknown = isPlaceholder(isl.id), sail = open.has(isl.id) && !unknown;
+    const a = sail ? el("a", { href: sailTo(isl.id), class: "island", tabindex: 0 }) : el("g", { opacity: 0.55 });
     el("title", {}, a).textContent = sail ? `${isl.id === "home" ? "Home" : `The ${isl.id}'s island`}${won.has(isl.id) ? " (won)" : ""}: sail there` : unknown ? "Not yet charted" : "Not yet found";
     const g = el("g", { transform: `translate(${at.x - BOX / 2} ${at.y - BOX / 2}) scale(${BOX})` }, a);
     el("path", { d: islandPath(isl.radii), class: "land", fill: rgb(ISLAND_LOOK.land2), stroke: rgb(ISLAND_LOOK.sand), "stroke-width": 1.5, "vector-effect": "non-scaling-stroke" }, g);
@@ -67,11 +71,18 @@ function draw(): void {
   }
   const n = save.found.filter(k => !isPlaceholder(k)).length;
   document.getElementById("status")!.textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : `wake legends at home to find their islands`}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
+  document.getElementById("world")!.textContent = `World seed: ${w}${linkWorld ? " (from the link)" : ""}`;
+  (document.getElementById("home") as HTMLAnchorElement).href = sailTo("home");
 }
 
-document.getElementById("start-over")!.addEventListener("click", () => {
-  if (!confirm("Start over? This forgets every island you've found and won.")) return;
-  clearSave();
-  if (showAll) location.search = ""; else { save = loadSave(); draw(); }
+// Start over (Ed, 2026-10-11): a new campaign in a new world, its seed random or typed / pasted in, after an are-you-sure.
+const panel = document.getElementById("new-world")!, field = document.getElementById("new-seed") as HTMLInputElement;
+document.getElementById("start-over")!.addEventListener("click", () => { field.value = ""; panel.hidden = false; field.focus(); });
+document.getElementById("new-cancel")!.addEventListener("click", () => { panel.hidden = true; });
+document.getElementById("new-go")!.addEventListener("click", () => {
+  if (!confirm("Start over in a new world? This forgets every island you've found and won.")) return;
+  save = newCampaign(worldSeed(field.value));
+  panel.hidden = true;
+  if (showAll || linkWorld) location.search = ""; else draw();
 });
 draw();

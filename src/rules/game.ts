@@ -49,7 +49,7 @@ import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 import { homeDown, startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
-import { stepWin, won, type WinState } from "./win";
+import { stepWin, winFlare, won, type WinState } from "./win";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
  *  body (where she is and how she flies), her leash, her spell. */
@@ -313,7 +313,8 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
     w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
     knockdownTempo(g.beat, t, g.clock.time); // (the beat speeds up: Ed, 2026-10-07, "the BPM goes up by 1 each time you die")
     // her wait ends on a bar line at the new tempo, the nearest to it (never under knockout.respawn.minScratch of scratching):
-    // her scratching on the new record leads straight into its first downbeat (Ed, 2026-10-09)
+    // her scratching on the new record leads straight into its first downbeat (Ed, 2026-10-09; the wait a second or so off knockout.respawn
+    // for it is fine: Ed, 2026-10-11)
     const off = g.clock.time - g.herTime, ko = w.ko, min = ko.inAt + (t.knockout.respawn?.minScratch ?? 0) + off;
     let bar = Math.round(beatAt(g.beat, ko.backAt + off) / 4);
     while (timeAt(g.beat, bar * 4) < min - 1e-6) bar++;
@@ -719,6 +720,7 @@ export function floorInputs(g: Game): FloorInputs {
     witch: { x: w.x, y: w.y, lift: g.witch.lift, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) }, dancers,
     moon: { phase: moonState(g.clock.time, g.seed, g.tuning).phase },
     island: { sigil: islandSigilOf(g.map), drawn: bootShare(g.party, g.map, g.clock.time) },
+    flare: winFlare(g) ?? undefined,
   };
 }
 

@@ -2649,6 +2649,14 @@
           "type": "number",
           "minimum": 0
         },
+        "flareDraw": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flare": {
+          "type": "number",
+          "minimum": 0
+        },
         "cardAfter": {
           "type": "number",
           "minimum": 0
@@ -2666,6 +2674,8 @@
         "joinSpeed",
         "seen",
         "legendRing",
+        "flareDraw",
+        "flare",
         "cardAfter",
         "retarget"
       ],

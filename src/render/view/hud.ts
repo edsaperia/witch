@@ -60,7 +60,7 @@ export function drawPointers(v: View, time: number): void {
     if (S || L || v.winPointer) {
       const P = (v.winPointer ??= new StoneIndicator(document.body, 3));
       P.fade(S || L ? calm : 0);
-      const at = S ? { x: S.x, z: S.z, colour: v.markerArt.colour.get(S.species)!, species: S.species } : L ? { x: L.x, z: L.z, colour: v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(g.map.centreCell[0], g.map.centreCell[1])].creature) ?? HAT_INK, species: "", glyph: PARTY } : null;
+      const at = S ? { x: S.x, z: S.z, colour: v.markerArt.colour.get(S.species)!, species: S.species } : L ? { x: v.ley.pulseTip?.x ?? L.x, z: v.ley.pulseTip?.z ?? L.z, colour: v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(g.map.centreCell[0], g.map.centreCell[1])].creature) ?? HAT_INK, species: "", glyph: PARTY } : null;
       P.update(v.camera, cw, ch, at, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
     // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.

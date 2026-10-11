@@ -132,6 +132,8 @@ export interface FloorInputs {
   /** The island's sigil (art/sigils.js islandSigil: home's the World Tree) and how far it's drawn on (0 to 1, the boot's share,
    *  rules/bootRing.ts bootShare): through the boot the floor shows it in place of the moon (Ed, 2026-10-11). */
   island?: { sigil: string; drawn: number };
+  /** The night won (rules/win.ts): the island's sigil flaring on the floor over everything, drawn on again (0 to 1). */
+  flare?: { sigil: string; drawn: number };
 }
 
 /** Advance the sequence and the witch's marks to `time` (call every frame). */
@@ -187,6 +189,7 @@ export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: U
     else if (inp.moon) moonTiles(rgbi, inp.moon.phase, time, t);
     return summary(rgbi);
   }
+  if (inp.flare && t.dancefloor.island.on) { islandTiles(rgbi, inp.flare.sigil, inp.flare.drawn, beat, t); return summary(rgbi); } // (the night won: rules/win.ts)
   const set = (n: number, c: Rgb, i: number, add = false) => {
     if (!MASK[n] || i <= 0) return;
     const k = n * 4, cur = rgbi[k + 3];
@@ -302,12 +305,9 @@ export function moonTiles(rgbi: Uint8Array, phase: number, time: number, t: Tuni
   }
 }
 
-/** Which island a map is (journey.md: every island its own legend kind, its own sigil): its roster island's kind (map.island,
- *  rules/rosters.ts: "home" for home's), home with none. Its sigil: art/sigils.js islandSigil (a kind's own; home's the World Tree). */
-export const islandOf = (map: object): string => {
-  const i = (map as { island?: string | { kind: string } | null }).island; // (the rosters' Island, rules/rosters.ts; a name, as before)
-  return (typeof i === "string" ? i : i?.kind) ?? "home";
-};
+/** Which island a map is (journey.md: every island its own legend kind, its own sigil): every map is home for now. The hook for
+ *  when islands come: give the map its island and its sigil in art/sigils.js ISLAND_SIGILS. */
+export const islandOf = (map: object): string => { const i = (map as { island?: string | { kind: string } | null }).island; return typeof i === "string" ? i : i?.kind ?? "home"; }; // (the rosters' Island, rules/rosters.ts: its kind)
 /** The sigil of a map's island (home's: the World Tree). */
 export const islandSigilOf = (map: object): string => islandSigil(islandOf(map));
 
