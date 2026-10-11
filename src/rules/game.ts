@@ -21,13 +21,13 @@ import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries
 import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
-import { stoneTurned } from "./bootRing";
+import { bootShare, stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
 import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, speakerStateOf, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
-import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
+import { floorEvent, floorLevel, islandSigilOf, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
@@ -712,6 +712,7 @@ export function floorInputs(g: Game): FloorInputs {
     time: g.clock.time, beatAt: tm => beatAt(g.beat, tm), seed: g.seed, level: floorLevel(g.party.areas.size, g.tuning), partifiedAreas: areas,
     witch: { x: w.x, y: w.y, lift: g.witch.lift, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) }, dancers,
     moon: { phase: moonState(g.clock.time, g.seed, g.tuning).phase },
+    island: { sigil: islandSigilOf(g.map), drawn: bootShare(g.party, g.map, g.clock.time) },
   };
 }
 
@@ -734,7 +735,8 @@ export function speakerBoot(g: Game, i: number, time = g.clock.time): number {
   return Math.max(0, Math.min(1, (time - at) / Math.max(1e-3, g.tuning.boot.transform)));
 }
 
-// Before the first wave the floor shows only the moon (Ed, 2026-10-06); it switches on, the full moon
+// Before the first wave the floor shows only the moon (Ed, 2026-10-06), and through the boot the island's sigil (Ed, 2026-10-11:
+// rules/dancefloor.ts islandTiles); it switches on, the full moon
 // flaring into the party, when the first wave comes (or at once, off the decks, in a run started later);
 // a wave sends a pulse towards the area it reached; a sigil placed flashes out from the centre.
 function stepDancefloor(g: Game, waveBefore: number): void {
