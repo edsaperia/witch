@@ -18,6 +18,25 @@ import { cellKey } from "./party";
 /** A legend's circle flashing: a sigil or relic put down outside its clearing (the leash's outsideCircle event). */
 export const outsideCircle = (g: Game, L: Creature) => { const c = g.map.legendClearing(L.cell[0], L.cell[1]); return { kind: "outsideCircle" as const, id: L.id, x: c?.x ?? L.x, z: c?.z ?? L.z, at: g.clock.time }; };
 
+/** Whether the hex cell centred at (x, z) is barred to sigils (Ed, 2026-10-11): under a runestone or a soundsystem (the area's
+ *  soundsystem spot, where its stone stands and its soundsystem rises), or one of home's speakers (leash.hex). */
+export function sigilBarred(g: Game, x: number, z: number, t: Tuning): boolean {
+  const H = t.leash.hex;
+  if (!H) return false;
+  const half = H.size / 2, near = (px: number, pz: number, r: number) => Math.hypot(px - x, pz - z) < r + half;
+  if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, H.speaker))) return true;
+  for (const [, s] of g.combat.sounds) if (near(s.x, s.z, H.stone)) return true; // (home's speakers among them)
+  // (the stones of the area it's in and its neighbours': home has none, its speakers above)
+  const cell = g.map.cellSafe(x, z).cell, home = cellKey(g.map.centreCell);
+  for (const k of [cellKey(cell), ...(g.map.neighbours.get(cellKey(cell)) ?? [])]) {
+    const [cx, cy] = k.split(",").map(Number);
+    if (k === home || !g.map.playable(cx, cy)) continue;
+    const st = g.map.soundsystemSpot(cx, cy);
+    if (near(st.x, st.z, H.stone)) return true;
+  }
+  return false;
+}
+
 /** Witch W's sigil button this step (her controls c, her clock ht and step hdt; the game's legends; whether a creature's
  *  busy eating or evolving; the rules' fixed step). Its events join the leash's, after the leash's own step. */
 export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: number, hdt: number, legends: number[], busy: (id: number) => boolean, step: number): void {
@@ -46,7 +65,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).

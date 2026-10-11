@@ -776,6 +776,7 @@ describe("the game clock and a whole step", () => {
   });
 });
 
+const TOP = TUNING; // (the tuning, where a test shadows TUNING with its own)
 describe("inviting and leashing", () => {
   // (The old proximity chat: a second talk leashes a happy one, as states.leash "again" does; the game picks up its rune now, pickup.test.ts.)
   let savedLeash = STATES.leash;
@@ -898,8 +899,8 @@ describe("inviting and leashing", () => {
     expect(s.progress.get(a.id)).toBeGreaterThan(0); // draining, so coming back resumes
   });
 
-  it("stacks last in, first out: places the newest, picks up back onto the bottom", () => {
-    const all = fresh(), s = newLeash();
+  it("stacks last in, first out: places the newest, picks up back onto the bottom (put down freely: leash.hex off)", () => {
+    const all = fresh(), s = newLeash(), TUNING = withTuning({ leash: { ...TOP.leash, hex: { ...TOP.leash.hex!, size: 0 } } }); // (on the hex grid: hexSigils.test.ts)
     const a = inviteOne(all, s, 0), b = inviteOne(all, s, 0, a.t), c = inviteOne(all, s, 1, b.t);
     expect(s.stack).toEqual([a.c.id, b.c.id, c.c.id]);
     const here = { x: 500, z: 500 };

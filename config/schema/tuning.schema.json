@@ -2594,6 +2594,29 @@
           "type": "number",
           "minimum": 0
         },
+        "hex": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speaker": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "size",
+            "stone",
+            "speaker"
+          ],
+          "additionalProperties": false
+        },
         "runePull": {
           "type": "object",
           "properties": {
@@ -2691,6 +2714,7 @@
         "runeRadius",
         "hatHold",
         "restAbove",
+        "hex",
         "runePull",
         "weight"
       ],
