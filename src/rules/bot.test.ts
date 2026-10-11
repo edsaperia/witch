@@ -66,23 +66,17 @@ describe("the bot", () => {
     expect(h.witch.mode).toBe("treetop");
   });
 
-  it("wakes a napping creature by walking into its area, not firing at it from the next one (the islands, #650: the skilled bot invited none)", () => {
+  it("wins someone on the island it once won no one on (#650): its letters wake a napper from the next area (Ed, 2026-10-11: \"Letters wake them\")", () => {
     // Seed 1000 on the 10-area island: its first target, an elk, naps across the border from where its area's site lets her land.
-    // A sleeper takes no 💌 till she's on the ground in its own area; firing from the next area over, the bot won no one for ten minutes.
+    // When a sleeper took no 💌 till she was on the ground in its own area, the skilled bot fired at it from the next area all run.
     const g = newGame(1000, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false };
     const bot = newBot("skilled"), w = g.witches[0];
-    let shotAtSleeper = 0, won = 0;
-    for (let i = 0; i < 40 * 60; i++) {
-      const c = bot.decide(g);
-      if (c.fire && w.body.mode === "ground") {
-        const here = g.map.cellSafe(w.body.x, w.body.z).cell, aimed = g.creatures.filter(k => !k.gone && k.asleep && Math.hypot(k.x - w.body.x - (c.aimX ?? 0), k.z - w.body.z - (c.aimZ ?? 0)) < 1.5);
-        if (aimed.some(k => k.cell[0] !== here[0] || k.cell[1] !== here[1])) shotAtSleeper++;
-      }
-      stepGame(g, c, 1 / 60);
+    let won = 0;
+    for (let i = 0; i < 40 * 60 && !won; i++) {
+      stepGame(g, bot.decide(g), 1 / 60);
       won += w.invites.events.filter(e => e.kind === "happy").length;
     }
-    expect(shotAtSleeper).toBe(0);
     expect(won).toBeGreaterThan(0);
   }, 60000);
 

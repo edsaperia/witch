@@ -443,14 +443,10 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
             [aimX, aimZ] = aimAt(tg, td); fire = td < R * K.fireFrac;
             if (tg.species !== species(target.cell)) bot.doing = `inviting ${article(tg.species)}`;
             mx = 0; mz = 0;
-            // Asleep (napping round its stone), it takes no 💌 till she lands in its own area (rules/game.ts invitable): from the
-            // next area over (the islands, #650: an area's site can lie near its edge), walk in to it and wake it first.
-            const asleepAway = !!tg.asleep && cellKey(map.cellSafe(b.x, b.z).cell) !== target.key;
-            if (asleepAway) { fire = false; bot.doing = `waking ${article(tg.species)}`; }
             let th: Creature | null = null, hd = Infinity;
-            for (const c of g.creatures) if (!c.gone && !c.leashed && !c.boss && !c.asleep && c.level > 0 && cellKey(c.cell) === target.key) { const d = Math.hypot(c.x - b.x, c.z - b.z); if (d < hd) { hd = d; th = c; } } // (a sleeper's no threat: kiting off it, she'd never reach it to wake it)
+            for (const c of g.creatures) if (!c.gone && !c.leashed && !c.boss && c.level > 0 && cellKey(c.cell) === target.key) { const d = Math.hypot(c.x - b.x, c.z - b.z); if (d < hd) { hd = d; th = c; } }
             if (careful && th && hd < K.kite) { mx = (b.x - th.x) / hd; mz = (b.z - th.z) / hd; dash = hd < K.dashAt; }
-            else if (asleepAway || td > R * K.closeFrac) { mx = (tg.x - b.x) / (td || 1); mz = (tg.z - b.z) / (td || 1); }
+            else if (td > R * K.closeFrac) { mx = aimX / td; mz = aimZ / td; }
           }
         }
       }
