@@ -1542,11 +1542,11 @@ describe("music by proximity (Ed, 2026-10-04)", () => {
   });
 });
 
-describe("the spell (Ed, 2026-10-04)", () => {
-  const S = TUNING.spells.speed;
-  it("casts the equipped speed boost: much faster for its duration, then recharges over its cooldown", () => {
-    const s = newSpells(TUNING);
-    expect(s.equipped).toBe("speed");
+describe("the Speed broom (Ed, 2026-10-04; a broom since 2026-10-11)", () => {
+  const S = TUNING.spells.speed, SPEED = withTuning({ spells: { ...TUNING.spells, broom: "speed" } });
+  it("casts the speed boost: much faster for its duration, then recharges over its cooldown", () => {
+    const s = newSpells(SPEED);
+    expect(s.broom).toBe("speed");
     expect(spellCharge(s, 0)).toBe(1);
     expect(castSpell(s, 10, TUNING)).toBe(true);
     expect(speedMultiplier(s, 10.1, TUNING)).toBeCloseTo(S.mult);
@@ -1556,7 +1556,7 @@ describe("the spell (Ed, 2026-10-04)", () => {
     expect(castSpell(s, 10 + S.duration + S.cooldown, TUNING)).toBe(true);
   });
   it("makes her fly faster in the game", () => {
-    const run = (spell: boolean) => { const g = newGame(4, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
+    const run = (spell: boolean) => { const g = newGame(4, SPEED); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
     expect(run(true)).toBeGreaterThan(run(false) * (S.mult - 0.3));
   });
 });

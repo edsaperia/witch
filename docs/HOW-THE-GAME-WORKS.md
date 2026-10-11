@@ -16,7 +16,7 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
 
 ## 2. How a run plays out
 
-1. **Dress her up.** The run opens in the character creator. When the scroll unrolls, click it (or press Enter, or her spell key R) to **cast the party spell**. The cast takes 1.2 s, and she can't move until it's done.
+1. **Dress her up.** The run opens in the character creator. When the scroll unrolls, click it (or press Enter) to **cast the party spell**. The cast takes 1.2 s, and she can't move until it's done.
 2. **At the decks.** She sits behind the decks in the treehouse until you first move or rise.
 3. **Boot-up.** When she leaves the decks a pulse runs from the treehouse down to the home ring and round it at the ley pulse's speed (`leyLines.pulseSpeed` 4 m/s; Ed, 2026-10-09), turning each little runestone into a speaker as it passes: the first about 3 s in, the whole 179 m path in **about 45 s**. The animals still attack during it, but no waves come.
 4. **Waves.** When the boot ends, the ley pulse sets off along the route at a **constant 4 m/s** (`leyLines.pulseSpeed`, times the party's tempo, so a knockdown's BPM speeds it; Ed, 2026-10-09: "Pure constant speed"), and **a wave lands as it reaches the next stone**: each gap is that link's length over the speed, no fixed interval. Links run about 30 m to 600 m, so gaps run from a few seconds to a few minutes (the REPORT's table). The dancefloor switches on at the first wave. The bedroom's Waves dropdown picks slow (2.5), normal (4), fast (6 m/s) or off. (The Player dropdown, a human or a bot playing the run, shows under it only with the debug overlay on, whose ` key now works in the bedroom too: Ed, 2026-10-11.)
