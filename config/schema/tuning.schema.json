@@ -23,6 +23,12 @@
           "type": "number",
           "minimum": 0
         },
+        "island": {
+          "type": "string"
+        },
+        "found": {
+          "type": "array"
+        },
         "buffer": {
           "type": "number",
           "minimum": 0
@@ -67,6 +73,8 @@
         "shape",
         "radius",
         "islandAreas",
+        "island",
+        "found",
         "buffer",
         "push",
         "drift",
@@ -2610,6 +2618,69 @@
       ],
       "additionalProperties": false
     },
+    "win": {
+      "type": "object",
+      "properties": {
+        "lapSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "congaSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "congaGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "congaRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "joinSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "seen": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendRing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flareDraw": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flare": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cardAfter": {
+          "type": "number",
+          "minimum": 0
+        },
+        "retarget": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "lapSpeed",
+        "congaSpeed",
+        "congaGap",
+        "congaRadius",
+        "joinSpeed",
+        "seen",
+        "legendRing",
+        "flareDraw",
+        "flare",
+        "cardAfter",
+        "retarget"
+      ],
+      "additionalProperties": false
+    },
     "leash": {
       "type": "object",
       "properties": {
@@ -2634,6 +2705,10 @@
           "minimum": 0
         },
         "hatHold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "placedThrough": {
           "type": "number",
           "minimum": 0
         },
@@ -2798,6 +2873,7 @@
         "spacing",
         "runeRadius",
         "hatHold",
+        "placedThrough",
         "restAbove",
         "hex",
         "runePull",
@@ -9464,6 +9540,7 @@
     "berries",
     "invites",
     "invite",
+    "win",
     "leash",
     "bond",
     "fight",

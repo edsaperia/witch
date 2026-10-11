@@ -3,7 +3,7 @@ import styleJson from "../../config/music-style.json";
 import { Conductor, barSeconds, bootLayers, legendNear, musicCue, partyNear, planBlock, type MusicCue } from "./musicPlan";
 import { newGame } from "./game";
 import { TUNING } from "./tuning";
-import { checkStyle, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
+import { checkStyle, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
 
 const style = styleJson as unknown as MusicStyle;
 /** The section a wave lands on (the form's first block, Ed 2026-10-09). */
@@ -135,7 +135,7 @@ describe("music score", () => {
             if (e.midi !== null) {
               expect(e.midi).toBeGreaterThanOrEqual(21);
               expect(e.midi).toBeLessThanOrEqual(108);
-              const pc = (((e.midi - style.root - (a.transpose ?? 0)) % 12) + 12) % 12;
+              const pc = (((e.midi - style.root - (a.transpose ?? 0) - (resolveSection(style, section).transpose ?? 0)) % 12) + 12) % 12; // (the stage's key, and the section's own lift)
               expect(scale).toContain(pc);
             }
           }
