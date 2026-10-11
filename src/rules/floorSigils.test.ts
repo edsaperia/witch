@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { floorPatterns, islandKinds, pickPattern } from "./dancefloor";
-import { newGame } from "./game";
+import { floorPatterns, islandKinds, islandOf, islandSigilOf, pickPattern } from "./dancefloor";
+import { floorInputs, newGame } from "./game";
 import { AREA_TYPES } from "./map";
 import { TUNING, withTuning } from "./tuning";
 
@@ -33,5 +33,18 @@ describe("the dancefloor's sigils: only this island's kinds, and the World Tree 
     expect(g.map.island).toBeNull();
     for (const [x, y] of g.map.cells) if (g.map.playable(x, y) && (x !== g.map.centreCell[0] || y !== g.map.centreCell[1])) want.add(creatureOf(g.map.typeOf(x, y)));
     expect([...kinds].sort()).toEqual([...want].sort());
+  });
+  it("writes the island's own sigil through the boot: a kind's island its kind's, home's the World Tree", () => {
+    const fox = newGame(5, withTuning({ map: { ...TUNING.map!, island: "fox" } }));
+    expect(fox.map.island?.kind).toBe("fox");
+    expect(islandOf(fox.map)).toBe("fox");
+    expect(islandSigilOf(fox.map)).toBe("fox");
+    expect(floorInputs(fox).island!.sigil).toBe("fox");
+    const home = newGame(5, withTuning({ map: { ...TUNING.map!, island: "home", islandAreas: 10 } }));
+    expect(home.map.island?.kind).toBe("home");
+    expect(floorInputs(home).island!.sigil).toBe("worldTree");
+    const none = newGame(5, TUNING); // (no roster)
+    expect(none.map.island).toBeNull();
+    expect(floorInputs(none).island!.sigil).toBe("worldTree");
   });
 });
