@@ -1,88 +1,128 @@
 // The sea chart's page (chart.html; wave 2, part C; Ed, docs/backlog/journey.md "The world and the sea chart"): the world as a
-// disc, home in the middle, every island in its outline (art/islands.js islandPath of rules/islandShape.ts islandCoast: the
-// map's own coast) at its kind's bearing on its phase's ring, a sigil only on those she can travel to; the voyages as dotted
-// lines; won islands starred. Click an island to sail
-// there (?island=<kind>). Start over (after an are-you-sure) forgets it all; ?chart=all shows everything, for testing.
-import { ISLAND_LOOK, islandPath } from "../../art/islands.js";
-import { islandSigil, sigilArrival, sigilColour } from "../../art/sigils.js";
+// disc of night sea in 3D, drawn as the game is (render/chart/seaChart.ts; Ed, 2026-10-11: "show the map screen in the same way
+// you show the island: pixellated, camera seeing it in 3D, your view moves around as you select islands"): home in the middle,
+// every island at its kind's bearing on its phase's ring (chartLayout.ts islandAt) in its own coast (art/islands.js of
+// rules/islandShape.ts islandCoast), a sigil only on those she can travel to (Ed: "You can always see all the islands - you only
+// see sigils on the ones that you can travel to"); her voyages as glowing lines on the water; won islands ringed in gold.
+// Choose an island (tap or click it; arrow keys, the d-pad or the stick) and the camera glides to it and names it; choose it
+// again, press Enter or the pad's A, or the Sail button, to sail there (?island=<kind>). Start over (after an are-you-sure)
+// forgets it all; ?chart=all shows everything, for testing. The save and what's unlocked are chartSave.ts's: this is the view.
 import { islandCoast } from "../rules/islandShape";
 import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
+import { islandSigil } from "../../art/sigils.js";
+import { SeaChart, type ChartIsland } from "../render/chart/seaChart";
 import { allSave, loadSave, newCampaign, unlocked, worldSeed } from "./chartSave";
-import { BOX, islandAt, ringOf } from "./chartLayout";
+import { islandAt } from "./chartLayout";
+import { stepTo } from "./chartNav";
 
-const NS = "http://www.w3.org/2000/svg";
 const params = new URLSearchParams(location.search), showAll = params.get("chart") === "all" || params.has("all");
 let save = showAll ? allSave() : loadSave();
-// The world (Ed, 2026-10-11): the campaign's own seed, or ?world= for this look (shared links); the islands' links carry it on.
+// The world (golf, #685; Ed, 2026-10-11): the campaign's own seed, or ?world= for this look (shared links); the islands' links carry it on.
 const linkWorld = params.get("world"), worldNow = () => (linkWorld ? worldSeed(linkWorld) : save.world);
-const sailTo = (island: string) => `./?island=${island}${linkWorld ? `&world=${worldNow()}` : ""}`;
-const svg = document.getElementById("chart") as unknown as SVGSVGElement;
-const el = <K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number>, parent: Element = svg): SVGElementTagNameMap[K] => {
-  const e = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
-  parent.appendChild(e);
-  return e;
-};
-const rgb = (c: readonly number[]) => `rgb(${c[0]},${c[1]},${c[2]})`;
+const sailHref = (island: string) => `./?island=${island}${linkWorld ? `&world=${worldNow()}` : ""}`;
+const $ = (id: string) => document.getElementById(id)!;
+const canvas = $("chart") as HTMLCanvasElement;
+const chart = new SeaChart(canvas, TUNING as unknown as ConstructorParameters<typeof SeaChart>[1]);
+let islands: ChartIsland[] = [];
 
-/** A sigil as a little pixel image (its own glyph in its neon), `px` pixels across. */
-function sigilImage(id: string, px = 16): string {
-  const c = document.createElement("canvas"); c.width = c.height = px;
-  const ctx = c.getContext("2d")!, img = ctx.createImageData(px, px), ink = sigilArrival(id, px), col = sigilColour(id);
-  for (let i = 0; i < px * px; i++) if (ink[i] < Infinity) { img.data[i * 4] = col[0]; img.data[i * 4 + 1] = col[1]; img.data[i * 4 + 2] = col[2]; img.data[i * 4 + 3] = 255; }
-  ctx.putImageData(img, 0, 0);
-  return c.toDataURL();
-}
-
-function draw(): void {
-  svg.replaceChildren();
-  // the sea: the disc, its rim where the sea streams off into space, the phases' rings faint
-  el("circle", { cx: 0, cy: 0, r: 1.02, fill: "#1a2550" });
-  el("circle", { cx: 0, cy: 0, r: 1, fill: "#10183a", stroke: "#2a3c78", "stroke-width": 1.5, "vector-effect": "non-scaling-stroke" });
-  for (let p = 1; p <= 5; p++) el("circle", { cx: 0, cy: 0, r: ringOf(p), fill: "none", stroke: "#1d2a58", "stroke-width": 1, "stroke-dasharray": "2 5", "vector-effect": "non-scaling-stroke" });
-  for (const [t, x, y] of [["N", 0, -0.94], ["E", 0.94, 0], ["S", 0, 0.94], ["W", -0.94, 0]] as const) {
-    const label = el("text", { x, y, "text-anchor": "middle", "dominant-baseline": "middle", "font-size": 0.05, fill: "#3b4c8a" });
-    label.textContent = t;
-  }
-  // the voyages, under the islands
-  for (const v of save.voyages) {
-    const a = islandAt(v.from, worldNow()), b = islandAt(v.to, worldNow());
-    if (a && b) el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "rgba(232,180,106,.55)", "stroke-width": 1.5, "stroke-dasharray": "1 4", "stroke-linecap": "round", "vector-effect": "non-scaling-stroke" });
-  }
-  // Every island, always (Ed, 2026-10-11: "You can always see all the islands - you only see sigils on the ones that you can
-  // travel to"): home and each island found in its outline with its sigil, sailable; the rest bare outlines, dimmer, no link
-  // (the placeholders' too; under ?chart=all those show a '?').
-  const open = new Set(unlocked(save)), won = new Set(save.won);
-  const islands: { id: string; radii: Float32Array; sigil: string }[] = [];
-  const w = worldNow();
-  islands.push({ id: "home", radii: islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, sigil: islandSigil("home") });
-  for (const k of KIND_NAMES) islands.push({ id: k, radii: islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, sigil: k });
-  for (const isl of islands) {
-    const at = islandAt(isl.id, w)!, unknown = isPlaceholder(isl.id), sail = open.has(isl.id) && !unknown;
-    const a = sail ? el("a", { href: sailTo(isl.id), class: "island", tabindex: 0 }) : el("g", { opacity: 0.55 });
-    el("title", {}, a).textContent = sail ? `${isl.id === "home" ? "Home" : `The ${isl.id}'s island`}${won.has(isl.id) ? " (won)" : ""}: sail there` : unknown ? "Not yet charted" : "Not yet found";
-    const g = el("g", { transform: `translate(${at.x - BOX / 2} ${at.y - BOX / 2}) scale(${BOX})` }, a);
-    el("path", { d: islandPath(isl.radii), class: "land", fill: rgb(ISLAND_LOOK.land2), stroke: rgb(ISLAND_LOOK.sand), "stroke-width": 1.5, "vector-effect": "non-scaling-stroke" }, g);
-    const s = isl.id === "home" ? 0.06 : 0.045;
-    if (sail) el("image", { href: sigilImage(isl.sigil), x: at.x - s / 2, y: at.y - s / 2, width: s, height: s }, a);
-    else if (unknown && showAll) { const q = el("text", { x: at.x, y: at.y, "text-anchor": "middle", "dominant-baseline": "central", "font-size": 0.05, "font-weight": "bold", fill: "#9a93b4" }, a); q.textContent = "?"; }
-    if (won.has(isl.id)) { const star = el("text", { x: at.x + 0.045, y: at.y - 0.04, "font-size": 0.05, fill: "#e8b46a" }, a); star.textContent = "✦"; }
-  }
+/** Every island, always: home and each found with its sigil, sailable; the rest bare land, the placeholders dimmest. */
+function build(): void {
+  const open = new Set(unlocked(save)), won = new Set(save.won), w = worldNow();
+  const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
+    const at = islandAt(id, w)!, unknown = isPlaceholder(id);
+    return { id, x: at.x, y: at.y, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
+  };
+  islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
+  for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
+  chart.set(islands, save.voyages);
   const n = save.found.filter(k => !isPlaceholder(k)).length;
-  document.getElementById("status")!.textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : `wake legends at home to find their islands`}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
-  document.getElementById("world")!.textContent = `World seed: ${w}${linkWorld ? " (from the link)" : ""}`;
-  (document.getElementById("home") as HTMLAnchorElement).href = sailTo("home");
+  $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
+  $("world").textContent = `World seed: ${w}${linkWorld ? " (from the link)" : ""}`;
+  ($("home") as HTMLAnchorElement).href = sailHref("home");
 }
 
-// Start over (Ed, 2026-10-11): a new campaign in a new world, its seed random or typed / pasted in, after an are-you-sure.
-const panel = document.getElementById("new-world")!, field = document.getElementById("new-seed") as HTMLInputElement;
-document.getElementById("start-over")!.addEventListener("click", () => { field.value = ""; panel.hidden = false; field.focus(); });
-document.getElementById("new-cancel")!.addEventListener("click", () => { panel.hidden = true; });
-document.getElementById("new-go")!.addEventListener("click", () => {
+/** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
+function choose(id: string | null, instant = false): void {
+  chart.select(id, instant);
+  const isl = islands.find(i => i.id === id);
+  const card = $("card"), sail = $("sail") as HTMLAnchorElement;
+  if (!isl) { card.hidden = true; return; }
+  card.hidden = false;
+  const phase = id === "home" ? 0 : islandOf(id!, worldNow())?.phase ?? 0;
+  $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
+  $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
+  $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "wake its legend to find it";
+  sail.hidden = !isl.sail;
+  sail.href = sailHref(id!);
+}
+const sailTo = (id: string | null) => { const isl = islands.find(i => i.id === id); if (isl?.sail) location.href = sailHref(id!); };
+
+// Pointer: tap or click an island to choose it, again to sail; drag nothing (the camera only follows the choice); the wheel
+// or a pinch zooms.
+const pointers = new Map<number, { x: number; y: number }>();
+let pinch = 0, downAt: { x: number; y: number } | null = null;
+canvas.addEventListener("pointerdown", e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); downAt = { x: e.clientX, y: e.clientY }; if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
+canvas.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch > 0 && d > 0) chart.zoom(pinch / d); pinch = d; downAt = null; }
+});
+const up = (e: PointerEvent) => {
+  const tap = pointers.size === 1 && downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8;
+  pointers.delete(e.pointerId); if (pointers.size < 2) pinch = 0;
+  if (!tap) return;
+  const id = chart.pick(e.clientX, e.clientY);
+  if (id && id === chart.selected) sailTo(id); else if (id) choose(id);
+};
+canvas.addEventListener("pointerup", up);
+canvas.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); pinch = 0; });
+canvas.addEventListener("wheel", e => { e.preventDefault(); chart.zoom(Math.exp(e.deltaY * 0.0015)); }, { passive: false });
+$("zoom-in").addEventListener("click", () => chart.zoom(0.75));
+$("zoom-out").addEventListener("click", () => chart.zoom(1.33));
+
+// Keys: the arrows step island to island, Enter or Space sails, + and - zoom.
+const step = (dx: number, dy: number) => { const next = stepTo(islands, chart.selected ?? "home", dx, dy); if (next) choose(next); };
+addEventListener("keydown", e => {
+  if ((e.target as HTMLElement)?.closest?.("input")) return; // (typing a seed)
+  if ((e.target as HTMLElement)?.closest?.("button, a") && (e.key === "Enter" || e.key === " ")) return; // (a focused button's own)
+  const dir: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
+  if (dir[e.key]) { e.preventDefault(); step(...dir[e.key]); }
+  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sailTo(chart.selected); }
+  else if (e.key === "+" || e.key === "=") chart.zoom(0.8);
+  else if (e.key === "-" || e.key === "_") chart.zoom(1.25);
+});
+
+// A gamepad: the d-pad or the left stick steps (repeating while held), A sails, the shoulders zoom.
+let padWait = 0;
+function pad(dt: number): void {
+  const p = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected); if (!p) return;
+  padWait -= dt;
+  const b = (i: number) => !!p.buttons[i]?.pressed, ax = p.axes[0] ?? 0, ay = p.axes[1] ?? 0;
+  const dx = b(15) ? 1 : b(14) ? -1 : Math.abs(ax) > 0.5 ? Math.sign(ax) : 0, dy = b(13) ? 1 : b(12) ? -1 : Math.abs(ay) > 0.5 ? Math.sign(ay) : 0;
+  if ((dx || dy) && padWait <= 0) { step(dx, dy); padWait = 0.28; } else if (!dx && !dy) padWait = 0;
+  if (b(0) && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; }
+  if (b(4)) chart.zoom(1 + dt); if (b(5)) chart.zoom(1 - dt * 0.8);
+}
+
+// Start over (golf, #685; Ed, 2026-10-11): a new campaign in a new world, its seed random or typed / pasted in, after an are-you-sure.
+const panel = $("new-world"), field = $("new-seed") as HTMLInputElement;
+$("start-over").addEventListener("click", () => { field.value = ""; panel.hidden = false; field.focus(); });
+$("new-cancel").addEventListener("click", () => { panel.hidden = true; });
+$("new-go").addEventListener("click", () => {
   if (!confirm("Start over in a new world? This forgets every island you've found and won.")) return;
   save = newCampaign(worldSeed(field.value));
   panel.hidden = true;
-  if (showAll || linkWorld) location.search = ""; else draw();
+  if (showAll || linkWorld) location.search = ""; else { build(); choose("home"); }
 });
-draw();
+
+const fit = () => chart.resize(innerWidth, innerHeight);
+addEventListener("resize", fit);
+fit(); build();
+// first, the island she was last on (her last voyage's end), else home
+choose(showAll ? "home" : save.voyages.at(-1)?.to ?? "home", true);
+let last = performance.now();
+const loop = (now: number) => { const dt = Math.min(0.1, (now - last) / 1000); last = now; pad(dt); chart.frame(dt, now / 1000); requestAnimationFrame(loop); };
+requestAnimationFrame(loop);
+// (for the screenshots: window.chart)
+(window as unknown as { chart: unknown }).chart = { chart, choose, islands: () => islands };
