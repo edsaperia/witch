@@ -35,3 +35,15 @@ Ed's music research (docs/music/research.md, from docs/backlog/music.md). All th
 - which steps to keep or drop, and any that are still too loud or too quiet;
 - Pink Trombone or the recorded voice for the vocalise (5 or 5b);
 - whether the witch-house take is a direction (for legend circles, or a "dark" record).
+
+## Victory music (wave 2's finale; PR #680)
+
+When an island is won, the victory lap, the party (a conga line round the dancefloor) and the "Night won" card play the victory section instead of the night's track. Each file is 60 s of wave 2, seed 7, as the game plays it (not loudness-matched, so you hear the real difference):
+
+| File | What |
+|---|---|
+| `victory-a-drop.mp3` | The night's drop, as it is |
+| `victory-b-victory.mp3` | The victory: the drop a whole step up, with the choir, swelling strings, a sixteenth arp and a shaker over it, the claps in a conga line ("one, two, three, kick!"), looping with no fills |
+| `victory-switch.mp3` | 32 s of the drop, then cut on the bar line into the victory, as the cue would switch it |
+
+The two measure the same loudness: the engine's limiter holds the level, so the lift comes from the key, the brightness and the layers, not the volume. Tell the builder if it needs more of a lift: a bigger key change, a brighter mode just for the victory, or a real cheer under it.
