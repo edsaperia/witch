@@ -166,6 +166,8 @@ export class SeaChart {
   readonly camera: THREE.PerspectiveCamera;
   private scene = new THREE.Scene();
   private post: Post;
+  /** The post pass's own knobs: the bloom gentler in a small view (a map table's miniature), where it would wash the sigils out. */
+  private postTuning: ChartTuning;
   private isles = new Map<string, Isle>();
   private lines: THREE.Mesh[] = [];
   private voyages: ChartVoyage[] = [];
@@ -185,6 +187,9 @@ export class SeaChart {
   /** How steeply the camera looks down (radians from level). */
   private pitch = 0.95;
   selected: string | null = null;
+  /** Circle the chosen island this fast (radians a second; the map table's miniature), 0 for the chart's still north-facing view. */
+  orbit = 0;
+  private yaw = 0;
   private w = 1; private h = 1;
 
   constructor(readonly canvas: HTMLCanvasElement, readonly tuning: ChartTuning) {
@@ -192,7 +197,8 @@ export class SeaChart {
     this.renderer.setPixelRatio(1);
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     this.camera = new THREE.PerspectiveCamera(tuning.camera.fov ?? 40, 1, 1, 1200);
-    this.post = new Post(this.renderer, tuning);
+    this.postTuning = { ...tuning, bloom: { ...tuning.bloom } };
+    this.post = new Post(this.renderer, this.postTuning);
     this.scene.background = new THREE.Color(0x05060e);
     // the night's light: a cool moon from the north, a little sky all round
     this.scene.add(new THREE.HemisphereLight(0x7080c0, 0x182030, 2.6));
@@ -302,6 +308,21 @@ export class SeaChart {
     return m;
   }
 
+  /** Let go of everything it holds on the GPU (its meshes, materials, textures, render targets and the context). */
+  dispose(): void {
+    this.scene.traverse(o => {
+      const m = o as THREE.Mesh;
+      m.geometry?.dispose();
+      for (const mat of ([] as THREE.Material[]).concat((m.material as THREE.Material | THREE.Material[]) ?? [])) {
+        for (const v of Object.values(mat)) if (v instanceof THREE.Texture) v.dispose();
+        mat.dispose();
+      }
+    });
+    this.glow.dispose();
+    this.renderer.dispose();
+    this.renderer.forceContextLoss();
+  }
+
   /** Choose an island: the camera glides to it; the ring goes round it. */
   select(id: string | null, instant = false): void {
     this.selected = id && this.isles.has(id) ? id : null;
@@ -341,6 +362,7 @@ export class SeaChart {
     this.canvas.style.width = `${this.w * p}px`; this.canvas.style.height = `${this.h * p}px`;
     this.camera.aspect = this.w / this.h; this.camera.updateProjectionMatrix();
     (this.skyU.uRes.value as THREE.Vector2).set(this.w, this.h);
+    this.postTuning.bloom.strength = this.tuning.bloom.strength * Math.max(0.3, Math.min(1, (this.h - 60) / 180));
     // how far the camera stands for a sigil to span so many art pixels across (a flat sigil keeps its width as it tilts away)
     const at = (px: number) => (SIGIL_UNITS * this.h) / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2) * px);
     const was = this.distOpen;
@@ -355,8 +377,11 @@ export class SeaChart {
     const k = 1 - Math.exp(-dt * 3.2);
     this.focus.lerp(this.aim, k); this.dist += (this.distTo - this.dist) * k;
     // tilted down, looking north (-z), never turning (as the game's camera)
-    this.camera.position.set(this.focus.x, this.focus.y + Math.sin(this.pitch) * this.dist, this.focus.z + Math.cos(this.pitch) * this.dist);
-    this.camera.lookAt(this.focus.x, 0, this.focus.z + this.dist * 0.035); // (the chosen island a little above the middle, clear of its card)
+    this.yaw += dt * this.orbit;
+    const back = Math.cos(this.pitch) * this.dist, sy = Math.sin(this.yaw), cy = Math.cos(this.yaw);
+    this.camera.position.set(this.focus.x + back * sy, this.focus.y + Math.sin(this.pitch) * this.dist, this.focus.z + back * cy);
+    const ahead = this.orbit ? 0 : this.dist * 0.035; // (the chosen island a little above the middle, clear of its card)
+    this.camera.lookAt(this.focus.x, 0, this.focus.z + ahead);
     this.post.lift = 0; // (the ground's gentler tilt-shift: the sigils off the middle still read)
     for (const i of this.isles.values()) {
       const pulse = 0.85 + 0.15 * Math.sin(time * 1.6 + i.x * 0.1), chosen = i.d.id === this.selected;
