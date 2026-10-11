@@ -30,11 +30,13 @@ describe("home grows with the kinds she knows", () => {
     // the 10-area home's areas, kinds and all, every night after (whatever the night's seed)
     for (const [k, kind] of a10) { expect(a11.get(k)).toBe(kind); expect(a13.get(k)).toBe(kind); }
     for (const [k, kind] of a11) expect(a13.get(k)).toBe(kind);
-    // the new ones further out than any of the first
-    // (out by the coast: each area's distance as a share of the coast's radius its way, as the map measures it)
-    const from = (m: ReturnType<typeof generateMap>, k: string) => { const [x, y] = k.split(",").map(Number), s = m.siteOf(x, y), c = m.siteOf(m.centreCell[0], m.centreCell[1]); return Math.hypot(s.x - c.x, s.z - c.z) / m.coast(Math.atan2(s.z - c.z, s.x - c.x)); };
-    const far = Math.max(...[...a10.keys()].map(k => from(m13, k)));
-    for (const k of a13.keys()) if (!a10.has(k)) expect(from(m13, k)).toBeGreaterThanOrEqual(far);
+    // the new ones further out, along the island's shape (rules/islandGrowth.ts: each the next it takes from its edge): each
+    // joined to the areas before it, and past home's own neighbours
+    const ring = new Set(m13.neighbours.get(m13.centreCell.join(",")) ?? []);
+    for (const k of a13.keys()) if (!a10.has(k)) {
+      expect(ring.has(k), `${k} past home's neighbours`).toBe(false);
+      expect([...(m13.neighbours.get(k) ?? [])].some(q => a10.has(q) || q === m13.centreCell.join(",") || (a13.has(q) && q !== k)), `${k} joined to the island`).toBe(true);
+    }
     const landOf = (m: ReturnType<typeof generateMap>) => m.bounds.land!.dist.filter(d => d > 0).length; // (its land's samples: the island bigger)
     expect(landOf(m13)).toBeGreaterThan(landOf(m10));
     // 2 legends a night at first (1 in 5 areas); 3 at 13

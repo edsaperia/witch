@@ -60,7 +60,9 @@ export function makeLand(isLand: (x: number, z: number) => boolean, box: { minX:
    *  another) taken as their surroundings. */
   minArea = 0,
   /** Slivers thinner than about twice this many samples smoothed away (0: none). */
-  smooth = 0): LandMap {
+  smooth = 0,
+  /** Water the sea doesn't reach (a pond the areas' borders leave) taken as land, whatever its size: no lakes but those meant. */
+  fillPonds = false): LandMap {
   const x0 = box.minX - margin, z0 = box.minZ - margin;
   const cols = Math.ceil((box.maxX - box.minX + 2 * margin) / step) + 1, rows = Math.ceil((box.maxZ - box.minZ + 2 * margin) / step) + 1, N = cols * rows;
   // The test at every sample (the grid's rim always water: the land lies inside the box, and the margin past it is sea): first
@@ -96,7 +98,7 @@ export function makeLand(isLand: (x: number, z: number) => boolean, box: { minX:
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) if (i === 0 || j === 0 || i === cols - 1 || j === rows - 1) land[j * cols + i] = 0;
   }
   // Crumbs: each run of land or of water (joined side to side) under minArea taken as what's round it; the sea round the rim never.
-  if (minArea > 0) {
+  if (minArea > 0 || fillPonds) {
     const most = minArea / (step * step), comp = new Int32Array(N).fill(-1), stack = new Int32Array(N), members = new Int32Array(N);
     for (let k0 = 0; k0 < N; k0++) {
       if (comp[k0] >= 0) continue;
@@ -112,7 +114,7 @@ export function makeLand(isLand: (x: number, z: number) => boolean, box: { minX:
         if (j > 0 && comp[k - cols] < 0 && land[k - cols] === v) { comp[k - cols] = k0; stack[top++] = k - cols; }
         if (j < rows - 1 && comp[k + cols] < 0 && land[k + cols] === v) { comp[k + cols] = k0; stack[top++] = k + cols; }
       }
-      if (!rim && count < most) for (let q = 0; q < count; q++) land[members[q]] = 1 - v; // (its neighbours, already numbered, keep theirs)
+      if (!rim && (count < most || (fillPonds && v === 0))) for (let q = 0; q < count; q++) land[members[q]] = 1 - v; // (its neighbours, already numbered, keep theirs)
     }
   }
   // Where the coast crosses each edge between samples, found by halving (8 times: to a 256th of a step), kept by the edge.
