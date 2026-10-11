@@ -6755,6 +6755,23 @@
           ],
           "additionalProperties": false
         },
+        "island": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "sapBars": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "sapBars"
+          ],
+          "additionalProperties": false
+        },
         "circleHue": {
           "type": "number",
           "minimum": 0
@@ -6812,6 +6829,7 @@
         "paving",
         "levels",
         "tiles",
+        "island",
         "circleHue",
         "circleHue2",
         "pulse",

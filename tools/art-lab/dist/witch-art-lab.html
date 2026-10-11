@@ -6652,6 +6652,55 @@ const SIGILS = {
   beetle: [E(.5, .64, .2, .26), L([.5, .4], [.5, .9]), E(.5, .32, .12, .08), ...pair(L([.43, .27], [.32, .14], [.3, .04]), L([.33, .16], [.4, .11]), L([.31, .54], [.14, .48]), L([.3, .66], [.12, .68]), L([.33, .78], [.18, .9]))],
 };
 
+// ---- the islands' sigils ----
+// (Ed, 2026-10-11, with a reference: a Celtic tree of life.) An island's own sigil, in the creature sigils' stroke family, so every
+// renderer draws it at every level: home's is the World Tree (journey.md: "symbolically the Ent legend's placed sigil"), shown on the
+// dancefloor through the boot (rules/dancefloor.ts islandTiles). A thick trunk, its crown above and its flatter roots below, every branch and root reaching out into a band of knotwork round it (two strands weaving over and under), so crown
+// and roots join in one ring.
+const bezier = (p0, c0, c1, p1, n = 20) => L(...Array.from({ length: n + 1 }, (_, i) => { const t = i / n, u = 1 - t; return [0, 1].map(k => u * u * u * p0[k] + 3 * u * u * t * c0[k] + 3 * u * t * t * c1[k] + t * t * t * p1[k]); })); // a cubic Bezier
+const KNOT_R = .405, KNOT_A = .036, KNOT_N = 6, KNOT_GAP = 9; // the band: its radius, how far each strand weaves in and out, its waves round, the gap (degrees) where a strand passes under
+// The knotwork band (Ed's reference): two strands weaving round, crossing 2 x KNOT_N times, each crossing over and under in turn.
+function knotBand() {
+  const out = [], step = 3;
+  for (const side of [1, -1]) {
+    let run = [];
+    for (let d = 0; d <= 360; d += step) {
+      const k = Math.round(d / (180 / KNOT_N)), near = Math.abs(d - k * 180 / KNOT_N) < KNOT_GAP, under = (k % 2 === 0) === (side === 1);
+      if (near && under) { if (run.length > 1) out.push(L(...run)); run = []; continue; }
+      const a = (d - 90) * Math.PI / 180, r = KNOT_R + side * KNOT_A * Math.sin(KNOT_N * a);
+      run.push([.5 + r * Math.cos(a), .5 + r * Math.sin(a)]);
+    }
+    if (run.length > 1) out.push(L(...run));
+  }
+  return out;
+}
+const treeBand = deg => at(.5, .5, KNOT_R - KNOT_A * .6, deg); // where a branch meets the band's inside
+// Drawn freehand like Ed's reference rather than mirrored: the crown's limbs climbing high into the band, the roots spreading
+// flatter and lower, the trunk a little off true.
+const CROWN = [
+  bezier([.43, .4], [.36, .3], [.25, .24], treeBand(-143)),  // the low limb rising over the left lobe
+  bezier([.44, .37], [.41, .26], [.33, .18], treeBand(-125)),    // up and out to the left
+  bezier([.46, .35], [.45, .24], [.39, .14], treeBand(-110)), // climbing to the top
+  bezier([.53, .34], [.55, .23], [.61, .15], treeBand(-73)),  // up and over to the right
+  bezier([.56, .37], [.6, .26], [.67, .19], treeBand(-55)),  // out to the right
+  bezier([.57, .4], [.64, .3], [.74, .25], treeBand(-36)),  // the low limb rising over the right lobe
+];
+const ROOTS = [
+  bezier([.44, .68], [.36, .7], [.24, .72], treeBand(150)),  // spreading flat to the left
+  bezier([.46, .69], [.42, .75], [.34, .79], treeBand(126)),
+  bezier([.5, .7], [.51, .76], [.48, .8], treeBand(97)),      // down
+  bezier([.54, .69], [.6, .74], [.66, .77], treeBand(62)),
+  bezier([.57, .68], [.66, .7], [.77, .7], treeBand(32)),    // spreading flat to the right
+];
+// The trunk: thick, narrowest at its middle, flaring into the crown and the roots.
+const TRUNK = [bezier([.43, .69], [.47, .6], [.46, .45], [.43, .36]), bezier([.58, .69], [.54, .6], [.55, .44], [.57, .36]), L([.505, .7], [.5, .34])];
+const WORLD_TREE = [...ROOTS, ...TRUNK, ...CROWN, ...knotBand()];
+SIGILS.worldTree = WORLD_TREE;
+// Each island's sigil (island -> sigil id): only home's for now, the World Tree, every map's (Ed, 2026-10-11: every map is the
+// home island until islands get their own legend kinds; add theirs here).
+const ISLAND_SIGILS = { home: "worldTree" };
+const islandSigil = (island = "home") => ISLAND_SIGILS[island] || ISLAND_SIGILS.home;
+
 // ---- legendary sigils ----
 // (Ed, 2026-10-06: "let's have the legendary sigils be huge, twice as wide and more detailed than the normal ones, with a
 // decorative border"; then his reference, an occult magic circle: "it would have the animal shape in the centre".) A legendary
@@ -6811,7 +6860,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid" };
+const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", worldTree: "mint" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -6968,8 +7017,8 @@ function sigilGlyph(id, size = 16, { progress = 1, legendary = false } = {}) {
 // When the draw-on reaches each pixel of the bare sigil's `size` px glyph (0 to 1; Infinity: no ink): sigilGlyph at any
 // progress is this at most that progress. Worked out once, a draw-on's steps are cheap (the dancefloor's area patterns
 // made all eight from scratch, most of the game's start-up after the map: overnight start-up pass).
-function sigilArrival(id, size = 16) {
-  const strokes = sigilStrokes(id), at = new Float64Array(size * size), half = Math.max(SIGIL_STROKE / 2, .62 / size);
+function sigilArrival(id, size = 16, { stroke = SIGIL_STROKE } = {}) { // stroke: a thinner line for more room (the floor's island sigil)
+  const strokes = sigilStrokes(id), at = new Float64Array(size * size), half = Math.max(stroke / 2, .62 / size);
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) at[y * size + x] = inkAt(strokes, (x + .5) / size, (y + .5) / size, half);
   return at;
 }

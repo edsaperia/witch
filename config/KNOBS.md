@@ -1489,6 +1489,8 @@ Off (Ed, 2026-10-06: "Remove the floating numbers above the runestones."); set o
 | `dancefloor.tiles.trailTime` | number | 0 to … |
 | `dancefloor.tiles.eventTime` | number | 0 to … |
 | `dancefloor.tiles.lowLevelShare` | number | 0 to … |
+| `dancefloor.island.on` | boolean |  |
+| `dancefloor.island.sapBars` | number | 0 to … |
 | `dancefloor.circleHue` | number | 0 to … |
 | `dancefloor.circleHue2` | number | 0 to … |
 | `dancefloor.pulse` | number | 0 to … |

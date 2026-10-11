@@ -320,6 +320,8 @@ export interface Tuning {
     /** The tile-lighting engine: partified areas for each level up from 1; the witch's tiles (below witchLift, in her neon), ripples, trail and event times (seconds), and the share of lit tiles shown at level 1. */
     levels: number[];
     tiles: { witchLift: number; witchColour: string; rippleTime: number; trailTime: number; eventTime: number; lowLevelShare: number };
+    /** The island's sigil on the floor through the boot (rules/dancefloor.ts islandTiles): on, and the bars between the sap rising up it once written. */
+    island: { on: boolean; sapBars: number };
     circleHue: number; circleHue2: number; pulse: number; runeSpeed: number;
     lightReach: number; lightStrength: number;
     discoHeight: number; discoSize: number; spin: number;
