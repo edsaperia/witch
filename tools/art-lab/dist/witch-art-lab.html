@@ -5327,7 +5327,7 @@ function speciesOf(g) {
 }
 
 // The evolution kit's features (creatures3d.js evolve3d).
-const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles"];
+const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings"];
 // A level's overrides, in the builders' bag (as speciesOf makes q).
 function levelQ(l) {
   const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
@@ -5555,6 +5555,9 @@ const glowMotes = (sp, seed, n = 9) => { // a few glowing motes around a legend 
 };
 
 // A feathered wing: a fan of long flat feathers from shoulder to tip, lifted and swept back.
+// A dragon's wing membrane (the wings feature): a straight leading edge, its trailing edge scalloped between the finger bones and
+// narrowing to the tip (s: -1 at the shoulder to 1 at the tip; t: -1 the trailing edge to 1 the leading).
+const dragonWing = mat => (s, t) => { const u = (s + 1) / 2, trail = -1 + 1.75 * u * u + .28 * Math.abs(Math.sin(u * Math.PI * 3)); return t < trail || t > 1 - .15 * u ? null : mat; };
 function wing3d(m, root, side, span, up, mat, mat2, group) {
   // one shaped plane: a feathered outline, raised and swept back, its leading edge forward
   const tip = v3.add(root, [-span * .7, span * (.75 + up), side * span * .35]), u = v3.norm(v3.sub(tip, root));
@@ -5674,6 +5677,8 @@ function gearUp(m) {
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
+//   wings: { size, at, mat, bone, nub }: leathery wings off its shoulders, a dragon's (bones and a membrane between them, as the
+//     bat's), rising up and back, size times its body's length, flapping a little with its walk; nub: folded stubs (a young one's).
 function evolve3d(m, feats, c) {
   for (const f of feats) {
     if (f.kind === "mane") {
@@ -5762,6 +5767,20 @@ function evolve3d(m, feats, c) {
         if (m.field(p) > k) continue; // nothing there
         m.ell(p, [k * 1.2, k * .55, k * .7], M.MOSS, { group: 150 + (side > 0 ? 0 : 1), extra: true, rough: k * .15 });
         if (i % 2) m.ell(v3.add(p, [0, k * .45, side * k * .2]), [k * .35, k * .3, k * .35], M.FLOWER, { group: 152, extra: true }); // a sprig of heather
+      }
+    }
+    if (f.kind === "wings") { // leathery wings off its shoulders (Ed, 2026-10-11: the east's Cinder Wyrm), bat-built: bones, a membrane between
+      m.part = "body";
+      const S = (f.size ?? .9) * c.len * (f.nub ? .32 : 1), b = c.backAt(f.at ?? .66), mem = M[f.mat || "BODY2"], bone = M[f.bone || "BODY3"], lift = c.frame ? -.08 : .06;
+      for (const side of [-1, 1]) {
+        const sh = [b[0], b[1] - .02, side * c.bw * .45], wr = v3.add(sh, [-.12 * S, (.5 + lift) * S, side * .32 * S]);
+        const tips = f.nub ? [v3.add(sh, [-.55 * S, .55 * S, side * .3 * S]), v3.add(sh, [-.65 * S, .2 * S, side * .25 * S])]
+          : [v3.add(sh, [-.62 * S, (.78 + lift) * S, side * .62 * S]), v3.add(sh, [-.95 * S, (.38 + lift * .5) * S, side * .5 * S]), v3.add(sh, [-.75 * S, .05 * S, side * .3 * S])];
+        const g = 180 + (side > 0 ? 1 : 0), r = Math.max(.012, S * .04);
+        m.seg(sh, wr, r, r * .8, bone, { group: g, extra: true });
+        for (const t of tips) m.seg(wr, t, r * .7, r * .3, bone, { group: g, extra: true });
+        const span = v3.sub(tips[0], sh), u = v3.norm(span), back = v3.norm(v3.sub(tips[tips.length - 1], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
+        m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, S * (f.nub ? .1 : .2))), u, v, Math.hypot(...span) * .55, S * (f.nub ? .22 : .4), dragonWing(mem), { group: g + 2, extra: true, bend: .2 });
       }
     }
     if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
