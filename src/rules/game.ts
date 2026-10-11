@@ -21,13 +21,14 @@ import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries
 import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
-import { stoneTurned } from "./bootRing";
+import { bootShare, stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
+import { homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
 import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, speakerStateOf, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
-import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
+import { floorEvent, floorLevel, islandSigilOf, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
@@ -268,14 +269,20 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
  *  "pickup", rules/leash.ts), or by filling it again (the old "again"). How many letters fill it is the tuning's invites.hits (buffs change it);
  *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace); it drains at the
  *  tuning's invites.drain (buffs change it; states.json's affection.drain only when that's missing), after states.json's drainDelay. */
+/** Napping (rules/creatures.ts stepNaps): asleep with a nap's end, so a letter can rouse it; not the party's over's sleep. */
+const napper = (c: Creature): boolean => !!c.asleep && c.napUntil !== undefined;
+
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, E = t.legends;
   const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain } };
   return {
-    invitable: c => !c.asleep && invitableNow(c, data), // (a sleeper isn't to be invited: she wakes it by landing in its area)
+    // A napper takes them (Ed, 2026-10-11: "Letters wake them"): the 💌 rouses it, wherever she is, and lands as any other (hit,
+    // below). One asleep for good (the party's over: no napUntil) still lets them by.
+    invitable: c => (napper(c) ? invitableNow({ ...c, asleep: false }, data) : invitableNow(c, data)), // (as if up: the letter wakes it)
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
     hit(c, amount, at) {
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
+      if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
       hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time) }, c, amount, time, data);
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
@@ -590,6 +597,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),
     centre: g.map.dancefloor,
+    home: homeArea(g.map),
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
@@ -706,6 +714,7 @@ export function floorInputs(g: Game): FloorInputs {
     time: g.clock.time, beatAt: tm => beatAt(g.beat, tm), seed: g.seed, level: floorLevel(g.party.areas.size, g.tuning), partifiedAreas: areas,
     witch: { x: w.x, y: w.y, lift: g.witch.lift, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) }, dancers,
     moon: { phase: moonState(g.clock.time, g.seed, g.tuning).phase },
+    island: { sigil: islandSigilOf(g.map), drawn: bootShare(g.party, g.map, g.clock.time) },
   };
 }
 
@@ -728,7 +737,8 @@ export function speakerBoot(g: Game, i: number, time = g.clock.time): number {
   return Math.max(0, Math.min(1, (time - at) / Math.max(1e-3, g.tuning.boot.transform)));
 }
 
-// Before the first wave the floor shows only the moon (Ed, 2026-10-06); it switches on, the full moon
+// Before the first wave the floor shows only the moon (Ed, 2026-10-06), and through the boot the island's sigil (Ed, 2026-10-11:
+// rules/dancefloor.ts islandTiles); it switches on, the full moon
 // flaring into the party, when the first wave comes (or at once, off the decks, in a run started later);
 // a wave sends a pulse towards the area it reached; a sigil placed flashes out from the centre.
 function stepDancefloor(g: Game, waveBefore: number): void {

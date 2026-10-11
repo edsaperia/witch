@@ -1,6 +1,6 @@
 // The bots (rules/bot.ts): the balance tool's and the bot game's one player made of rules.
 import { describe, expect, it } from "vitest";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { newGame, stepGame, type Game } from "./game";
 import { article, BOT_GAME, newBot, plural, type BotKind, type BotOptions } from "./bot";
 
@@ -65,6 +65,20 @@ describe("the bot", () => {
     play(h, "hover", 10);
     expect(h.witch.mode).toBe("treetop");
   });
+
+  it("wins someone on the island it once won no one on (#650): its letters wake a napper from the next area (Ed, 2026-10-11: \"Letters wake them\")", () => {
+    // Seed 1000 on the 10-area island: its first target, an elk, naps across the border from where its area's site lets her land.
+    // When a sleeper took no 💌 till she was on the ground in its own area, the skilled bot fired at it from the next area all run.
+    const g = newGame(1000, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false };
+    const bot = newBot("skilled"), w = g.witches[0];
+    let won = 0;
+    for (let i = 0; i < 40 * 60 && !won; i++) {
+      stepGame(g, bot.decide(g), 1 / 60);
+      won += w.invites.events.filter(e => e.kind === "happy").length;
+    }
+    expect(won).toBeGreaterThan(0);
+  }, 60000);
 
   it("names a species in the plural for its tag", () => {
     expect(plural("fox")).toBe("foxes");

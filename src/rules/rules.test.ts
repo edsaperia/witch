@@ -24,7 +24,7 @@ import { newClock, tick, MAX_STEP } from "./clock";
 import { isInside } from "./mapShape";
 import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
-import { composeFloor, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
+import { composeFloor, islandSigilOf, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { bootSpeaker, floorInputs, speakerBoot } from "./game";
 import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
@@ -1378,10 +1378,10 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
   const beat = 60 / TUNING.beat.bpm, boot = 8 * beat; // the switch-on sequence is 8 beats
   const inputs = (time: number, o: Partial<FloorInputs> = {}): FloorInputs => ({ time, seed: 7, level: 2, partifiedAreas: new Set(), witch: { x: -50, y: -50, lift: 1, rgb: [255, 238, 70] }, dancers: [], ...o });
   const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
-  it("shows only the moon before the first wave, in its twilight palette, and switches on, once, when the first wave comes", () => {
-    const g = newGame(3, TUNING), P = TUNING.moon.floor.palette.map(c => c.join());
+  it("shows only the moon before the first wave (with the island's sigil off), in its twilight palette, and switches on, once, when the first wave comes", () => {
+    const T = withTuning({ dancefloor: { ...TUNING.dancefloor, island: { ...TUNING.dancefloor.island, on: false } } }), g = newGame(3, T), P = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
-    const colours = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
+    const colours = () => { const o = composeFloor(g.floor, floorInputs(g), T).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
     expect(g.party.wave).toBe(0);
@@ -1399,6 +1399,27 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
     for (let i = 0; i < 60 * (TUNING.moon.floor.flare + 1); i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     expect(g.floor.on).toBe(on); // only once
     expect([...colours().seen].some(c => !P.includes(c))).toBe(true); // the party's neons
+  });
+  it("shows the island's sigil through the boot (home's: the World Tree), written on as the pulse goes round, the moon before", () => {
+    expect(islandSigilOf({})).toBe("worldTree");
+    expect(islandSigilOf({ island: "nowhere" })).toBe("worldTree"); // an island without its own sigil yet: home's
+    const g = newGame(3, TUNING), ghost = TUNING.moon.floor.palette[0].join(), moon = TUNING.moon.floor.palette.map(c => c.join());
+    g.clock.paused = false;
+    const tiles = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi; let lit = 0, faint = 0, other = 0; for (let i = 0; i < o.length; i += 4) { if (!o[i + 3]) continue; const c = `${o[i]},${o[i + 1]},${o[i + 2]}`; if (o[i + 3] >= 2 && !moon.includes(c)) lit++; else if (c === ghost) faint++; else other++; } return { lit, faint, other }; };
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(floorInputs(g).island!.drawn).toBe(0);
+    expect(tiles().lit).toBe(0); // at her decks: the moon
+    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    const early = floorInputs(g).island!.drawn;
+    expect(early).toBeGreaterThan(0); expect(early).toBeLessThan(0.2);
+    const a = tiles();
+    expect(a.faint).toBeGreaterThan(40); // the strokes to come, faint
+    while (floorInputs(g).island!.drawn < 0.5) g.clock.time += 0.5;
+    const mid = tiles(); // half way round
+    g.clock.time += 600; const done = tiles();
+    expect(floorInputs(g).island!.drawn).toBe(1); expect(g.floor.on).toBeNull();
+    expect(mid.lit).toBeGreaterThan(a.lit); expect(done.lit).toBeGreaterThan(mid.lit); expect(done.faint).toBe(0);
+    expect(done.lit).toBeGreaterThan(150); // the whole tree and its ring
   });
   it("draws the moon's phases: none lit at new, the right half at first quarter, all at full, the left half at last quarter", () => {
     const lit = (phase: number) => { const o = new Uint8Array(GRID * GRID * 4); moonTiles(o, phase, 0, TUNING); const S = TUNING.moon.floor.palette[2].join(), P1 = TUNING.moon.floor.palette[1].join(); let l = 0, r = 0; for (let n = 0; n < GRID * GRID; n++) { const c = `${o[n * 4]},${o[n * 4 + 1]},${o[n * 4 + 2]}`; if (o[n * 4 + 3] === 2 && (c === S || c === P1)) { if (n % GRID < GRID / 2) l++; else r++; } } return { l, r }; };

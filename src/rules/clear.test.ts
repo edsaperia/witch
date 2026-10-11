@@ -278,13 +278,13 @@ describe("what's left to clear (Ed's playtest, 2026-10-07: the HUD's count, and 
     if (cellKey(g.map.cellSafe(site.x, site.z).cell) === key) expect(clearableAt(g.party, g.map, site.x, site.z)).toBeNull(); // (cleared: nothing to say)
   }, 60000);
 
-  it("a sleeper isn't to be invited from the treetops, and holds its area till she lands in it and wakes it (what Ed met)", () => {
+  it("a sleeper holds its area till she wakes it, landing in it (what Ed met), or with a 💌, which it now takes (Ed, 2026-10-11: \"Letters wake them\"; lettersWake.test.ts)", () => {
     const g = game(), key = routeOf(g.map).order[4], [cx, cy] = key.split(",").map(Number) as [number, number];
     const A = affectionOf(g), left = wildLeft(g.creatures, [cx, cy]);
     const sleeper = left[0];
     sleeper.asleep = true; sleeper.napUntil = g.clock.time + 999;
     for (const c of left) if (c !== sleeper) befriend(c, g.clock.time);
-    expect(A.invitable(sleeper)).toBe(false);
+    expect(A.invitable(sleeper)).toBe(true); // (a letter would rouse it)
     run(g, 0.5);
     expect(g.party.areas.has(key), "the sleeper holds it").toBe(false);
     expect(clearCue(wildLeft(g.creatures, [cx, cy])).text).toContain("1 asleep");
