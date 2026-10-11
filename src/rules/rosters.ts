@@ -88,3 +88,9 @@ export function dealLegends(island: Island, night: number, found: ReadonlySet<st
   if (n && early.length && !dealt.some(k => prefer.includes(k))) dealt[n - 1] = early[0];
   return dealt;
 }
+
+/** What rules/islandShape.ts islandCoast needs to draw an island's outline as the map makes it (the sea chart, the dreams): its
+ *  kind, its kind's phase, its own seed and its areas (home's: the run's seed, its size). With tuning.islands.coast for a kind's
+ *  island (the map's own for home). */
+export const coastSpec = (island: Island): { kind: string; phase: number; seed: number; areas: number } =>
+  ({ kind: island.kind, phase: Math.max(0, island.phase - 1), seed: island.seed, areas: island.size });

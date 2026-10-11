@@ -83,6 +83,38 @@
       ],
       "additionalProperties": false
     },
+    "islands": {
+      "type": "object",
+      "properties": {
+        "coast": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "detail"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "coast"
+      ],
+      "additionalProperties": false
+    },
     "beach": {
       "type": "object",
       "properties": {
@@ -9370,6 +9402,7 @@
   "required": [
     "mapAreas",
     "map",
+    "islands",
     "beach",
     "areaSize",
     "areaScale",

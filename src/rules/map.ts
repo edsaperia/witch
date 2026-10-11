@@ -240,7 +240,9 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
   // The coast's wobble (Ed, 2026-10-06): seeded, the same for every edge; the forest's extent covers its furthest headland.
   // (The grid doesn't change with it, so the coast's knobs never reshuffle the map: its slack of an area holds the
   // playable areas' furthest headland, and the buffer's past it are the forest's anyway.)
-  const coast = round ? makeCoast(seed, MS.coast) : () => 1, most = 1 + (round ? Math.max(0, MS.coast?.amp ?? 0) : 0);
+  // (a kind's island takes the islands' coast, as its outline on the sea chart and in the dreams: rules/islandShape.ts)
+  const coastKnobs = rosterIsland && rosterIsland.kind !== "home" ? tuning.islands?.coast ?? MS.coast : MS.coast;
+  const coast = round ? makeCoast(seed, coastKnobs) : () => 1, most = 1 + (round ? Math.max(0, coastKnobs?.amp ?? 0) : 0);
   const n = round ? 2 * Math.ceil(R + 0.5 + MS.buffer + 1) + 1 : tuning.mapAreas, margin = round ? Math.ceil(edgeK) : 2;
   // Areas vary in size: the world is warped smoothly before it is cut, so in some stretches of
   // the map the cells spread out (big areas) and in others they crowd (small ones). The warp

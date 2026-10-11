@@ -93,3 +93,16 @@ describe("the map of an island by roster", () => {
     if (pool.length >= g2.map.legendKinds.length) expect(g2.map.legendKinds.some(k => found.includes(k))).toBe(false);
   }, 60000);
 });
+
+describe("an island's outline (rules/islandShape.ts) is the map's own coast", () => {
+  it("draws from islandOf alone: the coast the map makes with the island's seed and the islands' knobs", async () => {
+    const { islandCoast } = await import("./islandShape");
+    const { makeCoast } = await import("./mapShape");
+    const { coastSpec } = await import("./rosters");
+    const i = islandOf("wolf")!, c = islandCoast(coastSpec(i), TUNING.islands.coast), m = makeCoast(i.seed, TUNING.islands.coast);
+    expect(c.seed).toBe(i.seed);
+    expect(c.areas).toBe(i.size);
+    const a = -Math.PI + 0.3; // (the radii follow the map's coast, at the island's size)
+    expect(c.radii[Math.round(((a + Math.PI) / (Math.PI * 2)) * c.radii.length)] / c.radii[0]).toBeCloseTo(m(-Math.PI + Math.round(((a + Math.PI) / (Math.PI * 2)) * c.radii.length) / c.radii.length * Math.PI * 2) / m(-Math.PI), 5);
+  });
+});
