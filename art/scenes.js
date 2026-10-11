@@ -80,15 +80,15 @@ const LARGE = {
     ["@greek-temple", 0, 0], ["column-drums", 1.6, 2.9], ["statue-headless", -3.4, 2.3], ["pediment-fragment", 3.8, -1.6, "left"]] },
   "castle-ruins": { desc: "castle ruins: curtain walls (one breached), a round tower open to the sky, a gatehouse with its portcullis fallen, steps to nowhere, rubble", suits: ["rocky-slope", "moor", "norway", "deadwood", "cave-mouth"], pieces: [
     ["curtain-wall", -4.2, -1.2], ["round-tower", -1.7, -2.6], ["gatehouse", 1.6, -2.3], ["curtain-wall-breach", 4.7, -1.4, "left"], ["steps-to-nowhere", -3.4, 2.0], ["rubble", 2.6, 1.7], ["rubble", -.4, 1.2, "left"]] },
-  "classical-ruins": { desc: "classical ruins: a row of columns, some fallen in drums, a pediment fragment, a cracked mosaic floor, a headless statue, a broken arch, and the statue's toppled head, its eyes still faintly lit", suits: ["meadow", "garden", "grassland", "ancient"], pieces: [
+  "classical-ruins": { desc: "classical ruins: a row of columns, some fallen in drums, a pediment fragment, a cracked mosaic floor, a headless statue, a broken arch and fallen drums", suits: ["meadow", "garden", "grassland", "ancient"], pieces: [
     ["mosaic-floor", 0, 0], ["column", -2.2, -2.3], ["column", -.8, -2.4], ["column-broken", .6, -2.3], ["column", 2.0, -2.4], ["column-drums", 1.8, 2.4], ["pediment-fragment", -2.8, 2.1],
-    ["statue-headless", 3.2, -.6], ["arch-ruin", -4.4, -.6], ["decor:statue-head", 4.0, 1.6, "left"]] },
+    ["statue-headless", 3.2, -.6], ["arch-ruin", -4.4, -.6], ["column-drums", 4.0, 1.6, "left"]] }, // (the toppled statue head gone: Ed, 2026-10-11)
 };
 // The classical ruins from a seed (art/landmarks.js CLASSICAL_PLANS; Ed, 2026-10-11: more variations, some smaller): each plan's
 // seeded variants as scenes, a few fallen pieces round the large ones (picked by the seed), the small ones alone; the large ones ("temple-<plan>~<k>") join
 // the featured pool (tuning scenes.featured, "temple-*"), the small ones ("ruin-<plan>~<k>") scatter as scenes in many more area types.
 const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "cave-mouth", "wispy-forest"];
-const TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "decor:statue-head", "column-broken", "column"];
+const TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
 for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
   const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => ((Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453) % 1 + 1) % 1;
   const pieces = [[`${id}~${k}`, 0, 0]];
