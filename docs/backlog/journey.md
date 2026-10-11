@@ -31,6 +31,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Biomes by direction** (Ed): the sea chart is a compass. **North** gets colder (pine forests, eventually tundra); **south** hotter (eventually desert); **east** rockier (eventually volcanic); **west** becomes jungle. The further out, the more of an island's areas are themed by its biome (today's 32 area types are the temperate middle). Proposed: the diagonals blend (north-east mountains and glaciers, south-east badlands, south-west mangrove swamp, north-west cold rainforest), and each biome brings its own creatures, legends and record genre.
 - **Harder further out.** The further an island is from the first, the more areas it has, the more irregular its shape, and the rarer its animals.
   - Further from home, the more **fantastical** the creatures (dragons, pegasi...); directions are biomes (below). Many more creatures are planned.
+- **Losing** (Ed, 2026-10-11): the next night she can replay the same island, or pick any other island she has unlocked on the sea chart. Nothing is lost.
 - **Replay:** islands already won can be won again, to explore the chart in other directions (each legend points somewhere new) or to finish their quests (records, below).
 - **How it could work:** each island is a point on the sea chart, its seed made from its position; its size, irregularity, biome and animals all follow from its distance and direction from the start. The save is only which islands are won and which records are earned.
 

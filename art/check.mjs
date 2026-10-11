@@ -792,7 +792,7 @@ const report = await b.page.evaluate(async () => {
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 ok(report.every(r => r.good), `${report.length} sprite checks`);
-// party relics (art/partyRelics.js, #87): 6+ giant bottles, each half-buried and legend-sized (7 to 16 m across and 6 to 17 m tall),
+// party relics (art/partyRelics.js, #87): 6+ bottles, each half-buried, drawn at a third of their built size (Ed, 2026-10-11: 2.3 to 5.4 m across and 2 to 5.7 m tall),
 // sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
 // motes); the glass is see-through (a rim in its colour and a half-clear dither of empty glass); it carries a light; its 3 frames
 // differ (the motes rise); its origin and glint inside the sprite, the glint on the glass; the glint's 4 frames differ, only GLINT,
@@ -803,7 +803,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   if (P.PARTY_RELIC_IDS.length < 6) bad.push(`${P.PARTY_RELIC_IDS.length} relics`);
   for (const id of P.PARTY_RELIC_IDS) {
     const R = P.partyRelicSprite(id, st), { w, h, m } = R.sp, { width, height } = R.metres, count = k => m.filter(v => v === k).length;
-    if (!(width >= 7 && width <= 16 && height >= 6 && height <= 17)) bad.push(`${id} ${width} x ${height} m`);
+    if (!(width >= 2.3 && width <= 5.4 && height >= 2 && height <= 5.7)) bad.push(`${id} ${width} x ${height} m`);
     let earth = 0, bottom = 0; for (let x = 0; x < w; x++) { const v = m[(h - 1) * w + x]; if (v) { bottom++; if (EARTH.has(v)) earth++; } } if (!bottom || earth < bottom * .8) bad.push(`${id} not sitting in its mound`);
     const glowing = new Set(); for (const v of m) if (EMISSIVE.has(v)) glowing.add(v); if (count(M.MAGIC) < 200 || [...glowing].some(v => !GLOWS.has(v))) bad.push(`${id} glows ${[...glowing]} (${count(M.MAGIC)} liquid)`);
     let holes = 0; for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) if (!m[y * w + x] && m[y * w + x - 1] === M.HAT2 && m[y * w + x + 1] === M.HAT2) holes++;
@@ -818,7 +818,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   if (new Set(frames.map(key)).size < 4) bad.push("glint frames repeat");
   for (const g of [...frames, ...tops]) if (g.sp.m.some(v => v && v !== M.GLINT)) bad.push("glint not all GLINT");
   if (tops.some((g, i) => g.sp.m.filter(Boolean).length <= frames[i].sp.m.filter(Boolean).length)) bad.push("treetop glint not bigger");
-  ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} giant bottles, half-buried, legend-sized, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), one sigil for all${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+  ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} bottles, half-buried, a third of their built size, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), one sigil for all${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
 // the trees and bushes grown from their genomes (art/flora/genomes.js) draw exactly as before: every species over seeds, sizes and
 // area options, and the bushes, against art/flora/baseline.json (when a change to them is meant, rewrite it: node art/flora/fingerprint.mjs)

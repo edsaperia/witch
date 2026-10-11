@@ -67,14 +67,16 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
 });
 
 describe("berries to evolve, tied to strength (Ed, 2026-10-05: \"tie the cost to strength\")", () => {
-  it("costs 3 and 8 for a species of normal strength (the level gap of 2026-10-07: an adult gains far more; 4 and 4 before, doubled by Ed 2026-10-06), nothing past adult", () => {
-    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([3, 8, Infinity]);
+  it("costs 1 and 8 for a species of normal strength (a baby's one berry: Ed, 2026-10-11, berries.babyCost; the youth's 8 by the level gap of 2026-10-07), nothing past adult", () => {
+    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([1, 8, Infinity]);
+    expect(toEvolve(0, withTuning({ berries: { ...TUNING.berries, babyCost: undefined } }))).toBe(3); // (by strength without the knob, as before)
     expect(toEvolve(1, TUNING, "wolf")).toBe(8);
   });
 
   it("buys the same fighting value a berry for every species (at least one berry)", () => {
     giving("bear", 2); giving("bat", 0.3);
-    expect(toEvolve(0, TUNING, "bear") + toEvolve(1, TUNING, "bear")).toBe(22); // twice the value, twice the berries (3 + 8 = 11 for a normal one)
+    expect(toEvolve(1, TUNING, "bear")).toBe(16); // twice the value, twice the berries (8 for a normal one)
+    expect(toEvolve(0, TUNING, "bear")).toBe(1); // (a baby: one berry, whatever its species: Ed, 2026-10-11)
     expect(toEvolve(0, TUNING, "bat")).toBe(1);
     expect(toEvolve(1, TUNING, "bat")).toBe(2);
   });

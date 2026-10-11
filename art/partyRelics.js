@@ -1,4 +1,4 @@
-// Party relics (Ed, #87, 2026-10-05): giant, legend-sized bottles half-buried in the forest floor, 3 or 4 to a map, waiting to be
+// Party relics (Ed, #87, 2026-10-05): bottles half-buried in the forest floor (built legend-sized, drawn at a third: PARTY_RELIC_SIZE), 3 or 4 to a map, waiting to be
 // found. The witch digs one up; it becomes a sigil in her stack, and placed by a sleeping legend it wakes the legend happy. Ed: "The
 // legend relics should be various kinds of bottle ... the liquid inside should glow so it's clear that it's a magical item and not
 // just scenery" and "They should all look like colourful transparent bottles of different shapes. Round, square, hexagonal, etc."
@@ -117,10 +117,13 @@ export const PARTY_RELIC_FRAMES = 3; // the motes' frames, at about 4 fps
 // metres }. frame 0 to 2: the motes rising. The glass is made see-through after drawing: its outermost pixels become its rim, and
 // the empty glass inside a half-clear dither.
 const PR_GLASSY = new Set([M.HAT2, M.MAGIC, M.MAGIC2, M.CRYSTAL]);
-export function partyRelicSprite(id, st = {}, { ppm = 16, facing = "towards", frame = 0 } = {}) {
+// Drawn at a third of the size they were built at (Ed, 2026-10-11, docs/backlog/gameplay.md: "relic bottles at one third their
+// size"; their sigil is unchanged): `size` scales the model as it is drawn.
+export const PARTY_RELIC_SIZE = 1 / 3;
+export function partyRelicSprite(id, st = {}, { ppm = 16, facing = "towards", frame = 0, size = PARTY_RELIC_SIZE } = {}) {
   const d = PARTY_RELIC_BY_ID[id]; if (!d) throw new Error(`no party relic "${id}"`);
   const m = new Model({ blend: .05 }); m.clipY = 0; d.build(m, frame % PARTY_RELIC_FRAMES);
-  const s = witchPixelsPerUnit(st), { sp, project } = render(m, { scale: s, facing });
+  const s = witchPixelsPerUnit(st) * size, { sp, project } = render(m, { scale: s, facing });
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   const W = x1 - x0 + 1, H = y1 - y0 + 1, out = new Sprite(W, H);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (mm) out.put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }

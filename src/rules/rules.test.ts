@@ -1713,20 +1713,23 @@ describe("the dash (Ed, 2026-10-04)", () => {
     expect(D.at).toBeGreaterThan(second);
   });
 
-  it("goes toward the cursor (Ed, 2026-10-06), the way she faces with the cursor on her, and the way she steers with none", () => {
+  it("goes the way she's moving, not the way she's aiming (Ed, 2026-10-11); toward the cursor only with toCursor on", () => {
     const B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }, w = { ...newWitch(0, 0), facing: -1 as const };
     const d = newDash();
-    startDash(d, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0, 30); // steering east, the cursor 30 m south
-    expect(d.toX).toBeCloseTo(0); expect(d.toZ).toBeCloseTo(TUNING.dash.distance);
+    startDash(d, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0, 30); // steering east, the cursor (or right stick) 30 m south
+    expect(d.toX).toBeCloseTo(TUNING.dash.distance); expect(d.toZ).toBeCloseTo(0);
     const d2 = newDash();
-    startDash(d2, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0.3, 0.2); // the cursor on her: the way she faces
+    startDash(d2, w, 0, 0, 1, TUNING, B, undefined, 1, 0, 0, 30); // standing still, aiming south: the way she faces
     expect(d2.toX).toBeCloseTo(-TUNING.dash.distance); expect(d2.toZ).toBeCloseTo(0);
     const d3 = newDash();
-    startDash(d3, w, 0, 1, 1, TUNING, B); // no cursor (touch): the way she steers
-    expect(d3.toZ).toBeCloseTo(TUNING.dash.distance);
+    startDash(d3, { ...w, heading: "up" }, 0, 0, 1, TUNING, B); // still, turned up the screen: up it
+    expect(d3.toX).toBeCloseTo(0); expect(d3.toZ).toBeCloseTo(-TUNING.dash.distance);
     const d4 = newDash();
-    startDash(d4, w, 1, 0, 1, { ...TUNING, dash: { ...TUNING.dash, toCursor: false } }, B, undefined, 1, 0, 0, 30); // off: the way she steers
-    expect(d4.toX).toBeCloseTo(TUNING.dash.distance);
+    startDash(d4, { ...w, heading: "down" }, 0, 0, 1, TUNING, B); // and down it
+    expect(d4.toZ).toBeCloseTo(TUNING.dash.distance);
+    const d5 = newDash();
+    startDash(d5, w, 1, 0, 1, { ...TUNING, dash: { ...TUNING.dash, toCursor: true } }, B, undefined, 1, 0, 0, 30); // toCursor on: the cursor
+    expect(d5.toX).toBeCloseTo(0); expect(d5.toZ).toBeCloseTo(TUNING.dash.distance);
   });
 
   it("goes the way she faces when she's still, and stops short of anything in the way", () => {

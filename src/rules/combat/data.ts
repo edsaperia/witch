@@ -222,6 +222,8 @@ export interface CombatWorld {
   talkingTo: (id: number) => number;
   /** How far a creature at (x, z) runs to leave the map, and where (a point just past its edge). */
   exit: (x: number, z: number) => { x: number; z: number };
+  /** The map's centre (home): besiegers march inward, never on a soundsystem further from it than they are (rules/combat.ts). */
+  centre?: { x: number; z: number };
   /** Whether (x, z) is out of every witch's sight (far beyond the haze): a fleeing creature there is gone. */
   unseen: (x: number, z: number) => boolean;
   /** Whether (x, z) is in the creature's own area. */

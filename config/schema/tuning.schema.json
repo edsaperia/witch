@@ -1788,6 +1788,10 @@
       "type": "number",
       "minimum": 0
     },
+    "riseCooldown": {
+      "type": "number",
+      "minimum": 0
+    },
     "groundHeight": {
       "type": "number",
       "minimum": 0
@@ -2361,6 +2365,14 @@
         "glow": {
           "type": "number",
           "minimum": 0
+        },
+        "babyReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "babyCost": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2371,7 +2383,9 @@
         "eatTime",
         "cost",
         "colour",
-        "glow"
+        "glow",
+        "babyReach",
+        "babyCost"
       ],
       "additionalProperties": false
     },
@@ -2662,6 +2676,10 @@
             "maxTension": {
               "type": "number",
               "minimum": 0
+            },
+            "babyGround": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -2674,7 +2692,41 @@
             "sinkMax",
             "floor",
             "extreme",
-            "maxTension"
+            "maxTension",
+            "babyGround"
+          ],
+          "additionalProperties": false
+        },
+        "babies": {
+          "type": "object",
+          "properties": {
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scatter": {
+              "type": "number",
+              "minimum": 0
+            },
+            "calm": {
+              "type": "number",
+              "minimum": 0
+            },
+            "farAt": {
+              "type": "number",
+              "minimum": 0
+            },
+            "farSpeed": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "gap",
+            "scatter",
+            "calm",
+            "farAt",
+            "farSpeed"
           ],
           "additionalProperties": false
         }
@@ -2688,7 +2740,8 @@
         "hatHold",
         "restAbove",
         "runePull",
-        "weight"
+        "weight",
+        "babies"
       ],
       "additionalProperties": false
     },
@@ -9263,6 +9316,7 @@
     "facing",
     "riseTime",
     "descendTime",
+    "riseCooldown",
     "groundHeight",
     "treetopHeight",
     "witch",
