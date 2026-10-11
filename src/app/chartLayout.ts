@@ -5,10 +5,10 @@
 import { islandOf, KINDS } from "../rules/rosters";
 
 /** The rings' radii by phase (0 home in the middle; 1 to 5 outward, the last just inside the rim). */
-export const ringOf = (phase: number): number => (phase <= 0 ? 0 : 0.03 + phase * 0.175);
+export const ringOf = (phase: number): number => (phase <= 0 ? 0 : 0.02 + phase * 0.165);
 
 /** An island's outline box across (the disc's radius 1): every island's drawn at this scale, so sizes compare. */
-export const BOX = 0.22;
+export const BOX = 0.17;
 
 /** Where an island ("home" or a kind) sits: x east, y down (SVG), on its phase's ring at its bearing; null if it's neither. */
 export function islandAt(island: string): { x: number; y: number } | null {
@@ -27,7 +27,7 @@ function shown(): Map<string, number> {
   const byPhase = new Map<number, string[]>();
   for (const k of Object.keys(KINDS)) { const p = KINDS[k].phase + 1; byPhase.set(p, [...(byPhase.get(p) ?? []), k]); }
   for (const [p, ks] of byPhase) {
-    const ang = new Map(ks.map(k => [k, KINDS[k].bearing])), r = ringOf(p), size = Math.sqrt((10 * p) / 64) * 0.96 * BOX;
+    const ang = new Map(ks.map(k => [k, KINDS[k].bearing])), r = ringOf(p), size = Math.sqrt((10 * p) / 64) * 0.96 * BOX * 1.25; // (its coast strays up to a quarter past round)
     const gap = ((size + 0.012) / r) * (180 / Math.PI); // (degrees between neighbours' middles so they just clear)
     for (let it = 0; it < 60; it++) {
       const order = [...ang].sort((a, b) => a[1] - b[1]);
