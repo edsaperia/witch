@@ -1600,6 +1600,29 @@ function bush(r, st, kind = pick(r, BUSH_KINDS)) { // (kind: one of BUSH_GENOMES
   return { sp, colours: c };
 }
 
+// Snow-laden crowns (the north's snowy areas, Ed 2026-10-11): snow lies on each clump's upper face, where the light falls, and
+// deepest on the crown's open top, in the pale tone M.WEB (225, 225, 232 in every tree's colours; leafy, so it sways with the
+// leaves and stays on them in the pixel wind). amount 0..1: 0 none (the tree exactly as before), about .4 a dusting, 1 laden.
+// Leaves only (never bark or flowers), in runs of 2 pixels or more across (no lone flecks). A tree's options: an area's `snow`
+// (areas.js), or a tree recipe's own.
+const SNOW_ON = new Set([M.LEAF, M.LEAF2, M.LEAF3]);
+function snowCrown(sp, amount, seed = 1) {
+  if (!(amount > 0)) return sp;
+  const { w, h } = sp, src = sp.m, snow = new Uint8Array(w * h), k = Math.min(1, amount);
+  const face = .8 - .5 * k, cap = 1 + Math.round(k * 2); // how squarely up a pixel must face to hold snow; the open top's depth
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x; if (!SNOW_ON.has(src[i])) continue;
+    const above = y ? src[i - w] : 0;
+    if (!above) { const d = cap + (hash2(x, seed) < .35 ? -1 : hash2(x, seed + 7) > .8 ? 1 : 0); for (let j = 0; j < d && y + j < h && SNOW_ON.has(src[i + j * w]); j++) snow[i + j * w] = 1; continue; } // the open top
+    if (src[i] !== M.LEAF3 && -sp.n[i * 3 + 1] > face && hash2(x * 3 + y, seed + 3) < .55 + .45 * k) snow[i] = 1; // a clump's lit top
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { // no lone flecks: a run across of 2 or more, or under more snow
+    const i = y * w + x; if (!snow[i]) continue;
+    if ((x && snow[i - 1]) || (x < w - 1 && snow[i + 1]) || (y && snow[i - w])) sp.m[i] = M.WEB;
+  }
+  return sp;
+}
+
 
 
 
@@ -3676,6 +3699,10 @@ const GROUND_GENOMES = {
   heather: grG({}, [grD("sprig", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("blade", 16, GR_GRASS)]),
   bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
   clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
+  // the north's floors (Ed, 2026-10-11; no area uses them yet): snow with needles and grass poking through, lichen heath, glacier ice
+  snow: grG({ scale: [12, 6], cuts: [.3, .62] }, [grD("needle", 14, ["BODY2", "ACCENT", "ACCENT"]), grD("blade", 12, GR_GRASS), grD("pebble", 5, GR_STONES)], { patches: [{ mat: "STONE", n: 2, r: [2, 4] }] }),
+  lichen: grG({ scale: [6, 5] }, [grD("moss", 40, ["BODY2", "BODY", "BELLY"]), grD("sprig", 22, ["LEAF3", "LEAF", "FLOWER"]), grD("pebble", 10, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 5] }, { mat: "MOSS", n: 2, r: [3, 6] }] }),
+  ice: grG({ scale: [14, 5], cuts: [.34, .7] }, [grD("slab", 7, ["BODY2", "BODY", "BELLY"]), grD("pebble", 16, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 6] }], puddles: { n: 2, r: [3, 6] } }),
 };
 
 // The genome an area's floor grows from: its floor kind's, with the area's own `ground` over it.
@@ -8058,6 +8085,7 @@ function prop(kind, o, def, st, r, s) {
     const f = treeSpecies(o.type).fn;
     const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: def.layout?.hang ?? 0 };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
+    snowCrown(t.sp, o.snow ?? def.snow ?? 0, 1); // (a snowy area's snow on its crown)
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
     c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
     return { sp: t.sp, colours: c };
@@ -8065,6 +8093,7 @@ function prop(kind, o, def, st, r, s) {
   if (kind === "shrub") { // a leafy bush, flowering or berried
     const b = bush(r, { ...st, leafHue: def.leaf, bushSize: st.bushSize * s, flowers: 1 });
     for (let i = 0; i < b.sp.m.length; i++) if (b.sp.m[i] && hash2(i, 1, 3) < (o.spiky ? .18 : .1) && b.sp.m[i] !== M.TRUNK) b.sp.m[i] = M.FLOWER;
+    snowCrown(b.sp, o.snow ?? def.snow ?? 0, 2); b.colours[M.WEB] ??= [225, 225, 232];
     b.colours[M.FLOWER] = o.flower; return b;
   }
   const W = Math.round(48 * s * (o.w || 1)), H = Math.round(32 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
@@ -8269,6 +8298,7 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
       treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs, treeHang: def.layout?.hang ?? 0 };
     const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
+    snowCrown(t.sp, o.snow ?? def.snow ?? 0, n + 1); // snow on its crown (a snowy area's `snow`, or the recipe's own: 0 none)
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
     c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
     const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), sw = sp => bakeSway(sp, makeCanvas), m = px => +(px / ppm).toFixed(2);

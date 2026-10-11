@@ -56,6 +56,10 @@ export const GROUND_GENOMES = {
   heather: grG({}, [grD("sprig", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("blade", 16, GR_GRASS)]),
   bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
   clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
+  // the north's floors (Ed, 2026-10-11; no area uses them yet): snow with needles and grass poking through, lichen heath, glacier ice
+  snow: grG({ scale: [12, 6], cuts: [.3, .62] }, [grD("needle", 14, ["BODY2", "ACCENT", "ACCENT"]), grD("blade", 12, GR_GRASS), grD("pebble", 5, GR_STONES)], { patches: [{ mat: "STONE", n: 2, r: [2, 4] }] }),
+  lichen: grG({ scale: [6, 5] }, [grD("moss", 40, ["BODY2", "BODY", "BELLY"]), grD("sprig", 22, ["LEAF3", "LEAF", "FLOWER"]), grD("pebble", 10, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 5] }, { mat: "MOSS", n: 2, r: [3, 6] }] }),
+  ice: grG({ scale: [14, 5], cuts: [.34, .7] }, [grD("slab", 7, ["BODY2", "BODY", "BELLY"]), grD("pebble", 16, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 6] }], puddles: { n: 2, r: [3, 6] } }),
 };
 
 // The genome an area's floor grows from: its floor kind's, with the area's own `ground` over it.

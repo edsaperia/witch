@@ -81,6 +81,7 @@ if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = tru
 if (process.env.AREA) await b.page.addInitScript(a => { window.AREA = a; }, process.env.AREA);
 if (process.env.BOG) await b.page.addInitScript(() => { window.BOG = true; });
 if (process.env.SEEDS) await b.page.addInitScript(l => { window.SEEDS = l; }, process.env.SEEDS.split(",").map(Number));
+if (process.env.SNOW) await b.page.addInitScript(n => { window.SNOW = n; }, +process.env.SNOW);
 if (process.env.CHANGES) await b.page.addInitScript(() => { window.CHANGES = true; });
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
@@ -519,7 +520,7 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     for (let i = 0; i < panels.length; i += 4) rows.push(panels.slice(i, i + 4));
   } else if (what === "species") { // every tree species (or listed) at mature height: from the side (whole), then its crown alone as treetop mode shows it, then its bottom half alone as ground mode shows it; the witch for scale
     const ids = list === "all" ? Object.keys(G.TREE_SPECIES) : list.split(","), K = 2 / (st.pixel || 2), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 5, items = [];
-    for (const id of ids) { const S = G.TREE_SPECIES[id], r = G.rng(7 + id.length * 13), ts = { ...st }, t = S.fn(r, ts, st.treeSize * K), c = G.treeColours(G.rng(3), ts, S.fn), p = G.splitTree(t); items.push(G.bake(t.sp, c, st, "none"), G.bake(p.top, c, st, "none"), G.bake(p.bot, c, st, "none")); }
+    for (const id of ids) { const S = G.TREE_SPECIES[id], r = G.rng(7 + id.length * 13), ts = { ...st }, t = S.fn(r, ts, st.treeSize * K); if (window.SNOW) G.snowCrown(t.sp, window.SNOW, id.length); const c = G.treeColours(G.rng(3), ts, S.fn), p = G.splitTree(t); items.push(G.bake(t.sp, c, st, "none"), G.bake(p.top, c, st, "none"), G.bake(p.bot, c, st, "none")); }
     for (let i = 0; i < items.length; i += per * 3) rows.push([...items.slice(i, i + per * 3), wit]);
   } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");
