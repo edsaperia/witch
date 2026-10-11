@@ -6,7 +6,7 @@
 import { ISLAND_LOOK, islandPath } from "../../art/islands.js";
 import { islandSigil, sigilArrival, sigilColour } from "../../art/sigils.js";
 import { islandCoast } from "../rules/islandShape";
-import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, REAL_KINDS } from "../rules/rosters";
+import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { allSave, loadSave, newCampaign, unlocked, worldSeed } from "./chartSave";
 import { BOX, islandAt, ringOf } from "./chartLayout";
@@ -56,7 +56,7 @@ function draw(): void {
   const open = new Set(unlocked(save)), won = new Set(save.won);
   const islands: { id: string; radii: Float32Array; sigil: string }[] = [];
   const w = worldNow();
-  islands.push({ id: "home", radii: islandCoast(coastSpec(homeIsland(w)), TUNING.map?.coast).radii, sigil: islandSigil("home") });
+  islands.push({ id: "home", radii: islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, sigil: islandSigil("home") });
   for (const k of KIND_NAMES) islands.push({ id: k, radii: islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, sigil: k });
   for (const isl of islands) {
     const at = islandAt(isl.id, w)!, unknown = isPlaceholder(isl.id), sail = open.has(isl.id) && !unknown;
