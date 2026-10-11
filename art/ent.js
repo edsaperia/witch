@@ -32,8 +32,8 @@ export const ENT = { deckY: 22, deckR: 7, railH: 1.1, tableR: 1.25, tableH: .85,
 /** Its colours: the treehouse's (the giant's bark and leaves, wood, iron, warm light, the party's neons). */
 export const entColours = st => treehouseColours(st);
 
-const hash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
-const FAIRY = [M.COLLAR, M.RUNE, M.WOKEN, M.MAGIC];
+const entHash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+const ENT_FAIRY = [M.COLLAR, M.RUNE, M.WOKEN, M.MAGIC];
 
 /** The Ent's model, in the witch's units, for `facing`: { m (everything), far, near (its two halves), dj: the decks' frame
  *  (djTable's), stand (where she stands, units), the deck's centre and the table's, the lanterns, the desk's arc, k (units a metre) }. */
@@ -45,11 +45,11 @@ function entModel(st, facing, E) {
   const D = E.deckY, R = E.deckR, hs = D / 22; // (its body grows with the deck's height)
   const yaw = YAW[facing] ?? YAW.towards, cam = [Math.sin(yaw), 0, Math.cos(yaw)], aCam = Math.atan2(cam[2], cam[0]); // towards the camera, in the model's plane
   // ---- the bark: deeply furrowed along the limb, knotted, a little moss ----
-  const bark = p => { const x = p[0] / k, y = p[1] / k, z = p[2] / k, a = Math.atan2(z, x), q = Math.sin(a * 9 + y * 1.1 + 1.6 * Math.sin(y * .5 + a * 3) + x * .4); return q > .55 ? M.BARKD : q > .2 ? M.BARK2 : q < -.82 ? M.BARKL : (hash(Math.floor(a * 5), Math.floor(y * 1.5)) < .06 ? M.MOSS : undefined); };
+  const bark = p => { const x = p[0] / k, y = p[1] / k, z = p[2] / k, a = Math.atan2(z, x), q = Math.sin(a * 9 + y * 1.1 + 1.6 * Math.sin(y * .5 + a * 3) + x * .4); return q > .55 ? M.BARKD : q > .2 ? M.BARK2 : q < -.82 ? M.BARKL : (entHash(Math.floor(a * 5), Math.floor(y * 1.5)) < .06 ? M.MOSS : undefined); };
   const limb = (pts, o = {}) => both(mm => mm.chain(pts.map(([x, y, z, r]) => [U(x), U(y), U(z), U(r)]), M.TRUNK, { group: o.group ?? g(), rough: U(o.rough ?? .12), paint: bark }));
   const burl = (x, y, z, r, mat = M.TRUNK) => both(mm => mm.ell(P(x, y, z), [U(r), U(r * .85), U(r)], mat, { group: g(), rough: U(.08), paint: p => (p[1] / k > y + r * .55 ? M.MOSS : bark(p)) }));
   // the roots, gripping the ground all round
-  for (let i = 0; i < 11; i++) { const a = i / 11 * Math.PI * 2 + .2 + (hash(i, 3) - .5) * .35, r1 = 5.2 + hash(i, 5) * 2.4, c = Math.cos(a), s = Math.sin(a);
+  for (let i = 0; i < 11; i++) { const a = i / 11 * Math.PI * 2 + .2 + (entHash(i, 3) - .5) * .35, r1 = 5.2 + entHash(i, 5) * 2.4, c = Math.cos(a), s = Math.sin(a);
     limb([[c * 1.8, 2.4, s * 1.8 - .6, 1.3], [c * 2.9, 1.0, s * 2.9 - .4, .9], [c * r1 * .7, .35, s * r1 * .7, .5], [Math.cos(a + .2) * r1, .05, Math.sin(a + .2) * r1, .14]], { rough: .08 }); }
   // kneeling: the near knee down on the ground (its shin lying back along it), the far knee raised, its foot planted
   const hip = [0, 8 * hs, -1.6];
@@ -69,14 +69,14 @@ function entModel(st, facing, E) {
     const hand = [s * 4.6, under - 1.6, 1.6];
     limb([[s * 2.0, sh[1] - .3, .4, 1.7], [s * 3.9, 17.4 * hs, 1.6, 1.5], [s * 4.9, (17.4 * hs + hand[1]) / 2, 1.9, 1.25], [...hand, 1.05]]);
     burl(s * 3.9, 17.4 * hs, 1.6, 1.2); burl(...hand.map((v, j) => j === 1 ? v + .3 : v), .95);
-    for (const [j, a] of [-1.0, -.35, .3, .95, 1.55].entries()) { const d = R * (.55 + .3 * hash(j, s + 3)), t = [s * Math.abs(Math.cos(a)) * d + s * 1.0, under, Math.sin(a) * d]; limb([[...hand, .55], [...v3.lerp(hand, t, .5).slice(0, 1), (hand[1] + under) / 2 + .5, v3.lerp(hand, t, .5)[2], .38], [...t, .16]], { rough: .06 }); }
+    for (const [j, a] of [-1.0, -.35, .3, .95, 1.55].entries()) { const d = R * (.55 + .3 * entHash(j, s + 3)), t = [s * Math.abs(Math.cos(a)) * d + s * 1.0, under, Math.sin(a) * d]; limb([[...hand, .55], [...v3.lerp(hand, t, .5).slice(0, 1), (hand[1] + under) / 2 + .5, v3.lerp(hand, t, .5)[2], .38], [...t, .16]], { rough: .06 }); }
   }
   // boughs from its back up into the deck's middle, and a few more under the rim at the back
   for (const [x, z] of [[-1.4, -1.8], [1.3, -2.1], [0, -.6], [-.2, -3.2]]) limb([[x * .4, sh[1] - .8, -.8, 1.0], [x, under - 2.0, z, .7], [x * 1.5, under, z * 1.35, .3]], { rough: .07 });
   for (const a of [-2.2, -1.57, -.9]) { const c = Math.cos(a), s = Math.sin(a); limb([[c * 1.5, 15 * hs, s * 1.5 - .6, .9], [c * 3.6, under - 3, s * 3.6, .55], [c * (R - .6), under, s * (R - .6), .2]], { rough: .06 }); }
   // leafy tufts at the branch tips under the rim, in its own blue-green; a few hanging higher round the back
-  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + hash(i, 9) * .3; if (Math.cos(a - aCam) > .55) continue; // (never across its front: its raised arms show there)
-    const d = R - .2 + hash(i, 4) * .5, y = under - .3 - hash(i, 2) * .7;
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + entHash(i, 9) * .3; if (Math.cos(a - aCam) > .55) continue; // (never across its front: its raised arms show there)
+    const d = R - .2 + entHash(i, 4) * .5, y = under - .3 - entHash(i, 2) * .7;
     both(mm => mm.ell(P(Math.cos(a) * d, y, Math.sin(a) * d), [U(.85), U(.55), U(.85)], [M.LEAF, M.LEAF2, M.LEAF3][i % 3], { group: g(), rough: U(.18) })); }
   // ---- the deck: planks in rings, a thick rim, joists under it ----
   const top = D, gd = g();
@@ -86,7 +86,7 @@ function entModel(st, facing, E) {
     if (r > R - .3) return M.BARKL; // the rim
     const ring = r / .55, ri = Math.floor(ring); if (ring % 1 < .1) return M.BARKD; // the rings' seams
     const n = Math.max(6, Math.round(r * Math.PI * 2 / 1.4)); if (((a / (Math.PI * 2) * n + ri * .37) % 1 + 1) % 1 < .045) return M.BARKD; // their joints
-    return hash(ri, Math.floor((a / (Math.PI * 2)) * n)) < .3 ? M.HAT2 : undefined; // boards a shade apart
+    return entHash(ri, Math.floor((a / (Math.PI * 2)) * n)) < .3 ? M.HAT2 : undefined; // boards a shade apart
   } }));
   for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + .2, c = Math.cos(a), s = Math.sin(a); both(mm => mm.box(P(c * R * .5, top - .65, s * R * .5), [U(R * .48), U(.14), U(.12)], M.BARK2, { dir: [c, 0, s], up: [0, 1, 0], group: g() })); } // joists
   // ---- the balustrade: turned balusters, a bottom rail and a top rail, a stouter newel every few, lanterns from some ----
@@ -128,7 +128,7 @@ function entModel(st, facing, E) {
       const x = p[0] / k, z = p[2] / k, y = p[1] / k - top, r = Math.hypot(x, z);
       if (y > deskTop - .02) return r > deskFront - .04 ? M.BARKL : M.SHADES; // the top: dark, a light lip at its front
       if (r < deskFront - .04) return M.BARKL; // its back, toward her
-      if (y > deskTop - .1 || y < .09) return FAIRY[((Math.floor(Math.atan2(z, x) * deskMid * 9) % 4) + 4) % 4]; // LED strips, top and bottom
+      if (y > deskTop - .1 || y < .09) return ENT_FAIRY[((Math.floor(Math.atan2(z, x) * deskMid * 9) % 4) + 4) % 4]; // LED strips, top and bottom
       return ((Math.atan2(z, x) * deskMid * 5) % 1 + 1) % 1 < .08 ? M.BARK2 : undefined; // slats
     } })); } };
   wing(aCam + halfMid * .92, aCam + E.deskArc); wing(aCam - E.deskArc, aCam - halfMid * .92);
