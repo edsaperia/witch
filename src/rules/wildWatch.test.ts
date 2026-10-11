@@ -32,6 +32,9 @@ function overWild(): { g: Game; key: string; at: { x: number; z: number } } {
       const x = c.x + Math.cos(i * Math.PI / 4) * 8, z = c.z + Math.sin(i * Math.PI / 4) * 8;
       if (cellKey(g.map.cellSafe(x, z).cell) !== key || rings.some(r => Math.hypot(r.x - x, r.z - z) < r.r + 6)) continue;
       const at = { x, z };
+      // (just this area's: another area's creatures near her spot gone, so none of theirs comes for her across the border and
+      // knocks her into its own area: the master curve by wave, Ed 2026-10-11, put a young one by this spot on seed 77)
+      for (const o of g.creatures) if (cellKey(o.cell) !== key && Math.hypot(o.x - x, o.z - z) < 60) o.gone = true;
       g.witch = { ...g.witch, seated: false, x, z, vx: 0, vz: 0, mode: "treetop", lift: 1 };
       return { g, key, at };
     }

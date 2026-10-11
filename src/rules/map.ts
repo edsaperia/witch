@@ -222,7 +222,11 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // that and the warp's play; the forest goes on edge areas beyond, its last areas never seen.
   const MS = tuning.map ?? { shape: "square" as const, radius: 0, buffer: 0, push: 0, drift: 0, edge: 2 };
   const shape: "circle" | "square" = MS.shape === "circle" ? "circle" : "square", round = shape === "circle";
-  const R = MS.radius, flightR = (R + 0.5 + MS.buffer) * A, edgeK = MS.edge ?? 2;
+  // An island of so many areas (Ed, 2026-10-11, the journey's first step: map.islandAreas): home and exactly that many more, the
+  // nearest home's (found below, once the areas are cut); until then a radius sure to hold them sizes the grid and the forest.
+  const island = round && (MS.islandAreas ?? 0) > 0 ? Math.round(MS.islandAreas!) : 0;
+  let R = island ? Math.sqrt((island + 1) / Math.PI) * 1.4 + 1.5 : MS.radius, flightR = (R + 0.5 + MS.buffer) * A;
+  const edgeK = MS.edge ?? 2;
   // The coast's wobble (Ed, 2026-10-06): seeded, the same for every edge; the forest's extent covers its furthest headland.
   // (The grid doesn't change with it, so the coast's knobs never reshuffle the map: its slack of an area holds the
   // playable areas' furthest headland, and the buffer's past it are the forest's anyway.)
@@ -306,6 +310,15 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // area's), and such a ghost area put its runestone, its legend and its creatures all on one spot in a neighbour's
   // ground (Ed, v1628: "Legend and runestone in the same place"). Ground: any of the neighbour scan's samples, 6 a cell.
   const hasGround = (cx: number, cy: number) => neighbours.has(cellKey(cx, cy));
+  if (island) {
+    // The island's areas: home and the `island` nearest it that own ground; its radius halfway out to the next, so the flight's
+    // edge, the buffer ring and the coast sit round them as round any map's.
+    const by: number[] = [];
+    for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (hasGround(cx, cy)) by.push(fromHome(cx, cy));
+    by.sort((a, b) => a - b);
+    const last = by[Math.min(island, by.length - 1)], next = by[Math.min(island + 1, by.length - 1)];
+    R = Math.min(R, (last + (next > last ? (next - last) / 2 : 0.01 * A)) / A); flightR = (R + 0.5 + MS.buffer) * A;
+  }
   const playable = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < n && cy < n && (!round || fromHome(cx, cy) <= R * A) && hasGround(cx, cy);
   const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && fromHome(cx, cy) <= flightR + A * 0.5;
   const cells: Cell[] = [];
