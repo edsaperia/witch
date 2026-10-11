@@ -1,0 +1,7 @@
+{
+  "version": null,
+  "items": [
+    "Sigils snap to a hex grid: press on a taken cell to pick that one up, never a fizzle",
+    "Parked animals rest 5 m above their sigil, not 10"
+  ]
+}
