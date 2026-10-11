@@ -43,6 +43,8 @@ const MODERN_POOL = [...RELICS.filter(r => r.family === "modern" && (r as { scat
 const MODERN = MODERN_POOL.length;
 
 const map = generateMap(123, TUNING);
+// A map with plenty of paths and railways, for the tests of how they behave (the game's own numbers make few: Ed, 2026-10-11).
+const NET = { ...TUNING, paths: { ...TUNING.paths, rails: [2, 4] as [number, number], linkChance: 0.55, deadEndChance: 0.3 } }, NET_MAP = generateMap(123, NET);
 
 describe("fractal partition", () => {
   it("gives the same areas from the same seed", () => {
@@ -1090,10 +1092,19 @@ describe("the density field", () => {
 });
 
 describe("paths, roads and railways", () => {
-  const P = map.paths, T = TUNING.paths;
+  // How the network behaves, on a map that has plenty of it: the old numbers (two to four railways, paths linking most
+  // neighbours, dead ends), since the game's own are sparse now (Ed, 2026-10-11: "There are much too many paths"; tested below).
+  const map = NET_MAP, P = map.paths, T = NET.paths;
+  it("are few with the game's own numbers: at most one railway (and its branch), far fewer footpaths, streams as before", () => {
+    const sparse = generateMap(123, TUNING).paths.lines, of = (k: string, ls = sparse) => ls.filter(l => l.kind === k);
+    expect(of("rail").filter(l => l.pts.length > 100).length).toBeLessThanOrEqual(TUNING.paths.rails[1]);
+    expect(of("rail").length).toBeLessThanOrEqual(TUNING.paths.rails[1] + 1);
+    expect(of("path").length).toBeLessThan(of("path", P.lines).length / 2);
+    expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(TUNING.paths.streams[0]); // streams as they were (their numbers unchanged)
+  });
   it("are seeded: the same map makes the same network", () => {
-    expect(generateMap(123, TUNING).paths.lines).toEqual(P.lines);
-    expect(generateMap(124, TUNING).paths.lines).not.toEqual(P.lines);
+    expect(generateMap(123, NET).paths.lines).toEqual(P.lines);
+    expect(generateMap(124, NET).paths.lines).not.toEqual(P.lines);
   });
   it("have two to four railway lines crossing many areas, a road or two, and paths between areas", () => {
     const of = (k: string) => P.lines.filter(l => l.kind === k);
@@ -1152,14 +1163,14 @@ describe("paths, roads and railways", () => {
     for (const id of ["verge-post", "level-crossing"]) expect(ids.has(id)).toBe(false); // the roads' own pieces went with them (Ed, round 13)
     expect(P.pieces.some(p => ["goods-wagon", "carriage", "platform", "signal-gantry"].includes(p.id))).toBe(true);
     let bridges = 0;
-    for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
+    for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, NET).paths.pieces.filter(p => p.id.includes("bridge")).length;
     expect(bridges).toBeGreaterThan(0);
     expect(P.pieces.some(p => p.id === "fingerpost")).toBe(false); // fingerposts only with paths.fingerposts (the game sets it)
-    const withPosts = generateMap(123, { ...TUNING, paths: { ...TUNING.paths, fingerposts: true } }).paths.pieces;
+    const withPosts = generateMap(123, { ...NET, paths: { ...NET.paths, fingerposts: true } }).paths.pieces;
     expect(withPosts.filter(p => p.id === "fingerpost").length).toBeGreaterThan(3);
     expect(withPosts.filter(p => p.id !== "fingerpost")).toEqual(P.pieces); // placed last: every other piece where it was
     for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
-    for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.paths.pieceGap); // never a row of them
+    for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(T.pieceGap); // never a row of them
     for (const p of P.pieces) expect(map.reserved(p.x, p.z, p.r)).toBe(false); // clear of soundsystems, set pieces, grounds
     const forest = new Forest(map);
     for (const p of P.pieces.slice(0, 60)) for (const t of forest.treesNear(p.x, p.z, p.r + 1)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThanOrEqual(p.r - 1e-6);
@@ -1205,8 +1216,8 @@ describe("relics and grounds", () => {
       expect(Math.hypot(g.x - map.dancefloor.x, g.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + g.r);
     }
   });
-  it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => {
-    const forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
+  it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => { // (on a map with railways: NET)
+    const map = NET_MAP, forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
     expect(list.length).toBeGreaterThan(3);
     expect(list.length).toBeLessThanOrEqual(MODERN); // each at most once (relics and the standalone country pieces)
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }

@@ -2,9 +2,8 @@
 // leashed or happy creature's near her, moving with it.
 import { hasRune } from "../../rules/creatureStates";
 import type { LeashView } from "../leash";
-import type { PlacedSigil } from "../../rules/leash";
 
-const STACKED = new Set<number>(), PLACED = new Map<number, PlacedSigil>(); // (filled each frame, never kept)
+const STACKED = new Set<number>(), PLACED = new Set<number>(); // (filled each frame, never kept)
 
 /** From the treetops, each placed sigil is projected up above the canopy over its spot, flat and glowing, joined to its rune by
  *  a faint pulsing column of light (Ed, 2026-10-03), fading in as she rises; and over every leashed or happy creature near her,
@@ -27,13 +26,12 @@ export function drawProjection(lv: LeashView, time: number, dot: number[]): void
     // a box test before the distance, and the list's records kept from frame to frame)
     const C = P.creatures, near = lv.projected, pool = lv.projectedPool, R = C.range;
     STACKED.clear(); for (const id of s.stack) STACKED.add(id);
-    PLACED.clear(); for (const p of s.placed) PLACED.set(p.id, p);
+    PLACED.clear(); for (const p of s.placed) PLACED.add(p.id);
     let n = 0;
     for (let i = 0; i < g.creatures.length; i++) {
       const c = g.creatures[i];
       if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R || !(c.leashed || hasRune(c)) || STACKED.has(c.id)) continue;
-      const p = PLACED.get(c.id);
-      if (p && Math.hypot(p.x - c.x, p.z - c.z) < 6) continue;
+      if (PLACED.has(c.id)) continue; // parked: its placed sigil marks it, however far it roams (Ed, 2026-10-11: "Hide a creature's own sigil whenever it's parked")
       const d = Math.hypot(c.x - w.x, c.z - w.z);
       if (d > R) continue;
       const r = pool[n] ?? (pool[n] = { c, d }); r.c = c; r.d = d; n++;

@@ -26,6 +26,11 @@ describe("the link's world (src/app/linkParams.ts)", () => {
     expect(tuningFromLink(new URLSearchParams("island=30")).tuning.map?.islandAreas).toBe(30);
     expect(tuningFromLink(new URLSearchParams("island=off")).tuning.map?.islandAreas).toBe(0);
     expect(tuningFromLink(new URLSearchParams("mapAreas=14")).tuning.map?.islandAreas).toBe(0); // (the radius map's size: no island)
+    // a kind's island by name (rules/rosters.ts); home by roster; a number, random areas
+    expect(tuningFromLink(new URLSearchParams("island=fox")).tuning.map?.island).toBe("fox");
+    expect(tuningFromLink(new URLSearchParams("island=home")).tuning.map?.island).toBe("home");
+    expect(tuningFromLink(new URLSearchParams("island=30")).tuning.map?.island).toBe("");
+    expect(tuningFromLink(new URLSearchParams("")).tuning.map?.island).toBe("home");
   });
 
   it("ignores and deletes a remembered world and fight, and writes none back", () => {
