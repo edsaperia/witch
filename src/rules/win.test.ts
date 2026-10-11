@@ -147,4 +147,12 @@ describe("the win and the rosters (rules/rosters.ts)", () => {
     expect(islandOf({ island: { kind: "wolf" } })).toBe("wolf");
     expect(islandOf({ island: null })).toBe("home");
   });
+
+  it("a kind's island flares its own sigil at the win, home the World Tree (art4: art/sigils.js islandSigil)", async () => {
+    const { islandSigil } = await import("./win");
+    const fox = newGame(7, withTuning({ map: { ...TUNING.map!, island: "fox" } }));
+    expect(fox.map.island?.kind).toBe("fox");
+    expect(islandSigil(fox)).toBe("fox");
+    expect(islandSigil(newGame(7, withTuning({ map: { ...TUNING.map!, island: "home" } })))).toBe("worldTree");
+  }, 60000);
 });

@@ -477,7 +477,7 @@ export class View {
     // There are only 30 area types and 30 creatures: draw them all in the background now, so
     // the forest ahead is ready however fast she flies; the area types nearest her first.
     const m = this.game.map, w = this.game.witch, near = new Map<number, number>();
-    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
       const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - w.x, s.z - w.z);
       if (!(near.get(t)! <= d)) near.set(t, d);
     }

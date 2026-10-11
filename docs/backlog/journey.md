@@ -120,7 +120,7 @@ A third axis of progress, separate from the other two:
 
 **Arriving** (Ed, 2026-10-10): on a new island the Ent stands on the back of **a party legend of that island's kind**, sitting north of the dancefloor where the treehouse stands today. Story: it was so impressed by her last party that it brought her back to its home island.
 
-**Home's size** (Ed, 2026-10-10): **one area of each creature**, so about **64 areas** at the end (about 64 islands, one per legend kind), playing the whole master curve (squeezed to 64 waves).
+**Home's size** (Ed, 2026-10-10): **one area of each creature**, so about **64 areas** at the end (about 64 islands, one per legend kind), playing the whole master curve (squeezed to 64 waves). **Built** (wave 2 D, 2026-10-11; `rules/rosters.ts` `knownKinds`, `homeIsland`; `rules/map.ts`): the kinds she knows are home's 10 and each kind whose island she's found (the save's `found`, in the order found; a home kind or a placeholder adds nothing), one area each. Winning home finds home kinds' islands, so home stays 10 until she wins one of those: its legends are dealt from its roster (phase 1's kinds among them), and each found adds an area at home the next night (10 → 11 → 13 …), a legend a night for every 5 areas (2 at first). Home's shape stays the world's as it grows: its middle and its first 10 areas (their places and their kinds) are the same every night of the campaign, and each new kind takes the next area further out. The sea chart's home outline grows with it (`coastSpec(homeIsland(world, knownKinds(found)))`). `map.islandAreas` only turns home on and sets its least size (past one area each, the kinds again in turn).
 
 **Relics: one per 10 areas** (Ed; today's maps have six whatever their size).
 
