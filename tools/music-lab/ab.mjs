@@ -2,12 +2,14 @@
 // judge by ear"): node tools/music-lab/ab.mjs [out dir] [wave] [seed] [bars]
 // (default previews/ed/music, wave 2, seed 7, 32 bars). One passage of the game's music, rendered by tools/music-lab/ab.ts in
 // headless Chromium, then again with one ingredient more each time:
-//   0 the music as it is; 1 + a drone; 2 + a chant (Pink Trombone, a low voice, syllables); 3 + frame drums (VCSL);
-//   4 + tape wobble and crackle; 5 + the CC0 kit in the synthesised drums' place (the kicks stay); 6 + the vocalise (Pink
-//   Trombone, a soprano) singing B and C; 7 + recorded voices (Freesound, CC0: a crowd's choir on the chords, whispers,
-//   throat singing on the tonic); and a bonus witch-house take (Phrygian, half-time drums, the chant pitched down, the
-//   kargyraa, a huge reverb). Each loudness-matched (ffmpeg loudnorm, -16 LUFS) so louder doesn't win, as mp3; and the voices alone
-//   and the kit's samples in a row. Fails on a script error, NaN or silence. Nothing here touches the game.
+//   0 the music as it is; 1 + a drone; 2 + frame drums (VCSL); 3 + tape wobble and crackle; 4 + the CC0 kit in the
+//   synthesised drums' place (the kicks stay); 5 + the vocalise (Pink Trombone, a soprano) singing B and C, or 5b a recorded
+//   woman's note (Freesound, CC0) retuned to each note instead; 6 + recorded voices (Freesound, CC0: a crowd's choir on the
+//   chords, whispers, throat singing on the tonic); and a bonus witch-house take (Phrygian, half-time drums, the kargyraa,
+//   a huge reverb). Each loudness-matched (ffmpeg loudnorm, -16 LUFS) so louder doesn't win, as mp3; the stems (the frame
+//   drums, the vocalise and the recorded one, alone) at the level they play in the mix; the vocalise alone, the recorded
+//   voices and the kit's samples in a row. (The chant is out: Ed, 2026-10-11.) Fails on a script error, NaN or silence.
+//   Nothing here touches the game.
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from "node:fs";
@@ -52,21 +54,30 @@ const voices = async witch => {
 const plain = await voices(false), witchy = await voices(true);
 ok(plain.sc.sung.length > 0, `the passage has sung notes to sing (${plain.sc.sung.length}), sections: ${[...new Set(plain.sc.sections)].join(", ")}`);
 
-const enc = (wavFile, name) => {
-  execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", wavFile, "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ar", "44100", "-b:a", "128k", join(out, `${name}.mp3`)]);
+// (loudness-matched, or a stem at the level it plays in the mix, set by the same gain the mix's matching gave the baseline)
+let stemGain = 0;
+const lufs = f => Number(/I:\s+(-?[\d.]+) LUFS/.exec(execFileSync("sh", ["-c", `ffmpeg -hide_banner -i "$1" -af ebur128 -f null - 2>&1 | grep -E "^\\s+I:" | tail -1`, "_", f]).toString())?.[1] ?? -16);
+const enc = (wavFile, name, match = true) => {
+  if (name === "ab-0-baseline") stemGain = -16 - lufs(wavFile);
+  execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", wavFile, "-af", match ? "loudnorm=I=-16:TP=-1.5:LRA=11" : `volume=${stemGain.toFixed(2)}dB`, "-ar", "44100", "-b:a", "128k", join(out, `${name}.mp3`)]);
   unlinkSync(wavFile);
   console.log(`     wrote ${join(outArg, name)}.mp3`);
 };
+// (Ed, 2026-10-11, on the first renders: "Cut the chant. I can't hear the frame drums or vocalise at all": the chant's out,
+// the frame drums and the vocalise louder, and each alone as a stem so it can be heard to be there)
 const steps = [
   ["ab-0-baseline", {}],
   ["ab-1-drone", { drone: true }],
-  ["ab-2-chant", { drone: true, chant: true }],
-  ["ab-3-frame-drums", { drone: true, chant: true, frames: true }],
-  ["ab-4-tape", { drone: true, chant: true, frames: true, tape: true }],
-  ["ab-5-cc0-kit", { drone: true, chant: true, frames: true, tape: true, kit: true }],
-  ["ab-6-vocalise", { drone: true, chant: true, frames: true, tape: true, kit: true, vocalise: true }],
-  ["ab-7-recorded-voices", { drone: true, chant: true, frames: true, tape: true, kit: true, vocalise: true, recorded: true }],
-  ["ab-bonus-witch-house", { witch: true, drone: true, chant: true, tape: true, vocalise: true, recorded: true }],
+  ["ab-2-frame-drums", { drone: true, frames: true }],
+  ["ab-3-tape", { drone: true, frames: true, tape: true }],
+  ["ab-4-cc0-kit", { drone: true, frames: true, tape: true, kit: true }],
+  ["ab-5-vocalise", { drone: true, frames: true, tape: true, kit: true, vocalise: true }],
+  ["ab-5b-vocalise-recorded", { drone: true, frames: true, tape: true, kit: true, sampledVocalise: true }],
+  ["ab-6-recorded-voices", { drone: true, frames: true, tape: true, kit: true, vocalise: true, recorded: true }],
+  ["ab-bonus-witch-house", { witch: true, drone: true, tape: true, vocalise: true, recorded: true }],
+  ["stem-frame-drums", { music: false, frames: true }],
+  ["stem-vocalise", { music: false, vocalise: true }],
+  ["stem-vocalise-recorded", { music: false, sampledVocalise: true }],
 ];
 for (const [name, flags] of steps) {
   const v = flags.witch ? witchy : plain;
@@ -76,11 +87,11 @@ for (const [name, flags] of steps) {
   h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8); h.write("fmt ", 12); h.writeUInt32LE(16, 16);
   h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(r.rate, 24); h.writeUInt32LE(r.rate * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34);
   h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
-  const f = join(out, `${name}.wav`); writeFileSync(f, Buffer.concat([h, pcm])); enc(f, name);
+  const f = join(out, `${name}.wav`); writeFileSync(f, Buffer.concat([h, pcm])); enc(f, name, !name.startsWith("stem-"));
 }
 await browser.close();
 // the voices alone, and the kit's samples one after another
-for (const [name, b] of [["voice-vocalise", plain.vocalise], ["voice-chant", plain.chant]]) { const f = join(out, `${name}.wav`); writeFileSync(f, b); enc(f, name); }
+for (const [name, b] of [["voice-vocalise", plain.vocalise]]) { const f = join(out, `${name}.wav`); writeFileSync(f, b); enc(f, name); }
 // the recorded voices as they are, one after another
 { const vs = readdirSync(join(root, "samples/voices")).filter(f => f.endsWith(".ogg")).sort(), parts = [], list = join(out, "voices.txt");
   for (const v of vs) { const p = join(out, `rv-${v}.wav`); execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", join(root, "samples/voices", v), "-af", "apad=pad_dur=0.6", "-ar", "48000", "-ac", "1", p]); parts.push(p); }
