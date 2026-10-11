@@ -25,7 +25,7 @@ import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
-import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerStateOf, type SpeakerState } from "./speakers";
+import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, speakerStateOf, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
@@ -73,6 +73,8 @@ export interface Witch {
   /** Slowed (a snail's slime, a glow-worm's flash) until then: her speeds times slowMult. */
   slowUntil?: number;
   slowMult?: number;
+  /** Her time she last landed (from the treetops): she can't rise again till riseCooldown seconds after it. */
+  landedAt?: number;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -415,6 +417,9 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
   else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle };
+  // Just landed: no rising again till riseCooldown seconds after (Ed, 2026-10-11: "players rise to the treetops instead of
+  // dodging"; rising takes her out of ground mode at once).
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && ht < (W.landedAt ?? -Infinity) + (t.riseCooldown ?? 0)) c = { ...c, toggleMode: false };
   const was = W.body;
   rechargeDash(W.dash, ht, charges, t.dash.cooldown);
   // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
@@ -427,6 +432,7 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t))); // (her sigils' pull: rules/leashWeight.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
+  if (was.mode !== "ground" && W.body.mode === "ground") W.landedAt = ht; // (landed: the rise cooldown starts)
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null); // (in a legend's circle: the lower view, camera.circle)
@@ -477,7 +483,7 @@ function fixedStep(g: Game, controls: Controls): void {
   questsFromPlaced(g, ht);
   questsFromStanding(g);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
-  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
+  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat, id => { const p = g.leash.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : null; });
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
   // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
   for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }
@@ -583,6 +589,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),
+    centre: g.map.dancefloor,
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
@@ -652,7 +659,7 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number): voi
     // home is lost only with the last of them.
     const i = speakerIndex(key), all = i < 0;
     g.speakers.forEach((_, j) => { if (all || j === i) g.speakers[j] = "destroyed"; });
-    for (let j = 0; j < g.speakers.length; j++) if (all || j === i) marchOn(S, speakerKey(j), g.creatures);
+    for (let j = 0; j < g.speakers.length; j++) if (all || j === i) marchOn(S, speakerKey(j), g.creatures, g.map.dancefloor);
     if (!all && g.speakers.some((_, j) => (S.sounds.get(speakerKey(j))?.hp ?? 0) > 0)) return;
     key = "home"; x = g.map.dancefloor.x; z = g.map.dancefloor.z;
   } else {
@@ -664,7 +671,7 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number): voi
       S.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); S.busy.add(c.id);
     }
   }
-  if (key !== "home") marchOn(S, key, g.creatures);
+  if (key !== "home") marchOn(S, key, g.creatures, g.map.dancefloor); // (inward only)
   g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time });
 }
 
@@ -678,7 +685,9 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell);
   // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
   const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
-  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t);
+  // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11).
+  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear, ring: speakerRadius(t) + t.dancefloor.speakers.footprint }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t,
+    { ruined: g.party.ruined, over: !!g.partyOver });
 }
 
 const neonOf = neon;

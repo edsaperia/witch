@@ -1,7 +1,7 @@
 // The waves' pace (Ed, 2026-10-08: "a dropdown in the top right during character creation, underneath the bot selector", and
 // not remembered): "Waves:" the ley pulse's speed (Ed, 2026-10-09: "Pure constant speed"; a wave lands as it reaches its
-// stone, so the gaps follow the links' lengths), slow, normal or fast, or off, under the dev "Player:" pick
-// (app/playerPick.ts) in the bedroom's top right corner, plain like it. Every game starts at the tuning's pace (or the link's
+// stone, so the gaps follow the links' lengths), slow, normal or fast, or off, in the bedroom's top right corner
+// (the dev "Player:" pick, app/playerPick.ts, under it with the debug overlay on), plain like it. Every game starts at the tuning's pace (or the link's
 // ?pulse=) until one is picked.
 import type { Creator } from "../ui/creator";
 

@@ -69,7 +69,7 @@ export interface ByRoute {
  *  route (`index` of `length`): its hostile swarm (rules/swarm.ts buildSwarm) over population.start's young and adults (times
  *  its count scale), at least minHostile of them; and its babies, byRoute.babies (or start's, if more), at most babyCap. */
 export function routePopulation(index: number, length: number, R: ByRoute, S: SwarmTuning, start: { babies: number; young: number; adults: number }, species: string, table: PowerTable = POWER_TABLE, data: CombatData = COMBAT): [number, number, number] {
-  const scale = countScale(species), [sy, sa] = buildSwarm(routeShare(index, length), S, species, table, data);
+  const scale = countScale(species), [sy, sa] = buildSwarm(routeShare(index, S.waves ?? length), S, species, table, data); // (by its wave on the master curve: S.waves)
   const babies = Math.min(Math.max(0, R.babyCap), Math.max(startCount(start.babies, scale), R.babies));
   const young = startCount(start.young, scale) + sy, adults = startCount(start.adults, scale) + sa;
   return [babies, young + Math.max(0, (R.minHostile ?? 0) - young - adults), adults]; // (at least minHostile young or adults: Ed, 2026-10-07)

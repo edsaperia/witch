@@ -12,7 +12,7 @@
 //     or heals.
 // The bot flies between areas over the treetops and fights on the ground, as a player does.
 // WHO=1 in the environment logs every hit she takes: who was close and coming for her, and the angry legends.
-//   node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--quest-max N (at most N quests, then she plays on as usual)] [--relic-max N (at most N relics brought)] [--strategy invite|feed|quest|sigil|mixed (the skilled bot's strategies: rules/bot.ts STRATEGIES)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--set path=value;...] [--combat path=value;... (config/combat.json's)] [--json out.json] | --report a.json,b.json
+//   node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--quest-max N (at most N quests, then she plays on as usual)] [--relic-max N (at most N relics brought)] [--strategy invite|feed|quest|sigil|mixed (the skilled bot's strategies: rules/bot.ts STRATEGIES)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--island 10|20|...|off (map.islandAreas)] [--set path=value;...] [--combat path=value;... (config/combat.json's)] [--json out.json] | --report a.json,b.json
 import { readFileSync, writeFileSync } from "node:fs";
 import { arg, list, mean, median, openRules } from "./lib.mjs";
 
@@ -22,6 +22,7 @@ if (arg("report")) rows = list(arg("report")).flatMap(f => JSON.parse(readFileSy
 else {
   const SEEDS = +arg("seeds", 3), SKIP = +arg("skip", 0), HAPPY = +arg("happy", 0), GUARDS = +arg("guards", 3), KEEP = +arg("keep", 2), FEED = process.argv.includes("--feed"), QUESTS = process.argv.includes("--quests"), RELICS = process.argv.includes("--relics"), RELIC_POLICY = String(arg("relic-policy", "nearest")), QUEST_MAX = +arg("quest-max", Infinity), RELIC_MAX = +arg("relic-max", Infinity), STRATEGY = arg("strategy", ""), BOTS = list(arg("bots", "skilled,crude")), TIME = +arg("time", 1800);
   const SETS = String(arg("set", "")).split(";").filter(Boolean).map(kv => { const [k, v] = kv.split("="); return [k.trim().split("."), JSON.parse(v)]; });
+  if (arg("island", null) !== null) SETS.push([["map", "islandAreas"], arg("island") === "off" ? 0 : +arg("island")]); // (--island N|off: the journey's islands, Ed 2026-10-11; map.islandAreas, 10 by default)
   const { load, close } = await openRules();
   const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
   const { newGame, stepGame } = await load("/src/rules/game.ts");

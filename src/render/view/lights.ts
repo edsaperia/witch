@@ -101,11 +101,22 @@ const spillRgb = new Map<string, THREE.Vector3>();
  *  place in legends.json relics.kinds (wine, partyHat, discoBall, gramophone, present, mask: the kinds' names from before the
  *  bottles; the rules seed their order by name, so they stay). */
 export function relicBottle(kind: string): string {
+  kind = kind.split("~")[0].replace(/Flip$/, ""); // (a mirrored kind draws its own bottle, flipped: relicFlipped; its colour: relicGlass)
   const ids = Art.PARTY_RELIC_IDS as string[];
   if (ids.includes(kind)) return kind;
   const i = LEGENDS.relics.kinds.indexOf(kind);
   return ids[(i >= 0 ? i : 0) % ids.length];
 }
+
+/** Whether a relic kind is one of the six mirror images (Ed, 2026-10-11: "flip the current kinds so there are now 12 kinds";
+ *  legends.json relics.kinds, `<kind>Flip`): its bottle drawn mirrored. */
+export const relicFlipped = (kind: string): boolean => kind.split("~")[0].endsWith("Flip");
+
+/** A relic kind's colour (Ed, 2026-10-11: recoloured bottles, `<kind>~<glass>`; legends.json relics.colours), or undefined: its own. */
+export const relicGlass = (kind: string): string | undefined => kind.split("~")[1];
+
+/** Its sprite's id in the relic atlas (render/artBuild.ts): the bottle, in another glass if recoloured. */
+export const relicArtId = (kind: string): string => { const g = relicGlass(kind); return `party:${relicBottle(kind)}${g ? "~" + g : ""}`; };
 
 /** The quest relics' bottles lying in the world (render/view/scenery.ts): each lights the ground round it in its liquid's own
  *  colour (art/partyRelics.js partyRelicLight: its reach and height, a slow pulse), as bright as a magic stone, so a found bottle
@@ -114,9 +125,9 @@ export function relicLights(v: View, time: number): ForestLight[] {
   const g = v.game, w = g.witch, out: ForestLight[] = [], S = g.tuning.lights.stone;
   for (const r of g.relics) {
     if (r.state !== "lying" || Math.abs(r.x - w.x) > 160 || Math.abs(r.z - w.z) > 160) continue;
-    const id = relicBottle(r.kind), L = (Art.partyRelicLight as (id: string) => { rgb: number[]; radius: number; height: number; pulse: number })(id);
-    let rgb = relicRgb.get(id);
-    if (!rgb) relicRgb.set(id, (rgb = new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255)));
+    const id = relicBottle(r.kind), glass = relicGlass(r.kind), L = (Art.partyRelicLight as (id: string, glass?: string) => { rgb: number[]; radius: number; height: number; pulse: number })(id, glass), key = relicArtId(r.kind);
+    let rgb = relicRgb.get(key);
+    if (!rgb) relicRgb.set(key, (rgb = new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255)));
     const pulse = 0.85 + 0.15 * Math.sin((time / L.pulse) * Math.PI * 2 + r.id);
     out.push({ x: r.x, y: L.height, z: r.z, reach: L.radius * 1.6, rgb, strength: S.strength * pulse });
   }

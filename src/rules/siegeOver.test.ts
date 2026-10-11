@@ -63,7 +63,7 @@ describe("a siege lost, and the party's over (the full smoke's siege, #577's min
     const key = cellKey(first), sound = g.combat.sounds.get(key)!, second = [...g.combat.sounds.keys()].find(k => !isHomeKey(k) && k !== key)!;
     expect(second).toBeTruthy();
     sound.hp = sound.max = 150;
-    const s2 = g.combat.sounds.get(second)!; s2.x = sound.x + 30; s2.z = sound.z; s2.hp = s2.max = 1e9; // (the second wave's 30 m off, nearer than home: the smoke's case, made sure of)
+    const s2 = g.combat.sounds.get(second)!, F = g.map.dancefloor, k = Math.hypot(F.x - sound.x, F.z - sound.z); s2.x = sound.x + ((F.x - sound.x) / k) * 30; s2.z = sound.z + ((F.z - sound.z) / k) * 30; s2.hp = s2.max = 1e9; // (the second wave's 30 m off toward home, nearer than home: the smoke's case, made sure of; inward, so they may go for it)
     const besiegers = g.creatures.filter(c => c.siege === key && !c.boss);
     for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
     for (let i = 0; i < 120 / STEP && sound.hp > 0; i++) stepGame(g, idle, STEP);
@@ -80,5 +80,30 @@ describe("a siege lost, and the party's over (the full smoke's siege, #577's min
     expect(s2.hp).toBeGreaterThan(0);
     expect(g.party.areas.has(second)).toBe(true);
     expect(g.creatures.some(c => c.siege === second)).toBe(false); // (nothing besieges it: everyone's off to bed)
+  }, 120000);
+
+  it("marching on, they never go for a soundsystem further from the centre than they are (Ed, 2026-10-11: enraged animals march inward), even the nearest", () => {
+    const g = newGame(123, TUNING);
+    g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    stepGame(g, idle, STEP);
+    const first = g.party.next[0];
+    g.creatures.filter(c => c.cell[0] === first[0] && c.cell[1] === first[1]).forEach(c => { c.level = 1; });
+    stepGame(g, { ...idle, nextWave: true }, STEP);
+    stepGame(g, { ...idle, nextWave: true }, STEP);
+    const key = cellKey(first), sound = g.combat.sounds.get(key)!, second = [...g.combat.sounds.keys()].find(k => !isHomeKey(k) && k !== key)!;
+    sound.hp = sound.max = 150;
+    // The second wave's 30 m off, further out from home: the nearest to them by far, but outward.
+    const s2 = g.combat.sounds.get(second)!, F = g.map.dancefloor, k = Math.hypot(F.x - sound.x, F.z - sound.z); s2.x = sound.x - ((F.x - sound.x) / k) * 30; s2.z = sound.z - ((F.z - sound.z) / k) * 30; s2.hp = s2.max = 1e9;
+    const besiegers = g.creatures.filter(c => c.siege === key && !c.boss);
+    for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
+    for (let i = 0; i < 120 / STEP && sound.hp > 0; i++) stepGame(g, idle, STEP);
+    expect(sound.hp).toBe(0);
+    const left = besiegers.filter(c => !c.gone), out = (x: number, z: number) => Math.hypot(x - F.x, z - F.z);
+    expect(left.length).toBeGreaterThan(0);
+    for (const c of left) { const h = g.combat.sounds.get(c.siege!)!; expect(isHomeKey(c.siege!) || out(h.x, h.z) <= out(c.x, c.z) + 10, c.siege).toBe(true); }
+    expect(left.some(c => c.siege === second)).toBe(false);
+    for (let i = 0; i < 10 / STEP; i++) stepGame(g, idle, STEP); // (and stay so on the march)
+    expect(left.filter(c => !c.gone).some(c => c.siege === second)).toBe(false);
   }, 120000);
 });

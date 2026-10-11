@@ -188,10 +188,17 @@ export class LeashView {
     const M = moodOf(t), hs = M?.berryHalo ?? 1, hg = glow * (M?.berryGlow ?? 1);
     for (const e of B.events) if (e.kind === "evolved") this.evolved.set(e.id, time);
     for (const [id, at] of this.evolved) if (time - at > 1) this.evolved.delete(id);
+    // A baby's sigil next to go down (Ed, 2026-10-11): the berries within berries.babyReach of her glow brightly, the ones it'll eat there.
+    const bot = !treetops && w.mode === "ground" ? stackBottom(g.leash) : null, babyNext = bot?.kind === "creature" && g.creatures[bot.id]?.level === 0;
+    const reach = t.berries.babyReach ?? 10;
     for (const berry of B.berries) {
       const p = B.bushes[berry.bush];
       if (Math.abs(p.x - w.x) > near || Math.abs(p.z - w.z) > near) continue;
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
+      if (babyNext && berry.claimedBy === null && Math.hypot(p.x - w.x, p.z - w.z) <= reach) {
+        const pulse = 0.75 + 0.25 * Math.sin(time * 4 + berry.id);
+        this.standing.add(p.x, 0.8, p.z + 0.29, 4.6 * hs, dot, r * 2, gg * 1.6, b * 1.6, Math.min(1, 1.6 * hg) * pulse); // (a wide bright halo)
+      }
       if (treetops) this.over.add(p.x, 1, p.z + 0.25, 0.9, dot, r * 1.6 * tw, gg * 1.6, b * 1.6, 0.8 * glow);
       else {
         this.standing.add(p.x, 0.8, p.z + 0.3, 2.8 * hs, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * hg * tw); // the soft halo, easy to spot

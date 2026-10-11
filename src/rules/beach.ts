@@ -9,7 +9,7 @@
 // poses and pairing (rules/partyWitches.ts), drawn by their own PartyWitchView, made only once
 // she's near. Most runs never come here, so a spot does nothing unless she's within its simRange.
 import { beachOf, type Bounds } from "./mapShape";
-import { pairOffset, type PartyWitch, type PlayerIdle } from "./partyWitches";
+import { MEET_SEQUENCE, pairOffset, type PartyWitch, type PlayerIdle } from "./partyWitches";
 import { hash2, rng } from "./random";
 import type { Tuning } from "./tuning";
 
@@ -27,9 +27,7 @@ export interface BeachWitches {
 }
 
 /** What she and a beach witch do together, round and round, turn seconds each. */
-export const SEQUENCE: { activity: PartyWitch["activity"]; pose: string }[] = [
-  { activity: "chat", pose: "laugh" }, { activity: "pair", pose: "holdHands" }, { activity: "pair", pose: "hug" }, { activity: "rest", pose: "stargaze" },
-];
+export const SEQUENCE = MEET_SEQUENCE; // (the stargazers by the party do the same: rules/partyWitches.ts)
 const REST = ["sitGround", "stargaze"];
 
 /** This run's spots of beach witches round the coast, or null (the square map, the beach off, or a run without them). */

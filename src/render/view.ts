@@ -354,7 +354,7 @@ export class View {
       this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer is half the scene's size: post.ts)
       this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
     }
-    if (t.lightRings?.on && t.lightRings.strength > 0 && !t.bare) {
+    if (t.lightRings?.on && (t.lightRings.strength > 0 || t.lightRings.gloryStrength > 0) && !t.bare) {
       this.lightRings = new LightRings(t.lightRings, this.post.scene.depthTexture, game.map.seed);
       (this.post.fxScene ??= new THREE.Scene()).add(this.lightRings.mesh);
     }

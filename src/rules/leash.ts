@@ -7,6 +7,7 @@
 // Sigils can't be put down on top of one another. Leashes are elastic: creatures walk or run to
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
 // No drawing here.
+import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, scatterSpot, stepBaby, trailPoint, updateTrail } from "./babies";
 import { heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { befriend, invitableNow, stateOf } from "./creatureStates";
@@ -42,6 +43,11 @@ export interface LeashState {
   /** Legends that have given her their unimpressed look this approach: not again until she's
    *  been beyond invite.cancelDistance of them. */
   snubbed: Set<number>;
+  /** Her trail on the ground while babies follow her (rules/babies.ts): breadcrumbs, newest first, flat x, z pairs. Made only then. */
+  trail?: number[];
+  /** While she's in a fight with babies following (rules/babies.ts): the way from the first attacker to her when it began,
+   *  kept the whole fight, and when it's over (babies.calm seconds after the last thing went for her or hers). */
+  scatter?: { x: number; z: number; until: number };
   /** Relic sigils she carries (rules/legends.ts: ids into the game's relics), in the stack's order, top first. */
   relics: number[];
   /** Where each carried relic sigil sits in the stack (Ed's playtest, 2026-10-08: "Flasks should behave like other sigils in
@@ -125,6 +131,8 @@ export interface LeashControls {
   rune?: (x: number, z: number, r: number) => Creature | null;
   /** Debug: invite the nearest invitable creature, however far. */
   inviteNearest?: boolean;
+  /** Whether a hex cell centred at (x, z) is barred to sigils (under a runestone, a soundsystem or a home speaker: rules/sigilButton.ts). */
+  barred?: (x: number, z: number) => boolean;
   /** Put a relic's sigil down on the ground at (x, z) (the game's relics: rules/sigilButton.ts), when it's at the bottom of
    *  her stack and the button isn't giving it to a legend (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you
    *  put down when you press e"). */
@@ -250,7 +258,12 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   }
   if ((c.sigil || c.place) && onGround) {
     let pick = -1, pd = L.pickRadius;
-    s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
+    // On the hex grid (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"): the cell nearest her decides; taken, the press
+    // picks its sigil up (no fizzling); free, a sigil goes down on it, or, if it's barred, on the nearest free cell that isn't.
+    const H = L.hex && L.hex.size > 0 ? L.hex : null;
+    const spot = H ? hexSpot(s, witch.x, witch.z, H.size, c.barred) : null;
+    if (spot) pick = spot.taken;
+    else s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
     // (Her own placed sigil first, then a happy creature's rune: Ed, 2026-10-06, the nearest; her hat before both, rules/game.ts.)
     const rune = pick < 0 ? c.rune?.(witch.x, witch.z, L.runeRadius ?? L.pickRadius) ?? null : null; // (further than her own sigils: Ed's playtest, "difficult to pick up")
     if (pick >= 0) {
@@ -274,7 +287,10 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
       const id = s.stack[s.stack.length - 1];
       // A party legend's (the Easter egg): put down, it's let go where it stands, dancing (its rune at its feet), and she's free.
       if (byId(id).partyLegend) { s.stack.pop(); letPartyLegendGo(byId(id)); s.events.push({ kind: "placed", id, x: byId(id).x, z: byId(id).z, at: time }); }
-      else if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
+      else if (spot) {
+        if (spot.at) { s.stack.pop(); s.placed.push({ id, x: spot.at.x, z: spot.at.z, at: time }); s.events.push({ kind: "placed", id, x: spot.at.x, z: spot.at.z, at: time }); }
+        // (no allowed free cell near her: nothing)
+      } else if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
       else {
         s.stack.pop();
         s.placed.push({ id, x: witch.x, z: witch.z, at: time });
@@ -284,11 +300,62 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   }
 
   // (A party animal busy with a berry, or evolving, is moved by rules/berries.ts instead.)
-  for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
+  // Her babies following her on the ground (Ed, 2026-10-11; rules/babies.ts): single file along where she's been, in stack
+  // order from the bottom, babies.gap metres apart; scattering while she's in a fight.
+  const BB = babiesOf(t), babies = onGround ? s.stack.filter(id => isBaby(byId(id))) : [];
+  if (babies.length) s.trail = updateTrail(s.trail, witch.x, witch.z, (babies.length + 2) * BB.gap + 4);
+  else if (s.trail) s.trail = undefined;
+  const herSpeed = Math.hypot((witch as { vx?: number }).vx ?? 0, (witch as { vz?: number }).vz ?? 0);
+  const foe = babies.length ? attackerNear(creatures, witch.x, witch.z, (t.combat.defendRadius ?? 30) * (t.fight?.scale ?? 1)) : null;
+  // (scattered from the moment something goes for her or hers, closing in or winding up, for the whole fight, one way, until
+  // nothing has for babies.calm seconds; Ed, 2026-10-11)
+  if (foe) {
+    if (!s.scatter) { const dx = witch.x - foe.x, dz = witch.z - foe.z, d = Math.hypot(dx, dz) || 1; s.scatter = { x: dx / d, z: dz / d, until: 0 }; }
+    s.scatter.until = time + (BB.calm ?? BABIES_DEFAULT.calm);
+  } else if (s.scatter && (!babies.length || time >= s.scatter.until)) s.scatter = undefined;
+  for (let i = s.stack.length - 1, k = 0; i >= 0; i--) {
+    const id = s.stack[i], c = byId(id);
+    if (!babies.length || !isBaby(c)) continue;
+    const slot = k++;
+    if (busy(id)) continue;
+    const to = s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter) : trailPoint(s.trail, witch.x, witch.z, (slot + 1) * BB.gap);
+    stepBaby(c, to.x, to.z, witch.x, witch.z, leashSpeed(c, t) * (t.leash.pace ?? 1), herSpeed, dt, t);
+  }
+  for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend && !(babies.length && isBaby(byId(id)))) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
   // Parked, it rests restAbove metres north of its sigil (up the screen, -z), so the sigil stays in sight and easy to pick up
-  // (Ed, 2026-10-10: "Leashed animals should come to rest 10m above their placed sigil").
+  // (Ed, 2026-10-10: "Leashed animals should come to rest 10m above their placed sigil"; 2026-10-11: 5 m).
   const above = t.leash.restAbove ?? 0;
   for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z - above, dt, t);
+}
+
+/** The hex cell (axial q, r) nearest (x, z), on a world-fixed grid `size` metres between neighbours (rows along x, each
+ *  half a cell over from the last, size × √3/2 apart). */
+export function hexCell(x: number, z: number, size: number): { q: number; r: number } {
+  const fr = z / (size * Math.sqrt(3) / 2), fq = x / size - fr / 2, fs = -fq - fr;
+  let q = Math.round(fq), r = Math.round(fr);
+  const s = Math.round(fs), dq = Math.abs(q - fq), dr = Math.abs(r - fr), ds = Math.abs(s - fs);
+  if (dq > dr && dq > ds) q = -r - s; else if (dr > ds) r = -q - s;
+  return { q, r };
+}
+/** The middle of hex cell (q, r). */
+export const hexCentre = (q: number, r: number, size: number) => ({ x: size * (q + r / 2), z: size * (Math.sqrt(3) / 2) * r });
+
+/** The sigil button on the hex grid at (x, z): `taken`, the placed sigil (its index) in the cell nearest her, else -1; `at`,
+ *  where a sigil goes down: that cell, or, if it's barred, the nearest free one that isn't within two cells (null: none). */
+export function hexSpot(s: LeashState, x: number, z: number, size: number, barred: (x: number, z: number) => boolean = () => false): { taken: number; at: { x: number; z: number } | null } {
+  const key = (q: number, r: number) => `${q},${r}`, held = new Map<string, number>();
+  s.placed.forEach((p, i) => { const h = hexCell(p.x, p.z, size), k = key(h.q, h.r), o = held.get(k); if (o === undefined || Math.hypot(p.x - x, p.z - z) < Math.hypot(s.placed[o].x - x, s.placed[o].z - z)) held.set(k, i); });
+  const h0 = hexCell(x, z, size), taken = held.get(key(h0.q, h0.r)) ?? -1;
+  if (taken >= 0) return { taken, at: null };
+  const c0 = hexCentre(h0.q, h0.r, size);
+  if (!barred(c0.x, c0.z)) return { taken: -1, at: c0 };
+  let best: { x: number; z: number } | null = null, bd = Infinity;
+  for (let dq = -2; dq <= 2; dq++) for (let dr = -2; dr <= 2; dr++) {
+    if (Math.abs(dq + dr) > 2) continue; // (two rings round it)
+    const q = h0.q + dq, r = h0.r + dr, c = hexCentre(q, r, size), d = Math.hypot(c.x - x, c.z - z);
+    if (d < bd && !held.has(key(q, r)) && !barred(c.x, c.z)) { bd = d; best = c; }
+  }
+  return { taken: -1, at: best };
 }
 
 /** Whether a sigil put down at (x, z) would land on another. */

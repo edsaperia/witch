@@ -4,6 +4,7 @@ import { type Creature } from "../creatures";
 import { foes, huntsWitch, stateOf, type State } from "../creatureStates";
 import { LEGENDS } from "../legends";
 import { bodyRadius } from "../spacing";
+import { isHomeKey } from "../speakers";
 import { FIGHT, profileOf } from "../movement";
 import { type Delivery, type Target, type CombatState, attackOf, type CombatWorld } from "./data";
 
@@ -184,9 +185,18 @@ export function moveToward(c: Creature, x: number, z: number, stopAt: number, sp
   return d - step;
 }
 
+/** Metres a soundsystem may stand further from the centre than a besieger and still be marched on (one it's beside already). */
+const INWARD_SLACK = 10;
+
 /** The soundsystem a siege goes for next: the nearest still standing, from (x, z). */
-export function nearestSound(s: CombatState, x: number, z: number): string | null {
+export function nearestSound(s: CombatState, x: number, z: number, centre?: { x: number; z: number }, keep?: string): string | null {
+  // Marching inward (Ed, 2026-10-11): given the map's centre, never one further from it than (x, z) is (home's, and `keep`, its own, always;
+  // and one it's all but at already, within INWARD_SLACK metres further out).
+  const out = centre ? Math.hypot(x - centre.x, z - centre.z) + INWARD_SLACK : Infinity;
   let best: string | null = null, bd = Infinity;
-  for (const [key, h] of s.sounds) { if (h.hp <= 0) continue; const d = Math.hypot(h.x - x, h.z - z); if (d < bd) { bd = d; best = key; } }
+  for (const [key, h] of s.sounds) {
+    if (h.hp <= 0 || (centre && key !== keep && !isHomeKey(key) && Math.hypot(h.x - centre.x, h.z - centre.z) > out)) continue;
+    const d = Math.hypot(h.x - x, h.z - z); if (d < bd) { bd = d; best = key; }
+  }
   return best;
 }

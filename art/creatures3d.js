@@ -27,6 +27,9 @@ const glowMotes = (sp, seed, n = 9) => { // a few glowing motes around a legend 
 };
 
 // A feathered wing: a fan of long flat feathers from shoulder to tip, lifted and swept back.
+// A dragon's wing membrane (the wings feature): a straight leading edge, its trailing edge scalloped between the finger bones and
+// narrowing to the tip (s: -1 at the shoulder to 1 at the tip; t: -1 the trailing edge to 1 the leading).
+const dragonWing = mat => (s, t) => { const u = (s + 1) / 2, trail = -1 + 1.75 * u * u + .28 * Math.abs(Math.sin(u * Math.PI * 3)); return t < trail || t > 1 - .15 * u ? null : mat; };
 function wing3d(m, root, side, span, up, mat, mat2, group) {
   // one shaped plane: a feathered outline, raised and swept back, its leading edge forward
   const tip = v3.add(root, [-span * .7, span * (.75 + up), side * span * .35]), u = v3.norm(v3.sub(tip, root));
@@ -146,6 +149,8 @@ function gearUp(m) {
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
+//   wings: { size, at, mat, bone, nub }: leathery wings off its shoulders, a dragon's (bones and a membrane between them, as the
+//     bat's), rising up and back, size times its body's length, flapping a little with its walk; nub: folded stubs (a young one's).
 function evolve3d(m, feats, c) {
   for (const f of feats) {
     if (f.kind === "mane") {
@@ -234,6 +239,20 @@ function evolve3d(m, feats, c) {
         if (m.field(p) > k) continue; // nothing there
         m.ell(p, [k * 1.2, k * .55, k * .7], M.MOSS, { group: 150 + (side > 0 ? 0 : 1), extra: true, rough: k * .15 });
         if (i % 2) m.ell(v3.add(p, [0, k * .45, side * k * .2]), [k * .35, k * .3, k * .35], M.FLOWER, { group: 152, extra: true }); // a sprig of heather
+      }
+    }
+    if (f.kind === "wings") { // leathery wings off its shoulders (Ed, 2026-10-11: the east's Cinder Wyrm), bat-built: bones, a membrane between
+      m.part = "body";
+      const S = (f.size ?? .9) * c.len * (f.nub ? .32 : 1), b = c.backAt(f.at ?? .66), mem = M[f.mat || "BODY2"], bone = M[f.bone || "BODY3"], lift = c.frame ? -.08 : .06;
+      for (const side of [-1, 1]) {
+        const sh = [b[0], b[1] - .02, side * c.bw * .45], wr = v3.add(sh, [-.12 * S, (.5 + lift) * S, side * .32 * S]);
+        const tips = f.nub ? [v3.add(sh, [-.55 * S, .55 * S, side * .3 * S]), v3.add(sh, [-.65 * S, .2 * S, side * .25 * S])]
+          : [v3.add(sh, [-.62 * S, (.78 + lift) * S, side * .62 * S]), v3.add(sh, [-.95 * S, (.38 + lift * .5) * S, side * .5 * S]), v3.add(sh, [-.75 * S, .05 * S, side * .3 * S])];
+        const g = 180 + (side > 0 ? 1 : 0), r = Math.max(.012, S * .04);
+        m.seg(sh, wr, r, r * .8, bone, { group: g, extra: true });
+        for (const t of tips) m.seg(wr, t, r * .7, r * .3, bone, { group: g, extra: true });
+        const span = v3.sub(tips[0], sh), u = v3.norm(span), back = v3.norm(v3.sub(tips[tips.length - 1], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
+        m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, S * (f.nub ? .1 : .2))), u, v, Math.hypot(...span) * .55, S * (f.nub ? .22 : .4), dragonWing(mem), { group: g + 2, extra: true, bend: .2 });
       }
     }
     if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
@@ -710,6 +729,30 @@ export function beetle3d(S, level, frame, st, facing = "towards") {
   eyesOn(m, hc, [.1, .1, .17], [[.4, .3, .85], [.4, .3, -.85]], .032, legend ? M.MAGIC2 : M.EYE, 9); // its own group: too small to survive melting into the head
   if (has("crystals")) crystals3d(m, [[[-.35, .5, .1], .3], [[-.1, .55, -.08], .45], [[.1, .5, .1], .35]]);
   return finish(m, S, level, st, .5, facing);
+}
+
+// The scarab (Ed, 2026-10-11: the south's sun scarab, "a domed beetle with a horn"): a high round dome of wing cases split down the
+// middle, a broad shield behind its head, a rake of teeth across its face, one horn curving up off its head (longer each level),
+// stout toothed front legs for digging; a legend (feature sunBall) rolls a glowing ball of light ahead of it.
+export function scarab3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
+  for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six legs, the front pair stout and toothed for digging
+    const x = .28 - i * .27, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .2, side * .22], w = i === 0 ? .04 : .03;
+    m.chain([[...base, w], [x + ph + (1 - i) * .08, .28, side * .44, w * .85], [x + ph * 1.5 + (1 - i) * .16, .02, side * .54, w * .5]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
+    if (i === 0) for (const k of [.35, .65]) m.ell([x + (ph + .08) * k * 1.4, .28 - .26 * k, side * (.44 + .1 * k)], [.03, .015, .02], M.BODY3, { group: side > 0 ? 7 : 2 });
+  }
+  m.ell([-.1, .38, 0], [.42, .3, .34], M.BODY, { paint: p => Math.abs(p[2]) < .016 && p[1] > .45 ? M.LINE : p[1] > .58 && p[2] > .04 && p[2] < .16 ? M.BELLY : undefined }); // the dome: its wing cases, a seam, a sheen
+  m.ell([.3, .34, 0], [.16, .2, .3], M.BODY, { group: 1, paint: p => p[1] > .48 && p[2] > .02 && p[2] < .14 ? M.BELLY : undefined }); // the shield behind its head
+  const hc = [.48, .26, 0];
+  m.ell(hc, [.1, .08, .18], M.BODY2, { group: 1 });
+  for (let t = -2; t <= 2; t++) m.ell([hc[0] + .1, hc[1] - .02, t * .055], [.03, .02, .022], M.BODY3, { group: 1 }); // the rake of teeth across its face
+  const hl = [.16, .3, .46, .56][level], hm = legend ? M.MAGIC : M.BODY3; // its horn, curving up and back
+  m.chain([[hc[0] + .08, hc[1] + .04, 0, .06], [hc[0] + .16, hc[1] + .04 + hl * .55, 0, .042], [hc[0] + .1, hc[1] + .04 + hl, 0, .016]], hm, { group: 8 });
+  eyesOn(m, hc, [.1, .08, .18], [[.4, .3, .85], [.4, .3, -.85]], .03, legend ? M.MAGIC2 : M.EYE, 9);
+  m.anchors.head = { c: hc, r: [.1, .08, .18], top: [hc[0], hc[1] + .08, 0] };
+  if (has("sunBall")) m.ell([hc[0] + .62, .26, 0], [.25, .25, .25], M.GLOW, { group: 10, extra: true, paint: p => spotty(p, 14, .25) ? M.BELLY : undefined }); // the sun it rolls
+  if (has("crystals")) crystals3d(m, [[[-.3, .62, .1], .3], [[-.05, .66, -.08], .42], [[.15, .58, .1], .32]]);
+  return finish(m, S, level, st, .55, facing);
 }
 
 // The snail: its foot, eye stalks and shell. Its genome levels shape it (each level its own design: docs/art-guide/EVOLUTIONS.md):
