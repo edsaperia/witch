@@ -198,7 +198,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.
     // (Ed's motion scale pass: party animals chase about 40 m from her or their sigil before giving up)
-    const S = FIGHT.scale, reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
+    // (parked with its sigil in the home area, it guards all of that area and nothing outside it: Ed, 2026-10-11)
+    const H = c.leashed && guarding && lp && w.home?.inside(lp.x, lp.z) ? w.home : null;
+    const S = FIGHT.scale, reachX = H ? H.x : lp ? lp.x : c.x, reachZ = H ? H.z : lp ? lp.z : c.z, reach = H ? H.r : (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
     if (f.target && !valid(w, s, c, f.target)) {
       // Lost her (or her party) past its band, or she rose (Ed, 2026-10-06: "instead they should retreat
       // and go back to idling"): a wild one that isn't besieging gives up and heads home.
@@ -206,9 +208,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       f.target = null;
     }
     const had = !!f.target;
-    if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z))) f.target = null; }
+    if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || (H ? !H.inside(p.x, p.z) : Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z)))) f.target = null; }
     if (!f.target || f.windupUntil === 0) {
-      let near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, happy ? o => w.inArea(c, o.x, o.z) : undefined, claims);
+      let near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, H ? o => H.inside(o.x, o.z) : happy ? o => w.inArea(c, o.x, o.z) : undefined, claims);
       // Retreating, it takes up a fight again only with someone back in its own area (no flip-flopping at the band's edge).
       if (near && c.retreat) { const q = targetPos(w, s, near); if (q && w.inArea(c, q.x, q.z)) c.retreat = undefined; else near = null; }
       if (near && c.leashed && !guarding) { claim(f.target, -1); claim(near, 1); } // (her posse's claims kept up as they choose)
@@ -281,7 +283,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (f.windupUntil === 0 && P && !marching) {
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
       const run = speed;
-      if (P.move?.kind === "charge") {
+      if (P.move?.kind === "charge" && f.target.kind !== "sound") { // (at a soundsystem its ordinary attack, not one blow a charge: Ed, 2026-10-11)
         const was = c.charge, r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
         // Predictive aim (dodge.b): a charge at her runs down the lane to where she'll be when it gets there.
         if (DB && !was && c.charge && f.target.kind === "witch") {
@@ -305,7 +307,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r === "charging" && t.fight.charge?.contact && c.charge && !c.charge.braking && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
         if (r === "charging") continue;
       }
-      if (P.move?.kind === "swoop" && swoops(c)) {
+      if (P.move?.kind === "swoop" && swoops(c) && f.target.kind !== "sound") { // (at a soundsystem it lands and attacks as usual: Ed, 2026-10-11)
         // A wild flyer (the owl, the bat, the raven: hotel's phase-3 flyer table): it circles out of reach, telegraphs, dives along a
         // line at where its target will be and pulls back up; only in the dive and at its bottom can it be hit or invited.
         const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
@@ -313,10 +315,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r === "tele") { f.readyAt = time + A.cooldown; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
         if (r === "dive") s.events.push({ kind: "swooped", x: c.x, z: c.z, at: time, id: c.id });
         if (r === "low" && c.swoop?.hit) {
-          // Its dive touches every foe it passes (once each); a soundsystem it's after, at the bottom.
+          // Its dive touches every foe it passes (once each). (A soundsystem it never swoops at: above.)
           const dive: Attack = { ...A, delivery: "melee", range: 2.5 * S, ...(P.move.knockback ? { modifier: "knockback" as const, knockback: P.move.knockback * S } : {}) };
           touch(w, s, c, atk.damage, dive, grid, c.swoop.hit);
-          if (f.target.kind === "sound" && !c.swoop.hit.includes(-1e9) && Math.hypot(p.x - c.x, p.z - c.z) <= p.r + 2 * S) { c.swoop.hit.push(-1e9); land(w, s, c, f.target, atk.damage, dive, c.x, c.z); }
         }
         continue;
       }
@@ -494,13 +495,17 @@ export function startSiege(s: CombatState, key: string, at: { x: number; z: numb
   if (besiege) for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && !c.fleeUntil && !c.dazed && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0 && enrage(c)) c.siege = key;
 }
 
-/** A besieger's marching pace (m/s): its own times combat.marchMult; marching on from a fallen soundsystem (a siege outside
- *  its own area: marchOn), at combat.marchOnRun at least, so it plainly leaves for the next (Ed's playtest, 2026-10-09:
- *  "Enraged creatures don't seem to be leaving their area"; at under 1 m/s it took minutes to). */
-export function marchSpeed(c: Creature, t: Tuning): number {
-  const own = c.speed * t.combat.marchMult;
-  return c.siege && !c.boss && c.siege !== `${c.cell[0]},${c.cell[1]}` ? Math.max(own, t.combat.marchOnRun ?? 0) : own;
+/** A kind's top speed (m/s): its fight run, its movement profile's (movement.json speed) else combat.fightRun, a legend's
+ *  combat.legendRun, at the fight's speed (fight.speed). */
+export function topSpeedOf(species: string, level: number, t: Tuning): number {
+  return (level === LEGEND ? t.combat.legendRun : profileOf(species)?.speed ?? t.combat.fightRun) * (t.fight?.speed ?? 1);
 }
+
+/** A besieger's marching pace (m/s), on its own area's soundsystem or marching on after a fall: combat.marchShare of its top
+ *  speed (Ed's playtest, 2026-10-11: "Animals seem to walk very slowly when they're going towards soundsystems"; it was its
+ *  walk times marchMult, under 1 m/s, and 5 m/s marching on). */
+export const marchSpeedOf = (species: string, level: number, t: Tuning): number => topSpeedOf(species, level, t) * (t.combat.marchShare ?? 0.5);
+export const marchSpeed = (c: Creature, t: Tuning): number => marchSpeedOf(c.species, c.level, t);
 
 /** After a soundsystem falls: the survivors march on to the next-nearest still standing. */
 export function marchOn(s: CombatState, key: string, creatures: Creature[], centre?: { x: number; z: number }): void {

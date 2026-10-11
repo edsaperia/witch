@@ -828,6 +828,26 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   const keys = Object.keys(base), diff = keys.filter(k => base[k] !== now[k]), extra = Object.keys(now).filter(k => !(k in base));
   ok(!diff.length && !extra.length, `flora genomes: ${keys.length - diff.length} of ${keys.length} trees and bushes as the baseline${diff.length ? " — differ: " + diff.slice(0, 8).join(", ") : ""}${extra.length ? " — not in it: " + extra.slice(0, 8).join(", ") : ""}`);
 }
+// snow-laden crowns (trees.js snowCrown, Ed 2026-10-11): at 0 a tree is untouched; laden, every leafy species holds snow, on its
+// leaves only (as WEB, which sways with them), more on its upper half than its lower, and no lone flecks
+{
+  const T = await import("./trees.js"), W = await import("./sway.js"), { defaultStyle } = await import("./generator.js"), { rng, M } = await import("./core.js");
+  const st = defaultStyle(), bad = [], LEAVES = new Set([M.LEAF, M.LEAF2, M.LEAF3]); let n = 0;
+  for (const [id, S] of Object.entries(T.TREE_SPECIES)) {
+    const t = S.fn(rng(9), { ...st }, st.treeSize), sp = t.sp, before = sp.m.slice(), { w, h } = sp;
+    T.snowCrown(sp, 0); if (sp.m.some((v, i) => v !== before[i])) { bad.push(id + " changed at 0"); continue; }
+    if (!before.some(v => LEAVES.has(v))) continue; // bare
+    T.snowCrown(sp, 1, 3); n++;
+    const snow = []; for (let i = 0; i < sp.m.length; i++) if (sp.m[i] !== before[i]) { if (!LEAVES.has(before[i]) || sp.m[i] !== M.WEB) { bad.push(id + " snow off its leaves"); break; } snow.push(i); }
+    if (!snow.length) { bad.push(id + " no snow"); continue; }
+    const at = i => sp.m[i] === M.WEB, lone = snow.filter(i => { const x = i % w; return !(x && at(i - 1)) && !(x < w - 1 && at(i + 1)) && !(i >= w && at(i - w)) && !(i + w < sp.m.length && at(i + w)); });
+    if (lone.length) bad.push(`${id} ${lone.length} lone flecks`);
+    const meanY = l => l.reduce((a, i) => a + Math.floor(i / w), 0) / l.length, leaves = []; before.forEach((v, i) => { if (LEAVES.has(v)) leaves.push(i); });
+    if (meanY(snow) > meanY(leaves)) bad.push(`${id} snow low (lower on average than its leaves)`); // on the upper faces: higher than the leaves as a whole
+    const sw = W.swayMask(sp); if (snow.some(i => !sw[i])) bad.push(id + " snow doesn't sway");
+  }
+  ok(!bad.length, `snow crowns: ${n} leafy species hold snow, laden, on their leaves only, higher than its leaves as a whole, swaying with them, no lone flecks; untouched at 0${bad.length ? " — " + bad.slice(0, 8).join(", ") : ""}`);
+}
 // pixel wind (art/sway.js): every species' sway code keeps the trunk's foot still; the genome generator's trees sway by their
 // blobs (3+ regions, 3+ phases among them); with no wind a tree draws exactly as baked; in a strong gust every region moves whole,
 // by whole pixels (at most 2), and keeps most of itself in view

@@ -7,6 +7,7 @@ import { newGame, stepGame, STEP, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { isHomeKey } from "./speakers";
 import { cellKey } from "./party";
+import { nearestSound } from "./combat/targeting";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** Seed 123 (the smoke's), the waves held, wave 1 brought on with its area's creatures grown to young, its soundsystem cut
@@ -22,7 +23,7 @@ function siege(): { g: Game; key: string; besiegers: Game["creatures"] } {
   const key = cellKey(next), sound = g.combat.sounds.get(key)!;
   sound.hp = sound.max = 150;
   const besiegers = g.creatures.filter(c => c.siege === key && !c.boss);
-  for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
+  for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; c.fight = undefined; } // (put beside it, nothing else in mind: at half their top speed a stale target's reached in seconds)
   for (let i = 0; i < 120 / STEP && sound.hp > 0; i++) stepGame(g, idle, STEP);
   expect(sound.hp).toBe(0);
   return { g, key, besiegers };
@@ -41,13 +42,13 @@ describe("a siege lost, and the party's over (the full smoke's siege, #577's min
     expect(g.partyOver).not.toBeNull();
   }, 120000);
 
-  it("its besiegers leave for the next one at once (Ed's playtest, 2026-10-09: they seemed not to leave their area): marching on at combat.marchOnRun", () => {
+  it("its besiegers leave for the next one at once (Ed's playtest, 2026-10-09: they seemed not to leave their area): marching on at combat.marchShare of its top speed (Ed, 2026-10-11)", () => {
     const { g, besiegers } = siege(), left = besiegers.filter(c => !c.gone);
     expect(left.length).toBeGreaterThan(0);
     const dist = (c: (typeof left)[number]) => { const h = g.combat.sounds.get(c.siege!)!; return Math.hypot(h.x - c.x, h.z - c.z); };
     const d0 = left.map(dist);
     for (let i = 0; i < 20 / STEP; i++) stepGame(g, idle, STEP);
-    // 20 s on, each is well on its way: at its old amble (its speed times marchMult, under 1 m/s) it had gone some 15 m; at marchOnRun's 5 m/s, 100.
+    // 20 s on, each is well on its way: at its old amble (its walk times marchMult, under 1 m/s) it had gone some 15 m; at half its top speed, far more.
     left.forEach((c, i) => expect(d0[i] - dist(c), c.species).toBeGreaterThan(60));
   }, 120000);
 
@@ -65,13 +66,15 @@ describe("a siege lost, and the party's over (the full smoke's siege, #577's min
     sound.hp = sound.max = 150;
     const s2 = g.combat.sounds.get(second)!, F = g.map.dancefloor, k = Math.hypot(F.x - sound.x, F.z - sound.z); s2.x = sound.x + ((F.x - sound.x) / k) * 30; s2.z = sound.z + ((F.z - sound.z) / k) * 30; s2.hp = s2.max = 1e9; // (the second wave's 30 m off toward home, nearer than home: the smoke's case, made sure of; inward, so they may go for it)
     const besiegers = g.creatures.filter(c => c.siege === key && !c.boss);
-    for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
+    for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; c.fight = undefined; } // (put beside it, nothing else in mind: at half their top speed a stale target's reached in seconds)
     for (let i = 0; i < 120 / STEP && sound.hp > 0; i++) stepGame(g, idle, STEP);
     expect(sound.hp).toBe(0);
-    // Each to the standing soundsystem nearest it (rules/combat.ts marchOn), some to the second wave's: the smoke's case.
-    const standing = [...g.combat.sounds].filter(([, h]) => h.hp > 0), left = besiegers.filter(c => !c.gone);
-    for (const c of left) { const best = standing.reduce((m, [k, h]) => (Math.hypot(h.x - c.x, h.z - c.z) < m.d ? { k, d: Math.hypot(h.x - c.x, h.z - c.z) } : m), { k: "", d: Infinity }); expect(c.siege).toBe(best.k); }
-    expect(left.length).toBeGreaterThan(0); expect(left.every(c => c.siege === second)).toBe(true);
+    // Each to the standing soundsystem nearest it that's no further out (rules/combat.ts marchOn, inward: Ed, 2026-10-11), so those
+    // still at the fallen one to the second wave's: the smoke's case. (One that had already run further in goes on inward, to home.)
+    const left = besiegers.filter(c => !c.gone), F0 = g.map.dancefloor;
+    for (const c of left) expect(c.siege).toBe(nearestSound(g.combat, c.x, c.z, F0));
+    const there = left.filter(c => Math.hypot(c.x - sound.x, c.z - sound.z) < 20);
+    expect(there.length).toBeGreaterThan(0); expect(there.every(c => c.siege === second)).toBe(true);
     // Home's last speaker down: the party's over, the second wave's still standing, switched off (Ed, 2026-10-10: "The party
     // should end when all your home speakers are destroyed, not all speakers+soundsystems").
     for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = 0;
@@ -96,7 +99,7 @@ describe("a siege lost, and the party's over (the full smoke's siege, #577's min
     // The second wave's 30 m off, further out from home: the nearest to them by far, but outward.
     const s2 = g.combat.sounds.get(second)!, F = g.map.dancefloor, k = Math.hypot(F.x - sound.x, F.z - sound.z); s2.x = sound.x - ((F.x - sound.x) / k) * 30; s2.z = sound.z - ((F.z - sound.z) / k) * 30; s2.hp = s2.max = 1e9;
     const besiegers = g.creatures.filter(c => c.siege === key && !c.boss);
-    for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
+    for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; c.fight = undefined; } // (put beside it, nothing else in mind: at half their top speed a stale target's reached in seconds)
     for (let i = 0; i < 120 / STEP && sound.hp > 0; i++) stepGame(g, idle, STEP);
     expect(sound.hp).toBe(0);
     const left = besiegers.filter(c => !c.gone), out = (x: number, z: number) => Math.hypot(x - F.x, z - F.z);

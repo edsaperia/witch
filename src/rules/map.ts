@@ -16,6 +16,7 @@ export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.
 import { PathNetwork } from "./paths";
 import { routeOf } from "./party";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
+import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -89,6 +90,9 @@ export interface ForestMap {
   readonly tuning: Tuning;
   /** Areas across the grid of cells: the playable square's (square map), or the whole flight circle's and a little more (circular). */
   readonly n: number;
+  /** The grid's first cell (its cells run first to first + n - 1 each way): 0, but below on a home grown past its 10 areas (its
+   *  middle kept where the 10-area home's is). */
+  readonly first: number;
   /** Extra rings of areas outside the grid. */
   readonly margin: number;
   /** The map's shape: "circle" (Ed, 2026-10-06) or "square" (as before, ?shape=square). */
@@ -156,6 +160,10 @@ export interface ForestMap {
   hasLegend(cx: number, cy: number): boolean;
   /** The areas with a legend, as "cx,cy" keys. */
   readonly legendCells: ReadonlySet<string>;
+  /** The island this map is, when it's one by roster (rules/rosters.ts: a kind's, or home's), else null. */
+  readonly island: Island | null;
+  /** On an island by roster, the night's legends' kinds (dealt from its roster: one area of each has its legend); else empty. */
+  legendKinds: string[];
   /** Each area's sleeping legend's clearing (not home's: it has no legend), or null where none fits. */
   legendClearing(cx: number, cy: number): LegendClearing | null;
   /** Every legend's clearing (for the drawing: its ground ring, and the rendering's twilight and motes). */
@@ -214,7 +222,7 @@ function findNeighbours(p: Partition, lo: number, hi: number, perCell: number): 
   return nb;
 }
 
-export function generateMap(seed: number, tuning: Tuning): ForestMap {
+export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
   const A = tuning.areaSize * tuning.areaScale, typeCount = AREA_TYPES.length;
   // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of
   // home's; past them a buffer ring buffer areas deep, then the edge of her flight (from the
@@ -222,16 +230,34 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // that and the warp's play; the forest goes on edge areas beyond, its last areas never seen.
   const MS = tuning.map ?? { shape: "square" as const, radius: 0, buffer: 0, push: 0, drift: 0, edge: 2 };
   const shape: "circle" | "square" = MS.shape === "circle" ? "circle" : "square", round = shape === "circle";
+  // The journey's islands by roster (Ed, 2026-10-11; rules/rosters.ts): map.island a kind plays that kind's island, its shape and
+  // areas from its own seed (where it lies on the sea chart) and its size by phase; "home" plays home's (one area per kind she
+  // knows, on the run's seed). The run's seed deals the night's legends.
+  // The world seed (Ed, 2026-10-11; rules/rosters.ts): an island's shape (its coast, the partition into areas, their types) is
+  // its own, from the campaign's world (map.world) and its kind, the same every night (shapeSeed); everything inside it (paths,
+  // scenery, set pieces, creatures, the night's legends; map.seed) is the night's, the run's seed.
+  const world = MS.world ?? 0;
+  // Home grows (Ed, 2026-10-10, journey.md "Home's size"): one area per kind she knows, home's 10 and every kind found since
+  // (map.found, the save's); islandAreas turns it on, and is its least (past one each, the kinds again in turn).
+  const rosterIsland = !round ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(world, knownKinds(MS.found ?? []), Math.round(MS.islandAreas!)) : null) : MS.island && playableIsland(MS.island) ? islandOf(MS.island, world) : null; // (never a placeholder's: rules/rosters.ts)
+  const seed = runSeed, shapeSeed = rosterIsland ? rosterIsland.seed : runSeed;
   // An island of so many areas (Ed, 2026-10-11, the journey's first step: map.islandAreas): home and exactly that many more, the
   // nearest home's (found below, once the areas are cut); until then a radius sure to hold them sizes the grid and the forest.
-  const island = round && (MS.islandAreas ?? 0) > 0 ? Math.round(MS.islandAreas!) : 0;
-  let R = island ? Math.sqrt((island + 1) / Math.PI) * 1.4 + 1.5 : MS.radius, flightR = (R + 0.5 + MS.buffer) * A;
+  const island = rosterIsland ? rosterIsland.size : round && (MS.islandAreas ?? 0) > 0 ? Math.round(MS.islandAreas!) : 0;
+  const reach = (areas: number) => Math.sqrt((areas + 1) / Math.PI) * 1.4 + 1.5;
+  let R = island ? reach(island) : MS.radius, flightR = (R + 0.5 + MS.buffer) * A;
   const edgeK = MS.edge ?? 2;
   // The coast's wobble (Ed, 2026-10-06): seeded, the same for every edge; the forest's extent covers its furthest headland.
   // (The grid doesn't change with it, so the coast's knobs never reshuffle the map: its slack of an area holds the
   // playable areas' furthest headland, and the buffer's past it are the forest's anyway.)
-  const coast = round ? makeCoast(seed, MS.coast) : () => 1, most = 1 + (round ? Math.max(0, MS.coast?.amp ?? 0) : 0);
-  const n = round ? 2 * Math.ceil(R + 0.5 + MS.buffer + 1) + 1 : tuning.mapAreas, margin = round ? Math.ceil(edgeK) : 2;
+  // (a kind's island takes the islands' coast, as its outline on the sea chart and in the dreams: rules/islandShape.ts)
+  const coastKnobs = rosterIsland && rosterIsland.kind !== "home" ? tuning.islands?.coast ?? MS.coast : MS.coast;
+  const coast = round ? makeCoast(shapeSeed, coastKnobs) : () => 1, most = 1 + (round ? Math.max(0, coastKnobs?.amp ?? 0) : 0);
+  const across = (r: number) => 2 * Math.ceil(r + 0.5 + MS.buffer + 1) + 1;
+  const n = round ? across(R) : tuning.mapAreas, margin = round ? Math.ceil(edgeK) : 2;
+  // Home grown (more kinds known than home's 10): its grid's middle stays where the 10-area home's is, so the partition, home's
+  // cell and its first areas are the same every night of the campaign; the grid reaches further round it (from cell `first`).
+  const homeBase = rosterIsland?.kind === "home" ? homeKinds().length : 0, grown = homeBase > 0 && island > homeBase;
   // Areas vary in size: the world is warped smoothly before it is cut, so in some stretches of
   // the map the cells spread out (big areas) and in others they crowd (small ones). The warp
   // never folds (its slope stays under 1), so every area keeps its place and the map stays
@@ -239,7 +265,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const L = 3, V = Math.max(0, Math.min(1, tuning.areaSizeVariance)) * L * 0.3;
   const toPart = (x: number, z: number): [number, number] => {
     const u = x / A, v = z / A;
-    return [u + V * (vnoise(u / L, v / L, seed + 91) - 0.5) * 2, v + V * (vnoise(u / L, v / L, seed + 92) - 0.5) * 2];
+    return [u + V * (vnoise(u / L, v / L, shapeSeed + 91) - 0.5) * 2, v + V * (vnoise(u / L, v / L, shapeSeed + 92) - 0.5) * 2];
   };
   const toWorld = (u: number, v: number): [number, number] => {
     let x = u * A, z = v * A;
@@ -247,7 +273,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     // audit. The same sums in the same order.)
     for (let i = 0; i < 30; i++) {
       const uu = x / A, vv = z / A;
-      const pu = uu + V * (vnoise(uu / L, vv / L, seed + 91) - 0.5) * 2, pv = vv + V * (vnoise(uu / L, vv / L, seed + 92) - 0.5) * 2;
+      const pu = uu + V * (vnoise(uu / L, vv / L, shapeSeed + 91) - 0.5) * 2, pv = vv + V * (vnoise(uu / L, vv / L, shapeSeed + 92) - 0.5) * 2;
       x += (u - pu) * A; z += (v - pv) * A;
     }
     return [x, z];
@@ -259,7 +285,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // and home.margin more, measured through the warp (its edge mapped into partition space), so
   // every point of it is home's; the areas round it are cut round it, their centres kept
   // home.gap of an area beyond it.
-  const mid = Math.floor(n / 2), plain = makePartition(seed, tuning.borderLayers);
+  const mid = Math.floor((grown ? across(reach(homeBase)) : n) / 2), first = mid - Math.floor(n / 2), plain = makePartition(shapeSeed, tuning.borderLayers);
   const ownsSite = (cx: number, cy: number) => { const s = plain.site(cx, cy), c = plain.partition(s[0], s[1]); return c[0] === cx && c[1] === cy; };
   let centreCell: Cell = [mid, mid];
   for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) if (ownsSite(mid + dx, mid + dy)) { centreCell = [mid + dx, mid + dy]; break; }
@@ -270,7 +296,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     const a = (k / 96) * Math.PI * 2, [u, v] = toPart(homeWorld[0] + Math.cos(a) * homeRadius, homeWorld[1] + Math.sin(a) * homeRadius);
     homeR = Math.max(homeR, Math.hypot(u - homeSite[0], v - homeSite[1]));
   }
-  const partition = makePartition(seed, tuning.borderLayers, { cell: centreCell, radius: homeR * 1.03, gap: H.gap });
+  const partition = makePartition(shapeSeed, tuning.borderLayers, { cell: centreCell, radius: homeR * 1.03, gap: H.gap });
   // (circular: the extent a square round the flight circle, edge areas past it; the cells it covers, and one more for the warp)
   const ext = round ? { minX: homeWorld[0] - flightR * most - edgeK * A, maxX: homeWorld[0] + flightR * most + edgeK * A, minZ: homeWorld[1] - flightR * most - edgeK * A, maxZ: homeWorld[1] + flightR * most + edgeK * A } : null;
   const lo = ext ? Math.floor(Math.min(ext.minX, ext.minZ) / A) - 1 : -margin, hi = ext ? Math.ceil(Math.max(ext.maxX, ext.maxZ) / A) + 1 : n + margin;
@@ -278,7 +304,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
 
   // Area types: random, never the same as a touching area nor any area within two cells.
   const types = new Map<string, number>();
-  const r = rng(seed * 5 + 1);
+  const r = rng(shapeSeed * 5 + 1);
   for (let cy = lo; cy < hi; cy++) for (let cx = lo; cx < hi; cx++) {
     const near = new Set<number>(), homeKey = cellKey(centreCell[0], centreCell[1]);
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
@@ -291,7 +317,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     const pool = free.length ? free : [...Array(typeCount).keys()];
     types.set(cellKey(cx, cy), pool[Math.floor(r() * pool.length)]);
   }
-  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, seed + 17) * typeCount);
+  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, shapeSeed + 17) * typeCount);
 
   // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
   const SITES = new Map<number, [number, number]>();
@@ -310,19 +336,35 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // area's), and such a ghost area put its runestone, its legend and its creatures all on one spot in a neighbour's
   // ground (Ed, v1628: "Legend and runestone in the same place"). Ground: any of the neighbour scan's samples, 6 a cell.
   const hasGround = (cx: number, cy: number) => neighbours.has(cellKey(cx, cy));
+  let baseR = 0;
   if (island) {
     // The island's areas: home and the `island` nearest it that own ground; its radius halfway out to the next, so the flight's
     // edge, the buffer ring and the coast sit round them as round any map's.
     const by: number[] = [];
-    for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (hasGround(cx, cy)) by.push(fromHome(cx, cy));
+    for (let cy = first; cy < first + n; cy++) for (let cx = first; cx < first + n; cx++) if (hasGround(cx, cy)) by.push(fromHome(cx, cy));
     by.sort((a, b) => a - b);
-    const last = by[Math.min(island, by.length - 1)], next = by[Math.min(island + 1, by.length - 1)];
-    R = Math.min(R, (last + (next > last ? (next - last) / 2 : 0.01 * A)) / A); flightR = (R + 0.5 + MS.buffer) * A;
+    const upTo = (k: number, est: number) => { const last = by[Math.min(k, by.length - 1)], next = by[Math.min(k + 1, by.length - 1)]; return Math.min(est, (last + (next > last ? (next - last) / 2 : 0.01 * A)) / A); };
+    R = upTo(island, R); flightR = (R + 0.5 + MS.buffer) * A;
+    if (grown) baseR = upTo(homeBase, reach(homeBase));
   }
-  const playable = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < n && cy < n && (!round || fromHome(cx, cy) <= R * A) && hasGround(cx, cy);
+  const playable = (cx: number, cy: number) => cx >= first && cy >= first && cx < first + n && cy < first + n && (!round || fromHome(cx, cy) <= R * A) && hasGround(cx, cy);
   const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && fromHome(cx, cy) <= flightR + A * 0.5;
   const cells: Cell[] = [];
-  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (playable(cx, cy)) cells.push([cx, cy]);
+  for (let cy = first; cy < first + n; cy++) for (let cx = first; cx < first + n; cx++) if (playable(cx, cy)) cells.push([cx, cy]);
+  // (an island by roster: its areas' types from the roster, as few of a kind side by side as the swaps can manage)
+  const others = cells.filter(([x, y]) => x !== centreCell[0] || y !== centreCell[1]);
+  if (rosterIsland && !grown) assignRoster(rosterIsland, others, types, neighbours, shapeSeed);
+  else if (rosterIsland) {
+    // Home grown: its first 10 areas dealt as the 10-area home's (the same areas, the same kinds), then each kind found since
+    // given the next area out, in the order found.
+    const inBase = (x: number, y: number) => fromHome(x, y) <= baseR * A, extra = others.filter(([x, y]) => !inBase(x, y)).sort((a, b) => fromHome(a[0], a[1]) - fromHome(b[0], b[1]));
+    assignRoster(homeIsland(world), others.filter(([x, y]) => inBase(x, y)), types, neighbours, shapeSeed);
+    const known = knownKinds(MS.found ?? []), more = known.slice(homeBase);
+    more.forEach((kind, i) => { const c = extra[i]; if (c) types.set(cellKey(c[0], c[1]), AREA_TYPES.findIndex(a => a.creature === kind)); });
+    // (past one area each, islandAreas's padding: the kinds again, dealt as any roster's)
+    const pad = extra.slice(more.length);
+    if (pad.length) assignRoster(homeIsland(world, known, known.length + pad.length), pad, types, neighbours, shapeSeed, known.length);
+  }
 
   // The warp's steepest slope (vnoise's gradient is at most 1.5 a component), so a step of d metres
   // moves a point at most d * stretch / A in partition units.
@@ -331,7 +373,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const areaAt = (x: number, z: number): AreaSample => {
     // (toPart inline: no [u, v] tuple a call; phase 2's GC audit, the same sums)
     const uu = x / A, vv = z / A;
-    const u = uu + V * (vnoise(uu / L, vv / L, seed + 91) - 0.5) * 2, v = vv + V * (vnoise(uu / L, vv / L, seed + 92) - 0.5) * 2, cell = partition.partition(u, v);
+    const u = uu + V * (vnoise(uu / L, vv / L, shapeSeed + 91) - 0.5) * 2, v = vv + V * (vnoise(uu / L, vv / L, shapeSeed + 92) - 0.5) * 2, cell = partition.partition(u, v);
     return { cell, type: typeOf(cell[0], cell[1]), look: cell[0] === centreCell[0] && cell[1] === centreCell[1] ? HOME_LOOK : typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
   // An area that rolls a set piece (setPieceChance of those whose type has one; not home).
@@ -414,7 +456,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     pieceSpots.set(key, spot);
     return spot;
   };
-  const legendCells = chooseLegendCells(cells, centreCell, neighbours, tuning.legends?.share ?? 1, seed); // (the playable areas)
+  const legendCells = rosterIsland ? new Set<string>() : chooseLegendCells(cells, centreCell, neighbours, tuning.legends?.share ?? 1, seed); // (the playable areas; an island by roster deals its own below, once the route's known)
+  let legendKinds: string[] = [];
   const grounds: Ground[] = [], scenes: Scene[] = [], clearings = new Map<string, LegendClearing>();
   const reserved = (x: number, z: number, r: number) => {
     const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
@@ -432,7 +475,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     return false;
   };
   // The beach and the sea past it (the tuning's beach): nothing grows or stands there.
-  const beach = round ? beachOf({ minX: 0, maxX: 0, minZ: 0, maxZ: 0, circle: { x: centre.x, z: centre.z, r: flightR, coast, seed } }, tuning) : null;
+  const beach = round ? beachOf({ minX: 0, maxX: 0, minZ: 0, maxZ: 0, circle: { x: centre.x, z: centre.z, r: flightR, coast, seed: shapeSeed } }, tuning) : null;
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (beach && beach.intoSand(x, z) > 0) return true;
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
@@ -475,10 +518,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (round ? R : n / 2));
   const pad = A * 0.5;
   const bounds: Bounds = round
-    ? { minX: centre.x - flightR * most, maxX: centre.x + flightR * most, minZ: centre.z - flightR * most, maxZ: centre.z + flightR * most, circle: { x: centre.x, z: centre.z, r: flightR, coast, seed } }
+    ? { minX: centre.x - flightR * most, maxX: centre.x + flightR * most, minZ: centre.z - flightR * most, maxZ: centre.z + flightR * most, circle: { x: centre.x, z: centre.z, r: flightR, coast, seed: shapeSeed } }
     : { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad };
   const map = {
-    seed, tuning, n, margin, shape, cells, playable, inBuffer, coast, areaSize: A, partition, centreCell, homeRadius,
+    seed, tuning, n, first, margin, shape, cells, playable, inBuffer, coast, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
     treehouse, treehouseFront: { x: treehouse.x, z: treehouse.z + tuning.treehouse.clear }, grounds, scenes,
     start: { x: treehouse.x, z: treehouse.z + 1 },
@@ -486,6 +529,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     extent: ext ?? { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
     hasLegend: (cx: number, cy: number) => legendCells.has(cellKey(cx, cy)), legendCells,
+    island: rosterIsland, legendKinds,
     legendClearing: (cx: number, cy: number) => clearings.get(cellKey(cx, cy)) ?? null, legendClearings: [] as LegendClearing[],
     paths: null as unknown as PathNetwork,
   };
@@ -515,15 +559,26 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const order: [number, number, number][] = [];
   for (const [cx, cy] of cells) if (!(cx === centreCell[0] && cy === centreCell[1])) order.push([cx, cy, hash2(cx, cy, seed + 881)]);
   order.sort((a, b) => a[2] - b[2]);
+  const placeScene = (id: string, cx: number, cy: number): boolean => {
+    const r = sceneFootprint(id, tuning), a = hash2(cx, cy, seed + 885) * Math.PI * 2, site = siteOf(cx, cy);
+    for (const d of [r + 8, r + 16, r + 26]) for (let k = 0; k < 12; k++) {
+      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
+      if (inCell(x, z, cx, cy) && !reserved(x, z, r) && !map.paths.at(x, z, r * 0.7)) { scenes.push({ id, x, z, r, mirror: hash2(cx, cy, seed + 887) < 0.5 }); usedScenes.add(id); return true; }
+    }
+    return false;
+  };
+  // A featured scene, one of its ids (Ed, 2026-10-11: the temple ruins on most islands, the Greek temple or the classical ruins): on a map at its chance, in the first area it suits that has
+  // room, else in any area that has room (an island of 10 areas often has none of the types it suits).
+  const FS = SC.featured, pool = (FS?.ids ?? []).filter(id => SCENES.some(sc => sc.id === id));
+  if (FS && pool.length && hash2(seed, 7, seed + 889) < FS.chance) {
+    const fid = pool[Math.floor(hash2(seed, 9, seed + 891) * pool.length)], suits = SCENES.find(sc => sc.id === fid)!.suits ?? [], fit = (c: [number, number, number]) => (suits.includes(AREA_TYPES[typeOf(c[0], c[1])].id) ? 0 : 1);
+    for (const [cx, cy] of [...order].sort((p, q) => fit(p) - fit(q) || p[2] - q[2])) if (placeScene(fid, cx, cy)) break;
+  }
   for (const [cx, cy, roll] of order) {
     if (roll >= SC.chance) continue;
     const id = AREA_TYPES[typeOf(cx, cy)].id, fits = SCENES.filter(sc => !usedScenes.has(sc.id) && (sc.suits ?? []).includes(id));
     if (!fits.length) continue;
-    const sc = fits[Math.floor(hash2(cx, cy, seed + 883) * fits.length)], r = sceneFootprint(sc.id, tuning), a = hash2(cx, cy, seed + 885) * Math.PI * 2, site = siteOf(cx, cy);
-    search: for (const d of [r + 8, r + 16, r + 26]) for (let k = 0; k < 12; k++) {
-      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
-      if (inCell(x, z, cx, cy) && !reserved(x, z, r) && !map.paths.at(x, z, r * 0.7)) { scenes.push({ id: sc.id, x, z, r, mirror: hash2(cx, cy, seed + 887) < 0.5 }); usedScenes.add(sc.id); break search; }
-    }
+    placeScene(fits[Math.floor(hash2(cx, cy, seed + 883) * fits.length)].id, cx, cy);
   }
   // Each area's sleeping legend's clearing (Ed, 2026-10-06: "Sleeping legends should be in a small
   // circular clearing, where they sit near the top of the circle"): out from the area's middle
@@ -534,7 +589,19 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // three areas the waves wake always has a legend. When legends.share left all three without, one of them (seeded, one whose
   // kind another of the three doesn't share, so its dream has a creature to want) is given one here, moved from another
   // area so the share holds, before the clearings are cut.
-  if (tuning.legends?.earlyQuest !== false) {
+  if (rosterIsland) {
+    // The night's legends (rules/rosters.ts dealLegends): one area of each kind dealt; a kind among the route's first three areas
+    // (with another kind beside it there, so its dream has a creature to want) dealt where it can be, in its earliest area.
+    const order = routeOf(map as unknown as ForestMap).order, kindAt = (k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[typeOf(x, y)].creature; };
+    const first = order.slice(0, 3), early = tuning.legends?.earlyQuest !== false ? first.filter(k => first.some(o => o !== k && kindAt(o) !== kindAt(k))).map(kindAt) : [];
+    legendKinds = dealLegends(rosterIsland, runSeed, new Set(MS.found ?? []), early);
+    map.legendKinds = legendKinds;
+    for (const kind of legendKinds) {
+      const mine = order.filter(k => kindAt(k) === kind);
+      const at = mine.find(k => first.includes(k)) ?? mine[Math.floor(hash2(runSeed, mine.length, 7357 + legendKinds.indexOf(kind)) * mine.length)];
+      if (at) legendCells.add(at);
+    }
+  } else if (tuning.legends?.earlyQuest !== false) {
     const order = routeOf(map as unknown as ForestMap).order, first = order.slice(0, 3), kind = (k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[typeOf(x, y)].creature; };
     if (first.length && !first.some(k => legendCells.has(k))) {
       const fit = first.filter(k => first.some(o => o !== k && kind(o) !== kind(k)));
@@ -658,4 +725,36 @@ export function chooseLegendCells(cells: readonly Cell[], home: Cell, neighbours
     chosen.add(best!);
   }
   return chosen;
+}
+
+/** Give an island's areas their types from its roster (Ed, 2026-10-11; rules/rosters.ts): each kind's count of areas, dealt
+ *  in a seeded order, then swapped about to keep two of a kind from touching where it can. */
+function assignRoster(island: Island, cells: readonly Cell[], types: Map<string, number>, neighbours: ReadonlyMap<string, ReadonlySet<string>>, seed: number, skip = 0): void {
+  const typeOfKind = (k: string) => AREA_TYPES.findIndex(a => a.creature === k);
+  const deck: number[] = [];
+  for (const { kind, areas } of island.roster) for (let i = 0; i < areas; i++) deck.push(typeOfKind(kind));
+  // (`skip`: one of each kind dealt already elsewhere, so the deck is the rest)
+  for (const { kind } of skip ? island.roster.slice(0, skip) : []) deck.splice(deck.indexOf(typeOfKind(kind)), 1);
+  if (!deck.length || !cells.length) return;
+  const keys = cells.map(([x, y]) => cellKey(x, y)), r = rng(seed * 7 + 13);
+  for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+  keys.forEach((k, i) => types.set(k, deck[i % deck.length]));
+  const clash = (k: string, t: number) => { let c = 0; for (const o of neighbours.get(k) ?? []) if (types.get(o) === t && keys.includes(o)) c++; return c; };
+  for (let pass = 0; pass < 6; pass++) {
+    let moved = false;
+    for (const a of keys) {
+      const ta = types.get(a)!;
+      if (!clash(a, ta)) continue;
+      for (const b of keys) {
+        const tb = types.get(b)!;
+        if (tb === ta) continue;
+        const before = clash(a, ta) + clash(b, tb);
+        types.set(a, tb); types.set(b, ta);
+        const after = clash(a, tb) + clash(b, ta);
+        if (after < before) { moved = true; break; }
+        types.set(a, ta); types.set(b, tb);
+      }
+    }
+    if (!moved) break;
+  }
 }

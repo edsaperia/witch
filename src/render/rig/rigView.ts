@@ -29,7 +29,7 @@ export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
   let by = faceMetas.get(meta); if (!by) faceMetas.set(meta, (by = {}));
   return (by[face!] ??= { ...meta, head });
 }
-export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number; /** its character (render/character.ts): its posture, and its idle quirk and how far through it (-1: none) */ posture?: { hx: number; hy: number; by: number }; quirk?: string; quirkK?: number; /** standing, it turns to look at this (rules/wildWatch.ts: a wild area watching her come down) */ lookAt?: { x: number; z: number } }
+export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number; /** its character (render/character.ts): its posture, and its idle quirk and how far through it (-1: none) */ posture?: { hx: number; hy: number; by: number }; quirk?: string; quirkK?: number; /** standing, it turns to look at this (rules/wildWatch.ts: a wild area watching her come down) */ lookAt?: { x: number; z: number }; /** drawn this far (m) from its place (the conga's lean onto the one ahead, render/conga.ts) */ dx?: number; dz?: number }
 
 export class RigView {
   private bodies = new Map<number, RigBody>();
@@ -100,7 +100,7 @@ export class RigView {
     for (const k of [key, dkey]) if (!this.pool.has(k)) { this.pool.set(k, []); this.used.set(k, 0); }
     if (!this.batches.has(key)) for (const [k, rim] of [[key, true], [dkey, false]] as const) { const L = c.boss && !c.leashed && this.legendLook ? this.legendLook(c.species) : {}, b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined, ...(rim ? L : { steps: L.steps }) }); this.batches.set(k, b); this.scene.add(...b.meshes); } // (a legend's look: its rim on its body, not its legs' discs)
     const pools = [this.pool.get(key)!, this.pool.get(dkey)!], ns = [this.used.get(key)!, this.used.get(dkey)!];
-    const m = this.mpp * look.scale, R = this.R, U = this.U, F = this.F, sx = look.sx ?? 1, sy = look.sy ?? 1;
+    const m = this.mpp * look.scale, ox = c.x + (look.dx ?? 0), oz = c.z + (look.dz ?? 0), R = this.R, U = this.U, F = this.F, sx = look.sx ?? 1, sy = look.sy ?? 1;
     for (let k = 0; k < this.out.n; k++) {
       const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];
       if (!f) continue;
@@ -108,8 +108,8 @@ export class RigView {
       const w = discs.has(it.piece.frame) ? 1 : 0, pool = pools[w], n = ns[w]++;
       let s = pool[n];
       if (!s) pool[n] = s = { x: 0, y: 0, z: 0, frame: f, flip: false };
-      s.x = c.x + it.x - R.x * dx - U.x * dy + F.x * b; s.y = look.y + it.y - R.y * dx - U.y * dy + F.y * b; s.z = c.z + it.z - R.z * dx - U.z * dy + F.z * b;
-      if (sx !== 1 || sy !== 1) { s.x = c.x + (s.x - c.x) * sx; s.z = c.z + (s.z - c.z) * sx; s.y = look.y + (s.y - look.y) * sy; } // squashed or stretched about its feet
+      s.x = ox + it.x - R.x * dx - U.x * dy + F.x * b; s.y = look.y + it.y - R.y * dx - U.y * dy + F.y * b; s.z = oz + it.z - R.z * dx - U.z * dy + F.z * b;
+      if (sx !== 1 || sy !== 1) { s.x = ox + (s.x - ox) * sx; s.z = oz + (s.z - oz) * sx; s.y = look.y + (s.y - look.y) * sy; } // squashed or stretched about its feet
       s.frame = f; s.flip = it.flip; s.fresh = look.fresh; s.glow = look.glow; s.scale = look.scale; s.sx = sx; s.sy = sy;
     }
     this.used.set(key, ns[0]); this.used.set(dkey, ns[1]);

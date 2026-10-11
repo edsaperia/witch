@@ -20,10 +20,18 @@ node tools/map/leydepart.mjs [--seeds 1,2,3,123,4242,925469] [--out previews/ley
 
 ## `leyroute.mjs`
 
-The ley line's route from above, today's against the spiral: for each seed, the whole route through every area in wave order, the varied order beside the spiral, the line from blue to pink, home the yellow dot, each crossing ringed red; under them,…
+The ley line's route from above: for each seed, the whole route through every area in wave order, the line from blue to pink, home the yellow dot, each crossing ringed red; under it, distance from home by wave.
 
 ```
 node tools/map/leyroute.mjs [--seeds 1,2,3,123,4242,925469] [--out previews/ley-spiral]
+```
+
+## `scenery.mjs`
+
+The random scenery on an island from above: for each seed, the island's areas, its paths, streams and railways, and every random piece the map puts down, by kind: scenes, grounds, set pieces, ruins, rocks, freak trees, modern relics, walls, path pieces,…
+
+```
+node tools/map/scenery.mjs [--seeds 1,2,3] [--out previews/scenery-map] [--set paths.linkChance=0.1;paths.rails=0,1]
 ```
 
 ## `shape.mjs`

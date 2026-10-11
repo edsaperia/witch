@@ -22,9 +22,9 @@ import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { isInside } from "./mapShape";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING as GAME_TUNING, type Tuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
-import { composeFloor, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
+import { composeFloor, islandSigilOf, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { bootSpeaker, floorInputs, speakerBoot } from "./game";
 import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
@@ -34,10 +34,17 @@ import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
 import { COUNTRY } from "../../art/country.js";
+// The rules' every kind of scenery on, as before the small islands' cuts (Ed, 2026-10-11: no set pieces, sports grounds, rocks, freak
+// trees or path pieces; ruins twice): this file tests how each is placed, so it keeps them all; "the small islands' scenery" below
+// checks the game's own tuning.
+const TUNING: Tuning = { ...GAME_TUNING, setPieceChance: 0.25, grounds: { ...GAME_TUNING.grounds, kinds: ["playground", "tennis", "baseball", "football", "basketball"] }, decor: { ...GAME_TUNING.decor, mix: { ruins: 1, rocks: 1, freak: 1 } }, paths: { ...GAME_TUNING.paths, pieces: true }, scenes: { ...GAME_TUNING.scenes, featured: undefined } };
+const withTuning = (over: Partial<Tuning>): Tuning => ({ ...TUNING, ...over, camera: { ...TUNING.camera, ...(over.camera ?? {}) } });
 const MODERN_POOL = [...RELICS.filter(r => r.family === "modern" && (r as { scatter?: boolean }).scatter !== false), ...(COUNTRY as { id: string; family: string }[]).filter(d => d.family === "farm" || d.family === "street")].map(d => d.id); // the scattered modern finds, in the view's order (the bits of highway left out: Ed, round 13)
 const MODERN = MODERN_POOL.length;
 
 const map = generateMap(123, TUNING);
+// A map with plenty of paths and railways, for the tests of how they behave (the game's own numbers make few: Ed, 2026-10-11).
+const NET = { ...TUNING, paths: { ...TUNING.paths, rails: [2, 4] as [number, number], linkChance: 0.55, deadEndChance: 0.3 } }, NET_MAP = generateMap(123, NET);
 
 describe("fractal partition", () => {
   it("gives the same areas from the same seed", () => {
@@ -1085,10 +1092,19 @@ describe("the density field", () => {
 });
 
 describe("paths, roads and railways", () => {
-  const P = map.paths, T = TUNING.paths;
+  // How the network behaves, on a map that has plenty of it: the old numbers (two to four railways, paths linking most
+  // neighbours, dead ends), since the game's own are sparse now (Ed, 2026-10-11: "There are much too many paths"; tested below).
+  const map = NET_MAP, P = map.paths, T = NET.paths;
+  it("are few with the game's own numbers: at most one railway (and its branch), far fewer footpaths, streams as before", () => {
+    const sparse = generateMap(123, TUNING).paths.lines, of = (k: string, ls = sparse) => ls.filter(l => l.kind === k);
+    expect(of("rail").filter(l => l.pts.length > 100).length).toBeLessThanOrEqual(TUNING.paths.rails[1]);
+    expect(of("rail").length).toBeLessThanOrEqual(TUNING.paths.rails[1] + 1);
+    expect(of("path").length).toBeLessThan(of("path", P.lines).length / 2);
+    expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(TUNING.paths.streams[0]); // streams as they were (their numbers unchanged)
+  });
   it("are seeded: the same map makes the same network", () => {
-    expect(generateMap(123, TUNING).paths.lines).toEqual(P.lines);
-    expect(generateMap(124, TUNING).paths.lines).not.toEqual(P.lines);
+    expect(generateMap(123, NET).paths.lines).toEqual(P.lines);
+    expect(generateMap(124, NET).paths.lines).not.toEqual(P.lines);
   });
   it("have two to four railway lines crossing many areas, a road or two, and paths between areas", () => {
     const of = (k: string) => P.lines.filter(l => l.kind === k);
@@ -1147,14 +1163,14 @@ describe("paths, roads and railways", () => {
     for (const id of ["verge-post", "level-crossing"]) expect(ids.has(id)).toBe(false); // the roads' own pieces went with them (Ed, round 13)
     expect(P.pieces.some(p => ["goods-wagon", "carriage", "platform", "signal-gantry"].includes(p.id))).toBe(true);
     let bridges = 0;
-    for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
+    for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, NET).paths.pieces.filter(p => p.id.includes("bridge")).length;
     expect(bridges).toBeGreaterThan(0);
     expect(P.pieces.some(p => p.id === "fingerpost")).toBe(false); // fingerposts only with paths.fingerposts (the game sets it)
-    const withPosts = generateMap(123, { ...TUNING, paths: { ...TUNING.paths, fingerposts: true } }).paths.pieces;
+    const withPosts = generateMap(123, { ...NET, paths: { ...NET.paths, fingerposts: true } }).paths.pieces;
     expect(withPosts.filter(p => p.id === "fingerpost").length).toBeGreaterThan(3);
     expect(withPosts.filter(p => p.id !== "fingerpost")).toEqual(P.pieces); // placed last: every other piece where it was
     for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
-    for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.paths.pieceGap); // never a row of them
+    for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(T.pieceGap); // never a row of them
     for (const p of P.pieces) expect(map.reserved(p.x, p.z, p.r)).toBe(false); // clear of soundsystems, set pieces, grounds
     const forest = new Forest(map);
     for (const p of P.pieces.slice(0, 60)) for (const t of forest.treesNear(p.x, p.z, p.r + 1)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThanOrEqual(p.r - 1e-6);
@@ -1200,8 +1216,8 @@ describe("relics and grounds", () => {
       expect(Math.hypot(g.x - map.dancefloor.x, g.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + g.r);
     }
   });
-  it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => {
-    const forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
+  it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => { // (on a map with railways: NET)
+    const map = NET_MAP, forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
     expect(list.length).toBeGreaterThan(3);
     expect(list.length).toBeLessThanOrEqual(MODERN); // each at most once (relics and the standalone country pieces)
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
@@ -1378,10 +1394,10 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
   const beat = 60 / TUNING.beat.bpm, boot = 8 * beat; // the switch-on sequence is 8 beats
   const inputs = (time: number, o: Partial<FloorInputs> = {}): FloorInputs => ({ time, seed: 7, level: 2, partifiedAreas: new Set(), witch: { x: -50, y: -50, lift: 1, rgb: [255, 238, 70] }, dancers: [], ...o });
   const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
-  it("shows only the moon before the first wave, in its twilight palette, and switches on, once, when the first wave comes", () => {
-    const g = newGame(3, TUNING), P = TUNING.moon.floor.palette.map(c => c.join());
+  it("shows only the moon before the first wave (with the island's sigil off), in its twilight palette, and switches on, once, when the first wave comes", () => {
+    const T = withTuning({ dancefloor: { ...TUNING.dancefloor, island: { ...TUNING.dancefloor.island, on: false } } }), g = newGame(3, T), P = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
-    const colours = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
+    const colours = () => { const o = composeFloor(g.floor, floorInputs(g), T).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
     expect(g.party.wave).toBe(0);
@@ -1399,6 +1415,27 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
     for (let i = 0; i < 60 * (TUNING.moon.floor.flare + 1); i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     expect(g.floor.on).toBe(on); // only once
     expect([...colours().seen].some(c => !P.includes(c))).toBe(true); // the party's neons
+  });
+  it("shows the island's sigil through the boot (home's: the World Tree), written on as the pulse goes round, the moon before", () => {
+    expect(islandSigilOf({})).toBe("worldTree");
+    expect(islandSigilOf({ island: "nowhere" })).toBe("worldTree"); // an island without its own sigil yet: home's
+    const g = newGame(3, TUNING), ghost = TUNING.moon.floor.palette[0].join(), moon = TUNING.moon.floor.palette.map(c => c.join());
+    g.clock.paused = false;
+    const tiles = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi; let lit = 0, faint = 0, other = 0; for (let i = 0; i < o.length; i += 4) { if (!o[i + 3]) continue; const c = `${o[i]},${o[i + 1]},${o[i + 2]}`; if (o[i + 3] >= 2 && !moon.includes(c)) lit++; else if (c === ghost) faint++; else other++; } return { lit, faint, other }; };
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(floorInputs(g).island!.drawn).toBe(0);
+    expect(tiles().lit).toBe(0); // at her decks: the moon
+    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    const early = floorInputs(g).island!.drawn;
+    expect(early).toBeGreaterThan(0); expect(early).toBeLessThan(0.2);
+    const a = tiles();
+    expect(a.faint).toBeGreaterThan(40); // the strokes to come, faint
+    while (floorInputs(g).island!.drawn < 0.5) g.clock.time += 0.5;
+    const mid = tiles(); // half way round
+    g.clock.time += 600; const done = tiles();
+    expect(floorInputs(g).island!.drawn).toBe(1); expect(g.floor.on).toBeNull();
+    expect(mid.lit).toBeGreaterThan(a.lit); expect(done.lit).toBeGreaterThan(mid.lit); expect(done.faint).toBe(0);
+    expect(done.lit).toBeGreaterThan(150); // the whole tree and its ring
   });
   it("draws the moon's phases: none lit at new, the right half at first quarter, all at full, the left half at last quarter", () => {
     const lit = (phase: number) => { const o = new Uint8Array(GRID * GRID * 4); moonTiles(o, phase, 0, TUNING); const S = TUNING.moon.floor.palette[2].join(), P1 = TUNING.moon.floor.palette[1].join(); let l = 0, r = 0; for (let n = 0; n < GRID * GRID; n++) { const c = `${o[n * 4]},${o[n * 4 + 1]},${o[n * 4 + 2]}`; if (o[n * 4 + 3] === 2 && (c === S || c === P1)) { if (n % GRID < GRID / 2) l++; else r++; } } return { l, r }; };
@@ -1794,5 +1831,26 @@ describe("the moon (Ed, 2026-10-06)", () => {
     for (let seed = 1; seed < 40; seed++) for (let t = M.colourEvery; t < M.colourEvery * 12; t += 10) { const m = moonState(t, seed, TUNING); if (m.colour > 0.99) kinds.add(m.kind); expect(m.rgb.every(Number.isFinite)).toBe(true); }
     expect([...kinds].sort()).toEqual(["blue", "gold", "red"]);
     expect(moonState(1234.5, 9, TUNING)).toEqual(moonState(1234.5, 9, TUNING));
+  });
+});
+
+describe("the small islands' scenery (Ed, 2026-10-11)", () => {
+  // the game's own tuning: no set pieces, path pieces, rocks or freak trees; only the playground of the grounds; ruins about twice as
+  // many as before; the featured scene (the temple ruins) on most islands
+  const maps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(seed => generateMap(seed, GAME_TUNING));
+  it("leaves out the cut scenery, keeps the playground, and puts the featured scene on most islands", () => {
+    let featured = 0, ruins = 0;
+    for (const m of maps) {
+      const f = new Forest(m), b = m.bounds, cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2, half = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) / 2;
+      expect(f.setPiecesNear(cx, cz, half)).toEqual([]);
+      expect(m.paths.pieces).toEqual([]);
+      for (const g of m.grounds) expect(g.kind).toBe("playground");
+      const decor = f.decorNear(cx, cz, half);
+      for (const d of decor) expect(d.family).toBe("ruins");
+      ruins += decor.filter(d => { const c = m.areaAt(d.x, d.z).cell; return m.playable(c[0], c[1]); }).length;
+      if (m.scenes.some(s => GAME_TUNING.scenes.featured?.ids.includes(s.id))) featured++;
+    }
+    expect(featured).toBeGreaterThanOrEqual(6);
+    expect(ruins / maps.length).toBeGreaterThan(4);
   });
 });

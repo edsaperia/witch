@@ -7,7 +7,7 @@
 // trees.js (trees and bushes), this file (the style's knobs, the witch, a whole asset set).
 
 import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake } from "./core.js";
-import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick } from "./trees.js";
+import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick, snowCrown } from "./trees.js";
 import { PLANT_GENOMES, BUSH_GENOMES } from "./flora/genomes.js";
 export { PLANT_GENOMES, BUSH_GENOMES };
 import { witchSprite, witchHatSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit , WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks, LIMBO_BAR, DJ_DECKS, DJ_GESTURES, djFrame, djGesture } from "./witch.js";
@@ -84,7 +84,7 @@ import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight,
 export { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, DANCEFLOOR_SPEAKER_ANGLES, DANCEFLOOR_SPEAKER_STATES, dancefloorSpeakerFacing, dancefloorSpeakerHeight, dancefloorSpeakerColours, dancefloorSpeakerSprite };
 import { CRYSTALS as SOUNDSYSTEM_CRYSTALS, STONES as SOUNDSYSTEM_STONES, PROFILES as SOUNDSYSTEM_PROFILES, PROJECTORS as SOUNDSYSTEM_PROJECTORS, soundsystemGenome, soundsystemSignature, soundsystemDiff, soundsystemSet, soundsystemYaw, soundsystemScale, soundsystemGenColours, soundsystemGenSprite, DAMAGE_STAGES, PROFILE_YAW } from "./soundsystemGen.js";
 export { SOUNDSYSTEM_CRYSTALS, SOUNDSYSTEM_STONES, SOUNDSYSTEM_PROFILES, SOUNDSYSTEM_PROJECTORS, soundsystemGenome, soundsystemSignature, soundsystemDiff, soundsystemSet, soundsystemYaw, soundsystemScale, soundsystemGenColours, soundsystemGenSprite, DAMAGE_STAGES, PROFILE_YAW };
-export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick };
+export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick, snowCrown };
 export { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake, SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, walkGait, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES };
 
 // ================= the style genome =================
