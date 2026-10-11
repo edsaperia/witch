@@ -21,6 +21,8 @@ import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { tuningFromLink } from "./app/linkParams";
+import { saveLoadout } from "./app/loadout";
+import { castable, setLoadout } from "./rules/spells";
 import { nightOver } from "./app/chartSave";
 import { Hud } from "./app/hud";
 import { setupKnobs } from "./app/knobs";
@@ -60,7 +62,7 @@ const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 // Her look (the character creator's, kept on this browser; else the classic witch).
 const savedLook = loadGenome();
 /** Whether her look has a hat to lose on a knockout (rules/hat.ts; Ed, 2026-10-06: "If she chooses no hat in character creation, then she simply doesn't have this mechanic"). */
-const hasHat = (g: unknown) => (g as { hat?: { shape?: string } } | null)?.hat?.shape !== "none";
+const hasHat = (g: unknown) => (g as { hat?: { shape?: string } } | null)?.hat?.shape !== "none" || game.spells.hat !== "none"; // (a hat with a spell is a hat, whatever its look: rules/spells.ts)
 const wearHat = (g: unknown) => { const H = game.witches[0].hat; H.has = hasHat(g); if (!H.has) H.down = null; };
 wearHat(savedLook);
 const view = new View(canvas, game, {
@@ -154,6 +156,9 @@ freeze.started = () => startEl.style.display === "none";
 const creator = new Creator(style, savedLook, tuning.pixelSize);
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 let lookNow = JSON.stringify(savedLook);
+// Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
+creator.loadout = { hat: game.spells.hat, broom: game.spells.broom };
+creator.onLoadout = l => { setLoadout(game.spells, l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(lookNow ? JSON.parse(lookNow) : savedLook); };
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => sound.wake();
@@ -273,6 +278,7 @@ let lastShedS = -1; // (the sound's safety valve, checked once a second: platfor
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
+const spellButton = document.getElementById("spell");
 let overShown = false, wonShown = false, chartRecorded = false;
 document.getElementById("won-close")?.addEventListener("click", () => document.getElementById("won")!.classList.remove("on"));
 document.getElementById("won-sail")?.addEventListener("click", () => { location.href = "chart.html"; }); // (on to the sea chart, its islands found now lit: app/chartPage.ts)
@@ -313,6 +319,8 @@ function frame(now: number): void {
     document.getElementById("won")!.classList.add("on");
   }
   if (game.win?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); } // (in the campaign's world only)
+  // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
+  { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
     nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); // (the sea chart: played; losing loses nothing)

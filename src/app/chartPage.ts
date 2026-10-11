@@ -8,7 +8,7 @@
 // again, press Enter or the pad's A, or the Sail button, to sail there (?island=<kind>). Start over (after an are-you-sure)
 // forgets it all; ?chart=all shows everything, for testing. The save and what's unlocked are chartSave.ts's: this is the view.
 import { islandCoast } from "../rules/islandShape";
-import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, REAL_KINDS } from "../rules/rosters";
+import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { SeaChart, type ChartIsland } from "../render/chart/seaChart";
@@ -33,7 +33,7 @@ function build(): void {
     const at = islandAt(id, w)!, unknown = isPlaceholder(id);
     return { id, x: at.x, y: at.y, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
   };
-  islands = [one("home", islandCoast(coastSpec(homeIsland(w)), TUNING.map?.coast).radii, islandSigil("home"))];
+  islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
   for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
   chart.set(islands, save.voyages);
   const n = save.found.filter(k => !isPlaceholder(k)).length;

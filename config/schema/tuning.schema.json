@@ -236,6 +236,10 @@
               "type": "number",
               "minimum": 0
             },
+            "findScale": {
+              "type": "number",
+              "minimum": 0
+            },
             "trails": {
               "type": "number",
               "minimum": 0,
@@ -271,6 +275,7 @@
           "required": [
             "on",
             "finds",
+            "findScale",
             "trails",
             "prints",
             "clear",
@@ -1082,12 +1087,33 @@
         "pad": {
           "type": "number",
           "minimum": 0
+        },
+        "featured": {
+          "type": "object",
+          "properties": {
+            "ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ids",
+            "chance"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "chance",
         "scale",
-        "pad"
+        "pad",
+        "featured"
       ],
       "additionalProperties": false
     },
@@ -1397,6 +1423,29 @@
           "type": "number",
           "minimum": 0
         },
+        "mix": {
+          "type": "object",
+          "properties": {
+            "ruins": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rocks": {
+              "type": "number",
+              "minimum": 0
+            },
+            "freak": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ruins",
+            "rocks",
+            "freak"
+          ],
+          "additionalProperties": false
+        },
         "minGap": {
           "type": "number",
           "minimum": 0
@@ -1419,6 +1468,7 @@
         "ruins",
         "rocks",
         "freak",
+        "mix",
         "minGap",
         "clearing",
         "pathGap",
@@ -1494,6 +1544,9 @@
           "type": "number",
           "minimum": 0
         },
+        "pieces": {
+          "type": "boolean"
+        },
         "fingerposts": {
           "type": "boolean"
         },
@@ -1525,6 +1578,7 @@
         "landmarkChance",
         "vergeSpacing",
         "pieceGap",
+        "pieces",
         "fingerposts",
         "treesOnBroken",
         "edgeBushes",
@@ -2249,7 +2303,10 @@
     "spells": {
       "type": "object",
       "properties": {
-        "equipped": {
+        "hat": {
+          "type": "string"
+        },
+        "broom": {
           "type": "string"
         },
         "speed": {
@@ -2274,11 +2331,87 @@
             "cooldown"
           ],
           "additionalProperties": false
+        },
+        "plain": {
+          "type": "object",
+          "properties": {
+            "riseCooldown": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "riseCooldown"
+          ],
+          "additionalProperties": false
+        },
+        "long": {
+          "type": "object",
+          "properties": {
+            "mult": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "mult"
+          ],
+          "additionalProperties": false
+        },
+        "healing": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "helmet": {
+          "type": "object",
+          "properties": {
+            "drop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "drop"
+          ],
+          "additionalProperties": false
+        },
+        "double": {
+          "type": "object",
+          "properties": {
+            "charges": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "charges"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
-        "equipped",
-        "speed"
+        "hat",
+        "broom",
+        "speed",
+        "plain",
+        "long",
+        "healing",
+        "helmet",
+        "double"
       ],
       "additionalProperties": false
     },
@@ -2708,7 +2841,19 @@
           "type": "number",
           "minimum": 0
         },
-        "legendRing": {
+        "legendGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendRow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendSpace": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendArc": {
           "type": "number",
           "minimum": 0
         },
@@ -2736,7 +2881,10 @@
         "congaRadius",
         "joinSpeed",
         "seen",
-        "legendRing",
+        "legendGap",
+        "legendRow",
+        "legendSpace",
+        "legendArc",
         "flareDraw",
         "flare",
         "cardAfter",

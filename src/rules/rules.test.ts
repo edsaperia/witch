@@ -22,7 +22,7 @@ import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { isInside } from "./mapShape";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING as GAME_TUNING, type Tuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
 import { composeFloor, islandSigilOf, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { bootSpeaker, floorInputs, speakerBoot } from "./game";
@@ -34,6 +34,11 @@ import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
 import { COUNTRY } from "../../art/country.js";
+// The rules' every kind of scenery on, as before the small islands' cuts (Ed, 2026-10-11: no set pieces, sports grounds, rocks, freak
+// trees or path pieces; ruins twice): this file tests how each is placed, so it keeps them all; "the small islands' scenery" below
+// checks the game's own tuning.
+const TUNING: Tuning = { ...GAME_TUNING, setPieceChance: 0.25, grounds: { ...GAME_TUNING.grounds, kinds: ["playground", "tennis", "baseball", "football", "basketball"] }, decor: { ...GAME_TUNING.decor, mix: { ruins: 1, rocks: 1, freak: 1 } }, paths: { ...GAME_TUNING.paths, pieces: true }, scenes: { ...GAME_TUNING.scenes, featured: undefined } };
+const withTuning = (over: Partial<Tuning>): Tuning => ({ ...TUNING, ...over, camera: { ...TUNING.camera, ...(over.camera ?? {}) } });
 const MODERN_POOL = [...RELICS.filter(r => r.family === "modern" && (r as { scatter?: boolean }).scatter !== false), ...(COUNTRY as { id: string; family: string }[]).filter(d => d.family === "farm" || d.family === "street")].map(d => d.id); // the scattered modern finds, in the view's order (the bits of highway left out: Ed, round 13)
 const MODERN = MODERN_POOL.length;
 
@@ -1537,11 +1542,11 @@ describe("music by proximity (Ed, 2026-10-04)", () => {
   });
 });
 
-describe("the spell (Ed, 2026-10-04)", () => {
-  const S = TUNING.spells.speed;
-  it("casts the equipped speed boost: much faster for its duration, then recharges over its cooldown", () => {
-    const s = newSpells(TUNING);
-    expect(s.equipped).toBe("speed");
+describe("the Speed broom (Ed, 2026-10-04; a broom since 2026-10-11)", () => {
+  const S = TUNING.spells.speed, SPEED = withTuning({ spells: { ...TUNING.spells, broom: "speed" } });
+  it("casts the speed boost: much faster for its duration, then recharges over its cooldown", () => {
+    const s = newSpells(SPEED);
+    expect(s.broom).toBe("speed");
     expect(spellCharge(s, 0)).toBe(1);
     expect(castSpell(s, 10, TUNING)).toBe(true);
     expect(speedMultiplier(s, 10.1, TUNING)).toBeCloseTo(S.mult);
@@ -1551,7 +1556,7 @@ describe("the spell (Ed, 2026-10-04)", () => {
     expect(castSpell(s, 10 + S.duration + S.cooldown, TUNING)).toBe(true);
   });
   it("makes her fly faster in the game", () => {
-    const run = (spell: boolean) => { const g = newGame(4, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
+    const run = (spell: boolean) => { const g = newGame(4, SPEED); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
     expect(run(true)).toBeGreaterThan(run(false) * (S.mult - 0.3));
   });
 });
@@ -1826,5 +1831,26 @@ describe("the moon (Ed, 2026-10-06)", () => {
     for (let seed = 1; seed < 40; seed++) for (let t = M.colourEvery; t < M.colourEvery * 12; t += 10) { const m = moonState(t, seed, TUNING); if (m.colour > 0.99) kinds.add(m.kind); expect(m.rgb.every(Number.isFinite)).toBe(true); }
     expect([...kinds].sort()).toEqual(["blue", "gold", "red"]);
     expect(moonState(1234.5, 9, TUNING)).toEqual(moonState(1234.5, 9, TUNING));
+  });
+});
+
+describe("the small islands' scenery (Ed, 2026-10-11)", () => {
+  // the game's own tuning: no set pieces, path pieces, rocks or freak trees; only the playground of the grounds; ruins about twice as
+  // many as before; the featured scene (the temple ruins) on most islands
+  const maps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(seed => generateMap(seed, GAME_TUNING));
+  it("leaves out the cut scenery, keeps the playground, and puts the featured scene on most islands", () => {
+    let featured = 0, ruins = 0;
+    for (const m of maps) {
+      const f = new Forest(m), b = m.bounds, cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2, half = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) / 2;
+      expect(f.setPiecesNear(cx, cz, half)).toEqual([]);
+      expect(m.paths.pieces).toEqual([]);
+      for (const g of m.grounds) expect(g.kind).toBe("playground");
+      const decor = f.decorNear(cx, cz, half);
+      for (const d of decor) expect(d.family).toBe("ruins");
+      ruins += decor.filter(d => { const c = m.areaAt(d.x, d.z).cell; return m.playable(c[0], c[1]); }).length;
+      if (m.scenes.some(s => GAME_TUNING.scenes.featured?.ids.includes(s.id))) featured++;
+    }
+    expect(featured).toBeGreaterThanOrEqual(6);
+    expect(ruins / maps.length).toBeGreaterThan(4);
   });
 });

@@ -3,6 +3,7 @@ import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
 import { MOVEMENT } from "./movement";
+import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
 import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, waveArrived, waveTempo, type BeatClock } from "./beat";
@@ -42,7 +43,7 @@ import { dropCache, newInvites, stepInvites, type Affection, type InviteControls
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
 import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type DashState } from "./dash";
-import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
+import { blinkDistance, castSpell, extraBlinks, newSpells, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
@@ -158,6 +159,8 @@ export interface Game {
   speakerBoot: (number | null)[];
   /** The beat clock: beats by game time, its tempo rising wave by wave (rules/beat.ts). */
   beat: BeatClock;
+  /** The night's set (rules/musicSet.ts; Ed, 2026-10-11): the music's arc for this night, a step a wave. */
+  musicSet: NightSet | null;
   /** Every knockdown (any witch's), in order (Ed, 2026-10-09): `at` when she went down (the record scratched, the music
    *  stopped) and `back` when her wait behind the decks ends (a bar line: she's put a new record on, and its music starts
    *  from the top, re-seeded: "Being knocked down changes the music to a random new seed"), in game time. rules/musicPlan.ts
@@ -220,6 +223,9 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
   const map = generateMap(seed, tuning);
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
+  // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
+  // gameplay's: Ed, "tempo is set by the gameplay")
+  const set = nightFor(map, seed);
   const g = {
     seed, tuning, map, forest, creatures, clock: newClock(), witches,
     get witch() { return this.witches[0].body; }, set witch(w: WitchState) { this.witches[0].body = w; },
@@ -228,7 +234,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
-    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[],
+    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
     combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
@@ -307,6 +313,14 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
   const w = g.witches[id], at = g.herTime + (worldAt - g.clock.time);
   if (!w || w.ko || dashing(w.dash, at) || g.partyOver || won(g)) return; // (the afterparty, or the night won: nothing hurts her)
   if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
+  // The Helmet (rules/spells.ts; Ed, 2026-10-11: "The helmet gives you an extra hit and it's knocked off when hit"): worn, it
+  // takes the blow, knocked off to lie beside her (her hat down: picked up and put back on as ever, rules/hat.ts).
+  if (w.spells.hat === "helmet" && dropHat(w.hat, w.body.x + (w.body.facing ?? 1) * (t.spells.helmet?.drop ?? 1.2), w.body.z, at)) {
+    w.health.hurtAt = at;
+    g.koEvents.push({ kind: "helmetOff", at, x: w.body.x, z: w.body.z });
+    if (blow) knockWitch((w.knock ??= newKnock()), w.body, blow, at, t);
+    return;
+  }
   if (hurt(w.health, at, t)) {
     const hatFloats = dropHat(w.hat, w.body.x, w.body.z, at, t.knockout.dropHat), streak = nextStreak(w.koStreak, at, t);
     w.koStreak = { n: streak, at };
@@ -418,7 +432,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.spell) castSpell(g.spells, ht, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
-  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = (t.dash.charges ?? 1) + M.charges; // (two blinks before the cooldown, Ed 2026-10-08; Hare's Dash bursts more)
+  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = (t.dash.charges ?? 1) + M.charges + extraBlinks(W.spells, t); // (two blinks before the cooldown, Ed 2026-10-08; Hare's Dash bursts more; the Double blink broom one more)
   // Her speed: the boost spell, a slow, Momentum (Boar) after a blink, and firing (no slowing: Ram's Steady).
   const firing = W.invites.burstLeft > 0 || (!!c.fire && t.invites.on && g.witch.mode === "ground" && !g.witch.seated);
   const boost = speedMultiplier(g.spells, ht, t) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1)
@@ -430,14 +444,14 @@ function fixedStep(g: Game, controls: Controls): void {
   else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle };
   // Just landed: no rising again till riseCooldown seconds after (Ed, 2026-10-11: "players rise to the treetops instead of
   // dodging"; rising takes her out of ground mode at once).
-  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && ht < (W.landedAt ?? -Infinity) + (t.riseCooldown ?? 0)) c = { ...c, toggleMode: false };
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && ht < (W.landedAt ?? -Infinity) + riseCooldownOf(W.spells, t)) c = { ...c, toggleMode: false }; // (the plain broom's shorter: rules/spells.ts)
   const was = W.body;
   rechargeDash(W.dash, ht, charges, t.dash.cooldown);
   // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
   // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
   if (c.dash) W.dash.bufferUntil = ht + t.dash.buffer;
   if (ht <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, ht)
-    && startDash(W.dash, was, c.moveX, c.moveZ, ht, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0)) {
+    && startDash(W.dash, was, c.moveX, c.moveZ, ht, W.spells.broom === "long" ? { ...t, dash: { ...t.dash, distance: blinkDistance(W.spells, t) } } : t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0)) {
     W.dash.bufferUntil = undefined;
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, ht, t, M);
   }
@@ -464,6 +478,8 @@ function fixedStep(g: Game, controls: Controls): void {
     if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
   }
   repair(W.health, ht, t);
+  // The Healing ring (rules/spells.ts): by her hat where it lies, on the ground, she heals a hit every few seconds.
+  if (stepHealingRing(W.spells, W.health, !W.ko && W.body.mode === "ground" ? W.hat.down : null, W.body.x, W.body.z, ht, t)) g.koEvents.push({ kind: "healed", at: ht, x: W.body.x, z: W.body.z });
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   // (No growth on a clock: every area is peopled from the start by its place on the route, Ed 2026-10-07; rules/creatures.ts.)
   if (!calm) stepClear(g);

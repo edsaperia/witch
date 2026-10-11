@@ -32,7 +32,7 @@ export interface WinState {
   lap: { key: string; x: number; z: number; at: number }[];
   /** Fired so far (the lap's stones passed). */
   fired: number;
-  /** The island's sigil (its legend kind's; home's own for now: "worldTree", art4's islandSigil hook). */
+  /** The island's sigil (islandSigil: a kind's island its kind's, home the World Tree's). */
   sigil: string;
   /** The night's dealt legends won (woken, their islands found: the card's, and the sea chart's), and those still enraged at the
    *  end (calmed, back to sleep; their islands not found), by kind (species). */
@@ -55,8 +55,14 @@ export interface WinTuning {
   /** Joining: how fast a dancer walks to its place (m/s); out of her sight (this far from her, m) it's simply there. */
   joinSpeed: number;
   seen: number;
-  /** The woken legends' ring round the dancefloor (m). */
-  legendRing: number;
+  /** The woken legends' places (Ed, 2026-10-11, from art1's #691: a ring inside the conga's hid it from the ground): on the
+   *  dancefloor's far (north) side, beyond the conga's ring and behind everything from the north-facing camera: arcs legendGap m
+   *  outside the conga's circle, legendRow m apart, places legendSpace m apart along them from due north out to legendArc
+   *  degrees across, none within legendSpace / 2 of the treehouse's clearing. */
+  legendGap: number;
+  legendRow: number;
+  legendSpace: number;
+  legendArc: number;
   /** The island's sigil on the dancefloor as it's won: seconds to draw it on, and how long it holds. */
   flareDraw: number;
   flare: number;
@@ -65,7 +71,7 @@ export interface WinTuning {
   retarget: number;
 }
 
-export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, legendRing: 22, flareDraw: 3, flare: 16, cardAfter: 20, retarget: 0.25 };
+export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, cardAfter: 20, retarget: 0.25 };
 const tuningOf = (g: Game): WinTuning => ({ ...WIN_DEFAULT, ...(g.tuning.win ?? {}) });
 
 /** A legend (an area's, or any at the legend level). */
@@ -148,9 +154,25 @@ export function congaPlace(g: Game, i: number, n: number, t: number): { x: numbe
   return { x: d0.x + Math.cos(a) * R, z: d0.z + Math.sin(a) * R, facing: vx < 0 ? -1 : 1, away: vz < 0 };
 }
 
+/** The woken legends' `n` places north of the dancefloor (WinTuning legendGap..legendArc): along arcs round it beyond the conga's
+ *  circle, from due north outward, alternately west and east, a row further out once one's full; clear of the treehouse. */
+export function legendPlaces(g: Game, n: number): { x: number; z: number }[] {
+  const T = tuningOf(g), d0 = g.map.dancefloor, th = g.map.treehouse, keep = g.tuning.treehouse.clear + T.legendSpace / 2;
+  const north = -Math.PI / 2, half = (T.legendArc * Math.PI) / 360, out: { x: number; z: number }[] = [];
+  for (let row = 0; out.length < n && row < 64; row++) {
+    const R = congaRadius(Math.max(0, g.win?.congaSize ?? 0), T) + T.legendGap + row * T.legendRow, step = T.legendSpace / R;
+    for (let k = 0; out.length < n && k * step <= half; k++) for (const side of k ? [-1, 1] : [1]) {
+      if (out.length >= n) break;
+      const a = north + side * k * step, p = { x: d0.x + Math.cos(a) * R, z: d0.z + Math.sin(a) * R };
+      if (Math.hypot(p.x - th.x, p.z - th.z) >= keep) out.push(p);
+    }
+  }
+  return out;
+}
+
 /** The win itself (the lap home): the legends woken or lulled, everyone else a party animal in the conga, her leash let go. */
 function win(g: Game, time: number): void {
-  const w = g.win!, T = tuningOf(g), d0 = g.map.dancefloor;
+  const w = g.win!, d0 = g.map.dancefloor;
   w.phase = "won"; w.wonAt = time; w.sigil = islandSigil(g);
   // Her leash let go: every one of them dances in the line now.
   for (const W of g.witches) { for (const id of [...W.leash.stack, ...W.leash.placed.map(p => p.id)]) g.creatures[id].leashed = false; W.leash.stack = []; W.leash.placed = []; W.leash.talk = null; }
@@ -161,16 +183,17 @@ function win(g: Game, time: number): void {
     if (c.legendState === "angry" || c.enraged) { lull(c, time); w.lost.push(c.species); continue; }
     woken.push(c); w.found.push(c.species);
   }
-  woken.forEach((c, k) => {
-    Object.assign(c, { legendState: "happy", stateAt: time, enraged: false, state: "happy", partyLegend: true, fight: undefined, siege: undefined, charge: undefined, run: undefined, questOpen: false, asleep: false, napUntil: undefined, legend: undefined, finale: -(k + 1) });
-    const a = (k / Math.max(1, woken.length)) * Math.PI * 2;
-    Object.assign(c, { anchorX: d0.x + Math.cos(a) * T.legendRing, anchorZ: d0.z + Math.sin(a) * T.legendRing, range: 3, dancing: true });
-  });
   // Every other animal: a party animal, in the line.
   w.lead = Math.atan2(g.witch.z - d0.z, g.witch.x - d0.x);
   const line = congaOrder(g, w.lead);
-  line.forEach((c, i) => { befriend(c, time); Object.assign(c, { friendly: true, asleep: false, napUntil: undefined, wakeUntil: undefined, bed: undefined, travelling: undefined, finale: i, dancing: true, fleeUntil: undefined, dazed: undefined, dazedUntil: undefined, watchUntil: undefined, hunting: undefined, swoop: undefined }); });
   w.congaSize = line.length;
+  // The woken legends dance on the far side, north of the dancefloor beyond the line (legendPlaces), west of north first.
+  const places = legendPlaces(g, woken.length);
+  woken.forEach((c, k) => {
+    Object.assign(c, { legendState: "happy", stateAt: time, enraged: false, state: "happy", partyLegend: true, fight: undefined, siege: undefined, charge: undefined, run: undefined, questOpen: false, asleep: false, napUntil: undefined, legend: undefined, finale: -(k + 1) });
+    Object.assign(c, { anchorX: places[k].x, anchorZ: places[k].z, range: 3, dancing: true });
+  });
+  line.forEach((c, i) => { befriend(c, time); Object.assign(c, { friendly: true, asleep: false, napUntil: undefined, wakeUntil: undefined, bed: undefined, travelling: undefined, finale: i, dancing: true, fleeUntil: undefined, dazed: undefined, dazedUntil: undefined, watchUntil: undefined, hunting: undefined, swoop: undefined }); });
   g.byArea = null;
 }
 
@@ -214,7 +237,7 @@ export function stepWin(g: Game, dt: number): void {
   for (const c of g.creatures) {
     if (c.finale === undefined || c.gone) continue;
     if (c.finale >= 0) { const p = congaPlace(g, c.finale, n, time); toward(g, c, p, dt, T); if (Math.hypot(p.x - c.x, p.z - c.z) < 0.5) { c.facing = p.facing; c.away = p.away; c.moving = true; } }
-    else toward(g, c, { x: c.anchorX, z: c.anchorZ }, dt, T);
+    else { toward(g, c, { x: c.anchorX, z: c.anchorZ }, dt, T); if (!c.moving) c.away = false; } // (there: facing us, dancing in place)
   }
   if (!w.card && time >= (w.wonAt ?? Infinity) + T.cardAfter) w.card = true;
 }
