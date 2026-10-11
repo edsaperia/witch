@@ -15,6 +15,8 @@ import { placed } from "../height";
 import { tiltFilter } from "../overlayTilt";
 import { GRID, dreamSymbol, paintThought, snap, thoughtShape, type DreamSymbol, type ThoughtShape } from "../thoughtCloud";
 import type { LeashView } from "../leash";
+import { islandPixels } from "../../../art/islands.js";
+import { islandCoast } from "../../rules/islandShape";
 
 /** The party's over: 😴 bubbles over at most this many sleepers, within this many metres of her. */
 const SNORES = 6, SNORE_RANGE = 40;
@@ -218,6 +220,14 @@ function sigilCanvas(id: string, level: number | null, colour: number[], n: numb
     for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 90 ? 255 : 0;
     x.putImageData(d, 0, 0);
   }
+  return cv;
+}
+
+/** A kind's home island (art/islands.js islandPixels), `n` pixels across. */
+function islandCanvas(kind: string, coast: Parameters<typeof islandCoast>[1], n: number): HTMLCanvasElement {
+  const cv = document.createElement("canvas"), P = islandPixels(kind, islandCoast({ kind }, coast).radii, { n }) as { w: number; h: number; rgba: Uint8ClampedArray };
+  cv.width = P.w; cv.height = P.h;
+  cv.getContext("2d")?.putImageData(new ImageData(new Uint8ClampedArray(P.rgba), P.w, P.h), 0, 0);
   return cv;
 }
 
@@ -431,7 +441,7 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
 
 /** The night won (rules/win.ts; Ed, 2026-10-10: "each woken legend's dream bubble shows the shape of its home island with its
  *  sigil, the same picture that lights up on the sea chart"): over each woken legend dancing at home, the nearest few, a dream
- *  bubble of its island. Its sigil for now; art4's island outline joins it when it lands (`islandOutline`). */
+ *  bubble of its island: its coast with its sigil on it (art4's art/islands.js islandPixels, the shape by rules/islandShape.ts). */
 function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, height: number, host: HTMLElement): void {
   const g = lv.game, w = g.witch, range = g.tuning.dreams.range * 2;
   const list = g.creatures.filter(c => !c.gone && c.finale !== undefined && c.finale < 0).map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 6);
@@ -445,7 +455,7 @@ function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, he
     el.style.display = "";
     const S = thoughtShape(DREAM_INNER, 3);
     paintCloud(el, S, DREAM_INK, DREAM_FILL);
-    showSymbol(el, S, "sigil", `island:${c.species}`, () => sigilCanvas(c.species, null, sigilColour(c.species), DREAM_INNER), 1);
+    showSymbol(el, S, "sigil", `island:${c.species}`, () => islandCanvas(c.species, g.tuning.islands?.coast, DREAM_INNER), 1);
     const left = snap(((lv.v.x + 1) / 2) * width - (S.foot.x + 0.5) * GRID), top = Math.max(57, snap(((1 - lv.v.y) / 2) * height - (S.foot.y + 0.5) * GRID));
     el.style.left = `${left}px`; el.style.top = `${top}px`;
     tiltFilter(el, top + S.box.y * GRID + S.box.n * GRID * 0.5);
