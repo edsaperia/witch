@@ -1,4 +1,4 @@
-// Stargazing party witches (Ed, 2026-10-11, docs/backlog/gameplay.md): "when a soundsystem is destroyed its party witch doesn't
+// Stargazing party witches (Ed, 2026-10-11, docs/backlog/creator-and-house.md): "when a soundsystem is destroyed its party witch doesn't
 // leave; she leaves the dancefloor and lies down to stargaze ... around the party area outside the speaker ring, in pairs and
 // threes where possible. At the end of the night everyone lies there looking up. She can interact with them like the beach
 // witches."
