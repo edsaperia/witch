@@ -12,7 +12,8 @@
     "Three stages of damage from its health before it falls, each stack breaking its own way: dead cones and cracks, a block knocked off and the projector cracked, then its top tiers fallen.",
     "Baked by the art workers at each area's own yaw and size, ahead of its wave, with a preview page of five real maps and a reroll.",
     "The World Tree, home's island sigil (`art/sigils.js` `ISLAND_SIGILS`): a Celtic tree of life in the sigils' stroke family, its crown climbing into a band of knotwork, two strands weaving over and under, its roots spreading low and flat, drawn freehand rather than mirrored; through the boot the dancefloor writes it on stroke by stroke as the pulse goes round the ring (`islandTiles`).",
-    "Every island's picture for the legends' dreams and the sea chart (`art/islands.js`, `src/rules/islandShape.ts`): its coastline by the map's own coast maths, seeded by its kind and sized by its phase, a dark island in a rim of sand with its legend's sigil on it, whole pixels at a bubble's 30, or a path for the chart."
+    "Every island's picture for the legends' dreams and the sea chart (`art/islands.js`, `src/rules/islandShape.ts`): its coastline by the map's own coast maths, seeded by its kind and sized by its phase, a dark island in a rim of sand with its legend's sigil on it, whole pixels at a bubble's 30, or a path for the chart.",
+    "The dancefloor's sigils keep to the island (`islandKinds`, `rules/dancefloor.ts`): only the shapes of kinds on its roster come round, and the World Tree joins them; home's own cell, whose type no roster deals, had been slipping a stranger's sigil in."
   ],
   "learned": [
     "\"No two alike\" needs a measure: two stacks counted as different only when they differ in at least two traits, and the set is dealt nearest first so a re-roll falls on the further one.",
