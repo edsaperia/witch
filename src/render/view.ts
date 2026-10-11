@@ -671,7 +671,7 @@ export class View {
 
   /** Her sprite batch, from the assets' witch frames (bare: her hat knocked off, and the hat on the ground). */
   makeWitchBatch(bare = false): SpriteBatch {
-    const t = this.game.tuning, b = new SpriteBatch(bare ? this.assets.witchBare() : this.assets.witch, this.mpp, { absolute: true, rim: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+    const t = this.game.tuning, b = new SpriteBatch(bare ? this.assets.witchBare() : this.assets.witch, this.mpp, { absolute: true, rim: true, unmark: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
     b.mesh.renderOrder = 10;
     this.scene.add(...b.meshes);
     return b;
