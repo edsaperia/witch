@@ -55,6 +55,16 @@ describe("hex sigils (leash.hex)", () => {
     expect(s.events).toEqual([]);
   });
 
+  it("a baby's sigil (Ed, 2026-10-11: babies follow in single file) snaps to the grid like the rest, and is picked up the same way", () => {
+    const { s, all } = stacked(2);
+    for (const c of all) Object.assign(c, { level: 0, species: "wolf" });
+    press(s, all, 37.2, -12.9);
+    const h = hexCell(37.2, -12.9, H.size), c = hexCentre(h.q, h.r, H.size);
+    expect(s.placed.map(p => [p.id, +p.x.toFixed(6), +p.z.toFixed(6)])).toEqual([[1, +c.x.toFixed(6), +c.z.toFixed(6)]]);
+    press(s, all, c.x - 1, c.z + 1);
+    expect(s.placed).toEqual([]); expect(s.stack).toEqual([0, 1]);
+  });
+
   it("skips barred cells (under a stone, a soundsystem, a speaker): down on the nearest free one that isn't, or nothing", () => {
     const { s, all } = stacked(2), h = hexCell(0, 0, H.size), c = hexCentre(h.q, h.r, H.size);
     const stone = (x: number, z: number) => Math.hypot(x - c.x, z - c.z) < 1; // (just the cell she's in)
