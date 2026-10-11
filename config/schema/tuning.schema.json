@@ -1788,6 +1788,10 @@
       "type": "number",
       "minimum": 0
     },
+    "riseCooldown": {
+      "type": "number",
+      "minimum": 0
+    },
     "groundHeight": {
       "type": "number",
       "minimum": 0
@@ -9263,6 +9267,7 @@
     "facing",
     "riseTime",
     "descendTime",
+    "riseCooldown",
     "groundHeight",
     "treetopHeight",
     "witch",

@@ -263,6 +263,8 @@ export interface Tuning {
   /** The away cone round straight up the screen, degrees: enter under awayEnter, leave over awayLeave. */
   facing: { awayEnter: number; awayLeave: number; /** degrees from straight up or down the screen for her up/down heading sprites, entering and leaving */ headingEnter: number; headingLeave: number };
   riseTime: number;
+  /** Seconds after she lands before she can rise again (Ed, 2026-10-11). */
+  riseCooldown?: number;
   descendTime: number;
   groundHeight: number;
   treetopHeight: number;

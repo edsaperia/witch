@@ -439,7 +439,7 @@ Speeds per mode, and how long rising and descending take. acceleration: how quic
 | `treetopSpeed` | number | 0 to … |
 | `acceleration` | number | 0 to … |
 
-### `treetop`, `groundAcceleration`, `leanAt`, `facing`, `riseTime`, `descendTime`, `groundHeight`, `treetopHeight`
+### `treetop`, `groundAcceleration`, `leanAt`, `facing`, `riseTime`, `descendTime`
 
 Treetop flight (Ed: a high top speed and momentum; the ground stays snappy): pressing a direction reaches treetopSpeed in about 0.3 s (acceleration); holding it within boostAngle degrees builds boost over boostTime seconds, up to boost times treetopSpeed; her heading turns toward the input at turnRateSlow degrees a second below sharpTurnSpeed of cruise, falling to turnRate at cruise (half that at full boost), so the size of her swoop grows with her speed (Ed); a turn of 90 degrees or more bleeds boost sharpTurnBleed times a second, and above brakeAt of cruise she skids in the brake pose; letting go, she glides to a stop over about glideTime seconds. cameraPull: how far the camera draws back at full boost (a share of its distance).
 
@@ -463,6 +463,14 @@ Treetop flight (Ed: a high top speed and momentum; the ground stays snappy): pre
 | `facing.headingLeave` | number | 0 to … |
 | `riseTime` | number | 0 to … |
 | `descendTime` | number | 0 to … |
+
+### `riseCooldown`, `groundHeight`, `treetopHeight`
+
+After she lands she can't rise again for this many seconds (Ed, 2026-10-11: players rose to the treetops instead of dodging, since rising takes her out of ground mode, and out of reach, at once). 0: no wait.
+
+| knob | type | range |
+|---|---|---|
+| `riseCooldown` | number | 0 to … |
 | `groundHeight` | number | 0 to … |
 | `treetopHeight` | number | 0 to … |
 
@@ -539,7 +547,7 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 
 ### `dash`, `spells`
 
-The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's steering (or flying, or facing) in one step, then cooldown seconds before the next. toCursor (Ed's playtest, 2026-10-06): she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.
+The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's moving (her steering, on the pad and on keyboard and mouse alike, not the way she's aiming: Ed, 2026-10-11; standing still, the way she's facing) in one step, then cooldown seconds before the next. toCursor (Ed's playtest, 2026-10-06; off since 2026-10-11): on, she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.
 
 | knob | type | range |
 |---|---|---|
