@@ -20,14 +20,21 @@ function landed(t = TUNING) {
 describe("the rise cooldown (riseCooldown)", () => {
   it("is 3 s", () => expect(TUNING.riseCooldown).toBe(3));
 
-  it("just landed, rising does nothing till riseCooldown seconds after; then she rises", () => {
-    const { g, W } = landed();
+  it("just landed, rising does nothing till riseCooldown seconds after; then she rises (on a broom with a spell)", () => {
+    const { g, W } = landed(withTuning({ spells: { ...TUNING.spells, broom: "speed" } }));
     for (let i = 0; i < (TUNING.riseCooldown! - 0.5) / STEP; i++) stepGame(g, idle, STEP);
     stepGame(g, { ...idle, toggleMode: true }, STEP);
     expect(W.body.mode).toBe("ground"); // (2.5 s on: not yet)
     for (let i = 0; i < 0.6 / STEP; i++) stepGame(g, idle, STEP);
     stepGame(g, { ...idle, toggleMode: true }, STEP);
     expect(W.body.mode).not.toBe("ground"); // (3.1 s on: up she goes)
+  });
+
+  it("the plain broom's is shorter (Ed, 2026-10-11: 'default broom reduces treetop cooldown'; spells.plain)", () => {
+    const { g, W } = landed(), k = TUNING.riseCooldown! * TUNING.spells.plain!.riseCooldown;
+    for (let i = 0; i < (k + 0.1) / STEP; i++) stepGame(g, idle, STEP);
+    stepGame(g, { ...idle, toggleMode: true }, STEP);
+    expect(W.body.mode).not.toBe("ground");
   });
 
   it("at 0, she rises again at once", () => {
