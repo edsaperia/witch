@@ -2240,7 +2240,10 @@
     "spells": {
       "type": "object",
       "properties": {
-        "equipped": {
+        "hat": {
+          "type": "string"
+        },
+        "broom": {
           "type": "string"
         },
         "speed": {
@@ -2265,11 +2268,87 @@
             "cooldown"
           ],
           "additionalProperties": false
+        },
+        "plain": {
+          "type": "object",
+          "properties": {
+            "riseCooldown": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "riseCooldown"
+          ],
+          "additionalProperties": false
+        },
+        "long": {
+          "type": "object",
+          "properties": {
+            "mult": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "mult"
+          ],
+          "additionalProperties": false
+        },
+        "healing": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "helmet": {
+          "type": "object",
+          "properties": {
+            "drop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "drop"
+          ],
+          "additionalProperties": false
+        },
+        "double": {
+          "type": "object",
+          "properties": {
+            "charges": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "charges"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
-        "equipped",
-        "speed"
+        "hat",
+        "broom",
+        "speed",
+        "plain",
+        "long",
+        "healing",
+        "helmet",
+        "double"
       ],
       "additionalProperties": false
     },

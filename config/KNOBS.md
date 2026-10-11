@@ -583,10 +583,17 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `dash.clear.sound` | number | 0 to … |
 | `dash.clear.speaker` | number | 0 to … |
 | `dash.clear.treehouse` | number | 0 to … |
-| `spells.equipped` | string |  |
+| `spells.hat` | string |  |
+| `spells.broom` | string |  |
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |
 | `spells.speed.cooldown` | number | 0 to … |
+| `spells.plain.riseCooldown` | number | 0 to … |
+| `spells.long.mult` | number | 0 to … |
+| `spells.healing.radius` | number | 0 to … |
+| `spells.healing.every` | number | 0 to … |
+| `spells.helmet.drop` | number | 0 to … |
+| `spells.double.charges` | number | 0 to … |
 
 ### `trail`
 

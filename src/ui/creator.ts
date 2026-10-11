@@ -18,6 +18,7 @@ import { SpellScroll, type SpellCue } from "./spellScroll";
 import { KeyHint } from "./keyHint";
 import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixelUi";
 import { button, h } from "./dom";
+import { BROOM_SPELLS, HAT_SPELLS } from "../rules/spells";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -202,6 +203,10 @@ export class Creator {
   stepTab(by: number): void { const ids = [...this.boxes.keys()], i = ids.indexOf(this.box); this.openBox(ids[((i < 0 ? 0 : i + by) % ids.length + ids.length) % ids.length]); }
   /** Called with her look when the party spell bursts (the scroll cast and the world ready): play starts, the spell cast. */
   onStart: (g: Genome) => void = () => {};
+  /** Her hat's and broom's spells (rules/spells.ts; Ed, 2026-10-11: chosen "as they are picked now", in the Hat and Broom boxes;
+   *  their shape and colour stay on the sliders), and a callback when she changes one. */
+  loadout: { hat: string; broom: string } = { hat: "none", broom: "none" };
+  onLoadout: (l: { hat: string; broom: string }) => void = () => {};
   /** Called on the scroll's click itself (a gesture: the sound can start). */
   onGesture: () => void = () => {};
   /** The party spell's scroll's sound cues (platform/audio/spell.ts). */
@@ -365,6 +370,7 @@ export class Creator {
           ar.append(h("label", { style: { display: "inline-flex", alignItems: "center", gap: "3px", marginRight: "8px", cursor: "pointer" } }, c, WEAR_NAMES[k] ?? label(k)));
         }
       }
+      if (B.id === "hat" || B.id === "broom") this.spellRow(body, B.id, row);
       for (const axis of axes) this.axisRow(body, axis, row, get, set);
       if (parts.length) this.picker(body, B.id, parts, row, pal, cur);
     }
@@ -382,6 +388,23 @@ export class Creator {
   }
 
   /** An axis's row in its box: a button per choice, or a slider. */
+  /** The Hat or Broom box's spells (rules/spells.ts): a chip for each built one, the chosen one lit, and its line under them. */
+  private spellRow(body: HTMLElement, slot: "hat" | "broom", row: (p: HTMLElement, n: string) => HTMLElement): void {
+    const r = row(body, "Spell"), list = (slot === "hat" ? HAT_SPELLS : BROOM_SPELLS).filter(x => x.built), say = h("div", { style: { margin: "0 0 6px 84px", opacity: ".8", fontSize: "12px" } });
+    const paint = () => {
+      for (const b of r.querySelectorAll<HTMLButtonElement>("button")) { const on = b.dataset.spell === this.loadout[slot]; b.style.background = on ? "var(--accent)" : "rgba(255,255,255,.08)"; b.style.color = on ? "#1d1408" : "inherit"; }
+      say.textContent = list.find(x => x.id === this.loadout[slot])?.line ?? "";
+    };
+    for (const x of list) {
+      const b = h("button", { type: "button", text: x.id === "none" ? "none" : x.name });
+      Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" });
+      b.dataset.spell = x.id; b.title = x.line;
+      b.addEventListener("click", () => { this.loadout = { ...this.loadout, [slot]: x.id }; paint(); this.onLoadout(this.loadout); });
+      r.append(b);
+    }
+    body.append(say);
+    paint();
+  }
   private axisRow(body: HTMLElement, axis: string, row: (p: HTMLElement, n: string) => HTMLElement, get: (a: string) => unknown, set: (a: string, v: unknown) => void): void {
     const g = this.g, lim = AXES[axis], r = row(body, label(axis));
     if (typeof lim[0] === "string") {

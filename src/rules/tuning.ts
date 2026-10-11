@@ -130,7 +130,7 @@ export interface Tuning {
   /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
   wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */
-  /** Spells (Ed, 2026-10-04): the one equipped this run, and each spell's numbers. speed: her speed times mult for duration seconds, then cooldown seconds to recharge. */
+  /** Spells (Ed, 2026-10-11; rules/spells.ts): her hat's and broom's spells this run (none: the plain ones), and each spell's numbers. */
   /** Combat (Stage 4; the attacks are data in config/combat.json): see config/tuning.json's _combat. */
   /** The fight's scale and speed (Ed's motion scale pass): lengths and speeds in a fight times these. */
   fight: { scale: number; speed: number; momentum: number;
@@ -175,7 +175,7 @@ export interface Tuning {
   /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
    *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
   dash: { distance: number; gone: number; cooldown: number; buffer: number; /** blinks before the cooldown (Ed, 2026-10-08: two), each back one at a time, cooldown seconds apart */ charges?: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
-  spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
+  spells: { hat: string; broom: string; speed: { mult: number; duration: number; cooldown: number }; /** the plain broom: riseCooldown times this */ plain?: { riseCooldown: number }; /** the Long broom: blink distance times mult */ long?: { mult: number }; /** the Healing ring: within radius m of it she heals a hit every `every` s */ healing?: { radius: number; every: number }; /** the Helmet: knocked off, it lands drop m beside her */ helmet?: { drop: number }; /** the Double blink broom: this many more blinks before the cooldown */ double?: { charges: number } };
   trail: { on: boolean; ground: number; treetops: number; from: number; curve: number; width: number[]; bright: number; fade: number; grow: number; shrink: number; colourEase: number; sparks: boolean };
   /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */
   /** Sigil weight, made visible (render/load.ts). */
