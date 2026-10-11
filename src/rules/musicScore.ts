@@ -88,6 +88,8 @@ export interface SectionDef {
   /** A crash and sub drop on its first beat. */
   impact?: boolean;
   sevenths?: boolean;
+  /** Semitones above its stage's key (a lift: the victory's), still in the style's one scale. */
+  transpose?: number;
   /** Its last bar before a new section: the style's drum fill and mutes (fill, the default), the
    *  mutes only (mute), or nothing (none). */
   ending?: "fill" | "mute" | "none";
@@ -150,7 +152,7 @@ export interface MusicStyle {
   /** The section the home speakers' boot plays, and the one while she's knocked out. */
   intro: string;
   knockout: string;
-  /** The night won (rules/win.ts): the section from the victory lap on (Ed, 2026-10-10: "special victory music"); missing, the drop. */
+  /** The section an island's victory plays (the prototype builder's "victory" cue: the lap, the win, the "Night won" card). */
   victory?: string;
   /** The drum fill in the last bar before a new section: its part, pattern, and parts muted in the bar's last beat. */
   fill: { part: string; pattern: string; mute: string[] };
@@ -475,7 +477,7 @@ export function circleParts(style: MusicStyle, species: string): [string, { p: s
 export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
   const bar = Math.floor(step / 16), s = step - bar * 16, barIn = bar - plan.start;
   const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc);
-  const scale = style.scales[style.scale], transpose = a.transpose ?? 0; // (one scale, dorian, in each stage's key: Ed, 2026-10-09)
+  const scale = style.scales[style.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0); // (one scale, dorian, in each stage's key: Ed, 2026-10-09; a section's own lift on top, the victory's)
   const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
   // the form's chords (Ed, 2026-10-09: the 32-bar ABAC form), or, with none, the section's own, a step on each pass round the loop
   const formBar = bar - (ctx.formStart ?? 0), form = style.form;
@@ -585,7 +587,7 @@ export function checkStyle(style: MusicStyle): string[] {
   for (const [pn, u] of circleUses) for (const p of Array.isArray(u.p) ? u.p : [u.p]) checkUse("circle", pn, { p });
   if (style.fill.pattern.length !== 16) errs.push("fill: not one bar");
   if (!style.parts[style.fill.part]) errs.push(`fill: no part "${style.fill.part}"`);
-  for (const n of [style.intro, style.knockout]) if (!style.sections[n]) errs.push(`no section "${n}"`);
+  for (const n of [style.intro, style.knockout, ...(style.victory ? [style.victory] : [])]) if (!style.sections[n]) errs.push(`no section "${n}"`);
   if (!style.scales[style.scale]) errs.push(`no scale "${style.scale}"`);
   const F = style.form;
   if (F) {
