@@ -19,6 +19,28 @@ Pages must be switched on once in the repository's settings (Source: *Deploy fro
 
 A static site about how the game was made, at https://edsaperia.github.io/witch/making-of/ (and `/pr-<number>/making-of/` on a PR's build): `making-of/` (`site.json` the chapters, `pages/<slug>.html` each page's body, `media/` its pictures listed with captions in `media/media.json`, `assets/` the stylesheet and the game's pixel fonts), built by `tools/making-of/build.mjs` into `dist/making-of/` as the last step of `npm run build`; `node tools/making-of/build.mjs --check` (in `npm test`, `src/makingOf.test.ts`) fails on a malformed builder's note, a missing picture or link, an unlisted picture or a model's name. **Previews**: the tools write their pictures, sheets and sounds to `previews/`, which git ignores (Ed's overnight programme, 2026-10-07: the folder had grown to 416 MB): post them in the PR's comments (the REPORT or FINAL), never commit them; the best of the old ones now live, captioned, in `making-of/media/`. **Builders' notes**: as you finish a piece of work, add your own `making-of/builders/<name>.json` (what you built, what you learned, your best previews; the format is in `making-of/builders/README.md`); never edit anyone else's.
 
+## Samples
+
+Samples are allowed (Ed, 2026-10-11; docs/backlog/music.md, docs/music/research.md), none in the game yet:
+- `samples/` holds them, trimmed and encoded (Opus in Ogg), built by `node tools/samples/build.mjs` from `samples/sources.json`. Each source is pinned to its repository's commit.
+- `samples/manifest.json` (each file's source, licence, author, credit line, the source's hash and processing) and `samples/CREDITS.md` are both written by the build. Never edit either by hand.
+- `tools/samples/check.mjs` (in `npm test`, `src/samples.test.ts`) fails on any of:
+  - a file not in the manifest;
+  - an entry with no file;
+  - a licence that isn't CC0, public domain or CC-BY with a credit line (never NC);
+  - stale credits;
+  - the size budget passed (3 MB in all, the first kit 300 KB).
+- The first kit is 19 one-shots from VCSL (CC0), about 83 KB. The dance kicks stay synthesised: no ripped drum machines.
+
+**Voices**: `tools/voice/sing.mjs` sings a note list offline with Pink Trombone, vendored in `tools/voice/pink-trombone/` (MIT; changes marked "Witch:"):
+- vowels gliding, the voice firming up through each note, vibrato creeping in;
+- onsets ("m", "n", "l");
+- a soprano's shorter tract (36), or a man's (44).
+
+The library itself runs on a ScriptProcessor, so the game would need an AudioWorklet port first.
+
+**A/B renders**: `node tools/music-lab/ab.mjs [out] [wave] [seed] [bars]` renders one passage of the game's music as it is, then with one ingredient more each time. The steps are a drone, a chant, frame drums, tape, the CC0 kit, the vocalise, and a witch-house take. Every render is loudness-matched, into `previews/ed/music/` (`tools/music-lab/ab.ts`, lab-only: it lays the ingredients over the engine without changing the game).
+
 ## What's new
 
 The start screen shows a **What's new** panel: the last three entries of the changelog, newest first. The changelog is **one small file per change** in `config/changelog/` (Ed, 2026-10-05: so builders working in parallel don't conflict), collected at build time by `src/changelog.ts`:
