@@ -21,6 +21,7 @@ import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { tuningFromLink } from "./app/linkParams";
+import { nightOver } from "./app/chartSave";
 import { Hud } from "./app/hud";
 import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
@@ -272,10 +273,11 @@ let lastShedS = -1; // (the sound's safety valve, checked once a second: platfor
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
-let overShown = false, wonShown = false;
+let overShown = false, wonShown = false, chartRecorded = false;
 document.getElementById("won-close")?.addEventListener("click", () => document.getElementById("won")!.classList.remove("on"));
-document.getElementById("won-sail")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
+document.getElementById("won-sail")?.addEventListener("click", () => { location.href = "chart.html"; }); // (on to the sea chart, its islands found now lit: app/chartPage.ts)
 document.getElementById("again")?.addEventListener("click", () => location.reload());
+document.getElementById("chart-open")?.addEventListener("click", () => { location.href = "chart.html"; }); // (the sea chart: Ed, 2026-10-11: after a loss, replay the island or pick another)
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 function frame(now: number): void {
@@ -303,15 +305,17 @@ function frame(now: number): void {
   const stepMs = performance.now() - step0;
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
-  // The night won (rules/win.ts): its card, the islands its woken legends showed (part C's sea chart will light them; till then,
-  // on to a new island).
+  // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart
+  // (app/chartSave.ts), once, as its card comes up; the enraged legends' (win.lost) not.
   if (game.win?.card && !wonShown) {
     wonShown = true;
     document.getElementById("won-found")!.textContent = wonText(game.win);
     document.getElementById("won")!.classList.add("on");
   }
+  if (game.win?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }); }
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
+    nightOver(tuning.map?.island ?? "", { won: false }); // (the sea chart: played; losing loses nothing)
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.partyOver.at / 60)} min ${Math.floor(game.partyOver.at % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
