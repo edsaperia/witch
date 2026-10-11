@@ -326,8 +326,9 @@ function relicsInChunk(map: ForestMap, ci: number, cj: number): Relic[] {
 interface Uniques { decor: Map<string, number>; relics: Map<string, number> }
 const UNIQUES = new WeakMap<ForestMap, Uniques>();
 const ruinStarts: number[] = [], freakCount = DECOR.filter(d => d.family === "freak").length;
-for (let k = 0, n = 0; k < DECOR.length; k++) if (DECOR[k].family === "ruins") { ruinStarts.push(n); n += DECOR[k].variants; }
-const ruinVariants = DECOR.filter(d => d.family === "ruins").map(d => d.variants);
+const scattered = (d: (typeof DECOR)[number]) => (d as { scatter?: boolean }).scatter !== false; // (a ruin flagged scatter: false is never placed: the statue head, Ed 2026-10-11)
+for (let k = 0, n = 0; k < DECOR.length; k++) if (DECOR[k].family === "ruins") { if (scattered(DECOR[k])) ruinStarts.push(n); n += DECOR[k].variants; }
+const ruinVariants = DECOR.filter(d => d.family === "ruins" && scattered(d)).map(d => d.variants);
 // The modern finds: the relics' own (but those kept out of the scatter: roads, Ed round 13), then the countryside and street pieces that stand alone (art/country.js; the scene-only ones are left to scenes).
 const modernCount = RELICS.filter(d => d.family === "modern" && (d as { scatter?: boolean }).scatter !== false).length + COUNTRY.filter(d => d.family === "farm" || d.family === "street").length;
 
