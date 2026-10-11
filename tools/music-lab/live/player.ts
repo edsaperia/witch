@@ -4,9 +4,9 @@
 // sound (the CC0 kit for the synth drums, a voice for the sung melody) and its bars as they're scheduled (the frame drums,
 // the drone's key, the recorded voices, the witch-house beat), and sets each part's level on its channel.
 import { MusicEngine } from "../../../src/platform/audio/musicEngine";
-import { newBeatClock, type BeatClock } from "../../../src/rules/beat";
+import { newBeatClock, rampTo, type BeatClock } from "../../../src/rules/beat";
 import { formClock, type planBlock, type MusicCue } from "../../../src/rules/musicPlan";
-import { arcStep, formChord, musicSeed, resolveSection, type MusicStyle, type NoteEvent } from "../../../src/rules/musicScore";
+import { arcStep, formChord, musicSeed, resolveSection, tuneSeed, type MusicStyle, type NoteEvent } from "../../../src/rules/musicScore";
 import { BREAKDOWN, FRAMES, FRAME_IDS, frameHit, KIT, PITCH, PRESENCE_DB, VOCALISE_GAIN, VOWELS } from "../ingredients";
 import { heard, type LabState } from "./settings";
 
@@ -38,7 +38,7 @@ export class Player {
   private waiting = new Map<string, { at: number; dur: number }[]>();
   private rr = 0;
   /** What's playing now, for the page. */
-  now: { wave: string; section: string; bar: number; feel: string } | null = null;
+  now: { wave: string; section: string; bar: number; feel: string; arc: number } | null = null;
 
   constructor(private state: () => LabState, private samples: Record<string, AudioBuffer>, ctx: AudioContext) {
     this.ctx = ctx;
@@ -73,12 +73,18 @@ export class Player {
 
   get playing(): boolean { return this.engine !== null; }
 
-  /** Start from the top of the passage with this style (its tempo, seed and wave from the settings). */
-  start(style: MusicStyle): void {
+  /** A night in miniature (the set view): `bars` bars a wave, each wave at its own tempo; null: the passage. */
+  private night: { bars: number; tempos: number[] } | null = null;
+
+  /** Start from the top of the passage with this style (its tempo, seed and wave from the settings); with `night`, the whole
+   *  night in miniature (the style's arc a night's set: a wave every `bars` bars, each at its tempo, eased in over a beat). */
+  start(style: MusicStyle, night: { bars: number; tempos: number[] } | null = null): void {
     this.stop();
     const s = this.state();
     this.style = style;
-    this.clock = newBeatClock(style.bpm);
+    this.night = night;
+    this.clock = newBeatClock(style.bpm, night ? night.tempos[0] : style.bpm);
+    if (night) night.tempos.forEach((bpm, w) => { if (w > 0) rampTo(this.clock, w * night.bars * 4, bpm, 4); });
     const e = new MusicEngine(this.ctx, this.bus, style, s.seed), h = e as unknown as Hooked;
     const play = h.play.bind(e), step = h.step.bind(e);
     h.play = (ev, t, dur, sps, chord) => this.note(ev, t, dur, sps, chord, play);
@@ -104,7 +110,8 @@ export class Player {
   setStyle(style: MusicStyle): void { this.style = style; this.engine?.setStyle(style); }
 
   cue(): MusicCue {
-    const s = this.state();
+    const s = this.state(), N = this.night;
+    if (N) return { waves: N.tempos.slice(1).map((_, i) => (i + 1) * N.bars), nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
     return { waves: Array.from({ length: s.wave }, () => 0), nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: s.wave, forceSection: s.section || undefined };
   }
 
@@ -143,12 +150,12 @@ export class Player {
   /** A bar as it's scheduled: its tonic for the drone, its frame drums, voices and witch-house beat. */
   private bar(bar: number, t: number, sps: number, plan: BlockPlan, cue: MusicCue): void {
     const s = this.state(), S = this.style, sec = resolveSection(S, plan.section), L = (n: keyof LabState["layers"]) => heard(s, n, s.layers[n]);
-    const a = arcStep(S, plan.arc), tr = (a.transpose ?? 0) + (sec.transpose ?? 0), sc = S.scales[S.scale] ?? S.scales.dorian;
+    const a = arcStep(S, plan.arc), tr = (a.transpose ?? 0) + (sec.transpose ?? 0), sc = S.scales[a.scale ?? S.scale] ?? S.scales.dorian;
     const tonic = S.root + tr;
-    const f = formClock(S, cue, bar), ch = S.form ? formChord(S, musicSeed(this.engine!.seed, f.n), bar - f.start) : { root: 0 };
+    const f = formClock(S, cue, bar), ch = S.form ? formChord(S, tuneSeed(musicSeed(this.engine!.seed, f.n), a.tune ?? 0), bar - f.start) : { root: 0 };
     const chordRoot = tonic + sc[((ch.root % 7) + 7) % 7] + 12 * Math.floor(ch.root / 7);
     const breakdown = BREAKDOWN.test(plan.section);
-    this.now = { wave: `${plan.arc + 1} · ${a.name}`, section: plan.section, bar: bar - plan.start + 1, feel: sec.feel ?? "" };
+    this.now = { wave: this.night ? `wave ${plan.arc} · ${a.name}` : `${plan.arc + 1} · ${a.name}`, section: plan.section, bar: bar - plan.start + 1, feel: sec.feel ?? "", arc: plan.arc };
     for (const [i, o] of this.droneOsc.entries()) o.frequency.setTargetAtTime(mtof(tonic + [12, 12, 19, 24][i]), t, 0.05);
     const barLen = 16 * sps;
     // frame drums: the ritual pattern over the beat, but in the breakdowns

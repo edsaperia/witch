@@ -21,6 +21,8 @@ export interface BeatClock {
   bonus?: number;
   /** The beat her latest knockdown's rise starts on (the next bar line after it): the music lands a crowd cue there. */
   bonusAt?: number;
+  /** The night's tempos, a wave each (rules/musicSet.ts: the night's set, Ed 2026-10-11); the tuning's beat.tempos if none. */
+  tempos?: number[];
 }
 
 export function newBeatClock(base: number, bpm = base): BeatClock {
@@ -97,12 +99,16 @@ export function blockLineAfter(beat: number, blockBars: number): number {
   return beat - b <= 1 ? b : b + B;
 }
 
+/** The tempo of the clock's wave: the night's (its own tempos), else the tuning's. */
+export const clockTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number =>
+  c.tempos?.length ? c.tempos[Math.max(0, Math.min(c.tempos.length - 1, c.wave))] : waveTempo(t, c.wave);
+
 /** The tempo the clock is heading for: its wave's, plus her knockdowns' bonus. */
-export const targetTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number => waveTempo(t, c.wave) + (c.bonus ?? 0);
+export const targetTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number => clockTempo(c, t) + (c.bonus ?? 0);
 
 /** How much faster than its wave's own tempo the party runs (her knockdowns' bonus over the wave's tempo): the wave
  *  countdown and the ley line's pulse run this many times as fast (Ed, 2026-10-07: the pulse travels at the tempo). */
-export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number => 1 + (c.bonus ?? 0) / Math.max(1, waveTempo(t, c.wave));
+export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number => 1 + (c.bonus ?? 0) / Math.max(1, c.tempos?.length ? c.base : waveTempo(t, c.wave)); // (over the base tempo with a night's set: the pulse's pace never follows the music's own tempo steps, only her knockdowns)
 
 /** She's been knocked down at `time` (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): the bonus rises by
  *  knockout.bpmStep (to knockout.bpmCap, if set), eased in over beat.knockBeats (a bar) from the next bar line (bonusAt), so

@@ -57,6 +57,12 @@ button.primary { background: var(--accent-2); color: #08151a; border-color: var(
 .tog.s.on { background: var(--good); border-color: var(--good); color: #0b1a0d; }
 .note { font-size: 13px; }
 .ok { color: var(--good); font-size: 13px; min-height: 1.2em; }
+#curve { width: 100%; height: auto; background: var(--bg); border-radius: 6px; }
+#steps { display: grid; gap: 2px; }
+.step { display: grid; grid-template-columns: 44px 76px minmax(0, 1fr); gap: 6px; font: 12px/1.4 var(--mono); padding: 4px 6px; border-radius: 4px; }
+.step.now { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.step .role { color: var(--muted); }
+button[disabled] { opacity: .4; cursor: default; }
 input[type=range].wide { width: 100%; height: 44px; accent-color: var(--accent); }
 </style>
 </head>
@@ -81,6 +87,15 @@ input[type=range].wide { width: 100%; height: 44px; accent-color: var(--accent);
         <label class="f">Play<select id="section"></select></label>
         <div class="pair"><label class="f">Seed (a new tune)<input id="seed" type="number" inputmode="numeric" min="0"></label><button id="dice" title="A random seed">🎲</button></div>
         <label class="f">Tempo: <span id="bpm-val"></span> bpm<input id="bpm" class="wide" type="range" min="90" max="160" step="1"></label>
+      </section>
+      <section class="card" id="set-card">
+        <h2>The night's set</h2>
+        <p class="note">Each night is a full DJ set over its waves: gentle at first, build-ups, breakdowns and a climax on the last wave, the genres moving from organic and dreamy to techno and breakbeat to hard and industrial over home's 64 waves. Pick a night to see it and hear it in miniature (the seed above deals it).</p>
+        <label class="f">Night<select id="night"></select></label>
+        <button id="play-night" class="primary">▶ Play the night in miniature</button>
+        <svg id="curve" viewBox="0 0 320 120" role="img" aria-label="The night's energy, wave by wave"></svg>
+        <p id="night-note" class="note"></p>
+        <div id="steps"></div>
       </section>
       <section class="card" id="mood">
         <h2>Mood</h2>

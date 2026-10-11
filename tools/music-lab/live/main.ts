@@ -7,6 +7,7 @@ import { MusicEngine } from "../../../src/platform/audio/musicEngine";
 import { newBeatClock } from "../../../src/rules/beat";
 import type { MusicStyle, NoteEvent, PartUse } from "../../../src/rules/musicScore";
 import { Player } from "./player";
+import { nightStyle, nightTempos, planNight, type NightSet } from "../../../src/rules/musicSet";
 import { defaultState, heard, LAYERS, LAYER_NAMES, MODES, parseSettings, settingsJson, VOICES, type Defaults, type LabState, type Layer, type Voice } from "./settings";
 
 const BASE = styleJson as unknown as MusicStyle;
@@ -96,10 +97,19 @@ async function play(): Promise<void> {
   restart();
 }
 
+/** The set view's night in miniature: this many bars a wave (Ed's renders: about 20 s a wave at its own tempo). */
+const NIGHT_BARS = 8;
+/** Whether the night's playing (the set view's button), not the passage. */
+let nightPlaying = false;
+/** The night the set view shows (rules/musicSet.ts), from the settings' seed. */
+const nightOf = (): NightSet | null => state.night ? planNight(BASE, { seed: state.seed, island: state.night.island, waves: state.night.waves }) : null;
+
 function restart(): void {
   if (!player) return;
-  const st = styleFor(state);
-  player.start(st);
+  // (in miniature each wave lands on its own section, its build cut to a block: the game's 8-bar builds would fill its 8 bars)
+  const n = nightPlaying ? nightOf() : null, night = n ? nightStyle(styleFor(state), n) : null;
+  const st = night ? { ...night, arc: night.arc.map(a => ({ ...a, buildBars: BASE.blockBars })) } : styleFor(state);
+  player.start(st, n ? { bars: NIGHT_BARS, tempos: nightTempos(n) } : null);
   player.prewarm(sungNotes(st));
   showTransport();
 }
@@ -125,6 +135,33 @@ function frame(): void {
   const n = player.now;
   $("now").textContent = player.playing && n ? `${n.wave} · ${n.section} · bar ${n.bar}` : player.playing ? "starting…" : "stopped";
   $("feel").textContent = player.playing && n ? n.feel : "";
+  const on = nightPlaying && player.playing && n ? n.arc : -1;
+  if (on !== shownWave) { shownWave = on; showNight(); }
+}
+let shownWave = -1;
+
+// ---- the set view: the night's waves, its energy curve, each wave's genre, key, tempo, lead, bass and voice ----
+const NOTE = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
+const ROLE_COLOUR: Record<string, string> = { warm: "#4fe0ff", build: "#9b93ab", peak: "#ff5fc8", breakdown: "#7d8aff", climax: "#ffd35f" };
+function showNight(): void {
+  const n = nightOf(), box = $("steps"), svg = $("curve");
+  box.textContent = ""; svg.innerHTML = "";
+  $("play-night").toggleAttribute("disabled", !n);
+  if (!n) return;
+  const W = 320, H = 120, x = (u: number) => 8 + u * (W - 16), y = (e: number) => H - 10 - e * (H - 24);
+  const pts = n.steps.map(s => `${x(s.at).toFixed(1)},${y(s.energy).toFixed(1)}`).join(" ");
+  svg.innerHTML = `<line x1="8" y1="${y(0)}" x2="${W - 8}" y2="${y(0)}" stroke="#2b2636"/><polyline points="${pts}" fill="none" stroke="#e6e1ee" stroke-width="1.5" stroke-linejoin="round"/>`
+    + n.steps.map(s => `<circle cx="${x(s.at).toFixed(1)}" cy="${y(s.energy).toFixed(1)}" r="${s.wave === shownWave ? 5 : 3}" fill="${ROLE_COLOUR[s.role]}"><title>wave ${s.wave}: ${s.role}, ${s.family}</title></circle>`).join("");
+  $("night-note").textContent = `${n.curated ? "The hand-picked first home night." : `Planned from seed ${n.seed}.`} ${n.waves} waves, ${n.cycles} cycle${n.cycles > 1 ? "s" : ""}; ${NIGHT_BARS} bars a wave in miniature.`;
+  for (const st of n.steps) {
+    const f = BASE.families![st.family], key = `${NOTE[(((BASE.root + st.transpose) % 12) + 12) % 12]} ${st.scale}`;
+    const row = el("div", { cls: `step${st.wave === shownWave ? " now" : ""}` },
+      el("b", { textContent: st.wave ? `w${st.wave}` : "start" }),
+      el("span", { cls: "role", textContent: st.role }),
+      el("span", { textContent: `${f?.name ?? st.family} · ${key} · ${st.bpm} bpm · ${st.lead} / ${st.bass} / ${st.vocal}` }));
+    (row.firstChild as HTMLElement).style.color = ROLE_COLOUR[st.role];
+    box.append(row);
+  }
 }
 requestAnimationFrame(frame);
 
@@ -188,17 +225,18 @@ function showTransport(): void {
 
 function build(): void {
   $("play").onclick = () => (player?.playing ? stop() : void play());
+  // (a new seed or tempo while the night plays: the night again from the top)
   // the passage
   const wave = $("wave") as HTMLSelectElement;
   BASE.arc.forEach((a, i) => wave.append(el("option", { value: String(i), textContent: `Wave ${i + 1} · ${a.name}` })));
-  wave.onchange = () => { state.wave = Number(wave.value); changed(); if (player?.playing) player.setStyle(styleFor(state)); };
+  wave.onchange = () => { nightPlaying = false; state.wave = Number(wave.value); changed(); if (player?.playing) player.setStyle(styleFor(state)); };
   const sec = $("section") as HTMLSelectElement;
   sec.append(el("option", { value: "", textContent: "The wave's own (as the game plays it)" }));
   const picks = el("optgroup", { label: "Passages" }), all = el("optgroup", { label: "Every section" });
   for (const s of PICKS) picks.append(el("option", { value: s, textContent: s[0].toUpperCase() + s.slice(1) }));
   for (const s of SECTIONS) if (!PICKS.includes(s)) all.append(el("option", { value: s, textContent: s }));
   sec.append(picks, all);
-  sec.onchange = () => { state.section = sec.value; changed(); if (player?.playing) player.setStyle(styleFor(state)); };
+  sec.onchange = () => { nightPlaying = false; state.section = sec.value; changed(); if (player?.playing) player.setStyle(styleFor(state)); };
   const seed = $("seed") as HTMLInputElement;
   seed.onchange = () => { state.seed = Math.max(0, Math.round(Number(seed.value) || 0)); changed(); if (player?.playing) restart(); };
   $("dice").onclick = () => { state.seed = Math.floor(Math.random() * 10000); seed.value = String(state.seed); changed(); if (player?.playing) restart(); };
@@ -219,6 +257,12 @@ function build(): void {
   vt.oninput = () => { state.victory.transpose = Number(vt.value); $("vt-val").textContent = `${state.victory.transpose >= 0 ? "+" : ""}${state.victory.transpose}`; changed(); };
   shows.push(() => { vt.value = String(state.victory.transpose); $("vt-val").textContent = `${state.victory.transpose >= 0 ? "+" : ""}${state.victory.transpose}`; });
   for (const k of Object.keys(DEFAULTS.victory.layers)) $("victory").append(row(k, `victory:${k}`, () => state.victory.layers[k], v => { state.victory.layers[k] = v; }, 1.5, DEFAULTS.victory.layers[k], undefined, false));
+  // the set view
+  const night = $("night") as HTMLSelectElement;
+  for (const [v, t] of [["", "None"], ["home:10", "Home, 10 waves (the first night, hand-picked)"], ["island:10", "An island, 10 waves"], ["island:20", "An island, 20 waves"], ["island:30", "An island, 30 waves"], ["island:40", "An island, 40 waves"], ["island:50", "An island, 50 waves"], ["home:64", "Home grown, 64 waves"]]) night.append(el("option", { value: v, textContent: t }));
+  night.onchange = () => { const [island, waves] = night.value.split(":"); state.night = night.value ? { island, waves: +waves } : null; changed(); showNight(); if (nightPlaying && player?.playing) restart(); };
+  shows.push(() => { night.value = state.night ? `${state.night.island}:${state.night.waves}` : ""; showNight(); });
+  $("play-night").onclick = () => { nightPlaying = true; if (player?.playing) restart(); else void play(); };
   $("play-victory").onclick = () => { state.section = VICTORY; changed(); if (player?.playing) player.setStyle(styleFor(state)); else void play(); showAll(); };
   // the parts
   let role = "";

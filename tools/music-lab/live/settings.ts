@@ -28,6 +28,9 @@ export interface LabState {
   mute: string[]; solo: string[];
   /** The victory section's knobs: its key change (semitones over the night's) and its layers' levels. */
   victory: { transpose: number; layers: Record<string, number> };
+  /** The set view's night (rules/musicSet.ts): its waves and island ("home": the first home night is the hand-picked one at
+   *  10), or null. */
+  night: { waves: number; island: string } | null;
 }
 
 export interface Defaults { bpm: number; mode: string; parts: string[]; victory: { transpose: number; layers: Record<string, number> } }
@@ -37,7 +40,7 @@ export function defaultState(d: Defaults): LabState {
     wave: 2, section: "", seed: 7, bpm: d.bpm, mode: d.mode, witchHouse: false,
     layers: Object.fromEntries(LAYERS.map(l => [l, l === "vocalise" ? 1 : 0])) as Record<Layer, number>, voice: "synth",
     parts: Object.fromEntries(d.parts.map(p => [p, 1])), mute: [], solo: [],
-    victory: { transpose: d.victory.transpose, layers: { ...d.victory.layers } },
+    victory: { transpose: d.victory.transpose, layers: { ...d.victory.layers } }, night: null,
   };
 }
 
@@ -66,6 +69,7 @@ export function settingsJson(s: LabState, d: Defaults): string {
   if (s.solo.length) out.solo = [...s.solo].sort();
   const vl = changed(s.victory.layers, base.victory.layers);
   if (s.victory.transpose !== base.victory.transpose || some(vl)) out.victory = { ...(s.victory.transpose !== base.victory.transpose ? { transpose: s.victory.transpose } : {}), ...(some(vl) ? { layers: vl } : {}) };
+  if (s.night) out.night = { ...s.night };
   // one key a line, what's under it on the same line: short enough to paste in a message, easy to read
   return `{\n${Object.entries(out).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v).replace(/([,:])(?=["{\[\d-])/g, "$1 ")}`).join(",\n")}\n}`;
 }
@@ -97,6 +101,11 @@ export function parseSettings(text: string, d: Defaults, sections: string[]): { 
         const vic = v as { transpose?: unknown; layers?: unknown };
         s.victory.transpose = Math.round(num(vic?.transpose, -12, 12, s.victory.transpose));
         levels(vic?.layers, s.victory.layers, l => l in s.victory.layers);
+        break;
+      }
+      case "night": {
+        const n = v as { waves?: unknown; island?: unknown } | null;
+        s.night = n && typeof n === "object" ? { waves: Math.round(num(n.waves, 1, 64, 10)), island: typeof n.island === "string" ? n.island.slice(0, 24) : "home" } : null;
         break;
       }
       default: ignored.push(k);
