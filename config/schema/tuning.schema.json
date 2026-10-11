@@ -2645,6 +2645,10 @@
           "type": "number",
           "minimum": 0
         },
+        "placedThrough": {
+          "type": "number",
+          "minimum": 0
+        },
         "restAbove": {
           "type": "number",
           "minimum": 0
@@ -2806,6 +2810,7 @@
         "spacing",
         "runeRadius",
         "hatHold",
+        "placedThrough",
         "restAbove",
         "hex",
         "runePull",
