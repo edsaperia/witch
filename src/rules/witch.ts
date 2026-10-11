@@ -124,9 +124,9 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     const drift = Wt.drift * max * Math.min(1, over / Math.max(1e-6, Wt.extreme));
     driftX = load.x * drift; driftZ = load.z * drift;
   }
-  if (bounds.circle) ({ vx, vz } = softEdge(bounds, w.x, w.z, vx, vz, Math.max(max, Math.hypot(vx, vz)), t.map?.push ?? 0, t.map?.drift ?? 0)); // (the circular map's soft edge)
+  if (bounds.land) ({ vx, vz } = softEdge(bounds, w.x, w.z, vx, vz, Math.max(max, Math.hypot(vx, vz)), t.map?.push ?? 0, t.map?.drift ?? 0)); // (the island's soft edge)
   let x = w.x + (vx + driftX) * dt, z = w.z + (vz + driftZ) * dt;
-  if (bounds.circle) { const p = keepIn(bounds, x, z); if (p.x !== x || p.z !== z) { const c = bounds.circle, l = Math.hypot(p.x - c.x, p.z - c.z) || 1, nx = (p.x - c.x) / l, nz = (p.z - c.z) / l, out = vx * nx + vz * nz; if (out > 0) { vx -= nx * out; vz -= nz * out; } x = p.x; z = p.z; } }
+  if (bounds.land) { const p = keepIn(bounds, x, z); if (p.x !== x || p.z !== z) { const n = bounds.land.inward(p.x, p.z), out = -(vx * n.x + vz * n.z); if (out > 0) { vx += n.x * out; vz += n.z * out; } x = p.x; z = p.z; } }
   else {
     if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
     if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
@@ -137,7 +137,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // Flying on out over the beach (Ed, 2026-10-06: "If you try and fly past the beach, you land and stargaze"): pushing seaward
   // against the edge's soft hold, on the sand, for restAfter seconds, she comes down (from the treetops too) and, landed, lies down.
   const B = t.beach, beach = B?.on ? beachOf(bounds, t) : null;
-  const held = beach && beach.intoSand(x, z) > 0 && Math.hypot(x - beach.x, z - beach.z) > beach.edge(Math.atan2(z - beach.z, x - beach.x)) - (t.map?.push ?? 0) * 0.6; // (on the sand, where the edge is holding her back)
+  const held = beach && beach.intoSand(x, z) > 0 && beach.land.distAt(x, z) < (t.map?.push ?? 0) * 0.6; // (on the sand, where the edge is holding her back)
   if (held && seaward(next, intent, bounds)) {
     next.beachPush = (w.beachPush ?? 0) + dt;
     if (next.beachPush >= B!.restAfter) {
@@ -148,12 +148,12 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   return next;
 }
 
-/** Is she being steered on out to sea (within 60 degrees of straight out from the circle's middle)? undefined: not steered at all. */
+/** Is she being steered on out to sea (within 60 degrees of straight out to the water)? undefined: not steered at all. */
 function seaward(w: { x: number; z: number }, intent: Intent, bounds: Bounds): boolean | undefined {
-  const c = bounds.circle, m = Math.hypot(intent.moveX, intent.moveZ);
-  if (!c || m < 0.1) return undefined;
-  const d = Math.hypot(w.x - c.x, w.z - c.z) || 1;
-  return (intent.moveX * (w.x - c.x) + intent.moveZ * (w.z - c.z)) / (d * m) > 0.5;
+  const L = bounds.land, m = Math.hypot(intent.moveX, intent.moveZ);
+  if (!L || m < 0.1) return undefined;
+  const n = L.inward(w.x, w.z);
+  return -(intent.moveX * n.x + intent.moveZ * n.z) / m > 0.5;
 }
 
 /** Treetop flight with momentum: pressing a direction reaches cruise (treetopSpeed) quickly;

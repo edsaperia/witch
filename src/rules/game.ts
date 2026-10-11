@@ -828,13 +828,14 @@ export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.camera.lif
 export function coastOf(g: Game): CoastView | null {
   const BC = g.tuning.beach?.camera, b = BC ? beachOf(g.map.bounds, g.tuning) : null, w = g.witch;
   if (!BC || !b) return null;
-  // (metres from where the edge's soft hold starts, where she lies down at the water's edge (rules/witch.ts `held`); exactly, by
-  // the coast's edge her way: intoSea's quick path is only right about which side of the water a point is on, well inland)
-  const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) - (g.tuning.map?.push ?? 0) * 0.6 - Math.hypot(dx, dz);
+  // (metres from where the edge's soft hold starts, where she lies down at the water's edge: rules/witch.ts `held`)
+  const off = b.land.distAt(w.x, w.z) - (g.tuning.map?.push ?? 0) * 0.6;
   const gazing = w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
   const near = Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach)));
-  // (her bearing round the coast only by the sea, where the stargazing camera reads it: inland the camera's state is as ever)
-  return { near, gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)), bearing: near > 0 || gazing ? Math.atan2(dx, -dz) : undefined }; // (south of the middle: the sea behind a camera looking north)
+  // (her bearing round the coast only by the sea, where the stargazing camera reads it: the way out to the water from her
+  // (0 north, clockwise); inland the camera's state is as ever)
+  const n = b.land.inward(w.x, w.z), ox = -n.x, oz = -n.z;
+  return { near, gazing, seaBehind: Math.max(0, oz), bearing: near > 0 || gazing ? Math.atan2(ox, -oz) : undefined }; // (the water to the south: behind a camera looking north)
 }
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */

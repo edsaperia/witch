@@ -27,9 +27,9 @@ server.listen(0, "127.0.0.1", async () => {
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
   // On the sand a few metres in from a beach witch, facing out to sea.
   const aim = await page.evaluate(() => {
-    const g = window.witch.game, c = g.map.bounds.circle, s = g.beach[0], a = Math.atan2(s.z - c.z, s.x - c.x), d = Math.hypot(s.x - c.x, s.z - c.z) - 6;
-    g.witch = { ...g.witch, x: c.x + Math.cos(a) * d - Math.sin(a) * 3, z: c.z + Math.sin(a) * d + Math.cos(a) * 3, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 };
-    return { nx: Math.cos(a), nz: Math.sin(a) };
+    const g = window.witch.game, s = g.beach[0], n = g.map.bounds.land.shore(s.x, s.z), nx = n.nx, nz = n.nz;
+    g.witch = { ...g.witch, x: s.x - nx * 6 - nz * 3, z: s.z - nz * 6 + nx * 3, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 };
+    return { nx, nz };
   });
   const step = (n, o, draw) => page.evaluate(([n, o, draw]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60, draw && i === n - 1); return !!w.game.witch.stargazing; }, [n, o, draw]);
   let lying = false;

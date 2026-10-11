@@ -116,7 +116,7 @@ const pct = (a, p) => { if (!a.length) return 0; const s = [...a].sort((x, y) =>
     await run(60, {}, 1 / 10, false); await settle();
     await moment("legend circle", "09-legend-circle.png", await run(120, {}), s => s.mode === "ground");
     // the beach: in from the flight edge east of the middle, then flying on out
-    const edge = await page.evaluate(() => { const c = window.witch.game.map.bounds.circle; if (!c) return null; const r = c.coast ? c.r * c.coast(0) : c.r; return { x: c.x + r - 25, z: c.z }; });
+    const edge = await page.evaluate(() => { const p = window.witch.coastFacing(0); return p && { x: p.x - p.nx * 25, z: p.z - p.nz * 25 }; }); // (a stretch of coast facing east)
     if (edge) {
       await teleport(edge.x, edge.z);
       await run(60, {}, 1 / 10, false); await settle();

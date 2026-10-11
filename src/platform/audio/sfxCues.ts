@@ -450,10 +450,10 @@ export class SfxCues {
     if (this.beach?.map !== g.map) this.beach = { map: g.map, at: beachOf(g.map.bounds, g.tuning) };
     const P = g.tuning.sfx.waves, B = this.beach.at;
     if (!P || !B) return;
-    // (metres from the water, by the coast's own edge that way: intoSea's quick path is only right about the side, well inland)
-    const w = g.witch, d = Math.hypot(w.x - B.x, w.z - B.z) || 1, off = B.edge(Math.atan2(w.z - B.z, w.x - B.x)) + B.out - d;
+    // (metres from the water, by the land map; panned toward the water's side of her)
+    const w = g.witch, off = -B.intoSea(w.x, w.z);
     if (off >= P.range) { this.sfx.sea(0); return; } // (Sfx.sea: nothing unless already made)
-    this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
+    this.sfx.sea(Math.max(0, 1 - off / P.range), -B.land.inward(w.x, w.z).x * 0.8);
     this.seaLife(g, B, off);
   }
 

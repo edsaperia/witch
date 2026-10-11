@@ -25,7 +25,7 @@ export class KrakenView {
     if (K) {
       const A = this.ensure(), R = SPRITE_UNIFORMS.uRight.value, sea = (g.tuning.beach as { sea?: number } | undefined)?.sea ?? 0; // (world heights: the ground's height map only covers round her, and these are far out)
       for (const t of K.tentacles) { // each curling away from the middle (mirrored as the screen has it)
-        const s = (time - t.start) / t.dur, k = Math.floor(s * A.frames), tx = -(t.z - b.z), tz = t.x - b.x;
+        const s = (time - t.start) / t.dur, k = Math.floor(s * A.frames), tx = K.tx, tz = K.tz;
         if (s >= 0 && s < 1) this.put(A.atlas.frames[k], A.origins[k], t.x, sea, t.z, t.side < 0 !== (tx * R.x + tz * R.z < 0));
       }
       const h = K.head;

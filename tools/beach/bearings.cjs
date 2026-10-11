@@ -41,9 +41,10 @@ server.listen(0, "127.0.0.1", async () => {
     let lying = false;
     for (const nudge of [0, 6, -6, 12, -12]) {
       const out = await page.evaluate(deg => {
-        const g = window.witch.game, c = g.map.bounds.circle, b = (deg * Math.PI) / 180, nx = Math.sin(b), nz = -Math.cos(b), r = c.r - 40;
-        g.witch = { ...g.witch, x: c.x + nx * r, z: c.z + nz * r, seated: false, stargazing: false, vx: 0, vz: 0, mode: "ground", lift: 0 };
-        return { nx, nz };
+        const g = window.witch.game, b = (deg * Math.PI) / 180, p = window.witch.coastFacing(Math.atan2(-Math.cos(b), Math.sin(b))); // (a stretch of coast facing out that way)
+        if (!p) return { nx: 0, nz: 0 };
+        g.witch = { ...g.witch, x: p.x - p.nx * 40, z: p.z - p.nz * 40, seated: false, stargazing: false, vx: 0, vz: 0, mode: "ground", lift: 0 };
+        return { nx: p.nx, nz: p.nz };
       }, deg + nudge);
       for (let k = 0; k < 120 && !lying; k++) lying = await step(10, { moveX: out.nx * 0.4, moveZ: out.nz * 0.4 });
       if (lying) { if (nudge) console.log(`  (${deg}°: lying ${nudge}° along the coast)`); break; }

@@ -4,7 +4,7 @@
 // line of beach shrubs and round bushes in rows along the sand's edge (the ground shader's own scalloped line, render/ground.ts,
 // worked out the same way here), grass clumps at its foot, a palm now and then among them, and a few strays out on the sand.
 // The forest's own trees stand behind, up to the sand's line (rules/map.ts), so the canopy steps up from the bushes. The line
-// follows the sand's own width round the coast (its bays and narrows: rules/mapShape.ts sandAt), scalloped less where it's
+// follows the sand's own width along the coast (its bays and narrows: rules/mapShape.ts sandAlong), scalloped less where it's
 // narrow, and nothing stands where the beach's decorations lie (rules/beachDecor.ts: `clear` in from the line and on) or in the sea.
 // Objects are pixels, light can be smooth (Ed): the bushes are the art's sprites (render/artBuild.ts beachEdge), their soft
 // shadows on the sand the ground shader's.
@@ -31,9 +31,9 @@ export function vnoise(x: number, y: number): number {
   return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
 }
 
-/** How far (m) the sand's line stands out past the beach's plain one at this arc length round the coast, where the sand is
- *  `width` metres wide (render/ground.ts: less where it's narrow, so the scallop never swallows it). */
-export const scallop = (arc: number, width = 24) => ((vnoise(arc / 7, 3) - 0.5) * 7 + (vnoise(arc / 2.3, 11) - 0.5) * 2) * Math.min(1, Math.max(0.3, width / 24));
+/** How far (m) the sand's line stands out past the beach's plain one by the point (x, z) of the coast (the nearest to where it's
+ *  asked), where the sand is `width` metres wide (render/ground.ts, alike: less where it's narrow, so the scallop never swallows it). */
+export const scallop = (x: number, z: number, width = 24) => ((vnoise(x / 7 + 3, z / 7 + 3) - 0.5) * 7 + (vnoise(x / 2.3 + 11, z / 2.3 + 11) - 0.5) * 2) * Math.min(1, Math.max(0.3, width / 24));
 
 /** A placed plant: where, which sprite (a palm: its crown too), mirrored or not, how big. */
 export interface EdgePlant { x: number; z: number; kind: "shrub" | "grass" | "palm"; v: number; flip: boolean; scale: number }
@@ -42,29 +42,45 @@ export interface EdgePlant { x: number; z: number; kind: "shrub" | "grass" | "pa
 const STEP = 1.6, REACH = 150;
 
 /** The plants along the edge within REACH of the coast point nearest (x, z): rows of shrubs in the scallop, the grass at its foot,
- *  palms among them, strays on the sand. Seeded by their place round the coast: the same plants wherever she comes from. */
+ *  palms among them, strays on the sand. Seeded by their place along the coast: the same plants wherever she comes from. */
 export function edgePlants(b: Beach, x: number, z: number, out: EdgePlant[] = [], clear = 16): EdgePlant[] {
   out.length = 0;
-  const R0 = (b.edgeMin + b.edgeMax) / 2, da = STEP / R0, a0 = Math.atan2(z - b.z, x - b.x), k0 = Math.round(a0 / da), K = Math.ceil(REACH / STEP);
-  // (each at its own place round: `d` metres past the sand's line there, + onto the sand)
+  const L = b.land, here = L.shore(x, z);
+  if (here.loop < 0) return out;
+  const loop = here.loop, len = L.loops[loop].length, count = Math.max(1, Math.round(len / STEP)), ds = len / count, k0 = Math.round(here.s / ds), K = Math.min(Math.floor(count / 2), Math.ceil(REACH / ds));
+  // (each at its own place along: `d` metres past the sand's line there, + onto the sand, the line where the ground shader has
+  // it: in from the coast by the sand's width less the scallop at that point of the coast)
   // (out onto the sand, a plant stays short of the decorations' ground, `clear` in from the plain line, and of the water: on a
   // narrow stretch only the front rows and the grass, pulled back to fit)
-  const lineAt = (a: number) => { const an = Math.atan2(Math.sin(a), Math.cos(a)), e = b.edge(an), w = b.sandAt(an); return { e, w, line: e - w + scallop(an * e, w) }; };
-  const put = (a: number, d: number, kind: EdgePlant["kind"], v: number, flip: boolean, scale: number) => {
-    const L = lineAt(a), most = Math.min(L.e - 2, L.e - L.w + Math.min(clear - 2.5, L.w * 0.6)) - L.line; // (the most past the line it may stand)
+  const at = { x: 0, z: 0 };
+  const lineAt = (s: number) => { const c = L.along(loop, s), w = b.sandAlong(loop, s); return { c, w, t: w - scallop(c.x, c.z, w) }; };
+  const put = (s: number, d: number, kind: EdgePlant["kind"], v: number, flip: boolean, scale: number) => {
+    const P = lineAt(s), most = P.t - Math.max(2, P.w - Math.min(clear - 2.5, P.w * 0.6)); // (the most past the line it may stand)
     if (d > most) { if (d > 2.5) return; d = Math.max(Math.min(0, d), most); } // (a stray with no room isn't placed; the rest pulled back)
-    const r = L.line + d; out.push({ x: b.x + Math.cos(a) * r, z: b.z + Math.sin(a) * r, kind, v, flip, scale });
+    // (onto the ground shader's own line, d past it: stepped along the way out from where this stretch puts it, by how far off
+    // it is there (its sand's width and scallop by the nearest coast, as the shader has them); none where that doesn't settle:
+    // where the coast bends, its sand's edge here isn't this stretch's)
+    let r = P.t - d, x = 0, z = 0, off = 0;
+    for (let i = 0; i < 4; i++) {
+      x = P.c.x - P.c.nx * r; z = P.c.z - P.c.nz * r;
+      const c = b.coastAt(x, z, at), w = b.sandAt(x, z);
+      off = b.intoSand(x, z) - scallop(c.x, c.z, w) - d;
+      if (Math.abs(off) < 0.3) break;
+      r += off;
+    }
+    if (Math.abs(off) > 1 || r < 2) return;
+    out.push({ x, z, kind, v, flip, scale });
   };
-  for (let k = k0 - K; k <= k0 + K; k++) {
-    const a = k * da, h = (salt: number) => hash(k * 0.137 + salt, salt * 0.71 + 3.3);
+  for (let j = k0 - K; j <= k0 + K; j++) {
+    const k = ((j % count) + count) % count, s = j * ds, h = (salt: number) => hash(k * 0.137 + salt + loop * 31.7, salt * 0.71 + 3.3);
     // the bushes' reach onto the sand: more in some stretches than others
-    const spill = 0.6 + 0.8 * vnoise((a * R0) / 11, 21);
-    if (h(1) < 0.85) put(a + (h(2) - 0.5) * da, spill - h(3) * 1.6, "shrub", Math.floor(h(4) * 8), h(5) < 0.5, 0.85 + h(6) * 0.4); // the front row, over the line
-    if (h(7) < 0.75) put(a + (h(8) - 0.5) * da, -2.2 - h(9) * 2.2, "shrub", Math.floor(h(10) * 8), h(11) < 0.5, 1 + h(12) * 0.5); // behind it, bigger
-    if (h(13) < 0.5) put(a + (h(14) - 0.5) * da, -5 - h(15) * 3, "shrub", Math.floor(h(16) * 8), h(17) < 0.5, 1.2 + h(18) * 0.5);
-    if (h(19) < 0.7) put(a + (h(20) - 0.5) * da, 0.4 + h(21) * 1.4, "grass", Math.floor(h(22) * 4), h(23) < 0.5, 0.8 + h(24) * 0.5); // the grass at its foot
-    if (h(25) < 0.07) put(a, -2.5 - h(26) * 4, "palm", Math.floor(h(27) * 4), h(28) < 0.5, 0.9 + h(29) * 0.3); // a palm among them
-    if (h(30) < 0.05) put(a, 2.5 + h(31) * 5, h(32) < 0.3 ? "palm" : "shrub", Math.floor(h(33) * (h(32) < 0.3 ? 4 : 8)), h(34) < 0.5, 0.7 + h(35) * 0.4); // a stray out on the sand
+    const spill = 0.6 + 0.8 * vnoise((k * ds) / 11, 21 + loop);
+    if (h(1) < 0.85) put(s + (h(2) - 0.5) * ds, spill - h(3) * 1.6, "shrub", Math.floor(h(4) * 8), h(5) < 0.5, 0.85 + h(6) * 0.4); // the front row, over the line
+    if (h(7) < 0.75) put(s + (h(8) - 0.5) * ds, -2.2 - h(9) * 2.2, "shrub", Math.floor(h(10) * 8), h(11) < 0.5, 1 + h(12) * 0.5); // behind it, bigger
+    if (h(13) < 0.5) put(s + (h(14) - 0.5) * ds, -5 - h(15) * 3, "shrub", Math.floor(h(16) * 8), h(17) < 0.5, 1.2 + h(18) * 0.5);
+    if (h(19) < 0.7) put(s + (h(20) - 0.5) * ds, 0.4 + h(21) * 1.4, "grass", Math.floor(h(22) * 4), h(23) < 0.5, 0.8 + h(24) * 0.5); // the grass at its foot
+    if (h(25) < 0.07) put(s, -2.5 - h(26) * 4, "palm", Math.floor(h(27) * 4), h(28) < 0.5, 0.9 + h(29) * 0.3); // a palm among them
+    if (h(30) < 0.05) put(s, 2.5 + h(31) * 5, h(32) < 0.3 ? "palm" : "shrub", Math.floor(h(33) * (h(32) < 0.3 ? 4 : 8)), h(34) < 0.5, 0.7 + h(35) * 0.4); // a stray out on the sand
   }
   return out;
 }
