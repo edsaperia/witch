@@ -36,6 +36,7 @@ import { installHooks } from "./app/hooks";
 import { PerfHud } from "./app/perfHud";
 import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
+import { wonText } from "./app/wonCard";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -272,7 +273,9 @@ let lastShedS = -1; // (the sound's safety valve, checked once a second: platfor
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
-let overShown = false, chartRecorded = false;
+let overShown = false, wonShown = false, chartRecorded = false;
+document.getElementById("won-close")?.addEventListener("click", () => document.getElementById("won")!.classList.remove("on"));
+document.getElementById("won-sail")?.addEventListener("click", () => { location.href = "chart.html"; }); // (on to the sea chart, its islands found now lit: app/chartPage.ts)
 document.getElementById("again")?.addEventListener("click", () => location.reload());
 document.getElementById("chart-open")?.addEventListener("click", () => { location.href = "chart.html"; }); // (the sea chart: Ed, 2026-10-11: after a loss, replay the island or pick another)
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
@@ -302,10 +305,14 @@ function frame(now: number): void {
   const stepMs = performance.now() - step0;
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
-  // The night won (rules/win.ts, the finale's): its legends' islands found on the sea chart (app/chartSave.ts), once, as its card
-  // comes up; the enraged legends' (win.lost) not.
-  const won = (game as { win?: { card?: boolean; found?: string[] } }).win;
-  if (won?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: won.found ?? [] }); }
+  // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart
+  // (app/chartSave.ts), once, as its card comes up; the enraged legends' (win.lost) not.
+  if (game.win?.card && !wonShown) {
+    wonShown = true;
+    document.getElementById("won-found")!.textContent = wonText(game.win);
+    document.getElementById("won")!.classList.add("on");
+  }
+  if (game.win?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }); }
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
     nightOver(tuning.map?.island ?? "", { won: false }); // (the sea chart: played; losing loses nothing)
