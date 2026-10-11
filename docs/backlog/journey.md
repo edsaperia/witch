@@ -53,6 +53,11 @@ Where this overrides older notes: the record crate no longer picks the map's see
 5. **Telling without words:** each woken legend's dream bubble shows the shape of its home island with its sigil, the same picture that lights up on the sea chart.
 6. Then the afterparty, stargazing, bed and the voyage.
 
+Decisions (Ed, 2026-10-11, approving the plan):
+- **Legends don't join the conga**, but they do come home: the woken dealt legends walk to the home area and dance there as party legends, in a ring round the dancefloor. The conga is the party animals only.
+- **Enraged legends don't block the win**: the straggler pointer and the "no enraged left" check ignore them (only non-legend enraged animals count). At the win they calm and go back to sleep in their clearing, and **an enraged legend's island is not unlocked**: the night's islands found are the dealt legends woken, not those still enraged at the end (`g.win.found` and `g.win.lost`, by kind: the card's and, later, the sea chart's).
+- Built (PR 1, rules/win.ts): last call (🎉 on the wave pointer), the stragglers' pointer, the victory lap (the pointer follows its pulse home, each stone's fireworks as it passes, the music's victory hook), the win (legends home, the conga, fireworks from every soundsystem, her leash let go, nothing fights), the Night won card (its button: a new island until the sea chart). Placeholders: the island's sigil (home's), the dealt legends (every legend on the island, until part A's rosters), the victory music (the drop), the dream bubbles and the island outlines (art4), the conga's look (art1).
+
 ### Irregular islands and lakes
 
 - **Build the land out of areas.** Grow the island outward from home over the area grid with seeded noise (arms, bays, peninsulas); some interior areas are water: **lakes**. The coast follows the areas' fractal borders.

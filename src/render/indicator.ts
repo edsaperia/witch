@@ -146,6 +146,24 @@ export const NOTES = [
   ".###.....####..",
 ];
 
+/** 🎉 in pixels: a party popper, its cone (`#`) bursting streamers and confetti (`+`) up to the right (the wave pointer's middle
+ *  for the route's last stone: Ed, 2026-10-10, "Last call"; and the victory lap's pointer). */
+export const PARTY = [
+  "..........+...+",
+  "......+.....+..",
+  "...........+...",
+  ".......+.+.....",
+  "....##....+..+.",
+  "...####.+......",
+  "..######...+...",
+  "..#######......",
+  ".########..+...",
+  ".#########.....",
+  "###########....",
+  "##########.....",
+  "########.......",
+];
+
 /** 🎩 in pixels: her hat, a tall crown leaning back over a wide brim, its band (`+`) a lighter line (the dropped hat's pointer, rules/hat.ts). */
 export const HAT = [
   ".........###...",

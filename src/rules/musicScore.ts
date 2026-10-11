@@ -150,6 +150,8 @@ export interface MusicStyle {
   /** The section the home speakers' boot plays, and the one while she's knocked out. */
   intro: string;
   knockout: string;
+  /** The night won (rules/win.ts): the section from the victory lap on (Ed, 2026-10-10: "special victory music"); missing, the drop. */
+  victory?: string;
   /** The drum fill in the last bar before a new section: its part, pattern, and parts muted in the bar's last beat. */
   fill: { part: string; pattern: string; mute: string[] };
   /** Parts added while a soundsystem nearby is under siege (their level times the siege, 0-1). */
