@@ -54,3 +54,8 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked shipped; don't buil
 - Single-file tightness: the knob's default.
 - Flying cooldown length (3 s proposed).
 - Blink when standing still: facing (proposed) or something else?
+
+## Decisions (Ed, 2026-10-11)
+
+- **Babies on the ground:** babies weigh **more on the ground than in the treetops**, so 8 fill the ground allowance (and 8 the treetops' too). Species strength still doesn't count for babies.
+- **The Player dropdown** (human or bot) moves to the **debug overlay only**; players never see it. The Waves menu goes (the record sets the tempo).

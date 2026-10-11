@@ -83,3 +83,8 @@ Suggested:
 - Cooldowns and durations.
 - Long broom: broom, quest buff, or both stacking?
 - Earlier hat ideas from before hats were placed (Berry patch, Mend, Second wind): drop, or rework as placed hats? (Harvest already covers berries.)
+
+## Decisions (Ed, 2026-10-11)
+
+- **Looks:** the hat room and broom room choose *which* hat and broom (their spells); their **shape and colour are styled while dressing**, with today's sliders.
+- **The older hat spells, reworked as placed hats:** Berry patch → **Harvest hat**; Mend → **Nursing hat**; Second wind → **Healing ring hat** (placed: standing near it, she heals a hit every few seconds).

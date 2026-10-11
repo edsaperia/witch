@@ -132,3 +132,5 @@ Visual references: Qualia Research Institute's replications of psychedelic visua
 - CRT: replace Underwater, or wait for a seventh mushroom?
 - Bag size, and whether the bag survives a knockdown.
 - The trip frame: adopt it for every trip, or fix the subtle ones one by one?
+
+- **The build-cost sort is accepted as it stands** (Ed, 2026-10-11).
