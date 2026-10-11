@@ -13,16 +13,18 @@ Ed's music research (docs/music/research.md, from docs/backlog/music.md). All th
 | `ab-4-tape.mp3` | Tape: wow and flutter on the whole mix, the top rolled off, crackle and hiss |
 | `ab-5-cc0-kit.mp3` | The CC0 kit in place of the synthesised drums: hats, claps, snare, shaker, rim and claves from VCSL; the kicks stay synthesised |
 | `ab-6-vocalise.mp3` | The vocalise: B and C sung by Pink Trombone with a soprano's tract, vowels gliding note to note, vibrato creeping in |
-| `ab-bonus-witch-house.mp3` | A witch-house take: Phrygian, half-time drums (kick on 1, snare and clap on 3, trap hats with rolls, an 808-ish sub), the chant pitched down, a huge reverb, tape, the vocalise |
+| `ab-7-recorded-voices.mp3` | Recorded voices from Freesound (CC0, each its uploader's own): a crowd's "uh" retuned to the chords as a choir with its fifth, whispers over the breakdown, throat singing (recorded in a cave) as a drone voice on the tonic |
+| `ab-bonus-witch-house.mp3` | A witch-house take: Phrygian, half-time drums (kick on 1, snare and clap on 3, trap hats with rolls, an 808-ish sub), the chant pitched down, a huge reverb, tape, the vocalise, the recorded choir and whispers, a low kargyraa throat chant on the root |
 
 **Also:**
 - `voice-vocalise.mp3`: the soprano alone.
 - `voice-chant.mp3`: the chant alone.
+- `recorded-voices.mp3`: the five Freesound voices as they are, one after another: the crowd's "uh", female vocal chops (not used yet: their key isn't measured), the kargyraa, the cave's throat singing, the whispers.
 - `kit-samples.mp3`: the kit's 19 samples one after another, in alphabetical order: bass drum, two claps, claves, darbuka (doum, tek), frame drum (small open, large open, large muted), hi-hats (closed, closed soft, open), slit drum (high, low), rim, shaker (down, up), snare, tambourine.
 
 **Caveats (the builder can't hear):**
 - Each ingredient's level is a first guess.
 - Pink Trombone is a speech model pushed to sing. Its soprano is the novelty here, and the thing to judge most.
-- Freesound was still blocked from the builder's environment, so there are no recorded voices yet.
+- Freesound came through later: render 7 adds its voices, and the witch-house take uses them too. Renders 0 to 6 are unchanged.
 
 **What to tell the builder:** which steps to keep, which to drop, and any that are too loud or too quiet. Also say whether the witch-house take is a direction (for legend circles or a "dark" record).
