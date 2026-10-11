@@ -4,13 +4,13 @@
 // grew while wild, by the game's own growthLevel) and the real wave order (the
 // party's own picker, ruined areas dropping out as in the game); each wave's soundsystem with its
 // health; its area's young and up marching on it in straight lines at their march speed
-// (creatureSpeed × marchMult, as combat.ts moves them) and, once in reach, hitting it at their
+// (combat.marchShare of their top speed, as combat.ts moves them: marchSpeedOf) and, once in reach, hitting it at their
 // level's dps; survivors of a fallen soundsystem marching on to the next-nearest still standing;
 // the run over when none stands, home included. Soundsystems are passive, so the same-kind truce
 // doesn't matter here. An optional player grows at a steady rate of fighting value and fights
 // sieges by the square law (rules/power.ts). It runs in well under a second a run, where the full
 // game manages about 3.5 times real time. Read by tools/balance/sim.mjs and balance.test.ts.
-import { attackOf, COMBAT, strengthOf } from "./combat";
+import { attackOf, COMBAT, marchSpeedOf, strengthOf } from "./combat";
 import { spawnCreatures, type Creature, type Level } from "./creatures";
 import { countScale, grownAt, growthLevel } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
@@ -125,14 +125,14 @@ const FIGHTERS = new WeakMap<ForestMap, Map<string, Fighter[]>>();
 export function fightersOf(map: ForestMap, creatures: Creature[] = spawnCreatures(map)): Map<string, Fighter[]> {
   const known = FIGHTERS.get(map);
   if (known) return known;
-  const t = map.tuning, C = t.combat, by = new Map<string, Fighter[]>();
+  const by = new Map<string, Fighter[]>();
   for (const c of creatures) {
     if (c.level === 0) continue; // babies never join a siege
     if (c.boss) continue; // (the areas' own legends: the areaLegends option models them)
     const atk = attackOf(c.species, c.level, COMBAT)!, A = atk.attack, kites = A.delivery === "shot" && COMBAT.kite.species.includes(c.species);
     const reach = A.delivery === "shot" ? A.range * (kites ? COMBAT.kite.far : 0.8) : A.range + (A.lunge ?? 0) - 0.3;
     const m = strengthOf(c.species, c.level);
-    const f: Fighter = { id: c.id, level: c.level, cell: cellKey(c.cell), x: c.x, z: c.z, x0: c.x, z0: c.z, speed: c.speed * C.marchMult, dps: COMBAT.levels.dps[c.level] * m, reach, value: levelValue(c.level) * m, m, siege: null, gone: false };
+    const f: Fighter = { id: c.id, level: c.level, cell: cellKey(c.cell), x: c.x, z: c.z, x0: c.x, z0: c.z, speed: marchSpeedOf(c.species, c.level, map.tuning), dps: COMBAT.levels.dps[c.level] * m, reach, value: levelValue(c.level) * m, m, siege: null, gone: false };
     let l = by.get(f.cell);
     if (!l) by.set(f.cell, (l = []));
     l.push(f);
@@ -202,7 +202,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         const happy = o.areaLegends && (o.happyChance ?? 0) > 0 && hash2(a.cell[0], a.cell[1], map.seed + 991) < (o.happyChance ?? 0);
         if (happy) { const at = soundsystemFor(map, a.cell); guards.push({ key, x: at.x, z: at.z, hp: COMBAT.levels.hp[3], asleep: false }); }
         else if (o.areaLegends && (map.hasLegend?.(a.cell[0], a.cell[1]) ?? true)) {
-          const site = map.siteOf(a.cell[0], a.cell[1]), L: Fighter = { ...reinforcement(-1e6 - live.length, key, site.x, site.z, map), level: 3, dps: COMBAT.levels.dps[3], value: levelValue(3), speed: t.legendSpeed * C.marchMult, reach: COMBAT.attacks[COMBAT.byLevel.melee[3]!].range, stay: true, siege: key };
+          const site = map.siteOf(a.cell[0], a.cell[1]), L: Fighter = { ...reinforcement(-1e6 - live.length, key, site.x, site.z, map), level: 3, dps: COMBAT.levels.dps[3], value: levelValue(3), speed: marchSpeedOf("", 3, t), reach: COMBAT.attacks[COMBAT.byLevel.melee[3]!].range, stay: true, siege: key };
           live.push(L);
         }
       }
@@ -291,5 +291,5 @@ const frac = (x: number) => x - Math.floor(x);
 /** A director's reinforcement: an adult at its area's centre, marching and hitting as one. */
 function reinforcement(id: number, cell: string, x: number, z: number, map: ForestMap): Fighter {
   const A = COMBAT.attacks[COMBAT.byLevel.melee[2]!];
-  return { id, level: 2, cell, x, z, x0: x, z0: z, speed: map.tuning.creatureSpeed * map.tuning.combat.marchMult, dps: COMBAT.levels.dps[2], reach: A.range + (A.lunge ?? 0) - 0.3, value: levelValue(2), m: 1, siege: null, gone: false };
+  return { id, level: 2, cell, x, z, x0: x, z0: z, speed: marchSpeedOf("", 2, map.tuning), dps: COMBAT.levels.dps[2], reach: A.range + (A.lunge ?? 0) - 0.3, value: levelValue(2), m: 1, siege: null, gone: false };
 }
