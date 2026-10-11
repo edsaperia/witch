@@ -3,6 +3,7 @@ import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
 import { MOVEMENT } from "./movement";
+import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
 import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, waveArrived, waveTempo, type BeatClock } from "./beat";
@@ -158,6 +159,8 @@ export interface Game {
   speakerBoot: (number | null)[];
   /** The beat clock: beats by game time, its tempo rising wave by wave (rules/beat.ts). */
   beat: BeatClock;
+  /** The night's set (rules/musicSet.ts; Ed, 2026-10-11): the music's arc for this night, a step a wave. */
+  musicSet: NightSet | null;
   /** Every knockdown (any witch's), in order (Ed, 2026-10-09): `at` when she went down (the record scratched, the music
    *  stopped) and `back` when her wait behind the decks ends (a bar line: she's put a new record on, and its music starts
    *  from the top, re-seeded: "Being knocked down changes the music to a random new seed"), in game time. rules/musicPlan.ts
@@ -220,6 +223,9 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
   const map = generateMap(seed, tuning);
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
+  // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
+  // gameplay's: Ed, "tempo is set by the gameplay")
+  const set = nightFor(map, seed);
   const g = {
     seed, tuning, map, forest, creatures, clock: newClock(), witches,
     get witch() { return this.witches[0].body; }, set witch(w: WitchState) { this.witches[0].body = w; },
@@ -228,7 +234,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
-    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[],
+    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
     combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
