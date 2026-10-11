@@ -1,0 +1,176 @@
+diff --git a/art/areas.js b/art/areas.js
+index 30fbbbd0..39a33e0f 100644
+--- a/art/areas.js
++++ b/art/areas.js
+@@ -28,6 +28,15 @@ const P = (kind, o = {}) => [kind, o];
+ 
+ // floor: [texture, hue, saturation, value]; leaf: leaf hue for this area's plants.
+ export const AREAS = [
++  // ---- north biome concepts (2026-10-11, not in the game) ----
++  { id: "snowy-pinewood", name: "Snowy pinewood", creature: "wolverine", by: "concept", leaf: .4, floor: ["snow", .6, .12, .82], text: { floor: "snow over pine needles", small: "snow-capped juniper", big: "tall pines and firs", set: "a trapper's food cache on stilts" },
++    small: [P("shrub", { spiky: true, flower: [70, 90, 160] })], big: [tree("pine", { scale: 1.35 }), tree("fir", { scale: 1.2 }), tree("fir", { minor: true, scale: .7 })] },
++  { id: "lichen-tundra", name: "Lichen tundra", creature: "reindeer", by: "concept", leaf: .17, floor: ["lichen", .14, .28, .6], text: { floor: "reindeer lichen and crowberry", small: "cotton grass", big: "frost mounds, boulders, dwarf birch", set: "a cairn crowned with shed antlers" },
++    small: [P("grass", { h: .8, leafHue: .14, leafSat: .3 })], big: [P("mound", { moss: true }), P("boulder", { sparse: .2 }), tree("birch", { scale: .4, lean: .35, minor: true }), P("standingstone", { sparse: .1 })] },
++  { id: "glacier-moraine", name: "Glacier moraine", creature: "muskox", by: "concept", leaf: .3, floor: ["ice", .55, .32, .78], text: { floor: "old ice and gravel", wall: "meltwater", small: "loose stones", big: "boulders the ice left", set: "a blue ice arch over the meltwater" },
++    wall: [P("water", { w: 1.4 })], small: [P("stones")], big: [P("boulder", { big: true }), P("boulder"), P("cairn", { sparse: .1, tall: true })], ice: true },
++  { id: "snowy-fell", name: "Snowy fell", creature: "lemming", by: "concept", leaf: .26, floor: ["snow", .6, .1, .86], text: { floor: "wind-packed snow", small: "dwarf willow", big: "bent mountain birches and boulders", set: "a glacial erratic, burrows beneath" },
++    small: [P("shrub", { flower: [235, 225, 190] })], big: [tree("birch", { scale: .55, lean: .55 }), P("boulder", { sparse: .2 })] },
+   { id: "moor", name: "Moor", creature: "badger", by: "Ed", leaf: .24, floor: ["heather", .95, .28, .36], ground: { patches: [{ mat: "TRUNK", n: 3, r: [4, 7] }, { mat: "MOSS", n: 3, r: [3, 6] }], details: [{ stamp: "moss", n: 18, mats: ["LEAF3", "LEAF", "LEAF2"] }, { stamp: "sprig", n: 34, mats: ["LEAF3", "BODY", "FLOWER"] }] } /* violet-brown heather and moss (the art director, round 1) */, text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
+     wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4, leafHue: .97, leafSat: .55 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 })] },
+   { id: "fern-forest", name: "Fern forest", creature: "boar", by: "Ed", leaf: .3, floor: ["needles", .3, .4, .3], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
+diff --git a/art/genome/species.js b/art/genome/species.js
+index c72827d4..24241ab6 100644
+--- a/art/genome/species.js
++++ b/art/genome/species.js
+@@ -141,4 +141,46 @@ export const GENOMES = [
+   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
+   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
+   { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },
++  // ---- north biome concepts (2026-10-11, not in the game) ----
++  { id: "reindeer", name: "Reindeer", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .38, val: .42, belly: "white" }, body: { hgt: 1.05, len: .64, chest: .5, tuck: .58, neck: .36, neckAng: .55, neckW: .44, hr: .25, legW: 1.1, back: "hump", humpK: .8 }, head: { snout: 1.1, snoutD: .72, snoutTaper: .85, muzzle: true }, parts: { ears: { kind: "small", size: 1 }, tail: "stub", feet: "hoof", antlers: "branch" }, coat: { belly: true, socks: .22, rump: true }, legend: ["antlersGlow"],
++    levels: [
++      { body: { len: .52, legW: 1.3 }, head: { snout: .7 }, coat: { spots: true } },
++      null,
++      { body: { hgt: 1.12, humpK: 1.1 }, features: [{ kind: "ruff", size: .22, count: 16 }] },
++      { body: { hgt: 1.2, humpK: 1.3, legW: 1.25 }, head: { eyeGlow: true, frost: true, features: ["antlersGlow"] }, features: [{ kind: "ruff", size: .32, count: 22 }, { kind: "mane", from: .55, to: 1, height: .22, count: 12, lean: .4, mat: "BELLY" }] },
++    ] },
++  { id: "muskox", name: "Musk ox", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .45, val: .3 }, body: { hgt: .95, len: .7, chest: .26, tuck: .3, neck: .14, neckAng: -.1, neckW: .62, hr: .3, legW: 1.3, back: "hump", front: 1.25, humpK: 2.2, bw: .4 }, head: { snout: .7, snoutD: .75, snoutTaper: .85, muzzle: true, horn: { length: .8, r: .26, curl: .55, twist: .2, ridges: 0, segs: 8, out: .45, mat2: "BELLY" } }, parts: { ears: { kind: "small", size: .5 }, tail: "stub", feet: "hoof", horns: "twist" }, coat: { shaggy: true, legMat: "BELLY" }, legend: ["tusksBig"],
++    levels: [
++      { body: { len: .55, chest: .3, tuck: .34, humpK: 1 }, head: { horn: { length: .2, r: .2, curl: .2, twist: 0, segs: 4, out: .3, ridges: 0 } } },
++      { features: [{ kind: "mane", belly: true, from: .05, to: .95, height: .18, count: 22, lean: .08 }] },
++      { features: [{ kind: "mane", belly: true, from: .02, to: 1, height: .3, count: 30, lean: .06 }, { kind: "mane", from: .3, to: .95, height: .16, count: 12, lean: .3 }] },
++      { body: { humpK: 2.8, front: 1.35, legW: 1.6, len: .82 }, head: { eyeGlow: true, frost: true, tuskSize: 1.9, tuskCurl: 1.1 }, parts: { tusks: true }, features: [
++        { kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 36, lean: .05 },
++        { kind: "mane", from: .15, to: 1, height: .22, count: 16, lean: .3 },
++        { kind: "stones", from: .2, to: .75, count: 4, height: .42, mat: "WEB" },
++        { kind: "wisps", at: "tusks", size: .26, mat: "MAGIC" },
++      ] },
++    ] },
++  { id: "wolverine", name: "Wolverine", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .5, val: .28 }, body: { hgt: .72, len: .7, chest: .3, tuck: .36, neck: .24, neckAng: .3, neckW: .5, hr: .29, legW: 1.25, back: "arch", bw: .34 }, head: { snout: .7, snoutD: .62, snoutTaper: .7, face: "dark" }, parts: { ears: { kind: "round", size: .75 }, tail: "bushy", feet: "paw" }, coat: { saddle: true }, legend: ["mane"],
++    levels: [
++      { body: { len: .55, hr: .32 }, head: { snout: .5 }, parts: { tail: "puff" } },
++      null,
++      { body: { hgt: .78, legW: 1.4 }, features: [{ kind: "claws", size: .15, mat: "BELLY" }, { kind: "mane", from: .35, to: .95, height: .08, count: 12, lean: .6 }] },
++      { body: { hgt: .85, legW: 1.6, front: 1.15 }, head: { eyeGlow: true, frost: true }, features: [
++        { kind: "claws", size: .26, mat: "WEB" },
++        { kind: "mane", from: .15, to: 1, height: .34, count: 22, lean: .3, mat: "WEB" },
++        { kind: "wisps", at: "mane", size: .26, count: 6, from: .1, to: .9, mat: "MAGIC", lift: .25 },
++      ] },
++    ] },
++  { id: "lemming", name: "Lemming", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .6, val: .62, belly: "white" }, body: { hgt: .4, len: .5, chest: .32, tuck: .34, neck: .1, neckAng: .4, neckW: .62, hr: .33, legW: 1.1, bw: .42 }, head: { snout: .42, snoutD: .75, snoutTaper: .9, whiskers: true, face: "dark" }, parts: { ears: { kind: "round", size: .45 }, tail: "stub", feet: "paw" }, coat: { belly: true, saddle: true }, legend: ["mane"],
++    levels: [
++      { body: { len: .44 } },
++      null,
++      { features: [{ kind: "ruff", size: .14, count: 12 }] },
++      { body: { hgt: .55, len: .6, bw: .5 }, head: { eyeGlow: true, frost: true }, features: [
++        { kind: "ruff", size: .26, count: 18 },
++        { kind: "stones", from: .3, to: .75, count: 3, height: .3, mat: "WEB" },
++        { kind: "wisps", at: "mane", size: .28, count: 5, from: .15, to: .85, mat: "MAGIC", lift: .2 },
++      ] },
++    ] },
+ ];
+diff --git a/art/ground.js b/art/ground.js
+index 7cfa80f9..9b48af0a 100644
+--- a/art/ground.js
++++ b/art/ground.js
+@@ -56,6 +56,10 @@ export const GROUND_GENOMES = {
+   heather: grG({}, [grD("sprig", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("blade", 16, GR_GRASS)]),
+   bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
+   clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
++  // north biome concepts (2026-10-11, not in the game): snow with needles and grass poking through, lichen heath, glacier ice
++  snow: grG({ scale: [12, 6], cuts: [.3, .62] }, [grD("needle", 14, ["BODY2", "ACCENT", "ACCENT"]), grD("blade", 12, GR_GRASS), grD("pebble", 5, GR_STONES)], { patches: [{ mat: "STONE", n: 2, r: [2, 4] }] }),
++  lichen: grG({ scale: [6, 5] }, [grD("moss", 40, ["BODY2", "BODY", "BELLY"]), grD("sprig", 22, ["LEAF3", "LEAF", "FLOWER"]), grD("pebble", 10, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 5] }, { mat: "MOSS", n: 2, r: [3, 6] }] }),
++  ice: grG({ scale: [14, 5], cuts: [.34, .7] }, [grD("slab", 7, ["BODY2", "BODY", "BELLY"]), grD("pebble", 16, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 6] }], puddles: { n: 2, r: [3, 6] } }),
+ };
+ 
+ // The genome an area's floor grows from: its floor kind's, with the area's own `ground` over it.
+diff --git a/art/setpieces.js b/art/setpieces.js
+index 873658cd..c67aca46 100644
+--- a/art/setpieces.js
++++ b/art/setpieces.js
+@@ -20,6 +20,37 @@ const spWater = (m, c, r, g) => m.ell(c, [r[0], .015, r[1]], M.WATER, { group: g
+ 
+ // Each builder fills a model; the ground is y = 0, x right, z towards the viewer.
+ const spSETS = {
++  // ---- north biome concepts (2026-10-11, not in the game); snow is BELLY, ice CLOTH (recoloured for ice areas) ----
++  // snowy pinewood: a trapper's food cache, a log hut on four tall posts out of reach, a ladder leaning, snow on its roof, claw marks up a post
++  "food-cache"(m) {
++    for (const [x, z] of [[-.55, -.4], [.55, -.4], [-.55, .4], [.55, .4]]) m.seg([x, 0, z], [x * .95, 1.9, z * .95], .1, .09, M.TRUNK, { group: 1, rough: .012, paint: p => x > 0 && z > 0 && p[1] > .5 && p[1] < 1.2 && (p[1] * 9) % 1 < .25 ? M.BARKL : spBark(p) });
++    m.box([0, 2.25, 0], [.72, .36, .55], M.WOOD, { round: .04, group: 2, paint: p => (p[1] * 9) % 1 < .2 ? M.BARKD : p[2] > .5 && Math.abs(p[0]) < .18 && p[1] < 2.4 ? M.NOSE : undefined });
++    for (const s of [-1, 1]) m.box([0, 2.78, s * .32], [.86, .05, .4], M.BELLY, { dir: [1, 0, 0], up: [0, .8, s * .6], round: .04, group: 3, rough: .02 });
++    m.chain([[.9, 0, .7, .04], [.5, 2.05, .62, .04]], M.WOOD, { group: 4 }); m.chain([[1.15, 0, .55, .04], [.75, 2.05, .47, .04]], M.WOOD, { group: 4 });
++    for (let i = 1; i < 7; i++) { const t = i / 7; m.seg([.9 - .4 * t, 2.05 * t, .7 - .08 * t], [1.15 - .4 * t, 2.05 * t, .55 - .08 * t], .025, .025, M.WOOD, { group: 4 }); }
++    for (let i = 0; i < 6; i++) m.ell([-1.2 + i * .5, .05, .9 + spHash(i) * .3], [.35, .08, .25], M.BELLY, { group: 5 + i, rough: .02 }); // drifts
++  },
++  // lichen tundra: a cairn crowned with shed antlers, lichen on its stones
++  "antler-cairn"(m) {
++    let y = 0; for (let ring = 0; ring < 5; ring++) { const R = .8 - ring * .15, n = Math.max(3, 8 - ring); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + ring; spRockAt(m, [Math.cos(a) * R * .8, y + .14, Math.sin(a) * R * .7], [.22 - ring * .02, .15, .18 - ring * .02], 1 + ((ring + i) % 3)); } y += .26; }
++    for (const [a, k] of [[.3, 1], [2.1, .9], [4, 1.1], [5.2, .8]]) { const b = [Math.cos(a) * .15, y, Math.sin(a) * .12], d = [Math.cos(a), 0, Math.sin(a)], tip = v3.add(b, [d[0] * .5 * k, .9 * k, d[2] * .4]);
++      m.chain([[...b, .05], [...v3.add(v3.lerp(b, tip, .5), [d[0] * .2, 0, d[2] * .2]), .04], [...tip, .02]], M.BARKL, { group: 6 });
++      for (const t of [.35, .6, .85]) { const q = v3.lerp(b, tip, t); m.chain([[...q, .025], [...v3.add(q, [-d[0] * .2, .2, -d[2] * .15]), .01]], M.BARKL, { group: 6 }); } }
++    spTufts(m, 14, 1.6, 10, 4, .2, M.LEAF2);
++  },
++  // glacier moraine: a blue ice arch over the meltwater, boulders frozen into it
++  "ice-arch"(m) {
++    for (let i = 0; i <= 16; i++) { const t = i / 16, a = Math.PI * t, x = -Math.cos(a) * 1.6, y = Math.sin(a) * 1.7, r = .45 + .25 * Math.abs(Math.cos(a)); m.ell([x, y + r * .4, 0], [r, r, .55], M.CLOTH, { group: 1 + (i % 3), rough: .03, paint: p => p[1] > y + r * 1.1 ? M.BELLY : spHash(Math.floor(p[0] * 9), Math.floor(p[1] * 9)) < .1 ? M.WATER : undefined }); }
++    spWater(m, [0, .01, .2], [1.1, 1.2], 6);
++    spRockAt(m, [-1.9, .25, .5], [.3, .25, .25], 7, false); spRockAt(m, [1.5, 1.2, .4], [.18, .16, .15], 8, false); spRockAt(m, [2, .2, -.2], [.4, .3, .3], 9, false);
++  },
++  // snowy fell: a glacial erratic, a great boulder balanced on three small stones, a snow cap, lemming burrows under it
++  "erratic"(m) {
++    for (const [x, z] of [[-.5, .2], [.45, .3], [0, -.4]]) spRockAt(m, [x, .2, z], [.28, .22, .25], 1, false);
++    m.ell([0, 1.15, 0], [1.25, .8, .95], M.STONE, { group: 2, rough: .05, paint: p => p[1] > 1.65 ? M.BELLY : Math.abs(Math.sin(p[0] * 9 + p[2] * 5)) < .05 ? M.STONED : spHash(Math.floor(p[0] * 7), Math.floor(p[2] * 7)) < .12 && p[1] < 1.4 ? M.MOSS : undefined });
++    for (const [x, z] of [[-1.2, .9], [.9, 1], [1.4, .2]]) { m.ell([x, .06, z], [.22, .1, .18], M.BELLY, { group: 3 }); m.ell([x, .05, z + .1], [.08, .06, .02], M.NOSE, { group: 3 }); }
++    for (let i = 0; i < 5; i++) m.ell([-1.6 + i * .8, .05, -.1 + spHash(i, 3) * 1.2], [.4, .08, .3], M.BELLY, { group: 4 + i, rough: .02 });
++  },
+   // moor: the sleeping giant, a long mound of moss shaped like a figure lying on its back
+   "sleeping-giant"(m) {
+     const moss = c => p => { const n = spHash(Math.floor(p[0] * 8), Math.floor(p[2] * 8) + Math.floor(p[1] * 8) * 5); return n < .15 ? M.LEAF3 : n > .86 ? M.LEAF2 : undefined; };
+@@ -231,6 +262,10 @@ export const NEW_SET_PIECES = {
+   "hazel-forest": ["fairy-ring", "a ring of fairy stones and toadstools", 1.1],
+   "twiggy-forest": ["charcoal-hut", "a charcoal burner's hut of sticks, its mound smouldering", 1],
+   "ancient": ["root-arch", "a great arch of roots over mossy stones", 1.1],
++  "snowy-pinewood": ["food-cache", "a trapper's food cache on stilts", 1.1],
++  "lichen-tundra": ["antler-cairn", "a cairn crowned with shed antlers", 1.2],
++  "glacier-moraine": ["ice-arch", "a blue ice arch over the meltwater", 1.3],
++  "snowy-fell": ["erratic", "a glacial erratic, burrows beneath", 1.3],
+   "norway": ["turf-hut", "a log cabin with a turf roof", 1.15],
+   "alder-forest": ["heron-rookery", "an alder holding herons' stick nests", 1],
+   "meadow": ["sundial", "a moonlit sundial on a stone dais in a ring of flowers", 1.2],
+@@ -258,6 +293,7 @@ export function setPieceColours(def, st) {
+     [M.WATER]: [52, 78, 104], [M.NOSE]: [16, 14, 20],
+     [M.GLOW]: [255, 120, 40], [M.MAGIC]: hsv2rgb(st.magicHue ?? .45, .6, 1), [M.MAGIC2]: hsv2rgb(st.magicHue ?? .45, .2, 1), [M.RUNE]: [120, 230, 255],
+     [M.LINE]: [24, 22, 30],
++    ...(def?.ice || ["snowy-pinewood", "snowy-fell", "lichen-tundra"].includes(def?.id) ? { [M.CLOTH]: [168, 210, 230], [M.BELLY]: [236, 242, 248] } : {}),
+   };
+ }
+ // One area's new set piece: { sp, colours, metres: { width, height } }, drawn at the witch's scale.
+diff --git a/art/sigils.js b/art/sigils.js
+index 71387f6d..2621cae6 100644
+--- a/art/sigils.js
++++ b/art/sigils.js
+@@ -55,6 +55,15 @@ const C = (cx, cy, r) => A(cx, cy, r, -90, 270); // a circle, drawn from the top
+ const E = (cx, cy, rx, ry, a0 = -90, a1 = 270, n = 36) => L(...Array.from({ length: n + 1 }, (_, i) => { const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180; return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; }));
+ const at = (cx, cy, r, deg) => [cx + r * Math.cos(deg * Math.PI / 180), cy + r * Math.sin(deg * Math.PI / 180)];
+ export const SIGILS = {
++  // ---- north biome concepts (2026-10-11, not in the game) ----
++  // a long narrow face, and its antlers: two great C-shaped beams sweeping back and up, a shovel tine down over its brow
++  reindeer: [...pair(L([.43, .44], [.42, .74], [.45, .86], [.5, .88]), D(.45, .55), bow([.43, .42], [.2, .06], .28), L([.3, .3], [.13, .33]), L([.24, .17], [.08, .19]), L([.45, .4], [.4, .26], [.47, .22])), L([.43, .44], [.57, .44])],
++  // a broad low head under a heavy boss, its horns sweeping out, down and hooking up, a long shaggy fringe hanging below
++  muskox: [L([.36, .26], [.64, .26]), ...pair(L([.36, .26], [.2, .26], [.09, .36], [.09, .55], [.19, .58]), L([.36, .3], [.32, .6], [.4, .8], [.5, .84]), D(.39, .46), L([.28, .56], [.24, .82]), L([.36, .76], [.34, .94])), D(.5, .76)],
++  // a broad bear-like face with little round ears, and the wolverine's mark: the pale band sweeping round from ear to ear
++  wolverine: [E(.5, .58, .34, .3), ...pair(A(.22, .32, .07, 110, 330), D(.38, .55)), A(.5, .72, .48, 222, 318), D(.5, .7), bow([.42, .8], [.58, .8], -.25)],
++  // a round little face, tiny ears hidden in the fur, whiskers, and its two front teeth
++  lemming: [C(.5, .55, .3), ...pair(A(.29, .3, .06, 140, 320), D(.4, .5), L([.36, .64], [.1, .6]), L([.37, .69], [.12, .76])), D(.5, .62), L([.47, .7], [.47, .78], [.53, .78], [.53, .7])],
+   // a sharp, angular face: tall pointed ears, a long wedge of a muzzle, slanted eyes
+   wolf: [...pair(L([.4, .3], [.22, .07], [.17, .44], [.32, .7], [.5, .92])), L([.4, .3], [.6, .3]), ...pair(L([.31, .46], [.42, .5])), D(.5, .82)],
+   // big triangle ears, a cheek ruff flaring wide, a narrow pointed snout
+@@ -280,7 +289,7 @@ export function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx
+ export const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
+ // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
+ // so area types near each other in the list never share a colour.
+-export const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid" };
++export const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", reindeer: "cyan", muskox: "violet", wolverine: "mint", lemming: "lemon" };
+ export const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
+ const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
+ const rgb = c => `rgb(${c.join(",")})`;
