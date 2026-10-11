@@ -1,9 +1,9 @@
 // The sea chart's save (wave 2, part C; Ed, 2026-10-10/11, docs/backlog/journey.md "The world and the sea chart"): what she's
 // found, kept in this browser. Islands appear on the chart as their legends are woken (a night won with that legend among its
 // dealt ones: rules/win.ts found; an enraged legend's island stays hidden), each found from the island she set out from (a
-// voyage, a line on the chart); won islands are marked; kinds she's met light their sigils. Losing loses nothing (Ed,
+// voyage, a line on the chart); won islands are marked; every island is drawn, a sigil only on those she can travel to. Losing loses nothing (Ed,
 // 2026-10-11): the night's island is only played. Every storage access is try/caught: blocked storage plays with nothing saved.
-import { homeKinds, isPlaceholder, islandOf, KINDS, playableIsland, REAL_KINDS } from "../rules/rosters";
+import { isPlaceholder, KINDS, playableIsland, REAL_KINDS } from "../rules/rosters";
 
 export const SAVE_KEY = "witch.chart";
 
@@ -67,15 +67,6 @@ export function recordNight(save: ChartSave, island: string, result: { won: bool
 
 /** The islands she can play: home and every one found. */
 export const unlocked = (save: ChartSave): string[] => ["home", ...save.found];
-
-/** The kinds she's met (their sigils lit on the chart): home's from the start, every kind on an island she's played, and every
- *  island's kind she's found. */
-export function discovered(save: ChartSave): Set<string> {
-  const out = new Set<string>(homeKinds());
-  for (const k of save.found) out.add(k);
-  for (const p of save.played) if (p !== "home") for (const r of islandOf(p)?.roster ?? []) out.add(r.kind);
-  return out;
-}
 
 /** Every island found, won and played, every kind met (?chart=all, for testing): a save with the whole chart open, the
  *  placeholders' '?' islands too (their voyages from the island nearest them a phase in). */

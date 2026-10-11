@@ -1,14 +1,14 @@
 // The sea chart's page (chart.html; wave 2, part C; Ed, docs/backlog/journey.md "The world and the sea chart"): the world as a
-// disc, home in the middle, each island found drawn in its outline (art/islands.js islandPath of rules/islandShape.ts
-// islandCoast: the map's own coast) with its kind's sigil, at its kind's bearing on its phase's ring; the sigils of kinds she's
-// met lit, even where their islands aren't found yet; the voyages as dotted lines; won islands starred. Click an island to sail
+// disc, home in the middle, every island in its outline (art/islands.js islandPath of rules/islandShape.ts islandCoast: the
+// map's own coast) at its kind's bearing on its phase's ring, a sigil only on those she can travel to; the voyages as dotted
+// lines; won islands starred. Click an island to sail
 // there (?island=<kind>). Start over (after an are-you-sure) forgets it all; ?chart=all shows everything, for testing.
 import { ISLAND_LOOK, islandPath } from "../../art/islands.js";
 import { islandSigil, sigilArrival, sigilColour } from "../../art/sigils.js";
 import { islandCoast } from "../rules/islandShape";
-import { coastSpec, homeIsland, homeKinds, isPlaceholder, islandOf, KIND_NAMES, REAL_KINDS } from "../rules/rosters";
+import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
-import { allSave, clearSave, discovered, loadSave, unlocked } from "./chartSave";
+import { allSave, clearSave, loadSave, unlocked } from "./chartSave";
 import { BOX, islandAt, ringOf } from "./chartLayout";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -47,32 +47,26 @@ function draw(): void {
     const a = islandAt(v.from), b = islandAt(v.to);
     if (a && b) el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "rgba(232,180,106,.55)", "stroke-width": 1.5, "stroke-dasharray": "1 4", "stroke-linecap": "round", "vector-effect": "non-scaling-stroke" });
   }
-  const met = discovered(save), open = new Set(unlocked(save)), won = new Set(save.won);
-  // home, then every island found; the sigils of kinds she's met (their islands not found yet) on their own
+  // Every island, always (Ed, 2026-10-11: "You can always see all the islands - you only see sigils on the ones that you can
+  // travel to"): home and each island found in its outline with its sigil, sailable; the rest bare outlines, dimmer, no link
+  // (the placeholders' too; under ?chart=all those show a '?').
+  const open = new Set(unlocked(save)), won = new Set(save.won);
   const islands: { id: string; radii: Float32Array; sigil: string }[] = [];
   islands.push({ id: "home", radii: islandCoast({ kind: "home", areas: homeIsland(0).size }, TUNING.map?.coast).radii, sigil: islandSigil("home") });
-  for (const k of KIND_NAMES) if (open.has(k)) islands.push({ id: k, radii: islandCoast(coastSpec(islandOf(k)!), TUNING.islands?.coast).radii, sigil: k });
-  for (const k of KIND_NAMES) {
-    if (open.has(k) || !met.has(k)) continue;
-    const at = islandAt(k)!, s = 0.045;
-    const g = el("g", { opacity: 0.8 });
-    el("title", {}, g).textContent = `${k}: met, its island not yet found`;
-    el("image", { href: sigilImage(k), x: at.x - s / 2, y: at.y - s / 2, width: s, height: s }, g);
-  }
+  for (const k of KIND_NAMES) islands.push({ id: k, radii: islandCoast(coastSpec(islandOf(k)!), TUNING.islands?.coast).radii, sigil: k });
   for (const isl of islands) {
-    // (a placeholder's island, a kind not designed yet: drawn with '?', not sailable: Ed, 2026-10-11)
-    const unknown = isPlaceholder(isl.id), at = islandAt(isl.id)!;
-    const a = unknown ? el("g", { opacity: 0.75 }) : el("a", { href: `./?island=${isl.id}`, class: "island", tabindex: 0 });
-    el("title", {}, a).textContent = unknown ? "Not yet charted" : `${isl.id === "home" ? "Home" : `The ${isl.id}'s island`}${won.has(isl.id) ? " (won)" : ""}: sail there`;
+    const at = islandAt(isl.id)!, unknown = isPlaceholder(isl.id), sail = open.has(isl.id) && !unknown;
+    const a = sail ? el("a", { href: `./?island=${isl.id}`, class: "island", tabindex: 0 }) : el("g", { opacity: 0.55 });
+    el("title", {}, a).textContent = sail ? `${isl.id === "home" ? "Home" : `The ${isl.id}'s island`}${won.has(isl.id) ? " (won)" : ""}: sail there` : unknown ? "Not yet charted" : "Not yet found";
     const g = el("g", { transform: `translate(${at.x - BOX / 2} ${at.y - BOX / 2}) scale(${BOX})` }, a);
     el("path", { d: islandPath(isl.radii), class: "land", fill: rgb(ISLAND_LOOK.land2), stroke: rgb(ISLAND_LOOK.sand), "stroke-width": 1.5, "vector-effect": "non-scaling-stroke" }, g);
     const s = isl.id === "home" ? 0.06 : 0.045;
-    if (unknown) { const q = el("text", { x: at.x, y: at.y, "text-anchor": "middle", "dominant-baseline": "central", "font-size": 0.05, "font-weight": "bold", fill: "#9a93b4" }, a); q.textContent = "?"; }
-    else el("image", { href: sigilImage(isl.sigil), x: at.x - s / 2, y: at.y - s / 2, width: s, height: s }, a);
+    if (sail) el("image", { href: sigilImage(isl.sigil), x: at.x - s / 2, y: at.y - s / 2, width: s, height: s }, a);
+    else if (unknown && showAll) { const q = el("text", { x: at.x, y: at.y, "text-anchor": "middle", "dominant-baseline": "central", "font-size": 0.05, "font-weight": "bold", fill: "#9a93b4" }, a); q.textContent = "?"; }
     if (won.has(isl.id)) { const star = el("text", { x: at.x + 0.045, y: at.y - 0.04, "font-size": 0.05, fill: "#e8b46a" }, a); star.textContent = "✦"; }
   }
   const n = save.found.filter(k => !isPlaceholder(k)).length;
-  document.getElementById("status")!.textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : `${homeKinds().length} kinds known: wake their legends at home to find their islands`}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
+  document.getElementById("status")!.textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : `wake legends at home to find their islands`}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
 }
 
 document.getElementById("start-over")!.addEventListener("click", () => {

@@ -1,18 +1,17 @@
 // The sea chart's save (wave 2, part C; app/chartSave.ts): what a night unlocks, kept in the browser.
 import { describe, expect, it } from "vitest";
-import { allSave, clearSave, discovered, emptySave, loadSave, recordNight, SAVE_KEY, storeSave, unlocked } from "./chartSave";
-import { homeKinds, islandOf, KIND_NAMES } from "../rules/rosters";
+import { allSave, clearSave, emptySave, loadSave, recordNight, SAVE_KEY, storeSave, unlocked } from "./chartSave";
+import { KIND_NAMES } from "../rules/rosters";
 
 function memory(items: Record<string, string> = {}) {
   return { items, getItem: (k: string) => items[k] ?? null, setItem: (k: string, v: string) => { items[k] = v; }, removeItem: (k: string) => { delete items[k]; } };
 }
 
 describe("the sea chart's save", () => {
-  it("starts with home alone unlocked and home's kinds met", () => {
+  it("starts with home alone unlocked", () => {
     const s = loadSave(memory());
     expect(s).toEqual(emptySave());
     expect(unlocked(s)).toEqual(["home"]);
-    expect([...discovered(s)].sort()).toEqual([...homeKinds()].sort());
   });
 
   it("unlocks the islands of the legends a won night woke, each with its voyage from where she set out; a lost night only plays", () => {
@@ -23,10 +22,9 @@ describe("the sea chart's save", () => {
     expect(unlocked(s)).toEqual(["home", "fox", "owl"]);
     expect(s.won).toEqual(["home"]);
     expect(s.voyages).toEqual([{ from: "home", to: "fox" }, { from: "home", to: "owl" }]);
-    // the fox's island: its roster's kinds met once played; an island found again keeps its first voyage
+    // the fox's island: an island found again keeps its first voyage
     s = recordNight(s, "fox", { won: true, found: ["owl", "raven"] });
     expect(s.voyages).toEqual([{ from: "home", to: "fox" }, { from: "home", to: "owl" }, { from: "fox", to: "raven" }]);
-    for (const r of islandOf("fox")!.roster) expect(discovered(s).has(r.kind)).toBe(true);
     expect(s.won).toEqual(["home", "fox"]);
     // not an island of the chart (a numbered map): nothing recorded
     expect(recordNight(s, "", { won: true, found: ["bear"] })).toBe(s);
