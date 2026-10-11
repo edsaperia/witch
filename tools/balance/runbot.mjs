@@ -2,10 +2,8 @@
 // (src/rules/game.ts, waves on, the boot-up from her first step) for the first --time seconds of a
 // run, and we read off what a playtester would feel: when she's first knocked out, how much of each
 // woken area she'd invited before its wave, how many legends are angry, and how the run ends.
-//   skilled: recruits carefully (never empties an area of its own kind, so no legend grows
-//     restless), does a legend's quest when she carries the creature it dreams of, heads for the
-//     next wave's soundsystem before it lands and parks some of her posse there as guards, kites
-//     fighters, and rises to the treetops to heal at her last hit;
+//   skilled: recruits carefully ahead of the wave, answers sieges, blinks, heals part way and
+//     sees off the win's stragglers (rules/bot.ts says it all; tools/balance/bottrace.mjs traces a run);
 //   idle: stands at home all run (the sieges alone, for comparing rules changes seed by seed);
 //   hover: idle, but over the treetops (nothing can go for her);
 //   crude: invites everything in the nearest wild area, area after area, and never parks, defends

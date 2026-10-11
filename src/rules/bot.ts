@@ -3,12 +3,16 @@
 // back the very controls a player's input would. The balance tool plays them headless to measure a run; the game's bot
 // game (?bot=skilled, the start screen's Bot game) plays them in real time to watch. One module, so the tactics the
 // balance builder tunes are the ones the bot game shows.
-//   skilled: recruits carefully (never empties an area of its own kind, so no legend grows restless), does a legend's
-//     quest when she carries the creature it dreams of, heads for the next wave's soundsystem before it lands and parks
-//     some of her posse there as guards, kites fighters, and rises to the treetops to heal at her last hit;
+//   skilled: recruits carefully (never empties an area of its own kind, so no legend grows restless), ahead of the wave
+//     (the areas the next two waves wake first, sticking with an area while it has anyone), answers the sieges her posse
+//     can take (standing behind the soundsystem), picks up guards left stranded, blinks out of blows, kites fighters,
+//     rises to heal at her last hit (back down part healed), and at the route's end takes her posse to the stragglers;
+//     with feed, puts her babies' sigils down by ripe berries till they're youths (bots-again, 2026-10-11: the islands'
+//     minute-a-wave pace; before, it stood at each next soundsystem before its wave and barely invited);
 //   idle: stands at home all run (the sieges alone);
 //   hover: idle, but over the treetops (nothing can go for her);
-//   crude: invites everything in the nearest wild area, area after area, and never parks, defends or heals.
+//   crude: invites everything in the nearest wild area, area after area, and never parks, defends or heals (it does go
+//     for the win's stragglers, gathering her posse first: without that no bot ever won).
 // She flies between areas over the treetops and fights on the ground, as a player does. Seeded and deterministic: no
 // clock, no Math.random; the same game and the same steps give the same controls.
 import { AREA_TYPES } from "./map";
