@@ -29,11 +29,25 @@ const CLEAR = { sparks: 56, reach: 14, y: 2.4, motes: 44, rise: 4.2, flash: 0.45
 /** The party's neons for a burst (cyan, blue, violet, magenta, pink, gold, green), along a hue 0-1. */
 const NEONS = [[0.3, 1, 1], [0.35, 0.55, 1], [0.7, 0.4, 1], [1, 0.3, 0.9], [1, 0.45, 0.6], [1, 0.82, 0.3], [0.45, 1, 0.5]];
 const neon = (h: number, out: number[]) => { const c = NEONS[Math.floor(((h % 1) + 1) % 1 * NEONS.length) % NEONS.length]; out[0] = c[0]; out[1] = c[1]; out[2] = c[2]; };
+/** The win's finale (Ed, 2026-10-11: when an island is won, every soundsystem fires fireworks), unlike any wave's show: gold and
+ *  silver, and rainbows. A peony's stars each their own neon round it (a rainbow chrysanthemum); a ring doubled, gold outside and
+ *  silver in; a willow's gold glittering as it droops; a crackle all white-silver strobes. More stars a shell, and longer. */
+const GOLD = [1, 0.78, 0.32], SILVER = [0.86, 0.9, 1];
+const set3 = (out: number[], c: readonly number[], w = 0) => { out[0] = c[0] + (1 - c[0]) * w; out[1] = c[1] + (1 - c[1]) * w; out[2] = c[2] + (1 - c[2]) * w; };
+export const WIN_STARS = 1.4, WIN_LIFE = 1.35;
+/** A win shell's star `i`, at azimuth `a` (radians) round its burst: its colour into `out`, and its motion (1 a star, 3 a
+ *  crackling one, 5 a glittering willow's). */
+export function winStar(kind: Shell["kind"], i: number, a: number, inner: boolean, out: number[]): number {
+  if (kind === "peony") { neon(a / (Math.PI * 2), out); set3(out, out, i % 5 ? 0 : 0.5); return 1; } // (round the rainbow, every fifth star whiter)
+  if (kind === "ring") { set3(out, inner ? SILVER : GOLD); return 1; }
+  if (kind === "willow") { set3(out, GOLD, i % 3 ? 0 : 0.35); return 5; } // (gold rain, glittering as it falls)
+  set3(out, SILVER, 0.3); return 3; // (a crackle: white-silver strobes)
+}
 
 const VERT = /* glsl */ `
 attribute vec4 aFrom; // start (x, height over the ground, z) and when (s)
 attribute vec4 aVel;  // velocity (m/s) and life (s)
-attribute vec4 aLook; // colour, and its motion: 0 a rocket, 1 a star, 2 a willow's star, 3 a crackling star, 4 a rising mote
+attribute vec4 aLook; // colour, and its motion: 0 a rocket, 1 a star, 2 a willow's star, 3 a crackling star, 4 a rising mote, 5 a glittering willow's star (the win's)
 attribute float aLag; // its pixel's place along the streak (0 its head)
 uniform vec2 uRes;
 uniform float uMpp, uNow;
@@ -45,7 +59,8 @@ void main() {
   if (t < 0.0 || k >= 1.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; vCol = vec4(0.0); return; }
   // A rocket climbs straight; a star slows in the air (drag) and falls, a willow's slower and further.
   // A mote (the cleared burst's) slows and floats up, lifting as it goes.
-  float drag = mode < 0.5 ? 0.0 : mode > 3.5 ? 2.2 : mode > 1.5 && mode < 2.5 ? 2.6 : 1.7, grav = mode < 0.5 ? 0.0 : mode > 3.5 ? -1.6 : mode > 1.5 && mode < 2.5 ? 5.5 : 3.5;
+  bool weep = (mode > 1.5 && mode < 2.5) || mode > 4.5;
+  float drag = mode < 0.5 ? 0.0 : weep ? 2.6 : mode > 3.5 ? 2.2 : 1.7, grav = mode < 0.5 ? 0.0 : weep ? 5.5 : mode > 3.5 ? -1.6 : 3.5;
   float d = drag > 0.0 ? (1.0 - exp(-drag * t)) / drag : t;
   vec3 p = aFrom.xyz + aVel.xyz * d; p.y -= 0.5 * grav * t * t;
   // Its light: a white flash as it bursts, then its colour; the last third fading in steps; a crackle's glitter flickering.
@@ -53,7 +68,7 @@ void main() {
   float a = mode < 0.5 ? 0.8 : 1.0 * (1.0 - floor(max(0.0, k - 0.6) / 0.4 * 3.0) / 3.0);
   if (mode > 0.5 && k < 0.05) c = mix(mix(c, vec3(1.0), 0.55), c, k / 0.05); // (a touch of white as it bursts)
   if (mode > 0.5) { float r = min(1.0, k / 0.04); a *= r; } // (faint while they're all still together at the burst's heart: a shell's stars, added up, never bloom into one white blob)
-  if (mode > 2.5 && mode < 3.5 && k > 0.45) a *= step(0.45, fh(floor(uNow * 18.0), aFrom.x * 3.1 + aVel.x * 7.7 + aLag)) * 1.4;
+  if (((mode > 2.5 && mode < 3.5) || mode > 4.5) && k > 0.45) a *= step(0.45, fh(floor(uNow * 18.0), aFrom.x * 3.1 + aVel.x * 7.7 + aLag)) * 1.4;
   if (aLag > 0.5) a *= aLag > 1.5 ? 0.35 : 0.6; // (the streak's tail)
   vCol = vec4(c * a, 1.0);
   vec3 g = onGround(p);
@@ -122,20 +137,21 @@ export class Fireworks {
     this.next = (i0 + TRAIL) % (POOL - POOL % TRAIL);
   }
 
-  /** A shell: its rocket, then its burst's stars. */
-  private shell(s: Shell, sx: number, sz: number): void {
+  /** A shell: its rocket, then its burst's stars (`win`: the island won's finale palette, winStar). */
+  private shell(s: Shell, sx: number, sz: number, win = false): void {
     const rise = s.burst - s.launch, c = this.rgb;
-    { const b = this.bursts[this.nextBurst]; this.nextBurst = (this.nextBurst + 1) % FLASHES; neon(s.hue, c); if (s.kind === "willow") { c[0] = 1; c[1] = 0.72; c[2] = 0.3; } b.t = s.burst; b.x = s.x; b.z = s.z; b.rgb.set(c[0], c[1], c[2]); }
+    { const b = this.bursts[this.nextBurst]; this.nextBurst = (this.nextBurst + 1) % FLASHES; neon(s.hue, c); if (s.kind === "willow" || (win && s.kind !== "peony")) set3(c, s.kind === "crackle" ? SILVER : GOLD); b.t = s.burst; b.x = s.x; b.z = s.z; b.rgb.set(c[0], c[1], c[2]); }
     this.put(sx, FROM_Y, sz, s.launch, (s.x - sx) / rise, (s.height - FROM_Y) / rise, (s.z - sz) / rise, rise, 1, 0.8, 0.45, 0);
     // (Fewer when the finale's go up together: so many add up to a white blob from afar.)
-    const n = Math.round((s.kind === "ring" ? 40 : s.kind === "crackle" ? 36 : s.kind === "willow" ? 48 : 54) * (s.finale ? 0.8 : 1));
+    const n = Math.round((s.kind === "ring" ? 40 : s.kind === "crackle" ? 36 : s.kind === "willow" ? 48 : 54) * (s.finale ? 0.8 : 1) * (win ? WIN_STARS : 1));
     // A ring lies tilted: its plane's normal.
     const ta = this.rand() * Math.PI * 2, tilt = 0.5 + this.rand() * 0.6, nx = Math.sin(tilt) * Math.cos(ta), ny = Math.cos(tilt), nz = Math.sin(tilt) * Math.sin(ta);
     for (let i = 0; i < n; i++) {
       let dx: number, dy: number, dz: number;
+      const inner = win && s.kind === "ring" && i % 2 === 1; // (the win's ring doubled: every other star a smaller ring inside)
       if (s.kind === "ring") {
         // Round the ring's plane: any vector across the normal, turned by i.
-        const a = (i / n) * Math.PI * 2, ux = ny, uy = -nx, uz = 0, ul = Math.hypot(ux, uy, uz) || 1, vx = ny * uz - nz * uy, vy = nz * ux - nx * uz, vz = nx * uy - ny * ux;
+        const a = (win ? Math.floor(i / 2) / Math.ceil(n / 2) : i / n) * Math.PI * 2, ux = ny, uy = -nx, uz = 0, ul = Math.hypot(ux, uy, uz) || 1, vx = ny * uz - nz * uy, vy = nz * ux - nx * uz, vz = nx * uy - ny * ux;
         const vl = Math.hypot(vx, vy, vz) || 1;
         dx = Math.cos(a) * ux / ul + Math.sin(a) * vx / vl; dy = Math.cos(a) * uy / ul + Math.sin(a) * vy / vl; dz = Math.cos(a) * uz / ul + Math.sin(a) * vz / vl;
       } else {
@@ -144,10 +160,14 @@ export class Fireworks {
         dx = Math.cos(a) * r; dy = y; dz = Math.sin(a) * r;
       }
       const willow = s.kind === "willow", crackle = s.kind === "crackle", drag = willow ? 2.6 : 1.7;
-      const speed = s.radius * drag * (0.92 + this.rand() * 0.16), life = willow ? 2.6 + this.rand() * 0.5 : crackle ? 1.5 + this.rand() * 0.5 : 1.3 + this.rand() * 0.5;
-      if (willow) { c[0] = 1; c[1] = 0.72; c[2] = 0.3; } else neon(s.hue2 >= 0 && i % 2 ? s.hue2 : s.hue, c);
-      if (crackle) { c[0] = c[0] * 0.5 + 0.5; c[1] = c[1] * 0.5 + 0.5; c[2] = c[2] * 0.5 + 0.5; }
-      this.put(s.x, s.height, s.z, s.burst, dx * speed, dy * speed, dz * speed, life, c[0], c[1], c[2], willow ? 2 : crackle ? 3 : 1);
+      const speed = s.radius * drag * (0.92 + this.rand() * 0.16) * (inner ? 0.62 : 1), life = (willow ? 2.6 + this.rand() * 0.5 : crackle ? 1.5 + this.rand() * 0.5 : 1.3 + this.rand() * 0.5) * (win ? WIN_LIFE : 1);
+      let mode = willow ? 2 : crackle ? 3 : 1;
+      if (win) mode = winStar(s.kind, i, Math.atan2(dz, dx) + Math.PI, inner, c);
+      else {
+        if (willow) { c[0] = 1; c[1] = 0.72; c[2] = 0.3; } else neon(s.hue2 >= 0 && i % 2 ? s.hue2 : s.hue, c);
+        if (crackle) { c[0] = c[0] * 0.5 + 0.5; c[1] = c[1] * 0.5 + 0.5; c[2] = c[2] * 0.5 + 0.5; }
+      }
+      this.put(s.x, s.height, s.z, s.burst, dx * speed, dy * speed, dz * speed, life, c[0], c[1], c[2], mode);
     }
   }
 
@@ -183,6 +203,14 @@ export class Fireworks {
     this.u.uNow.value = time;
     this.mesh.visible = time < this.liveTill;
     for (let i = 0; i < 3; i++) this.dirty[i].flush(this.attrs[i]);
+  }
+
+  /** The win's finale over (x, z) from `at` (Ed, 2026-10-11): the same schedule as a wave's show there (rules/fireworks.ts), drawn
+   *  in the finale's palette (winStar). Started once per soundsystem by its caller. */
+  finale(x: number, z: number, at: number, t: Tuning): void {
+    const shells = fireworkShells(x, z, at, t);
+    for (const s of shells) this.shell(s, x, z, true);
+    this.liveTill = Math.max(this.liveTill, at + (showEnds(shells) - at) * WIN_LIFE);
   }
 
   /** This frame's flashes: each burst lights the ground round it in its colour, a sharp flash fading over FLASH_S (so from the
