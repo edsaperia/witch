@@ -2699,7 +2699,19 @@
           "type": "number",
           "minimum": 0
         },
-        "legendRing": {
+        "legendGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendRow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendSpace": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendArc": {
           "type": "number",
           "minimum": 0
         },
@@ -2727,7 +2739,10 @@
         "congaRadius",
         "joinSpeed",
         "seen",
-        "legendRing",
+        "legendGap",
+        "legendRow",
+        "legendSpace",
+        "legendArc",
         "flareDraw",
         "flare",
         "cardAfter",
