@@ -75,6 +75,38 @@
       ],
       "additionalProperties": false
     },
+    "islands": {
+      "type": "object",
+      "properties": {
+        "coast": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "detail"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "coast"
+      ],
+      "additionalProperties": false
+    },
     "beach": {
       "type": "object",
       "properties": {
@@ -3064,11 +3096,7 @@
           "type": "number",
           "minimum": 0
         },
-        "marchMult": {
-          "type": "number",
-          "minimum": 0
-        },
-        "marchOnRun": {
+        "marchShare": {
           "type": "number",
           "minimum": 0
         },
@@ -3136,8 +3164,7 @@
         "fightRun",
         "legendRun",
         "reaction",
-        "marchMult",
-        "marchOnRun",
+        "marchShare",
         "fleeMult",
         "soundsystemHealth",
         "soundsystemRadius",
@@ -9430,6 +9457,7 @@
   "required": [
     "mapAreas",
     "map",
+    "islands",
     "beach",
     "areaSize",
     "areaScale",

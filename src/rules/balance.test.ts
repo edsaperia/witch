@@ -46,7 +46,8 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     expect(Date.now() - t0).toBeLessThan(5000);
     expect(a.waves.length).toBeGreaterThanOrEqual(Math.min(12, a.survived));
     expect(a.waves[0].largest).toBeGreaterThan(0); // (the first wave wakes a siege)
-    expect(a.waves[a.waves.length - 1].marching).toBeGreaterThan(a.waves[0].marching);
+    const live = a.waves.filter(w => w.standing > 0); // (to the last wave with a soundsystem standing: at a besieger's marching pace, combat.marchShare of its top speed, an idle run can end inside 12)
+    expect(live[live.length - 1].marching).toBeGreaterThan(live[0].marching);
     expect(simulate(map, { interval: 60, maxWaves: 12 })).toEqual(a); // deterministic, and the cached fighters reset
   }, 30000);
 
