@@ -13,7 +13,7 @@ import { barAt, musicCue, planBlock } from "./musicPlan";
 import type { MusicStyle } from "./musicScore";
 import { composeFloor, newFloor } from "./dancefloor";
 import { floorInputs } from "./game";
-import { congaPlace, finalStone, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winPulse, winTarget } from "./win";
+import { congaPlace, congaRadius, finalStone, legendPlaces, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winPulse, winTarget } from "./win";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const W = { ...WIN_DEFAULT, ...(TUNING.win ?? {}) };
@@ -110,7 +110,10 @@ describe("the end of the route (rules/win.ts)", () => {
     for (const c of byPlace) { const p = congaPlace(g, c.finale!, w.congaSize, g.clock.time); expect(Math.hypot(p.x - c.x, p.z - c.z)).toBeLessThan(0.6); }
     for (let i = 1; i < byPlace.length; i++) expect(Math.hypot(byPlace[i].x - byPlace[i - 1].x, byPlace[i].z - byPlace[i - 1].z)).toBeCloseTo(W.congaGap, 0);
     const d0 = g.map.dancefloor;
-    for (const c of legends) if (c !== angry) expect(Math.abs(Math.hypot(c.x - d0.x, c.z - d0.z) - W.legendRing)).toBeLessThan(4);
+    // the legends north of the dancefloor, beyond the line (behind it all from the north-facing camera), facing us, apart
+    const R = congaRadius(w.congaSize, W), dancers = legends.filter(c => c !== angry);
+    for (const c of dancers) { expect(c.z).toBeLessThan(d0.z - R); expect(Math.hypot(c.x - d0.x, c.z - d0.z)).toBeGreaterThan(R + W.legendGap - 0.6); expect(c.away).toBe(false); }
+    for (const a of dancers) for (const b of dancers) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(W.legendSpace - 0.6);
     expect(g.creatures.some(c => c.fight?.target)).toBe(false);
     expect(w.card).toBe(true);
     expect(winFlare(g)).toBeNull(); // (held win.flare seconds, then gone)
@@ -134,6 +137,27 @@ describe("the end of the route (rules/win.ts)", () => {
   }, 120000);
 });
 
+describe("the woken legends' places (Ed, 2026-10-11: north of the dancefloor, beyond the conga)", () => {
+  it("puts any number of them on arcs north of the floor, beyond the conga's ring, apart, clear of the treehouse, the same every time", () => {
+    const g = newGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } })), d0 = g.map.dancefloor, th = g.map.treehouse;
+    expect(th.z).toBeLessThan(d0.z); // (north is -z: the treehouse stands north of the floor)
+    g.win = { phase: "won", lastWaveAt: 0, target: null, pickedAt: 0, lap: [], fired: 0, sigil: "worldTree", found: [], lost: [], card: false, lead: 0, congaSize: 60 };
+    const R = congaRadius(60, W);
+    for (const n of [1, 2, 3, 5, 13]) {
+      const ps = legendPlaces(g, n);
+      expect(ps.length).toBe(n);
+      expect(legendPlaces(g, n)).toEqual(ps);
+      for (const p of ps) {
+        const r = Math.hypot(p.x - d0.x, p.z - d0.z), bearing = (Math.atan2(p.x - d0.x, d0.z - p.z) * 180) / Math.PI; // (0 due north)
+        expect(r).toBeGreaterThan(R + W.legendGap - 1e-6);
+        expect(Math.abs(bearing)).toBeLessThanOrEqual(W.legendArc / 2 + 1e-6);
+        expect(Math.hypot(p.x - th.x, p.z - th.z)).toBeGreaterThanOrEqual(g.tuning.treehouse.clear + W.legendSpace / 2);
+      }
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) expect(Math.hypot(ps[i].x - ps[j].x, ps[i].z - ps[j].z)).toBeGreaterThan(W.legendSpace - 0.5);
+    }
+  });
+});
+
 describe("the win and the rosters (rules/rosters.ts)", () => {
   it("the night's legends are the dealt kinds' (map.legendKinds); the island's sigil is its island's kind's, home's the World Tree", async () => {
     const { dealtLegends, islandSigil } = await import("./win");
@@ -147,4 +171,12 @@ describe("the win and the rosters (rules/rosters.ts)", () => {
     expect(islandOf({ island: { kind: "wolf" } })).toBe("wolf");
     expect(islandOf({ island: null })).toBe("home");
   });
+
+  it("a kind's island flares its own sigil at the win, home the World Tree (art4: art/sigils.js islandSigil)", async () => {
+    const { islandSigil } = await import("./win");
+    const fox = newGame(7, withTuning({ map: { ...TUNING.map!, island: "fox" } }));
+    expect(fox.map.island?.kind).toBe("fox");
+    expect(islandSigil(fox)).toBe("fox");
+    expect(islandSigil(newGame(7, withTuning({ map: { ...TUNING.map!, island: "home" } })))).toBe("worldTree");
+  }, 60000);
 });

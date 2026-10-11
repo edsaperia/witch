@@ -49,7 +49,7 @@ export interface Knockout {
   scratching?: boolean;
 }
 
-export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | /** the teleport's midpoint, with sparkleIn: the transition's cut (render/koIris.ts: the rewind smear; the music's scratch cutting the trumpet) */ "cut" | /** her scratching starts behind her decks (the respawn wait: knockout.respawn); "back" ends it */ "scratch" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
+export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | /** the teleport's midpoint, with sparkleIn: the transition's cut (render/koIris.ts: the rewind smear; the music's scratch cutting the trumpet) */ "cut" | /** her scratching starts behind her decks (the respawn wait: knockout.respawn); "back" ends it */ "scratch" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped" | /** her Helmet took a blow and was knocked off beside her (rules/spells.ts) */ "helmetOff" | /** the Healing ring healed her a hit (rules/spells.ts) */ "healed";
 export interface KnockoutEvent { kind: KnockoutEventKind; at: number; x: number; z: number; id?: number }
 
 export const newHealth = (t: Tuning): Health => ({ hp: t.witchHealth.hits, repairAt: Infinity, hurtAt: -Infinity });

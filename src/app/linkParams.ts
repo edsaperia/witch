@@ -3,6 +3,7 @@
 import { TUNING } from "../rules/tuning";
 import { islandOf, playableIsland } from "../rules/rosters";
 import { loadSave, worldSeed } from "./chartSave";
+import { loadoutFrom } from "./loadout";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
@@ -175,5 +176,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load
   if (tuning.map) { const save = loadSave(), w = params.get("world"); tuning.map = { ...tuning.map, found: save.found, world: w ? worldSeed(w) : save.world }; }
+  // Her hat and broom spells (app/loadout.ts): the creator's, kept on this browser, or ?hat= and ?broom=.
+  { const L = loadoutFrom(params); tuning.spells = { ...tuning.spells, hat: L.hat, broom: L.broom }; }
   return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };
 }

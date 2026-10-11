@@ -1,6 +1,6 @@
 # Hats and brooms
 
-Backlog (Ed, 2026-10-09). **Not built yet; don't build without Ed's go.** The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
+Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
 
 ## The two slots
 
@@ -88,3 +88,19 @@ Suggested:
 
 - **Looks:** the hat room and broom room choose *which* hat and broom (their spells); their **shape and colour are styled while dressing**, with today's sliders.
 - **The older hat spells, reworked as placed hats:** Berry patch → **Harvest hat**; Mend → **Nursing hat**; Second wind → **Healing ring hat** (placed: standing near it, she heals a hit every few seconds).
+
+## Decisions (Ed, 2026-10-11, the go)
+
+- **Hats** are mostly spells that happen when placed: some fire once on placing, some work over time while placed. **The Helmet** is worn: an extra hit, knocked off when she's hit (pick it up to wear it again).
+- **Brooms** change how she moves, or how much she can carry or pull.
+- **Everything unlocked for now**, the default none; chosen in the creator's Hat and Broom boxes as hats and brooms are picked now (the treehouse rooms later); `?hat=` and `?broom=` too, saved on this browser (`witch.loadout`).
+- 1. **The default broom** lets her rise to the treetops again sooner after landing (`spells.plain.riseCooldown`).
+- 2. Yes (the Long broom stacks with the Hare's buff).
+- 3. **Haul** is always on (passive).
+- 4. **Back to the bedroom mid-run** (later PR): fly at treetop level to the treehouse to go back to the bedroom, where time slows 10×; an exit button where the party scroll usually is goes back to the island.
+- 5. **Spells may affect enraged creatures** (stun, slow and the like) **but never damage them.**
+- 6. **Gathering** takes all her sigils in range.
+- **Harvest** grows a ring of six berries round the hat when it's put down.
+- **Ranges:** Bramble 30 m; Sentry 30 m; Slingshot catches 💌s within 10 m and fires out to 40 m; Mine 15 m.
+- **Beacon dropped** ("isn't useful").
+- **Double blink**, a new broom: one more blink before the cooldown.
