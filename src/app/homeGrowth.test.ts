@@ -35,7 +35,8 @@ describe("home grows with the kinds she knows", () => {
     const from = (m: ReturnType<typeof generateMap>, k: string) => { const [x, y] = k.split(",").map(Number), s = m.siteOf(x, y), c = m.siteOf(m.centreCell[0], m.centreCell[1]); return Math.hypot(s.x - c.x, s.z - c.z) / m.coast(Math.atan2(s.z - c.z, s.x - c.x)); };
     const far = Math.max(...[...a10.keys()].map(k => from(m13, k)));
     for (const k of a13.keys()) if (!a10.has(k)) expect(from(m13, k)).toBeGreaterThanOrEqual(far);
-    expect(m13.bounds.circle!.r).toBeGreaterThan(m10.bounds.circle!.r);
+    const landOf = (m: ReturnType<typeof generateMap>) => m.bounds.land!.dist.filter(d => d > 0).length; // (its land's samples: the island bigger)
+    expect(landOf(m13)).toBeGreaterThan(landOf(m10));
     // 2 legends a night at first (1 in 5 areas); 3 at 13
     expect(m10.legendKinds.length).toBe(2);
     expect(m13.legendKinds.length).toBe(legendsFor(13));

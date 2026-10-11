@@ -6,7 +6,8 @@
 import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { Forest } from "./forest";
-import { beachOf, edgeRadius } from "./mapShape";
+import { beachOf } from "./mapShape";
+import { facing } from "../test/coast";
 import { newWitch, stepWitch, NO_INTENT, type Intent, type WitchState } from "./witch";
 import { newBeachWitches, stepBeachWitches, SEQUENCE } from "./beach";
 import { TUNING, type Tuning } from "./tuning";
@@ -17,14 +18,15 @@ const STEP = 1 / 60;
 describe("the beach", () => {
   for (const seed of SEEDS) {
     it(`nothing grows, stands or runs on the sand or in the sea (seed ${seed})`, () => {
-      const map = generateMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, forest = new Forest(map);
-      const c = map.bounds.circle!, e0 = edgeRadius(c, c.x + 1, c.z), mid = { x: c.x + e0 - b.sandAt(0) / 2, z: c.z }; // (due east, on the coast's own edge there, halfway across the sand there)
+      const map = generateMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, forest = new Forest(map), L = b.land, sea = L.loops.findIndex(l => l.sea);
+      const p = facing(L, 0), w = b.sandAt(p.x - p.nx, p.z - p.nz), mid = { x: p.x - p.nx * w / 2, z: p.z - p.nz * w / 2 }; // (an eastward stretch of coast, halfway across the sand there)
       expect(b.intoSand(mid.x, mid.z)).toBeGreaterThan(0); // the sand inside the edge, the sea beyond it
       expect(b.intoSea(mid.x, mid.z)).toBeLessThan(0);
-      expect(b.intoSea(c.x + e0 + b.out + 1, c.z)).toBeGreaterThan(0);
-      expect(b.intoSand(c.x, c.z)).toBeLessThan(0);
+      expect(b.intoSea(p.x + p.nx * (b.out + 1), p.z + p.nz * (b.out + 1))).toBeGreaterThan(0);
+      expect(b.intoSand(map.dancefloor.x, map.dancefloor.z)).toBeLessThan(0);
       for (let k = 0; k < 64; k++) {
-        const a = (k / 64) * Math.PI * 2 - Math.PI, d = b.edge(a) - b.sandAt(a) + 1 + (k % 8) * 20, x = b.x + Math.cos(a) * d, z = b.z + Math.sin(a) * d;
+        const q = L.along(sea, (k / 64) * L.loops[sea].length), d = 1 + (k % 8) * 20, x = q.x - q.nx * d, z = q.z - q.nz * d;
+        if (b.intoSand(x, z) <= 0) continue; // (past a narrow stretch's sand: the woods)
         expect(map.hardClear(x, z)).toBe(true);
         expect(map.treeWeight(x, z)).toBe(0);
         for (const t of forest.treesNear(x, z, 12)) expect(b.intoSand(t.x, t.z)).toBeLessThan(0);
@@ -39,29 +41,28 @@ describe("the beach", () => {
 
   it("varies in width round the coast (Ed, 2026-10-06: \"more irregularly shaped\"): wide bays, narrows, rocky stretches", () => {
     for (const seed of SEEDS) {
-      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!, V = TUNING.beach!.vary!, w = [...b.sand];
+      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!, V = TUNING.beach!.vary!, L = b.land, sea = L.loops.findIndex(l => l.sea), len = L.loops[sea].length;
+      const w = Array.from({ length: 512 }, (_, k) => b.sandAlong(sea, (k / 512) * len));
       expect(Math.max(...w)).toBeGreaterThan(b.width * 1.8);
       expect(Math.min(...w)).toBeLessThan(b.width * 0.3);
       expect(Math.min(...w)).toBeGreaterThanOrEqual(V.min);
-      expect(w.some((_, k) => b.rockyAt(-Math.PI + (k / w.length) * Math.PI * 2) > 0.5)).toBe(true);
-      // The sand starts where its width says, round the coast.
-      for (let k = 0; k < 16; k++) {
-        const a = -Math.PI + (k / 16) * Math.PI * 2, d = b.edge(a) - b.sandAt(a);
-        expect(b.intoSand(b.x + Math.cos(a) * (d + 0.5), b.z + Math.sin(a) * (d + 0.5))).toBeGreaterThan(0);
-        expect(b.intoSand(b.x + Math.cos(a) * (d - 0.5), b.z + Math.sin(a) * (d - 0.5))).toBeLessThan(0);
+      expect(w.some((_, k) => b.rockyAlong(sea, (k / 512) * len) > 0.5)).toBe(true);
+      // The sand starts where its width says, along the coast (on its straight stretches: a bay's far side is nearer elsewhere).
+      for (let k = 0; k < 64; k++) {
+        const q = L.along(sea, (k / 64) * len), ww = b.sandAlong(sea, (k / 64) * len), straight = [5, ww * 0.5, ww, ww + 10].every(d => Math.abs(L.distAt(q.x - q.nx * d, q.z - q.nz * d) - d) < 1);
+        if (!straight) continue;
+        expect(b.intoSand(q.x - q.nx * (ww - 2.5), q.z - q.nz * (ww - 2.5))).toBeGreaterThan(0); // (within a few metres: eased between the land map's samples)
+        expect(b.intoSand(q.x - q.nx * (ww + 2.5), q.z - q.nz * (ww + 2.5))).toBeLessThan(0);
       }
     }
-    // How far in or out is a true distance anywhere, deep inland too (it was only right about the sign inside the
-    // nearest the coast comes: the waves' loudness, the hills' easing and the paths' clipping read it as a distance).
+    // How far in or out is a true distance anywhere, deep inland too (the waves' loudness, the hills' easing and the paths'
+    // clipping read it as a distance): the land map's against the nearest point of its coast, measured outright.
     for (const seed of SEEDS) {
-      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!;
-      for (let k = 0; k < 24; k++) {
-        const a = -Math.PI + ((k + 0.5) / 24) * Math.PI * 2;
-        for (const back of [1, 30, 80, 150, 300]) {
-          const d = b.edge(a) - back, x = b.x + Math.cos(a) * d, z = b.z + Math.sin(a) * d;
-          expect(b.intoSea(x, z)).toBeCloseTo(-back - b.out, 3);
-          expect(b.intoSand(x, z)).toBeCloseTo(b.sandAt(a) - back, 3);
-        }
+      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!, L = b.land;
+      for (let k = 0; k < 200; k++) {
+        const x = L.box.minX + ((k * 0.618) % 1) * (L.box.maxX - L.box.minX), z = L.box.minZ + ((k * 0.381) % 1) * (L.box.maxZ - L.box.minZ), s = L.shore(x, z);
+        expect(Math.abs(L.distAt(x, z)) - Math.abs(s.dist)).toBeLessThan(1.5);
+        expect(b.intoSea(x, z)).toBeCloseTo(-L.distAt(x, z) - b.out, 6);
       }
     }
     // The same for the same seed; another seed, another shape.
@@ -77,13 +78,14 @@ describe("the beach", () => {
 });
 
 describe("flying on past the beach, she lands and stargazes", () => {
-  const map = generateMap(123, TUNING), c = map.bounds.circle!, out = { x: 0.6, z: 0.8 }, edge = edgeRadius(c, c.x + out.x, c.z + out.z); // (the coast's edge that way)
-  const at = (d: number, mode: WitchState["mode"]): WitchState => ({ ...newWitch(c.x + out.x * d, c.z + out.z * d), mode, lift: mode === "treetop" ? 1 : 0 });
+  const map = generateMap(123, TUNING), p = facing(map.bounds.land!, Math.atan2(0.8, 0.6)), out = { x: p.nx, z: p.nz }; // (a straight stretch of coast facing out that way)
+  const at = (d: number, mode: WitchState["mode"]): WitchState => ({ ...newWitch(p.x - out.x * d, p.z - out.z * d), mode, lift: mode === "treetop" ? 1 : 0 });
+  const edge = 0, c = { x: p.x - out.x * 1000, z: p.z - out.z * 1000 }; // (distances in from the coast; a point well inland, for "back inland")
   const seaward: Intent = { moveX: out.x, moveZ: out.z, toggleMode: false }, inland: Intent = { moveX: -out.x, moveZ: -out.z, toggleMode: false };
   const run = (w: WitchState, i: Intent, secs: number) => { for (let k = 0; k < secs / STEP; k++) w = stepWitch(w, i, STEP, TUNING, map.bounds); return w; };
 
   it("on foot: pushing out against the edge she lies down, and stays down", () => {
-    let w = run(at(edge - 60, "ground"), seaward, 12);
+    let w = run(at(edge + 60, "ground"), seaward, 12);
     expect(w.stargazing).toBe(true);
     expect(beachOf(map.bounds, TUNING)!.intoSand(w.x, w.z)).toBeGreaterThan(0);
     const lay = { x: w.x, z: w.z };
@@ -97,7 +99,7 @@ describe("flying on past the beach, she lands and stargazes", () => {
   });
 
   it("from the treetops: she comes down first", () => {
-    let w = at(edge - 60, "treetop"), saw = false;
+    let w = at(edge + 60, "treetop"), saw = false;
     for (let k = 0; k < 20 / STEP && !w.stargazing; k++) { w = stepWitch(w, seaward, STEP, TUNING, map.bounds); if (w.mode === "descending") saw = true; }
     expect(saw).toBe(true);
     expect(w.mode).toBe("ground");
@@ -108,9 +110,9 @@ describe("flying on past the beach, she lands and stargazes", () => {
   });
 
   it("never in the woods, nor flying along the beach", () => {
-    expect(run(at(edge - 400, "ground"), seaward, 6).stargazing).toBeFalsy();
+    expect(run(at(edge + 400, "ground"), seaward, 6).stargazing).toBeFalsy();
     const along: Intent = { moveX: -out.z, moveZ: out.x, toggleMode: false };
-    expect(run(at(edge - 30, "ground"), along, 6).stargazing).toBeFalsy();
+    expect(run(at(edge + 30, "ground"), along, 3).stargazing).toBeFalsy(); // (a few seconds along a straight stretch)
   });
 });
 
@@ -124,7 +126,9 @@ describe("witches on the beach", () => {
       expect(spots, `seed ${seed}`).not.toBeNull();
       expect(spots.length).toBeGreaterThanOrEqual(lo);
       expect(spots.length).toBeLessThanOrEqual(hi);
-      const angles = spots.map(s => Math.atan2(s.z - b.z, s.x - b.x)).sort((p, q) => p - q), gap = (Math.PI * 2) / spots.length;
+      // (by their places along the coast: each a share of its length round)
+      const len = b.land.loops[b.land.shore(spots[0].x, spots[0].z).loop].length;
+      const angles = spots.map(s => b.land.shore(s.x, s.z).s / len * Math.PI * 2).sort((p, q) => p - q), gap = (Math.PI * 2) / spots.length;
       for (let i = 0; i < angles.length; i++) {
         const next = i + 1 < angles.length ? angles[i + 1] : angles[0] + Math.PI * 2;
         expect(next - angles[i], `seed ${seed}: spots ${i} and ${i + 1}`).toBeGreaterThan(gap * 0.3); // (a third of the gap's nudge either way at most)
@@ -154,7 +158,7 @@ describe("witches on the beach", () => {
     const t = chanced(true), map = generateMap(123, t), b = beachOf(map.bounds, t)!, s = newBeachWitches(123, map.bounds, t)![0];
     expect(s.list.length).toBeGreaterThanOrEqual(t.beach!.witches[0]);
     expect(s.list.length).toBeLessThanOrEqual(t.beach!.witches[1]);
-    for (const w of s.list) { expect(b.intoSand(w.x, w.z)).toBeGreaterThan(0); expect(Math.hypot(w.x - b.x, w.z - b.z)).toBeLessThan(edgeRadius(map.bounds.circle!, w.x, w.z)); }
+    for (const w of s.list) { expect(b.intoSand(w.x, w.z)).toBeGreaterThan(0); expect(b.land.distAt(w.x, w.z)).toBeGreaterThan(0); }
     // far away: nothing moves, nothing is picked
     const before = JSON.stringify(s.list);
     let time = 0;
@@ -162,7 +166,7 @@ describe("witches on the beach", () => {
     expect(JSON.stringify(s.list)).toBe(before);
     expect(s.idle).toBe(true);
     // she lands a few metres off them and keeps still
-    const me = { x: s.x - (s.x - b.x) * 0.004, z: s.z - (s.z - b.z) * 0.004, onFoot: true, moving: false };
+    const sh = b.land.shore(s.x, s.z), me = { x: s.x - sh.nx * 2.5, z: s.z - sh.nz * 2.5, onFoot: true, moving: false }; // (a few metres inland of them)
     const seen: string[] = [];
     for (let k = 0; k < (t.beach!.idleAfter + t.beach!.turn * 4 + 1) / STEP; k++) {
       stepBeachWitches(s, [me], (time += STEP), STEP, t);

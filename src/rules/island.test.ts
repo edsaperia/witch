@@ -22,8 +22,12 @@ describe("islands by area count (map.islandAreas)", () => {
       // the nearest home's: every playable area nearer than every buffer one
       const far = Math.max(...map.cells.map(([x, y]) => { const s = map.siteOf(x, y); return Math.hypot(s.x - home.x, s.z - home.z); }));
       for (const [x, y] of map.cells) { const s = map.siteOf(x, y); expect(isInside(map.bounds, s.x, s.z, 0), `seed ${seed}: area ${x},${y} inside`).toBe(true); }
-      expect(map.bounds.circle!.r).toBeGreaterThan(far);
-      expect(map.bounds.circle!.r).toBeLessThan(far + (TUNING.map!.buffer + 2) * map.areaSize * 1.2); // (round it, not the old map's)
+      // (its coast round them, not the old map's: no further out than the buffer and a little)
+      const coast = map.bounds.land!.loops.find(l => l.sea)!.pts;
+      let most = 0;
+      for (let k = 0; k < coast.length; k += 2) most = Math.max(most, Math.hypot(coast[k] - home.x, coast[k + 1] - home.z));
+      expect(most).toBeGreaterThan(far);
+      expect(most).toBeLessThan(far + (TUNING.map!.buffer + 2) * map.areaSize * 1.2);
     }
   }, 240000);
 

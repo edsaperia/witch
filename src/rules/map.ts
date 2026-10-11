@@ -16,6 +16,7 @@ export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.
 import { PathNetwork } from "./paths";
 import { routeOf } from "./party";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
+import { makeLand, type LandMap } from "./land";
 import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
@@ -105,7 +106,7 @@ export interface ForestMap {
   inBuffer(cx: number, cy: number): boolean;
   /** The coast (Ed, 2026-10-06: "slightly irregular"): every edge round home, at an angle (radians,
    *  atan2(dz, dx) from the dancefloor), as a factor of its round radius (1 on the square map). The
-   *  playable areas reach radius x coast, the buffer and her flight (bounds.circle) theirs x coast. */
+   *  playable areas reach radius x coast, the buffer theirs x coast; her flight's edge is the coast round them (bounds.land). */
   coast(angle: number): number;
   readonly areaSize: number;
   readonly partition: Partition;
@@ -186,6 +187,8 @@ type SceneDef = { id: string; size: string; suits?: string[]; pieces: [string, n
 const SCENES = SCENES_RAW as unknown as SceneDef[], SCENE_BY_ID = SCENE_BY_ID_RAW as unknown as Record<string, SceneDef>;
 
 const cellKey = (cx: number, cy: number) => cx + "," + cy;
+/** The land map's samples (m apart; rules/land.ts). */
+const LAND_STEP = 4;
 
 /** A seed from the URL: a number is used as is, any other text is hashed. */
 export function parseSeed(text: string | null | undefined): number | null {
@@ -348,9 +351,9 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
     if (grown) baseR = upTo(homeBase, reach(homeBase));
   }
   const playable = (cx: number, cy: number) => cx >= first && cy >= first && cx < first + n && cy < first + n && (!round || fromHome(cx, cy) <= R * A) && hasGround(cx, cy);
-  const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && fromHome(cx, cy) <= flightR + A * 0.5;
   const cells: Cell[] = [];
   for (let cy = first; cy < first + n; cy++) for (let cx = first; cx < first + n; cx++) if (playable(cx, cy)) cells.push([cx, cy]);
+  const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && landCells.has(cellKey(cx, cy));
   // (an island by roster: its areas' types from the roster, as few of a kind side by side as the swaps can manage)
   const others = cells.filter(([x, y]) => x !== centreCell[0] || y !== centreCell[1]);
   if (rosterIsland && !grown) assignRoster(rosterIsland, others, types, neighbours, shapeSeed);
@@ -370,6 +373,36 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
   // moves a point at most d * stretch / A in partition units.
   const stretch = 1 + (2 * V / L) * 1.5 * 2;
   const cellSafe = (x: number, z: number) => { const [u, v] = toPart(x, z), r = partition.partitionSafe(u, v); return { cell: r.cell, safe: (r.safe * A) / stretch }; };
+  // The island's land (rules/land.ts; Ed, 2026-10-11): its playable areas and the buffer ring's (the areas whose centres lie
+  // within the buffer of them), whole; its coast runs round their borders. Made once here, then asked how far from the water by
+  // everything that cares. Past it, the sea.
+  const landCells = new Set<string>();
+  let land: LandMap | undefined;
+  if (round) {
+    const reach = (R + MS.buffer) * A, want = new Set<string>();
+    for (let cy = first; cy < first + n; cy++) for (let cx = first; cx < first + n; cx++) if (playable(cx, cy) || (hasGround(cx, cy) && fromHome(cx, cy) <= reach)) want.add(cellKey(cx, cy));
+    // (every playable area ringed by land, and the ring past that where it's near: at least a buffer's depth of land round it)
+    const ring1 = new Set<string>();
+    for (const [cx, cy] of cells) for (const k of neighbours.get(cellKey(cx, cy)) ?? []) { want.add(k); ring1.add(k); }
+    const sites = cells.map(([cx, cy]) => siteOf(cx, cy)), deep = MS.buffer * A * 1.3;
+    for (const k of ring1) for (const q of neighbours.get(k) ?? []) {
+      if (want.has(q)) continue;
+      const [qx, qy] = q.split(",").map(Number), s = siteOf(qx, qy);
+      if (sites.some(p => Math.hypot(p.x - s.x, p.z - s.z) < deep + A * 0.5)) want.add(q);
+    }
+    // (one island: those joined to home's; and any area they ring round taken in, so no stray pond of a ghost area)
+    const homeKey = cellKey(centreCell[0], centreCell[1]), todo = [homeKey];
+    landCells.add(homeKey);
+    while (todo.length) for (const k of neighbours.get(todo.pop()!) ?? []) if (want.has(k) && !landCells.has(k)) { landCells.add(k); todo.push(k); }
+    const sea = new Set<string>(), edge: string[] = [];
+    for (const k of neighbours.keys()) { const [x, y] = k.split(",").map(Number); if (!landCells.has(k) && (x <= lo || y <= lo || x >= hi - 1 || y >= hi - 1)) { sea.add(k); edge.push(k); } }
+    while (edge.length) for (const k of neighbours.get(edge.pop()!) ?? []) if (!landCells.has(k) && !sea.has(k)) { sea.add(k); edge.push(k); }
+    for (const k of neighbours.keys()) if (!sea.has(k)) landCells.add(k);
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const k of landCells) { const [cx, cy] = k.split(",").map(Number), s = siteOf(cx, cy); x0 = Math.min(x0, s.x); x1 = Math.max(x1, s.x); z0 = Math.min(z0, s.z); z1 = Math.max(z1, s.z); }
+    const isLand = (x: number, z: number) => { const [u, v] = toPart(x, z), c = partition.partition(u, v); return landCells.has(cellKey(c[0], c[1])); };
+    land = makeLand(isLand, { minX: x0 - A, maxX: x1 + A, minZ: z0 - A, maxZ: z1 + A }, LAND_STEP, 64, (A * 0.5) ** 2, 2); // (crumbs under a quarter of an area's square taken as what's round them; slivers under about 16 m smoothed)
+  }
   const areaAt = (x: number, z: number): AreaSample => {
     // (toPart inline: no [u, v] tuple a call; phase 2's GC audit, the same sums)
     const uu = x / A, vv = z / A;
@@ -475,7 +508,11 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
     return false;
   };
   // The beach and the sea past it (the tuning's beach): nothing grows or stands there.
-  const beach = round ? beachOf({ minX: 0, maxX: 0, minZ: 0, maxZ: 0, circle: { x: centre.x, z: centre.z, r: flightR, coast, seed: shapeSeed } }, tuning) : null;
+  const pad = A * 0.5;
+  const bounds: Bounds = land
+    ? { ...land.box, land, seed: shapeSeed }
+    : { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad };
+  const beach = beachOf(bounds, tuning);
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (beach && beach.intoSand(x, z) > 0) return true;
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
@@ -516,10 +553,6 @@ export function generateMap(runSeed: number, tuning: Tuning): ForestMap {
   };
 
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (round ? R : n / 2));
-  const pad = A * 0.5;
-  const bounds: Bounds = round
-    ? { minX: centre.x - flightR * most, maxX: centre.x + flightR * most, minZ: centre.z - flightR * most, maxZ: centre.z + flightR * most, circle: { x: centre.x, z: centre.z, r: flightR, coast, seed: shapeSeed } }
-    : { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad };
   const map = {
     seed, tuning, n, first, margin, shape, cells, playable, inBuffer, coast, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
