@@ -88,6 +88,7 @@ import { setFrameUniforms } from "./view/frameUniforms";
 import { drawWitch } from "./view/witch";
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
+import { winPulse } from "../rules/win";
 
 /** Her shadow, lying on the rolling ground corner by corner. */
 const SHADOW_VERT = `varying vec2 vUv;
@@ -800,6 +801,7 @@ export class View {
       // line the boot branches off unlit ahead of where it will set off (as it is once the boot ends: no change as it does)
       const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
       this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
+      this.ley.lap(winPulse(g)?.links ?? null); // (the victory lap: its sparkler racing home along the route, rules/win.ts)
       // None till the party spell, nor before the boot's pulse reaches where the first link leaves the home ring (Ed, v2001 and
       // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
       // (leyReveal, by the boot pulse's own progress), then on along the route.

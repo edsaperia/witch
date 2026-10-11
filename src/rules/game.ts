@@ -49,7 +49,7 @@ import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 import { homeDown, startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
-import { stepWin, won, type WinState } from "./win";
+import { stepWin, winFlare, won, type WinState } from "./win";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
  *  body (where she is and how she flies), her leash, her spell. */
@@ -720,6 +720,7 @@ export function floorInputs(g: Game): FloorInputs {
     witch: { x: w.x, y: w.y, lift: g.witch.lift, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) }, dancers,
     moon: { phase: moonState(g.clock.time, g.seed, g.tuning).phase },
     island: { sigil: islandSigilOf(g.map), drawn: bootShare(g.party, g.map, g.clock.time) },
+    flare: winFlare(g) ?? undefined,
   };
 }
 

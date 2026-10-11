@@ -678,7 +678,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 
 ### `win`
 
-The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in a ring legendRing m round the dancefloor, every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); the Night won card cardAfter seconds after.
+The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in a ring legendRing m round the dancefloor, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); the Night won card cardAfter seconds after.
 
 | knob | type | range |
 |---|---|---|
@@ -689,6 +689,8 @@ The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/jou
 | `win.joinSpeed` | number | 0 to … |
 | `win.seen` | number | 0 to … |
 | `win.legendRing` | number | 0 to … |
+| `win.flareDraw` | number | 0 to … |
+| `win.flare` | number | 0 to … |
 | `win.cardAfter` | number | 0 to … |
 | `win.retarget` | number | 0 to … |
 
