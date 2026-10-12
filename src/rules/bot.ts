@@ -91,6 +91,16 @@ export interface BotKnobs {
   stick: number;
   /** In an area, a baby counts as this much further than the young and adults (m): they fight for her, and would besiege. */
   babyFar: number;
+  /** A standing defence at home (Ed, 2026-10-11: "Putting creatures into home is also now much more effective because they
+   *  defend the whole area"): she parks fighters (young and up) there till this many stand guard... */
+  homeGuards: number;
+  /** ...each wave adding this many more... */
+  homeGuardsPerWave: number;
+  /** ...whenever she has more than this many following her (to recruit with and see off stragglers)... */
+  follow: number;
+  /** ...and home's within this far (m); she stands this far south of the dancefloor to put them down (m). */
+  homeRange: number;
+  homeStand: number;
   /** Leaves at least this many of an area's own kind wild (so its legend stays asleep). */
   kinKeep: number;
   /** Feeds once this many babies and young are on her stack... */
@@ -118,10 +128,12 @@ export interface BotKnobs {
   /** Blinks when a blow aimed at her lands within this (s). */
   blinkLead: number;
 }
+// (home guards: a few, posted only when she's by home with ten fighters following her: measured on the islands, parking
+// more, or flying home to, cost more invites than the guard saved)
 // (bots-again, 2026-10-11: the pulse brings a wave every minute or so, and standing at the next area's soundsystem while it's
 // still wild cost her every hit she had: no stand before a wave (defendLead 0, so no hold after either); the siege response
 // goes instead, rules/bot.ts newBot)
-export const BOT_KNOBS: BotKnobs = { defendLead: 0, defendHold: 60, healAt: 1, healTo: 3, ahead: 400, stick: 250, babyFar: 0, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, recruitRange: 900, kinKeep: 1, feedMin: 3, feedRange: 500, feedWait: 4, siegeNear: 120, siegeMin: 10, siegeStand: 8, siegeSide: -1, homeWeight: 1.5, strandFar: 80, lead: 0, concede: 1.5, blinkLead: 0.3 };
+export const BOT_KNOBS: BotKnobs = { defendLead: 0, defendHold: 60, healAt: 1, healTo: 3, ahead: 400, stick: 250, babyFar: 0, homeGuards: 3, homeGuardsPerWave: 0, follow: 10, homeRange: 120, homeStand: 22, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, recruitRange: 900, kinKeep: 1, feedMin: 3, feedRange: 500, feedWait: 4, siegeNear: 120, siegeMin: 10, siegeStand: 8, siegeSide: -1, homeWeight: 1.5, strandFar: 80, lead: 0, concede: 1.5, blinkLead: 0.3 };
 
 /** The bot game's choices (Ed, 2026-10-06, watching it: "It's notable that it doesn't seem to get any legend buffs or
  *  feed creatures any berries"): the skilled one does a few quests, brings relics to the legends by the coming waves,
@@ -257,6 +269,15 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       }
       holding = best?.key ?? null;
       return best;
+    };
+    /** Whether to post guards at home now: more fighters following her than she needs, home short of its guard, near enough. */
+    const homeJob = (): boolean => {
+      const d0 = map.dancefloor, hk = cellKey(map.centreCell);
+      if (Math.hypot(d0.x - b.x, d0.z - b.z) > K.homeRange) return false;
+      const fighters = w.leash.stack.filter(i => g.creatures[i].level > 0 && g.creatures[i].level < 3).length;
+      if (fighters <= K.follow) return false;
+      const home = w.leash.placed.filter(p => cellKey(map.cellSafe(p.x, p.z).cell) === hk && !g.creatures[p.id].gone).length;
+      return home < K.homeGuards + g.party.wave * K.homeGuardsPerWave;
     };
     /** The nearest of her guards that's far from every standing soundsystem. */
     const strandedGuard = () => {
@@ -466,6 +487,15 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
             if (qi < 0) { qjob = null; questAgain = time + 10; }
             else { toBottom(w.leash, st[qi]); putDown(); } // (cycling it to the bottom, as the sigil button does in the treetops)
           }
+        }
+      } else if (careful && homeJob()) {
+        // A standing defence at home (Ed, 2026-10-11): fighters beyond those following her put down in the home area, where
+        // they defend all of it; the youngest fighters first, cycled to the bottom as the sigil button does in the treetops.
+        const d0 = map.dancefloor, at = { x: d0.x, z: d0.z + K.homeStand };
+        bot.doing = "posting guards at home";
+        if (goTo(at.x, at.z, true, 8)) {
+          const st = w.leash.stack, id = [...st].filter(i => g.creatures[i].level > 0 && g.creatures[i].level < 3).sort((a, c) => g.creatures[a].level - g.creatures[c].level)[0], bt = stackBottom(w.leash);
+          if (id !== undefined) { if (bt?.kind === "creature" && bt.id === id) putDown(); else toBottom(w.leash, id); }
         }
       } else if (o.feed && careful && (feeding || (time >= feedAgain && w.leash.stack.filter(id => g.creatures[id].level === 0).length >= K.feedMin))) {
         // Feeding her babies (Ed, 2026-10-11: "Babies don't defend, but they can be easily moved and cheaply levelled up to

@@ -229,7 +229,7 @@ export class HeightField {
 
   private raw(x: number, z: number): number {
     if (!this.H.on) return 0;
-    const h = terrainAt(this.map, x, z, this.H), b = this.beach; // (the hills and the layout's rises and hollows)
+    const h = terrainAt(this.map, x, z, this.H), b = this.beach; // (the hills and the layout's rises and hollows, and the lakes' hollows)
     if (!b) return h;
     // The beach (rules/mapShape.ts beachOf): the hills eased down over `ease` metres to the sand's
     // height where it starts, the sand sloping gently to the sea's, flat beyond.

@@ -29,7 +29,7 @@ export class Minimap {
     g.clearRect(0, 0, n * k, n * k);
     for (let y = m.first; y < m.first + n; y++) for (let x = m.first; x < m.first + n; x++) {
       const c = `${x},${y}`, a = p.areas.get(c);
-      if (!m.playable(x, y)) { if (m.inBuffer(x, y)) { g.fillStyle = "#0e0b1a"; g.fillRect((x - m.first) * k + 0.5, (y - m.first) * k + 0.5, k - 1, k - 1); } continue; } // (the circular map's buffer ring: scenery)
+      if (!m.playable(x, y)) { if (m.isLake?.(x, y)) { g.fillStyle = "#3d7fb0"; g.fillRect((x - m.first) * k + 0.5, (y - m.first) * k + 0.5, k - 1, k - 1); } else if (m.inBuffer(x, y)) { g.fillStyle = "#0e0b1a"; g.fillRect((x - m.first) * k + 0.5, (y - m.first) * k + 0.5, k - 1, k - 1); } continue; } // (the circular map's buffer ring: scenery)
       g.fillStyle = c === `${m.centreCell[0]},${m.centreCell[1]}` ? "#ff6fcf" : a ? `hsl(${300 - Math.min(200, a.wave * 12)},80%,55%)` : nextSet.has(c) ? "#ffe25c" : isCand.has(c) ? "#6a5a20" : "#1d1830";
       g.fillRect((x - m.first) * k + 0.5, (y - m.first) * k + 0.5, k - 1, k - 1);
     }

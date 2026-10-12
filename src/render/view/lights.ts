@@ -12,6 +12,7 @@ import { inView } from "./culling";
 import { mark } from "./pops";
 import * as Art from "../../../art/generator.js";
 import { LEGENDS } from "../../rules/legends";
+import { beachFires } from "../beach";
 
 export function updateSources(v: View, time: number): void {
   const f = v.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], g = v.game;
@@ -47,6 +48,14 @@ export function updateSources(v: View, time: number): void {
       lights.push({ x: src.x, y: 2, z: src.z, reach: v.game.tuning.lights.stone.reach * src.size, rgb: [v.runeCyan, v.runeViolet, v.runeGreen][kind], strength: v.game.tuning.lights.stone.strength * pulse });
       if (inView(v, src.x, src.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: mark(v, "prop", src.x, src.z, 2.6) });
     }
+  }
+  // The beach witches' campfires (render/beach.ts), while the beach is showing: lit as ever, whatever the party's doing.
+  if (v.beachView.on) for (const c of beachFires(g)) {
+    const k = hash2(Math.round(c.x * 10), Math.round(c.z * 10), 7), flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
+    lights.push({ x: c.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: c.z, reach: g.tuning.lights.campfire.reach, rgb: v.fire, strength: g.tuning.lights.campfire.strength * flick });
+    if (v.partyObjects.ready) { v.worldFires.push({ x: c.x, z: c.z, scale: 1, flip: c.flip }); continue; }
+    const fr = f[Math.floor(time * 8 + k * 10) % 3];
+    if (inView(v, c.x, c.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: c.x, y: 0, z: c.z, frame: fr, flip: c.flip, fresh: mark(v, "prop", c.x, c.z, 2) });
   }
   v.propBatch.set(items);
   v.forestLights = lights;

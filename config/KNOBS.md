@@ -35,6 +35,16 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.coast.harmonics` | number | 0 to … |
 | `map.coast.detail` | number | 0 to … |
 
+### `lakes`
+
+Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. shore: metres of bare shore round the water (no trees, nothing placed); pad: how far from the water anything on foot stops; koi: the share of lakes with koi in them (DECISION FOR ED).
+
+| knob | type | range |
+|---|---|---|
+| `lakes.shore` | number | 0 to … |
+| `lakes.pad` | number | 0 to … |
+| `lakes.koi` | number | 0 to … |
+
 ### `islands`
 
 Islands other than home (the wave 2 finale's dream bubbles and the sea chart; rules/islandShape.ts, art/islands.js; Ed, docs/backlog/journey.md): coast, the coastline's knobs as map.coast's (amp, the most it strays from round, a share of the radius; harmonics, how many bays and headlands; detail, the finer wobble), stronger than home's so every island has a shape of its own, read at a bubble's 30 pixels.
