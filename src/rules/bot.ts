@@ -529,11 +529,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           if (pk) pickUp(pk); else { feeding = null; feedAgain = time + 20; }
         }
         if (feeding && time - (feeding.until === Infinity ? time : feeding.until) > 40) { feeding.phase = "collect"; } // (never stuck waiting)
-      } else if (b.mode === "ground" && !b.seated && runeNear(g.creatures, b.x, b.z, 25, time)) {
-        // One won over (happy): its sigil lies as a rune at its feet; pick it up to leash it (E; Ed, 2026-10-06).
-        const rn = runeNear(g.creatures, b.x, b.z, 25, time)!, rd = Math.hypot(rn.x - b.x, rn.z - b.z);
+      } else if (b.mode === "ground" && !b.seated && runeNear(g.creatures, b.x, b.z, 25, time, undefined, t.leash.restAbove ?? 0)) {
+        // One won over (happy): its sigil lies as a rune south of it; pick it up to leash it (E; Ed, 2026-10-06).
+        const south = t.leash.restAbove ?? 0, rn = runeNear(g.creatures, b.x, b.z, 25, time, undefined, south)!, rx = rn.x, rz = rn.z + south, rd = Math.hypot(rx - b.x, rz - b.z); // (its rune lies south of it)
         bot.doing = `picking up ${article(rn.species)}'s rune`;
-        if (rd > t.leash.pickRadius * 0.6) { mx = (rn.x - b.x) / rd; mz = (rn.z - b.z) / rd; } else if (step % 10 === 0) place = true;
+        if (rd > t.leash.pickRadius * 0.6) { mx = (rx - b.x) / rd; mz = (rz - b.z) / rd; } else if (step % 10 === 0) place = true;
       } else {
         if (!target || time >= pickAt) { target = pickRecruit(); pickAt = time + 3; }
         bot.doing = target ? (there(target.x, target.z) ? `inviting the ${plural(species(target.cell))}` : `flying to the ${plural(species(target.cell))}`) : "looking for someone to invite";

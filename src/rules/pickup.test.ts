@@ -1,5 +1,5 @@
 // Leashing a happy creature by picking up its sigil rune (Ed, 2026-10-06; states.leash "pickup"): its 💌 ring full, it's
-// happy and its sigil lies as a rune at its feet, moving with it; on the ground within leash.runeRadius, E picks it up
+// happy and its sigil lies as a rune leash.restAbove metres south of it (Ed, 2026-10-11), moving with it; on the ground within leash.runeRadius, E picks it up
 // and it's leashed at the bottom of her stack. 💌s no longer fill a second meter. Her hat comes first, then a placed
 // sigil of hers, then the nearest rune. Only happy legends (and legends) have none; pickupDelay holds it back.
 import { afterEach, describe, expect, it } from "vitest";
@@ -18,10 +18,12 @@ function game(): Game {
   g.party.spellAt = undefined;
   return g;
 }
+const S = TUNING.leash.restAbove ?? 0; // (a happy one's rune lies this far south of it, +z)
 const at = (g: Game, x: number, z: number) => { g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 }; };
-/** A wild creature brought to (x, z), made happy by filling its 💌 meter. */
+/** A wild creature brought so its rune lies at (x, z) (it stands S north of it), made happy by filling its 💌 meter. */
 function happyAt(g: Game, x: number, z: number, skip: number[] = []): Creature {
   const c = g.creatures.find(k => !k.boss && k.level < 3 && stateOf(k) === "wild" && !skip.includes(k.id) && Math.hypot(k.x - x, k.z - z) > 200)!;
+  z -= S;
   Object.assign(c, { x, z, tx: x, tz: z, wanderTo: undefined, fleeUntil: undefined });
   const A = affectionOf(g);
   for (let i = 0; i < 40 && stateOf(c) === "wild"; i++) A.hit(c, TUNING.invites.amount, g.clock.time);
@@ -31,7 +33,7 @@ function happyAt(g: Game, x: number, z: number, skip: number[] = []): Creature {
 const press = (g: Game) => { stepGame(g, { ...C, place: true }, 1 / 60); const ev = g.leashEvents.map(e => e.kind); stepGame(g, C, 1 / 60); return ev; };
 
 describe("leashing a happy creature by its sigil rune", () => {
-  it("full ring: happy, its rune at its feet; E within reach leashes it at the bottom of her stack, as a pick-up", () => {
+  it("full ring: happy, its rune south of it; E within reach leashes it at the bottom of her stack, as a pick-up", () => {
     const g = game(), W = g.witches[0];
     at(g, g.witch.x + 30, g.witch.z + 20);
     const c = happyAt(g, g.witch.x + 0.8, g.witch.z);
@@ -43,7 +45,7 @@ describe("leashing a happy creature by its sigil rune", () => {
     press(g);
     expect(c.leashed).toBeFalsy();
     // Beside it (it may have wandered a step: still within reach).
-    at(g, c.x + 0.5, c.z);
+    at(g, c.x + 0.5, c.z + S); // (on its rune)
     const ev = press(g);
     expect(c.leashed).toBe(true);
     expect(stateOf(c)).toBe("leashed");
@@ -60,9 +62,10 @@ describe("leashing a happy creature by its sigil rune", () => {
     press(g);
     expect(c.leashed).toBe(true);
     // Another, a few metres off: it trots over to her, stopping short of her.
-    const P = TUNING.leash.runePull, o = happyAt(g, g.witch.x, g.witch.z + P.radius - 1);
+    // (north of her: its rune lies south of it, so one south of her would have to walk past her and her followers to bring it)
+    const P = TUNING.leash.runePull, o = happyAt(g, g.witch.x, g.witch.z - (P.radius - 1));
     for (let i = 0; i < 6 * 60; i++) stepGame(g, C, 1 / 60);
-    const d = Math.hypot(o.x - g.witch.x, o.z - g.witch.z);
+    const d = Math.hypot(o.x - g.witch.x, o.z + S - g.witch.z); // (its rune comes to her)
     expect(d).toBeLessThan(P.stop + 0.5);
     expect(d).toBeGreaterThan(P.stop - 0.5);
     press(g);
@@ -126,10 +129,10 @@ describe("leashing a happy creature by its sigil rune", () => {
     const c = happyAt(g, g.witch.x + 0.6, g.witch.z);
     expect(hasRune(c)).toBe(true); // (it has one: the view shows it popping out)
     expect(hasRune(c, g.clock.time)).toBe(false);
-    at(g, c.x, c.z); press(g);
+    at(g, c.x, c.z + S); press(g);
     expect(c.leashed).toBeFalsy();
     for (let i = 0; i < 60; i++) stepGame(g, C, 1 / 60);
-    at(g, c.x, c.z); press(g);
+    at(g, c.x, c.z + S); press(g);
     expect(c.leashed).toBe(true);
   }, 60000);
 });
