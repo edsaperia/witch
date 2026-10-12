@@ -45,6 +45,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Home's sigil is the World Tree**: symbolically the Ent legend's placed sigil. It shows on the dancefloor before the party spell wakes it.
 - **In the treehouse** the chart is a miniature of the world itself: a water feature, the disc with its islands, its sea pouring off the rim into a pool in the floor.
 - Fits what's drawn today: the world's bend already curves the ground away toward the horizon.
+- **Sailing zooms in** (Ed, 2026-10-11, eventually): choosing an island on the chart transitions to it by zooming the chart's camera down into the island, all the way to the dancefloor at its centre, where the night begins.
 
 ### The end of the route (Ed, 2026-10-10)
 

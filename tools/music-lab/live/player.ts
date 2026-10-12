@@ -97,6 +97,7 @@ export class Player {
     h.play = (ev, t, dur, sps, chord) => this.note(ev, t, dur, sps, chord, play);
     h.step = (cue, n, t, sps) => { step(cue, n, t, sps); if (n % 16 === 0 && e.current?.step === n) this.bar(Math.floor(n / 16), t, sps, e.current.plan, cue); };
     this.engine = e;
+    e.setRecordings(this.samples); // (the game's singer, a recording: Ed, 2026-10-11)
     if (this.whispered && this.samples.whispers) e.setWhisper(this.samples.whispers);
     this.startedAt = this.ctx.currentTime + 0.1;
     this.throatNext = 0; this.wasBreakdown = false; this.lastSung = -Infinity;
