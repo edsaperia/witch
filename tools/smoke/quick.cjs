@@ -1,7 +1,7 @@
 // The quick smoke test, run in CI on every push and pull request (a few minutes): serves the built
-// game (dist/), loads it in headless Chromium at a laptop size with ?quick=1 (only the art the
-// start needs), starts, flies about 5 s on the ground, rises, flies about 5 s in the treetops and
-// descends. Fails on any page or console error, a blank picture, or a witch that doesn't move,
+// game (dist/), loads it in headless Chromium at 960×540 (QUICK_SIZE=1280x720 for another) with ?quick=1 (only the art the
+// start needs), starts, hops off the treehouse deck, flies about 2.5 s on the ground, rises, flies about 2.5 s in the treetops
+// and descends: kept short, as the software renderer here takes 20 s or so a second of game time. Fails on any page or console error, a blank picture, or a witch that doesn't move,
 // rise or descend. Saves one screenshot (QUICK_OUT, default previews/quick.png). The full smoke
 // test (smoke.cjs) still covers pops, floating, big windows and the rest.
 // Run `npm run build` first, then `npm run smoke:quick`.
@@ -14,6 +14,7 @@ try { playwright = require("playwright"); } catch { playwright = require("/opt/n
 const root = path.resolve(__dirname, "../../dist");
 const shotPath = path.resolve(process.env.QUICK_OUT || path.join(__dirname, "../../previews/quick.png"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
+const [W, H] = (process.env.QUICK_SIZE || "960x540").split("x").map(Number), FLY = 2.5; // (the viewport; the seconds of game time each flight)
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 
 function serve() {
@@ -32,7 +33,7 @@ async function main() {
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [], results = [];
   const check = (ok, what) => { results.push(`${ok ? "ok  " : "FAIL"} ${what}`); log(ok ? "ok  " : "FAIL", what); if (!ok) errors.push(what); };
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  const page = await browser.newPage({ viewport: { width: W, height: H } });
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console error: ${m.text()}`); });
   try {
@@ -63,17 +64,17 @@ async function main() {
       await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 120000, polling: 100 }).catch(() => {});
       check(await page.evaluate(() => window.witch.game.witch.mode === "ground" && !window.witch.game.witch.perch), "lands on the ground away from the deck");
     }
-    let [a, b] = await hold("ArrowRight", 5);
-    check(b.mode === "ground" && b.x - a.x > 20, `flies on the ground (${(b.x - a.x).toFixed(0)} m east in ${(b.t - a.t).toFixed(1)} s)`);
+    let [a, b] = await hold("ArrowRight", FLY);
+    check(b.mode === "ground" && b.x - a.x > 10, `flies on the ground (${(b.x - a.x).toFixed(0)} m east in ${(b.t - a.t).toFixed(1)} s)`);
     // Right click dodges: a blink on the ground.
-    await page.mouse.click(640, 300, { button: "right" });
+    await page.mouse.click(W / 2, H * 0.42, { button: "right" });
     await page.waitForFunction(() => Number.isFinite(window.witch.game.witches[0].dash.at), null, { timeout: 60000, polling: 100 }).catch(() => {});
     check(await page.evaluate(() => Number.isFinite(window.witch.game.witches[0].dash.at)), "right click dodges (a blink on the ground)");
     await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
     check((await state()).mode === "treetop", "space rises to the treetops");
-    [a, b] = await hold("ArrowUp", 5);
-    check(a.z - b.z > 40, `flies in the treetops (${(a.z - b.z).toFixed(0)} m north in ${(b.t - a.t).toFixed(1)} s)`);
+    [a, b] = await hold("ArrowUp", FLY);
+    check(a.z - b.z > 20, `flies in the treetops (${(a.z - b.z).toFixed(0)} m north in ${(b.t - a.t).toFixed(1)} s)`);
     check(b.trees > 20, `the forest is drawn (${b.trees} trees)`);
     // Not a blank picture: the canvas holds many distinct colours.
     const colours = await page.evaluate(() => {
@@ -92,7 +93,7 @@ async function main() {
     check((await state()).mode === "ground", "space descends to the ground");
     // The mouse wheel zooms (Ed, 2026-10-06), and the page doesn't scroll.
     const z0 = await page.evaluate(() => window.witch.game.camera.zoom);
-    await page.mouse.move(640, 300);
+    await page.mouse.move(W / 2, H * 0.42);
     for (let i = 0; i < 3; i++) { await page.mouse.wheel(0, 120); await page.waitForTimeout(300); }
     await page.waitForFunction(z => Math.abs(window.witch.game.camera.zoom - z) > 0.01, z0, { timeout: 60000, polling: 100 }).catch(() => {});
     const z1 = await page.evaluate(() => window.witch.game.camera.zoom), scrolled = await page.evaluate(() => window.scrollY);
