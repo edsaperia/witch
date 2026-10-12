@@ -74,3 +74,20 @@ The strong one makes the cyan glyphs read clearly against dark ground. But a neg
 - **Bloom.** Lower the rune's bloom contribution when placed, for example by keeping the placed glyph's emissive below the bloom threshold and leaning on the dark backing for contrast.
 
 This is the leash layer (`src/render/leash/glyphs.ts`), so it belongs with golf's option B, not here.
+
+## Round 2: Ed's notes ("the same width as the sigil, darker, edges not too smooth"; "sigils less transparent")
+
+These are mocked with temporary local toggles in the leash layer and are not committed. Every shot also has the clock fix. The scenes are:
+- `5`, `6`: the Alder forest, where the sigils' own light makes the ground bright;
+- `7`, `8`: the home dancefloor while it is off, which is dark ground.
+
+The variants:
+- **o1 as today**. On bright ground the rune blooms into a white-yellow smear, about 200 luma, and the glyph is lost. On dark ground it is dim, about 70.
+- **o2 + dark backing**. This is a near-black disc (0.02, 0.02, 0.035 at 85%) drawn with normal blending under the rune. It is as wide as the glyph's own pixels plus 10%, measured from the atlas, and built from chunky 2-px cells with a 60% outer step, so the edge is pixelled, not soft. On its own it makes the glyph dim, because the glyph is drawn at the 0.5 glyph gain (#752).
+- **o3 + backing + opaque sigil (glow kept)**. The glyph is also drawn opaque with normal blending over the backing, and the additive glyph stays on top. **This reads best on both grounds**: crisp, full neon, dark behind it. Patch / ring luma: forest 107–165 / ~100; dancefloor 89–146 / 21–44.
+- **o4 opaque, no additive glow**. Too dim at the current gain.
+
+**Proposal for the leash layer (golf's code):**
+- **Backing.** Draw o2's backing under every placed rune: a solid, pixel-stepped dark disc, sigil-wide.
+- **Opaque glyph.** Draw the glyph opaque (normal blending) at full neon over it, keeping today's dim additive glyph only as the edge glow.
+- **Clock.** The rune's write-on (`leash.ts`, `Math.min(1, (time - p.at) / 0.8)`) has the same mismatch as the light. It should run on `g.herTime` too, or after the treehouse deck the rune is never written in.
