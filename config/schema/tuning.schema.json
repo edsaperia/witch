@@ -7644,10 +7644,6 @@
     "arrive": {
       "type": "object",
       "properties": {
-        "maxAge": {
-          "type": "number",
-          "minimum": 0
-        },
         "push": {
           "type": "number",
           "minimum": 0
@@ -7724,7 +7720,6 @@
         }
       },
       "required": [
-        "maxAge",
         "push",
         "pushTime",
         "fade",

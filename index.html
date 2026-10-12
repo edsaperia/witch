@@ -132,8 +132,8 @@
 <body>
   <canvas id="game"></canvas>
   <!-- Arriving from the sea chart (?arrive=1; rules/arrive.ts, app/arrive.ts): the chart's last frame, on the first paint, before the night builds. -->
-  <img id="arrive-still" alt="" style="display:none;position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:40;image-rendering:pixelated;transform-origin:50% 55%;pointer-events:none">
-  <script>(function () { try { if (new URLSearchParams(location.search).get("arrive") !== "1") return; var r = JSON.parse(sessionStorage.getItem("witch.arrive") || "null"); if (!r || typeof r.still !== "string" || Date.now() - r.at > 60000) return; var i = document.getElementById("arrive-still"); i.src = r.still; i.style.display = "block"; } catch (e) {} })();</script>
+  <img id="arrive-still" alt="" style="display:none;position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:40;background:#05060e;image-rendering:pixelated;transform-origin:50% 55%;pointer-events:none">
+  <script>(function () { try { if (new URLSearchParams(location.search).get("arrive") !== "1") return; var r = JSON.parse(sessionStorage.getItem("witch.arrive") || "null"); if (!r || !r.cam || Date.now() - r.at > 30000) return; var i = document.getElementById("arrive-still"); if (r.still) i.src = r.still; i.style.display = "block"; } catch (e) {} })();</script>
   <div id="seed"></div>
   <div id="version"></div>
   <div id="debug"></div>

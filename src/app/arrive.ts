@@ -1,25 +1,26 @@
-// Arriving on an island from the sea chart (?arrive=1; rules/arrive.ts has the record and the path): the chart's last frame
+// Arriving on an island from the sea chart (?arrive=1; app/arrival.ts reads the chart's hand-off, rules/arrive.ts has the path): the chart's last frame
 // (put up on the first paint by index.html's little script) pushes in slowly while the night builds; once the start's art is
 // ready the game's camera takes over at the chart's own camera, the still cross-fades away, and the flight goes on north over
 // the sea and the forest, up to frame the dancefloor and the Ent's spot, and down to the opening shot at her decks. Any key or
 // tap skips to the end. main.ts starts the night (her clock, the party spell's cast) when it lands.
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
-import { arrivePlan, planLength, shotAt, type ArrivePlan, type ArriveRecord, type ArriveTuning, type Shot } from "../rules/arrive";
+import { arrivePlan, planLength, shotAt, type ArrivePlan, type ArriveTuning, type Shot } from "../rules/arrive";
+import type { Arrival } from "./arrival";
 import { groundHeight } from "../render/height";
 import type { View } from "../render/view";
 
-export class Arrival {
+export class ArrivalFlight {
   private plan: ArrivePlan | null = null;
   private t0 = 0;
   private skipped = false;
   /** Landed: the flight over (or skipped), the game's camera its own again. */
   done = false;
 
-  constructor(readonly rec: ArriveRecord, private readonly A: ArriveTuning, private readonly still: HTMLImageElement | null) {
+  constructor(readonly rec: Arrival, private readonly A: ArriveTuning, private readonly still: HTMLImageElement | null) {
     const img = still;
     if (!img) return;
-    if (!img.src) img.src = rec.still;
+    if (!img.src && rec.still) img.src = rec.still; // (no still, too big for the storage: a plain dark screen fades instead)
     img.style.display = "block";
     // the push-in while the night builds (a slow ease, never past A.push)
     img.style.transition = `transform ${A.pushTime}s cubic-bezier(.2,.6,.3,1)`;

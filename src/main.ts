@@ -41,8 +41,8 @@ import { PerfHud } from "./app/perfHud";
 import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
-import { Arrival } from "./app/arrive";
-import { ARRIVE_KEY, readArrival } from "./rules/arrive";
+import { ArrivalFlight } from "./app/arrive";
+import { readArrival } from "./app/arrival";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -160,12 +160,9 @@ freeze.started = () => startEl.style.display === "none";
 // then (browsers keep sound off till one does) a small note asks for one.
 const stillEl = document.getElementById("arrive-still") as HTMLImageElement | null;
 const arrival = (() => {
-  if (params.get("arrive") !== "1" || !tuning.arrive) { stillEl?.remove(); return null; }
-  let raw: string | null = null;
-  try { raw = sessionStorage.getItem(ARRIVE_KEY); sessionStorage.removeItem(ARRIVE_KEY); } catch { /* no storage */ }
-  const r = readArrival(raw, tuning.map?.island ?? "", Date.now(), tuning.arrive.maxAge);
-  if (!r) { stillEl?.remove(); return null; }
-  return new Arrival(r, tuning.arrive, stillEl);
+  const r = params.get("arrive") === "1" && tuning.arrive ? readArrival(tuning.map?.island ?? "") : null; // (read once: a reload doesn't fly again)
+  if (!r || !tuning.arrive) { stillEl?.remove(); return null; }
+  return new ArrivalFlight(r, tuning.arrive, stillEl);
 })();
 let gestured = false, landed = false;
 const soundNote = () => {
