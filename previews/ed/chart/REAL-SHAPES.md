@@ -27,3 +27,18 @@ on the map to see a specific island or see almost the whole sea". World seed 0, 
   its real land arrives from a background worker, starting with the one you're looking at; all of them take about a
   minute and a half, and the page stays responsive.
 - The chart now draws at 2 screen pixels per art pixel, finer than the game's 3. It's still pixellated.
+
+## Natural land colours by biome, and lakes (Ed: "Natural land colours", "The real maps will have lakes. Colour it themed by its biome.")
+
+- The islands are painted like a map's terrain, no longer in their areas' floor colours: lowlands, uplands, rock and peaks by
+  height and steepness, darker where the forest is thick, and sand on the beaches. The heights are the game's own terrain.
+- Each island takes its biome's palette (from `config/kinds.json`). Today's 32 kinds are all temperate (greens and earths).
+  The uncharted islands have their direction's biome: cold, mountains and glaciers, rocky, badlands, hot, mangrove swamp,
+  jungle or cold rainforest. You can see the outer ring change colour by direction in `real-furthest.png`.
+- `biomes-sheet.png`, one island per biome close up, left to right and top to bottom:
+  - wolf (temperate), unknown-01 (cold), unknown-02 (mountains and glaciers);
+  - unknown-04 (rocky), unknown-05 (badlands), unknown-07 (hot);
+  - unknown-09 (mangrove swamp), unknown-11 (jungle), unknown-12 (cold rainforest).
+- Lakes (hotel's #711): each lake lies flat at its own level in its hollow in the hills, lighter than the sea as in the game.
+  `real-closest-wolf.png` shows two.
+- The night's blue grade still tints everything; the hot and badlands islands would read warmer in daylight.
