@@ -239,8 +239,16 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     if (mini && opts.size) { const p = CHART_PIXEL; chart.resize(opts.size.w * p, opts.size.h * p); return; }
     chart.resize(cssW ?? (root.clientWidth || host.clientWidth || innerWidth), cssH ?? (root.clientHeight || host.clientHeight || innerHeight));
   };
-  resize(); build();
-  choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true);
+  // The islands are laid out after the first frames are drawn: the archipelago (rules/archipelago.ts) is worked out once a world,
+  // about a second, the first time an island's place is asked for; till then the sea and the sky, and a word that it's coming.
+  resize();
+  $("status").textContent = "charting the sea…";
+  let disposed = false;
+  setTimeout(() => {
+    if (disposed) return;
+    build();
+    choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true);
+  }, 50);
 
   return {
     canvas, chart,
@@ -248,6 +256,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     update(dt, time) { if (!mini) pad(dt); chart.frame(dt, time); },
     resize, choose,
     dispose() {
+      disposed = true;
       removeEventListener("keydown", onKey);
       worker?.terminate(); worker = null;
       chart.dispose();
