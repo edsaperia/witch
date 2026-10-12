@@ -832,6 +832,24 @@ const report = await b.page.evaluate(async () => {
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 ok(report.every(r => r.good), `${report.length} sprite checks`);
+// the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
+// every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle
+// reaching it), each tier different and the carved ones more detailed than the plain glyph (more edges), not a solid disc
+{
+  const D = await import("./sigilDetail.js"), S = await import("./sigils.js"), bad = [];
+  for (const id of [...S.SIGIL_IDS, "worldTree"]) {
+    const n = 128, t = [0, 1, 2].map(tier => D.sigilDetail(id, n, { tier })), ink = t.map(m => m.reduce((a, v) => a + v, 0));
+    if (t.some(m => m.some(v => v !== 0 && v !== 1))) bad.push(`${id}: not crisp`);
+    if (ink.some(k => k < 150)) bad.push(`${id}: ink ${ink.join("/")}`);
+    if (ink[2] > n * n * .6) bad.push(`${id}: too solid (${ink[2]})`);
+    if (t.some(m => { for (let i = 0; i < n; i++) if (m[i] || m[(n - 1) * n + i] || m[i * n] || m[i * n + n - 1]) return true; return false; })) bad.push(`${id}: touches its box's edge`);
+    if (t[1].every((v, i) => v === t[2][i]) || t[0].every((v, i) => v === t[1][i])) bad.push(`${id}: tiers alike`);
+    const edges = t.map(m => { let e = 0; for (let y = 0; y < n; y++) for (let x = 1; x < n; x++) e += m[y * n + x] !== m[y * n + x - 1] ? 1 : 0; return e; });
+    if (!(edges[1] > edges[0] * 1.3 && edges[2] > edges[0] * 1.3)) bad.push(`${id}: the carved tiers no more detailed than the plain glyph (edges ${edges.join("/")})`);
+  }
+  if (!(D.detailTier(32) === 0 && D.detailTier(96) === 1 && D.detailTier(200) === 2)) bad.push("detailTier");
+  ok(!bad.length, `detailed sigils: every species' and the World Tree (${S.SIGIL_IDS.length + 1}), plain glyph, carved bands and the carved emblem, crisp, clear of the box's edge, no circle, each tier its own${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 // party relics (art/partyRelics.js, #87): 6+ bottles, each half-buried, drawn at a third of their built size (Ed, 2026-10-11: 2.3 to 5.4 m across and 2 to 5.7 m tall),
 // sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
 // motes); the glass is see-through (a rim in its colour and a half-clear dither of empty glass); it carries a light; its 3 frames

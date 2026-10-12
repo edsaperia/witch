@@ -6,7 +6,8 @@ import { AREA_TYPES } from "../../rules/map";
 import { waveCountdown } from "../../rules/party";
 import { hatMarker } from "../../rules/hat";
 import { leyPulse, pointerShown } from "../../rules/leypulse";
-import { edgeLayout, HAT, PARTY, StoneIndicator } from "../indicator";
+import { edgeLayout, FLASK, HAT, PARTY, StoneIndicator } from "../indicator";
+import { dowseMarker } from "../../rules/hatSpells";
 import { finalStone, winPulse, winTarget } from "../../rules/win";
 import { AlarmIndicators } from "../alarm";
 import { ALARM_DEFAULTS, shownAlarms, stepAlarms } from "../../rules/alarms";
@@ -53,6 +54,13 @@ export function drawPointers(v: View, time: number): void {
       const P = (v.hatPointer ??= new StoneIndicator(document.body, 3));
       P.fade(H ? calm : 0);
       P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+    }
+    // The Dowsing hat (rules/hatSpells.ts): toward the nearest relic still to find, for a while after she puts it down.
+    const D = dowseMarker(g, g.witches[0].spells, g.herTime);
+    if (D || v.dowsePointer) {
+      const P = (v.dowsePointer ??= new StoneIndicator(document.body, 3));
+      P.fade(D ? calm : 0);
+      P.update(v.camera, cw, ch, D ? { x: D.x, z: D.z, colour: HAT_INK, species: "", glyph: FLASK } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
     // The end of the route (rules/win.ts): toward the enraged animal nearest the centre while any lives (its sigil, in its
     // neon), then toward the victory lap's pulse racing home (🎉).
