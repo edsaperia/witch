@@ -17,6 +17,11 @@
       "default": 1.5, "apply": { "knob": "leash.sigilBacking.ink" }
     },
     {
+      "id": "sfxVoices", "pr": 755, "group": "Sound voice budget", "label": "Most sound effects at once", "note": "The one-shot sound effects allowed at once; past it, the ones that matter least (far creatures, the beds' little details) aren't played and lesser ones playing are cut short for hers and the stings. 0: no limit. Lower it if the sound cuts out.",
+      "control": { "type": "slider", "min": 0, "max": 64, "step": 1 },
+      "default": 24, "apply": { "knob": "sfx.budget.voices" }
+    },
+    {
       "id": "sigilGlyph", "pr": 752, "group": "Sigil glow", "label": "Sigil strength", "note": "How bright every sigil is drawn (placed, runes, ghost, stack, treetops). 0.5 stays under the bloom; lift it if they're faint on bright ground.",
       "control": { "type": "slider", "min": 0, "max": 1.5, "step": 0.05 },
       "default": 0.5, "apply": { "knob": "leash.sigilGlyph" }

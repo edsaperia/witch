@@ -221,7 +221,7 @@ export class Night {
     this.nextSnore = now + S.gap * (0.6 + 0.8 * Math.random());
     const at = now + 0.02, inhale = 0.9 + size * 0.8, f = 520 - size * 300, vol = S.volume * near;
     // breathing in through the nose: a low buzzing rasp rising; out: a soft whoosh falling
-    const bp = c.createBiquadFilter(), g = c.createGain(), out = K.voice(pan);
+    const bp = c.createBiquadFilter(), g = c.createGain(), out = K.voice(pan, 0.1);
     bp.type = "bandpass"; bp.Q.value = 2.5; bp.frequency.setValueAtTime(f * 0.8, at); bp.frequency.linearRampToValueAtTime(f, at + inhale);
     g.connect(out); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + inhale); g.gain.exponentialRampToValueAtTime(0.0001, at + inhale + 0.15);
     const am = c.createGain(), lfo = c.createOscillator(), d = c.createGain(); am.gain.value = 0.6; d.gain.value = 0.4;
