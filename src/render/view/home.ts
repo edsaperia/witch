@@ -20,6 +20,7 @@ import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
 import { mark } from "./pops";
 import { ringStoneKey } from "../artBuild";
+import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
@@ -36,10 +37,15 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
   const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
+  const casts = !!t.shadows.trunks?.scenery, cast: TrunkShadow[] = [];
+  const col = (cell: readonly [number, number]) => { const c = v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(cell[0], cell[1])].creature); return c ? [c.x, c.y, c.z] : [0.8, 0.7, 1]; };
   const stone = (x: number, z: number, cell: readonly [number, number], level: number, y = 0) => {
     const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level)];
     if (!inView(v, x, z, frame.w * v.mpp * scale, frame.h * v.mpp * scale, 6)) return false;
     inst.push({ x, y, z, frame, flip: false, scale, fresh: mark(v, "marker", x, z, frame.h * v.mpp * scale) });
+    // its shadow from her glow and the fires, as the scenery's (render/view/scenery.ts), shorter as it sinks
+    const h = frame.h * v.mpp * scale, up = Math.max(0, Math.min(1, 1 + y / h));
+    if (up > 0.05 && casts) cast.push({ x, z, w: frame.w * v.mpp * scale, h: h * up, frame, flip: false, scenery: true, glow: { rgb: col(cell), k: level > 0 ? 1 : 0.6 } }); // (glowing: a soft shade of its own colour)
     return true;
   };
   const near: { d: number; l: ForestLight }[] = [];
@@ -94,6 +100,11 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   near.sort((p, q) => p.d - q.d);
   for (const n of near.slice(0, 8)) lights.push(n.l);
   v.markerBatch.set(inst);
+  if (casts || v.trunkShadowBatches.has("markers")) { // (a batch of their own: their atlas)
+    let b = v.trunkShadowBatches.get("markers");
+    if (!b) { b = new TrunkShadowBatch(v.markerArt.atlas); v.trunkShadowBatches.set("markers", b); v.scene.add(...b.meshes); }
+    b.set(cast);
+  }
   // A 💌 that left a slowed circle outward vanishes in a small sparkle at its edge (render/slowtime.ts): 8 motes bursting
   // out and fading over SPARKLE seconds of real time.
   const now = LIGHT_UNIFORMS.uRealTime.value, SPARKLE = 0.45;

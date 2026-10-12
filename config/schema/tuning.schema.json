@@ -10019,6 +10019,33 @@
             "cover": {
               "type": "number",
               "minimum": 0
+            },
+            "scenery": {
+              "type": "boolean"
+            },
+            "sceneryMin": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tint": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tintTrees": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowLight": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sceneryFoot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sceneryTaper": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10032,7 +10059,14 @@
             "foot",
             "taper",
             "near",
-            "cover"
+            "cover",
+            "scenery",
+            "sceneryMin",
+            "tint",
+            "tintTrees",
+            "glowLight",
+            "sceneryFoot",
+            "sceneryTaper"
           ],
           "additionalProperties": false
         }
