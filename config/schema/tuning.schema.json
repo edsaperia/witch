@@ -193,6 +193,56 @@
       ],
       "additionalProperties": false
     },
+    "chart": {
+      "type": "object",
+      "properties": {
+        "moon": {
+          "type": "object",
+          "properties": {
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "from": {
+              "type": "number"
+            },
+            "shadow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "disc": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "rise",
+            "turn",
+            "height",
+            "from",
+            "shadow",
+            "disc"
+          ],
+          "additionalProperties": false
+        },
+        "edgeBand": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "moon",
+        "edgeBand"
+      ],
+      "additionalProperties": false
+    },
     "islands": {
       "type": "object",
       "properties": {
@@ -10278,6 +10328,7 @@
     "mapAreas",
     "map",
     "lakes",
+    "chart",
     "islands",
     "beach",
     "areaSize",
