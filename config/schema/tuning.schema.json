@@ -10018,6 +10018,10 @@
             "sceneryFoot": {
               "type": "number",
               "minimum": 0
+            },
+            "sceneryTaper": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10037,7 +10041,8 @@
             "tint",
             "tintTrees",
             "glowLight",
-            "sceneryFoot"
+            "sceneryFoot",
+            "sceneryTaper"
           ],
           "additionalProperties": false
         }

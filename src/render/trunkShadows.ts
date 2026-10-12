@@ -43,14 +43,17 @@ export const TRUNK_SHADOW_UNIFORMS = {
   uCasterLight: { value: 0 },
   /** scenery's foot fade (Ed, 2026-10-12: "Runestones shadow should fade at the base"): metres past its own half-width, from its middle */
   uSceneryFoot: { value: 2 },
+  /** scenery's taper (Ed, 2026-10-12: "What about tapering?"): over its half-width and this share of its width past it, so a wide ruin
+   *  opens out over more ground than a narrow runestone (0: none) */
+  uSceneryTaper: { value: 0.5 },
 };
 
 const VERT = /* glsl */ `
 attribute vec4 iTrunk; // x, z (its foot), width, height (metres)
 attribute vec4 iUv;    // its frame in the atlas (u0, v0 top, u1, v1 bottom; u0 > u1 mirrored)
-attribute vec3 iPad;   // its empty rows at the bottom, a share of its height; whether it tapers at its foot (scenery: no); scenery (1) or a tree (0)
+attribute vec3 iPad;   // its empty rows at the bottom, a share of its height; (unused); scenery (1) or a tree (0)
 attribute vec4 iShade; // a glowing caster's own colour (0..1) and how much it glows (0: not at all)
-uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear, uTintScenery, uTintTrees, uCasterLight, uTrunkFoot, uSceneryFoot;
+uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear, uTintScenery, uTintTrees, uCasterLight, uTrunkFoot, uSceneryFoot, uTrunkTaper, uSceneryTaper;
 uniform vec3 uGlowPos, uGlowRgb, uFireRgb;
 varying vec3 vShade;
 uniform vec4 uFires[${MAX_FIRES}];
@@ -75,7 +78,8 @@ void main() {
   float t = position.z + 0.5, u = position.x; // (along from its foot, across)
   vec2 p = foot + dir * t * len + side * u * iTrunk.z * uTrunkAcross;
   vTex = vec2(mix(iUv.x, iUv.z, 0.5 + u * uTrunkAcross), mix(iUv.w, iUv.y, pad + t * (1.0 - pad)));
-  vUx = vec2(iUv.x, iUv.z); vU = u * uTrunkAcross; vTaper = iPad.y;
+  vUx = vec2(iUv.x, iUv.z); vU = u * uTrunkAcross;
+  vTaper = iPad.z > 0.5 ? (uSceneryTaper > 0.0 ? (0.5 + uSceneryTaper) * iTrunk.z : 0.0) : uTrunkTaper; // (its taper's length: a trunk's, or scenery's by its width)
   vFrame = vec4(min(iUv.x, iUv.z), iUv.y, max(iUv.x, iUv.z), iUv.w);
   float k = 1.0 - d / reach;
   float near = uTrunkNear > 0.0 ? smoothstep(0.25 * uTrunkNear, uTrunkNear, length(foot - uGlowPos.xz)) : 1.0; // (to nothing as she comes up to its trunk)
@@ -96,7 +100,7 @@ void main() {
 
 const FRAG = /* glsl */ `
 uniform sampler2D uAlbedo;
-uniform float uTrunkStrength, uTrunkHard, uTrunkCore, uTrunkCover, uCover, uTrunkTaper;
+uniform float uTrunkStrength, uTrunkHard, uTrunkCore, uTrunkCover, uCover;
 varying vec2 vTex, vUx;
 varying float vFade, vAlong, vLen, vU, vTaper, vFoot;
 varying vec4 vFrame;
@@ -108,8 +112,8 @@ void main() {
   // width pinched to a third at the foot, opening smoothly to full over uTrunkTaper metres, the sprite's whole width squeezed in. Done
   // here, a pixel at a time (in the vertices, between the quad's few rows along, it showed as a kink: Ed, v3052).
   vec2 tex = vTex;
-  if (uTrunkTaper > 0.0 && vTaper > 0.0) {
-    float pinch = mix(0.35, 1.0, smoothstep(0.0, 1.0, vAlong * vLen / uTrunkTaper));
+  if (vTaper > 0.0) { // (vTaper: over how many metres, a trunk's or scenery's)
+    float pinch = mix(0.35, 1.0, smoothstep(0.0, 1.0, vAlong * vLen / vTaper));
     tex.x = mix(vUx.x, vUx.y, 0.5 + vU / pinch);
   }
   if (uTrunkHard > 1.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } // (?trunks=debug: where they lie, magenta)
@@ -126,9 +130,9 @@ void main() {
   gl_FragColor = vec4(mix(vec3(1.0), vShade, a), 1.0); // multiplied over the ground (toward its shade: black, or a colour)
 }`;
 
-/** A trunk: its foot (metres), width and height (metres), its frame and whether it's mirrored; taper false for scenery (a temple's or
- *  a runestone's foot is its own width: render/view/scenery.ts). */
-export interface TrunkShadow { x: number; z: number; w: number; h: number; frame: Frame; flip: boolean; taper?: boolean; /** a glowing caster's colour (0..1) and how much it glows (0 to 1) */ glow?: { rgb: ArrayLike<number>; k: number } }
+/** A trunk: its foot (metres), width and height (metres), its frame and whether it's mirrored; scenery (cast from its middle: its foot
+ *  fade and taper by its own width, render/view/scenery.ts) or a tree. */
+export interface TrunkShadow { x: number; z: number; w: number; h: number; frame: Frame; flip: boolean; scenery?: boolean; /** a glowing caster's colour (0..1) and how much it glows (0 to 1) */ glow?: { rgb: ArrayLike<number>; k: number } }
 
 export class TrunkShadowBatch {
   readonly meshes: THREE.Mesh[] = [];
@@ -174,7 +178,7 @@ export class TrunkShadowBatch {
       const uv = s.frame.uv;
       T.set([s.x, s.z, s.w, s.h], i * 4);
       U.set(s.flip ? [uv[2], uv[1], uv[0], uv[3]] : [uv[0], uv[1], uv[2], uv[3]], i * 4);
-      P[i * 3] = (s.frame.pad ?? 0) / s.frame.h; P[i * 3 + 1] = s.taper === false ? 0 : 1; P[i * 3 + 2] = s.taper === false ? 1 : 0; // (untapered: scenery)
+      P[i * 3] = (s.frame.pad ?? 0) / s.frame.h; P[i * 3 + 1] = 0; P[i * 3 + 2] = s.scenery ? 1 : 0;
       const gl = s.glow; S[i * 4] = gl ? gl.rgb[0] : 0; S[i * 4 + 1] = gl ? gl.rgb[1] : 0; S[i * 4 + 2] = gl ? gl.rgb[2] : 0; S[i * 4 + 3] = gl ? gl.k : 0;
     });
     for (const a of [this.trunk, this.uv, this.pad, this.shade]) a.needsUpdate = true;

@@ -52,6 +52,11 @@
       "default": 2, "apply": { "knob": "shadows.trunks.sceneryFoot" }
     },
     {
+      "id": "sceneryShadowTaper", "pr": 759, "group": "Scenery shadows", "label": "Taper (times its width)", "note": "Scenery's shadows are pinched at their base and open out over this share of the piece's width past its edge, so wide ruins and soundsystems open out over more ground than narrow runestones (0: no taper).",
+      "control": { "type": "slider", "min": 0, "max": 2, "step": 0.05 },
+      "default": 0.5, "apply": { "knob": "shadows.trunks.sceneryTaper" }
+    },
+    {
       "id": "sfxVoices", "pr": 755, "group": "Sound voice budget", "label": "Most sound effects at once", "note": "The one-shot sound effects allowed at once; past it, the ones that matter least (far creatures, the beds' little details) aren't played and lesser ones playing are cut short for hers and the stings. 0: no limit. Lower it if the sound cuts out.",
       "control": { "type": "slider", "min": 0, "max": 64, "step": 1 },
       "default": 24, "apply": { "knob": "sfx.budget.voices" }

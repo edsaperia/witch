@@ -100,13 +100,13 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   const per = new Map<number, SpriteInstance[]>();
   const trunks = new Map<number, TrunkShadow[]>(); // (their shadows from her glow and the fires: render/trunkShadows.ts)
   // Scenery casts them too (Ed, 2026-10-12: "Scenery (temples etc) should also cast them"): set pieces (in their area's batch, with
-  // its trees), decor, relics and scenes (a batch an atlas), upright pieces at least sceneryMin metres tall, whole and untapered
-  // (a temple's foot is its own width). Decals lie flat and cast none.
+  // its trees), decor, relics and scenes (a batch an atlas), upright pieces at least sceneryMin metres tall, whole, cast from
+  // their middle (their foot fade and taper by their own width: render/trunkShadows.ts). Decals lie flat and cast none.
   const ST = t.shadows.trunks, castMin = ST?.scenery ? ST.sceneryMin ?? 1.2 : Infinity;
   const casts = new Map<string, TrunkShadow[]>();
   const cast = (key: string, x: number, z: number, frame: Frame, m: number, flip: boolean) => {
     if (frame.h * m < castMin) return;
-    let l = casts.get(key); if (!l) casts.set(key, (l = [])); l.push({ x, z, w: frame.w * m, h: frame.h * m, frame, flip, taper: false });
+    let l = casts.get(key); if (!l) casts.set(key, (l = [])); l.push({ x, z, w: frame.w * m, h: frame.h * m, frame, flip, scenery: true });
   };
   const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
   const mpp = v.mpp;
@@ -172,7 +172,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
       // which leaves half of it in front, reading as a shadow below something hovering); one
       // drawn in perspective, anchored by its middle (its origin), round that middle, as relics are.
       const sd = frame.w * m * 0.3;
-      if (kind === "setpiece" && frame.h * m >= castMin) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: frame.w * m, h: frame.h * m, frame, flip: p.flip, taper: false }); }
+      if (kind === "setpiece" && frame.h * m >= castMin) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: frame.w * m, h: frame.h * m, frame, flip: p.flip, scenery: true }); }
       if (kind !== "setpiece") shadows.push({ x: p.x, z: piece.origin ? p.z : p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
       nb++;
       if (sliceDone()) { yield; resume(); }

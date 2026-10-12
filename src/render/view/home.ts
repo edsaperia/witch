@@ -45,7 +45,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     inst.push({ x, y, z, frame, flip: false, scale, fresh: mark(v, "marker", x, z, frame.h * v.mpp * scale) });
     // its shadow from her glow and the fires, as the scenery's (render/view/scenery.ts), shorter as it sinks
     const h = frame.h * v.mpp * scale, up = Math.max(0, Math.min(1, 1 + y / h));
-    if (up > 0.05 && casts) cast.push({ x, z, w: frame.w * v.mpp * scale, h: h * up, frame, flip: false, taper: false, glow: { rgb: col(cell), k: level > 0 ? 1 : 0.6 } }); // (glowing: a soft shade of its own colour)
+    if (up > 0.05 && casts) cast.push({ x, z, w: frame.w * v.mpp * scale, h: h * up, frame, flip: false, scenery: true, glow: { rgb: col(cell), k: level > 0 ? 1 : 0.6 } }); // (glowing: a soft shade of its own colour)
     return true;
   };
   const near: { d: number; l: ForestLight }[] = [];
