@@ -7,7 +7,7 @@ import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
 import { overrideFor, poseName, type Override } from "./overrides";
-import { propSprites, soundsystemGenSprites, soundsystemSprites, treehouseSprites, witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
+import { entTreehouseSprites, propSprites, soundsystemGenSprites, soundsystemSprites, treehouseSprites, witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
@@ -233,6 +233,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "witch"; id: string; style: Style; genome: unknown; bare: boolean }
   | { kind: "props"; id: string; style: Style }
   | { kind: "soundsystems"; id: string; style: Style }
+  /** (id "home" the old treehouse; "ent:<deck height>:<radius>" the treehouse Ent holding the deck: rules/treehouse.ts) */
   | { kind: "treehouse"; id: string; style: Style }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
   | { kind: "pathPieces"; id: string; style: Style }
@@ -502,7 +503,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "props") return { px: packPixels(propSprites(job.style, mk), 1024) };
   if (job.kind === "soundsystems") return { px: packPixels(soundsystemSprites(job.style, mk), 2048) };
   if (job.kind === "soundsystem") { const { sprites, art } = soundsystemGenSprites(job.style, job.genome, job.yaw, job.size, mk, job.part); return { px: packPixels(sprites, 1024), ss: art }; }
-  if (job.kind === "treehouse") { const { sprites, treehouse } = treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
+  if (job.kind === "treehouse") { const [ent, y, r] = job.id.split(":"), { sprites, treehouse } = ent === "ent" ? entTreehouseSprites(job.style, mk, +y, +r) : treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
