@@ -52,18 +52,23 @@ const PALETTES: Record<string, Palette> = {
 };
 /** What a biome's lakes become (Ed, 2026-10-12: "In the cold biomes lakes become frozen. In the volcano biome lakes become lava.
  *  In the desert biome lakes become oases. In the jungle biome, lakes become sinkholes."): ice, lava, an oasis, a sinkhole, else
- *  water. Only the four cardinal biomes (Ed: "NE, NW, SE, SW should have water lakes; just the cardinal points have special
- *  lakes"): north cold, east rocky (the volcano: "rocky is volcano"), south hot, west jungle. */
-export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole";
-export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", hot: "oasis", jungle: "sinkhole" };
+ *  water: north cold, east rocky (the volcano: "rocky is volcano"), south hot, west jungle. The diagonals have their own (Ed, via
+ *  the coordinator): a glacial tarn in the mountains and glaciers (NE), a hot spring in the cold rainforest (NW), a rust pool in
+ *  the badlands (SE), a lily pond in the mangrove swamp (SW). Temperate keeps water. Looks only. */
+export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole" | "tarn" | "spring" | "rust" | "lily";
+export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "spring", badlands: "rust", "mangrove swamp": "lily" };
 /** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly; a sinkhole's pit, how far (m) its bed
  *  and water sink below the ground round it. */
-const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
+const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number; bands?: RGB }> = {
   water: { rgb: [0, 0, 0], width: 0, k: 0 },
   ice: { rgb: hsv(0.57, 0.1, 0.72), width: 26, k: 0.75 }, // frost
   lava: { rgb: hsv(0.03, 0.4, 0.13), width: 30, k: 0.9 }, // a dark crust
   oasis: { rgb: hsv(0.3, 0.7, 0.46), width: 44, k: 0.9 }, // palms and grass
   sinkhole: { rgb: hsv(0.33, 0.72, 0.42), width: 40, k: 0.9 }, // lush green round the pit
+  tarn: { rgb: hsv(0.58, 0.06, 0.6), width: 26, k: 0.8 }, // bare grey scree
+  spring: { rgb: hsv(0.12, 0.16, 0.78), width: 30, k: 0.85 }, // pale mineral crust
+  rust: { rgb: hsv(0.05, 0.75, 0.62), width: 56, k: 0.95, bands: hsv(0.1, 0.3, 0.82) }, // terraces stepping down to it, orange and cream
+  lily: { rgb: hsv(0.3, 0.65, 0.4), width: 34, k: 0.85 }, // reeds
 };
 const SINK = 16;
 const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -129,7 +134,10 @@ function ground(src: Source, across = ACROSS): IslandGround {
     col = mix(col, P.rock, Math.max(smooth(0.62, 0.82, e), smooth(0.18, 0.4, slope)));
     col = mix(col, P.peak, smooth(0.84, 0.97, e));
     if (src.sand(x, z, dist[i])) col = P.sand;
-    if (near[i] < rim.width) col = mix(col, rim.rgb, rim.k * (1 - smooth(0.35, 1, near[i] / rim.width))); // the lakes' rim
+    if (near[i] < rim.width) { // the lakes' rim (a rust pool's in terraced bands)
+      const band = rim.bands && Math.floor(near[i] / Math.max(step, 9)) % 2 ? rim.bands : rim.rgb;
+      col = mix(col, band, rim.k * (1 - smooth(0.35, 1, near[i] / rim.width)));
+    }
     rgb[i * 3] = Math.round(col[0] * 255); rgb[i * 3 + 1] = Math.round(col[1] * 255); rgb[i * 3 + 2] = Math.round(col[2] * 255);
   }
   return { x0: x0 - src.centre.x, z0: z0 - src.centre.z, step, cols, rows, h, rgb, water, level, lake: look };

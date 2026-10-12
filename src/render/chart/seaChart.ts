@@ -173,7 +173,10 @@ const LAKE_SHALLOWS = 6;
 // A lake by its island's biome (Ed, 2026-10-12: frozen in the cold, lava in the volcano, an oasis in the desert, a sinkhole in the
 // jungle; chartOutlines.worker.ts LAKE_LOOKS, which also paints each one's rim on its shore): uLook 0 water (as the shallows), 1
 // ice (pale, frost white by the shore, faint cracks), 2 lava (glowing and slowly churning, crusting dark by the shore), 3 an
-// oasis (clear turquoise, pale sand under its edge), 4 a sinkhole (deep and dark, a little light caught at its edge).
+// oasis (clear turquoise, pale sand under its edge), 4 a sinkhole (deep and dark, a little light caught at its edge); and the
+// diagonals': 5 a glacial tarn (milky turquoise meltwater, ice floes by its edge), 6 a hot spring (clear blue, a pale mineral
+// edge, mist drifting off it), 7 a rust pool (red-orange mineral water, darker in the middle, rings of terrace by its edge), 8 a
+// lily pond (green water under giant pads, a few flowers).
 const LAKE_VERT = /* glsl */ `
 attribute float aDepth; varying float vD; varying vec2 vP;
 void main() { vD = aDepth; vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }`;
@@ -181,6 +184,15 @@ const LAKE_FRAG = /* glsl */ `
 uniform float uDim, uTime, uScale; uniform int uLook; uniform vec3 uDeep, uPale; varying float vD; varying vec2 vP;
 float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+// round things scattered one to a cell (floes, pads): x how far inside the nearest (1 its middle, 0 its edge, below 0 outside), y its cell's own number
+vec2 dots(vec2 p, float r) {
+  vec2 i = floor(p), best = vec2(-1.0, 0.0);
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    vec2 c = i + vec2(x, y), o = c + 0.2 + 0.6 * vec2(h(c), h(c + 9.1)); float rr = r * (0.6 + 0.5 * h(c + 3.7)), k = 1.0 - length(p - o) / rr;
+    if (k > best.x) best = vec2(k, h(c + 5.3));
+  }
+  return best;
+}
 void main() {
   float d = clamp(vD, 0.0, 1.0), a = pow(1.0 - d, 1.6); vec2 p = vP / uScale; // (p in about 30 m steps)
   vec3 c;
@@ -198,12 +210,28 @@ void main() {
     c = mix(vec3(0.06, 0.36, 0.42), vec3(0.62, 0.78, 0.6), a * a) + vec3(0.05) * n(p * 2.0 + uTime * 0.05);
   } else if (uLook == 4) {
     c = mix(vec3(0.02, 0.055, 0.06), vec3(0.1, 0.26, 0.19), a * a * a);
+  } else if (uLook == 5) {
+    c = mix(vec3(0.36, 0.62, 0.62), vec3(0.62, 0.8, 0.78), a * a);
+    vec2 f = dots(p * 3.0, 0.42); float floe = step(0.0, f.x) * step(0.35, a) * step(0.3, f.y + a * 0.6);
+    c = mix(c, vec3(0.78, 0.86, 0.9) * (0.92 + 0.08 * f.x), floe);
+  } else if (uLook == 6) {
+    c = mix(vec3(0.1, 0.42, 0.55), vec3(0.62, 0.74, 0.7), pow(a, 3.0));
+    float t = uTime * 0.08, mist = n(p * 1.4 + vec2(t, t * 0.6)) * 0.6 + n(p * 3.1 - vec2(t * 1.7, -t)) * 0.4;
+    c = mix(c, vec3(0.82, 0.86, 0.9), smoothstep(0.4, 0.8, mist) * 0.7);
+  } else if (uLook == 7) {
+    float ring = smoothstep(0.55, 0.75, fract(d * 4.0 + n(p * 2.0) * 0.4)) * a;
+    c = mix(vec3(0.62, 0.18, 0.06), vec3(0.88, 0.44, 0.16), a) + vec3(0.16, 0.12, 0.07) * ring;
+  } else if (uLook == 8) {
+    c = mix(vec3(0.08, 0.22, 0.16), vec3(0.16, 0.34, 0.22), a);
+    vec2 f = dots(p * 1.6, 0.55); float pad = step(0.0, f.x) * step(0.25, f.y);
+    c = mix(c, vec3(0.26, 0.56, 0.22) * (0.75 + 0.35 * f.x), pad);
+    c = mix(c, vec3(1.0, 0.66, 0.82), step(0.72, f.x) * step(0.7, f.y)); // (a flower on a few)
   } else c = mix(uDeep, uPale, a * a);
   gl_FragColor = vec4(c * uDim, 1.0);
 }`;
-/** How far in from its shore (m) a frozen, molten, oasis or sinkhole lake's edge reaches. */
+/** How far in from its shore (m) a special lake's edge reaches. */
 const LAKE_RIM = 40;
-const LOOKS: Record<string, number> = { water: 0, ice: 1, lava: 2, oasis: 3, sinkhole: 4 };
+const LOOKS: Record<string, number> = { water: 0, ice: 1, lava: 2, oasis: 3, sinkhole: 4, tarn: 5, spring: 6, rust: 7, lily: 8 };
 
 /** One island's meshes and where it is. */
 interface Isle { d: ChartIsland; group: THREE.Group; pick: THREE.Mesh; x: number; z: number; top: number; reach: number; sigil?: THREE.Mesh; glow?: THREE.Mesh; tier?: number; size?: number }
