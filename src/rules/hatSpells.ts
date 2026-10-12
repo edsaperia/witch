@@ -9,7 +9,8 @@ import type { Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
 import type { HatLetters } from "./invites";
 import { growRing } from "./berries";
-import type { SpellState } from "./spells";
+import { setLoadout, type SpellState } from "./spells";
+import { leaveHat } from "./hat";
 import { LEGEND, healBy, type Creature } from "./creatures";
 import { creatureMaxHp } from "./combat";
 
@@ -73,12 +74,20 @@ export function onHatPicked(g: Game, W: Witch, x: number, z: number, time: numbe
   return near.map(p => p.id);
 }
 
-/** What her hat throws, lying at `down` (rules/invites.ts): the Sentry's and the Slingshot's numbers; undefined for any other. */
-export function hatLetters(s: SpellState, down: { x: number; z: number } | null, t: Tuning): HatLetters | undefined {
-  if (!down) return undefined;
-  if (s.hat === "sentry" && t.spells.sentry) return { x: down.x, z: down.z, sentry: t.spells.sentry };
-  if (s.hat === "slingshot" && t.spells.slingshot) return { x: down.x, z: down.z, sling: t.spells.slingshot };
-  return undefined;
+/** Her hats lying in the world, each with its spell: her own (the spell she wears, `S.hat`), then those she left behind when
+ *  she took a new one in her room (rules/hat.ts leaveHat). None while she's knocked out. */
+export function hatsDown(W: Witch): { x: number; z: number; spell: string }[] {
+  if (W.ko) return [];
+  const own = W.hat.down ? [{ x: W.hat.down.x, z: W.hat.down.z, spell: W.spells.hat }] : [];
+  return W.hat.left.length ? [...own, ...W.hat.left] : own;
+}
+
+/** What her hats lying about throw (rules/invites.ts): every Sentry's and Slingshot's place and numbers; undefined for none. */
+export function hatLetters(down: { x: number; z: number; spell: string }[], t: Tuning): HatLetters | undefined {
+  const S = t.spells.sentry, SL = t.spells.slingshot;
+  const sentry = S ? down.filter(d => d.spell === "sentry").map(d => ({ x: d.x, z: d.z, ...S })) : [];
+  const sling = SL ? down.filter(d => d.spell === "slingshot").map(d => ({ x: d.x, z: d.z, ...SL })) : [];
+  return sentry.length || sling.length ? { sentry, sling } : undefined;
 }
 
 /** Where the Dowsing hat's pointer leads now: the relic's sigil while it's still to be found and the spell lasts; else null. */
@@ -118,24 +127,24 @@ export function cyclonePose(S: SpellState, id: number, time: number, t: Tuning):
 /** How high a creature rides the Cyclone's whirlwind now (the view lifts it by this), 0 when it isn't. */
 export const cycloneLift = (S: SpellState | undefined, id: number, time: number, t: Tuning): number => (S ? cyclonePose(S, id, time, t)?.y ?? 0 : 0);
 
-/** One step of her hat's lasting spells while it lies at `down`: Bramble slows, Nursing heals, the Cyclone whirls (and, while
- *  it lies there, starts again every cyclone.every seconds). The Cyclone's creatures are moved here, after everything else
+/** One step of the lasting spells of her hats lying at `down` (hatsDown): Bramble slows, Nursing heals, the Cyclone whirls (and,
+ *  while it lies there, starts again every cyclone.every seconds). The Cyclone's creatures are moved here, after everything else
  *  has moved them this step, and stunned while it holds them and a moment after. */
-export function stepHatSpells(g: Game, W: Witch, down: { x: number; z: number } | null, dt: number, t: Tuning): void {
+export function stepHatSpells(g: Game, W: Witch, down: { x: number; z: number; spell: string }[], dt: number, t: Tuning): void {
   const S = W.spells, now = g.clock.time;
-  if (down && S.hat === "bramble" && t.spells.bramble) {
-    for (const c of targetsNear(g, down.x, down.z, t.spells.bramble.range)) c.slowUntil = Math.max(c.slowUntil ?? 0, now + 0.25);
+  for (const d of down) {
+    if (d.spell === "bramble" && t.spells.bramble) {
+      for (const c of targetsNear(g, d.x, d.z, t.spells.bramble.range)) c.slowUntil = Math.max(c.slowUntil ?? 0, now + 0.25);
+    } else if (d.spell === "nursing" && t.spells.nursing) {
+      const N = t.spells.nursing;
+      for (const id of [...W.leash.stack, ...W.leash.placed.map(p => p.id)]) {
+        const c = g.creatures[id];
+        if (!c || c.gone || c.hp === undefined || Math.hypot(c.x - d.x, c.z - d.z) > N.range) continue;
+        const max = creatureMaxHp(c);
+        healBy(c, max * N.rate * dt, max, now);
+      }
+    } else if (d.spell === "cyclone") startCyclone(g, S, d.x, d.z, t);
   }
-  if (down && S.hat === "nursing" && t.spells.nursing) {
-    const N = t.spells.nursing;
-    for (const id of [...W.leash.stack, ...W.leash.placed.map(p => p.id)]) {
-      const c = g.creatures[id];
-      if (!c || c.gone || c.hp === undefined || Math.hypot(c.x - down.x, c.z - down.z) > N.range) continue;
-      const max = creatureMaxHp(c);
-      healBy(c, max * N.rate * dt, max, now);
-    }
-  }
-  if (S.hat === "cyclone" && down) startCyclone(g, S, down.x, down.z, t);
   const C = S.cyc, Y = t.spells.cyclone;
   if (C && Y) {
     const end = C.at + Y.time + Y.flingTime;
@@ -147,6 +156,18 @@ export function stepHatSpells(g: Game, W: Witch, down: { x: number; z: number } 
       c.x = p.x; c.z = p.z; c.tx = p.x; c.tz = p.z; c.kx = 0; c.kz = 0; c.vx = 0; c.vz = 0; c.moving = false;
       c.stunUntil = Math.max(c.stunUntil ?? 0, end + Y.stun);
     }
-    if (now >= end && S.hat !== "cyclone") S.cyc = undefined; // (done, and the hat's another: let it go)
+    if (now >= end && S.hat !== "cyclone" && !down.some(d => d.spell === "cyclone")) S.cyc = undefined; // (done, and no Cyclone hat of hers left: let it go)
   }
 }
+
+/** Her loadout changed (the creator's Hat and Broom boxes: in her room before the night, or back in it mid-night from the
+ *  treehouse deck, Ed's answer 4, 2026-10-11): the new spells, and a new hat swapped in while hers lies on the ground somewhere
+ *  leaves that one where it lies, still working its old spell (Ed, 2026-10-12: "the previous one(s) stay in the world"). */
+export function changeLoadout(W: Witch, hat: string, broom: string): void {
+  const was = W.spells.hat;
+  setLoadout(W.spells, hat, broom);
+  if (W.spells.hat !== was) leaveHat(W.hat, was);
+}
+
+/** Out of her room with her hat lying somewhere: she's taken a new one (the same spell again), and that one stays where it lies. */
+export const newHatFromRoom = (W: Witch): void => leaveHat(W.hat, W.spells.hat);

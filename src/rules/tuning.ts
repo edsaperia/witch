@@ -371,6 +371,8 @@ export interface Tuning {
   bubbles: { emojiPixels: number; scale: number; /** a creature's bubble size by level (baby, young, adult, legend) */ levelScale: number[] };
   /** Home's area, settled first: its circle reaches margin metres past the treehouse's footprint; other areas' centres stay gap (areas) beyond it. */
   home: { margin: number; gap: number };
+  /** Arriving on an island from the sea chart (rules/arrive.ts): the still's push-in and cross-fade, and the flight's legs. */
+  arrive?: { push: number; pushTime: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
     deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };

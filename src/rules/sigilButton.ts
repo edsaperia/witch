@@ -13,6 +13,7 @@ import { relicButton } from "./legends";
 import { runeNear } from "./creatureStates";
 import { spaceRadius } from "./spacing";
 import { hatButton, putHat } from "./hat";
+import { setLoadout } from "./spells";
 import { questOutside, questPlaced } from "./quest";
 import { onAreaDone } from "./leylines";
 import { cellKey } from "./party";
@@ -55,7 +56,10 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   }
   const pressed = (sigil || place) && g.witch.mode === "ground" && !g.witch.seated;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
-  if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius)) {
+  // Bare-headed by another hat of hers left lying (Ed, 2026-10-12), she puts that one on, and its spell is hers.
+  const worn = (sigil || place) && g.witch.mode === "ground" ? hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius, W.spells.hat) : null;
+  if (worn !== null) {
+    if (worn !== W.spells.hat) setLoadout(W.spells, worn, W.spells.broom);
     sigil = false; place = false;
     relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht }); // (after the leash's step, which starts its events afresh)
   }

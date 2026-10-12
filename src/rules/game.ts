@@ -37,7 +37,7 @@ import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, star
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, questsFromStanding, stepSigilButton } from "./sigilButton";
-import { hatLetters, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
+import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
@@ -492,7 +492,7 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   repair(W.health, ht, t);
   // The Healing ring (rules/spells.ts): by her hat where it lies, on the ground, she heals a hit every few seconds.
-  if (stepHealingRing(W.spells, W.health, !W.ko && W.body.mode === "ground" ? W.hat.down : null, W.body.x, W.body.z, ht, t)) g.koEvents.push({ kind: "healed", at: ht, x: W.body.x, z: W.body.z });
+  if (stepHealingRing(W.spells, W.health, W.body.mode === "ground" ? hatsDown(W) : [], W.body.x, W.body.z, ht, t)) g.koEvents.push({ kind: "healed", at: ht, x: W.body.x, z: W.body.z });
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   // (No growth on a clock: every area is peopled from the start by its place on the route, Ed 2026-10-07; rules/creatures.ts.)
   if (!calm) stepClear(g);
@@ -524,7 +524,7 @@ function fixedStep(g: Game, controls: Controls): void {
     else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(W.spells, W.hat.down, t));
+  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t));
   if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") refundDash(W.dash, ht, charges);
@@ -542,7 +542,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepWin(g, dt); // (the end of the route: last of all, so the finale's dancers keep their places, rules/win.ts)
   stepWitchParty(g, c, dt);
   // Her hat's lasting spells where it lies (rules/hatSpells.ts: Bramble, Nursing, the Cyclone), after everything else has moved.
-  for (const w of g.witches) stepHatSpells(g, w, w.ko ? null : w.hat.down, dt, t);
+  for (const w of g.witches) stepHatSpells(g, w, hatsDown(w), dt, t);
   if (g.beach) { const w = g.witch; for (const s of g.beach) stepBeachWitches(s, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving: !w.stargazing && (Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3) || !!c.toggleMode }], g.clock.time, dt, g.tuning); }
   // Last, everyone in view eases apart from anyone closer than their sizes like (Ed, 2026-10-05).
   stepSpacing(g, dt);

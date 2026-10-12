@@ -246,6 +246,9 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** The start's own art (render/homeArt.ts, fast start (b)): our witch's frames from her genome (id: its hash, and bare), the
    *  light props, the soundsystems and the treehouse. */
   | { kind: "witch"; id: string; style: Style; genome: unknown; bare: boolean }
+  /** Her hat alone, as it lies on the ground, in the look of a genome (id: its hash): a hat she left lying keeps the look it had
+   *  (render/view/witch.ts), whatever she's wearing since. */
+  | { kind: "hat"; id: string; style: Style; genome: unknown }
   | { kind: "props"; id: string; style: Style }
   | { kind: "soundsystems"; id: string; style: Style }
   /** (id "home" the old treehouse; "ent:<deck height>:<radius>" the treehouse Ent holding the deck: rules/treehouse.ts;
@@ -534,6 +537,10 @@ export function partyGearOf(seed: number, colour: number[] | null): RigGear {
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "witch") { const { sprites, witch } = witchSprites(job.style, job.genome, job.bare, mk); return { px: packPixels(sprites, 2048), ours: witch }; }
+  if (job.kind === "hat") {
+    const mine = witchLookOf(job.style, job.genome), hat = (Art.witchHatSprite as (st: Style, o: object) => unknown)(job.style, { look: mine.look });
+    return { px: packPixels(hat ? [Art.bake(hat, mine.colours, job.style, job.style.cOutline, mk) as Baked] : [], 256) };
+  }
   if (job.kind === "props") return { px: packPixels(propSprites(job.style, mk), 1024) };
   if (job.kind === "soundsystems") return { px: packPixels(soundsystemSprites(job.style, mk), 2048) };
   if (job.kind === "soundsystem") { const { sprites, art } = soundsystemGenSprites(job.style, job.genome, job.yaw, job.size, mk, job.part); return { px: packPixels(sprites, 1024), ss: art }; }

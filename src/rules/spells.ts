@@ -135,12 +135,12 @@ export const blinkDistance = (s: SpellState, t: Tuning): number => t.dash.distan
 /** Her blinks before the cooldown: the Double blink broom's one more (stacking with the Hare's: rules/buffs.ts). */
 export const extraBlinks = (s: SpellState, t: Tuning): number => (s.broom === "double" ? t.spells.double?.charges ?? 1 : 0);
 
-/** The Healing ring (Ed, 2026-10-11, "Second wind" reworked: "placed: standing near it, she heals a hit every few seconds"): her
- *  hat down within spells.healing.radius of her, she heals a hit every spells.healing.every seconds there while she's hurt.
- *  Returns whether she healed now. */
-export function stepHealingRing(s: SpellState, health: { hp: number; repairAt: number }, hat: { x: number; z: number } | null, x: number, z: number, time: number, t: Tuning): boolean {
+/** The Healing ring (Ed, 2026-10-11, "Second wind" reworked: "placed: standing near it, she heals a hit every few seconds"): a
+ *  Healing hat of hers down within spells.healing.radius of her (`hats`: those lying, rules/hatSpells.ts hatsDown), she heals a
+ *  hit every spells.healing.every seconds there while she's hurt. Returns whether she healed now. */
+export function stepHealingRing(s: SpellState, health: { hp: number; repairAt: number }, hats: { x: number; z: number; spell: string }[], x: number, z: number, time: number, t: Tuning): boolean {
   const H = t.spells.healing;
-  if (s.hat !== "healing" || !H || !hat || health.hp <= 0 || health.hp >= t.witchHealth.hits || Math.hypot(hat.x - x, hat.z - z) > H.radius) { s.healAt = undefined; return false; }
+  if (!H || health.hp <= 0 || health.hp >= t.witchHealth.hits || !hats.some(q => q.spell === "healing" && Math.hypot(q.x - x, q.z - z) <= H.radius)) { s.healAt = undefined; return false; }
   if (s.healAt === undefined) { s.healAt = time + H.every; return false; }
   if (time < s.healAt) return false;
   health.hp += 1; s.healAt = time + H.every;
