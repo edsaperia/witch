@@ -1,8 +1,8 @@
 // The hat icons and the Dowsing flask (golf's asks, 2026-10-12): whole glyphs in the indicator's format.
 import { describe, expect, it } from "vitest";
-import { HAT_ICONS } from "./hatIcons";
+import { BROOM_ICONS, HAT_ICONS } from "./hatIcons";
 import { FLASK } from "./indicator";
-import { HAT_SPELLS } from "../rules/spells";
+import { BROOM_SPELLS, HAT_SPELLS } from "../rules/spells";
 
 const shapeOk = (G: readonly string[], n: number) => {
   expect(G.length).toBeLessThanOrEqual(n);
@@ -16,6 +16,12 @@ describe("hat icons", () => {
     const ids = new Set(HAT_SPELLS.map(s => s.id));
     for (const [id, G] of Object.entries(HAT_ICONS)) { expect(ids.has(id as never)).toBe(true); shapeOk(G, 13); expect(G.length).toBe(13); }
     for (const id of ["helmet", "healing", "harvest", "dowsing", "sentry", "slingshot", "gathering"]) expect(HAT_ICONS[id]).toBeDefined();
+  });
+  it("every built hat spell but the plain hat has one, and every built broom (the plain one too)", () => {
+    for (const s of HAT_SPELLS) if (s.built && s.id !== "none") expect(HAT_ICONS[s.id], s.id).toBeDefined();
+    for (const s of BROOM_SPELLS) if (s.built) expect(BROOM_ICONS[s.id], s.id).toBeDefined();
+    const ids = new Set(BROOM_SPELLS.map(s => s.id as string));
+    for (const [id, G] of Object.entries(BROOM_ICONS)) { expect(ids.has(id)).toBe(true); shapeOk(G, 13); expect(G.length).toBe(13); }
   });
   it("the Dowsing flask fits the cue's box", () => { shapeOk(FLASK, 17); });
 });
