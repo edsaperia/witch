@@ -25,7 +25,7 @@ import type { DecidePanel } from "./ui/decide";
 import { tuningFromLink } from "./app/linkParams";
 import { saveLoadout } from "./app/loadout";
 import { castable, setLoadout } from "./rules/spells";
-import { nightOver } from "./app/chartSave";
+import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { Hud } from "./app/hud";
 import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
@@ -314,7 +314,8 @@ function frame(now: number): void {
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
   if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart(href => {
-    if (!wavesOver(game) && !chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0);
+    const W = tuning.map?.world ?? 0, save = loadSave();
+    if (save.world === W) storeSave(sailNight(save, tuning.map?.island ?? "", !wavesOver(game) && !chartRecorded && !overShown)); // (in the campaign's world only, as nightOver)
     location.href = href;
   });
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased

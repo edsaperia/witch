@@ -1,6 +1,6 @@
 // The sea chart's save (wave 2, part C; app/chartSave.ts): what a night unlocks, kept in the browser.
 import { describe, expect, it } from "vitest";
-import { allSave, clearSave, emptySave, loadSave, newCampaign, nightOver, recordNight, SAVE_KEY, storeSave, unlocked, worldSeed } from "./chartSave";
+import { allSave, clearSave, emptySave, loadSave, newCampaign, nightOver, recordNight, sailNight, SAVE_KEY, storeSave, unlocked, worldSeed } from "./chartSave";
 import { KIND_NAMES } from "../rules/rosters";
 
 function memory(items: Record<string, string> = {}) {
@@ -70,5 +70,15 @@ describe("the sea chart's save", () => {
     expect(worldSeed("hello")).not.toBe(worldSeed("goodbye"));
     expect(worldSeed("")).toBeGreaterThan(0);
     expect(loadSave(memory({ [SAVE_KEY]: JSON.stringify({ world: "x" }) })).world).toBe(0);
+  });
+
+  it("sailing off from the treehouse's map table mid-night ends the night unwon, as a loss; once the night's over, it's already recorded (Ed, 2026-10-11: \"Sail anytime\")", () => {
+    const before = recordNight(emptySave(), "home", { won: true, found: ["fox"] });
+    const mid = sailNight(before, "home", true);
+    expect(mid.played).toContain("home");
+    expect(mid.found).toEqual(before.found); expect(mid.won).toEqual(before.won); expect(mid.voyages).toEqual(before.voyages); // (nothing found, no legends woken)
+    const fresh = sailNight(emptySave(), "home", true);
+    expect(fresh.played).toEqual(["home"]); expect(fresh.won).toEqual([]); expect(fresh.found).toEqual([]);
+    expect(sailNight(before, "home", false)).toBe(before); // (won or over: as it ended)
   });
 });
