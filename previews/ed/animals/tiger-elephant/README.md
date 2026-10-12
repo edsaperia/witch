@@ -10,4 +10,4 @@ New animals for later islands, each with its own new jungle area type (Ed, via t
   - The area: red earth, ferns and tumbled stones, huge strangler figs and kapoks with date palms and bamboo, mud wallows, and temple steps in the clearing, a fig rooted on top and two stone elephants flanking the stair.
 - Both sheets end with the animals at night, as the game lights them. The elephant reads khaki under the sheet's studio light but blue-grey at night.
 
-Size: the elephant's adult is about one and a half times the bear's adult and well over the art check's 2.1 times the witch (the elk's limit is 2.5). That is a DECISION FOR ED: keep it this big, or bring it down to the elk's size.
+Size: by eye on the sheet, the elephant's adult stands about 1.3 times the bear's adult, and its legend is the biggest legend. The art check limits the bigger species' adults to 1.45 to 2.1 times the witch (the elk and the stag to 2.5); I'll measure the elephant against that in the full build. DECISION FOR ED: should the elephant be allowed to stand bigger than the elk?
