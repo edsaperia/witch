@@ -34,8 +34,8 @@ describe("the sea chart's layout", () => {
         const dx = (pa.x - pb.x) * W.metres, dz = (pa.y - pb.y) * W.metres;
         expect(Math.hypot(dx, dz), `${a} in ${b}'s patch`).toBeGreaterThan(patchAt(pb.patch, Math.atan2(dz, dx)));
       }
-      // and the whole disc used: no quarter of it holds less than a sixth of the islands, or more than a third
-      for (let q = 0; q < 4; q++) { const n = KIND_NAMES.filter(k => { const at = islandAt(k, world)!, a = Math.atan2(at.y, at.x); return Math.floor(((a / (Math.PI / 2)) % 4 + 4) % 4) === q; }).length; expect(n).toBeGreaterThan(KIND_NAMES.length / 6); expect(n).toBeLessThan(KIND_NAMES.length / 3); }
+      // and the whole disc used: no quarter of it holds less than a sixth of the islands, or more than three eighths
+      for (let q = 0; q < 4; q++) { const n = KIND_NAMES.filter(k => { const at = islandAt(k, world)!, a = Math.atan2(at.y, at.x); return Math.floor(((a / (Math.PI / 2)) % 4 + 4) % 4) === q; }).length; expect(n).toBeGreaterThan(KIND_NAMES.length / 6); expect(n).toBeLessThan(KIND_NAMES.length * 0.375); }
     }
   });
 

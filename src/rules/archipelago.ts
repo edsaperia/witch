@@ -19,9 +19,9 @@ import { hash2, vnoise } from "./random";
 export interface Placed { id: string; phase: number; x: number; y: number; area: number; patch: Float32Array }
 export interface Archipelago { world: number; islands: Map<string, Placed>; /** the disc's radius (m) */ metres: number }
 
-/** The disc's radius in metres, about (each world's: archipelago().metres, the disc as big as all the islands' shares, so their
- *  land fills about FILL of it at one true scale). */
-export const CHART_METRES = 9300;
+/** The disc's radius in metres (archipelago().metres): one true scale for every island and every world, about as big as all the
+ *  islands' shares at FILL (each world's own came to 11.9 to 12.6 km). */
+export const CHART_METRES = 12100;
 /** The strait between neighbouring islands' coasts (m): each keeps half of it in from its patch's edge (rules/map.ts). */
 export const STRAIT = 260;
 /** How many angles a patch is given at. */
@@ -36,7 +36,7 @@ export const FILL = 0.5, FILL_VARY = 0.35, FULLEST = 0.75;
 export const OPEN = 0.9, OPEN_SCALE = 2.2;
 /** The pulls back toward its phase's distance and its bearing (a share of the way, each round), the relaxation's rounds, and how
  *  far each round it moves toward its cell's middle. */
-const RADIAL = 0.1, BEARING = 0.05, ROUNDS = 70, CENTRE = 0.35;
+const RADIAL = 0.1, BEARING = 0.05, ROUNDS = 50, CENTRE = 0.35;
 /** The borders' wiggle (a share of the cells' sizes) and its scale (wiggles across a cell). */
 const WIGGLE = 1.5, WIGGLE_SCALE = 0.9;
 
@@ -54,12 +54,10 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
   const fills = sites.map(s => FILL * (1 + FILL_VARY * (2 * hash2(Math.floor(s.seed * 1e6), 7, 9011 + world) - 1)));
   // (where the sea's open, an island's share is the larger: its fill the less)
   const openAt = (x: number, y: number) => 1 + OPEN * (2 * vnoise(x * OPEN_SCALE + 40, y * OPEN_SCALE + 40, 9021 + world) - 1);
-  let km2 = 0;
   const share = () => {
     let total = 0;
     const open = sites.map(s => openAt(s.x, s.y)), mean = open.reduce((t, o) => t + o, 0) / open.length; // (its mean 1: the open water moves round, the sea's total stays)
     sites.forEach((s, k) => { const land = LAND_KM2[Math.min(5, s.phase)]; s.target = Math.max(land / FULLEST, (land / fills[k]) * (open[k] / mean)); total += s.target; });
-    km2 = total;
     for (const s of sites) { s.target /= total; s.r = Math.sqrt(s.target); } // (as a share of the disc's area: π r² over π)
   };
   share();
@@ -72,7 +70,7 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
   for (let p = 0; p < 6; p++) { ring.push(p ? Math.sqrt(inside + byPhase[p] / 2) : 0); inside += byPhase[p]; }
   for (const s of sites) if (s.phase) { const a = (s.bearing * Math.PI) / 180; s.x = Math.sin(a) * ring[s.phase]; s.y = -Math.cos(a) * ring[s.phase]; }
   // The relaxation, on a grid over the disc.
-  const G = 120, cell = 2 / G, cellArea = (cell * cell) / Math.PI; // (a sample's share of the disc)
+  const G = 96, cell = 2 / G, cellArea = (cell * cell) / Math.PI; // (a sample's share of the disc)
   const label = new Int16Array(G * G);
   const power = (s: Site, px: number, py: number) => (px - s.x) ** 2 + (py - s.y) ** 2 - s.w;
   for (let round = 0; round < ROUNDS; round++) {
@@ -101,21 +99,27 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
   }
   // The patches: from each island's middle, out along each angle till another's (wiggled) power distance is the less, or the rim.
   const wig = (s: Site, px: number, py: number) => WIGGLE * s.r * s.r * (vnoise((px / s.r) * WIGGLE_SCALE + 50, (py / s.r) * WIGGLE_SCALE, Math.floor(s.seed * 1e6)) - 0.5) * 2;
-  const owns = (k: number, px: number, py: number) => {
+  // (only the islands near enough to share a border are asked: a patch reaches no further than MOST of its island's size)
+  const MOST = 3;
+  const owns = (k: number, near: readonly number[], px: number, py: number) => {
     if (px * px + py * py > 1) return false;
     if (Math.hypot(px - sites[k].x, py - sites[k].y) < sites[k].r * 0.4) return true; // (its own middle always its own, wiggles or no)
     const own = power(sites[k], px, py) + wig(sites[k], px, py);
-    for (let q = 0; q < sites.length; q++) if (q !== k && (power(sites[q], px, py) + wig(sites[q], px, py) < own || Math.hypot(px - sites[q].x, py - sites[q].y) < sites[q].r * 0.4)) return false; // (another's middle is always its own)
+    for (const q of near) if (power(sites[q], px, py) + wig(sites[q], px, py) < own || Math.hypot(px - sites[q].x, py - sites[q].y) < sites[q].r * 0.4) return false; // (another's middle is always its own)
     return true;
   };
-  const islands = new Map<string, Placed>(), metres = Math.sqrt((km2 * 1e6) / Math.PI); // (the disc as big as all the islands' shares)
+  const islands = new Map<string, Placed>(), metres = CHART_METRES;
   sites.forEach((s, k) => {
-    const patch = new Float32Array(PATCH_ANGLES), most = s.r * 3, step = s.r / 60;
+    const patch = new Float32Array(PATCH_ANGLES), most = s.r * MOST, step = s.r / 16;
+    const near = sites.map((_, q) => q).filter(q => q !== k && Math.hypot(sites[q].x - s.x, sites[q].y - s.y) < most + sites[q].r * MOST);
     for (let a = 0; a < PATCH_ANGLES; a++) {
       const t = (a / PATCH_ANGLES) * Math.PI * 2, ux = Math.cos(t), uy = Math.sin(t); // (x east, y south: the map's x and z)
+      // (out in steps till it's another's, then its edge found by halving)
       let r = step;
-      while (r < most && owns(k, s.x + ux * r, s.y + uy * r)) r += step;
-      patch[a] = (r - step / 2) * metres;
+      while (r < most && owns(k, near, s.x + ux * r, s.y + uy * r)) r += step;
+      let lo = r - step, hi = Math.min(r, most);
+      if (r < most) for (let h = 0; h < 6; h++) { const m = (lo + hi) / 2; if (owns(k, near, s.x + ux * m, s.y + uy * m)) lo = m; else hi = m; }
+      patch[a] = ((lo + hi) / 2) * metres;
     }
     islands.set(s.id, { id: s.id, phase: s.phase, x: s.x, y: s.y, area: s.target, patch });
   });
