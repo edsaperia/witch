@@ -164,6 +164,14 @@ const arrival = (() => {
   if (!r || !tuning.arrive) { stillEl?.remove(); return null; }
   return new ArrivalFlight(r, tuning.arrive, stillEl);
 })();
+// (Ed, 2026-10-12: the HUD hidden through the flight, fading in as she settles at her decks)
+const HUD_IDS = ["clock", "seed", "version", "buffs", "aim", "touch", "bubbles", "invites"];
+if (arrival) {
+  const st = document.createElement("style");
+  st.textContent = `${HUD_IDS.map(i => `#${i}`).join(",")} { transition: opacity 1.2s ease-out; } ${HUD_IDS.map(i => `body.arriving #${i}`).join(",")} { opacity: 0 !important; pointer-events: none !important; }`;
+  document.head.append(st);
+  document.body.classList.add("arriving");
+}
 let gestured = false, landed = false;
 const soundNote = () => {
   const el = document.createElement("div");
@@ -177,6 +185,7 @@ if (arrival) for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, (
 /** It's landed at her decks: the night starts, the party spell cast, as the bedroom's scroll would. */
 function arrived(): void {
   landed = true;
+  document.body.classList.remove("arriving"); // (the HUD fades in)
   if (start()) queueCast();
   if (!gestured) soundNote(); else sound.wake();
 }
