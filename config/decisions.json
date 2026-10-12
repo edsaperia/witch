@@ -2,6 +2,26 @@
   "_note": "Ed's decisions panel (src/ui/decide.ts; ?decide or F2 in the game) and the pause page's test sliders (Esc: every entry, by group, down the left, with Copy values; Ed, 2026-10-12). Each entry: id, pr (the pull request that added it) and group (that PR's short name: the pause page's heading, \"#pr group\", newest PR first), label, a one-line note, a control (toggle, choice of 2 to 4 options, or slider with min, max and step), the shipped default, and what it changes: a tuning knob by its path (applied live to the running game) or a URL switch (param; reload: true when the game reads it only as it loads). Confirm opens a new GitHub issue labelled decision with the choice; the coordinator acts on those.",
   "decisions": [
     {
+      "id": "trunkShadowFoot", "pr": 754, "group": "Trunk shadow fades", "label": "Fade at the foot (m)", "note": "How far from its trunk's foot a shadow fades in from nothing (0: none).",
+      "control": { "type": "slider", "min": 0, "max": 6, "step": 0.25 },
+      "default": 1.5, "apply": { "knob": "shadows.trunks.foot" }
+    },
+    {
+      "id": "trunkShadowTaper", "pr": 754, "group": "Trunk shadow fades", "label": "Taper at the foot (m)", "note": "How far from its foot a shadow opens out from a third of its width, so wide roots don't splay (0: none).",
+      "control": { "type": "slider", "min": 0, "max": 6, "step": 0.25 },
+      "default": 2, "apply": { "knob": "shadows.trunks.taper" }
+    },
+    {
+      "id": "trunkShadowNear", "pr": 754, "group": "Trunk shadow fades", "label": "Fade near her (m)", "note": "A trunk's shadow fades to nothing as she comes within this distance of the trunk (0: never).",
+      "control": { "type": "slider", "min": 0, "max": 20, "step": 0.5 },
+      "default": 6, "apply": { "knob": "shadows.trunks.near" }
+    },
+    {
+      "id": "trunkShadowCover", "pr": 754, "group": "Trunk shadow fades", "label": "Darkens grass and flowers", "note": "How much a shadow darkens the grass, flowers and tufts it falls on (1: as much as the ground; 0: not at all).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 1, "apply": { "knob": "shadows.trunks.cover" }
+    },
+    {
       "id": "sigilGlyph", "pr": 752, "group": "Sigil glow", "label": "Sigil strength", "note": "How bright every sigil is drawn (placed, runes, ghost, stack, treetops). 0.5 stays under the bloom; lift it if they're faint on bright ground.",
       "control": { "type": "slider", "min": 0, "max": 1.5, "step": 0.05 },
       "default": 0.5, "apply": { "knob": "leash.sigilGlyph" }
