@@ -55,6 +55,7 @@ function outlines(): void {
     worker.onmessage = (e: MessageEvent<OutlineDone>) => {
       const o = e.data, isl = islands.find(i => i.id === o.id);
       if (!isl || o.world !== worldNow()) return;
+      if (isl.outline && (isl.outline as OutlineDone).detail && !o.detail) return; // (the close-up's fine grid stays)
       isl.outline = o; chart.reshape(o.id, o);
     };
   }
@@ -68,6 +69,8 @@ function outlines(): void {
 function choose(id: string | null, instant = false): void {
   chart.select(id, instant);
   if (id && worker && !islands.find(i => i.id === id)?.outline) worker.postMessage({ first: id } satisfies OutlineAsk);
+  // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
+  if (id && worker && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) worker.postMessage({ detail: id } satisfies OutlineAsk);
   const isl = islands.find(i => i.id === id);
   const card = $("card"), sail = $("sail") as HTMLAnchorElement;
   if (!isl) { card.hidden = true; return; }
