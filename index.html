@@ -131,6 +131,9 @@
 </head>
 <body>
   <canvas id="game"></canvas>
+  <!-- Arriving from the sea chart (?arrive=1; rules/arrive.ts, app/arrive.ts): the chart's last frame, on the first paint, before the night builds. -->
+  <img id="arrive-still" alt="" style="display:none;position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:40;background:#05060e;image-rendering:pixelated;transform-origin:50% 55%;pointer-events:none">
+  <script>(function () { try { if (new URLSearchParams(location.search).get("arrive") !== "1") return; var r = JSON.parse(sessionStorage.getItem("witch.arrive") || "null"); if (!r || !r.cam || Date.now() - r.at > 30000) return; var i = document.getElementById("arrive-still"); if (r.still) i.src = r.still; i.style.display = "block"; } catch (e) {} })();</script>
   <div id="seed"></div>
   <div id="version"></div>
   <div id="debug"></div>
@@ -150,6 +153,7 @@
     <div class="tbtn" id="invite">💌</div>
   </div>
   <!-- The night won (rules/win.ts; Ed, 2026-10-10): the islands its legends showed, and on to the sea chart (chart.html). -->
+  <button type="button" id="bedroom-btn" title="Back to her room: change her look, hat and broom (F)" style="display:none;position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:12;font:inherit;padding:6px 14px;border-radius:8px;border:1px solid rgba(232,226,244,.5);background:rgba(232,180,106,.22);color:inherit;cursor:pointer">🎩 Bedroom <kbd>F</kbd></button>
   <div id="won"><div class="card"><button id="won-close" title="Hide">×</button><h1>NIGHT WON</h1><div>The whole island's dancing 🎉</div><div id="won-found"></div><button id="won-sail">Sail on</button></div></div>
   <div id="over"><div class="card"><button id="over-close" title="Hide">×</button><h1>THE PARTY'S OVER</h1><div>Everyone's gone home to sleep 😴. Wander as long as you like.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="chart-open">Sea chart</button> <button id="fresh">A new forest</button></div></div>
   <!-- The old start card (Ed, 2026-10-06: "can we skip it and go straight to the bedroom?"): hidden; shown only for a run

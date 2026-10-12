@@ -7655,6 +7655,97 @@
       ],
       "additionalProperties": false
     },
+    "arrive": {
+      "type": "object",
+      "properties": {
+        "push": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pushTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minLeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "low": {
+          "type": "object",
+          "properties": {
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "offshore": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angle",
+            "distance",
+            "offshore"
+          ],
+          "additionalProperties": false
+        },
+        "frame": {
+          "type": "object",
+          "properties": {
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angle",
+            "distance",
+            "lift"
+          ],
+          "additionalProperties": false
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "settle": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "push",
+        "pushTime",
+        "fade",
+        "speed",
+        "minLeg",
+        "low",
+        "frame",
+        "rise",
+        "settle"
+      ],
+      "additionalProperties": false
+    },
     "camera": {
       "type": "object",
       "properties": {
@@ -10334,6 +10425,7 @@
     "waveNumbers",
     "dancefloor",
     "partyOver",
+    "arrive",
     "camera",
     "pixelSize",
     "spriteTilt",

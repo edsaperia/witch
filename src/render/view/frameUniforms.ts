@@ -6,6 +6,7 @@ import { AREA_TYPES } from "../../rules/map";
 import { coastView } from "../../rules/camera";
 import { canopyShown, witchHeight } from "../../rules/witch";
 import { groundHeight, placed } from "../height";
+import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { SPRITE_UNIFORMS } from "../sprites";
 
@@ -86,7 +87,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
 
   const w = g.witch, h = witchHeight(w, t);
   LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + v.rideOff + h + t.glowHeight, w.z);
-  LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
+  { const fo = focusOf(v); LIGHT_UNIFORMS.uHazeCentre.value.set(fo.x, fo.z); } // (her, or the arrival's flight's aim: app/arrive.ts)
   // The mood where she is (render/mood.ts): each area's own fog, grade tint and mist, eased across;
   // which area, looked up four times a second.
   if (v.areaMoods) {

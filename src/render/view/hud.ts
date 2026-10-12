@@ -4,7 +4,8 @@ import type { View } from "../view";
 import { beatTime, bpmAt } from "../../rules/beat";
 import { AREA_TYPES } from "../../rules/map";
 import { waveCountdown } from "../../rules/party";
-import { hatMarker } from "../../rules/hat";
+import { hatMarkers } from "../../rules/hat";
+import { hatInk, hatKey, noteHatLooks } from "./hatLooks";
 import { leyPulse, pointerShown } from "../../rules/leypulse";
 import { edgeLayout, FLASK, HAT, PARTY, StoneIndicator } from "../indicator";
 import { dowseMarker } from "../../rules/hatSpells";
@@ -47,14 +48,18 @@ export function drawPointers(v: View, time: number): void {
     cue(v.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone, `${Math.round(bpmAt(g.beat, time))} bpm`);
     const bonus = g.beat.bonus ?? 0;
     if (bonus > v.pointerBonus) { v.pointerBonus = bonus; v.nextStones[0]?.pop(); }
-    // Her hat on the ground (Ed, 2026-10-06: "there's a direction marker for it, so you can go back and find it"): toward it
-    // off screen, over it on screen, while it lies there; in the HUD's amber.
-    const H = hatMarker(g.witches[0].hat);
-    if (H || v.hatPointer) {
-      const P = (v.hatPointer ??= new StoneIndicator(document.body, 3));
+    // Her hats on the ground (Ed, 2026-10-06: "there's a direction marker for it, so you can go back and find it"): toward each
+    // off screen, over it on screen, while it lies there; the ring in the HUD's amber, and (Ed, 2026-10-12: "If there are multiple
+    // hats on the ground, they each get a pointer"; "the pointer colour can be in the hat colour chosen in the character creator")
+    // each 🎩 in its own hat's colour, the look it went down in (render/view/hatLooks.ts).
+    noteHatLooks(v);
+    const hats = hatMarkers(g.witches[0].hat);
+    while (v.hatPointers.length < hats.length) v.hatPointers.push(new StoneIndicator(document.body, 3));
+    v.hatPointers.forEach((P, i) => {
+      const H = hats[i];
       P.fade(H ? calm : 0);
-      P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
-    }
+      P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT, glyphColour: hatInk(v.hatLooks.get(hatKey(H))) } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+    });
     // The Dowsing hat (rules/hatSpells.ts): toward the nearest relic still to find, for a while after she puts it down.
     const D = dowseMarker(g, g.witches[0].spells, g.herTime);
     if (D || v.dowsePointer) {
