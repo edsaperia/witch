@@ -1,6 +1,6 @@
 # Hats and brooms
 
-Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
+Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring; the second, Hats A: Harvest, Dowsing, Sentry, Slingshot and Gathering, rules/hatSpells.ts). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
 
 ## The two slots
 

@@ -18,12 +18,12 @@ export const HAT_SPELLS: SpellInfo<HatSpellId>[] = [
   { id: "none", name: "Plain hat", how: "placed", line: "No spell.", built: true },
   { id: "helmet", name: "Helmet", how: "worn", line: "An extra hit: the first blow knocks it off instead. Pick it up to wear it again.", built: true },
   { id: "healing", name: "Healing ring", how: "placed", line: "Put it down: standing near it, she heals a hit every few seconds.", built: true },
-  { id: "harvest", name: "Harvest", how: "onPlace", line: "Put it down: a ring of six berries grows round it.", built: false }, // (Ed, 2026-10-11)
-  { id: "dowsing", name: "Dowsing", how: "onPlace", line: "Put it down: it points to the nearest relic for a while.", built: false },
-  { id: "sentry", name: "Sentry", how: "placed", line: "Put it down: it throws 💌s at wild creatures nearby.", built: false },
+  { id: "harvest", name: "Harvest", how: "onPlace", line: "Put it down: a ring of six berries grows round it.", built: true }, // (Ed, 2026-10-11)
+  { id: "dowsing", name: "Dowsing", how: "onPlace", line: "Put it down: a pointer leads to the nearest relic for a minute.", built: true },
+  { id: "sentry", name: "Sentry", how: "placed", line: "Put it down: it throws 💌s at wild creatures within 30 m.", built: true }, // (Ed, 2026-10-11: "larger ranges")
   { id: "bramble", name: "Bramble", how: "placed", line: "Put it down: creatures near it are slowed.", built: false },
-  { id: "slingshot", name: "Slingshot", how: "placed", line: "Put it down: 💌s that pass it orbit, then fly at the nearest creature.", built: false },
-  { id: "gathering", name: "Gathering", how: "onPlace", line: "Put it down: her sigils nearby gather to it; pick it up to take them all.", built: false },
+  { id: "slingshot", name: "Slingshot", how: "placed", line: "Put it down: 💌s that pass within 10 m circle it, then fly at a creature up to 40 m off.", built: true },
+  { id: "gathering", name: "Gathering", how: "placed", line: "Put it down, then pick it up: every sigil of hers within 100 m comes back to her stack.", built: true }, // (Ed, 2026-10-11: "all sigils in range")
   { id: "mine", name: "Mine", how: "onPlace", line: "Put it down: it stuns every creature nearby.", built: false },
   { id: "lullaby", name: "Lullaby", how: "onPlace", line: "Put it down: wild creatures nearby nap.", built: false },
   { id: "decoy", name: "Decoy", how: "placed", line: "Put it down: it draws attackers to itself.", built: false },
@@ -62,6 +62,10 @@ export interface SpellState {
   castAt: number;
   /** The Healing ring: when she next heals a hit while she stays by it (absent: she's not by it). */
   healAt?: number;
+  /** The Harvest hat: when its ring last grew. */
+  harvestAt?: number;
+  /** The Dowsing hat: the relic it points to, till when. */
+  dowse?: { relic: number; until: number };
 }
 
 export function newSpells(t: Tuning): SpellState {
