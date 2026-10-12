@@ -52,9 +52,10 @@ const PALETTES: Record<string, Palette> = {
 };
 /** What a biome's lakes become (Ed, 2026-10-12: "In the cold biomes lakes become frozen. In the volcano biome lakes become lava.
  *  In the desert biome lakes become oases. In the jungle biome, lakes become sinkholes."): ice, lava, an oasis, a sinkhole, else
- *  water. The badlands stand for the volcano (there's no volcano biome yet); the rocky biome keeps water. */
+ *  water. The volcano is the rocky biome, the east (Ed: "rocky is volcano"); the badlands go with the desert; the mangrove swamp
+ *  keeps water. */
 export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole";
-export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", "mountains and glaciers": "ice", "cold rainforest": "ice", badlands: "lava", hot: "oasis", jungle: "sinkhole", "mangrove swamp": "sinkhole" };
+export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", "mountains and glaciers": "ice", "cold rainforest": "ice", rocky: "lava", hot: "oasis", badlands: "oasis", jungle: "sinkhole" };
 /** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly; a sinkhole's pit, how far (m) its bed
  *  and water sink below the ground round it. */
 const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
