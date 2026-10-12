@@ -45,7 +45,8 @@ import { dropCache, newInvites, stepInvites, type Affection, type InviteControls
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
 import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type DashState } from "./dash";
-import { blinkDistance, castSpell, extraBlinks, newSpells, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
+import { blinkDistance, castSpell, extraBlinks, newSpells, pullOf, revealed, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
+import { batter, canPound, groundPound, hiddenWitch, leyJump, leyJumpTarget } from "./brooms";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
@@ -310,7 +311,7 @@ export const affectionOf = (g: Game): Affection => {
 /** Hits to fill a meter, by level: the tuning's invites.hits, a legend's the party-legend egg's (legends.partyHits). */
 export const meterHits = (t: Tuning): number[] => [...t.invites.hits.slice(0, 3), t.legends.partyHits];
 
-export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf(w.leash.stack, g.creatures, w.body, g.buffs?.tuning ?? g.tuning);
+export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf(w.leash.stack, g.creatures, w.body, g.buffs?.tuning ?? g.tuning, pullOf(w.spells, g.buffs?.tuning ?? g.tuning)); // (the Haul broom's lighter: rules/spells.ts)
 
 export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tuning, blow?: Blow): void {
   // (her health, blinks, knocks and hat run on her clock, rules/slowTime.ts: the world's moment `worldAt` on hers, by how far it is from now)
@@ -434,9 +435,13 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
   // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
   if (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
-  if (c.spell) castSpell(g.spells, ht, t);
-  // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
+  // Her broom's spell (rules/spells.ts): Speed's boost, or at once Ley jump (to the ley line's pulse) or Ground pound (rules/brooms.ts).
+  if (c.spell && !W.ko && castSpell(g.spells, ht, t, W.spells.broom === "leyjump" ? !!leyJumpTarget(g) : W.spells.broom === "pound" ? canPound(W.body) : true)) {
+    if (W.spells.broom === "leyjump") leyJump(g, W, (x, z) => blinkClear(g, x, z));
+    else if (W.spells.broom === "pound" && groundPound(g, W, t)) W.landedAt = ht;
+  }
+  // The speed boost: her speeds times its multiplier while it's on.
   const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = (t.dash.charges ?? 1) + M.charges + extraBlinks(W.spells, t); // (two blinks before the cooldown, Ed 2026-10-08; Hare's Dash bursts more; the Double blink broom one more)
   // Her speed: the boost spell, a slow, Momentum (Boar) after a blink, and firing (no slowing: Ram's Steady).
   const firing = W.invites.burstLeft > 0 || (!!c.fire && t.invites.on && g.witch.mode === "ground" && !g.witch.seated);
@@ -458,9 +463,10 @@ function fixedStep(g: Game, controls: Controls): void {
   if (ht <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, ht)
     && startDash(W.dash, was, c.moveX, c.moveZ, ht, W.spells.broom === "long" ? { ...t, dash: { ...t.dash, distance: blinkDistance(W.spells, t) } } : t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0)) {
     W.dash.bufferUntil = undefined;
+    if (W.spells.broom === "battering") batter(g, W.dash.fromX, W.dash.fromZ, W.dash.toX, W.dash.toZ, t); // (Battering: what's in her path is stunned)
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, ht, t, M);
   }
-  W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
+  W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells, t)), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   if (was.mode !== "ground" && W.body.mode === "ground") W.landedAt = ht; // (landed: the rise cooldown starts)
   // On the treehouse deck or off it (rules/treehouse.ts): landed on it, or risen off it.
@@ -511,6 +517,8 @@ function fixedStep(g: Game, controls: Controls): void {
   stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP);
   if (perchTurn) W.leash.events.push({ kind: "perch", id: W.id, x: W.body.x, z: W.body.z, at: ht, on: perchTurn > 0 });
   // Her hat's spell on putting it down or picking it up (rules/hatSpells.ts: Harvest, Dowsing, Gathering).
+  // Stealth (rules/brooms.ts): throwing 💌s, or putting down or picking up anything, gives her away for a moment.
+  if (firing || W.leash.events.some(e => e.at === ht && (e.kind === "placed" || e.kind === "picked" || e.kind === "hatPut" || e.kind === "hatPicked" || e.kind === "relicPicked" || e.kind === "relicPlaced" || e.kind === "relicDropped"))) revealed(W.spells, ht, t);
   for (const e of W.leash.events.slice()) if (e.at === ht && e.id === W.id) {
     if (e.kind === "hatPut" && W.hat.down) onHatPut(g, W, W.hat.down.x, W.hat.down.z, ht, t);
     else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
@@ -627,7 +635,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     creatures: g.creatures, active: stepped, time, dt, t, busy,
     witches: g.witches.map((w, i) => {
       const onGround = w.body.mode === "ground" && !w.body.seated && !w.body.perch; // (up on the treehouse deck: out of every fight)
-      return { id: i, x: w.body.x, z: w.body.z, onGround, down: !!w.ko, vx: w.body.vx, vz: w.body.vz, shelter: onGround ? calmRingAt(g, w.body.x, w.body.z)?.id : undefined }; // (in a calm legend's circle, safe from outside: Ed, round 14)
+      return { id: i, x: w.body.x, z: w.body.z, onGround, down: !!w.ko, vx: w.body.vx, vz: w.body.vz, shelter: onGround ? calmRingAt(g, w.body.x, w.body.z)?.id : undefined, ...(hiddenWitch(g, i) ? { hidden: t.spells.stealth?.range ?? 25 } : {}) }; // (her Stealth broom: unseen, rules/brooms.ts) // (in a calm legend's circle, safe from outside: Ed, round 14)
     }),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
     asleep: c => !!c.partyLegend || dormant(g, c) || napping(c, time) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be; a sleeper, or one getting up, is out of it)
