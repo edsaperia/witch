@@ -649,3 +649,10 @@ export function liftOff(t) { const e = Math.min(1, Math.max(0, t)), s = e * e * 
 export function setDown(t) { const e = Math.min(1, Math.max(0, t)), drop = Math.min(1, e / .55), s = drop * drop; return { rise: 1 - s, upright: 1 - Math.min(1, drop * 1.2), scale: 1 - s, draw: Math.max(0, (e - .45) / .55) }; }
 
 export const SIGIL_IDS = SPECIES.map(s => s.id);
+
+// ---- the detailed sigil's strokes (art/sigilDetail.js) ----
+// A sigil's own strokes as polylines in its unit box (no circle, no frame): its plain strokes, and from tier 1 the animal's
+// extra detail (LEGEND_DETAIL, the same strokes the legend circle carries, here at full size).
+export function sigilDetailStrokes(id, tier = 2) {
+  return [...(SIGILS[id] || []), ...(tier >= 1 && LEGEND_DETAIL[id] || [])].map(polyline);
+}
