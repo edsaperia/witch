@@ -130,6 +130,11 @@
       "id": "pursue", "label": "Chase past their area (m)", "note": "How far past its area's edge a wild animal chases her (or her party) before it gives up and retreats home (10 before round 13; Ed: 30).",
       "control": { "type": "slider", "min": 0, "max": 80, "step": 5 },
       "default": 30, "apply": { "knob": "combat.leaveArea" }
+    },
+    {
+      "id": "groundFog", "label": "Ground fog in the wild", "note": "How thick the low fog lies over the wild ground (thinning near the party): 0 none, 0.5 as built, 1 thick.",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.5, "apply": { "knob": "groundFog.density" }, "pr": 495, "group": "Ground fog"
     }
   ]
 }

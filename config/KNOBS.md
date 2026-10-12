@@ -2091,6 +2091,22 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `groundFog`
+
+Low ground fog over the wild (Ed, 2026-10-07, making the wild forest eerier: "low ground fog in the wild areas: slow, thinner near the party, cheap"; render/groundFog.ts): one pass over the screen in the half-size effects layer, thickest where the picture meets the ground and thinning to nothing depth metres above it, so it pools on the forest floor and round the feet of trees and creatures. density: how thick at the ground (0 to 1); size: its patches (m); drift: how fast they drift, times the wind's speed (slow); clear, reach: round each partified area's centre it's gone within clear metres and back to full by reach; treetops: how much of it is left seen from the treetops (0 to 1); part: it parts round her, clear within part metres and full by twice that, so her light still falls warm on the floor.
+
+| knob | type | range |
+|---|---|---|
+| `groundFog.on` | boolean |  |
+| `groundFog.density` | number | 0 to … |
+| `groundFog.depth` | number | 0 to … |
+| `groundFog.drift` | number | 0 to … |
+| `groundFog.size` | number | 0 to … |
+| `groundFog.clear` | number | 0 to … |
+| `groundFog.reach` | number | 0 to … |
+| `groundFog.treetops` | number | 0 to … |
+| `groundFog.part` | number | 0 to … |
+
 ### `lightRings`
 
 Light rings in the canopy (Ed, 2026-10-07, making the wild forest eerier: "a halo / circle optical illusion: faint concentric rings of moonlight in the canopy, visible from treetop view"; render/lightRings.ts): one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor. Centres seeded on a spacing-metre grid (a share of its cells has one), each count faint bands of moonlight out to radius metres, breathing outward at speed bands a second, laid on a level sheet plane metres up (about the crowns' tops: the crowns are upright sprites, so it's where the line of sight crosses that sheet that is ringed); strength: a band at its brightest (in the moon's hue, paled), added as light. They fade out between fadeNear and fadeFar metres from her. And the glory: rings of moonlight round her own shadow on the leaves (the halo you see round your shadow on dewy foliage), glory metres across at gloryStrength, faintly prismatic, going with her; off (gloryStrength 0) since Ed, 2026-10-08: "there's now concentric circles under the witch on the canopy ... I think we should remove them". Treetops only (fading in as she rises). Scattered rings off (Ed, 2026-10-11: strength 0); the glory is off too (gloryStrength 0), and the pass is skipped while both are 0.
