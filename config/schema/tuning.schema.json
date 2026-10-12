@@ -75,6 +75,20 @@
               "jitter": {
                 "type": "number",
                 "minimum": 0
+              },
+              "lakes": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "lakeSize": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
               }
             },
             "required": [
@@ -143,6 +157,29 @@
         "drift",
         "edge",
         "coast"
+      ],
+      "additionalProperties": false
+    },
+    "lakes": {
+      "type": "object",
+      "properties": {
+        "shore": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pad": {
+          "type": "number",
+          "minimum": 0
+        },
+        "koi": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "shore",
+        "pad",
+        "koi"
       ],
       "additionalProperties": false
     },
@@ -4970,6 +5007,9 @@
     "runeMarkers": {
       "type": "object",
       "properties": {
+        "variants": {
+          "type": "boolean"
+        },
         "laser": {
           "type": "object",
           "properties": {
@@ -5099,6 +5139,7 @@
         }
       },
       "required": [
+        "variants",
         "laser",
         "scale",
         "beamHeight",
@@ -9681,6 +9722,7 @@
   "required": [
     "mapAreas",
     "map",
+    "lakes",
     "islands",
     "beach",
     "areaSize",

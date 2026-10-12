@@ -42,7 +42,8 @@ export function drawProjection(lv: LeashView, time: number, dot: number[]): void
     for (let i = 0; i < Math.min(near.length, C.max); i++) {
       const { c, d } = near[i], col = lv.colours.get(c.species) ?? (lv.slotOf(c.species, 0), lv.colours.get(c.species)!), sg = lv.sigilOf(c);
       const edge = Math.min(1, Math.max(0, (C.range - d) / (C.range * C.fade))), a = C.opacity * up * edge * (c.leashed ? 1 : C.happy) * (0.88 + 0.12 * Math.sin(time * 1.3 + c.id));
-      if (a > 0.01) lv.flat.add(c.x, top + 0.2 * Math.sin(time * 0.9 + c.id), c.z, (3 + c.level * 0.8) * C.size * sg.scale, sg.uv, col.r, col.g, col.b, a);
+      const z = c.leashed ? c.z : c.z + (t.leash.restAbove ?? 0); // (a happy one's over its rune, restAbove south of it: render/leash.ts)
+      if (a > 0.01) lv.flat.add(c.x, top + 0.2 * Math.sin(time * 0.9 + c.id), z, (3 + c.level * 0.8) * C.size * sg.scale, sg.uv, col.r, col.g, col.b, a);
     }
   }
 }

@@ -308,6 +308,34 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "treehouse: towards and away, 28 to 40 m, its top storey above the 24 m treetops; its giant tree's trunk 5 m+ across and crown 11 m+; fore (the DJ table) part of the whole; top + bottom = whole, the studio below the split; windows glow; anchors inside; the seat on the studio floor, the camera over it", good: !bad.length, info: bad.join("; ") || info });
   }
+  { // the treehouse Ent (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent"; a gnarled kneeling tree, a suggestion
+    // of Atlas, no face; the deck at 22 m, radius 7; the world map at its centre; the DJ decks along its south arc; art/ent.js): towards and away,
+    // standing; far and near the whole's size, near a part of the whole and the two covering it; no face; anchors inside (the deck over the base,
+    // the table on the deck's middle, the seat on its planks in front of the middle); the deck as wide as its radius and as high as deckY; the DJ
+    // table's fore frames turning (one size, each different, the first the whole's); its lanterns and the decks lit; her DJ hands on the decks
+    const bad = []; let info = "";
+    const count = x => { let n = 0; for (let i = 0; i < x.m.length; i++) if (x.m[i]) n++; return n; }, FACE = new Set([G.M.EYE, G.M.PUPIL, G.M.IRIS]);
+    for (const facing of ["towards", "away"]) {
+      const T = G.entSprite(st, { facing }), sp = T.whole, s2 = stats(sp), A = T.anchors, Mx = T.metres, W = sp.w, H = sp.h;
+      const sized = [T.far, T.near, T.fore].every(x => x.w === W && x.h === H) && count(T.far) > 5000 && count(T.near) > 300;
+      let partOf = 0, covered = true; for (let i = 0; i < sp.m.length; i++) { if (T.near.m[i] && T.near.m[i] === sp.m[i]) partOf++; if (sp.m[i] && !T.far.m[i] && !T.near.m[i]) covered = false; }
+      const nearOk = partOf >= count(T.near) * .9, faceless = ![...sp.m].some(v => FACE.has(v));
+      const inside = [A.base, A.deck, A.table, A.seat, A.platter, A.camera, ...A.lights].every(({ x, y }) => x >= 0 && x <= W && y >= 0 && y <= H);
+      const placed = A.deck.y < A.base.y - 200 && Math.abs(A.table.x - A.deck.x) < 3 && A.table.y < A.deck.y && A.seat.y > A.deck.y && A.camera.y < A.seat.y;
+      let onPlanks = false; for (let dy = -3; dy <= 2 && !onPlanks; dy++) for (let dx = -4; dx <= 4; dx++) if ([G.M.WOOD, G.M.HAT2, G.M.BARKD, G.M.BARKL].includes(T.far.get(Math.round(A.seat.x) + dx, Math.round(A.seat.y) + dy))) { onPlanks = true; break; }
+      const wide = Mx.width >= Mx.deckR * 2 && Mx.width <= Mx.deckR * 2 + 4, high = (A.base.y - A.deck.y) / 16 >= Mx.deckY * .8 && (A.base.y - A.deck.y) / 16 <= Mx.deckY * 1.02;
+      const FF = T.foreFrames, framesOk = FF.length === G.DJ_FRAMES && new Set(FF.map(f => f.w + "x" + f.h)).size === 1 && new Set(FF.map(f => Array.from(f.m).join())).size === FF.length;
+      let foreOk = count(T.fore) > 150; for (let i = 0; i < sp.m.length && foreOk; i++) if (T.fore.m[i] && T.fore.m[i] !== sp.m[i]) foreOk = false;
+      const lit = A.lights.filter(L => L.kind === "lantern").length >= 4 && A.lights.filter(L => L.kind === "decks").length === 2 && [...sp.m].filter(v => v === G.M.GLOW).length > 12;
+      // her DJ hands on the decks' pixels (the treehouse's own check, on the Ent's deck)
+      const DECK = new Set([G.M.SHADES, G.M.BODY3, G.M.COLLAR, G.M.RUNE, G.M.BELLY, G.M.FRAME, G.M.WOKEN]), f0 = FF[0];
+      const onDeck = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = Math.round(x) - T.foreBox.x + dx, Y = Math.round(y) - T.foreBox.y + dy; if (X >= 0 && Y >= 0 && X < f0.w && Y < f0.h && DECK.has(f0.m[Y * f0.w + X])) return true; } return false; };
+      let hands = 0; for (const f of [0, 1, 4, 5, 6, 7, 8, 9, 15, 16, 17, 18]) { const w = G.witchSprite(st, { pose: "dj", frame: f }); if (!onDeck(A.seat.x - w.anchors.ground[0] + w.anchors.hand[0], A.seat.y - w.anchors.ground[1] + w.anchors.hand[1])) hands++; }
+      if (!(s2.bottom > 0 && sized && nearOk && covered && faceless && inside && placed && onPlanks && wide && high && framesOk && foreOk && lit && !hands)) bad.push(`${facing}:${sized ? "" : " sizes"}${nearOk ? "" : " near not the whole's"}${covered ? "" : " halves don't cover it"}${faceless ? "" : " a face"}${inside ? "" : " anchors outside"}${placed ? "" : " anchors misplaced"}${onPlanks ? "" : " seat off the planks"}${wide ? "" : ` ${Mx.width} m wide`}${high ? "" : ` deck at ${((A.base.y - A.deck.y) / 16).toFixed(1)} m on screen`}${framesOk ? "" : " fore frames"}${foreOk ? "" : " fore not the whole's"}${lit ? "" : " lights"}${hands ? ` ${hands} hands off the decks` : ""}`);
+      info = `${W}x${H} (${Mx.height} m tall, ${Mx.width} m wide; deck ${Mx.deckR} m round at ${Mx.deckY} m, table ${Mx.tableR * 2} m across; desk ${Mx.desk.from}..${Mx.desk.to} rad, her spot ${Mx.desk.inner} m from the middle), ${A.lights.length} lights`;
+    }
+    res.push({ what: "treehouse Ent: towards and away, standing, no face; far and near the whole's size, near part of it, the two covering it; anchors inside, the deck over the base, the table on its middle, the seat on its planks; the deck its radius wide and deckY high; DJ fore frames turning, the first the whole's; lanterns and decks lit; her DJ hands on the decks", good: !bad.length, info: bad.join("; ") || info });
+  }
   { // the DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): the DJ
     // table's fore frames (DJ_FRAMES of them, one size, each different: the platters turning, the LEDs chasing; the first is the
     // whole's own table); her DJ frames, facing us, every gesture's frames different, each with an upper layer (what's over the
@@ -782,6 +810,18 @@ const report = await b.page.evaluate(async () => {
     { const p = G.partyPatch(1, (id, o) => G.scenePlacements(id, st, o)); if (!(p.length > 10) || p.some(q => !q.ref || Number.isNaN(q.x) || Number.isNaN(q.y))) bad.push(`party patch: ${p.length} pieces`); else { const missing = p.filter(q => !G.sceneRefExists(q.ref)); if (missing.length) bad.push(`party patch: ${missing[0].ref} is no piece`); } }
     for (const id of G.LEGEND_IDS) { const L = G.legendSprites(id, st); if (!L || !Object.keys(L).length) bad.push(`legend sprites ${id}`); seen.legends++; }
     res.push({ what: "every generator draws: the beach's finds and prints (every heading), the bedroom, every broom, the witch's hat both ways, every species' rune stone, a party patch, every legend's sprites; none empty, nothing NaN, every material coloured", good: !bad.length && seen.beach > 0 && seen.brooms >= 18, info: bad.slice(0, 6).join("; ") || `${seen.beach} beach pieces, ${seen.brooms} brooms, ${seen.stones} rune stones, ${seen.legends} legends` });
+  }
+  { // the runestones' 20 forms (Ed, 2026-10-12): each draws, mildly unlike today's (its size within 0.85 to 1.25 of it), and mirrored at the
+    // same size with its carving the same glyph (as many lit pixels, the sigil stamped after the flip: never mirror-written)
+    const lit = b => { const d = b.A.getContext("2d").getImageData(0, 0, b.w, b.h).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] === 254) n++; return n; };
+    const base = G.runeStone(st, { sigil: "boar" }), bad = [];
+    for (let v = 0; v < G.RUNESTONE_FORMS; v++) {
+      const a = G.runeStone(st, { sigil: "boar", form: v }), f = G.runeStone(st, { sigil: "boar", form: v, flip: true });
+      if (!(a.h >= base.h * .85 && a.h <= base.h * 1.25 && a.w >= base.w * .85 && a.w <= base.w * 1.25)) bad.push(`form ${v} ${a.w}x${a.h} (today's ${base.w}x${base.h})`);
+      if (f.w !== a.w || f.h !== a.h) bad.push(`form ${v} mirrored ${f.w}x${f.h}`);
+      if (Math.abs(lit(f) - lit(a)) > 6 || lit(a) < 20) bad.push(`form ${v} carving ${lit(a)} / mirrored ${lit(f)}`);
+    }
+    res.push({ what: `the runestone's ${G.RUNESTONE_FORMS} forms draw, within 0.85 to 1.25 of today's size, mirrored the same size with the same carving`, good: G.RUNESTONE_FORMS === 20 && !bad.length, info: bad.slice(0, 4).join("; ") || `${G.RUNESTONE_FORMS} forms` });
   }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {
