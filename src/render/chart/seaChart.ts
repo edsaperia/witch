@@ -37,7 +37,7 @@ const RELIEF = 5;
 /** The chart's pixel (CSS pixels across one): finer than the game's, for the islands' and sigils' detail; still whole pixels. */
 export const CHART_PIXEL = 2;
 /** A sigil's width against its island's reach (Ed: "the sigils should be larger and more detailed"). */
-const SIGIL_SHARE = 1.25;
+const SIGIL_SHARE = 1.0;
 /** A sigil's art by how many pixels it spans on screen (art/sigilDetail.js detailTier; Ed, 2026-10-12: "we don't need the circles
  *  around the rune; ideally we want more detailed versions of the rune itself"): the plain glyph while small, the carved bands,
  *  then the carved emblem; each texture about as many pixels as it shows, so it stays crisp. */
