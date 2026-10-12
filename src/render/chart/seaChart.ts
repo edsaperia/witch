@@ -11,7 +11,8 @@
 // the page (app/chartPage.ts, from app/chartSave.ts).
 import * as THREE from "three";
 import { ISLAND_LOOK, islandPoints } from "../../../art/islands.js";
-import { sigilArrival, sigilColour } from "../../../art/sigils.js";
+import { sigilColour } from "../../../art/sigils.js";
+import { sigilDetail } from "../../../art/sigilDetail.js";
 import { Post, type PostTuning } from "../post";
 
 /** The chart's disc: radius 1 on the flat chart is this many units here. */
@@ -32,10 +33,10 @@ const RELIEF = 5;
 export const CHART_PIXEL = 2;
 /** A sigil's width against its island's reach (Ed: "the sigils should be larger and more detailed"). */
 const SIGIL_SHARE = 1.25;
-/** A sigil's art by how many pixels it spans on screen: each texture about as many pixels as it shows, so it stays crisp. The
- *  plain glyph at every size for now, no circle round it (Ed, 2026-10-12: "we don't need the circles around the rune"); the
- *  animal's own detailed versions come with their art. */
-const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 80, px: 128 }, { from: 150, px: 256 }];
+/** A sigil's art by how many pixels it spans on screen (art/sigilDetail.js detailTier; Ed, 2026-10-12: "we don't need the circles
+ *  around the rune; ideally we want more detailed versions of the rune itself"): the plain glyph while small, the carved bands,
+ *  then the carved emblem; each texture about as many pixels as it shows, so it stays crisp. */
+const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 64, px: 128 }, { from: 128, px: 256 }];
 /** When the chart opens, a sigil spans this many art pixels, and at the furthest no fewer than this. */
 const SIGIL_OPEN_PX = 96, SIGIL_MIN_PX = 16;
 /** A typical sailable island's sigil (units), for the zoom's limits. */
@@ -43,7 +44,7 @@ const SIGIL_TYPICAL = REACH[2] * SIGIL_SHARE;
 
 /** An island's real land (app/chartOutlines.worker.ts): its coast's loops (x, z interleaved, metres from its home's middle; `sea`
  *  its coast, one loop for each piece of land, else a lake's shore), their box, and its ground on a grid (heights and colours). */
-export interface ChartOutline { loops: { pts: ArrayLike<number>; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; ground?: { x0: number; z0: number; step: number; cols: number; rows: number; h: ArrayLike<number>; rgb: ArrayLike<number> } }
+export interface ChartOutline { loops: { pts: ArrayLike<number>; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; ground?: { x0: number; z0: number; step: number; cols: number; rows: number; h: ArrayLike<number>; rgb: ArrayLike<number>; /** 0 land, 1 sea, 2 lake */ water?: ArrayLike<number>; /** a lake's water level (m, as h) */ level?: ArrayLike<number> } }
 
 export interface ChartIsland {
   id: string;
@@ -141,7 +142,7 @@ void main() {
   vec3 n = normalize(vN);
   float lit = max(0.0, dot(n, uMoon)), hill = clamp(dot(n, uShade), -1.0, 1.0);
   float up = clamp(vY / uRise, 0.0, 1.0);
-  vec3 c = vC * (0.48 + 0.5 * lit) * (0.78 + 0.36 * hill) + vec3(0.05, 0.05, 0.06) * up * up;
+  vec3 c = vC * (0.66 + 0.5 * lit) * (0.8 + 0.34 * hill) + vec3(0.05, 0.05, 0.06) * up * up;
   c += vec3(0.015, 0.025, 0.05) * (1.0 - lit);
   gl_FragColor = vec4(c, 1.0);
 }`;
@@ -151,20 +152,25 @@ const SHALLOW_VERT = /* glsl */ `
 attribute float aDepth; varying float vD;
 void main() { vD = aDepth; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }`;
 const SHALLOW_FRAG = /* glsl */ `
-uniform float uDim; varying float vD;
+uniform float uDim, uOpaque; uniform vec3 uDeep, uPale; varying float vD;
 void main() {
   float a = pow(1.0 - clamp(vD, 0.0, 1.0), 1.6);
-  vec3 c = mix(vec3(0.08, 0.2, 0.34), vec3(0.22, 0.46, 0.52), a * a);
-  gl_FragColor = vec4(c * uDim, a * 0.85);
+  vec3 c = mix(uDeep, uPale, a * a);
+  gl_FragColor = vec4(c * uDim, max(uOpaque, a * 0.85));
 }`;
+/** The sea's shallows' colours, and a lake's (lighter than the sea, as in the game: about 0.15, 0.28, 0.37 against 0.09, 0.18,
+ *  0.26; hotel, #711), each pale by its shore. */
+const SEA_WATER = { deep: new THREE.Color(0.08, 0.2, 0.34), pale: new THREE.Color(0.22, 0.46, 0.52) }, LAKE_WATER = { deep: new THREE.Color(0.15, 0.28, 0.37), pale: new THREE.Color(0.3, 0.52, 0.56) };
+/** How deep (m) a lake's shallows fade out to. */
+const LAKE_SHALLOWS = 6;
 
 /** One island's meshes and where it is. */
 interface Isle { d: ChartIsland; group: THREE.Group; pick: THREE.Mesh; x: number; z: number; top: number; reach: number; sigil?: THREE.Mesh; glow?: THREE.Mesh; tier?: number; size?: number }
 
-/** A sigil as a white glyph texture, `px` across, whole pixels (art/sigils.js sigilArrival). */
-function sigilTexture(id: string, px = 24): THREE.Texture {
-  const ink = sigilArrival(id, px), data = new Uint8Array(px * px * 4);
-  for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const i = y * px + x, o = ((px - 1 - y) * px + x) * 4; if (ink[i] < Infinity) data.set([255, 255, 255, 255], o); }
+/** A sigil as a white texture, `px` across, whole pixels, at a detail tier (art/sigilDetail.js). */
+function sigilTexture(id: string, px = 24, tier = 0): THREE.Texture {
+  const ink = sigilDetail(id, px, { tier }), data = new Uint8Array(px * px * 4);
+  for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const i = y * px + x, o = ((px - 1 - y) * px + x) * 4; if (ink[i]) data.set([255, 255, 255, 255], o); }
   const t = new THREE.DataTexture(data, px, px); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.needsUpdate = true;
   return t;
 }
@@ -288,7 +294,7 @@ export class SeaChart {
     const g = new THREE.Group(), x = d.x * CHART_SCALE, z = d.y * CHART_SCALE;
     g.position.set(x, 0, z); this.scene.add(g);
     const { loops, k, cx, cz } = islandLoops(d), seas = loops.filter(l => l.sea);
-    const dim = d.unknown ? 0.5 : d.sail ? 1 : 0.7, home = d.id === "home", reach = reachOf(d);
+    const dim = d.unknown ? 0.72 : d.sail ? 1 : 0.85, home = d.id === "home", reach = reachOf(d);
     let body: THREE.Mesh, top: number;
     const G = d.outline?.ground;
     if (!G || !(k > 0)) { // a shelf of shallows round the round coast (the real ground brings its own)
@@ -316,7 +322,7 @@ export class SeaChart {
       top = hi;
       // the shallows: the water over every sample within reach of the shore, flat on the sea, by its depth
       const flat = new Float32Array(cols * rows * 3), depth = new Float32Array(cols * rows), wi: number[] = [];
-      for (let i = 0; i < cols * rows; i++) { flat[i * 3] = pos[i * 3]; flat[i * 3 + 1] = 0.03; flat[i * 3 + 2] = pos[i * 3 + 2]; depth[i] = G.h[i] > 0 ? 0 : Math.min(1, -G.h[i] / SHALLOWS); }
+      for (let i = 0; i < cols * rows; i++) { flat[i * 3] = pos[i * 3]; flat[i * 3 + 1] = 0.03; flat[i * 3 + 2] = pos[i * 3 + 2]; depth[i] = G.h[i] > 0 || G.water?.[i] === 2 ? 0 : Math.min(1, -G.h[i] / SHALLOWS); }
       for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
         const a = r * cols + c, b = a + 1, e = a + cols, f = e + 1;
         if (depth[a] >= 1 && depth[b] >= 1 && depth[e] >= 1 && depth[f] >= 1) continue;
@@ -325,7 +331,31 @@ export class SeaChart {
       }
       const wg = new THREE.BufferGeometry();
       wg.setAttribute("position", new THREE.BufferAttribute(flat, 3)); wg.setAttribute("aDepth", new THREE.BufferAttribute(depth, 1)); wg.setIndex(wi);
-      g.add(new THREE.Mesh(wg, new THREE.ShaderMaterial({ vertexShader: SHALLOW_VERT, fragmentShader: SHALLOW_FRAG, uniforms: { uDim: { value: 0.6 + 0.4 * dim } }, transparent: true, depthWrite: false })));
+      const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) => new THREE.ShaderMaterial({ vertexShader: SHALLOW_VERT, fragmentShader: SHALLOW_FRAG, uniforms: { uDim: { value: 0.6 + 0.4 * dim }, uOpaque: { value: opaque }, uDeep: { value: w.deep }, uPale: { value: w.pale } }, transparent: opaque < 1, depthWrite: opaque >= 1 });
+      g.add(new THREE.Mesh(wg, waterMat(SEA_WATER, 0)));
+      // the lakes: still water at each one's level, in its hollow, pale where it's shallow by its shore
+      if (G.water && G.level) {
+        const lp = new Float32Array(cols * rows * 3), ld = new Float32Array(cols * rows), li: number[] = [];
+        for (let i = 0; i < cols * rows; i++) {
+          const lv = G.water[i] === 2 ? G.level[i] : 0;
+          lp[i * 3] = pos[i * 3]; lp[i * 3 + 1] = 0.06 + lv * k * RELIEF; lp[i * 3 + 2] = pos[i * 3 + 2];
+          ld[i] = G.water[i] === 2 ? Math.min(1, (G.level[i] - G.h[i]) / LAKE_SHALLOWS) : 0;
+        }
+        // (a lake's edge samples take the level of the lake next to them, so its water meets its shore)
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const i = r * cols + c; if (G.water[i] === 2) continue;
+          for (const j of [i - 1, i + 1, i - cols, i + cols]) if (j >= 0 && j < cols * rows && G.water[j] === 2) { lp[i * 3 + 1] = 0.06 + G.level[j] * k * RELIEF; break; }
+        }
+        for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
+          const a = r * cols + c, b = a + 1, e = a + cols, f = e + 1;
+          if (G.water[a] === 2 || G.water[b] === 2 || G.water[e] === 2 || G.water[f] === 2) li.push(a, e, b, b, e, f);
+        }
+        if (li.length) {
+          const lg = new THREE.BufferGeometry();
+          lg.setAttribute("position", new THREE.BufferAttribute(lp, 3)); lg.setAttribute("aDepth", new THREE.BufferAttribute(ld, 1)); lg.setIndex(li);
+          g.add(new THREE.Mesh(lg, waterMat(LAKE_WATER, 1)));
+        }
+      }
     } else { // till then: a low landmass raised from its round coast
       const H = home ? 1.6 : 1.1, c = col(ISLAND_LOOK.land2, dim * 1.6);
       const lam = (cc: THREE.Color) => new THREE.MeshLambertMaterial({ color: cc, emissive: cc.clone().multiplyScalar(0.18) });
@@ -362,7 +392,7 @@ export class SeaChart {
   private sigilArt(id: string, tier: number): THREE.Texture {
     const key = `${id}|${tier}`;
     let t = this.sigilArts.get(key);
-    if (!t) { t = sigilTexture(id, SIGIL_TIERS[tier].px); this.sigilArts.set(key, t); }
+    if (!t) { t = sigilTexture(id, SIGIL_TIERS[tier].px, tier); this.sigilArts.set(key, t); }
     return t;
   }
 

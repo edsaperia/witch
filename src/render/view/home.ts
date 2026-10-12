@@ -34,8 +34,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
   const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
-  const stone = (x: number, z: number, species: string, level: number, y = 0) => {
-    const frame = v.markerArt.atlas.frames[v.markerArt.frame(species, level)];
+  const stone = (x: number, z: number, cell: readonly [number, number], level: number, y = 0) => {
+    const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level)];
     if (!inView(v, x, z, frame.w * v.mpp * scale, frame.h * v.mpp * scale, 6)) return false;
     inst.push({ x, y, z, frame, flip: false, scale, fresh: mark(v, "marker", x, z, frame.h * v.mpp * scale) });
     return true;
@@ -53,9 +53,9 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, col = v.markerArt.colour.get(species)!;
     // Awake: brighter on the beat, more so as the countdown runs out; dormant: a steady glow.
     const level = m.awake ? 1 + Math.round(Math.min(1, beat * (0.4 + 0.6 * build)) * (MARKER_LEVELS - 2)) : 0;
-    stone(m.x, m.z, species, level);
+    stone(m.x, m.z, m.cell, level);
     // The beam and laser rise from the top of the stone, not from inside it.
-    const top = (v.markerArt.height.get(species) ?? 0) * v.mpp * scale;
+    const top = v.markerArt.height(m.cell) * v.mpp * scale;
     const A = R.awake, D = R.dormant;
     const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
     if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
@@ -86,7 +86,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     if (!a.soundsystem || time - a.at > R.flare.time || time < a.at) continue;
     const k = (time - a.at) / R.flare.time, species = AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature, col = v.markerArt.colour.get(species)!;
     const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]);
-    stone(s0.x, s0.z, species, MARKER_LEVELS - 1, -k * k * 4 * scale);
+    stone(s0.x, s0.z, a.cell, MARKER_LEVELS - 1, -k * k * 4 * scale);
     near.push({ d: 0, l: { x: s0.x, y: 2.5, z: s0.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * (1 - k) } });
   }
   near.sort((p, q) => p.d - q.d);
@@ -127,7 +127,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     for (const m of mc.list) {
       const wave = v.plan.waves.get(m.key);
       if (wave === undefined || Math.hypot(m.x - w.x, m.z - w.z) > range) continue;
-      const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = (v.markerArt.height.get(species) ?? 0) * v.mpp * scale;
+      const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = v.markerArt.height(m.cell) * v.mpp * scale;
       const k = shown(m.key, m.x, m.z, top);
       // the next stone's number as bright as its ring; the rest dimmer (the art director, #188)
       if (k > 0.02) nums.push({ x: m.x, z: m.z, y: lift(top), wave, colour: v.markerArt.colour.get(species)!, alpha: m.stage === "next" ? 1 : 0.5, show: k, top, pin: pin(m.x, m.z) });

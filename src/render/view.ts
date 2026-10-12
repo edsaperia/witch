@@ -240,6 +240,8 @@ export class View {
   nextStones: StoneIndicator[] = [];
   /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
   hatPointer: StoneIndicator | null = null;
+  /** The Dowsing hat's pointer toward the nearest relic (rules/hatSpells.ts). */
+  dowsePointer: StoneIndicator | null = null;
   /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */
   winPointer: StoneIndicator | null = null;
   /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
@@ -381,7 +383,7 @@ export class View {
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     this.minimap = new Minimap(document.body, game.map);
-    this.markerArt = new MarkerArt(style, t);
+    this.markerArt = new MarkerArt(style, t, game.map);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.

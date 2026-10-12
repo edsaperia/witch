@@ -43,13 +43,20 @@ export function islandOutline(island: Island, tuning: Tuning, step = 16): Island
   const key = `${island.kind}|${island.seed}|${island.size}|${island.phase}|${step}`;
   const had = outlines.get(key);
   if (had) return had;
-  const { land, home, areaSize } = islandLand(island, tuning, step);
+  const { land, lakes, home, areaSize } = islandLand(island, tuning, step);
   let far = 0;
   const loops = land.loops.map(l => {
     const pts = new Float32Array(l.pts.length);
     for (let i = 0; i < pts.length; i += 2) { pts[i] = l.pts[i] - home.x; pts[i + 1] = l.pts[i + 1] - home.z; if (l.sea) far = Math.max(far, Math.hypot(pts[i], pts[i + 1])); }
     return { pts, sea: l.sea };
   });
+  // (its lakes' shores, from their own map (rules/lakes.ts): each loop round a lake's water, turned so the land's on its left)
+  for (const l of lakes?.loops ?? []) {
+    if (!l.sea) continue; // (an islet in a lake)
+    const n = l.pts.length / 2, pts = new Float32Array(l.pts.length);
+    for (let i = 0; i < n; i++) { const j = n - 1 - i; pts[i * 2] = l.pts[j * 2] - home.x; pts[i * 2 + 1] = l.pts[j * 2 + 1] - home.z; }
+    loops.push({ pts, sea: false });
+  }
   const b = land.box, out = { loops, box: { minX: b.minX - home.x, maxX: b.maxX - home.x, minZ: b.minZ - home.z, maxZ: b.maxZ - home.z }, far, areaSize };
   outlines.set(key, out);
   return out;

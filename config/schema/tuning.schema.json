@@ -75,6 +75,20 @@
               "jitter": {
                 "type": "number",
                 "minimum": 0
+              },
+              "lakes": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "lakeSize": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
               }
             },
             "required": [
@@ -143,6 +157,29 @@
         "drift",
         "edge",
         "coast"
+      ],
+      "additionalProperties": false
+    },
+    "lakes": {
+      "type": "object",
+      "properties": {
+        "shore": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pad": {
+          "type": "number",
+          "minimum": 0
+        },
+        "koi": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "shore",
+        "pad",
+        "koi"
       ],
       "additionalProperties": false
     },
@@ -2401,6 +2438,106 @@
             "charges"
           ],
           "additionalProperties": false
+        },
+        "harvest": {
+          "type": "object",
+          "properties": {
+            "berries": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "berries",
+            "radius",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "dowsing": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        "sentry": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "slingshot": {
+          "type": "object",
+          "properties": {
+            "catch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fire": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hold": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "catch",
+            "fire",
+            "hold",
+            "radius",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        "gathering": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -2411,7 +2548,12 @@
         "long",
         "healing",
         "helmet",
-        "double"
+        "double",
+        "harvest",
+        "dowsing",
+        "sentry",
+        "slingshot",
+        "gathering"
       ],
       "additionalProperties": false
     },
@@ -4970,6 +5112,9 @@
     "runeMarkers": {
       "type": "object",
       "properties": {
+        "variants": {
+          "type": "boolean"
+        },
         "laser": {
           "type": "object",
           "properties": {
@@ -5099,6 +5244,7 @@
         }
       },
       "required": [
+        "variants",
         "laser",
         "scale",
         "beamHeight",
@@ -9681,6 +9827,7 @@
   "required": [
     "mapAreas",
     "map",
+    "lakes",
     "islands",
     "beach",
     "areaSize",

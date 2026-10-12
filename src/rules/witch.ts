@@ -1,6 +1,7 @@
 // The witch: where she is, how fast she flies, and her two modes. Ground mode is slower and
 // under the trees; treetop mode is faster and above the canopy. One button rises or descends,
 // which takes riseTime or descendTime: `lift` runs from 0 (ground) to 1 (treetop).
+import { lakeKnobs, onLake, stopAtShore } from "./lakes";
 import { clamp, lerp, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
 import { beachOf, keepIn, softEdge, type Bounds } from "./mapShape";
@@ -65,6 +66,9 @@ export function headingOf(vx: number, vz: number, was: Heading | undefined, minS
   return off < (was === want ? t.facing.headingLeave : t.facing.headingEnter) ? want : "side";
 }
 
+/** How high (lift, 0 to 1) she holds over a lake's water, coming down: she never lands on it. */
+const LAKE_HOVER = 0.3;
+
 export const NO_INTENT: Intent = { moveX: 0, moveZ: 0, toggleMode: false };
 
 export function newWitch(x: number, z: number): WitchState {
@@ -103,6 +107,9 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     } else if (lift < 1) lift = Math.min(1, lift + dt / Math.max(1e-3, t.riseTime));
   }
 
+  // Never down on a lake's water (Ed, 2026-10-11: rules/lakes.ts): coming down over it, she holds a little off it, and lands
+  // once she's over the shore.
+  if (bounds.lakes && mode !== "rising" && mode !== "treetop" && w.mode !== "ground" && lift < LAKE_HOVER && onLake(bounds, w.x, w.z, lakeKnobs(t).pad)) { lift = LAKE_HOVER; mode = "descending"; }
   let mx = intent.moveX, mz = intent.moveZ;
   const len = Math.hypot(mx, mz);
   if (len > 1) { mx /= len; mz /= len; }
@@ -130,6 +137,11 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   else {
     if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
     if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
+  }
+  // On foot, a lake's shore stops her (sliding along it).
+  if (mode === "ground" && bounds.lakes) {
+    const q = stopAtShore(bounds, w.x, w.z, x, z, lakeKnobs(t).pad, 0);
+    if (q) { const into = -(vx * q.nx + vz * q.nz); if (into < 0) { vx += q.nx * into; vz += q.nz * into; } x = q.x; z = q.z; }
   }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);

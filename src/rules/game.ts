@@ -1,4 +1,5 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
+import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
@@ -36,6 +37,7 @@ import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, star
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, questsFromStanding, stepSigilButton } from "./sigilButton";
+import { hatLetters, onHatPicked, onHatPut } from "./hatSpells";
 import { loadOf, type LeashLoad } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
@@ -349,6 +351,7 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
   if (g.forest.decorNear(x, z, C.decor).some(p => near(p.x, p.z, C.decor))) return false;
   for (const [k, s] of g.combat.sounds) if (!isHomeKey(k) && near(s.x, s.z, C.sound)) return false; // (home's speakers: below)
   if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, C.speaker))) return false;
+  if (g.witch.mode === "ground" && onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad)) return false; // (on foot, never onto a lake: rules/lakes.ts)
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
 
@@ -502,8 +505,13 @@ function fixedStep(g: Game, controls: Controls): void {
   // Far from her on the ground, or from its sigil, a party animal travels (rules/travel.ts): quiet, along area borders.
   stepTravel(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
   stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP);
+  // Her hat's spell on putting it down or picking it up (rules/hatSpells.ts: Harvest, Dowsing, Gathering).
+  for (const e of W.leash.events.slice()) if (e.at === ht && e.id === W.id) {
+    if (e.kind === "hatPut" && W.hat.down) onHatPut(g, W, W.hat.down.x, W.hat.down.z, ht, t);
+    else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
+  }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g));
+  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g), hatLetters(W.spells, W.hat.down, t));
   if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") refundDash(W.dash, ht, charges);
@@ -525,6 +533,8 @@ function fixedStep(g: Game, controls: Controls): void {
   stepSpacing(g, dt);
   // Enraged creatures stay out of a sleeping or restless legend's circle (Ed, 2026-10-06).
   if (g.tuning.legendCircle?.slow.on !== false) keepEnragedOut(g);
+  // And everyone on foot stays ashore of the lakes (rules/lakes.ts).
+  if (g.map.bounds.lakes) creaturesAshore(g.creatures, g.map.bounds, lakeKnobs(t).pad);
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -617,6 +627,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),
+    round: g.map.bounds.lakes ? (x, z, tx, tz) => roundLakes(g.map.bounds, x, z, tx, tz, lakeKnobs(t).shore + 4) : undefined,
     centre: g.map.dancefloor,
     home: homeArea(g.map),
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
