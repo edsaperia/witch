@@ -12,7 +12,8 @@ import { affectionOf, meterHits } from "../rules/game";
 import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
 import { placed, shownOverBend } from "./height";
-import { sizeBubble } from "./bubbles";
+import { pixelEmoji, pixelEmojiData, sizeBubble, speechBubble } from "./bubbles";
+
 import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf } from "./inviteRing";
@@ -23,32 +24,6 @@ const HERS = ["💌", "🎉", "🥳", "💃", "🎈", "😘", "🎶", "✨"];
 // Replies by how full its meter is: unsure, warming, nearly, won over; and stung (blocked).
 const REPLIES = [["😳", "🤨", "😶", "🫣"], ["😮", "🤭", "😊", "🙂"], ["😍", "🥰", "😆", "🤩"], ["🥳", "🎉", "💖", "💃"]];
 const BLOCKED = ["😠", "🙅", "💢", "😤"];
-
-/** A pixel emoji: drawn n pixels across with hard edges, as a data URL (cached). */
-const pixelCache = new Map<string, string>(), pixelData = new Map<string, ImageData | null>();
-function emojiPixels(e: string, n: number): { canvas: HTMLCanvasElement; data: ImageData | null } {
-  const c = document.createElement("canvas");
-  c.width = c.height = n;
-  const x = c.getContext("2d", { willReadFrequently: true });
-  let d: ImageData | null = null;
-  if (x) {
-    x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillText(e, n / 2, n / 2 + 0.5);
-    d = x.getImageData(0, 0, n, n);
-    for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
-    x.putImageData(d, 0, 0);
-  }
-  pixelData.set(`${e}:${n}`, d);
-  return { canvas: c, data: d };
-}
-export function pixelEmoji(e: string, n: number): string {
-  const key = `${e}:${n}`;
-  let url = pixelCache.get(key);
-  if (url) return url;
-  url = emojiPixels(e, n).canvas.toDataURL();
-  pixelCache.set(key, url);
-  return url;
-}
 
 /** Where pixel (i, j) of a W x H picture of an n-pixel sprite turned by (cos c, sin s) and scaled (sx, sy) comes from in
  *  the sprite: [x, y], or null outside it (nearest pixel: a CSS rotate, or a scale that isn't whole, would tilt and smear
@@ -70,8 +45,7 @@ export function pixelTurned(e: string, n: number, sx: number, sy: number, deg: n
   if (!got) {
     const th = (a * Math.PI) / 8, c = Math.cos(th), s = Math.sin(th);
     const W = Math.max(1, Math.round(sx * (Math.abs(c) + Math.abs(s)) * n)), H = Math.max(1, Math.round(sy * (Math.abs(c) + Math.abs(s)) * n));
-    if (!pixelData.has(`${e}:${n}`)) emojiPixels(e, n);
-    const src = pixelData.get(`${e}:${n}`), cv = document.createElement("canvas");
+    const src = pixelEmojiData(e, n), cv = document.createElement("canvas");
     cv.width = W; cv.height = H;
     const x = cv.getContext("2d", { willReadFrequently: true });
     if (x && src) {
@@ -147,12 +121,8 @@ export class InviteView {
   }
 
   private bubble(id: number): Bubble {
-    const el = document.createElement("div"), img = document.createElement("img");
-    el.className = "bubble";
+    const { el, img } = speechBubble(this.root);
     el.style.zIndex = "2";
-    img.style.imageRendering = "pixelated"; img.style.display = "block";
-    el.append(img);
-    this.root.append(el);
     return { el, img, until: -Infinity, x: 0, y: 0, z: 0, id };
   }
 

@@ -1,6 +1,7 @@
 // Her, each frame (moved out of view.ts's render, unchanged): her pose (hover, lean, rise and descend, brake and fast, her
 // headings, on foot, the treehouse's seat, a knockout, mid-blink), her hat knocked off, her sprite stood by its frame's ground,
 // the party's and the beach's views of her, where she is on screen, and her shadow.
+import { deckOf } from "../../rules/treehouse";
 import type { View } from "../view";
 import { PARTY_CAST } from "../../rules/party";
 import { STEP } from "../../rules/game";
@@ -12,7 +13,7 @@ import { LOAD_DEFAULT } from "../load";
 import { setOverlayTilt } from "../overlayTilt";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { inView } from "./culling";
-import { DJ_DEPTH, nearerCamera } from "./home";
+import { alongRay, DJ_DEPTH, ENT_DEPTH, nearerCamera } from "./home";
 import { beatAt } from "../../rules/beat";
 import { djRoutineAt } from "../../rules/djSet";
 import { respawnLeft } from "../../rules/knockout";
@@ -69,20 +70,35 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     else if (L.talk) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
     else wf = pick("stand", Math.floor(ht * F.stand.fps) % F.stand[side].length);
   } else if (v.foot > 0.02) wf = v.foot >= prevFoot ? pick("land", Math.floor(v.foot * 3)) : pick("takeoff", Math.floor((1 - v.foot) * 3));
-  const footEase = v.foot * v.foot * (3 - 2 * v.foot), wy = (h + bob - 0.4) * (1 - footEase);
+  // On the treehouse deck (rules/treehouse.ts) its floor is her ground.
+  const deck = deckOf(g.map, t), floor = w.perch && deck ? deck.h : 0;
+  const footEase = v.foot * v.foot * (3 - 2 * v.foot), wy = floor + (h - floor + bob - 0.4) * (1 - footEase);
   // At the start she sits on the treehouse terrace (the sit pose, swinging her legs), and eases
   // off it into the air when she first moves.
   const sdt = Math.min(0.1, Math.max(0, ht - v.seatTime));
   v.seatTime = ht;
   v.seatK = w.seated ? 1 : Math.max(0, v.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
-  let wx = w.x, wz = w.z, wyy = wy, djUpper = -1;
+  let wx = w.x, wz = w.z, wyy = wy, djUpper = -1, herScale = 1;
+  // On the treehouse Ent's deck (art/ent.js): drawn on its own floor, her place on the deck taken into the art's pixels (its floor's
+  // ellipse is the art's view, not the camera's) in the plane through the deck's middle, then moved along the ray from the camera
+  // by how far toward it she stands (so she's between the Ent's halves, render/view/home.ts ENT_DEPTH) and scaled to land on those
+  // pixels; eased off as she rises (her lift) into the world's own place.
+  if (T.ent && deck && w.perch) {
+    const m = 1 - w.lift, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
+    const p = onTreehouse(T.ent.deck.x + (w.x - deck.x) / v.mpp, T.ent.deck.y + dz * ky), g0 = groundHeight(deck.x, deck.z);
+    const q = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, dz);
+    wx += (q.x - wx) * m; wz += (q.z - wz) * m; wyy += (q.y - groundHeight(q.x, q.z) + (wy - deck.h) - wyy) * m; herScale += (q.scale - 1) * m;
+  }
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
   { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
-  if (!v.leashView.seatAt && T) v.leashView.seatAt = onTreehouse(T.seat.x, T.seat.y); // (the decks' place, from the start: the tempo over them, render/leash/deckBpm.ts)
+  // Her decks: on the treehouse deck (rules/treehouse.ts), where she stands, the opening shot just over her; else the old studio's seat.
+  // (with the Ent's art, art/ent.js, its own seat and camera anchors, as the old studio's: she lands on its seat's pixel, between its halves)
+  const deckSeat = deck && !T.ent ? { x: g.map.start.x, y: groundHeight(g.map.start.x, g.map.start.z) + deck.h, z: g.map.start.z } : null;
+  if (!v.leashView.seatAt && (T || deckSeat)) v.leashView.seatAt = deckSeat ?? onTreehouse(T.seat.x, T.seat.y); // (the decks' place, from the start: the tempo over them, render/leash/deckBpm.ts)
   if (v.seatK > 0) {
-    const seat = onTreehouse(T.seat.x, T.seat.y), k = v.seatK * v.seatK * (3 - 2 * v.seatK);
+    const seat = deckSeat ?? onTreehouse(T.seat.x, T.seat.y), k = deckSeat ? 0 : v.seatK * v.seatK * (3 - 2 * v.seatK);
     v.leashView.seatAt = seat; // (where she sparkles back in after a knockout)
-    const cam = onTreehouse(T.camera.x, T.camera.y);
+    const cam = deckSeat ? { ...deckSeat, y: deck!.h + 1.2 } : onTreehouse(T.camera.x, T.camera.y); // (the rules' heights: the camera stands it on the smoothed ground)
     g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
     // (a touch nearer the camera than the house, along the ray to it, so she lands on the seat's own pixel: render/view/home.ts)
     const near = nearerCamera(v, seat, DJ_DEPTH.her);
@@ -138,8 +154,14 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // Behind the decks her frame stands with its ground anchor on the seat (not its box's middle), so her hands land on the decks;
   // her upper layer goes over the DJ table, nearer the camera along the same ray.
   const wcen = djUpper >= 0 && wg ? (wg.x - wframe.w / 2) * v.mpp : 0;
-  const her = v.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink - R.x * wcen, y: wyy + groundHeight(wx, wz) - U.y * wsink - R.y * wcen, z: wz - U.z * wsink - R.z * wcen, frame: wframe, flip: wflip }];
-  if (djUpper >= 0 && her.length) { const b = her[0], up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
+  const her = v.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink - R.x * wcen, y: wyy + groundHeight(wx, wz) - U.y * wsink - R.y * wcen, z: wz - U.z * wsink - R.z * wcen, frame: wframe, flip: wflip, ...(herScale !== 1 ? { scale: herScale } : {}) }];
+  if (djUpper >= 0 && her.length) {
+    const b = her[0];
+    if (T.ent && deck) { // (over the Ent's desk, brought forward with its near half: render/view/home.ts ENT_DEPTH; scaled to land on her own pixels)
+      const up = alongRay(v, b, ENT_DEPTH.near + DJ_DEPTH.upper - 2 * DJ_DEPTH.her); // (her batch's heights are the world's)
+      her.push({ x: up.x, y: up.y, z: up.z, frame: watlas.frames[djUpper], flip: false, scale: up.scale } as typeof b);
+    } else { const up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
+  }
   const hatFrame = bare ? v.assets.witchBare().frames[v.assets.witchHatFrame] : undefined;
   { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
     const LV = v.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && v.foot < 0.05 && !v.partyWitchView.herIdle;
@@ -198,7 +220,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // terrace, nowhere (mid-blink, sparkled away), or drawn by the party's or the beach's view (they lay her shadow there).
   const ref = watlas.grounds?.[0], wide = wg && ref && ref.w > 0 ? Math.max(0.6, Math.min(3, wg.w / ref.w)) : 1;
   v.shadow.position.set(wx + R.x * wside, 0.08, wz + R.z * wside);
-  const shown = hidden || v.partyWitchView.herIdle || onBeach ? 0 : (1 - 0.5 * canopyShown(w)) * (1 - v.seatK);
+  const shown = hidden || v.partyWitchView.herIdle || onBeach || w.perch ? 0 : (1 - 0.5 * canopyShown(w)) * (1 - v.seatK); // (up on the treehouse deck: none on the ground)
   v.shadow.scale.set(shown * wide + 1e-3, 1, shown + 1e-3);
 
   v.witchBodyY = wyy + wframe.h * v.mpp * 0.45; v.witchFeetY = wyy; v.witchFrameH = wframe.h; // (her body's middle: the claw slashes go over it)

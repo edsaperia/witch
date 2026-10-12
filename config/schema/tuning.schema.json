@@ -1081,6 +1081,82 @@
         "lightStrength": {
           "type": "number",
           "minimum": 0
+        },
+        "deck": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "grace": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rail": {
+              "type": "number",
+              "minimum": 0
+            },
+            "table": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tableUse": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decks": {
+              "type": "object",
+              "properties": {
+                "inner": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "outer": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "from": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "inner",
+                "outer",
+                "from",
+                "to"
+              ],
+              "additionalProperties": false
+            },
+            "seat": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "radius",
+            "height",
+            "grace",
+            "rail",
+            "table",
+            "tableUse",
+            "decks",
+            "seat"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -1088,7 +1164,8 @@
         "angle",
         "clear",
         "lightReach",
-        "lightStrength"
+        "lightStrength",
+        "deck"
       ],
       "additionalProperties": false
     },
@@ -2439,6 +2516,96 @@
           ],
           "additionalProperties": false
         },
+        "battering": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stun": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "width",
+            "stun"
+          ],
+          "additionalProperties": false
+        },
+        "leyjump": {
+          "type": "object",
+          "properties": {
+            "cooldown": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "cooldown"
+          ],
+          "additionalProperties": false
+        },
+        "haul": {
+          "type": "object",
+          "properties": {
+            "pull": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "pull"
+          ],
+          "additionalProperties": false
+        },
+        "pound": {
+          "type": "object",
+          "properties": {
+            "cooldown": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "push": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stun": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "cooldown",
+            "radius",
+            "push",
+            "stun"
+          ],
+          "additionalProperties": false
+        },
+        "stealth": {
+          "type": "object",
+          "properties": {
+            "reveal": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reveal",
+            "range"
+          ],
+          "additionalProperties": false
+        },
         "harvest": {
           "type": "object",
           "properties": {
@@ -2674,6 +2841,11 @@
         "healing",
         "helmet",
         "double",
+        "battering",
+        "leyjump",
+        "haul",
+        "pound",
+        "stealth",
         "harvest",
         "dowsing",
         "sentry",

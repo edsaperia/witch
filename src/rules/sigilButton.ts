@@ -3,6 +3,7 @@
 // legend (rules/legends.ts relicButton), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
+import { atMapTable, deckOf } from "./treehouse";
 import type { Controls, Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
@@ -45,6 +46,13 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   const relicEvents: LeashEvent[] = [];
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
   let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
+  // On the treehouse deck (rules/treehouse.ts) nothing goes down or comes up: there's nothing of hers up there. E at the map
+  // table opens the sea chart (Ed, 2026-10-11: "The world map is in the centre").
+  const perched = !!g.witch.perch, deck = perched ? deckOf(g.map, t) : null;
+  if (perched) {
+    if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, g.witch.x, g.witch.z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
+    sigil = false; place = false;
+  }
   const pressed = (sigil || place) && g.witch.mode === "ground" && !g.witch.seated;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
   if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius)) {
@@ -66,16 +74,16 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, t.leash.restAbove ?? 0), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, t.leash.restAbove ?? 0), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
   const idle = pressed && !g.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
-  if (putHat(W.hat, idle, !!c.sigilHeld && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.witch.x, g.witch.z, ht, t.leash.hatHold))
+  if (putHat(W.hat, idle, !!c.sigilHeld && g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko, g.witch.x, g.witch.z, ht, t.leash.hatHold))
     g.leash.events.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
   // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
   // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.
-  if (g.witch.mode === "ground" && !g.witch.seated && !W.ko) pullRune(g, t, step);
+  if (g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko) pullRune(g, t, step);
 }
 
 /** A sigil put down this step in a sleeping legend's clearing finishes its quest. */

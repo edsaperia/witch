@@ -68,7 +68,7 @@ export class AssetLibrary {
   soundsystems: Atlas = placeholderAtlas(16);
   /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
    *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
-  treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
+  treehouse: { atlas: Atlas; ent?: { deck: { x: number; y: number }; table: { x: number; y: number } }; base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
     /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
     foreFrames: number; foreBox: { x: number; y: number };
     /** The knockdown candles (Art.candleSprite: white then red from candleRed on, level × flicker, from frame candle0) and their row along the desk's front (its ends, in the base's pixels). */
@@ -98,7 +98,7 @@ export class AssetLibrary {
   /** The areas' rune stones' bake scale (tuning runeMarkers.scale; the view sets it): the dancefloor ring's stones are baked at it. */
   stoneScale = 2.25;
 
-  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null) {
+  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home") {
     this.K = 2 / pixelSize;
     this.styleHash = hashText(JSON.stringify(style));
     // Where her poses' frames will be, at once (a dry run: nothing drawn), and the stand-ins above; the art itself from the
@@ -123,7 +123,7 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
-    this.ask({ kind: "treehouse", id: "home", style }, true);
+    this.ask({ kind: "treehouse", id: treehouse, style }, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
     this.ask({ kind: "soundsystems", id: "home", style }, true);
     this.ask({ kind: "props", id: "home", style }, true);
     this.ask(this.witchJob(witchGenome, false), true);

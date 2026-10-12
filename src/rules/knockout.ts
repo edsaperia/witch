@@ -119,7 +119,7 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     // behind the decks in your treehouse, as when the game begins (but not zoomed in)"): seated till she first moves. (The
     // opening close-up doesn't come back: the camera's intro only ever eases out, rules/camera.ts; nor the boot, which runs
     // from the first time she left.)
-    body = { ...body, x: map.start.x, z: map.start.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: true };
+    body = { ...body, x: map.start.x, z: map.start.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: true, ...(map.tuning.treehouse.deck?.on ? { perch: true } : {}) }; // (her decks: on the treehouse deck)
     events.push({ kind: "sparkleIn", at: time, x: body.x, z: body.z });
     events.push({ kind: "cut", at: time, x: body.x, z: body.z }); // (the cut from the hat to the decks: render/koIris.ts, and the music's scratch)
     // Loyal legends come home with her.

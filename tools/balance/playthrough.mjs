@@ -62,6 +62,7 @@ while (g.clock.time < end && !g.partyOver) {
   const c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
   const go = (p, slow = 1) => { const dx = p.x - w.x, dz = p.z - w.z, d = Math.hypot(dx, dz) || 1; c.moveX = (dx / d) * slow; c.moveZ = (dz / d) * slow; return d; };
   if (w.seated) c.moveX = 1;
+  else if (w.perch && w.mode === "ground") c.toggleMode = true; // (on the treehouse deck: straight up off it)
   else if (W.ko) { /* (knocked out: it plays out) */ }
   else if (W.health.hp <= 1 && w.mode === "ground") { rest = true; c.toggleMode = true; }
   else if (rest) { if (W.health.hp >= TUNING.witchHealth.hits) rest = false; }

@@ -279,7 +279,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     b?.set(list);
     if (sliceDone()) { yield; resume(); }
   }
-  { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: 7, d: 3.5, scenery: false }); } // soft, under the treehouse
+  { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: g.tuning.treehouse.deck?.on ? 9 : 7, d: g.tuning.treehouse.deck?.on ? 5 : 3.5, scenery: false }); } // soft, under the treehouse
   checkPops(v, "placed", !force);
   v.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
   v.stats.trees = nt; v.stats.bushes = nb;
