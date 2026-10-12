@@ -44,14 +44,14 @@ const RELIEF = 5;
 // shallows and lakes through a tile of its own heights, as fine as its heightfield, so the shadows hold up close in.
 const HMAP = 2048; // (the whole chart's height map, a side)
 // How lit a point is by the moon (1 open, down to 1 - uShadow behind a hill): the heights between it and the moon, looked along
-// toward it in 28 steps, closer together near; tanK scales the moon's slope (an island's tile is in its own, maybe squashed, heights).
-const march = (name: string, h: string) => /* glsl */ `
+// toward it in `taps` steps (20 on an island, 16 on the open sea), closer together near; tanK scales the moon's slope (an island's tile is in its own, maybe squashed, heights).
+const march = (name: string, h: string, taps: number) => /* glsl */ `
 float ${name}(vec3 w, float tanK) {
   if (uShadow <= 0.0) return 1.0;
   float fl = max(length(uMoonV.xz), 1e-4); vec2 d = uMoonV.xz / fl; float tanE = uMoonV.y / fl * tanK;
   float reach = min(80.0, uTop / max(tanE, 0.05)), occ = 0.0;
-  for (int i = 1; i <= 28; i++) {
-    float u = float(i) / 28.0, t = reach * u * u + 0.06;
+  for (int i = 1; i <= ${taps}; i++) {
+    float u = float(i) / ${taps}.0, t = reach * u * u + 0.06;
     float above = ${h}(w.xz + d * t) - (w.y + t * tanE) - 0.03;
     occ = max(occ, smoothstep(0.0, 0.05 + 0.05 * t, above));
   }
@@ -62,7 +62,7 @@ const SHADOW_MAP = /* glsl */ `
 uniform sampler2D uHMap; uniform float uHR, uHMax, uShadow; uniform vec3 uMoonV;
 #define uTop uHMax
 float hAtMap(vec2 p) { return texture2D(uHMap, p / (2.0 * uHR) + 0.5).r * uHMax; }
-${march("moonLit", "hAtMap")}`;
+${march("moonLit", "hAtMap", 16)}`;
 /** An island's own: in its local units, through its tile (x0, z0, 1 / step; samples across, down), nothing outside it. */
 const SHADOW_TILE = /* glsl */ `
 uniform sampler2D uTile; uniform vec4 uTileB; uniform vec2 uTileN; uniform float uTileMax, uYScale, uShadow; uniform vec3 uMoonV;
@@ -72,7 +72,7 @@ float hAtTile(vec2 p) {
   if (c.x < 0.0 || c.y < 0.0 || c.x > uTileN.x - 1.0 || c.y > uTileN.y - 1.0) return 0.0;
   return texture2D(uTile, (c + 0.5) / uTileN).r * uTileMax;
 }
-${march("moonLit", "hAtTile")}`;
+${march("moonLit", "hAtTile", 20)}`;
 
 /** The chart's pixel (CSS pixels across one): finer than the game's, for the islands' and sigils' detail; still whole pixels. */
 export const CHART_PIXEL = 2;
