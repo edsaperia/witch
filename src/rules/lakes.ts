@@ -82,7 +82,7 @@ export function creaturesAshore(creatures: readonly { x: number; z: number; tx: 
 export interface KoiPond { x: number; z: number; r: number; seed: number; count: number }
 const koiMade = new WeakMap<object, { key: string; ponds: KoiPond[] }>();
 /** The lakes with koi: each lake (a loop of the lakes' map round its water) has them by `share` (seeded by the map), round its
- *  deepest point, as far out as half its depth there (6 to 30 m), 3 to 7 of them. Made once a map. */
+ *  deepest point, as far out as half its depth there (12 to 30 m), 2 to 5 of them (big ones: a baby creature's size). Made once a map. */
 export function koiPonds(b: Bounds, seed: number, share: number): KoiPond[] {
   const L = b.lakes;
   if (!L || share <= 0) return [];
@@ -101,7 +101,7 @@ export function koiPonds(b: Bounds, seed: number, share: number): KoiPond[] {
     if (!L.loops[loop].sea) continue; // (a loop round the lakes' "land": a lake's water)
     const h = hash2(loop, 17, seed + 131);
     if (h >= share) continue;
-    ponds.push({ x: L.x0 + (k % L.cols) * L.step, z: L.z0 + Math.floor(k / L.cols) * L.step, r: Math.max(6, Math.min(30, L.dist[k] * 0.5)), seed: Math.floor(hash2(loop, 31, seed + 133) * 997) + 1, count: 3 + Math.floor(hash2(loop, 37, seed + 137) * 5) });
+    ponds.push({ x: L.x0 + (k % L.cols) * L.step, z: L.z0 + Math.floor(k / L.cols) * L.step, r: Math.max(12, Math.min(30, L.dist[k] * 0.5)), seed: Math.floor(hash2(loop, 31, seed + 133) * 997) + 1, count: 2 + Math.floor(hash2(loop, 37, seed + 137) * 4) });
   }
   koiMade.set(L, { key, ponds });
   return ponds;

@@ -70,6 +70,7 @@ uniform vec4 uLake; // the lakes (rules/lakes.ts): .x on (1) or off, .y half the
 uniform vec4 uLakeBox; // the lakes' map's grid: its first sample's x, z, and 1 over its width and depth (metres)
 uniform sampler2D uLakes; // the lakes' map: r, how far into a lake (+ on the water, - ashore)
 uniform vec4 uKoi[8]; // the lakes with koi (rules/lakes.ts koiPonds): where they swim round, how far out (0: none), a seed and how many (seed + count / 10)
+uniform float uKoiSize; // a koi's scale: its length (m) over the shape's 1.12 (koiScale: a baby creature's size)
 uniform vec3 uMoonRoad; // the sky's moon on the screen (its x, a fraction from the left), the picture's width (px), 1 while it's up
 // The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
@@ -411,20 +412,21 @@ void main() {
           if (spec > 0.993) water = mix(water, uMoon + vec3(0.25), 0.8);
           else if (spec > 0.975) water = mix(water, uMoon * 0.7, 0.3);
           else if (mod(px.y, 5.0) < 1.0 && vnoise(px / vec2(8.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.76) water += vec3(0.08, 0.12, 0.14); // ripples catching the light
-          // Koi (Ed, 2026-10-11): in some lakes a few, orange, white and gold, patched, swimming slow rounds under the water.
+          // Koi (Ed, 2026-10-11; 2026-10-12: "large, similar to the size of a baby creature"): in some lakes a few, orange, white
+          // and gold, patched, swimming slow rounds under the water.
           for (int i = 0; i < 8; i++) {
             vec4 K = uKoi[i];
             if (K.z <= 0.0) break;
             vec2 q = p - K.xy;
-            if (dot(q, q) > (K.z + 3.0) * (K.z + 3.0)) continue;
-            float n = fract(K.w) * 10.0 + 0.5;
+            if (dot(q, q) > (K.z + uKoiSize) * (K.z + uKoiSize)) continue;
+            float n = floor(fract(K.w) * 10.0 + 0.5);
             for (int f = 0; f < 7; f++) {
-              if (float(f) > n) break;
-              float s = floor(K.w) * 0.731 + float(f) * 3.71, r = K.z * (0.2 + 0.5 * fract(s * 0.37)); // (in toward the middle: they keep together)
+              if (float(f) >= n) break;
+              float s = floor(K.w) * 0.731 + float(f) * 3.71, r = max(uKoiSize * 1.4, K.z * (0.2 + 0.6 * fract(s * 0.37))); // (in toward the middle: they keep together)
               r *= 1.0 + 0.12 * sin(uTime * 0.21 + s);
-              float dirn = fract(s * 2.13) > 0.5 ? 1.0 : -1.0, a = s * 1.7 + dirn * uTime * (0.35 + 0.25 * fract(s * 1.31)) / max(2.0, r);
+              float dirn = fract(s * 2.13) > 0.5 ? 1.0 : -1.0, a = s * 1.7 + dirn * uTime * (0.35 + 0.25 * fract(s * 1.31)) * uKoiSize / max(2.0, r); // (a bigger fish swims faster)
               vec2 fp = K.xy + vec2(cos(a), sin(a)) * r, hd = vec2(-sin(a), cos(a)) * dirn, d = p - fp;
-              float u = dot(d, hd) / 1.7, v = dot(d, vec2(-hd.y, hd.x)) / 1.7; // (about 1.4 m long: big old koi)
+              float u = dot(d, hd) / uKoiSize, v = dot(d, vec2(-hd.y, hd.x)) / uKoiSize;
               v += sin(uTime * 3.0 + s + u * 4.0) * 0.05 * (0.45 - u); // (its tail sways)
               bool bodyIn = (u / 0.42) * (u / 0.42) + (v / 0.19) * (v / 0.19) < 1.0, tail = u < -0.38 && u > -0.7 && abs(v) < (-u - 0.33) * 0.55;
               if (bodyIn || tail) {
@@ -569,7 +571,7 @@ export class Ground {
         uLandBox: { value: new THREE.Vector4() },
         uLand: { value: null as THREE.DataTexture | null },
         uMoonRoad: { value: new THREE.Vector3() },
-        ...lakeUniforms(map.bounds, map.seed, lakeKnobs(map.tuning).koi),
+        ...lakeUniforms(map.bounds, map.seed, lakeKnobs(map.tuning).koi, koiScale(st, metresPerPixel)),
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGlow: { value: new Array(6).fill(0) },
         uLegendRingCount: { value: 0 },
@@ -757,15 +759,21 @@ function discoLooks(st: Style, radius: number) {
 
 /** The lakes' map (rules/lakes.ts) for the ground shader: how far into a lake, as a half-float texture eased between its samples;
  *  and their koi. */
-function lakeUniforms(bounds: Bounds, seed: number, share: number): Record<string, THREE.IUniform> {
+function lakeUniforms(bounds: Bounds, seed: number, share: number, koiSize: number): Record<string, THREE.IUniform> {
   const L = bounds.lakes;
   const koi = { value: Array.from({ length: 8 }, () => new THREE.Vector4()) };
-  if (!L) return { uLake: { value: new THREE.Vector4() }, uLakeBox: { value: new THREE.Vector4() }, uLakes: { value: null }, uKoi: koi };
+  if (!L) return { uLake: { value: new THREE.Vector4() }, uLakeBox: { value: new THREE.Vector4() }, uLakes: { value: null }, uKoi: koi, uKoiSize: { value: koiSize } };
   koiPonds(bounds, seed, share).slice(0, 8).forEach((k, i) => koi.value[i].set(k.x, k.z, k.r, k.seed + k.count / 10));
   const N = L.cols * L.rows, data = new Uint16Array(N), h = THREE.DataUtils.toHalfFloat;
   for (let k = 0; k < N; k++) data[k] = h(Math.max(-60, Math.min(60, L.dist[k])));
   const t = new THREE.DataTexture(data, L.cols, L.rows, THREE.RedFormat, THREE.HalfFloatType);
   t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
   t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
-  return { uLake: { value: new THREE.Vector4(1, L.step / 2, 0, 0) }, uLakeBox: { value: new THREE.Vector4(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows)) }, uLakes: { value: t }, uKoi: koi };
+  return { uLake: { value: new THREE.Vector4(1, L.step / 2, 0, 0) }, uLakeBox: { value: new THREE.Vector4(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows)) }, uLakes: { value: t }, uKoi: koi, uKoiSize: { value: koiSize } };
 }
+
+/** A koi's scale in the shader (Ed, 2026-10-12: "large, similar to the size of a baby creature"): as long as a baby creature is
+ *  drawn tall, about BABY_PX art pixels (art/creatures3d.js drawHeight1) times the style's creatureScale, at the art pixel's
+ *  metres; over the shape's own length (1.12). About 4.2 m at today's numbers. */
+const BABY_PX = 30;
+export const koiScale = (st: Style, metresPerPixel: number): number => (BABY_PX * ((st as { creatureScale?: number }).creatureScale ?? 1) * metresPerPixel) / 1.12;

@@ -125,7 +125,7 @@ describe("lakes", () => {
     expect(koiPonds(B, 1, 0)).toEqual([]);
     const k = koiPonds(B, 3, 0.5);
     expect(koiPonds(B, 3, 0.5)).toBe(k);
-    for (const pond of koiPonds(B, 4, 1)) { expect(lakeDepth(B, pond.x, pond.z)).toBeGreaterThan(0); expect(pond.count).toBeGreaterThanOrEqual(3); }
+    for (const pond of koiPonds(B, 4, 1)) { expect(lakeDepth(B, pond.x, pond.z)).toBeGreaterThan(0); expect(pond.count).toBeGreaterThanOrEqual(2); expect(pond.count).toBeLessThanOrEqual(5); }
   }, 120000);
 });
 
