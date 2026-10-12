@@ -10,6 +10,14 @@ on the map to see a specific island or see almost the whole sea". World seed 0, 
 - **Sigils:** they lie over the islands and change with how big they show. Far out you see the plain glyph, which reads at
   small sizes. Nearer, you see the legend circle with the animal's detail. Close in, you see the full circle with its runes,
   faded a little so the land shows through.
+- **Close-up** (Ed: "the islands should be larger at full zoom"): the camera now comes in until one island fills the screen
+  and more. The chosen island's ground is rebuilt at about 7 m a sample. Its hills are relief-shaded, lit from the north-west
+  as a painted map is; each area keeps its own ground colour; the beaches are sand; and the sea is pale in the shallows,
+  fading into the deep. Close in, the sigil fades out so you see the island itself. `closeup-vs-reference.html` shows it
+  beside your reference.
+  What else could come straight from the game's data: the streams (a path kind in the game's path network) as blue lines;
+  the paths and roads; how thickly each area is wooded, as darker canopy or tree marks; the dancefloor; and the runestones.
+  None of that is drawn yet.
 - **Zoom:** from one island filling the screen (`real-closest-wolf.png`, `real-closest-stag.png`) out to the whole sea on one
   screen (`real-furthest.png`), with every sigil still readable.
 - `real-home.png`: the chart as it opens, on home.
