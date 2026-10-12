@@ -26,8 +26,9 @@ export const SHAPES: ShapeKnobs[] = [
 /** The knobs for a phase: the tuning's, else the defaults (clamped to the last). */
 export const shapeOf = (phase: number, shapes?: readonly ShapeKnobs[]): ShapeKnobs => { const S = shapes?.length ? shapes : SHAPES; return S[Math.max(0, Math.min(S.length - 1, Math.round(phase)))]; };
 
-/** The island's reach by bearing (a factor, about 1 on the whole): `reach(angle)`, and the most it reaches anywhere. */
-export function reachOf(K: ShapeKnobs, seed: number): { reach: (angle: number) => number; most: number } {
+/** The island's reach by bearing (a factor, about 1 on the whole): `reach(angle)`, and the most it reaches anywhere; turned by
+ *  `turn` (radians, as atan2(z, x) turns: the archipelago's, its arms into the room it has). */
+export function reachOf(K: ShapeKnobs, seed: number, turn = 0): { reach: (angle: number) => number; most: number } {
   const r = rng(seed * 6151 + 811), terms: [number, number, number][] = [];
   for (let h = 0; h < Math.max(1, Math.round(K.harmonics)); h++) terms.push([2 + h, 0.5 + 0.5 * r(), r() * Math.PI * 2]);
   const total = terms.reduce((t, [, w]) => t + w, 0) || 1;
@@ -37,7 +38,8 @@ export function reachOf(K: ShapeKnobs, seed: number): { reach: (angle: number) =
   for (let i = 0; i < arms; i++) bumps.push([a0 + (i / Math.max(1, arms)) * Math.PI * 2 + (r() - 0.5) * 1.2, K.arms * (0.75 + 0.5 * r())]);
   for (let i = 0; i < bays; i++) bumps.push([r() * Math.PI * 2, -K.bays * (0.7 + 0.6 * r())]);
   const w = Math.max(0.05, K.armWidth);
-  const reach = (angle: number) => {
+  const reach = (turned: number) => {
+    const angle = turned - turn;
     let s = 0;
     for (const [h, wt, ph] of terms) s += wt * Math.sin(h * angle + ph);
     let v = 1 + K.lobes * (s / total);
@@ -59,8 +61,8 @@ export interface Candidate { key: string; dx: number; dz: number }
 
 /** Grow an island of `size` areas besides home from home (`home`, its key) over `neighbours`, taking `candidates` (the areas with
  *  ground, their places from home's in areas) by K's shape: the playable areas, home among them, in the order taken. */
-export function growIsland(home: string, size: number, candidates: ReadonlyMap<string, Candidate>, neighbours: ReadonlyMap<string, ReadonlySet<string>>, K: ShapeKnobs, seed: number, patch?: PatchGrowth): string[] {
-  const shape = reachOf(K, seed).reach, taken = new Set([home]), order = [home];
+export function growIsland(home: string, size: number, candidates: ReadonlyMap<string, Candidate>, neighbours: ReadonlyMap<string, ReadonlySet<string>>, K: ShapeKnobs, seed: number, patch?: PatchGrowth, turn = 0): string[] {
+  const shape = reachOf(K, seed, turn).reach, taken = new Set([home]), order = [home];
   // (in its patch on the chart, rules/archipelago.ts: its reach mostly the patch's, its own shape's a little, and anything past
   // the patch taken only when nothing inside is left)
   const reach = patch ? (a: number) => patch.reach(a) ** (1 - PATCH_SHAPE) * shape(a) ** PATCH_SHAPE : shape;
