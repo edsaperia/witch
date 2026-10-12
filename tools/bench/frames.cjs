@@ -143,8 +143,10 @@ async function main() {
       await page.close();
       continue;
     }
-    // The loop stands still before the start, so every scene starts at game time 0.
-    await page.evaluate(() => { window.witch.manual = true; });
+    // The loop stands still before the start, so every scene starts at game time 0. The treehouse deck's map table off: its live
+    // miniature chart (render/mapTable.ts) draws islands a worker makes in real time, so whether they're in by the shot is a race
+    // (two runs of one build differed by 3584 px in the boot scene, #758); with its view gone it's never made or shown.
+    await page.evaluate(() => { window.witch.manual = true; const v = window.witch.view; if (v.mapTable) { v.mapTable.drop(); v.mapTable.mesh.visible = false; v.mapTable = null; } });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 });
     // (the party spell cast long since, so she isn't held at the decks: every scene a run under way, the same each time)
