@@ -70,6 +70,12 @@ export interface ChartIsland {
 }
 export interface ChartVoyage { from: string; to: string }
 
+/** Where a sail's flight hands over to the game (Ed, 2026-10-12: "you select an island, and then you zoom into the map into the
+ *  island you chose ... and you keep zooming until you're at the start position"): the camera over the sea off the island's south
+ *  coast, looking north at it, in the game's terms: metres from the island's dancefloor (x east, z south), its height above the
+ *  sea (m), its tilt down (radians), its vertical field of view (degrees) and how fast it's moving north (m/s); and the last frame. */
+export interface FlightEnd { cam: { x: number; z: number; height: number; pitch: number; fov: number; speed: number }; still: string }
+
 export interface ChartTuning extends PostTuning { pixelSize: number; camera: { fov: number } }
 
 const SEA_VERT = /* glsl */ `
@@ -262,6 +268,14 @@ const TIER = 60, TIER_STEP = 1.5;
 const LAKE_RIM = 40;
 
 /** One island's meshes and where it is. */
+/** A sail's flight (fly): its legs' ends (the camera's focus, distance and tilt, in chart units) and their seconds; how far in. */
+interface Flight { id: string; t: number; keys: { x: number; z: number; dist: number; pitch: number; at: number; ease: (u: number) => number }[]; done: (end: FlightEnd) => void; speed: number; floor: THREE.Group; size: number }
+const smoothstep = (u: number) => u * u * (3 - 2 * u), easeIn = (u: number) => u * u;
+/** The flight: the glide to frame the island (s), the swoop down and round to the sea off its south coast (s), then the run on north
+ *  (s) `onward` metres, ending looking down just `inland` of the shore below its dancefloor (the camera `dist` m back, tilted `pitchDeg` down:
+ *  the game's treetop view) and still moving north, for the game to carry on. */
+const FLY = { frame: 1.6, swoop: 2.8, run: 1.2, dist: 600, pitchDeg: 50, onward: 60, inland: 40 };
+
 interface Isle { d: ChartIsland; group: THREE.Group; pick: THREE.Mesh; x: number; z: number; top: number; reach: number; sigil?: THREE.Mesh; glow?: THREE.Mesh; tier?: number; size?: number }
 
 /** A sigil as a white texture, `px` across, whole pixels, at a detail tier (art/sigilDetail.js). */
@@ -334,6 +348,9 @@ export class SeaChart {
   /** Circle the chosen island this fast (radians a second; the map table's miniature), 0 for the chart's still north-facing view. */
   orbit = 0;
   private yaw = 0;
+  /** A sail's flight in progress (fly), else null. */
+  private flight: Flight | null = null;
+  get flying(): boolean { return !!this.flight; }
   private w = 1; private h = 1;
 
   constructor(readonly canvas: HTMLCanvasElement, readonly tuning: ChartTuning) {
@@ -582,6 +599,53 @@ export class SeaChart {
     this.renderer.forceContextLoss();
   }
 
+  /** Sail to an island (Ed, 2026-10-12): the camera glides over to frame it while its sigil settles onto its dancefloor (a glow
+   *  at its middle, where the chart's island has its dancefloor), swoops down and round to the sea off its south coast, its land
+   *  easing to its true heights, and runs on north toward the coast; then `done` with the camera in the game's terms and the last
+   *  frame, for the game to carry on from. False if it's not an island here. */
+  fly(id: string, done: (end: FlightEnd) => void): boolean {
+    const i = this.isles.get(id); if (!i) return false;
+    this.select(id); this.orbit = 0; this.yaw = 0;
+    // the south coast below the dancefloor: the southmost land in the grid's columns round its middle, else its box
+    const G = i.d.outline?.ground; let coast = i.d.outline ? i.d.outline.box.maxZ : i.reach / K;
+    if (G) {
+      // (walking south from the dancefloor down its own column to the first sea: the shore straight below it, not a cape beside it)
+      const c0 = Math.round(-G.x0 / G.step);
+      for (let r = Math.max(0, Math.round(-G.z0 / G.step)); r < G.rows; r++) if (!(G.h[r * G.cols + c0] > 0)) { coast = G.z0 + r * G.step; break; }
+    }
+    const pitch = THREE.MathUtils.degToRad(FLY.pitchDeg), z3 = i.z + (coast - FLY.inland) * K, z2 = z3 + FLY.onward * K;
+    const keys: Flight["keys"] = [
+      { x: this.focus.x, z: this.focus.z, dist: this.dist, pitch: this.pitch, at: 0, ease: smoothstep },
+      { x: i.x, z: i.z, dist: Math.max(CLOSEST, i.reach * 4.2), pitch: 0.95, at: FLY.frame, ease: smoothstep },
+      { x: i.x, z: z2, dist: FLY.dist * K, pitch, at: FLY.frame + FLY.swoop, ease: smoothstep },
+      { x: i.x, z: z3, dist: FLY.dist * K, pitch, at: FLY.frame + FLY.swoop + FLY.run, ease: easeIn },
+    ];
+    // its dancefloor: a ring of party light at its middle (about the real one's size, a little more to show from up high)
+    const floor = new THREE.Group(), y = G ? (() => { const r = Math.round(-G.z0 / G.step), c = Math.round(-G.x0 / G.step); return 0.06 + Math.max(0, G.h[r * G.cols + c] ?? 0) * K * RELIEF; })() : i.top;
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.9, 0.5, 1.2), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(5, 5).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: new THREE.Color(0.7, 0.4, 1), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+    floor.add(disc, halo); floor.position.y = y + 0.05; floor.scale.setScalar(22 * K); i.group.add(floor);
+    this.flight = { id, t: 0, keys, done, speed: (FLY.onward * 2) / FLY.run, floor, size: i.size ?? 1 };
+    return true;
+  }
+  /** Any key or tap during a flight: straight to its end. */
+  skipFlight(): void { if (this.flight) this.flight.t = this.flight.keys.at(-1)!.at; }
+
+  /** The flight's frame: the camera along its legs; the island's land easing to its true heights; its sigil settling. */
+  private flyFrame(dt: number, time: number): void {
+    const f = this.flight!, i = this.isles.get(f.id)!, end = f.keys.at(-1)!.at;
+    f.t = Math.min(end, f.t + dt);
+    let n = 1; while (n < f.keys.length - 1 && f.t > f.keys[n].at) n++;
+    const a = f.keys[n - 1], b = f.keys[n], u = b.ease(Math.min(1, Math.max(0, (f.t - a.at) / (b.at - a.at))));
+    const L = (p: number, q: number) => p + (q - p) * u;
+    this.focus.set(L(a.x, b.x), 0, L(a.z, b.z)); this.aim.copy(this.focus); this.dist = this.distTo = L(a.dist, b.dist); this.pitch = L(a.pitch, b.pitch);
+    const lowered = smoothstep(Math.min(1, Math.max(0, (f.t - f.keys[1].at) / (f.keys[2].at - f.keys[1].at))));
+    i.group.scale.y = 1 + (1 / RELIEF - 1) * lowered; // (the chart's heights are drawn five times over; the game's are true)
+    const settle = smoothstep(Math.min(1, f.t / f.keys[1].at));
+    if (i.sigil) { const s = 1 + ((60 * K) / f.size - 1) * settle; i.sigil.scale.set(s, 1, s); i.glow?.scale.set(s, 1, s); }
+    f.floor.rotation.y = time * 0.6; (f.floor.children[0] as THREE.Mesh).scale.setScalar(0.9 + 0.1 * Math.sin(time * 6));
+  }
+
   /** Choose an island: the camera glides to it; the ring goes round it. */
   select(id: string | null, instant = false): void {
     this.selected = id && this.isles.has(id) ? id : null;
@@ -634,12 +698,13 @@ export class SeaChart {
   frame(dt: number, time: number): void {
     this.uTime.value = time;
     const k = 1 - Math.exp(-dt * 3.2);
-    this.focus.lerp(this.aim, k); this.dist += (this.distTo - this.dist) * k;
+    if (this.flight) this.flyFrame(dt, time);
+    else { this.focus.lerp(this.aim, k); this.dist += (this.distTo - this.dist) * k; }
     // tilted down, looking north (-z), never turning (as the game's camera)
     this.yaw += dt * this.orbit;
     const back = Math.cos(this.pitch) * this.dist, sy = Math.sin(this.yaw), cy = Math.cos(this.yaw);
     this.camera.position.set(this.focus.x + back * sy, this.focus.y + Math.sin(this.pitch) * this.dist, this.focus.z + back * cy);
-    const ahead = this.orbit ? 0 : this.dist * 0.035; // (the chosen island a little above the middle, clear of its card)
+    const ahead = this.orbit || this.flight ? 0 : this.dist * 0.035; // (the chosen island a little above the middle, clear of its card)
     this.camera.lookAt(this.focus.x, 0, this.focus.z + ahead);
     // the depth range round what it's looking at (from one island close in to the whole sea: a fixed range would lose the
     // precision to keep the rings and the shallows off the water)
@@ -663,8 +728,14 @@ export class SeaChart {
       i.group.position.y = chosen ? Math.sin(time * 2) * 0.12 : 0;
     }
     const sel = this.selected ? this.isles.get(this.selected) : null;
-    this.ring.visible = !!sel;
+    this.ring.visible = !!sel && !this.flight;
     if (sel) { const r = sel.reach * 1.6 * (1 + 0.04 * Math.sin(time * 3)); this.ring.position.set(sel.x, 0.15, sel.z); this.ring.scale.set(r, 1, r); (this.ring.material as THREE.MeshBasicMaterial).opacity = 0.7 + 0.3 * Math.sin(time * 3); }
     this.post.render(this.scene, this.camera);
+    const f = this.flight;
+    if (f && f.t >= f.keys.at(-1)!.at) { // (landed: hand over, in the game's terms, with this frame)
+      const i = this.isles.get(f.id)!, p = this.camera.position;
+      this.flight = null;
+      f.done({ cam: { x: (p.x - i.x) / K, z: (p.z - i.z) / K, height: p.y / K, pitch: this.pitch, fov: this.camera.fov, speed: f.speed }, still: this.canvas.toDataURL("image/jpeg", 0.88) });
+    }
   }
 }
