@@ -114,3 +114,4 @@ Suggested:
 - **Stealth** (instead of Shadow step): "creatures don't see you unless you're inviting or placing/pickup; once aggro'd they attack you until you're out of range and then they lose you again" (throwing 💌s, or putting down or picking up anything, shows her for 3 s; what went for her loses her past 25 m).
 - **Comet and Homing: cut.**
 - Ley jump (to the ley line's pulse, 60 s recharge) and Haul (her sigils pull half as hard, always on) as planned.
+- **Back to her room mid-night** (Ed's answer 4; built 2026-10-12 on the treehouse deck, #717): on the deck the Bedroom button or F opens her room, the world running at the deck's tenth; "Back to the island" sits where the party scroll does. A hat swapped while hers lies on the ground comes home on her head.

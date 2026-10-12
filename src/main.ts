@@ -24,7 +24,9 @@ import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { tuningFromLink } from "./app/linkParams";
 import { saveLoadout } from "./app/loadout";
-import { castable, setLoadout } from "./rules/spells";
+import { castable } from "./rules/spells";
+import { changeLoadout } from "./rules/hatSpells";
+import { onTreehouse } from "./rules/treehouse";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { Hud } from "./app/hud";
 import { setupKnobs } from "./app/knobs";
@@ -160,7 +162,16 @@ const creator = new Creator(style, savedLook, tuning.pixelSize);
 let lookNow = JSON.stringify(savedLook);
 // Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
 creator.loadout = { hat: game.spells.hat, broom: game.spells.broom };
-creator.onLoadout = l => { setLoadout(game.spells, l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(lookNow ? JSON.parse(lookNow) : savedLook); };
+creator.onLoadout = l => { changeLoadout(game.witches[0], l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(lookNow ? JSON.parse(lookNow) : savedLook); }; // (a hat swapped while hers lies elsewhere comes home: rules/hatSpells.ts)
+// Back to her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4: "fly at treetop level to the treehouse to go back
+// to bedroom where time slows 10x. click an exit button (where the party scroll usually is) to go back to the island"): on the deck
+// (rules/treehouse.ts onTreehouse), the Bedroom button or F opens her room, the world running on at the deck's tenth; its way out
+// brings her back, standing on the deck, in her new look, hat and broom.
+creator.onExit = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
+const bedroomBtn = document.getElementById("bedroom-btn");
+const toBedroom = () => { if (!bot && onTreehouse(game) && !creator.open && !game.witches[0].ko) { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.visit(); } };
+if (bedroomBtn) { for (const ev of ["pointerdown", "pointerup", "touchstart"]) bedroomBtn.addEventListener(ev, e => e.stopPropagation()); bedroomBtn.addEventListener("click", toBedroom); }
+window.addEventListener("keydown", e => { if (e.code === "KeyF" && !e.repeat && !creator.open) toBedroom(); });
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => sound.wake();
@@ -299,7 +310,7 @@ function frame(now: number): void {
   frameStats.frame(dt * 1000);
   freeze.pollPad();
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
-  const human = chartOpen() ? stillControls(input.read()) : input.read();
+  const human = chartOpen() || creator.visiting ? stillControls(input.read()) : input.read(); // (her room open mid-night: she stands still on the deck)
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
@@ -333,6 +344,7 @@ function frame(now: number): void {
   if (game.win?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); } // (in the campaign's world only)
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
+  { const want = !bot && onTreehouse(game) && !creator.open && !game.witches[0].ko ? "block" : "none"; if (bedroomBtn && bedroomBtn.style.display !== want) bedroomBtn.style.display = want; } // (on the treehouse deck: back to her room)
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
     nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); // (the sea chart: played; losing loses nothing)

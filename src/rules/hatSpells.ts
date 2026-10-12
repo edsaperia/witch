@@ -9,7 +9,7 @@ import type { Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
 import type { HatLetters } from "./invites";
 import { growRing } from "./berries";
-import type { SpellState } from "./spells";
+import { setLoadout, type SpellState } from "./spells";
 import { LEGEND, healBy, type Creature } from "./creatures";
 import { creatureMaxHp } from "./combat";
 
@@ -149,4 +149,15 @@ export function stepHatSpells(g: Game, W: Witch, down: { x: number; z: number } 
     }
     if (now >= end && S.hat !== "cyclone") S.cyc = undefined; // (done, and the hat's another: let it go)
   }
+}
+
+/** Her loadout changed (the creator's Hat and Broom boxes: in her room before the night, or back in it mid-night from the
+ *  treehouse deck, Ed's answer 4, 2026-10-11): the new spells, and a hat swapped while hers lies on the ground somewhere comes
+ *  home on her head (its old spell's ring, pointer and whirlwind gone with it). */
+export function changeLoadout(W: Witch, hat: string, broom: string): void {
+  const was = W.spells.hat;
+  setLoadout(W.spells, hat, broom);
+  if (W.spells.hat === was) return;
+  W.hat.down = null; delete W.hat.hold;
+  W.spells.dowse = undefined; W.spells.cyc = undefined;
 }
