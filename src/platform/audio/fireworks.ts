@@ -10,7 +10,7 @@ import { crackleBuffer } from "./sparkler";
 export function whoosh(K: SfxKit, dur: number, whistle: boolean, pan = 0, near = 1): void {
   const F = K.T.fireworks, c = K.ctx, at = c.currentTime + 0.005, vol = (F?.volume ?? 0) * (F?.whoosh ?? 0) * near;
   if (vol <= 0.0005) return;
-  const out = K.voice(pan), g = c.createGain(), bp = c.createBiquadFilter();
+  const out = K.voice(pan, 0.5, 3), g = c.createGain(), bp = c.createBiquadFilter();
   bp.type = "bandpass"; bp.Q.value = 2.2;
   bp.frequency.setValueAtTime(700, at); bp.frequency.exponentialRampToValueAtTime(3800, at + dur);
   g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.08);
@@ -27,7 +27,7 @@ export function whoosh(K: SfxKit, dur: number, whistle: boolean, pan = 0, near =
 export function burst(K: SfxKit, size: number, pan = 0, near = 1, glitter = false): void {
   const F = K.T.fireworks, c = K.ctx, at = c.currentTime + 0.005, vol = (F?.volume ?? 0) * near;
   if (vol <= 0.0005) return;
-  const out = K.voice(pan), boom = c.createGain();
+  const out = K.voice(pan, 0.5, 3), boom = c.createGain();
   // the boom: a low knock and a thud of noise, the far ones duller
   boom.connect(out);
   const echo = c.createGain(); echo.gain.value = F!.echo; boom.connect(echo); echo.connect(K.space());
@@ -49,7 +49,7 @@ export function burst(K: SfxKit, size: number, pan = 0, near = 1, glitter = fals
 export function cheer(K: SfxKit, pan = 0, near = 1): void {
   const F = K.T.fireworks, c = K.ctx, at = c.currentTime + 0.005, vol = (F?.volume ?? 0) * (F?.cheer ?? 0) * near * 4, dur = 3.2; // (a crowd through narrow vowel bands: quiet for its level)
   if (vol <= 0.0005) return;
-  const out = K.voice(pan), g = c.createGain();
+  const out = K.voice(pan, 0.5, 3), g = c.createGain();
   g.connect(out);
   g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.35);
   g.gain.exponentialRampToValueAtTime(vol * 0.55, at + 1.4); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);

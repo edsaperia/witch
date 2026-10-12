@@ -47,6 +47,35 @@ function loopBuffer(ctx: BaseAudioContext, period: number, shape: "ramp" | "wind
   return b;
 }
 
+/** The vocoder's bands (Hz) and their Q. */
+const BANDS = Array.from({ length: 14 }, (_, b) => 220 * Math.pow(7500 / 220, b / 13)), BAND_Q = 5;
+const ENVELOPES = new WeakMap<AudioBuffer, AudioBuffer>();
+/** A recording's level in each vocoder band, as the live chain had it (a band-pass, rectified, smoothed at 35 Hz, times 6),
+ *  a channel a band at 3 kHz (the lowest rate a buffer can have), worked out once a recording. */
+export function whisperEnvelopes(ctx: BaseAudioContext, rec: AudioBuffer): AudioBuffer {
+  const have = ENVELOPES.get(rec);
+  if (have) return have;
+  const sr = rec.sampleRate, n = rec.length, mono = new Float32Array(n);
+  for (let ch = 0; ch < rec.numberOfChannels; ch++) { const d = rec.getChannelData(ch); for (let i = 0; i < n; i++) mono[i] += d[i] / rec.numberOfChannels; }
+  const OUT = 3000, step = sr / OUT, m = Math.max(1, Math.floor(n / step)), out = ctx.createBuffer(BANDS.length, m, OUT);
+  const lp = 1 - Math.exp((-2 * Math.PI * 35) / sr);
+  BANDS.forEach((f, b) => {
+    // RBJ band-pass (constant 0 dB peak), as a BiquadFilterNode's
+    const w = (2 * Math.PI * f) / sr, al = Math.sin(w) / (2 * BAND_Q), a0 = 1 + al;
+    const b0 = al / a0, b2 = -al / a0, a1 = (-2 * Math.cos(w)) / a0, a2 = (1 - al) / a0;
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0, e = 0, k = 0;
+    const d = out.getChannelData(b);
+    for (let i = 0; i < n; i++) {
+      const x = mono[i], y = b0 * x + b2 * x2 - a1 * y1 - a2 * y2;
+      x2 = x1; x1 = x; y2 = y1; y1 = y;
+      e += lp * (Math.abs(y) - e);
+      if (i >= k * step && k < m) d[k++] = 6 * e;
+    }
+  });
+  ENVELOPES.set(rec, out);
+  return out;
+}
+
 export class VoiceFx {
   /** The voice in. */
   readonly input: GainNode;
@@ -55,73 +84,102 @@ export class VoiceFx {
   /** The voice out (dry and the effects). */
   readonly output: GainNode;
   private dry: GainNode;
-  private chorusMix: GainNode; private satMix: GainNode; private air: BiquadFilterNode;
-  private delayL: DelayNode; private delayR: DelayNode; private delayFb: GainNode; private delaySend: GainNode;
-  private hallSend: GainNode; private shimmerSend: GainNode; private shimmerFb: GainNode; private freezeSend: GainNode;
-  private whisperMix: GainNode;
+  private air: BiquadFilterNode;
+  /** The wet returns (into the duck bus, when there is one). */
   private wet: GainNode;
+  // Each effect is built the first time its level is above 0 (Ed's playtest, 2026-10-12: "the sound is cutting out": every
+  // effect built and running at once, even at 0, cost a ninth of the audio thread; built only when heard, nothing at 0), and
+  // let go again for good when the sound is shed (shed.ts).
+  private sat?: { mix: GainNode; nodes: AudioNode[] };
+  private chorus?: { mix: GainNode; nodes: AudioNode[] };
+  private delay?: { send: GainNode; l: DelayNode; r: DelayNode; nodes: AudioNode[] };
+  private hall?: { send: GainNode; conv: ConvolverNode; nodes: AudioNode[] };
+  private shimmer?: { send: GainNode; fb: GainNode; conv: ConvolverNode; nodes: AudioNode[] };
+  private freeze?: { send: GainNode; nodes: AudioNode[] };
+  private whisperRig?: { mix: GainNode; nodes: AudioNode[] };
+  private whisperRec: { rec: AudioBuffer; start: number } | null = null;
   private sources: AudioScheduledSourceNode[] = [];
-  private whisperOn = false;
+  /** What the sound shed has taken (shed.ts): 1 the vocoder and the freeze, 2 the shimmer and the chorus, 3 the hall and the
+   *  echoes; none of it comes back within a load. */
+  private shedStep = 0;
   s: VoiceFxSettings = { ...NO_FX };
 
   constructor(private ctx: BaseAudioContext, settings: Partial<VoiceFxSettings> = {}, private bpm = () => 120, duckInto?: AudioNode) {
     const c = ctx;
     this.input = c.createGain(); this.wetIn = c.createGain(); this.output = c.createGain();
-    // the voice coloured: saturation and air, then on to the dry path and the sends
-    const shaped = c.createGain();
-    const sat = c.createWaveShaper(), curve = new Float32Array(1024);
-    for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(2.5 * x) / Math.tanh(2.5); }
-    sat.curve = curve; sat.oversample = "2x";
-    this.satMix = c.createGain(); this.satMix.gain.value = 0;
-    this.input.connect(shaped); this.input.connect(sat).connect(this.satMix).connect(shaped);
+    // the voice coloured: air, then on to the dry path and the sends
     this.air = c.createBiquadFilter(); this.air.type = "highshelf"; this.air.frequency.value = 8000; this.air.gain.value = 0;
-    shaped.connect(this.air);
+    this.input.connect(this.air);
     this.dry = c.createGain(); this.air.connect(this.dry).connect(this.output);
-    // chorus: three short delays swept slowly out of step, mixed in
-    this.chorusMix = c.createGain(); this.chorusMix.gain.value = 0;
+    // the wet returns: into the engine's duck bus (the kick ducks them) when asked, else straight out
+    this.wet = c.createGain(); this.wet.connect(duckInto ?? this.output);
+    this.set(settings);
+  }
+
+  /** Saturation: a gentle tanh beside the input, mixed in. */
+  private buildSat(): NonNullable<VoiceFx["sat"]> {
+    const c = this.ctx, sat = c.createWaveShaper(), curve = new Float32Array(1024), mix = c.createGain();
+    for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(2.5 * x) / Math.tanh(2.5); }
+    sat.curve = curve; mix.gain.value = 0;
+    this.input.connect(sat).connect(mix).connect(this.air);
+    return { mix, nodes: [sat, mix] };
+  }
+  /** Chorus: three short delays swept slowly out of step. */
+  private buildChorus(): NonNullable<VoiceFx["chorus"]> {
+    const c = this.ctx, mix = c.createGain(), nodes: AudioNode[] = [mix];
+    mix.gain.value = 0;
     [[0.011, 0.31, -0.6], [0.017, 0.23, 0.6], [0.023, 0.17, 0]].forEach(([base, rate, pan]) => {
       const d = c.createDelay(0.05), lfo = c.createOscillator(), depth = c.createGain(), p = c.createStereoPanner();
       d.delayTime.value = base; lfo.frequency.value = rate; depth.gain.value = 0.004; p.pan.value = pan;
       lfo.connect(depth).connect(d.delayTime); lfo.start(); this.sources.push(lfo);
-      this.air.connect(d).connect(p).connect(this.chorusMix);
+      this.air.connect(d).connect(p).connect(mix);
+      nodes.push(d, lfo, depth, p);
     });
-    this.chorusMix.connect(this.output);
-    // the wet returns: into the engine's duck bus (the kick ducks them) when asked, else straight out
-    this.wet = c.createGain(); this.wet.connect(duckInto ?? this.output);
-    // ping-pong dotted eighths
-    this.delaySend = c.createGain(); this.delaySend.gain.value = 0;
-    this.delayL = c.createDelay(3); this.delayR = c.createDelay(3); this.delayFb = c.createGain(); this.delayFb.gain.value = 0.42;
-    const merge = c.createChannelMerger(2), dTone = c.createBiquadFilter(); dTone.type = "lowpass"; dTone.frequency.value = 4500;
-    this.air.connect(this.delaySend).connect(this.delayL);
-    this.delayL.connect(this.delayR); this.delayR.connect(this.delayFb).connect(dTone).connect(this.delayL);
-    this.delayL.connect(merge, 0, 0); this.delayR.connect(merge, 0, 1); merge.connect(this.wet);
-    // a dark hall
-    const hall = c.createConvolver(); hall.buffer = impulse(c, 5.5, 0.8, 4441);
-    this.hallSend = c.createGain(); this.hallSend.gain.value = 0;
-    this.air.connect(this.hallSend).connect(hall).connect(this.wet);
-    this.wetIn.connect(hall);
-    // shimmer: a reverb whose tail goes back through an octave-up shifter into itself
-    const shimmerVerb = c.createConvolver(); shimmerVerb.buffer = impulse(c, 3.5, 0.3, 9001);
-    this.shimmerSend = c.createGain(); this.shimmerSend.gain.value = 0;
-    this.shimmerFb = c.createGain(); this.shimmerFb.gain.value = 0;
-    const up = this.octaveUp(), shimmerOut = c.createGain(); shimmerOut.gain.value = 0.7;
-    this.air.connect(this.shimmerSend).connect(shimmerVerb);
-    this.wetIn.connect(shimmerVerb);
-    shimmerVerb.connect(up.input); up.output.connect(this.shimmerFb).connect(shimmerVerb);
-    shimmerVerb.connect(shimmerOut).connect(this.wet);
-    // freeze: a moment of the voice into a very long bright reverb
-    const freeze = c.createConvolver(); freeze.buffer = impulse(c, 9, 0.2, 2027);
-    this.freezeSend = c.createGain(); this.freezeSend.gain.value = 0;
-    this.air.connect(this.freezeSend).connect(freeze).connect(this.wet);
-    // the whisper vocoder's mix (its bands built when it's given a recording)
-    this.whisperMix = c.createGain(); this.whisperMix.gain.value = 0; this.whisperMix.connect(this.output);
-    this.set(settings);
+    mix.connect(this.output);
+    return { mix, nodes };
+  }
+  /** Ping-pong dotted eighths. */
+  private buildDelay(): NonNullable<VoiceFx["delay"]> {
+    const c = this.ctx, send = c.createGain(), l = c.createDelay(3), r = c.createDelay(3), fb = c.createGain();
+    send.gain.value = 0; fb.gain.value = 0.42;
+    const merge = c.createChannelMerger(2), tone = c.createBiquadFilter(); tone.type = "lowpass"; tone.frequency.value = 4500;
+    this.air.connect(send).connect(l);
+    l.connect(r); r.connect(fb).connect(tone).connect(l);
+    l.connect(merge, 0, 0); r.connect(merge, 0, 1); merge.connect(this.wet);
+    return { send, l, r, nodes: [send, l, r, fb, merge, tone] };
+  }
+  /** A dark hall (the swells go into it too). */
+  private buildHall(): NonNullable<VoiceFx["hall"]> {
+    const c = this.ctx, conv = c.createConvolver(), send = c.createGain();
+    conv.buffer = impulse(c, 5.5, 0.8, 4441); send.gain.value = 0;
+    this.air.connect(send).connect(conv).connect(this.wet);
+    this.wetIn.connect(conv);
+    return { send, conv, nodes: [send, conv] };
+  }
+  /** Shimmer: a reverb whose tail goes back through an octave-up shifter into itself (the swells go into it too). */
+  private buildShimmer(): NonNullable<VoiceFx["shimmer"]> {
+    const c = this.ctx, conv = c.createConvolver(), send = c.createGain(), fb = c.createGain(), out = c.createGain();
+    conv.buffer = impulse(c, 3.5, 0.3, 9001); send.gain.value = 0; fb.gain.value = 0; out.gain.value = 0.7;
+    const up = this.octaveUp();
+    this.air.connect(send).connect(conv);
+    this.wetIn.connect(conv);
+    conv.connect(up.input); up.output.connect(fb).connect(conv);
+    conv.connect(out).connect(this.wet);
+    return { send, fb, conv, nodes: [send, conv, fb, out, up.input, up.output, ...up.nodes] };
+  }
+  /** Freeze: a moment of the voice at each phrase's end sent into the hall (its own 9 s reverb, once, cost the audio thread
+   *  as much as every other effect together: Ed's playtest, 2026-10-12). */
+  private buildFreeze(): NonNullable<VoiceFx["freeze"]> {
+    const c = this.ctx, send = c.createGain(), hall = (this.hall ??= this.buildHall());
+    send.gain.value = 0;
+    this.air.connect(send).connect(hall.conv);
+    return { send, nodes: [send] };
   }
 
   /** An octave-up pitch shifter: two delay taps sweeping down a 60 ms window at the speed of sound, half a period apart,
    *  each faded in and out (sin²), so their sum plays an octave up. */
-  private octaveUp(): { input: GainNode; output: GainNode } {
-    const c = this.ctx, P = 0.06, input = c.createGain(), output = c.createGain(), ramp = loopBuffer(c, P, "ramp"), win = loopBuffer(c, P, "window");
+  private octaveUp(): { input: GainNode; output: GainNode; nodes: AudioNode[] } {
+    const c = this.ctx, P = 0.06, input = c.createGain(), output = c.createGain(), ramp = loopBuffer(c, P, "ramp"), win = loopBuffer(c, P, "window"), nodes: AudioNode[] = [];
     for (const offset of [0, P / 2]) {
       const d = c.createDelay(0.2), g = c.createGain(), r = c.createBufferSource(), w = c.createBufferSource(), depth = c.createGain();
       d.delayTime.value = 0; g.gain.value = 0;
@@ -131,26 +189,48 @@ export class VoiceFx {
       r.start(t, offset); w.start(t, offset);
       this.sources.push(r, w);
       input.connect(d).connect(g).connect(output);
+      nodes.push(d, g, r, w, depth);
     }
-    return { input, output };
+    return { input, output, nodes };
   }
 
-  /** New levels (0 to 1 each), eased in. */
+  /** New levels (0 to 1 each), eased in; an effect is built the first time its level is above 0 (and not shed). */
   set(settings: Partial<VoiceFxSettings>): void {
     this.s = { ...this.s, ...settings };
-    const s = this.s, t = this.ctx.currentTime, to = (p: AudioParam, v: number) => p.setTargetAtTime(v, t, 0.05);
-    to(this.satMix.gain, 0.6 * s.saturation);
+    const s = this.s, t = this.ctx.currentTime, to = (p: AudioParam, v: number) => p.setTargetAtTime(v, t, 0.05), shed = this.shedStep;
+    if (s.saturation > 0) to((this.sat ??= this.buildSat()).mix.gain, 0.6 * s.saturation);
+    else if (this.sat) to(this.sat.mix.gain, 0);
     to(this.air.gain, 9 * s.air);
-    to(this.chorusMix.gain, 0.7 * s.chorus);
-    to(this.delaySend.gain, 0.55 * s.delay);
-    const beat = 60 / Math.max(40, this.bpm());
-    this.delayL.delayTime.setTargetAtTime(0.75 * beat, t, 0.05); this.delayR.delayTime.setTargetAtTime(0.75 * beat, t, 0.05);
-    to(this.hallSend.gain, 0.5 * s.hall);
-    to(this.shimmerSend.gain, 0.45 * s.shimmer);
-    to(this.shimmerFb.gain, 0.62 * Math.min(1, s.shimmer * 1.4));
-    to(this.whisperMix.gain, 1.6 * s.whisper);
+    if (s.chorus > 0 && shed < 2) to((this.chorus ??= this.buildChorus()).mix.gain, 0.7 * s.chorus);
+    else if (this.chorus) to(this.chorus.mix.gain, 0);
+    if (s.delay > 0 && shed < 3) {
+      const d = (this.delay ??= this.buildDelay()), beat = 60 / Math.max(40, this.bpm());
+      to(d.send.gain, 0.55 * s.delay);
+      d.l.delayTime.setTargetAtTime(0.75 * beat, t, 0.05); d.r.delayTime.setTargetAtTime(0.75 * beat, t, 0.05);
+    } else if (this.delay) to(this.delay.send.gain, 0);
+    if ((s.hall > 0 || s.swells > 0 || s.freeze > 0) && shed < 3) to((this.hall ??= this.buildHall()).send.gain, 0.5 * s.hall);
+    else if (this.hall) to(this.hall.send.gain, 0);
+    if ((s.shimmer > 0 || (s.swells > 0 && !this.hall)) && shed < 2) {
+      const sh = (this.shimmer ??= this.buildShimmer());
+      to(sh.send.gain, 0.45 * s.shimmer); to(sh.fb.gain, 0.62 * Math.min(1, s.shimmer * 1.4));
+    } else if (this.shimmer) { to(this.shimmer.send.gain, 0); to(this.shimmer.fb.gain, 0); }
+    if (s.freeze > 0 && shed < 1 && (this.hall || shed < 3)) this.freeze ??= this.buildFreeze();
+    if (s.whisper > 0 && shed < 1 && this.whisperRec) this.buildWhisper();
+    if (this.whisperRig) to(this.whisperRig.mix.gain, 1.6 * s.whisper);
     to(this.dry.gain, 1 - 0.25 * Math.max(s.hall, s.shimmer));
     to(this.wetIn.gain, 1);
+  }
+
+  /** The sound shed a step (shed.ts; never back within a load): 1 the vocoder and the freeze let go, 2 the shimmer and the
+   *  chorus, 3 the hall and the echoes: the voice drier, the audio thread lighter. */
+  shedTo(step: number): void {
+    if (step <= this.shedStep) return;
+    this.shedStep = step;
+    const drop = (x: { nodes: AudioNode[] } | undefined) => { if (!x) return; for (const n of x.nodes) { try { (n as AudioScheduledSourceNode).stop?.(); } catch { /* stopped */ } try { n.disconnect(); } catch { /* gone */ } } };
+    if (step >= 1) { drop(this.whisperRig); this.whisperRig = undefined; drop(this.freeze); this.freeze = undefined; }
+    if (step >= 2) { drop(this.shimmer); this.shimmer = undefined; drop(this.chorus); this.chorus = undefined; }
+    if (step >= 3) { drop(this.hall); this.hall = undefined; drop(this.delay); this.delay = undefined; }
+    this.set({});
   }
 
   /** A phrase begins at `t` (a voice's first note after a rest): a swell rises into it if asked (the source plays it into
@@ -163,30 +243,37 @@ export class VoiceFx {
 
   /** A phrase ends at `t` (its last note's release): its end smeared into the long reverb, if asked. */
   release(t: number): void {
-    if (this.s.freeze <= 0) return;
-    const g = this.freezeSend.gain;
+    if (this.s.freeze <= 0 || !this.freeze) return;
+    const g = this.freeze.send.gain;
     g.setValueAtTime(0, Math.max(0, t - 0.35));
     g.linearRampToValueAtTime(0.9 * this.s.freeze, t - 0.05);
     g.linearRampToValueAtTime(0, t + 0.1);
   }
 
-  /** The whisper vocoder: the voice through 14 bands, each band's level the recording's in it (looped from `start`). */
+  /** The whisper vocoder's recording (looped from `start`): the vocoder built once its level is above 0. */
   whisper(rec: AudioBuffer, start = 0): void {
-    if (this.whisperOn) return;
-    this.whisperOn = true;
-    const c = this.ctx, src = c.createBufferSource();
-    src.buffer = rec; src.loop = true; src.start(Math.max(start, c.currentTime)); this.sources.push(src);
-    const bands = 14, lo = 220, hi = 7500;
-    for (let b = 0; b < bands; b++) {
-      const f = lo * Math.pow(hi / lo, b / (bands - 1)), q = 5;
-      const car = c.createBiquadFilter(), mod = c.createBiquadFilter(), env = c.createWaveShaper(), smooth = c.createBiquadFilter(), vca = c.createGain(), amt = c.createGain();
-      car.type = mod.type = "bandpass"; car.frequency.value = mod.frequency.value = f; car.Q.value = mod.Q.value = q;
-      const rect = new Float32Array(257); for (let i = 0; i < 257; i++) rect[i] = Math.abs(i / 128 - 1);
-      env.curve = rect; smooth.type = "lowpass"; smooth.frequency.value = 35; vca.gain.value = 0; amt.gain.value = 6;
-      this.air.connect(car).connect(vca).connect(this.whisperMix);
-      src.connect(mod).connect(env).connect(smooth).connect(amt).connect(vca.gain);
-    }
+    if (this.whisperRec) return;
+    this.whisperRec = { rec, start };
+    if (this.s.whisper > 0 && this.shedStep < 1) { this.buildWhisper(); this.set({}); }
   }
 
-  dispose(): void { for (const s of this.sources) try { s.stop(); } catch { /* stopped */ } try { this.output.disconnect(); this.wet.disconnect(); } catch { /* gone */ } }
+  /** The whisper vocoder: the voice through 14 bands, each band's level the recording's in it there. The recording never
+   *  changes, so its bands' levels are worked out once here (whisperEnvelopes) and played as one looped buffer, a channel a
+   *  band: 14 filters on the audio thread, not 42 and 14 rectifiers (Ed's playtest, 2026-10-12). */
+  private buildWhisper(): void {
+    if (this.whisperRig || !this.whisperRec) return;
+    const c = this.ctx, env = whisperEnvelopes(c, this.whisperRec.rec), src = c.createBufferSource(), split = c.createChannelSplitter(BANDS.length), mix = c.createGain(), nodes: AudioNode[] = [src, split, mix];
+    mix.gain.value = 0; mix.connect(this.output);
+    src.buffer = env; src.loop = true; src.connect(split); src.start(Math.max(this.whisperRec.start, c.currentTime)); this.sources.push(src);
+    BANDS.forEach((f, b) => {
+      const car = c.createBiquadFilter(), vca = c.createGain();
+      car.type = "bandpass"; car.frequency.value = f; car.Q.value = BAND_Q; vca.gain.value = 0;
+      this.air.connect(car).connect(vca).connect(mix);
+      split.connect(vca.gain, b);
+      nodes.push(car, vca);
+    });
+    this.whisperRig = { mix, nodes };
+  }
+
+  dispose(): void { for (const s of this.sources) try { s.stop(); } catch { /* stopped */ } try { this.output.disconnect(); this.wet.disconnect(); this.input.disconnect(); } catch { /* gone */ } }
 }
