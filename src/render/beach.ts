@@ -73,6 +73,8 @@ export class BeachView {
   private kraken: KrakenView | null = null;
   /** The woods' edge along the sand: shrubs, grass, palms (render/beachEdge.ts). */
   private edge: BeachEdgeView;
+  /** The palms' shadows (render/trunkShadows.ts), shown and hidden with the trunks'. */
+  get palmShadows() { return this.edge.shadows; }
   /** The beach's decorations (rules/beachDecor.ts, art/beach.js): where they lie, and their two batches (flat: prints, starfish,
    *  seaweed; upright: shells, a conch, pebbles and rocks), made once she's first near and kept. */
   private decor: BeachDecor | null = null;

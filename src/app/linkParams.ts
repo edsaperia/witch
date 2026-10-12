@@ -109,6 +109,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?carrier=<kind>: that kind's legend carrying the treehouse Ent (art/carrier.js), wherever; ?carrier=none no one.
   const carrierParam = params.get("carrier");
   if (carrierParam) tuning.treehouse = { ...tuning.treehouse, carrier: carrierParam };
+  // ?trunks=soft|hard|off: the trunks' shadows from her glow and the campfires in ground mode (render/trunkShadows.ts).
+  const trunksParam = params.get("trunks");
+  if (trunksParam && tuning.shadows.trunks) tuning.shadows = { ...tuning.shadows, trunks: { ...tuning.shadows.trunks, mode: trunksParam } };
   // ?ley=0: no ley lines through the runestones.
   if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
   if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };

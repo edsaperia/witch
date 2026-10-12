@@ -9856,12 +9856,55 @@
         },
         "trees": {
           "type": "boolean"
+        },
+        "trunks": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string"
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "long": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowReach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowHeight": {
+              "type": "number",
+              "minimum": 0
+            },
+            "across": {
+              "type": "number",
+              "minimum": 0
+            },
+            "core": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "mode",
+            "strength",
+            "long",
+            "glowReach",
+            "glowHeight",
+            "across",
+            "core"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "on",
         "strength",
-        "trees"
+        "trees",
+        "trunks"
       ],
       "additionalProperties": false
     },

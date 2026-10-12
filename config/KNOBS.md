@@ -2086,6 +2086,13 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `shadows.on` | boolean |  |
 | `shadows.strength` | number | 0 to … |
 | `shadows.trees` | boolean |  |
+| `shadows.trunks.mode` | string |  |
+| `shadows.trunks.strength` | number | 0 to … |
+| `shadows.trunks.long` | number | 0 to … |
+| `shadows.trunks.glowReach` | number | 0 to … |
+| `shadows.trunks.glowHeight` | number | 0 to … |
+| `shadows.trunks.across` | number | 0 to … |
+| `shadows.trunks.core` | number | 0 to … |
 | `mist.on` | boolean |  |
 | `mist.strength` | number | 0 to … |
 | `mist.height` | number | 0 to … |

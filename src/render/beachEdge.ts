@@ -14,6 +14,7 @@
 import type { Beach } from "../rules/mapShape";
 import type { BeachEdgeArt } from "./artBuild";
 import type { Atlas } from "./atlas";
+import { TrunkShadowBatch, type TrunkShadow } from "./trunkShadows";
 import { SpriteBatch, type SpriteInstance } from "./sprites";
 import * as THREE from "three";
 
@@ -88,6 +89,9 @@ export function edgePlants(b: Beach, x: number, z: number, out: EdgePlant[] = []
 /** The edge's sprites, laid out round her and drawn in one batch (palms whole in both modes: thin, at the open edge, never a bare pole on the sand). */
 export class BeachEdgeView {
   private batch: SpriteBatch | null = null;
+  /** The palms' shadows from her glow and the beach fires (render/trunkShadows.ts; Ed, 2026-10-12: palms by the campfires too). */
+  shadows: TrunkShadowBatch | null = null;
+  private palmShadows: TrunkShadow[] = [];
   private atlas: Atlas | null = null;
   private plants: EdgePlant[] = [];
   private items: SpriteInstance[] = [];
@@ -97,22 +101,25 @@ export class BeachEdgeView {
 
   update(b: Beach, art: (BeachEdgeArt & { atlas: Atlas }) | undefined, x: number, z: number, clear?: number): void {
     if (!art) return;
-    if (this.atlas !== art.atlas) { this.dispose(); this.atlas = art.atlas; this.batch = new SpriteBatch(art.atlas, this.mpp, { scenery: true, fade: true }); this.scene.add(...this.batch.meshes); this.at.x = NaN; }
+    if (this.atlas !== art.atlas) { this.dispose(); this.atlas = art.atlas; this.batch = new SpriteBatch(art.atlas, this.mpp, { scenery: true, fade: true }); this.scene.add(...this.batch.meshes); this.shadows = new TrunkShadowBatch(art.atlas); this.scene.add(...this.shadows.meshes); this.at.x = NaN; }
     if (Math.hypot(x - this.at.x, z - this.at.z) < 6) return; // (laid out again only when she's moved on a little)
     this.at.x = x; this.at.z = z;
     edgePlants(b, x, z, this.plants, clear);
-    const F = art.atlas.frames, items = this.items;
-    items.length = 0;
+    const F = art.atlas.frames, items = this.items, palms = this.palmShadows;
+    items.length = 0; palms.length = 0;
     for (const p of this.plants) {
-      if (p.kind === "palm") { const P = art.palms[p.v % art.palms.length]; items.push({ x: p.x, y: 0, z: p.z, frame: F[P.bot], flip: p.flip, scale: p.scale, sway: 1 }, { x: p.x, y: 0, z: p.z, frame: F[P.top], flip: p.flip, scale: p.scale, sway: 1 }); }
+      if (p.kind === "palm") { const P = art.palms[p.v % art.palms.length]; palms.push({ x: p.x, z: p.z, w: F[P.bot].w * this.mpp * p.scale, h: F[P.bot].h * this.mpp * p.scale, frame: F[P.bot], flip: p.flip }); items.push({ x: p.x, y: 0, z: p.z, frame: F[P.bot], flip: p.flip, scale: p.scale, sway: 1 }, { x: p.x, y: 0, z: p.z, frame: F[P.top], flip: p.flip, scale: p.scale, sway: 1 }); }
       else { const list = p.kind === "grass" ? art.grass : art.shrubs; items.push({ x: p.x, y: 0, z: p.z, frame: F[list[p.v % list.length]], flip: p.flip, scale: p.scale, sway: 1 }); }
     }
     this.batch!.set(items);
+    this.shadows!.set(palms);
   }
 
   /** Let go (she's left the beach). */
   dispose(): void {
     if (this.batch) { this.scene.remove(...this.batch.meshes); this.batch.mesh.geometry.dispose(); }
+    if (this.shadows) { this.scene.remove(...this.shadows.meshes); this.shadows.dispose(); }
+    this.shadows = null;
     this.batch = null; this.atlas = null; this.at.x = NaN;
   }
 }
