@@ -1,8 +1,9 @@
 // The sea chart's page (chart.html; wave 2, part C; Ed, docs/backlog/journey.md "The world and the sea chart"): the world as a
 // disc of night sea in 3D, drawn as the game is (render/chart/seaChart.ts; Ed, 2026-10-11: "show the map screen in the same way
 // you show the island: pixellated, camera seeing it in 3D, your view moves around as you select islands"): home in the middle,
-// every island at its kind's bearing on its phase's ring (chartLayout.ts islandAt) in its own coast (art/islands.js of
-// rules/islandShape.ts islandCoast), a sigil only on those she can travel to (Ed: "You can always see all the islands - you only
+// every island at its kind's bearing on its phase's ring (chartLayout.ts islandAt) in its real outline (hotel, rules/islandShape.ts
+// islandOutline: the land each grows to; made off the page's thread by chartOutlines.worker.ts, the chosen and nearest first, its
+// round coast, islandCoast, shown till it comes), a sigil only on those she can travel to (Ed: "You can always see all the islands - you only
 // see sigils on the ones that you can travel to"); her voyages as glowing lines on the water; won islands ringed in gold.
 // Choose an island (tap or click it; arrow keys, the d-pad or the stick) and the camera glides to it and names it; choose it
 // again, press Enter or the pad's A, or the Sail button, to sail there (?island=<kind>). Start over (after an are-you-sure)
@@ -15,6 +16,7 @@ import { SeaChart, type ChartIsland } from "../render/chart/seaChart";
 import { allSave, loadSave, newCampaign, unlocked, worldSeed } from "./chartSave";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
+import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 
 const params = new URLSearchParams(location.search), showAll = params.get("chart") === "all" || params.has("all");
 let save = showAll ? allSave() : loadSave();
@@ -31,20 +33,44 @@ function build(): void {
   const open = new Set(unlocked(save)), won = new Set(save.won), w = worldNow();
   const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
     const at = islandAt(id, w)!, unknown = isPlaceholder(id);
-    return { id, x: at.x, y: at.y, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
+    return { id, x: at.x, y: at.y, phase: id === "home" ? 0 : islandOf(id, w)?.phase ?? 1, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
   };
   islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
   for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
   chart.set(islands, save.voyages);
   const n = save.found.filter(k => !isPlaceholder(k)).length;
   $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
+  outlines();
   $("world").textContent = `World seed: ${w}${linkWorld ? " (from the link)" : ""}`;
   ($("home") as HTMLAnchorElement).href = sailHref("home");
+}
+
+// The real outlines, made in a worker (seconds each for the big islands, about a minute for them all): the chosen island and
+// those nearest it first, each swapped in as it comes; on a phone or a laptop alike, the page never waits on them.
+let worker: Worker | null = null;
+const OUTLINE_STEP = 32; // (metres between a placeholder's land's samples: the chart's pixels are far coarser)
+function outlines(): void {
+  if (!worker) {
+    try { worker = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { return; }
+    worker.onmessage = (e: MessageEvent<OutlineDone>) => {
+      const o = e.data, isl = islands.find(i => i.id === o.id);
+      if (!isl || o.world !== worldNow()) return;
+      if (isl.outline && (isl.outline as OutlineDone).detail && !o.detail) return; // (the close-up's fine grid stays)
+      isl.outline = o; chart.reshape(o.id, o);
+    };
+  }
+  const from = islands.find(i => i.id === (chart.selected ?? save.voyages.at(-1)?.to ?? "home")) ?? islands[0];
+  const ids = [...islands].sort((a, b) => Math.hypot(a.x - from.x, a.y - from.y) - Math.hypot(b.x - from.x, b.y - from.y)).map(i => i.id);
+  const ask: OutlineAsk = { world: worldNow(), found: [...save.found], ids, step: OUTLINE_STEP };
+  worker.postMessage(ask);
 }
 
 /** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
 function choose(id: string | null, instant = false): void {
   chart.select(id, instant);
+  if (id && worker && !islands.find(i => i.id === id)?.outline) worker.postMessage({ first: id } satisfies OutlineAsk);
+  // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
+  if (id && worker && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) worker.postMessage({ detail: id } satisfies OutlineAsk);
   const isl = islands.find(i => i.id === id);
   const card = $("card"), sail = $("sail") as HTMLAnchorElement;
   if (!isl) { card.hidden = true; return; }
