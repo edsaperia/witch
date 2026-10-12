@@ -3381,6 +3381,14 @@
           "type": "number",
           "minimum": 0
         },
+        "sigilGlyph": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sigilHalo": {
+          "type": "number",
+          "minimum": 0
+        },
         "restAbove": {
           "type": "number",
           "minimum": 0
@@ -3543,6 +3551,8 @@
         "runeRadius",
         "hatHold",
         "placedThrough",
+        "sigilGlyph",
+        "sigilHalo",
         "restAbove",
         "hex",
         "runePull",
