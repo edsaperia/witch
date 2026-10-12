@@ -34,6 +34,33 @@ const CLOSEST = TYPICAL_REACH * 2.3;
 const SHALLOWS = 240;
 /** The land's heights (m) on the chart: exaggerated, so the hills read from high up. */
 const RELIEF = 5;
+
+// MOCKUP (Ed, 2026-10-12: "islands casting shadows from the moon orbiting the map screen"): a moon circling the chart, low, each
+// island's real relief throwing its shadow across the sea (and its own hills) away from it, the shadows sweeping round as it goes,
+// and the hills' shading following it. ?moon=orbit (the default here) | fixed (today's light, with shadows) | off (as today);
+// the moon rising over the chart's north-west edge as it opens (Ed, 2026-10-12, #746), ?moonRise= seconds (6), then orbiting;
+// ?moonSpeed= degrees a second (2: once round in 3 minutes); ?moonElev= its height in degrees (22); ?moonAt= a fixed bearing (deg,
+// 0 north, clockwise) for stills. The islands' heights are drawn once (and again when one changes) into a height map of the whole
+// chart, top down; the ground, the sea and the shallows each look back toward the moon through it (28 taps) for what stands between.
+const MOON_Q = (() => { try { return new URLSearchParams(location.search); } catch { return new URLSearchParams(); } })();
+const MOON = { mode: MOON_Q.get("moon") ?? "orbit", speed: +(MOON_Q.get("moonSpeed") ?? 2), elev: +(MOON_Q.get("moonElev") ?? 22), at: MOON_Q.has("moonAt") ? +MOON_Q.get("moonAt")! : null, start: -45, rise: +(MOON_Q.get("moonRise") ?? 6) };
+const HMAP = 2048;
+(globalThis as { __moon?: typeof MOON }).__moon = MOON; // (for the mockup's captures)
+const SHADOW_GLSL = /* glsl */ `
+uniform sampler2D uHMap; uniform float uHR, uHMax, uShadow; uniform vec3 uMoonV;
+float hAt(vec2 p) { return texture2D(uHMap, p / (2.0 * uHR) + 0.5).r * uHMax; }
+// how lit a point is by the moon (1 open, down to 1 - uShadow behind a hill): the heights between it and the moon, looked along
+float moonLit(vec3 w) {
+  if (uShadow <= 0.0) return 1.0;
+  float fl = max(length(uMoonV.xz), 1e-4); vec2 d = uMoonV.xz / fl; float tanE = uMoonV.y / fl;
+  float reach = min(80.0, uHMax / max(tanE, 0.05)), occ = 0.0;
+  for (int i = 1; i <= 28; i++) {
+    float u = float(i) / 28.0, t = reach * u * u + 0.06;
+    float above = hAt(w.xz + d * t) - (w.y + t * tanE) - 0.03;
+    occ = max(occ, smoothstep(0.0, 0.05 + 0.05 * t, above));
+  }
+  return 1.0 - uShadow * occ;
+}`;
 /** The chart's pixel (CSS pixels across one): finer than the game's, for the islands' and sigils' detail; still whole pixels. */
 export const CHART_PIXEL = 2;
 /** A sigil's width against its island's reach (Ed: "the sigils should be larger and more detailed"). */
@@ -85,6 +112,7 @@ void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Positio
 // moon low in the north), the phases' rings faint on the water, and the rim where the sea pours off the world.
 const SEA_FRAG = /* glsl */ `
 uniform float uTime, uR; uniform vec3 uMoonDir; varying vec3 vW;
+${SHADOW_GLSL}
 float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
@@ -97,6 +125,7 @@ void main() {
   // the moon's glitter: a band of bright ripples from the camera's side up toward the moon, in the north
   float band = exp(-pow(vW.x - uMoonDir.x * 40.0, 2.0) / 900.0);
   c += vec3(0.55, 0.6, 0.7) * band * step(0.93, w) * 0.8;
+  c *= moonLit(vec3(vW.x, 0.0, vW.z)); // (the islands shadows on the water: MOCKUP)
   // the phases' rings, faint (dashed round)
   for (int p = 1; p <= 5; p++) { float rr = 0.02 + float(p) * 0.165; float d = abs(r - rr);
     float dash = step(0.5, fract(atan(vW.z, vW.x) * 24.0 / 6.2832 * float(p)));
@@ -147,28 +176,31 @@ void main() {
 // The islands' ground (groundMaterial): its colour relief-shaded as a painted map is (Ed, 2026-10-12, his close-up reference: the
 // hills lit from the north-west, dark on their far sides) under the moon, the heights a little paler, a cool fill in the shadow.
 const GROUND_VERT = /* glsl */ `
-varying vec3 vN; varying vec3 vC; varying float vY;
-void main() { vN = normalize(mat3(modelMatrix) * normal); vC = color; vY = position.y; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }`;
+varying vec3 vN; varying vec3 vC; varying float vY; varying vec3 vW;
+void main() { vN = normalize(mat3(modelMatrix) * normal); vC = color; vY = position.y; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
 const GROUND_FRAG = /* glsl */ `
-uniform vec3 uMoon; uniform vec3 uShade; uniform float uRise; varying vec3 vN; varying vec3 vC; varying float vY;
+uniform vec3 uMoon; uniform vec3 uShade; uniform float uRise; varying vec3 vN; varying vec3 vC; varying float vY; varying vec3 vW;
+${SHADOW_GLSL}
 void main() {
   vec3 n = normalize(vN);
   float lit = max(0.0, dot(n, uMoon)), hill = clamp(dot(n, uShade), -1.0, 1.0);
   float up = clamp(vY / uRise, 0.0, 1.0);
   vec3 c = vC * (0.66 + 0.5 * lit) * (0.8 + 0.34 * hill) + vec3(0.05, 0.05, 0.06) * up * up;
   c += vec3(0.015, 0.025, 0.05) * (1.0 - lit);
+  float sh = moonLit(vW); c = c * sh + vec3(0.006, 0.01, 0.024) * (1.0 - sh); // (in a hill shadow: darker, a little bluer)
   gl_FragColor = vec4(c, 1.0);
 }`;
 // The shallows round an island (shallowMaterial): the sea pale and green-blue by the shore, fading into the deep (the reference's
 // light coastal water), from each sample's depth.
 const SHALLOW_VERT = /* glsl */ `
-attribute float aDepth; varying float vD;
-void main() { vD = aDepth; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }`;
+attribute float aDepth; varying float vD; varying vec3 vW;
+void main() { vD = aDepth; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
 const SHALLOW_FRAG = /* glsl */ `
-uniform float uDim, uOpaque; uniform vec3 uDeep, uPale; varying float vD;
+uniform float uDim, uOpaque; uniform vec3 uDeep, uPale; varying float vD; varying vec3 vW;
+${SHADOW_GLSL}
 void main() {
   float a = pow(1.0 - clamp(vD, 0.0, 1.0), 1.6);
-  vec3 c = mix(uDeep, uPale, a * a);
+  vec3 c = mix(uDeep, uPale, a * a) * moonLit(vec3(vW.x, 0.0, vW.z));
   gl_FragColor = vec4(c * uDim, max(uOpaque, a * 0.85));
 }`;
 /** The sea's shallows' colours, and a lake's (lighter than the sea, as in the game: about 0.15, 0.28, 0.37 against 0.09, 0.18,
@@ -363,7 +395,7 @@ export class SeaChart {
     this.scene.background = new THREE.Color(0x05060e);
     // the night's light: a cool moon from the north, a little sky all round
     this.scene.add(new THREE.HemisphereLight(0x7080c0, 0x182030, 2.6));
-    const moon = new THREE.DirectionalLight(0xd0dcff, 3.2); moon.position.set(-30, 60, -90); this.scene.add(moon);
+    const moon = new THREE.DirectionalLight(0xd0dcff, 3.2); moon.position.set(-30, 60, -90); this.scene.add(moon); this.moonLight = moon;
     // the sky past the rim
     const skyGeo = new THREE.BufferGeometry(); skyGeo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
     this.skyU = { uRes: { value: new THREE.Vector2(1, 1) }, uTime: this.uTime, uMoon: { value: new THREE.Vector2(0.28, 0.88) } };
@@ -371,7 +403,7 @@ export class SeaChart {
     sky.frustumCulled = false; sky.renderOrder = 9; this.scene.add(sky);
     // the sea, and the sea pouring off its rim
     const R = CHART_SCALE * 1.02;
-    const sea = new THREE.Mesh(new THREE.CircleGeometry(R, 160).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({ vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, uniforms: { uTime: this.uTime, uR: { value: R }, uMoonDir: { value: new THREE.Vector3(-0.3, 0.6, -0.9) } } }));
+    const sea = new THREE.Mesh(new THREE.CircleGeometry(R, 160).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({ vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, uniforms: { ...this.moonU, uTime: this.uTime, uR: { value: R }, uMoonDir: this.seaMoon } }));
     this.scene.add(sea);
     const fall = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 0.97, 40, 160, 1, true).translate(0, -20, 0), new THREE.ShaderMaterial({
       vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
@@ -382,8 +414,12 @@ export class SeaChart {
     this.ring.position.y = 0.15; this.ring.visible = false; this.scene.add(this.ring);
   }
 
+  /** MOCKUP: an island's land out of the height map. */
+  private unheight(g: THREE.Group): void { const hb = g.userData.hb as THREE.Mesh | undefined; if (!hb) return; this.hScene.remove(hb); this.hBodies = this.hBodies.filter(e => e.hb !== hb); this.hDirty = true; }
+
   /** Every island and her voyages: the scene rebuilt (on load, and after a start over). */
   set(islands: ChartIsland[], voyages: ChartVoyage[]): void {
+    for (const i of this.isles.values()) this.unheight(i.group);
     for (const i of this.isles.values()) this.scene.remove(i.group);
     for (const l of this.lines) this.scene.remove(l);
     this.isles.clear(); this.lines = [];
@@ -396,7 +432,7 @@ export class SeaChart {
   /** An island's real outline has come: its land rebuilt in that shape (her voyages redrawn to its new shore). */
   reshape(id: string, outline: ChartOutline): void {
     const old = this.isles.get(id); if (!old) return;
-    this.scene.remove(old.group);
+    this.unheight(old.group); this.scene.remove(old.group);
     this.isles.set(id, this.island({ ...old.d, outline }));
     for (const l of this.lines) this.scene.remove(l);
     this.lines = this.voyages.flatMap(v => { const a = this.isles.get(v.from), b = this.isles.get(v.to); return a && b ? [this.voyage(a, b)] : []; });
@@ -446,7 +482,7 @@ export class SeaChart {
       }
       const wg = new THREE.BufferGeometry();
       wg.setAttribute("position", new THREE.BufferAttribute(flat, 3)); wg.setAttribute("aDepth", new THREE.BufferAttribute(depth, 1)); wg.setIndex(wi);
-      const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) => new THREE.ShaderMaterial({ vertexShader: SHALLOW_VERT, fragmentShader: SHALLOW_FRAG, uniforms: { uDim: { value: 0.6 + 0.4 * dim }, uOpaque: { value: opaque }, uDeep: { value: w.deep }, uPale: { value: w.pale } }, transparent: opaque < 1, depthWrite: opaque >= 1 });
+      const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) => new THREE.ShaderMaterial({ vertexShader: SHALLOW_VERT, fragmentShader: SHALLOW_FRAG, uniforms: { ...this.moonU, uDim: { value: 0.6 + 0.4 * dim }, uOpaque: { value: opaque }, uDeep: { value: w.deep }, uPale: { value: w.pale } }, transparent: opaque < 1, depthWrite: opaque >= 1 });
       g.add(new THREE.Mesh(wg, waterMat(SEA_WATER, 0)));
       // the lakes: still water at each one's level, in its hollow, pale where it's shallow by its shore
       if (G.water && G.level) {
@@ -532,6 +568,7 @@ export class SeaChart {
       top = H + 0.4;
     }
     g.add(body);
+    { const hb = new THREE.Mesh((body as THREE.Mesh).geometry, this.heightMat); hb.matrixAutoUpdate = false; hb.frustumCulled = false; this.hScene.add(hb); this.hBodies.push({ hb, body }); g.userData.hb = hb; this.hDirty = true; }
     const isle: Isle = { d, group: g, pick: body, x, z, top, reach };
     if (d.sail) { // its sigil, lying over the land and glowing as a placed sigil does, a halo of its light under it
       const c = sigilColour(d.sigil), s = Math.max(SIGIL_FLOOR, reach * SIGIL_SHARE);
@@ -550,9 +587,48 @@ export class SeaChart {
 
   /** The islands' ground: each sample's own colour (its area's floor, the beach's sand), lit by the moon so the hills show, a
    *  little of the night's blue in the shadows; not the scene's lights, whose blue would drown the areas' colours. */
+  // MOCKUP: the moon's shadows (MOON above): the chart's heights, top down, and the moon's way
+  private hmap = new THREE.WebGLRenderTarget(HMAP, HMAP, { depthBuffer: true, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false });
+  private hScene = new THREE.Scene();
+  private hBodies: { hb: THREE.Mesh; body: THREE.Object3D }[] = [];
+  private hDirty = true;
+  private moonLight: THREE.DirectionalLight | null = null;
+  private moonT0: number | undefined;
+  private seaMoon = { value: new THREE.Vector3(-0.3, 0.6, -0.9) };
+  private moonU = { uHMap: { value: this.hmap.texture }, uHR: { value: CHART_SCALE * 1.02 }, uHMax: { value: 8 }, uShadow: { value: MOON.mode === "off" ? 0 : 0.62 }, uMoonV: { value: new THREE.Vector3(-0.3, 0.6, -0.9).normalize() } };
+  private heightMat = new THREE.ShaderMaterial({
+    vertexShader: "uniform float uHR, uHMax; varying float vY; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vY = w.y; gl_Position = vec4(w.x / uHR, w.z / uHR, -0.9 * clamp(w.y / uHMax, -1.0, 1.0), 1.0); }",
+    fragmentShader: "uniform float uHMax; varying float vY; void main() { gl_FragColor = vec4(clamp(vY / uHMax, 0.0, 1.0), 0.0, 0.0, 1.0); }",
+    uniforms: { uHR: this.moonU.uHR, uHMax: this.moonU.uHMax },
+    side: THREE.DoubleSide, // (seen from below in its own projection: x across, z up the map)
+  });
+  /** MOCKUP: the moon this frame (its bearing by time), and the height map drawn again if the land changed. */
+  private moonFrame(time: number): void {
+    if (MOON.mode !== "off") {
+      this.moonT0 ??= time;
+      const age = time - this.moonT0, orbit = MOON.at === null && MOON.mode === "orbit", u = orbit ? Math.min(1, age / Math.max(0.01, MOON.rise)) : 1, k = u * u * (3 - 2 * u);
+      const deg = MOON.at ?? (orbit ? MOON.start + Math.max(0, age - MOON.rise) * MOON.speed : MOON.start), az = THREE.MathUtils.degToRad(deg), el = THREE.MathUtils.degToRad(-4 + (MOON.elev + 4) * k);
+      this.moonU.uShadow.value = 0.62 * k; // (rising: the land comes out of the dark, its shadows long and shortening)
+      (this.skyU.uMoon.value as THREE.Vector2).y = 0.6 + 0.28 * k; // (the moon in the sky climbs into its place, north-west)
+      const v = this.moonU.uMoonV.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el));
+      (this.groundMaterial.uniforms.uMoon.value as THREE.Vector3).copy(v);
+      (this.groundMaterial.uniforms.uShade.value as THREE.Vector3).set(Math.sin(az) * 0.8, 0.45, -Math.cos(az) * 0.8).normalize();
+      this.seaMoon.value.set(v.x, v.y, v.z);
+      this.moonLight?.position.copy(v).multiplyScalar(100);
+    }
+    if (!this.hDirty && !this.flight) return;
+    this.hDirty = false;
+    let top = 1;
+    for (const { hb, body } of this.hBodies) { body.updateWorldMatrix(true, false); hb.matrix.copy(body.matrixWorld); hb.matrixWorld.copy(body.matrixWorld); const b = (body as THREE.Mesh).geometry.boundingBox ?? ((body as THREE.Mesh).geometry.computeBoundingBox(), (body as THREE.Mesh).geometry.boundingBox!); top = Math.max(top, b.max.y); }
+    this.moonU.uHMax.value = top * 1.05;
+    const r = this.renderer, was = r.getRenderTarget(), col = r.getClearColor(new THREE.Color()), a = r.getClearAlpha();
+    r.setRenderTarget(this.hmap); r.setClearColor(0x000000, 1); r.clear(); r.render(this.hScene, this.camera);
+    r.setRenderTarget(was); r.setClearColor(col, a);
+  }
+
   private groundMaterial = new THREE.ShaderMaterial({
     vertexShader: GROUND_VERT, fragmentShader: GROUND_FRAG,
-    uniforms: { uMoon: { value: new THREE.Vector3(-0.3, 0.6, -0.9).normalize() }, uShade: { value: new THREE.Vector3(-0.7, 0.45, -0.55).normalize() }, uRise: { value: 3 } },
+    uniforms: { ...this.moonU, uMoon: { value: new THREE.Vector3(-0.3, 0.6, -0.9).normalize() }, uShade: { value: new THREE.Vector3(-0.7, 0.45, -0.55).normalize() }, uRise: { value: 3 } },
     vertexColors: true,
   });
 
@@ -730,6 +806,7 @@ export class SeaChart {
     const sel = this.selected ? this.isles.get(this.selected) : null;
     this.ring.visible = !!sel && !this.flight;
     if (sel) { const r = sel.reach * 1.6 * (1 + 0.04 * Math.sin(time * 3)); this.ring.position.set(sel.x, 0.15, sel.z); this.ring.scale.set(r, 1, r); (this.ring.material as THREE.MeshBasicMaterial).opacity = 0.7 + 0.3 * Math.sin(time * 3); }
+    this.moonFrame(time);
     this.post.render(this.scene, this.camera);
     const f = this.flight;
     if (f && f.t >= f.keys.at(-1)!.at) { // (landed: hand over, in the game's terms, with this frame)
