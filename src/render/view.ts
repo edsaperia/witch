@@ -1,6 +1,7 @@
 // The Three.js view: reads the game state each frame and draws it. Rendered into a canvas of
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
+import { RUNE_MODE, RuneOverlay } from "./runeOverlay";
 import { RigView, rigOn } from "./rig/rigView";
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
@@ -412,6 +413,7 @@ export class View {
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp, new SoundsystemGenView(this.scene, this.assets, this.mpp, this.renderer, this.camera));
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
+    if (RUNE_MODE !== "grid") this.leashView.overlay = new RuneOverlay(this.canvas); // (MOCKUP: ?runes=smooth|ui)
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.holograms = new SigilHolograms(t.holograms);
@@ -930,6 +932,7 @@ export class View {
     this.post.lift = this.game.witch.lift;
     if (t.bare) this.hideForBare();
     this.post.render(this.scene, this.camera);
+    this.leashView.overlay?.draw(this.camera);
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.

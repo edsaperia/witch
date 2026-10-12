@@ -23,6 +23,7 @@ import { blocked, stackBottom, talkTime } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { hasRune, runeNear } from "../rules/creatureStates";
+import { RUNE_MODE, type RuneOverlay, type RuneState } from "./runeOverlay";
 import { newLoadView, type LoadView } from "./load";
 import { relicGlints } from "../rules/legends";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "./sprites";
@@ -122,6 +123,29 @@ export class LeashView {
   readonly heads = new Map<number, { x: number; z: number }>();
   /** When she last hit a party legend's edge (its boing played). */
   boingAt = -Infinity;
+  /** MOCKUP (?runes=smooth|ui): the ground runes drawn at screen resolution over the game (render/runeOverlay.ts). */
+  private runeOverlay: RuneOverlay | null = null;
+  /** MOCKUP: what the runes being added now are (the ui option's ring by state). */
+  runeState: RuneState = "other";
+  private slotKeys = new Map<number, { species: string; level: number; legendary: boolean }>();
+  get overlay(): RuneOverlay | null { return this.runeOverlay; }
+  /** MOCKUP: every sigil glyph from the atlas (placed, happy runes, the ghost, a dropped flask, the treetop projection, the stack,
+   *  a knocked-out one walking home) goes to the overlay instead, flat on the ground or upright; through-scenery copies dropped
+   *  (the overlay is over everything). The soft dots and squares stay in the batches. */
+  set overlay(o: RuneOverlay | null) {
+    this.runeOverlay = o;
+    if (!o || RUNE_MODE === "grid") return;
+    const N = SLOT * SLOTS;
+    const hook = (inst: Instances, upright: boolean, drop: boolean) => {
+      const add = inst.add.bind(inst);
+      inst.add = (x, y, z, size, uv, r, g, b, a, draw = 1, glow = false) => {
+        const slot = Math.round((1 - uv[1]) * N / SLOT) * SLOTS + Math.round(uv[0] * N / SLOT), key = this.slotKeys.get(slot);
+        if (!key) { add(x, y, z, size, uv, r, g, b, a, draw, glow); return; }
+        if (!drop) o.add({ x, y, z, size, species: key.species, level: key.level, legendary: key.legendary, r, g, b, a, draw, upright, state: this.runeState });
+      };
+    };
+    hook(this.flat, false, false); hook(this.through, false, true); hook(this.standing, true, false); hook(this.over, true, false);
+  }
 
   constructor(scene: THREE.Scene, readonly game: Game) {
     this.canvas.width = this.canvas.height = SLOT * SLOTS;
@@ -159,7 +183,7 @@ export class LeashView {
     if (s !== undefined) return s;
     // a legendary one: a block of 2 × 2 slots from LEGEND_ROW down (8 a row pair), its top left slot
     s = legendary ? LEGEND_ROW * SLOTS + Math.floor(this.legendSlots / 8) * 2 * SLOTS + (this.legendSlots++ % 8) * 2 : this.nextSlot++;
-    this.slots.set(key, s);
+    this.slots.set(key, s); this.slotKeys.set(s, { species, level, legendary });
     const g = this.canvas.getContext("2d", { willReadFrequently: true })!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT, W = legendary ? SLOT * 2 : SLOT;
     g.clearRect(ox, oy, W, W);
     drawSigil(g, species, { x: ox + 1, y: oy + 1, size: (W - 2) / (legendary ? LEGEND_SCALE : 1), level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary });
@@ -387,6 +411,7 @@ export class LeashView {
 
   /** hatTop: the height of the tip of her hat this frame (the stack floats above it); bodyY, her body's middle, feetY her feet and frameH her frame's height in art pixels (the slashes, sized to her). */
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
+    this.runeOverlay?.clear();
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
     this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin();
@@ -459,10 +484,12 @@ export class LeashView {
     for (const p of s.placed) {
       const c = g.creatures[p.id], sg = this.sigilOf(c), col = this.colours.get(c.species)!;
       const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
+      this.runeState = "parked";
       this.flat.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
       if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, Math.min(1, (time - p.at) / 0.8));
       this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
+    this.runeState = "other";
 
     // Happy creatures' runes (Ed, 2026-10-06; states.leash "pickup"): each carries its sigil as a dim rune restAbove metres
     // south of it (Ed, 2026-10-11: as far as a parked one rests north of its placed sigil), moving with it; it pops out with its hearts (up off it and down, growing, written in) and settles. Ready to pick up
@@ -472,10 +499,12 @@ export class LeashView {
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
       const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + (t.leash.restAbove ?? 0);
+      this.runeState = ready ? "ready" : "happy";
       this.flat.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
       if (ready) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18);
     }
+    this.runeState = "other";
 
     // The party legend (Ed's Easter egg, rules/partyLegend.ts): a giant party hat on its head, striped in party neons, a
     // pom-pom on top, bobbing on the beat. Pinned to one (she can't go past its reach), its leash goes ruler-straight and
