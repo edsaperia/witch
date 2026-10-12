@@ -39,6 +39,10 @@ export const LIGHT_UNIFORMS = {
   uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
   uLightCol: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
   uLightCount: { value: 0 },
+  /** The light's soft knee (Ed, 2026-10-12: "soundsystems lighting tends to blow out"; the tuning's lights.knee and
+   *  lights.ceiling): the light's brightness passes unchanged up to x, then eases toward y and never past it, keeping its
+   *  hue; y <= x: off. */
+  uLightKnee: { value: new THREE.Vector2(0.9, 1.1) },
   /** The legends' clearings (render/glades.ts): each one's centre x, z, radius and edge (0 to 1); how many; the twilight's
    *  colour; its pool's and its edge ring's strength. */
   uGlade: { value: Array.from({ length: MAX_GLADES }, () => new THREE.Vector4()) },
@@ -103,6 +107,7 @@ uniform float uDim;
 uniform vec4 uSlow, uSlowKeep;
 uniform float uRealTime;
 uniform int uLightCount;
+uniform vec2 uLightKnee;
 uniform vec4 uPartyOver;
 // The party's over: how far switched off a party light at P is (0 on, 1 off), the front rippling out from home.
 float partyOff(vec3 P) { if (uPartyOver.z <= 0.0) return 0.0; return smoothstep(0.0, 1.0, (uPartyOver.z - distance(P.xz, uPartyOver.xy)) / uPartyOver.w); }
@@ -129,6 +134,18 @@ vec3 haze(vec3 c, vec3 P) {
   float h = smoothstep(uHazeRange.x, uHazeRange.y, length(P.xz - uHazeCentre));
   h *= h; // light through the middle distance, full only at the far edge
   return slowGrade(mix(c, uHazeColour * uDim, h), P);
+}
+
+// The light's soft knee: the light falling on a pixel (every source summed) kept in its own hue but eased, past uLightKnee.x
+// of brightness, toward uLightKnee.y and never past it. Where a soundsystem's party light, campfires, her glow and the moon all
+// meet, the sum ran to three or four times white and every lit pixel clipped to the same pale yellow (Ed, 2026-10-12): now
+// the brightest ground stays under white and keeps its texture; the forest at large, below the knee, is as it was.
+vec3 softKnee(vec3 l) {
+  float k = uLightKnee.x, r = uLightKnee.y - uLightKnee.x;
+  if (r <= 0.0) return l;
+  float y = dot(l, vec3(0.3, 0.55, 0.15));
+  if (y <= k) return l;
+  return l * ((k + r * (1.0 - exp(-(y - k) / r))) / y);
 }
 
 float lightStep(float f) {
@@ -205,7 +222,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
       if (pick < uDiscoParams.y && dot(f, f) < spot * spot) l += uDiscoColour * uDiscoParams.z * (1.0 - dd / uDiscoParams.w);
     }
   }
-  return l;
+  return softKnee(l);
 }
 vec3 nightLight(vec3 N, vec3 P) { return nightLightShaded(N, P, 1.0); }
 // Her pool in her light's own colour (the art director, round 3: "a lime glow sits on the ground at the front of home's
