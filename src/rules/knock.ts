@@ -8,6 +8,7 @@
 // on her) is big. Fair: a blink still dodges everything (hitWitch never gets here), she can't be
 // stunned again for `immune` seconds after a stun (the blow still counts), and the blow that knocks
 // her out throws nothing. Knobs: tuning witch.knock. No drawing here.
+import { ashore, lakeKnobs } from "./lakes";
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
 import { keepIn, type Bounds } from "./mapShape";
@@ -63,7 +64,8 @@ export function stepWitchKnock(k: Knock, body: WitchState, dt: number, t: Tuning
   if (!k.kx && !k.kz) return body;
   // (the exact distance an easing velocity covers in dt, so the whole throw is its metres, whatever the step)
   const ease = t.witch.knock.ease, decay = Math.exp(-dt * ease), go = (1 - decay) / ease;
-  const inside = (x: number, z: number) => keepIn(bounds, x, z);
+  // (kept on the island, and on foot ashore of a lake: thrown toward one, she stops at its shore; rules/lakes.ts)
+  const pad = lakeKnobs(t).pad, inside = (x: number, z: number) => { const q = keepIn(bounds, x, z); return bounds.lakes && body.mode === "ground" ? ashore(bounds, q.x, q.z, pad) : q; };
   let p = inside(body.x + k.kx * go, body.z + k.kz * go);
   k.kx *= decay; k.kz *= decay;
   if (Math.hypot(k.kx, k.kz) < 0.05) {

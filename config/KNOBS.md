@@ -35,6 +35,16 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.coast.harmonics` | number | 0 to … |
 | `map.coast.detail` | number | 0 to … |
 
+### `lakes`
+
+Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. shore: metres of bare shore round the water (no trees, nothing placed); pad: how far from the water anything on foot stops; koi: the share of lakes with koi in them (DECISION FOR ED).
+
+| knob | type | range |
+|---|---|---|
+| `lakes.shore` | number | 0 to … |
+| `lakes.pad` | number | 0 to … |
+| `lakes.koi` | number | 0 to … |
+
 ### `islands`
 
 Islands other than home (the wave 2 finale's dream bubbles and the sea chart; rules/islandShape.ts, art/islands.js; Ed, docs/backlog/journey.md): coast, the coastline's knobs as map.coast's (amp, the most it strays from round, a share of the radius; harmonics, how many bays and headlands; detail, the finer wobble), stronger than home's so every island has a shape of its own, read at a bubble's 30 pixels.
@@ -608,6 +618,18 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `spells.healing.every` | number | 0 to … |
 | `spells.helmet.drop` | number | 0 to … |
 | `spells.double.charges` | number | 0 to … |
+| `spells.harvest.berries` | number | 0 to … |
+| `spells.harvest.radius` | number | 0 to … |
+| `spells.harvest.every` | number | 0 to … |
+| `spells.dowsing.time` | number | 0 to … |
+| `spells.sentry.range` | number | 0 to … |
+| `spells.sentry.every` | number | 0 to … |
+| `spells.slingshot.catch` | number | 0 to … |
+| `spells.slingshot.fire` | number | 0 to … |
+| `spells.slingshot.hold` | number | 0 to … |
+| `spells.slingshot.radius` | number | 0 to … |
+| `spells.slingshot.max` | number | 0 to … |
+| `spells.gathering.range` | number | 0 to … |
 
 ### `trail`
 
@@ -1191,10 +1213,11 @@ The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are 
 
 ### `runeMarkers`
 
-Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam. beamHeight: the beacon's height (metres); lightRange: stones within this many metres light the scene. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. An awake stone shows both (Ed, v149: "let's see both"): a column of light above the canopy and a thin laser straight up like the disco ball's (laser opacity, width and length in metres; glow only, no light).
+Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size. variants (Ed, 2026-10-12: "20 mild variations on runestones so that they don't all look identical. They can also be flipped"): each area's stone one of the art's 20 seeded forms, dealt like a shuffled deck so every form is used before any repeats (Ed, #716; rules/runestones.ts) (height, lean, worn top, chips, cracks, moss, the carving's place and wear, the stones and grass at its foot), mirrored at random, its sigil never mirror-written; off, every stone as before. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam. beamHeight: the beacon's height (metres); lightRange: stones within this many metres light the scene. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. An awake stone shows both (Ed, v149: "let's see both"): a column of light above the canopy and a thin laser straight up like the disco ball's (laser opacity, width and length in metres; glow only, no light).
 
 | knob | type | range |
 |---|---|---|
+| `runeMarkers.variants` | boolean |  |
 | `runeMarkers.laser.opacity` | number | 0 to … |
 | `runeMarkers.laser.width` | number | 0 to … |
 | `runeMarkers.laser.length` | number | 0 to … |

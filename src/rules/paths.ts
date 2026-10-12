@@ -3,6 +3,7 @@
 // two to four railway lines cross many areas in long, gentle curves, with a branch line, broken
 // sections where the track is gone and trees grow between the sleepers. They carve tree-free
 // corridors with bushes along their edges. Seeded, so they never change; no drawing here.
+import { lakeKnobs, onLake } from "./lakes";
 import { clamp, hash2, rng, vnoise } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { floorClearing } from "./speakers";
@@ -156,18 +157,18 @@ export class PathNetwork {
     });
   }
 
-  /** Cut every line short of the beach (the circular map's, beachOf): a line running on past the sand
+  /** Cut every line short of the beach (the circular map's, beachOf) and of the lakes: a line running on past the sand
    *  stops a little before it, in as many pieces as it crosses in and out (a junction kept on its piece). */
   private clipToBeach(): void {
-    const B = beachOf(this.map.bounds, this.map.tuning);
-    if (!B) return;
+    const B = beachOf(this.map.bounds, this.map.tuning), lakes = this.map.bounds.lakes ? this.map.bounds : null, shore = lakeKnobs(this.map.tuning).shore;
+    if (!B && !lakes) return;
     const out: PathLine[] = [], remap = new Map<number, number[]>();
     let cut = false;
     this.lines.forEach((l, li) => {
       const keep = l.half + 8, ids: number[] = [];
       let run: [number, number][] = [];
       const flush = () => { if (run.length >= 2) { ids.push(out.length); out.push({ ...l, pts: run }); } run = []; };
-      for (const p of l.pts) { if (B.intoSand(p[0], p[1]) <= -keep) run.push(p); else { cut = true; flush(); } }
+      for (const p of l.pts) { if ((!B || B.intoSand(p[0], p[1]) <= -keep) && (!lakes || !onLake(lakes, p[0], p[1], keep + shore))) run.push(p); else { cut = true; flush(); } } // (and short of a lake's shore: rules/lakes.ts)
       flush();
       remap.set(li, ids);
     });

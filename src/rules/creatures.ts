@@ -4,6 +4,7 @@
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
+import { lakeKnobs, onLake } from "./lakes";
 import { watchStep } from "./wildWatch";
 import { coarseTurn, inFull, type LodCounts } from "./simLod";
 import { earlyQuest, questFor, type Quest } from "./quest";
@@ -321,19 +322,19 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
   if (keepsToCircle(c)) return pointInCircle(c.circle!, r); // (the circle's baby, wild or happy)
   // A hostile one idles in a loose cluster round its area's runestone: anywhere in a disc of stoneIdle.radius metres round it
   // (evenly, so they spread), keeping stoneIdle.clear metres off the stone itself; the rest of the area as before.
-  const S = map.tuning.stoneIdle;
+  const S = map.tuning.stoneIdle, shore = map.bounds.lakes ? lakeKnobs(map.tuning).shore : 0;
   if (S?.on && !c.anywhere && idlesAtStone(c)) {
     const st = map.soundsystemSpot(c.cell[0], c.cell[1]);
     for (let i = 0; i < 12; i++) {
       const a = r() * Math.PI * 2, d = Math.sqrt(S.clear ** 2 + r() * (S.radius ** 2 - S.clear ** 2)), x = st.x + Math.cos(a) * d, z = st.z + Math.sin(a) * d;
-      if (inCell(map, x, z, c.cell)) return [x, z];
+      if (inCell(map, x, z, c.cell) && !onLake(map.bounds, x, z, shore)) return [x, z];
     }
   }
   // (a dancing one keeps round its party spot, its anchor: rules/partyGuests.ts)
   const cx = c.dancing ? c.anchorX : c.homeX, cz = c.dancing ? c.anchorZ : c.homeZ;
   for (let i = 0; i < 12; i++) {
     const a = r() * Math.PI * 2, d = Math.sqrt(r()) * c.range, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d;
-    if (inCell(map, x, z, c.cell)) return [x, z];
+    if (inCell(map, x, z, c.cell) && !onLake(map.bounds, x, z, shore)) return [x, z]; // (never to a lake's water: rules/lakes.ts)
   }
   return [c.anchorX, c.anchorZ];
 }

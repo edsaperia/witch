@@ -11,6 +11,7 @@ import { heldByCombat } from "./creatures";
 import { carryRelic, dropRelic, stackBottom, stepLeash, type LeashEvent } from "./leash";
 import { relicButton } from "./legends";
 import { runeNear } from "./creatureStates";
+import { spaceRadius } from "./spacing";
 import { hatButton, putHat } from "./hat";
 import { questOutside, questPlaced } from "./quest";
 import { onAreaDone } from "./leylines";
@@ -73,7 +74,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, t.leash.restAbove ?? 0), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
@@ -135,14 +136,36 @@ export function befriendArea(g: Game, key: string): void {
   g.byArea = null;
 }
 
-/** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, to leash.runePull.stop from her. */
+/** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, till its rune is leash.runePull.stop
+ *  from her. It heads for the spot that puts its rune at her feet (restAbove north of her), from any side (Ed, 2026-10-12: "Pull from
+ *  any side"): where the straight way there passes her or one of her followers, it goes round them, on its own side. */
 export function pullRune(g: Game, t: Tuning, fixed: number): void {
-  const P = t.leash.runePull, w = g.witch, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time);
+  const P = t.leash.runePull, w = g.witch, south = t.leash.restAbove ?? 0, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time, undefined, south);
   if (!c || c.fight?.target) return;
-  const dx = w.x - c.x, dz = w.z - c.z, d = Math.hypot(dx, dz);
+  const gx = w.x, gz = w.z - south, d = Math.hypot(gx - c.x, gz - c.z); // (it walks so its rune, south of it, comes to her)
   if (d <= P.stop) return;
-  const step = Math.min(d - P.stop, P.speed * fixed * g.timeScale);
-  c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = c.x; c.tz = c.z;
-  if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
-  c.away = dz < -Math.abs(dx); c.moving = true;
+  const [tx, tz] = roundAbout(g, c, gx, gz, d), ex = tx - c.x, ez = tz - c.z, e = Math.hypot(ex, ez) || 1;
+  const step = Math.min(e === d ? d - P.stop : e, P.speed * fixed * g.timeScale);
+  c.x += (ex / e) * step; c.z += (ez / e) * step; c.tx = c.x; c.tz = c.z;
+  if (Math.abs(ex) > 0.02) c.facing = ex > 0 ? 1 : -1;
+  c.away = ez < -Math.abs(ex); c.moving = true;
+}
+
+/** Where a pulled creature at c heads for its goal (gx, gz), d away: the goal, or, when the straight way passes within reach of her
+ *  or one of her followers (the leashed near her), a waypoint beside the first of them in the way, on the side the creature is
+ *  already on, far enough out to clear it (re-chosen every step, so it walks round). */
+function roundAbout(g: Game, c: Creature, gx: number, gz: number, d: number): [number, number] {
+  const w = g.witch, ux = (gx - c.x) / d, uz = (gz - c.z) / d, mine = spaceRadius(c);
+  let best: { t: number; ox: number; oz: number; r: number; side: number } | null = null;
+  const test = (ox: number, oz: number, r: number) => {
+    const rx = ox - c.x, rz = oz - c.z, t = rx * ux + rz * uz, side = rx * uz - rz * ux; // along the way, and across it (+: on its left)
+    if (t <= 0 || t >= d + r * 0.5 || Math.abs(side) >= r) return;
+    if (!best || t < best.t) best = { t, ox, oz, r, side };
+  };
+  test(w.x, w.z, mine + 1.2); // (her)
+  for (const o of g.creatures) if (o !== c && o.leashed && !o.gone && Math.abs(o.x - w.x) < 14 && Math.abs(o.z - w.z) < 14) test(o.x, o.z, mine + spaceRadius(o) + 0.4);
+  if (!best) return [gx, gz];
+  // round it on the creature's own side: away from where the obstacle sits across the way (n = (-uz, ux), the way's left; side = -(r·n))
+  const B: { t: number; ox: number; oz: number; r: number; side: number } = best, s = B.side === 0 ? (c.id % 2 ? 1 : -1) : -Math.sign(B.side), out = B.r + 0.6;
+  return [B.ox + uz * s * out, B.oz - ux * s * out]; // (the obstacle less s × out along n)
 }

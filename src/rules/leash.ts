@@ -272,7 +272,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
       s.events.push({ kind: "picked", id: p.id, x: p.x, z: p.z, at: time });
     } else if (rune) {
       // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
-      inviteCreature(s, rune, rune.x, rune.z, time, "picked");
+      inviteCreature(s, rune, rune.x, rune.z + (t.leash.restAbove ?? 0), time, "picked"); // (where its rune lay, south of it)
     } else if (stackBottom(s)?.kind === "relic") {
       // A relic's sigil at the bottom (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you put down when you press
       // e"): by a sleeping legend the sigil button has given it already (rules/legends.ts relicButton); anywhere else it goes
