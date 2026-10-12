@@ -19,3 +19,16 @@ There are no circles at any size. The colour stays each animal's neon.
 
 On the chart: #699 already shows the plain glyph with no circle. Once this PR lands, the chart switches to these by on-screen
 size: the plain glyph below about 64 px, the carved bands to about 128 px, the knotwork beyond.
+
+## Round 2 (Ed: "Close but could do with more work")
+
+The top tier is now a solid carved emblem, as the reference's are, not a line drawing. Each animal is one mass of ink: its
+strokes made broad, the gaps between them closed, and whatever they enclose filled in, with a clean edge. Carved into it:
+- a channel down every stroke, so the outline becomes a carved border and the face keeps its lines;
+- finer channels for the fur and feather lines;
+- the eyes as holes with a pupil left in;
+- spirals in its broadest places (cheeks, haunches, shoulders);
+- channels echoing the outline through the rest of the solid.
+
+`sigils-carved-six.png` has the six to compare with the reference first: wolf, raven, bear, boar, stag and hare.
+`sigils-detailed-all.png` has the rest. The two smaller sizes are unchanged.
