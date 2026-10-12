@@ -23,6 +23,7 @@ import { blocked, stackBottom, talkTime } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { hasRune, runeNear } from "../rules/creatureStates";
+import { GLOW_MODE, HALOS, inkHook, inkMaterial, type InkState } from "./leash/inkMock";
 import { newLoadView, type LoadView } from "./load";
 import { relicGlints } from "../rules/legends";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "./sprites";
@@ -62,6 +63,8 @@ export class LeashView {
   colours = new Map<string, THREE.Color>();
   standing: Instances;
   flat: Instances;
+  /** MOCKUP (?sigilGlow=state): the shape of the runes being added now. */
+  inkState: InkState = "solid";
   /** The placed sigils, and the happy creatures' runes (Ed, 2026-10-12), again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
    *  something nearer is drawn and it is scenery or ground cover (their stencil marks), never the witch, at leash.placedThrough. */
   through: Instances;
@@ -147,6 +150,14 @@ export class LeashView {
     this.solid = new Instances(mat(0, true, true));
     this.blood = new Instances(mat(1, true, true, BLOOD_PULL)); // (over the grass tufts: Ed's pick, 2026-10-09)
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh);
+    // MOCKUP (?sigilGlow=tight|ink|state: render/leash/inkMock.ts): the glyphs in ink twins of these batches, or dimmed.
+    if (GLOW_MODE === "ink" || GLOW_MODE === "state") {
+      for (const k of ["standing", "flat", "through", "over"] as const) {
+        const base = this[k], twin = new Instances(inkMaterial(base.mesh.material as THREE.ShaderMaterial, SLOT * SLOTS));
+        twin.mesh.renderOrder = base.mesh.renderOrder; scene.add(twin.mesh);
+        inkHook(base, twin, () => this.inkState);
+      }
+    } else for (const k of ["standing", "flat", "through", "over"] as const) inkHook(this[k], null, () => "solid");
     const hex = game.tuning.berries.colour.replace("#", "");
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
@@ -461,7 +472,7 @@ export class LeashView {
       const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
       this.flat.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
       if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, Math.min(1, (time - p.at) / 0.8));
-      this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
+      if (HALOS) this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
     // Happy creatures' runes (Ed, 2026-10-06; states.leash "pickup"): each carries its sigil as a dim rune restAbove metres
@@ -472,10 +483,13 @@ export class LeashView {
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
       const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + (t.leash.restAbove ?? 0);
+      this.inkState = ready ? "solid" : "hollow";
+      if (GLOW_MODE === "state" && ready) { const R = (3 + c.level * 0.8) * 0.85 * 0.62, n = 8; for (let i = 0; i < n; i++) { const an = time * 0.9 + (i / n) * Math.PI * 2; this.flat.add(c.x + Math.cos(an) * R, 0.03, rz + Math.sin(an) * R, 0.35, dot, col.r, col.g, col.b, 0.9); } } // (MOCKUP: ready, a ring of pixel dots turning)
       this.flat.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
-      if (ready) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18);
+      if (ready && HALOS) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18);
     }
+    this.inkState = "solid";
 
     // The party legend (Ed's Easter egg, rules/partyLegend.ts): a giant party hat on its head, striped in party neons, a
     // pom-pom on top, bobbing on the beat. Pinned to one (she can't go past its reach), its leash goes ruler-straight and
@@ -509,7 +523,9 @@ export class LeashView {
     } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, t.leash.restAbove ?? 0) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const sg = this.sigilOf(c);
-      this.flat.add(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
+      this.inkState = "hollow"; // (MOCKUP: the ghost, hollow)
+      this.flat.add(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, GLOW_MODE === "ink" || GLOW_MODE === "state" ? 0.55 : 0.22);
+      this.inkState = "solid";
     }
 
     // Relics (#87): where one lies, its bottle stands among the scenery in its mound (render/view/scenery.ts, Ed 2026-10-09:
@@ -525,7 +541,7 @@ export class LeashView {
       {
         const col = (this.slotOf("relic", 0), this.colours.get("relic")!), pulse = 1.05 + 0.25 * Math.sin(time * 2 + r.id);
         this.flat.add(r.sx, 0.02, r.sz, 3.4, this.uv(this.slotOf("relic", 0)), col.r * pulse, col.g * pulse, col.b * pulse, 1);
-        this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38);
+        if (HALOS) this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38);
       }
       if (dropped || !relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
