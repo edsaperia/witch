@@ -178,13 +178,18 @@
         "biomeFrom": {
           "type": "number",
           "minimum": 0
+        },
+        "biomeFirstShare": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "shore",
         "pad",
         "koi",
-        "biomeFrom"
+        "biomeFrom",
+        "biomeFirstShare"
       ],
       "additionalProperties": false
     },
