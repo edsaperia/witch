@@ -4,7 +4,7 @@
 // nothing), no berries, and it walks a route planned along area borders rather than through
 // area middles, a little faster than its leash pace. The route is kept on the creature for the
 // view, which draws the leash along it. No drawing here.
-import { ashore, lakeKnobs } from "./lakes";
+import { ashore, lakeKnobs, shoreDetours } from "./lakes";
 import raw from "../../config/travel.json";
 import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
@@ -69,7 +69,9 @@ function sitesNear(map: ForestMap, x: number, z: number): { x: number; z: number
  *  every `step` metres. Deterministic. */
 export function planRoute(map: ForestMap, sx: number, sz: number, tx: number, tz: number, data: TravelData = TRAVEL): { x: number; z: number }[] {
   const clear = data.clear * FIGHT.scale, step = data.step * FIGHT.scale;
-  const L = Math.hypot(tx - sx, tz - sz), n = Math.max(1, Math.ceil(L / step)), lakes = !!map.bounds.lakes, lakeGap = lakes ? lakeKnobs(map.tuning).shore + 4 : 0;
+  const lakes = !!map.bounds.lakes, lakeGap = lakes ? lakeKnobs(map.tuning).shore + 4 : 0;
+  if (lakes) ({ x: tx, z: tz } = ashore(map.bounds, tx, tz, lakeGap)); // (her over a lake in the treetops: to its shore)
+  const L = Math.hypot(tx - sx, tz - sz), n = Math.max(1, Math.ceil(L / step));
   let pts = Array.from({ length: n + 1 }, (_, i) => ({ x: sx + ((tx - sx) * i) / n, z: sz + ((tz - sz) * i) / n }));
   // (near its start or its target, a point may be in an area's middle: that's where it is, or goes)
   const free = (p: { x: number; z: number }) => Math.hypot(p.x - sx, p.z - sz) < clear || Math.hypot(p.x - tx, p.z - tz) < clear;
@@ -106,6 +108,9 @@ export function planRoute(map: ForestMap, sx: number, sz: number, tx: number, tz
   };
   for (let k = 0; k < 6; k++) { push(); smooth(); push(); resample(); }
   push();
+  // (round the lakes, along their shores: each point pushed ashore alone can leave a stretch across the water between two
+  // shores, the near half's and the far half's; Ed, 2026-10-12)
+  if (lakes) pts = shoreDetours(map.bounds, pts, lakeGap, step);
   return pts;
 }
 
@@ -119,8 +124,9 @@ export function stepTraveller(c: Creature, tx: number, tz: number, map: ForestMa
   const R = c.route!, speed = hurry ? Math.max(B.farSpeed, leashSpeed(c, t) * data.speed * pace) : leashSpeed(c, t) * data.speed * pace;
   if (R.next >= R.points.length) { c.moving = false; c.vx = 0; c.vz = 0; return; } // (there: it waits for its target to move on)
   let left = speed * dt;
+  const end = map.bounds.lakes ? ashore(map.bounds, tx, tz, lakeKnobs(map.tuning).shore + 4) : { x: tx, z: tz }; // (never out onto a lake to her)
   while (left > 1e-6 && R.next < R.points.length) {
-    const p = R.next === R.points.length - 1 ? { x: tx, z: tz } : R.points[R.next], dx = p.x - c.x, dz = p.z - c.z, d = Math.hypot(dx, dz);
+    const p = R.next === R.points.length - 1 ? end : R.points[R.next], dx = p.x - c.x, dz = p.z - c.z, d = Math.hypot(dx, dz);
     if (d <= left) { c.x = p.x; c.z = p.z; left -= d; R.next++; continue; }
     c.x += (dx / d) * left; c.z += (dz / d) * left;
     if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
