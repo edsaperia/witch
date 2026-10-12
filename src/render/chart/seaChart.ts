@@ -11,7 +11,8 @@
 // the page (app/chartPage.ts, from app/chartSave.ts).
 import * as THREE from "three";
 import { ISLAND_LOOK, islandPoints } from "../../../art/islands.js";
-import { sigilArrival, sigilColour } from "../../../art/sigils.js";
+import { sigilColour } from "../../../art/sigils.js";
+import { sigilDetail } from "../../../art/sigilDetail.js";
 import { Post, type PostTuning } from "../post";
 
 /** The chart's disc: radius 1 on the flat chart is this many units here. */
@@ -32,10 +33,10 @@ const RELIEF = 5;
 const CHART_PIXEL = 2;
 /** A sigil's width against its island's reach (Ed: "the sigils should be larger and more detailed"). */
 const SIGIL_SHARE = 1.25;
-/** A sigil's art by how many pixels it spans on screen: each texture about as many pixels as it shows, so it stays crisp. The
- *  plain glyph at every size for now, no circle round it (Ed, 2026-10-12: "we don't need the circles around the rune"); the
- *  animal's own detailed versions come with their art. */
-const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 80, px: 128 }, { from: 150, px: 256 }];
+/** A sigil's art by how many pixels it spans on screen (art/sigilDetail.js detailTier; Ed, 2026-10-12: "we don't need the circles
+ *  around the rune; ideally we want more detailed versions of the rune itself"): the plain glyph while small, the carved bands,
+ *  then the carved emblem; each texture about as many pixels as it shows, so it stays crisp. */
+const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 64, px: 128 }, { from: 128, px: 256 }];
 /** When the chart opens, a sigil spans this many art pixels, and at the furthest no fewer than this. */
 const SIGIL_OPEN_PX = 96, SIGIL_MIN_PX = 16;
 /** A typical sailable island's sigil (units), for the zoom's limits. */
@@ -166,10 +167,10 @@ const LAKE_SHALLOWS = 6;
 /** One island's meshes and where it is. */
 interface Isle { d: ChartIsland; group: THREE.Group; pick: THREE.Mesh; x: number; z: number; top: number; reach: number; sigil?: THREE.Mesh; glow?: THREE.Mesh; tier?: number; size?: number }
 
-/** A sigil as a white glyph texture, `px` across, whole pixels (art/sigils.js sigilArrival). */
-function sigilTexture(id: string, px = 24): THREE.Texture {
-  const ink = sigilArrival(id, px), data = new Uint8Array(px * px * 4);
-  for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const i = y * px + x, o = ((px - 1 - y) * px + x) * 4; if (ink[i] < Infinity) data.set([255, 255, 255, 255], o); }
+/** A sigil as a white texture, `px` across, whole pixels, at a detail tier (art/sigilDetail.js). */
+function sigilTexture(id: string, px = 24, tier = 0): THREE.Texture {
+  const ink = sigilDetail(id, px, { tier }), data = new Uint8Array(px * px * 4);
+  for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const i = y * px + x, o = ((px - 1 - y) * px + x) * 4; if (ink[i]) data.set([255, 255, 255, 255], o); }
   const t = new THREE.DataTexture(data, px, px); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.needsUpdate = true;
   return t;
 }
@@ -385,7 +386,7 @@ export class SeaChart {
   private sigilArt(id: string, tier: number): THREE.Texture {
     const key = `${id}|${tier}`;
     let t = this.sigilArts.get(key);
-    if (!t) { t = sigilTexture(id, SIGIL_TIERS[tier].px); this.sigilArts.set(key, t); }
+    if (!t) { t = sigilTexture(id, SIGIL_TIERS[tier].px, tier); this.sigilArts.set(key, t); }
     return t;
   }
 
