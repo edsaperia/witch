@@ -836,7 +836,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     if (!(edges[1] > edges[0] * 1.3 && edges[2] > edges[0] * 1.3)) bad.push(`${id}: the carved tiers no more detailed than the plain glyph (edges ${edges.join("/")})`);
   }
   if (!(D.detailTier(32) === 0 && D.detailTier(96) === 1 && D.detailTier(200) === 2)) bad.push("detailTier");
-  ok(!bad.length, `detailed sigils: every species' and the World Tree (${S.SIGIL_IDS.length + 1}), plain glyph, carved bands and knotwork, crisp, clear of the box's edge, no circle, each tier its own${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+  ok(!bad.length, `detailed sigils: every species' and the World Tree (${S.SIGIL_IDS.length + 1}), plain glyph, carved bands and the carved emblem, crisp, clear of the box's edge, no circle, each tier its own${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
 // party relics (art/partyRelics.js, #87): 6+ bottles, each half-buried, drawn at a third of their built size (Ed, 2026-10-11: 2.3 to 5.4 m across and 2 to 5.7 m tall),
 // sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
