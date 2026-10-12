@@ -16,7 +16,7 @@ import { islandAt } from "./chartLayout";
 import { TUNING } from "../rules/tuning";
 import { lakeKnobs } from "../rules/lakes";
 import type { LandMap } from "../rules/land";
-import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
+import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cacheKeys, cachePut, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
 
 /** The page's asks: the islands to make (`ids` in order), or one to make next. */
 /** The islands for a world (the closest first), the kinds she's found (home's size), the grid; `warm`: make and keep them only
@@ -36,6 +36,9 @@ export interface OutlineDone { id: string; world: number; loops: { pts: Float32A
 let queue: string[] = [], detail: string | null = null, job: { world: number; found: string[]; step: number; warm?: boolean } | null = null, busy = false;
 let warmMade = 0, warmKept = 0;
 void cachePrune(CACHE_PREFIX);
+// (what's kept, listed once: an island not in it is made straight away, with no wait on the store)
+let kept: Set<string> | null = null;
+void cacheKeys().then(k => { kept = k; });
 const post = (m: OutlineDone, t: Transferable[]) => (self as unknown as { postMessage(m: unknown, t: Transferable[]): void }).postMessage(m, t);
 
 /** HSV (0..1) to RGB (0..1). */
@@ -258,10 +261,11 @@ async function next(): Promise<void> {
   }
   const j = job, across = close ? DETAIL_ACROSS : ACROSS, key = cacheKey(id, j.world, j.found, j.step, across);
   try {
-    let o = await cacheGet<OutlineDone>(key), made = false;
-    if (!o) { o = make(id, j.world, j.found, j.step, across); made = !!o; if (o) await cachePut(key, o); } // (copied as it's put, before its buffers are sent on)
+    let o = kept?.has(key) ? await cacheGet<OutlineDone>(key) : null, made = false; // (not known to be kept, or the store still opening: made at once)
+    if (!o) { o = make(id, j.world, j.found, j.step, across); made = !!o; }
     if (j.warm && !close) { if (made) warmMade++; else warmKept++; note({ warmed: id, made }); }
-    else if (o) post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer]);
+    else if (o) post(o, made ? [] : [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer]); // (one just made is copied, not handed over: it's kept next)
+    if (made && o) { await cachePut(key, o); kept?.add(key); }
   } catch (e) { console.warn(`sea chart: ${id}'s island`, e); }
   setTimeout(next, 0); // (between islands, so a `first` can come in)
 }

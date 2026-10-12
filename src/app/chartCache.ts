@@ -22,7 +22,7 @@ export const cacheKey = (id: string, world: number, found: readonly string[], st
 
 let opened: Promise<IDBDatabase | null> | null = null;
 function db(): Promise<IDBDatabase | null> {
-  return (opened ??= new Promise(res => {
+  return (opened ??= new Promise<IDBDatabase | null>(res => {
     try {
       const r = indexedDB.open(DB, 1);
       r.onupgradeneeded = () => r.result.createObjectStore(STORE);
@@ -42,6 +42,19 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
       q.onsuccess = () => res((q.result as T | undefined) ?? null);
       q.onerror = () => res(null);
     } catch { res(null); }
+  });
+}
+
+/** Every key kept (an empty set if there's no store). */
+export async function cacheKeys(): Promise<Set<string>> {
+  const d = await db();
+  if (!d) return new Set();
+  return new Promise(res => {
+    try {
+      const q = d.transaction(STORE).objectStore(STORE).getAllKeys();
+      q.onsuccess = () => res(new Set(q.result.map(String)));
+      q.onerror = () => res(new Set());
+    } catch { res(new Set()); }
   });
 }
 
