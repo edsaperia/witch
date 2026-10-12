@@ -1,7 +1,7 @@
 // Scenery's shadows from her glow (Ed, 2026-10-12: "Scenery (temples etc) should also cast them", "Runestones and soundsystems should
 // also cast shadows": render/view/scenery.ts, render/view/home.ts, render/soundsystemGen.ts): the built game (DIST, default dist/) at
 // 1280×800, stepped at a fixed 1/60 s, her on foot just east of a scene's piece, a set piece, a decor piece, a runestone and a
-// soundsystem (the first wave brought on), each shot with them (<name>-on.png) and without (<name>-off.png, shadows.trunks.scenery off), coloured (<name>-coloured.png, the tint and glowing casters' shade) and black (<name>-black.png), and where
+// soundsystem (the first wave brought on), each shot with them (<name>-on.png) and without (<name>-off.png, shadows.trunks.scenery off), coloured (<name>-coloured.png, the tint and glowing casters' shade), without the taper (<name>-untapered.png) and black (<name>-black.png), and where
 // they all lie (<name>-debug.png, magenta); and a decor piece by a campfire, her across the fire from it.
 // Fails on a page error.
 //   npm run build && node tools/shadows/scenery-shots.cjs <out dir> [seed]
@@ -52,8 +52,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       return s;
     });
     for (const s of out.subjects.filter(q => !only || q.name.startsWith(only))) {
-      for (const on of ["coloured", "black", false, "debug"]) {
-        await page.evaluate(([s, on]) => { const g = window.witch.game; const T = g.tuning.shadows.trunks; if (!window.__reach) window.__reach = T.glowReach; T.glowReach = s.fireOnly ? 0 : window.__reach; T.scenery = !!on; T.mode = on === "debug" ? "debug" : "soft"; Object.assign(T, on === "black" ? { tint: 0, tintTrees: 0, glowLight: 0 } : { tint: 0.6, tintTrees: s.trees ? 0.6 : 0, glowLight: 0.7 }); g.witch = { ...g.witch, x: s.x + 80, z: s.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, [s, on]);
+      for (const on of ["coloured", "untapered", "black", false, "debug"]) {
+        await page.evaluate(([s, on]) => { const g = window.witch.game; const T = g.tuning.shadows.trunks; if (!window.__reach) window.__reach = T.glowReach; T.glowReach = s.fireOnly ? 0 : window.__reach; T.scenery = !!on; T.mode = on === "debug" ? "debug" : "soft"; Object.assign(T, on === "black" ? { tint: 0, tintTrees: 0, glowLight: 0 } : { tint: 0.6, tintTrees: s.trees ? 0.6 : 0, glowLight: 0.7 }); if (!window.__taper) window.__taper = T.sceneryTaper; T.sceneryTaper = on === "untapered" ? 0 : window.__taper; g.witch = { ...g.witch, x: s.x + 80, z: s.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, [s, on]);
         await step(20);
         await page.evaluate(s => { const g = window.witch.game; const W = g.witches[0]; W.health = JSON.parse(window.__hp); W.ko = null; g.witch = { ...g.witch, x: s.at ? s.at.x : s.x + s.r + 5, z: s.at ? s.at.z : s.z + 1, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, s);
         await step(90);

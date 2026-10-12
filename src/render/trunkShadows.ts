@@ -79,7 +79,7 @@ void main() {
   vec2 p = foot + dir * t * len + side * u * iTrunk.z * uTrunkAcross;
   vTex = vec2(mix(iUv.x, iUv.z, 0.5 + u * uTrunkAcross), mix(iUv.w, iUv.y, pad + t * (1.0 - pad)));
   vUx = vec2(iUv.x, iUv.z); vU = u * uTrunkAcross;
-  vTaper = iPad.z > 0.5 ? (uSceneryTaper > 0.0 ? (0.5 + uSceneryTaper) * iTrunk.z : 0.0) : uTrunkTaper; // (its taper's length: a trunk's, or scenery's by its width)
+  vTaper = iPad.z > 0.5 ? (uSceneryTaper > 0.0 ? min((0.5 + uSceneryTaper) * iTrunk.z, 0.6 * len) : 0.0) : uTrunkTaper; // (its taper's length: a trunk's, or scenery's by its width, at most 0.6 of its shadow: a wide ruin's isn't all pinch)
   vFrame = vec4(min(iUv.x, iUv.z), iUv.y, max(iUv.x, iUv.z), iUv.w);
   float k = 1.0 - d / reach;
   float near = uTrunkNear > 0.0 ? smoothstep(0.25 * uTrunkNear, uTrunkNear, length(foot - uGlowPos.xz)) : 1.0; // (to nothing as she comes up to its trunk)
