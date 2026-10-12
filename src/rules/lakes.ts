@@ -107,6 +107,31 @@ export function koiPonds(b: Bounds, seed: number, share: number): KoiPond[] {
   return ponds;
 }
 
+/** A route kept off the lakes (Ed, 2026-10-12: "This leashed animal pathing seems to go through a lake"): every stretch of `pts`
+ *  that crosses water (every 2 m along it) is replaced by the way round that lake's shore from its start to its end, the shorter
+ *  way, `clear` metres off the water, a point every `step` metres. Its points should be ashore already (rules/travel.ts planRoute
+ *  puts them there); a stretch whose ends are by different waters is left as it is. Deterministic. */
+export function shoreDetours(b: Bounds, pts: readonly { x: number; z: number }[], clear: number, step: number): { x: number; z: number }[] {
+  const L = b.lakes;
+  if (!L || pts.length < 2) return pts.slice();
+  const wet = (a: { x: number; z: number }, c: { x: number; z: number }) => {
+    const n = Math.ceil(Math.hypot(c.x - a.x, c.z - a.z) / 2);
+    for (let k = 1; k < n; k++) if (lakeDepth(b, a.x + ((c.x - a.x) * k) / n, a.z + ((c.z - a.z) * k) / n) > 0) return true;
+    return false;
+  };
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const a = out[out.length - 1], c = pts[i];
+    if (!wet(a, c)) { out.push(c); continue; }
+    const sa = L.shore(a.x, a.z), la = sa.loop, s0 = sa.s, sc = L.shore(c.x, c.z);
+    if (la !== sc.loop) { out.push(c); continue; }
+    const len = L.loops[la].length, fwd = (((sc.s - s0) % len) + len) % len, way = fwd <= len - fwd ? 1 : -1, span = way > 0 ? fwd : len - fwd;
+    for (let u = step; u < span; u += step) { const p = L.along(la, s0 + way * u); out.push({ x: p.x + p.nx * clear, z: p.z + p.nz * clear }); } // (n: out of the water)
+    out.push(c);
+  }
+  return out;
+}
+
 /** Where to head for (tx, tz) from (x, z) round the lakes (Ed, 2026-10-11): null (straight there) if no lake lies on the way within `look`
  *  metres ahead; else a point on round the lake's shore, `clear` metres off its water, `ahead` metres along it from her nearest
  *  point of it, the shorter way round to where the way comes out of the water. Stateless, so the same each step: as it goes

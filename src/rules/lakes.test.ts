@@ -5,15 +5,18 @@ import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { generateMap, type ForestMap } from "./map";
 import { soundsystemFor } from "./party";
-import { creaturesAshore, koiPonds, lakeDepth, roundLakes, stopAtShore } from "./lakes";
+import { creaturesAshore, koiPonds, lakeDepth, lakeKnobs, roundLakes, stopAtShore } from "./lakes";
+import { newGame } from "./game";
 import { newWitch, stepWitch, NO_INTENT, type WitchState } from "./witch";
-import { planRoute } from "./travel";
+import { planRoute, stepTraveller } from "./travel";
 import { lakePlan, placeLakes, SHAPES } from "./islandGrowth";
 
 const isle = (phase: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: phase ? 10 * phase : 10, island: "", phase } });
 const maps = new Map<string, ForestMap>();
 const mapOf = (phase: number, seed: number) => { const k = `${phase}:${seed}`; if (!maps.has(k)) maps.set(k, generateMap(seed, isle(phase))); return maps.get(k)!; };
 /** A point on a lake's water, its deepest sample. */
+/** Metres of a polyline over a lake's water (every 2 m along it). */
+const wetMetres = (B: ForestMap["bounds"], pts: readonly { x: number; z: number }[]) => { let w = 0; for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(d / 2)); for (let k = 1; k <= n; k++) if (lakeDepth(B, a.x + ((b.x - a.x) * k) / n, a.z + ((b.z - a.z) * k) / n) > 0) w += d / n; } return w; };
 const deepest = (m: ForestMap) => { const L = m.bounds.lakes!; let best = 0; for (let k = 0; k < L.dist.length; k++) if (L.dist[k] > L.dist[best]) best = k; return { x: L.x0 + (best % L.cols) * L.step, z: L.z0 + Math.floor(best / L.cols) * L.step, d: L.dist[best] }; };
 
 describe("lakes", () => {
@@ -117,6 +120,31 @@ describe("lakes", () => {
     const a = { x: s.x + s.nx * 40, z: s.z + s.nz * 40 }, b = { x: p.x - (a.x - p.x), z: p.z - (a.z - p.z) };
     const route = planRoute(m, a.x, a.z, b.x, b.z);
     for (const q of route.slice(1, -1)) expect(lakeDepth(B, q.x, q.z)).toBeLessThan(0);
+    // and every stretch between them (Ed, 2026-10-12: each point pushed ashore alone left one stretch across the water)
+    expect(wetMetres(B, route)).toBe(0);
+  }, 120000);
+
+  it("a leashed animal travelling to her across a lake (Ed, 2026-10-12) walks round its shore, never on the water, and its drawn route is where it goes", () => {
+    const g = newGame(1, isle(4)), m = g.map, B = m.bounds, p = deepest(m), W = B.lakes!, s = W.shore(p.x, p.z);
+    const a = { x: s.x + s.nx * 40, z: s.z + s.nz * 40 }, her = { x: p.x - (a.x - p.x), z: p.z - (a.z - p.z) };
+    expect(wetMetres(B, [a, her])).toBeGreaterThan(20); // (the lake lies between them)
+    const c = g.creatures.find(k => !k.boss && !k.gone)!;
+    Object.assign(c, { x: a.x, z: a.z, tx: a.x, tz: a.z, leashed: true, travelling: true, route: undefined, fight: undefined });
+    const pad = lakeKnobs(g.tuning).pad, walked: { x: number; z: number }[] = [{ x: c.x, z: c.z }];
+    let i = 0;
+    for (; i < 60 * 600 && Math.hypot(c.x - her.x, c.z - her.z) > 30; i++) {
+      stepTraveller(c, her.x, her.z, m, 1 / 60, g.tuning);
+      creaturesAshore([c], B, pad); // (as the game does after every move)
+      expect(lakeDepth(B, c.x, c.z)).toBeLessThan(0);
+      if (i % 30 === 0) walked.push({ x: c.x, z: c.z });
+    }
+    expect(i).toBeLessThan(60 * 600); // (it got to her)
+    expect(wetMetres(B, walked)).toBe(0);
+    expect(wetMetres(B, c.route!.points)).toBe(0); // (the leash drawn along it: render/leash.ts)
+    // her hovering over the lake in the treetops: the route ends on the shore nearest her, not out on the water
+    const over = planRoute(m, a.x, a.z, p.x, p.z), end = over[over.length - 1];
+    expect(lakeDepth(B, end.x, end.z)).toBeLessThan(0);
+    expect(wetMetres(B, over)).toBe(0);
   }, 120000);
 
   it("has koi in some lakes: seeded, all or none at the share's ends", () => {
