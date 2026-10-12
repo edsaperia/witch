@@ -62,7 +62,7 @@ export class LeashView {
   colours = new Map<string, THREE.Color>();
   standing: Instances;
   flat: Instances;
-  /** The placed sigils again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
+  /** The placed sigils, and the happy creatures' runes (Ed, 2026-10-12), again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
    *  something nearer is drawn and it is scenery or ground cover (their stencil marks), never the witch, at leash.placedThrough. */
   through: Instances;
   /** Drawn over everything (no depth test): the berries' glints seen from the treetops. */
@@ -469,6 +469,7 @@ export class LeashView {
       const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + (t.leash.restAbove ?? 0);
       this.flat.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
       if (ready) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18);
     }
 
