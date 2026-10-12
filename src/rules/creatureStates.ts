@@ -85,12 +85,14 @@ export function hasRune(c: Creature, time?: number, data: StatesData = STATES): 
   return time === undefined || time >= (c.happyAt ?? -Infinity) + (data.pickupDelay ?? 0);
 }
 
-/** The nearest happy creature whose rune is ready within r of (x, z), or null. */
-export function runeNear(creatures: readonly Creature[], x: number, z: number, r: number, time: number, data: StatesData = STATES): Creature | null {
+/** The nearest happy creature whose rune is ready within r of (x, z), or null. Its rune lies `south` metres south of it (+z,
+ *  down the screen: tuning leash.restAbove, as a parked one rests that far north of its placed sigil; Ed, 2026-10-11). */
+export function runeNear(creatures: readonly Creature[], x: number, z: number, r: number, time: number, data: StatesData = STATES, south = 0): Creature | null {
   let best: Creature | null = null, bd = r;
   for (const c of creatures) {
-    if (Math.abs(c.x - x) > r || Math.abs(c.z - z) > r || !hasRune(c, time, data)) continue;
-    const d = Math.hypot(c.x - x, c.z - z);
+    const rz = c.z + south;
+    if (Math.abs(c.x - x) > r || Math.abs(rz - z) > r || !hasRune(c, time, data)) continue;
+    const d = Math.hypot(c.x - x, rz - z);
     if (d <= bd) { bd = d; best = c; }
   }
   return best;

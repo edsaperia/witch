@@ -65,7 +65,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, t.leash.restAbove ?? 0), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
@@ -127,11 +127,11 @@ export function befriendArea(g: Game, key: string): void {
   g.byArea = null;
 }
 
-/** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, to leash.runePull.stop from her. */
+/** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, till its rune is leash.runePull.stop from her. */
 export function pullRune(g: Game, t: Tuning, fixed: number): void {
-  const P = t.leash.runePull, w = g.witch, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time);
+  const P = t.leash.runePull, w = g.witch, south = t.leash.restAbove ?? 0, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time, undefined, south);
   if (!c || c.fight?.target) return;
-  const dx = w.x - c.x, dz = w.z - c.z, d = Math.hypot(dx, dz);
+  const dx = w.x - c.x, dz = w.z - south - c.z, d = Math.hypot(dx, dz); // (it walks so its rune, south of it, comes to her)
   if (d <= P.stop) return;
   const step = Math.min(d - P.stop, P.speed * fixed * g.timeScale);
   c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = c.x; c.tz = c.z;
