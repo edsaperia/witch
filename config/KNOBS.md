@@ -630,6 +630,23 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `spells.slingshot.radius` | number | 0 to … |
 | `spells.slingshot.max` | number | 0 to … |
 | `spells.gathering.range` | number | 0 to … |
+| `spells.bramble.range` | number | 0 to … |
+| `spells.mine.range` | number | 0 to … |
+| `spells.mine.stun` | number | 0 to … |
+| `spells.mine.every` | number | 0 to … |
+| `spells.lullaby.range` | number | 0 to … |
+| `spells.lullaby.time` | number | 0 to … |
+| `spells.lullaby.every` | number | 0 to … |
+| `spells.cyclone.radius` | number | 0 to … |
+| `spells.cyclone.time` | number | 0 to … |
+| `spells.cyclone.every` | number | 0 to … |
+| `spells.cyclone.spin` | number | 0 to … |
+| `spells.cyclone.lift` | number | 0 to … |
+| `spells.cyclone.fling` | number | 0 to … |
+| `spells.cyclone.flingTime` | number | 0 to … |
+| `spells.cyclone.stun` | number | 0 to … |
+| `spells.nursing.range` | number | 0 to … |
+| `spells.nursing.rate` | number | 0 to … |
 
 ### `trail`
 
