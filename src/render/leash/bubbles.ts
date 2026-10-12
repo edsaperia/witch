@@ -68,7 +68,8 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
     const Z = g.tuning.dreams.sleepy, time = g.clock.time;
     for (const { c } of near) {
       const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(lv.tops.get(c.id) ?? 1.5, 6) + 0.35 + bob; // (capped at 6 m: 4 before the creatures grew half again, Ed 2026-10-08)
-      placed(lv.v.set(c.x + Math.sin(time * 0.7 + c.id) * 0.15, y, c.z)).project(camera);
+      const hd = lv.heads.get(c.id); // (its puffs down to its head, Ed 2026-10-12)
+      placed(lv.v.set((hd?.x ?? c.x) + Math.sin(time * 0.7 + c.id) * 0.15, y, hd?.z ?? c.z)).project(camera);
       if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
       let el = lv.snoreEls[used];
       if (!el) { el = thoughtBubble(host, "snore"); lv.snoreEls.push(el); }
@@ -96,7 +97,8 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
     // legend's bubble sat on its back (Ed, 2026-10-08: "their speech bubble and the helper text obscure them").
     const head = lv.tops.get(c.id) ?? 2, y = head + 0.4;
     const B = legendBounds(lv, camera, c.x, c.z, head, lv.halfW.get(c.id) ?? 1.5, width, height);
-    placed(lv.v.set(c.x, y, c.z)).project(camera);
+    const hd = lv.heads.get(c.id); // (its puffs trailing down to its head, Ed 2026-10-12)
+    placed(lv.v.set(hd?.x ?? c.x, y, hd?.z ?? c.z)).project(camera);
     if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
     // Restless (#87: its area has none of its kind), the dream turns to a nightmare (Ed, 2026-10-05):
     // its face slightly sad at first, sadder, upset, then angry (dreams.nightmare), by turns with
@@ -353,8 +355,9 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
   }
   const c = g.creatures[talk.id];
   bc.style.setProperty("--px", `${bubblePx(c.level)}px`);
-  place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z);
-  place(bc, c.x, (lv.tops.get(c.id) ?? 1.2 + c.level * 0.8) + 0.3, c.z); // over its head, however big it is drawn (#47)
+  place(bw, w.x, witchHeight(w, g.tuning) + 2.2, w.z); // (its tail over her head, Ed 2026-10-12)
+  const hd = lv.heads.get(c.id); // (its tail over its head, Ed 2026-10-12: render/view/creatures.ts)
+  place(bc, hd?.x ?? c.x, (lv.tops.get(c.id) ?? 1.2 + c.level * 0.8) + 0.3, hd?.z ?? c.z); // over its head, however big it is drawn (#47)
   if (talk.refused) {
     // A legend: one unimpressed look, and nothing more.
     bw.classList.remove("on");
@@ -388,7 +391,8 @@ function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, he
   let used = 0;
   for (const { c } of list) {
     const head = lv.tops.get(c.id) ?? 2;
-    placed(lv.v.set(c.x, head + 0.4, c.z)).project(camera);
+    const hd = lv.heads.get(c.id);
+    placed(lv.v.set(hd?.x ?? c.x, head + 0.4, hd?.z ?? c.z)).project(camera);
     if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
     let el = lv.dreamEls[used];
     if (!el) { el = thoughtBubble(host, "dream"); lv.dreamEls.push(el); }

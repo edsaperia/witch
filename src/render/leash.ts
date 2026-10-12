@@ -117,6 +117,9 @@ export class LeashView {
   readonly tops = new Map<number, number>();
   /** Each creature's half-width as drawn (metres), with tops: its bounds, which a legend's dream bubble and circle panel keep clear of. */
   readonly halfW = new Map<number, number>();
+  /** Where each creature's head is drawn on the ground plane (its frame's head point, mirrored with it): bubbles point their tails
+   *  at it (Ed, 2026-10-12). */
+  readonly heads = new Map<number, { x: number; z: number }>();
   /** When she last hit a party legend's edge (its boing played). */
   boingAt = -Infinity;
 

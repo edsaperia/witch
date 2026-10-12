@@ -10,11 +10,11 @@ import { overrideFor, poseName, type Override } from "./overrides";
 import { entTreehouseSprites, propSprites, soundsystemGenSprites, soundsystemSprites, treehouseSprites, witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
-export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
+export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas; /** A creature's head (art pixels from its top left): bubbles point their tails at it (headPoint). */ head?: [number, number] }
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
 /** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
  *  drawn pixel rather than on its box. */
-export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean }
+export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean; /** A creature's head, art pixels from its top left (Baked.head). */ head?: [number, number] }
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
@@ -145,6 +145,7 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
     const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
     if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
+    b.head = headPoint(sp.m, b.w, b.h);
     out.push(b);
   }
   return out;
@@ -174,6 +175,20 @@ function eyeMask(m: ArrayLike<number>): Uint8Array | undefined {
   let any = false;
   for (let i = 0; i < m.length; i++) if (EYES.has(m[i])) { out[i] = 1; any = true; }
   return any ? out : undefined;
+}
+/** Where a creature's head is in its sprite (Ed, 2026-10-12: "can we have the tail of bubbles point at creatures' heads?"): the
+ *  middle of its eyes where they show, else the middle of its topmost few rows (turned away, its head's back and ears; asleep,
+ *  the top of the curl), in art pixels from its top left. */
+export function headPoint(m: ArrayLike<number>, w: number, h: number): [number, number] | undefined {
+  let n = 0, sx = 0, sy = 0, top = -1;
+  for (let i = 0; i < w * h; i++) { if (EYES.has(m[i])) { n++; sx += i % w; sy += Math.floor(i / w); } if (top < 0 && m[i]) top = Math.floor(i / w); }
+  if (n) return [sx / n + 0.5, sy / n + 0.5];
+  if (top < 0) return undefined;
+  let bottom = h - 1;
+  while (bottom > top && ![...Array(w).keys()].some(x => m[bottom * w + x])) bottom--;
+  const rows = Math.max(2, Math.round((bottom - top + 1) * 0.18));
+  for (let y = top; y < Math.min(h, top + rows); y++) for (let x = 0; x < w; x++) if (m[y * w + x]) { n++; sx += x; }
+  return [sx / n + 0.5, top + rows / 2];
 }
 /** Towards: frames 0 to 4n - 1 (level x n + walk frame, n its walk's frames: 2 unless it has its own cycle); away: the
  *  same, from 4n. */
@@ -210,7 +225,7 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
     // Its lowest drawn row (the sprite shader drops alpha under a half).
     let pad = 0;
     bottom: for (let row = s.h - 1; row >= 0; row--, pad++) for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) break bottom;
-    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(s.S ? { masked: true } : {}) };
+    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) };
   });
   return { albedo, normal, width: W, height: H, frames };
 }
@@ -538,7 +553,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     for (let f = 0; f < 2; f++) {
       const { sp, colours } = Art.legendForm(job.species, job.style, { frame: f }) as { sp: { origin?: number[]; h: number; w: number }; colours: unknown };
-      sprites.push(Art.bake(sp, colours, job.style, "none", mk) as Baked);
+      const b = Art.bake(sp, colours, job.style, "none", mk) as Baked; b.head = headPoint((sp as unknown as { m: ArrayLike<number> }).m, b.w, b.h); sprites.push(b);
       ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
     }
     return { px: packPixels(sprites, 2048), ground, centre };
@@ -550,7 +565,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const gear = { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true } as unknown as null;
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
       const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
-      sprites.push(Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked);
+      const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
       ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
     }
     return { px: packPixels(sprites, 2048), ground, centre };
