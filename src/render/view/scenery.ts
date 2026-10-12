@@ -301,7 +301,9 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     const atlases: Record<string, Atlas | undefined> = { decor: decor?.atlas, relics: ra?.atlas, scenes: sa?.atlas };
     for (const [key, list] of casts) {
       let b = v.trunkShadowBatches.get(key);
-      if (!b) { const a = atlases[key]; if (!a) continue; b = new TrunkShadowBatch(a); v.trunkShadowBatches.set(key, b); v.scene.add(...b.meshes); }
+      const a = atlases[key];
+      if (b && b.atlas !== a) { v.scene.remove(...b.meshes); b.dispose(); b = undefined; } // (its art rebaked: a new atlas)
+      if (!b) { if (!a) continue; b = new TrunkShadowBatch(a); v.trunkShadowBatches.set(key, b); v.scene.add(...b.meshes); }
       b.set(list);
     }
   }

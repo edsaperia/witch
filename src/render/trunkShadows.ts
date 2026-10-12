@@ -117,7 +117,7 @@ export class TrunkShadowBatch {
   private uv!: THREE.InstancedBufferAttribute;
   private pad!: THREE.InstancedBufferAttribute;
 
-  constructor(atlas: Atlas) {
+  constructor(readonly atlas: Atlas) {
     const quad = new THREE.PlaneGeometry(1, 1, 1, 8).rotateX(-Math.PI / 2); // (divided along, to lie on the slopes)
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));

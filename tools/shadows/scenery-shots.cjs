@@ -1,7 +1,7 @@
 // Scenery's shadows from her glow (Ed, 2026-10-12: "Scenery (temples etc) should also cast them", "Runestones and soundsystems should
 // also cast shadows": render/view/scenery.ts, render/view/home.ts, render/soundsystemGen.ts): the built game (DIST, default dist/) at
 // 1280×800, stepped at a fixed 1/60 s, her on foot just east of a scene's piece, a set piece, a decor piece, a runestone and a
-// soundsystem (the first wave brought on), each shot with them (<name>-on.png) and without (<name>-off.png, shadows.trunks.scenery off).
+// soundsystem (the first wave brought on), each shot with them (<name>-on.png) and without (<name>-off.png, shadows.trunks.scenery off), and where they all lie (<name>-debug.png, magenta).
 // Fails on a page error.
 //   npm run build && node tools/shadows/scenery-shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -40,12 +40,12 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       return s;
     });
     for (const s of out.subjects) {
-      for (const on of [true, false]) {
-        await page.evaluate(([s, on]) => { const g = window.witch.game; g.tuning.shadows.trunks.scenery = on; g.witch = { ...g.witch, x: s.x + 80, z: s.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, [s, on]);
+      for (const on of [true, false, "debug"]) {
+        await page.evaluate(([s, on]) => { const g = window.witch.game; g.tuning.shadows.trunks.scenery = !!on; g.tuning.shadows.trunks.mode = on === "debug" ? "debug" : "soft"; g.witch = { ...g.witch, x: s.x + 80, z: s.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, [s, on]);
         await step(20);
         await page.evaluate(s => { const g = window.witch.game; g.witch = { ...g.witch, x: s.x + s.r + 5, z: s.z + 1, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, s);
         await step(90);
-        await page.screenshot({ path: path.join(outDir, `${s.name}-${on ? "on" : "off"}.png`) });
+        await page.screenshot({ path: path.join(outDir, `${s.name}-${on === "debug" ? "debug" : on ? "on" : "off"}.png`) });
       }
     }
   } finally { await browser.close(); server.close(); }
