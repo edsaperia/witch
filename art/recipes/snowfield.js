@@ -1,0 +1,19 @@
+// The snowfield (the north's cold island, phase 3): an area type as a recipe (art/recipes.js says what each field is). Deep snow
+// with grass and needles poking through, snow-laden firs in small stands and dwarf birch, a ring of old stones half buried in a
+// drift; the arctic fox its creature.
+export const SNOWFIELD = {
+  id: "snowfield", name: "Snowfield", creature: "arcticfox", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86], snow: 1,
+  text: { floor: "deep snow, grass and needles poking through", wall: "drifts and frozen stones", small: "snowy tussocks", big: "snow-laden firs and dwarf birch", set: "a ring of old stones half buried in a drift" },
+  wall: [["stones", {}]], small: [["grass", { h: .9 }]],
+  big: [["tree", { type: "fir", scale: .95 }], ["tree", { type: "birch", minor: true, scale: .6 }], ["boulder", { sparse: .1 }]],
+  pathKinds: ["footpath"],
+  setPiece: ["ring", "a ring of old stones half buried in a drift", 1, { member: "stone", centre: "stone", fallen: 2 }],
+  layout: {
+    pattern: "stands", density: .3, clump: .8, glades: { count: 2, size: [20, 30] },
+    heightMix: { sapling: .25, mature: .5, tall: .25, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
+    terrain: ["mounds", "hollows"], decor: { rate: .2, ruins: .1, rocks: .55, freak: .05, lake: .25, modern: .05 },
+    feel: "A wide white quiet: deep snow between small stands of snow-laden firs, dwarf birch bent low, old stones showing through the drifts.",
+  },
+  flora: { species: [["fir", .6], ["pine", .25], ["birch", .15]], palette: { sat: .6, val: .8 } },
+  settings: { treeDensity: .35, groundCover: { density: .45, kinds: ["blades", "needles"] } },
+};

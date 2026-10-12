@@ -59,6 +59,8 @@ export const SIGILS = {
   wolf: [...pair(L([.4, .3], [.22, .07], [.17, .44], [.32, .7], [.5, .92])), L([.4, .3], [.6, .3]), ...pair(L([.31, .46], [.42, .5])), D(.5, .82)],
   // big triangle ears, a cheek ruff flaring wide, a narrow pointed snout
   fox: [...pair(L([.4, .3], [.15, .07], [.13, .44], [.05, .54], [.3, .62], [.5, .88]), L([.2, .2], [.26, .32])), L([.4, .3], [.6, .3]), ...pair(D(.37, .5)), D(.5, .8)],
+  // the snowfield's arctic fox: the fox's face, rounder, its short ears rounded against the cold, a fluff of cheek ruff
+  arcticfox: [...pair(L([.4, .34], [.3, .17], [.19, .19], [.15, .44], [.07, .54], [.3, .62], [.5, .86]), L([.16, .5], [.1, .62])), L([.4, .34], [.6, .34]), ...pair(D(.37, .5)), D(.5, .78)],
   // the striped face: a round head, two stripes running from the snout over the eyes, little round ears
   badger: [E(.5, .54, .34, .38), ...pair(bow([.45, .88], [.38, .17], .1), A(.2, .26, .07, 110, 330)), ...pair(D(.32, .52)), D(.5, .82)],
   // tusks curling up beside a round snout with nostrils, pointed ears, a bristly crest
@@ -97,6 +99,8 @@ export const SIGILS = {
   snail: [spiral(.44, .5, .03, .28, 2.1, -90), L([.08, .82], [.82, .82], [.9, .74]), L([.82, .8], [.78, .52]), L([.86, .76], [.92, .5]), D(.78, .52), D(.92, .5)],
   // great horns curling round beside a long face
   ram: [...pair(L([.4, .34], [.41, .74], [.5, .86]), spiral(.24, .38, .05, .19, 1.15, 330), D(.44, .52)), L([.4, .34], [.6, .34])],
+  // the crags' ibex: a long goat's face, great horns sweeping up and back in knobbled arcs, a beard
+  ibex: [...pair(L([.44, .34], [.39, .2], [.3, .09], [.17, .05]), L([.4, .19], [.35, .21]), L([.33, .11], [.29, .14]), L([.44, .34], [.37, .44], [.43, .72], [.5, .78]), D(.41, .5)), L([.44, .34], [.56, .34]), L([.5, .8], [.5, .95])],
   // a segmented oval shell seen from above, its feelers and little legs
   woodlouse: [E(.5, .55, .24, .36), ...[.36, .48, .6, .72].map(y => L([.5 - Math.sqrt(1 - ((y - .55) / .36) ** 2) * .24, y], [.5 + Math.sqrt(1 - ((y - .55) / .36) ** 2) * .24, y])), ...pair(L([.43, .2], [.24, .06]), L([.27, .44], [.14, .42]), L([.26, .58], [.12, .6]), L([.29, .72], [.16, .78]))],
   // coiled round in a ring, its head raised in the middle, a forked tongue
@@ -329,7 +333,7 @@ export function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx
 export const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-export const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", worldTree: "mint" };
+export const SIGIL_NEON = { arcticfox: "cyan", ibex: "orange", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", worldTree: "mint" };
 export const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
