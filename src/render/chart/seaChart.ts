@@ -11,7 +11,7 @@
 // the page (app/chartPage.ts, from app/chartSave.ts).
 import * as THREE from "three";
 import { ISLAND_LOOK, islandPoints } from "../../../art/islands.js";
-import { legendSigilMask, sigilArrival, sigilColour } from "../../../art/sigils.js";
+import { sigilArrival, sigilColour } from "../../../art/sigils.js";
 import { Post, type PostTuning } from "../post";
 
 /** The chart's disc: radius 1 on the flat chart is this many units here. */
@@ -27,11 +27,11 @@ const RELIEF = 5;
 const CHART_PIXEL = 2;
 /** A sigil's width against its island's reach (Ed: "the sigils should be larger and more detailed"). */
 const SIGIL_SHARE = 1.25;
-/** A sigil's art by how many pixels it spans on screen (Ed: "we have detailed sigil art"; art/sigils.js): the plain glyph while
- *  small (it reads down to about 12 px), the legend circle with the animal's detail from 80 px, the full circle with its runes
- *  from 150 px (legendTier); each texture about as many pixels as it shows. */
+/** A sigil's art by how many pixels it spans on screen: each texture about as many pixels as it shows, so it stays crisp. The
+ *  plain glyph at every size for now, no circle round it (Ed, 2026-10-12: "we don't need the circles around the rune"); the
+ *  animal's own detailed versions come with their art. */
 const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 80, px: 128 }, { from: 150, px: 256 }];
-/** When the chart opens, a sigil spans this many art pixels (the legend circle's), and at the furthest no fewer than this. */
+/** When the chart opens, a sigil spans this many art pixels, and at the furthest no fewer than this. */
 const SIGIL_OPEN_PX = 96, SIGIL_MIN_PX = 16;
 /** A typical sailable island's sigil (units), for the zoom's limits. */
 const SIGIL_TYPICAL = REACH[2] * SIGIL_SHARE;
@@ -145,16 +145,6 @@ function sigilTexture(id: string, px = 24): THREE.Texture {
   const ink = sigilArrival(id, px), data = new Uint8Array(px * px * 4);
   for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const i = y * px + x, o = ((px - 1 - y) * px + x) * 4; if (ink[i] < Infinity) data.set([255, 255, 255, 255], o); }
   const t = new THREE.DataTexture(data, px, px); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.needsUpdate = true;
-  return t;
-}
-/** A sigil's legend circle (art/sigils.js legendSigilMask: the animal inside its ring, with its detail from tier 1 and its
- *  runes from tier 2) as a white texture, `px` across. Home's world tree has no circle: its plain glyph, bigger. */
-function legendTexture(id: string, px: number, tier: number): THREE.Texture {
-  let m: Float32Array;
-  try { m = legendSigilMask(id, px, { tier, minPx: 1.5 }); } catch { return sigilTexture(id, px); }
-  const data = new Uint8Array(px * px * 4);
-  for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const v = Math.round(m[y * px + x] * 255), o = ((px - 1 - y) * px + x) * 4; data.set([255, 255, 255, v], o); }
-  const t = new THREE.DataTexture(data, px, px); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
   return t;
 }
 /** A soft round glow (for the sigils' halos and the selection ring's light). */
@@ -332,7 +322,7 @@ export class SeaChart {
   private sigilArt(id: string, tier: number): THREE.Texture {
     const key = `${id}|${tier}`;
     let t = this.sigilArts.get(key);
-    if (!t) { t = tier === 0 ? sigilTexture(id, SIGIL_TIERS[0].px) : legendTexture(id, SIGIL_TIERS[tier].px, tier); this.sigilArts.set(key, t); }
+    if (!t) { t = sigilTexture(id, SIGIL_TIERS[tier].px); this.sigilArts.set(key, t); }
     return t;
   }
 
@@ -419,7 +409,7 @@ export class SeaChart {
       const pulse = 0.85 + 0.15 * Math.sin(time * 1.6 + i.x * 0.1), chosen = i.d.id === this.selected;
       if (i.sigil) {
         const m = i.sigil.material as THREE.MeshBasicMaterial;
-        // its art by how big it shows: the plain glyph while small, the legend circle (and its runes) as it grows
+        // its art by how big it shows (a texture about as many pixels as it spans)
         const px = (i.size! * this.h) / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2) * this.camera.position.distanceTo(tmp.set(i.x, i.top, i.z)));
         m.opacity = pulse * (px > 220 ? Math.max(0.4, 1 - (px - 220) / 400) : 1); // (close in, the land shows through)
         let tier = 0; for (let t = 1; t < SIGIL_TIERS.length; t++) if (px >= SIGIL_TIERS[t].from) tier = t;
