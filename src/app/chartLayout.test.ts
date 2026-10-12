@@ -12,7 +12,7 @@ import { TUNING } from "../rules/tuning";
 const reach = (k: string) => Math.max(...islandCoast(coastSpec(islandOf(k)!), TUNING.islands.coast).radii) * 0.48 * BOX;
 
 describe("the sea chart's layout", () => {
-  it("packs the islands over the whole disc: home in the middle, each near its bearing, each phase further out, each in its own patch", () => {
+  it("packs the islands over the whole disc: home in the middle, each near its bearing, later phases further out, each in its own patch", () => {
     for (const world of [0, 1, 2]) {
       expect(islandAt("home", world)).toEqual({ x: 0, y: 0 });
       expect(islandAt("dragon", world)).toBeNull();
@@ -27,7 +27,7 @@ describe("the sea chart's layout", () => {
       drift.sort((a, b) => a - b);
       expect(drift[drift.length >> 1]).toBeLessThan(12); // (most near their bearings: its biome's direction)
       expect(drift[drift.length - 1]).toBeLessThan(60);
-      for (let p = 2; p <= 5; p++) expect(sum[p] / count[p], `phase ${p}`).toBeGreaterThan(sum[p - 1] / count[p - 1] + 0.05); // (each phase further out, on the whole: their edges may mingle)
+      for (let p = 3; p <= 5; p++) expect(sum[p] / count[p], `phase ${p}`).toBeGreaterThan(sum[p - 2] / count[p - 2] + 0.05); // (later phases further out, loosely: neighbouring phases mingle, Ed's v3)
       // its own patch: every island's middle is in none of the others'
       for (const [a, pa] of W.islands) for (const [b, pb] of W.islands) {
         if (a === b) continue;

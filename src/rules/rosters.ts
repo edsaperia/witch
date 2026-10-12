@@ -24,7 +24,7 @@ export const playableIsland = (island: string): boolean => island === "home" || 
 
 /** An island: its legend kind ("home" for home), phase (0 home), bearing (degrees from north), size (areas the waves reach),
  *  seed (its shape and areas) and roster (each kind with how many areas it has, adding up to size). */
-export interface Island { kind: string; phase: number; bearing: number; size: number; seed: number; roster: { kind: string; areas: number }[]; /** its patch on the chart (rules/archipelago.ts): how far it may reach from its home's middle (m) by angle */ patch?: Float32Array }
+export interface Island { kind: string; phase: number; bearing: number; size: number; seed: number; roster: { kind: string; areas: number }[]; /** its patch on the chart (rules/archipelago.ts): how far it may reach from its home's middle (m) by angle */ patch?: Float32Array; /** and how far its own shape is turned there (radians) */ turn?: number }
 
 /** Areas a phase's islands have (journey.md: 10 / 20 / 30 / 40 / 50). */
 export const sizeOfPhase = (p: number) => 10 * Math.max(1, p);
@@ -56,7 +56,7 @@ export function islandOf(kind: string, world = 0): Island | null {
   const info = KINDS[kind];
   if (!info) return null;
   const phase = info.phase + 1, size = sizeOfPhase(phase), bearing = bearingOf(kind, world), seed = islandSeed(phase, bearing, world);
-  return { kind, phase, bearing, size, seed, roster: rosterOf(kind, phase, bearing, size, seed), patch: worldOf(world).islands.get(kind)?.patch };
+  return { kind, phase, bearing, size, seed, roster: rosterOf(kind, phase, bearing, size, seed), patch: worldOf(world).islands.get(kind)?.patch, turn: worldOf(world).islands.get(kind)?.turn };
 }
 
 /** The world's archipelago (rules/archipelago.ts): every island's place on the chart and its patch. */
@@ -81,7 +81,7 @@ export function homeIsland(world = 0, known: readonly string[] = homeKinds(), si
   // (at least `size` areas: past one each, the kinds again in turn, the old ?island=20 home)
   const counts = new Map<string, number>(), n = Math.max(size, known.length);
   for (let i = 0; i < n; i++) { const k = known[i % known.length]; counts.set(k, (counts.get(k) ?? 0) + 1); }
-  return { kind: "home", phase: 0, bearing: 0, size: n, seed: islandSeed(0, 0, world), roster: [...counts].map(([kind, areas]) => ({ kind, areas })), patch: worldOf(world).islands.get("home")?.patch };
+  return { kind: "home", phase: 0, bearing: 0, size: n, seed: islandSeed(0, 0, world), roster: [...counts].map(([kind, areas]) => ({ kind, areas })), patch: worldOf(world).islands.get("home")?.patch, turn: worldOf(world).islands.get("home")?.turn };
 }
 
 /** Kind K's island's roster (the rule above), seeded. */
