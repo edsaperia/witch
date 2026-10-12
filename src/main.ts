@@ -1,6 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
-import { openChart } from "./ui/chartOverlay";
+import { chartOpen, openChart } from "./ui/chartOverlay";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -288,6 +288,8 @@ document.getElementById("again")?.addEventListener("click", () => location.reloa
 document.getElementById("chart-open")?.addEventListener("click", () => { location.href = "chart.html"; }); // (the sea chart: Ed, 2026-10-11: after a loss, replay the island or pick another)
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
+/** Controls with nothing pressed or held (the aim left where it is). */
+const stillControls = <T extends object>(c: T): T => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, typeof v === "boolean" ? false : typeof v === "number" ? 0 : v])) as T;
 function frame(now: number): void {
   requestAnimationFrame(frame);
   if (loop.manual) return;
@@ -296,7 +298,8 @@ function frame(now: number): void {
   const work0 = performance.now();
   frameStats.frame(dt * 1000);
   freeze.pollPad();
-  const human = input.read();
+  // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
+  const human = chartOpen() ? stillControls(input.read()) : input.read();
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
@@ -317,7 +320,7 @@ function frame(now: number): void {
     const W = tuning.map?.world ?? 0, save = loadSave();
     if (save.world === W) storeSave(sailNight(save, tuning.map?.island ?? "", !wavesOver(game) && !chartRecorded && !overShown)); // (in the campaign's world only, as nightOver)
     location.href = href;
-  });
+  }, new URLSearchParams(location.search).has("world") ? tuning.map?.world : undefined);
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
   // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart
