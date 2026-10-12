@@ -7398,6 +7398,13 @@ function setDown(t) { const e = Math.min(1, Math.max(0, t)), drop = Math.min(1, 
 
 const SIGIL_IDS = SPECIES.map(s => s.id);
 
+// ---- the detailed sigil's strokes (art/sigilDetail.js) ----
+// A sigil's own strokes as polylines in its unit box (no circle, no frame): its plain strokes, and from tier 1 the animal's
+// extra detail (LEGEND_DETAIL, the same strokes the legend circle carries, here at full size).
+function sigilDetailStrokes(id, tier = 2) {
+  return [...(SIGILS[id] || []), ...(tier >= 1 && LEGEND_DETAIL[id] || [])].map(polyline);
+}
+
 
 const prCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 const prUnit = v => v3.mul(v, 1 / Math.hypot(...v));
@@ -8684,59 +8691,95 @@ const STONE_GLOW = { cyan: [[70, 230, 255], [200, 250, 255]], violet: [[190, 100
 // it: a bright neon inlay (glowing, recoloured to the sigil's neon) in a dark carved groove (its shadow side, down and right, the
 // moon being up and left), so it reads by day as a cut line and by night as a lit one; the faint glow is the inlay's own bloom.
 const FACE = M.GLINT; // a stand-in for the face's pixels while the stone renders
-function carveSigil(sp, sigil) {
+// A sprite mirrored left to right in place, its normals kept (lit as before, as the game lights a mirrored sprite's face).
+function mirrorSprite(sp) {
+  for (let y = 0; y < sp.h; y++) for (let x = 0, r = y * sp.w; x < sp.w >> 1; x++) {
+    const i = r + x, j = r + sp.w - 1 - x;
+    [sp.m[i], sp.m[j]] = [sp.m[j], sp.m[i]];
+    [sp.g[i], sp.g[j]] = [sp.g[j], sp.g[i]];
+    for (let c = 0; c < 3; c++) [sp.n[i * 3 + c], sp.n[j * 3 + c]] = [sp.n[j * 3 + c], sp.n[i * 3 + c]];
+  }
+}
+function carveSigil(sp, sigil, { wear = 0, seed = 0 } = {}) { // wear: the share of the inlay worn dim (a variation's: the glyph's shape kept)
   let x0 = sp.w, y0 = sp.h, x1 = -1, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === FACE) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); sp.recolour(x, y, M.STONE); }
   if (x1 < 0) return;
   const n = Math.max(9, Math.round(Math.min(x1 - x0 + 1, y1 - y0 + 1) * .62)), g = sigilGlyph(sigil, n), ox = Math.round((x0 + x1 + 1 - n) / 2), oy = Math.round((y0 + y1 + 1 - n) / 2);
   const ink = (x, y) => x >= 0 && y >= 0 && x < n && y < n && g.m[y * n + x];
   for (let y = -1; y <= n; y++) for (let x = -1; x <= n; x++) {
-    if (ink(x, y)) sp.recolour(ox + x, oy + y, M.RUNE);
+    if (ink(x, y)) sp.recolour(ox + x, oy + y, wear && hash2(x, y, 41 + seed) < wear ? M.MAGIC : M.RUNE);
     else if (ink(x - 1, y) || ink(x, y - 1) || ink(x - 1, y - 1)) sp.recolour(ox + x, oy + y, M.LINE); // the groove's shadow side
     else if (ink(x + 1, y) || ink(x, y + 1) || ink(x + 1, y + 1)) sp.recolour(ox + x, oy + y, M.MAGIC); // its lit rim (up and left), catching the inlay's light: a dim glow, so the carving reads from mid-distance at night (Ed's note #1)
   }
 }
 // The ring stones' three dots (dots: true): heights up the slab and radii, bass to tweeter.
 const DOTS = [[.4, .062], [.56, .05], [.7, .04]];
-function magicStone(variant, sigil, size = 1, width = 1, { yaw, rune, dots } = {}) { // size: baked that much bigger (the game's runeMarkers.scale), never stretched; width: the slab that much narrower or wider, as carved (the dancefloor ring's stones: half; Ed, 2026-10-08)
+// Runestone variations (Ed, 2026-10-12: "We should have 20 mild variations on runestones so that they don't all look identical. They
+// can also be flipped"): a seeded form, the same slab and size class (so it reads at once as a runestone), its height and lean, its
+// worn top and chips, its cracks, moss and lichen, where the carving sits and how worn it is, the stones and grass at its foot.
+// mirror: the stone's picture mirrored (as a mirrored scene is, its light kept on its face), the carving stamped on after, so never
+// mirror-written.
+const RUNESTONE_FORMS = 20;
+function runestoneForm(v, mirror = false) {
+  const r = rng(9301 + v * 7919), u = (a, b) => a + r() * (b - a);
+  const cracks = [];
+  for (let i = 0, n = 1 + Math.floor(r() * 3); i < n; i++) { // from the top or the foot, a few jagged steps
+    const top = r() < .6, x0 = u(-.22, .22), y0 = top ? u(.8, .92) : u(.03, .1), pts = [[x0, y0]];
+    for (let j = 0, m = 2 + Math.floor(r() * 3); j < m; j++) { const [x, y] = pts[pts.length - 1]; pts.push([Math.max(-.25, Math.min(.25, x + u(-.07, .07))), y + (top ? -1 : 1) * u(.07, .13)]); }
+    cracks.push(pts);
+  }
+  const chips = Array.from({ length: Math.floor(r() * 3) }, () => [(r() < .5 ? -1 : 1) * u(.18, .3), u(.75, .98), u(.04, .08)]); // [across, height share, radius]
+  const patches = Array.from({ length: Math.floor(r() * 3) }, () => [u(-.25, .25), r() < .5 ? u(.02, .25) : u(.78, .95), u(.04, .09)]); // moss and lichen on the slab
+  const stones = Array.from({ length: Math.floor(r() * 4) }, () => [(r() < .5 ? -1 : 1) * u(.28, .45), u(-.05, .2), u(.04, .08)]); // stones at its foot
+  return { h: u(.92, 1.14), lean: u(-.07, .07), topSide: r() < .5 ? -1 : 1, topDepth: u(-.03, .05), cracks, chips, patches, stones,
+    lichen: u(.15, .45), footMoss: u(.35, .7), carveDx: u(-.025, .025), carveDy: u(-.035, .035), wear: r() < .4 ? u(.05, .25) : 0, grass: 5 + Math.floor(r() * 10), mirror, seed: v };
+}
+function magicStone(variant, sigil, size = 1, width = 1, { yaw, rune, dots, form } = {}) { // size: baked that much bigger (the game's runeMarkers.scale), never stretched; width: the slab that much narrower or wider, as carved (the dancefloor ring's stones: half; Ed, 2026-10-08)
   // yaw: degrees its face is turned from facing us, as the dancefloor speakers are drawn (Ed, 2026-10-08: the ring's stones "face
   // inwards, like the ring speakers do"); every yaw at one scale, with its ground point. rune: which rune glyph to carve (default: its glow's).
-  const m = new Model({ blend: .04 }), k = Math.max(0, Object.keys(STONE_GLOW).indexOf(variant)), glow = Array.isArray(variant) ? [variant, variant.map(c => Math.round(c + (255 - c) * .7))] : STONE_GLOW[variant], fz = .08, A = yaw === undefined ? .4 : 0; // A: turned so its face is nearly square to the viewer (or square to the yaw)
+  const F = form, m = new Model({ blend: .04 }), k = Math.max(0, Object.keys(STONE_GLOW).indexOf(variant)), glow = Array.isArray(variant) ? [variant, variant.map(c => Math.round(c + (255 - c) * .7))] : STONE_GLOW[variant], fz = .08, A = yaw === undefined ? .4 : 0; // A: turned so its face is nearly square to the viewer (or square to the yaw)
   // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
-  const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
+  const az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ax0 = [Math.cos(A), 0, -Math.sin(A)], ay0 = v3.norm(v3.cross(az, ax0)), L = F?.lean ?? 0; // (a variation's lean: turned in its own face)
+  const ax = v3.add(v3.mul(ax0, Math.cos(L)), v3.mul(ay0, Math.sin(L))), ay = v3.sub(v3.mul(ay0, Math.cos(L)), v3.mul(ax0, Math.sin(L))), hs = F?.h ?? 1, hh = .46 * hs, C = F ? [ay[0] * hh, hh, 0] : [0, .46, 0];
   // two jagged cracks: one down from the worn top, one up from the foot
-  const cracks = [[[.2 - k * .05, .92], [.14, .8], [.19, .7], [.12, .58]], [[-.22 + k * .03, .05], [-.17, .16], [-.21, .25]]].map(c => c.map(([x, y]) => [x * width, y]));
+  const cracks = (F?.cracks ?? [[[.2 - k * .05, .92], [.14, .8], [.19, .7], [.12, .58]], [[-.22 + k * .03, .05], [-.17, .16], [-.21, .25]]]).map(c => c.map(([x, y]) => [x * width, y * hs]));
   const crack = (x, y) => cracks.some(c => c.some((a, i) => { const b = c[i + 1]; if (!b) return false;
     const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)));
     return Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t) < .014; }));
   const face = q => {
-    const d = v3.sub(q, C), p = [v3.dot(d, ax), v3.dot(d, ay) + .46, v3.dot(d, az)], px = p[0] / width; // in the slab's own axes (px: across, as on a full-width stone)
+    const d = v3.sub(q, C), p = [v3.dot(d, ax), v3.dot(d, ay) + hh, v3.dot(d, az)], px = p[0] / width; // in the slab's own axes (px: across, as on a full-width stone)
     if (p[2] > fz - .02) { // the rune, carved into the face
       const u = (px + .17) / .34, v = (.8 - p[1]) / .5;
       if (dots) { // three glowing dots stacked up the face, the speaker's bass, mid and tweeter to come (Ed, 2026-10-08), light set into the
         // stone: a bright core, the cyan, and a dim cyan glow round it (Ed, 2026-10-09: no ink ring; docs/STYLE.md §3)
         for (const [y, r] of DOTS) { const d = Math.hypot(p[0], p[1] - y); if (d < r * .55) return M.MAGIC2; if (d < r) return M.RUNE; if (d < r + .018) return M.MAGIC; }
-      } else if (sigil) { const su = (px + .27) / .54, sv = (.8 - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && !crack(p[0], p[1])) return FACE; } // (the sigil is stamped on after, as pixels)
+      } else if (sigil) { const su = (px + .27 - (F?.carveDx ?? 0)) / .54, sv = (.8 * hs + (F?.carveDy ?? 0) - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && !crack(p[0], p[1])) return FACE; } // (the sigil is stamped on after, as pixels)
       else if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, rune ?? k + 1, .1)) return M.RUNE;
     }
     if (crack(p[0], p[1])) return M.STONED; // cracks
-    if (p[1] > .86 && hash2(Math.floor(px * 30), Math.floor(p[2] * 30), 3) < .3) return M.MOSS;   // lichen on the weathered top
-    if (p[1] < .12 && hash2(Math.floor(px * 35), Math.floor(p[1] * 35) + Math.floor(p[2] * 35) * 7, 5) < .55) return M.MOSS;
+    if (p[1] > .86 * hs && hash2(Math.floor(px * 30), Math.floor(p[2] * 30), 3 + (F?.seed ?? 0)) < (F?.lichen ?? .3)) return M.MOSS;   // lichen on the weathered top
+    if (p[1] < .12 && hash2(Math.floor(px * 35), Math.floor(p[1] * 35) + Math.floor(p[2] * 35) * 7, 5 + (F?.seed ?? 0)) < (F?.footMoss ?? .55)) return M.MOSS;
+    if (F) for (const [x, y, r] of F.patches) if (Math.hypot(px - x, (p[1] - y * hh * 2) * 1.3) < r * (.75 + .5 * hash2(Math.floor(px * 40), Math.floor(p[1] * 40), 7))) return M.MOSS; // a variation's patches
     return undefined;
   };
-  m.box(C, [.28 * width, .46, fz], M.STONE, { group: 1, axes: [ax, ay, az], round: .06 * Math.min(1, width * 1.4), paint: face });
-  // the weathered top: worn down to one side
-  m.box(v3.add(v3.add(C, v3.mul(ay, .53)), v3.mul(ax, .2 * width)), [.3 * width, .12, .2], M.STONE, { group: 1, dir: v3.add(ax, v3.mul(ay, .35)), up: ay, cut: true, paint: face });
+  m.box(C, [.28 * width, hh, fz], M.STONE, { group: 1, axes: [ax, ay, az], round: .06 * Math.min(1, width * 1.4), paint: face });
+  // the weathered top: worn down to one side (a variation's side and depth)
+  const ts = F?.topSide ?? 1;
+  m.box(v3.add(v3.add(C, v3.mul(ay, hh + .07 - (F?.topDepth ?? 0))), v3.mul(ax, ts * .2 * width)), [.3 * width, .12, .2], M.STONE, { group: 1, dir: v3.add(v3.mul(ax, ts), v3.mul(ay, .35)), up: ay, cut: true, paint: face });
+  if (F) for (const [x, y, r] of F.chips) m.ell(v3.add(v3.add(C, v3.mul(ax, x * width)), v3.mul(ay, (y * 2 - 1) * hh)), [r, r, r * 1.6], M.STONE, { group: 1, cut: true, paint: face }); // chips off its edges
   // moss and grass at its foot
   for (const [x, z, r] of [[-.24, .14, .08], [.2, .02, .07], [.0, .12, .07]]) m.ell([x * width, .015, z], [r * Math.sqrt(width), r * .4, r], M.MOSS, { group: 2 });
-  for (let i = 0; i < 9; i++) { const x = (-.3 + i * .07) * width, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
+  if (F) for (const [x, z, r] of F.stones) m.ell([x * width, r * .45, z], [r * 1.2, r * .7, r], M.STONE, { group: 3, rough: .01, paint: q => q[1] > r * .7 ? M.MOSS : undefined }); // stones at its foot
+  const ng = F?.grass ?? 9, gs = F ? .6 / Math.max(1, ng - 1) : .07;
+  for (let i = 0; i < ng; i++) { const x = (-.3 + i * gs) * width, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
   const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: glow[0], [M.MAGIC2]: glow[1], [M.MAGIC]: glow[0].map(c => Math.round(c * .5)), [M.LINE]: [40, 40, 50] };
   const H = Math.round(44 * size), R = yaw === undefined ? render(m, { height: H })
     : render(m, { scale: render(m, { height: H, yaw: 15 * Math.PI / 180, measure: true }).s, yaw: yaw * Math.PI / 180 }), sp = R.sp; // (every yaw at the scale of the speakers' nearest angle)
   const origin = yaw === undefined ? null : (([ox, oy]) => ({ x: +ox.toFixed(1), y: +oy.toFixed(1) }))(R.project([0, 0, 0]));
   // where the three dots' middles land in the sprite (art pixels), for the game's glow round them (Ed, 2026-10-09: "They should glow")
   const dotsAt = dots && yaw !== undefined ? DOTS.map(([y]) => (([x, py]) => ({ x: +x.toFixed(1), y: +py.toFixed(1) }))(R.project(v3.add(v3.add(C, v3.mul(ay, y - .46)), v3.mul(az, fz))))) : null;
-  if (sigil) carveSigil(sp, sigil);
+  if (F?.mirror) mirrorSprite(sp);
+  if (sigil) carveSigil(sp, sigil, { wear: F?.wear ?? 0, seed: F?.seed ?? 0 });
   // a few motes drifting round it
   let n = 0;
   for (let i = 0; i < 600 && n < 5; i++) {
@@ -8763,8 +8806,8 @@ function pond() {
 // yaw (degrees from facing us, as dancefloorSpeakerSprite's angle) turns it, and adds its ground point under its middle as `origin`;
 // rune picks the glyph carved when there's no sigil; dots carves three glowing dots up the face instead (and, turned, adds their
 // middles in the sprite as `dots`, where the game draws their glow).
-function runeStone(st, { glow = "cyan", sigil, scale = 1, width = 1, yaw, rune, dots, makeCanvas = defaultCanvas } = {}) {
-  const s = magicStone(glow, sigil, scale, width, { yaw, rune, dots }), b = bake(s.sp, s.colours, st, "none", makeCanvas);
+function runeStone(st, { glow = "cyan", sigil, scale = 1, width = 1, yaw, rune, dots, form, flip = false, makeCanvas = defaultCanvas } = {}) { // form: a variation (0 to RUNESTONE_FORMS - 1, runestoneForm), flipped by flip
+  const s = magicStone(glow, sigil, scale, width, { yaw, rune, dots, form: form === undefined ? undefined : runestoneForm(form, flip) }), b = bake(s.sp, s.colours, st, "none", makeCanvas);
   return s.origin ? { ...b, origin: s.origin, ...(s.dots ? { dots: s.dots } : {}) } : b;
 }
 function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
@@ -8950,6 +8993,11 @@ const EFFECTS = [
   { id: "traitHeavy", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
   { id: "traitNimble", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
   { id: "traitBurrower", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
+  // the Cyclone hat's whirlwind (golf, Hats B #721, 2026-10-12): about 10 m across at its foot and 5 m tall, a turn a second at
+  // its fps; it rises, loops while it holds, then falls apart flinging what it holds outward (its sprite 12 m across for that)
+  { id: "cycloneRise", family: "spell", plane: "standing", frames: 3, fps: 8, loop: false, metres: [12, 6], attacks: [] },
+  { id: "cyclone", family: "spell", plane: "standing", frames: 8, fps: 8, loop: true, metres: [12, 6], attacks: [] },
+  { id: "cycloneFall", family: "spell", plane: "standing", frames: 3, fps: 8, loop: false, metres: [12, 6], attacks: [] },
 ];
 const EFFECT_BY_ID = Object.fromEntries(EFFECTS.map(e => [e.id, e]));
 // Which effects each attack uses: what flies (or the beam's parts), its telegraph, where it lands, and what it leaves on the target.
@@ -9219,11 +9267,52 @@ const DRAW = {
   traitHeavy(c, f, S) { const cx = c.w / 2; c.ring(cx, c.h * .22, c.w * .12, Math.max(1, S), BODY); for (let y = Math.floor(c.h * .35); y < c.h - 1; y++) { const t = (y - c.h * .35) / (c.h * .62), hw = c.w * (.22 + .2 * t); for (let x = Math.ceil(cx - hw); x < cx + hw; x++) c.put(x, y, y > c.h - 2 - S || Math.abs(x + .5 - cx) > hw - S ? BODY : EDGE); } return {}; }, // a weight
   traitNimble(c, f, S) { const pts = [[.62, .05], [.32, .52], [.55, .52], [.38, .95]]; for (let j = 0; j + 1 < pts.length; j++) c.line(c.w * pts[j][0], c.h * pts[j][1], c.w * pts[j + 1][0], c.h * pts[j + 1][1], Math.max(1, S * 1.4), j === 1 ? CORE : BODY); return {}; }, // a lightning bolt
   traitBurrower(c, f, S) { const cx = c.w / 2, by = c.h - 2; for (let y = Math.floor(c.h * .55); y <= by; y++) { const t = (by - y) / (by - c.h * .55), hw = c.w * .42 * Math.sqrt(1 - t * t); for (let x = Math.ceil(cx - hw); x < cx + hw; x++) c.put(x, y, EDGE); } c.line(cx, 1, cx, c.h * .5, Math.max(1, S), BODY); for (const s of [-1, 1]) c.line(cx, c.h * .5, cx + s * c.w * .18, c.h * .32, Math.max(1, S), BODY); return {}; }, // a mound, an arrow down into it
+  cyclone(c, f, S) { return whirl(c, S, f / 8, 1, 0); }, // a turn every 8 frames
+  cycloneRise(c, f, S) { return whirl(c, S, f / 8, [.3, .6, .88][f], 0); }, // spinning up out of the ground
+  cycloneFall(c, f, S) { return whirl(c, S, f / 8, [.9, .7, .45][f], f + 1); }, // falling apart, what it holds flung outward
   dust(c, f) { // a puff of dust at its feet (lit, not glowing; drawn in stone greys)
     for (let k = 0; k < 6; k++) { const a = Math.PI * (.05 + .9 * k / 5), r = c.w * (.12 + .3 * (f + 1) / 4), x = c.w / 2 + Math.cos(a) * r, y = c.h - 2 - Math.sin(a) * r * .5, rr = c.h * (.22 - f * .03); if (rr > .5) c.disc(x, y, rr, M.STONE, { ball: true, tint: false, mat: (u, v) => v < -.2 ? M.BELLY : M.STONE }); }
     return { base: [c.w / 2, c.h - 1] };
   },
 };
+
+// The Cyclone's whirlwind (DRAW.cyclone*): a funnel of wind 10 m across at its foot (R: 5 m), narrowing to a waist and flaring a
+// little at its top, `grow` of its full height; its rings of air seen from the camera's pitch (squashed ellipses), glowing wind
+// streaks on them, leaves (their own green, not tinted) and motes (glowing) whirling round it, and dust (stone greys) churned up
+// round its foot. `turn`: how far round it has turned (0 to 1 a turn, so 8 frames at 1/8 loop exactly); `fling`: 0, or the fall's
+// frame (1 to 3), everything thrown further out and the streaks breaking up.
+function whirl(c, S, turn, grow, fling) {
+  const px = c.w / 12, cx = c.w / 2, by = c.h - 1 - S, R = 5 * px, H = 5.4 * px * grow, sq = .3, TAU = Math.PI * 2, out = 1 + fling * .22;
+  const rAt = t => R * (.32 + .68 * (1 - t) ** 2.2 + .22 * t * t) * (fling ? out : 1); // wide at its foot, a waist, a little flare
+  const at = (a, t, k = 1) => { const r = rAt(t) * k; return [cx + Math.cos(a) * r, by - t * H + Math.sin(a) * r * sq, Math.sin(a)]; };
+  const spin = turn * TAU;
+  // its streaks of wind: arcs on the rings, the back half first (dimmer), broken up as it falls
+  for (const back of [true, false]) for (let j = 0; j < 30; j++) {
+    const t = (Math.floor(j / 2) + .5 + (j % 2) * .35) / 15, a0 = j * 2.1 + (j % 2) * Math.PI + spin * (1 + t * .5), len = (2.2 - t * .6) * (.75 + .5 * hash2(j, 7, 41)) * (fling ? 1 - fling * .25 : 1), n = Math.ceil(len * rAt(t) / Math.max(1, S * .7));
+    for (let i = 0; i <= n; i++) {
+      const a = a0 + (i / n) * len, [x, y, z] = at(a, t);
+      if ((z < 0) !== back || (fling && hash2(j, i >> 2, 41 + fling) < fling * .22)) continue;
+      const w = Math.max(1, S * (back ? .8 : 1.1) * (.7 + .6 * Math.sin((i / n) * Math.PI)));
+      c.disc(x, y, w / 2, back ? EDGE : i / n > .7 ? CORE : BODY);
+    }
+  }
+  // dust churned up round its foot (lit, not glowing): a ring of puffs turning with it
+  for (let k = 0; k < 16; k++) {
+    const a = k * TAU / 16 + spin * 1.2, r = R * (.9 + .25 * hash2(k, 3, 7)) * (fling ? out : 1), x = cx + Math.cos(a) * r, y = by + Math.sin(a) * r * sq - (1 + 3 * hash2(k, 5, 7)) * S;
+    const rr = Math.max(1, (1.4 + 1.6 * hash2(k, 9, 7)) * S * (fling ? 1 - fling * .2 : grow < 1 ? .6 + grow * .4 : 1));
+    c.disc(x, y, rr, M.STONE, { ball: true, tint: false, mat: (u, v) => v < -.2 ? M.BELLY : M.STONE });
+  }
+  // leaves and motes whirling round it, each on its own height and turning faster up high; flung outward and up as it falls
+  for (let k = 0; k < 44; k++) {
+    const t = Math.min(.98, hash2(k, 1, 13) * (grow < 1 ? grow + .1 : 1)), a = k * 2.399 + spin * (1 + t * .5), k2 = .85 + .3 * hash2(k, 2, 13), fl = fling ? 1 + fling * (.25 + .2 * hash2(k, 4, 13)) : 1;
+    const [x, y] = at(a, t, k2 * fl), yy = y - (fling ? fling * 2 * S * hash2(k, 6, 13) : 0);
+    if (k % 3 === 0) { glow(c, x, yy, Math.max(.8, S * .9)); continue; } // a mote
+    const lw = Math.max(2, S * 1.5), tilt = Math.round(Math.sin(a * 2 + k) * S);
+    for (let i = 0; i < 2 * lw; i++) c.put(x + i, yy + (i >= lw ? tilt : 0), i < lw ? M.LEAF : M.TRUNK, [0, -.4, .9], false); // a leaf and its stalk
+    for (let d = 1; d < lw; d++) for (let i = 0; i < lw; i++) c.put(x + i, yy + d + (i >= lw ? tilt : 0), M.LEAF, [0, .2, .9], false); // (a leaf as thick as it is long)
+  }
+  return { base: [cx, c.h - 1], radiusPx: R };
+}
 
 // One frame of one effect: { sp (a Sprite; sp.tint the tint mask), anchors: { centre, ... } in pixels from the top-left, metres, px
 // (art pixels a metre at this zoom), period (a repeating strip's, in px), radiusPx (a ring's) }. variant "light" | "dark";
@@ -10201,7 +10290,26 @@ const STREET = {
 };
 
 // ---------------- the small scenes' pieces ----------------
+// The Harvest hat's ring (golf, for #719, 2026-10-12): six berries grow round the hat with no bush under them, so a berry
+// seedling stands under each, about 0.6 m: a mound of earth, a stem or two and a little dome of leaves, three ways.
+function harvestSprout(m, v) {
+  const r = (k) => sinHash(v * 31 + k, 7) - .5;
+  m.ell([0, .02, 0], [.2, .05, .16], M.STONED, { group: 1, rough: .02, paint: p => ctCell(p, 14, v) < .3 ? M.MOSS : undefined }); // its patch of earth
+  const stems = [[0, 0, 0], ...(v === 1 ? [[.08, 0, .04]] : v === 2 ? [[-.07, 0, .03], [.06, 0, -.03]] : [])];
+  stems.forEach(([x, , z], i) => ctBar(m, [x, .03, z], [x * 1.6 + r(i) * .06, .3 + .04 * i, z], 2, .012, M.TRUNK, undefined));
+  const leaves = 7 + v * 2;
+  for (let i = 0; i < leaves; i++) {
+    const a = i * 2.4 + v, h = .18 + (i / leaves) * .34, rr = .05 + (1 - i / leaves) * .12, x = Math.cos(a) * rr, z = Math.sin(a) * rr * .8;
+    const mat = i % 3 === 0 ? M.LEAF3 : i % 3 === 1 ? M.LEAF : M.LEAF2, sz = .065 + .02 * ((i * 7 + v) % 3);
+    m.ell([x, h, z], [sz, sz * .55, sz * .8], mat, { group: 3 + (i % 4), dir: [Math.cos(a) * .6, 1, Math.sin(a) * .6] });
+  }
+  m.ell([r(9) * .04, .52, 0], [.07, .05, .06], M.LEAF2, { group: 7 }); // its crown, the newest leaves on top
+}
+
 const SCENE_PIECES = {
+  "harvest-sprout-1": { desc: "a berry seedling: a dome of leaves on a stem, in a patch of earth (under one of the Harvest hat's berries)", build(m) { harvestSprout(m, 0); } },
+  "harvest-sprout-2": { desc: "a berry seedling, two stems", build(m) { harvestSprout(m, 1); } },
+  "harvest-sprout-3": { desc: "a berry seedling, three stems, the bushiest", build(m) { harvestSprout(m, 2); } },
   // a picnic gone wild
   "picnic-table": { desc: "a picnic table, its planks soft with rot, bracket fungus on its legs", build(m) {
     for (const z of [-.12, 0, .12]) m.box([0, .6, z * 2], [.78, .025, .11], M.WOOD, { round: .012, group: 1, paint: ctPlank(7, .3) });
