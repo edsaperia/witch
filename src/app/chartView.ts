@@ -24,6 +24,8 @@ import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
 
 export type ChartMode = "look" | "sail" | "miniature";
+/** The testing toggle's key (this browser): sail to any island with a creature. */
+const SAIL_ANY = "witch.chart.sailAnywhere";
 export interface ChartViewOptions {
   mode: ChartMode;
   /** What she's found, won and sailed (default: loadSave()). */
@@ -77,6 +79,8 @@ const STYLE = `
 .chart-view .phase, .chart-view .state { color: var(--dim); font-size: 12px; }
 .chart-view .bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .chart-view button, .chart-view a.btn { font: inherit; font-size: 13px; color: #e8e2f4; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px 14px; min-height: 36px; box-sizing: border-box; cursor: pointer; text-decoration: none; }
+.chart-view .sail-any { border-style: dashed; color: var(--dim); }
+.chart-view .sail-any[aria-pressed="true"] { color: #e8e2f4; border-color: var(--accent); background: #3a2a14; }
 .chart-view button:hover, .chart-view a.btn:hover, .chart-view button:focus-visible, .chart-view a.btn:focus-visible { border-color: var(--accent); outline: none; }
 .chart-view a.btn.sail { border-color: var(--accent); color: var(--accent); margin-top: 6px; display: inline-block; }
 .chart-view [hidden] { display: none !important; }
@@ -89,7 +93,7 @@ const HTML = `
 <div class="top"><h1>THE SEA CHART</h1><div class="status"></div></div>
 <div class="bottom">
   <div class="card" hidden><div class="name"></div><div class="phase"></div><div class="state"></div><a class="btn sail" href="./?island=home">Sail there</a></div>
-  <div class="bar"><button class="zoom-in" aria-label="Zoom in">+</button><button class="zoom-out" aria-label="Zoom out">−</button><a class="btn home" href="./?island=home">Sail home</a><button class="start-over">Start over</button><button class="close">Close</button></div>
+  <div class="bar"><button class="zoom-in" aria-label="Zoom in">+</button><button class="zoom-out" aria-label="Zoom out">−</button><a class="btn home" href="./?island=home">Sail home</a><button class="start-over">Start over</button><button class="sail-any" aria-pressed="false" title="Testing: sail to any island with a creature, found or not (the save isn't changed)">🧪 Test: sail anywhere</button><button class="close">Close</button></div>
   <div class="new-world bar" hidden><label>New world's seed <input class="new-seed" placeholder="blank: a random one" autocomplete="off"></label><button class="new-go">Start</button><button class="new-cancel">Cancel</button></div>
   <div class="world"></div>
   <div class="hint"></div>
@@ -108,7 +112,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const canvas = root.querySelector("canvas")!;
   if (mini) { $("top").hidden = true; $("bottom").hidden = true; }
   $("sail").hidden = true;
-  ($("home") as HTMLElement).hidden = !sailing; $("start-over").hidden = !sailing; $("close").hidden = !opts.onClose;
+  ($("home") as HTMLElement).hidden = !sailing; $("start-over").hidden = !sailing; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose;
   $("hint").textContent = sailing
     ? "Tap an island to look at it, again to sail · arrows / stick to choose, Enter / A to sail · sigils: islands you can sail to · gold rings: won"
     : "Tap an island to look at it · arrows / stick to choose · sigils: islands you can sail to · gold rings: won";
@@ -116,6 +120,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const chart = new SeaChart(canvas, TUNING as unknown as ConstructorParameters<typeof SeaChart>[1]);
   if (mini) chart.orbit = 0.12;
   let save = opts.save ?? loadSave(), islands: ChartIsland[] = [];
+  let sailAny = (() => { try { return localStorage.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
   const worldNow = () => opts.world ?? save.world;
   const sailHref = (island: string) => `./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`;
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
@@ -151,7 +156,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   /** Every island, always: home and each found with its sigil, sailable; the rest bare land, the placeholders dimmest. */
   function build(): void {
-    const open = new Set(unlocked(save)), won = new Set(save.won), w = worldNow();
+    const open = new Set(sailAny ? ["home", ...REAL_KINDS] : unlocked(save)), won = new Set(save.won), w = worldNow();
     const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
       const at = islandAt(id, w)!, unknown = isPlaceholder(id);
       return { id, x: at.x, y: at.y, phase: id === "home" ? 0 : islandOf(id, w)?.phase ?? 1, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
@@ -178,7 +183,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const phase = id === "home" ? 0 : islandOf(id!, worldNow())?.phase ?? 0;
     $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
     $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
-    $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "wake its legend to find it";
+    $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "wake its legend to find it";
     sail.hidden = !sailing || !isl.sail;
     sail.href = sailHref(id!);
   }
@@ -242,6 +247,15 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // Start over (golf, #685; Ed, 2026-10-11): a new campaign in a new world, its seed random or typed / pasted in, after an are-you-sure.
   const panel = $("new-world"), field = $<HTMLInputElement>("new-seed");
   $("start-over").addEventListener("click", () => { field.value = ""; panel.hidden = false; field.focus(); });
+  // Testing (Ed, 2026-10-12: "please give a button that lets me go to island even if I haven't unlocked them yet"): every island
+  // with a creature sailable, found or not; the '?' islands still not. Only what she can sail to: the save isn't touched (nothing
+  // found, no voyages). Kept on this browser (both the chart page and the map table's).
+  const showSailAny = () => { const b = $("sail-any"); b.setAttribute("aria-pressed", String(sailAny)); b.textContent = sailAny ? "🧪 Test: sailing anywhere (on)" : "🧪 Test: sail anywhere"; };
+  showSailAny();
+  $("sail-any").addEventListener("click", () => {
+    sailAny = !sailAny; try { localStorage.setItem(SAIL_ANY, sailAny ? "1" : "0"); } catch { /* storage blocked */ }
+    showSailAny(); const was = chart.selected; build(); choose(was);
+  });
   $("new-cancel").addEventListener("click", () => { panel.hidden = true; });
   $("new-go").addEventListener("click", () => {
     if (!confirm("Start over in a new world? This forgets every island you've found and won.")) return;
