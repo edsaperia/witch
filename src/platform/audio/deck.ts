@@ -17,7 +17,7 @@ export function scratch(K: SfxKit, forward: boolean, pan = 0, near = 1, len = 1,
   const D = K.T.deck, c = K.ctx, at = c.currentTime + 0.005 + wait, dur = D.stroke * len * (0.9 + 0.2 * Math.random());
   const vol = D.volume * D.scratch * near;
   if (vol <= 0.0005) return;
-  const out = K.voice(pan), g = c.createGain(), lp = c.createBiquadFilter();
+  const out = K.voice(pan, 1), g = c.createGain(), lp = c.createBiquadFilter();
   lp.type = "lowpass"; lp.frequency.value = forward ? 2600 : 1500; lp.Q.value = 3;
   lp.connect(g); g.connect(out);
   // her hand: the record's speed from still to past full and back to still, the level with it
@@ -76,7 +76,7 @@ export function recordScratch(K: SfxKit, pan = 0): void {
 export function spinBack(K: SfxKit, pan = 0, near = 1): void {
   const D = K.T.deck, c = K.ctx, at = c.currentTime + 0.005, dur = D.stroke * 4, vol = D.volume * D.scratch * near * 0.9;
   if (vol <= 0.0005) return;
-  const out = K.voice(pan), g = c.createGain(), lp = c.createBiquadFilter(), root = mtof(degree(K.root - 12, 0));
+  const out = K.voice(pan, 1), g = c.createGain(), lp = c.createBiquadFilter(), root = mtof(degree(K.root - 12, 0));
   lp.type = "lowpass"; lp.Q.value = 2; lp.frequency.setValueAtTime(3200, at); lp.frequency.exponentialRampToValueAtTime(300, at + dur);
   lp.connect(g); g.connect(out);
   g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
@@ -97,7 +97,7 @@ export function spinBack(K: SfxKit, pan = 0, near = 1): void {
 export function needle(K: SfxKit, kind: "lift" | "drop", pan = 0, near = 1): void {
   const D = K.T.deck, c = K.ctx, at = c.currentTime + 0.005, vol = D.volume * D.needle * near;
   if (vol <= 0.0005) return;
-  const out = K.voice(pan);
+  const out = K.voice(pan, 1);
   // the click: a short, bright tick
   const hp = c.createBiquadFilter(), cg = c.createGain();
   hp.type = "highpass"; hp.frequency.value = kind === "lift" ? 3000 : 2200;

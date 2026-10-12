@@ -41,7 +41,7 @@ export class Spell {
     if (!K.ready("spell-rustle", .12)) return;
     const at = c.currentTime + .005, vol = S.volume * S.rustle * (.4 + .6 * amount);
     for (let i = 0, n = 3 + Math.floor(Math.random() * 3); i < n; i++) {
-      const t = at + i * (.025 + Math.random() * .035), bp = c.createBiquadFilter(), g = c.createGain(), out = K.voice(.4 + (Math.random() - .5) * .3);
+      const t = at + i * (.025 + Math.random() * .035), bp = c.createBiquadFilter(), g = c.createGain(), out = K.voice(.4 + (Math.random() - .5) * .3, 1);
       bp.type = "bandpass"; bp.frequency.value = 2500 + Math.random() * 3500; bp.Q.value = .8;
       g.connect(out); K.env(g, t, vol * (.5 + Math.random() * .5), .004, .04 + Math.random() * .05);
       bp.connect(g); K.noiseBurst(t, .1, bp, Math.random());
@@ -52,7 +52,7 @@ export class Spell {
   crackle(length = .95): void {
     const K = this.k, S = K.T.spell, c = K.ctx, at = c.currentTime + .01, vol = S.volume * S.crackle;
     for (let i = 0, n = 60; i < n; i++) {
-      const x = Math.pow(Math.random(), .6), t = at + x * length, hp = c.createBiquadFilter(), g = c.createGain(), out = K.voice((Math.random() - .5) * 1.2);
+      const x = Math.pow(Math.random(), .6), t = at + x * length, hp = c.createBiquadFilter(), g = c.createGain(), out = K.voice((Math.random() - .5) * 1.2, 1);
       hp.type = "highpass"; hp.frequency.value = 1800 + Math.random() * 5000;
       g.connect(out); K.env(g, t, vol * (.2 + .8 * x) * (Math.random() < .12 ? 2 : .6), .0006, .006 + Math.random() * .02);
       hp.connect(g); K.noiseBurst(t, .03, hp, Math.random());

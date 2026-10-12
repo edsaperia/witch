@@ -19,7 +19,7 @@ const VOWELS: [number, number][][] = [
 const INVITE = [0.12, -0.04, 0.42, 0.05, -0.02, 0.5];
 /** A syllable's sound: its pitch gliding to `end`, a vowel through formants (or `pure`, a whistled
  *  tone), a trill ([Hz, cents]), a buzz or rattle (`am`: [Hz, depth]), breath or hiss (`noise` 0-1). */
-interface SyllableSpec { pitch: number; end: number; vowel: number; dur: number; formants: number; wave: OscillatorType; gain: number; grit: number; pan: number; consonant: boolean; pure?: boolean; trill?: number[]; am?: number[]; noise?: number }
+interface SyllableSpec { pitch: number; end: number; vowel: number; dur: number; formants: number; wave: OscillatorType; gain: number; grit: number; pan: number; consonant: boolean; pure?: boolean; trill?: number[]; am?: number[]; noise?: number; /** its budget priority (sfxKit.ts voice) when it's a sound of its own */ prio?: number }
 
 /** A burst's mouth (the audit's phase 2: a crowd's speech was most of the nodes the game made): the vowel's three formant
  *  filters and the consonant's hiss, built once for a burst and re-tuned at each syllable's start (a burst's syllables
@@ -51,13 +51,13 @@ export class Babble {
     if (v === this.phrase.vowel) v = (v + 1 + Math.floor(Math.random() * (VOWELS.length - 1))) % VOWELS.length;
     this.phrase.vowel = v;
     const f = V.pitch * (1 + V.range * (INVITE[k] + (Math.random() - 0.5) * 0.12));
-    this.syllable(now + 0.005, { pitch: f, end: f * (k === 2 || k === 5 ? 1 + V.range * 0.35 : 0.97), vowel: v, dur: V.pace, formants: V.timbre, wave: "sawtooth", gain: V.volume * near, grit: 0, pan, consonant: Math.random() < 0.7 });
+    this.syllable(now + 0.005, { pitch: f, end: f * (k === 2 || k === 5 ? 1 + V.range * 0.35 : 0.97), vowel: v, dur: V.pace, formants: V.timbre, wave: "sawtooth", gain: V.volume * near, grit: 0, pan, consonant: Math.random() < 0.7, prio: 0.9 });
   }
 
   /** One spoken syllable: a voiced source (gliding from `pitch` to `end`) through a vowel's three
    *  formants, a breath of consonant before it, gritted for anger. Returns its output gain. */
   private syllable(at: number, o: SyllableSpec, out?: GainNode, track?: AudioScheduledSourceNode[], mouth?: Mouth): GainNode {
-    const K = this.k, c = K.ctx, dest = out ?? K.voice(o.pan), g = c.createGain(), m = o.pure ? undefined : mouth; // (a whistle has no vowels: its own path)
+    const K = this.k, c = K.ctx, dest = out ?? K.voice(o.pan, o.prio ?? 0.5, o.dur + 0.4), g = c.createGain(), m = o.pure ? undefined : mouth; // (a whistle has no vowels: its own path)
     g.connect(m ? m.input : dest);
     g.gain.setValueAtTime(0.0001, at);
     g.gain.exponentialRampToValueAtTime(Math.max(0.0002, o.gain), at + 0.012);
@@ -159,7 +159,7 @@ export class Babble {
     }
     // the rest give it room: each voice a little quieter the more are talking
     const crowd = 1 / Math.sqrt(1 + this.speaking.length * A.duck);
-    const K = v.call, out = this.k.voice(pan), n = A.syllables[0] + Math.floor(Math.random() * (A.syllables[1] - A.syllables[0] + 1)) + (K?.extra ?? 0);
+    const K = v.call, out = this.k.voice(pan, 0.2 + 0.5 * Math.min(1, prio), 2), n = A.syllables[0] + Math.floor(Math.random() * (A.syllables[1] - A.syllables[0] + 1)) + (K?.extra ?? 0);
     let t = now + 0.005, v0 = Math.floor(Math.random() * VOWELS.length);
     const sources: AudioScheduledSourceNode[] = [], mouth = this.mouth(out);
     const vol = A.volume * near * crowd * Math.min(1.8, Math.max(1, Math.pow(A.pitch / v.pitch, 0.4))) * (v.call?.volume ?? 1); // (low voices carry less: lifted)
@@ -183,7 +183,7 @@ export class Babble {
 
   /** A canid turning enraged: a short howl, rising and falling (its family's `turn`). */
   howl(v: CreatureVoice, pan = 0, near = 1): void {
-    const A = this.k.T.voice.animals, at = this.k.ctx.currentTime + 0.01, p = v.pitch * 1.4, out = this.k.voice(pan), vol = A.volume * near;
+    const A = this.k.T.voice.animals, at = this.k.ctx.currentTime + 0.01, p = v.pitch * 1.4, out = this.k.voice(pan, 0.3 + 0.5 * near, 1.4), vol = A.volume * near;
     const base = { formants: v.formants, wave: v.wave, grit: 0.1, pan, consonant: false, trill: [5, 25] };
     this.syllable(at, { ...base, pitch: p, end: p * 1.5, vowel: 4, dur: 0.4, gain: vol * 0.8 }, out);
     this.syllable(at + 0.36, { ...base, pitch: p * 1.5, end: p * 1.05, vowel: 0, dur: 0.75, gain: vol }, out);
@@ -197,7 +197,7 @@ export class Babble {
     const K = this.k, L = K.T.lament, c = K.ctx, at = c.currentTime + 0.01, u = Math.max(0, Math.min(1, urgency)), call = v.call;
     const n = 2 + (u > 0.45 ? 1 : 0) + (u > 0.8 ? 1 : 0), p = v.pitch * L.pitch * (1 + 0.18 * u);
     // muffled the farther it is: a low-pass closing with distance, so it reads as far off over there
-    const out = K.voice(pan), lp = c.createBiquadFilter(), mix = c.createGain(), wet = c.createGain();
+    const out = K.voice(pan, 0.3 + 0.5 * near, 3), lp = c.createBiquadFilter(), mix = c.createGain(), wet = c.createGain();
     lp.type = "lowpass"; lp.frequency.value = 900 + 6000 * near * near; lp.connect(out);
     mix.connect(lp); mix.connect(wet); wet.gain.value = 0.6 + 0.4 * (1 - near); wet.connect(K.space());
     const vol = L.volume * (0.75 + 0.25 * u) * (0.35 + 0.65 * near) * (call?.volume ?? 1);
@@ -218,14 +218,14 @@ export class Babble {
   reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void {
     const A = this.k.T.voice.animals, at = this.k.ctx.currentTime + 0.06, f = v.pitch * (1 + 0.4 * Math.max(0, Math.min(1, amount)));
     const K = v.call;
-    this.syllable(at, { pitch: f, end: f * 1.15 * (K?.glide ?? 1), vowel: K?.vowel ?? Math.floor(Math.random() * VOWELS.length), dur: 0.08 * (K?.dur ?? 1), formants: v.formants, wave: v.wave, gain: A.volume * A.reply * near, grit: 0, pan, consonant: false, pure: K?.pure, trill: K?.trill, am: K?.am, noise: K?.noise });
+    this.syllable(at, { pitch: f, end: f * 1.15 * (K?.glide ?? 1), vowel: K?.vowel ?? Math.floor(Math.random() * VOWELS.length), dur: 0.08 * (K?.dur ?? 1), formants: v.formants, wave: v.wave, gain: A.volume * A.reply * near, grit: 0, pan, consonant: false, pure: K?.pure, trill: K?.trill, am: K?.am, noise: K?.noise, prio: 0.2 + 0.5 * near });
   }
 
   /** The witch hurt (Ed, 2026-10-05: "witch saying 'ouch!'"): a quick cry in her own babble voice,
    *  "ouch!" (a sharp rise, then a falling clipped "ch"), or now and then "oof!" or "eek!", over a
    *  soft thump. `strain` 0-1: how near she is to being knocked down, higher, harsher and louder. */
   ouch(strain = 0, pan = 0): void {
-    const K = this.k, V = K.T.voice.witch, O = K.T.ouch, c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan);
+    const K = this.k, V = K.T.voice.witch, O = K.T.ouch, c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 1);
     const p = V.pitch * (1.1 + 0.3 * strain) * (0.96 + 0.08 * Math.random()), vol = O.volume * (0.85 + 0.35 * strain), grit = 0.25 * strain;
     const base = { formants: V.timbre * (1 + 0.08 * strain), wave: "sawtooth" as OscillatorType, grit, pan, consonant: false };
     const pick = Math.random();
@@ -248,7 +248,7 @@ export class Babble {
 
   /** Her hype at the decks (deck.ts): "woo-hoo!", a breathy rising "woo" and a higher "hoo" lifting further, bright. */
   whoop(pan = 0, near = 1): void {
-    const K = this.k, V = K.T.voice.witch, D = K.T.deck, at = K.ctx.currentTime + 0.005, out = K.voice(pan), p = V.pitch * (0.95 + 0.1 * Math.random()), vol = D.volume * D.hype * near;
+    const K = this.k, V = K.T.voice.witch, D = K.T.deck, at = K.ctx.currentTime + 0.005, out = K.voice(pan, 1), p = V.pitch * (0.95 + 0.1 * Math.random()), vol = D.volume * D.hype * near;
     if (vol <= 0.0005) return;
     const base = { formants: V.timbre * 1.05, wave: "sawtooth" as OscillatorType, grit: 0, pan, consonant: false };
     this.syllable(at, { ...base, pitch: p * 1.05, end: p * 1.5, vowel: 4, dur: 0.13, gain: vol * 0.8, noise: 0.2 }, out);
@@ -257,7 +257,7 @@ export class Babble {
 
   /** Knocked down: a longer "whoa-oh" as she's sent home, falling away, over a heavier thump. */
   knockdown(pan = 0): void {
-    const K = this.k, V = K.T.voice.witch, O = K.T.ouch, at = K.ctx.currentTime + 0.005, out = K.voice(pan), p = V.pitch * 1.2, vol = O.volume * O.knockdown;
+    const K = this.k, V = K.T.voice.witch, O = K.T.ouch, at = K.ctx.currentTime + 0.005, out = K.voice(pan, 1, 2.5), p = V.pitch * 1.2, vol = O.volume * O.knockdown;
     const base = { formants: V.timbre, wave: "sawtooth" as OscillatorType, grit: 0.15, pan, consonant: false, trill: [6, 35] };
     this.syllable(at, { ...base, pitch: p, end: p * 1.45, vowel: 3, dur: 0.3, gain: vol }, out);
     this.syllable(at + 0.28, { ...base, pitch: p * 1.4, end: p * 0.55, vowel: 3, dur: 0.6, gain: vol * 0.9 }, out);

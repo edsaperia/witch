@@ -187,6 +187,8 @@ export interface Tuning {
   /** The sound effects (platform/audio/sfx.ts, platform/audio/sfxCues.ts): their volumes and rates. */
   sfx: {
     on: boolean; volume: number; hear: number;
+    /** The most one-shot sounds at once (0: no limit); the least needed over it aren't played (platform/audio/sfxKit.ts voice). */
+    budget?: { voices: number };
     voice: {
       witch: { volume: number; pitch: number; range: number; pace: number; timbre: number; phraseGap: number };
       animals: { volume: number; pitch: number; maxVoices: number; duck: number; syllables: number[]; gap: number; reply: number; /** a voice gives way only to one this much nearer (prio, 0 to 1.5) */ swapBy?: number; /** and at most one gives way every swapGap seconds */ swapGap?: number };

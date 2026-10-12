@@ -112,13 +112,15 @@ export class MusicEngine {
   private cAt = 0;
   private reverbTime = 0;
   /** Sound shed to spare the audio thread (shed.ts; Ed's under-runs, 2026-10-07): 2+ every synth and sung note one
-   *  oscillator (no unison, its first wave only) and shorter tails; 3 the reverbs short and the delay off. */
+   *  oscillator (no unison, its first wave only) and shorter tails; 3 the reverbs short and the delay off. The voice line's
+   *  effects shed with it (VoiceFx.shedTo: 1 its vocoder and freeze, 2 its shimmer and chorus, 3 its hall and echoes). */
   private shedLevel = 0;
   get shed(): number { return this.shedLevel; }
   set shed(level: number) {
     if (level === this.shedLevel) return;
     const was = this.shedLevel; this.shedLevel = level;
     if ((was >= 3) !== (level >= 3)) { this.reverbTime = -1; this.setMix(); }
+    for (const ch of this.channels.values()) ch.fx?.shedTo(level);
   }
 
   constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest) {
@@ -328,6 +330,7 @@ export class MusicEngine {
       // the voice line's ethereal effects (Ed, 2026-10-11), on the sung part and any listed
       if (!circle && fxOn(F) && (part === this.style.form?.sung.part || F!.parts?.includes(part))) {
         fx = new VoiceFx(c, F, () => this.bpmNow, (F!.duck ?? 0) > 0 ? this.duckBus : undefined);
+        if (this.shedLevel) fx.shedTo(this.shedLevel);
         if (this.whisperRec) fx.whisper(this.whisperRec);
         g.connect(fx.input); out = fx.output;
       }
