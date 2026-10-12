@@ -14,17 +14,22 @@ import { ISLAND_LOOK, islandPoints } from "../../../art/islands.js";
 import { sigilColour } from "../../../art/sigils.js";
 import { sigilDetail } from "../../../art/sigilDetail.js";
 import { Post, type PostTuning } from "../post";
+import { CHART_METRES } from "../../rules/archipelago";
 
 /** The chart's disc: radius 1 on the flat chart is this many units here. */
 export const CHART_SCALE = 100;
-/** How far each island reaches from its middle (units), by its phase (Ed, 2026-10-11: "the islands larger and more detailed"):
- *  the chart's scale is ours, so each island fills its place on its phase's ring, the small ones as well as the big, rather than
- *  keeping their sizes in metres against each other and the sea. */
-const REACH = [8.5, 5.6, 6.8, 7.4, 7.6, 7.8];
+/** One true scale (hotel, the archipelago, rules/archipelago.ts; Ed, 2026-10-12: "strong fit, moderate straits"): every island at
+ *  its real size in metres, CHART_METRES to the disc's radius, its home's middle where the archipelago places it, so neighbouring
+ *  coasts follow each other across their straits. Units a metre. */
+const K = CHART_SCALE / CHART_METRES;
+/** Till an island's land comes, about how far it reaches (units) by its phase: its round coast drawn that big. */
+const REACH = [8, 5.5, 8, 11, 13, 15];
 const reachOf = (d: { id: string; phase: number }) => (d.id === "home" ? REACH[0] : REACH[Math.max(1, Math.min(5, d.phase))]);
+/** A typical island's reach (units), for the zoom's limits. */
+const TYPICAL_REACH = 11;
 /** The camera's nearest (units): one island filling the screen and more (Ed, 2026-10-12: "the islands should be larger at full
  *  zoom"), its fine grid made for it (app/chartOutlines.worker.ts `detail`). */
-const CLOSEST = 17;
+const CLOSEST = TYPICAL_REACH * 2.3;
 /** How deep (m) the shallows fade out to. */
 const SHALLOWS = 240;
 /** The land's heights (m) on the chart: exaggerated, so the hills read from high up. */
@@ -40,7 +45,9 @@ const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 64, px: 128 }, { from: 128, px
 /** When the chart opens, a sigil spans this many art pixels, and at the furthest no fewer than this. */
 const SIGIL_OPEN_PX = 96, SIGIL_MIN_PX = 16;
 /** A typical sailable island's sigil (units), for the zoom's limits. */
-const SIGIL_TYPICAL = REACH[2] * SIGIL_SHARE;
+const SIGIL_TYPICAL = TYPICAL_REACH * SIGIL_SHARE;
+/** The smallest a sigil is drawn (units), so a small island's still reads. */
+const SIGIL_FLOOR = 9;
 
 /** An island's real land (app/chartOutlines.worker.ts): its coast's loops (x, z interleaved, metres from its home's middle; `sea`
  *  its coast, one loop for each piece of land, else a lake's shore), their box, and its ground on a grid (heights and colours). */
@@ -185,23 +192,24 @@ type Loop = { pts: THREE.Vector2[]; sea: boolean };
 /** An island's loops in its shape's units about its middle (shape y is -z, as the extrusion is laid flat), scaled to its reach on
  *  the chart; and the scale (units a metre) and middle (m) its real land was put there with. Its real outline's (every other
  *  point: a chart pixel is far coarser than its step), else its round coast's (art/islands.js islandPoints). */
-function islandLoops(d: ChartIsland): { loops: Loop[]; k: number; cx: number; cz: number } {
+function islandLoops(d: ChartIsland): { loops: Loop[]; k: number; cx: number; cz: number; reach: number } {
   const o = d.outline, want = reachOf(d);
   if (o && o.loops.some(l => l.sea)) {
-    const cx = (o.box.minX + o.box.maxX) / 2, cz = (o.box.minZ + o.box.maxZ) / 2;
+    // (at the true scale, about its home's middle: the archipelago places that middle)
+    const cx = 0, cz = 0, k = K;
     let far = 0;
     for (const l of o.loops) if (l.sea) for (let i = 0; i < l.pts.length; i += 2) far = Math.max(far, Math.hypot(l.pts[i] - cx, l.pts[i + 1] - cz));
-    const k = want / Math.max(1, far), out: Loop[] = [];
+    const out: Loop[] = [];
     for (const l of o.loops) {
       const n = l.pts.length / 2, by = n > 160 ? 2 : 1, pts: THREE.Vector2[] = [];
       for (let i = 0; i < n; i += by) pts.push(new THREE.Vector2((l.pts[i * 2] - cx) * k, -(l.pts[i * 2 + 1] - cz) * k));
       if (pts.length >= 3) out.push({ pts, sea: l.sea });
     }
-    if (out.some(l => l.sea)) return { loops: out, k, cx, cz };
+    if (out.some(l => l.sea)) return { loops: out, k, cx, cz, reach: far * k };
   }
   const raw = (islandPoints(d.radii) as [number, number][]).map(([px, py]) => new THREE.Vector2(px - 0.5, -(py - 0.5)));
   const far = Math.max(...raw.map(p => p.length())), k = want / far;
-  return { loops: [{ pts: raw.map(p => p.multiplyScalar(k)), sea: true }], k: 0, cx: 0, cz: 0 };
+  return { loops: [{ pts: raw.map(p => p.multiplyScalar(k)), sea: true }], k: 0, cx: 0, cz: 0, reach: want };
 }
 const middle = (pts: THREE.Vector2[]) => pts.reduce((a, p) => a.add(p), new THREE.Vector2()).divideScalar(pts.length);
 const tmp = new THREE.Vector3();
@@ -287,8 +295,8 @@ export class SeaChart {
   private island(d: ChartIsland): Isle {
     const g = new THREE.Group(), x = d.x * CHART_SCALE, z = d.y * CHART_SCALE;
     g.position.set(x, 0, z); this.scene.add(g);
-    const { loops, k, cx, cz } = islandLoops(d), seas = loops.filter(l => l.sea);
-    const dim = d.unknown ? 0.72 : d.sail ? 1 : 0.85, home = d.id === "home", reach = reachOf(d);
+    const { loops, k, cx, cz, reach } = islandLoops(d), seas = loops.filter(l => l.sea);
+    const dim = d.unknown ? 0.72 : d.sail ? 1 : 0.85, home = d.id === "home";
     let body: THREE.Mesh, top: number;
     const G = d.outline?.ground;
     if (!G || !(k > 0)) { // a shelf of shallows round the round coast (the real ground brings its own)
@@ -359,7 +367,7 @@ export class SeaChart {
     g.add(body);
     const isle: Isle = { d, group: g, pick: body, x, z, top, reach };
     if (d.sail) { // its sigil, lying over the land and glowing as a placed sigil does, a halo of its light under it
-      const c = sigilColour(d.sigil), s = reach * SIGIL_SHARE;
+      const c = sigilColour(d.sigil), s = Math.max(SIGIL_FLOOR, reach * SIGIL_SHARE);
       const sg = new THREE.Mesh(new THREE.PlaneGeometry(s, s).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.sigilArt(d.sigil, 0), color: col(c, 0.95), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
       sg.position.y = top + 0.35; g.add(sg); isle.sigil = sg; isle.tier = 0; isle.size = s;
       const halo = new THREE.Mesh(new THREE.PlaneGeometry(s * 1.6, s * 1.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: col(c, 0.16), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
