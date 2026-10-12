@@ -10003,6 +10003,22 @@
             "core": {
               "type": "number",
               "minimum": 0
+            },
+            "foot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "taper": {
+              "type": "number",
+              "minimum": 0
+            },
+            "near": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cover": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10012,7 +10028,11 @@
             "glowReach",
             "glowHeight",
             "across",
-            "core"
+            "core",
+            "foot",
+            "taper",
+            "near",
+            "cover"
           ],
           "additionalProperties": false
         }
