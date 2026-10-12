@@ -10,7 +10,7 @@ import type { TypeArt } from "../assets";
 import { hash2 } from "../../rules/random";
 import { poseOf, type Game } from "../../rules/game";
 import type { View } from "../view";
-import { inView, viewRect } from "./culling";
+import { focusOf, inView, viewRect } from "./culling";
 import { checkPops, mark } from "./pops";
 import { BarkFaces } from "../barkFaces";
 // Each map's bark faces (render/barkFaces.ts), made once; the forest's trees round a spot, for its anchors to find theirs.
@@ -281,7 +281,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   }
   { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: g.tuning.treehouse.deck?.on ? 9 : 7, d: g.tuning.treehouse.deck?.on ? 5 : 3.5, scenery: false }); } // soft, under the treehouse
   checkPops(v, "placed", !force);
-  v.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
+  const fo = focusOf(v);
+  v.sources = g.forest.lightsNear(fo.x, fo.z, t.haze.far + margin);
   v.stats.trees = nt; v.stats.bushes = nb;
   v.shadowList = shadows;
 }
