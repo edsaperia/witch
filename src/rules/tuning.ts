@@ -380,7 +380,7 @@ export interface Tuning {
     carrier?: string };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; /** each family's share times this (1 as authored; 0 none) */ mix?: { ruins?: number; rocks?: number; freak?: number }; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
   paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; /** the path pieces at all (railway landmarks and signals, buffer stops, verge posts, stairs, bridges, level crossings, fingerposts) */ pieces?: boolean; fingerposts: boolean; treesOnBroken: number; edgeBushes: number; bushBoost: number };
-  lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
+  lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number }; /** The light's soft knee (render/lighting.ts softKnee): the light on a pixel passes unchanged up to knee of brightness, then eases toward ceiling and never past it; ceiling <= knee: off. */ knee?: number; ceiling?: number };
   glowPower: number;
   /** The lighting's mood (render/mood.ts): spooky (the grade below) or plain (the light as it was). */
   light?: { mood: "spooky" | "plain"; spooky: Mood };

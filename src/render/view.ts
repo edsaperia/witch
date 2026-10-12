@@ -492,8 +492,11 @@ export class View {
     this.render(0, false);
     drawCreatures(this);
     this.ground.fill(this.renderer, viewRect(this, this.game.tuning.haze.near, 20), this.game.witch.x, this.game.witch.z, Infinity);
+    performance.mark("witch:prep-ground");
     await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
+    performance.mark("witch:prep-home");
     await this.assets.whenIdle();
+    performance.mark("witch:prep-idle");
     this.render(0, false);
     refresh(this, true);
     // There are only 30 area types and 30 creatures: draw them all in the background now, so
@@ -517,7 +520,9 @@ export class View {
     this.scene.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     const compiled = this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
     for (const o of hidden) o.visible = false;
+    performance.mark("witch:prep-compile0");
     await Promise.race([compiled, new Promise(r => setTimeout(r, 4000))]);
+    performance.mark("witch:prep-compiled");
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
     for (const p of this.renderer.info.programs ?? []) p.getUniforms();

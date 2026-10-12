@@ -9074,11 +9074,21 @@
             "strength"
           ],
           "additionalProperties": false
+        },
+        "knee": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ceiling": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "campfire",
-        "stone"
+        "stone",
+        "knee",
+        "ceiling"
       ],
       "additionalProperties": false
     },

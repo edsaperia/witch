@@ -58,6 +58,7 @@ export class ArrivalFlight {
   get warming(): boolean { return !this.done && (!this.plan || this.clock.phase === "warm"); }
 
   private fadeStill(): void {
+    performance.mark("witch:landed"); // (the still going: the wait over)
     const img = this.still;
     if (!img) return;
     img.style.transition = `opacity ${this.A.fade}s linear`;

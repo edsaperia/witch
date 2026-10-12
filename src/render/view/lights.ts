@@ -79,6 +79,8 @@ export function setLights(v: View, all: ForestLight[], x: number, z: number): vo
   }
   U.uLightCount.value = n;
   v.stats.lights = n;
+  const L = v.game.tuning.lights; // (the light's soft knee: render/lighting.ts softKnee; read each frame, so the pause page's sliders show at once)
+  U.uLightKnee.value.set(L.knee ?? 0, L.ceiling ?? 0);
 }
 
 /** The sigils' neon spilling onto the world (overnight phase 3: tuning sigilSpill): each placed sigil a small light in its
