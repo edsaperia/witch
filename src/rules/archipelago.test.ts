@@ -33,7 +33,7 @@ describe("the archipelago", () => {
       const C = coast(p.id, p.x, p.y);
       let d = Infinity;
       for (let i = 0; i < H.length; i += 2) for (let j = 0; j < C.length; j += 2) d = Math.min(d, Math.hypot(H[i] - C[j], H[i + 1] - C[j + 1]));
-      expect(d, `home and ${p.id}`).toBeGreaterThan(STRAIT * 0.5);
+      expect(d, `home and ${p.id}`).toBeGreaterThan(STRAIT - 8); // (a strait at least, less the outline's sampling)
       closest = Math.min(closest, d);
     }
     expect(closest).toBeLessThan(STRAIT * 4); // (one of them across a strait from home, not open sea)

@@ -264,7 +264,7 @@ export interface PartyWitchArt { poses: Record<string, number[]>; fps: Record<st
 
 /** A scene piece in its atlas (by its name in the scenes' table), with its ground point; and each
  *  scene's pieces in metres from its middle, as authored and mirrored. */
-export interface SceneArt { pieces: Record<string, { frame: number; originX: number; originY: number; decal: boolean }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
+export interface SceneArt { pieces: Record<string, { frame: number; originX: number; originY: number; decal: boolean; /** drawn at this many art pixels a metre, not the game's own (the effects': art/effects.js EFFECT_PPM) */ ppm?: number }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
 export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean }
 
 /** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
@@ -299,6 +299,12 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
 export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt }
 
+/** The Harvest hat's sprouts (art/country.js scene pieces), one under each of its berries by its place in the ring. */
+export const HARVEST_SPROUTS = ["harvest-sprout-1", "harvest-sprout-2", "harvest-sprout-3"];
+/** The Cyclone's whirlwind's effects and their frames (art/effects.js), and the spell's neon its wind and motes take. */
+export const CYCLONE_FRAMES: [string, number][] = [["cycloneRise", 3], ["cyclone", 8], ["cycloneFall", 3]];
+export const CYCLONE_TINT = [190, 150, 255];
+
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
   type Layout = { pieces: { sprite: string; dx: number; dz: number; facing?: string }[] };
@@ -310,6 +316,18 @@ function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: Sc
       const piece = Art.scenePiece(p.ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean };
       scenes.pieces[p.ref] = { frame: sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal };
     }
+  }
+  // The hats' own art (#723, drawn each frame by render/view/hatArt.ts): the Harvest hat's sprouts, under its berries, and the
+  // Cyclone hat's whirlwind (art/effects.js: rising, its loop, falling apart), in the spell's neon, by its foot's middle.
+  for (const ref of HARVEST_SPROUTS) {
+    const piece = Art.scenePiece(ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean };
+    scenes.pieces[ref] = { frame: sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: false };
+  }
+  const fxColours = Art.effectColours(CYCLONE_TINT);
+  for (const [id, n] of CYCLONE_FRAMES) for (let f = 0; f < n; f++) {
+    const e = Art.effectSprite(id, { frame: f, variant: "light" }) as { sp: unknown; anchors: { base?: number[] }; px: number };
+    const b = Art.bake(e.sp, fxColours, st, "none", mk) as Baked, base = e.anchors.base ?? [b.w / 2, b.h - 1];
+    scenes.pieces[`fx:${id}/${f}`] = { frame: sprites.push(b) - 1, originX: base[0], originY: base[1], decal: false, ppm: e.px };
   }
   return { sprites, scenes };
 }
