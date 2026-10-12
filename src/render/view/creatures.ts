@@ -215,15 +215,22 @@ export function drawCreatures(v: View, time = 0): void {
     const watching = c.watchUntil !== undefined && g.clock.time < c.watchUntil; // (a wild area watching her come down, rules/wildWatch.ts: still, no idle quirk, turned to her)
     const quirkK = standing && !watching ? quirkAt(c.id, ch, time) : -1;
     if (standing && (look === "leashed" || look === "happy") && !c.boss) hop += bounceAt(c.id, time);
+    // How its frame is drawn: mirrored for its facing (a nightmare tossing, a tumble, a look back turn it over), and how far its
+    // body's middle lies from its place (a sleeping form's frame is often off-centre: a curl, a legend's tails).
+    const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, RT = SPRITE_UNIFORMS.uRight.value;
     if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx * csx, sy: feel.sy * breathY * csy, dx: cx, dz: cz, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined }))) // the rig draws it, if it can
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
       spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
-      const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip !== SQ.turned, mid = (slept ?? napped)?.centre?.[fi] ?? 0, R = SPRITE_UNIFORMS.uRight.value, k = -mid * v.mpp * scale * (flip ? -1 : 1) + SQ.x * fh;
+      const turned = flip !== SQ.turned, k = -mid * v.mpp * scale * (turned ? -1 : 1) + SQ.x * fh;
       const near = below * toward - (form || napped ? U.z * padM : 0), nx = form || napped ? -U.x * padM : 0;
-      l.push({ x: c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k + nx, y: dance + hop + sunk + SQ.hop * fh, z: c.z + cz + R.z * k + near, frame, flip, fresh, glow, scale, sx: feel.sx * SQ.sx * csx, sy: feel.sy * breathY * SQ.sy * csy });
+      l.push({ x: c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + RT.x * k + nx, y: dance + hop + sunk + SQ.hop * fh, z: c.z + cz + RT.z * k + near, frame, flip: turned, fresh, glow, scale, sx: feel.sx * SQ.sx * csx, sy: feel.sy * breathY * SQ.sy * csy });
     }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     v.leashView.halfW.set(c.id, frame.w * v.mpp * scale * 0.5);
+    // Where its head is (Ed, 2026-10-12: bubbles' tails "point at creatures' heads"): its frame's head point (render/artBuild.ts
+    // headPoint), mirrored with it, along the camera's right from where it's drawn; bubbles stand over it.
+    const hd = frame.head ? ((frame.head[0] - frame.w / 2) * (flip ? -1 : 1) - mid * (flip ? -1 : 1)) * v.mpp * scale : 0;
+    v.leashView.heads.set(c.id, { x: c.x + cx + sway + RT.x * hd, z: c.z + cz + RT.z * hd });
     // Its shadow under it as drawn (its sway and a nightmare's tossing too), as big as it's drawn (a legend's size, an evolving
     // pop); off the ground (a hop, a leap, a tumble) still on the ground under it, smaller the higher it goes.
     const air = Math.max(0, dance + hop), sk = scale / (1 + air * 0.35);

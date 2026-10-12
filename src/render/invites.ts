@@ -146,7 +146,7 @@ export class InviteView {
     if (this.pops.length > 40) this.pops.shift()!.el.remove();
   }
 
-  update(time: number, camera: THREE.Camera, width: number, height: number, tops: Map<number, number>): void {
+  update(time: number, camera: THREE.Camera, width: number, height: number, tops: Map<number, number>, heads?: Map<number, { x: number; z: number }>): void {
     const g = this.game, W = g.witches[0], I = W.invites, t = g.tuning, w = g.witch;
     // (Pixel art (the 💌s, hearts and pops) on whole art pixels, each k CSS pixels: on the grid as it moves.)
     const kp = t.pixelSize * t.bubbles.scale;
@@ -203,11 +203,12 @@ export class InviteView {
       return true;
     });
     // Hers follows her; theirs follow them.
-    if (time < this.hers.until) place(this.hers.el, w.x - 1.2, witchHeight(w, t) + 2.2, w.z); else this.hers.el.classList.remove("on");
+    if (time < this.hers.until) place(this.hers.el, w.x, witchHeight(w, t) + 2.2, w.z); else this.hers.el.classList.remove("on");
     for (const [id, b] of this.replies) {
       const c = g.creatures[id];
       if (time >= b.until || c.gone) { b.el.remove(); this.replies.delete(id); continue; }
-      place(b.el, c.x, head(id) + 0.9, c.z);
+      const hd = heads?.get(id); // (its tail over its head: Ed, 2026-10-12)
+      place(b.el, hd?.x ?? c.x, head(id) + 0.9, hd?.z ?? c.z);
     }
 
     // Flat on the ground, seen from the camera: squashed top to bottom by how steeply it looks down.
