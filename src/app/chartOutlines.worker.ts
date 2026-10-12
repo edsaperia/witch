@@ -69,20 +69,20 @@ export function blendAt(bearing: number): Blend {
   return t <= 0.5 ? { a: COMPASS[i], b: COMPASS[(i + 1) % 8], w: 1 - t } : { a: COMPASS[(i + 1) % 8], b: COMPASS[i], w: t };
 }
 export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "spring", badlands: "rust", "mangrove swamp": "lily" };
-/** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly; a sinkhole's pit, how far (m) its bed
- *  and water sink below the ground round it. */
+/** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly. */
 const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
   water: { rgb: [0, 0, 0], width: 0, k: 0 },
   ice: { rgb: hsv(0.57, 0.1, 0.72), width: 26, k: 0.75 }, // frost
   lava: { rgb: hsv(0.03, 0.4, 0.13), width: 30, k: 0.9 }, // a dark crust
   oasis: { rgb: hsv(0.3, 0.7, 0.46), width: 44, k: 0.9 }, // palms and grass
-  sinkhole: { rgb: hsv(0.33, 0.72, 0.42), width: 40, k: 0.9 }, // lush green round the pit
+  sinkhole: { rgb: hsv(0.34, 0.75, 0.3), width: 50, k: 0.95 }, // rainforest canopy right up to the pit's rim
   tarn: { rgb: hsv(0.58, 0.06, 0.6), width: 26, k: 0.8 }, // bare grey scree
   spring: { rgb: hsv(0.12, 0.16, 0.78), width: 30, k: 0.85 }, // pale mineral crust
   rust: { rgb: hsv(0.1, 0.05, 0.95), width: 80, k: 0.95 }, // pale grey-white crusted ground round it
   lily: { rgb: hsv(0.3, 0.65, 0.4), width: 34, k: 0.85 }, // reeds
 };
-const SINK = 16;
+/** A sinkhole (Ed's reference, a jungle tiankeng): how far (m) its floor lies below its rim. */
+const SINK = 26;
 /** A seeded number in 0..1 from two integers. */
 const rand = (a: number, b: number) => { let x = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be5ab, 0xc2b2ae35); x ^= x >>> 15; x = Math.imul(x, 0x2c1b3c6d); x ^= x >>> 12; return (x >>> 0) / 4294967296; };
 const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -143,11 +143,19 @@ function ground(src: Source, across = ACROSS): IslandGround {
     const mx = sx / part.length, mz = sz / part.length;
     let best = 0, bd = Infinity; shores.forEach((p, k) => { const dd = Math.hypot(p.x - mx, p.z - mz); if (dd < bd) { bd = dd; best = k; } });
     const look = rand(src.seed, best * 7919 + 13) < B.w ? lookA : lookB;
-    for (const i of part) {
-      looks[i] = look;
-      if (LOOK_IDS[look] === "sinkhole") { h[i] -= SINK; level[i] -= SINK * 0.8; } // (a pit: its water far below the ground round it)
-    }
+    for (const i of part) looks[i] = look;
   }
+  // a sinkhole is no lake but a dry pit: a lip just below its rim, sheer walls, a forest floor far below (`ring` in from its rim)
+  const ring = new Uint8Array(n), queue: number[] = [];
+  for (let i = 0; i < n; i++) if (water[i] === 2 && LOOK_IDS[looks[i]] === "sinkhole") {
+    const c = i % cols;
+    if ([c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols].some(j => j >= 0 && j < n && water[j] !== 2)) { ring[i] = 1; queue.push(i); }
+  }
+  for (let q = 0; q < queue.length; q++) {
+    const i = queue[q], c = i % cols;
+    for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < n && water[j] === 2 && LOOK_IDS[looks[j]] === "sinkhole" && !ring[j]) { ring[j] = Math.min(255, ring[i] + 1); queue.push(j); }
+  }
+  for (let i = 0; i < n; i++) if (ring[i]) { const top = level[i]; h[i] = top - (ring[i] === 1 ? 3 : ring[i] === 2 ? SINK * 0.8 : SINK); level[i] = h[i]; }
   // how far (m) each land sample is from the nearest lake, and that lake's look, within the widest rim
   const near = new Float32Array(n).fill(Infinity), R = Math.ceil(Math.max(...Object.values(LAKE_RIMS).map(r => r.width)) / step);
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
@@ -169,6 +177,10 @@ function ground(src: Source, across = ACROSS): IslandGround {
     if (src.sand(x, z, dist[i])) col = P.sand;
     const rim = LAKE_RIMS[LOOK_IDS[looks[i]]];
     if (near[i] < rim.width) col = mix(col, rim.rgb, rim.k * (1 - smooth(0.35, 1, near[i] / rim.width))); // the lakes' rim
+    if (ring[i]) { // the pit: pale limestone walls streaked green from its lip down, a cave-dark foot, its floor dark forest
+      const v = rand(i, src.seed), stone = mix(hsv(0.11, 0.1, 1), hsv(0.28, 0.45, 0.6), v * 0.35);
+      col = ring[i] === 1 ? stone : ring[i] === 2 ? mix(stone, hsv(0.3, 0.3, 0.5), 0.25) : ring[i] === 3 ? hsv(0.33, 0.5, 0.07) : mix(hsv(0.33, 0.6, 0.2), hsv(0.3, 0.5, 0.28), v);
+    }
     rgb[i * 3] = Math.round(col[0] * 255); rgb[i * 3 + 1] = Math.round(col[1] * 255); rgb[i * 3 + 2] = Math.round(col[2] * 255);
   }
   return { x0: x0 - src.centre.x, z0: z0 - src.centre.z, step, cols, rows, h, rgb, water, level, looks, blend: B };

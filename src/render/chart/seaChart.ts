@@ -173,7 +173,7 @@ const LAKE_SHALLOWS = 6;
 // A lake by its island's biome (Ed, 2026-10-12: frozen in the cold, lava in the volcano, an oasis in the desert, a sinkhole in the
 // jungle; chartOutlines.worker.ts LAKE_LOOKS, which picks each lake's, blending by bearing, and paints its rim on its shore): aLook 0 water (as the shallows), 1
 // ice (pale, frost white by the shore, faint cracks), 2 lava (glowing and slowly churning, crusting dark by the shore), 3 an
-// oasis (clear turquoise, pale sand under its edge), 4 a sinkhole (deep and dark, a little light caught at its edge); and the
+// oasis (clear turquoise, pale sand under its edge), 4 a sinkhole (no water: a dry cliff-walled pit, which the ground draws); and the
 // diagonals': 5 a glacial tarn (milky turquoise meltwater, ice floes by its edge), 6 a hot spring (terraced milky turquoise pools
 // with scalloped cream lips spilling over, steam drifting off it), 7 a rust pool (a Yellowstone hot pool: rings from an orange rim through yellow, green and teal to a deep blue throat, a white lip), 8 a
 // lily pond (green water under giant pads, a few flowers).
@@ -494,6 +494,7 @@ export class SeaChart {
         }
         for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
           const a = r * cols + c, b = a + 1, e = a + cols, f = e + 1;
+          if (lk[a] === 4 || lk[b] === 4 || lk[e] === 4 || lk[f] === 4) continue; // (a sinkhole's a dry pit: the ground draws it)
           if (G.water[a] === 2 || G.water[b] === 2 || G.water[e] === 2 || G.water[f] === 2) li.push(a, e, b, b, e, f);
         }
         if (li.length) {
