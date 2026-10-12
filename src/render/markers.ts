@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { groundPoints, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import * as Art from "../../art/generator.js";
 import { AREA_TYPES, type ForestMap } from "../rules/map";
-import { hash2 } from "../rules/random";
+import { dealRunestones, type Runestone } from "../rules/runestones";
 import type { Tuning } from "../rules/tuning";
 import { packAtlas, type Atlas, type Baked } from "./atlas";
 import type { Style } from "./style";
@@ -18,12 +18,14 @@ import type { Style } from "./style";
 export const MARKER_LEVELS = 4;
 
 /** An area's runestone (Ed, 2026-10-12: "20 mild variations on runestones so that they don't all look identical. They can also be
- *  flipped"): one of the art's seeded forms (art/areas.js runestoneForm) by the map's seed and its cell, mirrored at random as
- *  scenes are; null with runeMarkers.variants off (every stone as before). */
-export function runestoneOf(map: ForestMap, cx: number, cy: number, t: Tuning): { form: number; flip: boolean } | null {
+ *  flipped"): one of the art's seeded forms (art/areas.js runestoneForm), dealt to the map's areas without repeats until every form
+ *  is out (rules/runestones.ts), mirrored at random as scenes are; null with runeMarkers.variants off (every stone as before). */
+const DEALT = new WeakMap<ForestMap, Map<string, Runestone>>();
+export function runestoneOf(map: ForestMap, cx: number, cy: number, t: Tuning): Runestone | null {
   if (!t.runeMarkers.variants) return null;
-  const n = Art.RUNESTONE_FORMS as number;
-  return { form: Math.min(n - 1, Math.floor(hash2(cx, cy, map.seed + 901) * n)), flip: hash2(cx, cy, map.seed + 903) < 0.5 };
+  let d = DEALT.get(map);
+  if (!d) DEALT.set(map, (d = dealRunestones(map.cells, map.seed, Art.RUNESTONE_FORMS as number)));
+  return d.get(`${cx},${cy}`) ?? null;
 }
 
 export class MarkerArt {
