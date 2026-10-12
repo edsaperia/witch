@@ -103,6 +103,25 @@ const spSETS = {
     for (let i = 0; i < 4; i++) spRockAt(m, [-.7 + i * .45, .12, (spHash(i) - .5) * .5], [.22, .18, .2], 6 + i);
     m.box([0, .35, -.2], [.16, .35, .08], M.STONE, { round: .05, rough: .01, group: 11, paint: p => Math.abs(p[1] - .4) < .14 && Math.abs(p[0]) < .05 ? M.MAGIC : p[1] > .62 ? M.MOSS : undefined }); // a rune stone under the arch
   },
+  // mistwood: a nurse log, a giant spruce fallen long ago, its root plate reared up at one end, moss thick along it and a
+  // row of young spruce growing out of its back, ferns and toadstools at its foot
+  "nurse-log"(m) {
+    const mossy = p => { const n = spHash(Math.floor(p[0] * 9), Math.floor(p[2] * 9) + Math.floor(p[1] * 9) * 5); return p[1] > .5 ? (n < .3 ? M.LEAF2 : M.MOSS) : n < .12 ? M.MOSS : undefined; };
+    m.chain([[-2.3, .48, .1, .5], [-1, .5, 0, .48], [.4, .44, -.05, .44], [1.7, .38, 0, .38], [2.6, .3, .05, .3]], M.TRUNK, { group: 1, rough: .02, paint: p => mossy(p) ?? spBark(p) });
+    m.ell([2.75, .3, .05], [.08, .28, .28], M.BARKL, { group: 1, paint: p => Math.abs(Math.hypot(p[1] - .3, p[2] - .05) - .15) < .03 ? M.BARKD : undefined }); // its broken end, the rings showing
+    // the root plate: a disc of roots and earth stood on edge, roots splaying out of it
+    m.ell([-2.7, 1.0, .05], [.25, 1.0, 1.05], M.BARKD, { group: 2, rough: .05, paint: p => p[1] > 1.6 ? M.MOSS : spHash(Math.floor(p[1] * 8), Math.floor(p[2] * 8)) < .3 ? M.STONED : undefined });
+    for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, r = .85 + spHash(i, 3) * .3; spLimb(m, [[-2.65, 1.0 + Math.sin(a) * r * .8, .05 + Math.cos(a) * r * .8, .08], [-2.75 - spHash(i) * .2, 1.0 + Math.sin(a) * r * 1.25, .05 + Math.cos(a) * r * 1.25, .03]], 3); }
+    // its saplings: young spruce in a row along its back, the middle ones tallest
+    for (let i = 0; i < 6; i++) {
+      const x = -1.6 + i * .75, h = .55 + .7 * Math.sin(Math.PI * (i + .5) / 6) * (.8 + .4 * spHash(i, 9)), y0 = .9 - i * .02, z = (spHash(i, 5) - .5) * .2;
+      m.seg([x, y0 - .1, z], [x, y0 + h, z], .03, .015, M.TRUNK, { group: 10 + i });
+      for (let k = 0; k < 4; k++) { const t = k / 4, r = (.24 - t * .18) * (h / 1), y = y0 + .12 + t * h * .85; m.ell([x, y, z], [r, h * .14, r], M.LEAF3, { group: 10 + i, rough: .02, paint: p => p[1] > y + h * .05 ? M.LEAF : undefined }); }
+    }
+    // ferns and toadstools at its foot
+    for (let i = 0; i < 7; i++) { const x = -2 + i * .7, z = (i % 2 ? .55 : -.5) + (spHash(i, 2) - .5) * .2; for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; m.ell([x + Math.cos(a) * .18, .14, z + Math.sin(a) * .18], [.2, .04, .07], M.LEAF2, { group: 30, dir: [Math.cos(a), .5, Math.sin(a)] }); } }
+    for (let i = 0; i < 5; i++) { const x = -1.2 + i * .65, z = .5; m.seg([x, 0, z], [x, .14, z], .02, .02, M.BELLY, { group: 40 }); m.ell([x, .16, z], [.07, .035, .07], M.ACCENT, { group: 40, paint: p => spHash(Math.floor(p[0] * 60), Math.floor(p[2] * 60)) < .2 ? M.BELLY : undefined }); }
+  },
   // Norway: a little log cabin with a turf roof, abandoned
   "turf-hut"(m) {
     m.box([0, .55, 0], [1.0, .55, .7], M.WOOD, { round: .04, group: 1, paint: p => (p[1] * 7) % 1 < .18 ? M.BARKD : p[2] > .66 && Math.abs(p[0] + .2) < .2 && p[1] < .85 ? M.NOSE : p[2] > .66 && Math.abs(p[0] - .5) < .14 && Math.abs(p[1] - .7) < .12 ? M.SHADES : undefined }); // log walls, a door, a dark window

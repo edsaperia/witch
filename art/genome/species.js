@@ -140,5 +140,22 @@ export const GENOMES = [
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
+  // the cold rainforest's flying squirrel (Ed, 2026-10-12: a new animal for a later island, unknown-12's): a squirrel built for the night,
+  // huge dark eyes, a flat feathered tail and loose furred skin from wrist to ankle that spreads into a glide; its legend's membrane the night sky
+  { id: "flyingsquirrel", name: "Flying squirrel", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .3, val: .42, belly: "white" }, body: { hgt: .5, len: .5, chest: .32, tuck: .36, neck: .16, neckAng: .75, neckW: .38, hr: .33, legW: .7, haunch: 1.1, back: "arch" }, head: { snout: .4, snoutD: .65, whiskers: true, eyeK: 1.9 }, parts: { ears: { kind: "round", size: .9 }, tail: "glider", feet: "paw" }, coat: { belly: true }, legend: ["starTail"], texture: { kind: "fur", size: 2 },
+    levels: [
+      { head: { eyeK: 2.1 }, features: [{ kind: "patagium", spread: .3 }] },
+      { features: [{ kind: "patagium", spread: .45 }] },
+      { features: [{ kind: "patagium", spread: .6 }] },
+      { head: { eyeGlow: true }, features: [{ kind: "patagium", spread: 1, mat: "BODY2", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: .09 }] },
+    ] },
+  // MOCK ONLY: the same, gliding (the mock sheet's glide pose; becomes a pose, not a species, in the build)
+  { id: "flyingsquirrelglide", name: "Flying squirrel (gliding, mock)", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .3, val: .42, belly: "white" }, body: { glide: true, hgt: .5, len: .5, chest: .32, tuck: .36, neck: .16, neckAng: .75, neckW: .38, hr: .33, legW: .7, haunch: 1.1, back: "arch" }, head: { snout: .4, snoutD: .65, whiskers: true, eyeK: 1.9 }, parts: { ears: { kind: "round", size: .9 }, tail: "glider", feet: "paw" }, coat: { belly: true }, legend: ["starTail"], texture: { kind: "fur", size: 2 },
+    levels: [
+      { head: { eyeK: 2.1 }, features: [{ kind: "patagium", spread: .3 }] },
+      { features: [{ kind: "patagium", spread: .45 }] },
+      { features: [{ kind: "patagium", spread: .6 }] },
+      { head: { eyeGlow: true }, features: [{ kind: "patagium", spread: 1, mat: "BODY2", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: .09 }] },
+    ] },
   { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },
 ];
