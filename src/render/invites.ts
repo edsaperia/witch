@@ -278,7 +278,7 @@ export class InviteView {
       if (!L) { im.style.display = "none"; return; }
       im.style.display = "block";
       // A cache waits on the ground, bobbing; an orbiting one circles at her hand; the rest fly.
-      const y = L.kind === "cache" ? 0.35 + 0.12 * Math.sin((time - L.at) * 4 + L.n) : L.kind === "orbit" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
+      const y = L.kind === "cache" ? 0.35 + 0.12 * Math.sin((time - L.at) * 4 + L.n) : L.kind === "orbit" || L.kind === "sling" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
       place(im, L.x, y, L.z);
       // Like a frisbee (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): lying flat, turning
       // about the upright at invites.spin turns a second (snapped to sixteenths, pixel-like), laid flat

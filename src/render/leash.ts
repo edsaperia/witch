@@ -198,6 +198,7 @@ export class LeashView {
     const bot = !treetops && w.mode === "ground" ? stackBottom(g.leash) : null, babyNext = bot?.kind === "creature" && g.creatures[bot.id]?.level === 0;
     const reach = t.berries.babyReach ?? 10;
     for (const berry of B.berries) {
+      if (berry.gone) continue; // (a Harvest berry eaten)
       const p = B.bushes[berry.bush];
       if (Math.abs(p.x - w.x) > near || Math.abs(p.z - w.z) > near) continue;
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);

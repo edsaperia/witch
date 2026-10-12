@@ -596,6 +596,18 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `spells.healing.every` | number | 0 to … |
 | `spells.helmet.drop` | number | 0 to … |
 | `spells.double.charges` | number | 0 to … |
+| `spells.harvest.berries` | number | 0 to … |
+| `spells.harvest.radius` | number | 0 to … |
+| `spells.harvest.every` | number | 0 to … |
+| `spells.dowsing.time` | number | 0 to … |
+| `spells.sentry.range` | number | 0 to … |
+| `spells.sentry.every` | number | 0 to … |
+| `spells.slingshot.catch` | number | 0 to … |
+| `spells.slingshot.fire` | number | 0 to … |
+| `spells.slingshot.hold` | number | 0 to … |
+| `spells.slingshot.radius` | number | 0 to … |
+| `spells.slingshot.max` | number | 0 to … |
+| `spells.gathering.range` | number | 0 to … |
 
 ### `trail`
 
