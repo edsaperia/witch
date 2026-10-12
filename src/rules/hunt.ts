@@ -41,7 +41,7 @@ export function stepHunts(g: Game, t: Tuning): void {
   // A witch on the ground in a wild area whose watch is over: its own awake young and adults hunt her.
   for (let i = 0; i < g.witches.length; i++) {
     const w = g.witches[i];
-    if (w.body.mode !== "ground" || w.body.seated || w.ko) continue;
+    if (w.body.mode !== "ground" || w.body.seated || w.body.perch || w.ko) continue; // (up on the treehouse deck: out of reach)
     const cell = clearableAt(g.party, g.map, w.body.x, w.body.z);
     if (!cell) continue;
     const key = `${cell[0]},${cell[1]}`;

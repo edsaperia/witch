@@ -27,7 +27,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     v.rideTime = time;
     v.ride.update(rdt, W.x, W.z, W.vx, W.vz, full, groundHeight, t.witch, witchHeight(W, t));
     v.camRide.update(rdt, pose.tx, pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity); // (no floor: just the smoothed ground)
-    v.rideOff = W.seated ? 0 : v.ride.h - groundHeight(W.x, W.z);
+    v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
   const target = new THREE.Vector3(pose.tx, pose.ty + v.camRide.h, pose.tz);
   // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the

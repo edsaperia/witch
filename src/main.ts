@@ -1,4 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { wavesOver } from "./rules/win";
+import { openChart } from "./ui/chartOverlay";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -309,6 +311,8 @@ function frame(now: number): void {
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
   if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== attackTick) { attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
   const stepMs = performance.now() - step0;
+  // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, mid-night only to look.
+  if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart(!wavesOver(game));
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
   // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart

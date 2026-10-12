@@ -12,7 +12,7 @@ function game(t: Tuning): Game {
   const g = newGame(123, t);
   g.clock.paused = false;
   g.party.spellAt = undefined;
-  g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0 };
+  g.witch = { ...g.witch, seated: false, perch: false, mode: "ground", lift: 0 };
   return g;
 }
 const step = (g: Game, secs: number, c = C) => { for (let i = 0; i < Math.round(secs * 60); i++) stepGame(g, c, 1 / 60); };

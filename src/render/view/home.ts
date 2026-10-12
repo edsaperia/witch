@@ -232,6 +232,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
   const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
   const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
   const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
+  if (v.treehouseDeck) { v.treehouseBatch.set([]); return at; } // (the deck in its place: render/treehouseDeck.ts)
   const items: SpriteInstance[] = [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
   // The studio's DJ table over her (Ed, 2026-10-06): its crop where it shows in the base, a frame two to a beat (the platters
   // turning an eighth, the LEDs chasing), nearer the camera than her.
