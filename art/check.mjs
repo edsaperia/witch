@@ -336,6 +336,19 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "treehouse Ent: towards and away, standing, no face; far and near the whole's size, near part of it, the two covering it; anchors inside, the deck over the base, the table on its middle, the seat on its planks; the deck its radius wide and deckY high; DJ fore frames turning, the first the whole's; lanterns and decks lit; her DJ hands on the decks", good: !bad.length, info: bad.join("; ") || info });
   }
+  { // the Ent's carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of its
+    // kind; art/carrier.js): every species draws one, standing on its bottom row (a flyer landed, its shadow gone), its back between
+    // 6 m and CARRIER.maxBack, no longer than CARRIER.maxLength, its back's top anchor inside it on its own pixels
+    const bad = [], C = G.CARRIER, out = [];
+    for (const S of G.SPECIES) {
+      const c = G.carrierSprite(st, S.id, { ppm: 16 }); if (!c) { bad.push(`${S.id}: none`); continue; }
+      const sp = c.sprite, standing = [...Array(sp.w).keys()].some(x => sp.m[(sp.h - 2) * sp.w + x] && sp.m[(sp.h - 2) * sp.w + x] !== G.M.NOSE);
+      const onIt = sp.get(c.back.x, c.back.y) || sp.get(c.back.x, c.back.y + 1);
+      if (!(standing && onIt && c.backM >= 6 && c.backM <= C.maxBack + .5 && c.lengthM <= C.maxLength + .5)) bad.push(`${S.id}:${standing ? "" : " floating"}${onIt ? "" : " back anchor off it"} back ${c.backM.toFixed(1)} m, ${c.lengthM.toFixed(1)} m long`);
+      out.push(`${S.id} ${c.backM.toFixed(0)}/${c.lengthM.toFixed(0)}`);
+    }
+    res.push({ what: "the Ent's carrier: every species, standing, back 6 m to maxBack, no longer than maxLength (back/length m)", good: !bad.length, info: bad.length ? bad.join("; ") : out.join(", ") });
+  }
   { // the DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): the DJ
     // table's fore frames (DJ_FRAMES of them, one size, each different: the platters turning, the LEDs chasing; the first is the
     // whole's own table); her DJ frames, facing us, every gesture's frames different, each with an upper layer (what's over the
