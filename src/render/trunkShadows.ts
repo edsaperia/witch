@@ -1,4 +1,5 @@
-// Trunk shadows (Ed, 2026-10-12: "tree trunks casting shadows in ground mode from the witch's glow and from campfires"): on
+// Trunk shadows (Ed, 2026-10-12: "tree trunks casting shadows in ground mode from the witch's glow and from campfires"; soft,
+// "but the darkest part as dark as the hard one"; the beach's palms by its campfires too): on
 // the ground near a light, each tree's trunk (its bottom half's sprite) laid flat as its silhouette, stretching away from the
 // light, longer the lower the light and the farther the trunk, fading with distance from the light and toward its tip. Two
 // lights at most a trunk: her glow (slot 0: it moves with her, so the shadows swing as she walks) and the nearest campfire
@@ -10,14 +11,16 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { Atlas } from "./atlas";
 import type { Frame } from "./artBuild";
 
-/** The fires that throw them (up to MAX_FIRES nearest her, set each frame: xyz, reach), how strong, hard (1: on the art's
- *  pixels, two tones) or soft (0: a blurred silhouette, its penumbra widening toward its tip), and the longest a shadow
- *  gets (times its trunk's height). */
+/** The fires that throw them (up to MAX_FIRES nearest her, set each frame: xyz, reach; and how far each has flared up), how
+ *  strong, hard (1: on the art's pixels, two tones) or soft (0: a blurred silhouette, its penumbra widening toward its tip, as
+ *  dark as hard where its fade passes uTrunkCore), and the longest a shadow gets (times its trunk's height). */
 export const MAX_FIRES = 4;
 export const TRUNK_SHADOW_UNIFORMS = {
   uFires: { value: Array.from({ length: MAX_FIRES }, () => new THREE.Vector4()) },
   uFireCount: { value: 0 },
-  uTrunkStrength: { value: 0.55 },
+  uFireFade: { value: Array.from({ length: MAX_FIRES }, () => 0) },
+  uTrunkStrength: { value: 0.6 },
+  uTrunkCore: { value: 0.3 },
   uTrunkHard: { value: 0 },
   uTrunkLong: { value: 2.5 },
   uGlowReach: { value: 20 },
@@ -32,6 +35,7 @@ attribute float iPad;  // its empty rows at the bottom, a share of its height
 uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross;
 uniform vec3 uGlowPos;
 uniform vec4 uFires[${MAX_FIRES}];
+uniform float uFireFade[${MAX_FIRES}];
 uniform int uFireCount;
 varying vec2 vTex;
 varying float vFade, vAlong;
@@ -39,11 +43,11 @@ varying vec4 vFrame;
 ${HEIGHT_VERT_GLSL}
 void main() {
   vec2 foot = iTrunk.xy;
-  vec3 L; float reach;
+  vec3 L; float reach, lit = 1.0; // (lit: a fire's share of itself, as it flares up or dies down)
   if (uSlot < 0.5) { L = vec3(uGlowPos.x, uGlowLift, uGlowPos.z); reach = uGlowReach; } // (her glow, as from uGlowLift metres up: lower than it shines from, for shadows that read)
   else { // the nearest fire whose reach it's in
     float best = 1e9; L = vec3(0.0); reach = 0.0;
-    for (int i = 0; i < ${MAX_FIRES}; i++) { if (i >= uFireCount) break; vec4 F = uFires[i]; float d = length(foot - F.xz); if (d < F.w && d < best) { best = d; L = vec3(F.x, F.y - groundH(F.xz), F.z); reach = F.w; } }
+    for (int i = 0; i < ${MAX_FIRES}; i++) { if (i >= uFireCount) break; vec4 F = uFires[i]; float d = length(foot - F.xz); if (d < F.w && d < best) { best = d; L = vec3(F.x, F.y - groundH(F.xz), F.z); reach = F.w; lit = uFireFade[i]; } }
   }
   vec2 off = foot - L.xz; float d = length(off);
   if (reach <= 0.0 || d > reach || d < 0.4) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; } // (out of its light: nothing)
@@ -54,14 +58,14 @@ void main() {
   vTex = vec2(mix(iUv.x, iUv.z, 0.5 + u * uTrunkAcross), mix(iUv.w, iUv.y, iPad + t * (1.0 - iPad)));
   vFrame = vec4(min(iUv.x, iUv.z), iUv.y, max(iUv.x, iUv.z), iUv.w);
   float k = 1.0 - d / reach;
-  vFade = k * k; vAlong = t;
+  vFade = k * k * lit; vAlong = t; // (to nothing at its reach's edge: none pops in or out)
   gl_Position = clipOf(onGround(vec3(p.x, 0.06, p.y)));
 
 }`;
 
 const FRAG = /* glsl */ `
 uniform sampler2D uAlbedo;
-uniform float uTrunkStrength, uTrunkHard;
+uniform float uTrunkStrength, uTrunkHard, uTrunkCore;
 varying vec2 vTex;
 varying float vFade, vAlong;
 varying vec4 vFrame;
@@ -74,7 +78,7 @@ void main() {
   } else {
     float px = 1.0 / float(textureSize(uAlbedo, 0).x), s = (1.0 + 4.0 * vAlong) * px; // (its penumbra widening toward the tip)
     a = (solid(vTex) * 2.0 + solid(vTex + vec2(s, 0.0)) + solid(vTex - vec2(s, 0.0)) + solid(vTex + vec2(2.0 * s, 0.0)) * 0.5 + solid(vTex - vec2(2.0 * s, 0.0)) * 0.5) / 5.0;
-    a *= vFade * (1.0 - vAlong * vAlong);
+    a *= min(1.0, vFade * (1.0 - vAlong * vAlong) / uTrunkCore); // (Ed: "soft, but the darkest part as dark as the hard one": full strength near its foot and the light, soft only at its edges and toward its tip)
   }
   a *= uTrunkStrength;
   if (a < 0.004) discard;
@@ -130,4 +134,6 @@ export class TrunkShadowBatch {
   }
 
   set visible(on: boolean) { for (const m of this.meshes) m.visible = on; }
+
+  dispose(): void { this.geo.dispose(); for (const m of this.meshes) (m.material as THREE.Material).dispose(); }
 }

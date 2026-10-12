@@ -9882,6 +9882,10 @@
             "across": {
               "type": "number",
               "minimum": 0
+            },
+            "core": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -9890,7 +9894,8 @@
             "long",
             "glowReach",
             "glowHeight",
-            "across"
+            "across",
+            "core"
           ],
           "additionalProperties": false
         }
