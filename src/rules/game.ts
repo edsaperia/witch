@@ -37,7 +37,7 @@ import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, star
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, questsFromStanding, stepSigilButton } from "./sigilButton";
-import { hatLetters, onHatPicked, onHatPut } from "./hatSpells";
+import { hatLetters, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
@@ -293,7 +293,7 @@ export const affectionOf = (g: Game): Affection => {
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
     hit(c, amount, at) {
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
-      if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
+      if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
       hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time) }, c, amount, time, data);
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
@@ -528,6 +528,8 @@ function fixedStep(g: Game, controls: Controls): void {
   stepDancefloor(g, wave);
   stepWin(g, dt); // (the end of the route: last of all, so the finale's dancers keep their places, rules/win.ts)
   stepWitchParty(g, c, dt);
+  // Her hat's lasting spells where it lies (rules/hatSpells.ts: Bramble, Nursing, the Cyclone), after everything else has moved.
+  for (const w of g.witches) stepHatSpells(g, w, w.ko ? null : w.hat.down, dt, t);
   if (g.beach) { const w = g.witch; for (const s of g.beach) stepBeachWitches(s, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving: !w.stargazing && (Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3) || !!c.toggleMode }], g.clock.time, dt, g.tuning); }
   // Last, everyone in view eases apart from anyone closer than their sizes like (Ed, 2026-10-05).
   stepSpacing(g, dt);
