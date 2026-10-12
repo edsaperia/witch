@@ -3,7 +3,7 @@
 import DECISIONS from "../../config/decisions.json";
 
 export type Control = { type: "toggle" } | { type: "choice"; options: { value: string; label: string }[] } | { type: "slider"; min: number; max: number; step: number };
-export interface Decision { id: string; /** the feature it belongs to (the pause page's heading) */ group?: string; label: string; note: string; control: Control; default: string | number | boolean; apply: { knob?: string; param?: string; reload?: boolean } }
+export interface Decision { id: string; /** the pull request that added it */ pr?: number; /** that PR's short name (the pause page's heading: "#pr group") */ group?: string; label: string; note: string; control: Control; default: string | number | boolean; apply: { knob?: string; param?: string; reload?: boolean } }
 export const DECISION_LIST = (DECISIONS as unknown as { decisions: Decision[] }).decisions;
 /** Where an issue is opened. */
 export const ISSUES = "https://github.com/edsaperia/witch/issues/new";
@@ -48,16 +48,20 @@ export function applyKnobParams(tuning: object, params: URLSearchParams): void {
   }
 }
 
-/** Its feature (the pause page groups by it). */
-export const groupOf = (d: Decision): string => d.group ?? "Other";
+/** Its group's heading: the PR that added it and that PR's short name ("#495 Ground fog"; Ed, 2026-10-12: "The panel shows all
+ *  the sliders in PR order"). */
+export const groupOf = (d: Decision): string => (d.pr ? `#${d.pr} ${d.group ?? ""}`.trim() : d.group ?? "Other");
+/** The registry in the pause page's order: by PR, newest first (those without one last), each PR's in the registry's order. */
+export const byPr = (list: readonly Decision[]): Decision[] => list.map((d, i) => ({ d, i })).sort((a, b) => (b.d.pr ?? -1) - (a.d.pr ?? -1) || a.i - b.i).map(x => x.d);
 /** What it changes, as Ed would name it to a builder: the tuning key, or the URL switch. */
 export const keyOf = (d: Decision): string => d.apply.knob ?? `?${d.apply.param}`;
 
 /** The pause page's Copy values (Ed, 2026-10-12: "a button that copies all the slider names and positions so I can paste them
- *  to you here"): a heading line (the game's version and seed), then a line for every test slider and switch by group: its
+ *  to you here"): a heading line (the game's version and seed), then a line for every test slider and switch under its PR's
+ *  heading ("#290 Legend layers:", newest PR first):
  *  label, its tuning key, its value now and its built default (● when they differ). Plain text, paste-ready. */
-export function valuesText(values: ReadonlyMap<string, string | number | boolean>, version: string, seed: number, list: readonly Decision[] = DECISION_LIST): string {
-  const out = [`Test sliders · ${version} · seed ${seed}`];
+export function valuesText(values: ReadonlyMap<string, string | number | boolean>, version: string, seed: number, all: readonly Decision[] = DECISION_LIST): string {
+  const out = [`Test sliders · ${version} · seed ${seed}`], list = byPr(all);
   for (const g of [...new Set(list.map(groupOf))]) {
     out.push("", `${g}:`);
     for (const d of list.filter(x => groupOf(x) === g)) {
