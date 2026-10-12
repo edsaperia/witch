@@ -7668,11 +7668,30 @@
     "arrive": {
       "type": "object",
       "properties": {
-        "push": {
-          "type": "number",
-          "minimum": 0
+        "warm": {
+          "type": "object",
+          "properties": {
+            "frames": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "frames",
+            "ms",
+            "max"
+          ],
+          "additionalProperties": false
         },
-        "pushTime": {
+        "maxStep": {
           "type": "number",
           "minimum": 0
         },
@@ -7744,8 +7763,8 @@
         }
       },
       "required": [
-        "push",
-        "pushTime",
+        "warm",
+        "maxStep",
         "fade",
         "speed",
         "minLeg",

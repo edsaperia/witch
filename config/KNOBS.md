@@ -1638,12 +1638,14 @@ The camera and the view (drawing only): framing, pixel size, culling, fading, fi
 
 ### `arrive`, `camera`
 
-Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in by push over pushTime seconds while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed).
+Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. It waits behind the still (Ed's playtest, 2026-10-12: the first frames at a new spot are heavy) until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed).
 
 | knob | type | range |
 |---|---|---|
-| `arrive.push` | number | 0 to … |
-| `arrive.pushTime` | number | 0 to … |
+| `arrive.warm.frames` | number | 0 to … |
+| `arrive.warm.ms` | number | 0 to … |
+| `arrive.warm.max` | number | 0 to … |
+| `arrive.maxStep` | number | 0 to … |
 | `arrive.fade` | number | 0 to … |
 | `arrive.speed` | number | 0 to … |
 | `arrive.minLeg` | number | 0 to … |

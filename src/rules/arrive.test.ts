@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, poseOf } from "./game";
-import { arrivePlan, planLength, shotAt, shotCamera, southCoast, type Handoff, type Shot } from "./arrive";
+import { arrivePlan, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
 
 const A = TUNING.arrive!;
 
@@ -37,5 +37,25 @@ describe("arriving from the sea chart", () => {
       const along = Math.atan2(c.y - p.y, c.z - p.z) * 180 / Math.PI; // (down from level to the point)
       expect(Math.abs(along - f.angle)).toBeLessThan(half);
     }
+  });
+
+  it("waits out the heavy first frames behind the still and then flies in full, a stall holding the flight, never skipping it (Ed's playtest, 2026-10-12: \"froze for about ten seconds, and then cut straight to the witch on the decks\")", () => {
+    const c = newFlightClock(), T = 12;
+    let now = 1000, faded = -1, frames = 0;
+    const frame = (dt: number) => { now += dt; frames++; if (stepFlightClock(c, now, A).faded) faded = frames; };
+    frame(0); frame(5000); // (the first frame at the hand-off: seconds)
+    expect(c.phase).toBe("warm"); expect(c.s).toBe(0);
+    frame(900); frame(400); // (still heavy: still warming)
+    expect(c.phase).toBe("warm");
+    for (let i = 0; i < A.warm.frames; i++) frame(16);
+    expect(c.phase).toBe("fly"); expect(faded).toBe(frames); expect(c.s).toBe(0);
+    // flying at 60 frames a second, with a 6 s stall halfway: the flight's own time only ever moves by a frame's worth
+    let flown = 0;
+    while (c.s < T) { const before = c.s; frame(flown++ === 300 ? 6000 : 1000 / 60); expect(c.s - before).toBeLessThanOrEqual(A.maxStep + 1e-9); }
+    expect(flown).toBeGreaterThan(T * 60 - 5); // (every second of it drawn)
+    // and the warm-up gives up waiting after warm.max seconds of frames that never come calm
+    const d = newFlightClock(); let t = 0; stepFlightClock(d, t, A);
+    while (d.phase === "warm") { t += 700; stepFlightClock(d, t, A); }
+    expect(t).toBeGreaterThanOrEqual(A.warm.max * 1000); expect(t).toBeLessThan(A.warm.max * 1000 + 701);
   });
 });
