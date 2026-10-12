@@ -86,3 +86,26 @@ export function shotCamera(s: Shot): { x: number; y: number; z: number } {
   const a = (s.angle * Math.PI) / 180;
   return { x: s.tx, y: s.ty + Math.sin(a) * s.distance, z: s.tz + Math.cos(a) * s.distance };
 }
+
+/** The flight's clock (Ed's playtest, 2026-10-12: "the screen froze for about ten seconds, and then cut straight to the witch on the
+ *  decks"): the first frames after the camera jumps to the chart's hand-off are the night's heaviest (the ground, the hills and the
+ *  forest made round a new spot), seconds each on a laptop, and a flight timed by the wall clock was over before it was drawn. So it
+ *  waits ("warm", the chart's still still up) until `warm.frames` frames in a row come within `warm.ms` (or `warm.max` seconds
+ *  pass), then flies on the frames' own time, each frame counting at most `maxStep` seconds: a stall holds the flight, never
+ *  skips it. */
+export interface FlightClock { phase: "warm" | "fly"; s: number; calm: number; since: number; last: number }
+export const newFlightClock = (): FlightClock => ({ phase: "warm", s: 0, calm: 0, since: -1, last: -1 });
+
+/** One frame at `now` (ms): the clock moved on; `faded` true on the frame the warm-up ends (the still to fade then). */
+export function stepFlightClock(c: FlightClock, now: number, A: Pick<ArriveTuning, "warm" | "maxStep">): { faded: boolean } {
+  const dt = c.last < 0 ? 0 : now - c.last;
+  c.last = now;
+  if (c.phase === "warm") {
+    if (c.since < 0) c.since = now;
+    c.calm = c.since !== now && dt <= A.warm.ms ? c.calm + 1 : 0;
+    if (c.calm >= A.warm.frames || now - c.since >= A.warm.max * 1000) { c.phase = "fly"; return { faded: true }; }
+    return { faded: false };
+  }
+  c.s += Math.min(A.maxStep, dt / 1000);
+  return { faded: false };
+}

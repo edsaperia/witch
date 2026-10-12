@@ -187,6 +187,8 @@ export interface Tuning {
   /** The sound effects (platform/audio/sfx.ts, platform/audio/sfxCues.ts): their volumes and rates. */
   sfx: {
     on: boolean; volume: number; hear: number;
+    /** The most one-shot sounds at once (0: no limit); the least needed over it aren't played (platform/audio/sfxKit.ts voice). */
+    budget?: { voices: number };
     voice: {
       witch: { volume: number; pitch: number; range: number; pace: number; timbre: number; phraseGap: number };
       animals: { volume: number; pitch: number; maxVoices: number; duck: number; syllables: number[]; gap: number; reply: number; /** a voice gives way only to one this much nearer (prio, 0 to 1.5) */ swapBy?: number; /** and at most one gives way every swapGap seconds */ swapGap?: number };
@@ -370,7 +372,7 @@ export interface Tuning {
   /** Home's area, settled first: its circle reaches margin metres past the treehouse's footprint; other areas' centres stay gap (areas) beyond it. */
   home: { margin: number; gap: number };
   /** Arriving on an island from the sea chart (rules/arrive.ts): the still's push-in and cross-fade, and the flight's legs. */
-  arrive?: { push: number; pushTime: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number };
+  arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
     deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };
@@ -400,7 +402,7 @@ export interface Tuning {
   /** The end of the route (rules/win.ts WinTuning): the lap's speed, the conga, the legends' ring, the card. */
   win?: Partial<import("./win").WinTuning>;
   /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
-  leash: { /** her babies (Ed, 2026-10-11): single file gap m apart on the ground, scatter m off in a fight (till calm s after the last thing went for her or hers), farSpeed m/s past farAt m from her */ babies?: { gap: number; scatter: number; calm?: number; farAt: number; farSpeed: number }; length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number; /** How near (m) she picks up a happy creature's rune, a relic's sigil or her hat. */ runeRadius: number; /** Seconds she holds the sigil button on the ground, with nothing it picks up or puts down, to put her hat down (rules/hat.ts; absent: never). */ hatHold?: number; /** How bright a placed sigil shows where scenery or grass hides it (render/leash.ts; 0 or absent: hidden). */ placedThrough?: number; /** Metres north (up the screen) of its placed sigil that a parked animal rests round (rules/leash.ts; absent: on it). */ restAbove?: number;
+  leash: { /** her babies (Ed, 2026-10-11): single file gap m apart on the ground, scatter m off in a fight (till calm s after the last thing went for her or hers), farSpeed m/s past farAt m from her */ babies?: { gap: number; scatter: number; calm?: number; farAt: number; farSpeed: number }; length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number; /** How near (m) she picks up a happy creature's rune, a relic's sigil or her hat. */ runeRadius: number; /** Seconds she holds the sigil button on the ground, with nothing it picks up or puts down, to put her hat down (rules/hat.ts; absent: never). */ hatHold?: number; /** How bright a placed sigil shows where scenery or grass hides it (render/leash.ts; 0 or absent: hidden). */ placedThrough?: number; /** Every sigil glyph's brightness, times its colour (render/leash/glyphs.ts; Ed's pick B, 2026-10-12: 0.5, under the bloom's threshold; absent: 1). */ sigilGlyph?: number; /** The soft halos under placed sigils, ready runes and relic sigils, times their old strength (0: none, Ed's pick B; absent: 1). */ sigilHalo?: number; /** Metres north (up the screen) of its placed sigil that a parked animal rests round (rules/leash.ts; absent: on it). */ restAbove?: number;
     /** Sigils snap to a world-fixed hex grid (Ed, 2026-10-11; rules/leash.ts hexCell): size metres between neighbouring cells (0: put down
      *  freely, as before); no cell within stone metres of a runestone or soundsystem, or speaker metres of a home speaker, plus half a cell. */
     hex?: { size: number; stone: number; speaker: number }; /** On the ground the nearest rune within radius (m) comes to her: its creature trots over at speed (m/s), stopping stop (m) away. */ runePull: { radius: number; speed: number; stop: number };

@@ -193,6 +193,56 @@
       ],
       "additionalProperties": false
     },
+    "chart": {
+      "type": "object",
+      "properties": {
+        "moon": {
+          "type": "object",
+          "properties": {
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "from": {
+              "type": "number"
+            },
+            "shadow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "disc": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "rise",
+            "turn",
+            "height",
+            "from",
+            "shadow",
+            "disc"
+          ],
+          "additionalProperties": false
+        },
+        "edgeBand": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "moon",
+        "edgeBand"
+      ],
+      "additionalProperties": false
+    },
     "islands": {
       "type": "object",
       "properties": {
@@ -3381,6 +3431,14 @@
           "type": "number",
           "minimum": 0
         },
+        "sigilGlyph": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sigilHalo": {
+          "type": "number",
+          "minimum": 0
+        },
         "restAbove": {
           "type": "number",
           "minimum": 0
@@ -3543,6 +3601,8 @@
         "runeRadius",
         "hatHold",
         "placedThrough",
+        "sigilGlyph",
+        "sigilHalo",
         "restAbove",
         "hex",
         "runePull",
@@ -5585,6 +5645,19 @@
           "type": "number",
           "minimum": 0
         },
+        "budget": {
+          "type": "object",
+          "properties": {
+            "voices": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "voices"
+          ],
+          "additionalProperties": false
+        },
         "voice": {
           "type": "object",
           "properties": {
@@ -6807,6 +6880,7 @@
         "on",
         "volume",
         "hear",
+        "budget",
         "voice",
         "hit",
         "fill",
@@ -7658,11 +7732,30 @@
     "arrive": {
       "type": "object",
       "properties": {
-        "push": {
-          "type": "number",
-          "minimum": 0
+        "warm": {
+          "type": "object",
+          "properties": {
+            "frames": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "frames",
+            "ms",
+            "max"
+          ],
+          "additionalProperties": false
         },
-        "pushTime": {
+        "maxStep": {
           "type": "number",
           "minimum": 0
         },
@@ -7734,8 +7827,8 @@
         }
       },
       "required": [
-        "push",
-        "pushTime",
+        "warm",
+        "maxStep",
         "fade",
         "speed",
         "minLeg",
@@ -10278,6 +10371,7 @@
     "mapAreas",
     "map",
     "lakes",
+    "chart",
     "islands",
     "beach",
     "areaSize",

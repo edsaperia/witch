@@ -85,8 +85,16 @@ void main() {
 
 const INSTANCE_ATTRS = ["iPos", "iSize", "iUv", "iCol", "iDraw"];
 
+/** Whether an atlas rect is a sigil's glyph (every slot but the soft dot in slot 0 and the solid square in the last). */
+export function isGlyph(uv: number[]): boolean {
+  return !(uv[0] === 0 && uv[1] === 1) && !(uv[0] === (SQ % SLOTS) / SLOTS && uv[1] === 1 - Math.floor(SQ / SLOTS) / SLOTS);
+}
+
 export class Instances {
   readonly mesh: THREE.Mesh;
+  /** How bright a sigil's glyph is drawn, times its colour (Ed's pick B, 2026-10-12: the tuning's leash.sigilGlyph, under the bloom's
+   *  threshold so it doesn't bloom into a disc on lit ground); the soft dots and squares as given. */
+  glyphGain = 1;
   private geo = new THREE.InstancedBufferGeometry();
   private cap = 0;
   private n = 0;
@@ -117,6 +125,7 @@ export class Instances {
   /** glow: drawn as light, smooth (a soft dot otherwise draws as an object, in art pixels, up to PIXEL_DOT_MAX metres). */
   add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1, glow = false): void {
     if (this.n >= this.cap) this.grow(this.cap * 2);
+    if (this.glyphGain !== 1 && isGlyph(uv)) { r *= this.glyphGain; g *= this.glyphGain; b *= this.glyphGain; }
     // (each attribute written, and sent, only where it changed: dirty.ts; no arrays made per instance)
     const i = this.n++, P = this.pos, U = this.uv, C = this.col, d = this.dirty, dr = draw + (glow ? 2 : 0);
     let j = i * 3;

@@ -12,7 +12,7 @@ import type { SfxKit } from "./sfxKit";
 export function splash(K: SfxKit, size = 0.5, pan = 0, near = 1, fall = 0.9): void {
   const S = K.T.seaLife, c = K.ctx, at = c.currentTime + 0.01, r = Math.random, vol = S.volume * S.splash * near * (0.6 + 0.6 * size);
   if (vol <= 0.0005) return;
-  const out = K.voice(pan);
+  const out = K.voice(pan, 0.4, 3);
   // breaking the surface: a soft rush of water and the blow (a short breath out)
   const bp = c.createBiquadFilter(), g = c.createGain();
   bp.type = "bandpass"; bp.frequency.setValueAtTime(1800, at); bp.frequency.exponentialRampToValueAtTime(900, at + 0.35); bp.Q.value = 0.8;
@@ -36,7 +36,7 @@ export function splash(K: SfxKit, size = 0.5, pan = 0, near = 1, fall = 0.9): vo
 export function groan(K: SfxKit, pan = 0, near = 1): void {
   const S = K.T.seaLife, c = K.ctx, at = c.currentTime + 0.02, r = Math.random, vol = S.volume * S.groan * near;
   if (vol <= 0.0005) return;
-  const dur = 4 + r() * 2, f = 38 + r() * 10, out = K.voice(pan), g = c.createGain(), lp = c.createBiquadFilter(), form = c.createBiquadFilter();
+  const dur = 4 + r() * 2, f = 38 + r() * 10, out = K.voice(pan, 0.4, 6), g = c.createGain(), lp = c.createBiquadFilter(), form = c.createBiquadFilter();
   lp.type = "lowpass"; lp.frequency.value = 420; lp.Q.value = 0.7;
   form.type = "bandpass"; form.Q.value = 3;
   form.frequency.setValueAtTime(140, at); form.frequency.linearRampToValueAtTime(260, at + dur * 0.4); form.frequency.linearRampToValueAtTime(110, at + dur);
@@ -56,7 +56,7 @@ export function groan(K: SfxKit, pan = 0, near = 1): void {
 export function pour(K: SfxKit, dur = 4, pan = 0, near = 1): void {
   const S = K.T.seaLife, c = K.ctx, at = c.currentTime + 0.02, r = Math.random, vol = S.volume * S.pour * near;
   if (vol <= 0.0005) return;
-  const out = K.voice(pan), bp = c.createBiquadFilter(), g = c.createGain();
+  const out = K.voice(pan, 0.4, 6), bp = c.createBiquadFilter(), g = c.createGain();
   bp.type = "bandpass"; bp.Q.value = 0.7;
   bp.frequency.setValueAtTime(700, at); bp.frequency.exponentialRampToValueAtTime(2200, at + dur);
   g.connect(out); g.connect(K.space());

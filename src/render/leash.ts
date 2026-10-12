@@ -60,6 +60,8 @@ export class LeashView {
   nextSlot = 1; // the next free atlas slot
   legendSlots = 0; // legendary blocks taken
   colours = new Map<string, THREE.Color>();
+  /** The sigils' halos this frame, times today's (the tuning's leash.sigilHalo; Ed's pick B: none). */
+  haloGain = 1;
   standing: Instances;
   flat: Instances;
   /** The placed sigils, and the happy creatures' runes (Ed, 2026-10-12), again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
@@ -390,6 +392,11 @@ export class LeashView {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
     this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin();
+    // Every sigil's glyph (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home) under the
+    // bloom's threshold, and its halo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation").
+    const gain = L.sigilGlyph ?? 1, halo = L.sigilHalo ?? 1;
+    this.standing.glyphGain = this.flat.glyphGain = this.through.glyphGain = this.over.glyphGain = gain;
+    this.haloGain = halo;
     const BK = bloodKnobs(t);
     if (BK.on) {
       if (!this.bloodPool || this.bloodPool.cap !== BK.cap) this.bloodPool = new BloodPool(BK.cap);
@@ -461,7 +468,7 @@ export class LeashView {
       const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
       this.flat.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
       if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, Math.min(1, (time - p.at) / 0.8));
-      this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
+      if (halo > 0) this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38 * halo);
     }
 
     // Happy creatures' runes (Ed, 2026-10-06; states.leash "pickup"): each carries its sigil as a dim rune restAbove metres
@@ -474,7 +481,7 @@ export class LeashView {
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + (t.leash.restAbove ?? 0);
       this.flat.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
-      if (ready) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18);
+      if (ready && halo > 0) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18 * halo);
     }
 
     // The party legend (Ed's Easter egg, rules/partyLegend.ts): a giant party hat on its head, striped in party neons, a
@@ -525,7 +532,7 @@ export class LeashView {
       {
         const col = (this.slotOf("relic", 0), this.colours.get("relic")!), pulse = 1.05 + 0.25 * Math.sin(time * 2 + r.id);
         this.flat.add(r.sx, 0.02, r.sz, 3.4, this.uv(this.slotOf("relic", 0)), col.r * pulse, col.g * pulse, col.b * pulse, 1);
-        this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38);
+        if (halo > 0) this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38 * halo);
       }
       if (dropped || !relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;

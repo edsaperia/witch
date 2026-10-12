@@ -81,7 +81,7 @@ export class Aggro {
     const K = this.k, A = K.T.aggro!, b = this.bed!, c = K.ctx;
     this.live = false; this.spent = true;
     for (const g of [b.swell, b.riser]) { g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + 0.04); }
-    const vol = A.volume * A.hit * (0.6 + 0.4 * danger), out = K.voice(pan), at = now + 0.01;
+    const vol = A.volume * A.hit * (0.6 + 0.4 * danger), out = K.voice(pan, 0.9), at = now + 0.01;
     const kg = c.createGain(); kg.connect(out); K.env(kg, at, vol, 0.003, 0.35);
     const o = K.osc("sine", mtof(K.root - 24), at, 0.4, kg); o.frequency.exponentialRampToValueAtTime(mtof(K.root - 36), at + 0.3);
     const hp = c.createBiquadFilter(), ng = c.createGain(); hp.type = "highpass"; hp.frequency.value = 1500;

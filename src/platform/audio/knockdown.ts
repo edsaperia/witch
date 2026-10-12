@@ -18,7 +18,7 @@ export function sadTrumpet(K: SfxKit, full = true, pan = 0): { gain: GainNode; l
   const S = K.T.sadTrumpet, c = K.ctx, at0 = c.currentTime + 0.02, vol = S.volume;
   if (vol <= 0.0005) return null;
   const out = c.createGain(), base = K.root - 12; // (a trumpet's middle: the key's root an octave down from the sound effects')
-  out.connect(K.voice(pan));
+  out.connect(K.voice(pan, 1, 4));
   let lastAt = at0;
   const notes: [number, number][] = full ? [[3, 0.42], [2, 0.42], [1, 0.42], [0, 1.6]] : [[1, 0.45], [0, 1.25]];
   const space = K.space(), wet = c.createGain(); wet.gain.value = 0.25; out.connect(wet); wet.connect(space);
@@ -71,7 +71,7 @@ export function rewind(K: SfxKit, at: number, trumpet: GainNode | null, pan = 0)
   const S = K.T.sadTrumpet, c = K.ctx, vol = S.volume * S.rewind, dur = 0.42;
   if (trumpet) { trumpet.gain.cancelScheduledValues(at); trumpet.gain.setValueAtTime(trumpet.gain.value, at); trumpet.gain.setTargetAtTime(0, at, 0.015); }
   if (vol <= 0.0005) return;
-  const out = K.voice(pan), g = c.createGain(), lp = c.createBiquadFilter(), f = mtof(K.root - 12);
+  const out = K.voice(pan, 1, 2), g = c.createGain(), lp = c.createBiquadFilter(), f = mtof(K.root - 12);
   lp.type = "lowpass"; lp.Q.value = 4; lp.frequency.setValueAtTime(900, at); lp.frequency.exponentialRampToValueAtTime(5200, at + dur * 0.4); lp.frequency.exponentialRampToValueAtTime(500, at + dur);
   g.gain.value = 0; lp.connect(g); g.connect(out); g.connect(K.space());
   g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.03); g.gain.setValueAtTime(vol, at + dur * 0.55); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
