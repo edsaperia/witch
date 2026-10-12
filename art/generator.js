@@ -7,11 +7,12 @@
 // trees.js (trees and bushes), this file (the style's knobs, the witch, a whole asset set).
 
 import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake } from "./core.js";
-import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick } from "./trees.js";
+import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick, snowCrown } from "./trees.js";
 import { PLANT_GENOMES, BUSH_GENOMES } from "./flora/genomes.js";
 export { PLANT_GENOMES, BUSH_GENOMES };
 import { witchSprite, witchHatSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit , WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks, LIMBO_BAR, DJ_DECKS, DJ_GESTURES, djFrame, djGesture } from "./witch.js";
 import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES, CANDLE, candleSprite } from "./treehouse.js";
+import { entSprite, entColours, ENT } from "./ent.js";
 import { PROP_GENOMES, PROP_KINDS, RIM_GENOMES } from "./props/genomes.js";
 import { propPiece, propVariant, propFor, rimPiece, rimForm, rimSeed } from "./props/generator.js";
 export { PROP_GENOMES, PROP_KINDS, RIM_GENOMES, propPiece, propVariant, propFor, rimPiece, rimForm, rimSeed };
@@ -23,8 +24,8 @@ import { WITCH_GENOME, WITCH_AXES, WITCH_RANDOM, witchGenome, genomeLook, witchG
 import { bedroomSprite, bedroomColours, BEDROOM_PROPS, BANNER_FONT, ROOM } from "./bedroom.js";
 export { bedroomSprite, bedroomColours, BEDROOM_PROPS, BANNER_FONT, ROOM };
 export { WITCH_GENOME, WITCH_AXES, WITCH_RANDOM, witchGenome, genomeLook, witchGenomeProblems, upgradeGenome, WITCH_INERT, sliderApplies };
-import { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGIL, PARTY_RELIC_SIGIL_STROKES, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId, partyRelicLight, PARTY_RELIC_FRAMES } from "./partyRelics.js";
-export { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGIL, PARTY_RELIC_SIGIL_STROKES, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId, partyRelicLight, PARTY_RELIC_FRAMES };
+import { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGIL, PARTY_RELIC_SIGIL_STROKES, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId, partyRelicLight, PARTY_RELIC_FRAMES, PARTY_RELIC_GLASSES } from "./partyRelics.js";
+export { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGIL, PARTY_RELIC_SIGIL_STROKES, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId, partyRelicLight, PARTY_RELIC_FRAMES, PARTY_RELIC_GLASSES };
 import { swayMask, bakeSway, swayCode, swayRegions, windShift, SWAY_CELL } from "./sway.js";
 import { tuftSprites, bakeTufts } from "./tufts.js";
 import { GROUND_GENOMES, groundGenome, groundTile, groundColours } from "./ground.js";
@@ -37,6 +38,8 @@ export { EFFECTS, EFFECT_BY_ID, ATTACK_EFFECTS, STATE_EFFECTS, TRAIT_TINTS, SPEC
 import { NEW_SET_PIECES, SET_PIECE_KINDS, setPiece3d } from "./setpieces.js";
 import { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset } from "./relics.js";
 import { BEACH_FINDS, BEACH_PRINTS, PRINT_HEADINGS, beachSprite, beachColours } from "./beach.js";
+import { DOLPHIN, dolphinColours, dolphinSprite, dolphinSplash } from "./dolphins.js";
+import { KRAKEN, krakenColours, krakenTentacle, krakenHead } from "./kraken.js";
 import { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint } from "./decor.js";
 import { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours } from "./country.js";
 import { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours } from "./landmarks.js";
@@ -58,10 +61,10 @@ import { NAP_POSES, napPose, napForm } from "./naps.js";
 export { NAP_POSES, napPose, napForm };
 import { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists } from "./scenes.js";
 import { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, pathKindsByArea } from "./paths.js";
-import { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, RIM_PIECES, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
+import { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, RIM_PIECES, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, RUNESTONE_FORMS, runestoneForm, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, walkGait, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
 export { LIMBO_BAR, DJ_DECKS, DJ_GESTURES, djFrame, djGesture, WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks };
-export { witchSprite, witchHatSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES, CANDLE, candleSprite };
+export { witchSprite, witchHatSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES, CANDLE, candleSprite, entSprite, entColours, ENT };
 export { NEW_SET_PIECES, SET_PIECE_KINDS, setPiece3d };
 export { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset };
 export { BEACH_FINDS, BEACH_PRINTS, PRINT_HEADINGS, beachSprite, beachColours };
@@ -73,14 +76,16 @@ export { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRef
 export { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite };
 // The path kinds each area suits, its own extra kinds (stairs, bridges) included.
 export function areaPathKinds() { return pathKindsByArea(AREAS); }
-export { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, RIM_PIECES, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
+export { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, RIM_PIECES, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, RUNESTONE_FORMS, runestoneForm, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
 import { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown, LEGEND_SCALE, LEGEND_DETAIL, LEGEND_DETAIL_PX, LEGEND_FULL_PX, LEGEND_STROKES, legendTier, legendCircle, legendSigilStrokes, legendSigilMask } from "./sigils.js";
 export { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown, LEGEND_SCALE, LEGEND_DETAIL, LEGEND_DETAIL_PX, LEGEND_FULL_PX, LEGEND_STROKES, legendTier, legendCircle, legendSigilStrokes, legendSigilMask };
 import { DISCO_GRID, DISCO_RADIUS, DISCO_TILE_METRES, DISCO_MASK, discoPatterns, discoPatternById, DISCO_TRANSITIONS, discoTransition, discoCompose, discoCells, discoPaint, discoTileSprite, discoGroutSprite, discoRimStrip, discoFloorBase, discoColours, discoRimColours, DISCO_PPM, DISCO_TILE_PX, DISCO_PITCH, DISCO_RIM, DISCO_LOOK } from "./dancefloor.js";
 export { DISCO_GRID, DISCO_RADIUS, DISCO_TILE_METRES, DISCO_MASK, discoPatterns, discoPatternById, DISCO_TRANSITIONS, discoTransition, discoCompose, discoCells, discoPaint, discoTileSprite, discoGroutSprite, discoRimStrip, discoFloorBase, discoColours, discoRimColours, DISCO_PPM, DISCO_TILE_PX, DISCO_PITCH, DISCO_RIM, DISCO_LOOK };
 import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, soundsystems, DANCEFLOOR_SPEAKER_ANGLES, DANCEFLOOR_SPEAKER_STATES, dancefloorSpeakerFacing, dancefloorSpeakerHeight, dancefloorSpeakerColours, dancefloorSpeakerSprite } from "./soundsystem.js";
 export { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, DANCEFLOOR_SPEAKER_ANGLES, DANCEFLOOR_SPEAKER_STATES, dancefloorSpeakerFacing, dancefloorSpeakerHeight, dancefloorSpeakerColours, dancefloorSpeakerSprite };
-export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick };
+import { CRYSTALS as SOUNDSYSTEM_CRYSTALS, STONES as SOUNDSYSTEM_STONES, PROFILES as SOUNDSYSTEM_PROFILES, PROJECTORS as SOUNDSYSTEM_PROJECTORS, soundsystemGenome, soundsystemSignature, soundsystemDiff, soundsystemSet, soundsystemYaw, soundsystemScale, soundsystemGenColours, soundsystemGenSprite, DAMAGE_STAGES, PROFILE_YAW } from "./soundsystemGen.js";
+export { SOUNDSYSTEM_CRYSTALS, SOUNDSYSTEM_STONES, SOUNDSYSTEM_PROFILES, SOUNDSYSTEM_PROJECTORS, soundsystemGenome, soundsystemSignature, soundsystemDiff, soundsystemSet, soundsystemYaw, soundsystemScale, soundsystemGenColours, soundsystemGenSprite, DAMAGE_STAGES, PROFILE_YAW };
+export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick, snowCrown };
 export { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake, SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, walkGait, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES };
 
 // ================= the style genome =================
@@ -138,6 +143,7 @@ export const KNOBS = [
   { k: "growth", g: "Creatures", label: "Legend vs baby height", min: 5, max: 25, step: 1, v: 20 },
   { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
   { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
+  { k: "creatureScale", g: "Creatures", label: "Creature size: babies, young and adults (Ed, 2026-10-08: +50%; legends stay well above their adults)", min: 1, max: 2, step: .05, v: 1.5 },
   { k: "texture", g: "Creatures", label: "Fur, feathers and scales (genome/texture.js; 0 off)", min: 0, max: 1, step: 1, v: 1 },
   { k: "texDetail", g: "Creatures", label: "Texture detail (0 cel shapes, 1 fine strokes)", min: 0, max: 1, step: 0.05, v: 0.3 },
   { k: "hueShift", g: "Creatures", label: "Hue-shifted ramps (warm lights, red-brown shadows)", min: 0, max: 1, step: 0.05, v: 0 },
@@ -220,3 +226,4 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   return out;
 }
 
+export { DOLPHIN, dolphinColours, dolphinSprite, dolphinSplash, KRAKEN, krakenColours, krakenTentacle, krakenHead }; // (imported above, so the lab's inliner sees them)

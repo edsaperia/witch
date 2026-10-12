@@ -36,7 +36,8 @@ const upcoming = existsSync("upcoming.generated.json") ? JSON.parse(readFileSync
 export default defineConfig({
   base: "./",
   define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash) },
-  build: { target: "es2022", chunkSizeWarningLimit: 1200 },
+  // (two pages: the game, and the sea chart: chart.html, wave 2 part C)
+  build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html" } } },
   plugins: [artOverrides()],
   worker: { plugins: () => [artOverrides()] },
   // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
@@ -45,5 +46,5 @@ export default defineConfig({
   // Tests (overnight phase 1, test speed): a worker per core (Vitest leaves one idle by default) and one module load per
   // worker rather than per file (isolate false: no test file leaves module state changed; the few that change it put it
   // back in afterEach). 281 s to 216 s locally on 4 cores, the same 758 tests.
-  test: { include: ["src/**/*.test.ts", "tools/bench/*.test.ts"], environment: "node", testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
+  test: { include: ["src/**/*.test.ts", "tools/bench/*.test.ts"], environment: "node", setupFiles: ["src/test/radiusMap.ts"], testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
 });

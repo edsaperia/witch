@@ -10,14 +10,14 @@
 // own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
 import { COMBAT, creatureMaxHp, strengthOf } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
-import { LEGEND, type Creature, type Level } from "./creatures";
+import { LEGEND, heal, type Creature, type Level } from "./creatures";
 import { gaitRate, leashSpeed } from "./leash";
 import type { ForestMap } from "./map";
 import { rng } from "./random";
 import type { Tuning } from "./tuning";
 
 /** A berry bush: where it stands, and its area's type (it's one of that area's own bushes). */
-export interface BerryBush { x: number; z: number; type: number; variant: number; flip: boolean }
+export interface BerryBush { x: number; z: number; type: number; variant: number; flip: boolean; /** a spot of the Harvest hat's ring (rules/spells.ts): no bush drawn, and never a regrown berry's */ harvest?: boolean }
 
 export interface Berry {
   id: number;
@@ -25,6 +25,10 @@ export interface Berry {
   bush: number;
   /** The party animal on its way to eat it, if any. */
   claimedBy: number | null;
+  /** One of the Harvest hat's ring (rules/spells.ts): eaten, it's gone (not grown again elsewhere) till the hat grows the ring again. */
+  once?: boolean;
+  /** Eaten and not grown again yet (a Harvest berry): not on the map. */
+  gone?: boolean;
 }
 
 /** A party animal busy with a berry: walking to it, or eating it (eatLeft counts down). */
@@ -48,6 +52,8 @@ export interface BerryState {
   ateAt: Map<number, number>;
   events: BerryEvent[];
   rand: () => number;
+  /** The Harvest hat's ring (rules/spells.ts): its berries' ids, made the first time it grows and reused after. */
+  harvest?: number[];
 }
 
 /** The highest level a party animal evolves to: adult (Ed, 2026-10-04). */
@@ -67,6 +73,7 @@ export function strengthGain(level: Level, species: string | undefined, t: Tunin
  *  legends don't evolve. */
 export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
   if (level >= TOP_LEVEL) return Infinity;
+  if (level === 0 && t.berries.babyCost !== undefined) return Math.max(1, t.berries.babyCost); // (one berry makes a baby a youth: Ed, 2026-10-11)
   const C = t.berries.cost;
   return Math.max(1, Math.round((strengthGain(level, species, t) / C.per) * (C.scale ?? 1)));
 };
@@ -124,10 +131,11 @@ export function newBerries(map: ForestMap, t: Tuning): BerryState {
 /** Grow an eaten berry again on a random free bush anywhere on the map (never its own). */
 function regrow(s: BerryState, b: Berry): void {
   s.onBush[b.bush] = -1;
-  const free = s.bushes.length - s.berries.length;
+  if (b.once) { b.gone = true; b.claimedBy = null; return; } // (a Harvest berry: gone till the ring grows again)
+  const harvest = s.harvest?.length ?? 0, free = s.bushes.length - harvest - (s.berries.length - harvest);
   if (free > 0) {
     let k = Math.floor(s.rand() * free);
-    for (let i = 0; i < s.bushes.length; i++) if (s.onBush[i] < 0 && i !== b.bush && k-- <= 0) { b.bush = i; break; }
+    for (let i = 0; i < s.bushes.length; i++) if (s.onBush[i] < 0 && i !== b.bush && !s.bushes[i].harvest && k-- <= 0) { b.bush = i; break; }
   }
   s.onBush[b.bush] = b.id;
   b.claimedBy = null;
@@ -147,7 +155,7 @@ function berryFor(s: BerryState, x: number, z: number, lp: { x: number; z: numbe
   const D = t.berries.detour, reach = t.leash.length + D;
   let best: Berry | null = null, bd = Infinity;
   for (const b of s.berries) {
-    if (b.claimedBy !== null) continue;
+    if (b.claimedBy !== null || b.gone) continue;
     const p = s.bushes[b.bush];
     if (Math.abs(p.x - x) > reach * 2 || Math.abs(p.z - z) > reach * 2) continue;
     if (Math.hypot(p.x - lp.x, p.z - lp.z) > reach || offPath(p.x, p.z, x, z, lp.x, lp.z) > D) continue;
@@ -166,7 +174,7 @@ function release(s: BerryState, id: number): void {
 /** Count one berry eaten; at the threshold, start evolving on the next bar line. */
 export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?: BeatClock): void {
   // A berry heals a party animal to full (Ed, 2026-10-04), as well as counting toward evolving.
-  if (c.leashed && hurtNow(c)) { c.hp = undefined; c.healedAt = time; }
+  if (c.leashed && hurtNow(c)) heal(c, time);
   if (c.level >= TOP_LEVEL || s.evolving.has(c.id)) return;
   const n = (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);
@@ -182,7 +190,21 @@ export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?
 
 /** One step. `leashPointOf` says where each party animal's leash is fixed (the witch, or its
  *  sigil); a feeding animal is moved here (the leash leaves it alone while it has a berry). */
-export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning, clock?: BeatClock): void {
+/** The nearest unclaimed berry within `reach` metres of a baby's placed sigil at (sx, sz) (Ed, 2026-10-11: a baby eats only there). */
+export function babyBerry(s: BerryState, sx: number, sz: number, reach: number): Berry | null {
+  let best: Berry | null = null, bd = reach * reach;
+  for (const b of s.berries) {
+    if (b.claimedBy !== null || b.gone) continue;
+    const p = s.bushes[b.bush], d = (p.x - sx) ** 2 + (p.z - sz) ** 2;
+    if (d <= bd) { bd = d; best = b; }
+  }
+  return best;
+}
+
+/** One step. `leashPointOf` says where each party animal's leash is fixed (the witch, or its
+ *  sigil); a feeding animal is moved here (the leash leaves it alone while it has a berry). `sigilOf` says where its
+ *  sigil lies when it's put down (null while it follows her): a baby eats only then (Ed, 2026-10-11). */
+export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning, clock?: BeatClock, sigilOf?: (id: number) => { x: number; z: number } | null): void {
   s.events = [];
   const B = t.berries;
   // Evolving: on its bar line, it goes up a level (and stays a party animal, legends too).
@@ -196,7 +218,7 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
   // Animals busy with a berry: give it up if pulled away or no longer a party animal; else walk to it and eat it.
   for (const [id, f] of s.feeding) {
     const c = creatures[id], b = s.berries[f.berry], p = s.bushes[b.bush], lp = leashPointOf(id);
-    if (!canEat(c, s) || !lp || Math.hypot(p.x - lp.x, p.z - lp.z) > t.leash.length + B.detour * 2) { release(s, id); continue; } // left behind
+    if (!canEat(c, s) || !lp || b.gone || Math.hypot(p.x - lp.x, p.z - lp.z) > t.leash.length + B.detour * 2 || (sigilOf && c.level === 0 && !sigilOf(id))) { release(s, id); continue; } // left behind (or a baby taken up again)
     const dx = p.x - c.x, dz = p.z - c.z + 0.6, d = Math.hypot(dx, dz); // it stands just in front of the bush
     if (!f.eating) {
       if (d > 0.3) {
@@ -226,7 +248,10 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
     if (!canEat(c, s) || s.feeding.has(c.id)) continue;
     const lp = leashPointOf(c.id);
     if (!lp) continue;
-    const b = berryFor(s, c.x, c.z, lp, t);
+    // A baby eats only at its placed sigil, a berry within berries.babyReach of it; following her, never (Ed, 2026-10-11).
+    const sg = sigilOf && c.level === 0 ? sigilOf(c.id) : null;
+    if (sigilOf && c.level === 0 && !sg) continue;
+    const b = sg ? babyBerry(s, sg.x, sg.z, B.babyReach ?? 10) : berryFor(s, c.x, c.z, lp, t);
     if (!b) continue;
     const p = s.bushes[b.bush];
     b.claimedBy = c.id;
@@ -241,4 +266,34 @@ export function feedNearest(s: BerryState, creatures: Creature[], x: number, z: 
   for (const c of creatures) if (canEat(c, s)) { const d = Math.hypot(c.x - x, c.z - z); if (d < bd) { bd = d; best = c; } }
   if (best) { release(s, best.id); feed(s, best, time, t, clock); s.events.push({ kind: "ate", id: best.id, x: best.x, z: best.z, at: time }); }
   return best;
+}
+
+/** The Harvest hat put down at (x, z) (Ed, 2026-10-11: "Harvest hat should grow a circle of six berries around the hat when
+ *  placed"): `n` berries in a ring `radius` metres round it, on spots of their own (no bush drawn; rules/spells.ts). The same
+ *  ring each time, moved: any of it still uneaten moves with it, so putting the hat down again never makes more than `n`.
+ *  Returns the ring's spots. */
+export function growRing(s: BerryState, x: number, z: number, n: number, radius: number, time: number): { x: number; z: number }[] {
+  if (!s.harvest) {
+    s.harvest = [];
+    const onBush = new Int32Array(s.bushes.length + n).fill(-1);
+    onBush.set(s.onBush);
+    s.onBush = onBush;
+    for (let i = 0; i < n; i++) {
+      s.bushes.push({ x, z, type: 0, variant: i, flip: false, harvest: true });
+      const id = s.berries.length;
+      s.berries.push({ id, bush: s.bushes.length - 1, claimedBy: null, once: true, gone: true });
+      s.harvest.push(id);
+    }
+  }
+  const spots: { x: number; z: number }[] = [];
+  s.harvest.forEach((id, i) => {
+    const b = s.berries[id], p = s.bushes[b.bush], a = (i / s.harvest!.length) * Math.PI * 2 - Math.PI / 2;
+    // (an animal on its way to one where it was lets it go: it's moved)
+    if (b.claimedBy !== null) { const f = s.feeding.get(b.claimedBy); if (f && f.berry === id) s.feeding.delete(b.claimedBy); b.claimedBy = null; }
+    p.x = x + Math.cos(a) * radius; p.z = z + Math.sin(a) * radius;
+    b.gone = false; s.onBush[b.bush] = id;
+    s.events.push({ kind: "regrew", id, x: p.x, z: p.z, at: time });
+    spots.push({ x: p.x, z: p.z });
+  });
+  return spots;
 }

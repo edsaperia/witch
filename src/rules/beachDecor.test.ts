@@ -10,7 +10,7 @@ const K = TUNING.beach!.decor!;
 
 describe("the beach's decorations", () => {
   const map = generateMap(123, TUNING), b = beachOf(map.bounds, TUNING)!;
-  const all = (d: BeachDecor) => Array.from({ length: K.sectors }, (_, k) => d.sector(k)).flat();
+  const all = (d: BeachDecor) => d.sectorKeys().map(k => d.sector(k)).flat();
 
   it("lie on the sand, clear of the woods' edge and out of the sea, sparsely, the same for the same seed", () => {
     const d = new BeachDecor(b, 123, K), list = all(d);
@@ -18,7 +18,7 @@ describe("the beach's decorations", () => {
       expect(b.intoSand(it.x, it.z)).toBeGreaterThan(it.print ? K.clear - 0.5 : K.clear);
       expect(b.intoSea(it.x, it.z)).toBeLessThan(0);
     }
-    const finds = list.filter(i => !i.print).length, coast = Math.PI * 2 * b.edgeMin;
+    const finds = list.filter(i => !i.print).length, coast = b.land.loops.reduce((t, l) => t + l.length, 0);
     expect(finds / (coast / 1000)).toBeGreaterThan(5);   // (some)
     expect(finds / (coast / 1000)).toBeLessThan(120);    // (sparse: a few every hundred metres at most)
     expect(all(new BeachDecor(b, 123, K))).toEqual(list);
@@ -35,7 +35,7 @@ describe("the beach's decorations", () => {
     const d = new BeachDecor(b, 123, K), list = all(d);
     const rocks = list.filter(i => i.id === "rock" || i.id === "rocks");
     expect(rocks.length).toBeGreaterThan(0);
-    for (const r of rocks) expect(b.rockyAt(Math.atan2(r.z - b.z, r.x - b.x))).toBeGreaterThan(0.3);
+    for (const r of rocks) { const s = b.land.shore(r.x, r.z); expect(b.rockyAlong(s.loop, s.s)).toBeGreaterThan(0.3); }
     // A trail: its prints in steps, the last ones smaller (fading out).
     const prints = list.filter(i => i.print);
     expect(prints.length).toBeGreaterThan(50);
@@ -43,8 +43,9 @@ describe("the beach's decorations", () => {
   });
 
   it("are found only near her, and only near the beach", () => {
-    const d = new BeachDecor(b, 123, K), a = 0.7, x = b.x + Math.cos(a) * (b.edge(a) - 20), z = b.z + Math.sin(a) * (b.edge(a) - 20);
+    const d = new BeachDecor(b, 123, K), L = b.land, sea = L.loops.findIndex(l => l.sea), p = L.along(sea, L.loops[sea].length * 0.3), x = p.x - p.nx * 20, z = p.z - p.nz * 20;
+    expect(d.near(x, z, 120).length).toBeGreaterThan(0);
     for (const it of d.near(x, z, 120)) { expect(Math.abs(it.x - x)).toBeLessThan(120); expect(Math.abs(it.z - z)).toBeLessThan(120); }
-    expect(d.near(b.x, b.z, 120)).toEqual([]);
+    expect(d.near(map.dancefloor.x, map.dancefloor.z, 120)).toEqual([]);
   });
 });

@@ -146,6 +146,24 @@ export const NOTES = [
   ".###.....####..",
 ];
 
+/** 🎉 in pixels: a party popper, its cone (`#`) bursting streamers and confetti (`+`) up to the right (the wave pointer's middle
+ *  for the route's last stone: Ed, 2026-10-10, "Last call"; and the victory lap's pointer). */
+export const PARTY = [
+  "..........+...+",
+  "......+.....+..",
+  "...........+...",
+  ".......+.+.....",
+  "....##....+..+.",
+  "...####.+......",
+  "..######...+...",
+  "..#######......",
+  ".########..+...",
+  ".#########.....",
+  "###########....",
+  "##########.....",
+  "########.......",
+];
+
 /** 🎩 in pixels: her hat, a tall crown leaning back over a wide brim, its band (`+`) a lighter line (the dropped hat's pointer, rules/hat.ts). */
 export const HAT = [
   ".........###...",
@@ -162,6 +180,27 @@ export const HAT = [
   ".#############.",
 ];
 
+/** A flask in pixels (the Dowsing hat's pointer toward the nearest relic, rules/hatSpells.ts): the relic sigil's round-bellied
+ *  potion flask, its cork (`+`) on a lipped neck, the glass's glint at its shoulder, and its liquid (`+`) a lighter fill with
+ *  two bubbles rising in it. */
+export const FLASK = [
+  ".....+++++.....",
+  ".....#####.....",
+  "......#.#......",
+  "......#.#......",
+  ".....##.##.....",
+  "...###...###...",
+  "..#.........#..",
+  ".#.+.........#.",
+  ".#+++++++++++#.",
+  "#++.++++++++++#",
+  "#++++++++.++++#",
+  "#+++++++++++++#",
+  ".#+++++++++++#.",
+  "..#+++++++++#..",
+  "...#########...",
+];
+
 export class StoneIndicator {
   private cue: PixelCue;
   private v = new THREE.Vector3();
@@ -171,6 +210,8 @@ export class StoneIndicator {
   /** `scale`, `opacity`: its size and strength (only the next stone has one: Ed, 2026-10-05). */
   constructor(parent: HTMLElement, scale = SCALE, private opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
   private shown = -1;
+  /** Its label pulses up (the wave pointer's tempo rising on a knockdown: index.html's bpm-up). */
+  pop(): void { const L = this.cue.label; L.style.animation = "none"; void L.offsetWidth; L.style.animation = "bpm-up 1.4s ease-out"; }
   /** How much it shows, 0 to 1, times its own strength (the wave pointer fading in as the boot ends). */
   fade(a: number): void {
     if (Math.abs(a - this.shown) < 0.01) return;

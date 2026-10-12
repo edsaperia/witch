@@ -3,11 +3,14 @@
 // (Ed, 2026-10-04, 2026-10-05).
 import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { newParty, spreadWave, cellKey } from "./party";
-import { departureClear, departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
+import { departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
+import { speakerCircle } from "./departure";
 
 const map = generateMap(123, TUNING);
+/** The same map with leyLines.advance "first": a quest done moves the line on (the default since Ed, 2026-10-08, is "wave": it doesn't). */
+const firstMap = generateMap(123, withTuning({ leyLines: { ...TUNING.leyLines, advance: "first" } }));
 const keys = (c: { cell: readonly [number, number] }[]) => c.map(s => cellKey(s.cell));
 /** The last stone reached and `count - 1` after it (no stones behind). */
 const ahead = (p: Parameters<typeof leyChain>[0], m: typeof map, count: number) => leyChain(p, m, count - 1, 0).stones;
@@ -31,18 +34,27 @@ describe("ley lines", () => {
       expect(keys(ahead(p, map, 3))).toEqual(keys(before).slice(1, 4)); // and now runs on from it
     }
   });
-  it("move on when the next area's quest is done, before its wave, and stay put when that wave comes", () => {
-    const p = newParty(map);
-    spreadWave(p, map, 100);
-    const before = ahead(p, map, 3), next = before[1].cell, key = leyKey(p);
+  it("under advance \"first\", move on when the next area's quest is done, before its wave, and stay put when that wave comes", () => {
+    const p = newParty(firstMap);
+    spreadWave(p, firstMap, 100);
+    const before = ahead(p, firstMap, 3), next = before[1].cell, key = leyKey(p);
     onAreaDone(p, next, 120);
     expect(leyKey(p)).not.toBe(key);
-    const after = ahead(p, map, 2);
+    const after = ahead(p, firstMap, 2);
     expect(keys(after)).toEqual(keys(before).slice(1, 3)); // from the quest's stone to the one after
     // Its wave arrives: the line already moved on, so it keeps pointing to the same next stone.
-    const woke = spreadWave(p, map, 200);
+    const woke = spreadWave(p, firstMap, 200);
     expect(cellKey(woke[0].cell)).toBe(cellKey(next));
-    expect(keys(ahead(p, map, 2))).toEqual(keys(after));
+    expect(keys(ahead(p, firstMap, 2))).toEqual(keys(after));
+  });
+  it("by default (advance \"wave\": Ed, 2026-10-08, 'The pulse should never skip'), stay put when a quest is done; its wave moves them on", () => {
+    const p = newParty(map);
+    spreadWave(p, map, 100);
+    const before = ahead(p, map, 3), next = before[1].cell;
+    onAreaDone(p, next, 120);
+    expect(keys(ahead(p, map, 3))).toEqual(keys(before));
+    spreadWave(p, map, 200);
+    expect(keys(ahead(p, map, 2))).toEqual(keys(before).slice(1, 3));
   });
 });
 
@@ -69,12 +81,12 @@ describe("the whole route, the whole time (Ed, 2026-10-06: \"I think the leyline
       expect(keys(c.stones.slice(0, c.current + 1))).toEqual(woken);
     }
   });
-  it("moves on when the next area's quest is done", () => {
-    const p = newParty(map);
-    spreadWave(p, map, 100);
-    const next = leyChain(p, map).stones[2].cell;
+  it("under advance \"first\", moves on when the next area's quest is done", () => {
+    const p = newParty(firstMap);
+    spreadWave(p, firstMap, 100);
+    const next = leyChain(p, firstMap).stones[2].cell;
     onAreaDone(p, next, 120);
-    const c = leyChain(p, map);
+    const c = leyChain(p, firstMap);
     expect(cellKey(c.stones[c.current].cell)).toBe(cellKey(next));
     expect(c.current).toBe(2); // home, the first wave's, then the quest's
   });
@@ -102,7 +114,7 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
     // (The noisy picker's first objective lies anywhere round home; the route's on the side it leaves by.)
     for (const T of [TUNING, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }]) for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
       const m = generateMap(seed, T), p = newParty(m), [a, b] = ahead(p, m, 2), d = m.dancefloor;
-      const pts = departureRoute(m, b, D.avoid, 4), R = departureClear(m, D.avoid);
+      const pts = departureRoute(m, b, D.avoid, 4), R = speakerCircle(m) - 0.6; // (on the speakers' own circle at the closest: the boot ring's, Ed 2026-10-07)
       expect(pts[0]).toEqual([a.x, a.z]);
       const last = pts[pts.length - 1];
       expect(Math.hypot(last[0] - b.x, last[1] - b.z)).toBeLessThan(1);

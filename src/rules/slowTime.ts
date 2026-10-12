@@ -8,6 +8,8 @@
 import type { Creature } from "./creatures";
 import type { Game } from "./game";
 import { bodyRadius } from "./spacing";
+import { deckOf, leavesDeck } from "./treehouse";
+import type { WitchState } from "./witch";
 
 /** A legend's circle: its clearing (map.legendClearings) and the legend lying in it. */
 export interface Ring { id: number; x: number; z: number; r: number }
@@ -34,11 +36,13 @@ export function calmRingAt(g: Game, x: number, z: number): Ring | null {
   return null;
 }
 
-/** The world's speed she asks for now: slow.scale on the ground in a calm circle (not on her seat, nor knocked out), else 1. */
+/** The world's speed she asks for now: slow.scale on the ground in a calm circle, or landed on the treehouse deck (Ed, 2026-10-11:
+ *  "10x slowdown works the same as legend circles"; rules/treehouse.ts), not on her seat, nor knocked out; else 1. */
 export function slowTarget(g: Game): number {
   const S = g.tuning.legendCircle?.slow, w = g.witch;
   if (!S || S.on === false || S.scale >= 1) return 1;
   if (w.mode !== "ground" || w.seated || g.witches[0].ko) return 1;
+  if (w.perch) return S.scale;
   return calmRingAt(g, w.x, w.z) ? S.scale : 1;
 }
 
@@ -72,8 +76,10 @@ export function keepEnragedOut(g: Game): void {
 }
 
 /** A 💌 going from (x0, z0) to (x1, z1) leaves a calm circle it was in (Ed: "Your invitations disappear if they go outside the circle from inside"). */
-export function leavesCalmRing(g: Game): (x0: number, z0: number, x1: number, z1: number) => boolean {
+export function leavesCalmRing(g: Game, w?: WitchState): (x0: number, z0: number, x1: number, z1: number) => boolean {
+  const deck = w?.perch ? deckOf(g.map, g.tuning) : null; // (thrown from the treehouse deck: it vanishes at the rail, as one leaving a circle)
   return (x0, z0, x1, z1) => {
+    if (deck) return leavesDeck(deck, x0, z0, x1, z1);
     const r = calmRingAt(g, x0, z0);
     return !!r && Math.hypot(x1 - r.x, z1 - r.z) >= r.r;
   };

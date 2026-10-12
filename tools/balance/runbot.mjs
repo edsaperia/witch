@@ -2,17 +2,15 @@
 // (src/rules/game.ts, waves on, the boot-up from her first step) for the first --time seconds of a
 // run, and we read off what a playtester would feel: when she's first knocked out, how much of each
 // woken area she'd invited before its wave, how many legends are angry, and how the run ends.
-//   skilled: recruits carefully (never empties an area of its own kind, so no legend grows
-//     restless), does a legend's quest when she carries the creature it dreams of, heads for the
-//     next wave's soundsystem before it lands and parks some of her posse there as guards, kites
-//     fighters, and rises to the treetops to heal at her last hit;
+//   skilled: recruits carefully ahead of the wave, answers sieges, blinks, heals part way and
+//     sees off the win's stragglers (rules/bot.ts says it all; tools/balance/bottrace.mjs traces a run);
 //   idle: stands at home all run (the sieges alone, for comparing rules changes seed by seed);
 //   hover: idle, but over the treetops (nothing can go for her);
 //   crude: invites everything in the nearest wild area, area after area, and never parks, defends
 //     or heals.
 // The bot flies between areas over the treetops and fights on the ground, as a player does.
 // WHO=1 in the environment logs every hit she takes: who was close and coming for her, and the angry legends.
-//   node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--quest-max N (at most N quests, then she plays on as usual)] [--relic-max N (at most N relics brought)] [--strategy invite|feed|quest|sigil|mixed (the skilled bot's strategies: rules/bot.ts STRATEGIES)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--set path=value;...] [--combat path=value;... (config/combat.json's)] [--json out.json] | --report a.json,b.json
+//   node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--quest-max N (at most N quests, then she plays on as usual)] [--relic-max N (at most N relics brought)] [--strategy invite|feed|quest|sigil|mixed (the skilled bot's strategies: rules/bot.ts STRATEGIES)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--island 10|20|...|off (map.islandAreas)] [--game (each bot with the bot game's own options, rules/bot.ts BOT_GAME, in place of the flags)] [--set path=value;...] [--combat path=value;... (config/combat.json's)] [--json out.json] | --report a.json,b.json
 import { readFileSync, writeFileSync } from "node:fs";
 import { arg, list, mean, median, openRules } from "./lib.mjs";
 
@@ -22,11 +20,12 @@ if (arg("report")) rows = list(arg("report")).flatMap(f => JSON.parse(readFileSy
 else {
   const SEEDS = +arg("seeds", 3), SKIP = +arg("skip", 0), HAPPY = +arg("happy", 0), GUARDS = +arg("guards", 3), KEEP = +arg("keep", 2), FEED = process.argv.includes("--feed"), QUESTS = process.argv.includes("--quests"), RELICS = process.argv.includes("--relics"), RELIC_POLICY = String(arg("relic-policy", "nearest")), QUEST_MAX = +arg("quest-max", Infinity), RELIC_MAX = +arg("relic-max", Infinity), STRATEGY = arg("strategy", ""), BOTS = list(arg("bots", "skilled,crude")), TIME = +arg("time", 1800);
   const SETS = String(arg("set", "")).split(";").filter(Boolean).map(kv => { const [k, v] = kv.split("="); return [k.trim().split("."), JSON.parse(v)]; });
+  if (arg("island", null) !== null) SETS.push([["map", "islandAreas"], arg("island") === "off" ? 0 : +arg("island")]); // (--island N|off: the journey's islands, Ed 2026-10-11; map.islandAreas, 10 by default)
   const { load, close } = await openRules();
   const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
   const { newGame, stepGame } = await load("/src/rules/game.ts");
   const { cellKey } = await load("/src/rules/party.ts");
-  const { newBot, STRATEGIES } = await load("/src/rules/bot.ts");
+  const { newBot, STRATEGIES, BOT_GAME } = await load("/src/rules/bot.ts");
   const { cheer, LEGENDS } = await load("/src/rules/legends.ts");
   if (process.argv.includes("--calm")) LEGENDS.angryAfter = 1e9; // (--calm: no legend ever turns angry, to see what their rage does)
   const { powerReport } = await load("/src/rules/power.ts");
@@ -54,7 +53,7 @@ else {
     let firstKo = null, kos = 0, wasKo = false;
     const T0 = Date.now(), angryAt = [], restlessAt = [], restWas = new Map(), ruinedAt = new Map(), babiesDown = []; let babyHits = 0;
     // The bot itself (src/rules/bot.ts, shared with the game's bot game): the controls a player would give, step by step.
-    const brain = newBot(bot, { guards: GUARDS, keep: KEEP, feed: FEED, quests: QUESTS, relics: RELICS, relicPolicy: RELIC_POLICY, questMax: QUEST_MAX, relicMax: RELIC_MAX, ...(STRATEGY ? STRATEGIES[STRATEGY] : {}) });
+    const brain = newBot(bot, process.argv.includes("--game") ? BOT_GAME[bot] : { guards: GUARDS, keep: KEEP, feed: FEED, quests: QUESTS, relics: RELICS, relicPolicy: RELIC_POLICY, questMax: QUEST_MAX, relicMax: RELIC_MAX, ...(STRATEGY ? STRATEGIES[STRATEGY] : {}) });
 
     for (let step = 0; step * dt < TIME; step++) {
       if (w.ko) wasKo = true;
@@ -94,7 +93,7 @@ else {
     const L = [...legendOf.values()].map(id => g.creatures[id]);
     const standing = [...g.combat.sounds.values()].filter(h => h.hp > 0).length;
     return {
-      seed, bot, set: [...SETS.map(([k, v]) => `${k.join(".")}=${JSON.stringify(v)}`), ...(arg("combat", "") ? [`combat:${arg("combat")}`] : []), ...(HAPPY ? [`happy=${HAPPY}`] : []), ...(GUARDS !== 3 || KEEP !== 2 ? [`guards=${GUARDS},keep=${KEEP}`] : []), ...(FEED ? ["feed"] : []), ...(process.argv.includes("--calm") ? ["calm"] : []), ...(QUESTS ? [QUEST_MAX < Infinity ? `quests<=${QUEST_MAX}` : "quests"] : []), ...(STRATEGY ? [`strategy:${STRATEGY}`] : []), ...(RELICS ? [`relics:${RELIC_POLICY}${RELIC_MAX < Infinity ? `<=${RELIC_MAX}` : ""}`] : [])].join(";"), end: g.clock.time, over: g.partyOver?.at ?? null, wave: g.party.wave,
+      seed, bot, set: [...SETS.map(([k, v]) => `${k.join(".")}=${JSON.stringify(v)}`), ...(arg("combat", "") ? [`combat:${arg("combat")}`] : []), ...(HAPPY ? [`happy=${HAPPY}`] : []), ...(GUARDS !== 3 || KEEP !== 2 ? [`guards=${GUARDS},keep=${KEEP}`] : []), ...(FEED ? ["feed"] : []), ...(process.argv.includes("--calm") ? ["calm"] : []), ...(QUESTS ? [QUEST_MAX < Infinity ? `quests<=${QUEST_MAX}` : "quests"] : []), ...(STRATEGY ? [`strategy:${STRATEGY}`] : []), ...(RELICS ? [`relics:${RELIC_POLICY}${RELIC_MAX < Infinity ? `<=${RELIC_MAX}` : ""}`] : []), ...(process.argv.includes("--game") ? ["game"] : [])].join(";"), end: g.clock.time, over: g.partyOver?.at ?? null, won: g.win?.wonAt ?? null, winPhase: g.win?.phase ?? null, found: g.win?.found ?? [], lost: g.win?.lost ?? [], wave: g.party.wave,
       firstKo, kos, invited: origin.size, posse: w.leash.stack.length, parked: w.leash.placed.length,
       angry: L.filter(c => c.legendState === "angry").length, happy: L.filter(c => c.legendState === "happy").length, quests: g.friendly.size,
       standing, ruined: g.party.ruined?.size ?? 0, angryAt, restlessAt, ruinedAt: [...ruinedAt].map(([key, at]) => ({ key, at, legend: legendOf.has(key) })), legends: legendOf.size, babyHits, babiesDown, questsDone: brain.done.quests, relicsPlaced: brain.done.relics, buffsAt: [...brain.done.quests, ...brain.done.relics].map(x => x.at).sort((a, b) => a - b), waves, tally: { ...g.tally }, levels: [0, 1, 2, 3].map(l => [...w.leash.stack, ...w.leash.placed.map(p => p.id)].filter(id => !g.creatures[id].gone && g.creatures[id].level === l).length), secs: (Date.now() - T0) / 1000,
@@ -105,7 +104,7 @@ else {
   for (const bot of BOTS) for (let i = SKIP; i < SEEDS; i++) {
     const r = run(1000 + i * 7919, bot);
     rows.push(r);
-    process.stderr.write(`${bot} ${r.seed}${r.set ? ` [${r.set}]` : ""}: ${r.over !== null ? `over at ${(r.over / 60).toFixed(1)} min` : `standing ${r.standing}`}, wave ${r.wave}, first KO ${r.firstKo === null ? "none" : `${(r.firstKo / 60).toFixed(1)} min`}, ${r.kos} KOs, invited ${r.invited} (levels ${r.levels.join('/')}, evolved ${r.tally.evolved}, berries ${r.tally.berries}), angry ${r.angry}, quests ${r.quests}, ruined ${r.ruined} (${r.secs.toFixed(0)} s)\n`);
+    process.stderr.write(`${bot} ${r.seed}${r.set ? ` [${r.set}]` : ""}: ${r.won !== null ? `WON at ${(r.won / 60).toFixed(1)} min (found ${r.found.join(" ") || "none"}${r.lost.length ? `, lost ${r.lost.join(" ")}` : ""})` : r.over !== null ? `over at ${(r.over / 60).toFixed(1)} min` : `standing ${r.standing}${r.winPhase ? ` (${r.winPhase})` : ""}`}, wave ${r.wave}, first KO ${r.firstKo === null ? "none" : `${(r.firstKo / 60).toFixed(1)} min`}, ${r.kos} KOs, invited ${r.invited} (levels ${r.levels.join('/')}, evolved ${r.tally.evolved}, berries ${r.tally.berries}), angry ${r.angry}, quests ${r.quests}, ruined ${r.ruined} (${r.secs.toFixed(0)} s)\n`);
   }
   await close();
   if (arg("json")) { writeFileSync(arg("json"), JSON.stringify(rows)); process.exit(0); }

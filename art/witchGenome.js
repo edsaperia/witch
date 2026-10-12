@@ -16,7 +16,7 @@ export const WITCH_GENOME = {
   hair: "long", top: "jacket", cloak: "none",
   broom: { kind: "classic", length: 1, bend: 0, bristles: 1, thickness: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false,
-    familiar: "none", lantern: false, vial: false, book: false, patches: false, bumbag: false, wristband: false, chunky: false },
+    lantern: false, vial: false, book: false, patches: false, bumbag: false, wristband: false, chunky: false },
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
@@ -29,7 +29,7 @@ export const WITCH_AXES = {
   hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"], cloak: ["none", "short", "long", "hooded"],
   broom: ["classic", "fan", "twig", "round", ...NEW_BROOMS], broomLength: [.4, 2.4], broomThickness: [.5, 2.2], broomBend: [-1.2, 1.5], bristles: [.3, 3],
   scarfLength: [0, 7], bagSize: [.4, 2.6], backpackSize: [0, 2.5],
-  cloakLength: [.6, 6], familiar: ["none", "cat", "crow", "toad", "bat"], // (Ed, on #98: "Longer cloaks."; 2026-10-06: "allow a longer cloak and a longer scarf"; the familiar, an accessory with a choice: accessories.familiar)
+  cloakLength: [.6, 6], // (Ed, on #98: "Longer cloaks."; 2026-10-06: "allow a longer cloak and a longer scarf". No familiar since 2026-10-08, Ed: "Remove familiars from the character creator", the game being about animals)
 };
 // Which of the sliders draw nothing on which of the options (Ed, 2026-10-06: "make sure that all the sliders do something for all
 // of the options"): the creator greys these out while that option is chosen, and tools/witch/slider-audit.mjs checks that every
@@ -55,8 +55,6 @@ export const WITCH_RANDOM = {
 const SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
 const HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86], [.85, .5, .8], [.5, .5, .7]]; // black, brown, auburn, blonde, red, silver, pink, teal
 
-// A familiar's colours (familiar, familiar2: its eyes' ring or beak): cats black, ginger or grey; crows blue-black; toads olive; bats brown.
-const FAMILIAR_COLOURS = { cat: [[[.7, .15, .14], [.12, .5, .9]], [[.07, .65, .75], [.1, .3, .95]], [[.6, .06, .55], [.6, .1, .9]]], crow: [[[.68, .3, .14], [.1, .2, .25]]], toad: [[[.2, .45, .45], [.13, .6, .3]], [[.12, .45, .5], [.1, .5, .3]]], bat: [[[.06, .4, .25], [.05, .45, .15]]] };
 // (her hat's glowing band: hers is narrow; a generated witch's broader, so it shows whatever her hat)
 // A new witch from a seed: every axis picked within its limits, her palette from one base hue. party: a party witch's odds
 // (more of the modern party things: glow sticks, sunglasses, wristbands).
@@ -76,20 +74,22 @@ export function witchGenome(seed = 0, { party = false } = {}) {
   const shape = hs < .66 ? pick(WITCHY) : hs < .97 ? pick(OTHER) : "none", hat = { shape, height: uni([.75, shape === "wizard" ? 1.2 : 1.6]), brim: uni([.85, shape === "floppy" ? 1.5 : 1.9]), tilt: uni(WITCH_RANDOM.hatTilt), band: uni([1.7, 2.4]) }; // a broad band, so it always shows; brims up to nearly twice hers (a floppy one's to 1.5, so its point still shows)
   const hair = pick(WITCH_AXES.hair), top = pick(WITCH_AXES.top), ck = r(), cloak = ck < .15 ? "none" : ck < .35 ? "short" : ck < .7 ? "long" : "hooded"; // cloaks mostly long
   const broom = { kind: pick(WITCH_RANDOM.broom), length: uni(WITCH_RANDOM.broomLength), bend: uni(WITCH_RANDOM.broomBend), bristles: uni(WITCH_RANDOM.bristles) };
-  const k = party ? 1.6 : 1, fk = r(), familiar = fk < .5 ? "none" : WITCH_AXES.familiar[1 + Math.floor((fk - .5) / .5 * 4)];
+  const k = party ? 1.6 : 1, fk = r(); // (where a familiar was drawn: no familiars since 2026-10-08, its draws kept so every other choice of a seed is as it was)
   const accessories = { phones: chance(.55), shades: chance(.25 * k) ? (chance(.5) ? "round" : true) : false, glowsticks: chance(.2 * k), scarf: chance(.35), satchel: chance(.3), pendant: chance(.3), earrings: chance(.4),
-    familiar, lantern: chance(.22), vial: chance(.3), book: chance(.2), patches: cloak !== "none" && chance(.35), bumbag: chance(.22 * k), wristband: chance(.3 * k), chunky: chance(.35) };
+    lantern: chance(.22), vial: chance(.3), book: chance(.2), patches: cloak !== "none" && chance(.35), bumbag: chance(.22 * k), wristband: chance(.3 * k), chunky: chance(.35) };
   const cloakLength = cloak === "none" ? 1 : cloak === "short" ? uni([1, 1.4]) : uni([1.2, 1.75]); // and long
   const scarfLength = accessories.scarf ? uni([.6, 2.2]) : 1, bagSize = uni([.8, 1.5]), backpackSize = chance(.18) ? uni([.75, 1.3]) : 0;
-  if (familiar !== "none") { const [a, b] = pick(FAMILIAR_COLOURS[familiar]); palette.familiar = a; palette.familiar2 = b; }
+  if (fk >= .5) r(); // (its colours' draw)
   palette.backpack = [r(), uni([.35, .7]), uni([.4, .75])]; palette.plume = [r(), uni([0, .5]), uni([.85, 1])]; palette.gold = [uni([.1, .14]), uni([.6, .8]), uni([.85, 1])];
   broom.thickness = uni(WITCH_RANDOM.broomThickness); // (drawn last, so every other draw of a seed is as it was)
   return { hat, hair, top, cloak, cloakLength, scarfLength, bagSize, backpackSize, broom, accessories, palette };
 }
-// A genome saved before round 2 (or missing anything since): every field it lacks taken from hers, so old saves still load.
+// A genome saved before round 2 (or missing anything since): every field it lacks taken from hers, so old saves still load. A
+// save with a familiar (before 2026-10-08) loads without it, and without its colours.
 export function upgradeGenome(g) {
   const W = WITCH_GENOME, o = g && typeof g === "object" ? g : {};
-  return { ...W, ...o, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...o.accessories }, palette: o.palette ?? null };
+  const { familiar: _f, ...acc } = o.accessories ?? {}, pal = o.palette && Object.fromEntries(Object.entries(o.palette).filter(([k]) => k !== "familiar" && k !== "familiar2"));
+  return { ...W, ...o, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...acc }, palette: pal ?? null };
 }
 // The look and outfit witch.js draws a genome with.
 export function genomeLook(g = WITCH_GENOME) {
@@ -102,7 +102,6 @@ export function witchGenomeProblems(g) {
   const out = [], A = WITCH_AXES, inR = (v, [a, b]) => v >= a - 1e-9 && v <= b + 1e-9;
   if (!A.hatShape.includes(g.hat.shape)) out.push("hat " + g.hat.shape);
   for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles], ["broomThickness", g.broom.thickness ?? 1, A.broomThickness], ["cloakLength", g.cloakLength ?? 1, A.cloakLength], ["scarfLength", g.scarfLength ?? 1, A.scarfLength], ["bagSize", g.bagSize ?? 1, A.bagSize], ["backpackSize", g.backpackSize ?? 0, A.backpackSize]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
-  if (g.accessories && !A.familiar.includes(g.accessories.familiar ?? "none")) out.push("familiar " + g.accessories.familiar);
   if (g.accessories && ![false, true, "round"].includes(g.accessories.shades ?? false)) out.push("shades " + g.accessories.shades); // sunglasses: none, plain or round
   if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!A.top.includes(g.top)) out.push("top " + g.top); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
   if (g.palette) for (const [k, c] of Object.entries(g.palette)) if (!(Array.isArray(c) && c.length === 3 && c.every(v => v >= 0 && v <= 1))) out.push("palette " + k);

@@ -58,7 +58,7 @@ describe("the legend circle's explainer", () => {
   it("shows for a legend in any state, and says what its state means", () => {
     const { g, L } = setup(), at = { x: L.x, z: L.z, mode: "ground" };
     const words = () => circleLines(L).map(l => l.text).join(" ");
-    expect(words()).toMatch(/^This is a slumbering elder\./);
+    expect(words()).toMatch(/^This is a slumbering elder [a-z -]+\./);
     expect(words()).toContain("{sigil}"); expect(words()).toContain("{relic}"); expect(words()).toContain("none of its kin are nearby");
     L.quest!.done = 10;
     expect(circleLines(L).find(l => l.done)?.text).toMatch(/^Its boon is yours/);

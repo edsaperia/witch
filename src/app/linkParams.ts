@@ -1,10 +1,46 @@
 // The link's switches (?px=, ?tilt=, ?music=, ?hills=, ?shape=, ...): the tuning for this load, made from the tuning file
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
+import { islandOf, playableIsland } from "../rules/rosters";
+import { loadSave, worldSeed } from "./chartSave";
+import { loadoutFrom } from "./loadout";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
 import { applyKnobParams } from "../ui/decisions";
+
+/** The browser keys that once remembered knobs which change the world or the balance: the world's shape and travel speed
+ *  (witch.world: area size, map areas, treetop speed) and the fight's scale, speed and momentum (witch.fight). They're the
+ *  link's alone now (2026-10-07: a 14 x 14 map left in Ed's browser gave every PR build 196 areas and threw off each
+ *  playtest's balance), so a load forgets them. */
+export const FORGOTTEN_KEYS = ["witch.world", "witch.fight", "witch.wave"]; // (and the waves' pace, 2026-10-08: Ed, "stop remembering it")
+export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined = globalThis.localStorage): void {
+  for (const k of FORGOTTEN_KEYS) try { storage?.removeItem(k); } catch { /* storage blocked */ }
+}
+
+/** ?island= (Ed, 2026-10-11): a number of areas (1 to 200), "home" (the home island's size, `home`), "off" (0: the radius map), or a kind (its island: rules/rosters.ts, handled by the caller);
+ *  null when it's not given or not understood. */
+export function islandFromLink(v: string | null, home: number): number | null {
+  if (v === null) return null;
+  if (v === "off" || v === "0") return 0;
+  if (v === "home") return home > 0 ? home : 10;
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n > 0 ? Math.min(200, n) : null;
+}
+
+/** The world's shape and travel speed for this load: the tuning's, unless the link says otherwise (?areaSize= or ?areaScale=,
+ *  ?treetopSpeed=, ?mapAreas=), clamped. Never from what an earlier load saw. */
+export function worldFromLink(params: URLSearchParams, defaults = { areaSize: TUNING.areaSize * TUNING.areaScale, treetopSpeed: TUNING.treetopSpeed, mapAreas: TUNING.mapAreas }) {
+  const world = { ...defaults };
+  const size = Number(params.get("areaSize")), scale = Number(params.get("areaScale")), speed = Number(params.get("treetopSpeed")), n = Number(params.get("mapAreas"));
+  if (size > 0) world.areaSize = size; else if (scale > 0) world.areaSize = TUNING.areaSize * scale;
+  if (speed > 0) world.treetopSpeed = speed;
+  if (n > 0) world.mapAreas = n;
+  world.areaSize = Math.round(Math.min(560, Math.max(56, world.areaSize)));
+  world.treetopSpeed = Math.round(Math.min(300, Math.max(8, world.treetopSpeed)));
+  world.mapAreas = Math.round(Math.min(30, Math.max(6, world.mapAreas)));
+  return world;
+}
 
 export function tuningFromLink(params: URLSearchParams) {
   // Variants as switches in the link: ?tilt=off, ?bloom=off, ?shadows=off,
@@ -74,6 +110,13 @@ export function tuningFromLink(params: URLSearchParams) {
   if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
   if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };
   if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
+  // ?dodge=a,b,c: which of the dodge changes are on (Ed, 2026-10-08; tuning dodge: a committed strikes, b predictive aim,
+  // c packs cutting off her retreat), the rest off; ?dodge=0 none of them.
+  const dodgeParam = params.get("dodge");
+  if (dodgeParam !== null && tuning.dodge) {
+    const on = new Set(dodgeParam.toLowerCase().split(",").map(k => k.trim()));
+    tuning.dodge = { a: { ...tuning.dodge.a, on: on.has("a") }, b: { ...tuning.dodge.b, on: on.has("b") }, c: { ...tuning.dodge.c, on: on.has("c") } };
+  }
   // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
   // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
   // point lights, glow or haze, and a low raking moonlight. ?bare=2: a flat grey ground with contour
@@ -106,29 +149,41 @@ export function tuningFromLink(params: URLSearchParams) {
 
   // Area size and treetop speed, to play with (Ed, 2026-10-05: "compared to now, areas should be
   // fairly large, and treetop mode should be much faster than ground mode"): ?areaSize=<metres> (or
-  // ?areaScale=), ?treetopSpeed=<m/s> and ?mapAreas=<n>, remembered on this browser till changed or
-  // reset (in the debug overlay, ~, where treetop speed also has a live slider). Area size makes the
-  // map, so it's set by the link alone. Every change goes in the playtest log.
-  const WORLD_DEFAULT = { areaSize: TUNING.areaSize * TUNING.areaScale, treetopSpeed: TUNING.treetopSpeed, mapAreas: TUNING.mapAreas };
-  const world = { ...WORLD_DEFAULT };
+  // ?areaScale=), ?treetopSpeed=<m/s> and ?mapAreas=<n>, by the link alone, never remembered on this browser (the debug
+  // overlay, ~, has a live treetop slider for this load). Every change goes in the playtest log.
+  forgetRuleKnobs();
+  const WORLD_DEFAULT = worldFromLink(new URLSearchParams());
+  const world = worldFromLink(params, WORLD_DEFAULT);
   {
-    try { const v = localStorage.getItem("witch.world"); if (v) Object.assign(world, JSON.parse(v)); } catch { /* storage blocked */ }
-    const size = Number(params.get("areaSize")), scale = Number(params.get("areaScale")), speed = Number(params.get("treetopSpeed")), n = Number(params.get("mapAreas"));
-    if (size > 0) world.areaSize = size; else if (scale > 0) world.areaSize = TUNING.areaSize * scale;
-    if (speed > 0) world.treetopSpeed = speed;
-    if (n > 0) world.mapAreas = n;
-    world.areaSize = Math.round(Math.min(560, Math.max(56, world.areaSize)));
-    world.treetopSpeed = Math.round(Math.min(300, Math.max(8, world.treetopSpeed)));
-    world.mapAreas = Math.round(Math.min(30, Math.max(6, world.mapAreas)));
     tuning.areaScale = world.areaSize / tuning.areaSize; tuning.treetopSpeed = world.treetopSpeed; tuning.mapAreas = world.mapAreas;
     // (the circular map: about mapAreas x mapAreas areas in its circle, when that's been changed)
-    if (tuning.map && world.mapAreas !== WORLD_DEFAULT.mapAreas) tuning.map = { ...tuning.map, radius: world.mapAreas / Math.sqrt(Math.PI) };
-    try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
+    if (tuning.map && world.mapAreas !== WORLD_DEFAULT.mapAreas) tuning.map = { ...tuning.map, radius: world.mapAreas / Math.sqrt(Math.PI), islandAreas: 0 };
+  }
+  // The island's size (Ed, 2026-10-11, the journey's first step): ?island=10|20|30|40|50 (any 1 to 200) areas the waves reach,
+  // home (the home island's: map.islandAreas, 10 for now) or off (the radius map, about 100 areas, as before islands).
+  // A kind's name plays that kind's island (Ed, 2026-10-11, rules/rosters.ts: ?island=fox); home, home's by roster; a number, that
+  // many areas of random types.
+  {
+    const v = params.get("island");
+    if (v && v !== "home" && playableIsland(v) && islandOf(v) && tuning.map) tuning.map = { ...tuning.map, island: v }; // (a placeholder's island isn't played)
+    else { const n = islandFromLink(v, tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n, island: v === "home" ? "home" : "" }; }
+    // ?phase=0 to 5 (Ed, 2026-10-11, the journey's irregular islands: rules/islandGrowth.ts): an island of that phase's shape, of
+    // random types (10 areas a phase, home's 10 for 0) unless ?island= gives a number; a kind's island keeps its own.
+    const ph = params.get("phase"), p = ph === null ? NaN : Math.round(Number(ph));
+    if (Number.isFinite(p) && p >= 0 && p <= 5 && tuning.map && !(v && v !== "home" && playableIsland(v))) {
+      const sized = v !== null && v !== "home" && islandFromLink(v, 0) !== null;
+      tuning.map = { ...tuning.map, phase: p, island: "", islandAreas: sized ? tuning.map.islandAreas : p === 0 ? (tuning.map.islandAreas || 10) : 10 * p };
+    }
   }
 
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
   // where footpaths come into a clearing (placed with the map, so set before it is made).
   tuning.paths = { ...tuning.paths, fingerposts: true };
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
+  // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
+  // and the campaign's world seed (every island's shape), unless ?world= names one for this load
+  if (tuning.map) { const save = loadSave(), w = params.get("world"); tuning.map = { ...tuning.map, found: save.found, world: w ? worldSeed(w) : save.world }; }
+  // Her hat and broom spells (app/loadout.ts): the creator's, kept on this browser, or ?hat= and ?broom=.
+  { const L = loadoutFrom(params); tuning.spells = { ...tuning.spells, hat: L.hat, broom: L.broom }; }
   return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };
 }

@@ -93,9 +93,9 @@ vec3 bendW(vec3 w) {
 }
 `;
 
-/** HEIGHT_GLSL plus clipOf(w): a world point bent and projected (vertex shaders only). */
-export const HEIGHT_VERT_GLSL = HEIGHT_GLSL + /* glsl */ `
-vec4 clipOf(vec3 w) { return projectionMatrix * viewMatrix * vec4(bendW(w), 1.0); }
+/** HEIGHT_GLSL plus overBend(w) and groundSeen(w), whether the bent ground hides a world point: for vertex or fragment
+ *  shaders (a fragment shader tests each of its pixels, so what floats over the horizon is cut off along it). */
+export const GROUND_SEEN_GLSL = HEIGHT_GLSL + /* glsl */ `
 // 1 if a (lifted, unbent) world point shows over the bent ground's horizon, 0 if the bend hides it
 // (seenOverBend's twin): for what is drawn without a depth test, like lights glimmering through the
 // canopy, so they don't show through the earth (Ed, v256).
@@ -122,6 +122,11 @@ float groundSeen(vec3 w) {
   }
   return 1.0;
 }
+`;
+
+/** GROUND_SEEN_GLSL plus clipOf(w): a world point bent and projected (vertex shaders only). */
+export const HEIGHT_VERT_GLSL = GROUND_SEEN_GLSL + /* glsl */ `
+vec4 clipOf(vec3 w) { return projectionMatrix * viewMatrix * vec4(bendW(w), 1.0); }
 `;
 
 /** Glowing points (rgba vertex colours, added on) given as height above the ground: motes, trails. */
@@ -190,7 +195,7 @@ export class HeightField {
     this.PATH_EDGE = Math.max(6, H.amplitude * 0.6);
     this.PLATEAU_FADE = Math.max(16, H.amplitude * 2);
     amplitude = H.on ? H.amplitude : 0;
-    { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) { const ease = Math.max(1, B.ease), clear = b.edgeMin - Math.max(...b.sand) - ease; this.beach = { b, ease, hSand: B.sand, hSea: B.sea, clear2: clear > 0 ? clear * clear : 0 }; } }
+    { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) { const ease = Math.max(1, B.ease); let most = 0; for (const w of b.sand) most = Math.max(most, w); this.beach = { b, ease, hSand: B.sand, hSea: B.sea, inland: most + ease + 1 }; } }
     this.texture = new THREE.DataTexture(this.half, N, N, THREE.RedFormat, THREE.HalfFloatType);
     const t = this.texture;
     t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -224,19 +229,19 @@ export class HeightField {
 
   private raw(x: number, z: number): number {
     if (!this.H.on) return 0;
-    const h = terrainAt(this.map, x, z, this.H), b = this.beach; // (the hills and the layout's rises and hollows)
+    const h = terrainAt(this.map, x, z, this.H), b = this.beach; // (the hills and the layout's rises and hollows, and the lakes' hollows)
     if (!b) return h;
     // The beach (rules/mapShape.ts beachOf): the hills eased down over `ease` metres to the sand's
     // height where it starts, the sand sloping gently to the sea's, flat beyond.
-    const dx = x - b.b.x, dz = z - b.b.z;
-    if (dx * dx + dz * dz < b.clear2) return h; // (quickly: nearer the middle than the sand comes anywhere, less the ease)
-    const into = b.b.intoSand(x, z);
+    if (b.b.land.roughDistAt(x, z) > b.inland + 8) return h; // (quickly: further from the water than the sand comes anywhere, and its ease)
+    const d = b.b.land.distAt(x, z);
+    const w = b.b.sandAt(x, z), into = w - d;
     if (into < -b.ease) return h;
     if (into < 0) return h + (b.hSand - h) * smoothstep((into + b.ease) / b.ease);
-    return b.hSand + (b.hSea - b.hSand) * smoothstep(Math.min(1, into / Math.max(1, b.b.sandAt(Math.atan2(z - b.b.z, x - b.b.x)) + b.b.out)));
+    return b.hSand + (b.hSea - b.hSand) * smoothstep(Math.min(1, into / Math.max(1, w + b.b.out)));
   }
   /** The beach's levels, on the circular map with it on. */
-  private beach: { b: Beach; ease: number; hSand: number; hSea: number; clear2: number } | null = null;
+  private beach: { b: Beach; ease: number; hSand: number; hSea: number; /** further from the water than this (m), no beach */ inland: number } | null = null;
 
   private addCircle(c: Circle): void {
     const R = c.r + this.PLATEAU_FADE;

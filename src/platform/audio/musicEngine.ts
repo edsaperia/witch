@@ -12,11 +12,27 @@
 // kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
 // supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
-import { Conductor, bootLayers, type MusicCue } from "../../rules/musicPlan";
+import { Conductor, bootLayers, formClock, silentAt, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
-import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
+import { FOF_TYPES, FOF_VOWELS, FofVoices, fofLoaded, fofReady } from "./fof/fof";
+import { fxOn, VoiceFx } from "./voiceFx";
+import { musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
-interface Channel { in: GainNode; lastFreq: number }
+/** A part's way into the mix; `lfo`: its filter's slow wobble, one for all its notes (made when first wanted). */
+interface Channel {
+  in: GainNode; lastFreq: number; lfo?: { osc: OscillatorNode; depth: GainNode };
+  /** A drum's filters, which never move: one set a part, every hit's envelope into it (made when first wanted). */
+  hitIn?: AudioNode;
+  /** A sung part's vibrato (5.2 Hz) and formant banks by vowel, shared by its notes. */
+  vib?: OscillatorNode; banks?: Map<string, AudioNode>;
+  /** What to stop when the style changes (the shared sources). */
+  running?: AudioScheduledSourceNode[];
+  /** A FOF part's voices (one worklet a part), its voice line's effects, when its last note ends (its phrases), and its
+   *  swells' voices (into the effects' reverbs only, under a rising envelope). */
+  fof?: FofVoices; fx?: VoiceFx; lastEnd?: number; swell?: { voices: FofVoices; gain: GainNode };
+  /** A recorded voice's presence lift, shared by its notes, and its notes so far this phrase (its vowels taken in turn). */
+  presence?: BiquadFilterNode; sung?: number;
+}
 
 /** Vowels for the synthesised voice: three formants each (Hz) and their levels. */
 const VOWELS: Record<string, [number, number][]> = {
@@ -37,6 +53,15 @@ export class MusicEngine {
   /** Only these parts sound (the Music Lab's analysis); null: all. */
   solo: Set<string> | null = null;
   private out: GainNode;
+  /** Shut from a knockdown till its new record starts (Ed, 2026-10-09: "the music stops when she gets knocked down"): cut at
+   *  once on the audio clock when the knockdown is heard of (what's already scheduled ahead with it), opened on the new
+   *  record's first downbeat. */
+  private gate: GainNode;
+  /** After the limiter: where the voice line joins the music, through a safety limiter. */
+  private post: WaveShaperNode;
+  /** Knockdowns heard of so far, and whether the gate is shut (as scheduled: on the audio clock, ahead of now). */
+  private knocksHeard = 0;
+  gated = false;
   private tone: BiquadFilterNode;
   private duckBus: GainNode;
   private dryBus: GainNode;
@@ -86,6 +111,15 @@ export class MusicEngine {
   private cNext = -1;
   private cAt = 0;
   private reverbTime = 0;
+  /** Sound shed to spare the audio thread (shed.ts; Ed's under-runs, 2026-10-07): 2+ every synth and sung note one
+   *  oscillator (no unison, its first wave only) and shorter tails; 3 the reverbs short and the delay off. */
+  private shedLevel = 0;
+  get shed(): number { return this.shedLevel; }
+  set shed(level: number) {
+    if (level === this.shedLevel) return;
+    const was = this.shedLevel; this.shedLevel = level;
+    if ((was >= 3) !== (level >= 3)) { this.reverbTime = -1; this.setMix(); }
+  }
 
   constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest) {
     this.conductor = new Conductor(style);
@@ -104,7 +138,14 @@ export class MusicEngine {
     const reverbLow = c.createBiquadFilter(); reverbLow.type = "highpass"; reverbLow.frequency.value = 220;
     this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
     this.delayIn.connect(this.delay); this.delay.connect(delayTone); delayTone.connect(this.feedback); this.feedback.connect(this.delay); delayTone.connect(this.tone);
-    this.tone.connect(limit); limit.connect(this.out); this.out.connect(dest);
+    this.gate = c.createGain();
+    // (the voice line joins after the limiter, so the sum has a safety clipper of its own: exactly linear to 0.9, where the music
+    // alone stays, rounding off only the voice's overs; no compressor, whose make-up gain would lift the music too)
+    this.post = c.createWaveShaper();
+    const curve = new Float32Array(4097);
+    for (let i = 0; i < curve.length; i++) { const x = (i / 2048) - 1, a = Math.abs(x); curve[i] = a <= 0.9 ? x : Math.sign(x) * (0.9 + 0.1 * Math.tanh((a - 0.9) / 0.1)); }
+    this.post.curve = curve;
+    this.tone.connect(limit); limit.connect(this.post); this.post.connect(this.gate); this.gate.connect(this.out); this.out.connect(dest);
     // the legend's clearing layer: not through the section's low-pass, its own reverb and a limiter
     this.circleIn = c.createGain(); this.circleVerbIn = c.createGain(); this.circleVerb = c.createConvolver();
     const circleLimit = c.createDynamicsCompressor();
@@ -124,19 +165,45 @@ export class MusicEngine {
     for (let i = 0; i < m.length; i++) { const x = m[i], d1 = x - a; a = x; const d2 = d1 - b; b = d1; m[i] = d2; peak = Math.max(peak, Math.abs(d2)); }
     for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
     this.setStyle(style);
+    if (Object.values(style.patches).some(p => p.kind === "fof") && style.form?.sung && style.patches[style.form.sung.patch]?.kind === "fof") void fofReady(ctx); // (the FOF voice loading ahead of its first note, when it sings)
   }
 
   /** A new or edited style: takes effect from the next block. */
   setStyle(style: MusicStyle): void {
     this.style = style;
     this.conductor.reset(style);
-    const m = style.mix;
+    this.setMix();
+    for (const ch of this.channels.values()) {
+      for (const n of [ch.lfo?.osc, ...(ch.running ?? [])]) if (n) try { n.stop(); } catch { /* stopped */ }
+      ch.fof?.dispose(); ch.swell?.voices.dispose(); ch.fx?.dispose();
+    }
+    this.channels.clear();
+  }
+
+  /** The FOF voice's worklet loaded on a context (tools rendering offline wait for it; the game starts it with the music). */
+  static fofReady = fofReady;
+  /** The tempo now (the voice effects' echoes are on the beat). */
+  private bpmNow = 120;
+  /** The voice line's effects changed while playing (the Music Lab's sliders): set at once on its parts. */
+  setVoiceFx(settings: NonNullable<MusicStyle["voiceFx"]>): void {
+    this.style = { ...this.style, voiceFx: { ...this.style.voiceFx, ...settings } };
+    for (const ch of this.channels.values()) ch.fx?.set(settings);
+  }
+  /** The recorded voices the sample patches sing (samples/voices: platform/audio/voiceSamples.ts loads them). */
+  private recordings = new Map<string, AudioBuffer>();
+  setRecordings(recs: Record<string, AudioBuffer>): void { for (const [k, b] of Object.entries(recs)) this.recordings.set(k, b); }
+  /** A whispering recording for the voice effects' vocoder (the CC0 whispers). */
+  private whisperRec: AudioBuffer | null = null;
+  setWhisper(rec: AudioBuffer): void { this.whisperRec = rec; for (const ch of this.channels.values()) ch.fx?.whisper(rec); }
+
+  /** The style's mix on the buses (shed 3: the reverbs cut short, the delay off). */
+  private setMix(): void {
+    const m = this.style.mix, lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
     this.out.gain.value = m.master;
     this.reverbIn.gain.value = m.reverb;
-    this.delayIn.gain.value = m.delay;
-    this.feedback.gain.value = Math.min(0.85, m.feedback);
-    if (m.reverbTime !== this.reverbTime) { this.reverbTime = m.reverbTime; this.reverb.buffer = this.impulse(m.reverbTime); this.circleVerb.buffer = this.impulse(m.reverbTime * 1.6); }
-    this.channels.clear();
+    this.delayIn.gain.value = lite ? 0 : m.delay;
+    this.feedback.gain.value = lite ? 0 : Math.min(0.85, m.feedback);
+    if (time !== this.reverbTime) { this.reverbTime = time; this.reverb.buffer = this.impulse(time); this.circleVerb.buffer = this.impulse(time * 1.6); }
   }
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
@@ -144,6 +211,13 @@ export class MusicEngine {
   update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.6, rate = 1, pitch = 1): void {
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
     if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; this.lastNow = -1; return; }
+    // a knockdown just heard of: the record scratched (sfx), the music cut now, notes already scheduled with it
+    const knocks = cue.knockdowns?.length ?? 0;
+    if (knocks < this.knocksHeard) this.knocksHeard = knocks; // (a new run)
+    if (knocks > this.knocksHeard) {
+      this.knocksHeard = knocks;
+      if (silentAt(cue, stepNow / 16)) { this.gate.gain.cancelScheduledValues(now); this.gate.gain.setValueAtTime(this.gate.gain.value, now); this.gate.gain.setTargetAtTime(0, now, 0.03); this.gated = true; }
+    }
     // Game time as heard: running on from where it was at the old rate, then at the new one (the
     // world slowing in a legend's circle). The music never waits for the game (Ed's playtest, 2026-10-06:
     // "The music cuts in and out a lot": a frame over the rules' MAX_STEP loses game time, and re-anchoring
@@ -168,6 +242,7 @@ export class MusicEngine {
       // (not what's already scheduled, unless time went back: a new run, a jump)
       if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
     }
+    this.bpmNow = bpmAt(clock, gameTime) * rate;
     this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime) / rate), now, 0.05);
     // A frame longer than what was scheduled ahead: the next sixteenth is already late. Played now rather than
     // dropped: the music held for the hitch, then on from where it was (the slew takes it back into step).
@@ -191,9 +266,10 @@ export class MusicEngine {
     while (this.cAt < now + ahead) {
       if (this.cAt >= now) {
         const main = Math.floor(beatAt(clock, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
-        const events = notesAt(this.style, plan, null, main, { seed: this.seed, siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
+        if (silentAt(cue, main / 16)) { this.cNext++; this.cAt += sps; continue; }
+        const events = notesAt(this.style, plan, null, main, { ...this.formAt(cue, Math.floor(main / 16)), siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
         const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
-        for (const e of events) this.play(e, this.cAt + swing + e.offset * sps, e.dur * sps, sps);
+        this.playAll(events, e => this.cAt + (e.straight ? 0 : swing) + e.offset * sps, sps);
       }
       this.cNext++; this.cAt += sps;
     }
@@ -215,6 +291,9 @@ export class MusicEngine {
   /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
   private step(cue: MusicCue, step: number, t: number, sps: number): void {
     const S = this.style, B = S.blockBars, bar = Math.floor(step / 16), s = step - bar * 16;
+    // knocked down: nothing till her new record starts, then the gate open on its first sixteenth
+    if (silentAt(cue, step / 16)) { if (!this.gated) { this.gate.gain.setTargetAtTime(0, t, 0.03); this.gated = true; } return; }
+    if (this.gated) { this.gate.gain.cancelScheduledValues(t); this.gate.gain.setValueAtTime(1, t); this.gated = false; }
     const plan = this.conductor.plan(cue, bar);
     // in a block's last bar, the next block's plan (for the fill): fixed a bar early
     const next = bar % B === B - 1 ? this.conductor.plan(cue, bar + 1) : null;
@@ -229,40 +308,73 @@ export class MusicEngine {
       this.tone.frequency.setValueAtTime(f0, t);
       if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
+    const events = notesAt(S, plan, next, step, { ...this.formAt(cue, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
-    for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
+    this.playAll(events, e => t + (e.straight ? 0 : swing) + e.offset * sps, sps);
+  }
+
+  /** The music's seed and its form's start in bar `bar` (each knockdown re-seeds it: Ed, 2026-10-09). */
+  private formAt(cue: MusicCue, bar: number): { seed: number; formStart: number } {
+    const f = formClock(this.style, cue, bar);
+    return { seed: musicSeed(this.seed, f.n), formStart: f.start };
   }
 
   private channel(part: string, p: Patch, circle = false): Channel {
     const key = circle ? `circle:${part}` : part;
     let ch = this.channels.get(key);
     if (!ch) {
-      const c = this.ctx, g = c.createGain();
-      let out: AudioNode = g;
+      const c = this.ctx, g = c.createGain(), F = this.style.voiceFx;
+      let out: AudioNode = g, fx: VoiceFx | undefined;
+      // the voice line's ethereal effects (Ed, 2026-10-11), on the sung part and any listed
+      if (!circle && fxOn(F) && (part === this.style.form?.sung.part || F!.parts?.includes(part))) {
+        fx = new VoiceFx(c, F, () => this.bpmNow, (F!.duck ?? 0) > 0 ? this.duckBus : undefined);
+        if (this.whisperRec) fx.whisper(this.whisperRec);
+        g.connect(fx.input); out = fx.output;
+      }
       if (p.hp) { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.hp; f.Q.value = 0.7; out.connect(f); out = f; }
       if (p.pan) { const s = c.createStereoPanner(); s.pan.value = p.pan; out.connect(s); out = s; }
-      // (a legend's clearing layer into its own bus and reverb, over the muffle; the rest into the mix)
-      out.connect(circle ? this.circleIn : p.duck ? this.duckBus : this.dryBus);
+      // (a legend's clearing layer into its own bus and reverb, over the muffle; the voice line with its effects in after the
+      // section's low-pass and the limiter, before the knockdown's gate, as the A/B Ed picked had it: Ed, 2026-10-11, "e Recorded
+      // + ethereal"; the rest into the mix)
+      out.connect(circle ? this.circleIn : fx ? this.post : p.duck ? this.duckBus : this.dryBus);
       if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(circle ? this.circleVerbIn : this.reverbIn); }
       if (p.delay && !circle) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.delayIn); }
-      this.channels.set(key, ch = { in: g, lastFreq: 0 });
+      this.channels.set(key, ch = { in: g, lastFreq: 0, ...(fx ? { fx } : {}) });
     }
     return ch;
   }
 
-  private play(e: NoteEvent, t: number, dur: number, sps: number): void {
+  /** A step's notes. A synth part's chord, its notes struck together (the same time, length and velocity), shares one
+   *  filter, envelope and pair of panners: a filter's the same on their sum as on each (not with drive, a waveshaper, or
+   *  glide). A note each was the gate pad's and the stabs' cost; foxtrot's measure, #523. */
+  private playAll(events: NoteEvent[], at: (e: NoteEvent) => number, sps: number): void {
+    const taken = new Set<NoteEvent>();
+    for (let i = 0; i < events.length; i++) {
+      const e = events[i];
+      if (taken.has(e)) continue;
+      const p = this.style.patches[e.patch];
+      if (p?.kind === "synth" && !p.drive && !p.glide && e.midi !== null) {
+        const mates = events.filter((f, j) => j > i && !taken.has(f) && f.part === e.part && f.patch === e.patch && f.layer === e.layer && f.offset === e.offset && f.dur === e.dur && f.vel === e.vel && f.midi !== null);
+        if (mates.length) { for (const f of mates) taken.add(f); this.play(e, at(e), e.dur * sps, sps, mates.map(f => f.midi!)); continue; }
+      }
+      this.play(e, at(e), e.dur * sps, sps);
+    }
+  }
+
+  private play(e: NoteEvent, t: number, dur: number, sps: number, chord: number[] = []): void {
     const p = this.style.patches[e.patch];
     if (!p || (this.solo && !this.solo.has(e.part))) return;
     const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
     const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
     switch (p.kind) {
       case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
-      case "noise": this.noiseHit(t, p, peak, ch.in); break;
-      case "snare": this.snare(t, p, peak, ch.in); break;
+      case "noise": this.noiseHit(t, p, peak, ch); break;
+      case "snare": this.snare(t, p, peak, ch); break;
       case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69) * pf, ch.in); break;
-      case "synth": this.synth(t, p, peak, mtof(e.midi ?? 45) * pf, dur, ch); break;
-      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch.in); break;
+      case "synth": this.synth(t, p, peak, chord.length ? [e.midi ?? 45, ...chord].map(m => mtof(m) * pf) : mtof(e.midi ?? 45) * pf, dur, ch); break;
+      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
+      case "fof": this.fof(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
+      case "sample": this.sampled(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "riser": this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in); break;
       case "impact": this.impact(t, p, peak, ch.in); break;
     }
@@ -328,24 +440,33 @@ export class MusicEngine {
     return s;
   }
 
-  private noiseHit(t: number, p: Patch, peak: number, dest: AudioNode): void {
+  /** A drum part's filters, which never move, made once and shared by its hits (each hit's envelope goes in before them:
+   *  the same sound, a filter or two fewer a hit; foxtrot's measure, #523). */
+  private hitFilters(ch: Channel, make: () => AudioNode[]): AudioNode {
+    if (!ch.hitIn) { const f = make(); this.chain(f, ch.in); ch.hitIn = f[0]; }
+    return ch.hitIn;
+  }
+
+  private noiseHit(t: number, p: Patch, peak: number, ch: Channel): void {
     const c = this.ctx, decay = p.decay ?? 0.05, bursts = p.bursts ?? 1, gap = 0.011;
-    const f = c.createBiquadFilter(); f.type = p.filter ?? "highpass"; f.frequency.value = p.cutoff ?? 8000; f.Q.value = p.q ?? 0.7;
     const g = c.createGain(), t0 = t + (bursts - 1) * gap, metal = p.source === "metal";
     g.gain.setValueAtTime(0, t);
     for (let i = 0; i < bursts - 1; i++) { g.gain.linearRampToValueAtTime(peak, t + i * gap + 0.001); g.gain.exponentialRampToValueAtTime(peak * 0.15, t + i * gap + gap * 0.9); }
     g.gain.linearRampToValueAtTime(peak, t0 + Math.max(0.001, p.attack ?? 0.001));
     g.gain.exponentialRampToValueAtTime(0.0005, t0 + (p.attack ?? 0.001) + decay);
-    const nodes: AudioNode[] = [this.noiseSource(t, t0 - t + decay + 0.06, metal), f];
-    // the 808's metal: its six tones through a band-pass at 10 kHz, then the filter (a high-pass at 7 kHz or so)
-    if (metal) { const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = 10000; b.Q.value = 0.6; nodes.splice(1, 0, b); }
-    this.chain([...nodes, g], dest);
+    // the filter (a high-pass at 7 kHz or so); the 808's metal, its six tones, through a band-pass at 10 kHz before it
+    const filters = this.hitFilters(ch, () => {
+      const f = c.createBiquadFilter(); f.type = p.filter ?? "highpass"; f.frequency.value = p.cutoff ?? 8000; f.Q.value = p.q ?? 0.7;
+      if (!metal) return [f];
+      const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = 10000; b.Q.value = 0.6;
+      return [b, f];
+    });
+    this.chain([this.noiseSource(t, t0 - t + decay + 0.06, metal), g], filters);
   }
-
-  private snare(t: number, p: Patch, peak: number, dest: AudioNode): void {
-    const c = this.ctx, decay = p.decay ?? 0.14;
-    const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.cutoff ?? 1800; f.Q.value = p.q ?? 0.7;
-    this.chain([this.noiseSource(t, decay + 0.05), f, this.env(t, peak, 0.001, decay)], dest);
+  private snare(t: number, p: Patch, peak: number, ch: Channel): void {
+    const c = this.ctx, decay = p.decay ?? 0.14, dest = ch.in;
+    const hp = this.hitFilters(ch, () => { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.cutoff ?? 1800; f.Q.value = p.q ?? 0.7; return [f]; });
+    this.chain([this.noiseSource(t, decay + 0.05), this.env(t, peak, 0.001, decay)], hp);
     // the shell: two tones, the second a little under a ninth above, each dropping into place
     for (const [k, lvl] of [[1, 0.7], [1.85, 0.35]]) {
       const o = c.createOscillator(); o.type = "triangle";
@@ -364,26 +485,32 @@ export class MusicEngine {
     for (const k of [1, p.ratio ?? 1.48]) { const o = c.createOscillator(); o.type = "square"; o.frequency.value = freq * k; o.connect(f); o.start(t); o.stop(t + decay + 0.05); }
   }
 
-  private synth(t: number, p: Patch, peak: number, freq: number, dur: number, ch: Channel): void {
-    const c = this.ctx, waves = p.waves ?? ["sawtooth"], U = Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
-    const attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
-    const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+  private synth(t: number, p: Patch, peak: number, freqOrChord: number | number[], dur: number, ch: Channel): void {
+    const freqs = Array.isArray(freqOrChord) ? freqOrChord : [freqOrChord], freq = freqs[freqs.length - 1];
+    const lite = this.shedLevel >= 2, all = p.waves ?? ["sawtooth"], waves = lite ? all.slice(0, 1) : all, U = lite ? 1 : Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
+    const c = this.ctx, attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
+    const end = t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02; // (its gain's fall has time constant release / 3: 2 releases is -52 dB, under everything)
     const g = c.createGain();
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(peak / Math.sqrt(n), t + attack);
     if (end > t + attack) g.gain.setTargetAtTime((peak / Math.sqrt(n)) * sustain, t + attack, decay / 3);
     g.gain.setTargetAtTime(0, end, release / 3);
     const nodes: AudioNode[] = [];
+    let lfoOf: GainNode | null = null, wobbled: BiquadFilterNode | null = null;
     if (p.filter) {
-      const f = c.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q ?? 0.7;
+      const f = c.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q ?? 0.7; kRate(f.frequency);
       const base = p.cutoff ?? 2000, top = Math.min(18000, base + (p.envAmt ?? 0) * peak / Math.max(0.001, p.gain));
       f.frequency.setValueAtTime(top, t);
       if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
-      // a slow wobble of the filter: pads breathe
+      // a slow wobble of the filter: pads breathe (one wobble a part, shared by its notes and let go of each as it ends:
+      // a wobble a note was a fifth of the pads' cost; foxtrot's measure, #523)
       if (p.lfoRate && p.lfoDepth) {
-        const l = c.createOscillator(), lg = c.createGain();
-        l.frequency.value = p.lfoRate; lg.gain.value = p.lfoDepth;
-        l.connect(lg); lg.connect(f.frequency); l.start(t); l.stop(stop);
+        if (!ch.lfo) {
+          const osc = c.createOscillator(), depth = c.createGain();
+          osc.frequency.value = p.lfoRate; depth.gain.value = p.lfoDepth;
+          osc.connect(depth); osc.start(); ch.lfo = { osc, depth };
+        }
+        lfoOf = ch.lfo.depth; lfoOf.connect(f.frequency); wobbled = f;
       }
       nodes.push(f);
     }
@@ -392,53 +519,163 @@ export class MusicEngine {
     this.chain(nodes, ch.in);
     // every wave as `unison` voices, detuned across ±detune cents and spread across ±width in the
     // stereo field (outer voices widest), each starting at its own point in the cycle
-    let v = 0;
-    for (const w of waves) for (let u = 0; u < U; u++, v++) {
+    // the voices spread across ±width: those on each side through one panner at their mean place (a panner a voice was
+    // the gate pad's, stab's and supersaw's biggest cost; foxtrot's measure, #523)
+    const pans: number[] = [];
+    for (let v = 0; v < n; v++) { const x = n > 1 ? (2 * v) / (n - 1) - 1 : 0; pans.push(p.width && n > 1 ? p.width * (v % 2 ? x : -x) : 0); }
+    const side = (sign: number): AudioNode | null => {
+      const on = pans.filter(q => Math.sign(q) === sign);
+      if (!on.length) return null;
+      const s = c.createStereoPanner(); s.pan.value = on.reduce((a, q) => a + q, 0) / on.length; s.connect(nodes[0]);
+      return s;
+    };
+    const left = side(-1), right = side(1);
+    // a middle voice among spread ones as a centred panner had it: -3 dB a side (a mono input alone would be copied whole to both)
+    const mid = (left || right) && pans.some(q => q === 0) ? (() => { const m = c.createGain(); m.gain.value = Math.SQRT1_2; m.connect(nodes[0]); return m; })() : nodes[0];
+    let last: OscillatorNode | null = null;
+    for (const freq of freqs) { let v = 0; for (const w of waves) for (let u = 0; u < U; u++, v++) {
       const o = c.createOscillator(), x = n > 1 ? (2 * v) / (n - 1) - 1 : 0;
       o.type = w;
       o.detune.value = (p.detune ?? 0) * x;
-      if (p.glide && ch.lastFreq > 0 && ch.lastFreq !== freq) { o.frequency.setValueAtTime(ch.lastFreq, t); o.frequency.exponentialRampToValueAtTime(freq, t + p.glide); }
+      if (p.glide && freqs.length === 1 && ch.lastFreq > 0 && ch.lastFreq !== freq) { o.frequency.setValueAtTime(ch.lastFreq, t); o.frequency.exponentialRampToValueAtTime(freq, t + p.glide); }
       else if (p.bend) { o.frequency.setValueAtTime(freq * Math.pow(2, p.bend / 12), t); o.frequency.exponentialRampToValueAtTime(freq, t + (p.bendTime ?? 0.08)); }
       else o.frequency.value = freq;
-      let src: AudioNode = o;
-      if (p.width && n > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * (v % 2 ? x : -x); o.connect(s); src = s; }
-      src.connect(nodes[0]); o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); o.stop(stop);
-    }
+      o.connect(pans[v] < 0 ? left! : pans[v] > 0 ? right! : mid); o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); o.stop(stop);
+      last = o;
+    } }
+    if (lfoOf && wobbled && last) { const l = lfoOf, f = wobbled; last.onended = () => { try { l.disconnect(f.frequency); } catch { /* gone */ } }; }
     ch.lastFreq = freq;
+  }
+
+  /** A sung note on the FOF voice (Ed, 2026-10-11): its pool of voices on the part's channel, the vowel morphing to the next
+   *  through it; a phrase (after a rest of a beat or more) swelling in and the last one's end frozen, as the voice effects
+   *  ask; an octave-up double if asked. Until the worklet's loaded, or with the sound shed (shed.ts, step 2), the formant
+   *  voice sings it instead. */
+  private fof(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
+    if (!fofLoaded(this.ctx) || this.shedLevel >= 2) {
+      void fofReady(this.ctx);
+      this.voice(t, { ...p, kind: "voice", formantShift: p.voiceType === "alto" || p.voiceType === "tenor" ? 1.02 : 1.18, q: 9, vibrato: 20 }, peak, freq, dur, step, ch);
+      return;
+    }
+    const settings = { type: FOF_TYPES[p.voiceType ?? "soprano"] ?? 3, detune: p.detune ?? 9, vibrato: p.vibrato ?? 22, vibratoRate: p.vibratoRate ?? 5.2, vibratoDelay: p.vibratoDelay ?? 0.35, breath: p.breath ?? 0.06, attack: p.attack ?? 0.12, release: p.release ?? 0.5 };
+    ch.fof ??= new FofVoices(this.ctx, ch.in, 6, settings);
+    const vs = p.vowels?.length ? p.vowels : ["ah"], k = Math.floor(step / Math.max(1, p.vowelStep ?? 1));
+    const v = FOF_VOWELS[vs[k % vs.length]] ?? 0, vTo = dur > 0.6 ? FOF_VOWELS[vs[(k + 1) % vs.length]] ?? v : undefined, gain = Math.min(1, peak);
+    const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow);
+    if (fx && (ch.lastEnd === undefined || t - ch.lastEnd > beat)) {
+      if (ch.lastEnd !== undefined) fx.release(ch.lastEnd + (p.release ?? 0.5) * 0.3);
+      if (fx.s.swells > 0) {
+        if (!ch.swell) { const sg = this.ctx.createGain(); sg.gain.value = 0; sg.connect(fx.wetIn); ch.swell = { voices: new FofVoices(this.ctx, sg, 2, { ...settings, attack: 1.2, release: 0.05 }), gain: sg }; }
+        const len = Math.min(4 * beat, Math.max(beat, t - (ch.lastEnd ?? t - 4 * beat) - 0.1));
+        ch.swell.voices.note(t - len, freq, len, Math.min(1, gain * 0.9), v);
+        fx.swellEnvelope(ch.swell.gain, t, len, 1);
+      }
+    }
+    ch.fof.note(t, freq, dur, gain, v, vTo);
+    const double = (fx?.s.octave ?? 0) + (p.octave ?? 0);
+    if (double > 0) ch.fof.note(t, freq * 2, dur, Math.min(1, gain * double), v, vTo);
+    ch.lastEnd = t + dur;
+  }
+
+  /** A sung note from a recording (Ed, 2026-10-11: the game's singer, "Recorded + ethereal"): the recording retuned to it
+   *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
+   *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
+  private sampled(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
+    const rec = this.recordings.get(p.sample ?? "");
+    if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
+    const c = this.ctx, rate = freq / mtof(p.root ?? 69), len = Math.min(dur * 0.97, (rec.duration - 0.05) / rate);
+    if (len < 0.05) return;
+    if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
+    const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow);
+    if (fx && (ch.lastEnd === undefined || t - ch.lastEnd > beat)) {
+      if (ch.lastEnd !== undefined) fx.release(ch.lastEnd);
+      const swell = Math.min(4 * beat, Math.max(beat, t - (ch.lastEnd ?? t - 4 * beat) - 0.1));
+      if (fx.s.swells > 0 && t - swell >= c.currentTime) {
+        const sw = c.createBufferSource(), sg = c.createGain();
+        sw.buffer = rec; sw.playbackRate.value = rate; sw.loop = true; sw.loopStart = Math.min(0.3, rec.duration / 4); sw.loopEnd = Math.min(1.6, rec.duration);
+        sw.connect(sg).connect(fx.wetIn); fx.swellEnvelope(sg, t, swell, peak); sw.start(t - swell); sw.stop(t + 0.05);
+      }
+    }
+    const phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
+    ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + len);
+    ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
+    const src = c.createBufferSource(), g = c.createGain();
+    src.buffer = rec; src.playbackRate.value = rate;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.03);
+    g.gain.setValueAtTime(peak, t + Math.max(0.03, len - 0.08)); g.gain.linearRampToValueAtTime(0, t + len);
+    // its vowel (Ed, 2026-10-11: "stick to aa and oo"), the patch's taken in turn through the phrase: the recording sings a dark
+    // vowel (its partials strong to 800 Hz, weak past 1 kHz), opened to "aa" by lifts at aa's formants (800 and 1150 Hz) or closed
+    // to "oo" by a low-pass; and its onset ("l": the filter opening from a muffle over its first 80 ms, "laa")
+    const vs = p.vowels?.length ? p.vowels : [], vowel = vs.length ? vs[ch.sung % vs.length] : "";
+    const nodes: AudioNode[] = [src, g];
+    src.connect(g);
+    let last: AudioNode = g;
+    const open = vowel === "oo" ? 750 : 16000;
+    if (p.onset === "l" || vowel === "oo") {
+      const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.7;
+      if (p.onset === "l") { lp.frequency.setValueAtTime(420, t); lp.frequency.exponentialRampToValueAtTime(open, t + 0.08); } else lp.frequency.value = open;
+      last.connect(lp); last = lp; nodes.push(lp);
+    }
+    if (vowel === "aa" || vowel === "ah") for (const [f, db] of [[800, 4], [1150, 8]]) {
+      const pk = c.createBiquadFilter(); pk.type = "peaking"; pk.frequency.value = f; pk.Q.value = 2.2; pk.gain.value = db;
+      last.connect(pk); last = pk; nodes.push(pk);
+    }
+    last.connect(ch.presence); src.start(t, 0, len * rate + 0.02);
+    src.onended = () => { for (const n of nodes) n.disconnect(); };
   }
 
   /** A sung note, synthesised: a buzzy source (saws, a touch of breath) through three formant
    *  band-passes for its vowel (chosen by the note, from the patch's vowels), with a vibrato that
    *  creeps in; unison voices spread wide make a choir. */
-  private voice(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, dest: AudioNode): void {
-    const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], vowel = VOWELS[vowels[Math.abs(step >> 2) % vowels.length]] ?? VOWELS.ah;
-    const U = Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
-    const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+  private voice(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
+    const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], name = vowels[Math.floor(Math.abs(step) / Math.max(1, p.vowelStep ?? 4)) % vowels.length], vowel = VOWELS[name] ? name : "ah";
+    const U = this.shedLevel >= 2 ? 1 : Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
+    const end = t + Math.max(dur, attack), stop = end + release * (this.shedLevel >= 2 ? 1.5 : 2) + 0.02;
+    // The part's own vowels (three formant band-passes each) and its vibrato, made once and shared by its notes: each note's
+    // envelope goes in before the formants (the same sound; a choir note's 3 band-passes and vibrato were most of the
+    // choir's cost; foxtrot's measure, #523).
+    const bank = (ch.banks ??= new Map()).get(vowel) ?? (() => {
+      const into = c.createGain();
+      for (const [f, a] of VOWELS[vowel]) {
+        const bp = c.createBiquadFilter(), bg = c.createGain();
+        bp.type = "bandpass"; bp.frequency.value = f * (p.formantShift ?? 1); bp.Q.value = p.q ?? 8; bg.gain.value = a * 3;
+        into.connect(bp); bp.connect(bg); bg.connect(ch.in);
+      }
+      ch.banks!.set(vowel, into);
+      return into;
+    })();
+    if (!ch.vib) { ch.vib = c.createOscillator(); ch.vib.frequency.value = 5.2; ch.vib.start(); (ch.running ??= []).push(ch.vib); }
     const g = c.createGain(), lvl = peak / Math.sqrt(U);
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + attack);
     if (end > t + attack) g.gain.setTargetAtTime(lvl * sustain, t + attack, decay / 3);
     g.gain.setTargetAtTime(0, end, release / 3);
-    g.connect(dest);
-    const src = c.createGain(); // the buzz, into the formants in parallel
-    for (const [f, a] of vowel) {
-      const b = c.createBiquadFilter(), bg = c.createGain();
-      b.type = "bandpass"; b.frequency.value = f * (p.formantShift ?? 1); b.Q.value = p.q ?? 8; bg.gain.value = a * 3;
-      src.connect(b); b.connect(bg); bg.connect(g);
-    }
-    // vibrato: a few cents, creeping in after the attack
-    const vib = c.createOscillator(), vg = c.createGain();
-    vib.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(p.vibrato ?? 15, t + Math.min(0.6, attack + 0.25));
-    vib.connect(vg); vib.start(t); vib.stop(stop);
+    g.connect(bank);
+    // vibrato: a few cents, creeping in after the attack (the part's wobble, this note's depth)
+    const vg = c.createGain();
+    vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(p.vibrato ?? 15, t + Math.min(0.6, attack + 0.25));
+    ch.vib.connect(vg);
+    // (the outer voices through a panner a side, the middle one straight in: as synth())
+    const spread = !!p.width && U > 1, xs = Array.from({ length: U }, (_, u) => U > 1 ? (2 * u) / (U - 1) - 1 : 0);
+    const sideOf = (sign: number): AudioNode => {
+      const on = xs.filter(x => Math.sign(x) === sign), sp = c.createStereoPanner();
+      sp.pan.value = p.width! * on.reduce((a, x) => a + x, 0) / on.length; sp.connect(g); return sp;
+    };
+    const left = spread ? sideOf(-1) : null, right = spread ? sideOf(1) : null;
+    const mid = spread && xs.includes(0) ? (() => { const m = c.createGain(); m.gain.value = Math.SQRT1_2; m.connect(g); return m; })() : g; // (as synth())
+    let last: OscillatorNode | null = null;
     for (let u = 0; u < U; u++) {
-      const o = c.createOscillator(), x = U > 1 ? (2 * u) / (U - 1) - 1 : 0;
-      o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = (p.detune ?? 0) * x;
+      const o = c.createOscillator(), x = xs[u];
+      o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = (p.detune ?? 0) * x; kRate(o.detune);
       vg.connect(o.detune);
-      let out: AudioNode = o;
-      if (p.width && U > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * x; o.connect(s); out = s; }
-      out.connect(src); o.start(t); o.stop(stop);
+      o.connect(spread && x < 0 ? left! : spread && x > 0 ? right! : mid); o.start(t); o.stop(stop);
+      last = o;
     }
-    if (p.breath) { const h = c.createBiquadFilter(); h.type = "highpass"; h.frequency.value = 2500; this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], src); }
+    // its breath: a noise of its own (a shared one sums differently over overlapping notes: 1 to 2 dB on the mix)
+    if (p.breath) { const h = c.createBiquadFilter(); h.type = "highpass"; h.frequency.value = 2500; this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], bank); }
+    // the note over (on the audio clock): let go of the part's vibrato
+    if (last) { const v = ch.vib; last.onended = () => { try { v.disconnect(vg); } catch { /* gone */ } }; }
   }
+
 
   private riser(t: number, p: Patch, dur: number, from: number, to: number, dest: AudioNode): void {
     const c = this.ctx, lo = p.cutoff ?? 400, f = c.createBiquadFilter(), g = c.createGain();
@@ -478,3 +715,8 @@ export class MusicEngine {
     return b;
   }
 }
+
+/** An AudioParam worked out once a 128-sample block rather than every sample (about 3 ms: nothing heard in a filter's sweep,
+ *  a pad's slow wobble or a vibrato): a filter whose frequency moves recomputes its coefficients every sample otherwise,
+ *  the music's biggest steady cost on the audio thread (Ed's under-runs, 2026-10-07). */
+function kRate(p: AudioParam): void { try { p.automationRate = "k-rate"; } catch { /* (an older browser: as it was) */ } }

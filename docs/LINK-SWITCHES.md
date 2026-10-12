@@ -20,7 +20,8 @@ compare against an older look were retired on 2026-10-07 (the list at the end).
 | `dev=0` | hides the bedroom's dev "Player:" pick | app/playerPick.ts |
 | `room=<S>` | the creator's room drawn at this scale | ui/creator.ts |
 | `shake=0` | no screen shake (else the start screen's choice) | app/shake.ts |
-| `areaSize=<m>`, `areaScale=<k>`, `treetopSpeed=<m/s>`, `mapAreas=<n>` | the world's size and travel speed, remembered on this browser till changed | app/linkParams.ts |
+| `areaSize=<m>`, `areaScale=<k>`, `treetopSpeed=<m/s>`, `mapAreas=<n>` | the world's size and travel speed, for this load only (never remembered: they change the balance) | app/linkParams.ts |
+| `fightScale=<k>`, `fightSpeed=<k>`, `fightMomentum=<k>` | the fight's scale, speed and momentum for this load (the debug overlay's sliders; never remembered) | app/knobs.ts |
 | `shape=square\|circle` | the map's shape (circle, the default since 2026-10-06) | app/linkParams.ts |
 | `slow=0` / `slow=<k>` | legend circles slowing time: off, or another speed (0 < k < 1) | app/linkParams.ts |
 | `picker=route\|noisy\|near3\|near3touch\|nearest` | how the party picks the next area to wake | app/linkParams.ts |
@@ -66,6 +67,7 @@ compare against an older look were retired on 2026-10-07 (the list at the end).
 | `relief=<strength>` | the ground's fake relief (0 flat) | app/linkParams.ts |
 | `hills=0` / `hills=<m>` | the rolling ground flat, or this tall | app/linkParams.ts |
 | `ley=0`, `trail=0`, `knock=0` | no ley lines; no trail behind her; no knockback and stagger when she's hit | app/linkParams.ts |
+| `dodge=a,b,c` / `dodge=0` | which dodge changes are on (Ed, 2026-10-08; all by default): a committed strikes, b predictive aim, c packs cutting off her retreat | app/linkParams.ts |
 | `bare=1\|2` | the terrain on its own (2: grey, with contours and a grid) | app/linkParams.ts |
 | `clouds=<n>` | how many clouds | app/linkParams.ts |
 | `curve=<k>` | the world's bend over the treetops (0 off) | app/linkParams.ts |

@@ -7,6 +7,9 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { deckOf } from "../rules/treehouse";
+import { MapTable } from "./mapTable";
+import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
@@ -36,7 +39,6 @@ import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
 import { LOAD_DEFAULT, loadView } from "./load";
 import { InviteView } from "./invites";
 import { StateMarks } from "./looks";
-import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
@@ -47,6 +49,8 @@ import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { CombatLight } from "./combatLight";
 import { Lasers, type RingSpeaker } from "./lasers";
+import { SigilHolograms } from "./hologram";
+import { SoundsystemGenView } from "./soundsystemGen";
 import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
@@ -58,16 +62,18 @@ import { hasRune } from "../rules/creatureStates";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
+import { LightRings } from "./lightRings";
 import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
 import { LeyLines, leyReveal, shaderPulse } from "./leylines";
-import { bootLineAt, bootPath, bootPulseAt, bootShare } from "../rules/bootRing";
+import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
+import { Fireworks } from "./fireworks";
 import type { Style } from "./style";
 
 // The view's parts, each in its own module under view/ (issue #122), as functions of the View:
@@ -77,13 +83,15 @@ import { inView, overBulge, viewRect } from "./view/culling";
 import { checkPops, drawGhosts } from "./view/pops";
 import { refresh } from "./view/scenery";
 import { drawBerries, drawCreatures } from "./view/creatures";
+import { drawHatArt } from "./view/hatArt";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./view/home";
-import { setLights, sigilLights, updateSources } from "./view/lights";
+import { relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
 import { drawWitch } from "./view/witch";
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
+import { winPulse } from "../rules/win";
 
 /** Her shadow, lying on the rolling ground corner by corner. */
 const SHADOW_VERT = `varying vec2 vUv;
@@ -152,6 +160,8 @@ export class View {
   rideOff = 0;
   rideTime = NaN;
   treehouseBatch: SpriteBatch;
+  /** The treehouse deck's map table's miniature chart (render/mapTable.ts), with the deck on. */
+  mapTable: MapTable | null = null;
   markerArt: MarkerArt;
   markerBatch: SpriteBatch;
   markerFx = new MarkerFx();
@@ -164,15 +174,19 @@ export class View {
   spellFx = new SpellFx();
   /** The party spell's cast already burst into sparkles (its time). */
   castSeen: number | null | undefined = undefined;
+  /** the height of her body's middle this frame (render/view/witch.ts; the claw slashes go over it) */
+  witchBodyY = 0.8;
+  /** Her feet's height and her frame's height in art pixels this frame (the slashes scale with her: render/leash/bubbles.ts). */
+  witchFeetY = 0;
+  witchFrameH = 0;
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail: WitchTrail;
   private trailAt = -1;
   private trailRgb = new THREE.Vector3();
-  readonly actionBar = new ActionBar(document.body);
   private buffHud = new BuffHud(document.body);
   shadow: THREE.Mesh;
   mpp: number; // metres per art pixel
-  lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
+  lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 };
   /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
   budget: SceneryBudget;
   /** ?scenery=<metres>: a fixed scenery radius instead of the adaptive one. */
@@ -185,6 +199,10 @@ export class View {
   private strings: StringLightsView;
   leashView: LeashView;
   private lasers: Lasers;
+  /** The soundsystems' sky sigils (render/hologram.ts), in place of their laser shows (Ed, 2026-10-08). */
+  private holograms: SigilHolograms;
+  /** The wave's celebrations: fireworks over a soundsystem already cleared (render/fireworks.ts). */
+  readonly fireworks: Fireworks;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   ley: LeyLines;
   /** The sleeping legends' clearings: their twilight and rising motes. */
@@ -197,8 +215,9 @@ export class View {
   /** The ley line's brightness (the decisions panel's), and the last scale given it (the party's over fades it). */
   private leyBase = 1;
   private leyScaled = -1;
-  /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
-  private leyParty: Game["party"] | null = null;
+  /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour.
+   *  (Read by the beacons too, render/view/home.ts, so a stone's column comes up as the line it's drawn on reaches it.) */
+  leyParty: Game["party"] | null = null;
   /** The party's over (render/partyOver.ts): its look this frame, and ?partyover=<s> (debug). */
   readonly over = newPartyOverLook();
   private overDebug: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -226,9 +245,15 @@ export class View {
   nextStones: StoneIndicator[] = [];
   /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
   hatPointer: StoneIndicator | null = null;
+  /** The Dowsing hat's pointer toward the nearest relic (rules/hatSpells.ts). */
+  dowsePointer: StoneIndicator | null = null;
+  /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */
+  winPointer: StoneIndicator | null = null;
   /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
   alarms = newAlarms();
   alarmCues: AlarmIndicators | null = null;
+  /** The knockdowns' BPM bonus the wave pointer last pulsed for (render/view/hud.ts). */
+  pointerBonus = 0;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -251,6 +276,8 @@ export class View {
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
   mist: Mist | null = null;
+  /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts). */
+  lightRings: LightRings | null = null;
   /** Where she was a beat ago, for the trees watching her (render/view/frameUniforms.ts). */
   watch = { x: NaN, z: NaN, t: 0 };
   width = 1;
@@ -309,8 +336,10 @@ export class View {
       LIGHT_UNIFORMS.uGlowPower.value = 0;
     }
     this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
-    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome);
+    const deckOn = deckOf(game.map, t); // (the treehouse Ent holding the deck, rules/treehouse.ts; else the old treehouse)
+    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, deckOn ? `ent:${deckOn.h}:${deckOn.r}` : "home");
     this.assets.crownShare = t.trunkFade.crownShare;
+    this.assets.stoneScale = t.runeMarkers.scale;
     {
       // The steepest the hills may be: the camera's shallowest pitch at any zoom, ground or treetop (Ed, v289).
       const C = t.camera, pitch = Math.min(C.ground.angleIn, C.ground.angleOut, C.treetop.angleIn, C.treetop.angleOut);
@@ -336,6 +365,10 @@ export class View {
       this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.post.scene.depthTexture, this.post.fxSize); // (the effects layer is half the scene's size: post.ts)
       this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh);
     }
+    if (t.lightRings?.on && (t.lightRings.strength > 0 || t.lightRings.gloryStrength > 0) && !t.bare) {
+      this.lightRings = new LightRings(t.lightRings, this.post.scene.depthTexture, game.map.seed);
+      (this.post.fxScene ??= new THREE.Scene()).add(this.lightRings.mesh);
+    }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
     LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
@@ -353,10 +386,12 @@ export class View {
       // (Placed each frame by placeTreehouse: where it stands depends on the camera's angle.)
       this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true });
       this.scene.add(...this.treehouseBatch.meshes);
+      // The deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
+      if (deckOn) { this.mapTable = new MapTable(deckOn.table.r); this.scene.add(this.mapTable.mesh); }
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     this.minimap = new Minimap(document.body, game.map);
-    this.markerArt = new MarkerArt(style, t);
+    this.markerArt = new MarkerArt(style, t, game.map);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
@@ -373,11 +408,15 @@ export class View {
     this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
     this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
-    this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
+    this.partyView = new PartyView(this.assets.soundsystems, this.mpp, new SoundsystemGenView(this.scene, this.assets, this.mpp, this.renderer, this.camera));
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
+    this.holograms = new SigilHolograms(t.holograms);
+    this.scene.add(this.holograms.group);
+    this.fireworks = new Fireworks(SPRITE_UNIFORMS.uRes, this.mpp);
+    this.scene.add(this.fireworks.mesh);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
     this.leyBase = M?.leyBright ?? 1;
     this.ley.scale(this.leyBase);
@@ -448,7 +487,7 @@ export class View {
     // There are only 30 area types and 30 creatures: draw them all in the background now, so
     // the forest ahead is ready however fast she flies; the area types nearest her first.
     const m = this.game.map, w = this.game.witch, near = new Map<number, number>();
-    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
       const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - w.x, s.z - w.z);
       if (!(near.get(t)! <= d)) near.set(t, d);
     }
@@ -457,7 +496,21 @@ export class View {
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
     // In the background where the browser can (KHR_parallel_shader_compile); nothing it draws changes.
-    this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
+    // The hidden too (Ed's playtest, 2026-10-07: stalls of 100 ms and more in play): three compiles only what's visible, so
+    // the treetops' crowns, hidden on the ground, and everything not yet showing compiled on its first frame, the driver's
+    // wait inside it (getProgramInfoLog, 0.7-2.6 s a frame in the cloud's renderer, 50-200 ms on a real GPU). Everything is
+    // shown for the call (its programs are made at once, as it's called) and hidden again before anything is drawn; then
+    // play waits for them a few seconds at most, so on a GPU that compiles in parallel they're done in the Bedroom.
+    const hidden: THREE.Object3D[] = [];
+    this.scene.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+    const compiled = this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
+    for (const o of hidden) o.visible = false;
+    await Promise.race([compiled, new Promise(r => setTimeout(r, 4000))]);
+    // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
+    // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
+    for (const p of this.renderer.info.programs ?? []) p.getUniforms();
+    // Each legend's carving (render/legendCarving.ts: 10-80 ms a kind) made in idle time now, not the first time she comes near one.
+    warmCarvings(this.game.map.legendClearings.map(c => AREA_TYPES[this.game.map.typeOf(c.cell[0], c.cell[1])].creature));
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
@@ -546,6 +599,8 @@ export class View {
   readonly evolvedAt = new Map<number, number>();
   /** Each area legend's lying down and getting up, as the view has seen its state change (render/legendSleep.ts). */
   readonly legendSleeps = new Map<number, import("./legendSleep").SleepTrack>();
+  /** Each watching creature's aggro red as last drawn and when (view/creatures.ts), so it eases out when the watch ends. */
+  readonly aggroLast = new Map<number, { a: number; at: number }>();
   /** Each creature's distance walked as drawn, for its baked walk's frames (view/creatures.ts strideFrame). */
   readonly strides = new Map<number, { x: number; z: number; d: number; at: number }>();
   /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
@@ -579,7 +634,7 @@ export class View {
   private hideForBare(): void {
     for (const b of [...this.typeBatches.values(), ...this.decorBatches.values(), ...this.creatureBatches.values(), this.treehouseBatch, this.propBatch, this.markerBatch])
       for (const m of b.meshes) m.visible = false;
-    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.spellFx.trail, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
+    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.holograms.group, this.spellFx.trail, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
   }
 
   speakerFlare: (number | undefined)[] = [];
@@ -646,7 +701,7 @@ export class View {
 
   /** Her sprite batch, from the assets' witch frames (bare: her hat knocked off, and the hat on the ground). */
   makeWitchBatch(bare = false): SpriteBatch {
-    const t = this.game.tuning, b = new SpriteBatch(bare ? this.assets.witchBare() : this.assets.witch, this.mpp, { absolute: true, rim: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+    const t = this.game.tuning, b = new SpriteBatch(bare ? this.assets.witchBare() : this.assets.witch, this.mpp, { absolute: true, rim: true, unmark: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
     b.mesh.renderOrder = 10;
     this.scene.add(...b.meshes);
     return b;
@@ -748,36 +803,42 @@ export class View {
     this.time("uniforms");
     updateSources(this, time);
     this.time("sources");
-    // The party: soundsystems rising in partifying areas, their lights, the sweeping fronts.
+    // The party: soundsystems rising in partifying areas, and their lights.
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
-    const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false);
-    if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); }
+    this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }, at => !!g.win && g.win.lapAt !== undefined && at >= g.win.lapAt); // (the win's, from its victory lap on: the finale's palette; before the soundsystems: a celebrated one's lasers come on as its show starts)
+    const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated, offAt);
+    if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
-    this.ground.setSweeps(party.sweeps);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
-    this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
+    this.lasers.update(time, w.x, w.z, this.speakerTops, g.map.dancefloor); // (the dancefloor ring's: the soundsystems project their sigils instead)
+    this.holograms.update(party.projectors, time, w.x, w.z);
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
       // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
-      // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
-      this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
+      this.leyParty = g.party; // (leyLines.advance is the rules' own now: rules/leylines.ts questsMove)
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
       // The party's over (rules/partyOver.ts): the line fades to partyOver.leyFloor of itself, its pulse gone.
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
-      this.ley.pulse(g.partyOver ? null : shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
-      // None till the party spell; while home boots, its first link as the sketch (the way out of the ring: Ed, 2026-10-06), then
-      // the line grows out from the treehouse along the route (Ed).
-      const booting = g.party.spellAt !== null && time < g.party.bootUntil;
-      this.ley.sketch(booting);
+      // the wave's pulse along the current link, by the party's clock (as the HUD's pointer); while home boots, none drawn, but the
+      // line the boot branches off unlit ahead of where it will set off (as it is once the boot ends: no change as it does)
+      const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
+      this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
+      this.ley.lap(winPulse(g)?.links ?? null); // (the victory lap: its sparkler racing home along the route, rules/win.ts)
+      // None till the party spell, nor before the boot's pulse reaches where the first link leaves the home ring (Ed, v2001 and
+      // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
+      // (leyReveal, by the boot pulse's own progress), then on along the route.
       this.ley.near(w.x, w.z);
-      this.ley.grow(booting ? 1 : leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3));
+      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
-        const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
+        // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
+        // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at
+        // the top of the speaker circle"; 2026-10-09, "Pure constant speed", boot included.)
+        const B = bootPath(g.map), live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
         this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
         this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
       }
@@ -808,9 +869,16 @@ export class View {
       const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
       return { x: at.x + r.x * dx + u.x * dy, y: at.y + r.y * dx + u.y * dy, z: at.z + r.z * dx + u.z * dy };
     };
-    const thLights: ForestLight[] = T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
-      ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
-    }));
+    const deck = T.ent ? deckOf(g.map, t) : null;
+    if (this.mapTable) { // (its top's middle on the Ent's painted table, in the world's heights)
+      const tp = deck && T.ent ? onTreehouse(T.ent.table.x, T.ent.table.y) : null;
+      this.mapTable.update(tp && deck ? { x: tp.x, y: tp.y + groundHeight(deck.x, deck.z) + 0.02, z: tp.z } : null, deck ? Math.hypot(w.x - deck.x, w.z - deck.z) : Infinity, canopyShown(w) < 0.05, ht);
+    }
+    const thLights: ForestLight[] = deck // (the deck: one warm lantern over it, at the map table)
+      ? [{ x: deck.x, y: groundHeight(deck.x, deck.z) + deck.h + 3, z: deck.z, reach: t.treehouse.lightReach, rgb: new THREE.Vector3(1, 0.72, 0.42), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3)) }]
+      : T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
+        ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
+      }));
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);
@@ -826,7 +894,6 @@ export class View {
       loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
       const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
-    this.actionBar.update(g, ht);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
@@ -843,17 +910,18 @@ export class View {
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     { const H = g.witches[0].hat.down; if (H && g.witches[0].hat.has) clear.push({ x: H.x + HAT_BESIDE, z: H.z, r: t.groundCover.sigilClear }); } // (her hat where it lies)
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
-    for (const r of g.relics) if (r.state === "lying" && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
+    for (const r of g.relics) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
-    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...this.forestLights], w.x, w.z);
+    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
+    this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.time("witch");
     refresh(this);
@@ -861,6 +929,7 @@ export class View {
     this.easeAppearing();
     drawCreatures(this, time);
     drawBerries(this, time);
+    drawHatArt(this); // (the Harvest hat's sprouts, the Cyclone's whirlwind: render/view/hatArt.ts)
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
@@ -868,7 +937,7 @@ export class View {
     this.minimap.update(g.party, w.x, w.z);
     drawPointers(this, time);
     this.time("hud");
-    this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
+    this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     this.time("leash");
     workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
@@ -889,7 +958,7 @@ export class View {
     this.stats.batches = this.typeBatches.size + this.creatureBatches.size;
     this.stats.sceneryRadius = this.budget.radius; this.stats.fps = this.budget.fps;
     this.stats.scenery = this.stats.trees + this.stats.bushes;
-    this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count;
+    this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count + (this.partyView.gen?.count ?? 0);
   }
 }
 

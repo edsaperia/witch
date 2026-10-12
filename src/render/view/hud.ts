@@ -1,15 +1,20 @@
 // The pointers on the screen's edge (moved out of view.ts's render, unchanged): toward the wave's pulse and the next stones,
 // toward her hat where it lies, and toward a soundsystem under attack.
 import type { View } from "../view";
-import { beatTime } from "../../rules/beat";
+import { beatTime, bpmAt } from "../../rules/beat";
 import { AREA_TYPES } from "../../rules/map";
 import { waveCountdown } from "../../rules/party";
 import { hatMarker } from "../../rules/hat";
 import { leyPulse, pointerShown } from "../../rules/leypulse";
-import { edgeLayout, HAT, StoneIndicator } from "../indicator";
+import { edgeLayout, FLASK, HAT, PARTY, StoneIndicator } from "../indicator";
+import { dowseMarker } from "../../rules/hatSpells";
+import { finalStone, winPulse, winTarget } from "../../rules/win";
 import { AlarmIndicators } from "../alarm";
 import { ALARM_DEFAULTS, shownAlarms, stepAlarms } from "../../rules/alarms";
 import { HAT_BESIDE, HAT_INK } from "../view";
+import { slowAmount, slowest } from "../slowtime";
+
+/** At most this many left before each gets a pointer (more would clutter the edge: the HUD's count says how many). */
 
 /** Updates the pointers for this frame. */
 export function drawPointers(v: View, time: number): void {
@@ -21,7 +26,10 @@ export function drawPointers(v: View, time: number): void {
   // in as the pulse sets off.
   {
     const cw = v.canvas.clientWidth || window.innerWidth, ch = v.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
-    const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)); // (none once the party's over: rules/partyOver.ts)
+    // In slowed time (a sleeping legend's circle) they fade out with the slowing (Ed, 2026-10-10: "fade out edge indicators while
+    // you're in slow time areas"; render/slowtime.ts).
+    const calm = 1 - slowAmount(g.timeScale, slowest(t));
+    const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)) * calm; // (none once the party's over: rules/partyOver.ts)
     edgeLayout.reset(); // (no two edge cues on one another: render/indicator.ts)
     const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
       while (list.length < cells.length) list.push(make());
@@ -30,23 +38,42 @@ export function drawPointers(v: View, time: number): void {
         ind.fade(shown);
         if (!c || shown <= 0) { ind.update(v.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
         const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
-        const pulse = i === 0 ? leyPulse(g.party, g.map, time, v.ley.currentLink()) : null, at = pulse ?? s;
-        ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
+        const pulse = i === 0 ? v.ley.pulseTip ?? leyPulse(g.party, g.map, time, v.ley.currentLink()) : null, at = pulse ?? s; // (the sparkler's own point, drawn this frame)
+        ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0, glyph: i === 0 && finalStone(g) ? PARTY : undefined }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
       });
     };
-    // Pausing holds the countdown.
-    cue(v.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone);
+    // Pausing holds the countdown. Its label is the party's tempo (Ed, 2026-10-07: "The BPM is shown on the sparkler
+    // marker, and above the decks"), pulsing up when a knockdown raises it (rules/beat.ts knockdownTempo).
+    cue(v.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone, `${Math.round(bpmAt(g.beat, time))} bpm`);
+    const bonus = g.beat.bonus ?? 0;
+    if (bonus > v.pointerBonus) { v.pointerBonus = bonus; v.nextStones[0]?.pop(); }
     // Her hat on the ground (Ed, 2026-10-06: "there's a direction marker for it, so you can go back and find it"): toward it
     // off screen, over it on screen, while it lies there; in the HUD's amber.
     const H = hatMarker(g.witches[0].hat);
     if (H || v.hatPointer) {
       const P = (v.hatPointer ??= new StoneIndicator(document.body, 3));
-      P.fade(H ? 1 : 0);
+      P.fade(H ? calm : 0);
       P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+    }
+    // The Dowsing hat (rules/hatSpells.ts): toward the nearest relic still to find, for a while after she puts it down.
+    const D = dowseMarker(g, g.witches[0].spells, g.herTime);
+    if (D || v.dowsePointer) {
+      const P = (v.dowsePointer ??= new StoneIndicator(document.body, 3));
+      P.fade(D ? calm : 0);
+      P.update(v.camera, cw, ch, D ? { x: D.x, z: D.z, colour: HAT_INK, species: "", glyph: FLASK } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+    }
+    // The end of the route (rules/win.ts): toward the enraged animal nearest the centre while any lives (its sigil, in its
+    // neon), then toward the victory lap's pulse racing home (🎉).
+    const S = winTarget(g), L = winPulse(g);
+    if (S || L || v.winPointer) {
+      const P = (v.winPointer ??= new StoneIndicator(document.body, 3));
+      P.fade(S || L ? calm : 0);
+      const at = S ? { x: S.x, z: S.z, colour: v.markerArt.colour.get(S.species)!, species: S.species } : L ? { x: v.ley.pulseTip?.x ?? L.x, z: v.ley.pulseTip?.z ?? L.z, colour: v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(g.map.centreCell[0], g.map.centreCell[1])].creature) ?? HAT_INK, species: "", glyph: PARTY } : null;
+      P.update(v.camera, cw, ch, at, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
     // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
     const AT = t.alarms ?? ALARM_DEFAULTS;
     stepAlarms(v.alarms, g.combat.sounds, g.combat.events, time, AT);
-    if (v.alarms.byKey.size || v.alarmCues) (v.alarmCues ??= new AlarmIndicators(document.body)).update(v.camera, cw, ch, shownAlarms(v.alarms, AT), w.x, w.z, time, AT);
+    if (v.alarms.byKey.size || v.alarmCues) (v.alarmCues ??= new AlarmIndicators(document.body)).update(v.camera, cw, ch, shownAlarms(v.alarms, AT), w.x, w.z, time, AT, calm);
   }
 }

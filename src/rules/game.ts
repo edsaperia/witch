@@ -1,12 +1,17 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
-import { stepWildWatch } from "./wildWatch";
+import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
+import { stepWildWatch, type WildEntry } from "./wildWatch";
+import { stepHunts } from "./hunt";
+import { wakeOnInvites } from "./inviteWakes";
 import { MOVEMENT } from "./movement";
+import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
-import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
+import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
+import { legendCircleNear } from "./legendCircle";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
+import { healBy, heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
 import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
@@ -16,20 +21,23 @@ import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, S
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { heldByRoutine } from "./djSet";
-import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
-import { stoneTurned } from "./bootRing";
+import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
+import { clearedAreas } from "./clear";
+import { bootShare, stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
+import { homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
-import { nextSpeakerState, type SpeakerState } from "./speakers";
+import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, speakerStateOf, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
-import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
+import { floorEvent, floorLevel, islandKinds, islandSigilOf, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
-import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
-import { questsFromPlaced, stepSigilButton } from "./sigilButton";
+import { questsFromPlaced, questsFromStanding, stepSigilButton } from "./sigilButton";
+import { hatLetters, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
@@ -37,13 +45,16 @@ import { dropCache, newInvites, stepInvites, type Affection, type InviteControls
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
 import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type DashState } from "./dash";
-import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
+import { blinkDistance, castSpell, extraBlinks, newSpells, pullOf, revealed, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
+import { batter, canPound, groundPound, hiddenWitch, leyJump, leyJumpTarget } from "./brooms";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
-import { growWave, materialize, newGrowth, type GrowthState } from "./growth";
+import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
-import { startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
+import { deckOf } from "./treehouse";
+import { homeDown, startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
+import { stepWin, winFlare, won, type WinState } from "./win";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
  *  body (where she is and how she flies), her leash, her spell. */
@@ -69,6 +80,8 @@ export interface Witch {
   /** Slowed (a snail's slime, a glow-worm's flash) until then: her speeds times slowMult. */
   slowUntil?: number;
   slowMult?: number;
+  /** Her time she last landed (from the treetops): she can't rise again till riseCooldown seconds after it. */
+  landedAt?: number;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -112,7 +125,9 @@ export interface Game {
   /** Areas whose legend's quest is done (rules/quest.ts): friendly while wild. */
   friendly: Set<string>;
   /** The wild areas a witch has come down in lately (rules/wildWatch.ts): when, and when one was last on the ground there. */
-  wildEntry: Map<string, { at: number; last: number }>;
+  wildEntry: Map<string, WildEntry>;
+  /** The creatures hunting a witch (rules/hunt.ts), by id. */
+  hunts?: Set<number>;
   /** Quests done in this frame's steps (for the view). */
   questEvents: QuestEvent[];
   /** The map's relics (rules/legends.ts): lying half buried, carried, or put down by a legend. */
@@ -124,6 +139,8 @@ export interface Game {
   leashEvents: LeashEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
+  /** Game time of the last look for cleared areas (rules/clear.ts; game.ts stepClear). */
+  clearedAt?: number;
   /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
   legendIds?: number[];
   /** This step's simulation level of detail (rules/simLod.ts): how many creatures in each, for the debug overlay. */
@@ -133,6 +150,8 @@ export interface Game {
   /** The party's over (Ed, 2026-10-06: every soundsystem and the home ring's speakers destroyed): the afterparty, when it
    *  began and how far it has eased in (rules/partyOver.ts). Null while the party's on. */
   partyOver: PartyOver | null;
+  /** The end of the route (rules/win.ts): the stragglers, the victory lap, the night won. Null till the last wave lands. */
+  win: WinState | null;
   /** One-shot presses (rise, sigil, spell...) waiting for the next step. */
   pending: Partial<Controls>;
   /** Where each witch and creature was before the latest step, for interpolation. */
@@ -144,6 +163,13 @@ export interface Game {
   speakerBoot: (number | null)[];
   /** The beat clock: beats by game time, its tempo rising wave by wave (rules/beat.ts). */
   beat: BeatClock;
+  /** The night's set (rules/musicSet.ts; Ed, 2026-10-11): the music's arc for this night, a step a wave. */
+  musicSet: NightSet | null;
+  /** Every knockdown (any witch's), in order (Ed, 2026-10-09): `at` when she went down (the record scratched, the music
+   *  stopped) and `back` when her wait behind the decks ends (a bar line: she's put a new record on, and its music starts
+   *  from the top, re-seeded: "Being knocked down changes the music to a random new seed"), in game time. rules/musicPlan.ts
+   *  musicCue and formClock, rules/djSet.ts (her scratching on the new record). */
+  knockdowns: { at: number; back: number }[];
   /** The dancefloor's tile lights (rules/dancefloor.ts). */
   floor: FloorState;
   /** The legend buffs on now, and the tuning they make (rules/buffs.ts): the game plays by buffs.tuning. */
@@ -160,7 +186,13 @@ export interface Game {
 
 /** A soundsystem destroyed ("home" for the dancefloor's ring): the next wave `cut` seconds sooner,
  *  `left` seconds away now (0: it comes at once). */
-export interface WaveEvent { kind: "soundsystemLost"; key: string; x: number; z: number; at: number; cut: number; left: number }
+/** The waves' events: a soundsystem lost (cut: seconds it took off the countdown; left: seconds then left); an area cleared
+ *  of its wild creatures, its soundsystem rising (rules/clear.ts); a wave come to an area whose soundsystem stands already
+ *  (cleared before it, Ed 2026-10-07: it changes nothing in the rules; the view's fireworks and lasers). */
+export type WaveEvent =
+  | { kind: "soundsystemLost"; key: string; x: number; z: number; at: number }
+  | { kind: "areaCleared"; key: string; x: number; z: number; at: number }
+  | { kind: "waveCelebrate"; key: string; x: number; z: number; at: number; wave: number };
 
 export interface Controls extends Intent, Partial<LeashControls>, InviteControls {
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
@@ -181,18 +213,24 @@ export interface Controls extends Intent, Partial<LeashControls>, InviteControls
   cycleSpeakers?: boolean;
   /** The spell button: cast the equipped spell. */
   spell?: boolean;
+  /** The sigil button (E, the pad's, touch's) is down this frame: held long enough with nothing to do, she puts her hat down (rules/hat.ts putHat). */
+  sigilHeld?: boolean;
   /** The dash button (rules/dash.ts). */
   dash?: boolean;
 }
 
 export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
+  // (at her decks, on the treehouse deck: rules/treehouse.ts)
+  return { id, body: { ...newWitch(x, z), seated: true, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
   const map = generateMap(seed, tuning);
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
+  // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
+  // gameplay's: Ed, "tempo is set by the gameplay")
+  const set = nightFor(map, seed);
   const g = {
     seed, tuning, map, forest, creatures, clock: newClock(), witches,
     get witch() { return this.witches[0].body; }, set witch(w: WitchState) { this.witches[0].body = w; },
@@ -201,13 +239,14 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
-    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
+    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
-  const d = map.dancefloor, C = tuning.combat;
-  g.combat.sounds.set("home", { hp: C.homeHealth, max: C.homeHealth, x: d.x, z: d.z, radius: C.homeRadius });
+  // Home is its ring of speakers, each its own soundsystem in the fight (Ed, 2026-10-08; rules/speakers.ts).
+  const C = tuning.combat;
+  map.dancefloor.speakers.forEach((p, i) => g.combat.sounds.set(speakerKey(i), { hp: C.speakerHealth, max: C.speakerHealth, x: p.x, z: p.z, radius: C.speakerRadius }));
   return g as Game;
 }
 
@@ -244,14 +283,20 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
  *  "pickup", rules/leash.ts), or by filling it again (the old "again"). How many letters fill it is the tuning's invites.hits (buffs change it);
  *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace); it drains at the
  *  tuning's invites.drain (buffs change it; states.json's affection.drain only when that's missing), after states.json's drainDelay. */
+/** Napping (rules/creatures.ts stepNaps): asleep with a nap's end, so a letter can rouse it; not the party's over's sleep. */
+const napper = (c: Creature): boolean => !!c.asleep && c.napUntil !== undefined;
+
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, E = t.legends;
   const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain } };
   return {
-    invitable: c => !c.asleep && invitableNow(c, data), // (a sleeper isn't to be invited: she wakes it by landing in its area)
+    // A napper takes them (Ed, 2026-10-11: "Letters wake them"): the 💌 rouses it, wherever she is, and lands as any other (hit,
+    // below). One asleep for good (the party's over: no napUntil) still lets them by.
+    invitable: c => (napper(c) ? invitableNow({ ...c, asleep: false }, data) : invitableNow(c, data)), // (as if up: the letter wakes it)
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
     hit(c, amount, at) {
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
+      if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
       hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time) }, c, amount, time, data);
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
@@ -266,17 +311,34 @@ export const affectionOf = (g: Game): Affection => {
 /** Hits to fill a meter, by level: the tuning's invites.hits, a legend's the party-legend egg's (legends.partyHits). */
 export const meterHits = (t: Tuning): number[] => [...t.invites.hits.slice(0, 3), t.legends.partyHits];
 
-export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf(w.leash.stack, g.creatures, w.body, g.buffs?.tuning ?? g.tuning);
+export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf(w.leash.stack, g.creatures, w.body, g.buffs?.tuning ?? g.tuning, pullOf(w.spells, g.buffs?.tuning ?? g.tuning)); // (the Haul broom's lighter: rules/spells.ts)
 
 export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tuning, blow?: Blow): void {
   // (her health, blinks, knocks and hat run on her clock, rules/slowTime.ts: the world's moment `worldAt` on hers, by how far it is from now)
   const w = g.witches[id], at = g.herTime + (worldAt - g.clock.time);
-  if (!w || w.ko || dashing(w.dash, at) || g.partyOver) return; // (the afterparty: nothing hurts her)
+  if (!w || w.ko || dashing(w.dash, at) || g.partyOver || won(g)) return; // (the afterparty, or the night won: nothing hurts her)
   if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
+  // The Helmet (rules/spells.ts; Ed, 2026-10-11: "The helmet gives you an extra hit and it's knocked off when hit"): worn, it
+  // takes the blow, knocked off to lie beside her (her hat down: picked up and put back on as ever, rules/hat.ts).
+  if (w.spells.hat === "helmet" && dropHat(w.hat, w.body.x + (w.body.facing ?? 1) * (t.spells.helmet?.drop ?? 1.2), w.body.z, at)) {
+    w.health.hurtAt = at;
+    g.koEvents.push({ kind: "helmetOff", at, x: w.body.x, z: w.body.z });
+    if (blow) knockWitch((w.knock ??= newKnock()), w.body, blow, at, t);
+    return;
+  }
   if (hurt(w.health, at, t)) {
     const hatFloats = dropHat(w.hat, w.body.x, w.body.z, at, t.knockout.dropHat), streak = nextStreak(w.koStreak, at, t);
     w.koStreak = { n: streak, at };
     w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
+    knockdownTempo(g.beat, t, g.clock.time); // (the beat speeds up: Ed, 2026-10-07, "the BPM goes up by 1 each time you die")
+    // her wait ends on a bar line at the new tempo, the nearest to it (never under knockout.respawn.minScratch of scratching):
+    // her scratching on the new record leads straight into its first downbeat (Ed, 2026-10-09; the wait a second or so off knockout.respawn
+    // for it is fine: Ed, 2026-10-11)
+    const off = g.clock.time - g.herTime, ko = w.ko, min = ko.inAt + (t.knockout.respawn?.minScratch ?? 0) + off;
+    let bar = Math.round(beatAt(g.beat, ko.backAt + off) / 4);
+    while (timeAt(g.beat, bar * 4) < min - 1e-6) bar++;
+    ko.backAt = timeAt(g.beat, bar * 4) - off;
+    g.knockdowns.push({ at: g.clock.time, back: ko.backAt + off });
     if (hatFloats) g.koEvents.push({ kind: "hatDropped", at, x: w.body.x, z: w.body.z });
     return;
   }
@@ -290,8 +352,9 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
   const C = g.tuning.dash.clear, near = (px: number, pz: number, r: number) => (px - x) ** 2 + (pz - z) ** 2 < r * r;
   if (g.forest.treesNear(x, z, C.tree).some(p => near(p.x, p.z, C.tree))) return false;
   if (g.forest.decorNear(x, z, C.decor).some(p => near(p.x, p.z, C.decor))) return false;
-  for (const [k, s] of g.combat.sounds) if (k !== "home" && near(s.x, s.z, C.sound)) return false;
+  for (const [k, s] of g.combat.sounds) if (!isHomeKey(k) && near(s.x, s.z, C.sound)) return false; // (home's speakers: below)
   if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, C.speaker))) return false;
+  if (g.witch.mode === "ground" && onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad)) return false; // (on foot, never onto a lake: rules/lakes.ts)
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
 
@@ -372,10 +435,14 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
   // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
   if (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
-  if (c.spell) castSpell(g.spells, ht, t);
-  // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
-  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = 1 + M.charges;
+  // Her broom's spell (rules/spells.ts): Speed's boost, or at once Ley jump (to the ley line's pulse) or Ground pound (rules/brooms.ts).
+  if (c.spell && !W.ko && castSpell(g.spells, ht, t, W.spells.broom === "leyjump" ? !!leyJumpTarget(g) : W.spells.broom === "pound" ? canPound(W.body) : true)) {
+    if (W.spells.broom === "leyjump") leyJump(g, W, (x, z) => blinkClear(g, x, z));
+    else if (W.spells.broom === "pound" && groundPound(g, W, t)) W.landedAt = ht;
+  }
+  // The speed boost: her speeds times its multiplier while it's on.
+  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = (t.dash.charges ?? 1) + M.charges + extraBlinks(W.spells, t); // (two blinks before the cooldown, Ed 2026-10-08; Hare's Dash bursts more; the Double blink broom one more)
   // Her speed: the boost spell, a slow, Momentum (Boar) after a blink, and firing (no slowing: Ram's Steady).
   const firing = W.invites.burstLeft > 0 || (!!c.fire && t.invites.on && g.witch.mode === "ground" && !g.witch.seated);
   const boost = speedMultiplier(g.spells, ht, t) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1)
@@ -385,29 +452,37 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
   else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle };
+  // Just landed: no rising again till riseCooldown seconds after (Ed, 2026-10-11: "players rise to the treetops instead of
+  // dodging"; rising takes her out of ground mode at once).
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && ht < (W.landedAt ?? -Infinity) + riseCooldownOf(W.spells, t)) c = { ...c, toggleMode: false }; // (the plain broom's shorter: rules/spells.ts)
   const was = W.body;
   rechargeDash(W.dash, ht, charges, t.dash.cooldown);
   // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
   // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
   if (c.dash) W.dash.bufferUntil = ht + t.dash.buffer;
   if (ht <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, ht)
-    && startDash(W.dash, was, c.moveX, c.moveZ, ht, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0)) {
+    && startDash(W.dash, was, c.moveX, c.moveZ, ht, W.spells.broom === "long" ? { ...t, dash: { ...t.dash, distance: blinkDistance(W.spells, t) } } : t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0)) {
     W.dash.bufferUntil = undefined;
+    if (W.spells.broom === "battering") batter(g, W.dash.fromX, W.dash.fromZ, W.dash.toX, W.dash.toZ, t); // (Battering: what's in her path is stunned)
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, ht, t, M);
   }
-  W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t))); // (her sigils' pull: rules/leashWeight.ts)
+  W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells, t)), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
+  if (was.mode !== "ground" && W.body.mode === "ground") W.landedAt = ht; // (landed: the rise cooldown starts)
+  // On the treehouse deck or off it (rules/treehouse.ts): landed on it, or risen off it.
+  const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
-  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g));
+  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null); // (in a legend's circle: the lower view, camera.circle)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
-  const over = !!g.partyOver;
-  if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
-  if (c.nextWave && !over) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
-  if (!over) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated);
+  const over = !!g.partyOver, calm = over || won(g); // (calm: the afterparty, or the night won (rules/win.ts): no waves, no fights)
+  if (c.pauseWaves && !calm) g.party.paused = !g.party.paused;
+  const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
+  if (c.nextWave && !calm) { spreadWave(g.party, g.map, g.clock.time, celebrate); resetPulse(g.party, g.map, g.clock.time); } // (the pulse on from the stone it brought on)
+  if (!calm) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
-  if (!over) stepLegends(g, legends, !!c.happyNearest);
+  if (!calm) stepLegends(g, legends, !!c.happyNearest);
   if (W.ko) {
     const wasMoved = W.ko.moved, r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
@@ -416,35 +491,47 @@ function fixedStep(g: Game, controls: Controls): void {
     if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
   }
   repair(W.health, ht, t);
+  // The Healing ring (rules/spells.ts): by her hat where it lies, on the ground, she heals a hit every few seconds.
+  if (stepHealingRing(W.spells, W.health, !W.ko && W.body.mode === "ground" ? W.hat.down : null, W.body.x, W.body.z, ht, t)) g.koEvents.push({ kind: "healed", at: ht, x: W.body.x, z: W.body.z });
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
-  const grown = g.creatures.length;
-  if (!over) stepGrowth(g, wave);
-  for (let i = grown; i < g.creatures.length; i++) { const c = g.creatures[i]; if (g.friendly.has(cellKey(c.cell)) && !g.party.areas.has(cellKey(c.cell))) c.friendly = true; } // (a friendly area's newcomers are friendly too)
-  updateModes(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
+  // (No growth on a clock: every area is peopled from the start by its place on the route, Ed 2026-10-07; rules/creatures.ts.)
+  if (!calm) stepClear(g);
+  updateModes(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !g.witch.perch && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
   g.lod = newLodCounts();
-  if (!over) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
-  if (!over) stepFights(g, t, dt, busy);
-  else stepPartyOver(g, dt); // (nothing fights: everyone walks home to bed, rules/partyOver.ts)
+  if (!calm) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
+  if (!calm) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)
+  if (!calm) stepFights(g, t, dt, busy);
+  else if (over) stepPartyOver(g, dt); // (nothing fights: everyone walks home to bed, rules/partyOver.ts)
   // Noticing her (before they step, so a curious baby sets off this step).
   {
     const near: Creature[] = [], byArea = (g.byArea ??= indexByArea(g.creatures)), seen = new Set<string>();
     for (const w of g.witches) { if (w.body.mode !== "ground") continue; const k = cellKey(g.map.cellSafe(w.body.x, w.body.z).cell); for (const a of [k, ...(g.map.neighbours.get(k) ?? [])]) if (!seen.has(a)) { seen.add(a); near.push(...(byArea.get(a) ?? [])); } }
     const T = COMBAT.temperament;
-    stepNotice(near, g.witches.map(w => ({ x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated && !w.ko })), sp => (T.curious.includes(sp) ? "curious" : T.skittish.includes(sp) ? "skittish" : null), t);
+    stepNotice(near, g.witches.map(w => ({ x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated && !w.body.perch && !w.ko })), sp => (T.curious.includes(sp) ? "curious" : T.skittish.includes(sp) ? "skittish" : null), t);
   }
-  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => !!c.partyLegend || !!c.bed || dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod, napRules(g), t.wildWatch?.on ? t.wildWatch : undefined);
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => !!c.partyLegend || !!c.bed || c.finale !== undefined || dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod, napRules(g), t.wildWatch?.on ? t.wildWatch : undefined);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
   // Far from her on the ground, or from its sigil, a party animal travels (rules/travel.ts): quiet, along area borders.
   stepTravel(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
   stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP);
+  if (perchTurn) W.leash.events.push({ kind: "perch", id: W.id, x: W.body.x, z: W.body.z, at: ht, on: perchTurn > 0 });
+  // Her hat's spell on putting it down or picking it up (rules/hatSpells.ts: Harvest, Dowsing, Gathering).
+  // Stealth (rules/brooms.ts): throwing 💌s, or putting down or picking up anything, gives her away for a moment.
+  if (firing || W.leash.events.some(e => e.at === ht && (e.kind === "placed" || e.kind === "picked" || e.kind === "hatPut" || e.kind === "hatPicked" || e.kind === "relicPicked" || e.kind === "relicPlaced" || e.kind === "relicDropped"))) revealed(W.spells, ht, t);
+  for (const e of W.leash.events.slice()) if (e.at === ht && e.id === W.id) {
+    if (e.kind === "hatPut" && W.hat.down) onHatPut(g, W, W.hat.down.x, W.hat.down.z, ht, t);
+    else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
+  }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g));
+  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(W.spells, W.hat.down, t));
+  if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") refundDash(W.dash, ht, charges);
   questsFromPlaced(g, ht);
+  questsFromStanding(g);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
-  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
+  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat, id => { const p = g.leash.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : null; });
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
   // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
   for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }
@@ -452,12 +539,17 @@ function fixedStep(g: Game, controls: Controls): void {
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
   stepSpeakerBoot(g);
   stepDancefloor(g, wave);
+  stepWin(g, dt); // (the end of the route: last of all, so the finale's dancers keep their places, rules/win.ts)
   stepWitchParty(g, c, dt);
+  // Her hat's lasting spells where it lies (rules/hatSpells.ts: Bramble, Nursing, the Cyclone), after everything else has moved.
+  for (const w of g.witches) stepHatSpells(g, w, w.ko ? null : w.hat.down, dt, t);
   if (g.beach) { const w = g.witch; for (const s of g.beach) stepBeachWitches(s, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving: !w.stargazing && (Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3) || !!c.toggleMode }], g.clock.time, dt, g.tuning); }
   // Last, everyone in view eases apart from anyone closer than their sizes like (Ed, 2026-10-05).
   stepSpacing(g, dt);
   // Enraged creatures stay out of a sleeping or restless legend's circle (Ed, 2026-10-06).
   if (g.tuning.legendCircle?.slow.on !== false) keepEnragedOut(g);
+  // And everyone on foot stays ashore of the lakes (rules/lakes.ts).
+  if (g.map.bounds.lakes) creaturesAshore(g.creatures, g.map.bounds, lakeKnobs(t).pad);
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -467,7 +559,7 @@ function stepSpacing(g: Game, dt: number): void {
   const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list = spacingList;
   list.length = 0;
   for (const c of g.creatures) {
-    if (c.gone || c.burrow || c.leap) continue;
+    if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
   spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
@@ -479,23 +571,24 @@ function stepSpacing(g: Game, dt: number): void {
 function napRules(g: Game): NapRules | undefined {
   const N = g.tuning.naps;
   if (!N?.on) return undefined;
-  const roused = new Set<string>(), down = g.witches.filter(w => w.body.mode === "ground" && !w.body.seated && !w.ko).map(w => w.body);
+  const roused = new Set<string>(), down = g.witches.filter(w => w.body.mode === "ground" && !w.body.seated && !w.body.perch && !w.ko).map(w => w.body);
   for (const b of down) roused.add(cellKey(g.map.cellSafe(b.x, b.z).cell));
   // A legend circle's baby (naps.circle) wakes only for a witch at its circle (so she can still invite it), not anywhere in its area.
   const C = N.circle, atCircle = (c: Creature) => down.some(b => Math.hypot(b.x - c.circle!.x, b.z - c.circle!.z) <= c.circle!.r + C!.reach);
   return { chance: N.chance, length: N.length, wake: N.wake, circle: C, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => C && keepsToCircle(c) ? atCircle(c) : roused.size > 0 && roused.has(cellKey(c.cell)) };
 }
 
-/** Wild areas grow (Ed, 2026-10-04): every wave each area still wild (and each one this wave
- *  woke) gains its creatures, as counts; those near a witch are made where she can't see them
- *  come, and a woken area's at once, to march on its new soundsystem. */
-function stepGrowth(g: Game, waveBefore: number): void {
-  const p = g.party, woken = new Set<string>();
-  for (let w = waveBefore + 1; w <= p.wave; w++) {
-    growWave(g.growth, g.map, w, key => { const a = p.areas.get(key); return (!a || a.wave >= w) && !p.ruined?.has(key); });
-    for (const [key, a] of p.areas) if (a.wave >= w) woken.add(key);
+/** Areas cleared (Ed, 2026-10-07; rules/clear.ts): a few times a second (game time), any area none of whose own wild
+ *  creatures is left is partified at once, as its wave would; stepFights then raises its soundsystem, turns its babies
+ *  happy and sets its besiegers (none) on it, this same step. */
+function stepClear(g: Game): void {
+  const time = g.clock.time;
+  if (g.clearedAt !== undefined && time < g.clearedAt + 0.25) return;
+  g.clearedAt = time;
+  for (const cell of clearedAreas(g.party, g.map, g.creatures)) {
+    const a = clearArea(g.party, g.map, cell, time);
+    if (a?.soundsystem) g.waveEvents.push({ kind: "areaCleared", key: cellKey(cell), x: a.soundsystem.x, z: a.soundsystem.z, at: time });
   }
-  if (materialize(g.growth, g.creatures, g.map, g.witches.map(w => w.body), simRadius(g), g.clock.time, woken)) g.byArea = null;
 }
 
 /** The wild creatures by the area they live in (its key). */
@@ -541,14 +634,17 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   stepCombat(S, {
     creatures: g.creatures, active: stepped, time, dt, t, busy,
     witches: g.witches.map((w, i) => {
-      const onGround = w.body.mode === "ground" && !w.body.seated;
-      return { id: i, x: w.body.x, z: w.body.z, onGround, down: !!w.ko, vx: w.body.vx, vz: w.body.vz, shelter: onGround ? calmRingAt(g, w.body.x, w.body.z)?.id : undefined }; // (in a calm legend's circle, safe from outside: Ed, round 14)
+      const onGround = w.body.mode === "ground" && !w.body.seated && !w.body.perch; // (up on the treehouse deck: out of every fight)
+      return { id: i, x: w.body.x, z: w.body.z, onGround, down: !!w.ko, vx: w.body.vx, vz: w.body.vz, shelter: onGround ? calmRingAt(g, w.body.x, w.body.z)?.id : undefined, ...(hiddenWitch(g, i) ? { hidden: t.spells.stealth?.range ?? 25 } : {}) }; // (her Stealth broom: unseen, rules/brooms.ts) // (in a calm legend's circle, safe from outside: Ed, round 14)
     }),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
     asleep: c => !!c.partyLegend || dormant(g, c) || napping(c, time) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be; a sleeper, or one getting up, is out of it)
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),
+    round: g.map.bounds.lakes ? (x, z, tx, tz) => roundLakes(g.map.bounds, x, z, tx, tz, lakeKnobs(t).shore + 4) : undefined,
+    centre: g.map.dancefloor,
+    home: homeArea(g.map),
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
@@ -559,12 +655,12 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
   }, COMBAT);
   for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed || c.retreat)) S.busy.add(c.id); // carried on wherever she is
-  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
-  // The home ring shows its damage speaker by speaker.
-  const home = S.sounds.get("home");
-  if (home && home.hp < home.max) { const f = 1 - home.hp / home.max, n = g.speakers.length; g.speakers = g.speakers.map((_, i) => (f >= (i + 1) / n ? "destroyed" : f >= (i + 0.5) / n ? "damaged" : "playing")); }
-  // Every soundsystem down, the home ring's speakers too: the party's over (rules/partyOver.ts), the afterparty from now on.
-  if (!g.partyOver && [...S.sounds.values()].every(h => h.hp <= 0)) startPartyOver(g, time);
+  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z);
+  // The home ring shows each speaker's own damage (an unhurt one keeps what the debug key gave it).
+  g.speakers.forEach((_, i) => { const h = S.sounds.get(speakerKey(i)); if (h && h.hp < h.max) g.speakers[i] = speakerStateOf(h.hp, h.max); });
+  // The home ring's last speaker down: the party's over (rules/partyOver.ts), the afterparty from now on, whatever soundsystems
+  // still stand (Ed, 2026-10-10: "The party should end when all your home speakers are destroyed"; they switch off).
+  if (!g.partyOver && homeDown(S)) startPartyOver(g, time);
 }
 
 /** The besiegers to march coarsely this step (rules/simLod.ts): marching on a soundsystem (nothing
@@ -594,9 +690,9 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
     if (counts) counts.marchCoarse++;
     out.add(c);
     if (!coarseTurn(tick, c.id, L.every)) continue;
-    const key = tg?.kind === "sound" ? tg.key : c.siege!, h = S.sounds.get(key) ?? null;
+    const key0 = tg?.kind === "sound" ? tg.key : c.siege!, key = key0 === "home" ? nearestHomeSpeaker(S, c.x, c.z) ?? key0 : key0, h = S.sounds.get(key) ?? null;
     if (!h || h.hp <= 0) { c.lod = "full"; out.delete(c); continue; } // (its soundsystem fell: combat finds it the next)
-    const dx = h.x - c.x, dz = h.z - c.z, dist = Math.hypot(dx, dz), step = Math.min(Math.max(0, dist - 10), c.speed * t.combat.marchMult * dt * L.every); // (over the line it's in full next step)
+    const dx = h.x - c.x, dz = h.z - c.z, dist = Math.hypot(dx, dz), step = Math.min(Math.max(0, dist - 10), marchSpeed(c, t) * dt * L.every); // (over the line it's in full next step)
     if (dist > 1e-6) { c.x += (dx / dist) * step; c.z += (dz / dist) * step; }
     if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
     c.away = dz < -Math.abs(dx); c.moving = step > 0; c.walk += dt * L.every * 5;
@@ -604,18 +700,24 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
   return out;
 }
 
-/** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers
- *  marching on, and the next wave sooner (Ed, 2026-10-05: a loss takes party.lossPenalty seconds
- *  off the countdown, "all waves sooner is the wrong kind of penalty"). */
 /** Where something running off the map heads: just past its nearest edge. */
 function mapExit(map: ForestMap, x: number, z: number): { x: number; z: number } {
   return exitPoint(map.bounds, x, z, 30);
 }
 
-export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
+/** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers marching on. Nothing
+ *  else (Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown", "doesn't affect the bpm"). */
+export function loseSoundsystem(g: Game, key: string, x: number, z: number): void {
   const S = g.combat, time = g.clock.time;
-  if (key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
-  else {
+  if (isHomeKey(key)) {
+    // One of home's speakers (or, "home", the whole ring at once: the debug hook): its besiegers on to the nearest standing;
+    // home is lost only with the last of them.
+    const i = speakerIndex(key), all = i < 0;
+    g.speakers.forEach((_, j) => { if (all || j === i) g.speakers[j] = "destroyed"; });
+    for (let j = 0; j < g.speakers.length; j++) if (all || j === i) marchOn(S, speakerKey(j), g.creatures, g.map.dancefloor);
+    if (!all && g.speakers.some((_, j) => (S.sounds.get(speakerKey(j))?.hp ?? 0) > 0)) return;
+    key = "home"; x = g.map.dancefloor.x; z = g.map.dancefloor.z;
+  } else {
     g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key);
     // Its happy babies run off home, for good (Ed, 2026-10-06); leashed ones (and parked ones) stay hers.
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) {
@@ -624,9 +726,8 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: T
       S.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); S.busy.add(c.id);
     }
   }
-  marchOn(S, key, g.creatures);
-  const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0);
-  g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
+  if (key !== "home") marchOn(S, key, g.creatures, g.map.dancefloor); // (inward only)
+  g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time });
 }
 
 /** The party witches: one for each soundsystem playing (oldest first), and the player idling in. */
@@ -639,7 +740,9 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell);
   // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
   const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
-  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t);
+  // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11).
+  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear, ring: speakerRadius(t) + t.dancefloor.speakers.footprint }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t,
+    { ruined: g.party.ruined, over: !!g.partyOver });
 }
 
 const neonOf = neon;
@@ -655,9 +758,11 @@ export function floorInputs(g: Game): FloorInputs {
     dancers.push({ x: p.x, y: p.y, rgb: neonOf((SIGIL_NEON as Record<string, string>)[c.species]) });
   }
   return {
-    time: g.clock.time, beatAt: tm => beatAt(g.beat, tm), seed: g.seed, level: floorLevel(g.party.areas.size, g.tuning), partifiedAreas: areas,
+    time: g.clock.time, beatAt: tm => beatAt(g.beat, tm), seed: g.seed, level: floorLevel(g.party.areas.size, g.tuning), partifiedAreas: areas, kinds: islandKinds(g.map, t => AREA_TYPES[t].creature),
     witch: { x: w.x, y: w.y, lift: g.witch.lift, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) }, dancers,
     moon: { phase: moonState(g.clock.time, g.seed, g.tuning).phase },
+    island: { sigil: islandSigilOf(g.map), drawn: bootShare(g.party, g.map, g.clock.time) },
+    flare: winFlare(g) ?? undefined,
   };
 }
 
@@ -680,7 +785,8 @@ export function speakerBoot(g: Game, i: number, time = g.clock.time): number {
   return Math.max(0, Math.min(1, (time - at) / Math.max(1e-3, g.tuning.boot.transform)));
 }
 
-// Before the first wave the floor shows only the moon (Ed, 2026-10-06); it switches on, the full moon
+// Before the first wave the floor shows only the moon (Ed, 2026-10-06), and through the boot the island's sigil (Ed, 2026-10-11:
+// rules/dancefloor.ts islandTiles); it switches on, the full moon
 // flaring into the party, when the first wave comes (or at once, off the decks, in a run started later);
 // a wave sends a pulse towards the area it reached; a sigil placed flashes out from the centre.
 function stepDancefloor(g: Game, waveBefore: number): void {
@@ -728,7 +834,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
     g.tally.stomps = (g.tally.stomps ?? 0) + 1;
   });
   // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
-  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += (maxHp(c.level) / LEGENDS.healTime) * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) healBy(c, (maxHp(c.level) / LEGENDS.healTime) * STEP, maxHp(c.level), g.clock.time); }
   if (happyNearest) {
     // Debug (O): the nearest sleeping legend made happy, as if a relic were put down by it.
     let best: Creature | null = null, bd = Infinity;
@@ -770,13 +876,14 @@ export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.camera.lif
 export function coastOf(g: Game): CoastView | null {
   const BC = g.tuning.beach?.camera, b = BC ? beachOf(g.map.bounds, g.tuning) : null, w = g.witch;
   if (!BC || !b) return null;
-  // (metres from where the edge's soft hold starts, where she lies down at the water's edge (rules/witch.ts `held`); exactly, by
-  // the coast's edge her way: intoSea's quick path is only right about which side of the water a point is on, well inland)
-  const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) - (g.tuning.map?.push ?? 0) * 0.6 - Math.hypot(dx, dz);
+  // (metres from where the edge's soft hold starts, where she lies down at the water's edge: rules/witch.ts `held`)
+  const off = b.land.distAt(w.x, w.z) - (g.tuning.map?.push ?? 0) * 0.6;
   const gazing = w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
   const near = Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach)));
-  // (her bearing round the coast only by the sea, where the stargazing camera reads it: inland the camera's state is as ever)
-  return { near, gazing, seaBehind: Math.max(0, dz / (Math.hypot(dx, dz) || 1)), bearing: near > 0 || gazing ? Math.atan2(dx, -dz) : undefined }; // (south of the middle: the sea behind a camera looking north)
+  // (her bearing round the coast only by the sea, where the stargazing camera reads it: the way out to the water from her
+  // (0 north, clockwise); inland the camera's state is as ever)
+  const n = b.land.inward(w.x, w.z), ox = -n.x, oz = -n.z;
+  return { near, gazing, seaBehind: Math.max(0, oz), bearing: near > 0 || gazing ? Math.atan2(ox, -oz) : undefined }; // (the water to the south: behind a camera looking north)
 }
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */

@@ -31,6 +31,7 @@ uniform vec3 uRight, uUp;
 uniform float uFlat;
 uniform vec2 uRes;
 uniform float uMpp, uDotMax;
+uniform float uPull; // drawn this many metres nearer the camera along its own ray (the blood trails: over the grass tufts), 0 for the rest
 attribute vec3 iPos;
 attribute float iSize;
 attribute vec4 iUv;
@@ -53,6 +54,7 @@ void main() {
   vPix = !glow && iUv.z < 0.07 && iUv.y > 0.99 && iSize <= uDotMax ? 1.0 : 0.0; // (the soft dot, as an object)
   vN = max(1.0, floor(iSize / uMpp + 0.5)); // its art pixels across
   gl_Position = clipOf(w);
+  if (uPull > 0.0) { vec3 b = bendW(w), r = b - cameraPosition; gl_Position = projectionMatrix * viewMatrix * vec4(b - r * min(0.9, uPull / max(1e-3, length(r))), 1.0); }
   if (vPix > 0.5) gl_Position.xy += pixelSnap(clipOf(onGround(iPos))) * gl_Position.w;
   if (overBend(onGround(iPos)) < 0.5) gl_Position = vec4(2.0, 2.0, 2.0, 1.0); // (the glows seen through the canopy: never through the earth)
 }`;

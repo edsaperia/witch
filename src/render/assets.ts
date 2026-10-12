@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
-import { witchSprites, type WitchArt } from "./homeArt";
+import { witchSprites, type SoundsystemGenArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
@@ -33,6 +33,7 @@ export class AssetLibrary {
   private creatures = new Map<string, CreatureArt>();
   private rigs = new Map<string, RigArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
+  private soundsystemsGen = new Map<string, SoundsystemGenArt & { atlas: Atlas }>();
   private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
   /** The beach's edge of the woods (render/beach.ts): asked for only when she comes near the sand. */
@@ -67,7 +68,7 @@ export class AssetLibrary {
   soundsystems: Atlas = placeholderAtlas(16);
   /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
    *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
-  treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
+  treehouse: { atlas: Atlas; ent?: { deck: { x: number; y: number }; table: { x: number; y: number } }; base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
     /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
     foreFrames: number; foreBox: { x: number; y: number };
     /** The knockdown candles (Art.candleSprite: white then red from candleRed on, level × flicker, from frame candle0) and their row along the desk's front (its ends, in the base's pixels). */
@@ -94,8 +95,10 @@ export class AssetLibrary {
 
   /** The share of a crown's pixels above its cut (tuning trunkFade.crownShare; the view sets it). */
   crownShare = 0.85;
+  /** The areas' rune stones' bake scale (tuning runeMarkers.scale; the view sets it): the dancefloor ring's stones are baked at it. */
+  stoneScale = 2.25;
 
-  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null) {
+  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home") {
     this.K = 2 / pixelSize;
     this.styleHash = hashText(JSON.stringify(style));
     // Where her poses' frames will be, at once (a dry run: nothing drawn), and the stand-ins above; the art itself from the
@@ -120,7 +123,7 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
-    this.ask({ kind: "treehouse", id: "home", style }, true);
+    this.ask({ kind: "treehouse", id: treehouse, style }, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
     this.ask({ kind: "soundsystems", id: "home", style }, true);
     this.ask({ kind: "props", id: "home", style }, true);
     this.ask(this.witchJob(witchGenome, false), true);
@@ -146,7 +149,7 @@ export class AssetLibrary {
       return;
     }
     this.inFlight.add(k);
-    const ck = this.cacheKey(job), draw = () => { if (urgent) this.queue.unshift(job); else this.queue.push(job); this.dispatch(); };
+    const ck = this.cacheKey(job), draw = () => { if (urgent || this.promoted.has(k)) this.queue.unshift(job); else this.queue.push(job); this.dispatch(); }; // (promoted: asked again urgently while its cache lookup was pending, so not yet in the queue to move)
     if (!ck) { draw(); return; }
     cacheGet(ck).then(hit => {
       if (hit && hit.px) this.receive({ job, result: hit, ms: 0, cached: true });
@@ -193,6 +196,8 @@ export class AssetLibrary {
       this.pieces = { atlas, byId: Object.fromEntries(r.result.pieces!.map(p => [p.id, p])) };
     } else if (r.job.kind === "partyObjects") {
       this.party = { atlas, ...r.result.party! };
+    } else if (r.job.kind === "soundsystem") {
+      this.soundsystemsGen.set(r.job.id, { atlas, ...r.result.ss! });
     } else if (r.job.kind === "partyWitch") {
       this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
     } else if (r.job.kind === "beachEdge") {
@@ -263,7 +268,7 @@ export class AssetLibrary {
   }
   /** The dancefloor's speakers, or undefined (and asked for, ahead of the scenery: they're gameplay). */
   speakerArt(): (SpeakerArt & { atlas: Atlas }) | undefined {
-    if (!this.speakers) this.ask({ kind: "speakers", id: "all", style: this.style }, true);
+    if (!this.speakers) this.ask({ kind: "speakers", id: `all@${this.stoneScale}`, style: this.style, stone: this.stoneScale }, true);
     return this.speakers;
   }
   /** The paths' 3D pieces, or undefined (and asked for). */
@@ -386,6 +391,13 @@ export class AssetLibrary {
     const id = seed === null ? `her-${hashText(JSON.stringify(this.witchGenome))}` : `pw-${seed}`, a = this.partyWitches.get(id);
     // (urgent: they dance at home, in view from the start, so not behind every area type's prefetch)
     if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style, genome: seed === null ? this.witchGenome : undefined }, true);
+    return a;
+  }
+  /** An area's generated soundsystem (art/soundsystemGen.js), baked at its yaw and size, or undefined (and asked for; urgent when
+   *  it's about to rise, else in the background, ahead of its wave). `id` names the genome, yaw and size together. */
+  soundsystemGenArt(id: string, genome: unknown, yaw: number, size: number, urgent = true, part: "play" | "damage" = "play"): (SoundsystemGenArt & { atlas: Atlas }) | undefined {
+    const k = part === "play" ? id : `${id}-dmg`, a = this.soundsystemsGen.get(k);
+    if (!a) this.ask({ kind: "soundsystem", id: k, style: this.style, genome, yaw, size, part }, urgent);
     return a;
   }
   /** Ask for a set ahead of need, without using it. */

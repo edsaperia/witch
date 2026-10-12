@@ -4,6 +4,7 @@
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
 //   node art/preview.mjs sets all art/previews/set-pieces.png [scale]   (every area's set piece, five to a row, the witch for scale)
+//   node art/preview.mjs ent 0 art/previews/ent.png [scale]   (the treehouse Ent: towards and away, the witch at the decks between its far and near halves; and the deck up close; NIGHT=1 lit by its own lights)
 //   node art/preview.mjs home 0 art/previews/treehouse.png [scale]   (the treehouse with the witch sitting in its studio, sit frame 0 or 1; NIGHT=1 lit by its own lights; STUDIO=1 adds the studio up close, framed on its camera anchor)
 //   node art/preview.mjs relics modern|playground|sports|<ids> art/previews/relics-modern.png [scale]   (PER=n to a row)
 //   node art/preview.mjs country farm|street|scene|<ids> art/previews/country-farm.png [scale]   (countryside and street pieces; PER=n to a row)
@@ -11,6 +12,7 @@
 //   node art/preview.mjs landmarks cemetery|carpark|scrap|worship|castle|classical|<ids> art/previews/landmarks-worship.png [scale]   (the large scenes' pieces; buildings' two halves composed, HALVES=1 apart; PER=n to a row)
 //   node art/preview.mjs partyobjects litter|small|furniture|set|all|<ids> art/previews/party-objects.png [scale]   (the party objects, neon ones cycling the neons; NIGHT=1 to see them glow)
 //   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
+//   node art/preview.mjs sizes all|<species> art/previews/sizes.png [scale]   (each species' baby, young and adult beside the witch standing, at today's size and bigger: SCALES=1,1.2,1.35,1.5, st.creatureScale)
 //   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row)
 //   node art/preview.mjs naps all|<species> art/previews/naps.png [scale]   (each species asleep, art/naps.js: baby, young and adult awake, then each asleep in its 2 breathing frames, the witch for scale; LEVELS=[...] to choose; DRESSED=1: in party gear awake, then asleep bare and asleep dressed)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
@@ -29,6 +31,7 @@
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
 //   node art/preview.mjs runestones all|<species> art/previews/runestones.png [scale]   (each species' rune stone with its sigil in its neon; NIGHT=1; PER=n to a row)
+//   node art/preview.mjs runestoneforms <species> <png> [scale]   (today's stone, its 20 seeded forms, and four of them beside their mirror images)
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
 //   node art/preview.mjs sigils all art/previews/sigils.png [scale]
 //   node art/preview.mjs witch headings art/previews/witch-headings.png [scale]   (her side view, then heading straight up the screen (away) and straight down it (towards): hover x3, lean, fast x3, brake x2; ANCHORS=1 marks her hand and hat tip)
@@ -72,6 +75,7 @@ if (process.env.HALVES) await b.page.addInitScript(() => { window.HALVES = true;
 if (process.env.MIRROR) await b.page.addInitScript(() => { window.MIRROR = true; });
 if (process.env.VARIANT) await b.page.addInitScript(n => { window.VARIANT = n; }, +process.env.VARIANT);
 if (process.env.GENOME) await b.page.addInitScript(g => { window.GENOME = g; }, JSON.parse(process.env.GENOME));
+if (process.env.SCALES) await b.page.addInitScript(l => { window.SCALES = l; }, process.env.SCALES.split(",").map(Number));
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.STUDIO) await b.page.addInitScript(() => { window.STUDIO = true; });
@@ -79,6 +83,7 @@ if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = tru
 if (process.env.AREA) await b.page.addInitScript(a => { window.AREA = a; }, process.env.AREA);
 if (process.env.BOG) await b.page.addInitScript(() => { window.BOG = true; });
 if (process.env.SEEDS) await b.page.addInitScript(l => { window.SEEDS = l; }, process.env.SEEDS.split(",").map(Number));
+if (process.env.SNOW) await b.page.addInitScript(n => { window.SNOW = n; }, +process.env.SNOW);
 if (process.env.CHANGES) await b.page.addInitScript(() => { window.CHANGES = true; });
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
@@ -224,6 +229,32 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
     return big.toDataURL("image/png");
   }
+  if (what === "ent") { // the treehouse Ent (art/ent.js): towards and away, the witch at the decks (dj frame `list`) between its far and near halves; then the deck up close
+    const wc = G.witchColours(st), hc = G.entColours(st), panels = [], wsp = G.witchSprite(st, { pose: "dj", frame: +list || 0 }), wit = G.bake(wsp, wc, st, st.cOutline);
+    for (const facing of ["towards", "away"]) {
+      const T = G.entSprite(st, { facing }), far = G.bake(T.far, hc, st, "none"), near = G.bake(T.near, hc, st, "none");
+      panels.push({ T, far, near, w: far.w, h: far.h, wx: Math.round(T.anchors.seat.x - wsp.anchors.ground[0]), wy: Math.round(T.anchors.seat.y - wsp.anchors.ground[1]) });
+    }
+    { // the deck up close, round the first panel's deck (twice the size)
+      const P = panels[0], cw = 260, ch = 130, cx = Math.round(P.T.anchors.deck.x - cw / 2), cy = Math.round(P.T.anchors.deck.y - ch * .45), K = 2;
+      const c2 = d => { const c = document.createElement("canvas"); c.width = cw * K; c.height = ch * K; const g2 = c.getContext("2d"); g2.imageSmoothingEnabled = false; g2.drawImage(d.far, -cx * K, -cy * K, P.w * K, P.h * K); g2.drawImage(d.wit, (P.wx - cx) * K, (P.wy - cy) * K, wit.w * K, wit.h * K); g2.drawImage(d.near, -cx * K, -cy * K, P.w * K, P.h * K); return c; };
+      panels.push({ close: true, A: c2({ far: P.far.A, wit: wit.A, near: P.near.A }), N: c2({ far: P.far.N, wit: wit.N, near: P.near.N }), w: cw * K, h: ch * K, T: { anchors: { lights: P.T.anchors.lights.map(L => ({ ...L, x: (L.x - cx) * K, y: (L.y - cy) * K })).filter(L => L.x >= 0 && L.y >= 0 && L.x <= cw * K && L.y <= ch * K) } } });
+    }
+    const gap = 10, w = panels.reduce((a, p) => a + p.w + gap, gap), h = Math.max(...panels.map(p => p.h)) + gap * 2;
+    const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    const A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d"), lights = [];
+    if (!window.NIGHT) { a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, st.groundVal)})`; a.fillRect(0, 0, w, h); } n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
+    let x = gap;
+    for (const P of panels) { const y = h - gap - P.h;
+      if (P.close) { a.drawImage(P.A, x, y); n.drawImage(P.N, x, y); }
+      else for (const [L, dx, dy] of [[P.far, 0, 0], [wit, P.wx, P.wy], [P.near, 0, 0]]) { a.drawImage(L.A, x + dx, y + dy); n.drawImage(L.N, x + dx, y + dy); }
+      for (const L of P.T.anchors.lights) lights.push({ x: x + L.x, y: y + L.y, z: 10, R: 48, power: 1.1, rgb: L.rgb });
+      x += P.w + gap; }
+    let lit = mk(); shade({ a, n, w, h }, lit, window.NIGHT ? st : studio, window.NIGHT ? lights : [], [0, 0, w, h]);
+    if (window.NIGHT) { const under = mk(), u = under.getContext("2d"); u.fillStyle = "#0c1014"; u.fillRect(0, 0, w, h); u.drawImage(lit, 0, 0); lit = under; }
+    const big = document.createElement("canvas"); big.width = w * scale; big.height = h * scale; const g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(lit, 0, 0, w * scale, h * scale);
+    return big.toDataURL("image/png");
+  }
   if (what === "home") { // the treehouse at night, the witch sitting in its studio: towards (whole, as from the treetops), its base only (as from the ground), away
     const wc = G.witchColours(st), hc = G.treehouseColours(st), panels = [];
     for (const [facing, part] of [["towards", "whole"], ["towards", "bot"], ["away", "whole"]].filter(([f]) => !window.FACINGS || window.FACINGS.includes(f))) {
@@ -256,6 +287,10 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       const woken = { woken: true }; row.push(G.bake(G.critter(id, 1, 0, st, "towards", woken), G.speciesColours(id, st, woken), st, st.cOutline));
       rows.push(row);
     });
+  } else if (what === "sizes") { // per species: its baby, young and adult beside the witch standing, at each creature scale in SCALES (default today, +20%, +35%, +50%: st.creatureScale), each group led by its label
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), scales = window.SCALES || [1, 1.2, 1.35, 1.5], wit = G.bake(G.witchSprite(st, { pose: "stand" }), G.witchColours(st), st, st.cOutline);
+    const label = (t, h = 14) => { const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = 8 * t.length + 8; A.height = N.height = h; const a = A.getContext("2d"); a.font = "bold 12px monospace"; a.fillStyle = "#fff"; a.textBaseline = "top"; a.fillText(t, 2, 1); const nn = N.getContext("2d"); nn.fillStyle = "rgb(128,128,255)"; nn.fillRect(0, 0, N.width, h); return { A, N, w: A.width, h }; };
+    for (const id of ids) rows.push([label(id.padEnd(10)), ...scales.flatMap(c => { const s2 = { ...st, creatureScale: c }; return [label(c === 1 ? " today" : ` +${Math.round(c * 100 - 100)}%`), ...[0, 1, 2].map(l => G.bake(G.critter(id, l, 0, s2), G.speciesColours(id, s2), s2, s2.cOutline)), wit]; })]);
   } else if (what === "lineup") { // per species (or all): baby, young, adult and legend standing side by side, then the witch for scale; PER=n species to a row
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [];
     for (const id of ids) items.push(...[0, 1, 2, 3].map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
@@ -355,6 +390,11 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "runestones") { // every species' rune stone carved with its sigil in its own neon, eight to a row (NIGHT=1 to see them glow)
     const ids = list === "all" ? Object.keys(G.SIGIL_NEON) : list.split(","), per = +(window.PER || 8);
     for (let i = 0; i < ids.length; i += per) rows.push(ids.slice(i, i + per).map(id => G.runeStone(st, { glow: G.sigilColour(id), sigil: id })));
+  } else if (what === "runestoneforms") { // one species' stone (list: its id, default boar): today's, then its 20 forms ten to a row, then some forms and the same mirrored, side by side
+    const id = list === "all" ? "boar" : list, glow = G.sigilColour(id), one = (form, flip) => G.runeStone(st, { glow, sigil: id, form, flip });
+    const forms = [...Array(G.RUNESTONE_FORMS).keys()];
+    rows.push([one(), ...forms.slice(0, 10).map(v => one(v))], forms.slice(10).map(v => one(v)));
+    rows.push([0, 5, 11, 17].flatMap(v => [one(v), one(v, true)]));
   } else if (what === "speakers") { // per angle (yaw from facing us): playing x3, damaged x2, destroyed; the witch for scale
     const col = G.dancefloorSpeakerColours(), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const angle of G.DANCEFLOOR_SPEAKER_ANGLES) rows.push([...[0, 1, 2].map(frame => ({ state: "playing", frame })), ...[0, 1].map(frame => ({ state: "damaged", frame })), { state: "destroyed" }].map(o => G.bake(G.dancefloorSpeakerSprite(st, { angle, ...o }).sp, col, st, "none")).concat([wit]));
@@ -513,7 +553,7 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     for (let i = 0; i < panels.length; i += 4) rows.push(panels.slice(i, i + 4));
   } else if (what === "species") { // every tree species (or listed) at mature height: from the side (whole), then its crown alone as treetop mode shows it, then its bottom half alone as ground mode shows it; the witch for scale
     const ids = list === "all" ? Object.keys(G.TREE_SPECIES) : list.split(","), K = 2 / (st.pixel || 2), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 5, items = [];
-    for (const id of ids) { const S = G.TREE_SPECIES[id], r = G.rng(7 + id.length * 13), ts = { ...st }, t = S.fn(r, ts, st.treeSize * K), c = G.treeColours(G.rng(3), ts, S.fn), p = G.splitTree(t); items.push(G.bake(t.sp, c, st, "none"), G.bake(p.top, c, st, "none"), G.bake(p.bot, c, st, "none")); }
+    for (const id of ids) { const S = G.TREE_SPECIES[id], r = G.rng(7 + id.length * 13), ts = { ...st }, t = S.fn(r, ts, st.treeSize * K); if (window.SNOW) G.snowCrown(t.sp, window.SNOW, id.length); const c = G.treeColours(G.rng(3), ts, S.fn), p = G.splitTree(t); items.push(G.bake(t.sp, c, st, "none"), G.bake(p.top, c, st, "none"), G.bake(p.bot, c, st, "none")); }
     for (let i = 0; i < items.length; i += per * 3) rows.push([...items.slice(i, i + per * 3), wit]);
   } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach, afterAll } from "vitest";
 import { attackOf, COMBAT, creatureMaxHp, strengthOf } from "./combat";
 import { toEvolve } from "./berries";
 import { countScale, grownAt, startCount } from "./growth";
@@ -6,12 +6,17 @@ import { spawnCreatures } from "./creatures";
 import { AREA_TYPES, generateMap } from "./map";
 import { levelValue } from "./power";
 import { TUNING, withTuning } from "./tuning";
+import { routeOf } from "./party";
+import { estimatedPower } from "./swarm";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Species strength, a number (Ed, 2026-10-05: "just a number that goes up and down"), and berry
-// costs tied to it. No species has one yet, so these tests give one for a moment (and put it back).
-const S = COMBAT.strength!;
+// costs tied to it. These tests start with none (every species 1) and give one for a moment, then put the config's back
+// (Ed, 2026-10-08: the species have strengths by class now).
+const S = COMBAT.strength!, CONFIG = { ...S.species };
 const giving = (species: string, m: number) => { S.species[species] = m; };
-afterEach(() => { for (const k of Object.keys(S.species)) delete S.species[k]; });
+beforeEach(() => { for (const k of Object.keys(S.species)) delete S.species[k]; });
+afterAll(() => { for (const k of Object.keys(S.species)) delete S.species[k]; Object.assign(S.species, CONFIG); });
 
 describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger ones fewer)", () => {
   it("scales a species' health and damage by its number, never a legend's", () => {
@@ -44,28 +49,34 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
     expect(sum).toBe(15);
   });
 
-  it("spawns a weak species' areas three times as many, worth about the same", () => {
-    const map = generateMap(123, TUNING), cell = (cx: number, cy: number) => `${cx},${cy}`;
-    const plain = spawnCreatures(map), [hx, hy] = map.centreCell;
-    const [cx, cy] = hx > 2 ? [hx - 2, hy] : [hx + 2, hy], species = AREA_TYPES[map.typeOf(cx, cy)].creature;
+  it("spawns a weak species' areas many more, its swarm's power the same (its cap allowing)", () => {
+    const T = withTuning({ population: { ...PEOPLED.population, swarm: { ...PEOPLED.population.swarm, capScales: false, mixTolerance: 0, classes: { medium: { cap: 60, species: [] } } } } }); // (no cap in the way, the nearest swarm alone)
+    const map = generateMap(123, T), cell = (cx: number, cy: number) => `${cx},${cy}`;
+    // (the route's last area: its threat big enough that one creature's rounding doesn't swamp the comparison)
+    const plain = spawnCreatures(map), order = routeOf(map).order, [cx, cy] = order[order.length - 1].split(",").map(Number), species = AREA_TYPES[map.typeOf(cx, cy)].creature;
     const before = plain.filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle); // (not its legend's clearing's baby: one, whatever its strength)
-    const value = (l: typeof before) => l.reduce((a, c) => a + levelValue(c.level, COMBAT, c.species), 0), was = value(before);
+    const power = (l: typeof before) => estimatedPower(species, l.filter(c => c.level === 1).length, l.filter(c => c.level === 2).length), was = power(before);
     giving(species, 1 / 3);
     const after = spawnCreatures(map).filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle);
-    expect(after.length).toBe(before.length * 3);
-    expect(value(after)).toBeCloseTo(was, 0);
+    const fighters = (l: typeof before) => l.filter(c => c.level > 0).length;
+    // (Its young and adults' power the same, Σhp × Σdps by its new strength: rules/swarm.ts buildSwarm; so many more of them; its babies fixed.)
+    expect(power(after) / was).toBeGreaterThan(0.9); expect(power(after) / was).toBeLessThan(1.1);
+    expect(fighters(after) / fighters(before)).toBeGreaterThan(1.5);
+    expect(after.filter(c => c.level === 0).length).toBe(before.filter(c => c.level === 0).length);
   }, 30000);
 });
 
 describe("berries to evolve, tied to strength (Ed, 2026-10-05: \"tie the cost to strength\")", () => {
-  it("costs 3 and 8 for a species of normal strength (the level gap of 2026-10-07: an adult gains far more; 4 and 4 before, doubled by Ed 2026-10-06), nothing past adult", () => {
-    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([3, 8, Infinity]);
+  it("costs 1 and 8 for a species of normal strength (a baby's one berry: Ed, 2026-10-11, berries.babyCost; the youth's 8 by the level gap of 2026-10-07), nothing past adult", () => {
+    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([1, 8, Infinity]);
+    expect(toEvolve(0, withTuning({ berries: { ...TUNING.berries, babyCost: undefined } }))).toBe(3); // (by strength without the knob, as before)
     expect(toEvolve(1, TUNING, "wolf")).toBe(8);
   });
 
   it("buys the same fighting value a berry for every species (at least one berry)", () => {
     giving("bear", 2); giving("bat", 0.3);
-    expect(toEvolve(0, TUNING, "bear") + toEvolve(1, TUNING, "bear")).toBe(22); // twice the value, twice the berries (3 + 8 = 11 for a normal one)
+    expect(toEvolve(1, TUNING, "bear")).toBe(16); // twice the value, twice the berries (8 for a normal one)
+    expect(toEvolve(0, TUNING, "bear")).toBe(1); // (a baby: one berry, whatever its species: Ed, 2026-10-11)
     expect(toEvolve(0, TUNING, "bat")).toBe(1);
     expect(toEvolve(1, TUNING, "bat")).toBe(2);
   });

@@ -1,6 +1,6 @@
 // The bots (rules/bot.ts): the balance tool's and the bot game's one player made of rules.
 import { describe, expect, it } from "vitest";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { newGame, stepGame, type Game } from "./game";
 import { article, BOT_GAME, newBot, plural, type BotKind, type BotOptions } from "./bot";
 
@@ -42,6 +42,21 @@ describe("the bot", () => {
     expect(g.leash.stack.length + g.leash.placed.length).toBeGreaterThan(0); // (leashed: their runes picked up)
   });
 
+  it("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it invites through the run and wins the night", () => {
+    // (before: it stood at each next soundsystem before its wave, invited 3 to 5 all run and lost every night)
+    const g = newGame(8919, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; // (on the ground by the treehouse, as this run was tuned from; the deck's start shifts this chaotic run: 8 seeds from one spot invite about as many with it on as off)
+    const bot = newBot("skilled");
+    let invited = 0;
+    for (let i = 0; i < 20 * 60 * 60 && g.win?.phase !== "won" && !g.partyOver; i++) {
+      stepGame(g, bot.decide(g), 1 / 60);
+      for (const e of g.witches[0].invites.events) if (e.kind === "happy") invited++;
+    }
+    expect(g.partyOver).toBeFalsy();
+    expect(g.win?.phase).toBe("won");
+    expect(invited).toBeGreaterThan(15);
+  }, 240000);
+
   it("is deterministic: the same game and steps give the same run", () => {
     const a = play(fresh(7), "skilled", 60).track, b = play(fresh(7), "skilled", 60).track;
     expect(a).toEqual(b);
@@ -65,6 +80,20 @@ describe("the bot", () => {
     play(h, "hover", 10);
     expect(h.witch.mode).toBe("treetop");
   });
+
+  it("wins someone on the island it once won no one on (#650): its letters wake a napper from the next area (Ed, 2026-10-11: \"Letters wake them\")", () => {
+    // Seed 1000 on the 10-area island: its first target, an elk, naps across the border from where its area's site lets her land.
+    // When a sleeper took no 💌 till she was on the ground in its own area, the skilled bot fired at it from the next area all run.
+    const g = newGame(1000, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false };
+    const bot = newBot("skilled"), w = g.witches[0];
+    let won = 0;
+    for (let i = 0; i < 40 * 60 && !won; i++) {
+      stepGame(g, bot.decide(g), 1 / 60);
+      won += w.invites.events.filter(e => e.kind === "happy").length;
+    }
+    expect(won).toBeGreaterThan(0);
+  }, 60000);
 
   it("names a species in the plural for its tag", () => {
     expect(plural("fox")).toBe("foxes");

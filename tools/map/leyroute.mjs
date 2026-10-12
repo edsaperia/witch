@@ -20,10 +20,10 @@ fs.mkdirSync(out, { recursive: true });
 const MW = 300, CW = 2 * MW + 8, CH = 150;
 
 function routeSvg(map, r, label) {
-  const d = map.dancefloor, half = map.bounds.circle ? map.bounds.circle.r : (map.bounds.maxX - map.bounds.minX) / 2;
+  const d = map.dancefloor, half = Math.max(d.x - map.bounds.minX, map.bounds.maxX - d.x, d.z - map.bounds.minZ, map.bounds.maxZ - d.z);
   const k = MW / (2 * half + 40), X = x => ((x - d.x + half + 20) * k).toFixed(1), Z = z => ((z - d.z + half + 20) * k).toFixed(1);
   const p = [`<svg xmlns="http://www.w3.org/2000/svg" width="${MW}" height="${MW}"><rect width="${MW}" height="${MW}" fill="#0b0a12"/>`];
-  if (map.bounds.circle) p.push(`<circle cx="${X(d.x)}" cy="${Z(d.z)}" r="${(half * k).toFixed(1)}" fill="none" stroke="#333"/>`);
+  for (const l of map.bounds.land?.loops ?? []) { const q = []; for (let i = 0; i < l.pts.length; i += 16) q.push(`${X(l.pts[i])},${Z(l.pts[i + 1])}`); p.push(`<polygon points="${q.join(" ")}" fill="none" stroke="#333"/>`); } // (the island's coast)
   const n = r.links.length;
   r.links.forEach((l, i) => {
     const t = i / Math.max(1, n - 1), col = `hsl(${200 + t * 120},85%,${62 - t * 8}%)`;

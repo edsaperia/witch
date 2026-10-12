@@ -72,7 +72,7 @@
     "glowworm":   { "name": "Lanterns",       "kind": "shot", "mods": { "trail": 1 },               "label": "Glow-worm's Lanterns: 💌s leave a glowing trail that lands too" },
     "squirrel":   { "name": "Cache",          "kind": "shot", "mods": { "cache": 1 },               "label": "Squirrel's Cache: you drop 💌s that wait and fly at animals that come near" },
     "dormouse":   { "name": "Lullaby orbit",  "kind": "shot", "mods": { "orbit": 1 },               "label": "Dormouse's Lullaby orbit: two 💌s circle you and fly at animals close by" },
-    "hare":       { "name": "Dash bursts",    "kind": "move", "mods": { "charges": 2 },             "label": "Hare's Dash bursts: 3 blink charges" },
+    "hare":       { "name": "Dash bursts",    "kind": "move", "mods": { "charges": 2 },             "label": "Hare's Dash bursts: 2 more blink charges" },
     "bat":        { "name": "Flit",           "kind": "move", "scale": { "dash.distance": 1.5 },    "label": "Bat's Flit: your blink goes further" },
     "hedgehog":   { "name": "Curl",           "kind": "move", "add": { "dash.gone": 0.35 },         "label": "Hedgehog's Curl: untouchable for longer after a blink" },
     "boar":       { "name": "Momentum",       "kind": "move", "mods": { "momentum": 1 },            "label": "Boar's Momentum: a burst of speed after each blink" },

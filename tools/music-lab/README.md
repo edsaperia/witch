@@ -46,6 +46,18 @@ The legends' clearings check: node tools/music-lab/circles.mjs [species,...] Ren
 
 The legends' clearings: for each species, its legend's clearing as she walks into it on the ground: a few seconds of the music as it plays nearby, then the music muffling under the legend's own layer, the world slowing to a tenth there as a tape does, the…
 
+## `cost.cjs`
+
+The music graph's cost, measured two ways, repeatably.
+
+```
+node tools/music-lab/cost.cjs [sections,parts,run,live]   TOP=4 (sections whose parts are split) LIVE=120 (s)
+```
+
+## `cost.ts`
+
+The music graph's cost: the game's own music engine rendered offline, timed against the audio it makes, with the nodes it builds and the sources it plays counted.
+
 ## `flight.cjs`
 
 The music's continuity through the frames' hitches: Loads the built game in headless Chromium with sound, casts the party spell, then stops the game's own loop and drives the game's music as a real machine's frames would: about 60 a second, the game clock…

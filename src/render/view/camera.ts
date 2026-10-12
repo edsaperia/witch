@@ -27,7 +27,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     v.rideTime = time;
     v.ride.update(rdt, W.x, W.z, W.vx, W.vz, full, groundHeight, t.witch, witchHeight(W, t));
     v.camRide.update(rdt, pose.tx, pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity); // (no floor: just the smoothed ground)
-    v.rideOff = W.seated ? 0 : v.ride.h - groundHeight(W.x, W.z);
+    v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
   const target = new THREE.Vector3(pose.tx, pose.ty + v.camRide.h, pose.tz);
   // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
@@ -42,7 +42,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // Facing out to sea (the north coast: the camera always looks north), the bend would drop the open water out of sight
     // below a horizon of sand, and the flat sea shows the sky anyway: there it keeps only beach.camera.seaward of itself
     // (Ed, 2026-10-07: the sea "on the horizon" must read from the stargazing pose), easing round the coast by bearing.
-    const ring = g.map.bounds.circle, wx = ring ? g.witch.x - ring.x : 0, wz = ring ? g.witch.z - ring.z : 0, seaAhead = Math.max(0, -wz / (Math.hypot(wx, wz) || 1)); // (no circle, no coast: 0)
+    const land = g.map.bounds.land, seaAhead = land ? Math.max(0, land.inward(g.witch.x, g.witch.z).z) : 0; // (the water to the north of her: the land's way in points south; no island, no coast: 0)
     // Lying down, the bend is the stargazing table's for her bearing round the coast (beach.camera.bearings.bend: rules/camera.ts
     // gazeAt), eased in with her lying down.
     const seaKeep0 = 1 - seaAhead * (1 - (B?.camera?.seaward ?? 1)), gazeBend = B?.camera?.bearings.bend ? gazeAt(B.camera, g.camera.bearing ?? 0).bend : seaKeep0;

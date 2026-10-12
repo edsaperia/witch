@@ -5,6 +5,7 @@
 // meter, the playtest log and the balance simulator (tools/balance). No drawing here.
 import { COMBAT, strengthOf, type CombatData } from "./combat";
 import type { Creature, Level } from "./creatures";
+import { isHomeKey } from "./speakers";
 
 /** One fighter's value at full health: √(hp × dps) for its level (times its species' strength,
  *  which scales both: Ed, 2026-10-05). */
@@ -46,7 +47,8 @@ export function powerReport(creatures: readonly Creature[], witches: readonly { 
     for (const p of w.leash.placed) atSigil.push(creatures[p.id]);
   }
   const by = new Map<string, Creature[]>();
-  for (const c of creatures) if (c.siege && !c.leashed && !c.gone && !c.fleeUntil && !c.wanderTo) { let l = by.get(c.siege); if (!l) by.set(c.siege, (l = [])); l.push(c); }
-  const sieges = [...by].map(([key, l]) => ({ key, value: sideValue(l), count: l.length, hp: sounds.get(key)?.hp ?? 0 })).sort((a, b) => b.value - a.value);
+  for (const c of creatures) if (c.siege && !c.leashed && !c.gone && !c.fleeUntil && !c.wanderTo) { const k = isHomeKey(c.siege) ? "home" : c.siege; let l = by.get(k); if (!l) by.set(k, (l = [])); l.push(c); } // (home's speakers as one)
+  const hpOf = (key: string) => (key === "home" ? [...sounds].reduce((a, [k, h]) => a + (isHomeKey(k) ? Math.max(0, h.hp) : 0), 0) : sounds.get(key)?.hp ?? 0);
+  const sieges = [...by].map(([key, l]) => ({ key, value: sideValue(l), count: l.length, hp: hpOf(key) })).sort((a, b) => b.value - a.value);
   return { leashed: sideValue(onLeash), parked: sideValue(atSigil), counts: levelCounts([...onLeash, ...atSigil]), sieges, marching: sieges.reduce((a, s) => a + s.value, 0) };
 }

@@ -26,6 +26,9 @@ const pick = (g: Game, species: string, level: Level, dx: number, dz: number) =>
 };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
 
+/** With a species' swoop off for the test (hers fight this way still; wild flyers swoop since 2026-10-09: swoop.test.ts). */
+function grounded<T>(species: string, f: () => T): T { const P = MOVEMENT.profiles[species], mv = P.move; P.move = undefined; try { return f(); } finally { P.move = mv; } }
+
 describe("creature movement (Stage 5)", () => {
   it("has a profile for each of the first set, every behaviour and tactic one the system knows", () => {
     for (const sp of ["wolf", "boar", "hare", "raven", "bat", "owl", "salamander", "spider"]) expect(MOVEMENT.profiles[sp], sp).toBeTruthy();
@@ -64,7 +67,7 @@ describe("creature movement (Stage 5)", () => {
     expect(closest[Math.floor(closest.length / 2)]).toBeGreaterThan(2.5);
   }, 60000);
 
-  it("has a raven volley fire on the beat", () => {
+  it("has a raven volley fire on the beat (her ravens: wild ones swoop)", () => grounded("raven", () => {
     const saved = MOVEMENT.profiles.raven.tactics;
     MOVEMENT.profiles.raven.tactics = [{ kind: "volley", w: 1 }]; // (it also sometimes shoots freely)
     const g = quiet(), ravens = [0, 1, 2].map(i => pick(g, "raven", 1, 40, i * 6 - 6)), ids = new Set(ravens.map(r => r.id)), beat = 60 / TUNING.beat.bpm;
@@ -73,9 +76,9 @@ describe("creature movement (Stage 5)", () => {
     MOVEMENT.profiles.raven.tactics = saved;
     expect(phases.length).toBeGreaterThan(2);
     expect(phases.filter(p => p < 0.2 + STEP / beat).length / phases.length).toBeGreaterThan(0.9);
-  }, 60000);
+  }), 60000);
 
-  it("has an owl's lob land where she was: standing still she's hit, stepping away she isn't", () => {
+  it("has an owl's lob land where she was: standing still she's hit, stepping away she isn't (her owls' lob: wild ones swoop)", () => grounded("owl", () => {
     const g = quiet(), owl = pick(g, "owl", 1, 30, 0), W = g.witches[0], hp0 = W.health.hp;
     run(g, 6);
     expect(W.health.hp).toBeLessThan(hp0);
@@ -83,7 +86,7 @@ describe("creature movement (Stage 5)", () => {
     const hp1 = W.health.hp;
     run(g, 8, () => { if (g.combat.shots.some(s => s.lob && s.from === owl.id)) { const s = g.combat.shots.find(q => q.lob)!; if (Math.hypot(g.witch.x - s.lob!.tx, g.witch.z - s.lob!.tz) < 8) g.witch = { ...g.witch, z: g.witch.z + (g.witch.z > owl.z ? 12 : -12) }; } });
     expect(W.health.hp).toBe(hp1);
-  }, 60000);
+  }), 60000);
 
   it("has a salamander's beam burn along its line", () => {
     const g = quiet(), W = g.witches[0], hp0 = W.health.hp;
@@ -122,12 +125,12 @@ describe("creature movement (Stage 5)", () => {
     expect(W.health.hp).toBeLessThan(hp0);
   }, 60000);
 
-  it("has a bat screech: a pulse all round it", () => {
+  it("has a bat screech: a pulse all round it (her bats': wild ones swoop)", () => grounded("bat", () => {
     const g = quiet(), bat = pick(g, "bat", 1, 10, 0);
     let pulsed = false;
     run(g, 6, () => { if (g.combat.events.some(e => e.id === bat.id && e.kind === "pulse")) pulsed = true; });
     expect(pulsed).toBe(true);
-  }, 60000);
+  }), 60000);
 
   it("gives a boar's charge momentum: it builds speed, carries on past her, brakes and comes round in an arc (Ed, 2026-10-05)", () => {
     const g = quiet(), boar = pick(g, "boar", 1, 30, 0), M = MOVEMENT.profiles.boar.move!;

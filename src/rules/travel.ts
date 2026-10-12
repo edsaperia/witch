@@ -4,11 +4,13 @@
 // nothing), no berries, and it walks a route planned along area borders rather than through
 // area middles, a little faster than its leash pace. The route is kept on the creature for the
 // view, which draws the leash along it. No drawing here.
+import { ashore, lakeKnobs } from "./lakes";
 import raw from "../../config/travel.json";
 import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
 import { FIGHT } from "./movement";
 import { gaitRate, leashSpeed } from "./leash";
+import { babiesOf, isBaby } from "./babies";
 import type { Tuning } from "./tuning";
 
 export interface TravelData { posse: number; leave: number; engaged: number; speed: number; clear: number; step: number; replan: number }
@@ -67,13 +69,14 @@ function sitesNear(map: ForestMap, x: number, z: number): { x: number; z: number
  *  every `step` metres. Deterministic. */
 export function planRoute(map: ForestMap, sx: number, sz: number, tx: number, tz: number, data: TravelData = TRAVEL): { x: number; z: number }[] {
   const clear = data.clear * FIGHT.scale, step = data.step * FIGHT.scale;
-  const L = Math.hypot(tx - sx, tz - sz), n = Math.max(1, Math.ceil(L / step));
+  const L = Math.hypot(tx - sx, tz - sz), n = Math.max(1, Math.ceil(L / step)), lakes = !!map.bounds.lakes, lakeGap = lakes ? lakeKnobs(map.tuning).shore + 4 : 0;
   let pts = Array.from({ length: n + 1 }, (_, i) => ({ x: sx + ((tx - sx) * i) / n, z: sz + ((tz - sz) * i) / n }));
   // (near its start or its target, a point may be in an area's middle: that's where it is, or goes)
   const free = (p: { x: number; z: number }) => Math.hypot(p.x - sx, p.z - sz) < clear || Math.hypot(p.x - tx, p.z - tz) < clear;
   const push = () => {
     for (let i = 1; i < pts.length - 1; i++) {
       const p = pts[i];
+      if (lakes) { const q = ashore(map.bounds, p.x, p.z, lakeGap); p.x = q.x; p.z = q.z; } // (round a lake, along its shore: rules/lakes.ts)
       if (free(p)) continue;
       // Out of every centre's clear ring it's in, nearest first, twice over (two centres close
       // together: as far from both as it can get).
@@ -84,6 +87,7 @@ export function planRoute(map: ForestMap, sx: number, sz: number, tx: number, tz
         const ux = d > 1e-3 ? dx / d : -(tz - sz) / (L || 1), uz = d > 1e-3 ? dz / d : (tx - sx) / (L || 1);
         p.x = c.x + ux * clear; p.z = c.z + uz * clear;
       }
+      if (lakes) { const q = ashore(map.bounds, p.x, p.z, lakeGap); p.x = q.x; p.z = q.z; }
     }
   };
   const smooth = () => { pts = pts.map((p, i) => (i === 0 || i === pts.length - 1 ? p : { x: p.x * 0.5 + (pts[i - 1].x + pts[i + 1].x) * 0.25, z: p.z * 0.5 + (pts[i - 1].z + pts[i + 1].z) * 0.25 })); };
@@ -110,7 +114,9 @@ export function planRoute(map: ForestMap, sx: number, sz: number, tx: number, tz
 export function stepTraveller(c: Creature, tx: number, tz: number, map: ForestMap, dt: number, t: Tuning, pace = 1, data: TravelData = TRAVEL): void {
   const r = c.route;
   if (!r || Math.hypot(r.tx - tx, r.tz - tz) > data.replan * FIGHT.scale) c.route = { points: planRoute(map, c.x, c.z, tx, tz, data), next: 1, tx, tz };
-  const R = c.route!, speed = leashSpeed(c, t) * data.speed * pace;
+  // (a baby far from her, about off the screen, hurries at leash.babies.farSpeed: it's always with her in seconds; Ed, 2026-10-11)
+  const B = babiesOf(t), hurry = isBaby(c) && c.leashed && Math.hypot(c.x - tx, c.z - tz) > B.farAt;
+  const R = c.route!, speed = hurry ? Math.max(B.farSpeed, leashSpeed(c, t) * data.speed * pace) : leashSpeed(c, t) * data.speed * pace;
   if (R.next >= R.points.length) { c.moving = false; c.vx = 0; c.vz = 0; return; } // (there: it waits for its target to move on)
   let left = speed * dt;
   while (left > 1e-6 && R.next < R.points.length) {

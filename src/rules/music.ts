@@ -60,7 +60,7 @@ export function musicMix(g: Game, at: { x: number; z: number }): MusicMix {
   // on the beach"): within music.beach.fade metres of the water, down to music.beach.quiet of itself at its edge.
   const Bq = M.beach, b = Bq ? beachOf(g.map.bounds, g.tuning) : null;
   if (Bq && b) {
-    const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) + b.out - Math.hypot(dx, dz); // (metres from the water, by the coast's edge her way)
+    const off = -b.intoSea(w.x, w.z); // (metres from the water)
     const k = Math.max(0, Math.min(1, 1 - off / Math.max(1, Bq.fade)));
     mix.volume *= 1 - (1 - Bq.quiet) * k * k * (3 - 2 * k);
   }

@@ -4,18 +4,21 @@
 // grew while wild, by the game's own growthLevel) and the real wave order (the
 // party's own picker, ruined areas dropping out as in the game); each wave's soundsystem with its
 // health; its area's young and up marching on it in straight lines at their march speed
-// (creatureSpeed × marchMult, as combat.ts moves them) and, once in reach, hitting it at their
+// (combat.marchShare of their top speed, as combat.ts moves them: marchSpeedOf) and, once in reach, hitting it at their
 // level's dps; survivors of a fallen soundsystem marching on to the next-nearest still standing;
 // the run over when none stands, home included. Soundsystems are passive, so the same-kind truce
 // doesn't matter here. An optional player grows at a steady rate of fighting value and fights
 // sieges by the square law (rules/power.ts). It runs in well under a second a run, where the full
 // game manages about 3.5 times real time. Read by tools/balance/sim.mjs and balance.test.ts.
-import { attackOf, COMBAT, strengthOf } from "./combat";
+import { attackOf, COMBAT, marchSpeedOf, strengthOf } from "./combat";
 import { spawnCreatures, type Creature, type Level } from "./creatures";
 import { countScale, grownAt, growthLevel } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
+import { bootSeconds } from "./bootRing";
+import { stretchSeconds } from "./pulseRoute";
 import { hash2 } from "./random";
+import { homeHealth, homeReach } from "./speakers";
 import { lanchester, levelValue } from "./power";
 
 /** A player in the model (the guesses are here): from the start of wave `fromWave` (0: from the
@@ -53,6 +56,8 @@ export interface SimDirector { base: number; perWave: number; alpha: number; exp
 export interface SimOptions {
   /** Seconds between waves. */
   interval: number;
+  /** The ley pulse's speed (m/s, Ed 2026-10-09: "Pure constant speed"): set, each wave's gap is its stretch of the route over it (rules/pulseRoute.ts), in place of interval. */
+  pulse?: number;
   /** Attrition on the march (a pacing variant): the share of a fallen soundsystem's besiegers
    *  that march on to the next (the rest scatter home and leave the fight). 1, as in the game. */
   marchOn?: number;
@@ -120,14 +125,14 @@ const FIGHTERS = new WeakMap<ForestMap, Map<string, Fighter[]>>();
 export function fightersOf(map: ForestMap, creatures: Creature[] = spawnCreatures(map)): Map<string, Fighter[]> {
   const known = FIGHTERS.get(map);
   if (known) return known;
-  const t = map.tuning, C = t.combat, by = new Map<string, Fighter[]>();
+  const by = new Map<string, Fighter[]>();
   for (const c of creatures) {
     if (c.level === 0) continue; // babies never join a siege
     if (c.boss) continue; // (the areas' own legends: the areaLegends option models them)
     const atk = attackOf(c.species, c.level, COMBAT)!, A = atk.attack, kites = A.delivery === "shot" && COMBAT.kite.species.includes(c.species);
     const reach = A.delivery === "shot" ? A.range * (kites ? COMBAT.kite.far : 0.8) : A.range + (A.lunge ?? 0) - 0.3;
     const m = strengthOf(c.species, c.level);
-    const f: Fighter = { id: c.id, level: c.level, cell: cellKey(c.cell), x: c.x, z: c.z, x0: c.x, z0: c.z, speed: c.speed * C.marchMult, dps: COMBAT.levels.dps[c.level] * m, reach, value: levelValue(c.level) * m, m, siege: null, gone: false };
+    const f: Fighter = { id: c.id, level: c.level, cell: cellKey(c.cell), x: c.x, z: c.z, x0: c.x, z0: c.z, speed: marchSpeedOf(c.species, c.level, map.tuning), dps: COMBAT.levels.dps[c.level] * m, reach, value: levelValue(c.level) * m, m, siege: null, gone: false };
     let l = by.get(f.cell);
     if (!l) by.set(f.cell, (l = []));
     l.push(f);
@@ -143,13 +148,14 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
   for (const l of by.values()) for (const f of l) { f.gone = false; f.siege = null; f.x = f.x0; f.z = f.z0; f.hp = undefined; f.value = levelValue(f.level) * f.m; }
   const falls: SimResult["falls"] = [], live: Fighter[] = [], sounds = new Map<string, Sound>(), party = newParty(map), waves: WaveSample[] = [];
   const d = map.dancefloor;
-  sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius });
+  sounds.set("home", { key: "home", x: d.x, z: d.z, hp: homeHealth(map.tuning), radius: homeReach(map.tuning) });
   const P = o.player, ruined = new Set<string>(), D = o.director, share = o.marchOn ?? 1, adult = levelValue(2);
   let reinforced = 0, owed = 0, nextId = -1;
   const guards: { key: string; x: number; z: number; hp: number; asleep: boolean }[] = [], GR = o.guardRadius ?? 30, LHP = COMBAT.levels.hp[3], LDPS = COMBAT.levels.dps[3];
   const LG = o.logistics, defences: SimDefence[] = [];
   let posse = { x: d.x, z: d.z }, witch = { x: d.x, z: d.z }, pending: { key: string; at: number } | null = null, lastSound = { x: d.x, z: d.z, at: 0 };
-  let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval, playerF = 0, busyUntil = 0, lost: SimResult["lost"] = null;
+  const gap = () => (o.pulse ? stretchSeconds(party, map, o.pulse) : o.interval); // (the ley pulse at a constant speed: each gap its stretch over it, Ed 2026-10-09)
+  let time = 0, nextAt = bootSeconds(map) + t.party.startDelay + gap(), playerF = 0, busyUntil = 0, lost: SimResult["lost"] = null;
   const nearest = (x: number, z: number) => {
     let best: string | null = null, bd = Infinity;
     for (const s of sounds.values()) { if (s.hp <= 0) continue; const k = Math.hypot(s.x - x, s.z - z); if (k < bd) { bd = k; best = s.key; } }
@@ -170,7 +176,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
     if (time >= nextAt) {
       if (party.wave >= 1) sample();
       if (party.wave >= o.maxWaves) break;
-      nextAt += o.interval;
+      if (!o.pulse) nextAt += o.interval;
       for (const a of spreadWave(party, map, time)) {
         const key = cellKey(a.cell), at = soundsystemFor(map, a.cell);
         sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius, wave: party.wave, at: time });
@@ -196,13 +202,14 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         const happy = o.areaLegends && (o.happyChance ?? 0) > 0 && hash2(a.cell[0], a.cell[1], map.seed + 991) < (o.happyChance ?? 0);
         if (happy) { const at = soundsystemFor(map, a.cell); guards.push({ key, x: at.x, z: at.z, hp: COMBAT.levels.hp[3], asleep: false }); }
         else if (o.areaLegends && (map.hasLegend?.(a.cell[0], a.cell[1]) ?? true)) {
-          const site = map.siteOf(a.cell[0], a.cell[1]), L: Fighter = { ...reinforcement(-1e6 - live.length, key, site.x, site.z, map), level: 3, dps: COMBAT.levels.dps[3], value: levelValue(3), speed: t.legendSpeed * C.marchMult, reach: COMBAT.attacks[COMBAT.byLevel.melee[3]!].range, stay: true, siege: key };
+          const site = map.siteOf(a.cell[0], a.cell[1]), L: Fighter = { ...reinforcement(-1e6 - live.length, key, site.x, site.z, map), level: 3, dps: COMBAT.levels.dps[3], value: levelValue(3), speed: marchSpeedOf("", 3, t), reach: COMBAT.attacks[COMBAT.byLevel.melee[3]!].range, stay: true, siege: key };
           live.push(L);
         }
       }
+      if (o.pulse) nextAt = time + gap(); // (the pulse on along the next stretch)
       // The director: reinforcements for the areas the next wave wakes, by the player's progress.
       if (D && party.next.length) {
-        const start = t.boot.time + t.party.startDelay, expected = (D.expected * Math.max(0, time - start)) / 60;
+        const start = bootSeconds(map) + t.party.startDelay, expected = (D.expected * Math.max(0, time - start)) / 60;
         const k = Math.max(0, 1 + D.alpha * ((expected > 0 ? playerF / expected : 1) - 1)), w = D.byTime ? Math.max(0, time - start) / 60 : party.wave, budget = (D.base + D.perWave * Math.pow(w, D.power ?? 1)) * k * (D.byTime ? o.interval / 60 : 1);
         owed += budget;
         for (; owed >= adult; owed -= adult) {
@@ -284,5 +291,5 @@ const frac = (x: number) => x - Math.floor(x);
 /** A director's reinforcement: an adult at its area's centre, marching and hitting as one. */
 function reinforcement(id: number, cell: string, x: number, z: number, map: ForestMap): Fighter {
   const A = COMBAT.attacks[COMBAT.byLevel.melee[2]!];
-  return { id, level: 2, cell, x, z, x0: x, z0: z, speed: map.tuning.creatureSpeed * map.tuning.combat.marchMult, dps: COMBAT.levels.dps[2], reach: A.range + (A.lunge ?? 0) - 0.3, value: levelValue(2), m: 1, siege: null, gone: false };
+  return { id, level: 2, cell, x, z, x0: x, z0: z, speed: marchSpeedOf("", 2, map.tuning), dps: COMBAT.levels.dps[2], reach: A.range + (A.lunge ?? 0) - 0.3, value: levelValue(2), m: 1, siege: null, gone: false };
 }

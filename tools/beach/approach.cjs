@@ -25,15 +25,14 @@ server.listen(0, "127.0.0.1", async () => {
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
-  await page.evaluate(() => { const g = window.witch.game, c = g.map.bounds.circle; g.witch = { ...g.witch, x: c.x + 3, z: c.z - c.r + 280, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 }; });
+  await page.evaluate(() => { const g = window.witch.game, p = window.witch.coastFacing(-Math.PI / 2); g.witch = { ...g.witch, x: p.x - p.nx * 280, z: p.z - p.nz * 280, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 }; }); // (280 m in from a stretch of the north coast)
   await page.evaluate(() => window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, false)); // (the beach's view on, asking for her lying-down art)
   await page.waitForFunction(() => window.witch.view.assets.partyWitchArt(null), null, { timeout: 180000, polling: 250 });
   const step = (n, o = {}) => page.evaluate(([n, o]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60, i === n - 1); }, [n, o]);
   const info = () => page.evaluate(() => {
     const w = window.witch, g = w.game, b = w.view.beachView?.at?.beach, P = g.camera;
-    const dx = g.witch.x - (b?.x ?? 0), dz = g.witch.z - (b?.z ?? 0);
     // (from where she lies down: where the edge's soft hold starts, rules/witch.ts)
-    return { off: b ? b.edge(Math.atan2(dz, dx)) - (g.tuning.map?.push ?? 0) * 0.6 - Math.hypot(dx, dz) : Infinity, stargazing: !!g.witch.stargazing, coast: +(P.coast ?? 0).toFixed(2), gaze: +(P.gaze ?? 0).toFixed(2) };
+    return { off: b ? b.land.distAt(g.witch.x, g.witch.z) - (g.tuning.map?.push ?? 0) * 0.6 : Infinity, stargazing: !!g.witch.stargazing, coast: +(P.coast ?? 0).toFixed(2), gaze: +(P.gaze ?? 0).toFixed(2) };
   });
   const shoot = async name => { await step(90); await page.waitForTimeout(800); await step(2); const f = `${prefix}-${name}.png`; await page.screenshot({ path: f }); return f; };
   const report = async (name, f) => { const r = await info(); console.log(`${name.padEnd(6)} ${Number.isFinite(r.off) ? r.off.toFixed(0).padStart(4) + " m from the water" : ""}  coast ${r.coast}  gaze ${r.gaze}  → ${path.relative(process.cwd(), f)}`); };

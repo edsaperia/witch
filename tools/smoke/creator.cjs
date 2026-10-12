@@ -24,10 +24,10 @@ const looks = {
       await page.waitForSelector("#creator-start", { timeout: 60000 });
       await page.waitForTimeout(1500);
       await page.screenshot({ path: path.join(out, `${name}.png`) });
-      if (name === "high") { // no hat, then the jacket's colour picked off the rainbow
-        await page.click('fieldset[data-box="hat"] legend'); if (!(await page.isVisible('button[data-hat="none"]'))) await page.click('fieldset[data-box="hat"] legend');
-        await page.click('button[data-hat="none"]'); await page.click('fieldset[data-box="outfit"] legend'); await page.click('fieldset[data-box="outfit"] button[data-part="jacket"]');
-        const c = await page.$('fieldset[data-box="outfit"] canvas[data-strip="hue"]'), b = await c.boundingBox(); await page.mouse.click(b.x + b.width * .8, b.y + b.height / 2);
+      if (name === "high") { // no hat, then the jacket's colour picked off the swatch grid
+        await page.click('#creator [data-tab="hat"]');
+        await page.click('button[data-hat="none"]'); await page.click('#creator [data-tab="outfit"]'); await page.click('fieldset[data-box="outfit"] button[data-part="jacket"]');
+        const grid = 'fieldset[data-box="outfit"] [data-grid]', gb = await (await page.$(grid)).boundingBox(); await page.click(grid, { position: { x: gb.width * .8, y: gb.height * .5 } });
         await page.waitForTimeout(500); await page.screenshot({ path: path.join(out, "no-hat-picker.png") });
       }
       await page.close();

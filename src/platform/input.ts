@@ -22,19 +22,14 @@ export const KEYS = {
   nextWave: ["KeyN"], pauseWaves: ["KeyP"], cycleSpeakers: ["KeyK"], inviteNearest: ["KeyI"], feedNearest: ["KeyB"], happyNearest: ["KeyO"],
 } as const;
 
-/** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,
- *  items and totems). */
-export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "cycle" | "rise" | "autoTalk" | "invite" | null }[] = [
-  { key: "1", code: "Digit1", action: "invite" }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
-  { key: "Q", code: "KeyQ", action: "cycle" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: "spell" }, { key: "␣", code: "Space", action: "rise" }, { key: "RMB", code: "", action: "dash" },
-];
-
-/** Gamepad bindings (standard mapping button numbers): left stick or d-pad moves. */
-export const PAD = { rise: [3], dash: [0], spell: [1], sigil: [2], zoomOut: [4], zoomIn: [5], invite: [6, 7], debug: [8] } as const;
+/** Gamepad bindings (standard mapping button numbers; PlayStation names): left stick or d-pad moves. Ed, 2026-10-10:
+ *  cross (0) rises or lands, square (2) picks up and puts down (held: her hat), triangle (3) cycles the stack, circle (1)
+ *  boosts (the speed spell), the right trigger (7) invites, the left trigger (6) blinks. */
+export const PAD = { rise: [0], dash: [6], spell: [1], sigil: [2], cycle: [3], zoomOut: [4], zoomIn: [5], invite: [7], debug: [8] } as const;
 
 const GAME_KEYS = new Set<string>(Object.values(KEYS).flat() as string[]);
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; dash?: boolean; /** The action bar's auto-talk slot was clicked. */ autoTalk?: boolean; /** The 💌 button is down. */ invite?: boolean }
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; dash?: boolean; /** The action bar's auto-talk slot was clicked. */ autoTalk?: boolean; /** The 💌 button is down. */ invite?: boolean; /** The sigil button is down (held: her hat, rules/hat.ts putHat). */ sigilHeld?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -117,7 +112,8 @@ export class Input {
     if (Math.abs(this.wheel) >= 90) { zoom += Math.sign(this.wheel); this.wheel -= Math.sign(this.wheel) * 100; if (Math.abs(this.wheel) > 200) this.wheel = Math.sign(this.wheel) * 200; }
     let debug = p(KEYS.debug);
     let sigil = false, spell = p(KEYS.spell), dash = p(KEYS.dash) || this.rightClicked;
-    const place = p(KEYS.place), cycle = p(KEYS.cycle);
+    const place = p(KEYS.place); let cycle = p(KEYS.cycle);
+    let sigilHeld = k(KEYS.place) > 0;
     this.rightClicked = false;
     const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest), happyNearest = p(KEYS.happyNearest);
     // The 💌: fire with the mouse button or 1 (held, or a click since the last read); aim at the cursor.
@@ -148,7 +144,9 @@ export class Input {
       if (any(PAD.zoomIn)) zoom -= 1;
       if (any(PAD.debug)) debug = true;
       if (any(PAD.sigil)) sigil = true;
+      if (PAD.sigil.some(btn)) sigilHeld = true;
       if (any(PAD.spell)) spell = true;
+      if (any(PAD.cycle)) cycle = true;
       if (any(PAD.dash)) dash = true;
       // Twin-stick: the right stick aims (screen right is east, down is south), a trigger fires.
       const rx = pad.axes[2] ?? 0, ry = pad.axes[3] ?? 0;
@@ -164,6 +162,7 @@ export class Input {
     zoom += t.zoom;
     if (t.debug) debug = true;
     if (t.sigil) sigil = true;
+    if (t.sigilHeld) sigilHeld = true;
     if (t.spell) spell = true;
     if (t.dash) dash = true;
     if (t.invite) { fire = true; if (!cursorAim) { aimX = 0; aimZ = 0; } }
@@ -173,6 +172,6 @@ export class Input {
     if (len > 1) { moveX /= len; moveZ /= len; }
     const toggleAutoTalk = p(KEYS.autoTalk) || this.touch.autoTalk === true, talkHeld = k(KEYS.talk) > 0;
     this.touch.autoTalk = false;
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, debug, nextWave, pauseWaves, cycleSpeakers, sigil, sigilHeld, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
   }
 }

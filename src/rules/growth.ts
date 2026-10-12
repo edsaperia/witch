@@ -9,7 +9,8 @@
 // spot in the area furthest from the witches, from its edge if she's in it. No drawing here.
 import { makeCreature, type Creature, type Level } from "./creatures";
 import { AREA_TYPES, type ForestMap } from "./map";
-import { strengthOf } from "./combat";
+import { COMBAT, strengthOf, type CombatData } from "./combat";
+import { buildSwarm, POWER_TABLE, routeShare, type PowerTable, type SwarmTuning } from "./swarm";
 import { hash2, rng } from "./random";
 
 export interface Pending { level: Level; wave: number; n: number }
@@ -51,6 +52,33 @@ export const startCount = (base: number, scale: number) => (base > 0 ? Math.max(
 /** How many an area grows at `wave`: perWave times its count scale, the fractions carried from
  *  wave to wave (a loner's half a creature a wave is one every other wave). */
 export const grownAt = (wave: number, perWave: number, scale: number) => { const k = perWave * scale; return Math.floor(wave * k + 1e-9) - Math.floor((wave - 1) * k + 1e-9); };
+
+/** Pre-population by route (Ed, 2026-10-07: "pre-populate every area by its route position"; no growth on a clock): its
+ *  babies, and at least minHostile young or adults; its hostile swarm is population.swarm's (rules/swarm.ts). */
+export interface ByRoute {
+  /** Babies in every area, start's included (they're 0 F: quest sigils and berries, not danger). */
+  babies: number;
+  /** At most this many babies in any area, start's included. */
+  babyCap: number;
+  /** At least this many young or adults in every wild area (Ed, 2026-10-07: "every wild area has at least one hostile wild
+   *  creature"); any shortfall made up with young. */
+  minHostile?: number;
+}
+
+/** An area's whole starting population [babies, young, adults] (its legend and its circle's baby aside), by its place on the
+ *  route (`index` of `length`): its hostile swarm (rules/swarm.ts buildSwarm) over population.start's young and adults (times
+ *  its count scale), at least minHostile of them; and its babies, byRoute.babies (or start's, if more), at most babyCap. */
+export function routePopulation(index: number, length: number, R: ByRoute, S: SwarmTuning, start: { babies: number; young: number; adults: number }, species: string, table: PowerTable = POWER_TABLE, data: CombatData = COMBAT): [number, number, number] {
+  const scale = countScale(species), [sy, sa] = buildSwarm(routeShare(index, S.waves ?? length), S, species, table, data); // (by its wave on the master curve: S.waves)
+  const babies = Math.min(Math.max(0, R.babyCap), Math.max(startCount(start.babies, scale), R.babies));
+  const young = startCount(start.young, scale) + sy, adults = startCount(start.adults, scale) + sa;
+  return [babies, young + Math.max(0, (R.minHostile ?? 0) - young - adults), adults]; // (at least minHostile young or adults: Ed, 2026-10-07)
+}
+
+/** Each area's place on the waves' route (1 the first wave's area; rules/party.ts routeOf), by area key. */
+export function routeIndex(order: readonly string[]): Map<string, number> {
+  return new Map(order.map((k, i) => [k, i + 1]));
+}
 
 export function growWave(s: GrowthState, map: ForestMap, wave: number, wild: (key: string, cell: [number, number]) => boolean): void {
   const G = map.tuning.population.growth;

@@ -28,8 +28,8 @@ export interface PartyOverLook {
 
 export const newPartyOverLook = (): PartyOverLook => ({ ease: 0, front: 0, width: WIDTH, hx: 0, hz: 0, reach: 0 });
 
-/** How far the switch-off has gone (0 to 1) if the party's over: from the rules' g.partyOver.at (the moment the last soundsystem
- *  fell; builder hotel's rules/partyOver.ts) over `secs` (the ripple its own pace, slower than the rules' 6 s ease so it can be
+/** How far the switch-off has gone (0 to 1) if the party's over: from the rules' g.partyOver.at (the moment the home ring's last
+ *  speaker fell; builder hotel's rules/partyOver.ts) over `secs` (the ripple its own pace, slower than the rules' 6 s ease so it can be
  *  seen crossing the map), or their ease if there's no start time, or the debug start from ?partyover=. */
 export function partyOverEase(g: Game, debugAt: number | null = null, secs = 12): number {
   const P = (g as { partyOver?: { ease?: number; at?: number } | null }).partyOver;

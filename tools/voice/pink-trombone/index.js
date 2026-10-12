@@ -1,0 +1,916 @@
+// Vendored from pink-trombone 1.0.2 (npm; https://github.com/asmatzaile/pink-trombone, MIT, LICENSE beside this file) for
+// Witch's music research (docs/music/research.md; Ed, 2026-10-11). Changed here, marked "Witch:": the clock and the random
+// numbers settable (offline renders are repeatable), the tract's length an option (a shorter tract: a higher, female
+// voice), and an offline mode that renders straight into a buffer (no ScriptProcessor: tools/voice/sing.mjs).
+/*
+P I N K   T R O M B O N E
+
+Bare-handed procedural speech synthesis
+
+version 1.1, March 2017
+by Neil Thapen
+venuspatrol.nfshost.com
+
+
+Bibliography
+
+Julius O. Smith III, "Physical audio signal processing for virtual musical instruments and audio effects."
+https://ccrma.stanford.edu/~jos/pasp/
+
+Story, Brad H. "A parametric model of the vocal tract area function for vowel and consonant simulation." 
+The Journal of the Acoustical Society of America 117.5 (2005): 3231-3254.
+
+Lu, Hui-Ling, and J. O. Smith. "Glottal source modeling for singing voice synthesis." 
+Proceedings of the 2000 International Computer Music Conference. 2000.
+
+Mullen, Jack. Physical modelling of the vocal tract with the 2D digital waveguide mesh. 
+PhD thesis, University of York, 2006.
+
+
+Copyright 2017 Neil Thapen
+Copyright 2025 Gorka Egino
+
+Permission is hereby granted, free of charge, to any person obtaining a 
+copy of this software and associated documentation files (the "Software"), 
+to deal in the Software without restriction, including without limitation 
+the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+and/or sell copies of the Software, and to permit persons to whom the 
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in 
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+IN THE SOFTWARE.
+*/
+
+import { Noise } from "./Noise.js";
+
+const lerp = (a, b, t) => a + (b - a) * t;
+const normalize = (value, min, max) => (value - min) / (max - min);
+const clamp = (number, min, max) => Math.max(min, Math.min(max, number));
+const hertzToMidi = hertz => 12 * Math.log2(hertz / 440) + 69;
+const midiToHertz = midi => 440 * Math.pow(2, (midi - 69) / 12);
+
+const moveTowards = (current, target, amountUp, amountDown) => {
+    if (current<target) return Math.min(current+amountUp, target);
+    else return Math.max(current-amountDown, target);
+}
+
+
+var sampleRate;
+// Witch: the clock (ms) and random numbers, settable for offline renders; the tract's length for the next trombone made
+let now = () => Date.now(), random = Math.random, tractLength = 44;
+export const setClock = f => { now = f; };
+export const setRandom = f => { random = f; };
+let noiseSeed;
+export const setNoiseSeed = v => { noiseSeed = v; };
+var noiseFreq = 500;
+var noiseQ = 0.7;
+
+
+export class PinkTrombone {
+    isDisposed = false;
+
+    constructor(audioContext, options = {}) {
+        // Witch: options.tractLength (44, a man's; about 36 to 38 for a woman's), options.offline { sampleRate } (no audio context)
+        tractLength = options.tractLength ?? 44;
+        this.glottis = new Glottis();
+        this.tract = new Tract(this.glottis);
+        if (options.offline) this.offline = new OfflineSystem(options.offline.sampleRate, this.glottis, this.tract);
+        else this.audioSystem = new AudioSystem(audioContext, this.glottis, this.tract);
+    }
+
+    /** Witch: render `frames` samples offline (blocks of 512, as the script processor did). */
+    render(frames) { return this.offline.render(frames); }
+
+    dispose() {
+        this.isDisposed = true;
+		this.audioSystem?.dispose();
+		this.audioSystem = null;
+		this.glottis = null;
+		this.tract = null;
+	}
+
+    get isVoiced() { return this.glottis.isTouched }
+	set isVoiced(v) { this.glottis.isTouched = v }
+
+    get voicedness() {
+        return Math.acos(1-this.#tenseness) * 2 / Math.PI;
+        // if loudness was set separately (diffeent relationship than pow(tenseness, 0.25)) it wouldn't work
+    }
+    set voicedness(v) {
+        this.#tenseness = 1-Math.cos(v*Math.PI*0.5);
+        this.#loudness = Math.pow(this.#tenseness, 0.25);
+    }
+    get #loudness() { return this.glottis.loudness }
+    set #loudness(v) { this.glottis.loudness = v }
+	get #tenseness() { return this.glottis.UITenseness }
+	set #tenseness(v) { this.glottis.UITenseness = v }
+
+	get frequency() { return this.glottis.UIFrequency }
+	set frequency(v) { this.glottis.UIFrequency = v }
+	get pitch() { return hertzToMidi(this.frequency) }
+	set pitch(v) { this.frequency = midiToHertz(v) }
+
+    get vibrato() {
+        const glottis = this.glottis;
+        return {
+            get amount() { return glottis.vibratoAmount },
+            set amount(v) { glottis.vibratoAmount = v },
+            get frequency() { return glottis.vibratoFrequency },
+            set frequency(v) { glottis.vibratoFrequency = v },
+        }
+    }
+
+    get nasality() { return normalize(this.tract.velumTarget, 0.01, 0.4) } 
+    set nasality(v) { this.tract.velumTarget = lerp(0.01, 0.4, v) }
+
+    #frontness = 0.5;
+    #openness = 1;
+    get vowel() {
+        const trombone = this;
+        return {
+            get frontness() { return trombone.#frontness},
+            set frontness(v) {
+                trombone.#frontness = clamp(v, 0, 1);
+                const min = 1 - Math.sqrt(1-Math.pow(1-trombone.#frontness, 2));
+                trombone.#openness = clamp(trombone.#openness, min, 1);
+                trombone.updateTongue();
+            },
+            get openness() { return trombone.#openness},
+            set openness(v) {
+                trombone.#openness = clamp(v, 0, 1);
+                const min = 1 - Math.sqrt(1-Math.pow(1-trombone.#openness, 2));
+                trombone.#frontness = clamp(trombone.#frontness, min, 1);
+                trombone.updateTongue();
+            }
+        }
+    }
+    updateTongue() {
+        const theta = Math.atan2(1-this.#openness, 1-this.#frontness);
+        const r = Math.sqrt(Math.pow(1-this.#openness,2)+Math.pow(1-this.#frontness,2));
+        this.tract.tongue.setPolarCoords(r, theta);
+    }
+
+    get constrictions() { return this.tract.constrictions }
+
+}
+
+// Witch: the audio system offline: white noise through the same two band-passes (aspiration at 500 Hz, frication at
+// 1000 Hz, Q 0.5), the glottis and the tract run as doScriptProcessor ran them, into a buffer.
+class OfflineSystem {
+    blockLength = 512;
+    constructor(rate, glottis, tract) {
+        sampleRate = rate;
+        this.blockTime = this.blockLength / rate;
+        this.glottis = glottis; this.tract = tract;
+        this.bp = [this.bandpass(500, 0.5), this.bandpass(1000, 0.5)];
+        this.pending = new Float32Array(0);
+    }
+    bandpass(f, q) {
+        const w = 2 * Math.PI * f / sampleRate, a = Math.sin(w) / (2 * q), a0 = 1 + a;
+        return { b0: a / a0, b2: -a / a0, a1: -2 * Math.cos(w) / a0, a2: (1 - a) / a0, x1: 0, x2: 0, y1: 0, y2: 0 };
+    }
+    filter(f, x) { const y = f.b0 * x + f.b2 * f.x2 - f.a1 * f.y1 - f.a2 * f.y2; f.x2 = f.x1; f.x1 = x; f.y2 = f.y1; f.y1 = y; return y; }
+    render(frames) {
+        const out = new Float32Array(frames), N = this.blockLength;
+        let i = 0;
+        while (i < frames) {
+            if (!this.pending.length) {
+                const block = new Float32Array(N);
+                for (let j = 0; j < N; j++) {
+                    const w = random(), n1 = this.filter(this.bp[0], w), n2 = this.filter(this.bp[1], w);
+                    const g = this.glottis.runStep(j / N, n1);
+                    let v = 0;
+                    this.tract.runStep(g, n2, j / N); v += this.tract.lipOutput + this.tract.noseOutput;
+                    this.tract.runStep(g, n2, (j + 0.5) / N); v += this.tract.lipOutput + this.tract.noseOutput;
+                    block[j] = v * 0.125;
+                }
+                this.glottis.finishBlock();
+                this.tract.finishBlock(this.blockTime);
+                this.pending = block;
+            }
+            const k = Math.min(this.pending.length, frames - i);
+            out.set(this.pending.subarray(0, k), i); i += k; this.pending = this.pending.subarray(k);
+        }
+        return out;
+    }
+}
+
+class AudioSystem {   
+    blockLength = 512;
+    blockTime = 1;
+    isDisposed = false;
+
+    constructor(audioContext, glottis, tract) {
+        this.audioContext = audioContext;
+        sampleRate = this.audioContext.sampleRate;
+        
+        this.blockTime = this.blockLength/sampleRate;
+
+        this.glottis = glottis;
+        this.tract = tract;
+
+        //scriptProcessor may need a dummy input channel on iOS
+        this.scriptProcessor = this.audioContext.createScriptProcessor(this.blockLength, 2, 1);
+        this.scriptProcessor.connect(this.audioContext.destination); 
+        this.scriptProcessor.onaudioprocess = (e) => this.doScriptProcessor(e);
+    
+        this.whiteNoise = this.createWhiteNoiseNode(2*sampleRate); // 2 seconds of noise
+        
+        var aspirateFilter = this.audioContext.createBiquadFilter();
+        aspirateFilter.type = "bandpass";
+        aspirateFilter.frequency.value = 500;
+        aspirateFilter.Q.value = 0.5;
+        this.whiteNoise.connect(aspirateFilter);
+        aspirateFilter.connect(this.scriptProcessor);  
+        
+        var fricativeFilter = this.audioContext.createBiquadFilter();
+        fricativeFilter.type = "bandpass";
+        fricativeFilter.frequency.value = 1000;
+        fricativeFilter.Q.value = 0.5;
+        this.whiteNoise.connect(fricativeFilter);
+        fricativeFilter.connect(this.scriptProcessor);
+
+        this.filters = [aspirateFilter, fricativeFilter];
+        
+        this.whiteNoise.start(0);
+    }
+    
+    createWhiteNoiseNode(frameCount) {
+        var myArrayBuffer = this.audioContext.createBuffer(1, frameCount, sampleRate);
+
+        var nowBuffering = myArrayBuffer.getChannelData(0);
+        for (var i = 0; i < frameCount; i++) 
+        {
+            nowBuffering[i] = Math.random();// gaussian();
+        }
+
+        var source = this.audioContext.createBufferSource();
+        source.buffer = myArrayBuffer;
+        source.loop = true;
+
+        return source;
+    }
+    
+    
+    doScriptProcessor(event) {
+        var inputArray1 = event.inputBuffer.getChannelData(0);
+        var inputArray2 = event.inputBuffer.getChannelData(1);
+        var outArray = event.outputBuffer.getChannelData(0);
+        for (var j = 0, N = outArray.length; j < N; j++)
+        {
+            var lambda1 = j/N;
+            var lambda2 = (j+0.5)/N;
+            var glottalOutput = this.glottis.runStep(lambda1, inputArray1[j]); 
+            
+            var vocalOutput = 0;
+            //Tract runs at twice the sample rate 
+            this.tract.runStep(glottalOutput, inputArray2[j], lambda1);
+            vocalOutput +=this.tract.lipOutput +this.tract.noseOutput;
+            this.tract.runStep(glottalOutput, inputArray2[j], lambda2);
+            vocalOutput +=this.tract.lipOutput +this.tract.noseOutput;
+            outArray[j] = vocalOutput * 0.125;
+        }
+        this.glottis.finishBlock();
+        this.tract.finishBlock(this.blockTime);
+    }
+    
+    mute() {
+        this.scriptProcessor.disconnect();
+    }
+    
+    unmute() {
+        this.scriptProcessor.connect(this.audioContext.destination); 
+    }
+
+    dispose() {
+        this.isDisposed = true;
+		this.scriptProcessor.disconnect();
+		this.scriptProcessor.onaudioprocess = null;
+		this.scriptProcessor = null;
+
+		this.whiteNoise.stop();
+		this.whiteNoise.disconnect();
+		this.whiteNoise.buffer = null;
+		this.whiteNoise = null;
+
+		this.filters.forEach(filter => filter.disconnect());
+		this.filters = null;
+
+		this.glottis = null;
+		this.tract = null;
+	}
+    
+}
+
+   
+class Glottis {
+    timeInWaveform = 0;
+    oldFrequency = 140;
+    newFrequency = 140;
+    UIFrequency = 140;
+    smoothFrequency = 140;
+    oldTenseness = 0.6;
+    newTenseness = 0.6;
+    UITenseness = 0.6;
+    totalTime = 0;
+    vibratoAmount = 0.005;
+    vibratoFrequency = 6;
+    intensity = 0;
+    loudness = 1;
+    isTouched = false;
+    alwaysVoice = false;
+    autoWobble = false;
+    
+    constructor() {
+        this.setupWaveform(0);
+        this.noise = new Noise(noiseSeed); // Witch: the settable seed (else the clock's)
+    }
+        
+    runStep(lambda, noiseSource) {
+        var timeStep = 1.0 / sampleRate; 
+        this.timeInWaveform += timeStep;
+        this.totalTime += timeStep;
+        if (this.timeInWaveform>this.waveformLength) 
+        {
+            this.timeInWaveform -= this.waveformLength;
+            this.setupWaveform(lambda);
+        }
+        var out = this.normalizedLFWaveform(this.timeInWaveform/this.waveformLength);
+        var aspiration = this.intensity*(1-Math.sqrt(this.UITenseness))*this.getNoiseModulator()*noiseSource;
+        aspiration *= 0.2 + 0.02*this.noise.simplex1(this.totalTime * 1.99);
+        out += aspiration;
+        return out;
+    }
+    
+    getNoiseModulator() {
+        var voiced = 0.1+0.2*Math.max(0,Math.sin(Math.PI*2*this.timeInWaveform/this.waveformLength));
+        //return 0.3;
+        return this.UITenseness* this.intensity * voiced + (1-this.UITenseness* this.intensity ) * 0.3;
+    }
+    
+    finishBlock() {
+        const noise = this.noise;
+        var vibrato = 0;
+        vibrato += this.vibratoAmount * Math.sin(2*Math.PI * this.totalTime *this.vibratoFrequency);          
+        vibrato += 0.02 * noise.simplex1(this.totalTime * 4.07);
+        vibrato += 0.04 * noise.simplex1(this.totalTime * 2.15);
+        if (this.autoWobble)
+        {
+            vibrato += 0.2 * noise.simplex1(this.totalTime * 0.98);
+            vibrato += 0.4 * noise.simplex1(this.totalTime * 0.5);
+        }
+        if (this.UIFrequency>this.smoothFrequency) 
+            this.smoothFrequency = Math.min(this.smoothFrequency * 1.1, this.UIFrequency);
+        if (this.UIFrequency<this.smoothFrequency) 
+            this.smoothFrequency = Math.max(this.smoothFrequency / 1.1, this.UIFrequency);
+        this.oldFrequency = this.newFrequency;
+        this.newFrequency = this.smoothFrequency * (1+vibrato);
+        this.oldTenseness = this.newTenseness;
+        this.newTenseness = this.UITenseness
+            + 0.1*noise.simplex1(this.totalTime*0.46)+0.05*noise.simplex1(this.totalTime*0.36);
+        if (!this.isTouched && this.alwaysVoice) this.newTenseness += (3-this.UITenseness)*(1-this.intensity);
+        
+        if (this.isTouched || this.alwaysVoice) this.intensity += 0.13;
+        else this.intensity -= 0.05;
+        this.intensity = clamp(this.intensity, 0, 1);
+    }   
+    
+    setupWaveform(lambda) {
+        this.frequency = this.oldFrequency*(1-lambda) + this.newFrequency*lambda;
+        var tenseness = this.oldTenseness*(1-lambda) + this.newTenseness*lambda;
+        this.Rd = 3*(1-tenseness);
+        this.waveformLength = 1.0/this.frequency;
+        
+        var Rd = this.Rd;
+        if (Rd<0.5) Rd = 0.5;
+        if (Rd>2.7) Rd = 2.7;
+        var output;
+        // normalized to time = 1, Ee = 1
+        var Ra = -0.01 + 0.048*Rd;
+        var Rk = 0.224 + 0.118*Rd;
+        var Rg = (Rk/4)*(0.5+1.2*Rk)/(0.11*Rd-Ra*(0.5+1.2*Rk));
+        
+        var Ta = Ra;
+        var Tp = 1 / (2*Rg);
+        var Te = Tp + Tp*Rk; //
+        
+        var epsilon = 1/Ta;
+        var shift = Math.exp(-epsilon * (1-Te));
+        var Delta = 1 - shift; //divide by this to scale RHS
+           
+        var RHSIntegral = (1/epsilon)*(shift - 1) + (1-Te)*shift;
+        RHSIntegral = RHSIntegral/Delta;
+        
+        var totalLowerIntegral = - (Te-Tp)/2 + RHSIntegral;
+        var totalUpperIntegral = -totalLowerIntegral;
+        
+        var omega = Math.PI/Tp;
+        var s = Math.sin(omega*Te);
+        // need E0*e^(alpha*Te)*s = -1 (to meet the return at -1)
+        // and E0*e^(alpha*Tp/2) * Tp*2/pi = totalUpperIntegral 
+        //             (our approximation of the integral up to Tp)
+        // writing x for e^alpha,
+        // have E0*x^Te*s = -1 and E0 * x^(Tp/2) * Tp*2/pi = totalUpperIntegral
+        // dividing the second by the first,
+        // letting y = x^(Tp/2 - Te),
+        // y * Tp*2 / (pi*s) = -totalUpperIntegral;
+        var y = -Math.PI*s*totalUpperIntegral / (Tp*2);
+        var z = Math.log(y);
+        var alpha = z/(Tp/2 - Te);
+        var E0 = -1 / (s*Math.exp(alpha*Te));
+        this.alpha = alpha;
+        this.E0 = E0;
+        this.epsilon = epsilon;
+        this.shift = shift;
+        this.Delta = Delta;
+        this.Te=Te;
+        this.omega = omega;
+    }
+    
+ 
+    normalizedLFWaveform(t) {
+        let output;
+        if (t>this.Te) output = (-Math.exp(-this.epsilon * (t-this.Te)) + this.shift)/this.Delta;
+        else output = this.E0 * Math.exp(this.alpha*t) * Math.sin(this.omega * t);
+     
+        return output * this.intensity * this.loudness;
+    }
+}
+
+
+class Tongue {
+    // high level
+    setPolarCoords(r, theta) {
+        const normTheta = theta / (Math.PI / 2);
+        this.r = r;
+        this.index = this.getIndexFromLocalNorm(r, normTheta);
+    }
+
+    // low level
+    constructor(tract) {
+        this.tract = tract;
+        this.refTriangle = this.buildRefTriangle();
+        this._r = this.diameterToLocalR(); // why here
+    }
+
+    buildRefTriangle() {
+        // angle is somewhat arbitrary, although constraints are set on
+        // 'frontness' and 'openness' to behave as if they were half pi radians apart
+        const ANGLE = Math.PI / 2;
+        const GAMMA = (Math.PI*2 - ANGLE) / 2;
+        const B = this.tract.__diameter - this.maxDiameter;
+        const C = this.tract.__diameter - this.minDiameter;
+        const BETA = Math.asin(B*Math.sin(GAMMA)/C);
+        const ALPHA = Math.PI - GAMMA - BETA;
+        const A = B * Math.sin(ALPHA) / Math.sin(BETA);
+        return {
+            A, // line from tongue 'triangle' open vertex to middle vertex
+            B, // line from tract origin to tongue 'triangle' middle vertex
+            C, // line from tract origin to tongue 'triangle' vertex
+            ALPHA, BETA, GAMMA, // angles of the vertex opposite to the line
+        };
+    }
+    _index = 12.9;
+    get index() { return this._index };
+    get minIndex() { return this.tract.bladeStart + 2 }; 
+    get maxIndex() { return this.tract.tipStart - 3 };
+    get meanIndex() { return (this.minIndex + this.maxIndex) * 0.5 };
+    set index(v) { this._index = v; this.tract.setRestDiameter()};
+    // here diameter refers to distance from tract, not to the deformation circle
+    _diameter  = 2.43;
+    get diameter() { return this._diameter };
+    set diameter(v) { this._diameter = v; this._r = this.diameterToLocalR();this.tract.setRestDiameter() };
+    minDiameter = 2.05;
+    maxDiameter = 3.5;
+
+    // middle level, i guess ?
+    // r is 'equivalent' for diameter. calculated when tract is received with constructor
+    _r = undefined;
+    get r() { return this._r };
+    set r(v) { this._r = v; this.diameter = this.localRToDiameter(v) };
+    localRToDiameter() {
+        if (this.r === 0) return this.maxDiameter;
+        if (this.r === 1) return this.minDiameter;
+
+        const {A, B, GAMMA} = this.refTriangle;
+        const a = this.r * A;
+        const b = B;
+        const gamma = GAMMA;
+        const c = Math.sqrt(a**2 + b**2 - 2*a*b*Math.cos(gamma));
+        const diameter = this.tract.__diameter - c;
+        return diameter;
+    }
+    diameterToLocalR() {
+        if (this.diameter === this.maxDiameter) return 0;
+        if (this.diameter === this.minDiameter) return 1;
+
+        const {A, B, GAMMA} = this.refTriangle;
+        const c = this.tract.__diameter - this.diameter;
+        const b = B;
+        const gamma = GAMMA;
+        const beta = Math.asin(Math.sin(gamma)*b/c);
+        const alpha = Math.PI - gamma - beta;
+        const a = c * Math.sin(alpha) / Math.sin(gamma);
+        const r = a / A;
+        return r;
+    }
+
+    getIndexFromLocalNorm(r, localNorm) {
+        const {A, ALPHA, GAMMA} = this.refTriangle;
+        const a = r * A;
+        const c = this.tract.__diameter - this.diameter;
+        const gamma = GAMMA;
+        const alpha = Math.asin(a * Math.sin(gamma) / c);
+        const ratio = alpha / ALPHA;
+
+        const maxOffset = this.maxIndex - this.meanIndex;
+        const currentMaxOffset = maxOffset * ratio;
+        const currentMinIndex = this.meanIndex - currentMaxOffset;
+        const currentMaxIndex = this.meanIndex + currentMaxOffset;
+
+        return lerp(currentMinIndex, currentMaxIndex, localNorm);
+    }
+}
+
+// index and diameter will be used by Tract, while location ('normtheta') and strength ('r') will be used by PinkTrombone
+class Constriction {
+    index;
+    minIndex = 2;
+    // maxIndex with constructor
+    diameter; // not the diameter of the constriction but the distance from the tract 'surface'
+    minDiameter = 0; // on surface
+    maxDiameter = 3;
+
+    fricativeAttackTime = 100; // ms
+    constructor(location=1, strength=1, tractN, updateTract) {
+        this.updateTract = updateTract;
+        this.minIndex = 2;
+        this.maxIndex = tractN;
+        this.location = location;
+        this.strength = strength;
+        this.creationTime = now(); // Witch: the settable clock
+    }
+
+    get location() { return normalize(this.index, this.minIndex, this.maxIndex) }
+    set location(v) { this.index = lerp(this.minIndex, this.maxIndex, v); this.updateTract() }
+    // strength will be inversely proportional to diameter, hence the 'reversal' of min and max
+    get strength() { return normalize(this.diameter, this.maxDiameter, this.minDiameter) }
+    set strength(v) { this.diameter = lerp(this.maxDiameter, this.minDiameter, v); this.updateTract() }
+
+    get fricativeIntensity() {
+        const time = now();
+        const dividend = this.removeTime ? 1 - (time-this.removeTime) : time-this.creationTime;
+        return clamp(dividend/this.fricativeAttackTime, 0, 1);
+    }
+
+    get isDestroyed() { return this.removeTime !== undefined }
+
+    destroy(callback) {
+        this.removeTime = now();
+        callback();
+        // setTimeout(callback, 1000);
+    }
+}
+
+class Tract {
+    n = tractLength; // Witch: an option (PinkTrombone's tractLength)
+    bladeStart = 10;
+    tipStart = 32;
+    lipStart = 39;
+    R = []; //component going right
+    L = []; //component going left
+    reflection = [];
+    junctionOutputR = [];
+    junctionOutputL = [];
+    maxAmplitude = [];
+    diameter = [];
+    restDiameter = [];
+    targetDiameter = [];
+    newDiameter = [];
+    A = [];
+    glottalReflection = 0.75;
+    lipReflection = -0.85;
+    lastObstruction = -1;
+    fade = 1.0; //0.9999,
+    movementSpeed = 15; //cm per second
+    transients = [];
+    lipOutput = 0;
+    noseOutput = 0;
+    velumTarget = 0.01;
+    gridOffset = 1.7;
+
+    // Comes from old trombone TractUI's radius / scale
+    // necessary to use though because things like tongue maxdiameter, mindiameter... depend on that
+    __diameter = 4.966;
+
+    constrictions = new Set();
+
+    tongue = new Tongue(this);
+
+    constructor(glottis) {
+        this.glottis = glottis;
+
+        this.bladeStart = Math.floor(this.bladeStart*this.n/44);
+        this.tipStart = Math.floor(this.tipStart*this.n/44);
+        this.lipStart = Math.floor(this.lipStart*this.n/44);        
+        this.diameter = new Float64Array(this.n);
+        this.restDiameter = new Float64Array(this.n);
+        this.targetDiameter = new Float64Array(this.n);
+        this.newDiameter = new Float64Array(this.n);
+        for (var i=0; i<this.n; i++)
+        {
+            var diameter = 0;
+            if (i<7*this.n/44-0.5) diameter = 0.6;
+            else if (i<12*this.n/44) diameter = 1.1;
+            else diameter = 1.5;
+            this.diameter[i] = this.restDiameter[i] = this.targetDiameter[i] = this.newDiameter[i] = diameter;
+        }
+        this.R = new Float64Array(this.n);
+        this.L = new Float64Array(this.n);
+        this.reflection = new Float64Array(this.n+1);
+        this.newReflection = new Float64Array(this.n+1);
+        this.junctionOutputR = new Float64Array(this.n+1);
+        this.junctionOutputL = new Float64Array(this.n+1);
+        this.A =new Float64Array(this.n);
+        this.maxAmplitude = new Float64Array(this.n);
+        
+        this.noseLength = Math.floor(28*this.n/44)
+        this.noseStart = this.n-this.noseLength + 1;
+        this.noseR = new Float64Array(this.noseLength);
+        this.noseL = new Float64Array(this.noseLength);
+        this.noseJunctionOutputR = new Float64Array(this.noseLength+1);
+        this.noseJunctionOutputL = new Float64Array(this.noseLength+1);        
+        this.noseReflection = new Float64Array(this.noseLength+1);
+        this.noseDiameter = new Float64Array(this.noseLength);
+        this.noseA = new Float64Array(this.noseLength);
+        this.noseMaxAmplitude = new Float64Array(this.noseLength);
+        for (var i=0; i<this.noseLength; i++)
+        {
+            var diameter;
+            var d = 2*(i/this.noseLength);
+            if (d<1) diameter = 0.4+1.6*d;
+            else diameter = 0.5+1.5*(2-d);
+            diameter = Math.min(diameter, 1.9);
+            this.noseDiameter[i] = diameter;
+        }       
+        this.newReflectionLeft = this.newReflectionRight = this.newReflectionNose = 0;
+        this.calculateReflections();        
+        this.calculateNoseReflections();
+        this.noseDiameter[0] = this.velumTarget;
+
+        this.setRestDiameter();
+        this.restDiameter.forEach((v, i) => this.diameter[i] = v);
+
+        this.constrictions._add = this.constrictions.add;
+        this.constrictions.add = (location, strength) => {
+            const constriction = new Constriction(location, strength, this.n, this.handleConstrictions.bind(this));
+            this.constrictions._add(constriction);
+            this.handleConstrictions();
+            return constriction;
+        }
+        this.constrictions.remove = (constriction) => {
+            if (!(constriction instanceof Constriction)) return;
+            constriction.destroy(() => {
+                this.constrictions.delete(constriction);
+                this.handleConstrictions();
+            });
+        }
+    }
+
+    handleConstrictions() {
+        this.setRestDiameter();
+        this.constrictions.forEach(constriction => {
+            const { index, diameter } = constriction;
+            const intIndex = Math.round(index);
+            // radial deformer's width is 10 at start (and less than 25), 5 at end (and more than 32), interpolation inbetween
+            const width = clamp(10-5*(index-25)/(this.tipStart-25), 5, 10);
+            for (var i=-Math.ceil(width)-1; i<width+1; i++) {   
+               if (intIndex+i<0 || intIndex+i>=this.n) continue;
+               var relpos = (intIndex+i) - index;
+               relpos = Math.abs(relpos)-0.5;
+               var shrink;
+               if (relpos <= 0) shrink = 0;
+               else if (relpos > width) shrink = 1;
+               else shrink = 0.5*(1-Math.cos(Math.PI * relpos / width));
+               if (diameter < this.targetDiameter[intIndex+i])
+               {
+                   this.targetDiameter[intIndex+i] = diameter + (this.targetDiameter[intIndex+i]-diameter)*shrink;
+               }
+           }
+        })
+    }
+
+    // takes into account new position of tongue. also updates target diameter
+    setRestDiameter() {
+        for (var i=this.bladeStart; i<this.lipStart; i++) {
+            var t = 1.1 * Math.PI*(this.tongue.index - i)/(this.tipStart - this.bladeStart);
+            var fixedTongueDiameter = 2+(this.tongue.diameter-2)/1.5;
+            var curve = (1.5-fixedTongueDiameter+this.gridOffset)*Math.cos(t);
+            if (i == this.bladeStart-2 || i == this.lipStart-1) curve *= 0.8;
+            if (i == this.bladeStart || i == this.lipStart-2) curve *= 0.94;               
+            this.restDiameter[i] = 1.5 - curve;
+        }
+        this.restDiameter.forEach((v, i) => this.targetDiameter[i] = v);
+    }
+    
+    reshapeTract(deltaTime) {
+        var amount = deltaTime * this.movementSpeed; ;    
+        var newLastObstruction = -1;
+        for (var i=0; i<this.n; i++)
+        {
+            var diameter = this.diameter[i];
+            var targetDiameter = this.targetDiameter[i];
+            if (diameter <= 0) newLastObstruction = i;
+            var slowReturn; 
+            if (i<this.noseStart) slowReturn = 0.6;
+            else if (i >= this.tipStart) slowReturn = 1.0; 
+            else slowReturn = 0.6+0.4*(i-this.noseStart)/(this.tipStart-this.noseStart);
+            this.diameter[i] = moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount);
+        }
+        if (this.lastObstruction>-1 && newLastObstruction == -1 && this.noseA[0]<0.05)
+        {
+            this.addTransient(this.lastObstruction);
+        }
+        this.lastObstruction = newLastObstruction;
+        
+        amount = deltaTime * this.movementSpeed; 
+        this.noseDiameter[0] = moveTowards(this.noseDiameter[0], this.velumTarget, 
+                amount*0.25, amount*0.1);
+        this.noseA[0] = this.noseDiameter[0]*this.noseDiameter[0];        
+    }
+    
+    calculateReflections() {
+        for (var i=0; i<this.n; i++) 
+        {
+            this.A[i] = this.diameter[i]*this.diameter[i]; //ignoring PI etc.
+        }
+        for (var i=1; i<this.n; i++)
+        {
+            this.reflection[i] = this.newReflection[i];
+            if (this.A[i] == 0) this.newReflection[i] = 0.999; //to prevent some bad behaviour if 0
+            else this.newReflection[i] = (this.A[i-1]-this.A[i]) / (this.A[i-1]+this.A[i]); 
+        }
+        
+        //now at junction with nose
+
+        this.reflectionLeft = this.newReflectionLeft;
+        this.reflectionRight = this.newReflectionRight;
+        this.reflectionNose = this.newReflectionNose;
+        var sum = this.A[this.noseStart]+this.A[this.noseStart+1]+this.noseA[0];
+        this.newReflectionLeft = (2*this.A[this.noseStart]-sum)/sum;
+        this.newReflectionRight = (2*this.A[this.noseStart+1]-sum)/sum;   
+        this.newReflectionNose = (2*this.noseA[0]-sum)/sum;      
+    }
+
+    calculateNoseReflections() {
+        for (var i=0; i<this.noseLength; i++) 
+        {
+            this.noseA[i] = this.noseDiameter[i]*this.noseDiameter[i]; 
+        }
+        for (var i=1; i<this.noseLength; i++)
+        {
+            this.noseReflection[i] = (this.noseA[i-1]-this.noseA[i]) / (this.noseA[i-1]+this.noseA[i]); 
+        }
+    }
+    
+    runStep(glottalOutput, turbulenceNoise, lambda) {
+        var updateAmplitudes = (random()<0.1); // Witch: the settable random
+    
+        //mouth
+        this.processTransients();
+        this.addTurbulenceNoise(turbulenceNoise);
+        
+        //this.glottalReflection = -0.8 + 1.6 * this.glottis.newTenseness;
+        this.junctionOutputR[0] = this.L[0] * this.glottalReflection + glottalOutput;
+        this.junctionOutputL[this.n] = this.R[this.n-1] * this.lipReflection; 
+        
+        for (var i=1; i<this.n; i++)
+        {
+            var r = this.reflection[i] * (1-lambda) + this.newReflection[i]*lambda;
+            var w = r * (this.R[i-1] + this.L[i]);
+            this.junctionOutputR[i] = this.R[i-1] - w;
+            this.junctionOutputL[i] = this.L[i] + w;
+        }    
+        
+        //now at junction with nose
+        var i = this.noseStart;
+        var r = this.newReflectionLeft * (1-lambda) + this.reflectionLeft*lambda;
+        this.junctionOutputL[i] = r*this.R[i-1]+(1+r)*(this.noseL[0]+this.L[i]);
+        r = this.newReflectionRight * (1-lambda) + this.reflectionRight*lambda;
+        this.junctionOutputR[i] = r*this.L[i]+(1+r)*(this.R[i-1]+this.noseL[0]);     
+        r = this.newReflectionNose * (1-lambda) + this.reflectionNose*lambda;
+        this.noseJunctionOutputR[0] = r*this.noseL[0]+(1+r)*(this.L[i]+this.R[i-1]);
+         
+        for (var i=0; i<this.n; i++)
+        {          
+            this.R[i] = this.junctionOutputR[i]*0.999;
+            this.L[i] = this.junctionOutputL[i+1]*0.999; 
+            
+            //this.R[i] = clamp(this.junctionOutputR[i] * this.fade, -1, 1);
+            //this.L[i] = clamp(this.junctionOutputL[i+1] * this.fade, -1, 1);    
+            
+            if (updateAmplitudes)
+            {   
+                var amplitude = Math.abs(this.R[i]+this.L[i]);
+                if (amplitude > this.maxAmplitude[i]) this.maxAmplitude[i] = amplitude;
+                else this.maxAmplitude[i] *= 0.999;
+            }
+        }
+
+        this.lipOutput = this.R[this.n-1];
+        
+        //nose     
+        this.noseJunctionOutputL[this.noseLength] = this.noseR[this.noseLength-1] * this.lipReflection; 
+        
+        for (var i=1; i<this.noseLength; i++)
+        {
+            var w = this.noseReflection[i] * (this.noseR[i-1] + this.noseL[i]);
+            this.noseJunctionOutputR[i] = this.noseR[i-1] - w;
+            this.noseJunctionOutputL[i] = this.noseL[i] + w;
+        }
+        
+        for (var i=0; i<this.noseLength; i++)
+        {
+            this.noseR[i] = this.noseJunctionOutputR[i] * this.fade;
+            this.noseL[i] = this.noseJunctionOutputL[i+1] * this.fade;   
+            
+            //this.noseR[i] = clamp(this.noseJunctionOutputR[i] * this.fade, -1, 1);
+            //this.noseL[i] = clamp(this.noseJunctionOutputL[i+1] * this.fade, -1, 1);    
+            
+            if (updateAmplitudes)
+            {
+                var amplitude = Math.abs(this.noseR[i]+this.noseL[i]);
+                if (amplitude > this.noseMaxAmplitude[i]) this.noseMaxAmplitude[i] = amplitude;
+                else this.noseMaxAmplitude[i] *= 0.999;
+            }
+        }
+
+        this.noseOutput = this.noseR[this.noseLength-1];
+       
+    }
+    
+    finishBlock(blockTime) {         
+        this.reshapeTract(blockTime);
+        this.calculateReflections();
+    }
+    
+    addTransient(position) {
+        var trans = {}
+        trans.position = position;
+        trans.timeAlive = 0;
+        trans.lifeTime = 0.2;
+        trans.strength = 0.3;
+        trans.exponent = 200;
+        this.transients.push(trans);
+    }
+    
+    processTransients() {
+        for (var i = 0; i < this.transients.length; i++)  
+        {
+            var trans = this.transients[i];
+            var amplitude = trans.strength * Math.pow(2, -trans.exponent * trans.timeAlive);
+            this.R[trans.position] += amplitude/2;
+            this.L[trans.position] += amplitude/2;
+            trans.timeAlive += 1.0/(sampleRate*2);
+        }
+        for (var i=this.transients.length-1; i>=0; i--)
+        {
+            var trans = this.transients[i];
+            if (trans.timeAlive > trans.lifeTime)
+            {
+                this.transients.splice(i,1);
+            }
+        }
+    }
+    
+    addTurbulenceNoise(turbulenceNoise) {
+        this.constrictions.forEach(constriction => {
+            const {index, diameter} = constriction;
+            const intensity = constriction.fricativeIntensity;
+            if (intensity === 0) return;
+            this.addTurbulenceNoiseAtIndex(0.66*turbulenceNoise*intensity, index, diameter);
+        })
+    }
+    
+    addTurbulenceNoiseAtIndex(turbulenceNoise, index, diameter) {   
+        var i = Math.floor(index);
+        var delta = index - i;
+        turbulenceNoise *= this.glottis.getNoiseModulator();
+        var thinness0 = clamp(8*(0.7-diameter),0,1);
+        var openness = clamp(30*(diameter-0.3), 0, 1);
+        var noise0 = turbulenceNoise*(1-delta)*thinness0*openness;
+        var noise1 = turbulenceNoise*delta*thinness0*openness;
+        this.R[i+1] += noise0/2;
+        this.L[i+1] += noise0/2;
+        this.R[i+2] += noise1/2;
+        this.L[i+2] += noise1/2;
+    }
+}

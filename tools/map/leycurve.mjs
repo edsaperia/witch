@@ -24,7 +24,7 @@ const deg = r => (r * 180 / Math.PI);
 const corner = (S, i) => { const a = S[i], b = S[i + 1], h1 = Math.atan2(a[1][1] - a[0][1], a[1][0] - a[0][0]), h2 = Math.atan2(b[1][1] - b[0][1], b[1][0] - b[0][0]); return Math.abs(Math.atan2(Math.sin(h2 - h1), Math.cos(h2 - h1))); };
 
 function whole(map, r) {
-  const d = map.dancefloor, half = map.bounds.circle ? map.bounds.circle.r : (map.bounds.maxX - map.bounds.minX) / 2, k = MW / (2 * half + 40);
+  const d = map.dancefloor, half = Math.max(d.x - map.bounds.minX, map.bounds.maxX - d.x, d.z - map.bounds.minZ, map.bounds.maxZ - d.z), k = MW / (2 * half + 40);
   const X = x => ((x - d.x + half + 20) * k).toFixed(1), Z = z => ((z - d.z + half + 20) * k).toFixed(1), poly = (l, col, w, extra = "") => `<polyline points="${l.map(q => `${X(q[0])},${Z(q[1])}`).join(" ")}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" ${extra}/>`;
   const p = [`<svg xmlns="http://www.w3.org/2000/svg" width="${MW}" height="${MW}"><rect width="${MW}" height="${MW}" fill="#0b0a12"/>`];
   r.straight.forEach(l => p.push(poly(l, "#555", 0.8)));

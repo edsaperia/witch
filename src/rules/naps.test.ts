@@ -57,13 +57,21 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
     // getting up: no fight taken up before wake is over
     const wake = TUNING.naps!.wake;
     run(g, wake * 0.6, () => { for (const c of sleepers) expect(c.fight?.target ?? null).toBeNull(); });
-    run(g, 20, () => { for (const c of wildHere(g, key).filter(notBaby)) expect(c.asleep, "no new nap with her on the ground here").toBeFalsy(); });
+    let here = 0;
+    run(g, 20, () => {
+      if (cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key) return; // (a blow can knock her over its border: committed strikes, tuning dodge.a)
+      here++;
+      for (const c of wildHere(g, key).filter(notBaby)) expect(c.asleep, "no new nap with her on the ground here").toBeFalsy();
+    });
+    expect(here, "she was there a while").toBeGreaterThan(60);
   }, 120_000);
 
   it("keeps them asleep with her in the treetops right over them, or on the ground in the next area, close to the border", () => {
     const { g, key } = overWild();
     run(g, 90);
-    const sleepers = wildHere(g, key).filter(c => c.asleep && c.napUntil! > g.clock.time + 5);
+    const deep = () => wildHere(g, key).filter(c => c.asleep && c.napUntil! > g.clock.time + 5);
+    for (let t = 0; t < 150 && !deep().length; t++) run(g, 1); // (until one has a while yet to sleep)
+    const sleepers = deep();
     expect(sleepers.length).toBeGreaterThan(0);
     const s = sleepers[0];
     g.witch = { ...g.witch, x: s.x, z: s.z + 2 }; // (treetops, right over it)
@@ -81,6 +89,7 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
   it("wakes them when their area is partified, and lets no one nap with naps off", () => {
     const { g, key } = overWild();
     run(g, 90);
+    for (let t = 0; t < 150 && !wildHere(g, key).some(c => c.asleep); t++) run(g, 1); // (until one sleeps)
     const sleepers = wildHere(g, key).filter(c => c.asleep);
     expect(sleepers.length).toBeGreaterThan(0);
     const [cx, cy] = key.split(",").map(Number);
@@ -88,7 +97,9 @@ describe("wild idlers nap (Ed, 2026-10-06)", () => {
     run(g, 2 * STEP);
     for (const c of sleepers) expect(c.asleep).toBeFalsy();
     const off = overWild({ ...TUNING, naps: { ...TUNING.naps!, on: false } });
-    run(off.g, 60, () => { for (const c of off.g.creatures) expect(c.asleep).toBeFalsy(); });
+    let napped = 0; // (counted in a plain loop, one expect at the end: an expect a creature a step was most of the test's time with every area peopled)
+    run(off.g, 60, () => { for (const c of off.g.creatures) if (c.asleep) napped++; });
+    expect(napped).toBe(0);
   }, 120_000);
 
   it("leaves a sleep without napUntil (the party's over) alone: down till cleared, out of fights", () => {
