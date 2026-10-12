@@ -11,7 +11,7 @@
 // the page (app/chartPage.ts, from app/chartSave.ts).
 import * as THREE from "three";
 import { ISLAND_LOOK, islandPoints } from "../../../art/islands.js";
-import { legendSigilMask, sigilArrival, sigilColour } from "../../../art/sigils.js";
+import { sigilArrival, sigilColour } from "../../../art/sigils.js";
 import { Post, type PostTuning } from "../post";
 
 /** The chart's disc: radius 1 on the flat chart is this many units here. */
@@ -21,17 +21,22 @@ export const CHART_SCALE = 100;
  *  keeping their sizes in metres against each other and the sea. */
 const REACH = [8.5, 5.6, 6.8, 7.4, 7.6, 7.8];
 const reachOf = (d: { id: string; phase: number }) => (d.id === "home" ? REACH[0] : REACH[Math.max(1, Math.min(5, d.phase))]);
+/** The camera's nearest (units): one island filling the screen and more (Ed, 2026-10-12: "the islands should be larger at full
+ *  zoom"), its fine grid made for it (app/chartOutlines.worker.ts `detail`). */
+const CLOSEST = 17;
+/** How deep (m) the shallows fade out to. */
+const SHALLOWS = 240;
 /** The land's heights (m) on the chart: exaggerated, so the hills read from high up. */
 const RELIEF = 5;
 /** The chart's pixel (CSS pixels across one): finer than the game's, for the islands' and sigils' detail; still whole pixels. */
 export const CHART_PIXEL = 2;
 /** A sigil's width against its island's reach (Ed: "the sigils should be larger and more detailed"). */
 const SIGIL_SHARE = 1.25;
-/** A sigil's art by how many pixels it spans on screen (Ed: "we have detailed sigil art"; art/sigils.js): the plain glyph while
- *  small (it reads down to about 12 px), the legend circle with the animal's detail from 80 px, the full circle with its runes
- *  from 150 px (legendTier); each texture about as many pixels as it shows. */
+/** A sigil's art by how many pixels it spans on screen: each texture about as many pixels as it shows, so it stays crisp. The
+ *  plain glyph at every size for now, no circle round it (Ed, 2026-10-12: "we don't need the circles around the rune"); the
+ *  animal's own detailed versions come with their art. */
 const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 80, px: 128 }, { from: 150, px: 256 }];
-/** When the chart opens, a sigil spans this many art pixels (the legend circle's), and at the furthest no fewer than this. */
+/** When the chart opens, a sigil spans this many art pixels, and at the furthest no fewer than this. */
 const SIGIL_OPEN_PX = 96, SIGIL_MIN_PX = 16;
 /** A typical sailable island's sigil (units), for the zoom's limits. */
 const SIGIL_TYPICAL = REACH[2] * SIGIL_SHARE;
@@ -125,16 +130,32 @@ void main() {
   gl_FragColor = vec4(uColour * glow, glow);
 }`;
 
-// The islands' ground (groundMaterial): its colour lit by the moon, low on the far side of the hills, a cool fill in the shadow.
+// The islands' ground (groundMaterial): its colour relief-shaded as a painted map is (Ed, 2026-10-12, his close-up reference: the
+// hills lit from the north-west, dark on their far sides) under the moon, the heights a little paler, a cool fill in the shadow.
 const GROUND_VERT = /* glsl */ `
-varying vec3 vN; varying vec3 vC;
-void main() { vN = normalize(mat3(modelMatrix) * normal); vC = color; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }`;
+varying vec3 vN; varying vec3 vC; varying float vY;
+void main() { vN = normalize(mat3(modelMatrix) * normal); vC = color; vY = position.y; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }`;
 const GROUND_FRAG = /* glsl */ `
-uniform vec3 uMoon; varying vec3 vN; varying vec3 vC;
+uniform vec3 uMoon; uniform vec3 uShade; uniform float uRise; varying vec3 vN; varying vec3 vC; varying float vY;
 void main() {
-  float lit = max(0.0, dot(normalize(vN), uMoon));
-  vec3 c = vC * (0.42 + 0.95 * lit) + vec3(0.015, 0.025, 0.05) * (1.0 - lit);
+  vec3 n = normalize(vN);
+  float lit = max(0.0, dot(n, uMoon)), hill = clamp(dot(n, uShade), -1.0, 1.0);
+  float up = clamp(vY / uRise, 0.0, 1.0);
+  vec3 c = vC * (0.48 + 0.5 * lit) * (0.78 + 0.36 * hill) + vec3(0.05, 0.05, 0.06) * up * up;
+  c += vec3(0.015, 0.025, 0.05) * (1.0 - lit);
   gl_FragColor = vec4(c, 1.0);
+}`;
+// The shallows round an island (shallowMaterial): the sea pale and green-blue by the shore, fading into the deep (the reference's
+// light coastal water), from each sample's depth.
+const SHALLOW_VERT = /* glsl */ `
+attribute float aDepth; varying float vD;
+void main() { vD = aDepth; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }`;
+const SHALLOW_FRAG = /* glsl */ `
+uniform float uDim; varying float vD;
+void main() {
+  float a = pow(1.0 - clamp(vD, 0.0, 1.0), 1.6);
+  vec3 c = mix(vec3(0.08, 0.2, 0.34), vec3(0.22, 0.46, 0.52), a * a);
+  gl_FragColor = vec4(c * uDim, a * 0.85);
 }`;
 
 /** One island's meshes and where it is. */
@@ -145,16 +166,6 @@ function sigilTexture(id: string, px = 24): THREE.Texture {
   const ink = sigilArrival(id, px), data = new Uint8Array(px * px * 4);
   for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const i = y * px + x, o = ((px - 1 - y) * px + x) * 4; if (ink[i] < Infinity) data.set([255, 255, 255, 255], o); }
   const t = new THREE.DataTexture(data, px, px); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.needsUpdate = true;
-  return t;
-}
-/** A sigil's legend circle (art/sigils.js legendSigilMask: the animal inside its ring, with its detail from tier 1 and its
- *  runes from tier 2) as a white texture, `px` across. Home's world tree has no circle: its plain glyph, bigger. */
-function legendTexture(id: string, px: number, tier: number): THREE.Texture {
-  let m: Float32Array;
-  try { m = legendSigilMask(id, px, { tier, minPx: 1.5 }); } catch { return sigilTexture(id, px); }
-  const data = new Uint8Array(px * px * 4);
-  for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const v = Math.round(m[y * px + x] * 255), o = ((px - 1 - y) * px + x) * 4; data.set([255, 255, 255, v], o); }
-  const t = new THREE.DataTexture(data, px, px); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
   return t;
 }
 /** A soft round glow (for the sigils' halos and the selection ring's light). */
@@ -278,11 +289,12 @@ export class SeaChart {
     g.position.set(x, 0, z); this.scene.add(g);
     const { loops, k, cx, cz } = islandLoops(d), seas = loops.filter(l => l.sea);
     const dim = d.unknown ? 0.5 : d.sail ? 1 : 0.7, home = d.id === "home", reach = reachOf(d);
-    const shelfShape = seas.map(l => { const c = middle(l.pts); return new THREE.Shape(l.pts.map(v => c.clone().lerp(v, 1.12))); });
-    const shelf = new THREE.Mesh(new THREE.ShapeGeometry(shelfShape).rotateX(-Math.PI / 2).translate(0, 0.04, 0), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.1, 0.2, 0.32).multiplyScalar(dim), transparent: true, opacity: 0.8, depthWrite: false }));
-    g.add(shelf);
     let body: THREE.Mesh, top: number;
     const G = d.outline?.ground;
+    if (!G || !(k > 0)) { // a shelf of shallows round the round coast (the real ground brings its own)
+      const shelfShape = seas.map(l => { const c = middle(l.pts); return new THREE.Shape(l.pts.map(v => c.clone().lerp(v, 1.12))); });
+      g.add(new THREE.Mesh(new THREE.ShapeGeometry(shelfShape).rotateX(-Math.PI / 2).translate(0, 0.04, 0), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.1, 0.2, 0.32).multiplyScalar(dim), transparent: true, opacity: 0.8, depthWrite: false })));
+    }
     if (G && k > 0) { // its real ground: a heightfield, each sample its height and colour, lit by the moon
       const { cols, rows, step } = G, pos = new Float32Array(cols * rows * 3), colour = new Float32Array(cols * rows * 3), idx: number[] = [];
       let hi = 0;
@@ -302,6 +314,18 @@ export class SeaChart {
       geo.computeVertexNormals();
       body = new THREE.Mesh(geo, this.groundMaterial);
       top = hi;
+      // the shallows: the water over every sample within reach of the shore, flat on the sea, by its depth
+      const flat = new Float32Array(cols * rows * 3), depth = new Float32Array(cols * rows), wi: number[] = [];
+      for (let i = 0; i < cols * rows; i++) { flat[i * 3] = pos[i * 3]; flat[i * 3 + 1] = 0.03; flat[i * 3 + 2] = pos[i * 3 + 2]; depth[i] = G.h[i] > 0 ? 0 : Math.min(1, -G.h[i] / SHALLOWS); }
+      for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
+        const a = r * cols + c, b = a + 1, e = a + cols, f = e + 1;
+        if (depth[a] >= 1 && depth[b] >= 1 && depth[e] >= 1 && depth[f] >= 1) continue;
+        if (G.h[a] > 0 && G.h[b] > 0 && G.h[e] > 0 && G.h[f] > 0) continue; // (under the land: nothing to show)
+        wi.push(a, e, b, b, e, f);
+      }
+      const wg = new THREE.BufferGeometry();
+      wg.setAttribute("position", new THREE.BufferAttribute(flat, 3)); wg.setAttribute("aDepth", new THREE.BufferAttribute(depth, 1)); wg.setIndex(wi);
+      g.add(new THREE.Mesh(wg, new THREE.ShaderMaterial({ vertexShader: SHALLOW_VERT, fragmentShader: SHALLOW_FRAG, uniforms: { uDim: { value: 0.6 + 0.4 * dim } }, transparent: true, depthWrite: false })));
     } else { // till then: a low landmass raised from its round coast
       const H = home ? 1.6 : 1.1, c = col(ISLAND_LOOK.land2, dim * 1.6);
       const lam = (cc: THREE.Color) => new THREE.MeshLambertMaterial({ color: cc, emissive: cc.clone().multiplyScalar(0.18) });
@@ -329,7 +353,7 @@ export class SeaChart {
    *  little of the night's blue in the shadows; not the scene's lights, whose blue would drown the areas' colours. */
   private groundMaterial = new THREE.ShaderMaterial({
     vertexShader: GROUND_VERT, fragmentShader: GROUND_FRAG,
-    uniforms: { uMoon: { value: new THREE.Vector3(-0.3, 0.6, -0.9).normalize() } },
+    uniforms: { uMoon: { value: new THREE.Vector3(-0.3, 0.6, -0.9).normalize() }, uShade: { value: new THREE.Vector3(-0.7, 0.45, -0.55).normalize() }, uRise: { value: 3 } },
     vertexColors: true,
   });
 
@@ -338,7 +362,7 @@ export class SeaChart {
   private sigilArt(id: string, tier: number): THREE.Texture {
     const key = `${id}|${tier}`;
     let t = this.sigilArts.get(key);
-    if (!t) { t = tier === 0 ? sigilTexture(id, SIGIL_TIERS[0].px) : legendTexture(id, SIGIL_TIERS[tier].px, tier); this.sigilArts.set(key, t); }
+    if (!t) { t = sigilTexture(id, SIGIL_TIERS[tier].px); this.sigilArts.set(key, t); }
     return t;
   }
 
@@ -384,7 +408,7 @@ export class SeaChart {
     if (instant) this.focus.copy(this.aim);
   }
   /** Nearer or further (a share of the default), within reason. */
-  zoom(k: number): void { this.distTo = Math.max(28, Math.min(this.distMax, this.distTo * k)); }
+  zoom(k: number): void { this.distTo = Math.max(CLOSEST, Math.min(this.distMax, this.distTo * k)); }
 
   /** The island under a point on the canvas (CSS pixels), or null. */
   pick(clientX: number, clientY: number): string | null {
@@ -421,7 +445,7 @@ export class SeaChart {
     const was = this.distOpen;
     this.distOpen = at(SIGIL_OPEN_PX); this.distMax = at(SIGIL_MIN_PX);
     if (!this.sized) { this.dist = this.distTo = this.distOpen; this.sized = true; }
-    else { this.distTo = Math.max(28, Math.min(this.distMax, this.distTo * (this.distOpen / was))); this.dist = this.distTo; }
+    else { this.distTo = Math.max(CLOSEST, Math.min(this.distMax, this.distTo * (this.distOpen / was))); this.dist = this.distTo; }
   }
 
   /** A frame: the camera eases toward the chosen island, the sea moves, the sigils pulse. */
@@ -442,15 +466,18 @@ export class SeaChart {
     this.post.lift = 0; // (the ground's gentler tilt-shift: the sigils off the middle still read)
     for (const i of this.isles.values()) {
       const pulse = 0.85 + 0.15 * Math.sin(time * 1.6 + i.x * 0.1), chosen = i.d.id === this.selected;
+      let fade = 1;
       if (i.sigil) {
         const m = i.sigil.material as THREE.MeshBasicMaterial;
-        // its art by how big it shows: the plain glyph while small, the legend circle (and its runes) as it grows
+        // its art by how big it shows (a texture about as many pixels as it spans)
         const px = (i.size! * this.h) / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2) * this.camera.position.distanceTo(tmp.set(i.x, i.top, i.z)));
-        m.opacity = pulse * (px > 220 ? Math.max(0.4, 1 - (px - 220) / 400) : 1); // (close in, the land shows through)
+        fade = px > 220 ? Math.max(0, 1 - (px - 220) / 260) : 1; // (close in, it fades away: the land is the thing to see)
+        m.opacity = pulse * fade;
+        i.sigil.visible = fade > 0;
         let tier = 0; for (let t = 1; t < SIGIL_TIERS.length; t++) if (px >= SIGIL_TIERS[t].from) tier = t;
         if (tier !== i.tier) { i.tier = tier; m.map = this.sigilArt(i.d.sigil, tier); m.needsUpdate = true; }
       }
-      if (i.glow) (i.glow.material as THREE.MeshBasicMaterial).opacity = (chosen ? 0.85 : 0.7) * pulse;
+      if (i.glow) { (i.glow.material as THREE.MeshBasicMaterial).opacity = (chosen ? 0.85 : 0.7) * pulse * fade; i.glow.visible = i.sigil?.visible ?? true; }
       i.group.position.y = chosen ? Math.sin(time * 2) * 0.12 : 0;
     }
     const sel = this.selected ? this.isles.get(this.selected) : null;

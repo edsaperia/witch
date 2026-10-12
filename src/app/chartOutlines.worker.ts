@@ -15,15 +15,15 @@ import { AREAS } from "../../art/areas.js";
 import type { LandMap } from "../rules/land";
 
 /** The page's asks: the islands to make (`ids` in order), or one to make next. */
-export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number } | { first: string };
+export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number } | { first: string } | { detail: string };
 /** An island's ground on a grid (metres from home's middle): its first sample, the step, samples across and down; each sample's
  *  height (m: below 0 the sea, or a lake) and colour (r, g, b). */
 export interface IslandGround { x0: number; z0: number; step: number; cols: number; rows: number; h: Float32Array; rgb: Uint8Array }
 /** Each island as it's made: its coast's loops (x, z in metres from its home's middle; `sea` a coast, else a lake's shore), their
  *  box, and its ground. */
-export interface OutlineDone { id: string; world: number; loops: { pts: Float32Array; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; far: number; ground: IslandGround }
+export interface OutlineDone { id: string; world: number; loops: { pts: Float32Array; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; far: number; ground: IslandGround; /** the fine grid, for the chart's close zoom (asked for by `detail`) */ detail?: boolean }
 
-let queue: string[] = [], job: { world: number; found: string[]; step: number } | null = null, busy = false;
+let queue: string[] = [], detail: string | null = null, job: { world: number; found: string[]; step: number } | null = null, busy = false;
 const post = (m: OutlineDone, t: Transferable[]) => (self as unknown as { postMessage(m: unknown, t: Transferable[]): void }).postMessage(m, t);
 
 /** HSV (0..1) to RGB bytes. */
@@ -34,16 +34,19 @@ function hsv(h: number, s: number, v: number): [number, number, number] {
 // each area type's ground (its floor's hue, saturation and value, a little lifted to read at night), and home's
 const FLOORS = (AREAS as unknown as { floor: [string, number, number, number] }[]).map(a => hsv(a.floor[1], Math.min(1, a.floor[2] * 1.1), Math.min(1, a.floor[3] * 1.25 + 0.06)));
 const HOME_GROUND = hsv(0.3, 0.45, 0.5), SAND = hsv(0.12, 0.3, 0.6), BARE = hsv(0.32, 0.3, 0.4);
-/** The ground's samples across an island's longer side. */
-const ACROSS = 150;
+/** The ground's samples across an island's longer side: for the whole chart, and the chosen island's close-up (Ed, 2026-10-12:
+ *  "the islands should be larger at full zoom"). */
+const ACROSS = 150, DETAIL_ACROSS = 420;
+/** How far past the land the grid reaches (m): the shallows fading out from the coast. */
+const SEA_PAD = 260;
 
-function ground(land: LandMap, centre: { x: number; z: number }, seed: number, lookAt: ((x: number, z: number) => number) | null, sand: (x: number, z: number, d: number) => boolean): IslandGround {
-  const b = land.box, pad = 60, w = b.maxX - b.minX + pad * 2, d = b.maxZ - b.minZ + pad * 2;
-  const step = Math.max(12, Math.max(w, d) / ACROSS), cols = Math.ceil(w / step) + 1, rows = Math.ceil(d / step) + 1;
+function ground(land: LandMap, centre: { x: number; z: number }, seed: number, lookAt: ((x: number, z: number) => number) | null, sand: (x: number, z: number, d: number) => boolean, across = ACROSS): IslandGround {
+  const b = land.box, pad = SEA_PAD, w = b.maxX - b.minX + pad * 2, d = b.maxZ - b.minZ + pad * 2;
+  const step = Math.max(across > ACROSS ? 4 : 12, Math.max(w, d) / across), cols = Math.ceil(w / step) + 1, rows = Math.ceil(d / step) + 1;
   const x0 = b.minX - pad, z0 = b.minZ - pad, H = drawnHills(TUNING), h = new Float32Array(cols * rows), rgb = new Uint8Array(cols * rows * 3);
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const x = x0 + c * step, z = z0 + r * step, i = r * cols + c, dist = land.distAt(x, z);
-    if (dist <= 0) { h[i] = Math.max(-30, dist * 0.5) - 4; rgb.set(SAND, i * 3); continue; } // (under the water: the sea or a lake)
+    if (dist <= 0) { h[i] = Math.max(-200, dist) - 1; rgb.set(SAND, i * 3); continue; } // (under the water, as deep as it is far from the shore: the sea or a lake)
     // the coast rising out of the sea over the beach and on up, the hills on top
     const rise = 26 * Math.min(1, dist / 320) ** 0.8;
     h[i] = 1 + rise + Math.max(0, hillsAt(x, z, seed, H) + H.amplitude * 0.5) * Math.min(1, dist / 200);
@@ -53,7 +56,12 @@ function ground(land: LandMap, centre: { x: number; z: number }, seed: number, l
   return { x0: x0 - centre.x, z0: z0 - centre.z, step, cols, rows, h, rgb };
 }
 
-function make(id: string, world: number, found: string[], step: number): OutlineDone | null {
+/** The last few islands' maps (a close-up asks again for the one just made). */
+const made = new Map<string, { land: LandMap; centre: { x: number; z: number }; seed: number; lookAt: ((x: number, z: number) => number) | null; sand: (x: number, z: number, d: number) => boolean }>();
+export function make(id: string, world: number, found: string[], step: number, across = ACROSS): OutlineDone | null {
+  const key = `${id}|${world}|${found.length}`;
+  const had = made.get(key);
+  if (had) return outlineOf(id, world, had, across);
   const island = id === "home" ? homeIsland(world, knownKinds(found)) : islandOf(id, world);
   if (!island) return null;
   let land: LandMap, centre: { x: number; z: number }, lookAt: ((x: number, z: number) => number) | null = null, sand: (x: number, z: number, d: number) => boolean;
@@ -68,6 +76,13 @@ function make(id: string, world: number, found: string[], step: number): Outline
     const beach = beachOf(map.bounds, TUNING);
     sand = (x, z, d) => (beach ? beach.intoSand(x, z) > 0 : d < 60);
   }
+  const it = { land, centre, seed: island.seed, lookAt, sand };
+  made.set(key, it); if (made.size > 4) made.delete(made.keys().next().value!);
+  return outlineOf(id, world, it, across);
+}
+
+function outlineOf(id: string, world: number, it: { land: LandMap; centre: { x: number; z: number }; seed: number; lookAt: ((x: number, z: number) => number) | null; sand: (x: number, z: number, d: number) => boolean }, across: number): OutlineDone {
+  const { land, centre } = it;
   let far = 0;
   const loops = land.loops.map(l => {
     const pts = new Float32Array(l.pts.length);
@@ -75,14 +90,15 @@ function make(id: string, world: number, found: string[], step: number): Outline
     return { pts, sea: l.sea };
   });
   const b = land.box;
-  return { id, world, loops, box: { minX: b.minX - centre.x, maxX: b.maxX - centre.x, minZ: b.minZ - centre.z, maxZ: b.maxZ - centre.z }, far, ground: ground(land, centre, island.seed, lookAt, sand) };
+  return { id, world, loops, box: { minX: b.minX - centre.x, maxX: b.maxX - centre.x, minZ: b.minZ - centre.z, maxZ: b.maxZ - centre.z }, far, ground: ground(land, centre, it.seed, it.lookAt, it.sand, across), detail: across > ACROSS };
 }
 
 function next(): void {
-  const id = queue.shift();
+  const close = detail; detail = null; // (a close-up asked for goes first)
+  const id = close ?? queue.shift();
   if (!id || !job) { busy = false; return; }
   try {
-    const o = make(id, job.world, job.found, job.step);
+    const o = make(id, job.world, job.found, job.step, close ? DETAIL_ACROSS : ACROSS);
     if (o) post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer]);
   } catch (e) { console.warn(`sea chart: ${id}'s island`, e); }
   setTimeout(next, 0); // (between islands, so a `first` can come in)
@@ -90,6 +106,7 @@ function next(): void {
 
 self.onmessage = (e: MessageEvent<OutlineAsk>) => {
   const m = e.data;
+  if ("detail" in m) { detail = m.detail; if (!busy && job) { busy = true; setTimeout(next, 0); } return; }
   if ("first" in m) { const i = queue.indexOf(m.first); if (i > 0) { queue.splice(i, 1); queue.unshift(m.first); } return; }
   job = { world: m.world, found: m.found, step: m.step }; queue = [...m.ids];
   if (!busy) { busy = true; setTimeout(next, 0); }

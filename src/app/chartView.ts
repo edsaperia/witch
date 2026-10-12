@@ -128,6 +128,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
       worker.onmessage = (e: MessageEvent<OutlineDone>) => {
         const o = e.data, isl = islands.find(i => i.id === o.id);
         if (!isl || o.world !== worldNow()) return;
+        if ((isl.outline as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
         isl.outline = o; chart.reshape(o.id, o);
       };
     }
@@ -157,6 +158,8 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   function choose(id: string | null, instant = false): void {
     chart.select(id, instant);
     if (id && worker && !islands.find(i => i.id === id)?.outline) worker.postMessage({ first: id } satisfies OutlineAsk);
+    // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
+    if (id && worker && !mini && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) worker.postMessage({ detail: id } satisfies OutlineAsk);
     const isl = islands.find(i => i.id === id), card = $("card"), sail = $<HTMLAnchorElement>("sail");
     if (!isl || mini) { card.hidden = true; return; }
     card.hidden = false;
