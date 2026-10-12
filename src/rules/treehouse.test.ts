@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
 import { newGame, stepGame, STEP, type Game } from "./game";
-import { deckOf, keepOnDeck, onTreehouse } from "./treehouse";
+import { carrierOf, deckOf, keepOnDeck, onTreehouse } from "./treehouse";
 import { witchHeight } from "./witch";
 
 const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
@@ -102,5 +102,20 @@ describe("the treehouse deck", () => {
     expect(g.witch.perch).toBeFalsy();
     expect(g.witch.z).toBeCloseTo(g.map.treehouse.z + 1, 6);
     expect(witchHeight(g.witch, T)).toBeCloseTo(T.groundHeight, 6);
+  });
+});
+
+describe("who carries the Ent (art/carrier.js)", () => {
+  const isl = (kind: string) => ({ island: { kind } }), t = (carrier?: string) => ({ ...TUNING, treehouse: { ...TUNING.treehouse, carrier } });
+  it("is the island's own kind's legend, none at home or off an island", () => {
+    expect(carrierOf(isl("bear"), t("island"))).toBe("bear");
+    expect(carrierOf(isl("bear"), t())).toBe("bear");
+    expect(carrierOf(isl("home"), t("island"))).toBeNull();
+    expect(carrierOf({ island: null }, t("island"))).toBeNull();
+  });
+  it("can be set to a kind everywhere, or to no one", () => {
+    expect(carrierOf({ island: null }, t("owl"))).toBe("owl");
+    expect(carrierOf(isl("home"), t("owl"))).toBe("owl");
+    expect(carrierOf(isl("bear"), t("none"))).toBeNull();
   });
 });

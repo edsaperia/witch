@@ -7,7 +7,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { deckOf } from "../rules/treehouse";
+import { carrierOf, deckOf } from "../rules/treehouse";
 import { MapTable } from "./mapTable";
 import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
@@ -340,7 +340,8 @@ export class View {
     }
     this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
     const deckOn = deckOf(game.map, t); // (the treehouse Ent holding the deck, rules/treehouse.ts; else the old treehouse)
-    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, deckOn ? `ent:${deckOn.h}:${deckOn.r}` : "home");
+    const carrier = deckOn ? carrierOf(game.map, t) : null; // (the island's legend carrying it: art/carrier.js)
+    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, deckOn ? `ent:${deckOn.h}:${deckOn.r}${carrier ? `:${carrier}` : ""}` : "home");
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
     {
