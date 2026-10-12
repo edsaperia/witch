@@ -164,6 +164,19 @@ export const GENOMES = [
         { kind: "ruff", size: .18, count: 12, mat: "BODY" },
       ] },
     ] },
+  // the icefall's snow leopard (an area recipe's, the north-north-east's island of high glaciers): a long, low, pale smoky cat with
+  // rosettes, small round ears, a broad face and a very long thick tail; a fluffy cub, a lean young, a heavy adult, and the
+  // legend a glacier cat, its great tail glowing to the tip, frost along its back
+  { id: "snowleopard", name: "Snow leopard", template: "quadruped", builder: "quad", palette: { hue: .12, sat: .1, val: .82, belly: "white" }, body: { hgt: .86, len: .66, chest: .52, tuck: .56, neck: .26, neckAng: .55, neckW: .44, hr: .27, legW: 1.05 }, head: { snout: .48, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "round", size: .7 }, tail: "brush", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["crystals"], texture: { kind: "fur", size: 2 },
+    levels: [
+      { body: { len: .5, chest: .5, hr: .31 }, parts: { ears: { kind: "round", size: .95 }, tail: "bushy" } },
+      { body: { len: .66, legW: .95 } },
+      { body: { len: .7, legW: 1.1 } },
+      { body: { len: .72, legW: 1.15, neckAng: .5 }, head: { mask: true }, features: [
+        { kind: "mane", from: .25, to: .95, height: .12, count: 12, lean: .35, mat: "MAGIC" },
+        { kind: "ruff", size: .2, count: 14 },
+      ] },
+    ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
