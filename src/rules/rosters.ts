@@ -60,7 +60,7 @@ export function islandOf(kind: string, world = 0): Island | null {
 }
 
 /** The world's archipelago (rules/archipelago.ts): every island's place on the chart and its patch. */
-export const worldOf = (world = 0) => archipelago(world, KIND_NAMES.map(k => ({ id: k, phase: KINDS[k].phase + 1, bearing: bearingOf(k, world) })));
+export const worldOf = (world = 0) => archipelago(world, KIND_NAMES.map(k => { const phase = KINDS[k].phase + 1, bearing = bearingOf(k, world); return { id: k, phase, bearing, seed: islandSeed(phase, bearing, world) }; }), islandSeed(0, 0, world));
 
 /** The kinds with an area type (art/areas.js: an area's creature): only they can have areas (every designed kind has one today;
  *  a kind designed before its area would wait for it). */
