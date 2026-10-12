@@ -53,6 +53,7 @@ export function setPropVariant(kind, seed = 0, over = {}) {
     else { const x = g[0] + (g[1] - g[0]) * r(); v[k] = Number.isInteger(g[0]) && Number.isInteger(g[1]) && g[1] - g[0] >= 1 ? Math.round(x) : x; }
   }
   v.seed = seed; v.r = r;
+  if (over.colour) v.colour = over.colour; // (an area's own colours over the genome's: ice for stone, say)
   return Object.assign(v, Object.fromEntries(Object.entries(over).filter(([k]) => k in G && k !== "colour")));
 }
 const gsGrain = (p, d, k = 9) => { const s = v3.dot(p, d) * k; return (s - Math.floor(s)) < .12 ? M.BARKD : undefined; }; // plank seams across a direction
@@ -204,7 +205,7 @@ const GS_BUILD = { punt: gsPunt, jetty: gsJetty, ring: gsRing, heap: gsHeap };
 function gsTone(c, r, k) { if (Array.isArray(c[0])) c = pickByWeight(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
 // Its colours: wood and stone from its genome; mud, moss, reeds, grass and water from the area's ground (art/ground.js), so it sits in its floor.
 function gsColours(kind, v, def, st) {
-  const C = SET_PROP_GENOMES[kind].colour, r = rng((v.seed * 7919 + 29) >>> 0), k = C.spread, leaf = def?.leaf ?? .26, g = def?.floor ? groundColours(def, { sat: 1, trunkHue: .07, ...st }) : null;
+  const C = { ...SET_PROP_GENOMES[kind].colour, ...(v.colour || {}) }, r = rng((v.seed * 7919 + 29) >>> 0), k = C.spread, leaf = def?.leaf ?? .26, g = def?.floor ? groundColours(def, { sat: 1, trunkHue: .07, ...st }) : null;
   const wood = gsTone(C.wood ?? [.07, .38, .32], r, k), dark = wood.map(c => Math.round(c * .45)), light = wood.map(c => Math.min(255, Math.round(c * 1.35 + 12)));
   const stone = gsTone(C.stone ?? [.6, .08, .55], r, k), stoneD = C.dark ? gsTone(C.dark, r, k) : stone.map(c => Math.round(c * .55));
   return {
