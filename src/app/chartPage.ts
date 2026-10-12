@@ -33,7 +33,7 @@ function build(): void {
   const open = new Set(unlocked(save)), won = new Set(save.won), w = worldNow();
   const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
     const at = islandAt(id, w)!, unknown = isPlaceholder(id);
-    return { id, x: at.x, y: at.y, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
+    return { id, x: at.x, y: at.y, phase: id === "home" ? 0 : islandOf(id, w)?.phase ?? 1, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
   };
   islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
   for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
@@ -48,7 +48,7 @@ function build(): void {
 // The real outlines, made in a worker (seconds each for the big islands, about a minute for them all): the chosen island and
 // those nearest it first, each swapped in as it comes; on a phone or a laptop alike, the page never waits on them.
 let worker: Worker | null = null;
-const OUTLINE_STEP = 32; // (metres between the land's samples: the chart's pixels are far coarser)
+const OUTLINE_STEP = 32; // (metres between a placeholder's land's samples: the chart's pixels are far coarser)
 function outlines(): void {
   if (!worker) {
     try { worker = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { return; }
