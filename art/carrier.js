@@ -18,10 +18,12 @@ export const CARRIER = { back: 13, maxBack: 16, sink: 1.2, minLength: 13, maxLen
 function carrierBox(sp) {
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  const tops = [];
-  for (let x = Math.floor(x0 + (x1 - x0) * 0.4); x <= Math.ceil(x0 + (x1 - x0) * 0.6); x++) for (let y = 0; y < sp.h; y++) if (sp.m[y * sp.w + x]) { tops.push(y); break; }
-  tops.sort((a, b) => a - b);
-  return { x0, x1, y0, y1, back: tops.length ? tops[tops.length >> 1] : y0, bx: Math.round((x0 + x1) / 2) };
+  const tops = [], mid = (x0 + x1) / 2;
+  for (let x = Math.floor(x0 + (x1 - x0) * 0.4); x <= Math.ceil(x0 + (x1 - x0) * 0.6); x++) for (let y = 0; y < sp.h; y++) if (sp.m[y * sp.w + x]) { tops.push({ x, y }); break; }
+  if (!tops.length) return { x0, x1, y0, y1, back: y0, bx: Math.round(mid) };
+  const back = [...tops].sort((a, b) => a.y - b.y)[tops.length >> 1].y; // (its anchor on the column nearest the middle whose top is that)
+  const at = tops.filter(t => t.y === back).sort((a, b) => Math.abs(a.x - mid) - Math.abs(b.x - mid))[0];
+  return { x0, x1, y0, y1, back, bx: at.x };
 }
 
 /** A flyer's shadow (art/creatures3d.js: an ellipse on the ground, M.NOSE) gone: the bottom rows holding nothing else cleared. */
