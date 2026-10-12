@@ -18,7 +18,8 @@ import { routeOf } from "./party";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
 import { makeLand, type LandMap } from "./land";
 import { lakeDepth, lakeKnobs } from "./lakes";
-import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate } from "./islandGrowth";
+import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
+import { patchAt, STRAIT } from "./archipelago";
 import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
@@ -259,8 +260,10 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const island = rosterIsland ? rosterIsland.size : round && (MS.islandAreas ?? 0) > 0 ? Math.round(MS.islandAreas!) : 0;
   // Its shape by its phase (Ed, 2026-10-11, the journey's irregular islands: rules/islandGrowth.ts, the tuning's map.shapes): home
   // near-round, each phase further out more irregular; the grid sized for its furthest arm.
-  const phase = rosterIsland ? rosterIsland.phase : Math.max(0, Math.round(MS.phase ?? 0)), shapeK = shapeOf(phase, MS.shapes), shapeReach = island ? reachOf(shapeK, shapeSeed) : null;
-  const reach = (areas: number) => (Math.sqrt((areas + 1) / Math.PI) * 1.4 + 1.5) * (shapeReach?.most ?? 1);
+  const phase = rosterIsland ? rosterIsland.phase : Math.max(0, Math.round(MS.phase ?? 0)), shapeK = shapeOf(phase, MS.shapes), shapeReach = island ? reachOf(shapeK, shapeSeed, rosterIsland?.turn ?? 0) : null;
+  // (in its patch on the chart, rules/archipelago.ts: the grid sized for the patch's furthest reach)
+  const patch = rosterIsland?.patch, patchMost = patch ? Math.max(...patch) : 0;
+  const reach = (areas: number) => (patch ? patchMost / (tuning.areaSize * tuning.areaScale) + 1 : (Math.sqrt((areas + 1) / Math.PI) * 1.4 + 1.5) * (shapeReach?.most ?? 1));
   let R = island ? reach(island) : MS.radius, flightR = (R + 0.5 + MS.buffer) * A;
   const edgeK = MS.edge ?? 2;
   // The coast's wobble (Ed, 2026-10-06): seeded, the same for every edge; the forest's extent covers its furthest headland.
@@ -361,7 +364,16 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   if (island) {
     const cand = new Map<string, Candidate>(), plan = lakePlan(shapeK, shapeSeed), extra = plan.reduce((t, k) => t + k, 0);
     for (let cy = first; cy < first + n; cy++) for (let cx = first; cx < first + n; cx++) if (hasGround(cx, cy)) { const s = siteOf(cx, cy), k = cellKey(cx, cy); cand.set(k, { key: k, dx: (s.x - centre.x) / A, dz: (s.z - centre.z) / A }); }
-    growOrder = growIsland(cellKey(centreCell[0], centreCell[1]), island + extra, cand, neighbours, shapeK, shapeSeed);
+    // (in its patch: its playable areas kept in from the patch's edge by half a strait, the buffer's depth and most of an area (its
+    // ground past its centre), so its land, buffer and all, stops half a strait short of its neighbours'; its reach its own shape)
+    let grow: PatchGrowth | undefined;
+    if (patch) {
+      const inset = STRAIT / 2 + MS.buffer * A * 0.85 + A * 0.75, room = (a: number) => Math.max(A, patchAt(patch, a) - inset) / A;
+      let mean = 0;
+      for (let k = 0; k < 64; k++) mean += room((k / 64) * Math.PI * 2) / 64;
+      grow = { reach: a => room(a) / mean, outside: c => Math.max(0, Math.hypot(c.dx, c.dz) - room(Math.atan2(c.dz, c.dx))) };
+    }
+    growOrder = growIsland(cellKey(centreCell[0], centreCell[1]), island + extra, cand, neighbours, shapeK, shapeSeed, grow, rosterIsland?.turn ?? 0);
     if (extra) { const L = placeLakes(growOrder, island, plan, neighbours, shapeSeed); growOrder = L.playable; lakeCells = L.lakes; }
     grownSet = new Set(growOrder);
     R = 1;
@@ -414,7 +426,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const D2 = G * Math.SQRT2, relax = (k: number, q: number, w: number) => { if (dd[q] + w < dd[k]) dd[k] = dd[q] + w; };
     for (let j = 0; j < gr; j++) for (let i = 0; i < gc; i++) { const k = j * gc + i; if (i) relax(k, k - 1, G); if (j) { relax(k, k - gc, G); if (i) relax(k, k - gc - 1, D2); if (i < gc - 1) relax(k, k - gc + 1, D2); } }
     for (let j = gr - 1; j >= 0; j--) for (let i = gc - 1; i >= 0; i--) { const k = j * gc + i; if (i < gc - 1) relax(k, k + 1, G); if (j < gr - 1) { relax(k, k + gc, G); if (i < gc - 1) relax(k, k + gc + 1, D2); if (i) relax(k, k + gc - 1, D2); } }
-    for (let k = 0; k < dd.length; k++) if (dd[k] <= deep) want.add(at[k]);
+    // (and in its patch: no land past half a strait in from its edge, so its coast and its neighbour's keep a strait between)
+    const inPatch = (k: number) => { if (!patch) return true; const [cx, cy] = at[k].split(",").map(Number), q = siteOf(cx, cy), dx = q.x - centre.x, dz = q.z - centre.z; return Math.hypot(dx, dz) <= patchAt(patch, Math.atan2(dz, dx)) - STRAIT / 2 - A * 0.6; }; // (an area's ground reaches past its centre)
+    for (let k = 0; k < dd.length; k++) if (dd[k] <= deep && (dd[k] === 0 || inPatch(k))) want.add(at[k]);
     // (one island: those joined to home's; and any area they ring round taken in, so no stray pond of a ghost area)
     const homeKey = cellKey(centreCell[0], centreCell[1]), todo = [homeKey];
     landCells.add(homeKey);
@@ -425,7 +439,22 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     for (const k of neighbours.keys()) if (!sea.has(k)) landCells.add(k);
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
     for (const k of landCells) { const [cx, cy] = k.split(",").map(Number), s = siteOf(cx, cy); x0 = Math.min(x0, s.x); x1 = Math.max(x1, s.x); z0 = Math.min(z0, s.z); z1 = Math.max(z1, s.z); }
-    const isLand = (x: number, z: number) => { const [u, v] = toPart(x, z), c = partition.partition(u, v); return landCells.has(cellKey(c[0], c[1])); };
+    // (and never past half a strait in from its patch's edge, whatever its areas' ground: its coast and its neighbour's keep a
+    // strait apart, the coast running along the strait where an area would reach over)
+    // (by its true distance from the patch's edge near it: the edge crosses the way out from home's middle at a slant)
+    const rim = patch ? Array.from(patch, (r, a) => { const t = (a / patch.length) * Math.PI * 2; return [Math.cos(t) * r, Math.sin(t) * r]; }) : [];
+    const inStrait = (x: number, z: number) => {
+      if (!patch) return true;
+      const dx = x - centre.x, dz = z - centre.z, r = Math.hypot(dx, dz), out = patchAt(patch, Math.atan2(dz, dx));
+      if (r > out - STRAIT / 2) return false;
+      if (r < out - STRAIT * 3) return true;
+      for (let i = 0; i < rim.length; i++) {
+        const [ax, az] = rim[i], [bx, bz] = rim[(i + 1) % rim.length], ex = bx - ax, ez = bz - az, f = Math.max(0, Math.min(1, ((dx - ax) * ex + (dz - az) * ez) / (ex * ex + ez * ez || 1)));
+        if (Math.hypot(dx - ax - ex * f, dz - az - ez * f) < STRAIT / 2) return false;
+      }
+      return true;
+    };
+    const isLand = (x: number, z: number) => { if (!inStrait(x, z)) return false; const [u, v] = toPart(x, z), c = partition.partition(u, v); return landCells.has(cellKey(c[0], c[1])); };
     land = makeLand(isLand, { minX: x0 - A, maxX: x1 + A, minZ: z0 - A, maxZ: z1 + A }, only?.landStep ?? LAND_STEP, 64, (A * 0.5) ** 2, only ? 1 : 2, true); // (crumbs under a quarter of an area's square taken as what's round them; slivers under about 16 m smoothed; ponds filled: no lakes but those meant)
     // The lakes' own map (the same kind, its "land" the lakes' water: + in a lake, - ashore), over the lakes' areas alone; the
     // island's land above has them as land (her flight's edge, the beach and the sea are the sea's alone).

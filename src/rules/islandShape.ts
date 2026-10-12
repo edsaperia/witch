@@ -40,7 +40,7 @@ export function islandCoast(spec: IslandSpec, coast: CoastKnobs | undefined, n =
 export interface IslandOutline { loops: { pts: Float32Array; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; far: number; areaSize: number }
 const outlines = new Map<string, IslandOutline>();
 export function islandOutline(island: Island, tuning: Tuning, step = 16): IslandOutline {
-  const key = `${island.kind}|${island.seed}|${island.size}|${island.phase}|${step}`;
+  const key = `${island.kind}|${island.seed}|${island.size}|${island.phase}|${step}|${island.patch ? island.patch[0] : ""}|${island.turn ?? 0}`;
   const had = outlines.get(key);
   if (had) return had;
   const { land, lakes, home, areaSize } = islandLand(island, tuning, step);
