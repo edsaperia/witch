@@ -13,6 +13,7 @@ import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
+import { shotCamera, type Shot } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
@@ -159,6 +160,8 @@ export class View {
   rideOff = 0;
   rideTime = NaN;
   treehouseBatch: SpriteBatch;
+  /** Arriving from the sea chart (rules/arrive.ts, app/arrive.ts): the flight's shot this frame, in place of the game's camera; null otherwise. */
+  fly: Shot | null = null;
   /** The treehouse deck's map table's miniature chart (render/mapTable.ts), with the deck on. */
   mapTable: MapTable | null = null;
   markerArt: MarkerArt;
@@ -764,7 +767,9 @@ export class View {
 
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
-    const g = this.game, t = g.tuning, pose = poseOf(g);
+    const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
+    // (arriving from the sea chart: the flight's shot, app/arrive.ts)
+    const pose = F ? { ...P0, tx: F.tx, ty: F.ty, tz: F.tz, angle: F.angle, distance: F.distance, ...shotCamera(F) } : P0;
     this.prefetchWave();
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
