@@ -55,7 +55,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
     } else {
       const slot = lv.slotOf("relic", 0), tw = 0.88 + 0.12 * Math.sin(time * 3 + it.id);
       col = lv.colours.get("relic")!;
-      lv.standing.add(pos.x, pos.y, pos.z, size * 1.6, dot, col.r, col.g, col.b, 0.22 * tw); // (its halo)
+      if (lv.haloGain > 0) lv.standing.add(pos.x, pos.y, pos.z, size * 1.6, dot, col.r, col.g, col.b, 0.22 * tw * lv.haloGain); // (its halo)
       lv.standing.add(pos.x, pos.y, pos.z, size, lv.uv(slot), col.r * tw, col.g * tw, col.b * tw, 1);
     }
     const cyc = lv.cycledAt.get(key);
