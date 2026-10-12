@@ -1157,6 +1157,9 @@
             "seat"
           ],
           "additionalProperties": false
+        },
+        "carrier": {
+          "type": "string"
         }
       },
       "required": [
@@ -1165,7 +1168,8 @@
         "clear",
         "lightReach",
         "lightStrength",
-        "deck"
+        "deck",
+        "carrier"
       ],
       "additionalProperties": false
     },

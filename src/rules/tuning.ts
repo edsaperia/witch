@@ -371,7 +371,9 @@ export interface Tuning {
   home: { margin: number; gap: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
-    deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number } };
+    deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };
+    /** Who carries the Ent (drawing only; art/carrier.js): "island" the island's own kind's legend (none at home), a kind's id that kind's, "none" no one. */
+    carrier?: string };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; /** each family's share times this (1 as authored; 0 none) */ mix?: { ruins?: number; rocks?: number; freak?: number }; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
   paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; /** the path pieces at all (railway landmarks and signals, buffer stops, verge posts, stairs, bridges, level crossings, fingerposts) */ pieces?: boolean; fingerposts: boolean; treesOnBroken: number; edgeBushes: number; bushBoost: number };
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };

@@ -106,6 +106,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
   const hillsParam = params.get("hills");
   if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+  // ?carrier=<kind>: that kind's legend carrying the treehouse Ent (art/carrier.js), wherever; ?carrier=none no one.
+  const carrierParam = params.get("carrier");
+  if (carrierParam) tuning.treehouse = { ...tuning.treehouse, carrier: carrierParam };
   // ?ley=0: no ley lines through the runestones.
   if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
   if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };
