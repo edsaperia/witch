@@ -19,7 +19,8 @@ import type { LandMap } from "../rules/land";
 export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number } | { first: string } | { detail: string };
 /** An island's ground on a grid (metres from home's middle): its first sample, the step, samples across and down; each sample's
  *  height (m: below 0 the sea; a lake's its bed), colour (r, g, b), water and a lake's level. */
-export interface IslandGround { x0: number; z0: number; step: number; cols: number; rows: number; h: Float32Array; rgb: Uint8Array; /** 0 land, 1 sea, 2 lake */ water: Uint8Array; /** a lake's water level (m, as h) */ level: Float32Array }
+export interface IslandGround { x0: number; z0: number; step: number; cols: number; rows: number; h: Float32Array; rgb: Uint8Array; /** 0 land, 1 sea, 2 lake */ water: Uint8Array; /** a lake's water level (m, as h) */ level: Float32Array; /** what its lakes are, by its biome (LAKE_LOOKS) */ lake: LakeLook }
+
 /** Each island as it's made: its coast's loops (x, z in metres from its home's middle; `sea` a coast, else a lake's shore), their
  *  box, and its ground. */
 export interface OutlineDone { id: string; world: number; loops: { pts: Float32Array; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; far: number; ground: IslandGround; /** the fine grid, for the chart's close zoom (asked for by `detail`) */ detail?: boolean }
@@ -49,6 +50,21 @@ const PALETTES: Record<string, Palette> = {
   "cold rainforest": { low: hsv(0.4, 0.42, 0.36), up: hsv(0.42, 0.32, 0.38), rock: hsv(0.55, 0.12, 0.38), peak: hsv(0.55, 0.06, 0.7), sand: hsv(0.1, 0.14, 0.56), forest: hsv(0.42, 0.6, 0.2) },
   badlands: { low: hsv(0.07, 0.4, 0.56), up: hsv(0.04, 0.45, 0.48), rock: hsv(0.02, 0.4, 0.38), peak: hsv(0.06, 0.25, 0.6), sand: hsv(0.1, 0.3, 0.68), forest: hsv(0.18, 0.4, 0.34) },
 };
+/** What a biome's lakes become (Ed, 2026-10-12: "In the cold biomes lakes become frozen. In the volcano biome lakes become lava.
+ *  In the desert biome lakes become oases. In the jungle biome, lakes become sinkholes."): ice, lava, an oasis, a sinkhole, else
+ *  water. The badlands stand for the volcano (there's no volcano biome yet); the rocky biome keeps water. */
+export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole";
+export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", "mountains and glaciers": "ice", "cold rainforest": "ice", badlands: "lava", hot: "oasis", jungle: "sinkhole", "mangrove swamp": "sinkhole" };
+/** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly; a sinkhole's pit, how far (m) its bed
+ *  and water sink below the ground round it. */
+const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
+  water: { rgb: [0, 0, 0], width: 0, k: 0 },
+  ice: { rgb: hsv(0.57, 0.1, 0.72), width: 26, k: 0.75 }, // frost
+  lava: { rgb: hsv(0.03, 0.4, 0.13), width: 30, k: 0.9 }, // a dark crust
+  oasis: { rgb: hsv(0.3, 0.7, 0.46), width: 44, k: 0.9 }, // palms and grass
+  sinkhole: { rgb: hsv(0.33, 0.72, 0.42), width: 40, k: 0.9 }, // lush green round the pit
+};
+const SINK = 16;
 const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -81,7 +97,7 @@ function ground(src: Source, across = ACROSS): IslandGround {
   const span = Math.max(1, hi - lo);
   // the height drawn: the coast rising out of the sea over the beach and on up, the terrain above its lowest (eased in from the shore)
   const drawn = (tm: number, dm: number) => 1 + 26 * Math.min(1, dm / 320) ** 0.8 + (tm - lo) * Math.min(1, dm / 200);
-  const P = PALETTES[src.biome] ?? PALETTES.temperate;
+  const P = PALETTES[src.biome] ?? PALETTES.temperate, look = LAKE_LOOKS[src.biome] ?? "water";
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const x = x0 + c * step, z = z0 + r * step, i = r * cols + c, dm = dist[i];
     if (dm <= 0) { h[i] = Math.max(-200, dm) - 1; water[i] = 1; continue; } // (the sea: as deep as it is far from the shore)
@@ -90,6 +106,16 @@ function ground(src: Source, across = ACROSS): IslandGround {
       const lv = src.levelAt(x, z);
       water[i] = 2; level[i] = lv == null ? h[i] + 1 : drawn(lv, dm);
       if (level[i] <= h[i]) level[i] = h[i] + 0.5;
+      if (look === "sinkhole") { h[i] -= SINK; level[i] -= SINK * 0.8; } // (a pit: its water far below the ground round it)
+    }
+  }
+  // how far (m) each land sample is from the nearest lake, within its look's rim
+  const rim = LAKE_RIMS[look], near = new Float32Array(n).fill(Infinity), R = rim.width > 0 ? Math.ceil(rim.width / step) : 0;
+  if (R) for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    if (water[r * cols + c] !== 2) continue;
+    for (let dr = -R; dr <= R; dr++) for (let dc = -R; dc <= R; dc++) {
+      const rr = r + dr, cc = c + dc; if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) continue;
+      const j = rr * cols + cc; if (water[j] === 0) near[j] = Math.min(near[j], Math.hypot(dr, dc) * step);
     }
   }
   // the colours: by height (lowlands, uplands, rock, heights), steepness (bare rock on the steep), forest, and the beach
@@ -102,9 +128,10 @@ function ground(src: Source, across = ACROSS): IslandGround {
     col = mix(col, P.rock, Math.max(smooth(0.62, 0.82, e), smooth(0.18, 0.4, slope)));
     col = mix(col, P.peak, smooth(0.84, 0.97, e));
     if (src.sand(x, z, dist[i])) col = P.sand;
+    if (near[i] < rim.width) col = mix(col, rim.rgb, rim.k * (1 - smooth(0.35, 1, near[i] / rim.width))); // the lakes' rim
     rgb[i * 3] = Math.round(col[0] * 255); rgb[i * 3 + 1] = Math.round(col[1] * 255); rgb[i * 3 + 2] = Math.round(col[2] * 255);
   }
-  return { x0: x0 - src.centre.x, z0: z0 - src.centre.z, step, cols, rows, h, rgb, water, level };
+  return { x0: x0 - src.centre.x, z0: z0 - src.centre.z, step, cols, rows, h, rgb, water, level, lake: look };
 }
 
 /** The last few islands' sources (a close-up asks again for the one just made). */

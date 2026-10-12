@@ -51,7 +51,7 @@ const SIGIL_FLOOR = 9;
 
 /** An island's real land (app/chartOutlines.worker.ts): its coast's loops (x, z interleaved, metres from its home's middle; `sea`
  *  its coast, one loop for each piece of land, else a lake's shore), their box, and its ground on a grid (heights and colours). */
-export interface ChartOutline { loops: { pts: ArrayLike<number>; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; ground?: { x0: number; z0: number; step: number; cols: number; rows: number; h: ArrayLike<number>; rgb: ArrayLike<number>; /** 0 land, 1 sea, 2 lake */ water?: ArrayLike<number>; /** a lake's water level (m, as h) */ level?: ArrayLike<number> } }
+export interface ChartOutline { loops: { pts: ArrayLike<number>; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; ground?: { x0: number; z0: number; step: number; cols: number; rows: number; h: ArrayLike<number>; rgb: ArrayLike<number>; /** 0 land, 1 sea, 2 lake */ water?: ArrayLike<number>; /** a lake's water level (m, as h) */ level?: ArrayLike<number>; /** what its lakes are, by its biome: water, ice, lava, oasis, sinkhole */ lake?: string } }
 
 export interface ChartIsland {
   id: string;
@@ -170,6 +170,40 @@ void main() {
 const SEA_WATER = { deep: new THREE.Color(0.08, 0.2, 0.34), pale: new THREE.Color(0.22, 0.46, 0.52) }, LAKE_WATER = { deep: new THREE.Color(0.15, 0.28, 0.37), pale: new THREE.Color(0.3, 0.52, 0.56) };
 /** How deep (m) a lake's shallows fade out to. */
 const LAKE_SHALLOWS = 6;
+// A lake by its island's biome (Ed, 2026-10-12: frozen in the cold, lava in the volcano, an oasis in the desert, a sinkhole in the
+// jungle; chartOutlines.worker.ts LAKE_LOOKS, which also paints each one's rim on its shore): uLook 0 water (as the shallows), 1
+// ice (pale, frost white by the shore, faint cracks), 2 lava (glowing and slowly churning, crusting dark by the shore), 3 an
+// oasis (clear turquoise, pale sand under its edge), 4 a sinkhole (deep and dark, a little light caught at its edge).
+const LAKE_VERT = /* glsl */ `
+attribute float aDepth; varying float vD; varying vec2 vP;
+void main() { vD = aDepth; vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }`;
+const LAKE_FRAG = /* glsl */ `
+uniform float uDim, uTime, uScale; uniform int uLook; uniform vec3 uDeep, uPale; varying float vD; varying vec2 vP;
+float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+void main() {
+  float d = clamp(vD, 0.0, 1.0), a = pow(1.0 - d, 1.6); vec2 p = vP / uScale; // (p in about 30 m steps)
+  vec3 c;
+  if (uLook == 1) {
+    float crack = smoothstep(0.035, 0.0, abs(n(p * 0.9) - 0.5)) * 0.5 + smoothstep(0.03, 0.0, abs(n(p * 2.1 + 7.0) - 0.5)) * 0.3;
+    c = mix(vec3(0.3, 0.42, 0.52), vec3(0.6, 0.68, 0.76), a * a) + vec3(0.1, 0.12, 0.14) * crack * (1.0 - a);
+    c *= 0.9 + 0.1 * n(p * 3.0);
+  } else if (uLook == 2) {
+    float t = uTime * 0.12, f = n(p * 0.8 + vec2(t, -t * 0.7)) * 0.6 + n(p * 2.3 - vec2(t * 1.3, t)) * 0.4;
+    vec3 hot = mix(vec3(1.0, 0.36, 0.06), vec3(1.25, 0.86, 0.3), smoothstep(0.45, 0.8, f));
+    float crust = max(smoothstep(0.35, 0.85, a), smoothstep(0.32, 0.18, f) * 0.85);
+    c = mix(hot, vec3(0.1, 0.05, 0.04), crust);
+    gl_FragColor = vec4(c * mix(1.0, uDim, 0.5), 1.0); return; // (it glows: dimmed less, and not by the night)
+  } else if (uLook == 3) {
+    c = mix(vec3(0.06, 0.36, 0.42), vec3(0.62, 0.78, 0.6), a * a) + vec3(0.05) * n(p * 2.0 + uTime * 0.05);
+  } else if (uLook == 4) {
+    c = mix(vec3(0.02, 0.055, 0.06), vec3(0.1, 0.26, 0.19), a * a * a);
+  } else c = mix(uDeep, uPale, a * a);
+  gl_FragColor = vec4(c * uDim, 1.0);
+}`;
+/** How far in from its shore (m) a frozen, molten, oasis or sinkhole lake's edge reaches. */
+const LAKE_RIM = 40;
+const LOOKS: Record<string, number> = { water: 0, ice: 1, lava: 2, oasis: 3, sinkhole: 4 };
 
 /** One island's meshes and where it is. */
 interface Isle { d: ChartIsland; group: THREE.Group; pick: THREE.Mesh; x: number; z: number; top: number; reach: number; sigil?: THREE.Mesh; glow?: THREE.Mesh; tier?: number; size?: number }
@@ -354,6 +388,19 @@ export class SeaChart {
           const i = r * cols + c; if (G.water[i] === 2) continue;
           for (const j of [i - 1, i + 1, i - cols, i + cols]) if (j >= 0 && j < cols * rows && G.water[j] === 2) { lp[i * 3 + 1] = 0.06 + G.level[j] * k * RELIEF; break; }
         }
+        const look = LOOKS[G.lake ?? "water"] ?? 0;
+        if (look) { // (ice, lava, an oasis, a sinkhole: by how far in from its shore, not how deep, so a shallow one still has a middle)
+          const R = Math.ceil(LAKE_RIM / step);
+          for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+            const i = r * cols + c; if (G.water[i] !== 2) continue;
+            let near = LAKE_RIM;
+            for (let dr = -R; dr <= R; dr++) for (let dc = -R; dc <= R; dc++) {
+              const rr = r + dr, cc = c + dc; if (rr < 0 || cc < 0 || rr >= rows || cc >= cols || G.water[rr * cols + cc] === 2) continue;
+              near = Math.min(near, Math.hypot(dr, dc) * step);
+            }
+            ld[i] = near / LAKE_RIM;
+          }
+        }
         for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
           const a = r * cols + c, b = a + 1, e = a + cols, f = e + 1;
           if (G.water[a] === 2 || G.water[b] === 2 || G.water[e] === 2 || G.water[f] === 2) li.push(a, e, b, b, e, f);
@@ -361,7 +408,7 @@ export class SeaChart {
         if (li.length) {
           const lg = new THREE.BufferGeometry();
           lg.setAttribute("position", new THREE.BufferAttribute(lp, 3)); lg.setAttribute("aDepth", new THREE.BufferAttribute(ld, 1)); lg.setIndex(li);
-          g.add(new THREE.Mesh(lg, waterMat(LAKE_WATER, 1)));
+          g.add(new THREE.Mesh(lg, new THREE.ShaderMaterial({ vertexShader: LAKE_VERT, fragmentShader: LAKE_FRAG, uniforms: { uDim: { value: 0.6 + 0.4 * dim }, uTime: this.uTime, uScale: { value: 30 * k }, uLook: { value: look }, uDeep: { value: LAKE_WATER.deep }, uPale: { value: LAKE_WATER.pale } } })));
         }
       }
     } else { // till then: a low landmass raised from its round coast
