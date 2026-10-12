@@ -50,8 +50,9 @@ export function reachOf(K: ShapeKnobs, seed: number): { reach: (angle: number) =
 /** An island's patch on the chart (rules/archipelago.ts), for its growth: its reach by angle (a factor about 1, its patch's shape)
  *  and how far past the patch a candidate lies (in areas; 0 inside). */
 export interface PatchGrowth { reach: (angle: number) => number; outside: (c: Candidate) => number }
-/** How much of an island's own shape (its phase's lobes, arms and bays) shows through its patch's. */
-export const PATCH_SHAPE = 0.8;
+/** How much of an island's own shape (its phase's lobes, arms and bays) shows through its patch's: all of it (Ed, 2026-10-12: "keep
+ *  arms and irregularity"); its patch, shaped round it (rules/archipelago.ts), only bounds it. */
+export const PATCH_SHAPE = 1;
 
 /** One area the island may take: its key, where its middle is from home's (in areas), and whether it has ground. */
 export interface Candidate { key: string; dx: number; dz: number }

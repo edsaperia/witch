@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { homeIsland, islandOf, REAL_KINDS, worldOf } from "./rosters";
 import { islandOutline } from "./islandShape";
-import { STRAIT } from "./archipelago";
+import { CHART_METRES, STRAIT } from "./archipelago";
 
 describe("the archipelago", () => {
   it("is the same for a world each time, and another world's is another", () => {
@@ -14,6 +14,9 @@ describe("the archipelago", () => {
     expect(a.islands.get("home")!.x).toBe(0);
     const k = [...a.islands.keys()].find(x => x !== "home")!;
     expect(a.islands.get(k)!.x).not.toBe(b.islands.get(k)!.x);
+    // (one true scale, every world: the sea chart draws by CHART_METRES)
+    expect(Math.abs(a.metres - CHART_METRES)).toBeLessThan(5);
+    expect(Math.abs(b.metres - CHART_METRES)).toBeLessThan(5);
   });
 
   it("grows each island in its patch: home and its nearest neighbours' coasts never meet, a strait apart, and close enough to read as fitted", () => {

@@ -16,18 +16,18 @@ describe("the sea chart's layout", () => {
     for (const world of [0, 1, 2]) {
       expect(islandAt("home", world)).toEqual({ x: 0, y: 0 });
       expect(islandAt("dragon", world)).toBeNull();
-      const W = worldOf(world), drift: number[] = [], far = [0, 0, 0, 0, 0, 0], near = [9, 9, 9, 9, 9, 9];
+      const W = worldOf(world), drift: number[] = [], sum = [0, 0, 0, 0, 0, 0], count = [0, 0, 0, 0, 0, 0];
       for (const k of KIND_NAMES) {
         const at = islandAt(k, world)!, d = Math.hypot(at.x, at.y), p = KINDS[k].phase + 1;
         expect(d, k).toBeLessThan(1);
         const drawn = (Math.atan2(at.x, -at.y) * 180) / Math.PI;
         drift.push(Math.abs(((drawn - bearingOf(k, world)) % 360 + 540) % 360 - 180));
-        far[p] = Math.max(far[p], d); near[p] = Math.min(near[p], d);
+        sum[p] += d; count[p]++;
       }
       drift.sort((a, b) => a - b);
       expect(drift[drift.length >> 1]).toBeLessThan(12); // (most near their bearings: its biome's direction)
       expect(drift[drift.length - 1]).toBeLessThan(60);
-      for (let p = 2; p <= 5; p++) expect(near[p], `phase ${p}`).toBeGreaterThan(near[p - 1]); // (each phase further out)
+      for (let p = 2; p <= 5; p++) expect(sum[p] / count[p], `phase ${p}`).toBeGreaterThan(sum[p - 1] / count[p - 1] + 0.05); // (each phase further out, on the whole: their edges may mingle)
       // its own patch: every island's middle is in none of the others'
       for (const [a, pa] of W.islands) for (const [b, pb] of W.islands) {
         if (a === b) continue;
