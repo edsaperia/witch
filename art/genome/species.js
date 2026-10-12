@@ -167,6 +167,21 @@ export const GENOMES = [
         { kind: "wisps", at: "tusks", size: .3 },
       ] },
     ] },
+  // the jungle river's black jaguar (the journey's west, unknown-29's island): a melanistic jaguar, stocky and short-legged with a big
+  // head, black with rosettes a shade darker that show only in the light, gold-green eyes. Its evolution: a round, big-headed cub
+  // whose rosettes still show, a lithe young, a heavy-jawed adult, and the legend: the river's shadow, its rosettes glowing like
+  // moonlight on water, mist rising along its spine, long pale claws, its eyes lit
+  { id: "jaguar", name: "Black jaguar", template: "quadruped", builder: "quad", palette: { hue: .7, sat: .16, val: .3 }, body: { hgt: .95, len: .84, chest: .46, tuck: .52, neck: .26, neckAng: .5, neckW: .48, hr: .29, legW: 1.25, bw: .3 }, head: { snout: .5, snoutD: .8, snoutTaper: .82, cheeks: true, whiskers: true, eyeK: 1.1 }, parts: { ears: { kind: "round", size: .7 }, tail: "jaguar", feet: "paw" }, coat: { rosettes: { k: 8, density: .75 } }, legend: ["mane"],
+    levels: [
+      { body: { len: .6, hr: .33, legW: 1.45 }, coat: { rosettes: { k: 6, density: .8 } }, parts: { ears: { kind: "round", size: .95 } } },
+      { body: { len: .86, legW: 1.1, chest: .5 } },
+      { body: { front: 1.08, legW: 1.4, bw: .33, hgt: 1 }, head: { snoutD: .88 } },
+      { body: { front: 1.15, legW: 1.55, bw: .34, len: .9, hgt: 1.08 }, head: { eyeGlow: true }, coat: { rosettes: { k: 8, density: .8, mat: "MAGIC" } }, features: [
+        { kind: "wisps", at: "mane", size: .22, count: 7, from: .2, to: .95, mat: "MAGIC2", lift: .05 },
+        { kind: "claws", size: .15, mat: "BELLY" },
+        { kind: "ruff", size: .14, count: 12, mat: "BODY2" },
+      ] },
+    ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },

@@ -13,6 +13,6 @@ export const BAMBOO_JUNGLE = {
     terrain: [], decor: { rate: .2, ruins: .5, rocks: .2, freak: .1, lake: 0, modern: .05 },
     feel: "Tall bamboo in dense groves, its stems knocking in the wind, a few kapoks standing far above it; striped light and shadow, close and watchful.",
   },
-  flora: { species: [["bamboo", .55], ["kapok", .25], ["strangler", .1], ["palm", .1]], palette: { sat: 1, val: .95 } },
+  flora: { species: [["bamboo", .55], ["kapok", .25], ["strangler", .2]], palette: { sat: 1, val: .95 } },
   settings: { treeDensity: .7, groundCover: { density: .8, kinds: ["blades", "fern"] } },
 };

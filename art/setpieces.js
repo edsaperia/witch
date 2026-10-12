@@ -254,6 +254,19 @@ const spSETS = {
     elephant(-1.2, 20); elephant(1.2, 21);
     spTufts(m, 26, 3.0, 30, 17, .45);
   },
+  // river jungle (the black jaguar's): a giant fallen across the river, its roots torn up on one bank, a dugout canoe tied under it
+  "log-bridge"(m) {
+    spWater(m, [0, .01, 0], [3.0, 1.0], 1);
+    spLimb(m, [[-2.8, .35, -.3, .38], [-1.0, .6, -.15, .34], [1.0, .7, 0, .3], [2.7, .45, .15, .24]], 2); // the trunk across the water
+    for (let i = 0; i < 7; i++) { const a = -1.2 + i * .4; spLimb(m, [[-2.8, .5, -.3, .12], [-3.0 + Math.cos(a) * .2, .5 + Math.sin(a) * .9, -.3 + Math.sin(a * 2) * .4, .06], [-3.1 + Math.cos(a) * .3, .4 + Math.sin(a) * 1.3, -.3 + Math.sin(a * 2) * .6, .02]], 3); } // its roots, torn up
+    m.ell([-3.0, .45, -.35], [.35, .65, .55], M.BARKD, { group: 3, rough: .04, paint: p => spHash(Math.floor(p[1] * 9), Math.floor(p[2] * 9)) < .3 ? M.TRUNK : undefined }); // earth in its root plate
+    for (const [x, z] of [[-.5, -.1], [1.2, .05], [2.2, .1]]) m.ell([x, .95, z], [.35, .1, .25], M.MOSS, { group: 4 }); // moss along its top
+    for (let i = 0; i < 5; i++) m.chain([[-1 + i * .7, .85, i % 2 ? .25 : -.25, .02], [-1.1 + i * .7, .4, i % 2 ? .3 : -.3, .015], [-1 + i * .7, .05, i % 2 ? .28 : -.28, .01]], M.LEAF3, { group: 5 }); // lianas hanging from it
+    const c = [.3, .07, .75], d = v3.norm([1, 0, -.15]);
+    m.ell(c, [.9, .14, .2], M.WOOD, { dir: d, group: 6, paint: p => p[1] > .14 ? M.BARKD : undefined }); m.ell(v3.add(c, [0, .06, 0]), [.82, .1, .15], M.BARKD, { dir: d, group: 6, cut: true }); // a dugout canoe
+    m.seg(v3.add(c, [.85, .1, -.1]), [1.0, .7, .1], .01, .01, M.STRAW, { group: 7 }); m.seg([-.4, .1, .95], [.6, .9, .7], .02, .02, M.WOOD, { group: 7 }); // its rope, a paddle
+    spTufts(m, 18, 3.2, 10, 21, .5);
+  },
 };
 // The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale); a generated kind
 // (art/props/sets.js) may add a fourth item, its seed and any numbers to fix.
