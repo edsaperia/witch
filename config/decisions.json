@@ -134,7 +134,7 @@
     {
       "id": "groundFog", "label": "Ground fog in the wild", "note": "How thick the low fog lies over the wild ground (thinning near the party): 0 none, 0.5 as built, 1 thick.",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
-      "default": 0.5, "apply": { "knob": "groundFog.density" }
+      "default": 0.5, "apply": { "knob": "groundFog.density" }, "pr": 495, "group": "Ground fog"
     }
   ]
 }
