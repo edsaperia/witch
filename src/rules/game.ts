@@ -1,4 +1,5 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
+import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
@@ -349,6 +350,7 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
   if (g.forest.decorNear(x, z, C.decor).some(p => near(p.x, p.z, C.decor))) return false;
   for (const [k, s] of g.combat.sounds) if (!isHomeKey(k) && near(s.x, s.z, C.sound)) return false; // (home's speakers: below)
   if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, C.speaker))) return false;
+  if (g.witch.mode === "ground" && onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad)) return false; // (on foot, never onto a lake: rules/lakes.ts)
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
 
@@ -525,6 +527,8 @@ function fixedStep(g: Game, controls: Controls): void {
   stepSpacing(g, dt);
   // Enraged creatures stay out of a sleeping or restless legend's circle (Ed, 2026-10-06).
   if (g.tuning.legendCircle?.slow.on !== false) keepEnragedOut(g);
+  // And everyone on foot stays ashore of the lakes (rules/lakes.ts).
+  if (g.map.bounds.lakes) creaturesAshore(g.creatures, g.map.bounds, lakeKnobs(t).pad);
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -617,6 +621,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),
+    round: g.map.bounds.lakes ? (x, z, tx, tz) => roundLakes(g.map.bounds, x, z, tx, tz, lakeKnobs(t).shore + 4) : undefined,
     centre: g.map.dancefloor,
     home: homeArea(g.map),
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),

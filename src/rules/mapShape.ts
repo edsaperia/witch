@@ -31,6 +31,8 @@ export interface Bounds {
   minX: number; maxX: number; minZ: number; maxZ: number;
   /** The island's land map (rules/land.ts); absent on the square map. */
   land?: LandMap;
+  /** The lakes' water (rules/lakes.ts): a land map whose "land" is the lakes' water (+ on a lake); absent with no lakes. */
+  lakes?: LandMap;
   /** The map's seed (the beach's width varies by it). */
   seed?: number;
 }
