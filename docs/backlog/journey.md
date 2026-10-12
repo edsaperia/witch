@@ -46,6 +46,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **In the treehouse** the chart is a miniature of the world itself: a water feature, the disc with its islands, its sea pouring off the rim into a pool in the floor.
 - Fits what's drawn today: the world's bend already curves the ground away toward the horizon.
 - **Sailing zooms in** (Ed, 2026-10-11, eventually): choosing an island on the chart transitions to it by zooming the chart's camera down into the island, all the way to the dancefloor at its centre, where the night begins.
+- **Open sea round the edge, and the moon rising** (Ed, 2026-10-12): an empty band of sea round the chart's edge, past the outermost islands. As the map screen opens, the moon rises over its north-west edge (the same moon whose light casts the islands' shadows on the sea, Ed's chart-shadows ask).
 
 ### Sigils, unified (Ed, 2026-10-12)
 
