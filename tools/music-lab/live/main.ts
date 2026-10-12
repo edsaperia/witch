@@ -258,7 +258,7 @@ function build(): void {
   $("witch").append(choice(["off", "on"] as const, o => (o === "on" ? "On" : "Off"), () => (state.witchHouse ? "on" : "off"), o => { state.witchHouse = o === "on"; if (o === "on" && state.mode === BASE.scale) state.mode = "phrygian"; }));
   // the ingredients
   for (const l of LAYERS) {
-    const voice = l === "vocalise" ? choice(VOICES, (v: Voice) => ({ synth: "Synth soprano", fof: "FOF voice", pinkTrombone: "Pink Trombone (5)", recorded: "Recorded voice (5b)" })[v], () => state.voice, v => { state.voice = v; if (player?.playing) player.prewarm(sungNotes(styleFor(state))); }) : undefined;
+    const voice = l === "vocalise" ? choice(VOICES, (v: Voice) => ({ synth: "The game's singer", fof: "FOF voice", pinkTrombone: "Pink Trombone (5)", recorded: "Recorded voice (5b)" })[v], () => state.voice, v => { state.voice = v; if (player?.playing) player.prewarm(sungNotes(styleFor(state))); }) : undefined;
     $("layers").append(row(LAYER_NAMES[l], l, () => state.layers[l as Layer], v => { state.layers[l as Layer] = v; }, 1.5, l === "vocalise" ? 1 : 0, voice));
   }
   // the voice effects

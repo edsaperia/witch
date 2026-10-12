@@ -93,9 +93,9 @@ vec3 bendW(vec3 w) {
 }
 `;
 
-/** HEIGHT_GLSL plus clipOf(w): a world point bent and projected (vertex shaders only). */
-export const HEIGHT_VERT_GLSL = HEIGHT_GLSL + /* glsl */ `
-vec4 clipOf(vec3 w) { return projectionMatrix * viewMatrix * vec4(bendW(w), 1.0); }
+/** HEIGHT_GLSL plus overBend(w) and groundSeen(w), whether the bent ground hides a world point: for vertex or fragment
+ *  shaders (a fragment shader tests each of its pixels, so what floats over the horizon is cut off along it). */
+export const GROUND_SEEN_GLSL = HEIGHT_GLSL + /* glsl */ `
 // 1 if a (lifted, unbent) world point shows over the bent ground's horizon, 0 if the bend hides it
 // (seenOverBend's twin): for what is drawn without a depth test, like lights glimmering through the
 // canopy, so they don't show through the earth (Ed, v256).
@@ -122,6 +122,11 @@ float groundSeen(vec3 w) {
   }
   return 1.0;
 }
+`;
+
+/** GROUND_SEEN_GLSL plus clipOf(w): a world point bent and projected (vertex shaders only). */
+export const HEIGHT_VERT_GLSL = GROUND_SEEN_GLSL + /* glsl */ `
+vec4 clipOf(vec3 w) { return projectionMatrix * viewMatrix * vec4(bendW(w), 1.0); }
 `;
 
 /** Glowing points (rgba vertex colours, added on) given as height above the ground: motes, trails. */

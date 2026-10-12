@@ -4,6 +4,7 @@
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
 //   node art/preview.mjs sets all art/previews/set-pieces.png [scale]   (every area's set piece, five to a row, the witch for scale)
+//   node art/preview.mjs ent 0 art/previews/ent.png [scale]   (the treehouse Ent: towards and away, the witch at the decks between its far and near halves; and the deck up close; NIGHT=1 lit by its own lights)
 //   node art/preview.mjs home 0 art/previews/treehouse.png [scale]   (the treehouse with the witch sitting in its studio, sit frame 0 or 1; NIGHT=1 lit by its own lights; STUDIO=1 adds the studio up close, framed on its camera anchor)
 //   node art/preview.mjs relics modern|playground|sports|<ids> art/previews/relics-modern.png [scale]   (PER=n to a row)
 //   node art/preview.mjs country farm|street|scene|<ids> art/previews/country-farm.png [scale]   (countryside and street pieces; PER=n to a row)
@@ -225,6 +226,32 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     });
     const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale;
     const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+    return big.toDataURL("image/png");
+  }
+  if (what === "ent") { // the treehouse Ent (art/ent.js): towards and away, the witch at the decks (dj frame `list`) between its far and near halves; then the deck up close
+    const wc = G.witchColours(st), hc = G.entColours(st), panels = [], wsp = G.witchSprite(st, { pose: "dj", frame: +list || 0 }), wit = G.bake(wsp, wc, st, st.cOutline);
+    for (const facing of ["towards", "away"]) {
+      const T = G.entSprite(st, { facing }), far = G.bake(T.far, hc, st, "none"), near = G.bake(T.near, hc, st, "none");
+      panels.push({ T, far, near, w: far.w, h: far.h, wx: Math.round(T.anchors.seat.x - wsp.anchors.ground[0]), wy: Math.round(T.anchors.seat.y - wsp.anchors.ground[1]) });
+    }
+    { // the deck up close, round the first panel's deck (twice the size)
+      const P = panels[0], cw = 260, ch = 130, cx = Math.round(P.T.anchors.deck.x - cw / 2), cy = Math.round(P.T.anchors.deck.y - ch * .45), K = 2;
+      const c2 = d => { const c = document.createElement("canvas"); c.width = cw * K; c.height = ch * K; const g2 = c.getContext("2d"); g2.imageSmoothingEnabled = false; g2.drawImage(d.far, -cx * K, -cy * K, P.w * K, P.h * K); g2.drawImage(d.wit, (P.wx - cx) * K, (P.wy - cy) * K, wit.w * K, wit.h * K); g2.drawImage(d.near, -cx * K, -cy * K, P.w * K, P.h * K); return c; };
+      panels.push({ close: true, A: c2({ far: P.far.A, wit: wit.A, near: P.near.A }), N: c2({ far: P.far.N, wit: wit.N, near: P.near.N }), w: cw * K, h: ch * K, T: { anchors: { lights: P.T.anchors.lights.map(L => ({ ...L, x: (L.x - cx) * K, y: (L.y - cy) * K })).filter(L => L.x >= 0 && L.y >= 0 && L.x <= cw * K && L.y <= ch * K) } } });
+    }
+    const gap = 10, w = panels.reduce((a, p) => a + p.w + gap, gap), h = Math.max(...panels.map(p => p.h)) + gap * 2;
+    const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    const A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d"), lights = [];
+    if (!window.NIGHT) { a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, st.groundVal)})`; a.fillRect(0, 0, w, h); } n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
+    let x = gap;
+    for (const P of panels) { const y = h - gap - P.h;
+      if (P.close) { a.drawImage(P.A, x, y); n.drawImage(P.N, x, y); }
+      else for (const [L, dx, dy] of [[P.far, 0, 0], [wit, P.wx, P.wy], [P.near, 0, 0]]) { a.drawImage(L.A, x + dx, y + dy); n.drawImage(L.N, x + dx, y + dy); }
+      for (const L of P.T.anchors.lights) lights.push({ x: x + L.x, y: y + L.y, z: 10, R: 48, power: 1.1, rgb: L.rgb });
+      x += P.w + gap; }
+    let lit = mk(); shade({ a, n, w, h }, lit, window.NIGHT ? st : studio, window.NIGHT ? lights : [], [0, 0, w, h]);
+    if (window.NIGHT) { const under = mk(), u = under.getContext("2d"); u.fillStyle = "#0c1014"; u.fillRect(0, 0, w, h); u.drawImage(lit, 0, 0); lit = under; }
+    const big = document.createElement("canvas"); big.width = w * scale; big.height = h * scale; const g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(lit, 0, 0, w * scale, h * scale);
     return big.toDataURL("image/png");
   }
   if (what === "home") { // the treehouse at night, the witch sitting in its studio: towards (whole, as from the treetops), its base only (as from the ground), away
