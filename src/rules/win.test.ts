@@ -13,7 +13,10 @@ import { barAt, musicCue, planBlock } from "./musicPlan";
 import type { MusicStyle } from "./musicScore";
 import { composeFloor, newFloor } from "./dancefloor";
 import { floorInputs } from "./game";
-import { congaPlace, congaRadius, finalStone, legendPlaces, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winPulse, winTarget } from "./win";
+import { congaPlace, congaRadius, finalStone, islandCleared, legendPlaces, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winLit, winPulse, winPulseOut, winTarget } from "./win";
+import { cellKey, clearArea, wavePlan } from "./party";
+import { leyChain } from "./leylines";
+import { pulseLinks } from "./leypulse";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const W = { ...WIN_DEFAULT, ...(TUNING.win ?? {}) };
@@ -65,7 +68,9 @@ describe("the end of the route (rules/win.ts)", () => {
     const lap = g.win!.lap;
     expect(lap[lap.length - 1].key).toBe("home");
     const waves = [...g.party.waveReached!.entries()].sort((a, b) => b[1].wave - a[1].wave).map(([k]) => k);
-    expect(lap.slice(0, -1).map(s => s.key)).toEqual(waves);
+    expect(lap[0].key).toBe(""); // (where it set off: the wave's pulse, at the route's last stone once it's done)
+    expect(lap.slice(1, -1).map(s => s.key)).toEqual(waves);
+    expect(g.win!.out!.length).toBe(1); // (nothing ahead: the outward pulse has nowhere to go)
     let pulses = 0;
     run(g, (lap[lap.length - 1].at - g.clock.time) + 0.5, () => { watch(); if (winPulse(g)) pulses++; });
     expect(pulses).toBeGreaterThan(0);
@@ -75,6 +80,57 @@ describe("the end of the route (rules/win.ts)", () => {
     expect(planBlock(style, cue, bar).section).toBe(style.victory && style.sections[style.victory] ? style.victory : "drop");
     expect(fired).toEqual(waves);
     expect(g.win?.phase).toBe("won");
+  }, 60000);
+
+  it("the island cleared before the route's end (Ed, 2026-10-12): the lap sets off at once, from where the wave's pulse is, one pulse home and one on to the route's end, each stone firing once; the waves stop", () => {
+    const g = newGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    stepGame(g, idle, STEP);
+    for (let k = 0; k < 3; k++) stepGame(g, { ...idle, nextWave: true }, STEP);
+    for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = h.max = 1e9;
+    g.party.bootUntil = 0; g.party.paused = false; run(g, 10); // (the boot done: the wave's pulse partway along its link)
+    expect(g.win).toBeFalsy();
+    const reached = leyChain(g.party, g.map).current, plan = [...wavePlan(g.party, g.map).entries()].sort((a, b) => a[1] - b[1]).map(([k]) => k);
+    expect(plan.length).toBeGreaterThan(1);
+    // every area still to come cleared at once (as rules/clear.ts would, one by one), the stragglers won over
+    for (const c of g.creatures) if (plan.includes(cellKey(c.cell)) && !c.boss) c.gone = true; // (cleared: none of theirs left wild)
+    for (const k of plan) { const [x, y] = k.split(",").map(Number); clearArea(g.party, g.map, [x, y], g.clock.time); }
+    expect(islandCleared(g)).toBe(true);
+    expect(routeDone(g)).toBe(false);
+    calmAll(g);
+    const at = pulseLinks(g.party, g.map, g.clock.time), wave = g.party.wave, fired: string[] = [];
+    expect(at).toBeGreaterThan(reached);
+    stepGame(g, idle, STEP);
+    expect(g.win?.phase).toBe("lap");
+    const { lap, out } = { lap: g.win!.lap, out: g.win!.out! };
+    // both set off from the wave's pulse's place on the line (links along the route as drawn), one each way
+    expect(lap[0].links).toBeCloseTo(at, 1);
+    expect(out[0]).toBe(lap[0]);
+    expect(lap.slice(1).map(s => s.links)).toEqual([...Array(reached + 1).keys()].reverse());
+    expect(lap[lap.length - 1].key).toBe("home");
+    expect(out.slice(1).map(s => s.key)).toEqual(plan);
+    const home = winPulse(g)!, away = winPulseOut(g)!;
+    expect(home.links).toBeLessThanOrEqual(lap[0].links);
+    expect(away.links).toBeGreaterThanOrEqual(lap[0].links);
+    expect(winLit(g)).toBeCloseTo(away.links, 6);
+    const watch = () => { for (const e of g.waveEvents) if (e.kind === "waveCelebrate" && e.at === g.clock.time && e.key !== "home" && !isHomeKey(e.key) && g.win!.phase === "lap") fired.push(e.key); };
+    let lastHome = Infinity, lastOut = -Infinity;
+    run(g, Math.max(lap[lap.length - 1].at, out[out.length - 1].at) - g.clock.time + 0.5, () => {
+      watch();
+      const h = winPulse(g), o = winPulseOut(g);
+      if (h) { expect(h.links).toBeLessThanOrEqual(lastHome + 1e-9); lastHome = h.links; }
+      if (o) { expect(o.links).toBeGreaterThanOrEqual(lastOut - 1e-9); lastOut = o.links; }
+    });
+    // every stone on the route fired once (the reached ones by the home pulse, the cleared ones by the outward one, before the win)
+    const firedLap = new Set(fired);
+    expect(fired.length).toBe(firedLap.size);
+    for (const k of plan) if (out.find(s => s.key === k)!.at < lap[lap.length - 1].at) expect(firedLap.has(k)).toBe(true);
+    for (const s of lap.slice(1, -1)) expect(firedLap.has(s.key)).toBe(true);
+    expect(g.win?.phase).toBe("won");
+    expect(g.party.wave).toBe(wave); // (no wave came after the lap set off)
+    expect(winPulseOut(g)).toBeNull();
+    expect(winLit(g)).toBe(out[out.length - 1].links);
   }, 60000);
 
   it("the win: the dealt legends woken and home (an enraged one lulled, its island lost), everyone else in the conga, her leash let go, nothing fighting; then the card", () => {

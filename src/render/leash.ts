@@ -30,7 +30,7 @@ import { lobHeight } from "./invites";
 
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
-import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
+import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
 import { drawCombat } from "./leash/combat";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
@@ -62,6 +62,12 @@ export class LeashView {
   colours = new Map<string, THREE.Color>();
   /** The sigils' halos this frame, times today's (the tuning's leash.sigilHalo; Ed's pick B: none). */
   haloGain = 1;
+  /** Under every sigil lying on the ground (Ed, 2026-10-12, Bravo's o3): its dark backing disc, then its glyph opaque in its full neon,
+   *  both painted (not added) just before the additive glyph (groundSigil). */
+  backing: Instances;
+  ink: Instances;
+  /** Each glyph's reach from its slot's middle, a share of its half-width (measured from the atlas when drawn), by its rect. */
+  private extent = new Map<string, number>();
   standing: Instances;
   flat: Instances;
   /** The placed sigils, and the happy creatures' runes (Ed, 2026-10-12), again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
@@ -133,6 +139,14 @@ export class LeashView {
     g.fillStyle = dot; g.fillRect(0, 0, SLOT, SLOT);
     // The last slot: a solid square (health bars).
     g.fillStyle = "#ffffff"; g.fillRect((SQ % SLOTS) * SLOT + 4, Math.floor(SQ / SLOTS) * SLOT + 4, SLOT - 8, SLOT - 8);
+    // The one before: the backing disc, in chunky cells of 2 px (16 across), full inside 80% of its radius and a lighter outer step
+    // (Bravo's o3: "edges not too smooth"), its alpha the step's.
+    { const ox = (DISC % SLOTS) * SLOT, oy = Math.floor(DISC / SLOTS) * SLOT, n = SLOT / 2;
+      for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+        const r = Math.hypot(cx + 0.5 - n / 2, cy + 0.5 - n / 2) / (n / 2);
+        if (r > 1) continue;
+        g.fillStyle = r <= 0.8 ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)"; g.fillRect(ox + cx * 2, oy + cy * 2, 2, 2);
+      } }
     this.tex = new THREE.CanvasTexture(this.canvas);
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number, depthTest = true, solid = false, pull = 0) => new THREE.ShaderMaterial({
@@ -148,9 +162,27 @@ export class LeashView {
     this.through = new Instances(thr); this.through.mesh.renderOrder = 13; // (scenery marks 1, grass 2: sprites.ts, grass.ts; she clears it)
     this.solid = new Instances(mat(0, true, true));
     this.blood = new Instances(mat(1, true, true, BLOOD_PULL)); // (over the grass tufts: Ed's pick, 2026-10-09)
-    scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh);
+    this.backing = new Instances(mat(1, true, true)); this.backing.mesh.renderOrder = 2.9;
+    this.ink = new Instances(mat(1, true, true)); this.ink.mesh.renderOrder = 2.95;
+    scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh);
     const hex = game.tuning.berries.colour.replace("#", "");
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
+  }
+
+  /** A sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's): Bravo's o3, which Ed took (2026-10-12: "a
+   *  dark patch directly underneath a sigil is quite helpful for making it more readable", "the same width as the sigil, darker, edges
+   *  not too smooth", "sigils less transparent"). A near-black backing disc as wide as the glyph's own pixels (times
+   *  leash.sigilBacking.size) at leash.sigilBacking.dark, then the glyph painted opaque in its full neon, then the dim added glyph as
+   *  ever (its glow). `a` is how much it shows (a fresh rune's, the ghost's), `draw` its write-on. */
+  groundSigil(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1): void {
+    const B = this.game.tuning.leash.sigilBacking;
+    if (B && B.dark > 0) {
+      const reach = this.extent.get(`${uv[0]},${uv[1]}`) ?? 1;
+      const shown = Math.min(1, a * (B.ink ?? 1)); // (less see-through than the glow it was: Ed, "sigils less transparent")
+      this.backing.add(x, y, z, size * reach * B.size, this.uv(DISC), 0.02, 0.02, 0.035, B.dark * shown, draw);
+      this.ink.add(x, y, z, size, uv, Math.min(1, r), Math.min(1, g), Math.min(1, b), shown, draw);
+    }
+    this.flat.add(x, y, z, size, uv, r, g, b, a, draw);
   }
 
   /** A species' sigil at a level (it grows more ornate with level), white in the atlas, tinted
@@ -167,8 +199,13 @@ export class LeashView {
     drawSigil(g, species, { x: ox + 1, y: oy + 1, size: (W - 2) / (legendary ? LEGEND_SCALE : 1), level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary });
     // Crisp: no soft edges, so it reads as pixel art.
     const img = g.getImageData(ox, oy, W, W);
-    for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 90 ? 255 : 0;
+    let reach = 0;
+    for (let i = 3; i < img.data.length; i += 4) {
+      img.data[i] = img.data[i] > 90 ? 255 : 0;
+      if (img.data[i]) { const k = (i - 3) / 4, px = k % W + 0.5 - W / 2, py = Math.floor(k / W) + 0.5 - W / 2; reach = Math.max(reach, Math.hypot(px, py)); }
+    }
     g.putImageData(img, ox, oy);
+    const uv = this.uv(s, legendary ? 2 : 1); this.extent.set(`${uv[0]},${uv[1]}`, Math.min(1, reach / (W / 2)));
     const c = sigilColour(species);
     this.colours.set(species, new THREE.Color(c[0] / 255, c[1] / 255, c[2] / 255));
     this.tex.needsUpdate = true;
@@ -391,7 +428,7 @@ export class LeashView {
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
-    this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin();
+    this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin(); this.backing.begin(); this.ink.begin();
     // Every sigil's glyph (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home) under the
     // bloom's threshold, and its halo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation").
     const gain = L.sigilGlyph ?? 1, halo = L.sigilHalo ?? 1;
@@ -466,8 +503,9 @@ export class LeashView {
     for (const p of s.placed) {
       const c = g.creatures[p.id], sg = this.sigilOf(c), col = this.colours.get(c.species)!;
       const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
-      this.flat.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
-      if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, Math.min(1, (time - p.at) / 0.8));
+      const drawn = writeOn(g.herTime, p.at); // (on her clock, as its stamp is: Bravo's dark-circle diagnosis, 2026-10-12)
+      this.groundSigil(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, drawn);
+      if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, drawn);
       if (halo > 0) this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38 * halo);
     }
 
@@ -479,7 +517,7 @@ export class LeashView {
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
       const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + (t.leash.restAbove ?? 0);
-      this.flat.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      this.groundSigil(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
       if (ready && halo > 0) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18 * halo);
     }
@@ -512,11 +550,11 @@ export class LeashView {
     const bottomRelic = stackBottom(s)?.kind === "relic";
     if (w.mode === "ground" && bottomRelic && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !g.relics.some(r => (r.state === "lying" || r.state === "dropped") && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) {
       const col = (this.slotOf("relic", 0), this.colours.get("relic")!); // (a flask's at the bottom: its ghost, Ed 2026-10-08: "it's what you put down when you press e")
-      this.flat.add(w.x, 0, w.z, 3.4, this.uv(this.slotOf("relic", 0)), col.r, col.g, col.b, 0.22);
+      this.groundSigil(w.x, 0, w.z, 3.4, this.uv(this.slotOf("relic", 0)), col.r, col.g, col.b, 0.22);
     } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, t.leash.restAbove ?? 0) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const sg = this.sigilOf(c);
-      this.flat.add(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
+      this.groundSigil(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
     }
 
     // Relics (#87): where one lies, its bottle stands among the scenery in its mound (render/view/scenery.ts, Ed 2026-10-09:
@@ -531,7 +569,7 @@ export class LeashView {
       // stand on it and press the sigil button to pick the relic up), gold.
       {
         const col = (this.slotOf("relic", 0), this.colours.get("relic")!), pulse = 1.05 + 0.25 * Math.sin(time * 2 + r.id);
-        this.flat.add(r.sx, 0.02, r.sz, 3.4, this.uv(this.slotOf("relic", 0)), col.r * pulse, col.g * pulse, col.b * pulse, 1);
+        this.groundSigil(r.sx, 0.02, r.sz, 3.4, this.uv(this.slotOf("relic", 0)), col.r * pulse, col.g * pulse, col.b * pulse, 1);
         if (halo > 0) this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38 * halo);
       }
       if (dropped || !relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
@@ -549,7 +587,7 @@ export class LeashView {
 
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
-    this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end();
+    this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end();
     bubbles(this, time, camera, width, height);
     drawDreams(this, camera, width, height);
     drawSnores(this, camera, width, height);

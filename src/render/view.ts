@@ -93,7 +93,7 @@ import { setFrameUniforms } from "./view/frameUniforms";
 import { drawWitch } from "./view/witch";
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
-import { winPulse } from "../rules/win";
+import { winLit, winPulse, winPulseOut } from "../rules/win";
 
 /** Her shadow, lying on the rolling ground corner by corner. */
 const SHADOW_VERT = `varying vec2 vUv;
@@ -280,8 +280,9 @@ export class View {
   /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
   readonly witchBase = { x: 0, y: 0, z: 0 };
   shadowList: ShadowInstance[] = [];
-  /** The trunks' shadows from her glow and the fires, a batch an area type (render/trunkShadows.ts). */
-  trunkShadowBatches = new Map<number, TrunkShadowBatch>();
+  /** The trunks' shadows from her glow and the fires, a batch an area type (render/trunkShadows.ts); and the scenery's, a batch
+   *  an atlas (decor, relics, scenes: render/view/scenery.ts; the runestones, the soundsystems: render/view/home.ts, render/party.ts). */
+  trunkShadowBatches = new Map<number | string, TrunkShadowBatch>();
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
   mist: Mist | null = null;
@@ -418,7 +419,7 @@ export class View {
     this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
     this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
-    this.partyView = new PartyView(this.assets.soundsystems, this.mpp, new SoundsystemGenView(this.scene, this.assets, this.mpp, this.renderer, this.camera));
+    this.partyView = new PartyView(this.assets.soundsystems, this.mpp, new SoundsystemGenView(this.scene, this.assets, this.mpp, this.renderer, this.camera, this.trunkShadowBatches));
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
@@ -432,6 +433,7 @@ export class View {
     this.ley.scale(this.leyBase);
     this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
+    this.ley.addMeshes = m => this.scene.add(...m); // (the victory lap's outward sparkler, made as it's first needed)
     this.glades = new Glades(t.glades);
     this.scene.add(this.glades.points);
     if (t.wisps?.on) { this.wisps = new Wisps(t.wisps); this.scene.add(this.wisps.points); }
@@ -823,7 +825,7 @@ export class View {
       // line the boot branches off unlit ahead of where it will set off (as it is once the boot ends: no change as it does)
       const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
       this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
-      this.ley.lap(winPulse(g)?.links ?? null); // (the victory lap: its sparkler racing home along the route, rules/win.ts)
+      this.ley.lap(winPulse(g)?.links ?? null, winPulseOut(g)?.links ?? null, winLit(g)); // (the victory lap: its sparklers racing home and on to the route's end from where the wave's pulse was, rules/win.ts)
       // None till the party spell, nor before the boot's pulse reaches where the first link leaves the home ring (Ed, v2001 and
       // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
       // (leyReveal, by the boot pulse's own progress), then on along the route.
@@ -921,7 +923,8 @@ export class View {
         const base = t.lights.campfire.strength, fires = this.forestLights.filter(l => l.rgb === this.fire).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, MAX_FIRES);
         fires.forEach((l, i) => { U.uFires.value[i].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); U.uFireFade.value[i] = Math.min(1, l.strength / (base * 0.8)); });
         U.uFireCount.value = fires.length; U.uTrunkHard.value = TS.mode === "debug" ? 2 : TS.mode === "hard" ? 1 : 0; U.uTrunkStrength.value = TS.strength * (1 - lift); U.uTrunkLong.value = TS.long;
-        U.uGlowReach.value = TS.glowReach; U.uGlowLift.value = TS.glowHeight; U.uTrunkAcross.value = TS.across; U.uTrunkCore.value = TS.core;
+        U.uGlowReach.value = TS.glowReach; U.uGlowLift.value = TS.glowHeight; U.uTrunkAcross.value = TS.across; U.uTrunkCore.value = TS.core; U.uTrunkFoot.value = TS.foot ?? 0; U.uTrunkTaper.value = TS.taper ?? 0; U.uTrunkNear.value = TS.near ?? 0; U.uTrunkCover.value = TS.cover ?? 0;
+        U.uFireRgb.value.copy(this.fire); U.uTintScenery.value = TS.tint ?? 0; U.uTintTrees.value = TS.tintTrees ?? 0; U.uCasterLight.value = TS.glowLight ?? 0; U.uSceneryFoot.value = TS.sceneryFoot ?? 0; U.uSceneryTaper.value = TS.sceneryTaper ?? 0;
       }
     }
     this.time("grass+lights");
