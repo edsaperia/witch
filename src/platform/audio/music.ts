@@ -96,6 +96,9 @@ export class Music {
     this.engine?.update(cue, gameTime, clock, on, 0.6, rate, stop > 0 ? Math.max(M?.over?.floor ?? 0.15, rate) : tapePitch(rate, M?.slow)); // (stopping: the pitch falls all the way with it)
   }
 
+  /** Sound shed to spare the audio thread (shed.ts): the engine's own (unison, tails, reverb, delay). */
+  set shed(level: number) { if (this.engine) this.engine.shed = level; }
+
   /** The engine's continuity (tools/music-lab/flight.cjs). */
   get stats() { return this.engine?.stats ?? { resyncs: 0, late: 0, gap: 0, ahead: 0 }; }
 
@@ -104,7 +107,8 @@ export class Music {
   /** The legend circle's layer, which reaches the speakers on its own (the measured output taps it too). */
   get circleOutput(): AudioNode { return this.circleGain; }
   /** Whether it should be heard now: its volume turned up. */
-  get audible(): boolean { return this.master.gain.value > 0.02; }
+  /** Not shut by a knockdown (the engine's gate: her silence till the new record, Ed 2026-10-09) and turned up. */
+  get audible(): boolean { return this.master.gain.value > 0.02 && !this.engine?.gated; }
   /** Silenced for good and let go (the watchdog building afresh). */
   dispose(): void { try { this.master.disconnect(); this.circleGain.disconnect(); } catch { /* gone */ } }
 

@@ -18,24 +18,22 @@ const root = path.join(__dirname, "../.."), out = path.join(root, "previews/menu
     await page.waitForSelector("#creator-start", { timeout: 60000 });
     await page.waitForFunction(() => window.__creator.progress().ready, null, { timeout: 240000 }); // (screenshots are quick once the forest is grown)
     await page.waitForTimeout(1500);
-    const open = () => page.$$eval("#creator fieldset[data-box]", fs => fs.filter(f => f.querySelector("legend + div").style.display !== "none").map(f => f.dataset.box));
-    const ids = await page.$$eval("#creator fieldset[data-box]", fs => fs.map(f => f.dataset.box));
+    // (the boxes are tabs down the panel's left since 2026-10-06: one page shows at a time, its tab opens it)
+    const open = () => page.$$eval("#creator fieldset[data-box]", fs => fs.filter(f => f.style.display !== "none").map(f => f.dataset.box));
+    const ids = await page.$$eval("#creator [data-tab]", ts => ts.filter(t => t.style.display !== "none").map(t => t.dataset.tab)); // (her items' boxes: the extra pages' tabs are under the panel)
     console.log("boxes", ids.join(" "));
     // each box in turn: only it open
     for (const id of ids) {
-      if ((await open()).join() !== id) await page.click(`#creator fieldset[data-box="${id}"] legend`);
+      if ((await open()).join() !== id) await page.click(`#creator [data-tab="${id}"]`);
       const o = await open();
       if (o.length !== 1 || o[0] !== id) throw new Error(`opening ${id}: open ${o.join()}`);
       if (["hat", "outfit", "broom", "scarf"].includes(id)) await page.screenshot({ path: path.join(out, `box-${id}.png`), clip: { x: 1100, y: 0, width: 500, height: 900 } });
     }
-    // closing the open one leaves none open
-    await page.click(`#creator fieldset[data-box="${ids[ids.length - 1]}"] legend`);
-    if ((await open()).length) throw new Error("closing left one open");
-    // the hat's own picker: its plume, then a colour off the rainbow
-    await page.click('#creator fieldset[data-box="hat"] legend');
+    // the hat's own picker: its plume, then a swatch off the grid
+    await page.click('#creator [data-tab="hat"]');
     await page.click('#creator fieldset[data-box="hat"] button[data-part="plume"]');
-    const c = await page.$('#creator fieldset[data-box="hat"] canvas[data-strip="hue"]'), b = await c.boundingBox();
-    await page.mouse.click(b.x + b.width * .55, b.y + b.height / 2);
+    const grid = '#creator fieldset[data-box="hat"] [data-grid]', gb = await (await page.$(grid)).boundingBox();
+    await page.click(grid, { position: { x: gb.width * .55, y: gb.height * .5 } }); // (scrolled into view; a pure hue's swatch)
     const plume = await page.evaluate(() => JSON.stringify(window.__creator.genome().palette?.plume));
     console.log("plume", plume);
     if (!plume || plume === "undefined") throw new Error("the hat's picker didn't colour the plume");

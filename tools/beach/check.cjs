@@ -54,8 +54,8 @@ async function open(browser, port, seed) {
       w.frame(C({ toggleMode: true }), dt, false);
       for (let i = 0; i < 90; i++) w.frame(C(), dt, false); // (down)
       await fly(600, out.ground, { moveX: 1 });
-      const u = v.ground?.mesh?.material?.uniforms?.uBeach?.value;
-      return { ...out, beachOn: u ? u.z > 0 : null, beach: (w.game.beach ?? []).some(s => !s.idle) };
+      const U = v.ground?.mesh?.material?.uniforms, u = U?.uBeach?.value; // (on: .x since the land map, 2026-10-11; before it, .z, the sand's width)
+      return { ...out, beachOn: u ? (U.uLand ? u.x > 0 : u.z > 0) : null, beach: (w.game.beach ?? []).some(s => !s.idle) };
     });
     const row = (k, a) => console.log(`${k.padEnd(8)} frame work median ${pct(a, 0.5).toFixed(2)} ms  p99 ${pct(a, 0.99).toFixed(2)} ms  worst ${Math.max(...a).toFixed(2)} ms`);
     console.log(`\n${root}: an ordinary run (seed 123)`);
@@ -71,10 +71,9 @@ async function open(browser, port, seed) {
     fs.mkdirSync(out, { recursive: true });
     // Out to the edge toward the beach witches, over the treetops.
     const aim = await page.evaluate(() => {
-      const g = window.witch.game, c = g.map.bounds.circle, b = g.beach[0];
-      const a = Math.atan2(b.z - c.z, b.x - c.x) + 0.2, r = c.r - 200; // (along the coast from them: she lies down alone first)
-      g.witch = { ...g.witch, x: c.x + Math.cos(a) * r, z: c.z + Math.sin(a) * r, seated: false, vx: 0, vz: 0 };
-      return { nx: Math.cos(a), nz: Math.sin(a), witches: b.list.length };
+      const g = window.witch.game, b = g.beach[0], L = g.map.bounds.land, s = L.shore(b.x, b.z), p = L.along(s.loop, s.s + 120); // (along the coast from them: she lies down alone first)
+      g.witch = { ...g.witch, x: p.x - p.nx * 200, z: p.z - p.nz * 200, seated: false, vx: 0, vz: 0 };
+      return { nx: p.nx, nz: p.nz, witches: b.list.length };
     });
     check(aim.witches > 0, `seed 2 has beach witches (${aim.witches})`);
     const step = (n, o) => page.evaluate(([n, o]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60, i === n - 1); const s = w.game.witch; return { mode: s.mode, stargazing: !!s.stargazing, x: s.x, z: s.z }; }, [n, o]);
@@ -89,11 +88,11 @@ async function open(browser, port, seed) {
     await art([null]); s = await step(30, {});
     await page.screenshot({ path: path.join(out, "beach-stargaze.png") });
     // Over to the witches: walk to them, then keep still.
-    await page.evaluate(() => { const g = window.witch.game, b = g.beach[0], c = g.map.bounds.circle, k = 4 / Math.hypot(b.x - c.x, b.z - c.z); g.witch = { ...g.witch, stargazing: false, x: b.x - (b.x - c.x) * k, z: b.z - (b.z - c.z) * k, vx: 0, vz: 0 }; });
+    await page.evaluate(() => { const g = window.witch.game, b = g.beach[0], s = g.map.bounds.land.shore(b.x, b.z); g.witch = { ...g.witch, stargazing: false, x: b.x - s.nx * 4, z: b.z - s.nz * 4, vx: 0, vz: 0 }; });
     const met = [];
     for (let i = 0; i < 40; i++) { await step(30, {}); const p = await page.evaluate(() => window.witch.game.beach[0].players[0]?.pose); if (p && met[met.length - 1] !== p) met.push(p); if (met.length === 2) { await art(await page.evaluate(() => window.witch.game.beach[0].list.map(w => w.seed % 12))); await step(2, {}); await page.screenshot({ path: path.join(out, "beach-witches.png") }); } }
     check(met.length >= 3, `landed by them, a beach witch comes over: ${met.join(", ")}`);
-    await page.evaluate(() => { const g = window.witch.game, c = g.map.bounds.circle; g.witch = { ...g.witch, x: c.x, z: c.z + 30 }; });
+    await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor; g.witch = { ...g.witch, x: d.x, z: d.z + 30 }; });
     await step(60, {});
     const gone = await page.evaluate(() => window.witch.game.beach.every(s => s.idle));
     check(gone, "back home, the beach witches are left alone");

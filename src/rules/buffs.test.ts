@@ -247,7 +247,7 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
   function walk(sp: string[], secs: number, each: (i: number) => Partial<Controls> = () => ({})): number {
     const g = newGame(7, t);
     g.clock.paused = false; g.party.paused = true; g.buffs.forced = sp;
-    g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0 };
+    g.witch = { ...g.witch, seated: false, perch: false, mode: "ground", lift: 0 };
     g.witches[0].health.hp = 1e6;
     const x0 = g.witch.x;
     for (let i = 0; i < secs / STEP; i++) stepGame(g, ctl(each(i)), STEP);
@@ -264,7 +264,7 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
   it("Decoy (beaver): blinking leaves a waiting 💌 where she was", () => {
     const g = newGame(7, t);
     g.clock.paused = false; g.party.paused = true; g.buffs.forced = ["beaver"];
-    g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0 };
+    g.witch = { ...g.witch, seated: false, perch: false, mode: "ground", lift: 0 };
     const x0 = g.witch.x;
     stepGame(g, ctl({ dash: true }), STEP);
     const cache = g.witches[0].invites.letters.find(L => L.kind === "cache");

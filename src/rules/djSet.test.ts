@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { newBeatClock, beatAt } from "./beat";
 import { PARTY_CAST, type PartyState } from "./party";
-import { DJ_ROUTINE, DJ_ROUTINE_BEATS, djIntroEnd, djRoutineAt, djRoutineStart, djStrokes, heldByRoutine } from "./djSet";
+import { DJ_ROUTINE, DJ_ROUTINE_BEATS, djIntroEnd, djRoutineAt, djRoutineStart, djStrokes, heldByRoutine, scratchRoutine } from "./djSet";
 import { DJ_GESTURES } from "../../art/witch.js";
 
 const game = (spellAt: number | null | undefined, seated = true, ko: { inAt: number; backAt: number } | null = null) =>
@@ -38,24 +38,45 @@ describe("her set at the decks (rules/djSet.ts)", () => {
     expect(mid.every(k => k.at >= s + 2 && k.at < s + 3)).toBe(true);
     expect(djStrokes(game(0, false), 0, 100)).toEqual([]); // stepped off: nothing heard
   });
-  it("fills a respawn wait: straight into the scratch and chirp bars, round again, the hype landing on its end", () => {
-    const ko = { inAt: 100.2, backAt: 107.2 }, g = game(undefined, true, ko), s = djRoutineStart(g, 101)!; // a 7 s wait (the longest)
-    expect(s).toBeCloseTo(100.5, 6); // the next whole beat
-    const at = (b: number) => { const r = djRoutineAt(g, s + b * 0.5); return r && `${r.gesture}${r.frame}`; };
-    expect([at(0.1), at(4.1), at(7.1), at(8.1), at(12.1), at(12.6)]).toEqual(["scratch1", "chirp0", "spin0", "scratch1", "hype0", "hype1"]); // 13.4 beats: hype from 12
-    expect(djRoutineAt(g, 107.3)).toBeNull(); // free, up and away
+  it("fills a respawn wait: the needle on the new record as she's back, then her seeded scratching into the downbeat (Ed, 2026-10-09)", () => {
+    const ko = { inAt: 100.2, backAt: 106 }, g = { ...game(undefined, true, ko), seed: 9, knockdowns: [{}] }, s = djRoutineStart(g, 101)!; // the wait ending on a bar line
+    expect(s).toBeCloseTo(100.2, 6); // the needle drops as she's back
+    expect(djRoutineAt(g, 100.21)).toMatchObject({ gesture: "needle", frame: 1 });
     const st = djStrokes(g, 0, 200);
-    expect(st[0].stroke).toBe("f"); expect(st.some(k => k.stroke === "lift" || k.stroke === "drop")).toBe(false); // the needle's down already
-    expect(st.every(k => k.at + k.len <= s + 6 + 1e-9)).toBe(true); // nothing heard in the hype
-    // the shortest wait (1.5 s): a beat or so of scratching, then the hype to its end
-    const short = game(undefined, true, { inAt: 50, backAt: 51.5 }), s2 = djRoutineStart(short, 50.1)!;
-    expect(djRoutineAt(short, s2 + 0.1)?.gesture).toBe("scratch"); expect(djRoutineAt(short, 51.4)?.gesture).toBe("hype");
+    expect(st[0]).toMatchObject({ stroke: "drop" }); expect(st[0].at).toBeCloseTo(100.2, 6);
+    expect(st.filter(k => k.stroke === "drop" || k.stroke === "lift").length).toBe(1); // one needle drop, no second one
+    const scratching = st.slice(1);
+    expect(scratching.length).toBeGreaterThan(6);
+    expect(scratching[0].at).toBeGreaterThanOrEqual(100.2 + 0.75 * 0.5 - 1e-9); // (the crackle heard a moment first)
+    for (const k of scratching) { expect(k.at % 0.125).toBeCloseTo(0, 6); expect(k.at + k.len).toBeLessThanOrEqual(106 + 1e-9); } // on the sixteenths, inside the wait
+    expect(scratching[scratching.length - 1].at).toBeGreaterThan(106 - 0.5); // running into the downbeat
+    expect(djRoutineAt(g, 106.01)).toBeNull(); // free, up and away
+    // the shortest wait (1.5 s): the needle, then a beat or two of scratching
+    const short = { ...game(undefined, true, { inAt: 50, backAt: 52 }), seed: 9, knockdowns: [{}] };
+    expect(djStrokes(short, 0, 100).slice(1).length).toBeGreaterThan(0);
     expect(djRoutineStart(game(undefined, true, { inAt: 100, backAt: 100 }), 100.1)).toBeNull(); // no wait, no routine
+  });
+  it("makes its routine from the new music seed: the same for a seed, different between seeds, inside its beats", () => {
+    for (const beats of [3, 6, 10]) {
+      const a = scratchRoutine(1234, beats), b = scratchRoutine(1234, beats), c = scratchRoutine(98765, beats);
+      expect(a.length).toBeGreaterThan(0);
+      expect(b).toEqual(a);
+      expect(c.map(x => `${x.at}${x.stroke}`)).not.toEqual(a.map(x => `${x.at}${x.stroke}`));
+      for (const x of a) { expect(x.at).toBeGreaterThanOrEqual(0); expect(x.at).toBeLessThan(beats); expect((DJ_GESTURES as Record<string, number[]>)[x.gesture]?.[x.frame], x.gesture).toBeTypeOf("number"); }
+      // phrases with breaths: a beat with no stroke between them (in a long enough wait), busier at the end
+      const struck = new Set(a.filter(x => x.stroke).map(x => Math.floor(x.at)));
+      if (beats >= 6) expect(struck.size).toBeLessThan(beats);
+      const per = (b0: number) => a.filter(x => x.stroke && Math.floor(x.at) === b0).length;
+      expect(per(beats - 1)).toBeGreaterThanOrEqual(3);
+    }
+    // the knockdown's seed: each knockdown its own (musicSeed by how many)
+    const ko = { inAt: 0, backAt: 6 }, one = { ...game(undefined, true, ko), seed: 9, knockdowns: [{}] }, two = { ...one, knockdowns: [{}, {}] };
+    expect(djStrokes(two, 0, 10).map(k => k.stroke)).not.toEqual(djStrokes(one, 0, 10).map(k => k.stroke));
   });
   it("reads the knockout's times on her own clock", () => {
     const g = { ...game(undefined, true, { inAt: 40, backAt: 46 }), clock: { time: 60 }, herTime: 50 }; // the world 10 s ahead (a slowed circle once)
     expect(djRoutineStart(g, 45)).toBeNull(); // in her time that's before she's back
-    expect(djRoutineAt(g, 51)?.gesture).toBe("scratch"); expect(djRoutineAt(g, 52)?.gesture).toBe("chirp"); // back at 50 in the world's time
+    expect(djRoutineAt(g, 50.1)?.gesture).toBe("needle"); expect(djRoutineStart(g, 51)).toBeCloseTo(50, 6); // back at 50 in the world's time
   });
   it("holds her at the decks from the party spell to the routine's end, when the first music drops", () => {
     const g = game(10), end = djIntroEnd(g)!, s = djRoutineStart(g, 12)!;

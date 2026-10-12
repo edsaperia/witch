@@ -5,7 +5,7 @@ The rules every piece of art in Witch follows, so that the whole scene reads as 
 **Ed's rulings it rests on**
 - "Everything should look a bit more pixel-art stylised" (2026-10-05), and "everything should be pixellated to the same level (including the menu)" (2026-10-06).
 - "I think I prefer bold style" (2026-10-06): **bold is the game's default** (`?style=bold`; `ref` and `now` stay selectable).
-- Art pixel: **5** (Ed, 2026-10-07, after the px 3/4/5 comparison of seven scenes). It was "4 or 5, but we will decide in playtesting" (2026-10-05) and ran at 3 until then. `?px=3` or `?px=4` still switches it for one load.
+- Art pixel: **3** (Ed, 2026-10-07, after playtesting 5 and 4: "pixel level 3 is better. The large pixels look cute but it's impossible to see what's going on at all"). It was briefly 5, then 4, the same day. `?px=4` or `?px=5` still switches it for one load.
 - "Light and glow stay smooth"; "creature projectiles and the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they should be lighting objects that are pixels" (round 14). "No dithering" (the canopy and trunk fades).
 - "Animal legs have outlines on them; they'd look better without" (2026-10-06).
 
@@ -19,6 +19,7 @@ Rules:
 1. **Everything is baked at the game's art pixel and drawn at a whole scale.** A sprite's `scale` is 1 (or a whole number); its size comes from the bake, never from a fractional draw scale. Squash and stretch (`sx`, `sy`) are already rounded to whole art pixels; breathing, popping and growing must be done that way too.
 2. **One density.** Art drawn at a fixed 16 px per metre (paths, the dancefloor, attack effects, ground sigils) is a second pixel size beside the sprites' 10.7 px per metre at px 3. Bake it at the sprites' density.
 3. **Light may be smooth; objects may not.** Glows, bloom, haze, mist, the ley line and projectiles' light are smooth light. Anything that is a thing (a creature, a prop, a dot drawn as an object) is hard-edged art pixels on the grid.
+4. **Everything in the world sits on the game's pixel grid, overlays included** (Ed, 2026-10-08: "It should be on the same pixel grid"). A DOM or 2D-canvas element standing in the world (bubbles, dream clouds, 💌s, the claw slashes, markers) is drawn in whole game pixels (`pixelSize` screen px each, never 1 or 2), placed on multiples of `pixelSize`, with hard edges: no CSS gradients, rounded borders or smooth fonts. The exception is light (rule 3): a glow an overlay gives off, like the berries' or the claw slashes', may be smooth (Ed, 2026-10-08: "glow from lights is not on the grid"), but the thing glowing stays hard-edged pixels, and a soft shadow is not light. Its size may follow the thing it belongs to, by using fewer game pixels, not smaller ones. Only the HUD and menus are exempt. Known exceptions still to fix (2026-10-08 audit): speech-bubble text and fractional emoji pixel sizes, 💌 drop shadows and sub-pixel placement, party-witch chat, respawn countdown, deck BPM, legend circle panel, buff icons and wild-animal pointers at 2 px.
 
 Where the game breaks rule 1 today (each is a ticket for the builder who owns it):
 
@@ -66,14 +67,14 @@ A new area takes its floor from one of the 12 ramps' families and hue-shifts it;
 
 ![scale lineup: each species' baby, young, adult and legend, the witch for scale (bold)](style/scale-lineup.png)
 
-The witch is the unit (about 4.2 m; body 45 art px at px 3).
+The witch is the unit (about 4.2 m; body 45 art px at px 3). Creatures are drawn at the style's `creatureScale`, 1.5 since Ed's pick (2026-10-08: "creatures are quite hard to make out ... I think +50% is ok"): babies, young and adults half again as big as before, legends kept at least 2.35 × their adult's full height (2.1 × by body), about 30% bigger than before. Before it, a baby was about 0.65 × her, a young about 1 × and an adult about 2 × (the big species' check 1.45 to 2.1 ×, times `creatureScale` now).
 
 | Thing | Size | Rule from |
 |---|---|---|
-| Baby | about 0.65 × her (wolf 30 px body) | art/check.mjs level steps |
-| Young | about 1 × her (45 px) | young ≥ 1.3 × baby |
-| Adult | about 1.6 × her (75 px); the bigger species 1.45 to 2.1 × (elk, stag to 2.5 ×) | adult ≥ 1.55 × young |
-| Legend | about 4.5 × her (203 px) | legend ≥ 2.1 × adult |
+| Baby | about 1.1 × her (wolf 50 px body) | art/check.mjs level steps |
+| Young | about 1.7 × her (76 px) | young ≥ 1.3 × baby |
+| Adult | about 3 × her (135 px); the bigger species 2.2 to 3.15 × (elk, stag to 3.75 ×) | adult ≥ 1.55 × young |
+| Legend | about 6.6 × her (296 px) | legend ≥ 2.1 × adult |
 | Dancefloor speaker | about 2.6 × her (11 m) | check.mjs |
 | Soundsystem | about 3 × her (12.7 m) | check.mjs |
 | Set pieces | 6 to 12 m (1.4 to 2.9 ×) | check.mjs |

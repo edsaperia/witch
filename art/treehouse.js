@@ -63,14 +63,14 @@ const OPEN = a => Math.abs(((a - Math.PI / 2 + Math.PI * 3) % (Math.PI * 2)) - M
 // her (DJ_FRAMES of them: the platters turn an eighth of a turn and the LEDs chase on each).
 export const DJ_FRAMES = 8;
 const DJ_STAND = [0, TREEHOUSE_STOREYS.studio.y, 1.75]; // where she stands (her seat anchor), in the house's units
-function djFrame3(facing) { // her model's (a, b, c) in the house's: squared to the camera at the house's yaw for this facing
-  const yaw = YAW[facing] ?? YAW.towards, f = [Math.sin(yaw), 0, Math.cos(yaw)], r = [Math.cos(yaw), 0, -Math.sin(yaw)], o = v3.sub(DJ_STAND, v3.mul(f, .02)); // (her ground anchor .02 ahead of her origin)
+function djFrame3(facing, stand = DJ_STAND) { // her model's (a, b, c) in the house's: squared to the camera at the house's yaw for this facing (stand: where she stands, the Ent's deck's own, art/ent.js)
+  const yaw = YAW[facing] ?? YAW.towards, f = [Math.sin(yaw), 0, Math.cos(yaw)], r = [Math.cos(yaw), 0, -Math.sin(yaw)], o = v3.sub(stand, v3.mul(f, .02)); // (her ground anchor .02 ahead of her origin)
   const to = ([a, b, c]) => v3.add(o, v3.add(v3.mul(f, a), v3.add(v3.mul(r, -c), [0, b, 0])));
   const from = p => { const d = v3.sub(p, o); return [v3.dot(d, f), d[1], -v3.dot(d, r)]; };
   return { to, from, f, r };
 }
-function djTable(m, { frame = 0, facing = "towards" } = {}) {
-  const D = DJ_DECKS, F = djFrame3(facing), { to, from, f, r } = F, G0 = 60, TOP = D.top, [a0, a1] = D.depth, am = (a0 + a1) / 2, W = D.width; // its own groups (60..79), apart from the house's
+export function djTable(m, { frame = 0, facing = "towards", stand } = {}) {
+  const D = DJ_DECKS, F = djFrame3(facing, stand), { to, from, f, r } = F, G0 = 60, TOP = D.top, [a0, a1] = D.depth, am = (a0 + a1) / 2, W = D.width; // its own groups (60..79), apart from the house's
   const box = (c, h, mat, o = {}) => m.box(to(c), h, mat, { dir: r, up: [0, 1, 0], ...o }); // half sizes: across, up, deep
   const chase = (c, k) => FAIRY[((Math.floor((c + 9) * 22) + frame + k) % 4 + 4) % 4];
   // the desk: a panelled front with LED strips top and bottom round a crescent moon, wood sides, a dark top

@@ -1,9 +1,11 @@
 // The page's own HUD over the game: the clock top centre (with the boot's and a lost soundsystem's pops under it) and the
 // debug overlay (~), its buttons and the debug knobs shown with it. Driven by the loop (app/loop.ts in main.ts).
 import { leashLoad, type Game, type WaveEvent } from "../rules/game";
+import { freeOf } from "../rules/leashWeight";
 import { waveCountdown } from "../rules/party";
 import { clockSeconds, clockText } from "../rules/leypulse";
 import { powerReport } from "../rules/power";
+import { showPlayerPick } from "./playerPick";
 
 export class Hud {
   debugOn = false;
@@ -17,29 +19,30 @@ export class Hud {
   private readonly clockT = this.clockEl.querySelector<HTMLElement>(".t")!;
   private readonly clockLabel = this.clockEl.querySelector<HTMLElement>(".label")!;
 
-  constructor(private readonly game: Game, private readonly tuning: { party: { interval: number } }, private readonly knobs: HTMLElement) {}
+  constructor(private readonly game: Game, private readonly knobs: HTMLElement) {}
 
-  /** The debug overlay, its buttons and the knobs, on or off. */
+  /** The debug overlay, its buttons, the knobs and the bedroom's Player pick, on or off. */
   setDebug(on: boolean): void {
     this.debugOn = on;
     this.debugEl.classList.toggle("on", on);
     this.debugButtons.classList.toggle("on", on); this.knobs.classList.toggle("on", on);
+    showPlayerPick(on); // (the dev Player pick: debug only)
   }
 
   /** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
    *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
   clock(): void {
-    const { game, tuning, clockEl, clockT, clockLabel } = this;
+    const { game, clockEl, clockT, clockLabel } = this;
     const cd = waveCountdown(game.party, game.map, game.clock.time);
     clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
     const now = clockText(clockSeconds(game.party, game.clock.time));
     if (clockT.textContent !== now) clockT.textContent = now;
     clockEl.classList.toggle("paused", game.clock.paused);
     const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
-    const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
+    const left = game.party.paused ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
     clockLabel.textContent = this.debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
     // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word under the clock.
-    if (!this.bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
+    if (!this.bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && !game.party.paused) {
       this.bootShown = true;
       const pop = document.createElement("div");
       pop.className = "boot-pop";
@@ -50,17 +53,17 @@ export class Hud {
   }
 
   /** Every soundsystem lost since the last shown. */
-  losses(): void { for (const e of this.game.waveEvents) if (e.at > this.lossShown) this.showLoss(e); }
+  losses(): void { for (const e of this.game.waveEvents) if (e.kind === "soundsystemLost" && e.at > this.lossShown) this.showLoss(e); }
 
-  /** A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner; the clock flashes and the seconds taken off pop out
-   *  under it ("−60 s", "wave now!"), and the wave pointer's ring jumps on. */
-  showLoss(e: WaveEvent): void {
+  /** A soundsystem lost: the clock flashes and "soundsystem lost" pops out under it (the countdown and the tempo go on as
+   *  they were: Ed, 2026-10-08). */
+  showLoss(e: Extract<WaveEvent, { kind: "soundsystemLost" }>): void {
     const clockEl = this.clockEl;
     this.lossShown = e.at;
     clockEl.classList.remove("lost"); void clockEl.offsetWidth; clockEl.classList.add("lost"); // (restart the animation)
     const pop = document.createElement("div");
     pop.className = "loss-pop";
-    pop.textContent = e.left <= 0 ? "wave now!" : `−${Math.round(e.cut)} s`;
+    pop.textContent = "soundsystem lost";
     clockEl.append(pop);
     setTimeout(() => pop.remove(), 1800);
     setTimeout(() => { if (this.lossShown === e.at) clockEl.classList.remove("lost"); }, 900);
@@ -83,8 +86,8 @@ function powerLines(game: Game): string[] {
   const sieges = p.sieges.slice(0, 4).map(s => `${s.key} ${f(s.value)} (${s.count}, ${f(s.hp)} hp)`).join("  ");
   return [
     `power  party ${f(p.leashed + p.parked)} = leashed ${f(p.leashed)} + parked ${f(p.parked)}   ${n[0]}b ${n[1]}y ${n[2]}a ${n[3]}L   berries ${game.tally.berries} invites ${game.tally.invites}`,
-    `wild   grown ${game.growth.grown} a wave at a time, ${game.growth.made} come out, ${game.growth.grown - game.growth.made} waiting as counts   creatures ${game.creatures.length}`,
-    (() => { const L = leashLoad(game), W = game.tuning.leash.weight; return `load   ${L.total.toFixed(2)} pull, ${L.over.toFixed(2)} over the free ${W.free}${L.extreme ? " EXTREME" : ""}${L.total ? `  toward ${Math.round((Math.atan2(L.x, -L.z) * 180) / Math.PI + 360) % 360}°` : ""}   stack ${game.leash.stack.length}   lift ${game.witch.lift.toFixed(2)}`; })(),
+    `wild   peopled from the start by route (no growth)   creatures ${game.creatures.length}   cleared early ${game.party.ahead?.size ?? 0}`,
+    (() => { const L = leashLoad(game), free = freeOf(game.tuning, game.witch.mode === "ground"); return `load   ${L.total.toFixed(2)} pull, ${L.over.toFixed(2)} over the free ${free}${L.extreme ? " EXTREME" : ""}${L.total ? `  toward ${Math.round((Math.atan2(L.x, -L.z) * 180) / Math.PI + 360) % 360}°` : ""}   stack ${game.leash.stack.length}   lift ${game.witch.lift.toFixed(2)}`; })(),
     `enemy  marching ${f(p.marching)}${p.sieges.length ? `   ${sieges}${p.sieges.length > 4 ? ` +${p.sieges.length - 4} more` : ""}` : ""}   (L saves the playtest log)`,
   ];
 }

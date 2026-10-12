@@ -239,7 +239,26 @@ const STREET = {
 };
 
 // ---------------- the small scenes' pieces ----------------
+// The Harvest hat's ring (golf, for #719, 2026-10-12): six berries grow round the hat with no bush under them, so a berry
+// seedling stands under each, about 0.6 m: a mound of earth, a stem or two and a little dome of leaves, three ways.
+function harvestSprout(m, v) {
+  const r = (k) => sinHash(v * 31 + k, 7) - .5;
+  m.ell([0, .02, 0], [.2, .05, .16], M.STONED, { group: 1, rough: .02, paint: p => ctCell(p, 14, v) < .3 ? M.MOSS : undefined }); // its patch of earth
+  const stems = [[0, 0, 0], ...(v === 1 ? [[.08, 0, .04]] : v === 2 ? [[-.07, 0, .03], [.06, 0, -.03]] : [])];
+  stems.forEach(([x, , z], i) => ctBar(m, [x, .03, z], [x * 1.6 + r(i) * .06, .3 + .04 * i, z], 2, .012, M.TRUNK, undefined));
+  const leaves = 7 + v * 2;
+  for (let i = 0; i < leaves; i++) {
+    const a = i * 2.4 + v, h = .18 + (i / leaves) * .34, rr = .05 + (1 - i / leaves) * .12, x = Math.cos(a) * rr, z = Math.sin(a) * rr * .8;
+    const mat = i % 3 === 0 ? M.LEAF3 : i % 3 === 1 ? M.LEAF : M.LEAF2, sz = .065 + .02 * ((i * 7 + v) % 3);
+    m.ell([x, h, z], [sz, sz * .55, sz * .8], mat, { group: 3 + (i % 4), dir: [Math.cos(a) * .6, 1, Math.sin(a) * .6] });
+  }
+  m.ell([r(9) * .04, .52, 0], [.07, .05, .06], M.LEAF2, { group: 7 }); // its crown, the newest leaves on top
+}
+
 const SCENE_PIECES = {
+  "harvest-sprout-1": { desc: "a berry seedling: a dome of leaves on a stem, in a patch of earth (under one of the Harvest hat's berries)", build(m) { harvestSprout(m, 0); } },
+  "harvest-sprout-2": { desc: "a berry seedling, two stems", build(m) { harvestSprout(m, 1); } },
+  "harvest-sprout-3": { desc: "a berry seedling, three stems, the bushiest", build(m) { harvestSprout(m, 2); } },
   // a picnic gone wild
   "picnic-table": { desc: "a picnic table, its planks soft with rot, bracket fungus on its legs", build(m) {
     for (const z of [-.12, 0, .12]) m.box([0, .6, z * 2], [.78, .025, .11], M.WOOD, { round: .012, group: 1, paint: ctPlank(7, .3) });

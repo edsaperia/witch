@@ -1,5 +1,7 @@
 // What the leash view projects over the canvas as HTML (render/leash.ts): the talk's emoji bubbles, the dreams' thought
-// bubbles and their pointers, the 😴s when the party's over, a legend's circle panel, and the health pips.
+// bubbles and their pointers, the 😴s when the party's over, a legend's circle panel, and her health as claw slashes.
+import { DX, DY, SLASH_H, SLASH_W, paintSlashes, slashPixels, slashSize, slashState, slashStrokes } from "./slashes";
+import { SPRITE_UNIFORMS } from "../sprites";
 import { dreamStone, dreamWay, questOpen, restlessness } from "../../rules/dream";
 import { compassArrow } from "../compass";
 import * as THREE from "three";
@@ -7,11 +9,16 @@ import { drawSigil, sigilColour } from "../../../art/generator.js";
 import { talkTurn } from "../../rules/leash";
 import { hash2 } from "../../rules/random";
 import { emojiOr, sleepyFace } from "../sleepyFace";
-import { circleLines, circleShown, legendCircleNear } from "../../rules/legendCircle";
+import { broughtLine, circleLines, circleShown, legendCircleNear } from "../../rules/legendCircle";
 import { witchHeight } from "../../rules/witch";
 import { placed } from "../height";
 import { tiltFilter } from "../overlayTilt";
+import { GRID, dreamSymbol, thoughtShape } from "../thoughtCloud";
+import { bubbleGrid, emojiImage, snapTo, thoughtAt, thoughtBubble, thoughtCloud, thoughtEmoji, thoughtSymbol, type Rgba } from "../bubbles";
 import type { LeashView } from "../leash";
+import { islandPixels } from "../../../art/islands.js";
+import { islandCoast } from "../../rules/islandShape";
+import { coastSpec, islandOf } from "../../rules/rosters";
 
 /** The party's over: 😴 bubbles over at most this many sleepers, within this many metres of her. */
 const SNORES = 6, SNORE_RANGE = 40;
@@ -19,7 +26,13 @@ const SNORES = 6, SNORE_RANGE = 40;
 /** Bubbles grow with who's talking (Ed, 2026-10-05): the pixel bubble's game pixel (its --px, in
  *  screen px) by level, babies smallest, legends (dreams and nightmares) largest. One style for
  *  every bubble: index.html's .bubble. */
-export const BUBBLE_PX = 3;
+export const BUBBLE_PX = GRID; // (every bubble's grid: render/thoughtCloud.ts)
+/** A dream's thought bubble (render/thoughtCloud.ts): its symbol's square in cloud pixels (each GRID screen px), its face's
+ *  pixels (centred in that square), and a snore's (Ed, 2026-10-06: the party's over, the sleepers' little bubbles). */
+const DREAM_INNER = 30, DREAM_EMOJI = 20, SNORE_INNER = 12;
+/** Its ink and flat fill (no gradient, no glow): the HUD's amber, as before but crisp; a nightmare's fill a deep ember. */
+const DREAM_INK: Rgba = [232, 180, 106, 0.8], DREAM_FILL: Rgba = [20, 14, 34, 0.55], NIGHTMARE_FILL: Rgba = [44, 8, 14, 0.6];
+const DREAM_CYCLE = { hold: 1.8, fade: 0.3, flask: 0.25 };
 /** How far she goes (metres) before a dream's pointer works out her nearest runestone again. */
 const DREAM_REFRESH = 15;
 export const bubblePx = (level: number): number => BUBBLE_PX + Math.max(0, Math.min(3, level));
@@ -54,19 +67,19 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
     }
     const Z = g.tuning.dreams.sleepy, time = g.clock.time;
     for (const { c } of near) {
-      const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(lv.tops.get(c.id) ?? 1.5, 4) + 0.35 + bob;
-      placed(lv.v.set(c.x + Math.sin(time * 0.7 + c.id) * 0.15, y, c.z)).project(camera);
+      const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(lv.tops.get(c.id) ?? 1.5, 6) + 0.35 + bob; // (capped at 6 m: 4 before the creatures grew half again, Ed 2026-10-08)
+      const hd = lv.heads.get(c.id); // (its puffs down to its head, Ed 2026-10-12)
+      placed(lv.v.set((hd?.x ?? c.x) + Math.sin(time * 0.7 + c.id) * 0.15, y, hd?.z ?? c.z)).project(camera);
       if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
       let el = lv.snoreEls[used];
-      if (!el) { el = document.createElement("div"); el.className = "bubble dream on snore"; host.append(el); lv.snoreEls.push(el); }
+      if (!el) { el = thoughtBubble(host, "snore"); lv.snoreEls.push(el); }
       el.style.display = "";
-      const face = Z ? emojiOr(sleepyFace(c.id, time, Z), Z.fallback) : "😴";
-      if (el.dataset.e !== face) { el.dataset.e = face; const f = pixelEmoji(lv, face, 0.9, 18); f.classList.add("face"); el.replaceChildren(f); }
-      el.style.setProperty("--px", `${Math.max(1, bubblePx(c.level) * 0.8)}px`);
-      el.style.left = `${((lv.v.x + 1) / 2) * width}px`;
-      el.style.top = `${((1 - lv.v.y) / 2) * height}px`;
+      const face = Z ? emojiOr(sleepyFace(c.id, time, Z), Z.fallback) : "😴", S = thoughtShape(SNORE_INNER, 2), P = bubbleGrid(g.tuning, c.level); // (its size by its level, as its speech: Ed, 2026-10-12)
+      thoughtCloud(el, S, DREAM_INK, DREAM_FILL, P);
+      thoughtEmoji(el, S, face, SNORE_INNER, 1, P);
+      const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height, P);
+      el.style.left = `${at.left}px`; el.style.top = `${at.top}px`;
       el.style.opacity = `${Math.min(1, (lv.partyOverEase - 0.3) * 4).toFixed(2)}`;
-      el.style.transform = "translate(-50%, calc(-100% - var(--px) * 9))";
       used++;
     }
   }
@@ -76,59 +89,62 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
 export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
   const host = lv.bubbleWitch?.parentElement, g = lv.game, w = g.witch, range = g.tuning.dreams.range;
   if (!host) return;
+  if (g.win?.phase === "won") { drawIslandDreams(lv, camera, width, height, host); return; }
   const list = w.mode !== "ground" || w.lift > 0.5 ? [] : lv.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
   let used = 0;
   for (const { c } of list) {
-    const y = Math.min(lv.tops.get(c.id) ?? 2, 4.5) + 0.5; // (low over it, so its puffs rise from just above the sleeper's head: the art director, #238)
-    placed(lv.v.set(c.x, y, c.z)).project(camera);
+    // Its puffs rise from just above the sleeper's head (the art director, #238), its whole height: held to 4.5 m before, a big
+    // legend's bubble sat on its back (Ed, 2026-10-08: "their speech bubble and the helper text obscure them").
+    const head = lv.tops.get(c.id) ?? 2, y = head + 0.4;
+    const B = legendBounds(lv, camera, c.x, c.z, head, lv.halfW.get(c.id) ?? 1.5, width, height);
+    const hd = lv.heads.get(c.id); // (its puffs trailing down to its head, Ed 2026-10-12)
+    placed(lv.v.set(hd?.x ?? c.x, y, hd?.z ?? c.z)).project(camera);
     if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
     // Restless (#87: its area has none of its kind), the dream turns to a nightmare (Ed, 2026-10-05):
-    // one face by the sigil it wants, slightly sad at first, sadder, upset, then angry
-    // (dreams.nightmare), the sigil fading (bring one back). Once its quest has closed (its
+    // its face slightly sad at first, sadder, upset, then angry (dreams.nightmare), by turns with
+    // the sigil it wants, fading (bring one back). Once its quest has closed (its
     // area's soundsystem on) the dream is gone, but not a nightmare: just the face then.
     const q = c.quest!, r = restlessness(c), N = g.tuning.dreams.nightmare, open = questOpen(g.party, c);
     let step = -1;
     for (let k = 0; k < N.at.length; k++) if (r >= N.at[k]) step = k;
     const faces = step >= 0 ? 1 : 0, ire = r * r; // (the reddening and the shake gentle while it's only sad)
     if (!open && !faces) continue;
-    // Asleep giving its quest (Ed, 2026-10-06): a sleepy face by the sigil, mostly 😴, now and then a yawn or a sigh for a turn.
+    // Asleep giving its quest (Ed, 2026-10-06): a sleepy face, mostly 😴, now and then a yawn or a sigh for a turn.
     const Z = g.tuning.dreams.sleepy, zzz = !faces && open && Z ? sleepyFace(c.id, g.clock.time, Z) : null;
     let el = lv.dreamEls[used];
-    if (!el) { el = document.createElement("div"); el.className = "bubble dream on"; host.append(el); lv.dreamEls.push(el); }
+    if (!el) { el = thoughtBubble(host, "dream"); lv.dreamEls.push(el); }
     el.style.display = "";
-    const key = `${q.species}:${q.level}:${step}:${open}:${zzz ?? ""}`;
-    if (el.dataset.e !== key) {
-      el.dataset.e = key;
-      const cv = document.createElement("canvas"), n = 44;
-      cv.width = cv.height = n;
-      cv.style.width = cv.style.height = `calc(var(--px) * ${(n / BUBBLE_PX).toFixed(2)})`;
-      const x = cv.getContext("2d", { willReadFrequently: true });
-      if (x) {
-        drawSigil(x, q.species, { x: 1, y: 1, size: n - 2, level: q.level as unknown as null, colour: sigilColour(q.species), glow: false });
-        const d = x.getImageData(0, 0, n, n);
-        for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 90 ? 255 : 0;
-        x.putImageData(d, 0, 0);
-      }
-      // (its face in finer pixels than a chat face: its brows must read)
-      const face = step >= 0 ? pixelEmoji(lv, N.faces[step] ?? "😠", 0.9, 18) : zzz ? pixelEmoji(lv, emojiOr(zzz, Z!.fallback), 0.9, 18) : null;
-      face?.classList.add("face");
-      el.replaceChildren(...(open ? [cv] : []), ...(face ? [face] : []));
-      el.classList.toggle("nightmare", faces > 0);
+    // A pixel thought bubble (Ed, 2026-10-08, relayed by the coordinator: "drawn in the same way as the speech bubbles ... small
+    // clouds going up to a large cloud"; render/thoughtCloud.ts), holding one symbol at a time: its face (sleepy, or the
+    // nightmare's), then the sigil it dreams of (fading as it grows restless), then its face again, now and then the flask's
+    // relic sigil instead of the sigil; each fading in and out (dreams.cycle). A nightmare's ink reddens.
+    // A legend's dream as big as its speech (Ed, 2026-10-12: "dream bubbles should also grow"): its cloud's pixel P its level's.
+    const S = thoughtShape(DREAM_INNER, 3), P = bubbleGrid(g.tuning, c.level), tone = faces ? Math.round(ire * 8) / 8 : -1;
+    const snapToP = (v: number) => snapTo(v, P);
+    thoughtCloud(el, S, tone < 0 ? DREAM_INK : [Math.round(232 - 42 * tone), Math.round(180 - 130 * tone), Math.round(106 - 76 * tone), 0.8 + 0.2 * tone], tone < 0 ? DREAM_FILL : NIGHTMARE_FILL, P);
+    const faceE = step >= 0 ? N.faces[step] ?? "😠" : zzz ? emojiOr(zzz, Z!.fallback) : "😴";
+    const sym = dreamSymbol(performance.now() / 1000, c.id, g.tuning.dreams.cycle ?? DREAM_CYCLE, open); // (the screen's clock: game time slows to a crawl in a legend's clearing)
+    if (sym.kind === "emoji") thoughtEmoji(el, S, faceE, DREAM_EMOJI, sym.alpha, P);
+    else if (sym.kind === "flask") thoughtSymbol(el, S, "flask", "relic", DREAM_INNER, () => sigilCanvas("relic", null, [255, 205, 90], DREAM_INNER), sym.alpha, P);
+    else thoughtSymbol(el, S, "sigil", `${q.species}:${q.level}`, DREAM_INNER, () => sigilCanvas(q.species, q.level, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r), P);
+    const bx = ((lv.v.x + 1) / 2) * width, ly = ((1 - lv.v.y) / 2) * height;
+    const shake = faces ? snapToP(ire * P * Math.sin(performance.now() * 0.05 + c.id)) : 0; // (a nightmare shakes, a whole grid step)
+    const at = thoughtAt(S, bx, ly, P); // (its smallest puff over the sleeper)
+    let left = at.left + shake, top = at.top;
+    if (top < 57) {
+      // no room over it on screen (close, or a big legend): kept below the top edge's cues, beside its body rather than over it,
+      // its puffs reaching in from the left (the side they trail from), or from the right when there's no room on the left
+      top = 57;
+      const cw = S.w * P; // (the whole cloud, its lumps past the symbol's square too)
+      left = B.left - cw - P * 2 >= 8 ? snapToP(B.left - cw - P * 2) : snapToP(Math.min(width - S.w * P - 8, B.right + P * 2 - S.box.x * P));
     }
-    el.style.setProperty("--px", `${bubblePx(c.level)}px`);
-    (el.querySelector("canvas:not(.face)") as HTMLElement | null)?.style.setProperty("opacity", `${1 - 0.75 * r}`);
-    if (faces) el.style.setProperty("--ink", `rgba(${Math.round(232 - 42 * ire)}, ${Math.round(180 - 130 * ire)}, ${Math.round(106 - 76 * ire)}, ${(0.55 + 0.35 * ire).toFixed(2)})`); // (from the dream's amber to a deep ember: never the enraged eyes' bright red, the art director #238)
-    else el.style.removeProperty("--ink");
-    const bx = ((lv.v.x + 1) / 2) * width, ly = ((1 - lv.v.y) / 2) * height, by = Math.max(ly, el.offsetHeight + 56); // (kept on screen when she's close, below the top edge's cues)
-    el.style.left = `${bx}px`;
-    el.style.top = `${by}px`;
-    tiltFilter(el, by - el.offsetHeight * 0.5 - bubblePx(c.level) * 12.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
-    const shake = faces ? ire * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
-    el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), calc(-100% - var(--px) * 12.5))`; // (lifted by its puffs, the lowest just above the sleeper)
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    tiltFilter(el, top + S.box.y * P + S.box.n * P * 0.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
     // Its direction (rules/dream.ts; Ed, 2026-10-06: "the legend speech bubble should tell you in what direction you can find
     // the runestone for the area that has the quest animal in it"): the nearest area of the kind it dreams of to her, explored,
-    // partified or not; a pixel arrow on the bubble's edge that way (the eight compass points: the camera looks north, so north
-    // is up the screen), and its compass point and distance under the sigil, kept up as she moves.
+    // partified or not; a pixel arrow that way (the eight compass points: the camera looks north, so north is up the
+    // screen) and its compass point and distance, under the big cloud, kept up as she moves.
     let st = lv.dreamStones.get(c.id);
     if (!st || Math.hypot(w.x - st.fx, w.z - st.fz) > DREAM_REFRESH) { st = { to: dreamStone(g.map, q.species, w.x, w.z), fx: w.x, fz: w.z }; lv.dreamStones.set(c.id, st); }
     const to = open ? st.to : null;
@@ -141,8 +157,10 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
       const cv = cap.firstChild as HTMLCanvasElement, text = cap.lastChild as HTMLElement, akey = wy.word === "here" ? "here" : `${wy.point}:${rgb}`;
       if (cv.dataset.k !== akey) { cv.dataset.k = akey; compassArrow(cv, wy.word === "here" ? -1 : wy.point, rgb); }
       if (text.textContent !== wy.word) text.textContent = wy.word;
-      cap.style.setProperty("--px", `${bubblePx(c.level)}px`);
-      cap.style.left = `${bx}px`; cap.style.top = `${Math.round(by - bubblePx(c.level) * 12.5 + 2)}px`;
+      // (beside the big cloud, level with it, on the grid: under it, it fell on the legend's head)
+      const right = left + S.w * P + P * 2, capW = 57 + wy.word.length * 9; // (its arrow, padding and text, about: no layout read a frame)
+      cap.style.left = `${right + capW <= width - 8 ? right : Math.max(8, snapToP(left - P * 2 - capW))}px`;
+      cap.style.top = `${top + snapToP(S.box.y * P + S.box.n * P * 0.5) - 18}px`;
       cap.style.display = "";
     } else cap.style.display = "none";
     used++;
@@ -151,24 +169,89 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
   for (let i = used; i < lv.wayEls.length; i++) lv.wayEls[i].style.display = "none";
 }
 
-/** Her hits, as pips under her feet, only once she's been hit: the next to come back fills as it repairs. */
-export function drawPips(lv: LeashView, time: number, camera: THREE.Camera, width: number, height: number): void {
-  const g = lv.game, W = g.witches[0], H = W.health, max = g.tuning.witchHealth.hits;
-  if (!lv.pips) {
-    lv.pips = document.createElement("div");
-    Object.assign(lv.pips.style, { position: "fixed", transform: "translate(-50%, 8px)", display: "none", gap: "3px", pointerEvents: "none", zIndex: "2" });
-    document.body.append(lv.pips);
+/** A legend's bounds on screen (pixels): its feet to its head (metres over the ground), half its drawn width either side. */
+export function legendBounds(lv: LeashView, camera: THREE.Camera, x: number, z: number, head: number, half: number, width: number, height: number): { left: number; right: number; top: number; bottom: number } {
+  const R = SPRITE_UNIFORMS.uRight.value, sx = (v: THREE.Vector3) => ((v.x + 1) / 2) * width, sy = (v: THREE.Vector3) => ((1 - v.y) / 2) * height;
+  placed(lv.v.set(x - R.x * half, 0, z - R.z * half)).project(camera); const l = sx(lv.v), b = sy(lv.v);
+  placed(lv.v.set(x + R.x * half, head, z + R.z * half)).project(camera); const r = sx(lv.v), t = sy(lv.v);
+  return { left: Math.min(l, r), right: Math.max(l, r), top: Math.min(t, b), bottom: Math.max(t, b) };
+}
+
+/** A sigil, `n` pixels across, its edges hard (no half-see-through pixels). */
+function sigilCanvas(id: string, level: number | null, colour: number[], n: number): HTMLCanvasElement {
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = n;
+  const x = cv.getContext("2d", { willReadFrequently: true });
+  if (x) {
+    drawSigil(x, id, { x: 1, y: 1, size: n - 2, level: level as unknown as null, colour, glow: false });
+    const d = x.getImageData(0, 0, n, n);
+    for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 90 ? 255 : 0;
+    x.putImageData(d, 0, 0);
   }
-  const el = lv.pips;
-  if (H.hp >= max || W.ko) { el.style.display = "none"; return; }
-  el.style.display = "flex";
-  while (el.children.length < max) { const p = document.createElement("div"); Object.assign(p.style, { width: "10px", height: "10px", border: "1px solid rgba(255,140,170,.9)", borderRadius: "50%", overflow: "hidden", position: "relative", background: "rgba(14,11,28,.6)" }); p.innerHTML = '<div style="position:absolute;left:0;right:0;bottom:0;background:#ff5d8f"></div>'; el.append(p); }
-  const fill = H.repairAt === Infinity ? 0 : 1 - Math.max(0, H.repairAt - time) / g.tuning.witchHealth.repairTime;
-  [...el.children].forEach((p, i) => { (p.firstChild as HTMLElement).style.height = `${i < H.hp ? 100 : i === H.hp ? fill * 100 : 0}%`; (p as HTMLElement).style.opacity = i === H.hp ? "0.85" : "1"; });
+  return cv;
+}
+
+/** A kind's home island (art/islands.js islandPixels), `n` pixels across: its real coast (rules/rosters.ts coastSpec, the island's own
+ *  seed and size, as the sea chart draws it). */
+function islandCanvas(kind: string, coast: Parameters<typeof islandCoast>[1], n: number): HTMLCanvasElement {
+  const cv = document.createElement("canvas"), isle = islandOf(kind), P = islandPixels(kind, islandCoast(isle ? coastSpec(isle) : { kind }, coast).radii, { n }) as { w: number; h: number; rgba: Uint8ClampedArray };
+  cv.width = P.w; cv.height = P.h;
+  cv.getContext("2d")?.putImageData(new ImageData(new Uint8ClampedArray(P.rgba), P.w, P.h), 0, 0);
+  return cv;
+}
+
+/** Her hits, as claw slashes over her body (leash/slashes.ts), screen-aligned: one per hit taken, the newest slashing in
+ *  with a flash and draining from its upper tip as its hit heals; none while she's whole or knocked out. */
+export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, width: number, height: number): void {
+  const g = lv.game, W = g.witches[0], T = g.tuning.witchHealth, px = g.tuning.pixelSize; // (a game pixel on screen)
+  let cv = lv.slashCanvas;
+  if (!cv) {
+    cv = document.createElement("canvas"); cv.width = SLASH_W; cv.height = SLASH_H; cv.className = "claw-slashes";
+    Object.assign(cv.style, {
+      position: "fixed", width: `${SLASH_W * px}px`, height: `${SLASH_H * px}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none",
+      // (opaque over her, Ed 2026-10-08: "less transparent and more opaque"; its glow is light in the scene itself, below)
+    });
+    document.body.append(cv); lv.slashCanvas = cv;
+  }
+  const st = slashState(W.health, T.hits, T.repairTime, time);
+  if (!st.count || W.ko?.out) { cv.style.display = "none"; return; } // (the third, the knockdown, shows as she goes down, until she sparkles out)
   const w = g.witch;
-  placed(lv.v.set(w.x, 0, w.z)).project(camera); // under her feet (the stack is over her hat)
-  el.style.left = `${((lv.v.x + 1) / 2) * width}px`;
-  el.style.top = `${((1 - lv.v.y) / 2) * height}px`;
+  // (sized to her and on the game's pixel grid, Ed 2026-10-08: "slashes: scale with her", "It should be on the same pixel
+  // grid": each slash pixel is one game pixel (pixelSize screen pixels, snapped to the scene's grid, which starts at the
+  // canvas's top left); their drawing is scaled by her art pixel in game pixels, her frame's height on screen over its height
+  // in art pixels, so they sit over her body in the same proportion at every camera, in fewer pixels when she's smaller)
+  placed(lv.v.set(w.x, lv.feetY, w.z)).project(camera); const feet = lv.v.y;
+  placed(lv.v.set(w.x, lv.hatTop, w.z)).project(camera); const top = lv.v.y;
+  const herPx = lv.frameH > 0 ? (Math.abs(top - feet) / 2) * height / lv.frameH : px;
+  const k = T.slashScale ?? 1, geo = Math.min(k, Math.max(0.25, Math.round((herPx / px) * k * 16) / 16)), { w: cw, h: ch } = slashSize(geo); // (in steps, so it isn't redrawn every frame; witchHealth.slashScale their size against her, Ed 2026-10-08: "the slashes should be twice as large")
+  if (geo !== lv.slashGeo) { lv.slashGeo = geo; lv.slashPx = slashPixels(geo); lv.slashKey = ""; cv.width = cw; cv.height = ch; cv.style.width = `${cw * px}px`; cv.style.height = `${ch * px}px`; }
+  const key = `${st.count}:${Math.round(st.cut * 24)}:${Math.round(st.flash * 6)}:${Math.round(st.drained * 30)}`;
+  if (key !== lv.slashKey) {
+    lv.slashKey = key;
+    const ctx = cv.getContext("2d");
+    if (ctx) { const im = ctx.createImageData(cw, ch); paintSlashes(im.data, st, (lv.slashPx ??= slashPixels(geo)), cw); ctx.putImageData(im, 0, 0); }
+  }
+  // The glow (Ed, 2026-10-08: "The slashes should glow brighter as well - similar to the berries"): the berries' light, drawn in
+  // the scene so the bloom takes it, along every stroke that shows: a soft halo and a hot core every couple of slash pixels,
+  // placed over her body as the slashes are (a slash pixel is `m` metres there; right along the camera, up the world's up).
+  const m = lv.frameH > 0 && herPx > 0 ? ((lv.hatTop - lv.feetY) / lv.frameH) * (px / herPx) : 0.05, R = SPRITE_UNIFORMS.uRight.value, dot = lv.uv(0);
+  const G = T.slashGlow ?? 1, tw = 0.9 + 0.1 * Math.sin(time * 2.3), [r, gg, b] = [0.62, 0.05, 0.08]; // (the slashes' deeper red)
+  slashStrokes(geo).forEach((S, i) => {
+    if (i >= st.count) return;
+    const newest = i === st.count - 1, t0 = newest ? st.drained : 0, t1 = newest ? st.cut : 1, flash = newest ? st.flash : 0;
+    const n = Math.max(2, Math.ceil(((t1 - t0) * S.len) / 4)); // (a dot every four slash pixels: they overlap and add up)
+    for (let j = 0; j < n && t1 > t0; j++) {
+      const t = t0 + ((j + 0.5) / n) * (t1 - t0), taper = Math.pow(Math.sin(Math.PI * t), 0.7);
+      const sx = S.x + DX * S.len * t - cw / 2, sy = S.y + DY * S.len * t - ch / 2; // (from the canvas's middle, slash pixels)
+      const x = w.x + R.x * sx * m, z = w.z + R.z * sx * m, y = lv.bodyY - sy * m;
+      lv.over.add(x, y, z, S.w * 4 * m * taper, dot, r * 1.5, gg * 1.5 + flash, b * 1.5 + flash, 0.16 * G * tw * taper); // the soft halo
+      lv.over.add(x, y, z, S.w * 1.6 * m * taper, dot, 1.15 + flash, 0.1 + flash, 0.12 + flash, 0.22 * G * taper); // its warm core, just over the bloom's threshold, as a berry's
+    }
+  });
+  placed(lv.v.set(w.x, lv.bodyY, w.z)).project(camera); // (over her body, wherever she flies)
+  cv.style.display = lv.v.z > 1 ? "none" : "";
+  cv.style.left = `${Math.round((((lv.v.x + 1) / 2) * width) / px - cw / 2) * px}px`;
+  cv.style.top = `${Math.round((((1 - lv.v.y) / 2) * height) / px - ch / 2) * px}px`;
 }
 
 export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
@@ -182,8 +265,8 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
   let el = lv.circlePanel;
   if (!lv.circleFade || !lv.circleLast) { if (el) el.style.display = "none"; return; }
   if (!el) { el = document.createElement("div"); el.className = "legend-panel"; host.append(el); lv.circlePanel = el; }
-  const { legend: c, x, z, r } = lv.circleLast, lines = circleLines(c);
-  const key = `${c.id}:${c.legendState}:${c.quest?.done !== undefined}:${c.quest?.species}:${c.quest?.level}`;
+  const { legend: c, x, z, r } = lv.circleLast, brought = broughtLine(g, lv.circleLast), lines = brought ? [...circleLines(c), brought] : circleLines(c);
+  const key = `${c.id}:${c.legendState}:${c.quest?.done !== undefined}:${c.quest?.species}:${c.quest?.level}:${brought?.text ?? ""}`;
   if (el.dataset.k !== key) {
     el.dataset.k = key;
     el.dataset.state = c.legendState ?? "asleep";
@@ -196,7 +279,7 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
     };
     el.replaceChildren(...lines.map(l => {
       const p = document.createElement("p");
-      if (l.done) p.className = "done";
+      if (l.done) p.className = "done"; else if (l === brought) p.className = "wrong";
       l.text.split(/(\{sigil\}|\{relic\}|\{boon\})/).forEach(part => {
         if (part === "{sigil}" && c.quest) p.append(icon(c.quest.species, c.quest.level, sigilColour(c.quest.species)));
         else if (part === "{boon}") p.append(icon(c.species, null, sigilColour(c.species))); // (its own sigil: the buff's icon in the HUD)
@@ -213,12 +296,26 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
   placed(lv.v.set(x + r, 1.5, z)).project(camera);
   const rx = Math.abs(((lv.v.x + 1) / 2) * width - cx);
   el.style.display = behind ? "none" : "";
-  const w = el.offsetWidth, h = el.offsetHeight, gap = 16;
+  // its size read only when its lines or the screen change (a layout forced every frame otherwise, after the frame's style writes)
+  const wh = `${key}:${width}x${height}`;
+  if (!behind && el.dataset.wh !== wh) { el.dataset.wh = wh; el.dataset.w = String(el.offsetWidth); el.dataset.h = String(el.offsetHeight); }
+  const w = Number(el.dataset.w ?? 0), h = Number(el.dataset.h ?? 0), gap = 16;
   let left = cx + rx + gap;
   if (left + w > width - 8) left = cx - rx - gap - w; // (off the right edge: the other side)
   if (left < 8) left = width - w - 24; // (the circle wider than the screen: by its right edge)
   left = Math.max(8, Math.min(width - w - 8, left));
-  const top = Math.max(56, Math.min(height - h - 70, Math.max(height * .3, Math.min(height * .6, cy)) - h / 2)); // (about level with the circle's middle, clear of the clock and the action bar)
+  let top = Math.max(56, Math.min(height - h - 70, Math.max(height * .3, Math.min(height * .6, cy)) - h / 2)); // (about level with the circle's middle, clear of the clock and the action bar)
+  // never over the legend itself (Ed, 2026-10-08: "the helper text obscure[s] them"): if it lands on its body (and a little
+  // round it), to its other side, else above or below it, wherever there's room
+  if (!c.gone) {
+    const B = legendBounds(lv, camera, c.x, c.z, lv.tops.get(c.id) ?? 3, lv.halfW.get(c.id) ?? 2, width, height), m = 12;
+    const hits = (L: number, T: number) => L < B.right + m && L + w > B.left - m && T < B.bottom + m && T + h > B.top - m;
+    if (hits(left, top)) {
+      const tries: [number, number][] = [[B.right + m + gap, top], [B.left - m - gap - w, top], [left, B.bottom + m], [left, B.top - m - h]];
+      const ok = tries.map(([L, T]) => [Math.max(8, Math.min(width - w - 8, L)), Math.max(56, Math.min(height - h - 70, T))] as [number, number]).find(([L, T]) => !hits(L, T));
+      if (ok) [left, top] = ok;
+    }
+  }
   el.style.left = `${Math.round(left)}px`; el.style.top = `${Math.round(top)}px`;
   el.style.opacity = lv.circleFade.toFixed(2);
 }
@@ -231,21 +328,11 @@ export function emoji(lv: LeashView, el: HTMLElement, e: string): void {
   el.replaceChildren(pixelEmoji(lv, e));
 }
 
-/** An emoji as a pixel sprite, sized with its bubble (its --px: bubblePx). */
-export function pixelEmoji(lv: LeashView, e: string, k = 1, n = lv.game.tuning.bubbles.emojiPixels): HTMLCanvasElement {
-  const B = lv.game.tuning.bubbles, size = (B.emojiPixels * lv.game.tuning.pixelSize * B.scale * k) / BUBBLE_PX;
-  const c = document.createElement("canvas");
-  c.width = c.height = n;
-  c.style.width = c.style.height = `calc(var(--px) * ${size})`;
-  const x = c.getContext("2d", { willReadFrequently: true });
-  if (x) {
-    x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillText(e, n / 2, n / 2 + 0.5);
-    const d = x.getImageData(0, 0, n, n);
-    for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
-    x.putImageData(d, 0, 0);
-  }
-  return c;
+/** An emoji as a pixel sprite (render/bubbles.ts, every bubble's), sized with its bubble (its --px: bubblePx). */
+export function pixelEmoji(lv: LeashView, e: string, k = 1, n = lv.game.tuning.bubbles.emojiPixels): HTMLImageElement {
+  const B = lv.game.tuning.bubbles, size = (B.emojiPixels * lv.game.tuning.pixelSize * B.scale * k) / BUBBLE_PX, img = emojiImage(e, n);
+  img.style.width = img.style.height = `calc(var(--px) * ${size})`;
+  return img;
 }
 
 export function say(_lv: LeashView, el: HTMLElement, text: string): void { if (el.dataset.e !== text) { el.dataset.e = text; el.textContent = text; } }
@@ -270,8 +357,9 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
   }
   const c = g.creatures[talk.id];
   bc.style.setProperty("--px", `${bubblePx(c.level)}px`);
-  place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z);
-  place(bc, c.x, (lv.tops.get(c.id) ?? 1.2 + c.level * 0.8) + 0.3, c.z); // over its head, however big it is drawn (#47)
+  place(bw, w.x, witchHeight(w, g.tuning) + 2.2, w.z); // (its tail over her head, Ed 2026-10-12)
+  const hd = lv.heads.get(c.id); // (its tail over its head, Ed 2026-10-12: render/view/creatures.ts)
+  place(bc, hd?.x ?? c.x, (lv.tops.get(c.id) ?? 1.2 + c.level * 0.8) + 0.3, hd?.z ?? c.z); // over its head, however big it is drawn (#47)
   if (talk.refused) {
     // A legend: one unimpressed look, and nothing more.
     bw.classList.remove("on");
@@ -294,4 +382,31 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
   bc.classList.add("on");
   bc.style.opacity = turn % 2 === 1 ? "1" : "0.6";
   void time;
+}
+
+/** The night won (rules/win.ts; Ed, 2026-10-10: "each woken legend's dream bubble shows the shape of its home island with its
+ *  sigil, the same picture that lights up on the sea chart"): over each woken legend dancing at home, the nearest few, a dream
+ *  bubble of its island: its coast with its sigil on it (art4's art/islands.js islandPixels, the shape by rules/islandShape.ts). */
+function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, height: number, host: HTMLElement): void {
+  const g = lv.game, w = g.witch, range = g.tuning.dreams.range * 2;
+  const list = g.creatures.filter(c => !c.gone && c.finale !== undefined && c.finale < 0).map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 6);
+  let used = 0;
+  for (const { c } of list) {
+    const head = lv.tops.get(c.id) ?? 2;
+    const hd = lv.heads.get(c.id);
+    placed(lv.v.set(hd?.x ?? c.x, head + 0.4, hd?.z ?? c.z)).project(camera);
+    if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
+    let el = lv.dreamEls[used];
+    if (!el) { el = thoughtBubble(host, "dream"); lv.dreamEls.push(el); }
+    el.style.display = "";
+    const S = thoughtShape(DREAM_INNER, 3), P = bubbleGrid(g.tuning, c.level);
+    thoughtCloud(el, S, DREAM_INK, DREAM_FILL, P);
+    thoughtSymbol(el, S, "sigil", `island:${c.species}`, DREAM_INNER, () => islandCanvas(c.species, g.tuning.islands?.coast, DREAM_INNER), 1, P);
+    const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height, P), left = at.left, top = Math.max(57, at.top);
+    el.style.left = `${left}px`; el.style.top = `${top}px`;
+    tiltFilter(el, top + S.box.y * P + S.box.n * P * 0.5);
+    used++;
+  }
+  for (let i = used; i < lv.dreamEls.length; i++) lv.dreamEls[i].style.display = "none";
+  for (const cap of lv.wayEls) cap.style.display = "none";
 }

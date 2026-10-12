@@ -4,6 +4,7 @@ import { type Creature } from "../creatures";
 import { foes, huntsWitch, stateOf, type State } from "../creatureStates";
 import { LEGENDS } from "../legends";
 import { bodyRadius } from "../spacing";
+import { isHomeKey } from "../speakers";
 import { FIGHT, profileOf } from "../movement";
 import { type Delivery, type Target, type CombatState, attackOf, type CombatWorld } from "./data";
 
@@ -12,7 +13,7 @@ export const fighting = (c: Creature) => !c.gone && !c.asleep && !c.bed && !c.fl
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
-export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow && !c.partyLegend && !c.asleep; // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
+export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.swoop?.up && !c.burrow && !c.partyLegend && !c.asleep; // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
 
 /** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
 export const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/creatureStates.ts)
@@ -71,6 +72,7 @@ export const inviting = (w: CombatWorld, c: Creature, o: Creature) => !huntsWitc
 /** Why a wild one lost its target, if it's a chase it gives up (not one she's inviting, a fall, a knockout):
  *  she's risen to the treetops, or it (her or a party animal) is past its band beyond its area's edge. */
 export function gaveUp(w: CombatWorld, c: Creature, tg: Target): boolean {
+  if (tg.kind === "witch" && c.hunting === tg.id) return false; // (a hunter never gives her up while she's in its area: rules/hunt.ts; out of it, the hunt ends and this rule applies)
   if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || sheltered(v, c) || pastEdge(w, c, v.x, v.z)); }
   if (tg.kind === "creature") { const o = w.creatures[tg.id]; return !!o && !o.gone && pastEdge(w, c, o.x, o.z); }
   return false;
@@ -89,6 +91,8 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
     // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
     if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
+    if (v.hidden !== undefined && Math.hypot(v.x - c.x, v.z - c.z) > v.hidden) return false; // (her Stealth broom: out of its range, it's lost her)
+    if (c.hunting === tg.id) return true; // (hunting her: she's in its area, rules/hunt.ts; once she leaves it the hunt ends and pastEdge applies, 30 m)
     if (!c.siege) return !pastEdge(w, c, v.x, v.z);
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
     return !(d > range && d >= w.t.combat.witchLose * FIGHT.scale && !w.inArea(c, v.x, v.z));
@@ -101,27 +105,60 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
  *  attack range or she's on the ground in its area (Ed's playtest, 2026-10-04). A party animal following her takes on only
  *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
  *  parked one, anything within guard.radius of its sigil. */
-export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean): Target | null {
+export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean, claims?: Map<number, number>): Target | null {
+  // Taunted (rules/combat/hits.ts; Ed, 2026-10-09): it goes for the one of hers that drew it off her till the taunt's over,
+  // while that one's still there to fight (a lunge already under way keeps its line).
+  if (c.taunt) {
+    const o = w.creatures[c.taunt.by];
+    if (w.time < c.taunt.until && o && targetable(o) && foes(sideOf(o), sideOf(c)) && !truce(c, o) && !w.asleep(o)) return c.fight?.lunge && c.fight.target ? c.fight.target : { kind: "creature", id: o.id }; // (mid-lunge: on as it is)
+    else c.taunt = undefined;
+  }
+  // A hunter goes for her and nothing else, wherever she is (rules/hunt.ts): none while she's out of its reach (over the
+  // treetops, knocked out, sheltered in a calm circle) or inviting it.
+  if (c.hunting !== undefined && huntsWitch(sideOf(c))) {
+    const v = w.witches[c.hunting];
+    return v && v.onGround && !v.down && !sheltered(v, c) && w.talkingTo(c.id) !== v.id && !unseen(v, c) ? { kind: "witch", id: v.id } : null;
+  }
   // (an enraged one goes for a happy legend within legends.attack.wornReach: it wears it down)
   const legReach = sideOf(c) === "enraged" ? LEGENDS.attack.wornReach * FIGHT.scale : 0;
   let best: Target | null = null, bd = Math.max(range, legReach);
+  // Her posse (leashed, following her) defends her (Ed, 2026-10-09: "Animals that are leashed should attack animals that are
+  // attacking you"): only creatures going for her or for one of hers; anything with her as its target (closing in, winding up
+  // or striking) first; then the attacker fewest of hers are already on (claims: so they spread out, not all on one); then the
+  // nearest; keeping to the one it's on unless another's clearly better (no flip-flopping).
+  // (only those in her fight: within combat.defendRadius of her; Ed, 2026-10-09, "just ones that are in the same combat as you".
+  // Farther off, following her, one fights back only at what's on it itself, and isn't pulled across to her fight.)
+  const posse = c.leashed && !guarding, mine = posse && c.fight?.target?.kind === "creature" ? c.fight.target.id : -1;
+  const R = (w.t.combat.defendRadius ?? 30) * FIGHT.scale, inHerFight = posse && w.witches.some(v => v.onGround && !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R);
+  let bs = Infinity;
   for (const o of grid.near(x, z, Math.max(range, legReach))) {
     if (o === c || !targetable(o) || !foes(sideOf(o), sideOf(c)) || truce(c, o) || w.asleep(o) || inviting(w, c, o) || (keep && !keep(o))) continue;
     if (Math.hypot(o.x - x, o.z - z) > range && !(o.boss && o.legendState === "happy")) continue;
-    if (c.leashed && !guarding) {
+    const d = Math.hypot(o.x - x, o.z - z);
+    if (posse) {
       const tg = o.fight?.target;
       if (!tg || (tg.kind !== "witch" && !(tg.kind === "creature" && w.creatures[tg.id]?.leashed))) continue;
+      if (!inHerFight) { if (tg.kind === "creature" && tg.id === c.id && d < bd) { bd = d; best = { kind: "creature", id: o.id }; } continue; } // (not in her fight: only what's on it, never pulled across to her fight)
+      const others = (claims?.get(o.id) ?? 0) - (o.id === mine ? 1 : 0);
+      const score = (tg.kind === "witch" ? 0 : 1e4) + Math.max(0, others) * 60 + d - (o.id === mine ? 6 : 0);
+      if (score < bs) { bs = score; best = { kind: "creature", id: o.id }; }
+      continue;
     }
-    const d = Math.hypot(o.x - x, o.z - z);
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
   if (huntsWitch(sideOf(c)) && !(c.watchUntil !== undefined && w.time < c.watchUntil)) for (const v of w.witches) { // (not while it's still watching her: rules/wildWatch.ts)
-    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe)
+    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c) || unseen(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe; her Stealth broom hides her)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
     if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || !pastEdge(w, c, v.x, v.z)))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
   return best;
 }
+
+/** Her Stealth broom (rules/brooms.ts; Ed, 2026-10-12: "creatures don't see you unless you're inviting or placing/pickup; once
+ *  aggro'd they attack you until you're out of range and then they lose you again"): hidden, she's seen only by one already
+ *  going for her, and only while it's within her `hidden` range of her. */
+export const unseen = (v: { id: number; x: number; z: number; hidden?: number }, c: Creature): boolean =>
+  v.hidden !== undefined && !(c.fight?.target?.kind === "witch" && c.fight.target.id === v.id && Math.hypot(v.x - c.x, v.z - c.z) <= v.hidden);
 
 /** A coarse grid of the fighting creatures, rebuilt each step, so finding enemies near one is cheap. */
 export class Grid {
@@ -155,9 +192,18 @@ export function moveToward(c: Creature, x: number, z: number, stopAt: number, sp
   return d - step;
 }
 
+/** Metres a soundsystem may stand further from the centre than a besieger and still be marched on (one it's beside already). */
+const INWARD_SLACK = 10;
+
 /** The soundsystem a siege goes for next: the nearest still standing, from (x, z). */
-export function nearestSound(s: CombatState, x: number, z: number): string | null {
+export function nearestSound(s: CombatState, x: number, z: number, centre?: { x: number; z: number }, keep?: string): string | null {
+  // Marching inward (Ed, 2026-10-11): given the map's centre, never one further from it than (x, z) is (home's, and `keep`, its own, always;
+  // and one it's all but at already, within INWARD_SLACK metres further out).
+  const out = centre ? Math.hypot(x - centre.x, z - centre.z) + INWARD_SLACK : Infinity;
   let best: string | null = null, bd = Infinity;
-  for (const [key, h] of s.sounds) { if (h.hp <= 0) continue; const d = Math.hypot(h.x - x, h.z - z); if (d < bd) { bd = d; best = key; } }
+  for (const [key, h] of s.sounds) {
+    if (h.hp <= 0 || (centre && key !== keep && !isHomeKey(key) && Math.hypot(h.x - centre.x, h.z - centre.z) > out)) continue;
+    const d = Math.hypot(h.x - x, h.z - z); if (d < bd) { bd = d; best = key; }
+  }
   return best;
 }

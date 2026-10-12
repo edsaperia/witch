@@ -3,7 +3,7 @@
 // sleepers' 😴 dreams, the chat and reply bubbles) are placed by the bend (render/height.ts `placed`) but drawn after
 // the post pass, so its blur (render/post.ts TILT) never touches them. This gives each the same blur by its height on
 // screen: the shader's radius (in low-res pixels, a Gaussian over ±r, so about r/2 its deviation), as a CSS blur.
-// Not the HUD (health pips, cues, panels): those stay sharp, as the action bar does.
+// Not the HUD (her claw slashes, cues, panels): those stay sharp, as the action bar does.
 import type { PostTuning } from "./post";
 
 type Tilt = PostTuning["tiltShift"];

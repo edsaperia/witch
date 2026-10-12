@@ -1,5 +1,5 @@
 // The game's sound on the page: the AudioContext (made at the first press: browsers keep sound off till then), the music,
-// the sound effects and their cues, the volume slider in the corner, and the audio watchdog. One a page.
+// the sound effects and their cues, and the audio watchdog. One a page.
 import { beatAt, timeAt } from "../rules/beat";
 import { PARTY_CAST } from "../rules/party";
 import { djIntroEnd } from "../rules/djSet";
@@ -7,9 +7,12 @@ import { Music } from "../platform/audio/music";
 import { Sfx } from "../platform/audio/sfx";
 import { OVER_DEBUG, SfxCues } from "../platform/audio/sfxCues";
 import { AudioWatchdog } from "../platform/audio/watchdog";
+import { ShedValve } from "../platform/audio/shed";
 import { musicMix, partyOverEase } from "../rules/music";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
+import { nightStyle } from "../rules/musicSet";
+import { voiceRecordings } from "../platform/audio/voiceSamples";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import type { PlaytestLog } from "../platform/playtestLog";
@@ -19,36 +22,22 @@ export class Sound {
   music: Music | null = null;
   sfx: Sfx | null = null;
   sfxCues: SfxCues | null = null;
-  /** The volume, 0 to 1 (0 mutes); remembered on this browser. */
+  /** The ley line's drawn current link (the view's), for the pulse's fizz (SfxCues.leyLink). */
+  leyLink: SfxCues["leyLink"] = null;
+  /** The volume, 0 to 1 (fixed: the corner slider went, Ed 2026-10-10). */
   level = 0.8;
   /** The music's last mix (by how near she is to a playing soundsystem): the playtest log reads it. */
   lastMix: ReturnType<typeof musicMix> | null = null;
   watchdog: AudioWatchdog | null = null;
+  /** The safety valve (shed.ts): the sound shed a step at a time while the audio thread under-runs; `?audio=lite|full`. */
+  readonly valve = new ShedValve(audioParam());
 
   constructor(private readonly tuning: Tuning, private readonly style: MusicStyle, private readonly seed: number) {
-    try { const v = localStorage.getItem("witch.volume"); if (v !== null && !isNaN(+v)) this.level = Math.min(1, Math.max(0, +v)); } catch { /* storage blocked */ }
   }
+  /** The night's style (rules/musicSet.ts: the style with the night's set as its arc), once a game's been seen. */
+  private night: MusicStyle | null = null;
+  private get playing(): MusicStyle { return this.night ?? this.style; }
 
-  /** The volume (Ed's playtest, 2026-10-04): a slider in the corner, 0 mutes; remembered on this browser. */
-  volumeSlider(): void {
-    const volumeEl = document.createElement("label");
-    volumeEl.id = "volume";
-    volumeEl.title = "volume (0 mutes)";
-    Object.assign(volumeEl.style, { position: "fixed", right: "10px", bottom: "12px", zIndex: "3", display: "flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "6px", background: "rgba(14,11,28,.55)", color: "#e8e2f4", font: "12px ui-monospace, Menlo, Consolas, monospace", pointerEvents: "auto" });
-    const volumeIcon = document.createElement("span"), volumeRange = document.createElement("input");
-    volumeRange.type = "range"; volumeRange.min = "0"; volumeRange.max = "100"; volumeRange.value = String(Math.round(this.level * 100));
-    volumeRange.style.width = "80px";
-    const showVolume = () => { volumeIcon.textContent = this.level === 0 ? "🔇" : this.level < 0.4 ? "🔈" : "🔊"; };
-    volumeRange.addEventListener("input", () => {
-      this.level = +volumeRange.value / 100; showVolume();
-      if (this.music) this.music.volume = this.tuning.music.volume * this.level;
-      this.sfx?.setVolume(this.tuning.music.volume * this.level);
-      try { localStorage.setItem("witch.volume", String(this.level)); } catch { /* fine */ }
-    });
-    for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
-    volumeEl.append(volumeIcon, volumeRange); showVolume();
-    document.body.append(volumeEl);
-  }
 
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
   ensureSfx(): void {
@@ -56,13 +45,28 @@ export class Sound {
     if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, tuning.music.volume * this.level, tuning.sfx, this.style.root + 24); this.sfxCues = new SfxCues(this.sfx, (by, sec) => this.music?.duck(by, sec)); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
   }
 
+  /** The context, with the tuning's latencyHint (music.latency; ?latency= for one load): a bigger output buffer gives the
+   *  audio thread more room before it under-runs (heard as the sound cutting out), at the cost of later sound effects. */
+  private context(): AudioContext {
+    let hint: AudioContextLatencyCategory = this.tuning.music.latency ?? "interactive";
+    try { const q = new URLSearchParams(location.search).get("latency"); if (q === "interactive" || q === "balanced" || q === "playback") hint = q; } catch { /* no page */ }
+    return new AudioContext({ latencyHint: hint });
+  }
+
   /** A first press (the creator's): the context, resumed, and the sound effects. */
-  wake(): void { try { this.audio ??= new AudioContext(); void this.audio.resume(); this.ensureSfx(); } catch { /* no sound yet */ } }
+  wake(): void { try { this.audio ??= this.context(); void this.audio.resume(); this.ensureSfx(); } catch { /* no sound yet */ } }
+
+  /** The music's recorded voices (the singer's and the vocoder's), once loaded: given to each music made. */
+  private voices(): void {
+    const m = this.music, a = this.audio;
+    if (!m?.engine || !a) return;
+    void voiceRecordings(a).then(r => { m.engine?.setRecordings(r); if (r.whispers) m.engine?.setWhisper(r.whispers); });
+  }
 
   /** Play starts: the context, the music and the sound effects. */
   start(): void {
     const { tuning } = this;
-    try { this.audio ??= new AudioContext(); void this.audio.resume(); if (!this.music && tuning.music.on) this.music = new Music(this.audio, tuning.music.volume * this.level, this.style, this.seed, tuning.music.src); this.ensureSfx(); } catch { /* no sound yet anyway */ }
+    try { this.audio ??= this.context(); void this.audio.resume(); if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); } this.ensureSfx(); } catch { /* no sound yet anyway */ }
   }
 
   /** The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second, a context suspended is
@@ -78,13 +82,13 @@ export class Sound {
         playtest.audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, tuning.music.volume * this.level, this.style, this.seed, tuning.music.src); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); }
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
     setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
-    playtest.audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
+    playtest.audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
   }
 
   private live: () => boolean = () => false;
@@ -96,10 +100,20 @@ export class Sound {
   /** Frozen (platform/freeze.ts): the context suspended, and resumed after. */
   freeze(on: boolean): void { try { void (on ? this.audio?.suspend() : this.audio?.resume()); } catch { /* no sound */ } }
 
+  /** Once a second, from the output meter's ClockWatch: sheds a step if the audio thread is falling behind (the reason, if
+   *  it did, for the playtest log). */
+  shedCheck(t: number, underruns: number | null, drift: number): string | null { return this.valve.feed(t, underruns, drift, this.music?.stats.resyncs ?? 0); }
+
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
     this.lastMix = musicMix(game, game.witch);
+    // the night's set (Ed, 2026-10-11): the music plays its arc, from the next block
+    const night = nightStyle(this.style, game.musicSet);
+    if (night !== this.night) { this.night = night; this.music?.engine?.setStyle(night); }
+    if (this.music) this.music.shed = this.valve.level; // (the watchdog's rebuilt music too)
+    if (this.sfx) this.sfx.shed = this.valve.level;
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
+    if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
     // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
     // crackling under her hands (quieter: room.decks) once her routine has dropped the needle (rules/djSet.ts; the room quieter
@@ -109,3 +123,6 @@ export class Sound {
     this.sfx?.room(roomOpen ? 1 : atDecks ? this.tuning.sfx.room.decks * (dropped ? 1 : 0.3) : 0);
   }
 }
+
+/** `?audio=lite|full` for one load (shed.ts). */
+function audioParam(): string | null { try { return new URLSearchParams(location.search).get("audio"); } catch { return null; } }

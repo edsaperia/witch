@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { setupArena } from "./arena";
 import { stepCreaturesNear, type Creature } from "./creatures";
 import { newGame, STEP, stepGame, type Game } from "./game";
+import { marchSpeed } from "./combat";
 import { inFull } from "./simLod";
 import { TUNING } from "./tuning";
 
@@ -57,13 +58,13 @@ describe("no flicker at the line", () => {
 });
 
 describe("marching besiegers", () => {
-  /** Besiegers on home's soundsystem put down `far` metres east of it, the witch over the treetops `away` metres west. */
+  /** Besiegers on home (its ring of speakers) put down `far` metres east of it, the witch over the treetops `away` metres west. */
   function siege(far: number, away: number): { g: Game; marchers: Creature[]; home: { x: number; z: number } } {
     const g = newGame(7, TUNING);
     g.clock.paused = false;
     stepGame(g, { ...idle, moveX: 1 }, STEP);
     setupArena(g, "wolf*1@2,boar*6@2!");
-    const home = g.combat.sounds.get("home")!, marchers = g.arena!.ids.map(id => g.creatures[id]).filter(c => c.siege);
+    const home = g.map.dancefloor, marchers = g.arena!.ids.map(id => g.creatures[id]).filter(c => c.siege);
     marchers.forEach((c, i) => { c.x = home.x + far; c.z = home.z + i * 3; c.fight = undefined; g.combat.busy.add(c.id); }); // (marching: a siege under way)
     for (const id of g.arena!.ids) if (!g.creatures[id].siege) g.creatures[id].gone = true; // (hers out of the way)
     g.witches[0].body = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: home.x - away, z: home.z };
@@ -76,7 +77,7 @@ describe("marching besiegers", () => {
     expect(g.lod!.marchCoarse).toBe(marchers.length);
     const dist = (c: Creature) => Math.hypot(c.x - home.x, c.z - home.z), d0 = marchers.map(dist);
     for (let i = 0; i < 60 * 30; i++) stepGame(g, idle, STEP);
-    marchers.forEach((c, i) => expect(d0[i] - dist(c)).toBeGreaterThan(c.speed * TUNING.combat.marchMult * 30 * 0.8)); // (marching on, at their pace)
+    marchers.forEach((c, i) => expect(d0[i] - dist(c)).toBeGreaterThan(Math.min(marchSpeed(c, TUNING) * 30 * 0.8, d0[i] - L.action - 40))); // (marching on, at their pace: or there by now)
     for (let i = 0; i < 60 * 90; i++) stepGame(g, idle, STEP);
     expect(g.lod!.marchCoarse).toBe(0); // (in full near the soundsystem)
   }, 120_000);
@@ -93,6 +94,7 @@ describe("marching besiegers", () => {
     (b.g as { tuning: typeof TUNING }).tuning = { ...b.g.tuning, simLod: { ...L, every: 1 } }; // (every step: all in full)
     for (let i = 0; i < 60 * 8; i++) { stepGame(a.g, idle, STEP); stepGame(b.g, idle, STEP); }
     const da = Math.hypot(a.marchers[0].x - a.home.x, a.marchers[0].z - a.home.z), db = Math.hypot(b.marchers[0].x - b.home.x, b.marchers[0].z - b.home.z);
-    expect(Math.abs(da - db)).toBeLessThan(L.every * STEP * a.marchers[0].speed * TUNING.combat.marchMult * 1.5);
+    // (within a coarse turn's march, and full's combat.reaction pause before it sets off, at its marching pace: rules/combat.ts marchSpeed)
+    expect(Math.abs(da - db)).toBeLessThan((L.every * STEP + TUNING.combat.reaction) * marchSpeed(a.marchers[0], TUNING) * 1.5);
   }, 120_000);
 });

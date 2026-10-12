@@ -23,8 +23,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 600000, polling: 500 });
     // out of the boot, the next wave half way; the witch away from home, facing the way the line goes
     await page.evaluate(boot => {
-      const g = window.witch.game, t = g.clock.time, I = g.tuning.party.interval, D = g.map.dancefloor;
-      if (!boot) { g.party.bootUntil = t; g.party.nextAt = t + I * 0.5; } // (BOOT=1: left booting, the wave pointer hidden)
+      const g = window.witch.game, t = g.clock.time, P = g.party.pulse, D = g.map.dancefloor;
+      if (!boot) { g.party.bootUntil = t; P.at = t; P.d = P.lens.reduce((a, b) => a + b, 0) * 0.5; } // (BOOT=1: left booting, the wave pointer hidden; else the ley pulse half way to its stone)
       if (boot) g.party.spellAt = null; // (and waiting for the party spell: the clock at 00:00 and the prompt to cast it)
       g.witch = { ...g.witch, x: D.x + 60, z: D.z + 40, seated: false, mode: "ground", lift: 0 };
     }, !!process.env.BOOT);

@@ -27,15 +27,15 @@ export class Minimap {
     pickSet(p, m, p.areasPerWave, cand); // the candidates the pick of next chose among (the same state, so the same pick)
     const g = this.g, isCand = new Set(cand.map(c => `${c[0]},${c[1]}`)), nextSet = new Set(p.next.map(c => `${c[0]},${c[1]}`));
     g.clearRect(0, 0, n * k, n * k);
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    for (let y = m.first; y < m.first + n; y++) for (let x = m.first; x < m.first + n; x++) {
       const c = `${x},${y}`, a = p.areas.get(c);
-      if (!m.playable(x, y)) { if (m.inBuffer(x, y)) { g.fillStyle = "#0e0b1a"; g.fillRect(x * k + 0.5, y * k + 0.5, k - 1, k - 1); } continue; } // (the circular map's buffer ring: scenery)
+      if (!m.playable(x, y)) { if (m.isLake?.(x, y)) { g.fillStyle = "#3d7fb0"; g.fillRect((x - m.first) * k + 0.5, (y - m.first) * k + 0.5, k - 1, k - 1); } else if (m.inBuffer(x, y)) { g.fillStyle = "#0e0b1a"; g.fillRect((x - m.first) * k + 0.5, (y - m.first) * k + 0.5, k - 1, k - 1); } continue; } // (the circular map's buffer ring: scenery)
       g.fillStyle = c === `${m.centreCell[0]},${m.centreCell[1]}` ? "#ff6fcf" : a ? `hsl(${300 - Math.min(200, a.wave * 12)},80%,55%)` : nextSet.has(c) ? "#ffe25c" : isCand.has(c) ? "#6a5a20" : "#1d1830";
-      g.fillRect(x * k + 0.5, y * k + 0.5, k - 1, k - 1);
+      g.fillRect((x - m.first) * k + 0.5, (y - m.first) * k + 0.5, k - 1, k - 1);
     }
     // Where she is.
     const A = m.areaSize;
     g.fillStyle = "#fff";
-    g.fillRect(Math.floor((wx / A) * k) - 1, Math.floor((wz / A) * k) - 1, 3, 3);
+    g.fillRect(Math.floor((wx / A - m.first) * k) - 1, Math.floor((wz / A - m.first) * k) - 1, 3, 3);
   }
 }

@@ -30,7 +30,7 @@ const SIGNALS = {
   "enraged > 4 × defence": tr => tr.find(x => x.enragedF > 100 && x.enragedF > 4 * x.defenceF),
   "home besieged, no defender": tr => tr.find(x => x.homeSiegeF > 0 && x.homeDefF === 0),
   "home besieged, no defender, ≤ ½ standing": tr => tr.find(x => x.homeSiegeF > 0 && x.homeDefF === 0 && x.standing <= 0.5 * x.peak),
-  "home < ½ health": tr => tr.find(x => x.homeHp < TUNING.combat.homeHealth / 2),
+  "home < ½ health": tr => tr.find(x => x.homeHp < TUNING.combat.speakerHealth * TUNING.dancefloor.speakers.count / 2),
 };
 
 const all = [];

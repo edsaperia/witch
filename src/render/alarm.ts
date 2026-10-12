@@ -48,7 +48,8 @@ export class AlarmIndicators {
   constructor(private parent: HTMLElement) {}
 
   /** Draw `list` (rules/alarms.ts shownAlarms), seen from the witch at (wx, wz); width and height: the screen (CSS pixels). */
-  update(camera: THREE.Camera, width: number, height: number, list: readonly Alarm[], wx: number, wz: number, time: number, T: AlarmTuning): void {
+  /** `dim`: all of them faded by this much (0 to 1; slowed time: render/view/hud.ts). */
+  update(camera: THREE.Camera, width: number, height: number, list: readonly Alarm[], wx: number, wz: number, time: number, T: AlarmTuning, dim = 1): void {
     while (this.cues.length < list.length) this.cues.push(new PixelCue(this.parent, SCALE));
     this.cues.forEach((c, i) => {
       const a = list[i];
@@ -62,7 +63,7 @@ export class AlarmIndicators {
       const { x, y } = edgeLayout.claim(e.ex, e.ey, e.angle, N * SCALE * 0.42), tx = -Math.sin(e.angle), ty = Math.cos(e.angle);
       const shake = kick * Math.sin(time * 70) * 5;
       c.place(x + tx * shake, y + ty * shake, 1 + 0.18 * kick);
-      c.canvas.style.opacity = c.label.style.opacity = `${(e.show * fade).toFixed(2)}`;
+      c.canvas.style.opacity = c.label.style.opacity = `${(e.show * fade * dim).toFixed(2)}`;
       c.clear();
       // The ring: its health, clockwise from 12 o'clock, red; what's lost, dim. Brighter on a blow; white as it falls.
       const left = a.hp / Math.max(1, a.max), hot = this.hot;

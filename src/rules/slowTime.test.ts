@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { legendRings, slowTarget, type Ring } from "./slowTime";
+import { napping } from "./creatures";
 import { newInvites, stepInvites, type Affection } from "./invites";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -14,6 +15,7 @@ const S = TUNING.legendCircle!.slow;
 function inCircle(): { g: Game; ring: Ring } {
   const g = newGame(123, TUNING);
   g.clock.paused = false; g.party.spellAt = -100;
+  g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
   const ring = legendRings(g).find(r => g.creatures[r.id].legendState === "asleep")!;
   for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - ring.x, c.z - ring.z) < 150) c.gone = true; // (just her and the legend)
   g.byArea = null;
@@ -69,9 +71,9 @@ describe("legend circles slow time", () => {
       const { g } = inCircle();
       if (!on) (g as { tuning: typeof TUNING }).tuning = { ...g.tuning, legendCircle: { slow: { ...S, on: false } } };
       run(g, 1);
-      const far = g.creatures.find(c => !c.boss && !c.gone && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 160 && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 250)!;
+      const far = g.creatures.find(c => !c.boss && !c.gone && !napping(c, g.clock.time) && !c.circle && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 160 && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 250)!;
       const x0 = far.x, z0 = far.z;
-      for (let i = 0; i < 60; i++) { Object.assign(far, { tx: far.x + 50, tz: far.z, rest: 0 }); run(g, STEP); } // (heading east the whole second)
+      for (let i = 0; i < 60; i++) { Object.assign(far, { tx: far.x + 50, tz: far.z, rest: 0, watchUntil: undefined }); run(g, STEP); } // (heading east the whole second; not watching her: rules/wildWatch.ts)
       return { d: Math.hypot(far.x - x0, far.z - z0), speed: far.speed };
     };
     const slow = walked(true), full = walked(false);
