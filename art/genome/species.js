@@ -137,6 +137,36 @@ export const GENOMES = [
   { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .4, len: 1.1, chest: .1, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .28, legW: .6, bw: .22 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "newt", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: 2.4 }, legend: ["crystals"], texture: { kind: "smooth" } },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
+  // the jungle's tiger (the journey's west, unknown-11's island): a big striped cat, low and long, heavy in the shoulder. Its evolution:
+  // a round, big-pawed cub with soft broad stripes, a lanky young, a heavy-shouldered adult with a ruff of cheek fur, and the legend:
+  // its stripes burning with spirit-fire, a smouldering mane along its spine, long pale claws, its eyes lit
+  { id: "tiger", name: "Tiger", template: "quadruped", builder: "quad", palette: { hue: .065, sat: .85, val: .9, belly: "white" }, body: { hgt: 1.1, len: .86, chest: .5, tuck: .56, neck: .28, neckAng: .5, neckW: .52, hr: .3, legW: 1.3, bw: .32 }, head: { snout: .55, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true, muzzle: true }, parts: { ears: { kind: "round", size: .75 }, tail: "tiger", feet: "paw" }, coat: { belly: true, stripes: { n: 11, w: .3 } }, legend: ["mane"],
+    levels: [
+      { body: { len: .6, hr: .34, legW: 1.55 }, coat: { stripes: { n: 7, w: .28, legN: 4 } }, parts: { ears: { kind: "round", size: 1.05 } } },
+      { body: { len: .84, legW: 1.15, chest: .54 } },
+      { body: { front: 1.12, legW: 1.45, bw: .35, hgt: 1.15 }, features: [{ kind: "ruff", size: .15, count: 12 }] },
+      { body: { front: 1.25, legW: 1.65, bw: .37, len: .92, hgt: 1.2 }, head: { eyeGlow: true }, coat: { stripes: { n: 12, w: .32, mat: "MAGIC" } }, features: [
+        { kind: "ruff", size: .26, count: 16 },
+        { kind: "mane", from: .35, to: 1, height: .16, count: 14, lean: .55, mat: "BODY3" },
+        { kind: "wisps", at: "mane", size: .24, count: 6, from: .3, to: .95, mat: "MAGIC2", lift: .2 },
+        { kind: "claws", size: .16, mat: "BELLY" },
+      ] },
+    ] },
+  // the jungle's elephant (the journey's west, unknown-28's island): the biggest creature in the game, grey and wrinkled, a trunk, fan
+  // ears and tusks. Its evolution: a round calf with a short trunk and huge ears, a young with its first tusks, a great tusker, and the
+  // legend: a walking temple, old stones and a little wood standing on its back, its tusks long and burning at the tips, its eyes lit
+  { id: "elephant", name: "Elephant", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .22, val: .5 }, body: { hgt: 1.9, len: .95, chest: .58, tuck: .62, neck: .2, neckAng: .15, neckW: .75, hr: .5, legW: 2.1, bw: .3, back: "arch", front: 1.05 }, head: { snout: .3, snoutD: .95, trunk: { len: 1, curl: .5 }, eyeK: .65 }, parts: { ears: { kind: "fan", size: 1 }, tail: "thin", feet: "paw", tusks: true }, texture: { kind: "smooth" }, legend: ["moss"],
+    levels: [
+      { body: { len: .72, hr: .56, legW: 2.3, chest: .5, tuck: .54 }, head: { trunk: { len: .6, curl: .3 } }, parts: { ears: { kind: "fan", size: 1.15 } } },
+      { head: { tuskSize: .6, tuskCurl: .45, trunk: { len: .9, curl: .45 } } },
+      { body: { hgt: 2.0 }, head: { tuskSize: 1.5, tuskCurl: .55 } },
+      { body: { hgt: 2.05, legW: 2.4, bw: .33 }, head: { tuskSize: 2.4, tuskCurl: .75, eyeGlow: true, trunk: { len: 1.15, curl: .8 } }, features: [
+        { kind: "stones", from: .2, to: .8, count: 4, height: .5 },
+        { kind: "moss", count: 10, size: .12 },
+        { kind: "brambles", count: 3 },
+        { kind: "wisps", at: "tusks", size: .3 },
+      ] },
+    ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
