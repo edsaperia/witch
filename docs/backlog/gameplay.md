@@ -41,6 +41,10 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked shipped; don't buil
 
 - After destroying a soundsystem, enraged animals **never target a soundsystem further from the centre than they are** (Ed). They march inward, toward home, never back out.
 
+## Invitations bounce off the enraged (Ed, 2026-10-12)
+
+- A 💌 that hits an **enraged** creature is refused: the creature makes an **angry, whiny sound**, its **💢 vibrates**, and the invitation **crumples into a ball of paper** and is tossed away.
+
 ## Controller
 
 - **Shipped (#618):** cross rises or lands, square picks up and puts down sigils (held: her hat), triangle cycles the stack, circle boosts (the spell), R2 invites, L2 blinks. Start pauses.
