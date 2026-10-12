@@ -19,6 +19,7 @@ import { KeyHint } from "./keyHint";
 import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixelUi";
 import { button, h } from "./dom";
 import { BROOM_SPELLS, HAT_SPELLS } from "../rules/spells";
+import { HAT_ICONS } from "../render/hatIcons";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -388,20 +389,23 @@ export class Creator {
   }
 
   /** An axis's row in its box: a button per choice, or a slider. */
-  /** The Hat or Broom box's spells (rules/spells.ts): a chip for each built one, the chosen one lit, and its line under them. */
+  /** The Hat or Broom box's power (rules/spells.ts; Ed, 2026-10-12: "for now it can just be a dropdown", the item's look and its
+   *  power chosen apart till they're matched): a dropdown of the built ones, "none" first, the chosen one's icon beside it
+   *  (render/hatIcons.ts) and its line under it. */
   private spellRow(body: HTMLElement, slot: "hat" | "broom", row: (p: HTMLElement, n: string) => HTMLElement): void {
-    const r = row(body, "Spell"), list = (slot === "hat" ? HAT_SPELLS : BROOM_SPELLS).filter(x => x.built), say = h("div", { style: { margin: "0 0 6px 84px", opacity: ".8", fontSize: "12px" } });
+    const r = row(body, "Power"), list = (slot === "hat" ? HAT_SPELLS : BROOM_SPELLS).filter(x => x.built), say = h("div", { style: { margin: "0 0 6px 84px", opacity: ".8", fontSize: "12px" } });
+    const pick = document.createElement("select"), icon = h("span", { style: { display: "inline-flex", width: "13px", height: "13px", marginLeft: "6px" } });
+    pick.dataset.spell = slot;
+    Object.assign(pick.style, { font: "inherit", color: "inherit", background: "rgba(255,255,255,.08)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 4px", cursor: "pointer" });
+    for (const x of list) { const o = document.createElement("option"); o.value = x.id; o.textContent = x.id === "none" ? "none" : x.name; o.title = x.line; o.style.background = "#1d1430"; pick.append(o); }
     const paint = () => {
-      for (const b of r.querySelectorAll<HTMLButtonElement>("button")) { const on = b.dataset.spell === this.loadout[slot]; b.style.background = on ? "var(--accent)" : "rgba(255,255,255,.08)"; b.style.color = on ? "#1d1408" : "inherit"; }
-      say.textContent = list.find(x => x.id === this.loadout[slot])?.line ?? "";
+      pick.value = this.loadout[slot];
+      const x = list.find(q => q.id === this.loadout[slot]), glyph = slot === "hat" ? HAT_ICONS[this.loadout[slot]] : undefined;
+      say.textContent = x?.line ?? "";
+      icon.replaceChildren(...(glyph ? [spellIcon(glyph)] : []));
     };
-    for (const x of list) {
-      const b = h("button", { type: "button", text: x.id === "none" ? "none" : x.name });
-      Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" });
-      b.dataset.spell = x.id; b.title = x.line;
-      b.addEventListener("click", () => { this.loadout = { ...this.loadout, [slot]: x.id }; paint(); this.onLoadout(this.loadout); });
-      r.append(b);
-    }
+    pick.addEventListener("change", () => { this.loadout = { ...this.loadout, [slot]: pick.value }; paint(); this.onLoadout(this.loadout); });
+    r.append(pick, icon);
     body.append(say);
     paint();
   }
@@ -792,4 +796,20 @@ function drawGlows(x: CanvasRenderingContext2D, room: Room, t: number): void {
   halo(x, a.screen, 10, [150, 214, 255], .16 + .04 * Math.sin(t * 3));
   halo(x, a.potions, 6, [196, 120, 255], .08 + .05 * Math.sin(t * 1.1));
   x.restore();
+}
+
+/** A spell's icon (render/hatIcons.ts: `#` ink, `+` a lighter tone) as pixels in the chip's own colour, so it follows the chip lit
+ *  or not: an inline SVG of whole squares, 13 px across, crisp-edged. */
+function spellIcon(rows: readonly string[]): SVGSVGElement {
+  const NS = "http://www.w3.org/2000/svg", w = rows[0]?.length ?? 0, svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${w} ${rows.length}`); svg.setAttribute("width", String(w)); svg.setAttribute("height", String(rows.length));
+  svg.setAttribute("shape-rendering", "crispEdges"); svg.setAttribute("aria-hidden", "true");
+  rows.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c !== "#" && c !== "+") return;
+    const r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", String(x)); r.setAttribute("y", String(y)); r.setAttribute("width", "1"); r.setAttribute("height", "1");
+    r.setAttribute("fill", "currentColor"); if (c === "+") r.setAttribute("fill-opacity", "0.5");
+    svg.append(r);
+  }));
+  return svg;
 }

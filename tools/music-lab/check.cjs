@@ -12,6 +12,7 @@ try { playwright = require("playwright"); } catch { playwright = require("/opt/n
 
 const ROOT = path.resolve(__dirname, "../..");
 let failed = 0;
+const t0 = Date.now(), secs = () => ((Date.now() - t0) / 1000).toFixed(0);
 const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); if (!cond) failed++; };
 
 (async () => {
@@ -26,21 +27,23 @@ const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); i
   await page.waitForTimeout(300);
   ok(errors.length === 0, `the lab opens with no script errors${errors.length ? ": " + errors.join(" | ") : ""}`);
   ok(fetched.length === 0, `the lab fetches nothing${fetched.length ? ": " + fetched.join(", ") : ""}`);
-  const r = await page.evaluate(() => window.musicLabCheck());
+  const tr = Date.now(), r = await page.evaluate(() => window.musicLabCheck());
+  console.log(`     (rendered in ${((Date.now() - tr) / 1000).toFixed(0)} s)`);
   for (const x of r.results) console.log(`     ${x.name.padEnd(40)} rms ${x.rms.toFixed(3)}  peak ${x.peak.toFixed(2)}`);
   ok(r.ok, `every section renders offline, none silent, NaN or clipping${r.ok ? "" : ": " + r.errors.join("; ")}`);
   ok(r.results.length >= 10, `${r.results.length} renders`);
   // live: play for a few seconds, jump to a wave, check what's playing changes on a block line
+  // (each waits only until it shows, up to its old fixed wait)
   await page.click("#play");
-  await page.waitForTimeout(2500);
+  await page.waitForFunction(() => { const t = document.querySelector("#s-section")?.textContent; return !!t && t !== "–"; }, null, { timeout: 2500, polling: 100 }).catch(() => {});
   const s1 = await page.textContent("#s-section");
   ok(!!s1 && s1 !== "–", `plays live (now: ${s1})`);
   await page.click('#waves button[data-wave="7"]');
-  await page.waitForTimeout(9000);
+  await page.waitForFunction(() => /^7 /.test(document.querySelector("#s-wave")?.textContent || ""), null, { timeout: 9000, polling: 100 }).catch(() => {});
   const w = await page.textContent("#s-wave");
   ok(/^7 /.test(w || ""), `jumping to wave 7 plays its music within a block (now: ${w})`);
   ok(errors.length === 0, `no errors while playing${errors.length ? ": " + errors.join(" | ") : ""}`);
   await browser.close();
   if (failed) { console.log(`${failed} failed`); process.exit(1); }
-  console.log("all ok");
+  console.log(`all ok in ${secs()} s`);
 })().catch(e => { console.error(e); process.exit(1); });

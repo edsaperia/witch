@@ -1,8 +1,8 @@
 // Where things sit on the sea chart (wave 2, part C; Ed: "the sea chart is the same circle": home in the middle, every island
-// round it at its kind's planned biome direction, docs/backlog/journey.md): the disc's radius 1, north up; each phase's islands
-// on a ring further out (home plus five phases); an island's outline drawn in a box of BOX across, its size by phase kept by
+// round it at its kind's planned biome direction, docs/backlog/journey.md): the disc's radius 1, north up; the islands packed
+// over it by the archipelago (rules/archipelago.ts; Ed, 2026-10-12), each phase roughly further out (it was a ring a phase); an island's outline drawn in a box of BOX across, its size by phase kept by
 // art/islands.js islandPath (its radii shares of the biggest island's).
-import { bearingOf, islandOf, KINDS } from "../rules/rosters";
+import { bearingOf, islandOf, KINDS, worldOf } from "../rules/rosters";
 
 /** The rings' radii by phase (0 home in the middle; 1 to 5 outward, the last just inside the rim). */
 export const ringOf = (phase: number): number => (phase <= 0 ? 0 : 0.02 + phase * 0.165);
@@ -10,8 +10,17 @@ export const ringOf = (phase: number): number => (phase <= 0 ? 0 : 0.02 + phase 
 /** An island's outline box across (the disc's radius 1): every island's drawn at this scale, so sizes compare. */
 export const BOX = 0.17;
 
-/** Where an island ("home" or a kind) sits in the world: x east, y down (SVG), on its phase's ring at its bearing; null if it's neither. */
+/** Where an island ("home" or a kind) sits in the world: x east, y down (SVG), its home's middle (Ed, 2026-10-12, the journey's
+ *  tessellation: "the rings can be very relaxed, a pleasing layout is much more important": rules/archipelago.ts, the disc used
+ *  evenly, each island roughly at its bearing and its phase's distance, in its patch); null if it's neither. */
 export function islandAt(island: string, world = 0): { x: number; y: number } | null {
+  if (island !== "home" && !islandOf(island)) return null;
+  const p = worldOf(world).islands.get(island);
+  return p ? { x: p.x, y: p.y } : null;
+}
+
+/** Where an island sat before the archipelago: on its phase's ring at its bearing (tools/islands/chart.mjs's "before"). */
+export function ringAt(island: string, world = 0): { x: number; y: number } | null {
   if (island === "home") return { x: 0, y: 0 };
   const i = islandOf(island);
   if (!i) return null;

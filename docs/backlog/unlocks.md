@@ -50,10 +50,10 @@ Suggested:
 
 - **Ley jump** (active, long cooldown): teleport to the pulse.
 - **Haul** (passive or active): extra pulling power.
-- **Updraft** (active): instant rise or land with a knockback shockwave.
-- **Shadow step** (passive): after a blink, unseen for 2 s.
-- **Comet** (active): a ground charge.
-- **Homing** (active): fly to a placed sigil.
+- **Updraft** (active): instant rise or land with a knockback shockwave. *Renamed Ground pound (Ed, 2026-10-12); its landing also briefly stuns.*
+- **Shadow step** (passive): after a blink, unseen for 2 s. *Replaced by Stealth (Ed, 2026-10-12).*
+- **Comet** (active): a ground charge. *Cut (Ed, 2026-10-12).*
+- **Homing** (active): fly to a placed sigil. *Cut (Ed, 2026-10-12).*
 
 ## Rejected or flagged
 
@@ -106,3 +106,11 @@ Suggested:
 - **Double blink**, a new broom: one more blink before the cooldown.
 - **Lullaby** (Ed, 2026-10-12): "Wild creatures that are asleep wake up when hit with an invitation." A lulled creature wakes to a 💌 of its own (the rule for napping creatures, #671), not to her landing in its area or a 💌 on a neighbour.
 - **Decoy dropped, Cyclone instead** (Ed, 2026-10-12: "Decoy isn't useful, how about a Cyclone spell that pushes creatures around in a circle, lifts them and throws them outwards?"): a placed hat. On putting it down, and every 20 s while it lies there, it catches the wild and enraged creatures within 10 m, sweeps them round it for 3 s (a turn a second) up to 3 m off the ground, then flings them 10 m outward, stunned 1.5 s after landing. Never her (Ed, 2026-10-12: "cyclone doesn't affect you"), her creatures, happy ones or legends; never hurt (proposed numbers; the tuning's spells.cyclone).
+
+## Decisions (Ed, 2026-10-12, the brooms)
+
+- **Battering:** "blinks stun creatures in her path" (wild and enraged within 1.5 m of the blink's line, 1.5 s).
+- **Ground pound** (the Updraft renamed): rise or land at once with a knockback shockwave; "its landing should also briefly stun" (8 m, pushed 6 m, landing stuns 1 s; 10 s recharge).
+- **Stealth** (instead of Shadow step): "creatures don't see you unless you're inviting or placing/pickup; once aggro'd they attack you until you're out of range and then they lose you again" (throwing 💌s, or putting down or picking up anything, shows her for 3 s; what went for her loses her past 25 m).
+- **Comet and Homing: cut.**
+- Ley jump (to the ley line's pulse, 60 s recharge) and Haul (her sigils pull half as hard, always on) as planned.

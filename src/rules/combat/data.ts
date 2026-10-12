@@ -213,7 +213,7 @@ export interface CombatWorld {
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */
   active: Creature[];
-  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number; /** in a calm legend's circle (rules/slowTime.ts): that legend's id; nothing else attacks her there */ shelter?: number }[];
+  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number; /** in a calm legend's circle (rules/slowTime.ts): that legend's id; nothing else attacks her there */ shelter?: number; /** her Stealth broom (rules/brooms.ts): unseen, but by what already went for her while it's within this many metres */ hidden?: number }[];
   /** Where a party animal's leash is fixed. */
   leashPoint: (id: number) => { x: number; z: number } | null;
   /** Whether a party animal is parked (at a sigil on the ground): it guards round it. */

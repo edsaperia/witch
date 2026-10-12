@@ -618,6 +618,16 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `spells.healing.every` | number | 0 to … |
 | `spells.helmet.drop` | number | 0 to … |
 | `spells.double.charges` | number | 0 to … |
+| `spells.battering.width` | number | 0 to … |
+| `spells.battering.stun` | number | 0 to … |
+| `spells.leyjump.cooldown` | number | 0 to … |
+| `spells.haul.pull` | number | 0 to … |
+| `spells.pound.cooldown` | number | 0 to … |
+| `spells.pound.radius` | number | 0 to … |
+| `spells.pound.push` | number | 0 to … |
+| `spells.pound.stun` | number | 0 to … |
+| `spells.stealth.reveal` | number | 0 to … |
+| `spells.stealth.range` | number | 0 to … |
 | `spells.harvest.berries` | number | 0 to … |
 | `spells.harvest.radius` | number | 0 to … |
 | `spells.harvest.every` | number | 0 to … |
