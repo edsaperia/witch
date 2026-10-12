@@ -337,6 +337,8 @@ export interface Tuning {
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
+  /** Mist banks over the open areas (render/mistCanopy.ts; Ed, 2026-10-07). */
+  mistCanopy?: { on: boolean; cover: number; density: number; ground: number; low: number; high: number; part: number; partAction: number; clumps: number; clumpSize: number; patches: number; patchSize: number; drift: number; reach: number };
   /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts; Ed, 2026-10-07). */
   lightRings?: { on: boolean; strength: number; radius: number; count: number; spacing: number; share: number; above: number; speed: number; plane: number; glory: number; gloryStrength: number; fadeNear: number; fadeFar: number };
   /** The soundsystems' sky sigils (render/hologram.ts; Ed, 2026-10-08): in place of their laser shows. */
