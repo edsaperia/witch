@@ -13,8 +13,8 @@ import { broughtLine, circleLines, circleShown, legendCircleNear } from "../../r
 import { witchHeight } from "../../rules/witch";
 import { placed } from "../height";
 import { tiltFilter } from "../overlayTilt";
-import { GRID, dreamSymbol, snap, thoughtShape } from "../thoughtCloud";
-import { emojiImage, thoughtAt, thoughtBubble, thoughtCloud, thoughtEmoji, thoughtSymbol, type Rgba } from "../bubbles";
+import { GRID, dreamSymbol, thoughtShape } from "../thoughtCloud";
+import { bubbleGrid, emojiImage, snapTo, thoughtAt, thoughtBubble, thoughtCloud, thoughtEmoji, thoughtSymbol, type Rgba } from "../bubbles";
 import type { LeashView } from "../leash";
 import { islandPixels } from "../../../art/islands.js";
 import { islandCoast } from "../../rules/islandShape";
@@ -73,10 +73,10 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
       let el = lv.snoreEls[used];
       if (!el) { el = thoughtBubble(host, "snore"); lv.snoreEls.push(el); }
       el.style.display = "";
-      const face = Z ? emojiOr(sleepyFace(c.id, time, Z), Z.fallback) : "😴", S = thoughtShape(SNORE_INNER, 2);
-      thoughtCloud(el, S, DREAM_INK, DREAM_FILL);
-      thoughtEmoji(el, S, face, SNORE_INNER, 1);
-      const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height);
+      const face = Z ? emojiOr(sleepyFace(c.id, time, Z), Z.fallback) : "😴", S = thoughtShape(SNORE_INNER, 2), P = bubbleGrid(g.tuning, c.level); // (its size by its level, as its speech: Ed, 2026-10-12)
+      thoughtCloud(el, S, DREAM_INK, DREAM_FILL, P);
+      thoughtEmoji(el, S, face, SNORE_INNER, 1, P);
+      const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height, P);
       el.style.left = `${at.left}px`; el.style.top = `${at.top}px`;
       el.style.opacity = `${Math.min(1, (lv.partyOverEase - 0.3) * 4).toFixed(2)}`;
       used++;
@@ -116,27 +116,29 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
     // clouds going up to a large cloud"; render/thoughtCloud.ts), holding one symbol at a time: its face (sleepy, or the
     // nightmare's), then the sigil it dreams of (fading as it grows restless), then its face again, now and then the flask's
     // relic sigil instead of the sigil; each fading in and out (dreams.cycle). A nightmare's ink reddens.
-    const S = thoughtShape(DREAM_INNER, 3), tone = faces ? Math.round(ire * 8) / 8 : -1;
-    thoughtCloud(el, S, tone < 0 ? DREAM_INK : [Math.round(232 - 42 * tone), Math.round(180 - 130 * tone), Math.round(106 - 76 * tone), 0.8 + 0.2 * tone], tone < 0 ? DREAM_FILL : NIGHTMARE_FILL);
+    // A legend's dream as big as its speech (Ed, 2026-10-12: "dream bubbles should also grow"): its cloud's pixel P its level's.
+    const S = thoughtShape(DREAM_INNER, 3), P = bubbleGrid(g.tuning, c.level), tone = faces ? Math.round(ire * 8) / 8 : -1;
+    const snapToP = (v: number) => snapTo(v, P);
+    thoughtCloud(el, S, tone < 0 ? DREAM_INK : [Math.round(232 - 42 * tone), Math.round(180 - 130 * tone), Math.round(106 - 76 * tone), 0.8 + 0.2 * tone], tone < 0 ? DREAM_FILL : NIGHTMARE_FILL, P);
     const faceE = step >= 0 ? N.faces[step] ?? "😠" : zzz ? emojiOr(zzz, Z!.fallback) : "😴";
     const sym = dreamSymbol(performance.now() / 1000, c.id, g.tuning.dreams.cycle ?? DREAM_CYCLE, open); // (the screen's clock: game time slows to a crawl in a legend's clearing)
-    if (sym.kind === "emoji") thoughtEmoji(el, S, faceE, DREAM_EMOJI, sym.alpha);
-    else if (sym.kind === "flask") thoughtSymbol(el, S, "flask", "relic", DREAM_INNER, () => sigilCanvas("relic", null, [255, 205, 90], DREAM_INNER), sym.alpha);
-    else thoughtSymbol(el, S, "sigil", `${q.species}:${q.level}`, DREAM_INNER, () => sigilCanvas(q.species, q.level, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r));
+    if (sym.kind === "emoji") thoughtEmoji(el, S, faceE, DREAM_EMOJI, sym.alpha, P);
+    else if (sym.kind === "flask") thoughtSymbol(el, S, "flask", "relic", DREAM_INNER, () => sigilCanvas("relic", null, [255, 205, 90], DREAM_INNER), sym.alpha, P);
+    else thoughtSymbol(el, S, "sigil", `${q.species}:${q.level}`, DREAM_INNER, () => sigilCanvas(q.species, q.level, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r), P);
     const bx = ((lv.v.x + 1) / 2) * width, ly = ((1 - lv.v.y) / 2) * height;
-    const shake = faces ? snap(ire * 3 * Math.sin(performance.now() * 0.05 + c.id)) : 0; // (a nightmare shakes, a whole grid step)
-    const at = thoughtAt(S, bx, ly); // (its smallest puff over the sleeper)
+    const shake = faces ? snapToP(ire * P * Math.sin(performance.now() * 0.05 + c.id)) : 0; // (a nightmare shakes, a whole grid step)
+    const at = thoughtAt(S, bx, ly, P); // (its smallest puff over the sleeper)
     let left = at.left + shake, top = at.top;
     if (top < 57) {
       // no room over it on screen (close, or a big legend): kept below the top edge's cues, beside its body rather than over it,
       // its puffs reaching in from the left (the side they trail from), or from the right when there's no room on the left
       top = 57;
-      const cw = (S.box.x + S.box.n) * GRID;
-      left = B.left - cw - GRID * 2 >= 8 ? snap(B.left - cw - GRID * 2) : snap(Math.min(width - S.w * GRID - 8, B.right + GRID * 2 - S.box.x * GRID));
+      const cw = (S.box.x + S.box.n) * P;
+      left = B.left - cw - P * 2 >= 8 ? snapToP(B.left - cw - P * 2) : snapToP(Math.min(width - S.w * P - 8, B.right + P * 2 - S.box.x * P));
     }
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
-    tiltFilter(el, top + S.box.y * GRID + S.box.n * GRID * 0.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
+    tiltFilter(el, top + S.box.y * P + S.box.n * P * 0.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
     // Its direction (rules/dream.ts; Ed, 2026-10-06: "the legend speech bubble should tell you in what direction you can find
     // the runestone for the area that has the quest animal in it"): the nearest area of the kind it dreams of to her, explored,
     // partified or not; a pixel arrow that way (the eight compass points: the camera looks north, so north is up the
@@ -154,9 +156,9 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
       if (cv.dataset.k !== akey) { cv.dataset.k = akey; compassArrow(cv, wy.word === "here" ? -1 : wy.point, rgb); }
       if (text.textContent !== wy.word) text.textContent = wy.word;
       // (beside the big cloud, level with it, on the grid: under it, it fell on the legend's head)
-      const right = left + (S.box.x + S.box.n) * GRID + GRID * 3, capW = 57 + wy.word.length * 9; // (its arrow, padding and text, about: no layout read a frame)
-      cap.style.left = `${right + capW <= width - 8 ? right : Math.max(8, snap(left + S.box.x * GRID - GRID * 3 - capW))}px`;
-      cap.style.top = `${top + snap(S.box.y * GRID + S.box.n * GRID * 0.5) - 18}px`;
+      const right = left + (S.box.x + S.box.n) * P + P * 3, capW = 57 + wy.word.length * 9; // (its arrow, padding and text, about: no layout read a frame)
+      cap.style.left = `${right + capW <= width - 8 ? right : Math.max(8, snapToP(left + S.box.x * P - P * 3 - capW))}px`;
+      cap.style.top = `${top + snapToP(S.box.y * P + S.box.n * P * 0.5) - 18}px`;
       cap.style.display = "";
     } else cap.style.display = "none";
     used++;
@@ -393,12 +395,12 @@ function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, he
     let el = lv.dreamEls[used];
     if (!el) { el = thoughtBubble(host, "dream"); lv.dreamEls.push(el); }
     el.style.display = "";
-    const S = thoughtShape(DREAM_INNER, 3);
-    thoughtCloud(el, S, DREAM_INK, DREAM_FILL);
-    thoughtSymbol(el, S, "sigil", `island:${c.species}`, DREAM_INNER, () => islandCanvas(c.species, g.tuning.islands?.coast, DREAM_INNER), 1);
-    const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height), left = at.left, top = Math.max(57, at.top);
+    const S = thoughtShape(DREAM_INNER, 3), P = bubbleGrid(g.tuning, c.level);
+    thoughtCloud(el, S, DREAM_INK, DREAM_FILL, P);
+    thoughtSymbol(el, S, "sigil", `island:${c.species}`, DREAM_INNER, () => islandCanvas(c.species, g.tuning.islands?.coast, DREAM_INNER), 1, P);
+    const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height, P), left = at.left, top = Math.max(57, at.top);
     el.style.left = `${left}px`; el.style.top = `${top}px`;
-    tiltFilter(el, top + S.box.y * GRID + S.box.n * GRID * 0.5);
+    tiltFilter(el, top + S.box.y * P + S.box.n * P * 0.5);
     used++;
   }
   for (let i = used; i < lv.dreamEls.length; i++) lv.dreamEls[i].style.display = "none";
