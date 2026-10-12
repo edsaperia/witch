@@ -71,7 +71,7 @@ export function blendAt(bearing: number): Blend {
 export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "spring", badlands: "rust", "mangrove swamp": "lily" };
 /** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly; a sinkhole's pit, how far (m) its bed
  *  and water sink below the ground round it. */
-const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number; bands?: RGB }> = {
+const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
   water: { rgb: [0, 0, 0], width: 0, k: 0 },
   ice: { rgb: hsv(0.57, 0.1, 0.72), width: 26, k: 0.75 }, // frost
   lava: { rgb: hsv(0.03, 0.4, 0.13), width: 30, k: 0.9 }, // a dark crust
@@ -79,7 +79,7 @@ const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number; bands?: 
   sinkhole: { rgb: hsv(0.33, 0.72, 0.42), width: 40, k: 0.9 }, // lush green round the pit
   tarn: { rgb: hsv(0.58, 0.06, 0.6), width: 26, k: 0.8 }, // bare grey scree
   spring: { rgb: hsv(0.12, 0.16, 0.78), width: 30, k: 0.85 }, // pale mineral crust
-  rust: { rgb: hsv(0.05, 0.75, 0.62), width: 56, k: 0.95, bands: hsv(0.1, 0.3, 0.82) }, // terraces stepping down to it, orange and cream
+  rust: { rgb: hsv(0.1, 0.05, 0.95), width: 80, k: 0.95 }, // pale grey-white crusted ground round it
   lily: { rgb: hsv(0.3, 0.65, 0.4), width: 34, k: 0.85 }, // reeds
 };
 const SINK = 16;
@@ -168,10 +168,7 @@ function ground(src: Source, across = ACROSS): IslandGround {
     col = mix(col, P.peak, smooth(0.84, 0.97, e));
     if (src.sand(x, z, dist[i])) col = P.sand;
     const rim = LAKE_RIMS[LOOK_IDS[looks[i]]];
-    if (near[i] < rim.width) { // the lakes' rim (a rust pool's in terraced bands)
-      const band = rim.bands && Math.floor(near[i] / Math.max(step, 9)) % 2 ? rim.bands : rim.rgb;
-      col = mix(col, band, rim.k * (1 - smooth(0.35, 1, near[i] / rim.width)));
-    }
+    if (near[i] < rim.width) col = mix(col, rim.rgb, rim.k * (1 - smooth(0.35, 1, near[i] / rim.width))); // the lakes' rim
     rgb[i * 3] = Math.round(col[0] * 255); rgb[i * 3 + 1] = Math.round(col[1] * 255); rgb[i * 3 + 2] = Math.round(col[2] * 255);
   }
   return { x0: x0 - src.centre.x, z0: z0 - src.centre.z, step, cols, rows, h, rgb, water, level, looks, blend: B };

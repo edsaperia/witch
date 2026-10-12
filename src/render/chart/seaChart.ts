@@ -175,7 +175,7 @@ const LAKE_SHALLOWS = 6;
 // ice (pale, frost white by the shore, faint cracks), 2 lava (glowing and slowly churning, crusting dark by the shore), 3 an
 // oasis (clear turquoise, pale sand under its edge), 4 a sinkhole (deep and dark, a little light caught at its edge); and the
 // diagonals': 5 a glacial tarn (milky turquoise meltwater, ice floes by its edge), 6 a hot spring (clear blue, a pale mineral
-// edge, mist drifting off it), 7 a rust pool (red-orange mineral water, darker in the middle, rings of terrace by its edge), 8 a
+// edge, mist drifting off it), 7 a rust pool (a Yellowstone hot pool: rings from an orange rim through yellow, green and teal to a deep blue throat, a white lip), 8 a
 // lily pond (green water under giant pads, a few flowers).
 const LAKE_VERT = /* glsl */ `
 attribute float aDepth, aLook; varying float vD, vLook; varying vec2 vP;
@@ -218,9 +218,13 @@ void main() {
     c = mix(vec3(0.1, 0.42, 0.55), vec3(0.62, 0.74, 0.7), pow(a, 3.0));
     float t = uTime * 0.08, mist = n(p * 1.4 + vec2(t, t * 0.6)) * 0.6 + n(p * 3.1 - vec2(t * 1.7, -t)) * 0.4;
     c = mix(c, vec3(0.82, 0.86, 0.9), smoothstep(0.4, 0.8, mist) * 0.7);
-  } else if (uLook == 7) {
-    float ring = smoothstep(0.55, 0.75, fract(d * 4.0 + n(p * 2.0) * 0.4)) * a;
-    c = mix(vec3(0.62, 0.18, 0.06), vec3(0.88, 0.44, 0.16), a) + vec3(0.16, 0.12, 0.07) * ring;
+  } else if (uLook == 7) { // (Ed's reference, a Yellowstone pool from above: a deep blue throat, teal, green, a wide yellow and orange band, a white lip)
+    float r = clamp(d + (n(p * 3.0) - 0.5) * 0.08, 0.0, 1.0);
+    c = mix(vec3(0.95, 0.42, 0.06), vec3(1.0, 0.72, 0.12), smoothstep(0.08, 0.32, r));
+    c = mix(c, vec3(0.42, 0.72, 0.22), smoothstep(0.32, 0.48, r));
+    c = mix(c, vec3(0.08, 0.66, 0.64), smoothstep(0.46, 0.64, r));
+    c = mix(c, vec3(0.03, 0.2, 0.42), smoothstep(0.78, 1.0, r));
+    c = mix(c, vec3(0.92, 0.9, 0.84), smoothstep(0.07, 0.0, d)); // (the crusted white lip)
   } else if (uLook == 8) {
     c = mix(vec3(0.08, 0.22, 0.16), vec3(0.16, 0.34, 0.22), a);
     vec2 f = dots(p * 1.6, 0.55); float pad = step(0.0, f.x) * step(0.25, f.y);
@@ -417,16 +421,33 @@ export class SeaChart {
         }
         const lk = new Float32Array(cols * rows);
         if (G.looks) for (let i = 0; i < cols * rows; i++) lk[i] = G.looks[i];
-        { // (ice, lava, an oasis, a sinkhole: by how far in from its shore, not how deep, so a shallow one still has a middle)
-          const R = Math.ceil(LAKE_RIM / step);
-          for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-            const i = r * cols + c; if (G.water[i] !== 2 || !lk[i]) continue;
-            let near = LAKE_RIM;
-            for (let dr = -R; dr <= R; dr++) for (let dc = -R; dc <= R; dc++) {
-              const rr = r + dr, cc = c + dc; if (rr < 0 || cc < 0 || rr >= rows || cc >= cols || G.water[rr * cols + cc] === 2) continue;
-              near = Math.min(near, Math.hypot(dr, dc) * step);
+        { // (the special lakes: by how far in from its shore, not how deep, so a shallow one still has a middle; a rust pool's
+          // rings by how far in it is of the furthest in its pool reaches, so every pool runs rim to throat)
+          const N = cols * rows, far = new Float32Array(N), D = 1.4142;
+          for (let i = 0; i < N; i++) far[i] = G.water[i] === 2 ? 1e9 : 0;
+          for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { // (a chamfer distance, in samples, to the nearest shore)
+            const i = r * cols + c; if (!far[i]) continue; let v = far[i];
+            if (c > 0) v = Math.min(v, far[i - 1] + 1); if (r > 0) { v = Math.min(v, far[i - cols] + 1); if (c > 0) v = Math.min(v, far[i - cols - 1] + D); if (c < cols - 1) v = Math.min(v, far[i - cols + 1] + D); }
+            far[i] = v;
+          }
+          for (let r = rows - 1; r >= 0; r--) for (let c = cols - 1; c >= 0; c--) {
+            const i = r * cols + c; if (!far[i]) continue; let v = far[i];
+            if (c < cols - 1) v = Math.min(v, far[i + 1] + 1); if (r < rows - 1) { v = Math.min(v, far[i + cols] + 1); if (c < cols - 1) v = Math.min(v, far[i + cols + 1] + D); if (c > 0) v = Math.min(v, far[i + cols - 1] + D); }
+            far[i] = v;
+          }
+          const part = new Int32Array(N).fill(-1), most: number[] = [], stack: number[] = [];
+          for (let i0 = 0; i0 < N; i0++) {
+            if (lk[i0] !== 7 || G.water[i0] !== 2 || part[i0] >= 0) continue;
+            const id = most.length; let m = 0; most.push(0); stack.push(i0); part[i0] = id;
+            while (stack.length) {
+              const i = stack.pop()!, c = i % cols; m = Math.max(m, far[i]);
+              for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < N && G.water[j] === 2 && part[j] < 0) { part[j] = id; stack.push(j); }
             }
-            ld[i] = near / LAKE_RIM;
+            most[id] = m;
+          }
+          for (let i = 0; i < N; i++) {
+            if (G.water[i] !== 2 || !lk[i]) continue;
+            ld[i] = part[i] >= 0 ? Math.min(1, (far[i] - 0.5) / Math.max(1, most[part[i]] - 0.5)) : Math.min(1, ((far[i] - 0.5) * step) / LAKE_RIM);
           }
         }
         for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
