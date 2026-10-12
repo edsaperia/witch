@@ -11,7 +11,8 @@
 import { generateMap, islandLand } from "../rules/map";
 import { beachOf } from "../rules/mapShape";
 import { drawnHills, hillsAt, lakeLevel, terrainAt } from "../rules/terrain";
-import { homeIsland, islandOf, isPlaceholder, KINDS, knownKinds } from "../rules/rosters";
+import { bearingOf, homeIsland, islandOf, isPlaceholder, KINDS, knownKinds } from "../rules/rosters";
+import { islandAt } from "./chartLayout";
 import { TUNING } from "../rules/tuning";
 import type { LandMap } from "../rules/land";
 
@@ -19,7 +20,8 @@ import type { LandMap } from "../rules/land";
 export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number } | { first: string } | { detail: string };
 /** An island's ground on a grid (metres from home's middle): its first sample, the step, samples across and down; each sample's
  *  height (m: below 0 the sea; a lake's its bed), colour (r, g, b), water and a lake's level. */
-export interface IslandGround { x0: number; z0: number; step: number; cols: number; rows: number; h: Float32Array; rgb: Uint8Array; /** 0 land, 1 sea, 2 lake */ water: Uint8Array; /** a lake's water level (m, as h) */ level: Float32Array }
+export interface IslandGround { x0: number; z0: number; step: number; cols: number; rows: number; h: Float32Array; rgb: Uint8Array; /** 0 land, 1 sea, 2 lake */ water: Uint8Array; /** a lake's water level (m, as h) */ level: Float32Array; /** each sample's lake look (an index in LOOK_IDS: its lake's, or the lake beside it on its shore; else 0) */ looks: Uint8Array; /** its biome: the two nearest by its bearing, and the first's share */ blend: Blend }
+
 /** Each island as it's made: its coast's loops (x, z in metres from its home's middle; `sea` a coast, else a lake's shore), their
  *  box, and its ground. */
 export interface OutlineDone { id: string; world: number; loops: { pts: Float32Array; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; far: number; ground: IslandGround; /** the fine grid, for the chart's close zoom (asked for by `detail`) */ detail?: boolean }
@@ -49,6 +51,40 @@ const PALETTES: Record<string, Palette> = {
   "cold rainforest": { low: hsv(0.4, 0.42, 0.36), up: hsv(0.42, 0.32, 0.38), rock: hsv(0.55, 0.12, 0.38), peak: hsv(0.55, 0.06, 0.7), sand: hsv(0.1, 0.14, 0.56), forest: hsv(0.42, 0.6, 0.2) },
   badlands: { low: hsv(0.07, 0.4, 0.56), up: hsv(0.04, 0.45, 0.48), rock: hsv(0.02, 0.4, 0.38), peak: hsv(0.06, 0.25, 0.6), sand: hsv(0.1, 0.3, 0.68), forest: hsv(0.18, 0.4, 0.34) },
 };
+/** What a biome's lakes become (Ed, 2026-10-12: "In the cold biomes lakes become frozen. In the volcano biome lakes become lava.
+ *  In the desert biome lakes become oases. In the jungle biome, lakes become sinkholes."): ice, lava, an oasis, a sinkhole, else
+ *  water: north cold, east rocky (the volcano: "rocky is volcano"), south hot, west jungle. The diagonals have their own (Ed, via
+ *  the coordinator): a glacial tarn in the mountains and glaciers (NE), a hot spring in the cold rainforest (NW), a rust pool in
+ *  the badlands (SE), a lily pond in the mangrove swamp (SW). Temperate keeps water. Looks only. */
+export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole" | "tarn" | "spring" | "rust" | "lily";
+/** The looks by number, as the chart's lake shader knows them (seaChart.ts LAKE_FRAG's uLook). */
+export const LOOK_IDS: readonly LakeLook[] = ["water", "ice", "lava", "oasis", "sinkhole", "tarn", "spring", "rust", "lily"];
+/** The compass's biomes, N first and on clockwise every 45° (config/kinds.json's by direction). An island's biome blends the two
+ *  its bearing lies between, by how near it is to each (Ed, 2026-10-12: "These blend smoothly; ones on the border might have
+ *  both"): its land's colours mixed by that share, and each of its lakes one of the two looks, by those odds, seeded. */
+const COMPASS = ["cold", "mountains and glaciers", "rocky", "badlands", "hot", "mangrove swamp", "jungle", "cold rainforest"];
+export interface Blend { a: string; b: string; /** a's share, 0.5 to 1 */ w: number }
+export function blendAt(bearing: number): Blend {
+  const d = (((bearing % 360) + 360) % 360) / 45, i = Math.floor(d) % 8, t = d - Math.floor(d);
+  return t <= 0.5 ? { a: COMPASS[i], b: COMPASS[(i + 1) % 8], w: 1 - t } : { a: COMPASS[(i + 1) % 8], b: COMPASS[i], w: t };
+}
+export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "spring", badlands: "rust", "mangrove swamp": "lily" };
+/** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly. */
+const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
+  water: { rgb: [0, 0, 0], width: 0, k: 0 },
+  ice: { rgb: hsv(0.57, 0.1, 0.72), width: 26, k: 0.75 }, // frost
+  lava: { rgb: hsv(0.03, 0.4, 0.13), width: 30, k: 0.9 }, // a dark crust
+  oasis: { rgb: hsv(0.3, 0.7, 0.46), width: 44, k: 0.9 }, // palms and grass
+  sinkhole: { rgb: hsv(0.34, 0.75, 0.3), width: 50, k: 0.95 }, // rainforest canopy right up to the pit's rim
+  tarn: { rgb: hsv(0.58, 0.06, 0.6), width: 26, k: 0.8 }, // bare grey scree
+  spring: { rgb: hsv(0.12, 0.16, 0.78), width: 30, k: 0.85 }, // pale mineral crust
+  rust: { rgb: hsv(0.1, 0.05, 0.95), width: 80, k: 0.95 }, // pale grey-white crusted ground round it
+  lily: { rgb: hsv(0.3, 0.65, 0.4), width: 34, k: 0.85 }, // reeds
+};
+/** A sinkhole (Ed's reference, a jungle tiankeng): how far (m) its floor lies below its rim. */
+const SINK = 26;
+/** A seeded number in 0..1 from two integers. */
+const rand = (a: number, b: number) => { let x = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be5ab, 0xc2b2ae35); x ^= x >>> 15; x = Math.imul(x, 0x2c1b3c6d); x ^= x >>> 12; return (x >>> 0) / 4294967296; };
 const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -61,7 +97,7 @@ const SEA_PAD = 260;
 /** What an island's ground is drawn from: its coast, its lakes, its heights (m, as the game's terrain: hills, the hollows the
  *  lakes lie in), each lake's water level, how thick the trees stand, where the beach is, and its biome. */
 interface Source {
-  land: LandMap; lakes: LandMap | null; centre: { x: number; z: number }; biome: string;
+  land: LandMap; lakes: LandMap | null; centre: { x: number; z: number }; blend: Blend; seed: number;
   heightAt(x: number, z: number): number; levelAt(x: number, z: number): number | null; forest(x: number, z: number): number; sand(x: number, z: number, d: number): boolean;
 }
 
@@ -81,7 +117,8 @@ function ground(src: Source, across = ACROSS): IslandGround {
   const span = Math.max(1, hi - lo);
   // the height drawn: the coast rising out of the sea over the beach and on up, the terrain above its lowest (eased in from the shore)
   const drawn = (tm: number, dm: number) => 1 + 26 * Math.min(1, dm / 320) ** 0.8 + (tm - lo) * Math.min(1, dm / 200);
-  const P = PALETTES[src.biome] ?? PALETTES.temperate;
+  const B = src.blend, PA = PALETTES[B.a] ?? PALETTES.temperate, PB = PALETTES[B.b] ?? PALETTES.temperate;
+  const P = Object.fromEntries((Object.keys(PA) as (keyof Palette)[]).map(k => [k, mix(PB[k], PA[k], B.w)])) as unknown as Palette;
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const x = x0 + c * step, z = z0 + r * step, i = r * cols + c, dm = dist[i];
     if (dm <= 0) { h[i] = Math.max(-200, dm) - 1; water[i] = 1; continue; } // (the sea: as deep as it is far from the shore)
@@ -90,6 +127,42 @@ function ground(src: Source, across = ACROSS): IslandGround {
       const lv = src.levelAt(x, z);
       water[i] = 2; level[i] = lv == null ? h[i] + 1 : drawn(lv, dm);
       if (level[i] <= h[i]) level[i] = h[i] + 0.5;
+    }
+  }
+  // each lake's look: one of the blend's two, by its odds, seeded by the lake (its shore loop: the same on every grid)
+  const looks = new Uint8Array(n), lookA = LOOK_IDS.indexOf(LAKE_LOOKS[B.a] ?? "water"), lookB = LOOK_IDS.indexOf(LAKE_LOOKS[B.b] ?? "water");
+  const shores = (lakes?.loops ?? []).map(l => { let sx = 0, sz = 0; const m = l.pts.length / 2; for (let k = 0; k < m; k++) { sx += l.pts[k * 2]; sz += l.pts[k * 2 + 1]; } return { x: sx / m, z: sz / m }; });
+  const seen = new Uint8Array(n), stack: number[] = [];
+  for (let i0 = 0; i0 < n; i0++) {
+    if (water[i0] !== 2 || seen[i0]) continue;
+    const part: number[] = []; let sx = 0, sz = 0; stack.push(i0); seen[i0] = 1;
+    while (stack.length) {
+      const i = stack.pop()!, r = (i / cols) | 0, c = i - r * cols; part.push(i); sx += x0 + c * step; sz += z0 + r * step;
+      for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < n && water[j] === 2 && !seen[j]) { seen[j] = 1; stack.push(j); }
+    }
+    const mx = sx / part.length, mz = sz / part.length;
+    let best = 0, bd = Infinity; shores.forEach((p, k) => { const dd = Math.hypot(p.x - mx, p.z - mz); if (dd < bd) { bd = dd; best = k; } });
+    const look = rand(src.seed, best * 7919 + 13) < B.w ? lookA : lookB;
+    for (const i of part) looks[i] = look;
+  }
+  // a sinkhole is no lake but a dry pit: a lip just below its rim, sheer walls, a forest floor far below (`ring` in from its rim)
+  const ring = new Uint8Array(n), queue: number[] = [];
+  for (let i = 0; i < n; i++) if (water[i] === 2 && LOOK_IDS[looks[i]] === "sinkhole") {
+    const c = i % cols;
+    if ([c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols].some(j => j >= 0 && j < n && water[j] !== 2)) { ring[i] = 1; queue.push(i); }
+  }
+  for (let q = 0; q < queue.length; q++) {
+    const i = queue[q], c = i % cols;
+    for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < n && water[j] === 2 && LOOK_IDS[looks[j]] === "sinkhole" && !ring[j]) { ring[j] = Math.min(255, ring[i] + 1); queue.push(j); }
+  }
+  for (let i = 0; i < n; i++) if (ring[i]) { const top = level[i]; h[i] = top - (ring[i] === 1 ? 3 : ring[i] === 2 ? SINK * 0.8 : SINK); level[i] = h[i]; }
+  // how far (m) each land sample is from the nearest lake, and that lake's look, within the widest rim
+  const near = new Float32Array(n).fill(Infinity), R = Math.ceil(Math.max(...Object.values(LAKE_RIMS).map(r => r.width)) / step);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const i = r * cols + c; if (water[i] !== 2 || !LAKE_RIMS[LOOK_IDS[looks[i]]].width) continue;
+    for (let dr = -R; dr <= R; dr++) for (let dc = -R; dc <= R; dc++) {
+      const rr = r + dr, cc = c + dc; if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) continue;
+      const j = rr * cols + cc, dd = Math.hypot(dr, dc) * step; if (water[j] === 0 && dd < near[j]) { near[j] = dd; looks[j] = looks[i]; }
     }
   }
   // the colours: by height (lowlands, uplands, rock, heights), steepness (bare rock on the steep), forest, and the beach
@@ -102,9 +175,15 @@ function ground(src: Source, across = ACROSS): IslandGround {
     col = mix(col, P.rock, Math.max(smooth(0.62, 0.82, e), smooth(0.18, 0.4, slope)));
     col = mix(col, P.peak, smooth(0.84, 0.97, e));
     if (src.sand(x, z, dist[i])) col = P.sand;
+    const rim = LAKE_RIMS[LOOK_IDS[looks[i]]];
+    if (near[i] < rim.width) col = mix(col, rim.rgb, rim.k * (1 - smooth(0.35, 1, near[i] / rim.width))); // the lakes' rim
+    if (ring[i]) { // the pit: pale limestone walls streaked green from its lip down, a cave-dark foot, its floor dark forest
+      const v = rand(i, src.seed), stone = mix(hsv(0.11, 0.1, 1), hsv(0.28, 0.45, 0.6), v * 0.35);
+      col = ring[i] === 1 ? stone : ring[i] === 2 ? mix(stone, hsv(0.3, 0.3, 0.5), 0.25) : ring[i] === 3 ? hsv(0.33, 0.5, 0.07) : mix(hsv(0.33, 0.6, 0.2), hsv(0.3, 0.5, 0.28), v);
+    }
     rgb[i * 3] = Math.round(col[0] * 255); rgb[i * 3 + 1] = Math.round(col[1] * 255); rgb[i * 3 + 2] = Math.round(col[2] * 255);
   }
-  return { x0: x0 - src.centre.x, z0: z0 - src.centre.z, step, cols, rows, h, rgb, water, level };
+  return { x0: x0 - src.centre.x, z0: z0 - src.centre.z, step, cols, rows, h, rgb, water, level, looks, blend: B };
 }
 
 /** The last few islands' sources (a close-up asks again for the one just made). */
@@ -116,17 +195,20 @@ export function make(id: string, world: number, found: string[], step: number, a
   const island = id === "home" ? homeIsland(world, knownKinds(found)) : islandOf(id, world);
   if (!island) return null;
   const H = drawnHills(TUNING), biome = id === "home" ? "temperate" : KINDS[id]?.biome ?? "temperate";
+  // its biome: temperate as it stands; else a blend by its bearing where the archipelago put it (else its table's bearing)
+  const at = biome === "temperate" ? null : islandAt(id, world), bearing = at ? (Math.atan2(at.x, -at.y) * 180) / Math.PI : bearingOf(id, world);
+  const blend: Blend = biome === "temperate" ? { a: "temperate", b: "temperate", w: 1 } : blendAt(bearing), seed = island.seed | 0;
   let src: Source;
   if (id !== "home" && isPlaceholder(id)) { // uncharted: its land alone, the hills as drawn, no forest known
     const l = islandLand(island, TUNING, step), lakes = l.lakes ?? null;
-    src = { land: l.land, lakes, centre: l.home, biome, heightAt: (x, z) => hillsAt(x, z, island.seed, H), levelAt: () => null, forest: () => 0, sand: (_x, _z, d) => d < (TUNING.beach?.width ?? 60) };
+    src = { land: l.land, lakes, centre: l.home, blend, seed, heightAt: (x, z) => hillsAt(x, z, island.seed, H), levelAt: () => null, forest: () => 0, sand: (_x, _z, d) => d < (TUNING.beach?.width ?? 60) };
   } else { // its whole map, as the night plays it (the run's seed only places what's inside: its shape, areas and lakes are the world's)
     const t = { ...TUNING, map: { ...TUNING.map, island: id, world, found, islandAreas: id === "home" ? knownKinds(found).length : TUNING.map?.islandAreas } };
     const map = generateMap(1, t as typeof TUNING), L = map.bounds.land;
     if (!L) return null;
     const beach = beachOf(map.bounds, TUNING);
     src = {
-      land: L, lakes: map.bounds.lakes ?? null, centre: { x: map.dancefloor.x, z: map.dancefloor.z }, biome,
+      land: L, lakes: map.bounds.lakes ?? null, centre: { x: map.dancefloor.x, z: map.dancefloor.z }, blend, seed,
       heightAt: (x, z) => terrainAt(map, x, z, H), levelAt: (x, z) => lakeLevel(map, x, z, H), forest: (x, z) => map.treeWeight(x, z),
       sand: (x, z, d) => (beach ? beach.intoSand(x, z) > 0 : d < 60),
     };
@@ -153,7 +235,7 @@ function next(): void {
   if (!id || !job) { busy = false; return; }
   try {
     const o = make(id, job.world, job.found, job.step, close ? DETAIL_ACROSS : ACROSS);
-    if (o) post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer]);
+    if (o) post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer]);
   } catch (e) { console.warn(`sea chart: ${id}'s island`, e); }
   setTimeout(next, 0); // (between islands, so a `first` can come in)
 }
