@@ -6,7 +6,7 @@ import { LEGENDS } from "../legends";
 import { bodyRadius } from "../spacing";
 import { FIGHT, type LegendSet } from "../movement";
 import { type Attack, type CombatData, type Target, type Fight, type CombatState, attackNamed, maxHp, type CombatWorld } from "./data";
-import { targetable, sideOf, truce, targetPos, sheltered, Grid, moveToward } from "./targeting";
+import { targetable, sideOf, truce, targetPos, sheltered, Grid, moveToward, unseen } from "./targeting";
 import { land, area } from "./hits";
 
 /** An angry or happy legend's turn (Ed, 2026-10-05; #87; config/legends.json attack): it never
@@ -39,7 +39,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _d
   if (time < f.readyAt) return;
   // The nearest it may shoot, up to attack.targets of them.
   const found: { d: number; x: number; z: number; target: Target }[] = [];
-  if (angry) for (const v of w.witches) { if (!v.onGround || v.down) continue; const d = Math.hypot(v.x - c.x, v.z - c.z); if (d <= R) found.push({ d, x: v.x, z: v.z, target: { kind: "witch", id: v.id } }); }
+  if (angry) for (const v of w.witches) { if (!v.onGround || v.down || unseen(v, c)) continue; const d = Math.hypot(v.x - c.x, v.z - c.z); if (d <= R) found.push({ d, x: v.x, z: v.z, target: { kind: "witch", id: v.id } }); }
   for (const o of grid.near(c.x, c.z, R)) {
     if (o === c || !targetable(o) || truce(c, o) || w.asleep(o)) continue;
     const st = stateOf(o);

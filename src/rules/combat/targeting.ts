@@ -91,6 +91,7 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
     // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
     if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
+    if (v.hidden !== undefined && Math.hypot(v.x - c.x, v.z - c.z) > v.hidden) return false; // (her Stealth broom: out of its range, it's lost her)
     if (c.hunting === tg.id) return true; // (hunting her: she's in its area, rules/hunt.ts; once she leaves it the hunt ends and pastEdge applies, 30 m)
     if (!c.siege) return !pastEdge(w, c, v.x, v.z);
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
@@ -116,7 +117,7 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
   // treetops, knocked out, sheltered in a calm circle) or inviting it.
   if (c.hunting !== undefined && huntsWitch(sideOf(c))) {
     const v = w.witches[c.hunting];
-    return v && v.onGround && !v.down && !sheltered(v, c) && w.talkingTo(c.id) !== v.id ? { kind: "witch", id: v.id } : null;
+    return v && v.onGround && !v.down && !sheltered(v, c) && w.talkingTo(c.id) !== v.id && !unseen(v, c) ? { kind: "witch", id: v.id } : null;
   }
   // (an enraged one goes for a happy legend within legends.attack.wornReach: it wears it down)
   const legReach = sideOf(c) === "enraged" ? LEGENDS.attack.wornReach * FIGHT.scale : 0;
@@ -146,12 +147,18 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
   if (huntsWitch(sideOf(c)) && !(c.watchUntil !== undefined && w.time < c.watchUntil)) for (const v of w.witches) { // (not while it's still watching her: rules/wildWatch.ts)
-    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe)
+    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c) || unseen(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe; her Stealth broom hides her)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
     if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || !pastEdge(w, c, v.x, v.z)))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
   return best;
 }
+
+/** Her Stealth broom (rules/brooms.ts; Ed, 2026-10-12: "creatures don't see you unless you're inviting or placing/pickup; once
+ *  aggro'd they attack you until you're out of range and then they lose you again"): hidden, she's seen only by one already
+ *  going for her, and only while it's within her `hidden` range of her. */
+export const unseen = (v: { id: number; x: number; z: number; hidden?: number }, c: Creature): boolean =>
+  v.hidden !== undefined && !(c.fight?.target?.kind === "witch" && c.fight.target.id === v.id && Math.hypot(v.x - c.x, v.z - c.z) <= v.hidden);
 
 /** A coarse grid of the fighting creatures, rebuilt each step, so finding enemies near one is cheap. */
 export class Grid {
