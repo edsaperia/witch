@@ -191,7 +191,7 @@ export class MistCanopy {
   update(x: number, z: number, lift: number, wind: number, her: { x: number; z: number }, action: readonly { x: number; z: number }[], bigNear: (x: number, z: number, r: number) => Plant[]): void {
     const T = this.T, u = this.mat.uniforms.uMC.value as THREE.Vector4;
     this.plane.position.set(x, T.low + (T.high - T.low) * lift, z - 150);
-    u.y = lift; u.z = wind * T.drift;
+    u.x = T.density; u.y = lift; u.z = wind * T.drift; u.w = T.ground; // (read every frame: the decisions panel's sliders change them live)
     (this.clumpMat.uniforms.uClump.value as THREE.Vector2).y = lift;
     this.clumpMesh.visible = lift > 0.01 && T.clumps > 0;
     this.parts[0].set(her.x, her.z, T.part, 0);
