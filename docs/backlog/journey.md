@@ -47,6 +47,10 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - Fits what's drawn today: the world's bend already curves the ground away toward the horizon.
 - **Sailing zooms in** (Ed, 2026-10-11, eventually): choosing an island on the chart transitions to it by zooming the chart's camera down into the island, all the way to the dancefloor at its centre, where the night begins.
 
+### Sigils, unified (Ed, 2026-10-12)
+
+The chart's detailed island sigils (#712, art/sigilDetail.js: plain glyph, carved bands, solid carved emblem by size) are good enough for now. Later, **update and unify all the sigils**: one sigil family drawn by one system everywhere they appear (placed sigils and runes, the stack, dream bubbles, the dancefloor, the sea chart, runestones, the World Tree), with the carved emblem style refined toward Ed's reference (previews/ed/refs/sigil-detail-reference.png on claude/ed-shots: fewer, bolder carved bands and spirals) and detail chosen by size.
+
 ### The end of the route (Ed, 2026-10-10)
 
 1. **Last call:** the wave pointer's 🎶 becomes **🎉** for the final stone.
