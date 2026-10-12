@@ -16,7 +16,8 @@ export function openChart(onSail: (href: string) => void, world?: number): void 
   document.body.append(wrap);
   const view = mountChart(wrap, {
     mode: "sail", world,
-    onSail: island => { closeChart(); onSail(new URL(`./?island=${island}${world != null ? `&world=${world}` : ""}`, location.href).href); },
+    onSail: island => { closeChart(); onSail(new URL(`./?island=${island}&arrive=1${world != null ? `&world=${world}` : ""}`, location.href).href); },
+    onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; }, // (the flight fills the screen)
     onClose: closeChart,
   });
   let last = performance.now();
