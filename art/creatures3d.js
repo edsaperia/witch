@@ -323,6 +323,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const headPaint = p => {
     if (q.face === "badger") return Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? (q.blazeGlow && Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) && p[1] > H[1] - hr * .1 ? M.RUNE : M.BELLY) : M.BODY3; // blaze: the stripe's width; blazeGlow: it glows in moonlight
     if (q.face === "dark") return M.BODY2;
+    if (q.face === "raccoon") { const band = H[1] + hr * .12; if (p[0] > H[0] - hr * .35 && Math.abs(p[1] - band) < hr * .27) return M.BODY3; if (p[0] > H[0] - hr * .1 && p[1] >= band + hr * .27 && p[1] < band + hr * .5) return M.BELLY; if (p[0] > H[0] + hr * .2 && p[1] < band - hr * .27) return M.BELLY; return undefined; } // the bandit mask: black across its eyes, white brows over it and a white muzzle under
     if (q.frost && p[0] > H[0] + hr * .7 && spotty(p, 26, .45)) return M.WEB; // frost on its muzzle
     if (q.mask && p[0] > H[0] + hr * .15 && p[1] > H[1] - hr * .4 && p[1] < H[1] + hr * .45) return M.BELLY; // a white mask over its eyes and muzzle
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
@@ -464,6 +465,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
+  else if (kind === "ringed") m.chain([[...tb, .1], [X(1.05) - .3, top - .1 + tw, 0, .15], [X(1.05) - .7, top - .25 + tw, 0, .15], [X(1.05) - .95, top - .4 + tw, 0, .09]], M.BODY, { ...o, paint: p => Math.floor(-p[0] * 7) % 2 || p[0] < X(1.05) - .85 ? M.BODY3 : undefined }); // thick, held low, ringed in black, its tip black (the raccoon's)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }
 

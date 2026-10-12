@@ -137,6 +137,9 @@ export const GENOMES = [
   { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .4, len: 1.1, chest: .1, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .28, legW: .6, bw: .22 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "newt", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: 2.4 }, legend: ["crystals"], texture: { kind: "smooth" } },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
+  // the cold rainforest's raccoon (Ed, 2026-10-12, unknown-30): grey and hunched, a black bandit mask between white brows and muzzle,
+  // dark legs and hands, a thick ringed tail (not Delta's red panda: grey, not russet)
+  { id: "raccoon", name: "Raccoon", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .07, val: .55 }, body: { hgt: .62, len: .6, chest: .36, tuck: .4, neck: .2, neckAng: .45, neckW: .45, hr: .28, legW: .95, back: "arch" }, head: { snout: .7, snoutD: .55, snoutTaper: .5, face: "raccoon", whiskers: true }, parts: { ears: { kind: "round", size: .95 }, tail: "ringed", feet: "paw" }, coat: { legMat: "BODY3", shaggy: true }, legend: ["moss"], texture: { kind: "fur", size: 3 } },
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
   // dark round its eyes, a thin dark-tipped tail
   { id: "meerkat", name: "Meerkat", template: "squat", builder: "meerkat", palette: { hue: .09, sat: .35, val: .72 }, legend: ["sunRuff"], texture: { kind: "fur", size: 2 } },

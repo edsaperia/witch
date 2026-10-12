@@ -16,7 +16,8 @@ import { FEN } from "./recipes/fen.js";
 import { HERONRY } from "./recipes/heronry.js";
 import { WARREN } from "./recipes/warren.js";
 import { SCRUB_WASH } from "./recipes/scrubwash.js";
-export const AREA_RECIPES = [FEN, HERONRY, WARREN, SCRUB_WASH];
+import { MOSSY_CREEK } from "./recipes/mossycreek.js";
+export const AREA_RECIPES = [FEN, HERONRY, WARREN, SCRUB_WASH, MOSSY_CREEK];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
