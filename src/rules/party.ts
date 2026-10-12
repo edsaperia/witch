@@ -240,6 +240,13 @@ export function wavePlan(p: PartyState, map: ForestMap): Map<string, number> {
   return out;
 }
 
+/** Every area on the island has the party or is ruined (cleared before its wave or woken by it): the waves still to come
+ *  would only celebrate (rules/win.ts: the island's cleared, the victory lap sets off at once). */
+export function allReached(p: PartyState, map: ForestMap): boolean {
+  for (const c of cellsOf(map)) if (!p.areas.has(c.key) && !p.ruined?.has(c.key)) return false;
+  return true;
+}
+
 /** Where an area's soundsystem stands: in its clearing, beside its centre, inside its own ground. */
 export function soundsystemFor(map: ForestMap, cell: Cell): Soundsystem {
   // The spot is the map's (reserved from the start, so scenery keeps clear of it).

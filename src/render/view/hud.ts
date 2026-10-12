@@ -45,7 +45,7 @@ export function drawPointers(v: View, time: number): void {
     };
     // Pausing holds the countdown. Its label is the party's tempo (Ed, 2026-10-07: "The BPM is shown on the sparkler
     // marker, and above the decks"), pulsing up when a knockdown raises it (rules/beat.ts knockdownTempo).
-    cue(v.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone, `${Math.round(bpmAt(g.beat, time))} bpm`);
+    cue(v.nextStones, g.win && g.win.phase !== "stragglers" ? [] : g.party.next, () => new StoneIndicator(document.body, 3), cd.gone, `${Math.round(bpmAt(g.beat, time))} bpm`);
     const bonus = g.beat.bonus ?? 0;
     if (bonus > v.pointerBonus) { v.pointerBonus = bonus; v.nextStones[0]?.pop(); }
     // Her hats on the ground (Ed, 2026-10-06: "there's a direction marker for it, so you can go back and find it"): toward each

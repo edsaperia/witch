@@ -476,10 +476,11 @@ function fixedStep(g: Game, controls: Controls): void {
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null); // (in a legend's circle: the lower view, camera.circle)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
   const over = !!g.partyOver, calm = over || won(g); // (calm: the afterparty, or the night won (rules/win.ts): no waves, no fights)
+  const lapping = g.win?.phase === "lap"; // (the victory lap: its pulses race along the line, the waves done with: rules/win.ts)
   if (c.pauseWaves && !calm) g.party.paused = !g.party.paused;
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
-  if (c.nextWave && !calm) { spreadWave(g.party, g.map, g.clock.time, celebrate); resetPulse(g.party, g.map, g.clock.time); } // (the pulse on from the stone it brought on)
-  if (!calm) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
+  if (c.nextWave && !calm && !lapping) { spreadWave(g.party, g.map, g.clock.time, celebrate); resetPulse(g.party, g.map, g.clock.time); } // (the pulse on from the stone it brought on)
+  if (!calm && !lapping) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (!calm) stepLegends(g, legends, !!c.happyNearest);
