@@ -2,7 +2,7 @@
 // a confirmed choice makes the issue link and line the coordinator reads.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { applyKnobParams, currentValue, decisionLine, DECISION_LIST, issueUrl, knobAt, knobParam, parseValue, setKnob } from "./decide";
+import { applyKnobParams, byPr, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, parseValue, setKnob, valuesText } from "./decide";
 
 /** The URL switches the game reads (src/main.ts), and their values. */
 const PARAMS: Record<string, string[]> = { style: ["bold", "ref"] };
@@ -59,5 +59,24 @@ describe("the decisions panel", () => {
     expect(url.searchParams.get("title")).toBe(decisionLine("growth", 0.75));
     const body = url.searchParams.get("body")!;
     for (const s of ["v1100 · abc123", "seed: 123", "\"style\": \"bold\"", "?decide"]) expect(body).toContain(s);
+  });
+
+  it("the pause page's test sliders (Ed, 2026-10-12): every entry has its PR and a short name, newest PR first; Copy values gives a line each, label, key, value and built default", () => {
+    for (const d of DECISION_LIST) { expect(d.pr, d.id).toBeGreaterThan(0); expect(d.group, d.id).toBeTruthy(); }
+    const prs = byPr(DECISION_LIST).map(d => d.pr!);
+    for (let i = 1; i < prs.length; i++) expect(prs[i]).toBeLessThanOrEqual(prs[i - 1]);
+    expect(groupOf(DECISION_LIST.find(d => d.id === "bombard")!)).toBe("#290 Legend layers");
+    const values = new Map<string, string | number | boolean>(DECISION_LIST.map(d => [d.id, d.default]));
+    const sky = DECISION_LIST.find(d => d.id === "skyBlur")!;
+    values.set("skyBlur", 0.45);
+    const text = valuesText(values, "v123", 42), lines = text.split("\n");
+    expect(lines[0]).toBe("Test sliders · v123 · seed 42");
+    expect(lines[2]).toBe(`${groupOf(byPr(DECISION_LIST)[0])}:`); // (the newest PR's first)
+    for (const g of new Set(DECISION_LIST.map(groupOf))) expect(lines).toContain(`${g}:`);
+    expect(lines).toContain(`● ${sky.label} · tiltShift.skyBlur = 0.45 (built ${sky.default})`);
+    const style = DECISION_LIST.find(d => d.id === "style")!;
+    expect(lines).toContain(`  ${style.label} · ?style = ${style.default} (built ${style.default})`);
+    expect(keyOf(style)).toBe("?style");
+    expect(lines.filter(l => / = .* \(built /.test(l)).length).toBe(DECISION_LIST.length);
   });
 });
