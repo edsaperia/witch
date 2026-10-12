@@ -42,7 +42,7 @@ export const LIGHT_UNIFORMS = {
   /** The light's soft knee (Ed, 2026-10-12: "soundsystems lighting tends to blow out"; the tuning's lights.knee and
    *  lights.ceiling): the light's brightness passes unchanged up to x, then eases toward y and never past it, keeping its
    *  hue; y <= x: off. */
-  uLightKnee: { value: new THREE.Vector2(0.9, 1.3) },
+  uLightKnee: { value: new THREE.Vector2(0.9, 1.1) },
   /** The legends' clearings (render/glades.ts): each one's centre x, z, radius and edge (0 to 1); how many; the twilight's
    *  colour; its pool's and its edge ring's strength. */
   uGlade: { value: Array.from({ length: MAX_GLADES }, () => new THREE.Vector4()) },

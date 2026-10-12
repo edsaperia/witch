@@ -2,6 +2,26 @@
   "_note": "Ed's decisions panel (src/ui/decide.ts; ?decide or F2 in the game) and the pause page's test sliders (Esc: every entry, by group, down the left, with Copy values; Ed, 2026-10-12). Each entry: id, pr (the pull request that added it) and group (that PR's short name: the pause page's heading, \"#pr group\", newest PR first), label, a one-line note, a control (toggle, choice of 2 to 4 options, or slider with min, max and step), the shipped default, and what it changes: a tuning knob by its path (applied live to the running game) or a URL switch (param; reload: true when the game reads it only as it loads). Confirm opens a new GitHub issue labelled decision with the choice; the coordinator acts on those.",
   "decisions": [
     {
+      "id": "lightKnee", "pr": 763, "group": "Soundsystem light", "label": "Light knee", "note": "How bright the light on a pixel gets before it's eased off (every light summed: the party's, campfires, her glow, the moon). Lower: bright spots tamer.",
+      "control": { "type": "slider", "min": 0.4, "max": 2, "step": 0.05 },
+      "default": 0.9, "apply": { "knob": "lights.knee" }
+    },
+    {
+      "id": "lightCeiling", "pr": 763, "group": "Soundsystem light", "label": "Light ceiling", "note": "The most light a pixel ever gets, eased toward from the knee (at or under the knee: no easing, the old blow-out).",
+      "control": { "type": "slider", "min": 0.4, "max": 3, "step": 0.05 },
+      "default": 1.1, "apply": { "knob": "lights.ceiling" }
+    },
+    {
+      "id": "partyLight", "pr": 763, "group": "Soundsystem light", "label": "Soundsystem light", "note": "A partying soundsystem's own light, pulsing with the beat.",
+      "control": { "type": "slider", "min": 0, "max": 3, "step": 0.05 },
+      "default": 1.6, "apply": { "knob": "party.lightStrength" }
+    },
+    {
+      "id": "bloomThreshold", "pr": 763, "group": "Soundsystem light", "label": "Bloom threshold", "note": "How bright a pixel must be to bloom (everywhere: neons, sigils, lit ground). Higher: less haze over bright ground.",
+      "control": { "type": "slider", "min": 0.3, "max": 1.2, "step": 0.05 },
+      "default": 0.55, "apply": { "knob": "bloom.threshold" }
+    },
+    {
       "id": "sigilBackingDark", "pr": 756, "group": "Sigil backing", "label": "Backing darkness", "note": "How dark the patch under every sigil on the ground is (0: none, and no opaque sigil either: as #752).",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
       "default": 0.85, "apply": { "knob": "leash.sigilBacking.dark" }
