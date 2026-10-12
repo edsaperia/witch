@@ -15,6 +15,13 @@ export function styleFromLink(params: URLSearchParams, tuning: Tuning) {
   return style;
 }
 
+/** The style the game's art is drawn in for this load: the link's (styleFromLink) at the tuning's pixel size, trees taller by treeHeight,
+ *  crowns wider by crownWidth in all (treeHeight widens them too). The game's view and the landing's bake ahead (app/
+ *  landingBake.ts) both draw in it, so what one keeps the other finds. */
+export function gameStyle(style: ReturnType<typeof styleFromLink>, tuning: Tuning) {
+  return { ...style, pixel: tuning.pixelSize, treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight };
+}
+
 export function viewFromLink(view: View, params: URLSearchParams): void {
   view.debugCull = params.get("debug") === "cull";
   // ?debug=shadows: every shadow a flat magenta tint, to see each against what casts it (render/shadows.ts).

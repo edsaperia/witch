@@ -36,7 +36,7 @@ export interface ChartViewOptions {
   world?: number;
   /** Sail mode: sail to an island, once the chart has flown in to it (default: to ?island=<kind>&arrive=1, with &world= when
    *  `world` is given). The flight's end is in sessionStorage for the game to carry on from (app/arrival.ts). */
-  onSail?: (island: string) => void;
+  onSail?: (island: string, seed: number) => void;
   /** Sail mode: the flight in to the island has begun (the chart over the game fills the screen for it). */
   onFly?: () => void;
   /** Look and sail modes: a Close button and Esc. */
@@ -125,12 +125,24 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const sailHref = (island: string) => `./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`;
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
   // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
-  const go = (id: string) => { if (opts.onSail) opts.onSail(id); else location.href = `${sailHref(id)}&arrive=1`; };
+  // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
+  let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null> } | null = null;
+  const bakeFor = (id: string | null) => {
+    if (!sailing || mini || bake?.island === id) return;
+    void bake?.job.then(b => b?.stop());
+    bake = id && islands.find(i => i.id === id)?.sail ? { island: id, job: import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null) } : null;
+  };
+  const go = async (id: string) => {
+    const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? Math.floor(Math.random() * 1000000);
+    await b?.settle(); // (what's drawn, written before the page goes)
+    if (opts.onSail) opts.onSail(id, seed); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
+  };
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
     if (!sailing || !isl?.sail || chart.flying) return;
     const w = worldNow();
-    if (!chart.fly(id!, end => { writeArrival(id!, w, end); go(id!); })) { go(id!); return; }
+    bakeFor(id); // (sailing straight there: drawn through the flight)
+    if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!); })) { void go(id!); return; }
     root.classList.add("flying");
     opts.onFly?.();
     requestAnimationFrame(() => resize());
@@ -194,6 +206,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   /** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
   function choose(id: string | null, instant = false): void {
     chart.select(id, instant);
+    bakeFor(id);
     if (id && worker && !islands.find(i => i.id === id)?.outline) worker.postMessage({ first: id } satisfies OutlineAsk);
     // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
     if (id && !mini && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) void detail(id);
