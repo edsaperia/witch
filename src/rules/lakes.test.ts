@@ -141,3 +141,32 @@ describe("lakes on the sea chart", () => {
     for (const l of lakes) expect(Math.sign(area(l.pts))).toBe(-Math.sign(area(sea[0].pts)));
   }, 120000);
 });
+
+describe("lakes among the hills", () => {
+  it("lie level in a hollow: one flat water, the ground easing down to it round the shore and never under it", async () => {
+    const { terrainAt, drawnHills, lakeLevel, hillsAt, layoutBias, LAKE_EASE } = await import("./terrain");
+    for (const seed of [1, 2]) {
+      const m = mapOf(4, seed), B = m.bounds, W = B.lakes!, H = drawnHills(m.tuning);
+      expect(H.on).toBe(true);
+      for (const l of W.loops) {
+        if (!l.sea) continue;
+        const p0 = W.along(W.loops.indexOf(l), 0), level = lakeLevel(m, p0.x - p0.nx * 3, p0.z - p0.nz * 3, H)!;
+        for (let s = 0; s < l.length; s += 15) {
+          const p = W.along(W.loops.indexOf(l), s);
+          // on the water: the level itself
+          if (lakeDepth(B, p.x - p.nx * 4, p.z - p.nz * 4) > 0) expect(terrainAt(m, p.x - p.nx * 4, p.z - p.nz * 4, H)).toBeCloseTo(level, 5);
+          // round the shore: at or above it, and never steeper than the hills may be (the camera sees over it)
+          // (the bowl no steeper than LAKE_SLOPE of the hills' limit, or than the hills themselves there)
+          const raw = (q: number) => hillsAt(p.x + p.nx * q, p.z + p.nz * q, m.seed + 6113, H) + H.amplitude * layoutBias(m, p.x + p.nx * q, p.z + p.nz * q);
+          let was = terrainAt(m, p.x, p.z, H);
+          for (let o = 2; o <= 80; o += 2) {
+            const h = terrainAt(m, p.x + p.nx * o, p.z + p.nz * o, H);
+            if (o < LAKE_EASE) expect(h).toBeGreaterThanOrEqual(level - 1e-6);
+            expect((h - was) / 2, `slope at ${o} m (seed ${seed})`).toBeLessThan(Math.max(H.maxSlope!, Math.abs(raw(o) - raw(o - 2)) / 2) + 0.02); // (the bowl rises at LAKE_SLOPE of the limit; where two bowls or the hills meet, never past the limit)
+            was = h;
+          }
+        }
+      }
+    }
+  }, 120000);
+});

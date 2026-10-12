@@ -18,9 +18,6 @@ import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { floorClearing } from "../rules/speakers";
 import { beachOf, type Beach } from "../rules/mapShape";
-import { lakeDepth } from "../rules/lakes";
-/** How far round a lake's shore the hills ease down to its level (m). */
-const LAKE_EASE = 24;
 import { smoothstep } from "../rules/random";
 import { SLOPE_SCALE, terrainAt, type HillsTuning } from "../rules/terrain";
 
@@ -227,7 +224,7 @@ export class HeightField {
 
   private raw(x: number, z: number): number {
     if (!this.H.on) return 0;
-    const h = this.lake(x, z, terrainAt(this.map, x, z, this.H)), b = this.beach; // (the hills and the layout's rises and hollows)
+    const h = terrainAt(this.map, x, z, this.H), b = this.beach; // (the hills and the layout's rises and hollows, and the lakes' hollows)
     if (!b) return h;
     // The beach (rules/mapShape.ts beachOf): the hills eased down over `ease` metres to the sand's
     // height where it starts, the sand sloping gently to the sea's, flat beyond.
@@ -238,27 +235,6 @@ export class HeightField {
     if (into < 0) return h + (b.hSand - h) * smoothstep((into + b.ease) / b.ease);
     return b.hSand + (b.hSea - b.hSand) * smoothstep(Math.min(1, into / Math.max(1, w + b.b.out)));
   }
-  /** A lake (rules/lakes.ts) lies level: the hills eased down to its level over LAKE_EASE metres of its shore, flat over its
-   *  water. Its level: the lowest of the hills round its shore, a metre under. */
-  private lake(x: number, z: number, h: number): number {
-    const L = this.map.bounds.lakes;
-    if (!L) return h;
-    const d = lakeDepth(this.map.bounds, x, z);
-    if (d <= -LAKE_EASE) return h;
-    const i = Math.max(0, Math.min(L.cols - 1, Math.round((x - L.x0) / L.step))), j = Math.max(0, Math.min(L.rows - 1, Math.round((z - L.z0) / L.step))), sg = L.seg[j * L.cols + i];
-    if (sg < 0) return h;
-    const loop = L.segLoop[sg];
-    let level = this.lakeLevels.get(loop);
-    if (level === undefined) {
-      const P = L.loops[loop].pts;
-      level = Infinity;
-      for (let k = 0; k < P.length; k += 8) level = Math.min(level, terrainAt(this.map, P[k], P[k + 1], this.H));
-      level = (Number.isFinite(level) ? level : h) - 1;
-      this.lakeLevels.set(loop, level);
-    }
-    return d >= 0 ? level : h + (level - h) * smoothstep((d + LAKE_EASE) / LAKE_EASE);
-  }
-  private lakeLevels = new Map<number, number>();
   /** The beach's levels, on the circular map with it on. */
   private beach: { b: Beach; ease: number; hSand: number; hSea: number; /** further from the water than this (m), no beach */ inland: number } | null = null;
 

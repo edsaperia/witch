@@ -3,7 +3,7 @@
 // Loads it on that seed and phase (?phase=: its islands have lakes from 1), puts her on foot by a lake (one with koi if any),
 // shoots the shore from the ground; walks her at the water (she must stop at its shore); rises, shoots it from the treetops over
 // the water; asks her down over the water (she must not land) and flies her ashore (she must). Fails on a page error or any of
-// those. Writes <out>/lake-ground.png, lake-shore.png (stopped at it), lake-treetops.png and lake-koi.png (held low over its middle).
+// those. AT=x,z shoots the lake nearest that point instead. Writes <out>/lake-ground.png, lake-shore.png (stopped at it), lake-treetops.png and lake-koi.png (held low over its middle).
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -27,17 +27,18 @@ server.listen(0, "127.0.0.1", async () => {
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
   const step = (n, o = {}) => page.evaluate(([n, o]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60, i === n - 1); const b = w.game.witch; return { x: b.x, z: b.z, mode: b.mode, lift: b.lift }; }, [n, o]);
   // (a lake: one with koi if the view has any, its deepest water; her 14 m ashore of its nearest shore, south of it if she can)
-  const at = await page.evaluate(() => {
+  const at = await page.evaluate(near => {
     const g = window.witch.game, W = g.map.bounds.lakes;
     if (!W) return null;
     const koi = window.witch.view.ground.mesh.material.uniforms.uKoi.value.filter(v => v.z > 0);
     let p;
-    if (koi.length) p = { x: koi[0].x, z: koi[0].y };
+    if (near) { const s = W.shore(near[0], near[1]); p = { x: s.x - s.nx * 40, z: s.z - s.nz * 40 }; } // (AT=x,z: the lake nearest there)
+    else if (koi.length) p = { x: koi[0].x, z: koi[0].y };
     else { let best = 0; for (let k = 0; k < W.dist.length; k++) if (W.dist[k] > W.dist[best]) best = k; p = { x: W.x0 + (best % W.cols) * W.step, z: W.z0 + Math.floor(best / W.cols) * W.step }; }
     const s = W.shore(p.x, p.z), x = s.x + s.nx * 14, z = s.z + s.nz * 14;
     g.witch = { ...g.witch, x, z, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 };
     return { x, z, lake: p, nx: -s.nx, nz: -s.nz, koi: koi.length };
-  });
+  }, process.env.AT ? process.env.AT.split(",").map(Number) : null);
   if (!at) { console.log("no lakes on this island"); await browser.close(); server.close(); process.exit(1); }
   const depth = () => page.evaluate(() => { const g = window.witch.game, W = g.map.bounds.lakes; return W.distAt(g.witch.x, g.witch.z); });
   await step(120); await page.waitForTimeout(1500); await step(2);
