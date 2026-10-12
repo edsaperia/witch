@@ -19,6 +19,7 @@ import { KeyHint } from "./keyHint";
 import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixelUi";
 import { button, h } from "./dom";
 import { BROOM_SPELLS, HAT_SPELLS } from "../rules/spells";
+import { HAT_ICONS } from "../render/hatIcons";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -398,6 +399,8 @@ export class Creator {
     for (const x of list) {
       const b = h("button", { type: "button", text: x.id === "none" ? "none" : x.name });
       Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" });
+      const icon = slot === "hat" ? HAT_ICONS[x.id] : undefined;
+      if (icon) { b.prepend(spellIcon(icon)); Object.assign(b.style, { display: "inline-flex", alignItems: "center", gap: "4px" }); } // (art builder Bravo's icons: render/hatIcons.ts)
       b.dataset.spell = x.id; b.title = x.line;
       b.addEventListener("click", () => { this.loadout = { ...this.loadout, [slot]: x.id }; paint(); this.onLoadout(this.loadout); });
       r.append(b);
@@ -792,4 +795,20 @@ function drawGlows(x: CanvasRenderingContext2D, room: Room, t: number): void {
   halo(x, a.screen, 10, [150, 214, 255], .16 + .04 * Math.sin(t * 3));
   halo(x, a.potions, 6, [196, 120, 255], .08 + .05 * Math.sin(t * 1.1));
   x.restore();
+}
+
+/** A spell's icon (render/hatIcons.ts: `#` ink, `+` a lighter tone) as pixels in the chip's own colour, so it follows the chip lit
+ *  or not: an inline SVG of whole squares, 13 px across, crisp-edged. */
+function spellIcon(rows: readonly string[]): SVGSVGElement {
+  const NS = "http://www.w3.org/2000/svg", w = rows[0]?.length ?? 0, svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${w} ${rows.length}`); svg.setAttribute("width", String(w)); svg.setAttribute("height", String(rows.length));
+  svg.setAttribute("shape-rendering", "crispEdges"); svg.setAttribute("aria-hidden", "true");
+  rows.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c !== "#" && c !== "+") return;
+    const r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", String(x)); r.setAttribute("y", String(y)); r.setAttribute("width", "1"); r.setAttribute("height", "1");
+    r.setAttribute("fill", "currentColor"); if (c === "+") r.setAttribute("fill-opacity", "0.5");
+    svg.append(r);
+  }));
+  return svg;
 }
