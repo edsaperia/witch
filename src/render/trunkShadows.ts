@@ -41,13 +41,13 @@ const VERT = /* glsl */ `
 attribute vec4 iTrunk; // x, z (its foot), width, height (metres)
 attribute vec4 iUv;    // its frame in the atlas (u0, v0 top, u1, v1 bottom; u0 > u1 mirrored)
 attribute float iPad;  // its empty rows at the bottom, a share of its height
-uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear, uTrunkTaper;
+uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear;
 uniform vec3 uGlowPos;
 uniform vec4 uFires[${MAX_FIRES}];
 uniform float uFireFade[${MAX_FIRES}];
 uniform int uFireCount;
-varying vec2 vTex;
-varying float vFade, vAlong, vLen;
+varying vec2 vTex, vUx;
+varying float vFade, vAlong, vLen, vU;
 varying vec4 vFrame;
 ${HEIGHT_VERT_GLSL}
 void main() {
@@ -63,11 +63,9 @@ void main() {
   vec2 dir = off / d, side = vec2(dir.y, -dir.x); // (so across, along turn as x, z do: facing up, not culled)
   float h = iTrunk.w * (1.0 - iPad), len = clamp(d * h / max(0.6, L.y), 0.6 * h, uTrunkLong * h);
   float t = position.z + 0.5, u = position.x; // (along from its foot, across)
-  // Tapered at its foot (Ed, 2026-10-12: roots and decorations "get wide at the base, that look strange when they're rotated"): its
-  // width pinched to a third at the foot, opening to full over uTrunkTaper metres, the whole sprite's width squeezed into it.
-  float pinch = uTrunkTaper > 0.0 ? mix(0.35, 1.0, smoothstep(0.0, 1.0, t * len / uTrunkTaper)) : 1.0;
-  vec2 p = foot + dir * t * len + side * u * iTrunk.z * uTrunkAcross * pinch;
+  vec2 p = foot + dir * t * len + side * u * iTrunk.z * uTrunkAcross;
   vTex = vec2(mix(iUv.x, iUv.z, 0.5 + u * uTrunkAcross), mix(iUv.w, iUv.y, iPad + t * (1.0 - iPad)));
+  vUx = vec2(iUv.x, iUv.z); vU = u * uTrunkAcross;
   vFrame = vec4(min(iUv.x, iUv.z), iUv.y, max(iUv.x, iUv.z), iUv.w);
   float k = 1.0 - d / reach;
   float near = uTrunkNear > 0.0 ? smoothstep(0.25 * uTrunkNear, uTrunkNear, length(foot - uGlowPos.xz)) : 1.0; // (to nothing as she comes up to its trunk)
@@ -78,19 +76,27 @@ void main() {
 
 const FRAG = /* glsl */ `
 uniform sampler2D uAlbedo;
-uniform float uTrunkStrength, uTrunkHard, uTrunkCore, uTrunkFoot, uTrunkCover, uCover;
-varying vec2 vTex;
-varying float vFade, vAlong, vLen;
+uniform float uTrunkStrength, uTrunkHard, uTrunkCore, uTrunkFoot, uTrunkCover, uCover, uTrunkTaper;
+varying vec2 vTex, vUx;
+varying float vFade, vAlong, vLen, vU;
 varying vec4 vFrame;
 float solid(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : step(0.5, texture2D(uAlbedo, q).a); }
 void main() {
   float a;
+  // Tapered at its foot (Ed, 2026-10-12: roots and decorations "get wide at the base, that look strange when they're rotated"): its
+  // width pinched to a third at the foot, opening smoothly to full over uTrunkTaper metres, the sprite's whole width squeezed in. Done
+  // here, a pixel at a time (in the vertices, between the quad's few rows along, it showed as a kink: Ed, v3052).
+  vec2 tex = vTex;
+  if (uTrunkTaper > 0.0) {
+    float pinch = mix(0.35, 1.0, smoothstep(0.0, 1.0, vAlong * vLen / uTrunkTaper));
+    tex.x = mix(vUx.x, vUx.y, 0.5 + vU / pinch);
+  }
   if (uTrunkHard > 1.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } // (?trunks=debug: where they lie, magenta)
   if (uTrunkHard > 0.5) {
-    a = solid(vTex) * (vFade * (1.0 - vAlong) > 0.12 ? 1.0 : 0.55) * step(0.03, vFade * (1.0 - vAlong)); // two tones, on the art's pixels
+    a = solid(tex) * (vFade * (1.0 - vAlong) > 0.12 ? 1.0 : 0.55) * step(0.03, vFade * (1.0 - vAlong)); // two tones, on the art's pixels
   } else {
     float px = 1.0 / float(textureSize(uAlbedo, 0).x), s = (1.0 + 4.0 * vAlong) * px; // (its penumbra widening toward the tip)
-    a = (solid(vTex) * 2.0 + solid(vTex + vec2(s, 0.0)) + solid(vTex - vec2(s, 0.0)) + solid(vTex + vec2(2.0 * s, 0.0)) * 0.5 + solid(vTex - vec2(2.0 * s, 0.0)) * 0.5) / 5.0;
+    a = (solid(tex) * 2.0 + solid(tex + vec2(s, 0.0)) + solid(tex - vec2(s, 0.0)) + solid(tex + vec2(2.0 * s, 0.0)) * 0.5 + solid(tex - vec2(2.0 * s, 0.0)) * 0.5) / 5.0;
     a *= min(1.0, vFade * (1.0 - vAlong * vAlong) / uTrunkCore); // (Ed: "soft, but the darkest part as dark as the hard one": full strength near its foot and the light, soft only at its edges and toward its tip)
   }
   if (uTrunkFoot > 0.0) a *= smoothstep(0.0, uTrunkFoot, vAlong * vLen); // (from nothing at its trunk's foot)
