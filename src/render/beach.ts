@@ -10,7 +10,7 @@ import type { AssetLibrary } from "./assets";
 import type { Ground } from "./ground";
 import { PartyWitchView } from "./partyWitches";
 import type { ShadowInstance } from "./shadows";
-import { pixelEmoji } from "./invites";
+import { pixelEmoji } from "./bubbles";
 import { groundHeight, placed, shownOverBend } from "./height";
 import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "./sprites";
 import { BeachDecor, type BeachItem } from "../rules/beachDecor";

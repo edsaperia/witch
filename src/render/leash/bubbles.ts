@@ -13,7 +13,8 @@ import { broughtLine, circleLines, circleShown, legendCircleNear } from "../../r
 import { witchHeight } from "../../rules/witch";
 import { placed } from "../height";
 import { tiltFilter } from "../overlayTilt";
-import { GRID, dreamSymbol, paintThought, snap, thoughtShape, type DreamSymbol, type ThoughtShape } from "../thoughtCloud";
+import { GRID, dreamSymbol, snap, thoughtShape } from "../thoughtCloud";
+import { emojiImage, thoughtAt, thoughtBubble, thoughtCloud, thoughtEmoji, thoughtSymbol, type Rgba } from "../bubbles";
 import type { LeashView } from "../leash";
 import { islandPixels } from "../../../art/islands.js";
 import { islandCoast } from "../../rules/islandShape";
@@ -25,12 +26,12 @@ const SNORES = 6, SNORE_RANGE = 40;
 /** Bubbles grow with who's talking (Ed, 2026-10-05): the pixel bubble's game pixel (its --px, in
  *  screen px) by level, babies smallest, legends (dreams and nightmares) largest. One style for
  *  every bubble: index.html's .bubble. */
-export const BUBBLE_PX = 3;
+export const BUBBLE_PX = GRID; // (every bubble's grid: render/thoughtCloud.ts)
 /** A dream's thought bubble (render/thoughtCloud.ts): its symbol's square in cloud pixels (each GRID screen px), its face's
  *  pixels (centred in that square), and a snore's (Ed, 2026-10-06: the party's over, the sleepers' little bubbles). */
 const DREAM_INNER = 30, DREAM_EMOJI = 20, SNORE_INNER = 12;
 /** Its ink and flat fill (no gradient, no glow): the HUD's amber, as before but crisp; a nightmare's fill a deep ember. */
-const DREAM_INK: [number, number, number, number] = [232, 180, 106, 0.8], DREAM_FILL: [number, number, number, number] = [20, 14, 34, 0.55], NIGHTMARE_FILL: [number, number, number, number] = [44, 8, 14, 0.6];
+const DREAM_INK: Rgba = [232, 180, 106, 0.8], DREAM_FILL: Rgba = [20, 14, 34, 0.55], NIGHTMARE_FILL: Rgba = [44, 8, 14, 0.6];
 const DREAM_CYCLE = { hold: 1.8, fade: 0.3, flask: 0.25 };
 /** How far she goes (metres) before a dream's pointer works out her nearest runestone again. */
 const DREAM_REFRESH = 15;
@@ -70,13 +71,13 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
       placed(lv.v.set(c.x + Math.sin(time * 0.7 + c.id) * 0.15, y, c.z)).project(camera);
       if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
       let el = lv.snoreEls[used];
-      if (!el) { el = thoughtEl("thought snore"); host.append(el); lv.snoreEls.push(el); }
+      if (!el) { el = thoughtBubble(host, "snore"); lv.snoreEls.push(el); }
       el.style.display = "";
       const face = Z ? emojiOr(sleepyFace(c.id, time, Z), Z.fallback) : "😴", S = thoughtShape(SNORE_INNER, 2);
-      paintCloud(el, S, DREAM_INK, DREAM_FILL);
-      showSymbol(el, S, "emoji", face, () => emojiCanvas(face, SNORE_INNER), 1);
-      el.style.left = `${snap(((lv.v.x + 1) / 2) * width - (S.foot.x + 0.5) * GRID)}px`;
-      el.style.top = `${snap(((1 - lv.v.y) / 2) * height - (S.foot.y + 0.5) * GRID)}px`;
+      thoughtCloud(el, S, DREAM_INK, DREAM_FILL);
+      thoughtEmoji(el, S, face, SNORE_INNER, 1);
+      const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height);
+      el.style.left = `${at.left}px`; el.style.top = `${at.top}px`;
       el.style.opacity = `${Math.min(1, (lv.partyOverEase - 0.3) * 4).toFixed(2)}`;
       used++;
     }
@@ -109,22 +110,23 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
     // Asleep giving its quest (Ed, 2026-10-06): a sleepy face, mostly 😴, now and then a yawn or a sigh for a turn.
     const Z = g.tuning.dreams.sleepy, zzz = !faces && open && Z ? sleepyFace(c.id, g.clock.time, Z) : null;
     let el = lv.dreamEls[used];
-    if (!el) { el = thoughtEl("thought dream"); host.append(el); lv.dreamEls.push(el); }
+    if (!el) { el = thoughtBubble(host, "dream"); lv.dreamEls.push(el); }
     el.style.display = "";
     // A pixel thought bubble (Ed, 2026-10-08, relayed by the coordinator: "drawn in the same way as the speech bubbles ... small
     // clouds going up to a large cloud"; render/thoughtCloud.ts), holding one symbol at a time: its face (sleepy, or the
     // nightmare's), then the sigil it dreams of (fading as it grows restless), then its face again, now and then the flask's
     // relic sigil instead of the sigil; each fading in and out (dreams.cycle). A nightmare's ink reddens.
     const S = thoughtShape(DREAM_INNER, 3), tone = faces ? Math.round(ire * 8) / 8 : -1;
-    paintCloud(el, S, tone < 0 ? DREAM_INK : [Math.round(232 - 42 * tone), Math.round(180 - 130 * tone), Math.round(106 - 76 * tone), 0.8 + 0.2 * tone], tone < 0 ? DREAM_FILL : NIGHTMARE_FILL);
+    thoughtCloud(el, S, tone < 0 ? DREAM_INK : [Math.round(232 - 42 * tone), Math.round(180 - 130 * tone), Math.round(106 - 76 * tone), 0.8 + 0.2 * tone], tone < 0 ? DREAM_FILL : NIGHTMARE_FILL);
     const faceE = step >= 0 ? N.faces[step] ?? "😠" : zzz ? emojiOr(zzz, Z!.fallback) : "😴";
     const sym = dreamSymbol(performance.now() / 1000, c.id, g.tuning.dreams.cycle ?? DREAM_CYCLE, open); // (the screen's clock: game time slows to a crawl in a legend's clearing)
-    if (sym.kind === "emoji") showSymbol(el, S, "emoji", faceE, () => emojiCanvas(faceE, DREAM_EMOJI), sym.alpha);
-    else if (sym.kind === "flask") showSymbol(el, S, "flask", "relic", () => sigilCanvas("relic", null, [255, 205, 90], DREAM_INNER), sym.alpha);
-    else showSymbol(el, S, "sigil", `${q.species}:${q.level}`, () => sigilCanvas(q.species, q.level, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r));
+    if (sym.kind === "emoji") thoughtEmoji(el, S, faceE, DREAM_EMOJI, sym.alpha);
+    else if (sym.kind === "flask") thoughtSymbol(el, S, "flask", "relic", DREAM_INNER, () => sigilCanvas("relic", null, [255, 205, 90], DREAM_INNER), sym.alpha);
+    else thoughtSymbol(el, S, "sigil", `${q.species}:${q.level}`, DREAM_INNER, () => sigilCanvas(q.species, q.level, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r));
     const bx = ((lv.v.x + 1) / 2) * width, ly = ((1 - lv.v.y) / 2) * height;
     const shake = faces ? snap(ire * 3 * Math.sin(performance.now() * 0.05 + c.id)) : 0; // (a nightmare shakes, a whole grid step)
-    let left = snap(bx - (S.foot.x + 0.5) * GRID) + shake, top = snap(ly - (S.foot.y + 0.5) * GRID); // (its smallest puff over the sleeper)
+    const at = thoughtAt(S, bx, ly); // (its smallest puff over the sleeper)
+    let left = at.left + shake, top = at.top;
     if (top < 57) {
       // no room over it on screen (close, or a big legend): kept below the top edge's cues, beside its body rather than over it,
       // its puffs reaching in from the left (the side they trail from), or from the right when there's no room on the left
@@ -163,51 +165,12 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
   for (let i = used; i < lv.wayEls.length; i++) lv.wayEls[i].style.display = "none";
 }
 
-/** A thought bubble's element: its cloud on one canvas (a cloud pixel to GRID screen px) and its symbols over the big cloud. */
 /** A legend's bounds on screen (pixels): its feet to its head (metres over the ground), half its drawn width either side. */
 export function legendBounds(lv: LeashView, camera: THREE.Camera, x: number, z: number, head: number, half: number, width: number, height: number): { left: number; right: number; top: number; bottom: number } {
   const R = SPRITE_UNIFORMS.uRight.value, sx = (v: THREE.Vector3) => ((v.x + 1) / 2) * width, sy = (v: THREE.Vector3) => ((1 - v.y) / 2) * height;
   placed(lv.v.set(x - R.x * half, 0, z - R.z * half)).project(camera); const l = sx(lv.v), b = sy(lv.v);
   placed(lv.v.set(x + R.x * half, head, z + R.z * half)).project(camera); const r = sx(lv.v), t = sy(lv.v);
   return { left: Math.min(l, r), right: Math.max(l, r), top: Math.min(t, b), bottom: Math.max(t, b) };
-}
-
-function thoughtEl(cls: string): HTMLElement {
-  const el = document.createElement("div"), cv = document.createElement("canvas");
-  el.className = cls; cv.className = "cloud"; el.append(cv);
-  return el;
-}
-
-/** Paint its cloud, once for each shape and colour. */
-function paintCloud(el: HTMLElement, S: ThoughtShape, ink: [number, number, number, number], fill: [number, number, number, number]): void {
-  const key = `${S.w}x${S.h}:${ink}:${fill}`;
-  if (el.dataset.c === key) return;
-  el.dataset.c = key;
-  const cv = el.firstChild as HTMLCanvasElement, x = cv.getContext("2d");
-  cv.width = S.w; cv.height = S.h;
-  cv.style.width = `${S.w * GRID}px`; cv.style.height = `${S.h * GRID}px`;
-  el.style.width = cv.style.width; el.style.height = cv.style.height;
-  if (!x) return;
-  const d = x.createImageData(S.w, S.h);
-  paintThought(S, ink, fill, d.data);
-  x.putImageData(d, 0, 0);
-}
-
-/** Show one symbol of a bubble (`kind`, made by `make` when `key` changes), centred in its big cloud on the grid, `alpha` faded;
- *  the others hidden. */
-function showSymbol(el: HTMLElement, S: ThoughtShape, kind: DreamSymbol, key: string, make: () => HTMLCanvasElement, alpha: number): void {
-  let cv = el.querySelector(`canvas.${kind}`) as HTMLCanvasElement | null;
-  if (!cv || cv.dataset.k !== key) {
-    const made = make();
-    made.classList.add(kind); made.dataset.k = key;
-    const n = made.width, at = (S.box.n - n) / 2;
-    made.style.width = made.style.height = `${n * GRID}px`;
-    made.style.left = `${(S.box.x + Math.floor(at)) * GRID}px`; made.style.top = `${(S.box.y + Math.floor(at)) * GRID}px`;
-    if (cv) cv.replaceWith(made); else el.append(made);
-    cv = made;
-  }
-  for (const o of el.querySelectorAll("canvas:not(.cloud)") as NodeListOf<HTMLCanvasElement>) o.style.display = o === cv ? "" : "none";
-  cv.style.opacity = alpha.toFixed(2);
 }
 
 /** A sigil, `n` pixels across, its edges hard (no half-see-through pixels). */
@@ -230,21 +193,6 @@ function islandCanvas(kind: string, coast: Parameters<typeof islandCoast>[1], n:
   const cv = document.createElement("canvas"), isle = islandOf(kind), P = islandPixels(kind, islandCoast(isle ? coastSpec(isle) : { kind }, coast).radii, { n }) as { w: number; h: number; rgba: Uint8ClampedArray };
   cv.width = P.w; cv.height = P.h;
   cv.getContext("2d")?.putImageData(new ImageData(new Uint8ClampedArray(P.rgba), P.w, P.h), 0, 0);
-  return cv;
-}
-
-/** An emoji, `n` pixels across, its edges hard. */
-function emojiCanvas(e: string, n: number): HTMLCanvasElement {
-  const cv = document.createElement("canvas");
-  cv.width = cv.height = n;
-  const x = cv.getContext("2d", { willReadFrequently: true });
-  if (x) {
-    x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillText(e, n / 2, n / 2 + 0.5);
-    const d = x.getImageData(0, 0, n, n);
-    for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
-    x.putImageData(d, 0, 0);
-  }
   return cv;
 }
 
@@ -376,21 +324,11 @@ export function emoji(lv: LeashView, el: HTMLElement, e: string): void {
   el.replaceChildren(pixelEmoji(lv, e));
 }
 
-/** An emoji as a pixel sprite, sized with its bubble (its --px: bubblePx). */
-export function pixelEmoji(lv: LeashView, e: string, k = 1, n = lv.game.tuning.bubbles.emojiPixels): HTMLCanvasElement {
-  const B = lv.game.tuning.bubbles, size = (B.emojiPixels * lv.game.tuning.pixelSize * B.scale * k) / BUBBLE_PX;
-  const c = document.createElement("canvas");
-  c.width = c.height = n;
-  c.style.width = c.style.height = `calc(var(--px) * ${size})`;
-  const x = c.getContext("2d", { willReadFrequently: true });
-  if (x) {
-    x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillText(e, n / 2, n / 2 + 0.5);
-    const d = x.getImageData(0, 0, n, n);
-    for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
-    x.putImageData(d, 0, 0);
-  }
-  return c;
+/** An emoji as a pixel sprite (render/bubbles.ts, every bubble's), sized with its bubble (its --px: bubblePx). */
+export function pixelEmoji(lv: LeashView, e: string, k = 1, n = lv.game.tuning.bubbles.emojiPixels): HTMLImageElement {
+  const B = lv.game.tuning.bubbles, size = (B.emojiPixels * lv.game.tuning.pixelSize * B.scale * k) / BUBBLE_PX, img = emojiImage(e, n);
+  img.style.width = img.style.height = `calc(var(--px) * ${size})`;
+  return img;
 }
 
 export function say(_lv: LeashView, el: HTMLElement, text: string): void { if (el.dataset.e !== text) { el.dataset.e = text; el.textContent = text; } }
@@ -453,12 +391,12 @@ function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, he
     placed(lv.v.set(c.x, head + 0.4, c.z)).project(camera);
     if (lv.v.z > 1 || Math.abs(lv.v.x) > 1.1 || Math.abs(lv.v.y) > 1.1) continue;
     let el = lv.dreamEls[used];
-    if (!el) { el = thoughtEl("thought dream"); host.append(el); lv.dreamEls.push(el); }
+    if (!el) { el = thoughtBubble(host, "dream"); lv.dreamEls.push(el); }
     el.style.display = "";
     const S = thoughtShape(DREAM_INNER, 3);
-    paintCloud(el, S, DREAM_INK, DREAM_FILL);
-    showSymbol(el, S, "sigil", `island:${c.species}`, () => islandCanvas(c.species, g.tuning.islands?.coast, DREAM_INNER), 1);
-    const left = snap(((lv.v.x + 1) / 2) * width - (S.foot.x + 0.5) * GRID), top = Math.max(57, snap(((1 - lv.v.y) / 2) * height - (S.foot.y + 0.5) * GRID));
+    thoughtCloud(el, S, DREAM_INK, DREAM_FILL);
+    thoughtSymbol(el, S, "sigil", `island:${c.species}`, DREAM_INNER, () => islandCanvas(c.species, g.tuning.islands?.coast, DREAM_INNER), 1);
+    const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height), left = at.left, top = Math.max(57, at.top);
     el.style.left = `${left}px`; el.style.top = `${top}px`;
     tiltFilter(el, top + S.box.y * GRID + S.box.n * GRID * 0.5);
     used++;

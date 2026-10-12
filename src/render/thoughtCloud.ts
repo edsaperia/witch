@@ -2,10 +2,12 @@
 // same way as the speech bubbles ... thought bubbles - small clouds going up to a large cloud ... just one [symbol] at a time,
 // alternating between emoji and the quest sigil, and occasionally the flask sigil"): the cloud's shape as a grid of cloud
 // pixels (each GRID screen px, the game's grid), its outline one pixel thick like the speech bubbles', a flat fill, and the
-// trail of puffs rising to it, smallest at the sleeper; and which symbol shows when. No DOM here: render/leash/bubbles.ts draws it.
+// trail of puffs rising to it, smallest at the sleeper; and which symbol shows when. No DOM here: render/bubbles.ts draws it
+// (the thought variant of every bubble), for render/leash/bubbles.ts.
 import { hash2 } from "../rules/random";
 
-/** The game's pixel grid on screen: the bubbles' outline and every size and place in them are whole multiples of it. */
+/** The game's pixel grid on screen: every bubble's pixel (the speech bubbles' --px at size 1, the thought clouds'), and every size
+ *  and place in them a whole multiple of it. */
 export const GRID = 3;
 /** Snap a screen position (px) to the grid. */
 export const snap = (v: number): number => Math.round(v / GRID) * GRID;

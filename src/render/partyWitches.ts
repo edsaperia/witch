@@ -19,8 +19,7 @@ import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { ShadowInstance } from "./shadows";
 import { placed, shownOverBend } from "./height";
 import { tiltFilter } from "./overlayTilt";
-import { sizeBubble } from "./bubbles";
-import { pixelEmoji } from "./invites";
+import { speechBubble, speechEmoji } from "./bubbles";
 
 /** How many different looks are drawn: party witches beyond that share them (each look is a set of sprites to draw). */
 export const LOOKS = 12;
@@ -75,17 +74,15 @@ export class PartyWitchView {
       if ((turn + (w.lead ? 0 : 1)) % 2) continue; // their turn or their partner's
       let el = this.bubblePool[n];
       if (!el) {
-        el = document.createElement("div");
-        el.className = "bubble on";
-        const img = document.createElement("img"); img.style.imageRendering = "pixelated"; img.style.display = "block"; el.append(img);
-        (document.getElementById("bubbles") ?? document.body).appendChild(el); this.bubblePool.push(el); // (with hers and the creatures')
+        el = speechBubble(document.getElementById("bubbles") ?? document.body).el; // (with hers and the creatures')
+        el.classList.add("on"); this.bubblePool.push(el);
       }
       placed(this.v.set(w.x, 2.4, w.z)).project(camera); // (on the bent, rolling ground, as they are)
       const y = ((1 - this.v.y) / 2) * height;
       el.style.left = `${((this.v.x + 1) / 2) * width}px`; el.style.top = `${y}px`;
       tiltFilter(el, y);
       const e = CHAT[(turn * 7 + w.id * 3) % CHAT.length];
-      if (el.dataset.e !== e) { el.dataset.e = e; const img = el.firstChild as HTMLImageElement; img.src = pixelEmoji(e, g.tuning.bubbles.emojiPixels); sizeBubble(el, img, g.tuning); }
+      speechEmoji(el, el.firstChild as HTMLImageElement, e, g.tuning);
       el.style.display = this.v.z < 1 && shownOverBend(w.x, 2.4, w.z, camera.position) ? "" : "none"; // (never past the bend)
       n++;
     }
