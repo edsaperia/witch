@@ -60,6 +60,8 @@ export class RigView {
   }
 
   /** Lays out a creature with the rig, if its template has one and its parts are baked: true when drawn. */
+  /** Each creature's head as the rig last drew it (its head piece's joint, on the ground plane). */
+  readonly heads = new Map<number, { x: number; z: number }>();
   add(c: Creature, look: RigLook): boolean {
     if ((!this.ground || look.h * look.scale < this.minPx) && !this.always.includes(c.level)) return false; // (legends always: Ed, 2026-10-05)
     if (hasOverride(c.species, c.level)) return false; // (a hand-drawn level: its own frames, art/overrides)
@@ -77,6 +79,16 @@ export class RigView {
     if (meta.template === "quadruped") body.quadruped(meta, u2m, this.dt, drive, this.out);
     else body.serpent(meta, u2m, this.dt, drive, this.out);
     this.place(c, art, look, u2m);
+    // Where its head is drawn (its head piece's joint): bubbles point their tails at it (Ed, 2026-10-12).
+    // (the middle of its head piece's sprite as placed: its pivot pixel on the joint, so the middle that far across from it)
+    for (let k = 0; k < this.out.n; k++) {
+      const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];
+      if (!f || !meta.head.includes(it.piece)) continue;
+      const px = it.flip ? f.w - it.piece.px : it.piece.px, dx = (px - f.w / 2) * this.mpp * look.scale, R = this.R;
+      let h = this.heads.get(c.id); if (!h) this.heads.set(c.id, (h = { x: 0, z: 0 }));
+      h.x = c.x + (look.dx ?? 0) + it.x - R.x * dx; h.z = c.z + (look.dz ?? 0) + it.z - R.z * dx;
+      break;
+    }
     this.stats.creatures++; this.stats.ms += performance.now() - t0;
     return true;
   }
@@ -119,7 +131,7 @@ export class RigView {
   /** Hands every batch its instances; forgets creatures no longer drawn. */
   end(): void {
     for (const [k, b] of this.batches) { const pool = this.pool.get(k) ?? [], n = this.used.get(k) ?? 0; if (pool.length > n) pool.length = n; b.set(pool); } // (trimmed to this frame's: the batch draws them all)
-    for (const id of this.bodies.keys()) if (!this.seen.has(id)) this.bodies.delete(id);
+    for (const id of this.bodies.keys()) if (!this.seen.has(id)) { this.bodies.delete(id); this.heads.delete(id); }
   }
 }
 

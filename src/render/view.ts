@@ -84,6 +84,7 @@ import { inView, overBulge, viewRect } from "./view/culling";
 import { checkPops, drawGhosts } from "./view/pops";
 import { refresh } from "./view/scenery";
 import { drawBerries, drawCreatures } from "./view/creatures";
+import { drawHatArt } from "./view/hatArt";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./view/home";
 import { relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
@@ -916,6 +917,7 @@ export class View {
     this.easeAppearing();
     drawCreatures(this, time);
     drawBerries(this, time);
+    drawHatArt(this); // (the Harvest hat's sprouts, the Cyclone's whirlwind: render/view/hatArt.ts)
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);

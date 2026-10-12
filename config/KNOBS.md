@@ -1230,7 +1230,7 @@ A sparkling line round the partified region's outside edge, in each area's sigil
 
 ### `bubbles`
 
-The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble). levelScale (Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"): a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1. One bubble style for every speaker (render/bubbles.ts): the 💌 replies, and the legends' dream bubbles.
+The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble). levelScale (Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"): a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1. One bubble style for every speaker (render/bubbles.ts): the 💌 replies, the witches' chat, and the thought bubbles too (Ed, 2026-10-12: "dream bubbles should also grow"): a legend's dream, the night won's island dreams and the sleepers' 😴s, cloud and symbol together, by their creature's level.
 
 | knob | type | range |
 |---|---|---|

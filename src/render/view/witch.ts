@@ -149,7 +149,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   v.partyWitchView.bubbles(g, time, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   const onBeach = v.beachView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   v.stateMarks.update(g, time, v.leashView.tops, 70, v.camera.position);
-  v.inviteView.update(ht, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.leashView.tops);
+  v.inviteView.update(ht, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.leashView.tops, v.leashView.heads);
   // Idling into the party, she's drawn in her party pose there instead.
   // Behind the decks her frame stands with its ground anchor on the seat (not its box's middle), so her hands land on the decks;
   // her upper layer goes over the DJ table, nearer the camera along the same ray.

@@ -16,7 +16,7 @@ const COL = ["#c2549a", "#4f8f3a", "#5f9a3f", "#7a9a3a", "#8f8f35", "#9a7a35"];
 const panels = [];
 for (const world of worlds) {
   const kinds = Object.keys(Ro.KINDS).map(id => ({ id, phase: Ro.KINDS[id].phase + 1, bearing: Ro.bearingOf(id, world) }));
-  const t0 = performance.now(), arch = A.archipelago(world, kinds), ms = performance.now() - t0, M = arch.metres;
+  const t0 = performance.now(), arch = Ro.worldOf(world), ms = performance.now() - t0, M = arch.metres;
   const disc = (x, y, r, fill, extra = "") => `<circle cx="${(C + x * k).toFixed(1)}" cy="${(C + y * k).toFixed(1)}" r="${(r * k).toFixed(1)}" fill="${fill}" ${extra}/>`;
   const landR = p => Math.sqrt(A.LAND_KM2[p] * 1e6 / Math.PI) / M;
   // before: today's rings (app/chartLayout.ts), land at the same true scale
@@ -27,7 +27,7 @@ for (const world of worlds) {
   for (const id of ["home", ...kinds.map(kd => kd.id)]) {
     const at = L.ringAt ? L.ringAt(id, world) : L.islandAt(id, world), isl = isleOf(id), ph = id === "home" ? 0 : isl.phase;
     if (!at) continue;
-    if (S) before += coast(S.islandOutline({ ...isl, patch: undefined }, TUNING, 32), at.x, at.y).replaceAll('"COL"', `"${COL[ph]}"`);
+    if (S) before += coast(S.islandOutline({ ...isl, patch: undefined, turn: undefined }, TUNING, 32), at.x, at.y).replaceAll('"COL"', `"${COL[ph]}"`);
     else before += disc(at.x, at.y, landR(ph), COL[ph], `stroke="#e8d9a8" stroke-width="0.7" opacity="0.9"`);
   }
   before += `<text x="8" y="18" fill="#fff" font-family="monospace" font-size="13">world ${world}: today (rings)</text>`;
@@ -38,9 +38,21 @@ for (const world of worlds) {
     for (let a = 0; a < p.patch.length; a++) { const t = (a / p.patch.length) * Math.PI * 2, r = p.patch[a] / M; pts.push(`${(C + (p.x + Math.cos(t) * r) * k).toFixed(1)},${(C + (p.y + Math.sin(t) * r) * k).toFixed(1)}`); }
     after += `<polygon points="${pts.join(" ")}" fill="none" stroke="#2a4a70" stroke-width="1"/>`;
   }
+  const coasts = [];
   for (const p of arch.islands.values()) {
-    if (S) after += coast(S.islandOutline(isleOf(p.id), TUNING, 32), p.x, p.y).replaceAll('"COL"', `"${COL[p.phase]}"`);
+    if (S) { const o = S.islandOutline(isleOf(p.id), TUNING, 32); coasts.push({ id: p.id, o, x: p.x * M, y: p.y * M }); after += coast(o, p.x, p.y).replaceAll('"COL"', `"${COL[p.phase]}"`); }
     else after += disc(p.x, p.y, landR(p.phase), COL[p.phase], `stroke="#e8d9a8" stroke-width="0.7" opacity="0.9"`);
+  }
+  // (with outlines, the sea between neighbouring coasts: each island's nearest other coast, its least marked in red where under a strait)
+  if (S) {
+    const B = 200, grid = new Map(), cellOf = (x, y) => `${Math.floor(x / B)},${Math.floor(y / B)}`;
+    coasts.forEach((c, n) => { for (const l of c.o.loops) if (l.sea) for (let i = 0; i < l.pts.length; i += 2) { const x = c.x + l.pts[i], y = c.y + l.pts[i + 1], key = cellOf(x, y); if (!grid.has(key)) grid.set(key, []); grid.get(key).push(n, x, y); } });
+    const near = coasts.map(() => ({ d: Infinity, x: 0, y: 0, x2: 0, y2: 0 })), R = 4;
+    for (const [key, list] of grid) { const [gi, gj] = key.split(",").map(Number); for (let di = -R; di <= R; di++) for (let dj = -R; dj <= R; dj++) { const o = grid.get(`${gi + di},${gj + dj}`); if (!o) continue; for (let a = 0; a < list.length; a += 3) for (let b = 0; b < o.length; b += 3) { if (list[a] === o[b]) continue; const d = Math.hypot(list[a + 1] - o[b + 1], list[a + 2] - o[b + 2]), m = near[list[a]]; if (d < m.d) Object.assign(m, { d, x: list[a + 1], y: list[a + 2], x2: o[b + 1], y2: o[b + 2] }); } } }
+    const ds = near.map(m => m.d).filter(Number.isFinite).sort((a, b) => a - b), q = f => ds[Math.floor(f * (ds.length - 1))];
+    const worst = near.map((m, n) => [m.d, coasts[n].id]).sort((a, b) => a[0] - b[0]).slice(0, 4); console.log(worst.map(w => `${w[1]} ${w[0].toFixed(0)}`).join(', '));
+    console.log(`world ${world}: nearest coasts (m): least ${q(0).toFixed(0)}, 10% ${q(0.1).toFixed(0)}, median ${q(0.5).toFixed(0)}, most ${q(1).toFixed(0)}; under a strait (${A.STRAIT} m, less the outline's sampling): ${ds.filter(d => d < A.STRAIT - 8).length}`);
+    for (const m of near) if (m.d < A.STRAIT - 8) after += `<line x1="${(C + (m.x / M) * k).toFixed(1)}" y1="${(C + (m.y / M) * k).toFixed(1)}" x2="${(C + (m.x2 / M) * k).toFixed(1)}" y2="${(C + (m.y2 / M) * k).toFixed(1)}" stroke="#ff3030" stroke-width="3"/>`;
   }
   after += `<text x="8" y="18" fill="#fff" font-family="monospace" font-size="13">world ${world}: archipelago (${ms.toFixed(0)} ms)</text>`;
   panels.push(before, after);

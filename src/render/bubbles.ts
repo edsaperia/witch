@@ -8,7 +8,10 @@
 // - thought: a cloud with its puffs trailing down to the dreamer (render/thoughtCloud.ts its shape), its own ink and fill,
 //   holding one symbol at a time: the legends' dreams and nightmares, the night won's islands, and the sleepers' 😴s.
 import type { Tuning } from "../rules/tuning";
-import { GRID, paintThought, snap, type ThoughtShape } from "./thoughtCloud";
+import { GRID, paintThought, type ThoughtShape } from "./thoughtCloud";
+
+/** Snap a screen position (px) to a grid of `px`. */
+export const snapTo = (v: number, px: number): number => Math.round(v / px) * px;
 
 /** A bubble's size factor: the witch's (level undefined) 1, a creature's by its level. */
 export function bubbleScale(t: Tuning, level?: number): number {
@@ -17,11 +20,15 @@ export function bubbleScale(t: Tuning, level?: number): number {
   return L[Math.max(0, Math.min(L.length - 1, level))];
 }
 
+/** A bubble's pixel on screen for a speaker (screen px): the grid times its size, whole (a legend's 5, the witch's 3). Speech
+ *  and thought alike (Ed, 2026-10-12: "dream bubbles should also grow"). */
+export const bubbleGrid = (t: Tuning, level?: number): number => Math.max(1, Math.round(GRID * bubbleScale(t, level)));
+
 /** Size a .bubble element and its emoji image for a speaker: the outline (--px, the grid times its size) and the emoji's
  *  pixels scale together, so a legend's bubble is the same bubble, bigger. */
 export function sizeBubble(el: HTMLElement, img: HTMLElement, t: Tuning, level?: number): void {
   const k = bubbleScale(t, level), px = t.pixelSize * t.bubbles.scale * k, n = t.bubbles.emojiPixels;
-  el.style.setProperty("--px", `${Math.max(1, Math.round(GRID * k))}px`);
+  el.style.setProperty("--px", `${bubbleGrid(t, level)}px`);
   img.style.width = img.style.height = `${Math.round(n * px)}px`;
 }
 
@@ -97,14 +104,14 @@ export function thoughtBubble(parent: HTMLElement, cls: string): HTMLElement {
   return el;
 }
 
-/** Paint its cloud in shape S, once for each shape and colour: a cloud pixel GRID screen px. */
-export function thoughtCloud(el: HTMLElement, S: ThoughtShape, ink: Rgba, fill: Rgba): void {
-  const key = `${S.w}x${S.h}:${ink}:${fill}`;
+/** Paint its cloud in shape S, once for each shape, colour and size: a cloud pixel `px` screen px (bubbleGrid: its speaker's). */
+export function thoughtCloud(el: HTMLElement, S: ThoughtShape, ink: Rgba, fill: Rgba, px = GRID): void {
+  const key = `${S.w}x${S.h}:${ink}:${fill}:${px}`;
   if (el.dataset.c === key) return;
   el.dataset.c = key;
   const cv = el.firstChild as HTMLCanvasElement, x = cv.getContext("2d");
   cv.width = S.w; cv.height = S.h;
-  cv.style.width = `${S.w * GRID}px`; cv.style.height = `${S.h * GRID}px`;
+  cv.style.width = `${S.w * px}px`; cv.style.height = `${S.h * px}px`;
   el.style.width = cv.style.width; el.style.height = cv.style.height;
   if (!x) return;
   const d = x.createImageData(S.w, S.h);
@@ -114,13 +121,14 @@ export function thoughtCloud(el: HTMLElement, S: ThoughtShape, ink: Rgba, fill: 
 
 /** Show one symbol in a thought bubble's big cloud (`kind` its slot, `n` pixels across, made by `make` when `key` changes),
  *  centred on the grid, `alpha` faded; the others hidden. */
-export function thoughtSymbol(el: HTMLElement, S: ThoughtShape, kind: string, key: string, n: number, make: () => HTMLElement, alpha: number): void {
+export function thoughtSymbol(el: HTMLElement, S: ThoughtShape, kind: string, key: string, n: number, make: () => HTMLElement, alpha: number, px = GRID): void {
+  key = `${key}@${px}`;
   let sym = el.querySelector(`.${kind}`) as HTMLElement | null;
   if (!sym || sym.dataset.k !== key) {
     const made = make();
     made.classList.add(kind); made.dataset.k = key;
     const at = Math.floor((S.box.n - n) / 2);
-    Object.assign(made.style, { position: "absolute", width: `${n * GRID}px`, height: `${n * GRID}px`, left: `${(S.box.x + at) * GRID}px`, top: `${(S.box.y + at) * GRID}px` });
+    Object.assign(made.style, { position: "absolute", width: `${n * px}px`, height: `${n * px}px`, left: `${(S.box.x + at) * px}px`, top: `${(S.box.y + at) * px}px` });
     if (sym) sym.replaceWith(made); else el.append(made);
     sym = made;
   }
@@ -129,11 +137,11 @@ export function thoughtSymbol(el: HTMLElement, S: ThoughtShape, kind: string, ke
 }
 
 /** Show an emoji as a thought bubble's symbol, from the speech bubbles' pixel emoji. */
-export function thoughtEmoji(el: HTMLElement, S: ThoughtShape, e: string, n: number, alpha: number): void {
-  thoughtSymbol(el, S, "emoji", `${e}:${n}`, n, () => emojiImage(e, n), alpha);
+export function thoughtEmoji(el: HTMLElement, S: ThoughtShape, e: string, n: number, alpha: number, px = GRID): void {
+  thoughtSymbol(el, S, "emoji", `${e}:${n}`, n, () => emojiImage(e, n), alpha, px);
 }
 
-/** Where a thought bubble goes for a dreamer at screen point (x, y): its smallest puff over it, on the grid. */
-export function thoughtAt(S: ThoughtShape, x: number, y: number): { left: number; top: number } {
-  return { left: snap(x - (S.foot.x + 0.5) * GRID), top: snap(y - (S.foot.y + 0.5) * GRID) };
+/** Where a thought bubble goes for a dreamer at screen point (x, y): its smallest puff over it, on its own grid (`px`). */
+export function thoughtAt(S: ThoughtShape, x: number, y: number, px = GRID): { left: number; top: number } {
+  return { left: snapTo(x - (S.foot.x + 0.5) * px, px), top: snapTo(y - (S.foot.y + 0.5) * px, px) };
 }
