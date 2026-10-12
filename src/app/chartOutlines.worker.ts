@@ -16,9 +16,15 @@ import { islandAt } from "./chartLayout";
 import { TUNING } from "../rules/tuning";
 import { lakeKnobs } from "../rules/lakes";
 import type { LandMap } from "../rules/land";
+import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
 
 /** The page's asks: the islands to make (`ids` in order), or one to make next. */
-export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number } | { first: string } | { detail: string };
+/** The islands for a world (the closest first), the kinds she's found (home's size), the grid; `warm`: make and keep them only
+ *  (app/chartWarm.ts, in the night), answering { warmed } as each is kept and { warmDone } at the end. Or: this one next; this
+ *  one's fine grid next. */
+export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number; warm?: boolean } | { first: string } | { detail: string };
+/** A warm job's progress: an island kept (made, or already kept), then the end (how many made, how many already kept). */
+export type WarmNote = { warmed: string; made: boolean } | { warmDone: true; made: number; kept: number };
 /** An island's ground on a grid (metres from home's middle): its first sample, the step, samples across and down; each sample's
  *  height (m: below 0 the sea; a lake's its bed), colour (r, g, b), water and a lake's level. */
 export interface IslandGround { x0: number; z0: number; step: number; cols: number; rows: number; h: Float32Array; rgb: Uint8Array; /** 0 land, 1 sea, 2 lake */ water: Uint8Array; /** a lake's water level (m, as h) */ level: Float32Array; /** each sample's lake look (an index in LOOK_IDS: its lake's, or the lake beside it on its shore; else 0) */ looks: Uint8Array; /** its biome: the two nearest by its bearing, and the first's share */ blend: Blend }
@@ -27,7 +33,9 @@ export interface IslandGround { x0: number; z0: number; step: number; cols: numb
  *  box, and its ground. */
 export interface OutlineDone { id: string; world: number; loops: { pts: Float32Array; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; far: number; ground: IslandGround; /** the fine grid, for the chart's close zoom (asked for by `detail`) */ detail?: boolean }
 
-let queue: string[] = [], detail: string | null = null, job: { world: number; found: string[]; step: number } | null = null, busy = false;
+let queue: string[] = [], detail: string | null = null, job: { world: number; found: string[]; step: number; warm?: boolean } | null = null, busy = false;
+let warmMade = 0, warmKept = 0;
+void cachePrune(CACHE_PREFIX);
 const post = (m: OutlineDone, t: Transferable[]) => (self as unknown as { postMessage(m: unknown, t: Transferable[]): void }).postMessage(m, t);
 
 /** HSV (0..1) to RGB (0..1). */
@@ -91,7 +99,7 @@ const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math
 
 /** The ground's samples across an island's longer side: for the whole chart, and the chosen island's close-up (Ed, 2026-10-12:
  *  "the islands should be larger at full zoom"). */
-const ACROSS = 150, DETAIL_ACROSS = 420;
+const ACROSS = OUTLINE_ACROSS, DETAIL_ACROSS = OUTLINE_DETAIL;
 /** How far past the land the grid reaches (m): the shallows fading out from the coast. */
 const SEA_PAD = 260;
 
@@ -191,6 +199,10 @@ function ground(src: Source, across = ACROSS): IslandGround {
 /** The last few islands' sources (a close-up asks again for the one just made). */
 const made = new Map<string, Source>();
 export function make(id: string, world: number, found: string[], step: number, across = ACROSS): OutlineDone | null {
+  // (only home's island depends on what she's found: its size. Another's map would deal its legends to areas a little differently
+  // by the kinds found (rules/rosters.ts dealLegends), moving a clearing or two: the chart draws it as before she found any, so it
+  // stays the same through the whole campaign and is made once)
+  if (id !== "home") found = [];
   const key = `${id}|${world}|${found.length}`;
   const had = made.get(key);
   if (had) return outlineOf(id, world, had, across);
@@ -236,21 +248,29 @@ function outlineOf(id: string, world: number, src: Source, across: number): Outl
   return { id, world, loops, box: { minX: b.minX - centre.x, maxX: b.maxX - centre.x, minZ: b.minZ - centre.z, maxZ: b.maxZ - centre.z }, far, ground: ground(src, across), detail: across > ACROSS };
 }
 
-function next(): void {
+async function next(): Promise<void> {
   const close = detail; detail = null; // (a close-up asked for goes first)
   const id = close ?? queue.shift();
-  if (!id || !job) { busy = false; return; }
+  if (!id || !job) {
+    busy = false;
+    if (job?.warm) { note({ warmDone: true, made: warmMade, kept: warmKept }); warmMade = warmKept = 0; }
+    return;
+  }
+  const j = job, across = close ? DETAIL_ACROSS : ACROSS, key = cacheKey(id, j.world, j.found, j.step, across);
   try {
-    const o = make(id, job.world, job.found, job.step, close ? DETAIL_ACROSS : ACROSS);
-    if (o) post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer]);
+    let o = await cacheGet<OutlineDone>(key), made = false;
+    if (!o) { o = make(id, j.world, j.found, j.step, across); made = !!o; if (o) await cachePut(key, o); } // (copied as it's put, before its buffers are sent on)
+    if (j.warm && !close) { if (made) warmMade++; else warmKept++; note({ warmed: id, made }); }
+    else if (o) post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer]);
   } catch (e) { console.warn(`sea chart: ${id}'s island`, e); }
   setTimeout(next, 0); // (between islands, so a `first` can come in)
 }
+const note = (m: WarmNote) => (self as unknown as { postMessage(m: unknown): void }).postMessage(m);
 
 self.onmessage = (e: MessageEvent<OutlineAsk>) => {
   const m = e.data;
   if ("detail" in m) { detail = m.detail; if (!busy && job) { busy = true; setTimeout(next, 0); } return; }
   if ("first" in m) { const i = queue.indexOf(m.first); if (i > 0) { queue.splice(i, 1); queue.unshift(m.first); } return; }
-  job = { world: m.world, found: m.found, step: m.step }; queue = [...m.ids];
+  job = { world: m.world, found: m.found, step: m.step, warm: m.warm }; queue = [...m.ids];
   if (!busy) { busy = true; setTimeout(next, 0); }
 };

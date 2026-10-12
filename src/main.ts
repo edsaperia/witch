@@ -28,6 +28,7 @@ import { castable } from "./rules/spells";
 import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { onTreehouse } from "./rules/treehouse";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
+import { warmChart } from "./app/chartWarm";
 import { Hud } from "./app/hud";
 import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
@@ -140,6 +141,18 @@ const showProgress = setInterval(() => {
   progressLabel.textContent = ready ? `the rest of the forest, in the background: ${done} of ${total}` : `growing the forest: ${done} of ${total}`;
   if (ready && !a.pending) { progressEl.classList.add("done"); clearInterval(showProgress); }
 }, 250);
+// The sea chart made ahead (app/chartWarm.ts; Ed, 2026-10-12: "can we do it earlier, before we need to show it?"): once the
+// forest has grown and the tab is in view, a worker makes and keeps the chart's islands, so the map table opens on them at once.
+// Not under automation (the smoke and bench runs time the game's own frames), unless ?warmChart=1.
+const chartWorld = () => (params.has("world") ? tuning.map?.world ?? 0 : loadSave().world);
+const warmOn = params.get("warmChart") === "1" || (params.get("warmChart") !== "0" && !navigator.webdriver);
+const warmWhenSettled = warmOn ? setInterval(() => {
+  if (!ready || view.assets.pending || document.hidden || chartOpen()) return;
+  clearInterval(warmWhenSettled);
+  const t0 = performance.now(), log = params.get("warmChart") === "1"; // (?warmChart=1: each island logged, for timing it)
+  if (log) console.info("sea chart: making ahead");
+  warmChart(chartWorld(), loadSave().found, (made, kept) => console.info(`sea chart made ahead: ${made} islands made, ${kept} already kept, ${((performance.now() - t0) / 1000).toFixed(1)} s`), log ? (id, made) => console.info(`sea chart: ${id} ${made ? "made" : "kept"} at ${((performance.now() - t0) / 1000).toFixed(1)} s`) : undefined);
+}, 3000) : 0;
 requestAnimationFrame(() => setTimeout(async () => {
   await view.prepare();
   ready = true;
@@ -395,7 +408,7 @@ function frame(now: number): void {
     document.getElementById("won-found")!.textContent = wonText(game.win);
     document.getElementById("won")!.classList.add("on");
   }
-  if (game.win?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); } // (in the campaign's world only)
+  if (game.win?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // (in the campaign's world only; home grows with what she's found: made again ahead)
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
   { const want = !bot && onTreehouse(game) && !creator.open && !game.witches[0].ko ? "block" : "none"; if (bedroomBtn && bedroomBtn.style.display !== want) bedroomBtn.style.display = want; } // (on the treehouse deck: back to her room)
