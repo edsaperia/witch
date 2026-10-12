@@ -42,7 +42,8 @@ export const leashStrain = (d: number, t: Tuning) => Math.max(0, Math.min(t.leas
 export const freeOf = (t: Tuning, ground: boolean) => t.leash.weight.free + (ground ? t.leash.weight.levels[2] ?? 0 : 0);
 
 /** Her load from the sigils in her stack (`stack`: creature ids), at (x, z); `at.mode` "ground" gives the ground's allowance. */
-export function loadOf(stack: readonly number[], creatures: readonly Creature[], at: { x: number; z: number; mode?: string }, t: Tuning): LeashLoad {
+/** `pull`: how hard they pull on her (the Haul broom's half: rules/spells.ts pullOf). */
+export function loadOf(stack: readonly number[], creatures: readonly Creature[], at: { x: number; z: number; mode?: string }, t: Tuning, pull = 1): LeashLoad {
   if (!stack.length) return NO_LOAD;
   let px = 0, pz = 0, babies = 0;
   const ground = at.mode === "ground", gap = babiesOf(t).gap;
@@ -56,8 +57,8 @@ export function loadOf(stack: readonly number[], creatures: readonly Creature[],
     const k = (s * creatureWeight(c, t, ground)) / d;
     px += dx * k; pz += dz * k;
   }
-  const total = Math.hypot(px, pz), W = t.leash.weight;
+  const raw = Math.hypot(px, pz), total = raw * pull, W = t.leash.weight;
   if (total < 1e-9) return NO_LOAD;
   const over = Math.max(0, total - freeOf(t, at.mode === "ground"));
-  return { total, over, x: px / total, z: pz / total, extreme: over >= W.extreme };
+  return { total, over, x: px / raw, z: pz / raw, extreme: over >= W.extreme };
 }

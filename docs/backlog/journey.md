@@ -45,6 +45,12 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **Home's sigil is the World Tree**: symbolically the Ent legend's placed sigil. It shows on the dancefloor before the party spell wakes it.
 - **In the treehouse** the chart is a miniature of the world itself: a water feature, the disc with its islands, its sea pouring off the rim into a pool in the floor.
 - Fits what's drawn today: the world's bend already curves the ground away toward the horizon.
+- **Sailing zooms in** (Ed, 2026-10-11, eventually): choosing an island on the chart transitions to it by zooming the chart's camera down into the island, all the way to the dancefloor at its centre, where the night begins.
+- **Open sea round the edge, and the moon rising** (Ed, 2026-10-12): an empty band of sea round the chart's edge, past the outermost islands. As the map screen opens, the moon rises over its north-west edge (the same moon whose light casts the islands' shadows on the sea, Ed's chart-shadows ask).
+
+### Sigils, unified (Ed, 2026-10-12)
+
+The chart's detailed island sigils (#712, art/sigilDetail.js: plain glyph, carved bands, solid carved emblem by size) are good enough for now. Later, **update and unify all the sigils**: one sigil family drawn by one system everywhere they appear (placed sigils and runes, the stack, dream bubbles, the dancefloor, the sea chart, runestones, the World Tree), with the carved emblem style refined toward Ed's reference (previews/ed/refs/sigil-detail-reference.png on claude/ed-shots: fewer, bolder carved bands and spirals) and detail chosen by size.
 
 ### The end of the route (Ed, 2026-10-10)
 
@@ -56,7 +62,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 6. Then the afterparty, stargazing, bed and the voyage.
 
 Decisions (Ed, 2026-10-11, approving the plan):
-- **Legends don't join the conga**, but they do come home: the woken dealt legends walk to the home area and dance there as party legends, in a ring round the dancefloor. The conga is the party animals only.
+- **Legends don't join the conga**, but they do come home: the woken dealt legends walk to the home area and dance there as party legends. The conga is the party animals only. **Where** (Ed, 2026-10-11, from art1's #691 finding: their ring inside the conga's hid the conga from ground views): on the dancefloor's **far (north) side**, beyond the conga's ring, behind everything from the north-facing camera, in an arc (a second row further out if many) spread clear of the treehouse and of each other, dancing in place; the conga keeps its ring (`win.legendGap`, `legendRow`, `legendSpace`, `legendArc`; `rules/win.ts` `legendPlaces`).
 - **Enraged legends don't block the win**: the straggler pointer and the "no enraged left" check ignore them (only non-legend enraged animals count). At the win they calm and go back to sleep in their clearing, and **an enraged legend's island is not unlocked**: the night's islands found are the dealt legends woken, not those still enraged at the end (`g.win.found` and `g.win.lost`, by kind: the card's and, later, the sea chart's).
 - Built (PR 1, rules/win.ts): last call (🎉 on the wave pointer), the stragglers' pointer, the victory lap (the pointer follows its pulse home, each stone's fireworks as it passes, the music's victory hook), the win (legends home, the conga, fireworks from every soundsystem, her leash let go, nothing fights), the Night won card (its button: a new island until the sea chart). Placeholders: the island's sigil (home's), the dealt legends (every legend on the island, until part A's rosters), the victory music (the drop), the dream bubbles and the island outlines (art4), the conga's look (art1).
 
@@ -67,6 +73,9 @@ Decisions (Ed, 2026-10-11, approving the plan):
 - **Animals route over the area map** (Ed chose this): a path from area to area that skips water areas, as travelling party animals already route along area borders (`rules/travel.ts`); used by besiegers marching on and her followers. Straight lines within an area, as now.
 - Unchanged: areas, the wave route (it rings outward by distance on any set of areas), creatures, combat, legends, sieges.
 - Watch: the ley line crossing a lake; home must stay well inland.
+- **Lakes by biome** (Ed, 2026-10-12): in the **cold** biomes lakes are **frozen**; in the **volcano** biome they're **lava**; in the **desert** biome they're **oases**; in the **jungle** biome they're **sinkholes**. Only the cardinal biomes have special lakes (Ed, 2026-10-12): N cold frozen, E rocky (the volcano) lava, S hot oases, W jungle sinkholes; the diagonals have their own (Ed, 2026-10-12): NE mountains and glaciers glacial tarns (milky turquoise meltwater, ice chunks at the edge), NW cold rainforest hot springs (steaming, misty), SE badlands rust pools (red-orange mineral water, layered terraces), SW mangrove swamp lily ponds (giant lily pads and flowers); temperate stays water (koi). **Biomes blend smoothly** by bearing (Ed, 2026-10-12): an island between two directions mixes their looks, and a border island can have lakes of both kinds. Looks only (Ed): no gameplay effect; they play exactly as lakes do. They start a phase earlier than the biomes do (Ed, 2026-10-12: "biome lakes can start appearing one phase earlier"): from island phase 3 (`lakes.biomeFrom` in the tuning), the temperate islands that far out have their compass biomes' lakes on the sea chart (#736's looks, blended by bearing): half of them in that first phase, each lake seeded, the rest plain water (`lakes.biomeFirstShare`), all of them further out, and none further in (Ed: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain").
+- **Home earns biome lakes** (Ed, 2026-10-12): when she completes every island in a biome, home gets a special lake of that biome (a frozen lake, a lava pool, an oasis, a sinkhole, a glacial tarn, a hot spring, a rust pool or a lily pond), so home collects the world's waters as she explores. Looks only, like the other biome lakes. To settle: what "complete" means (every island won, or found), and where on home each lake goes.
+- Built: the land map and the coast (#690), the island shapes by phase (#697), the lakes (rules/lakes.ts: from phase 1, never home or its neighbours, small shores, lighter water, koi in some, no landing on the water, on foot everyone stopped at the shore; creatures head round them along the shore, which stands in for routing over the area map). The ley line crosses a lake on about 10 to 15% of its links (tools/lakes/leylines.mjs): left as it is for Ed to judge. Next: the islands fitted together on the chart (tessellation). Built (PR 4, rules/archipelago.ts): the archipelago, the islands' foreseen coasts packed over the whole disc, turned to fit, a strait apart at least, and grown in their patches, the rings only loose guidance (Ed, 2026-10-12).
 
 ### Difficulty: one master curve (Ed, 2026-10-10)
 
@@ -88,6 +97,10 @@ Using only today's 32 kinds and art:
 5. **Home** growing by one area per kind found.
 6. **All the islands** (Ed, 2026-10-11: "We should generate all the islands. For islands where we haven't designed the creatures yet, use '?'"): `config/kinds.json` holds all 64 kinds, today's 32 and 32 placeholders (`unknown-01`…`unknown-32`, `placeholder: true`): 14 introduced in phase 3 and 18 in phase 4, their bearings spread round the compass, each with the biome its direction suggests. Every island has a seed, size and coast (`islandOf`); a placeholder's shows on the sea chart as a bare outline like any island not yet found, not sailable ("Not yet charted"; a '?' under `?chart=all`), and no roster or night's deal ever holds a placeholder kind, nor does `?island=` play one. `?chart=all` shows all 64.
 Not yet: the Ent, the voyage, treehouse rooms, records, lakes, biomes.
+
+### The other 32 animals, and better shapes for all (Ed, 2026-10-12)
+
+When we design the 32 placeholder kinds (bringing the animals to 64), first **audit every creature shape and add-on**: today's four-legged animals are mostly the same three-ellipsoid "sausage" torso (art/creatures3d.js quad3d), so silhouettes differ only by their add-ons. Then **expand the set of body shapes and parts** (silhouette-first bodies lofted along a per-species spine and belly profile, separate neck, shoulder and haunch masses, bolder proportions, postures) **until it can make every animal we want**, and make all 64 as good as we can, the existing 32 included. A black-silhouette sheet at game size with a pairwise likeness score keeps them distinct.
 
 ### Mushrooms on the journey (Ed, 2026-10-10)
 
@@ -113,6 +126,8 @@ A third axis of progress, separate from the other two:
 - Keep the first island's quests gentle enough that a new player can finish them (the early easy quest helps).
 
 ## 3. The treehouse
+
+**No voyage** (Ed, 2026-10-12, superseding the voyage below): sailing is one continuous zoom. At the map table she picks an island; the chart's camera glides to it and zooms in, past its dancefloor and sigil, and on down into the game's own camera until she's at the night's start (yawning and getting out of bed). The legend-carries-the-Ent voyage and its pictures are dropped.
 
 **The same treehouse on every island; a legend carries it** (Ed, 2026-10-10). Each island is the home of one kind of legend. When she sets off for an island, its legend comes for the house: the giant tree rides **on the creature's back** across the sea, through the night while she sleeps (a short dreamy voyage: moonlight, the legend swimming or flying, the moon's phase changing). She wakes on its island and gets dressed. Proposed: the tree keeps souvenirs of where it's been (snow from the north, sand from the south).
 

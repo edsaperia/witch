@@ -5,6 +5,7 @@ import { setupArena } from "../rules/arena";
 import { cellKey } from "../rules/party";
 import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STEP, stepGame, type Game } from "../rules/game";
 import { AREA_TYPES } from "../rules/map";
+import { coastFacing } from "../rules/land";
 import { musicCue, type MusicCue } from "../rules/musicPlan";
 import type { Tuning } from "../rules/tuning";
 import { isHomeKey } from "../rules/speakers";
@@ -66,5 +67,5 @@ export function installHooks({ game, view, tuning, hud, sound, meter, shake, loa
       const add = (q: number[] | null) => (q ? [q[0] + gx, q[1] + gy] : null);
       return { steps, alpha, gx, gy, time: game.clock.time, witch: add(at.witch), witchWorld: at.witchWorld, probes: at.probes.map(add), creatures: at.creatures.map(add) };
     },
-    frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return loop.ready; } };
+    frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), coastFacing: (bearing: number) => (game.map.bounds.land ? coastFacing(game.map.bounds.land, bearing, 0.15) : null), areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return loop.ready; } };
 }

@@ -10,7 +10,7 @@ const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** A game a few seconds in, booted, the ley pulse `left` seconds (at most its whole first link) from the first wave's stone. */
 function game(left: number): Game {
   const g = newGame(7, TUNING);
-  g.clock.paused = false; g.witch.seated = false; // (up from the decks: the boot-up counts from then)
+  g.clock.paused = false; g.witch.seated = false; g.witch.perch = false; // (up from the decks, off the treehouse deck: the boot-up counts from then)
   for (let i = 0; i < 30; i++) stepGame(g, idle, STEP);
   const P = g.party.pulse, v = TUNING.leyLines.pulseSpeed, L = P.lens.reduce((a, b) => a + b, 0);
   g.party.bootUntil = g.clock.time - 1; P.at = g.clock.time; P.v = v; P.d = Math.max(0, L - left * v);

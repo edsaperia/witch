@@ -18,23 +18,28 @@ export const KRAKEN_DEFAULT: KrakenKnobs = { on: true, arc: 0.7, every: 75, chan
 export interface Leap { start: number; dur: number; x: number; z: number; tx: number; tz: number; length: number; height: number }
 /** A rising: its tentacles (each up from `start` for `dur` seconds, rising, curling over, sinking, at (x, z), curling away from
  *  the middle: `side` -1 or 1 along the coast) and, in some, its head (up at `start`, its eye open in the middle of `dur`). */
-export interface Rising { tentacles: { start: number; dur: number; x: number; z: number; side: number }[]; head: { start: number; dur: number; x: number; z: number } | null }
+export interface Rising { tentacles: { start: number; dur: number; x: number; z: number; side: number }[]; head: { start: number; dur: number; x: number; z: number } | null; /** along the coast there (the way `side` 1 lies) */ tx: number; tz: number }
 
 const hash = (n: number, k = 0) => { const x = Math.sin(n * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
 const knobs = <T>(g: Game, key: string, d: T): T => ({ ...d, ...((g.tuning.beach as Record<string, unknown> | undefined)?.[key] as Partial<T> ?? {}) });
-/** Her bearing round the island (radians, atan2 of z and x from its middle: 0 due east, ±π due west). */
-const bearing = (g: Game, b: Beach) => Math.atan2(g.witch.z - b.z, g.witch.x - b.x);
+/** The coast nearest her: straight out from her to the water's edge (level with her along the coast), the way out there, and its
+ *  bearing (atan2 of z and x: 0 out to the east, ±π the west). */
+const coastBy = (g: Game, b: Beach) => {
+  const w = g.witch, s = b.land.shore(w.x, w.z), d = Math.max(0, s.dist);
+  return { x: w.x + s.nx * d, z: w.z + s.nz * d, nx: s.nx, nz: s.nz, her: Math.atan2(s.nz, s.nx) };
+};
 
 /** The dolphins' leaps going on at `time` (and just about to, or just landed: within their splashes), none away from the east coast. */
 export function dolphinLeaps(g: Game, b: Beach, time: number): Leap[] {
-  const K = knobs(g, "dolphins", DOLPHINS_DEFAULT), her = bearing(g, b), out: Leap[] = [];
+  const K = knobs(g, "dolphins", DOLPHINS_DEFAULT), c = coastBy(g, b), her = c.her, out: Leap[] = [];
   if (!K.on || Math.abs(her) > K.arc) return out;
   const shore = (g.tuning.beach as { shore?: number } | undefined)?.shore ?? 0, slotLen = Math.max((K.every[0] + K.every[1]) / 2, K.time + 0.5), now = Math.floor(time / slotLen);
   for (let slot = now - 1; slot <= now; slot++) { // each slot holds at most one leap (or a pair), at a seeded moment in it
     if (hash(slot, 1) < 0.15) continue; // (now and then a slot empty: the gaps vary)
-    const t0 = slot * slotLen + hash(slot, 2) * (slotLen - K.time), a = her, nx = Math.cos(a), nz = Math.sin(a);
-    const off = K.out[0] + hash(slot, 4) * (K.out[1] - K.out[0]), north = K.ahead[0] + hash(slot, 3) * (K.ahead[1] - K.ahead[0]), r = b.edge(a) + shore + off;
-    const x = b.x + nx * r, z = b.z + nz * r - north, dir = hash(slot, 5) < 0.5 ? 1 : -1, tx = -nz * dir, tz = nx * dir;
+    const t0 = slot * slotLen + hash(slot, 2) * (slotLen - K.time), nx = c.nx, nz = c.nz;
+    const off = K.out[0] + hash(slot, 4) * (K.out[1] - K.out[0]), north = K.ahead[0] + hash(slot, 3) * (K.ahead[1] - K.ahead[0]), r = shore + off;
+    const x = c.x + nx * r, z = Math.min(c.z + nz * r, g.witch.z) - north, dir = hash(slot, 5) < 0.5 ? 1 : -1, tx = -nz * dir, tz = nx * dir;
+    if (b.land.distAt(x, z) > -6) continue; // (not over a headland of a ragged coast: open water only; never south of her, behind the stargazing camera)
     const n = hash(slot, 6) < K.pair ? 2 : 1;
     for (let k = 0; k < n; k++) { // (the second a beat behind, a little further out)
       const L: Leap = { start: t0 + k * 0.25, dur: K.time, x: x + k * 1.6 * nx, z: z + k * 1.6 * nz, tx, tz, length: K.length, height: K.height };
@@ -46,17 +51,18 @@ export function dolphinLeaps(g: Game, b: Beach, time: number): Leap[] {
 
 /** The kraken's rising going on at `time`, or null (most of the time, and anywhere but the west coast). */
 export function krakenRising(g: Game, b: Beach, time: number): Rising | null {
-  const K = knobs(g, "kraken", KRAKEN_DEFAULT), her = bearing(g, b);
+  const K = knobs(g, "kraken", KRAKEN_DEFAULT), c = coastBy(g, b), her = c.her;
   if (!K.on || Math.PI - Math.abs(her) > K.arc) return null;
   const slot = Math.floor(time / K.every), t0 = slot * K.every;
   if (hash(slot, 11) >= K.chance) return null;
   // `out` metres past the water's edge from her and `ahead` metres north of that (as the dolphins: inside the stargazing bend's horizon)
-  const shore = (g.tuning.beach as { shore?: number } | undefined)?.shore ?? 0, nx = Math.cos(her), nz = Math.sin(her);
-  const r = b.edge(her) + shore + K.out[0] + hash(slot, 12) * (K.out[1] - K.out[0]), north = K.ahead[0] + hash(slot, 13) * (K.ahead[1] - K.ahead[0]);
-  const x = b.x + nx * r, z = b.z + nz * r - north;
-  const n = K.tentacles[0] + Math.floor(hash(slot, 14) * (K.tentacles[1] - K.tentacles[0] + 1)), gap = K.time * 0.3, a = Math.atan2(z - b.z, x - b.x), tx = -Math.sin(a), tz = Math.cos(a);
+  const shore = (g.tuning.beach as { shore?: number } | undefined)?.shore ?? 0, nx = c.nx, nz = c.nz;
+  const r = shore + K.out[0] + hash(slot, 12) * (K.out[1] - K.out[0]), north = K.ahead[0] + hash(slot, 13) * (K.ahead[1] - K.ahead[0]);
+  const x = c.x + nx * r, z = Math.min(c.z + nz * r, g.witch.z) - north; // (never south of her: behind the stargazing camera)
+  const n = K.tentacles[0] + Math.floor(hash(slot, 14) * (K.tentacles[1] - K.tentacles[0] + 1)), gap = K.time * 0.3, tx = -nz, tz = nx; // (along the coast)
   if (time > t0 + (n - 1) * gap + K.time + 1) return null;
   const tentacles = [...Array(n).keys()].map(k => { const along = (k - (n - 1) / 2) * 5 + (hash(slot, 20 + k) - 0.5) * 2; return { start: t0 + k * gap, dur: K.time, x: x + tx * along, z: z + tz * along, side: along < 0 ? -1 : 1 }; });
-  const head = hash(slot, 15) < K.head ? { start: t0 + gap, dur: K.time, x: x + Math.cos(a) * 8, z: z + Math.sin(a) * 8 } : null;
-  return { tentacles, head };
+  if (tentacles.some(q => b.land.distAt(q.x, q.z) > -4)) return null; // (not over a headland of a ragged coast: open water only)
+  const head = hash(slot, 15) < K.head ? { start: t0 + gap, dur: K.time, x: x + nx * 8, z: z + nz * 8 } : null;
+  return { tentacles, head, tx, tz };
 }

@@ -19,6 +19,7 @@ import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { ShadowInstance } from "./shadows";
 import { placed, shownOverBend } from "./height";
 import { tiltFilter } from "./overlayTilt";
+import { speechBubble, speechEmoji } from "./bubbles";
 
 /** How many different looks are drawn: party witches beyond that share them (each look is a set of sprites to draw). */
 export const LOOKS = 12;
@@ -63,7 +64,8 @@ export class PartyWitchView {
     return fr[Math.floor(time * fps + phase * 7) % n];
   }
 
-  /** The chats: a small emoji over whoever's turn it is in each chatting pair, taking turns. */
+  /** The chats: a small emoji over whoever's turn it is in each chatting pair, taking turns: in the game's own speech bubble (index.html
+   *  .bubble, its pixel outline and tail; the emoji a pixel sprite; sized as hers: render/bubbles.ts), as hers and the creatures' are (render/invites.ts). */
   bubbles(g: Game, time: number, camera: THREE.Camera, width: number, height: number, list = g.partyWitches.list): void {
     let n = 0;
     for (const w of list) {
@@ -72,16 +74,15 @@ export class PartyWitchView {
       if ((turn + (w.lead ? 0 : 1)) % 2) continue; // their turn or their partner's
       let el = this.bubblePool[n];
       if (!el) {
-        el = document.createElement("div");
-        el.style.cssText = "position:absolute;transform:translate(-50%,-100%);font-size:13px;padding:1px 4px;border-radius:8px;background:rgba(255,255,255,.55);pointer-events:none;z-index:4";
-        document.body.appendChild(el); this.bubblePool.push(el);
+        el = speechBubble(document.getElementById("bubbles") ?? document.body).el; // (with hers and the creatures')
+        el.classList.add("on"); this.bubblePool.push(el);
       }
       placed(this.v.set(w.x, 2.4, w.z)).project(camera); // (on the bent, rolling ground, as they are)
       const y = ((1 - this.v.y) / 2) * height;
       el.style.left = `${((this.v.x + 1) / 2) * width}px`; el.style.top = `${y}px`;
       tiltFilter(el, y);
       const e = CHAT[(turn * 7 + w.id * 3) % CHAT.length];
-      if (el.textContent !== e) el.textContent = e;
+      speechEmoji(el, el.firstChild as HTMLImageElement, e, g.tuning);
       el.style.display = this.v.z < 1 && shownOverBend(w.x, 2.4, w.z, camera.position) ? "" : "none"; // (never past the bend)
       n++;
     }

@@ -1,6 +1,6 @@
 # Hats and brooms
 
-Backlog (Ed, 2026-10-09). **Not built yet; don't build without Ed's go.** The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
+Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring; the second, Hats A: Harvest, Dowsing, Sentry, Slingshot and Gathering, rules/hatSpells.ts; the third, Hats B: Bramble, Mine, Lullaby, Cyclone and Nursing). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
 
 ## The two slots
 
@@ -50,10 +50,10 @@ Suggested:
 
 - **Ley jump** (active, long cooldown): teleport to the pulse.
 - **Haul** (passive or active): extra pulling power.
-- **Updraft** (active): instant rise or land with a knockback shockwave.
-- **Shadow step** (passive): after a blink, unseen for 2 s.
-- **Comet** (active): a ground charge.
-- **Homing** (active): fly to a placed sigil.
+- **Updraft** (active): instant rise or land with a knockback shockwave. *Renamed Ground pound (Ed, 2026-10-12); its landing also briefly stuns.*
+- **Shadow step** (passive): after a blink, unseen for 2 s. *Replaced by Stealth (Ed, 2026-10-12).*
+- **Comet** (active): a ground charge. *Cut (Ed, 2026-10-12).*
+- **Homing** (active): fly to a placed sigil. *Cut (Ed, 2026-10-12).*
 
 ## Rejected or flagged
 
@@ -87,4 +87,33 @@ Suggested:
 ## Decisions (Ed, 2026-10-11)
 
 - **Looks:** the hat room and broom room choose *which* hat and broom (their spells); their **shape and colour are styled while dressing**, with today's sliders.
+- **Matching items to powers, later** (Ed, 2026-10-12): eventually each hat and broom look will be matched to its power; for now the power is picked from a dropdown, independent of the look.
+- **One power per hat, one of each in play** (Ed, 2026-10-12, after #737): to design. Today (#737, the treehouse wardrobe) she can take any number of hats from her room, duplicates included, each keeping the power picked for it. Eventually each hat has its one power, and only one of each hat can be out at a time.
 - **The older hat spells, reworked as placed hats:** Berry patch → **Harvest hat**; Mend → **Nursing hat**; Second wind → **Healing ring hat** (placed: standing near it, she heals a hit every few seconds).
+
+## Decisions (Ed, 2026-10-11, the go)
+
+- **Hats** are mostly spells that happen when placed: some fire once on placing, some work over time while placed. **The Helmet** is worn: an extra hit, knocked off when she's hit (pick it up to wear it again).
+- **Brooms** change how she moves, or how much she can carry or pull.
+- **Everything unlocked for now**, the default none; chosen in the creator's Hat and Broom boxes as hats and brooms are picked now (the treehouse rooms later); `?hat=` and `?broom=` too, saved on this browser (`witch.loadout`).
+- 1. **The default broom** lets her rise to the treetops again sooner after landing (`spells.plain.riseCooldown`).
+- 2. Yes (the Long broom stacks with the Hare's buff).
+- 3. **Haul** is always on (passive).
+- 4. **Back to the bedroom mid-run** (later PR): fly at treetop level to the treehouse to go back to the bedroom, where time slows 10×; an exit button where the party scroll usually is goes back to the island.
+- 5. **Spells may affect enraged creatures** (stun, slow and the like) **but never damage them.**
+- 6. **Gathering** takes all her sigils in range.
+- **Harvest** grows a ring of six berries round the hat when it's put down.
+- **Ranges:** Bramble 30 m; Sentry 30 m; Slingshot catches 💌s within 10 m and fires out to 40 m; Mine 15 m.
+- **Beacon dropped** ("isn't useful").
+- **Double blink**, a new broom: one more blink before the cooldown.
+- **Lullaby** (Ed, 2026-10-12): "Wild creatures that are asleep wake up when hit with an invitation." A lulled creature wakes to a 💌 of its own (the rule for napping creatures, #671), not to her landing in its area or a 💌 on a neighbour.
+- **Decoy dropped, Cyclone instead** (Ed, 2026-10-12: "Decoy isn't useful, how about a Cyclone spell that pushes creatures around in a circle, lifts them and throws them outwards?"): a placed hat. On putting it down, and every 20 s while it lies there, it catches the wild and enraged creatures within 10 m, sweeps them round it for 3 s (a turn a second) up to 3 m off the ground, then flings them 10 m outward, stunned 1.5 s after landing. Never her (Ed, 2026-10-12: "cyclone doesn't affect you"), her creatures, happy ones or legends; never hurt (proposed numbers; the tuning's spells.cyclone).
+
+## Decisions (Ed, 2026-10-12, the brooms)
+
+- **Battering:** "blinks stun creatures in her path" (wild and enraged within 1.5 m of the blink's line, 1.5 s).
+- **Ground pound** (the Updraft renamed): rise or land at once with a knockback shockwave; "its landing should also briefly stun" (8 m, pushed 6 m, landing stuns 1 s; 10 s recharge).
+- **Stealth** (instead of Shadow step): "creatures don't see you unless you're inviting or placing/pickup; once aggro'd they attack you until you're out of range and then they lose you again" (throwing 💌s, or putting down or picking up anything, shows her for 3 s; what went for her loses her past 25 m).
+- **Comet and Homing: cut.**
+- Ley jump (to the ley line's pulse, 60 s recharge) and Haul (her sigils pull half as hard, always on) as planned.
+- **Back to her room mid-night** (Ed's answer 4; built 2026-10-12 on the treehouse deck, #717): on the deck the Bedroom button or F opens her room, the world running at the deck's tenth; "Back to the island" sits where the party scroll does. A hat of hers lying in the world stays there, still working its spell, when she takes a new one in her room (Ed, 2026-10-12), and any number can lie about; she can't pick one up while she's wearing one, and bare-headed she puts it on, its spell hers. Each one lying has its own pointer, its 🎩 in that hat's creator colour, and keeps the look it went down in. (Ed, 2026-10-12: one power a hat, one of each at a time, is to be designed later; for now any number of the same can lie about.)

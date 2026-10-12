@@ -16,7 +16,7 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
 
 ### `map`
 
-The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). islandAreas (Ed, 2026-10-11, the journey's islands: 10, the home island for now; ?island=10\|20\|...\|64\|home, ?island=off for the radius map): the island is home and exactly this many more areas, those nearest home's, round, its radius halfway out to the next (0: the radius below). shape circle: the playable areas are those whose centres lie within radius areas of home's (5.6: about 96; Ed, 2026-10-07, for about 100 areas: the best bots wake about 20 in a run, and half the creatures and trees run faster; 7.9 gave about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is a circle, soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. coast (Ed, 2026-10-06: "The island shouldn't be a totally perfect circle; make the coast slightly irregular"): every edge round home (the playable areas', the buffer's, her flight's) wobbles by the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
+The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). islandAreas (Ed, 2026-10-11, the journey's islands: 10, the home island for now; ?island=10\|20\|...\|64\|home, ?island=off for the radius map): the island is home and exactly this many more areas, those nearest home's, round, its radius halfway out to the next (0: the radius below). shape circle: the playable areas are those whose centres lie within radius areas of home's (5.6: about 96; Ed, 2026-10-07, for about 100 areas: the best bots wake about 20 in a run, and half the creatures and trees run faster; 7.9 gave about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is the island's coast (Ed, 2026-10-11: the land map, rules/land.ts: round the borders of the playable areas, the ring of areas round them and, where it's near, the ring past that), soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. coast (Ed, 2026-10-06: "The island shouldn't be a totally perfect circle; make the coast slightly irregular"): which areas are playable and which the buffer's goes by their centres' distance from home over the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas. phase and shapes (Ed, 2026-10-11, the journey's irregular islands: rules/islandGrowth.ts): an island grows out from home over its areas' neighbours, each step the area nearest home for the island's reach that way, by its phase's shape (shapes[phase], index 0 home: near-round; 1 gently lobed; 2 bays and a peninsula; 3 arms and inlets; 4 and 5 strongly irregular): lobes, how far its outline swells and shrinks round home (a share of its reach) over harmonics bumps; arms, how far its peninsulas reach past it (a share), armCount[0] to [1] of them, each armWidth radians across; bays, how deep its bays cut in, bayCount[0] to [1] of them; jitter, each area's own seeded nudge in areas (ragged edges). Home's neighbours are always its first. phase: an island's phase when it isn't one by roster (?phase=0 to 5; a kind's island takes its own).
 
 | knob | type | range |
 |---|---|---|
@@ -25,6 +25,8 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.islandAreas` | number | 0 to … |
 | `map.island` | string |  |
 | `map.found` | array of any |  |
+| `map.phase` | number | 0 to … |
+| `map.shapes` | array of object |  |
 | `map.buffer` | number | 0 to … |
 | `map.push` | number | 0 to … |
 | `map.drift` | number | 0 to … |
@@ -32,6 +34,18 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.coast.amp` | number | 0 to … |
 | `map.coast.harmonics` | number | 0 to … |
 | `map.coast.detail` | number | 0 to … |
+
+### `lakes`
+
+Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. shore: metres of bare shore round the water (no trees, nothing placed); pad: how far from the water anything on foot stops; koi: the share of lakes with koi in them (DECISION FOR ED). biomeFrom: the island phase from which its lakes take the look of its compass biomes on the sea chart (frozen, lava, oasis, sinkhole, glacial tarn, hot spring, rust pool, lily pond; app/chartOutlines.worker.ts), before it plain water (Ed, 2026-10-12: "biome lakes can start appearing one phase earlier": 3, it was 4, the first uncharted islands). biomeFirstShare: the share of that first phase's lakes that take them, each lake seeded, the rest plain water; further out all of them, further in none (Ed, 2026-10-12: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain").
+
+| knob | type | range |
+|---|---|---|
+| `lakes.shore` | number | 0 to … |
+| `lakes.pad` | number | 0 to … |
+| `lakes.koi` | number | 0 to … |
+| `lakes.biomeFrom` | number | 0 to … |
+| `lakes.biomeFirstShare` | number | 0 to … |
 
 ### `islands`
 
@@ -45,7 +59,7 @@ Islands other than home (the wave 2 finale's dream bubbles and the sea chart; ru
 
 ### `beach`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`, `clearingSize`, `clearingFalloff`, `gladeAmount`, `gladeScale`
 
-The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. Lying there facing out to sea (the north coast: the camera always looks north), the bend keeps only camera.seaward of itself, so the open water isn't dropped below a horizon of sand. Lying down, the camera stands by her bearing round the coast (Ed, 2026-10-07: "move the camera further and lower to show off the moon reflecting on the water and the beach and the sky ... check in 12 different directions for a nice composition and smoothly interpolate between them"): camera.bearings, twelve entries every 30 degrees from the north, clockwise: angle (degrees below the horizon), distance (metres back), look (metres over her it aims at), side (metres east it stands and aims: out over the water on the east and west coasts, so the shore runs up the picture with the sea beside it) and bend (the share of the stargazing bend kept there: none facing the open sea to the north, so the water isn't dropped below a horizon of sand; camera.seaward does the same on the way down to the water), joined smoothly all the way round. Lying there (Ed, 2026-10-06: "the bend shader applies so that you can see the sky") the world bends stargazeCurve times the treetops' curve (Ed: "it's stronger than usual, so the sky takes up more of the screen"), eased in and out over about gazeEase seconds, so the night sky opens up over the sea. Lying there with a beach witch (Ed: "If you land near another witch, and you stargaze together, and you wait a few seconds, little hearts will start appearing near you both, floating upwards and disappearing"): after hearts.after seconds a ❤️ rises off one or the other every hearts.every[0] to [1] seconds, for hearts.life seconds each, until either gets up; the two stay lying together until she moves. A 💌 come down on the sand or the sea (Ed: "they last longer and disappear more slowly (5 seconds)") rests letterLinger seconds, fading over the last letterFade, bobbing gently on the water. witchChance of runs (Ed, 2026-10-06: "I think there should always be beach witches, but there are only a handful spread around it": every run) have spots[0] to spots[1] spots spread round the coast (evenly, each nudged by up to a third of the gap), each with witches[0] to witches[1] witches (Ed, 2026-10-06: "Beach witches appear solo": one); landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before. vary (Ed, 2026-10-06: "The beach can be more irregularly shaped"): the sand's width round the coast, width times e to the amp times a seeded smooth noise of harmonics bays and narrows; where the noise is lowest (below -rocky, of -1 to 1) it turns rocky, narrowing to rockyWidth metres; never under min. decor (Ed, 2026-10-06: "a few beach decorations, sparsely: shells, star fish, conch, footprints of people and creatures ... just nature"; rules/beachDecor.ts, art/beach.js): round the coast in sectors sectors, about finds finds a sector (shells, starfish, a conch, seaweed, pebbles; rocks on a rocky stretch), each sector with a trails chance of a trail of prints[0] to prints[1] footprints (bare feet, paws, hooves, a bird's, weighted by kinds) wandering along the sand and fading out; all of it on the wet and dry sand, the clear metres of it nearest the woods left bare. dolphins (Ed, 2026-10-07; their timetable rules/seaLife.ts, drawn by render/dolphins.ts): leaping off the east coast, within arc radians of due east, one every every[0] to [1] seconds, pair of them in twos, out[0] to [1] metres past the water's edge from her and ahead[0] to [1] metres north of that (away from the camera: the stargazing bend drops anything much more than 20 m ahead of her below the screen), each leap length metres along the coast and height high over time seconds. kraken (Ed, 2026-10-07; rules/seaLife.ts, render/kraken.ts): off the west coast, within arc radians of due west, a slot every every seconds, chance of them holding a rising: tentacles[0] to [1] tentacles rising one after another out[0] to [1] metres past the water's edge from her and ahead[0] to [1] metres north of that, each over time seconds, and in head of them the dome of its head and its eye. decor.findScale: the beach finds' size, times (Ed, 2026-10-11: twice; the footprints keep theirs).
+The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. Lying there facing out to sea (the north coast: the camera always looks north), the bend keeps only camera.seaward of itself, so the open water isn't dropped below a horizon of sand. Lying down, the camera stands by her bearing round the coast (Ed, 2026-10-07: "move the camera further and lower to show off the moon reflecting on the water and the beach and the sky ... check in 12 different directions for a nice composition and smoothly interpolate between them"): camera.bearings, twelve entries every 30 degrees from the north, clockwise: angle (degrees below the horizon), distance (metres back), look (metres over her it aims at), side (metres east it stands and aims: out over the water on the east and west coasts, so the shore runs up the picture with the sea beside it) and bend (the share of the stargazing bend kept there: none facing the open sea to the north, so the water isn't dropped below a horizon of sand; camera.seaward does the same on the way down to the water), joined smoothly all the way round. Lying there (Ed, 2026-10-06: "the bend shader applies so that you can see the sky") the world bends stargazeCurve times the treetops' curve (Ed: "it's stronger than usual, so the sky takes up more of the screen"), eased in and out over about gazeEase seconds, so the night sky opens up over the sea. Lying there with a beach witch (Ed: "If you land near another witch, and you stargaze together, and you wait a few seconds, little hearts will start appearing near you both, floating upwards and disappearing"): after hearts.after seconds a ❤️ rises off one or the other every hearts.every[0] to [1] seconds, for hearts.life seconds each, until either gets up; the two stay lying together until she moves. A 💌 come down on the sand or the sea (Ed: "they last longer and disappear more slowly (5 seconds)") rests letterLinger seconds, fading over the last letterFade, bobbing gently on the water. witchChance of runs (Ed, 2026-10-06: "I think there should always be beach witches, but there are only a handful spread around it": every run) have spots[0] to spots[1] spots spread round the coast (evenly, each nudged by up to a third of the gap), each with witches[0] to witches[1] witches (Ed, 2026-10-06: "Beach witches appear solo": one); landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before. vary (Ed, 2026-10-06: "The beach can be more irregularly shaped"): the sand's width round the coast, width times e to the amp times a seeded smooth noise of harmonics bays and narrows; where the noise is lowest (below -rocky, of -1 to 1) it turns rocky, narrowing to rockyWidth metres; never under min. decor (Ed, 2026-10-06: "a few beach decorations, sparsely: shells, star fish, conch, footprints of people and creatures ... just nature"; rules/beachDecor.ts, art/beach.js): round the coast in sectors sectors, about finds finds a sector (shells, starfish, a conch, seaweed, pebbles; rocks on a rocky stretch), each sector with a trails chance of a trail of prints[0] to prints[1] footprints (bare feet, paws, hooves, a bird's, weighted by kinds) wandering along the sand and fading out (Ed, 2026-10-12: too many on the beach, so finds and trails halved, to 0.35 and 0.035); all of it on the wet and dry sand, the clear metres of it nearest the woods left bare. dolphins (Ed, 2026-10-07; their timetable rules/seaLife.ts, drawn by render/dolphins.ts): leaping off the east coast, within arc radians of due east, one every every[0] to [1] seconds, pair of them in twos, out[0] to [1] metres past the water's edge from her and ahead[0] to [1] metres north of that (away from the camera: the stargazing bend drops anything much more than 20 m ahead of her below the screen), each leap length metres along the coast and height high over time seconds. kraken (Ed, 2026-10-07; rules/seaLife.ts, render/kraken.ts): off the west coast, within arc radians of due west, a slot every every seconds, chance of them holding a rising: tentacles[0] to [1] tentacles rising one after another out[0] to [1] metres past the water's edge from her and ahead[0] to [1] metres north of that, each over time seconds, and in head of them the dome of its head and its eye. decor.findScale: the beach finds' size, times (Ed, 2026-10-11: twice; the footprints keep theirs).
 
 | knob | type | range |
 |---|---|---|
@@ -210,7 +224,7 @@ The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in 
 
 ### `treehouse`
 
-The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"): its footprint's nearest edge (clear metres round its foot) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them), at angle degrees (-90: due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off.
+The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"): its footprint's nearest edge (clear metres round its foot) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them), at angle degrees (-90: due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one.
 
 | knob | type | range |
 |---|---|---|
@@ -219,6 +233,19 @@ The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due nor
 | `treehouse.clear` | number | 0 to … |
 | `treehouse.lightReach` | number | 0 to … |
 | `treehouse.lightStrength` | number | 0 to … |
+| `treehouse.deck.on` | boolean |  |
+| `treehouse.deck.radius` | number | 0 to … |
+| `treehouse.deck.height` | number | 0 to … |
+| `treehouse.deck.grace` | number | 0 to … |
+| `treehouse.deck.rail` | number | 0 to … |
+| `treehouse.deck.table` | number | 0 to … |
+| `treehouse.deck.tableUse` | number | 0 to … |
+| `treehouse.deck.decks.inner` | number | 0 to … |
+| `treehouse.deck.decks.outer` | number | 0 to … |
+| `treehouse.deck.decks.from` | number | 0 to … |
+| `treehouse.deck.decks.to` | number | 0 to … |
+| `treehouse.deck.seat` | number | 0 to … |
+| `treehouse.carrier` | string |  |
 
 ### `home`
 
@@ -231,7 +258,7 @@ Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circ
 
 ### `scenes`, `grounds`, `legendClearing`
 
-Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own). featured: one of ids (seeded) placed on a map at its chance, in an area it suits if there is room, else in any (Ed, 2026-10-11: the temple ruins on most islands, "both": the Greek temple or the classical ruins).
+Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own). featured: one of ids (seeded) placed on a map at its chance, in an area it suits if there is room, else in any (Ed, 2026-10-11: the temple ruins on most islands, "both": the Greek temple or the classical ruins, and "more variations": temple-* is every seeded classical ruin scene, art/landmarks.js CLASSICAL_PLANS; an id ending in * takes every scene it starts).
 
 | knob | type | range |
 |---|---|---|
@@ -583,10 +610,56 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `dash.clear.sound` | number | 0 to … |
 | `dash.clear.speaker` | number | 0 to … |
 | `dash.clear.treehouse` | number | 0 to … |
-| `spells.equipped` | string |  |
+| `spells.hat` | string |  |
+| `spells.broom` | string |  |
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |
 | `spells.speed.cooldown` | number | 0 to … |
+| `spells.plain.riseCooldown` | number | 0 to … |
+| `spells.long.mult` | number | 0 to … |
+| `spells.healing.radius` | number | 0 to … |
+| `spells.healing.every` | number | 0 to … |
+| `spells.helmet.drop` | number | 0 to … |
+| `spells.double.charges` | number | 0 to … |
+| `spells.battering.width` | number | 0 to … |
+| `spells.battering.stun` | number | 0 to … |
+| `spells.leyjump.cooldown` | number | 0 to … |
+| `spells.haul.pull` | number | 0 to … |
+| `spells.pound.cooldown` | number | 0 to … |
+| `spells.pound.radius` | number | 0 to … |
+| `spells.pound.push` | number | 0 to … |
+| `spells.pound.stun` | number | 0 to … |
+| `spells.stealth.reveal` | number | 0 to … |
+| `spells.stealth.range` | number | 0 to … |
+| `spells.harvest.berries` | number | 0 to … |
+| `spells.harvest.radius` | number | 0 to … |
+| `spells.harvest.every` | number | 0 to … |
+| `spells.dowsing.time` | number | 0 to … |
+| `spells.sentry.range` | number | 0 to … |
+| `spells.sentry.every` | number | 0 to … |
+| `spells.slingshot.catch` | number | 0 to … |
+| `spells.slingshot.fire` | number | 0 to … |
+| `spells.slingshot.hold` | number | 0 to … |
+| `spells.slingshot.radius` | number | 0 to … |
+| `spells.slingshot.max` | number | 0 to … |
+| `spells.gathering.range` | number | 0 to … |
+| `spells.bramble.range` | number | 0 to … |
+| `spells.mine.range` | number | 0 to … |
+| `spells.mine.stun` | number | 0 to … |
+| `spells.mine.every` | number | 0 to … |
+| `spells.lullaby.range` | number | 0 to … |
+| `spells.lullaby.time` | number | 0 to … |
+| `spells.lullaby.every` | number | 0 to … |
+| `spells.cyclone.radius` | number | 0 to … |
+| `spells.cyclone.time` | number | 0 to … |
+| `spells.cyclone.every` | number | 0 to … |
+| `spells.cyclone.spin` | number | 0 to … |
+| `spells.cyclone.lift` | number | 0 to … |
+| `spells.cyclone.fling` | number | 0 to … |
+| `spells.cyclone.flingTime` | number | 0 to … |
+| `spells.cyclone.stun` | number | 0 to … |
+| `spells.nursing.range` | number | 0 to … |
+| `spells.nursing.rate` | number | 0 to … |
 
 ### `trail`
 
@@ -685,7 +758,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 
 ### `win`
 
-The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in a ring legendRing m round the dancefloor, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); the Night won card cardAfter seconds after.
+The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side (Ed, 2026-10-11: a ring inside the conga's hid it from the ground), north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); the Night won card cardAfter seconds after.
 
 | knob | type | range |
 |---|---|---|
@@ -695,7 +768,10 @@ The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/jou
 | `win.congaRadius` | number | 0 to … |
 | `win.joinSpeed` | number | 0 to … |
 | `win.seen` | number | 0 to … |
-| `win.legendRing` | number | 0 to … |
+| `win.legendGap` | number | 0 to … |
+| `win.legendRow` | number | 0 to … |
+| `win.legendSpace` | number | 0 to … |
+| `win.legendArc` | number | 0 to … |
 | `win.flareDraw` | number | 0 to … |
 | `win.flare` | number | 0 to … |
 | `win.cardAfter` | number | 0 to … |
@@ -1157,7 +1233,7 @@ A sparkling line round the partified region's outside edge, in each area's sigil
 
 ### `bubbles`
 
-The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble). levelScale (Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"): a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1. One bubble style for every speaker (render/bubbles.ts): the 💌 replies, and the legends' dream bubbles.
+The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble). levelScale (Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"): a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1. One bubble style for every speaker (render/bubbles.ts): the 💌 replies, the witches' chat, and the thought bubbles too (Ed, 2026-10-12: "dream bubbles should also grow"): a legend's dream, the night won's island dreams and the sleepers' 😴s, cloud and symbol together, by their creature's level.
 
 | knob | type | range |
 |---|---|---|
@@ -1167,10 +1243,11 @@ The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are 
 
 ### `runeMarkers`
 
-Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam. beamHeight: the beacon's height (metres); lightRange: stones within this many metres light the scene. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. An awake stone shows both (Ed, v149: "let's see both"): a column of light above the canopy and a thin laser straight up like the disco ball's (laser opacity, width and length in metres; glow only, no light).
+Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size. variants (Ed, 2026-10-12: "20 mild variations on runestones so that they don't all look identical. They can also be flipped"): each area's stone one of the art's 20 seeded forms, dealt like a shuffled deck so every form is used before any repeats (Ed, #716; rules/runestones.ts) (height, lean, worn top, chips, cracks, moss, the carving's place and wear, the stones and grass at its foot), mirrored at random, its sigil never mirror-written; off, every stone as before. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam. beamHeight: the beacon's height (metres); lightRange: stones within this many metres light the scene. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. An awake stone shows both (Ed, v149: "let's see both"): a column of light above the canopy and a thin laser straight up like the disco ball's (laser opacity, width and length in metres; glow only, no light).
 
 | knob | type | range |
 |---|---|---|
+| `runeMarkers.variants` | boolean |  |
 | `runeMarkers.laser.opacity` | number | 0 to … |
 | `runeMarkers.laser.width` | number | 0 to … |
 | `runeMarkers.laser.length` | number | 0 to … |
@@ -1557,12 +1634,25 @@ The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all de
 
 The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.
 
-### `camera`
+### `arrive`, `camera`
 
-shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off.
+Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in by push over pushTime seconds while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed).
 
 | knob | type | range |
 |---|---|---|
+| `arrive.push` | number | 0 to … |
+| `arrive.pushTime` | number | 0 to … |
+| `arrive.fade` | number | 0 to … |
+| `arrive.speed` | number | 0 to … |
+| `arrive.minLeg` | number | 0 to … |
+| `arrive.low.angle` | number | 0 to … |
+| `arrive.low.distance` | number | 0 to … |
+| `arrive.low.offshore` | number | 0 to … |
+| `arrive.frame.angle` | number | 0 to … |
+| `arrive.frame.distance` | number | 0 to … |
+| `arrive.frame.lift` | number | 0 to … |
+| `arrive.rise` | number | 0 to … |
+| `arrive.settle` | number | 0 to … |
 | `camera.fov` | number | 0 to … |
 | `camera.ground.angleIn` | number | 0 to … |
 | `camera.ground.angleOut` | number | 0 to … |
@@ -1996,6 +2086,13 @@ shadows: a small contact shadow under the witch, each bush, creature and prop; t
 | `shadows.on` | boolean |  |
 | `shadows.strength` | number | 0 to … |
 | `shadows.trees` | boolean |  |
+| `shadows.trunks.mode` | string |  |
+| `shadows.trunks.strength` | number | 0 to … |
+| `shadows.trunks.long` | number | 0 to … |
+| `shadows.trunks.glowReach` | number | 0 to … |
+| `shadows.trunks.glowHeight` | number | 0 to … |
+| `shadows.trunks.across` | number | 0 to … |
+| `shadows.trunks.core` | number | 0 to … |
 | `mist.on` | boolean |  |
 | `mist.strength` | number | 0 to … |
 | `mist.height` | number | 0 to … |

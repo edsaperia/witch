@@ -23,7 +23,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 600000, polling: 500 });
     // onto the east coast's sand, a little in from the edge
-    const at = await page.evaluate(([west, near]) => { const g = window.witch.game, c = g.map.bounds.circle, x = west ? c.x - c.r + 20 : c.x + c.r - 20; if (west) g.tuning.beach = { ...g.tuning.beach, kraken: { every: 26, chance: 1, head: 1, ...(near ? { far: [25, 30] } : {}) } }; else if (near) g.tuning.beach = { ...g.tuning.beach, dolphins: { ahead: [5, 10], out: [8, 12], every: [3, 4] } }; g.witch = { ...g.witch, x, z: c.z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };  return { x, z: c.z, r: c.r }; }, [west, near]);
+    const at = await page.evaluate(([west, near]) => { const g = window.witch.game, p = window.witch.coastFacing(west ? Math.PI : 0), x = p.x - p.nx * 20, z = p.z - p.nz * 20; if (west) g.tuning.beach = { ...g.tuning.beach, kraken: { every: 26, chance: 1, head: 1, ...(near ? { far: [25, 30] } : {}) } }; else if (near) g.tuning.beach = { ...g.tuning.beach, dolphins: { ahead: [5, 10], out: [8, 12], every: [3, 4] } }; g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };  return { x, z }; }, [west, near]);
     console.log(west ? "on the west coast" : "on the east coast", JSON.stringify(at));
     const step = (o, n = 1) => page.evaluate(([o, n]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 30); return window.witch.view.beachView.on; }, [o, n]);
     console.log("beach shown", await step({}, 60));

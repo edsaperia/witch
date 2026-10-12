@@ -180,6 +180,27 @@ export const HAT = [
   ".#############.",
 ];
 
+/** A flask in pixels (the Dowsing hat's pointer toward the nearest relic, rules/hatSpells.ts): the relic sigil's round-bellied
+ *  potion flask, its cork (`+`) on a lipped neck, the glass's glint at its shoulder, and its liquid (`+`) a lighter fill with
+ *  two bubbles rising in it. */
+export const FLASK = [
+  ".....+++++.....",
+  ".....#####.....",
+  "......#.#......",
+  "......#.#......",
+  ".....##.##.....",
+  "...###...###...",
+  "..#.........#..",
+  ".#.+.........#.",
+  ".#+++++++++++#.",
+  "#++.++++++++++#",
+  "#++++++++.++++#",
+  "#+++++++++++++#",
+  ".#+++++++++++#.",
+  "..#+++++++++#..",
+  "...#########...",
+];
+
 export class StoneIndicator {
   private cue: PixelCue;
   private v = new THREE.Vector3();
@@ -201,7 +222,7 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[] } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3 } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -233,8 +254,9 @@ export class StoneIndicator {
     }
     // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
     if (at.notes || at.glyph) {
-      const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = bright.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
-      G.forEach((row, y) => [...row].forEach((on, x) => { if (on === "#") c.dot(ox + x, oy + y, bright, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); }));
+      const ink = at.glyphColour ? calm([at.glyphColour.x * 255, at.glyphColour.y * 255, at.glyphColour.z * 255]).map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)) : bright;
+      const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = ink.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
+      G.forEach((row, y) => [...row].forEach((on, x) => { if (on === "#") c.dot(ox + x, oy + y, ink, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); }));
     } else {
       let g = this.glyphs.get(at.species);
       if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }

@@ -3,6 +3,7 @@
 import { TUNING } from "../rules/tuning";
 import { islandOf, playableIsland } from "../rules/rosters";
 import { loadSave, worldSeed } from "./chartSave";
+import { loadoutFrom } from "./loadout";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
@@ -105,6 +106,12 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
   const hillsParam = params.get("hills");
   if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+  // ?carrier=<kind>: that kind's legend carrying the treehouse Ent (art/carrier.js), wherever; ?carrier=none no one.
+  const carrierParam = params.get("carrier");
+  if (carrierParam) tuning.treehouse = { ...tuning.treehouse, carrier: carrierParam };
+  // ?trunks=soft|hard|off: the trunks' shadows from her glow and the campfires in ground mode (render/trunkShadows.ts).
+  const trunksParam = params.get("trunks");
+  if (trunksParam && tuning.shadows.trunks) tuning.shadows = { ...tuning.shadows, trunks: { ...tuning.shadows.trunks, mode: trunksParam } };
   // ?ley=0: no ley lines through the runestones.
   if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
   if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };
@@ -166,6 +173,13 @@ export function tuningFromLink(params: URLSearchParams) {
     const v = params.get("island");
     if (v && v !== "home" && playableIsland(v) && islandOf(v) && tuning.map) tuning.map = { ...tuning.map, island: v }; // (a placeholder's island isn't played)
     else { const n = islandFromLink(v, tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n, island: v === "home" ? "home" : "" }; }
+    // ?phase=0 to 5 (Ed, 2026-10-11, the journey's irregular islands: rules/islandGrowth.ts): an island of that phase's shape, of
+    // random types (10 areas a phase, home's 10 for 0) unless ?island= gives a number; a kind's island keeps its own.
+    const ph = params.get("phase"), p = ph === null ? NaN : Math.round(Number(ph));
+    if (Number.isFinite(p) && p >= 0 && p <= 5 && tuning.map && !(v && v !== "home" && playableIsland(v))) {
+      const sized = v !== null && v !== "home" && islandFromLink(v, 0) !== null;
+      tuning.map = { ...tuning.map, phase: p, island: "", islandAreas: sized ? tuning.map.islandAreas : p === 0 ? (tuning.map.islandAreas || 10) : 10 * p };
+    }
   }
 
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
@@ -175,5 +189,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load
   if (tuning.map) { const save = loadSave(), w = params.get("world"); tuning.map = { ...tuning.map, found: save.found, world: w ? worldSeed(w) : save.world }; }
+  // Her hat and broom spells (app/loadout.ts): the creator's, kept on this browser, or ?hat= and ?broom=.
+  { const L = loadoutFrom(params); tuning.spells = { ...tuning.spells, hat: L.hat, broom: L.broom }; }
   return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };
 }

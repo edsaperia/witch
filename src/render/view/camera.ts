@@ -14,22 +14,27 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   const g = v.game, t = g.tuning;
   const a = (pose.angle * Math.PI) / 180;
   // Camera, snapped to the pixel grid along the screen's axes so the art does not shimmer.
-  const wpp = (2 * pose.distance * Math.tan((t.camera.fov * Math.PI) / 360)) / v.height;
+  // Arriving from the sea chart (rules/arrive.ts, app/arrive.ts): the flight's shot in place of hers, its field of view
+  // easing from the chart's to the game's, the ground and the heights following its aim (not her, at her decks).
+  const F = v.fly, fov = F ? F.fov : t.camera.fov;
+  if (v.camera.fov !== fov) { v.camera.fov = fov; v.camera.updateProjectionMatrix(); }
+  const wpp = (2 * pose.distance * Math.tan((fov * Math.PI) / 360)) / v.height;
   const up = new THREE.Vector3(0, Math.cos(a), -Math.sin(a));
   // The rolling ground: its window follows her, and the camera rides over its height.
   v.time("start");
-  if (v.heights.follow(g.witch.x, g.witch.z)) v.stats.heightMoves = (v.stats.heightMoves ?? 0) + 1;
+  const fx = F ? F.tx : g.witch.x, fz = F ? F.tz : g.witch.z;
+  if (v.heights.follow(fx, fz)) v.stats.heightMoves = (v.stats.heightMoves ?? 0) + 1;
   v.time("heights");
-  v.ground.follow(g.witch.x, g.witch.z);
+  v.ground.follow(fx, fz);
   // Riding the hills smoothly (Ed, v289): she and the camera follow damped heights, not the bumps.
   {
     const W = g.witch, rdt = Number.isNaN(v.rideTime) ? 0 : time - v.rideTime, full = W.mode === "ground" ? t.groundSpeed : t.treetopSpeed;
     v.rideTime = time;
     v.ride.update(rdt, W.x, W.z, W.vx, W.vz, full, groundHeight, t.witch, witchHeight(W, t));
     v.camRide.update(rdt, pose.tx, pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity); // (no floor: just the smoothed ground)
-    v.rideOff = W.seated ? 0 : v.ride.h - groundHeight(W.x, W.z);
+    v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
-  const target = new THREE.Vector3(pose.tx, pose.ty + v.camRide.h, pose.tz);
+  const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)
   // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
   // camera's focus, along its forward on the ground.
   {
@@ -42,7 +47,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // Facing out to sea (the north coast: the camera always looks north), the bend would drop the open water out of sight
     // below a horizon of sand, and the flat sea shows the sky anyway: there it keeps only beach.camera.seaward of itself
     // (Ed, 2026-10-07: the sea "on the horizon" must read from the stargazing pose), easing round the coast by bearing.
-    const ring = g.map.bounds.circle, wx = ring ? g.witch.x - ring.x : 0, wz = ring ? g.witch.z - ring.z : 0, seaAhead = Math.max(0, -wz / (Math.hypot(wx, wz) || 1)); // (no circle, no coast: 0)
+    const land = g.map.bounds.land, seaAhead = land ? Math.max(0, land.inward(g.witch.x, g.witch.z).z) : 0; // (the water to the north of her: the land's way in points south; no island, no coast: 0)
     // Lying down, the bend is the stargazing table's for her bearing round the coast (beach.camera.bearings.bend: rules/camera.ts
     // gazeAt), eased in with her lying down.
     const seaKeep0 = 1 - seaAhead * (1 - (B?.camera?.seaward ?? 1)), gazeBend = B?.camera?.bearings.bend ? gazeAt(B.camera, g.camera.bearing ?? 0).bend : seaKeep0;

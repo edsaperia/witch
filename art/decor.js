@@ -91,7 +91,7 @@ const RUINS = {
     dcBlock(m, [-1.1, .55, 0], [.15, .55, .62], 4, g); dcBlock(m, [-1.05, 1.15, 0], [.2, .1, .7], 5, g, { courses: 0 }); // a lintel over the way down
     if (g) { dcTufts(m, 12, 1.6, 10, 14); dcIvy(m, [-1.0, 1.2, .5], [-.9, .3, .62], 13, 15); }
   } },
-  "statue-head": { desc: "a toppled giant statue head, its eyes still faintly lit", glow: true, split: null, build(m, g) {
+  "statue-head": { desc: "a toppled giant statue head, its eyes still faintly lit", glow: true, split: null, scatter: false, /* (no longer placed: Ed, 2026-10-11, "Can it remove the stone head?") */ build(m, g) {
     // lying on its side, face turned to us: up the face is +y here, so its features run along y and out along z
     const H = [0, .8, 0], F = .62, face = (y, x) => [H[0] + x, H[1] + y, H[2] + F]; // a point on the face
     m.ell(H, [.8, 1.0, .7], M.STONE, { group: 1, rough: .012, dir: [1, .25, 0], paint: dcStone(g, 0) }); // the head, tipped over

@@ -9,6 +9,7 @@ import { Conductor, formClock, type MusicCue } from "../../src/rules/musicPlan";
 import { formChord, musicSeed, type MusicStyle, type NoteEvent } from "../../src/rules/musicScore";
 import styleJson from "../../config/music-style.json";
 import { FRAMES, FRAME_IDS, FRAMES_UP, KIT, PRESENCE_DB, VOCALISE_GAIN } from "./ingredients";
+import { VoiceFx, type VoiceFxSettings } from "../../src/platform/audio/voiceFx";
 
 const RATE = 44100;
 const base = styleJson as unknown as MusicStyle;
@@ -22,6 +23,8 @@ export interface AbOptions {
   recorded?: boolean;
   /** false: the game's music left out (a stem: only the ingredients asked for). */
   music?: boolean;
+  /** With music false: the form's sung line still played by the engine (the FOF voice alone). */
+  soloSung?: boolean;
   /** The vocalise from a recording instead of Pink Trombone: a woman's steady sung note (samples/voices/female-note, G4,
    *  measured at MIDI 67.2) retuned to each of the sung part's notes, like a sampler (Ed, 2026-10-11: "try a recorded voice
    *  as an alternative vocalise"). */
@@ -30,6 +33,10 @@ export interface AbOptions {
   voices?: { chant?: string; vocalise?: string };
   /** Base64 Ogg samples by id (samples/vcsl). */
   samples?: Record<string, string>;
+  /** The sung melody on the FOF voice (Ed, 2026-10-11): this patch (fofSoprano, fofAlto, fofChoir) in the soprano's place. */
+  fof?: string;
+  /** The voice line's ethereal effects (platform/audio/voiceFx.ts): on the FOF voice (the engine's) or the recorded one. */
+  fx?: Partial<VoiceFxSettings>;
 }
 
 const cueFor = (o: AbOptions): MusicCue => ({ waves: Array.from({ length: o.wave }, () => 0), nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: o.wave });
@@ -60,7 +67,9 @@ function witchStyle(): MusicStyle {
 }
 
 async function abRender(o: AbOptions) {
-  const style = o.witch ? witchStyle() : base, spb = 60 / style.bpm / 4, seconds = o.bars * 16 * spb + 3;
+  let style = o.witch ? witchStyle() : base;
+  if (o.fof) style = { ...clone(style), form: { ...style.form!, sung: { ...style.form!.sung, patch: o.fof } }, ...(o.fx ? { voiceFx: o.fx } : {}) };
+  const spb = 60 / style.bpm / 4, seconds = o.bars * 16 * spb + 3;
   const oc = new OfflineAudioContext(2, Math.ceil(seconds * RATE), RATE);
   const score = await abScore(o);
   // the mix: everything into `bus`, through the tape (if asked) to the output
@@ -80,6 +89,9 @@ async function abRender(o: AbOptions) {
   } else bus.connect(oc.destination);
   const samples: Record<string, AudioBuffer> = {};
   for (const [id, data] of Object.entries(o.samples ?? {})) samples[id] = await oc.decodeAudioData(b64(data));
+  // the FOF voice's worklet, loaded before anything's scheduled; its notes reach it while the render waits at its start
+  if (o.fof && !(await MusicEngine.fofReady(oc))) throw new Error("the FOF voice didn't load");
+  void oc.suspend(128 / RATE).then(() => new Promise(r => setTimeout(r, 300))).then(() => oc.resume());
   const hit = (id: string, at: number, gain: number, rate = 1, pan = 0) => {
     const b = samples[id]; if (!b) return;
     const s = oc.createBufferSource(), g = oc.createGain(), p = oc.createStereoPanner();
@@ -91,13 +103,15 @@ async function abRender(o: AbOptions) {
   const play = (e as unknown as { play: (ev: NoteEvent, t: number, dur: number, sps: number, chord?: number[]) => void }).play.bind(e);
   let rr = 0;
   (e as unknown as { play: typeof play }).play = (ev, t, dur, sps, chord) => {
-    if (o.music === false) return; // (a stem)
+    if (o.music === false && !(o.soloSung && ev.part === style.form!.sung.part && !o.vocalise && !o.sampledVocalise)) return; // (a stem)
     if ((o.vocalise || o.sampledVocalise) && ev.part === style.form!.sung.part) return; // (the vocalise sings these)
     if (o.witch && drums.has(ev.part)) return; // (the half-time beat below instead)
     const k = o.kit ? KIT[ev.part] : undefined;
     if (k) { const id = k.soft && ev.vel < 0.6 ? k.soft : k.ids[rr++ % k.ids.length]; hit(id, t, k.gain * ev.vel, 1, ev.part === "hat" ? 0.15 : ev.part === "shaker" ? -0.2 : 0); return; }
     play(ev, t, dur, sps, chord);
   };
+  if (o.fof && o.fx?.whisper && samples.whispers) e.setWhisper(samples.whispers);
+  e.setRecordings(samples); if (samples.whispers) e.setWhisper(samples.whispers); // (the game's singer, a recording: its own and the vocoder's)
   e.renderAhead(cueFor(o), 0, o.bars * 16 * spb, newBeatClock(style.bpm));
   // a drone: the tonic and its fifth, low, held through, a slow filter breathing (organum, hurdy-gurdy-like)
   if (o.drone) {
@@ -152,8 +166,20 @@ async function abRender(o: AbOptions) {
   // the sampled vocalise: the woman's note retuned to each sung note, a short attack and release, the same presence lift
   if (o.sampledVocalise) {
     const pres = oc.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 3000; pres.Q.value = 0.8; pres.gain.value = PRESENCE_DB;
-    pres.connect(bus);
+    // (the voice line's effects, if asked: phrases swelling in and their ends frozen as the FOF voice's do)
+    const fx = o.fx ? new VoiceFx(oc, o.fx, () => style.bpm) : null;
+    if (fx) { pres.connect(fx.input); fx.output.connect(bus); if (o.fx!.whisper && samples.whispers) fx.whisper(samples.whispers); } else pres.connect(bus);
+    let lastEnd = -Infinity;
     for (const n of score.sung) {
+      if (fx && n.at - lastEnd > 4 * spb) {
+        if (Number.isFinite(lastEnd)) fx.release(lastEnd);
+        const b = samples["female-note"], rate = 2 ** ((n.midi - 67.2) / 12), len = Math.min(16 * spb, Math.max(4 * spb, n.at - (Number.isFinite(lastEnd) ? lastEnd : n.at - 16 * spb) - 0.1));
+        if (b && fx.s.swells > 0 && n.at - len > 0) {
+          const src = oc.createBufferSource(), g = oc.createGain(); src.buffer = b; src.playbackRate.value = rate; src.loop = true; src.loopStart = 0.3; src.loopEnd = 1.6;
+          src.connect(g).connect(fx.wetIn); fx.swellEnvelope(g, n.at, len, VOCALISE_GAIN); src.start(n.at - len); src.stop(n.at + 0.05);
+        }
+      }
+      lastEnd = Math.max(lastEnd, n.at + n.dur);
       const rate = 2 ** ((n.midi - 67.2) / 12), len = Math.min(n.dur * 0.97, 1.75 / rate);
       const b = samples["female-note"]; if (!b || len < 0.05) continue;
       const src = oc.createBufferSource(), g = oc.createGain();

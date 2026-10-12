@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
-import { witchSprites, type SoundsystemGenArt, type WitchArt } from "./homeArt";
+import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
@@ -68,7 +68,7 @@ export class AssetLibrary {
   soundsystems: Atlas = placeholderAtlas(16);
   /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
    *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
-  treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
+  treehouse: { atlas: Atlas; ent?: { deck: { x: number; y: number }; table: { x: number; y: number } }; /** The island's legend carrying the Ent (render/homeArt.ts). */ carrier?: TreehouseArt["carrier"]; base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
     /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
     foreFrames: number; foreBox: { x: number; y: number };
     /** The knockdown candles (Art.candleSprite: white then red from candleRed on, level × flicker, from frame candle0) and their row along the desk's front (its ends, in the base's pixels). */
@@ -98,7 +98,7 @@ export class AssetLibrary {
   /** The areas' rune stones' bake scale (tuning runeMarkers.scale; the view sets it): the dancefloor ring's stones are baked at it. */
   stoneScale = 2.25;
 
-  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null) {
+  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home") {
     this.K = 2 / pixelSize;
     this.styleHash = hashText(JSON.stringify(style));
     // Where her poses' frames will be, at once (a dry run: nothing drawn), and the stand-ins above; the art itself from the
@@ -123,7 +123,7 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
-    this.ask({ kind: "treehouse", id: "home", style }, true);
+    this.ask({ kind: "treehouse", id: treehouse, style }, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
     this.ask({ kind: "soundsystems", id: "home", style }, true);
     this.ask({ kind: "props", id: "home", style }, true);
     this.ask(this.witchJob(witchGenome, false), true);
@@ -198,6 +198,8 @@ export class AssetLibrary {
       this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "soundsystem") {
       this.soundsystemsGen.set(r.job.id, { atlas, ...r.result.ss! });
+    } else if (r.job.kind === "hat") {
+      this.hats.set(r.job.id, atlas);
     } else if (r.job.kind === "partyWitch") {
       this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
     } else if (r.job.kind === "beachEdge") {
@@ -383,6 +385,14 @@ export class AssetLibrary {
   private bareStandIn = placeholderAtlas(256);
   /** The hat on the ground in witchBare()'s atlas (-1: she has none). */
   witchHatFrame = -1;
+  /** Her hat alone in the look of `genome` (a hat she left lying: render/view/witch.ts), its frame 0; undefined (and asked for)
+   *  till it's drawn. */
+  hatArt(genome: unknown): Atlas | undefined {
+    const id = `hat-${hashText(JSON.stringify(genome ?? null))}`, a = this.hats.get(id);
+    if (!a) this.ask({ kind: "hat", id, style: this.style, genome }, true);
+    return a;
+  }
+  private hats = new Map<string, Atlas>();
 
   /** A party witch's art (#37: her look from partyWitch(seed), or seed null for our witch's own),
    *  or undefined (and asked for). Looks repeat after a few, so there are only so many to draw. */

@@ -27,7 +27,7 @@ export function wakeOnInvites(g: Game, events: readonly InviteEvent[], t: Tuning
     if (prev && time >= prev.until) continue; // (already awake)
     let F = 0;
     for (const c of g.byArea?.get(key) ?? g.creatures) {
-      if (cellKey(c.cell) !== key || !holdsArea(c) || c.level === 0 || c.level === LEGEND || c.enraged || c.siege) continue;
+      if (cellKey(c.cell) !== key || !holdsArea(c) || c.level === 0 || c.level === LEGEND || c.enraged || c.siege || (c.lulled && c !== hit)) continue; // (one lulled by the Lullaby hat wakes only to a 💌 of its own)
       c.watchUntil = undefined;
       if (c.napUntil !== undefined || c.wakeUntil !== undefined) { c.asleep = false; c.napUntil = undefined; c.wakeUntil = undefined; c.rest = 0; } // (up at once; the party's over's sleep has no napUntil, and isn't touched)
       F += creatureValue(c);

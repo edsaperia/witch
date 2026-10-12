@@ -29,6 +29,81 @@
         "found": {
           "type": "array"
         },
+        "phase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shapes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lobes": {
+                "type": "number",
+                "minimum": 0
+              },
+              "harmonics": {
+                "type": "number",
+                "minimum": 0
+              },
+              "arms": {
+                "type": "number",
+                "minimum": 0
+              },
+              "armCount": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "armWidth": {
+                "type": "number",
+                "minimum": 0
+              },
+              "bays": {
+                "type": "number",
+                "minimum": 0
+              },
+              "bayCount": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "jitter": {
+                "type": "number",
+                "minimum": 0
+              },
+              "lakes": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "lakeSize": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "required": [
+              "lobes",
+              "harmonics",
+              "arms",
+              "armCount",
+              "armWidth",
+              "bays",
+              "bayCount",
+              "jitter"
+            ],
+            "additionalProperties": false
+          }
+        },
         "buffer": {
           "type": "number",
           "minimum": 0
@@ -75,11 +150,46 @@
         "islandAreas",
         "island",
         "found",
+        "phase",
+        "shapes",
         "buffer",
         "push",
         "drift",
         "edge",
         "coast"
+      ],
+      "additionalProperties": false
+    },
+    "lakes": {
+      "type": "object",
+      "properties": {
+        "shore": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pad": {
+          "type": "number",
+          "minimum": 0
+        },
+        "koi": {
+          "type": "number",
+          "minimum": 0
+        },
+        "biomeFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "biomeFirstShare": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "shore",
+        "pad",
+        "koi",
+        "biomeFrom",
+        "biomeFirstShare"
       ],
       "additionalProperties": false
     },
@@ -981,6 +1091,85 @@
         "lightStrength": {
           "type": "number",
           "minimum": 0
+        },
+        "deck": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "grace": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rail": {
+              "type": "number",
+              "minimum": 0
+            },
+            "table": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tableUse": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decks": {
+              "type": "object",
+              "properties": {
+                "inner": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "outer": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "from": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "inner",
+                "outer",
+                "from",
+                "to"
+              ],
+              "additionalProperties": false
+            },
+            "seat": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "radius",
+            "height",
+            "grace",
+            "rail",
+            "table",
+            "tableUse",
+            "decks",
+            "seat"
+          ],
+          "additionalProperties": false
+        },
+        "carrier": {
+          "type": "string"
         }
       },
       "required": [
@@ -988,7 +1177,9 @@
         "angle",
         "clear",
         "lightReach",
-        "lightStrength"
+        "lightStrength",
+        "deck",
+        "carrier"
       ],
       "additionalProperties": false
     },
@@ -2240,7 +2431,10 @@
     "spells": {
       "type": "object",
       "properties": {
-        "equipped": {
+        "hat": {
+          "type": "string"
+        },
+        "broom": {
           "type": "string"
         },
         "speed": {
@@ -2265,11 +2459,417 @@
             "cooldown"
           ],
           "additionalProperties": false
+        },
+        "plain": {
+          "type": "object",
+          "properties": {
+            "riseCooldown": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "riseCooldown"
+          ],
+          "additionalProperties": false
+        },
+        "long": {
+          "type": "object",
+          "properties": {
+            "mult": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "mult"
+          ],
+          "additionalProperties": false
+        },
+        "healing": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "helmet": {
+          "type": "object",
+          "properties": {
+            "drop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "drop"
+          ],
+          "additionalProperties": false
+        },
+        "double": {
+          "type": "object",
+          "properties": {
+            "charges": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "charges"
+          ],
+          "additionalProperties": false
+        },
+        "battering": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stun": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "width",
+            "stun"
+          ],
+          "additionalProperties": false
+        },
+        "leyjump": {
+          "type": "object",
+          "properties": {
+            "cooldown": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "cooldown"
+          ],
+          "additionalProperties": false
+        },
+        "haul": {
+          "type": "object",
+          "properties": {
+            "pull": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "pull"
+          ],
+          "additionalProperties": false
+        },
+        "pound": {
+          "type": "object",
+          "properties": {
+            "cooldown": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "push": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stun": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "cooldown",
+            "radius",
+            "push",
+            "stun"
+          ],
+          "additionalProperties": false
+        },
+        "stealth": {
+          "type": "object",
+          "properties": {
+            "reveal": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reveal",
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "harvest": {
+          "type": "object",
+          "properties": {
+            "berries": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "berries",
+            "radius",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "dowsing": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        "sentry": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "slingshot": {
+          "type": "object",
+          "properties": {
+            "catch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fire": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hold": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "catch",
+            "fire",
+            "hold",
+            "radius",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        "gathering": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "bramble": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "mine": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stun": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "stun",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "lullaby": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "time",
+            "every"
+          ],
+          "additionalProperties": false
+        },
+        "cyclone": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spin": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fling": {
+              "type": "number",
+              "minimum": 0
+            },
+            "flingTime": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stun": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "time",
+            "every",
+            "spin",
+            "lift",
+            "fling",
+            "flingTime",
+            "stun"
+          ],
+          "additionalProperties": false
+        },
+        "nursing": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rate": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "rate"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
-        "equipped",
-        "speed"
+        "hat",
+        "broom",
+        "speed",
+        "plain",
+        "long",
+        "healing",
+        "helmet",
+        "double",
+        "battering",
+        "leyjump",
+        "haul",
+        "pound",
+        "stealth",
+        "harvest",
+        "dowsing",
+        "sentry",
+        "slingshot",
+        "gathering",
+        "bramble",
+        "mine",
+        "lullaby",
+        "cyclone",
+        "nursing"
       ],
       "additionalProperties": false
     },
@@ -2699,7 +3299,19 @@
           "type": "number",
           "minimum": 0
         },
-        "legendRing": {
+        "legendGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendRow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendSpace": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendArc": {
           "type": "number",
           "minimum": 0
         },
@@ -2727,7 +3339,10 @@
         "congaRadius",
         "joinSpeed",
         "seen",
-        "legendRing",
+        "legendGap",
+        "legendRow",
+        "legendSpace",
+        "legendArc",
         "flareDraw",
         "flare",
         "cardAfter",
@@ -4813,6 +5428,9 @@
     "runeMarkers": {
       "type": "object",
       "properties": {
+        "variants": {
+          "type": "boolean"
+        },
         "laser": {
           "type": "object",
           "properties": {
@@ -4942,6 +5560,7 @@
         }
       },
       "required": [
+        "variants",
         "laser",
         "scale",
         "beamHeight",
@@ -7033,6 +7652,97 @@
         "ease",
         "leyFloor",
         "walk"
+      ],
+      "additionalProperties": false
+    },
+    "arrive": {
+      "type": "object",
+      "properties": {
+        "push": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pushTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minLeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "low": {
+          "type": "object",
+          "properties": {
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "offshore": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angle",
+            "distance",
+            "offshore"
+          ],
+          "additionalProperties": false
+        },
+        "frame": {
+          "type": "object",
+          "properties": {
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angle",
+            "distance",
+            "lift"
+          ],
+          "additionalProperties": false
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "settle": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "push",
+        "pushTime",
+        "fade",
+        "speed",
+        "minLeg",
+        "low",
+        "frame",
+        "rise",
+        "settle"
       ],
       "additionalProperties": false
     },
@@ -9146,12 +9856,55 @@
         },
         "trees": {
           "type": "boolean"
+        },
+        "trunks": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string"
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "long": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowReach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowHeight": {
+              "type": "number",
+              "minimum": 0
+            },
+            "across": {
+              "type": "number",
+              "minimum": 0
+            },
+            "core": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "mode",
+            "strength",
+            "long",
+            "glowReach",
+            "glowHeight",
+            "across",
+            "core"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "on",
         "strength",
-        "trees"
+        "trees",
+        "trunks"
       ],
       "additionalProperties": false
     },
@@ -9524,6 +10277,7 @@
   "required": [
     "mapAreas",
     "map",
+    "lakes",
     "islands",
     "beach",
     "areaSize",
@@ -9637,6 +10391,7 @@
     "waveNumbers",
     "dancefloor",
     "partyOver",
+    "arrive",
     "camera",
     "pixelSize",
     "spriteTilt",

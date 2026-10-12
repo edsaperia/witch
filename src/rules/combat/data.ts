@@ -213,13 +213,15 @@ export interface CombatWorld {
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */
   active: Creature[];
-  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number; /** in a calm legend's circle (rules/slowTime.ts): that legend's id; nothing else attacks her there */ shelter?: number }[];
+  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number; /** in a calm legend's circle (rules/slowTime.ts): that legend's id; nothing else attacks her there */ shelter?: number; /** her Stealth broom (rules/brooms.ts): unseen, but by what already went for her while it's within this many metres */ hidden?: number }[];
   /** Where a party animal's leash is fixed. */
   leashPoint: (id: number) => { x: number; z: number } | null;
   /** Whether a party animal is parked (at a sigil on the ground): it guards round it. */
   parked: (id: number) => boolean;
   /** The witch a creature is being invited by right now (it holds its fire on her: Ed's playtest), or -1. */
   talkingTo: (id: number) => number;
+  /** Where a creature at (x, z) heads for (tx, tz) round the lakes (rules/lakes.ts roundLakes): null, straight there; absent with none. */
+  round?: (x: number, z: number, tx: number, tz: number) => { x: number; z: number } | null;
   /** How far a creature at (x, z) runs to leave the map, and where (a point just past its edge). */
   exit: (x: number, z: number) => { x: number; z: number };
   /** The map's centre (home): besiegers march inward, never on a soundsystem further from it than they are (rules/combat.ts). */

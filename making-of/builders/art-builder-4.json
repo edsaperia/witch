@@ -13,14 +13,20 @@
     "Baked by the art workers at each area's own yaw and size, ahead of its wave, with a preview page of five real maps and a reroll.",
     "The World Tree, home's island sigil (`art/sigils.js` `ISLAND_SIGILS`): a Celtic tree of life in the sigils' stroke family, its crown climbing into a band of knotwork, two strands weaving over and under, its roots spreading low and flat, drawn freehand rather than mirrored; through the boot the dancefloor writes it on stroke by stroke as the pulse goes round the ring (`islandTiles`).",
     "Every island's picture for the legends' dreams and the sea chart (`art/islands.js`, `src/rules/islandShape.ts`): its coastline by the map's own coast maths, seeded by its kind and sized by its phase, a dark island in a rim of sand with its legend's sigil on it, whole pixels at a bubble's 30, or a path for the chart.",
-    "The dancefloor's sigils keep to the island (`islandKinds`, `rules/dancefloor.ts`): only the shapes of kinds on its roster come round, and the World Tree joins them; home's own cell, whose type no roster deals, had been slipping a stranger's sigil in."
+    "The dancefloor's sigils keep to the island (`islandKinds`, `rules/dancefloor.ts`): only the shapes of kinds on its roster come round, and the World Tree joins them; home's own cell, whose type no roster deals, had been slipping a stranger's sigil in.",
+    "The treehouse deck (`rules/treehouse.ts`): a round deck 22 m up on the Ent, landed on from the treetops, walked round its map table and behind its decks, the world slowing to a tenth there as in a legend's circle, the sea chart opening at its table; with placeholder meshes till the Ent's art.",
+    "The treehouse deck in play (#717, then the Ent's art swapped in): a round deck 22 m up on the treehouse Ent, landed on from the treetops and walked at a tenth of the world's time, the DJ decks along its front where each night starts, and the map table in its middle carrying a live miniature of the sea chart, E there opening the chart to sail from at any time.",
+    "Arriving from the sea chart (the game's half of the zoom to an island, with Charlie's chart half): the chart's last frame shown at once while the night builds, then the game's camera taking over at the chart's own, carrying on its speed north, down low over the forest, up to frame the dancefloor and the Ent, and down to her decks, where the night starts."
   ],
   "learned": [
     "\"No two alike\" needs a measure: two stacks counted as different only when they differ in at least two traits, and the set is dealt nearest first so a re-roll falls on the further one.",
     "A wide stack turned side-on is a sliver, so the turn eases off towards its limit (a tanh) rather than stopping dead at it, a smaller limit for the widest profiles.",
     "A colour rule beats a list of good pairs: no crystal within 60 degrees of hue of a warm stone kept every stack's glow readable.",
     "A sigil for 30 floor tiles wants a thinner line than the sigils' own: at the usual stroke the branches merged into a block, at two-thirds of it they stay apart and the dark lobes either side of the trunk carry the shape.",
-    "An island drawn at the map's own 8% wobble is a coin at 30 pixels: it took a coastline nearly four times as rough before 32 islands could be told apart by shape alone."
+    "An island drawn at the map's own 8% wobble is a coin at 30 pixels: it took a coastline nearly four times as rough before 32 islands could be told apart by shape alone.",
+    "A new place to stand touches every \"is she on the ground?\" in the rules: on the deck she's on the ground for walking and the camera, but not for fights, runes, notice or naps, so each of those checks had to say which it meant.",
+    "A flat sprite of a 3D platform can still hold a walker: split it into far and near halves, push each along the camera's rays and scale it back to its own pixels, and draw her on the floor as the art sees it rather than where the camera would put her, so the art's steeper view and the camera's never disagree.",
+    "A camera flight across the island has to move everything that is drawn round her (the ground's window, the hills, the haze, the culling) to the camera's aim; the game assumed the view and the witch were never far apart."
   ],
   "previews": [
     {

@@ -14,8 +14,8 @@ describe("music lab settings", () => {
   it("copies only what changed, and pastes back the same", () => {
     const s = defaultState(D);
     s.wave = 5; s.section = "victory"; s.seed = 42; s.bpm = 126; s.mode = "phrygian"; s.witchHouse = true;
-    s.layers.drone = 0.8; s.layers.frames = 1.2; s.voice = "pinkTrombone"; s.parts.kick = 0.5; s.mute = ["lead"]; s.solo = ["frames", "kick"];
-    s.victory.transpose = 4; s.victory.layers.choir = 1;
+    s.layers.drone = 0.8; s.layers.frames = 1.2; s.parts.kick = 0.5; s.mute = ["lead"]; s.solo = ["frames", "kick"];
+    s.victory.transpose = 4; s.victory.layers.choir = 1; s.night = { waves: 30, island: "fox" }; s.voiceFx.shimmer = 0.6; s.voiceFx.hall = 0.4; s.fofChoir = true; s.voice = "fof";
     const text = settingsJson(s, D), back = parseSettings(text, D, SECTIONS);
     expect(back.ignored).toEqual([]);
     expect(back.state).toEqual(s);

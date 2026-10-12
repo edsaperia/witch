@@ -42,6 +42,21 @@ describe("the bot", () => {
     expect(g.leash.stack.length + g.leash.placed.length).toBeGreaterThan(0); // (leashed: their runes picked up)
   });
 
+  it("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it invites through the run and wins the night", () => {
+    // (before: it stood at each next soundsystem before its wave, invited 3 to 5 all run and lost every night)
+    const g = newGame(8919, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; // (on the ground by the treehouse, as this run was tuned from; the deck's start shifts this chaotic run: 8 seeds from one spot invite about as many with it on as off)
+    const bot = newBot("skilled");
+    let invited = 0;
+    for (let i = 0; i < 20 * 60 * 60 && g.win?.phase !== "won" && !g.partyOver; i++) {
+      stepGame(g, bot.decide(g), 1 / 60);
+      for (const e of g.witches[0].invites.events) if (e.kind === "happy") invited++;
+    }
+    expect(g.partyOver).toBeFalsy();
+    expect(g.win?.phase).toBe("won");
+    expect(invited).toBeGreaterThan(15);
+  }, 240000);
+
   it("is deterministic: the same game and steps give the same run", () => {
     const a = play(fresh(7), "skilled", 60).track, b = play(fresh(7), "skilled", 60).track;
     expect(a).toEqual(b);

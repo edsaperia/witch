@@ -1,0 +1,28 @@
+<!doctype html><meta charset="utf-8"><title>Detailed sigils</title>
+<style>body{margin:0;background:#0a0b16;color:#ccc;font:12px ui-monospace,monospace}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script type="module">
+// The detailed sigils' contact sheet (art/sigilDetail.js): every animal and home's World Tree, at tier 2 (knotwork) in black on
+// white as the reference is drawn, then each in its neon at tiers 0, 1 and 2. ?ids=wolf,owl for a few; ?size=128.
+import { sigilDetail } from "../../art/sigilDetail.js";
+import { SIGIL_IDS, sigilColour } from "../../art/sigils.js";
+const q = new URLSearchParams(location.search), ids = q.get("ids") ? q.get("ids").split(",") : [...SIGIL_IDS, "worldTree"];
+const N = +(q.get("size") || 160), pad = 14, cols = +(q.get("cols") || 6), cell = N * 2 + pad * 3, rowH = N + 26 + Math.round(N * .45) + pad;
+const c = document.getElementById("c"), g = c.getContext("2d"), rows = Math.ceil(ids.length / cols);
+c.width = cols * cell + pad; c.height = rows * rowH + pad; g.fillStyle = "#0a0b16"; g.fillRect(0, 0, c.width, c.height);
+const draw = (m, n, x, y, rgb, bg) => {
+  const im = g.createImageData(n, n);
+  for (let i = 0; i < n * n; i++) { const on = m[i]; const col = on ? rgb : bg; im.data.set([col[0], col[1], col[2], 255], i * 4); }
+  g.putImageData(im, x, y);
+};
+ids.forEach((id, k) => {
+  const x = pad + (k % cols) * cell, y = pad + Math.floor(k / cols) * rowH, col = sigilColour(id);
+  draw(sigilDetail(id, N, { tier: 2 }), N, x, y, [12, 12, 14], [244, 242, 236]);
+  draw(sigilDetail(id, N, { tier: 2 }), N, x + N + pad, y, col, [8, 9, 20]);
+  const s = Math.round(N * .45);
+  draw(sigilDetail(id, s, { tier: 0 }), s, x, y + N + 22, col, [8, 9, 20]);
+  draw(sigilDetail(id, s, { tier: 1 }), s, x + s + 6, y + N + 22, col, [8, 9, 20]);
+  g.fillStyle = "#aaa"; g.fillText(`${id}  ·  tier 2 / tier 0, 1 below`, x, y + N + 14);
+});
+document.title = "done";
+</script>

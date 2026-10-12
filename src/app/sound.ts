@@ -11,6 +11,8 @@ import { ShedValve } from "../platform/audio/shed";
 import { musicMix, partyOverEase } from "../rules/music";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
+import { nightStyle } from "../rules/musicSet";
+import { voiceRecordings } from "../platform/audio/voiceSamples";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import type { PlaytestLog } from "../platform/playtestLog";
@@ -32,6 +34,9 @@ export class Sound {
 
   constructor(private readonly tuning: Tuning, private readonly style: MusicStyle, private readonly seed: number) {
   }
+  /** The night's style (rules/musicSet.ts: the style with the night's set as its arc), once a game's been seen. */
+  private night: MusicStyle | null = null;
+  private get playing(): MusicStyle { return this.night ?? this.style; }
 
 
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
@@ -51,10 +56,17 @@ export class Sound {
   /** A first press (the creator's): the context, resumed, and the sound effects. */
   wake(): void { try { this.audio ??= this.context(); void this.audio.resume(); this.ensureSfx(); } catch { /* no sound yet */ } }
 
+  /** The music's recorded voices (the singer's and the vocoder's), once loaded: given to each music made. */
+  private voices(): void {
+    const m = this.music, a = this.audio;
+    if (!m?.engine || !a) return;
+    void voiceRecordings(a).then(r => { m.engine?.setRecordings(r); if (r.whispers) m.engine?.setWhisper(r.whispers); });
+  }
+
   /** Play starts: the context, the music and the sound effects. */
   start(): void {
     const { tuning } = this;
-    try { this.audio ??= this.context(); void this.audio.resume(); if (!this.music && tuning.music.on) this.music = new Music(this.audio, tuning.music.volume * this.level, this.style, this.seed, tuning.music.src); this.ensureSfx(); } catch { /* no sound yet anyway */ }
+    try { this.audio ??= this.context(); void this.audio.resume(); if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); } this.ensureSfx(); } catch { /* no sound yet anyway */ }
   }
 
   /** The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second, a context suspended is
@@ -70,7 +82,7 @@ export class Sound {
         playtest.audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, tuning.music.volume * this.level, this.style, this.seed, tuning.music.src); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); }
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
@@ -95,6 +107,9 @@ export class Sound {
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
     this.lastMix = musicMix(game, game.witch);
+    // the night's set (Ed, 2026-10-11): the music plays its arc, from the next block
+    const night = nightStyle(this.style, game.musicSet);
+    if (night !== this.night) { this.night = night; this.music?.engine?.setStyle(night); }
     if (this.music) this.music.shed = this.valve.level; // (the watchdog's rebuilt music too)
     if (this.sfx) this.sfx.shed = this.valve.level;
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)

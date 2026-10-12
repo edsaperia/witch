@@ -25,8 +25,8 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** a relic's sigil put down on the ground, off any legend's clearing (id: the relic) */ "relicDropped" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** her hat put down at her feet, the sigil button held (rules/hat.ts putHat; id: the witch) */ "hatPut" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle";
-export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number; /** a "cycled" event's: the sigil cycled was a relic's (id: the relic) */ relic?: boolean }
+export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** a relic's sigil put down on the ground, off any legend's clearing (id: the relic) */ "relicDropped" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** her hat put down at her feet, the sigil button held (rules/hat.ts putHat; id: the witch) */ "hatPut" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle" | /** she landed on the treehouse deck (on) or rose off it (rules/treehouse.ts; id: the witch) */ "perch" | /** E at the treehouse's map table: open the sea chart (rules/treehouse.ts; id: the witch) */ "chart";
+export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number; /** a "cycled" event's: the sigil cycled was a relic's (id: the relic) */ relic?: boolean; /** a "perch" event's: on the deck (true) or off it */ on?: boolean }
 
 export interface LeashState {
   /** Creatures leashed to the witch, oldest first: the last is the bottom of the stack, nearest her head. */
@@ -272,7 +272,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
       s.events.push({ kind: "picked", id: p.id, x: p.x, z: p.z, at: time });
     } else if (rune) {
       // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
-      inviteCreature(s, rune, rune.x, rune.z, time, "picked");
+      inviteCreature(s, rune, rune.x, rune.z + (t.leash.restAbove ?? 0), time, "picked"); // (where its rune lay, south of it)
     } else if (stackBottom(s)?.kind === "relic") {
       // A relic's sigil at the bottom (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you put down when you press
       // e"): by a sleeping legend the sigil button has given it already (rules/legends.ts relicButton); anywhere else it goes

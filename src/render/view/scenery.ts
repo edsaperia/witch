@@ -6,11 +6,12 @@ import { LIGHT_UNIFORMS } from "../lighting";
 import type { Plant } from "../../rules/forest";
 import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "../sprites";
 import type { ShadowInstance } from "../shadows";
+import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
 import type { TypeArt } from "../assets";
 import { hash2 } from "../../rules/random";
 import { poseOf, type Game } from "../../rules/game";
 import type { View } from "../view";
-import { inView, viewRect } from "./culling";
+import { focusOf, inView, viewRect } from "./culling";
 import { checkPops, mark } from "./pops";
 import { BarkFaces } from "../barkFaces";
 // Each map's bark faces (render/barkFaces.ts), made once; the forest's trees round a spot, for its anchors to find theirs.
@@ -93,6 +94,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   // Shadows fall away from the moon: from the upper left, so toward the lower right.
   const L = LIGHT_UNIFORMS.uMoonDir.value, sx = -L.x / Math.max(0.2, L.y), sz = -L.z / Math.max(0.2, L.y);
   const per = new Map<number, SpriteInstance[]>();
+  const trunks = new Map<number, TrunkShadow[]>(); // (their shadows from her glow and the fires: render/trunkShadows.ts)
   const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
   const mpp = v.mpp;
   // How far up the screen a step up a sprite goes, for each step of ground toward the camera.
@@ -122,6 +124,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     // A tree's two halves share one box and sway alike (from its foot), so crown and trunk stay together.
     const sway = big.top !== null ? 1 : 0;
     add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined, sway });
+    if (big.top !== null || f[big.bot].h > f[big.bot].w * 1.5) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: f[big.bot].w * mpp * scale, h: f[big.bot].h * mpp * scale, frame: f[big.bot], flip: p.flip }); }
     if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale, sway });
     const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
     if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
@@ -164,7 +167,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   yield* scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
   yield* scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
   // Berry bushes (rules/berries.ts): normal bushes of their area, a berry on some of them.
-  yield* scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
+  yield* scatter("berrybush", g.berries.bushes.filter(b => !b.harvest && Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
   yield* scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
   yield* scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
   // The rim kit round the legends' clearings (rules/forest.ts legendRim), drawn whole.
@@ -270,6 +273,14 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   dl.sort((a, b) => b.z - a.z); // nearest first, as the trees below
   if (decor) v.batchFor(v.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
   for (const [type, b] of v.typeBatches) if (!per.has(type)) b.set([]);
+  if (t.shadows.trunks) { // (always set, so ?trunks or the pause page's switch can turn them on live; hidden while off: render/view.ts)
+    for (const [type, b] of v.trunkShadowBatches) if (!trunks.has(type)) b.set([]);
+    for (const [type, list] of trunks) {
+      let b = v.trunkShadowBatches.get(type);
+      if (!b) { const a = v.assets.typeArt(type); if (!a) continue; b = new TrunkShadowBatch(a.atlas); v.trunkShadowBatches.set(type, b); v.scene.add(...b.meshes); }
+      b.set(list);
+    }
+  }
   // Nearest the camera first (it looks north: larger z is nearer), so the GPU's early depth test
   // skips the pixels of the trees behind them: in the treetops most of the forest, and with the
   // bend the far forest folded in behind the near canopy, is hidden behind trees in front.
@@ -279,9 +290,10 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     b?.set(list);
     if (sliceDone()) { yield; resume(); }
   }
-  { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: 7, d: 3.5, scenery: false }); } // soft, under the treehouse
+  { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: g.tuning.treehouse.deck?.on ? 9 : 7, d: g.tuning.treehouse.deck?.on ? 5 : 3.5, scenery: false }); } // soft, under the treehouse
   checkPops(v, "placed", !force);
-  v.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
+  const fo = focusOf(v);
+  v.sources = g.forest.lightsNear(fo.x, fo.z, t.haze.far + margin);
   v.stats.trees = nt; v.stats.bushes = nb;
   v.shadowList = shadows;
 }

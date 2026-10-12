@@ -265,7 +265,7 @@ const report = await b.page.evaluate(async () => {
     // start and arrowhead, a wind-up flash, the quake's reach), hit sparks, and slow and knockback marks: every frame, light and dark, ground and
     // treetop, drawn, anchors inside, frames differing, the light ones haloed and the dark ones rimmed, only glowing pixels tinted, the treetop
     // drawing as big from the treetops as the ground one from the ground (or more); every attack in config/combat.json has its effects
-    const bad = [], E = G.EFFECTS, glowing = new Set([G.M.MAGIC2, G.M.MAGIC, G.M.GLOW, G.M.COLLAR]), need = ["spit", "barb", "lobSeed", "lobStone", "lobShadow", "feather", "mote", "beamShortStart", "beamShortLoop", "beamShortEnd", "beamLongStart", "beamLongLoop", "beamLongEnd", "quakeRing", "sporeCloud", "targetCircle", "line", "lineStart", "lineEnd", "windupFlash", "quakeReach", "hitSpark", "hitSparkBig", "slowRing", "slowMark", "knockback", "dust", "screechRing", "upheavalRing", "slamRing", "webGlob", "webSplat", "moleMound", "chargeDust", "stunStars", "hitStrong", "hitResisted", "traitFlier", "traitArmoured", "traitSwarm", "traitHeavy", "traitNimble", "traitBurrower"];
+    const bad = [], E = G.EFFECTS, glowing = new Set([G.M.MAGIC2, G.M.MAGIC, G.M.GLOW, G.M.COLLAR]), need = ["spit", "barb", "lobSeed", "lobStone", "lobShadow", "feather", "mote", "beamShortStart", "beamShortLoop", "beamShortEnd", "beamLongStart", "beamLongLoop", "beamLongEnd", "quakeRing", "sporeCloud", "targetCircle", "line", "lineStart", "lineEnd", "windupFlash", "quakeReach", "hitSpark", "hitSparkBig", "slowRing", "slowMark", "knockback", "dust", "screechRing", "upheavalRing", "slamRing", "webGlob", "webSplat", "moleMound", "chargeDust", "stunStars", "hitStrong", "hitResisted", "traitFlier", "traitArmoured", "traitSwarm", "traitHeavy", "traitNimble", "traitBurrower", "cycloneRise", "cyclone", "cycloneFall"];
     for (const id of need) if (!G.EFFECT_BY_ID[id]) bad.push(`no ${id}`);
     let n = 0;
     for (const e of E) for (const zoom of ["ground", "treetop"]) for (const variant of ["light", "dark"]) {
@@ -287,7 +287,7 @@ const report = await b.page.evaluate(async () => {
     for (const atk of Object.keys(combat.attacks)) { const fx = A[atk]; if (!fx) { bad.push(`attack ${atk} has no effects`); continue; } for (const v of Object.values(fx).flat()) if (!G.EFFECT_BY_ID[v]) bad.push(`attack ${atk}: no effect ${v}`); }
     for (const [atk, fx] of Object.entries(A)) for (const v of Object.values(fx).flat()) if (!G.EFFECT_BY_ID[v].attacks.includes(atk)) bad.push(`${v} doesn't list ${atk}`);
     for (const v of Object.values(G.STATE_EFFECTS).flatMap(x => typeof x === "string" ? [x] : Object.values(x))) if (!G.EFFECT_BY_ID[v]) bad.push(`state effect ${v} missing`);
-    res.push({ what: "attack effects: projectiles, short and long beams (start, a repeating loop, end), quake ring and spore cloud, telegraphs (target circle, a repeating line with its ends, wind-up flash, quake reach), hit sparks, slow and knockback marks, Stage 5's pulse rings, web, mole mound, charge dust, stun stars, strong and resisted hits, six trait marks; every frame light and dark, ground and treetop, drawn, anchors inside, frames differing, halos and rims, only glowing pixels tinted, as big from the treetops; every attack in config/combat.json has its effects", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${E.length} effects, ${n} sprites; ${Object.keys(combat.attacks).length} attacks covered` });
+    res.push({ what: "attack effects: projectiles, short and long beams (start, a repeating loop, end), quake ring and spore cloud, telegraphs (target circle, a repeating line with its ends, wind-up flash, quake reach), hit sparks, slow and knockback marks, Stage 5's pulse rings, web, mole mound, charge dust, stun stars, strong and resisted hits, six trait marks, the Cyclone hat's whirlwind (rising, looping, falling); every frame light and dark, ground and treetop, drawn, anchors inside, frames differing, halos and rims, only glowing pixels tinted, as big from the treetops; every attack in config/combat.json has its effects", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${E.length} effects, ${n} sprites; ${Object.keys(combat.attacks).length} attacks covered` });
   }
   for (const id of ["wolf", "owl", "snake"]) { const s = stats(G.critter(id, 1, 0, st, "away")); res.push({ what: `${id} turned away`, good: s.n > 50 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
   { // the treehouse (Ed's second go: mostly wood, modern touches, its top standing above the treeline, her seat in a cutaway studio): towards and away,
@@ -307,6 +307,47 @@ const report = await b.page.evaluate(async () => {
       info = `${sp.w}x${sp.h} (${Mx.height} m; top storey at ${Mx.towerFloor} m, roof tip ${Mx.roofTip} m; trunk ${Mx.trunk} m across, crown ${Mx.crown} m; footprint ${Mx.footprint} m, decks to ${Mx.overhang} m), ${A.lights.length} lights (${A.lights.filter(L => L.kind === "decks").length} on the decks)`;
     }
     res.push({ what: "treehouse: towards and away, 28 to 40 m, its top storey above the 24 m treetops; its giant tree's trunk 5 m+ across and crown 11 m+; fore (the DJ table) part of the whole; top + bottom = whole, the studio below the split; windows glow; anchors inside; the seat on the studio floor, the camera over it", good: !bad.length, info: bad.join("; ") || info });
+  }
+  { // the treehouse Ent (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent"; a gnarled kneeling tree, a suggestion
+    // of Atlas, no face; the deck at 22 m, radius 7; the world map at its centre; the DJ decks along its south arc; art/ent.js): towards and away,
+    // standing; far and near the whole's size, near a part of the whole and the two covering it; no face; anchors inside (the deck over the base,
+    // the table on the deck's middle, the seat on its planks in front of the middle); the deck as wide as its radius and as high as deckY; the DJ
+    // table's fore frames turning (one size, each different, the first the whole's); its lanterns and the decks lit; her DJ hands on the decks
+    const bad = []; let info = "";
+    const count = x => { let n = 0; for (let i = 0; i < x.m.length; i++) if (x.m[i]) n++; return n; }, FACE = new Set([G.M.EYE, G.M.PUPIL, G.M.IRIS]);
+    for (const facing of ["towards", "away"]) {
+      const T = G.entSprite(st, { facing }), sp = T.whole, s2 = stats(sp), A = T.anchors, Mx = T.metres, W = sp.w, H = sp.h;
+      const sized = [T.far, T.near, T.fore].every(x => x.w === W && x.h === H) && count(T.far) > 5000 && count(T.near) > 300;
+      let partOf = 0, covered = true; for (let i = 0; i < sp.m.length; i++) { if (T.near.m[i] && T.near.m[i] === sp.m[i]) partOf++; if (sp.m[i] && !T.far.m[i] && !T.near.m[i]) covered = false; }
+      const nearOk = partOf >= count(T.near) * .9, faceless = ![...sp.m].some(v => FACE.has(v));
+      const inside = [A.base, A.deck, A.table, A.seat, A.platter, A.camera, ...A.lights].every(({ x, y }) => x >= 0 && x <= W && y >= 0 && y <= H);
+      const placed = A.deck.y < A.base.y - 200 && Math.abs(A.table.x - A.deck.x) < 3 && A.table.y < A.deck.y && A.seat.y > A.deck.y && A.camera.y < A.seat.y;
+      let onPlanks = false; for (let dy = -3; dy <= 2 && !onPlanks; dy++) for (let dx = -4; dx <= 4; dx++) if ([G.M.WOOD, G.M.HAT2, G.M.BARKD, G.M.BARKL].includes(T.far.get(Math.round(A.seat.x) + dx, Math.round(A.seat.y) + dy))) { onPlanks = true; break; }
+      const wide = Mx.width >= Mx.deckR * 2 && Mx.width <= Mx.deckR * 2 + 4, high = (A.base.y - A.deck.y) / 16 >= Mx.deckY * .8 && (A.base.y - A.deck.y) / 16 <= Mx.deckY * 1.02;
+      const FF = T.foreFrames, framesOk = FF.length === G.DJ_FRAMES && new Set(FF.map(f => f.w + "x" + f.h)).size === 1 && new Set(FF.map(f => Array.from(f.m).join())).size === FF.length;
+      let foreOk = count(T.fore) > 150; for (let i = 0; i < sp.m.length && foreOk; i++) if (T.fore.m[i] && T.fore.m[i] !== sp.m[i]) foreOk = false;
+      const lit = A.lights.filter(L => L.kind === "lantern").length >= 4 && A.lights.filter(L => L.kind === "decks").length === 2 && [...sp.m].filter(v => v === G.M.GLOW).length > 12;
+      // her DJ hands on the decks' pixels (the treehouse's own check, on the Ent's deck)
+      const DECK = new Set([G.M.SHADES, G.M.BODY3, G.M.COLLAR, G.M.RUNE, G.M.BELLY, G.M.FRAME, G.M.WOKEN]), f0 = FF[0];
+      const onDeck = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = Math.round(x) - T.foreBox.x + dx, Y = Math.round(y) - T.foreBox.y + dy; if (X >= 0 && Y >= 0 && X < f0.w && Y < f0.h && DECK.has(f0.m[Y * f0.w + X])) return true; } return false; };
+      let hands = 0; for (const f of [0, 1, 4, 5, 6, 7, 8, 9, 15, 16, 17, 18]) { const w = G.witchSprite(st, { pose: "dj", frame: f }); if (!onDeck(A.seat.x - w.anchors.ground[0] + w.anchors.hand[0], A.seat.y - w.anchors.ground[1] + w.anchors.hand[1])) hands++; }
+      if (!(s2.bottom > 0 && sized && nearOk && covered && faceless && inside && placed && onPlanks && wide && high && framesOk && foreOk && lit && !hands)) bad.push(`${facing}:${sized ? "" : " sizes"}${nearOk ? "" : " near not the whole's"}${covered ? "" : " halves don't cover it"}${faceless ? "" : " a face"}${inside ? "" : " anchors outside"}${placed ? "" : " anchors misplaced"}${onPlanks ? "" : " seat off the planks"}${wide ? "" : ` ${Mx.width} m wide`}${high ? "" : ` deck at ${((A.base.y - A.deck.y) / 16).toFixed(1)} m on screen`}${framesOk ? "" : " fore frames"}${foreOk ? "" : " fore not the whole's"}${lit ? "" : " lights"}${hands ? ` ${hands} hands off the decks` : ""}`);
+      info = `${W}x${H} (${Mx.height} m tall, ${Mx.width} m wide; deck ${Mx.deckR} m round at ${Mx.deckY} m, table ${Mx.tableR * 2} m across; desk ${Mx.desk.from}..${Mx.desk.to} rad, her spot ${Mx.desk.inner} m from the middle), ${A.lights.length} lights`;
+    }
+    res.push({ what: "treehouse Ent: towards and away, standing, no face; far and near the whole's size, near part of it, the two covering it; anchors inside, the deck over the base, the table on its middle, the seat on its planks; the deck its radius wide and deckY high; DJ fore frames turning, the first the whole's; lanterns and decks lit; her DJ hands on the decks", good: !bad.length, info: bad.join("; ") || info });
+  }
+  { // the Ent's carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of its
+    // kind; art/carrier.js): every species draws one, standing on its bottom row (a flyer landed, its shadow gone), its back between
+    // 6 m and CARRIER.maxBack, no longer than CARRIER.maxLength, its back's top anchor inside it on its own pixels
+    const bad = [], C = G.CARRIER, out = [];
+    for (const S of G.SPECIES) {
+      const c = G.carrierSprite(st, S.id, { ppm: 16 }); if (!c) { bad.push(`${S.id}: none`); continue; }
+      const sp = c.sprite, standing = [...Array(sp.w).keys()].some(x => sp.m[(sp.h - 2) * sp.w + x] && sp.m[(sp.h - 2) * sp.w + x] !== G.M.NOSE);
+      const onIt = sp.get(c.back.x, c.back.y) || sp.get(c.back.x, c.back.y + 1);
+      if (!(standing && onIt && c.backM >= 6 && c.backM <= C.maxBack + .5 && c.lengthM <= C.maxLength + .5)) bad.push(`${S.id}:${standing ? "" : " floating"}${onIt ? "" : " back anchor off it"} back ${c.backM.toFixed(1)} m, ${c.lengthM.toFixed(1)} m long`);
+      out.push(`${S.id} ${c.backM.toFixed(0)}/${c.lengthM.toFixed(0)}`);
+    }
+    res.push({ what: "the Ent's carrier: every species, standing, back 6 m to maxBack, no longer than maxLength (back/length m)", good: !bad.length, info: bad.length ? bad.join("; ") : out.join(", ") });
   }
   { // the DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): the DJ
     // table's fore frames (DJ_FRAMES of them, one size, each different: the platters turning, the LEDs chasing; the first is the
@@ -783,6 +824,18 @@ const report = await b.page.evaluate(async () => {
     for (const id of G.LEGEND_IDS) { const L = G.legendSprites(id, st); if (!L || !Object.keys(L).length) bad.push(`legend sprites ${id}`); seen.legends++; }
     res.push({ what: "every generator draws: the beach's finds and prints (every heading), the bedroom, every broom, the witch's hat both ways, every species' rune stone, a party patch, every legend's sprites; none empty, nothing NaN, every material coloured", good: !bad.length && seen.beach > 0 && seen.brooms >= 18, info: bad.slice(0, 6).join("; ") || `${seen.beach} beach pieces, ${seen.brooms} brooms, ${seen.stones} rune stones, ${seen.legends} legends` });
   }
+  { // the runestones' 20 forms (Ed, 2026-10-12): each draws, mildly unlike today's (its size within 0.85 to 1.25 of it), and mirrored at the
+    // same size with its carving the same glyph (as many lit pixels, the sigil stamped after the flip: never mirror-written)
+    const lit = b => { const d = b.A.getContext("2d").getImageData(0, 0, b.w, b.h).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] === 254) n++; return n; };
+    const base = G.runeStone(st, { sigil: "boar" }), bad = [];
+    for (let v = 0; v < G.RUNESTONE_FORMS; v++) {
+      const a = G.runeStone(st, { sigil: "boar", form: v }), f = G.runeStone(st, { sigil: "boar", form: v, flip: true });
+      if (!(a.h >= base.h * .85 && a.h <= base.h * 1.25 && a.w >= base.w * .85 && a.w <= base.w * 1.25)) bad.push(`form ${v} ${a.w}x${a.h} (today's ${base.w}x${base.h})`);
+      if (f.w !== a.w || f.h !== a.h) bad.push(`form ${v} mirrored ${f.w}x${f.h}`);
+      if (Math.abs(lit(f) - lit(a)) > 6 || lit(a) < 20) bad.push(`form ${v} carving ${lit(a)} / mirrored ${lit(f)}`);
+    }
+    res.push({ what: `the runestone's ${G.RUNESTONE_FORMS} forms draw, within 0.85 to 1.25 of today's size, mirrored the same size with the same carving`, good: G.RUNESTONE_FORMS === 20 && !bad.length, info: bad.slice(0, 4).join("; ") || `${G.RUNESTONE_FORMS} forms` });
+  }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {
     const a = G.areaAssets(A.id, st), props = [...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])];
@@ -792,6 +845,24 @@ const report = await b.page.evaluate(async () => {
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 ok(report.every(r => r.good), `${report.length} sprite checks`);
+// the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
+// every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle
+// reaching it), each tier different and the carved ones more detailed than the plain glyph (more edges), not a solid disc
+{
+  const D = await import("./sigilDetail.js"), S = await import("./sigils.js"), bad = [];
+  for (const id of [...S.SIGIL_IDS, "worldTree"]) {
+    const n = 128, t = [0, 1, 2].map(tier => D.sigilDetail(id, n, { tier })), ink = t.map(m => m.reduce((a, v) => a + v, 0));
+    if (t.some(m => m.some(v => v !== 0 && v !== 1))) bad.push(`${id}: not crisp`);
+    if (ink.some(k => k < 150)) bad.push(`${id}: ink ${ink.join("/")}`);
+    if (ink[2] > n * n * .6) bad.push(`${id}: too solid (${ink[2]})`);
+    if (t.some(m => { for (let i = 0; i < n; i++) if (m[i] || m[(n - 1) * n + i] || m[i * n] || m[i * n + n - 1]) return true; return false; })) bad.push(`${id}: touches its box's edge`);
+    if (t[1].every((v, i) => v === t[2][i]) || t[0].every((v, i) => v === t[1][i])) bad.push(`${id}: tiers alike`);
+    const edges = t.map(m => { let e = 0; for (let y = 0; y < n; y++) for (let x = 1; x < n; x++) e += m[y * n + x] !== m[y * n + x - 1] ? 1 : 0; return e; });
+    if (!(edges[1] > edges[0] * 1.3 && edges[2] > edges[0] * 1.3)) bad.push(`${id}: the carved tiers no more detailed than the plain glyph (edges ${edges.join("/")})`);
+  }
+  if (!(D.detailTier(32) === 0 && D.detailTier(96) === 1 && D.detailTier(200) === 2)) bad.push("detailTier");
+  ok(!bad.length, `detailed sigils: every species' and the World Tree (${S.SIGIL_IDS.length + 1}), plain glyph, carved bands and the carved emblem, crisp, clear of the box's edge, no circle, each tier its own${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 // party relics (art/partyRelics.js, #87): 6+ bottles, each half-buried, drawn at a third of their built size (Ed, 2026-10-11: 2.3 to 5.4 m across and 2 to 5.7 m tall),
 // sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
 // motes); the glass is see-through (a rim in its colour and a half-clear dither of empty glass); it carries a light; its 3 frames

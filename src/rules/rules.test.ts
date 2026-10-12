@@ -132,7 +132,7 @@ describe("the map", () => {
   it("is a circle of about mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
     expect(Math.abs(map.cells.length - TUNING.mapAreas ** 2)).toBeLessThan(TUNING.mapAreas * 2);
     expect(AREA_TYPES.length).toBeGreaterThanOrEqual(30);
-    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r * (1 + TUNING.map!.coast!.amp)); // (the box round its furthest headland)
+    expect(map.bounds).toMatchObject(map.bounds.land!.box); // (the box round its furthest headland)
   });
 
   it("never gives two touching areas the same type", () => {
@@ -223,7 +223,7 @@ describe("the map", () => {
     expect(far).toBeGreaterThan(floorClearing(TUNING)); // outside the speakers and the clearing
     expect(far).toBeLessThan(floorClearing(TUNING) + 20);
     expect(map.hardClear(th.x, th.z)).toBe(true);
-    expect(Math.hypot(map.start.x - th.x, map.start.z - th.z)).toBeLessThan(3);
+    expect(Math.hypot(map.start.x - th.x, map.start.z - th.z - (TUNING.treehouse.deck?.on ? TUNING.treehouse.deck.seat : 1))).toBeLessThan(1e-9); // (at her decks: on the treehouse deck, rules/treehouse.ts)
   });
   it("starts the witch seated on the terrace; she stays put till the first move or rise", () => {
     const g = newGame(5, TUNING);
@@ -593,7 +593,7 @@ describe("light sources", () => {
   it("put more ponds in the wet areas", () => {
     const wet = new Set(["wetland", "stream", "bog", "beaver-pond", "moor"]);
     const ponds = all.filter(l => l.kind === "pond"), inWet = ponds.filter(l => wet.has(AREA_TYPES[map.areaAt(l.x, l.z).type].id)).length;
-    expect(inWet / ponds.length).toBeGreaterThan(0.4);
+    expect(inWet / ponds.length).toBeGreaterThan(0.35); // (5 of the 30 kinds: about a sixth by chance)
   });
 });
 
@@ -966,7 +966,7 @@ describe("inviting and leashing", () => {
 
   it("goes through the game: the debug invite and the sigil button in its controls", () => {
     const g = newGame(123, TUNING);
-    g.clock.paused = false;
+    g.clock.paused = false; g.witch.perch = false; // (down on the ground, off the treehouse deck)
     stepGame(g, { ...NO_INTENT, zoom: 0, inviteNearest: true }, 1 / 60);
     expect(g.leash.stack.length).toBe(1);
     stepGame(g, { ...NO_INTENT, zoom: 0, sigil: true }, 1 / 60);
@@ -1518,7 +1518,7 @@ describe("music by proximity (Ed, 2026-10-04)", () => {
   const g0 = newGame(6, TUNING), map = g0.map; // the game's own map
   g0.party.bootFrom = 0; g0.party.bootUntil = bootSeconds(map); // (off her decks at the start)
   const atW = (x: number, z: number, time: number) => { const g = at(x, z, time); return [g, g.witch] as const; };
-  const at = (x: number, z: number, time: number) => { const g = { ...g0, speakers: [...g0.speakers], clock: { ...g0.clock, time } }; g.witch = { ...g.witch, x, z, seated: false }; return g; };
+  const at = (x: number, z: number, time: number) => { const g = { ...g0, speakers: [...g0.speakers], clock: { ...g0.clock, time } }; g.witch = { ...g.witch, x, z, seated: false, perch: false }; return g; };
   it("is full and clear by the playing dancefloor, quiet and muffled in the deep forest", () => {
     const d = map.dancefloor, after = bootSeconds(map) + 1;
     const g = at(d.x, d.z, after), near = musicMix(g, g.witch);
@@ -1542,11 +1542,11 @@ describe("music by proximity (Ed, 2026-10-04)", () => {
   });
 });
 
-describe("the spell (Ed, 2026-10-04)", () => {
-  const S = TUNING.spells.speed;
-  it("casts the equipped speed boost: much faster for its duration, then recharges over its cooldown", () => {
-    const s = newSpells(TUNING);
-    expect(s.equipped).toBe("speed");
+describe("the Speed broom (Ed, 2026-10-04; a broom since 2026-10-11)", () => {
+  const S = TUNING.spells.speed, SPEED = withTuning({ spells: { ...TUNING.spells, broom: "speed" } });
+  it("casts the speed boost: much faster for its duration, then recharges over its cooldown", () => {
+    const s = newSpells(SPEED);
+    expect(s.broom).toBe("speed");
     expect(spellCharge(s, 0)).toBe(1);
     expect(castSpell(s, 10, TUNING)).toBe(true);
     expect(speedMultiplier(s, 10.1, TUNING)).toBeCloseTo(S.mult);
@@ -1556,7 +1556,7 @@ describe("the spell (Ed, 2026-10-04)", () => {
     expect(castSpell(s, 10 + S.duration + S.cooldown, TUNING)).toBe(true);
   });
   it("makes her fly faster in the game", () => {
-    const run = (spell: boolean) => { const g = newGame(4, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
+    const run = (spell: boolean) => { const g = newGame(4, SPEED); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
     expect(run(true)).toBeGreaterThan(run(false) * (S.mult - 0.3));
   });
 });
@@ -1690,7 +1690,7 @@ describe("the simulation (Stage 4)", () => {
   it("keeps a press made in a frame too short for a step for the next step", () => {
     const g = newGame(321, TUNING);
     g.clock.paused = false;
-    g.witch = { ...g.witch, seated: false };
+    g.witch = { ...g.witch, seated: false, perch: false };
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: true, zoom: 0 }, STEP / 4);
     expect(g.witch.mode).toBe("ground");
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
@@ -1700,7 +1700,7 @@ describe("the simulation (Stage 4)", () => {
   it("applies a press once, however many steps a slow frame runs", () => {
     const g = newGame(321, TUNING);
     g.clock.paused = false;
-    g.witch = { ...g.witch, seated: false };
+    g.witch = { ...g.witch, seated: false, perch: false };
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: true, zoom: 0 }, 0.1); // six steps
     expect(g.witch.mode).toBe("rising");
   });
@@ -1714,7 +1714,7 @@ describe("the simulation (Stage 4)", () => {
 });
 
 describe("the dash (Ed, 2026-10-04)", () => {
-  const ready = () => { const g = newGame(321, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; return g; };
+  const ready = () => { const g = newGame(321, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; return g; };
   const run = (g: ReturnType<typeof newGame>, n: number, c: Partial<Parameters<typeof stepGame>[1]> = {}) => { for (let i = 0; i < n; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, STEP); };
 
   it("blinks dash.distance metres the way she steers in one step, gone for a moment, then waits out its cooldown", () => {
@@ -1787,7 +1787,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     for (const tr of trees.slice(0, 12)) {
       const W = g.witches[0];
       W.dash = newDash();
-      g.witch = { ...g.witch, x: tr.x - TUNING.dash.distance, z: tr.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false };
+      g.witch = { ...g.witch, x: tr.x - TUNING.dash.distance, z: tr.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: false };
       run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
       for (const p of g.forest.treesNear(g.witch.x, g.witch.z, 3)) expect(Math.hypot(p.x - g.witch.x, p.z - g.witch.z)).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
       tried++;
@@ -1811,7 +1811,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     const x0 = g.witch.x;
     run(g, 1, { dash: true });
     expect(g.witches[0].dash.until).toBe(-Infinity);
-    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    g.witch = { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1 };
     run(g, 1, { dash: true });
     expect(g.witches[0].dash.until).toBe(-Infinity);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(1);
@@ -1848,7 +1848,7 @@ describe("the small islands' scenery (Ed, 2026-10-11)", () => {
       const decor = f.decorNear(cx, cz, half);
       for (const d of decor) expect(d.family).toBe("ruins");
       ruins += decor.filter(d => { const c = m.areaAt(d.x, d.z).cell; return m.playable(c[0], c[1]); }).length;
-      if (m.scenes.some(s => GAME_TUNING.scenes.featured?.ids.includes(s.id))) featured++;
+      if (m.scenes.some(s => (GAME_TUNING.scenes.featured?.ids ?? []).some(id => (id.endsWith("*") ? s.id.startsWith(id.slice(0, -1)) : s.id === id)))) featured++;
     }
     expect(featured).toBeGreaterThanOrEqual(6);
     expect(ruins / maps.length).toBeGreaterThan(4);

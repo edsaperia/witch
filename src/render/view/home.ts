@@ -10,6 +10,8 @@ import type { WaveNumber } from "../waveNumbers";
 import { beatAt, beatTime } from "../../rules/beat";
 import { candleCount, candleMelt, candleRed } from "../../rules/knockout";
 import { canopyShown } from "../../rules/witch";
+import { deckOf } from "../../rules/treehouse";
+import { groundHeight } from "../height";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
 import { columnShown, leyReachTimes } from "../../rules/leypulse";
@@ -34,8 +36,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
   const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
-  const stone = (x: number, z: number, species: string, level: number, y = 0) => {
-    const frame = v.markerArt.atlas.frames[v.markerArt.frame(species, level)];
+  const stone = (x: number, z: number, cell: readonly [number, number], level: number, y = 0) => {
+    const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level)];
     if (!inView(v, x, z, frame.w * v.mpp * scale, frame.h * v.mpp * scale, 6)) return false;
     inst.push({ x, y, z, frame, flip: false, scale, fresh: mark(v, "marker", x, z, frame.h * v.mpp * scale) });
     return true;
@@ -53,9 +55,9 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, col = v.markerArt.colour.get(species)!;
     // Awake: brighter on the beat, more so as the countdown runs out; dormant: a steady glow.
     const level = m.awake ? 1 + Math.round(Math.min(1, beat * (0.4 + 0.6 * build)) * (MARKER_LEVELS - 2)) : 0;
-    stone(m.x, m.z, species, level);
+    stone(m.x, m.z, m.cell, level);
     // The beam and laser rise from the top of the stone, not from inside it.
-    const top = (v.markerArt.height.get(species) ?? 0) * v.mpp * scale;
+    const top = v.markerArt.height(m.cell) * v.mpp * scale;
     const A = R.awake, D = R.dormant;
     const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
     if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
@@ -86,7 +88,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     if (!a.soundsystem || time - a.at > R.flare.time || time < a.at) continue;
     const k = (time - a.at) / R.flare.time, species = AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature, col = v.markerArt.colour.get(species)!;
     const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]);
-    stone(s0.x, s0.z, species, MARKER_LEVELS - 1, -k * k * 4 * scale);
+    stone(s0.x, s0.z, a.cell, MARKER_LEVELS - 1, -k * k * 4 * scale);
     near.push({ d: 0, l: { x: s0.x, y: 2.5, z: s0.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * (1 - k) } });
   }
   near.sort((p, q) => p.d - q.d);
@@ -127,7 +129,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     for (const m of mc.list) {
       const wave = v.plan.waves.get(m.key);
       if (wave === undefined || Math.hypot(m.x - w.x, m.z - w.z) > range) continue;
-      const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = (v.markerArt.height.get(species) ?? 0) * v.mpp * scale;
+      const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = v.markerArt.height(m.cell) * v.mpp * scale;
       const k = shown(m.key, m.x, m.z, top);
       // the next stone's number as bright as its ring; the rest dimmer (the art director, #188)
       if (k > 0.02) nums.push({ x: m.x, z: m.z, y: lift(top), wave, colour: v.markerArt.colour.get(species)!, alpha: m.stage === "next" ? 1 : 0.5, show: k, top, pin: pin(m.x, m.z) });
@@ -220,6 +222,21 @@ export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d:
   return { x: p.x - (dx / l) * d, y: p.y - (dy / l) * d, z: p.z - (dz / l) * d };
 }
 
+/** The treehouse Ent's halves (rules/treehouse.ts, art/ent.js): drawn in the plane through the deck's middle, the far half (the Ent,
+ *  the floor, the rail's far side, the map table) moved this far back along the rays from the camera and the near half (the rail's
+ *  near side, the decks' desk) this far forward, each scaled to land on its own pixels, so she, anywhere on the deck, stands
+ *  between them (metres: past the deck's radius and its rail). The DJ table's frames, her hands over it and the candles go in
+ *  front of the near half as DJ_DEPTH says. */
+export const ENT_DEPTH = { far: 8, near: 7.6 };
+/** The Ent's carrier (art/carrier.js): a breath's seconds and how much taller it stands at its top (its height's share). */
+const CARRIER_BREATH = 4, CARRIER_SWELL = 0.006;
+/** A point `d` metres nearer the camera along the ray from it, and how much smaller to draw what stands there to cover the same
+ *  pixels as at `p` (negative `d`: farther, bigger). */
+export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {
+  const c = v.camera.position, l = Math.hypot(p.x - c.x, p.y - c.y, p.z - c.z) || 1, q = nearerCamera(v, p, d);
+  return { ...q, scale: Math.max(0.05, (l - d) / l) };
+}
+
 /** The knockdown candles last shown, per view: their count, how many red, and (once she's free) when their smoke is done. */
 const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>();
 
@@ -231,15 +248,42 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
   const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(v.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
   const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
   const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
-  const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
-  const items: SpriteInstance[] = [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+  let at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
+  const deck = T.ent ? deckOf(v.game.map, v.game.tuning) : null, R0 = SPRITE_UNIFORMS.uRight.value;
+  // The treehouse Ent: its deck's middle (its anchor) on the rules' deck, its two halves either side of her (ENT_DEPTH)
+  const ent = (p: { x: number; y: number; z: number }, dd: number, frame: SpriteInstance["frame"], o: Partial<SpriteInstance> = {}): SpriteInstance => {
+    const P = deckAt!, g0 = groundHeight(P.x, P.z), q = alongRay(v, { ...P, y: P.y + g0 }, dd), k = q.scale; // (the ray in the world's heights; sprites stand on the ground: p's offset from the deck's middle, shrunk or grown with it)
+    q.y -= g0;
+    return { x: q.x + (p.x - P.x) * k, y: q.y + (p.y - P.y) * k, z: q.z + (p.z - P.z) * k, frame, flip: false, scale: k, ...o };
+  };
+  let deckAt: { x: number; y: number; z: number } | null = null;
+  if (deck && T.ent) {
+    deckAt = { x: deck.x, y: deck.h, z: deck.z }; // (over the ground, as every sprite's y)
+    const ox = (T.ent.deck.x - f[0].w / 2) * mpp, oy = (f[0].h - T.ent.deck.y) * mpp;
+    at = { x: deckAt.x - R0.x * ox - U.x * oy, y: deckAt.y - R0.y * ox - U.y * oy, z: deckAt.z - R0.z * ox - U.z * oy };
+  }
+  const items: SpriteInstance[] = deckAt ? [ent(at, -ENT_DEPTH.far, f[0]), ent(at, ENT_DEPTH.near, f[1])] : [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+  // The island's legend carrying the Ent (art/carrier.js; Ed, 2026-10-10): its back's top under the Ent's roots' foot (the base
+  // anchor), its roots' foot planted T.carrier.sink pixels down in its fur, its feet on the ground (the art grows the Ent's trunk
+  // to fit): in front of the Ent's far half (pushed back along the rays with it, it would sink into the ground). Breathing slowly (drawing only): a touch taller and shorter about
+  // its feet, a breath every CARRIER_BREATH seconds.
+  if (deckAt && T.carrier) {
+    const C = T.carrier, fc = f[C.frame];
+    const bx = T.base.x - C.back.x + fc.w / 2, by = T.base.y + C.sink + (fc.h - C.back.y); // (its sprite's bottom middle, in the Ent's pixels)
+    const dx = (bx - f[0].w / 2) * mpp, dy = (f[0].h - by) * mpp;
+    const p0 = { x: at.x + R0.x * dx + U.x * dy, y: at.y + R0.y * dx + U.y * dy, z: at.z + R0.z * dx + U.z * dy };
+    // Stacked down the sprites' up (tilted back from the camera, steeply in the treetops) its feet would land under the ground:
+    // slid along the ray from the camera until they stand on it, the same pixels on screen (nearer, so drawn smaller).
+    const g0 = groundHeight(deckAt.x, deckAt.z), c = v.camera.position, Wy = p0.y + g0, t = p0.y < 0 && c.y > Wy ? -p0.y / (c.y - Wy) : 0;
+    items.push({ x: p0.x + (c.x - p0.x) * t, y: 0, z: p0.z + (c.z - p0.z) * t, frame: fc, flip: false, scale: 1 - t, sy: 1 + CARRIER_SWELL * Math.sin((time * 2 * Math.PI) / CARRIER_BREATH) });
+  }
   // The studio's DJ table over her (Ed, 2026-10-06): its crop where it shows in the base, a frame two to a beat (the platters
   // turning an eighth, the LEDs chasing), nearer the camera than her.
   if (T.hasFore) {
     const k = Math.floor(beatAt(v.game.beat, time) * 2) % T.foreFrames, ff = f[2 + Math.max(0, k)], R = SPRITE_UNIFORMS.uRight.value;
     const dx = (T.foreBox.x + ff.w / 2 - f[0].w / 2) * mpp, dy = (f[0].h - T.foreBox.y - ff.h) * mpp;
-    const p = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.fore);
-    items.push({ ...p, frame: ff, flip: false, overlay: true });
+    const p0 = { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy };
+    items.push(deckAt ? ent(p0, ENT_DEPTH.near + DJ_DEPTH.fore - DJ_DEPTH.her, ff, { overlay: true }) : { ...nearerCamera(v, p0, DJ_DEPTH.fore), frame: ff, flip: false, overlay: true });
   }
   // The knockdown candles along the front edge of the studio's terrace (Ed, 2026-10-07), a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
   // seconds of her wait; candleRed of them red, the wait past the base; candleMelt, burning down one after another as she
@@ -261,8 +305,8 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
       const level = m >= 1 ? T.candleLevels - 1 : Math.min(T.candleLevels - 2, Math.floor(m * (T.candleLevels - 1)));
       const fr = f[T.candle0 + (j < red ? T.candleRed : 0) + level * T.candleFlicker + (Math.floor(time * 7 + i * 1.7) % T.candleFlicker)]; if (!fr) continue;
       const dx = (px - f[0].w / 2) * mpp, dy = (f[0].h - py) * mpp; // (the candle's foot on the row, in the base's pixels: its sprite's bottom middle there)
-      const base = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.candles);
-      items.push({ ...base, frame: fr, flip: false, overlay: true });
+      const c0 = { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy };
+      items.push(deckAt ? ent(c0, ENT_DEPTH.near + DJ_DEPTH.candles - DJ_DEPTH.her, fr, { overlay: true }) : { ...nearerCamera(v, c0, DJ_DEPTH.candles), frame: fr, flip: false, overlay: true });
     }
   }
   v.treehouseBatch.set(items);

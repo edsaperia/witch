@@ -27,7 +27,7 @@ describe("the party spell", () => {
   });
   it("starts the clock and the boot when pressed, and lets her move once the cast and her routine are done", () => {
     const g = newGame(123, TUNING);
-    g.party.spellAt = null; g.clock.paused = false;
+    g.party.spellAt = null; g.clock.paused = false; g.witch.perch = false; // (her decks on the ground: the treehouse deck slows time, treehouse.test.ts)
     run(g, 2);
     const x0 = g.witch.x;
     run(g, STEP, { castParty: true });

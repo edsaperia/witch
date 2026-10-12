@@ -1,4 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { wavesOver } from "./rules/win";
+import { chartOpen, openChart } from "./ui/chartOverlay";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -21,7 +23,11 @@ import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { tuningFromLink } from "./app/linkParams";
-import { nightOver } from "./app/chartSave";
+import { saveLoadout } from "./app/loadout";
+import { castable } from "./rules/spells";
+import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
+import { onTreehouse } from "./rules/treehouse";
+import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { Hud } from "./app/hud";
 import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
@@ -37,6 +43,8 @@ import { PerfHud } from "./app/perfHud";
 import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
+import { ArrivalFlight } from "./app/arrive";
+import { readArrival } from "./app/arrival";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -60,7 +68,7 @@ const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 // Her look (the character creator's, kept on this browser; else the classic witch).
 const savedLook = loadGenome();
 /** Whether her look has a hat to lose on a knockout (rules/hat.ts; Ed, 2026-10-06: "If she chooses no hat in character creation, then she simply doesn't have this mechanic"). */
-const hasHat = (g: unknown) => (g as { hat?: { shape?: string } } | null)?.hat?.shape !== "none";
+const hasHat = (g: unknown) => (g as { hat?: { shape?: string } } | null)?.hat?.shape !== "none" || game.spells.hat !== "none"; // (a hat with a spell is a hat, whatever its look: rules/spells.ts)
 const wearHat = (g: unknown) => { const H = game.witches[0].hat; H.has = hasHat(g); if (!H.has) H.down = null; };
 wearHat(savedLook);
 const view = new View(canvas, game, {
@@ -138,6 +146,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   loadTimes.ready = performance.now();
   startEl.classList.remove("loading");
   if (bot) start(); // (a bot game starts itself as soon as it can)
+  arrival?.begin(game); // (the camera takes over from the chart's still)
 }, 0));
 
 // The sound: the volume slider in the corner, then the context, music and sound effects at the first press (app/sound.ts).
@@ -147,6 +156,42 @@ sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where t
 const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
 freeze.started = () => startEl.style.display === "none";
 
+// Arriving from the sea chart (?arrive=1; Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart's
+// last frame (index.html put it up) while the night builds, then the flight from the chart's camera to her decks; no bedroom.
+// Any key or tap skips to the decks; the night starts (the party spell cast) as it lands, and if no key or tap has come by
+// then (browsers keep sound off till one does) a small note asks for one.
+const stillEl = document.getElementById("arrive-still") as HTMLImageElement | null;
+const arrival = (() => {
+  const r = params.get("arrive") === "1" && tuning.arrive ? readArrival(tuning.map?.island ?? "") : null; // (read once: a reload doesn't fly again)
+  if (!r || !tuning.arrive) { stillEl?.remove(); return null; }
+  return new ArrivalFlight(r, tuning.arrive, stillEl);
+})();
+// (Ed, 2026-10-12: the HUD hidden through the flight, fading in as she settles at her decks)
+const HUD_IDS = ["clock", "seed", "version", "buffs", "aim", "touch", "bubbles", "invites"];
+if (arrival) {
+  const st = document.createElement("style");
+  st.textContent = `${HUD_IDS.map(i => `#${i}`).join(",")} { transition: opacity 1.2s ease-out; } ${HUD_IDS.map(i => `body.arriving #${i}`).join(",")} { opacity: 0 !important; pointer-events: none !important; }`;
+  document.head.append(st);
+  document.body.classList.add("arriving");
+}
+let gestured = false, landed = false;
+const soundNote = () => {
+  const el = document.createElement("div");
+  el.id = "sound-note"; el.textContent = "🔊 press any key for sound";
+  el.style.cssText = "position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:30;font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.7);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;pointer-events:none";
+  document.body.append(el);
+  const go = () => { sound.wake(); el.remove(); removeEventListener("keydown", go); removeEventListener("pointerdown", go); };
+  addEventListener("keydown", go); addEventListener("pointerdown", go);
+};
+if (arrival) for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { gestured = true; if (!arrival.done) arrival.skip(); }, { capture: true });
+/** It's landed at her decks: the night starts, the party spell cast, as the bedroom's scroll would. */
+function arrived(): void {
+  landed = true;
+  document.body.classList.remove("arriving"); // (the HUD fades in)
+  if (start()) queueCast();
+  if (!gestured) soundNote(); else sound.wake();
+}
+
 // The character creator (Ed, 2026-10-05): at every load (and from the start screen's button);
 // ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
 // It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
@@ -154,6 +199,19 @@ freeze.started = () => startEl.style.display === "none";
 const creator = new Creator(style, savedLook, tuning.pixelSize);
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 let lookNow = JSON.stringify(savedLook);
+// Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
+creator.loadout = { hat: game.spells.hat, broom: game.spells.broom };
+creator.onLoadout = l => { changeLoadout(game.witches[0], l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(lookNow ? JSON.parse(lookNow) : savedLook); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
+// Back to her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4: "fly at treetop level to the treehouse to go back
+// to bedroom where time slows 10x. click an exit button (where the party scroll usually is) to go back to the island"): on the deck
+// (rules/treehouse.ts onTreehouse), the Bedroom button or F opens her room, the world running on at the deck's tenth; its way out
+// brings her back, standing on the deck, in her new look, hat and broom: a new hat on her head, any lying about staying where
+// they lie (Ed, 2026-10-12).
+creator.onExit = g => { newHatFromRoom(game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
+const bedroomBtn = document.getElementById("bedroom-btn");
+const toBedroom = () => { if (!bot && onTreehouse(game) && !creator.open && !game.witches[0].ko) { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.visit(); } };
+if (bedroomBtn) { for (const ev of ["pointerdown", "pointerup", "touchstart"]) bedroomBtn.addEventListener(ev, e => e.stopPropagation()); bedroomBtn.addEventListener("click", toBedroom); }
+window.addEventListener("keydown", e => { if (e.code === "KeyF" && !e.repeat && !creator.open) toBedroom(); });
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => sound.wake();
@@ -182,7 +240,7 @@ function botGame(kind: BotKind): void {
   });
 }
 if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
-else if (params.get("creator") !== "0") creator.show();
+else if (params.get("creator") !== "0" && !arrival) creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
@@ -205,14 +263,28 @@ function start(): boolean {
   input.clearPresses();
   return true;
 }
-input.onAny = start;
+input.onAny = () => (arrival && !landed ? true : start()); // (arriving: a key skips the flight, app/arrive.ts; the landing starts it)
 // The audio watchdog (app/sound.ts).
 sound.watch(() => !game.clock.paused && !freeze.frozen && !document.hidden, () => game.speakerBoot.some(t => t !== null), playtest);
-freeze.onToggle = on => sound.freeze(on);
+// The pause page's test sliders (Ed, 2026-10-12; ui/decide.ts PauseSliders): down the left while frozen, the freeze quiet (no card
+// of its own: nothing else over the game), its stamp at their foot. Their code loads on the first freeze.
+let pauseSliders: import("./ui/decide").PauseSliders | null = null, pauseLoading = false;
+freeze.quiet = true;
+freeze.onStamp = text => pauseSliders?.setStamp(text);
+freeze.onToggle = on => {
+  sound.freeze(on);
+  if (pauseSliders) { pauseSliders.show(on); return; }
+  if (!on || pauseLoading) return;
+  pauseLoading = true;
+  void import("./ui/decide").then(({ PauseSliders }) => {
+    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: {} });
+    requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
+  });
+};
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The waves' pace: a "Waves:" dropdown in the bedroom's top right (app/wavePick.ts; Ed, 2026-10-08), the dev "Player:" pick
 // under it with the debug overlay on (Ed, 2026-10-11), never remembered; picking one doesn't start the game.
-if (params.get("creator") !== "0") makeWavePick(creator, WAVE_CHOICES, waveChoice, false, setPulseSpeed);
+if (params.get("creator") !== "0" && !arrival) makeWavePick(creator, WAVE_CHOICES, waveChoice, false, setPulseSpeed);
 setPulseSpeed(waveChoice);
 // Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
 const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = shake.option;
@@ -220,7 +292,7 @@ const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = sha
 // the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
 // (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the screen shake; the waves' pace is the top right's dropdown). The card itself shows only for a
 // run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
-if (params.get("creator") !== "0" && !botKind) {
+if (arrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (params.get("creator") !== "0" && !botKind) {
   const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
   if (keys) creator.addTab("controls", "❔ Controls", [keys]);
   if (news) creator.addTab("news", "📜 What's new", [news]);
@@ -273,6 +345,7 @@ let lastShedS = -1; // (the sound's safety valve, checked once a second: platfor
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
+const spellButton = document.getElementById("spell");
 let overShown = false, wonShown = false, chartRecorded = false;
 document.getElementById("won-close")?.addEventListener("click", () => document.getElementById("won")!.classList.remove("on"));
 document.getElementById("won-sail")?.addEventListener("click", () => { location.href = "chart.html"; }); // (on to the sea chart, its islands found now lit: app/chartPage.ts)
@@ -280,6 +353,8 @@ document.getElementById("again")?.addEventListener("click", () => location.reloa
 document.getElementById("chart-open")?.addEventListener("click", () => { location.href = "chart.html"; }); // (the sea chart: Ed, 2026-10-11: after a loss, replay the island or pick another)
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
+/** Controls with nothing pressed or held (the aim left where it is). */
+const stillControls = <T extends object>(c: T): T => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, typeof v === "boolean" ? false : typeof v === "number" ? 0 : v])) as T;
 function frame(now: number): void {
   requestAnimationFrame(frame);
   if (loop.manual) return;
@@ -288,7 +363,8 @@ function frame(now: number): void {
   const work0 = performance.now();
   frameStats.frame(dt * 1000);
   freeze.pollPad();
-  const human = input.read();
+  // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
+  const human = chartOpen() || creator.visiting ? stillControls(input.read()) : input.read(); // (her room open mid-night: she stands still on the deck)
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
@@ -303,6 +379,13 @@ function frame(now: number): void {
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
   if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== attackTick) { attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
   const stepMs = performance.now() - step0;
+  // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
+  // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
+  if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart(href => {
+    const W = tuning.map?.world ?? 0, save = loadSave();
+    if (save.world === W) storeSave(sailNight(save, tuning.map?.island ?? "", !wavesOver(game) && !chartRecorded && !overShown)); // (in the campaign's world only, as nightOver)
+    location.href = href;
+  }, new URLSearchParams(location.search).has("world") ? tuning.map?.world : undefined);
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
   // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart
@@ -313,6 +396,9 @@ function frame(now: number): void {
     document.getElementById("won")!.classList.add("on");
   }
   if (game.win?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); } // (in the campaign's world only)
+  // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
+  { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
+  { const want = !bot && onTreehouse(game) && !creator.open && !game.witches[0].ko ? "block" : "none"; if (bedroomBtn && bedroomBtn.style.display !== want) bedroomBtn.style.display = want; } // (on the treehouse deck: back to her room)
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
     nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); // (the sea chart: played; losing loses nothing)
@@ -341,7 +427,10 @@ function frame(now: number): void {
   hud.clock();
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
-  if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;
+  // (arriving: the flight's shot on the view, every frame; landed, the night starts)
+  const flying = !!arrival && !landed && ready;
+  if (flying && arrival!.frame(view, game, now)) arrived();
+  if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
   frameStats.beginGpu();

@@ -17,8 +17,12 @@ export class Freeze {
   private readonly copy = document.createElement("button");
   /** Whether the game has started (Escape on the start screen starts it, like any key). */
   started = () => true;
-  /** Told on every freeze and thaw (the music's audio stops dead). */
+  /** Told on every freeze and thaw (the music's audio stops dead; the pause page's sliders slide in). */
   onToggle: (frozen: boolean) => void = () => {};
+  /** Quiet (Ed, 2026-10-12: "the pause page shouldn't put any other overlay on the game"): no card or stamp of its own; the
+   *  stamp's text goes to onStamp instead (the pause page's sliders show it at their foot: ui/decide.ts PauseSliders). */
+  quiet = false;
+  onStamp: (text: string) => void = () => {};
 
   constructor(private readonly game: Game, private readonly seed: number, private readonly build: string) {
     const panel = { position: "fixed", zIndex: "6", background: "rgba(14,11,28,.72)", color: "#e8e2f4", font: "12px ui-monospace, Menlo, Consolas, monospace", borderRadius: "6px", pointerEvents: "none" };
@@ -43,8 +47,8 @@ export class Freeze {
     const g = this.game;
     if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; }
     else g.clock.paused = this.wasPaused;
-    this.marker.style.display = this.stamp.style.display = this.frozen ? "block" : "none";
     this.onToggle(this.frozen);
+    this.marker.style.display = this.stamp.style.display = this.frozen && !this.quiet ? "block" : "none";
   }
 
   /** Advance exactly n fixed steps, with no controls held. */
@@ -72,6 +76,7 @@ export class Freeze {
       `area   ${areaUnderWitch(g)}   cell ${a.cell[0]},${a.cell[1]}`,
       `camera zoom ${g.camera.zoomStep}`,
     ].join("\n");
+    if (this.quiet) { this.onStamp(lines); return; }
     if (this.stamp.firstChild?.nodeValue !== lines) { this.stamp.textContent = lines + "\n"; this.stamp.append(this.copy); }
   }
 

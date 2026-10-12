@@ -18,6 +18,8 @@ import { SpellScroll, type SpellCue } from "./spellScroll";
 import { KeyHint } from "./keyHint";
 import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixelUi";
 import { button, h } from "./dom";
+import { BROOM_SPELLS, HAT_SPELLS } from "../rules/spells";
+import { HAT_ICONS } from "../render/hatIcons";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -202,6 +204,10 @@ export class Creator {
   stepTab(by: number): void { const ids = [...this.boxes.keys()], i = ids.indexOf(this.box); this.openBox(ids[((i < 0 ? 0 : i + by) % ids.length + ids.length) % ids.length]); }
   /** Called with her look when the party spell bursts (the scroll cast and the world ready): play starts, the spell cast. */
   onStart: (g: Genome) => void = () => {};
+  /** Her hat's and broom's spells (rules/spells.ts; Ed, 2026-10-11: chosen "as they are picked now", in the Hat and Broom boxes;
+   *  their shape and colour stay on the sliders), and a callback when she changes one. */
+  loadout: { hat: string; broom: string } = { hat: "none", broom: "none" };
+  onLoadout: (l: { hat: string; broom: string }) => void = () => {};
   /** Called on the scroll's click itself (a gesture: the sound can start). */
   onGesture: () => void = () => {};
   /** The party spell's scroll's sound cues (platform/audio/spell.ts). */
@@ -240,6 +246,13 @@ export class Creator {
    *  sets done of total, and whether play can start. */
   progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
   get open(): boolean { return this.root.style.display !== "none"; }
+  /** Back in her room mid-night from the treehouse deck (Ed, 2026-10-11: "fly at treetop level to the treehouse to go back to
+   *  bedroom where time slows 10x. click an exit button (where the party scroll usually is) to go back to the island"): no
+   *  party scroll, its place taken by the way out. */
+  visiting = false;
+  /** The way out, mid-night: her look as it is now. */
+  onExit: (g: Genome) => void = () => {};
+  private exitBtn = h("button", { type: "button", text: "Back to the island" });
 
   constructor(private style: Style, start: Genome | null, pixel = 3) {
     this.st = { ...style, pixel } as Style;
@@ -273,13 +286,17 @@ export class Creator {
     this.scroll.onCast = () => { saveGenome(this.g); this.onGesture(); };
     this.scroll.onBurst = () => { this.hide(); this.onStart(this.genome()); };
     this.scroll.sound = (cue, v) => this.spellSound(cue, v);
+    Object.assign(this.exitBtn.style, { position: "absolute", display: "none", zIndex: "4", font: "inherit", fontSize: "15px", color: "#1d1408", background: "var(--accent, #e8b46a)", border: "2px solid rgba(255,236,200,.85)", borderRadius: "8px", cursor: "pointer", boxShadow: "0 0 18px rgba(232,180,106,.45)" });
+    this.exitBtn.dataset.exit = "";
+    this.exitBtn.addEventListener("click", () => this.leave());
+    this.root.append(this.exitBtn);
     // While it's open, its keys are its own but the debug overlay's ` (Enter casts the party spell, R randomises, WASD or the arrows walk her about); nothing reaches the game.
     window.addEventListener("keydown", e => {
       if (!this.open || e.code === "Backquote") return; // (bar the debug overlay's key: the Player pick shows with it, app/playerPick.ts)
       e.stopPropagation();
       if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); this.keyHint.pressed(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;
-      if (e.code === "Enter") { e.preventDefault(); this.scroll.cast(); } else if (e.code === "KeyR") this.randomise();
+      if (e.code === "Enter" || (this.visiting && e.code === "Escape")) { e.preventDefault(); if (this.visiting) this.leave(); else this.scroll.cast(); } else if (e.code === "KeyR") this.randomise();
       else if (e.key === "?" && this.boxes.has("controls")) { e.preventDefault(); this.openBox("controls"); }
       else if (e.code === "KeyQ" || e.code === "PageUp") { e.preventDefault(); this.stepTab(-1); } else if (e.code === "KeyE" || e.code === "PageDown") { e.preventDefault(); this.stepTab(1); }
     }, { capture: true });
@@ -292,7 +309,16 @@ export class Creator {
   }
 
   show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st, this.roomS); this.walker ??= newWalker(this.room.walk); this.loop(); this.scroll.start(); }
-  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); this.scroll.stop(); this.spellSound("hum", 0); }
+  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); this.scroll.stop(); this.spellSound("hum", 0); if (this.visiting) { this.visiting = false; this.scroll.el.style.display = ""; this.exitBtn.style.display = "none"; } }
+  /** Back in her room mid-night, from the treehouse deck: as at the start, but the way out in the party scroll's place. */
+  visit(): void {
+    this.visiting = true;
+    this.show();
+    this.scroll.stop(); this.scroll.el.style.display = "none"; this.exitBtn.style.display = "block";
+    this.laid = ""; this.dirty = true;
+  }
+  /** Out of her room, back to the island (mid-night): her look saved as at the start. */
+  private leave(): void { saveGenome(this.g); this.hide(); this.onExit(this.genome()); }
   genome(): Genome { return clone(this.g); }
 
   private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.g.palette = snapPalette(this.g.palette); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
@@ -365,6 +391,7 @@ export class Creator {
           ar.append(h("label", { style: { display: "inline-flex", alignItems: "center", gap: "3px", marginRight: "8px", cursor: "pointer" } }, c, WEAR_NAMES[k] ?? label(k)));
         }
       }
+      if (B.id === "hat" || B.id === "broom") this.spellRow(body, B.id, row);
       for (const axis of axes) this.axisRow(body, axis, row, get, set);
       if (parts.length) this.picker(body, B.id, parts, row, pal, cur);
     }
@@ -382,6 +409,26 @@ export class Creator {
   }
 
   /** An axis's row in its box: a button per choice, or a slider. */
+  /** The Hat or Broom box's power (rules/spells.ts; Ed, 2026-10-12: "for now it can just be a dropdown", the item's look and its
+   *  power chosen apart till they're matched): a dropdown of the built ones, "none" first, the chosen one's icon beside it
+   *  (render/hatIcons.ts) and its line under it. */
+  private spellRow(body: HTMLElement, slot: "hat" | "broom", row: (p: HTMLElement, n: string) => HTMLElement): void {
+    const r = row(body, "Power"), list = (slot === "hat" ? HAT_SPELLS : BROOM_SPELLS).filter(x => x.built), say = h("div", { style: { margin: "0 0 6px 84px", opacity: ".8", fontSize: "12px" } });
+    const pick = document.createElement("select"), icon = h("span", { style: { display: "inline-flex", width: "13px", height: "13px", marginLeft: "6px" } });
+    pick.dataset.spell = slot;
+    Object.assign(pick.style, { font: "inherit", color: "inherit", background: "rgba(255,255,255,.08)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 4px", cursor: "pointer" });
+    for (const x of list) { const o = document.createElement("option"); o.value = x.id; o.textContent = x.id === "none" ? "none" : x.name; o.title = x.line; o.style.background = "#1d1430"; pick.append(o); }
+    const paint = () => {
+      pick.value = this.loadout[slot];
+      const x = list.find(q => q.id === this.loadout[slot]), glyph = slot === "hat" ? HAT_ICONS[this.loadout[slot]] : undefined;
+      say.textContent = x?.line ?? "";
+      icon.replaceChildren(...(glyph ? [spellIcon(glyph)] : []));
+    };
+    pick.addEventListener("change", () => { this.loadout = { ...this.loadout, [slot]: pick.value }; paint(); this.onLoadout(this.loadout); });
+    r.append(pick, icon);
+    body.append(say);
+    paint();
+  }
   private axisRow(body: HTMLElement, axis: string, row: (p: HTMLElement, n: string) => HTMLElement, get: (a: string) => unknown, set: (a: string, v: unknown) => void): void {
     const g = this.g, lim = AXES[axis], r = row(body, label(axis));
     if (typeof lim[0] === "string") {
@@ -634,6 +681,8 @@ export class Creator {
     const [cw, ch] = SpellScroll.SIZE;
     const pad = (cw - SpellScroll.ART[0]) / 2;
     this.scroll.place(px(Math.min(SW - MARGIN + pad - cw, rx + bx1 - Math.round(cw * .55))), px(Math.min(SH - MARGIN + pad - ch, ry + by1 - Math.round(ch * .7))), px(cw), px(ch));
+    // (mid-night, the way out where the scroll would be)
+    Object.assign(this.exitBtn.style, { left: this.scroll.el.style.left, top: this.scroll.el.style.top, width: this.scroll.el.style.width, height: px(Math.round(ch * .45)) });
   }
 }
 
@@ -769,4 +818,20 @@ function drawGlows(x: CanvasRenderingContext2D, room: Room, t: number): void {
   halo(x, a.screen, 10, [150, 214, 255], .16 + .04 * Math.sin(t * 3));
   halo(x, a.potions, 6, [196, 120, 255], .08 + .05 * Math.sin(t * 1.1));
   x.restore();
+}
+
+/** A spell's icon (render/hatIcons.ts: `#` ink, `+` a lighter tone) as pixels in the chip's own colour, so it follows the chip lit
+ *  or not: an inline SVG of whole squares, 13 px across, crisp-edged. */
+function spellIcon(rows: readonly string[]): SVGSVGElement {
+  const NS = "http://www.w3.org/2000/svg", w = rows[0]?.length ?? 0, svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${w} ${rows.length}`); svg.setAttribute("width", String(w)); svg.setAttribute("height", String(rows.length));
+  svg.setAttribute("shape-rendering", "crispEdges"); svg.setAttribute("aria-hidden", "true");
+  rows.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c !== "#" && c !== "+") return;
+    const r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", String(x)); r.setAttribute("y", String(y)); r.setAttribute("width", "1"); r.setAttribute("height", "1");
+    r.setAttribute("fill", "currentColor"); if (c === "+") r.setAttribute("fill-opacity", "0.5");
+    svg.append(r);
+  }));
+  return svg;
 }

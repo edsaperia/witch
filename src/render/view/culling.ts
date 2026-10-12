@@ -27,14 +27,19 @@ export function updateFrustum(v: View): void {
   const to = cameraPose({ ...g.camera, zoom: steps > 1 ? g.camera.zoomStep / (steps - 1) : 0 }, lift, t);
   const c = v.cullCam;
   c.fov = cam.fov; c.aspect = cam.aspect; c.near = cam.near; c.far = cam.far; c.updateProjectionMatrix();
-  poseCamera(c, { ...to, ty: lerp(t.groundHeight, t.treetopHeight, lift) + groundHeight(to.tx, to.tz) });
+  // (arriving from the sea chart, app/arrive.ts: the flight's own camera, not where hers is heading at her decks)
+  if (v.fly) { c.position.copy(cam.position); c.quaternion.copy(cam.quaternion); c.updateMatrixWorld(); }
+  else poseCamera(c, { ...to, ty: lerp(t.groundHeight, t.treetopHeight, lift) + groundHeight(to.tx, to.tz) });
   v.m4.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);
   v.frustumTo.setFromProjectionMatrix(v.m4);
 }
 
+/** What the view is drawn round: her, or (arriving from the sea chart, app/arrive.ts) the flight's aim. */
+export const focusOf = (v: View): { x: number; z: number } => (v.fly ? { x: v.fly.tx, z: v.fly.tz } : v.game.witch);
+
 /** The ground rectangle the cameras can see, out to `far` metres from the witch, plus `margin`. */
 export function viewRect(v: View, far: number, margin: number) {
-  const w = v.game.witch, pts: [number, number][] = [];
+  const w = focusOf(v), pts: [number, number][] = [];
   for (const cam of [v.camera, v.cullCam]) {
     const o = cam.position, reach = far + Math.hypot(o.x - w.x, o.z - w.z) + margin;
     for (const nx of [-1, 1]) for (const ny of [-1, 1]) {
@@ -58,7 +63,7 @@ export function viewRect(v: View, far: number, margin: number) {
 /** Whether a sprite standing at (x, z), w wide and h tall, may be on screen now or soon. Nothing
  *  is drawn beyond the haze's far edge, where the haze has already hidden it completely. */
 export function inView(v: View, x: number, z: number, w: number, h: number, margin: number, reach = v.game.tuning.haze.far): boolean {
-  const wx = v.game.witch.x, wz = v.game.witch.z, far = reach + margin;
+  const { x: wx, z: wz } = focusOf(v), far = reach + margin;
   if ((x - wx) ** 2 + (z - wz) ** 2 > far * far) return false;
   // On the rolling ground, and dropped by the bend (things far ahead come down into view): by the
   // bend now and the bend it is easing to (as she rises), as the culling isn't redone as it grows.
