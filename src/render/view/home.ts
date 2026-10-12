@@ -10,6 +10,8 @@ import type { WaveNumber } from "../waveNumbers";
 import { beatAt, beatTime } from "../../rules/beat";
 import { candleCount, candleMelt, candleRed } from "../../rules/knockout";
 import { canopyShown } from "../../rules/witch";
+import { deckOf } from "../../rules/treehouse";
+import { groundHeight } from "../height";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
 import { columnShown, leyReachTimes } from "../../rules/leypulse";
@@ -220,6 +222,19 @@ export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d:
   return { x: p.x - (dx / l) * d, y: p.y - (dy / l) * d, z: p.z - (dz / l) * d };
 }
 
+/** The treehouse Ent's halves (rules/treehouse.ts, art/ent.js): drawn in the plane through the deck's middle, the far half (the Ent,
+ *  the floor, the rail's far side, the map table) moved this far back along the rays from the camera and the near half (the rail's
+ *  near side, the decks' desk) this far forward, each scaled to land on its own pixels, so she, anywhere on the deck, stands
+ *  between them (metres: past the deck's radius and its rail). The DJ table's frames, her hands over it and the candles go in
+ *  front of the near half as DJ_DEPTH says. */
+export const ENT_DEPTH = { far: 8, near: 7.6 };
+/** A point `d` metres nearer the camera along the ray from it, and how much smaller to draw what stands there to cover the same
+ *  pixels as at `p` (negative `d`: farther, bigger). */
+export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {
+  const c = v.camera.position, l = Math.hypot(p.x - c.x, p.y - c.y, p.z - c.z) || 1, q = nearerCamera(v, p, d);
+  return { ...q, scale: Math.max(0.05, (l - d) / l) };
+}
+
 /** The knockdown candles last shown, per view: their count, how many red, and (once she's free) when their smoke is done. */
 const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>();
 
@@ -231,15 +246,28 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
   const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(v.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
   const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
   const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
-  const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
-  const items: SpriteInstance[] = [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+  let at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
+  const deck = T.ent ? deckOf(v.game.map, v.game.tuning) : null, R0 = SPRITE_UNIFORMS.uRight.value;
+  // The treehouse Ent: its deck's middle (its anchor) on the rules' deck, its two halves either side of her (ENT_DEPTH)
+  const ent = (p: { x: number; y: number; z: number }, dd: number, frame: SpriteInstance["frame"], o: Partial<SpriteInstance> = {}): SpriteInstance => {
+    const P = deckAt!, g0 = groundHeight(P.x, P.z), q = alongRay(v, { ...P, y: P.y + g0 }, dd), k = q.scale; // (the ray in the world's heights; sprites stand on the ground: p's offset from the deck's middle, shrunk or grown with it)
+    q.y -= g0;
+    return { x: q.x + (p.x - P.x) * k, y: q.y + (p.y - P.y) * k, z: q.z + (p.z - P.z) * k, frame, flip: false, scale: k, ...o };
+  };
+  let deckAt: { x: number; y: number; z: number } | null = null;
+  if (deck && T.ent) {
+    deckAt = { x: deck.x, y: deck.h, z: deck.z }; // (over the ground, as every sprite's y)
+    const ox = (T.ent.deck.x - f[0].w / 2) * mpp, oy = (f[0].h - T.ent.deck.y) * mpp;
+    at = { x: deckAt.x - R0.x * ox - U.x * oy, y: deckAt.y - R0.y * ox - U.y * oy, z: deckAt.z - R0.z * ox - U.z * oy };
+  }
+  const items: SpriteInstance[] = deckAt ? [ent(at, -ENT_DEPTH.far, f[0]), ent(at, ENT_DEPTH.near, f[1])] : [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
   // The studio's DJ table over her (Ed, 2026-10-06): its crop where it shows in the base, a frame two to a beat (the platters
   // turning an eighth, the LEDs chasing), nearer the camera than her.
   if (T.hasFore) {
     const k = Math.floor(beatAt(v.game.beat, time) * 2) % T.foreFrames, ff = f[2 + Math.max(0, k)], R = SPRITE_UNIFORMS.uRight.value;
     const dx = (T.foreBox.x + ff.w / 2 - f[0].w / 2) * mpp, dy = (f[0].h - T.foreBox.y - ff.h) * mpp;
-    const p = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.fore);
-    items.push({ ...p, frame: ff, flip: false, overlay: true });
+    const p0 = { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy };
+    items.push(deckAt ? ent(p0, ENT_DEPTH.near + DJ_DEPTH.fore - DJ_DEPTH.her, ff, { overlay: true }) : { ...nearerCamera(v, p0, DJ_DEPTH.fore), frame: ff, flip: false, overlay: true });
   }
   // The knockdown candles along the front edge of the studio's terrace (Ed, 2026-10-07), a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
   // seconds of her wait; candleRed of them red, the wait past the base; candleMelt, burning down one after another as she
@@ -261,8 +289,8 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
       const level = m >= 1 ? T.candleLevels - 1 : Math.min(T.candleLevels - 2, Math.floor(m * (T.candleLevels - 1)));
       const fr = f[T.candle0 + (j < red ? T.candleRed : 0) + level * T.candleFlicker + (Math.floor(time * 7 + i * 1.7) % T.candleFlicker)]; if (!fr) continue;
       const dx = (px - f[0].w / 2) * mpp, dy = (f[0].h - py) * mpp; // (the candle's foot on the row, in the base's pixels: its sprite's bottom middle there)
-      const base = nearerCamera(v, { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy }, DJ_DEPTH.candles);
-      items.push({ ...base, frame: fr, flip: false, overlay: true });
+      const c0 = { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy };
+      items.push(deckAt ? ent(c0, ENT_DEPTH.near + DJ_DEPTH.candles - DJ_DEPTH.her, fr, { overlay: true }) : { ...nearerCamera(v, c0, DJ_DEPTH.candles), frame: fr, flip: false, overlay: true });
     }
   }
   v.treehouseBatch.set(items);

@@ -3,6 +3,7 @@
 import { characterOf, quirkAt, bounceAt, spriteQuirk } from "../character";
 import * as THREE from "three";
 import type { Tuning } from "../../rules/tuning";
+import { cycloneLift } from "../../rules/hatSpells";
 import type { CreatureArt } from "../assets";
 import { ENRAGED_TINT, dances, expression, lookOf } from "../looks";
 
@@ -70,6 +71,7 @@ export function drawBerries(v: View, time: number): void {
   for (const [id, at] of v.evolvedAt) if (time - at > 1.2) v.evolvedAt.delete(id);
   const V = v.lastView, VH = V ? V.half + 4 : Infinity; // (the scenery's square first: much cheaper than inView)
   for (const b of B.berries) {
+    if (b.gone) continue; // (a Harvest berry eaten)
     const p = B.bushes[b.bush];
     if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || (V && (Math.abs(p.x - V.x) > VH || Math.abs(p.z - V.z) > VH)) || !inView(v, p.x, p.z, 0.5, 1.2, 2)) continue;
     const at = v.regrewAt.get(b.id), grow = at === undefined ? 1 : Math.min(1, (time - at) / 0.5);
@@ -190,6 +192,7 @@ export function drawCreatures(v: View, time = 0): void {
     let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
     hop += feel.hop; // (a tumble's arc: render/attackFeel.ts)
     hop += flightHeight(c, time); // (a wild flyer swooping: up out of reach over its shadow, rules/movement.ts stepSwoop)
+    for (const W of g.witches) if (W.spells.cyc) hop += cycloneLift(W.spells, c.id, g.clock.time, g.tuning); // (whirled up by her Cyclone hat: rules/hatSpells.ts)
     // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
     const joined = v.leashView.joined.get(c.id);
     if (joined !== undefined && time - joined < 0.7) { const k = (time - joined) / 0.7; hop += Math.abs(Math.sin(k * Math.PI * 2)) * 0.45 * (1 - k * 0.6); }

@@ -15,6 +15,7 @@
 //     for the win's stragglers, gathering her posse first: without that no bot ever won).
 // She flies between areas over the treetops and fights on the ground, as a player does. Seeded and deterministic: no
 // clock, no Math.random; the same game and the same steps give the same controls.
+import { deckOf, overDeck } from "./treehouse";
 import { AREA_TYPES } from "./map";
 import { cellKey } from "./party";
 import { hexSpot, stackBottom, toBottom } from "./leash";
@@ -503,7 +504,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         // makes it a youth): to the nearest patch of ripe berries, her babies' sigils put down by it, a few seconds while they
         // eat, then picked up again, youths.
         if (!feeding) {
-          const B = g.berries, ripe = B.berries.filter(r => r.claimedBy === null).map(r => B.bushes[r.bush]);
+          const B = g.berries, ripe = B.berries.filter(r => r.claimedBy === null && !r.gone).map(r => B.bushes[r.bush]);
           let best: { x: number; z: number } | null = null, bs = -Infinity;
           for (const p of ripe) {
             const d = Math.hypot(p.x - b.x, p.z - b.z); if (d > K.feedRange) continue;
@@ -516,7 +517,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         bot.doing = feeding?.phase === "collect" ? "gathering her youths" : "feeding her babies berries";
         if (feeding && feeding.phase === "drop" && goTo(feeding.x, feeding.z, true, 4)) {
           const B = g.berries, reach = (t.berries.babyReach ?? 10) * 0.8;
-          const ripeNear = B.berries.filter(r => r.claimedBy === null && Math.hypot(B.bushes[r.bush].x - feeding!.x, B.bushes[r.bush].z - feeding!.z) < reach).length;
+          const ripeNear = B.berries.filter(r => r.claimedBy === null && !r.gone && Math.hypot(B.bushes[r.bush].x - feeding!.x, B.bushes[r.bush].z - feeding!.z) < reach).length;
           const baby = w.leash.stack.filter(id => g.creatures[id].level === 0).pop(), bt = stackBottom(w.leash);
           if (baby === undefined || feeding.ids!.length >= ripeNear || Math.hypot(b.x - feeding.x, b.z - feeding.z) > reach) { feeding.phase = "wait"; feeding.until = time + K.feedWait; }
           else if (bt?.kind === "creature" && bt.id === baby) { putDown(); if (sigil) feeding.ids!.push(baby); }
@@ -563,6 +564,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       if (dd) { dash = true; mx = dd.x; mz = dd.z; aimX = dd.x * 10; aimZ = dd.z * 10; fire = false; }
       else if (dash) { const l = Math.hypot(mx, mz) || 1; aimX = (mx / l) * 10; aimZ = (mz / l) * 10; fire = false; } // (a kiting blink: away, the way she's going)
     }
+    // The treehouse deck (rules/treehouse.ts): the bots don't use it. Stepped off her decks onto it, she rises straight off; in the
+    // treetops she doesn't come down over it.
+    const deck = deckOf(g.map, t);
+    if (deck && !b.seated && b.perch && b.mode === "ground") toggle = true;
+    else if (deck && toggle && b.mode === "treetop" && overDeck(deck, b.x, b.z)) toggle = false;
     return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, ...(cycle ? { cycle } : {}), castParty: g.party.spellAt === null };
   }
 }

@@ -12,6 +12,7 @@ import { LEGEND, type Creature } from "./creatures";
 import type { Game } from "./game";
 import type { Tuning } from "./tuning";
 import { creatureValue } from "./power";
+import { stealthed } from "./spells";
 
 /** An area's watch: when it started and ends (her first attack), when a witch was last on the ground in it, and its danger (0 to 1). */
 export interface WildEntry { at: number; until: number; last: number; danger: number }
@@ -27,7 +28,8 @@ export function stepWildWatch(g: Game, t: Tuning): void {
   const home = cellKey(g.map.centreCell);
   let here: string | null = null, here2: string | null = null; // (the areas a witch is on the ground in this step: one or two players)
   for (const w of g.witches) {
-    if (w.body.mode !== "ground" || w.body.seated || w.ko) continue;
+    if (w.body.mode !== "ground" || w.body.seated || w.body.perch || w.ko) continue; // (up on the treehouse deck: not in any area)
+    if (stealthed(w.spells, g.herTime)) continue; // (her Stealth broom: unseen, nothing notices her; rules/brooms.ts)
     const k = cellKey(g.map.cellSafe(w.body.x, w.body.z).cell), e = g.wildEntry.get(k);
     if (here === null) here = k; else here2 = k;
     if (e) { e.last = time; continue; }

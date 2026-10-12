@@ -180,6 +180,27 @@ export const HAT = [
   ".#############.",
 ];
 
+/** A flask in pixels (the Dowsing hat's pointer toward the nearest relic, rules/hatSpells.ts): the relic sigil's round-bellied
+ *  potion flask, its cork (`+`) on a lipped neck, the glass's glint at its shoulder, and its liquid (`+`) a lighter fill with
+ *  two bubbles rising in it. */
+export const FLASK = [
+  ".....+++++.....",
+  ".....#####.....",
+  "......#.#......",
+  "......#.#......",
+  ".....##.##.....",
+  "...###...###...",
+  "..#.........#..",
+  ".#.+.........#.",
+  ".#+++++++++++#.",
+  "#++.++++++++++#",
+  "#++++++++.++++#",
+  "#+++++++++++++#",
+  ".#+++++++++++#.",
+  "..#+++++++++#..",
+  "...#########...",
+];
+
 export class StoneIndicator {
   private cue: PixelCue;
   private v = new THREE.Vector3();
