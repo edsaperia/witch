@@ -2,7 +2,7 @@
 // a confirmed choice makes the issue link and line the coordinator reads.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { applyKnobParams, currentValue, decisionLine, DECISION_LIST, issueUrl, knobAt, knobParam, parseValue, setKnob } from "./decide";
+import { applyKnobParams, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, parseValue, setKnob, valuesText } from "./decide";
 
 /** The URL switches the game reads (src/main.ts), and their values. */
 const PARAMS: Record<string, string[]> = { style: ["bold", "ref"] };
@@ -59,5 +59,20 @@ describe("the decisions panel", () => {
     expect(url.searchParams.get("title")).toBe(decisionLine("growth", 0.75));
     const body = url.searchParams.get("body")!;
     for (const s of ["v1100 · abc123", "seed: 123", "\"style\": \"bold\"", "?decide"]) expect(body).toContain(s);
+  });
+
+  it("the pause page's test sliders (Ed, 2026-10-12): every entry has a feature group; Copy values gives a line each, label, key, value and built default", () => {
+    for (const d of DECISION_LIST) expect(d.group, d.id).toBeTruthy();
+    const values = new Map<string, string | number | boolean>(DECISION_LIST.map(d => [d.id, d.default]));
+    const sky = DECISION_LIST.find(d => d.id === "skyBlur")!;
+    values.set("skyBlur", 0.45);
+    const text = valuesText(values, "v123", 42), lines = text.split("\n");
+    expect(lines[0]).toBe("Test sliders · v123 · seed 42");
+    for (const g of new Set(DECISION_LIST.map(groupOf))) expect(lines).toContain(`${g}:`);
+    expect(lines).toContain(`● ${sky.label} · tiltShift.skyBlur = 0.45 (built ${sky.default})`);
+    const style = DECISION_LIST.find(d => d.id === "style")!;
+    expect(lines).toContain(`  ${style.label} · ?style = ${style.default} (built ${style.default})`);
+    expect(keyOf(style)).toBe("?style");
+    expect(lines.filter(l => / = .* \(built /.test(l)).length).toBe(DECISION_LIST.length);
   });
 });
