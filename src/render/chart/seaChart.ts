@@ -174,14 +174,35 @@ const LAKE_SHALLOWS = 6;
 // jungle; chartOutlines.worker.ts LAKE_LOOKS, which picks each lake's, blending by bearing, and paints its rim on its shore): aLook 0 water (as the shallows), 1
 // ice (pale, frost white by the shore, faint cracks), 2 lava (glowing and slowly churning, crusting dark by the shore), 3 an
 // oasis (clear turquoise, pale sand under its edge), 4 a sinkhole (deep and dark, a little light caught at its edge); and the
-// diagonals': 5 a glacial tarn (milky turquoise meltwater, ice floes by its edge), 6 a hot spring (clear blue, a pale mineral
-// edge, mist drifting off it), 7 a rust pool (a Yellowstone hot pool: rings from an orange rim through yellow, green and teal to a deep blue throat, a white lip), 8 a
+// diagonals': 5 a glacial tarn (milky turquoise meltwater, ice floes by its edge), 6 a hot spring (terraced milky turquoise pools
+// with scalloped cream lips spilling over, steam drifting off it), 7 a rust pool (a Yellowstone hot pool: rings from an orange rim through yellow, green and teal to a deep blue throat, a white lip), 8 a
 // lily pond (green water under giant pads, a few flowers).
+// A hot spring (Ed's reference, terraced travertine pools like Saturnia) steps down its slope: aS counts its tiers downhill, each
+// a step lower (uStep), its pools milky turquoise behind scalloped cream lips that spill white over into the next.
 const LAKE_VERT = /* glsl */ `
-attribute float aDepth, aLook; varying float vD, vLook; varying vec2 vP;
-void main() { vD = aDepth; vLook = aLook; vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }`;
+uniform float uStep, uScale; attribute float aDepth, aLook, aS; varying float vD, vLook, vS; varying vec2 vP;
+float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+void main() {
+  vD = aDepth; vLook = aLook; vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xz;
+  vS = aS + (n(w.xz / uScale * 1.2) - 0.5) * 0.7; // (the tiers' lips curving, as travertine's do)
+  if (abs(aLook - 6.0) < 0.5) w.y -= floor(vS) * uStep;
+  gl_Position = projectionMatrix * viewMatrix * w;
+}`;
+// The steam off a hot spring: a light, drifting veil a little above its pools (two, at different heights, for its rising).
+const STEAM_FRAG = /* glsl */ `
+uniform float uTime, uScale, uSeed; varying float vLook; varying vec2 vP;
+float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+void main() {
+  if (abs(vLook - 6.0) > 0.5 || vD <= 0.0) discard; // (over its water only)
+  vec2 p = vP / uScale; float t = uTime * (0.05 + uSeed * 0.03);
+  float s = n(p * 1.3 + vec2(t, t * 0.7) + uSeed * 9.0) * 0.65 + n(p * 3.2 - vec2(t * 1.6, -t * 0.4)) * 0.35;
+  float a = smoothstep(0.38, 0.8, s) * (0.5 - uSeed * 0.18);
+  gl_FragColor = vec4(vec3(0.86, 0.9, 0.94), a);
+}`;
 const LAKE_FRAG = /* glsl */ `
-uniform float uDim, uTime, uScale; uniform vec3 uDeep, uPale; varying float vD, vLook; varying vec2 vP;
+uniform float uDim, uTime, uScale; uniform vec3 uDeep, uPale; varying float vD, vLook, vS; varying vec2 vP;
 float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
 // round things scattered one to a cell (floes, pads): x how far inside the nearest (1 its middle, 0 its edge, below 0 outside), y its cell's own number
@@ -214,10 +235,12 @@ void main() {
     c = mix(vec3(0.36, 0.62, 0.62), vec3(0.62, 0.8, 0.78), a * a);
     vec2 f = dots(p * 3.0, 0.42); float floe = step(0.0, f.x) * step(0.35, a) * step(0.3, f.y + a * 0.6);
     c = mix(c, vec3(0.78, 0.86, 0.9) * (0.92 + 0.08 * f.x), floe);
-  } else if (uLook == 6) {
-    c = mix(vec3(0.1, 0.42, 0.55), vec3(0.62, 0.74, 0.7), pow(a, 3.0));
-    float t = uTime * 0.08, mist = n(p * 1.4 + vec2(t, t * 0.6)) * 0.6 + n(p * 3.1 - vec2(t * 1.7, -t)) * 0.4;
-    c = mix(c, vec3(0.82, 0.86, 0.9), smoothstep(0.4, 0.8, mist) * 0.7);
+  } else if (uLook == 6) { // (stepped pools: f runs 0 at a pool's top to 1 at its lip, which scallops; past it, white water spills over)
+    float f = fract(vS), lip = 0.88 + (n(p * 8.0) - 0.5) * 0.08;
+    c = mix(vec3(0.3, 0.58, 0.58), vec3(0.48, 0.74, 0.72), smoothstep(0.0, lip, f));
+    c = mix(c, vec3(0.74, 0.72, 0.64) * (0.9 + 0.1 * n(p * 12.0)), smoothstep(lip - 0.02, lip + 0.02, f));
+    c = mix(c, vec3(0.66, 0.74, 0.76), smoothstep(0.1, 0.0, f) * step(0.5, n(p * 10.0 + vec2(0.0, uTime * 0.5))) * 0.7);
+    c = mix(c, vec3(0.74, 0.72, 0.64), smoothstep(0.05, 0.0, d)); // (the cream rim at its shore)
   } else if (uLook == 7) { // (Ed's reference, a Yellowstone pool from above: a deep blue throat, teal, green, a wide yellow and orange band, a white lip)
     float r = clamp(d + (n(p * 3.0) - 0.5) * 0.08, 0.0, 1.0);
     c = mix(vec3(0.95, 0.42, 0.06), vec3(1.0, 0.72, 0.12), smoothstep(0.08, 0.32, r));
@@ -233,6 +256,8 @@ void main() {
   } else c = mix(uDeep, uPale, a * a);
   gl_FragColor = vec4(c * uDim, 1.0);
 }`;
+/** A hot spring's pools: how far apart down its slope (m), and how far each steps down (m, as the ground's heights). */
+const TIER = 60, TIER_STEP = 1.5;
 /** How far in from its shore (m) a special lake's edge reaches. */
 const LAKE_RIM = 40;
 
@@ -419,7 +444,7 @@ export class SeaChart {
           const i = r * cols + c; if (G.water[i] === 2) continue;
           for (const j of [i - 1, i + 1, i - cols, i + cols]) if (j >= 0 && j < cols * rows && G.water[j] === 2) { lp[i * 3 + 1] = 0.06 + G.level[j] * k * RELIEF; break; }
         }
-        const lk = new Float32Array(cols * rows);
+        const lk = new Float32Array(cols * rows), ts = new Float32Array(cols * rows);
         if (G.looks) for (let i = 0; i < cols * rows; i++) lk[i] = G.looks[i];
         { // (the special lakes: by how far in from its shore, not how deep, so a shallow one still has a middle; a rust pool's
           // rings by how far in it is of the furthest in its pool reaches, so every pool runs rim to throat)
@@ -435,7 +460,7 @@ export class SeaChart {
             if (c < cols - 1) v = Math.min(v, far[i + 1] + 1); if (r < rows - 1) { v = Math.min(v, far[i + cols] + 1); if (c < cols - 1) v = Math.min(v, far[i + cols + 1] + D); if (c > 0) v = Math.min(v, far[i + cols - 1] + D); }
             far[i] = v;
           }
-          const part = new Int32Array(N).fill(-1), most: number[] = [], stack: number[] = [];
+          const part = new Int32Array(N).fill(-1), most: number[] = [], stack: number[] = [], spring = new Int8Array(N).fill(-1);
           for (let i0 = 0; i0 < N; i0++) {
             if (lk[i0] !== 7 || G.water[i0] !== 2 || part[i0] >= 0) continue;
             const id = most.length; let m = 0; most.push(0); stack.push(i0); part[i0] = id;
@@ -444,6 +469,23 @@ export class SeaChart {
               for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < N && G.water[j] === 2 && part[j] < 0) { part[j] = id; stack.push(j); }
             }
             most[id] = m;
+          }
+          // a hot spring's tiers: down its slope (the plane through the ground round it), one every TIER m
+          for (let i0 = 0; i0 < N; i0++) {
+            if (lk[i0] !== 6 || spring[i0] >= 0) continue;
+            const cells: number[] = []; stack.push(i0); spring[i0] = 1;
+            while (stack.length) {
+              const i = stack.pop()!, c = i % cols; cells.push(i);
+              for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < N && lk[j] === 6 && spring[j] < 0) { spring[j] = 1; stack.push(j); }
+            }
+            let cx = 0, cz = 0, hm = 0, m = 0;
+            for (const i of cells) if (G.water[i] !== 2) { cx += pos[i * 3]; cz += pos[i * 3 + 2]; hm += G.h[i]; m++; }
+            if (!m) continue;
+            cx /= m; cz /= m; hm /= m;
+            let gx = 0, gz = 0;
+            for (const i of cells) if (G.water[i] !== 2) { gx += (pos[i * 3] - cx) * (G.h[i] - hm); gz += (pos[i * 3 + 2] - cz) * (G.h[i] - hm); }
+            const gl = Math.hypot(gx, gz) || 1, dx = -gx / gl, dz = -gz / gl;
+            for (const i of cells) ts[i] = ((pos[i * 3] - cx) * dx + (pos[i * 3 + 2] - cz) * dz) / (TIER * k) + 0.5;
           }
           for (let i = 0; i < N; i++) {
             if (G.water[i] !== 2 || !lk[i]) continue;
@@ -456,8 +498,13 @@ export class SeaChart {
         }
         if (li.length) {
           const lg = new THREE.BufferGeometry();
-          lg.setAttribute("position", new THREE.BufferAttribute(lp, 3)); lg.setAttribute("aDepth", new THREE.BufferAttribute(ld, 1)); lg.setAttribute("aLook", new THREE.BufferAttribute(lk, 1)); lg.setIndex(li);
-          g.add(new THREE.Mesh(lg, new THREE.ShaderMaterial({ vertexShader: LAKE_VERT, fragmentShader: LAKE_FRAG, uniforms: { uDim: { value: 0.6 + 0.4 * dim }, uTime: this.uTime, uScale: { value: 30 * k }, uDeep: { value: LAKE_WATER.deep }, uPale: { value: LAKE_WATER.pale } } })));
+          lg.setAttribute("position", new THREE.BufferAttribute(lp, 3)); lg.setAttribute("aDepth", new THREE.BufferAttribute(ld, 1)); lg.setAttribute("aLook", new THREE.BufferAttribute(lk, 1)); lg.setAttribute("aS", new THREE.BufferAttribute(ts, 1)); lg.setIndex(li);
+          const uStep = { value: TIER_STEP * k * RELIEF };
+          g.add(new THREE.Mesh(lg, new THREE.ShaderMaterial({ vertexShader: LAKE_VERT, fragmentShader: LAKE_FRAG, uniforms: { uDim: { value: 0.6 + 0.4 * dim }, uTime: this.uTime, uScale: { value: 30 * k }, uStep, uDeep: { value: LAKE_WATER.deep }, uPale: { value: LAKE_WATER.pale } } })));
+          if (lk.includes(6)) for (const [up, seed] of [[6, 0], [16, 1]]) { // (its steam)
+            const veil = new THREE.Mesh(lg, new THREE.ShaderMaterial({ vertexShader: LAKE_VERT, fragmentShader: STEAM_FRAG, uniforms: { uTime: this.uTime, uScale: { value: 30 * k }, uSeed: { value: seed }, uStep }, transparent: true, depthWrite: false }));
+            veil.position.y = up * k * RELIEF; veil.renderOrder = 2; g.add(veil);
+          }
         }
       }
     } else { // till then: a low landmass raised from its round coast
