@@ -90,6 +90,10 @@ Using only today's 32 kinds and art:
 6. **All the islands** (Ed, 2026-10-11: "We should generate all the islands. For islands where we haven't designed the creatures yet, use '?'"): `config/kinds.json` holds all 64 kinds, today's 32 and 32 placeholders (`unknown-01`…`unknown-32`, `placeholder: true`): 14 introduced in phase 3 and 18 in phase 4, their bearings spread round the compass, each with the biome its direction suggests. Every island has a seed, size and coast (`islandOf`); a placeholder's shows on the sea chart as a bare outline like any island not yet found, not sailable ("Not yet charted"; a '?' under `?chart=all`), and no roster or night's deal ever holds a placeholder kind, nor does `?island=` play one. `?chart=all` shows all 64.
 Not yet: the Ent, the voyage, treehouse rooms, records, lakes, biomes.
 
+### The other 32 animals, and better shapes for all (Ed, 2026-10-12)
+
+When we design the 32 placeholder kinds (bringing the animals to 64), first **audit every creature shape and add-on**: today's four-legged animals are mostly the same three-ellipsoid "sausage" torso (art/creatures3d.js quad3d), so silhouettes differ only by their add-ons. Then **expand the set of body shapes and parts** (silhouette-first bodies lofted along a per-species spine and belly profile, separate neck, shoulder and haunch masses, bolder proportions, postures) **until it can make every animal we want**, and make all 64 as good as we can, the existing 32 included. A black-silhouette sheet at game size with a pairwise likeness score keeps them distinct.
+
 ### Mushrooms on the journey (Ed, 2026-10-10)
 
 - Six mushroom kinds (the cauldron's 56 recipes): **two temperate kinds grow on home** from the start; **one kind per biome direction** (north, south, east, west) grows only on **phase-3-and-beyond islands** of that direction (home and phases 1–2 are essentially temperate).
