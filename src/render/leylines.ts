@@ -310,8 +310,8 @@ export class LeyLines {
     const mpp = this.u.uMpp.value as number;
     this.sparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
     this.ringSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
-    this.outSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
-    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.sparkler.meshes, ...this.ringSparkler.meshes, ...this.outSparkler.meshes];
+    this.mpp = mpp;
+    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.sparkler.meshes, ...this.ringSparkler.meshes];
   }
 
   /** The drawn route of the line's links (each from one stone to the next). */
@@ -544,8 +544,11 @@ export class LeyLines {
    *  "The boot leyline pulse does not have the sparkler pulse"). */
   private sparkler: Sparkler;
   private ringSparkler: Sparkler;
-  /** The victory lap's outward pulse (rules/win.ts winPulseOut), the same. */
-  private outSparkler: Sparkler;
+  /** The victory lap's outward pulse (rules/win.ts winPulseOut), the same: made as the lap first needs it, its meshes handed to
+   *  `addMeshes` (the view's scene), so nothing before a win changes (three.js breaks ties in its draw order by object id). */
+  private outSparkler: Sparkler | null = null;
+  private mpp: number;
+  addMeshes: (meshes: THREE.Object3D[]) => void = () => {};
   private tipColours = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
   private tipPoints: LeyTip[] = this.tipColours.map(colour => ({ x: 0, z: 0, colour, links: 0 }));
   /** The front as last drawn (for tools), or null. */
@@ -567,7 +570,8 @@ export class LeyLines {
     const ringPulse = ringOn ? this.pointAt(this.ringDrawn, R!.pulse!, time, 3) : null;
     const ringK = strength * (R?.strength ?? 0);
     const outPulse = this.lapOut !== null ? this.pointAt(D, Math.max(0, Math.min(D.length, this.lapOut)), time, 5) : null;
-    this.sparkler.update(pulse, time, strength); this.ringSparkler.update(ringPulse, time, ringK); this.outSparkler.update(outPulse, time, strength);
+    if (outPulse && !this.outSparkler) { this.outSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, this.mpp); this.meshes.push(...this.outSparkler.meshes); this.addMeshes(this.outSparkler.meshes); }
+    this.sparkler.update(pulse, time, strength); this.ringSparkler.update(ringPulse, time, ringK); this.outSparkler?.update(outPulse, time, strength);
     this.tip = tip; this.pulseTip = pulse;
     return tip;
   }

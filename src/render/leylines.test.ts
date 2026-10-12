@@ -98,7 +98,9 @@ describe("the line's front (Ed, 2026-10-06: \"Please come up with a better desig
     ley.grow(null);
     expect(ley.front(1, 1)).toBeNull();
     // Nothing drawn there (Ed, 2026-10-07: "It can just be the leyline finishing plainly"): only the line's own meshes and the
-    // pulses' sparklers (the wave's, the boot's, and the victory lap's outward one: rules/win.ts winPulseOut).
+    // two pulses' sparklers (the wave's and the boot's; the victory lap's outward one is only made at a win).
+    expect(ley.meshes.filter(m => (m as { isPoints?: boolean }).isPoints).length).toBe(2);
+    ley.lap(1, 1.5, 1.5); ley.front(1, 1);
     expect(ley.meshes.filter(m => (m as { isPoints?: boolean }).isPoints).length).toBe(3);
   }, 30000);
 });
