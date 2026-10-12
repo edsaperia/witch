@@ -4,7 +4,12 @@
 // light, longer the lower the light and the farther the trunk, fading with distance from the light and toward its tip. Two
 // lights at most a trunk: her glow (slot 0: it moves with her, so the shadows swing as she walks) and the nearest campfire
 // (slot 1). One batch per area type (its trees' atlas), each drawn twice, a mesh a slot; all the aiming is on the GPU, the
-// trunks set only when the scenery's rebuilt. Multiplied over the ground, like render/shadows.ts.
+// trunks set only when the scenery's rebuilt. Multiplied over the ground, like render/shadows.ts. Each fades in from nothing at
+// its trunk's foot over uTrunkFoot metres and narrows to its foot over uTrunkTaper metres, and fades to nothing as she comes within uTrunkNear metres of its trunk (Ed, 2026-10-12: "they
+// should fade out at the bottom of the tree", "when you're close to the tree", "for both campfires and for the witch"); and it
+// darkens the ground cover it falls on too, the grass, flowers and tufts (Ed: "a treetrunk casting a shadow on some red flowers.
+// The ground is very dark but the red flowers are still full brightness"): drawn again just after the grass, over only the
+// grass's own pixels (its stencil mark: render/grass.ts), before the scenery and mist go on.
 import * as THREE from "three";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -26,19 +31,23 @@ export const TRUNK_SHADOW_UNIFORMS = {
   uGlowReach: { value: 20 },
   uGlowLift: { value: 2.5 },
   uTrunkAcross: { value: 0.5 },
+  uTrunkFoot: { value: 1.5 },
+  uTrunkTaper: { value: 2 },
+  uTrunkNear: { value: 6 },
+  uTrunkCover: { value: 1 },
 };
 
 const VERT = /* glsl */ `
 attribute vec4 iTrunk; // x, z (its foot), width, height (metres)
 attribute vec4 iUv;    // its frame in the atlas (u0, v0 top, u1, v1 bottom; u0 > u1 mirrored)
 attribute float iPad;  // its empty rows at the bottom, a share of its height
-uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross;
+uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear;
 uniform vec3 uGlowPos;
 uniform vec4 uFires[${MAX_FIRES}];
 uniform float uFireFade[${MAX_FIRES}];
 uniform int uFireCount;
-varying vec2 vTex;
-varying float vFade, vAlong;
+varying vec2 vTex, vUx;
+varying float vFade, vAlong, vLen, vU;
 varying vec4 vFrame;
 ${HEIGHT_VERT_GLSL}
 void main() {
@@ -56,31 +65,42 @@ void main() {
   float t = position.z + 0.5, u = position.x; // (along from its foot, across)
   vec2 p = foot + dir * t * len + side * u * iTrunk.z * uTrunkAcross;
   vTex = vec2(mix(iUv.x, iUv.z, 0.5 + u * uTrunkAcross), mix(iUv.w, iUv.y, iPad + t * (1.0 - iPad)));
+  vUx = vec2(iUv.x, iUv.z); vU = u * uTrunkAcross;
   vFrame = vec4(min(iUv.x, iUv.z), iUv.y, max(iUv.x, iUv.z), iUv.w);
   float k = 1.0 - d / reach;
-  vFade = k * k * lit; vAlong = t; // (to nothing at its reach's edge: none pops in or out)
+  float near = uTrunkNear > 0.0 ? smoothstep(0.25 * uTrunkNear, uTrunkNear, length(foot - uGlowPos.xz)) : 1.0; // (to nothing as she comes up to its trunk)
+  vFade = k * k * lit * near; vAlong = t; vLen = len; // (to nothing at its reach's edge: none pops in or out)
   gl_Position = clipOf(onGround(vec3(p.x, 0.06, p.y)));
 
 }`;
 
 const FRAG = /* glsl */ `
 uniform sampler2D uAlbedo;
-uniform float uTrunkStrength, uTrunkHard, uTrunkCore;
-varying vec2 vTex;
-varying float vFade, vAlong;
+uniform float uTrunkStrength, uTrunkHard, uTrunkCore, uTrunkFoot, uTrunkCover, uCover, uTrunkTaper;
+varying vec2 vTex, vUx;
+varying float vFade, vAlong, vLen, vU;
 varying vec4 vFrame;
 float solid(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : step(0.5, texture2D(uAlbedo, q).a); }
 void main() {
   float a;
+  // Tapered at its foot (Ed, 2026-10-12: roots and decorations "get wide at the base, that look strange when they're rotated"): its
+  // width pinched to a third at the foot, opening smoothly to full over uTrunkTaper metres, the sprite's whole width squeezed in. Done
+  // here, a pixel at a time (in the vertices, between the quad's few rows along, it showed as a kink: Ed, v3052).
+  vec2 tex = vTex;
+  if (uTrunkTaper > 0.0) {
+    float pinch = mix(0.35, 1.0, smoothstep(0.0, 1.0, vAlong * vLen / uTrunkTaper));
+    tex.x = mix(vUx.x, vUx.y, 0.5 + vU / pinch);
+  }
   if (uTrunkHard > 1.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } // (?trunks=debug: where they lie, magenta)
   if (uTrunkHard > 0.5) {
-    a = solid(vTex) * (vFade * (1.0 - vAlong) > 0.12 ? 1.0 : 0.55) * step(0.03, vFade * (1.0 - vAlong)); // two tones, on the art's pixels
+    a = solid(tex) * (vFade * (1.0 - vAlong) > 0.12 ? 1.0 : 0.55) * step(0.03, vFade * (1.0 - vAlong)); // two tones, on the art's pixels
   } else {
     float px = 1.0 / float(textureSize(uAlbedo, 0).x), s = (1.0 + 4.0 * vAlong) * px; // (its penumbra widening toward the tip)
-    a = (solid(vTex) * 2.0 + solid(vTex + vec2(s, 0.0)) + solid(vTex - vec2(s, 0.0)) + solid(vTex + vec2(2.0 * s, 0.0)) * 0.5 + solid(vTex - vec2(2.0 * s, 0.0)) * 0.5) / 5.0;
+    a = (solid(tex) * 2.0 + solid(tex + vec2(s, 0.0)) + solid(tex - vec2(s, 0.0)) + solid(tex + vec2(2.0 * s, 0.0)) * 0.5 + solid(tex - vec2(2.0 * s, 0.0)) * 0.5) / 5.0;
     a *= min(1.0, vFade * (1.0 - vAlong * vAlong) / uTrunkCore); // (Ed: "soft, but the darkest part as dark as the hard one": full strength near its foot and the light, soft only at its edges and toward its tip)
   }
-  a *= uTrunkStrength;
+  if (uTrunkFoot > 0.0) a *= smoothstep(0.0, uTrunkFoot, vAlong * vLen); // (from nothing at its trunk's foot)
+  a *= uTrunkStrength * (uCover > 0.5 ? uTrunkCover : 1.0);
   if (a < 0.004) discard;
   gl_FragColor = vec4(vec3(1.0 - a), 1.0); // multiplied over the ground
 }`;
@@ -101,13 +121,17 @@ export class TrunkShadowBatch {
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));
     this.grow(256);
-    for (const slot of [0, 1]) {
+    for (const slot of [0, 1]) for (const cover of [false, true]) {
+      // (cover: again over the ground cover's pixels only, just after it's drawn (renderOrder 0.25) and before the scenery (0.5)
+      // goes over it; in the opaque pass so it keeps that place, multiplying all the same, with no depth test: the tufts stand
+      // above the shadow, which lies on the ground)
       const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG,
-        uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...TRUNK_SHADOW_UNIFORMS, uAlbedo: { value: atlas.albedo }, uSlot: { value: slot } },
+        uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...TRUNK_SHADOW_UNIFORMS, uAlbedo: { value: atlas.albedo }, uSlot: { value: slot }, uCover: { value: cover ? 1 : 0 } },
         depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
-        transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor });
+        blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor,
+        ...(cover ? { transparent: false, depthTest: false, stencilWrite: true, stencilRef: 2, stencilFuncMask: 2, stencilWriteMask: 0, stencilFunc: THREE.EqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp } : { transparent: true }) });
       const m = new THREE.Mesh(this.geo, mat);
-      m.frustumCulled = false; m.renderOrder = 1;
+      m.frustumCulled = false; m.renderOrder = cover ? 0.3 : 1;
       this.meshes.push(m);
     }
   }
