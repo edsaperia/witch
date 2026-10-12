@@ -13,7 +13,8 @@ import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { LOOKS } from "../rules/map";
 import { speakerRadius } from "../rules/speakers";
-import type { Beach } from "../rules/mapShape";
+import type { Beach, Bounds } from "../rules/mapShape";
+import { koiPonds, lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
@@ -65,6 +66,10 @@ uniform vec4 uCircle; // magic circle: hue, second hue, brightness (pulsing), ru
 uniform vec4 uBeach; // the beach round the island: .x on (1) or off (0), .y how far past the coast the sea starts, .z half the land map's step (metres)
 uniform vec4 uLandBox; // the land map's grid (rules/land.ts): its first sample's x, z, and 1 over its width and depth (metres)
 uniform sampler2D uLand; // the land map: r, the signed distance to the coast (+ on land); g, the sand's width there; ba, the way to the nearest point of the coast (m; rules/mapShape.ts beachOf)
+uniform vec4 uLake; // the lakes (rules/lakes.ts): .x on (1) or off, .y half their map's step (metres)
+uniform vec4 uLakeBox; // the lakes' map's grid: its first sample's x, z, and 1 over its width and depth (metres)
+uniform sampler2D uLakes; // the lakes' map: r, how far into a lake (+ on the water, - ashore)
+uniform vec4 uKoi[8]; // the lakes with koi (rules/lakes.ts koiPonds): where they swim round, how far out (0: none), a seed and how many (seed + count / 10)
 uniform vec3 uMoonRoad; // the sky's moon on the screen (its x, a fraction from the left), the picture's width (px), 1 while it's up
 // The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
@@ -375,6 +380,70 @@ void main() {
       }
     }
   }
+  // Lakes (Ed, 2026-10-11, rules/lakes.ts): no beach, a small shore: the area's own floor running down into the water, darker
+  // and wet over the last couple of metres, a pale line lapping at the edge; then shallows where the floor still shows under
+  // the water, deepening to a lake blue lighter than the sea's, the night sky in it (its stars, the moon's glint) and ripples.
+  if (uLake.x > 0.0) {
+    vec2 kuv = (p - uLakeBox.xy + uLake.y) * uLakeBox.zw;
+    if (kuv.x > 0.0 && kuv.y > 0.0 && kuv.x < 1.0 && kuv.y < 1.0) {
+      float ld = texture2D(uLakes, kuv).r + (vnoise(p / 5.0 + 23.0) - 0.5) * 1.4; // (+ on the water; its line wobbled a little)
+      if (ld > -2.6) {
+        float lap = 0.5 + 0.5 * sin(uTime * 1.1 + vnoise(p / 30.0 + 5.0) * 6.0), front = 0.35 * lap - 0.1; // (the edge laps in and out)
+        vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
+        if (ld < front) {
+          // the wet bank, and the foam's broken line at the water's edge
+          c *= 1.0 - 0.4 * smoothstep(-2.6, front, ld);
+          float froth = vnoise(px / vec2(2.0, 1.0) + vec2(uTime * 0.6, 0.0));
+          if (front - ld < uPixel * 1.5 && froth > 0.5) c = mix(c, vec3(0.5, 0.6, 0.63) / max(vec3(0.2), lit), 0.4);
+        } else {
+          vec3 V = normalize(cameraPosition - vec3(p.x, vWorld.y, p.y));
+          vec2 rip = vec2(vnoise(p * vec2(0.35, 1.2) + vec2(uTime * 0.3, 0.0)), vnoise(p * vec2(0.25, 0.9) + vec2(0.0, uTime * 0.22) + 19.0)) - 0.5;
+          vec3 R = reflect(-V, normalize(vec3(rip.x * 0.03, 1.0, rip.y * 0.06)));
+          float up = clamp(R.y, 0.0, 1.0), deep = smoothstep(front, front + 7.0, ld + (vnoise(p / 3.0 + 41.0) - 0.5) * 2.0);
+          vec3 water = mix(uHazeColour * 0.9 + vec3(0.14, 0.24, 0.28), vec3(0.15, 0.28, 0.37), smoothstep(0.0, 0.3, up)); // (lighter than the sea's 0.09, 0.18, 0.26)
+          water *= 0.92 + 0.2 * (rip.x + 0.5);
+          water = mix(c * lit * vec3(0.62, 0.82, 1.0) * 1.1 + vec3(0.02, 0.05, 0.07), water, 0.12 + 0.88 * deep); // (the floor under the shallows, fading as it deepens)
+          vec2 sc = floor(R.xz / max(0.08, R.y) * 26.0);
+          float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
+          if (hs > 0.997 && deep > 0.5) water += vec3(0.4, 0.44, 0.52) * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0)); // a star
+          vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
+          float spec = dot(R, moon);
+          if (spec > 0.993) water = mix(water, uMoon + vec3(0.25), 0.8);
+          else if (spec > 0.975) water = mix(water, uMoon * 0.7, 0.3);
+          else if (mod(px.y, 5.0) < 1.0 && vnoise(px / vec2(8.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.76) water += vec3(0.08, 0.12, 0.14); // ripples catching the light
+          // Koi (Ed, 2026-10-11): in some lakes a few, orange, white and gold, patched, swimming slow rounds under the water.
+          for (int i = 0; i < 8; i++) {
+            vec4 K = uKoi[i];
+            if (K.z <= 0.0) break;
+            vec2 q = p - K.xy;
+            if (dot(q, q) > (K.z + 3.0) * (K.z + 3.0)) continue;
+            float n = fract(K.w) * 10.0 + 0.5;
+            for (int f = 0; f < 7; f++) {
+              if (float(f) > n) break;
+              float s = floor(K.w) * 0.731 + float(f) * 3.71, r = K.z * (0.2 + 0.5 * fract(s * 0.37)); // (in toward the middle: they keep together)
+              r *= 1.0 + 0.12 * sin(uTime * 0.21 + s);
+              float dirn = fract(s * 2.13) > 0.5 ? 1.0 : -1.0, a = s * 1.7 + dirn * uTime * (0.35 + 0.25 * fract(s * 1.31)) / max(2.0, r);
+              vec2 fp = K.xy + vec2(cos(a), sin(a)) * r, hd = vec2(-sin(a), cos(a)) * dirn, d = p - fp;
+              float u = dot(d, hd) / 1.7, v = dot(d, vec2(-hd.y, hd.x)) / 1.7; // (about 1.4 m long: big old koi)
+              v += sin(uTime * 3.0 + s + u * 4.0) * 0.05 * (0.45 - u); // (its tail sways)
+              bool bodyIn = (u / 0.42) * (u / 0.42) + (v / 0.19) * (v / 0.19) < 1.0, tail = u < -0.38 && u > -0.7 && abs(v) < (-u - 0.33) * 0.55;
+              if (bodyIn || tail) {
+                float kind = fract(s * 5.31), blot = vnoise((vec2(u, v) + s) * 4.0);
+                vec3 kc = kind < 0.45 ? vec3(0.95, 0.42, 0.12) : kind < 0.8 ? vec3(0.92, 0.9, 0.84) : vec3(0.95, 0.75, 0.25);
+                if (kind >= 0.45 && kind < 0.8 && blot > 0.55) kc = vec3(0.92, 0.32, 0.1); // (white with orange patches)
+                if (kind < 0.45 && blot > 0.72) kc = vec3(0.92, 0.9, 0.84);
+                if (kind < 0.25 && blot < 0.22) kc = vec3(0.08, 0.07, 0.07); // (a few black spots)
+                water = mix(water, kc * (tail ? 0.75 : 0.95), 0.85 * deep);
+              }
+            }
+          }
+          if (ld < front + uPixel * 2.0 && mod(px.x + px.y, 2.0) < 1.0) water = mix(water, vec3(0.5, 0.6, 0.64), 0.25); // (the edge's thin shine, broken)
+          gl_FragColor = vec4(mix(water, haze(water, vWorld), 0.6), 1.0);
+          return;
+        }
+      }
+    }
+  }
   // Ponds: dark water mirroring the moon. The glint is a fake highlight from the view and a
   // moon mirrored into the sky ahead, so it slides as the camera moves, and shimmers.
   {
@@ -500,6 +569,7 @@ export class Ground {
         uLandBox: { value: new THREE.Vector4() },
         uLand: { value: null as THREE.DataTexture | null },
         uMoonRoad: { value: new THREE.Vector3() },
+        ...lakeUniforms(map.bounds, map.seed, lakeKnobs(map.tuning).koi),
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGlow: { value: new Array(6).fill(0) },
         uLegendRingCount: { value: 0 },
@@ -683,4 +753,19 @@ function discoLooks(st: Style, radius: number) {
   const g = lit.getContext("2d")!;
   for (let k = 1; k <= 3; k++) g.drawImage((Art.bake(Art.discoTileSprite("lit", { level: k }), Art.discoColours(k), st, "none") as { A: HTMLCanvasElement }).A, (k - 1) * 14, 0);
   return { base: tex(base), lit: tex(lit), tileM: radius / (Art.DISCO_RADIUS as number), pitch: fb.pitch, size: fb.size, gridOrigin: fb.gridOrigin, rimOuter: fb.rimOuter };
+}
+
+/** The lakes' map (rules/lakes.ts) for the ground shader: how far into a lake, as a half-float texture eased between its samples;
+ *  and their koi. */
+function lakeUniforms(bounds: Bounds, seed: number, share: number): Record<string, THREE.IUniform> {
+  const L = bounds.lakes;
+  const koi = { value: Array.from({ length: 8 }, () => new THREE.Vector4()) };
+  if (!L) return { uLake: { value: new THREE.Vector4() }, uLakeBox: { value: new THREE.Vector4() }, uLakes: { value: null }, uKoi: koi };
+  koiPonds(bounds, seed, share).slice(0, 8).forEach((k, i) => koi.value[i].set(k.x, k.z, k.r, k.seed + k.count / 10));
+  const N = L.cols * L.rows, data = new Uint16Array(N), h = THREE.DataUtils.toHalfFloat;
+  for (let k = 0; k < N; k++) data[k] = h(Math.max(-60, Math.min(60, L.dist[k])));
+  const t = new THREE.DataTexture(data, L.cols, L.rows, THREE.RedFormat, THREE.HalfFloatType);
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
+  return { uLake: { value: new THREE.Vector4(1, L.step / 2, 0, 0) }, uLakeBox: { value: new THREE.Vector4(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows)) }, uLakes: { value: t }, uKoi: koi };
 }

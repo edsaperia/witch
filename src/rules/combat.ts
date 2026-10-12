@@ -413,7 +413,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     if (c.swoop) landSwoop(c, time); // (a flyer marching on a soundsystem far off, or a party one: on the ground)
     if (f.windupUntil === 0) {
-      if (d > want) { moveToward(c, p.x, p.z, want, marching ? marchSpeed(c, w.t) : speed, dt); continue; }
+      if (d > want) { const q = w.round?.(c.x, c.z, p.x, p.z); moveToward(c, q ? q.x : p.x, q ? q.z : p.z, q ? 0 : want, marching ? marchSpeed(c, w.t) : speed, dt); continue; } // (round a lake on the way: rules/lakes.ts)
       // A kiter backs off when its target comes too close, keeping its distance while it shoots.
       if (kites && d < A0.range * K.near && d > 0.01) { c.x -= ((p.x - c.x) / d) * speed * dt; c.z -= ((p.z - c.z) / d) * speed * dt; c.moving = true; c.walk += dt * 6; c.facing = p.x >= c.x ? 1 : -1; if (time < f.readyAt) continue; }
       c.moving = false; c.facing = p.x >= c.x ? 1 : -1;

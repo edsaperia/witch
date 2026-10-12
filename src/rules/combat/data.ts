@@ -220,6 +220,8 @@ export interface CombatWorld {
   parked: (id: number) => boolean;
   /** The witch a creature is being invited by right now (it holds its fire on her: Ed's playtest), or -1. */
   talkingTo: (id: number) => number;
+  /** Where a creature at (x, z) heads for (tx, tz) round the lakes (rules/lakes.ts roundLakes): null, straight there; absent with none. */
+  round?: (x: number, z: number, tx: number, tz: number) => { x: number; z: number } | null;
   /** How far a creature at (x, z) runs to leave the map, and where (a point just past its edge). */
   exit: (x: number, z: number) => { x: number; z: number };
   /** The map's centre (home): besiegers march inward, never on a soundsystem further from it than they are (rules/combat.ts). */
