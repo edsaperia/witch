@@ -1,5 +1,6 @@
 // The lights (from render/view.ts, issue #122): campfires and magic stones lit each frame, and the
 // shader's light budget filled with the nearest.
+import { writeOn } from "../leash/glyphs";
 import * as THREE from "three";
 import { partyOff } from "../partyOver";
 import { LIGHT_UNIFORMS, MAX_LIGHTS } from "../lighting";
@@ -94,8 +95,8 @@ export function sigilLights(v: View, time: number, hatY: number): ForestLight[] 
   for (const p of g.leash.placed) {
     const c = g.creatures[p.id], rgb = c && neon(c.species);
     if (!rgb) continue;
-    const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id); // (the rune's own pulse: leash.ts)
-    out.push({ x: p.x, y: S.height, z: p.z, reach: S.reach * (1 + c.level * 0.15), rgb, strength: S.strength * Math.min(1, (time - p.at) / 0.8) * pulse });
+    const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id); // (the rune's own pulse: leash.ts; its fade-in on her clock, as its stamp is, never below 0: Bravo's dark-circle diagnosis, 2026-10-12)
+    out.push({ x: p.x, y: S.height, z: p.z, reach: S.reach * (1 + c.level * 0.15), rgb, strength: S.strength * writeOn(g.herTime, p.at) * pulse });
   }
   const s = g.leash.stack, w = g.witch;
   if (S.stack > 0 && s.length) {

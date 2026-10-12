@@ -3439,6 +3439,29 @@
           "type": "number",
           "minimum": 0
         },
+        "sigilBacking": {
+          "type": "object",
+          "properties": {
+            "dark": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ink": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "dark",
+            "size",
+            "ink"
+          ],
+          "additionalProperties": false
+        },
         "restAbove": {
           "type": "number",
           "minimum": 0
@@ -3603,6 +3626,7 @@
         "placedThrough",
         "sigilGlyph",
         "sigilHalo",
+        "sigilBacking",
         "restAbove",
         "hex",
         "runePull",

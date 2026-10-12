@@ -2,6 +2,21 @@
   "_note": "Ed's decisions panel (src/ui/decide.ts; ?decide or F2 in the game) and the pause page's test sliders (Esc: every entry, by group, down the left, with Copy values; Ed, 2026-10-12). Each entry: id, pr (the pull request that added it) and group (that PR's short name: the pause page's heading, \"#pr group\", newest PR first), label, a one-line note, a control (toggle, choice of 2 to 4 options, or slider with min, max and step), the shipped default, and what it changes: a tuning knob by its path (applied live to the running game) or a URL switch (param; reload: true when the game reads it only as it loads). Confirm opens a new GitHub issue labelled decision with the choice; the coordinator acts on those.",
   "decisions": [
     {
+      "id": "sigilBackingDark", "pr": 756, "group": "Sigil backing", "label": "Backing darkness", "note": "How dark the patch under every sigil on the ground is (0: none, and no opaque sigil either: as #752).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.85, "apply": { "knob": "leash.sigilBacking.dark" }
+    },
+    {
+      "id": "sigilBackingSize", "pr": 756, "group": "Sigil backing", "label": "Backing size (times the sigil)", "note": "How wide the dark patch is, times the sigil's own width.",
+      "control": { "type": "slider", "min": 0.8, "max": 2, "step": 0.05 },
+      "default": 1.1, "apply": { "knob": "leash.sigilBacking.size" }
+    },
+    {
+      "id": "sigilBackingInk", "pr": 756, "group": "Sigil backing", "label": "Sigil opacity", "note": "How solid the sigil is painted over its patch, times how much it shows (a fresh rune, the ghost fainter).",
+      "control": { "type": "slider", "min": 0, "max": 3, "step": 0.1 },
+      "default": 1.5, "apply": { "knob": "leash.sigilBacking.ink" }
+    },
+    {
       "id": "trunkShadowFoot", "pr": 754, "group": "Trunk shadow fades", "label": "Fade at the foot (m)", "note": "How far from its trunk's foot a shadow fades in from nothing (0: none).",
       "control": { "type": "slider", "min": 0, "max": 6, "step": 0.25 },
       "default": 1.5, "apply": { "knob": "shadows.trunks.foot" }
