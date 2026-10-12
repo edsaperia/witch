@@ -923,7 +923,7 @@ export class View {
         fires.forEach((l, i) => { U.uFires.value[i].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); U.uFireFade.value[i] = Math.min(1, l.strength / (base * 0.8)); });
         U.uFireCount.value = fires.length; U.uTrunkHard.value = TS.mode === "debug" ? 2 : TS.mode === "hard" ? 1 : 0; U.uTrunkStrength.value = TS.strength * (1 - lift); U.uTrunkLong.value = TS.long;
         U.uGlowReach.value = TS.glowReach; U.uGlowLift.value = TS.glowHeight; U.uTrunkAcross.value = TS.across; U.uTrunkCore.value = TS.core; U.uTrunkFoot.value = TS.foot ?? 0; U.uTrunkTaper.value = TS.taper ?? 0; U.uTrunkNear.value = TS.near ?? 0; U.uTrunkCover.value = TS.cover ?? 0;
-        U.uFireRgb.value.copy(this.fire); U.uTintScenery.value = TS.tint ?? 0; U.uTintTrees.value = TS.tintTrees ?? 0; U.uCasterLight.value = TS.glowLight ?? 0;
+        U.uFireRgb.value.copy(this.fire); U.uTintScenery.value = TS.tint ?? 0; U.uTintTrees.value = TS.tintTrees ?? 0; U.uCasterLight.value = TS.glowLight ?? 0; U.uSceneryFoot.value = TS.sceneryFoot ?? 0;
       }
     }
     this.time("grass+lights");

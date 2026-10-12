@@ -10014,6 +10014,10 @@
             "glowLight": {
               "type": "number",
               "minimum": 0
+            },
+            "sceneryFoot": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10032,7 +10036,8 @@
             "sceneryMin",
             "tint",
             "tintTrees",
-            "glowLight"
+            "glowLight",
+            "sceneryFoot"
           ],
           "additionalProperties": false
         }

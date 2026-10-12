@@ -1,7 +1,8 @@
 // Scenery's shadows from her glow (Ed, 2026-10-12: "Scenery (temples etc) should also cast them", "Runestones and soundsystems should
 // also cast shadows": render/view/scenery.ts, render/view/home.ts, render/soundsystemGen.ts): the built game (DIST, default dist/) at
 // 1280×800, stepped at a fixed 1/60 s, her on foot just east of a scene's piece, a set piece, a decor piece, a runestone and a
-// soundsystem (the first wave brought on), each shot with them (<name>-on.png) and without (<name>-off.png, shadows.trunks.scenery off), and where they all lie (<name>-debug.png, magenta).
+// soundsystem (the first wave brought on), each shot with them (<name>-on.png) and without (<name>-off.png, shadows.trunks.scenery off), coloured (<name>-coloured.png, the tint and glowing casters' shade) and black (<name>-black.png), and where
+// they all lie (<name>-debug.png, magenta); and a decor piece by a campfire, her across the fire from it.
 // Fails on a page error.
 //   npm run build && node tools/shadows/scenery-shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -37,15 +38,21 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       for (const [, a] of g.party.areas) if (a.soundsystem && a.cell) { s.push({ name: "soundsystem", x: a.soundsystem.x, z: a.soundsystem.z, r: 3 }); break; }
       const ss = s.find(q => q.name === "soundsystem"), hc = g.map.cellSafe(d.x, d.z).cell;
       for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, -1]]) { const p = g.map.soundsystemSpot(hc[0] + dx, hc[1] + dy); if (p && (!ss || Math.hypot(p.x - ss.x, p.z - ss.z) > 5) && !g.party.areas.has(`${hc[0] + dx},${hc[1] + dy}`)) { s.push({ name: "runestone", x: p.x, z: p.z, r: 1.5 }); break; } }
+      // a ruin (or any decor, else a scene) by a campfire, her across the fire from it: lit by the fire's orange
+      const fires = g.forest.lightsNear(d.x, d.z, 1500).filter(l => l.kind === "campfire");
+      for (const f of fires) {
+        const r = [...g.forest.decorNear(f.x, f.z, 22)].find(q => Math.hypot(q.x - f.x, q.z - f.z) > 5);
+        if (r) { const dx = f.x - r.x, dz = f.z - r.z, k = Math.hypot(dx, dz); s.push({ name: "campfire-" + r.family, x: r.x, z: r.z, r: 0, at: { x: f.x + (dx / k) * 4, z: f.z + (dz / k) * 4 } }); break; }
+      }
       return s;
     });
     for (const s of out.subjects) {
-      for (const on of [true, false, "debug"]) {
-        await page.evaluate(([s, on]) => { const g = window.witch.game; g.tuning.shadows.trunks.scenery = !!on; g.tuning.shadows.trunks.mode = on === "debug" ? "debug" : "soft"; g.witch = { ...g.witch, x: s.x + 80, z: s.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, [s, on]);
+      for (const on of ["coloured", "black", false, "debug"]) {
+        await page.evaluate(([s, on]) => { const g = window.witch.game; const T = g.tuning.shadows.trunks; T.scenery = !!on; T.mode = on === "debug" ? "debug" : "soft"; Object.assign(T, on === "black" ? { tint: 0, tintTrees: 0, glowLight: 0 } : { tint: 0.6, tintTrees: 0, glowLight: 0.7 }); g.witch = { ...g.witch, x: s.x + 80, z: s.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, [s, on]);
         await step(20);
-        await page.evaluate(s => { const g = window.witch.game; g.witch = { ...g.witch, x: s.x + s.r + 5, z: s.z + 1, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, s);
+        await page.evaluate(s => { const g = window.witch.game; g.witch = { ...g.witch, x: s.at ? s.at.x : s.x + s.r + 5, z: s.at ? s.at.z : s.z + 1, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, s);
         await step(90);
-        await page.screenshot({ path: path.join(outDir, `${s.name}-${on === "debug" ? "debug" : on ? "on" : "off"}.png`) });
+        await page.screenshot({ path: path.join(outDir, `${s.name}-${on || "off"}.png`) });
       }
     }
   } finally { await browser.close(); server.close(); }
