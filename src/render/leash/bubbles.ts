@@ -133,7 +133,7 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
       // no room over it on screen (close, or a big legend): kept below the top edge's cues, beside its body rather than over it,
       // its puffs reaching in from the left (the side they trail from), or from the right when there's no room on the left
       top = 57;
-      const cw = (S.box.x + S.box.n) * P;
+      const cw = S.w * P; // (the whole cloud, its lumps past the symbol's square too)
       left = B.left - cw - P * 2 >= 8 ? snapToP(B.left - cw - P * 2) : snapToP(Math.min(width - S.w * P - 8, B.right + P * 2 - S.box.x * P));
     }
     el.style.left = `${left}px`;
@@ -156,8 +156,8 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
       if (cv.dataset.k !== akey) { cv.dataset.k = akey; compassArrow(cv, wy.word === "here" ? -1 : wy.point, rgb); }
       if (text.textContent !== wy.word) text.textContent = wy.word;
       // (beside the big cloud, level with it, on the grid: under it, it fell on the legend's head)
-      const right = left + (S.box.x + S.box.n) * P + P * 3, capW = 57 + wy.word.length * 9; // (its arrow, padding and text, about: no layout read a frame)
-      cap.style.left = `${right + capW <= width - 8 ? right : Math.max(8, snapToP(left + S.box.x * P - P * 3 - capW))}px`;
+      const right = left + S.w * P + P * 2, capW = 57 + wy.word.length * 9; // (its arrow, padding and text, about: no layout read a frame)
+      cap.style.left = `${right + capW <= width - 8 ? right : Math.max(8, snapToP(left - P * 2 - capW))}px`;
       cap.style.top = `${top + snapToP(S.box.y * P + S.box.n * P * 0.5) - 18}px`;
       cap.style.display = "";
     } else cap.style.display = "none";
