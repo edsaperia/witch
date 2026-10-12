@@ -207,14 +207,22 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
     else if (peak > 1.2) errors.push(`${name}: clips (peak ${peak.toFixed(2)})`);
   };
   const quiet: MusicCue = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
-  for (const name of Object.keys(style.sections)) {
-    const oc = new OfflineAudioContext(2, Math.ceil(rate * bars * spBar), rate);
-    const e = new MusicEngine(oc, oc.destination, style, 7);
-    // the intro and builds start part-way, so their later parts sound too
-    const from = name === style.intro || resolveSection(style, name).riser ? 8 * spBar : 0;
-    e.renderAhead({ ...quiet, forceSection: name, forceWave: 3 }, from, bars * spBar, steady);
-    measure(name, await oc.startRendering());
-  }
+  // every section, a few at once (each offline context renders on a thread of its own: CI's smoke job has 4 cores), measured
+  // in the style's order
+  const names = Object.keys(style.sections), bufs: AudioBuffer[] = [];
+  let next = 0;
+  const worker = async () => {
+    for (let i = next++; i < names.length; i = next++) {
+      const name = names[i], oc = new OfflineAudioContext(2, Math.ceil(rate * bars * spBar), rate);
+      const e = new MusicEngine(oc, oc.destination, style, 7);
+      // the intro and builds start part-way, so their later parts sound too
+      const from = name === style.intro || resolveSection(style, name).riser ? 8 * spBar : 0;
+      e.renderAhead({ ...quiet, forceSection: name, forceWave: 3 }, from, bars * spBar, steady);
+      bufs[i] = await oc.startRendering();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(4, navigator.hardwareConcurrency || 2)) }, worker));
+  names.forEach((name, i) => measure(name, bufs[i]));
   {
     // a run: wave 7 due at bar 20, the tempo holding through it (Ed, 2026-10-09: 120 but for her knockdowns), a knockdown
     // in bar 14 (5 bpm faster from the next bar line, silent till her new record starts on bar 17, re-seeded); render bars 8
