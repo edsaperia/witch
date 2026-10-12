@@ -37,13 +37,14 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 
 ### `lakes`
 
-Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. shore: metres of bare shore round the water (no trees, nothing placed); pad: how far from the water anything on foot stops; koi: the share of lakes with koi in them (DECISION FOR ED).
+Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. shore: metres of bare shore round the water (no trees, nothing placed); pad: how far from the water anything on foot stops; koi: the share of lakes with koi in them (DECISION FOR ED). biomeFrom: the island phase from which its lakes take the look of its compass biomes on the sea chart (frozen, lava, oasis, sinkhole, glacial tarn, hot spring, rust pool, lily pond; app/chartOutlines.worker.ts), before it plain water (Ed, 2026-10-12: "biome lakes can start appearing one phase earlier": 3, it was 4, the first uncharted islands).
 
 | knob | type | range |
 |---|---|---|
 | `lakes.shore` | number | 0 to … |
 | `lakes.pad` | number | 0 to … |
 | `lakes.koi` | number | 0 to … |
+| `lakes.biomeFrom` | number | 0 to … |
 
 ### `islands`
 

@@ -14,6 +14,7 @@ import { drawnHills, hillsAt, lakeLevel, terrainAt } from "../rules/terrain";
 import { bearingOf, homeIsland, islandOf, isPlaceholder, KINDS, knownKinds } from "../rules/rosters";
 import { islandAt } from "./chartLayout";
 import { TUNING } from "../rules/tuning";
+import { lakeKnobs } from "../rules/lakes";
 import type { LandMap } from "../rules/land";
 
 /** The page's asks: the islands to make (`ids` in order), or one to make next. */
@@ -97,7 +98,7 @@ const SEA_PAD = 260;
 /** What an island's ground is drawn from: its coast, its lakes, its heights (m, as the game's terrain: hills, the hollows the
  *  lakes lie in), each lake's water level, how thick the trees stand, where the beach is, and its biome. */
 interface Source {
-  land: LandMap; lakes: LandMap | null; centre: { x: number; z: number }; blend: Blend; seed: number;
+  land: LandMap; lakes: LandMap | null; centre: { x: number; z: number }; blend: Blend; /** its lakes' biomes (null: plain water) */ lakeBlend: Blend | null; seed: number;
   heightAt(x: number, z: number): number; levelAt(x: number, z: number): number | null; forest(x: number, z: number): number; sand(x: number, z: number, d: number): boolean;
 }
 
@@ -130,7 +131,8 @@ function ground(src: Source, across = ACROSS): IslandGround {
     }
   }
   // each lake's look: one of the blend's two, by its odds, seeded by the lake (its shore loop: the same on every grid)
-  const looks = new Uint8Array(n), lookA = LOOK_IDS.indexOf(LAKE_LOOKS[B.a] ?? "water"), lookB = LOOK_IDS.indexOf(LAKE_LOOKS[B.b] ?? "water");
+  const LB = src.lakeBlend ?? { a: "temperate", b: "temperate", w: 1 };
+  const looks = new Uint8Array(n), lookA = LOOK_IDS.indexOf(LAKE_LOOKS[LB.a] ?? "water"), lookB = LOOK_IDS.indexOf(LAKE_LOOKS[LB.b] ?? "water");
   const shores = (lakes?.loops ?? []).map(l => { let sx = 0, sz = 0; const m = l.pts.length / 2; for (let k = 0; k < m; k++) { sx += l.pts[k * 2]; sz += l.pts[k * 2 + 1]; } return { x: sx / m, z: sz / m }; });
   const seen = new Uint8Array(n), stack: number[] = [];
   for (let i0 = 0; i0 < n; i0++) {
@@ -142,7 +144,7 @@ function ground(src: Source, across = ACROSS): IslandGround {
     }
     const mx = sx / part.length, mz = sz / part.length;
     let best = 0, bd = Infinity; shores.forEach((p, k) => { const dd = Math.hypot(p.x - mx, p.z - mz); if (dd < bd) { bd = dd; best = k; } });
-    const look = rand(src.seed, best * 7919 + 13) < B.w ? lookA : lookB;
+    const look = rand(src.seed, best * 7919 + 13) < LB.w ? lookA : lookB;
     for (const i of part) looks[i] = look;
   }
   // a sinkhole is no lake but a dry pit: a lip just below its rim, sheer walls, a forest floor far below (`ring` in from its rim)
@@ -195,20 +197,23 @@ export function make(id: string, world: number, found: string[], step: number, a
   const island = id === "home" ? homeIsland(world, knownKinds(found)) : islandOf(id, world);
   if (!island) return null;
   const H = drawnHills(TUNING), biome = id === "home" ? "temperate" : KINDS[id]?.biome ?? "temperate";
-  // its biome: temperate as it stands; else a blend by its bearing where the archipelago put it (else its table's bearing)
-  const at = biome === "temperate" ? null : islandAt(id, world), bearing = at ? (Math.atan2(at.x, -at.y) * 180) / Math.PI : bearingOf(id, world);
+  // its biome: temperate as it stands; else a blend by its bearing where the archipelago put it (else its table's bearing); its
+  // lakes by that bearing's biomes from the tuning's lakes.biomeFrom phase on (Ed, 2026-10-12: "biome lakes can start appearing one
+  // phase earlier": so a temperate island that far out has the compass's lakes too), before it plain water
+  const at = id === "home" ? null : islandAt(id, world), bearing = at ? (Math.atan2(at.x, -at.y) * 180) / Math.PI : bearingOf(id, world);
   const blend: Blend = biome === "temperate" ? { a: "temperate", b: "temperate", w: 1 } : blendAt(bearing), seed = island.seed | 0;
+  const lakeBlend = id !== "home" && island.phase >= lakeKnobs(TUNING).biomeFrom ? blendAt(bearing) : null;
   let src: Source;
   if (id !== "home" && isPlaceholder(id)) { // uncharted: its land alone, the hills as drawn, no forest known
     const l = islandLand(island, TUNING, step), lakes = l.lakes ?? null;
-    src = { land: l.land, lakes, centre: l.home, blend, seed, heightAt: (x, z) => hillsAt(x, z, island.seed, H), levelAt: () => null, forest: () => 0, sand: (_x, _z, d) => d < (TUNING.beach?.width ?? 60) };
+    src = { land: l.land, lakes, centre: l.home, blend, lakeBlend, seed, heightAt: (x, z) => hillsAt(x, z, island.seed, H), levelAt: () => null, forest: () => 0, sand: (_x, _z, d) => d < (TUNING.beach?.width ?? 60) };
   } else { // its whole map, as the night plays it (the run's seed only places what's inside: its shape, areas and lakes are the world's)
     const t = { ...TUNING, map: { ...TUNING.map, island: id, world, found, islandAreas: id === "home" ? knownKinds(found).length : TUNING.map?.islandAreas } };
     const map = generateMap(1, t as typeof TUNING), L = map.bounds.land;
     if (!L) return null;
     const beach = beachOf(map.bounds, TUNING);
     src = {
-      land: L, lakes: map.bounds.lakes ?? null, centre: { x: map.dancefloor.x, z: map.dancefloor.z }, blend, seed,
+      land: L, lakes: map.bounds.lakes ?? null, centre: { x: map.dancefloor.x, z: map.dancefloor.z }, blend, lakeBlend, seed,
       heightAt: (x, z) => terrainAt(map, x, z, H), levelAt: (x, z) => lakeLevel(map, x, z, H), forest: (x, z) => map.treeWeight(x, z),
       sand: (x, z, d) => (beach ? beach.intoSand(x, z) > 0 : d < 60),
     };
