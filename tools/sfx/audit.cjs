@@ -53,7 +53,7 @@ server.listen(0, "127.0.0.1", async () => {
   const page = await browser.newPage({ viewport: { width: 640, height: 360 } }), errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.addInitScript(COUNT);
-  await page.goto(`http://127.0.0.1:${server.address().port}/?seed=871136&creator=0&arena=${encodeURIComponent(ARENA)}`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/?seed=871136&creator=0&arena=${encodeURIComponent(ARENA)}${process.env.QUERY || ""}`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
   await page.keyboard.press("Enter");
   await page.mouse.click(320, 200);
@@ -95,7 +95,7 @@ server.listen(0, "127.0.0.1", async () => {
     ms.sort((a, b) => a - b);
     const q = p => +ms[Math.min(ms.length - 1, Math.floor(p * ms.length))].toFixed(3);
     const creatures = g.creatures.filter(c => Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 60).length;
-    return { gameSeconds: +span.toFixed(1), frames: ms.length, creaturesNear: creatures, nodesPerSecond: Math.round(total / span), made, startedPerSecond: Math.round((A.started - base.started) / span), peakSounding: A.peak, soundingAtEnd: A.live,
+    return { gameSeconds: +span.toFixed(1), frames: ms.length, creaturesNear: creatures, nodesPerSecond: Math.round(total / span), made, startedPerSecond: Math.round((A.started - base.started) / span), peakSounding: A.peak, soundingAtEnd: A.live, budget: w.audio.sfx?.budget ? { ...w.audio.sfx.budget, cap: g.tuning.sfx.budget?.voices ?? 0 } : null,
       soundMs: { median: q(0.5), p95: q(0.95), p99: q(0.99), worst: +ms[ms.length - 1].toFixed(3) },
       musicMs: stats(part.music), cuesMs: stats(part.cues),
       sfxMethods: Object.entries(each).map(([k, e]) => [k, e.calls, +e.ms.toFixed(1), +e.worst.toFixed(2)]).sort((a, b) => b[2] - a[2]).slice(0, 12),
