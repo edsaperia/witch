@@ -174,12 +174,22 @@
         "koi": {
           "type": "number",
           "minimum": 0
+        },
+        "biomeFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "biomeFirstShare": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "shore",
         "pad",
-        "koi"
+        "koi",
+        "biomeFrom",
+        "biomeFirstShare"
       ],
       "additionalProperties": false
     },
