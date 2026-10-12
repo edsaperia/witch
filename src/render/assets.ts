@@ -198,6 +198,8 @@ export class AssetLibrary {
       this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "soundsystem") {
       this.soundsystemsGen.set(r.job.id, { atlas, ...r.result.ss! });
+    } else if (r.job.kind === "hat") {
+      this.hats.set(r.job.id, atlas);
     } else if (r.job.kind === "partyWitch") {
       this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
     } else if (r.job.kind === "beachEdge") {
@@ -383,6 +385,14 @@ export class AssetLibrary {
   private bareStandIn = placeholderAtlas(256);
   /** The hat on the ground in witchBare()'s atlas (-1: she has none). */
   witchHatFrame = -1;
+  /** Her hat alone in the look of `genome` (a hat she left lying: render/view/witch.ts), its frame 0; undefined (and asked for)
+   *  till it's drawn. */
+  hatArt(genome: unknown): Atlas | undefined {
+    const id = `hat-${hashText(JSON.stringify(genome ?? null))}`, a = this.hats.get(id);
+    if (!a) this.ask({ kind: "hat", id, style: this.style, genome }, true);
+    return a;
+  }
+  private hats = new Map<string, Atlas>();
 
   /** A party witch's art (#37: her look from partyWitch(seed), or seed null for our witch's own),
    *  or undefined (and asked for). Looks repeat after a few, so there are only so many to draw. */

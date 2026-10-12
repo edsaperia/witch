@@ -243,8 +243,11 @@ export class View {
   partyObjects: PartyObjectsView;
   private borders: BorderView;
   nextStones: StoneIndicator[] = [];
-  /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
-  hatPointer: StoneIndicator | null = null;
+  /** The pointers to her hats lying in the world (rules/hat.ts: knocked off, put down, or left when she took a new one): 🎩 in a
+   *  whole ring, one a hat, each 🎩 in that hat's colour from the character creator (render/view/hatLooks.ts). */
+  hatPointers: StoneIndicator[] = [];
+  /** Each hat of hers lying: the look (her genome) it went down in (render/view/hatLooks.ts). */
+  hatLooks = new Map<string, unknown>();
   /** The Dowsing hat's pointer toward the nearest relic (rules/hatSpells.ts). */
   dowsePointer: StoneIndicator | null = null;
   /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */

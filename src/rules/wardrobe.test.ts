@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
 import { changeLoadout, hatsDown, newHatFromRoom } from "./hatSpells";
-import { wearing } from "./hat";
+import { hatMarkers, wearing } from "./hat";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 function game(t: Tuning): Game {
@@ -44,6 +44,9 @@ describe("changing her hat and broom mid-night", () => {
     changeLoadout(W, "bramble", "none");
     expect(W.hat.left.map(q => q.spell)).toEqual(["sentry", "sentry"]);
     expect(hatsDown(W).length).toBe(2);
+    // a pointer to each (Ed, 2026-10-12: "If there are multiple hats on the ground, they each get a pointer")
+    W.hat.down = { x: 90, z: 10, at: 2 };
+    expect(hatMarkers(W.hat)).toEqual([{ x: 90, z: 10, at: 2 }, { x: 10, z: 10, at: 0 }, { x: 50, z: 10, at: 1 }]);
   });
 });
 

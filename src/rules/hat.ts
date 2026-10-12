@@ -64,6 +64,10 @@ export function hatButton(h: HatState, x: number, z: number, radius: number, spe
 /** Where the marker points (her hat on the ground), or null when there's nothing to find. */
 export const hatMarker = (h: HatState | undefined): { x: number; z: number } | null => (h?.has && h.down ? { x: h.down.x, z: h.down.z } : null);
 
+/** Where the markers point: every hat of hers on the ground (her own, then those she left), each with when it went down. */
+export const hatMarkers = (h: HatState | undefined): { x: number; z: number; at: number }[] =>
+  !h ? [] : [...(h.has && h.down ? [h.down] : []), ...h.left].map(q => ({ x: q.x, z: q.z, at: q.at }));
+
 /** Putting it down (Ed, 2026-10-09: "If you are in ground mode and hold down the 'drop / pick up sigil' button and there are
  *  no sigils to pick up, you put down your hat"; just a marker, nothing in the rules reads it): a press of the sigil button
  *  that did nothing (`idle`: nothing picked up or put down) starts the hold; held `hold` seconds on, wearing it, she puts it
