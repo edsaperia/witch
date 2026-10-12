@@ -9995,6 +9995,13 @@
             "cover": {
               "type": "number",
               "minimum": 0
+            },
+            "scenery": {
+              "type": "boolean"
+            },
+            "sceneryMin": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10008,7 +10015,9 @@
             "foot",
             "taper",
             "near",
-            "cover"
+            "cover",
+            "scenery",
+            "sceneryMin"
           ],
           "additionalProperties": false
         }

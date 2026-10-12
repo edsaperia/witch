@@ -7,6 +7,7 @@ import type { Plant } from "../../rules/forest";
 import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "../sprites";
 import type { ShadowInstance } from "../shadows";
 import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
+import type { Atlas } from "../atlas";
 import type { TypeArt } from "../assets";
 import { hash2 } from "../../rules/random";
 import { poseOf, type Game } from "../../rules/game";
@@ -14,6 +15,9 @@ import type { View } from "../view";
 import { focusOf, inView, viewRect } from "./culling";
 import { checkPops, mark } from "./pops";
 import { BarkFaces } from "../barkFaces";
+
+/** The scenery's own trunk-shadow batches, by the key they're kept under in View.trunkShadowBatches (the area types' by number). */
+const SCENERY_CASTS = new Set(["decor", "relics", "scenes"]);
 // Each map's bark faces (render/barkFaces.ts), made once; the forest's trees round a spot, for its anchors to find theirs.
 const FACES = new WeakMap<object, BarkFaces>(), NEAR = new WeakMap<object, (x: number, z: number, r: number) => Iterable<Plant>>();
 function facesOf(g: Game): BarkFaces { let f = FACES.get(g.map); if (!f) { const d = g.map.dancefloor; FACES.set(g.map, (f = new BarkFaces(g.map, d ? g.map.areaAt(d.x, d.z).cell : undefined))); } return f; }
@@ -95,6 +99,15 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   const L = LIGHT_UNIFORMS.uMoonDir.value, sx = -L.x / Math.max(0.2, L.y), sz = -L.z / Math.max(0.2, L.y);
   const per = new Map<number, SpriteInstance[]>();
   const trunks = new Map<number, TrunkShadow[]>(); // (their shadows from her glow and the fires: render/trunkShadows.ts)
+  // Scenery casts them too (Ed, 2026-10-12: "Scenery (temples etc) should also cast them"): set pieces (in their area's batch, with
+  // its trees), decor, relics and scenes (a batch an atlas), upright pieces at least sceneryMin metres tall, whole and untapered
+  // (a temple's foot is its own width). Decals lie flat and cast none.
+  const ST = t.shadows.trunks, castMin = ST?.scenery ? ST.sceneryMin ?? 1.2 : Infinity;
+  const casts = new Map<string, TrunkShadow[]>();
+  const cast = (key: string, x: number, z: number, frame: Frame, m: number, flip: boolean) => {
+    if (frame.h * m < castMin) return;
+    let l = casts.get(key); if (!l) casts.set(key, (l = [])); l.push({ x, z, w: frame.w * m, h: frame.h * m, frame, flip, taper: false });
+  };
   const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
   const mpp = v.mpp;
   // How far up the screen a step up a sprite goes, for each step of ground toward the camera.
@@ -159,6 +172,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
       // which leaves half of it in front, reading as a shadow below something hovering); one
       // drawn in perspective, anchored by its middle (its origin), round that middle, as relics are.
       const sd = frame.w * m * 0.3;
+      if (kind === "setpiece" && frame.h * m >= castMin) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: frame.w * m, h: frame.h * m, frame, flip: p.flip, taper: false }); }
       if (kind !== "setpiece") shadows.push({ x: p.x, z: piece.origin ? p.z : p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
       nb++;
       if (sliceDone()) { yield; resume(); }
@@ -182,6 +196,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     const fresh = mark(v, "decor", d.x, d.z, whole.h * mpp), at = stand(d.x, d.z, frame, mpp);
     dl.push({ ...at, frame, flip: d.flip, fresh });
     if (piece.top !== null) dl.push({ ...at, frame: f[piece.top], flip: d.flip, top: true, fresh });
+    cast("decor", d.x, d.z, frame, mpp, d.flip); // (a tall one's two halves share one box: each casts its own, together the whole)
+    if (piece.top !== null) cast("decor", d.x, d.z, f[piece.top], mpp, d.flip);
     const sd = frame.w * mpp * 0.3; // its shadow under it, front edge at its base
     shadows.push({ x: d.x, z: d.z - sd * 0.4, w: frame.w * mpp * 0.8, d: sd, scenery: true });
     nb++;
@@ -220,6 +236,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
       const at = a.decal ? { x: gx - R.x * dx, y: 0, z: gz - R.z * dx + toward } : stand(gx - R.x * dx, gz - R.z * dx + toward, frame, mpp);
       if (!inView(v, at.x, at.z, frame.w * mpp, frame.h * mpp, margin, reach)) return;
       (a.decal ? flat : upright).push({ ...at, frame, flip, fresh: mark(v, "relic", gx, gz, frame.h * mpp) });
+      if (!a.decal) cast("relics", gx, gz, frame, mpp, flip);
       if (!a.decal) shadows.push({ x: gx, z: gz, w: frame.w * mpp * 0.6, d: frame.w * mpp * 0.22, scenery: true });
       nb++;
     };
@@ -260,6 +277,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
         const at = a.decal ? { x: gx - R.x * dx, y: 0, z: gz - R.z * dx + toward } : stand(gx - R.x * dx, gz - R.z * dx + toward, frame, mpp);
         if (!inView(v, at.x, at.z, frame.w * mpp, frame.h * mpp, margin, reach)) return;
         (a.decal ? flat : upright).push({ ...at, frame, flip, fresh: mark(v, "scene", gx, gz, frame.h * mpp) });
+        if (!a.decal) cast("scenes", gx, gz, frame, mpp, flip);
         if (!a.decal) shadows.push({ x: gx, z: gz, w: frame.w * mpp * 0.6, d: frame.w * mpp * 0.22, scenery: true });
         nb++;
       });
@@ -274,10 +292,16 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   if (decor) v.batchFor(v.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
   for (const [type, b] of v.typeBatches) if (!per.has(type)) b.set([]);
   if (t.shadows.trunks) { // (always set, so ?trunks or the pause page's switch can turn them on live; hidden while off: render/view.ts)
-    for (const [type, b] of v.trunkShadowBatches) if (!trunks.has(type)) b.set([]);
+    for (const [type, b] of v.trunkShadowBatches) if (typeof type === "number" ? !trunks.has(type) : SCENERY_CASTS.has(type) && !casts.has(type)) b.set([]);
     for (const [type, list] of trunks) {
       let b = v.trunkShadowBatches.get(type);
       if (!b) { const a = v.assets.typeArt(type); if (!a) continue; b = new TrunkShadowBatch(a.atlas); v.trunkShadowBatches.set(type, b); v.scene.add(...b.meshes); }
+      b.set(list);
+    }
+    const atlases: Record<string, Atlas | undefined> = { decor: decor?.atlas, relics: ra?.atlas, scenes: sa?.atlas };
+    for (const [key, list] of casts) {
+      let b = v.trunkShadowBatches.get(key);
+      if (!b) { const a = atlases[key]; if (!a) continue; b = new TrunkShadowBatch(a); v.trunkShadowBatches.set(key, b); v.scene.add(...b.meshes); }
       b.set(list);
     }
   }

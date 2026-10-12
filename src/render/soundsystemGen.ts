@@ -11,6 +11,7 @@ import type { ForestMap } from "../rules/map";
 import { cellKey } from "../rules/party";
 import type { AssetLibrary } from "./assets";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
+import { TrunkShadowBatch } from "./trunkShadows";
 import type * as THREE from "three";
 import { Vector3 } from "three";
 
@@ -73,7 +74,9 @@ export class SoundsystemGenView {
   private warmed = new WeakSet<object>();
   private fwd = new Vector3();
   private up = new Vector3();
-  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number, private renderer?: THREE.WebGLRenderer, private camera?: THREE.Camera) {}
+  /** Their shadows from her glow and the fires (Ed, 2026-10-12: "Runestones and soundsystems should also cast shadows"; render/trunkShadows.ts),
+   *  a batch an atlas, kept in the view's own map (as `ss:<id>`) so its switch shows and hides them with the trees'. */
+  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number, private renderer?: THREE.WebGLRenderer, private camera?: THREE.Camera, private shadows?: Map<number | string, TrunkShadowBatch>) {}
 
   /** Upload an area's atlas as soon as its bake is here (foxtrot's hitch check on #541), so its first frame on screen doesn't
    *  pay for it: for the next waves' areas that's well before they rise. */
@@ -88,7 +91,7 @@ export class SoundsystemGenView {
     const K = genKnobs(g), specs = soundsystemSpecs(g.map, K), out = new Map<string, GenInfo>();
     for (const s of leyChain(g.party, g.map, K.ahead, 0).stones) { const sp = specs.get(cellKey(s.cell)); if (sp) this.warm(this.assets.soundsystemGenArt(sp.id, sp.genome, sp.yaw, sp.size, false)); }
     this.used.clear();
-    const R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
+    const R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value, casts = !!g.tuning.shadows.trunks?.scenery;
     // how far towards the camera a sprite's rows below its ground point land (as the relics and the ring's speakers stand):
     // a yawed stack's front corners reach below its middle's ground point in the sprite, so it stands on its lowest drawn
     // pixel, moved towards the camera until its middle lands where it stands (Ed's playtest, 2026-10-08: "soundsystems are
@@ -112,11 +115,17 @@ export class SoundsystemGenView {
       const bx = d.x - R.x * dx - U.x * pad, by = y - U.y * pad, bz = d.z - R.z * dx + below * toward - U.z * pad;
       b.set([{ x: bx, y: by, z: bz, frame: f, flip: false, fresh: d.fresh, glow: d.off ? -0.5 : undefined } as SpriteInstance]);
       this.used.add(bid);
+      if (this.shadows && casts) { // (its foot where it stands, as tall as it has risen; risen out of a rubble heap, as the rubble)
+        const key = `ss:${bid}`; let sb = this.shadows.get(key);
+        if (!sb) { sb = new TrunkShadowBatch(art.atlas); this.shadows.set(key, sb); this.scene.add(...sb.meshes); }
+        sb.set([{ x: d.x, z: d.z, w: f.w * this.mpp, h: h * d.rise, frame: f, flip: false, taper: false }]);
+      }
       const at = (px: number, py: number) => { const a = (px - f.w / 2) * this.mpp, c = (f.h - py) * this.mpp; return { x: bx + R.x * a + U.x * c, y: by + R.y * a + U.y * c, z: bz + R.z * a + U.z * c }; };
       const proj = p ? at(p.x, p.y) : null;
       out.set(d.key, { rgb: play.rgb, projector: proj, h, stage: d.stage });
     }
     for (const [id, b] of this.batches) if (!this.used.has(id) && b.count) b.set([]);
+    if (this.shadows) for (const [key, b] of this.shadows) if (typeof key === "string" && key.startsWith("ss:") && !(casts && this.used.has(key.slice(3)))) b.set([]);
     return out;
   }
 

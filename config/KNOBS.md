@@ -2098,7 +2098,7 @@ The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party 
 
 ### `shadows`, `mist`
 
-trunks.foot, trunks.near, trunks.cover (Ed, 2026-10-12: "they should fade out at the bottom of the tree", "when you're close to the tree", for her glow's and the campfires' alike; and "The shadows should darken other foliage that they cast upon"): a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations "get wide at the base, that look strange when they're rotated"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all). Ed's tuned values (2026-10-12): strength 0.75, long 2.5, glowReach 50, glowHeight 1.25, soft, core 0.8, across 1, and lights.campfire.reach 40. shadows: a small contact shadow under the witch, each bush, creature and prop; trees: a crown-sized shadow under every tree too, cast away from the moon (off: Ed, 2026-10-03). canopyShadow: a dappled shadow from the canopy overhead (height in metres), thinner in clearings, drifting with the wind. mist: a low drifting mist (height in metres above the ground). Each has on and strength.
+trunks.foot, trunks.near, trunks.cover (Ed, 2026-10-12: "they should fade out at the bottom of the tree", "when you're close to the tree", for her glow's and the campfires' alike; and "The shadows should darken other foliage that they cast upon"): a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations "get wide at the base, that look strange when they're rotated"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all). Ed's tuned values (2026-10-12): strength 0.75, long 2.5, glowReach 50, glowHeight 1.25, soft, core 0.8, across 1, and lights.campfire.reach 40. shadows: a small contact shadow under the witch, each bush, creature and prop; trees: a crown-sized shadow under every tree too, cast away from the moon (off: Ed, 2026-10-03). canopyShadow: a dappled shadow from the canopy overhead (height in metres), thinner in clearings, drifting with the wind. mist: a low drifting mist (height in metres above the ground). Each has on and strength. trunks.scenery, trunks.sceneryMin (Ed, 2026-10-12: "Scenery (temples etc) should also cast them", "Runestones and soundsystems should also cast shadows"): scenery casts the same shadows from her glow and the fires, untapered (its foot is its own width): set pieces, ruins, rocks and freak trees, modern and quest relics, the scenes' pieces (temples, castles, cemeteries...), the runestones and the soundsystems; pieces under sceneryMin metres tall cast none.
 
 | knob | type | range |
 |---|---|---|
@@ -2116,6 +2116,8 @@ trunks.foot, trunks.near, trunks.cover (Ed, 2026-10-12: "they should fade out at
 | `shadows.trunks.taper` | number | 0 to … |
 | `shadows.trunks.near` | number | 0 to … |
 | `shadows.trunks.cover` | number | 0 to … |
+| `shadows.trunks.scenery` | boolean |  |
+| `shadows.trunks.sceneryMin` | number | 0 to … |
 | `mist.on` | boolean |  |
 | `mist.strength` | number | 0 to … |
 | `mist.height` | number | 0 to … |

@@ -40,14 +40,14 @@ export const TRUNK_SHADOW_UNIFORMS = {
 const VERT = /* glsl */ `
 attribute vec4 iTrunk; // x, z (its foot), width, height (metres)
 attribute vec4 iUv;    // its frame in the atlas (u0, v0 top, u1, v1 bottom; u0 > u1 mirrored)
-attribute float iPad;  // its empty rows at the bottom, a share of its height
+attribute vec2 iPad;   // its empty rows at the bottom, a share of its height; and how much it tapers at its foot (scenery: none)
 uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear;
 uniform vec3 uGlowPos;
 uniform vec4 uFires[${MAX_FIRES}];
 uniform float uFireFade[${MAX_FIRES}];
 uniform int uFireCount;
 varying vec2 vTex, vUx;
-varying float vFade, vAlong, vLen, vU;
+varying float vFade, vAlong, vLen, vU, vTaper;
 varying vec4 vFrame;
 ${HEIGHT_VERT_GLSL}
 void main() {
@@ -61,11 +61,11 @@ void main() {
   vec2 off = foot - L.xz; float d = length(off);
   if (reach <= 0.0 || d > reach || d < 0.4) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; } // (out of its light: nothing)
   vec2 dir = off / d, side = vec2(dir.y, -dir.x); // (so across, along turn as x, z do: facing up, not culled)
-  float h = iTrunk.w * (1.0 - iPad), len = clamp(d * h / max(0.6, L.y), 0.6 * h, uTrunkLong * h);
+  float pad = iPad.x, h = iTrunk.w * (1.0 - pad), len = clamp(d * h / max(0.6, L.y), 0.6 * h, uTrunkLong * h);
   float t = position.z + 0.5, u = position.x; // (along from its foot, across)
   vec2 p = foot + dir * t * len + side * u * iTrunk.z * uTrunkAcross;
-  vTex = vec2(mix(iUv.x, iUv.z, 0.5 + u * uTrunkAcross), mix(iUv.w, iUv.y, iPad + t * (1.0 - iPad)));
-  vUx = vec2(iUv.x, iUv.z); vU = u * uTrunkAcross;
+  vTex = vec2(mix(iUv.x, iUv.z, 0.5 + u * uTrunkAcross), mix(iUv.w, iUv.y, pad + t * (1.0 - pad)));
+  vUx = vec2(iUv.x, iUv.z); vU = u * uTrunkAcross; vTaper = iPad.y;
   vFrame = vec4(min(iUv.x, iUv.z), iUv.y, max(iUv.x, iUv.z), iUv.w);
   float k = 1.0 - d / reach;
   float near = uTrunkNear > 0.0 ? smoothstep(0.25 * uTrunkNear, uTrunkNear, length(foot - uGlowPos.xz)) : 1.0; // (to nothing as she comes up to its trunk)
@@ -78,7 +78,7 @@ const FRAG = /* glsl */ `
 uniform sampler2D uAlbedo;
 uniform float uTrunkStrength, uTrunkHard, uTrunkCore, uTrunkFoot, uTrunkCover, uCover, uTrunkTaper;
 varying vec2 vTex, vUx;
-varying float vFade, vAlong, vLen, vU;
+varying float vFade, vAlong, vLen, vU, vTaper;
 varying vec4 vFrame;
 float solid(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : step(0.5, texture2D(uAlbedo, q).a); }
 void main() {
@@ -87,7 +87,7 @@ void main() {
   // width pinched to a third at the foot, opening smoothly to full over uTrunkTaper metres, the sprite's whole width squeezed in. Done
   // here, a pixel at a time (in the vertices, between the quad's few rows along, it showed as a kink: Ed, v3052).
   vec2 tex = vTex;
-  if (uTrunkTaper > 0.0) {
+  if (uTrunkTaper > 0.0 && vTaper > 0.0) {
     float pinch = mix(0.35, 1.0, smoothstep(0.0, 1.0, vAlong * vLen / uTrunkTaper));
     tex.x = mix(vUx.x, vUx.y, 0.5 + vU / pinch);
   }
@@ -105,8 +105,9 @@ void main() {
   gl_FragColor = vec4(vec3(1.0 - a), 1.0); // multiplied over the ground
 }`;
 
-/** A trunk: its foot (metres), width and height (metres), its frame and whether it's mirrored. */
-export interface TrunkShadow { x: number; z: number; w: number; h: number; frame: Frame; flip: boolean }
+/** A trunk: its foot (metres), width and height (metres), its frame and whether it's mirrored; taper false for scenery (a temple's or
+ *  a runestone's foot is its own width: render/view/scenery.ts). */
+export interface TrunkShadow { x: number; z: number; w: number; h: number; frame: Frame; flip: boolean; taper?: boolean }
 
 export class TrunkShadowBatch {
   readonly meshes: THREE.Mesh[] = [];
@@ -140,7 +141,7 @@ export class TrunkShadowBatch {
     this.capacity = Math.max(n, this.capacity * 2);
     this.geo.dispose(); // (or three.js keeps drawing only the old capacity: SpriteBatch.grow)
     const mk = (k: number) => { const a = new THREE.InstancedBufferAttribute(new Float32Array(this.capacity * k), k); a.setUsage(THREE.DynamicDrawUsage); return a; };
-    this.trunk = mk(4); this.uv = mk(4); this.pad = mk(1);
+    this.trunk = mk(4); this.uv = mk(4); this.pad = mk(2);
     this.geo.setAttribute("iTrunk", this.trunk); this.geo.setAttribute("iUv", this.uv); this.geo.setAttribute("iPad", this.pad);
   }
 
@@ -151,7 +152,7 @@ export class TrunkShadowBatch {
       const uv = s.frame.uv;
       T.set([s.x, s.z, s.w, s.h], i * 4);
       U.set(s.flip ? [uv[2], uv[1], uv[0], uv[3]] : [uv[0], uv[1], uv[2], uv[3]], i * 4);
-      P[i] = (s.frame.pad ?? 0) / s.frame.h;
+      P[i * 2] = (s.frame.pad ?? 0) / s.frame.h; P[i * 2 + 1] = s.taper === false ? 0 : 1;
     });
     for (const a of [this.trunk, this.uv, this.pad]) a.needsUpdate = true;
     this.geo.instanceCount = list.length;
