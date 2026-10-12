@@ -266,7 +266,21 @@ function start(): boolean {
 input.onAny = () => (arrival && !landed ? true : start()); // (arriving: a key skips the flight, app/arrive.ts; the landing starts it)
 // The audio watchdog (app/sound.ts).
 sound.watch(() => !game.clock.paused && !freeze.frozen && !document.hidden, () => game.speakerBoot.some(t => t !== null), playtest);
-freeze.onToggle = on => sound.freeze(on);
+// The pause page's test sliders (Ed, 2026-10-12; ui/decide.ts PauseSliders): down the left while frozen, the freeze quiet (no card
+// of its own: nothing else over the game), its stamp at their foot. Their code loads on the first freeze.
+let pauseSliders: import("./ui/decide").PauseSliders | null = null, pauseLoading = false;
+freeze.quiet = true;
+freeze.onStamp = text => pauseSliders?.setStamp(text);
+freeze.onToggle = on => {
+  sound.freeze(on);
+  if (pauseSliders) { pauseSliders.show(on); return; }
+  if (!on || pauseLoading) return;
+  pauseLoading = true;
+  void import("./ui/decide").then(({ PauseSliders }) => {
+    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: {} });
+    requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
+  });
+};
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The waves' pace: a "Waves:" dropdown in the bedroom's top right (app/wavePick.ts; Ed, 2026-10-08), the dev "Player:" pick
 // under it with the debug overlay on (Ed, 2026-10-11), never remembered; picking one doesn't start the game.
