@@ -6,6 +6,9 @@ import { mountChart } from "./chartView";
 
 const params = new URLSearchParams(location.search), showAll = params.get("chart") === "all" || params.has("all");
 const linkWorld = params.get("world");
+// Over the game, opened at the treehouse deck's map table (ui/chartOverlay.ts): sailing asks the game to sail (it records the
+// night first), and Close or Esc hands it back.
+const inFrame = window.parent !== window, toGame = (m: unknown) => window.parent.postMessage(m, "*");
 const view = mountChart(document.body, {
   mode: "sail",
   save: showAll ? allSave() : undefined,
@@ -13,6 +16,8 @@ const view = mountChart(document.body, {
   start: showAll ? "home" : undefined,
   countUncharted: showAll,
   note: showAll ? "showing everything (?chart=all)" : undefined,
+  onSail: inFrame ? island => toGame({ chartSail: `./?island=${island}${linkWorld ? `&world=${worldSeed(linkWorld)}` : ""}` }) : undefined,
+  onClose: inFrame ? () => toGame("chart:close") : undefined,
 });
 addEventListener("resize", () => view.resize());
 let last = performance.now();

@@ -222,7 +222,7 @@ The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in 
 
 ### `treehouse`
 
-The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"): its footprint's nearest edge (clear metres round its foot) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them), at angle degrees (-90: due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off.
+The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"): its footprint's nearest edge (clear metres round its foot) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them), at angle degrees (-90: due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow).
 
 | knob | type | range |
 |---|---|---|
@@ -231,6 +231,18 @@ The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due nor
 | `treehouse.clear` | number | 0 to … |
 | `treehouse.lightReach` | number | 0 to … |
 | `treehouse.lightStrength` | number | 0 to … |
+| `treehouse.deck.on` | boolean |  |
+| `treehouse.deck.radius` | number | 0 to … |
+| `treehouse.deck.height` | number | 0 to … |
+| `treehouse.deck.grace` | number | 0 to … |
+| `treehouse.deck.rail` | number | 0 to … |
+| `treehouse.deck.table` | number | 0 to … |
+| `treehouse.deck.tableUse` | number | 0 to … |
+| `treehouse.deck.decks.inner` | number | 0 to … |
+| `treehouse.deck.decks.outer` | number | 0 to … |
+| `treehouse.deck.decks.from` | number | 0 to … |
+| `treehouse.deck.decks.to` | number | 0 to … |
+| `treehouse.deck.seat` | number | 0 to … |
 
 ### `home`
 

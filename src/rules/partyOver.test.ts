@@ -14,7 +14,7 @@ const run = (g: Game, s: number, c: Partial<typeof C> = {}) => { for (let i = 0;
 function game(): Game {
   const g = newGame(123, TUNING);
   g.clock.paused = false; g.party.spellAt = undefined;
-  g.witch = { ...g.witch, seated: false };
+  g.witch = { ...g.witch, seated: false, perch: false };
   return g;
 }
 const inOwnArea = (g: Game, c: Creature) => cellKey(g.map.cellSafe(c.x, c.z).cell) === cellKey(c.cell);

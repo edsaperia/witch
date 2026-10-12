@@ -72,6 +72,13 @@ export function newCampaign(world: number, storage?: Store | null): ChartSave {
 /** The night's end on `island` ("home" or a kind; anything else isn't an island of the chart and records nothing): played; if
  *  won, marked won, and the islands of the legends it woke (`found`: rules/win.ts) found from it, each with its voyage (an
  *  island already found keeps its first voyage). A new save; the old one unchanged. */
+/** Sailing off from the treehouse deck's map table (Ed, 2026-10-11: "Sail anytime"; ui/chartOverlay.ts): with the night still on
+ *  (not won, the party not over, nothing yet recorded), it ends unwon, as a loss: played, nothing found, no legends woken; otherwise
+ *  the night's already in the save as it ended. */
+export function sailNight(save: ChartSave, island: string, nightOn: boolean): ChartSave {
+  return nightOn ? recordNight(save, island, { won: false }) : save;
+}
+
 export function recordNight(save: ChartSave, island: string, result: { won: boolean; found?: readonly string[] }): ChartSave {
   if (!playableIsland(island)) return save;
   const next: ChartSave = { world: save.world, found: [...save.found], won: [...save.won], played: [...save.played], voyages: [...save.voyages] };

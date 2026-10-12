@@ -595,7 +595,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     seed, tuning, n, first, margin, shape, cells, playable, inBuffer, isLake, coast, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
     treehouse, treehouseFront: { x: treehouse.x, z: treehouse.z + tuning.treehouse.clear }, grounds, scenes,
-    start: { x: treehouse.x, z: treehouse.z + 1 },
+    start: { x: treehouse.x, z: treehouse.z + (tuning.treehouse.deck?.on ? tuning.treehouse.deck.seat : 1) }, // (her decks: on the treehouse deck, rules/treehouse.ts)
     bounds,
     extent: ext ? (land ? { minX: Math.min(ext.minX, land.box.minX - edgeK * A), maxX: Math.max(ext.maxX, land.box.maxX + edgeK * A), minZ: Math.min(ext.minZ, land.box.minZ - edgeK * A), maxZ: Math.max(ext.maxZ, land.box.maxZ + edgeK * A) } : ext) : { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A }, // (the forest past the coast all round)
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,

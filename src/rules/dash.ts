@@ -71,7 +71,7 @@ export function dashCharge(d: DashState, time: number): number {
  *  steers. `clear(x, z)` says whether she can stand there. Returns whether she did. */
 export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: number, time: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean = () => true, max = 1, chain = 0, aimX = 0, aimZ = 0): boolean {
   rechargeDash(d, time, max, t.dash.cooldown);
-  if (time < d.readyAt || d.charges < 1 || w.mode !== "ground" || w.seated) return false;
+  if (time < d.readyAt || d.charges < 1 || w.mode !== "ground" || w.seated || w.perch) return false; // (no blinking off the treehouse deck)
   let dx = moveX, dz = moveZ, len = Math.hypot(dx, dz);
   const al = Math.hypot(aimX, aimZ);
   // The way she's moving (Ed, 2026-10-11: on the pad and on keyboard and mouse, not the way she's aiming): her

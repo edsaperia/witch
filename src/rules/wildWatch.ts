@@ -27,7 +27,7 @@ export function stepWildWatch(g: Game, t: Tuning): void {
   const home = cellKey(g.map.centreCell);
   let here: string | null = null, here2: string | null = null; // (the areas a witch is on the ground in this step: one or two players)
   for (const w of g.witches) {
-    if (w.body.mode !== "ground" || w.body.seated || w.ko) continue;
+    if (w.body.mode !== "ground" || w.body.seated || w.body.perch || w.ko) continue; // (up on the treehouse deck: not in any area)
     const k = cellKey(g.map.cellSafe(w.body.x, w.body.z).cell), e = g.wildEntry.get(k);
     if (here === null) here = k; else here2 = k;
     if (e) { e.last = time; continue; }
