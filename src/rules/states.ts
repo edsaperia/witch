@@ -11,14 +11,17 @@
 // dazedTime first, a knob); no new creatures grow in an area with a soundsystem. A headless model
 // on the real map, its creatures, growth and wave order, like rules/balance.ts, with the witch's
 // time spent flying, landing and talking. Read by tools/balance/states.mjs and states.test.ts.
-import { attackOf, COMBAT, strengthOf } from "./combat";
-import { spawnCreatures, speedFactor, LEGEND, type CreatureState, type LegendState, type Level } from "./creatures";
+import { attackOf, COMBAT, marchSpeedOf, strengthOf } from "./combat";
+import { spawnCreatures, LEGEND, type CreatureState, type LegendState, type Level } from "./creatures";
 import { countScale, grownAt, growthLevel } from "./growth";
 import { toEvolve } from "./berries";
 import { AREA_TYPES, type ForestMap } from "./map";
 import type { Cell } from "./partition";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
+import { bootSeconds } from "./bootRing";
+import { stretchSeconds } from "./pulseRoute";
 import { hash2 } from "./random";
+import { homeHealth, homeReach } from "./speakers";
 import { crowdTime, INVITE_FIRE, movement, throughput, type Buff, type Limits } from "./throughput";
 
 /** How she splits her invites (issue #87): every one a defender; every third leashed; every one
@@ -33,6 +36,8 @@ export type Policy = "defend" | "third" | "leash" | "babies" | "relay" | "mass";
 export interface StatesOptions {
   /** Seconds between waves, and the waves to stop at. */
   interval: number;
+  /** The ley pulse's speed (m/s, Ed 2026-10-09: "Pure constant speed"): set, each wave's gap is its stretch of the route over it (rules/pulseRoute.ts), in place of interval. */
+  pulse?: number;
   maxWaves: number;
   policy: Policy;
   /** Her invite rate, times the game's (talk times invite.talkTime: baby 3 s, young 6, adult 12). */
@@ -98,7 +103,7 @@ export interface StatesOptions {
   maxTime?: number;
   /** A fallen soundsystem costs wave time (Ed, 2026-10-05: "there's not much penalty for losing a
    *  soundsystem. Maybe it penalises you wave time?"; he picked 60 s): the next wave comes
-   *  fallAdvance seconds sooner (60; at once if less is left; 0 off), or fallShare of the gap
+   *  fallAdvance seconds sooner (at once if less is left; 0 off, the default since Ed dropped it from the game, 2026-10-08), or fallShare of the gap
    *  then; fallShrink (every later gap times 1 − it, down to fallFloor) was tried and dropped. */
   fallAdvance?: number;
   fallShare?: number;
@@ -191,19 +196,19 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   const make = (id: number, species: string, cell: string, x: number, z: number, level: Level): Unit => {
     const legend = level === LEGEND, m = strengthOf(species, level), A = attackOf(species, level, COMBAT)?.attack;
     const reach = !A ? 0 : A.delivery === "shot" ? A.range * 0.8 : A.range + (A.lunge ?? 0) - 0.3; // (babies don't attack)
-    return { id, species, cell, x, z, level, m, hp: fullHp(level, m), dps: COMBAT.levels.dps[level] * m, reach, speed: (legend ? t.legendSpeed : t.creatureSpeed * speedFactor(species, level, t)) * C.marchMult, state: "wild", target: null, legend };
+    return { id, species, cell, x, z, level, m, hp: fullHp(level, m), dps: COMBAT.levels.dps[level] * m, reach, speed: marchSpeedOf(species, level, t), state: "wild", target: null, legend };
   };
   const homeKey = cellKey(map.centreCell);
   for (const c of spawnCreatures(map)) {
     const u = make(c.id, c.species, cellKey(c.cell), c.x, c.z, c.level);
-    u.speed = c.speed * C.marchMult; // (its own, as combat.ts marches it)
+    u.speed = marchSpeedOf(c.species, c.level, t); // (as combat.ts marches it)
     if (u.legend) { u.state = c.legendState === "happy" ? "happy" : "wild"; u.mood = "asleep"; if (u.state === "happy") u.hp *= LD; }
     add(u);
   }
   let nextId = 1e6;
 
   const party = newParty(map), sounds = new Map<string, Sound>();
-  sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius, wave: 0, at: 0 });
+  sounds.set("home", { key: "home", x: d.x, z: d.z, hp: homeHealth(map.tuning), radius: homeReach(map.tuning), wave: 0, at: 0 });
   const soundOf = (key: string) => (key === homeKey ? sounds.get("home") : sounds.get(key));
   const ruined = new Set<string>(), worked = new Set<string>(), fed = new Set<string>();
   const legends = units.filter(u => u.legend), legendStats = { angry: 0, angryAreas: [] as { wave: number; key: string; woken: boolean }[], happy: 0, relicsUsed: 0, hazardTime: 0, armyLost: 0, beaten: 0 };
@@ -301,7 +306,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       let best: Sound | null = null, bd = Infinity;
       for (const s1 of sounds.values()) { if (s1.hp <= 0 || s1.key === big) continue; const k = Math.hypot(s1.x - s0.x, s1.z - s0.z); if (k < bd) { bd = k; best = s1; } }
       // (While this one still has most of its health, stand by it.)
-      if (best && s0.hp < (s0.key === "home" ? C.homeHealth : o.soundHealth ?? C.soundsystemHealth) * 0.5) return { x: best.x, z: best.z };
+      if (best && s0.hp < (s0.key === "home" ? homeHealth(map.tuning) : o.soundHealth ?? C.soundsystemHealth) * 0.5) return { x: best.x, z: best.z };
       return { x: s0.x, z: s0.z };
     }
     const c = party.next[0];
@@ -312,13 +317,13 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   let hurry = 1, rushing = false, shrunk = 1, firstFall: number | null = null;
   // The gap before wave w (Ed's faster waves: a ramp over the run, and a rush once it's lost).
   const gapNow = (w: number) => {
-    let g = o.interval;
+    let g = o.pulse ? stretchSeconds(party, map, o.pulse) : o.interval; // (the ley pulse at a constant speed: the next stretch over it, Ed 2026-10-09)
     if (o.rampTo !== undefined && o.rampBy) g = Math.max(o.rampTo, o.interval - ((o.interval - o.rampTo) * w) / o.rampBy);
     else if (o.rampTo !== undefined && o.rampPct) g = Math.max(o.rampTo, o.interval * Math.pow(1 - o.rampPct, w));
     g = Math.max(Math.min(g, o.fallFloor ?? 60), g * shrunk);
     return rushing ? g * (o.rushFactor ?? 0.5) : g;
   };
-  let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval;
+  let time = 0, nextAt = bootSeconds(map) + t.party.startDelay + (o.pulse ? stretchSeconds(party, map, o.pulse) : o.interval);
   const sample = () => {
     let pool = 0, poolF = 0, happy = 0, lea = 0, aF = 0, en = 0, eF = 0;
     for (const u of units) {
@@ -342,7 +347,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       for (const lf of openLocal.values()) { lf.held = (sounds.get(lf.key)?.hp ?? 0) > 0; }
       openLocal.clear();
       if (party.wave >= o.maxWaves) break;
-      nextAt += gapNow(party.wave + 1);
+      if (!o.pulse) nextAt += gapNow(party.wave + 1);
       const wave = party.wave + 1;
       if (wave % relicEvery === 0 && relicsFound < relicCount) { relicsFound++; relicsHeld++; } // (she finds one on her travels)
       // What grows while wild (never in an area with a soundsystem).
@@ -377,6 +382,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
         const lf: LocalFight = { wave: party.wave, key, invited: all > 0 ? inv / all : 0, defendersF: defF, enragedF: enF, otherF, held: true, won: null };
         local.push(lf); openLocal.set(key, lf); if (enF > 0 && defF > 0) deciding.add(lf);
       }
+      if (o.pulse) nextAt = time + gapNow(party.wave + 1); // (the pulse on along the next stretch)
     }
 
     // Her time.
@@ -529,7 +535,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       if (s.key !== "home") {
         firstFall ??= party.wave;
         // The wave time it costs: the next wave sooner, and every later gap shorter.
-        const left = nextAt - time, cut = o.fallShare !== undefined ? o.fallShare * gapNow(party.wave + 1) : o.fallAdvance ?? 60;
+        const left = nextAt - time, cut = o.fallShare !== undefined ? o.fallShare * gapNow(party.wave + 1) : o.fallAdvance ?? 0;
         if (cut > 0) nextAt = time + Math.max(0, left - cut);
         if (o.fallShrink) shrunk *= 1 - o.fallShrink;
       }

@@ -1,5 +1,6 @@
 // The scenery rebuild (from render/view.ts, issue #122): trees, undergrowth, walls, set pieces, decor,
 // path pieces, relics, grounds and scenes round the camera, rebuilt once it has moved, turned or zoomed.
+import { relicArtId, relicBottle, relicFlipped } from "./lights";
 import type { Frame, Piece, RelicArt } from "../artBuild";
 import { LIGHT_UNIFORMS } from "../lighting";
 import type { Plant } from "../../rules/forest";
@@ -59,6 +60,9 @@ export function refresh(v: View, force = false): void {
 
 const SLICE_MS = 2.5, MAX_FRAMES = 4, SLICE_FPS = 30;
 
+/** Which quest relics lie in the world, as a bit mask (their bottles are scenery). */
+const lyingRelics = (g: View["game"]): number => { let m = 0; for (const r of g.relics) if (r.state === "lying") m |= 1 << (r.id % 30); return m; };
+
 /** What a rebuild needs, if one is due now (she has moved, turned or zoomed, the scenery's radius has grown, or new art is in), else null; `force`: anyway. */
 function due(v: View, force = false) {
   // The margin grows with her speed (a quarter second's flight), so at full boost the batches are
@@ -72,7 +76,8 @@ function due(v: View, force = false) {
   const radius = v.budget.radius, reach = Math.min(t.haze.far, radius + margin / 2);
   const regrown = Math.abs(radius - v.lastBuild.radius) >= margin / 3;
   const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift;
-  if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version) return null;
+  const relics = lyingRelics(g); // (one picked up or put back: its bottle goes or comes at once)
+  if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version && relics === v.lastBuild.relics) return null;
   return { margin, pose, key, lift, radius, reach };
 }
 
@@ -80,7 +85,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   let t0 = performance.now();
   const sliceDone = () => performance.now() - t0 > SLICE_MS, resume = () => { t0 = performance.now(); };
   const g = v.game, t = g.tuning;
-  v.lastBuild = { ...key, version: v.assets.version, radius };
+  v.lastBuild = { ...key, version: v.assets.version, radius, relics: lyingRelics(v.game) };
   v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift };
   const r = viewRect(v, reach, margin), cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, half = Math.max(r.maxX - r.minX, r.maxZ - r.minZ) / 2;
   v.lastView = { x: cx, z: cz, half };
@@ -159,7 +164,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   yield* scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
   yield* scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
   // Berry bushes (rules/berries.ts): normal bushes of their area, a berry on some of them.
-  yield* scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
+  yield* scatter("berrybush", g.berries.bushes.filter(b => !b.harvest && Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
   yield* scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
   yield* scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
   // The rim kit round the legends' clearings (rules/forest.ts legendRim), drawn whole.
@@ -216,6 +221,13 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
       nb++;
     };
     if (ra.modern.length) for (const r of g.forest.relicsNear(cx, cz, half)) put(ra.modern[r.variant % ra.modern.length], r.x, r.z, r.flip);
+    // The quest relics still lying where they were found: each its party relic bottle in its mound, standing on its lowest drawn
+    // pixel like the rest (its gold rune, the pickup marker, lies sigilOffset metres south: render/leash.ts).
+    for (const r of g.relics) {
+      if (r.state !== "lying" || Math.abs(r.x - cx) > half || Math.abs(r.z - cz) > half) continue;
+      const a = ra.byId[relicArtId(r.kind)] ?? ra.byId[`party:${relicBottle(r.kind)}`];
+      if (a) put(a, r.x, r.z, relicFlipped(r.kind));
+    }
     for (const gr of g.map.grounds) {
       if (Math.abs(gr.x - cx) > half + gr.r || Math.abs(gr.z - cz) > half + gr.r) continue;
       for (const p of ra.layouts[gr.kind] ?? []) { const a = ra.byId[p.id]; if (a) put(a, gr.x + (gr.flip ? -p.x : p.x), gr.z + p.z, gr.flip); } // mirrored whole
@@ -267,7 +279,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     b?.set(list);
     if (sliceDone()) { yield; resume(); }
   }
-  { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: 7, d: 3.5, scenery: false }); } // soft, under the treehouse
+  { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: g.tuning.treehouse.deck?.on ? 9 : 7, d: g.tuning.treehouse.deck?.on ? 5 : 3.5, scenery: false }); } // soft, under the treehouse
   checkPops(v, "placed", !force);
   v.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
   v.stats.trees = nt; v.stats.bushes = nb;

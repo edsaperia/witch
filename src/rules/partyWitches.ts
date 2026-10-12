@@ -22,6 +22,15 @@
 // (alone, or with a free party witch near her); any input stops it at once. Pairs stand where
 // they meet; the view lines their sprites up by the art's anchors. Dance moves keep to the beat
 // in the view. No drawing here, and no single-witch assumption: players are passed in.
+//
+// Stargazing (Ed, 2026-10-11, docs/backlog/creator-and-house.md): "when a soundsystem is destroyed its party witch doesn't leave; she
+// leaves the dancefloor and lies down to stargaze ... around the party area outside the speaker ring, in pairs and threes where
+// possible. At the end of the night everyone lies there looking up. She can interact with them like the beach witches." A
+// witch whose soundsystem is ruined (or every witch, once the party's over) is `gazing`: she comes down if she's up, walks to
+// her place in a bed (`beds`: two or three places side by side, out past the speakers' ring by gaze.from to gaze.to metres)
+// and lies there; the next one to lie down fills the newest bed before a new one is begun. A player keeping still within
+// gaze.meet of one for idleAfter seconds gets the beach's turn with her (MEET_SEQUENCE: a chat, holding hands, a hug, then
+// lying side by side), and she goes back to her place when the player moves.
 import { rng } from "./random";
 import type { Tuning } from "./tuning";
 
@@ -41,7 +50,12 @@ export const POSES: Record<Activity, string[]> = {
   swoop: ["fly"],
 };
 
-export type PartyWitchState = "arriving" | "floor" | "leaving";
+export type PartyWitchState = "arriving" | "floor" | "leaving" | "gazing";
+
+/** What a player and a witch lying about (on the beach, or stargazing by the party) do together, round and round. */
+export const MEET_SEQUENCE: { activity: Activity; pose: string }[] = [
+  { activity: "chat", pose: "laugh" }, { activity: "pair", pose: "holdHands" }, { activity: "pair", pose: "hug" }, { activity: "rest", pose: "stargaze" },
+];
 
 export interface PartyWitch {
   id: number;
@@ -74,7 +88,12 @@ export interface PartyWitch {
   next?: Activity;
   /** A swoop: where it began (she drifts from there to tx, tz over it), and how high it goes. */
   sx?: number; sz?: number; peak?: number;
+  /** Stargazing: her place in her bed, and which way the bed lies. */
+  bed?: { x: number; z: number; facing: 1 | -1 };
 }
+
+/** A bed of stargazers: where its middle is, how many places it has (2 or 3), how many are taken, which way they lie. */
+export interface GazeBed { x: number; z: number; cap: number; n: number; facing: 1 | -1 }
 
 /** What the partner does in a pair whose lead does this (art/witch.js WITCH_PAIRS partnerPose). */
 export const PARTNER_POSE: Record<string, string> = { twirl: "twirled", limboHold: "limboHelp" };
@@ -89,13 +108,22 @@ export interface PartyWitches {
   nextId: number;
   players: PlayerIdle[];
   rand: () => number;
+  /** The stargazers' beds, oldest first. */
+  beds?: GazeBed[];
+  /** The players with a stargazer (as `players`), and which of MEET_SEQUENCE comes next. */
+  gaze?: PlayerIdle[];
+  gazeStep?: number;
 }
+
+/** What the night's done: the areas whose soundsystems are ruined (their witches lie down to stargaze), and whether the party's
+ *  over (everyone does). */
+export interface Night { ruined?: ReadonlySet<string>; over?: boolean }
 
 /** What the party witches need to know about a player this step. */
 export interface PlayerView { x: number; z: number; onFoot: boolean; moving: boolean; /** up over the treetops (party witches swoop more, to be seen from there) */ treetop?: boolean }
 
 /** The dancefloor: its centre and radius (metres); `clear`, whether a party witch may stand at a spot round it (not in a tree, a speaker or the treehouse). */
-export interface Floor { x: number; z: number; radius: number; clear?: (x: number, z: number) => boolean }
+export interface Floor { x: number; z: number; radius: number; clear?: (x: number, z: number) => boolean; /** the speakers' ring's outside edge (metres from the middle): the stargazers lie out past it */ ring?: number }
 
 export const newPartyWitches = (seed: number): PartyWitches => ({ list: [], nextId: 0, players: [], rand: rng(seed * 7919 + 61) });
 
@@ -196,21 +224,105 @@ export function pairOffset(pose: string, facing: 1 | -1, t: Tuning): { dx: numbe
   return pose === "conga" ? { dx: -facing * g * 1.1, dz: 0.05 } : pose === "limboHold" ? { dx: facing * g * 2.6, dz: 0 } : { dx: facing * g, dz: 0 };
 }
 
+/** She lies down to stargaze: out of whatever she's doing, to her place in the newest bed with room, or a new bed. */
+function lieDown(s: PartyWitches, w: PartyWitch, floor: Floor, t: Tuning, time: number): void {
+  const G = t.partyWitches.gaze!, r = s.rand, beds = (s.beds ??= []);
+  release(s, w, time);
+  if (w.partner !== null && w.partner < 0) { const I = s.players[-1 - w.partner]; if (I?.partner === w.id) I.until = time; } // (a player dancing with her: her turn's over)
+  for (const o of s.list) if (o.third && o.partner === w.id) { o.partner = null; o.third = false; o.until = Math.min(o.until, time); }
+  let b = beds.find(q => q.n < q.cap);
+  if (!b) {
+    // Two or three places side by side (lying along x, so one behind another in z), out past the speakers: clear of what
+    // stands there and of the other beds.
+    const cap = r() < G.threes ? 3 : 2, ring = floor.ring ?? floor.radius, depth = (cap - 1) * G.gap;
+    let best: GazeBed | null = null;
+    for (let k = 0; k < 16 && !best; k++) {
+      const a = r() * Math.PI * 2, d = ring + G.from + r() * (G.to - G.from), x = floor.x + Math.cos(a) * d, z = floor.z + Math.sin(a) * d;
+      const room = beds.every(q => Math.abs(q.x - x) > G.apart + G.length || Math.abs(q.z - z) > ((q.cap - 1) * G.gap + depth) / 2 + G.apart);
+      if ((room && (!floor.clear || Array.from({ length: cap }, (_, i) => bedPlace({ x, z, cap }, i, G)).every(p => floor.clear!(p.x, p.z)))) || k === 15) best = { x, z, cap, n: 0, facing: r() < 0.5 ? 1 : -1 };
+    }
+    beds.push((b = best!));
+  }
+  const bed = { ...bedPlace(b, b.n++, G), facing: b.facing };
+  Object.assign(w, { state: "gazing", bed, activity: "run", pose: "run", partner: null, lead: false, third: false, next: undefined, tx: bed.x, tz: bed.z, until: Infinity });
+}
+
+/** A bed's ith place: one behind another, gap metres apart, each a little along from the last (stagger) so they don't line up. */
+function bedPlace(b: { x: number; z: number; cap: number }, i: number, G: NonNullable<Tuning["partyWitches"]["gaze"]>): { x: number; z: number } {
+  const k = i - (b.cap - 1) / 2;
+  return { x: b.x + k * G.stagger, z: b.z + k * G.gap };
+}
+
+/** Whether a stargazer is lying in her place. */
+const lying = (w: PartyWitch) => w.state === "gazing" && !!w.bed && w.pose === "stargaze" && Math.hypot(w.x - w.bed.x, w.z - w.bed.z) < 0.35;
+
+/** A stargazer this step: beside the player she's with, or back to her place (coming down first if she's up) and lying there. */
+function stepGazer(s: PartyWitches, w: PartyWitch, players: PlayerView[], dt: number, t: Tuning): void {
+  const P = t.partyWitches, bed = w.bed!;
+  if (w.partner !== null && w.partner < 0) {
+    const i = -1 - w.partner, p = players[i], I = s.gaze?.[i];
+    if (p && I && I.partner === w.id) {
+      // Beside her (as on the beach): walking over, then keeping her place; lying alongside to stargaze, as in a bed.
+      const G = P.gaze!, off = w.pose === "stargaze" ? { dx: G.stagger, dz: -G.gap } : pairOffset(w.pose, I.facing, t);
+      const gx = p.x + off.dx, gz = p.z + off.dz, dx = gx - w.x, dz = gz - w.z, d = Math.hypot(dx, dz);
+      if (d > 1e-3) { const st = Math.min(d, Math.max(P.walkSpeed, d * 2) * dt); w.x += (dx / d) * st; w.z += (dz / d) * st; }
+      w.y = 0;
+      return;
+    }
+    w.partner = null;
+  }
+  const dx = bed.x - w.x, dz = bed.z - w.z, d = Math.hypot(dx, dz);
+  w.y = Math.max(0, w.y - (P.flyHeight / P.arriveTime) * dt);
+  if (d > 0.3) {
+    const st = Math.min(d, P.runSpeed * dt); w.x += (dx / d) * st; w.z += (dz / d) * st;
+    Object.assign(w, { activity: "run", pose: "run", facing: dx >= 0 ? 1 : -1, away: dz < -Math.abs(dx) });
+  } else if (w.y <= 0) Object.assign(w, { x: bed.x, z: bed.z, activity: "rest", pose: "stargaze", facing: bed.facing, away: false });
+}
+
+/** Players keeping still by a stargazer: the nearest gets up and they take their turns (MEET_SEQUENCE), as on the beach. */
+function meetGazers(s: PartyWitches, players: PlayerView[], time: number, dt: number, t: Tuning): void {
+  const P = t.partyWitches, G = P.gaze!, gz = s.list.filter(w => w.state === "gazing" && w.bed);
+  if (!gz.length && !s.gaze) return; // (nobody stargazing yet: nothing kept)
+  const gaze = (s.gaze ??= []);
+  players.forEach((p, i) => {
+    const I = (gaze[i] ??= { still: 0, activity: null, pose: null, partner: null, until: 0, facing: 1 });
+    let near: PartyWitch | null = null, nd = G.meet;
+    for (const w of gz) { const d = Math.hypot(w.x - p.x, w.z - p.z); if (d < nd && (w.partner === -1 - i || (w.partner === null && lying(w)))) { nd = d; near = w; } }
+    const mine = I.partner !== null ? gz.find(w => w.id === I.partner) : undefined;
+    if (!p.onFoot || p.moving || (!near && !mine)) {
+      if (mine && mine.partner === -1 - i) mine.partner = null; // (she goes back to her place)
+      Object.assign(I, { still: 0, activity: null, pose: null, partner: null });
+      return;
+    }
+    I.still += dt;
+    if (I.still < P.idleAfter || (I.activity !== null && time < I.until)) return;
+    const w = mine ?? near!, step = MEET_SEQUENCE[(s.gazeStep ?? 0) % MEET_SEQUENCE.length];
+    s.gazeStep = (s.gazeStep ?? 0) + 1;
+    I.facing = w.x >= p.x ? 1 : -1;
+    const side = step.pose === "holdHands" || step.pose === "stargaze"; // (side by side, facing us)
+    const until = time + (step.pose === "stargaze" ? 1e6 : G.turn); // (lying together, they stay so until she moves)
+    Object.assign(I, { activity: step.activity, pose: step.pose, until, partner: w.id });
+    Object.assign(w, { activity: step.activity, pose: step.pose, partner: -1 - i, lead: false, facing: side ? I.facing : (I.facing === 1 ? -1 : 1), away: false });
+  });
+}
+
 /**
  * One step. `areas`: the soundsystems playing now (not the dancefloor's), oldest first: each its
  * area's key and where it stands. `players`: each player on foot or not, moving or not.
  */
-export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: number; z: number }[], floor: Floor, players: PlayerView[], time: number, dt: number, t: Tuning): void {
+export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: number; z: number }[], floor: Floor, players: PlayerView[], time: number, dt: number, t: Tuning, night: Night = {}): void {
   const P = t.partyWitches, r = s.rand;
   // Who should be here: one for each soundsystem playing, however many (Ed, 2026-10-06).
   const want = new Map(areas.map(a => [a.key, a])), treetop = players.some(p => p.treetop);
-  for (const w of s.list) if (w.state !== "leaving" && !want.has(w.area)) {
+  // Her soundsystem ruined, or the party over: she stays, lying down to stargaze (Ed, 2026-10-11).
+  if (P.gaze) for (const w of s.list) if (w.state !== "gazing" && w.state !== "leaving" && (night.over || (!want.has(w.area) && night.ruined?.has(w.area)))) lieDown(s, w, floor, t, time);
+  for (const w of s.list) if (w.state !== "leaving" && w.state !== "gazing" && !want.has(w.area)) {
     release(s, w, time);
     const a = Math.atan2(w.z - floor.z, w.x - floor.x);
     Object.assign(w, { state: "leaving", since: time, from: { x: w.x, z: w.z }, to: { x: floor.x + Math.cos(a) * P.flyFrom, z: floor.z + Math.sin(a) * P.flyFrom } });
   }
   const here = new Set<string>(); for (const w of s.list) if (w.state !== "leaving") here.add(w.area); // (a set: no list scan per soundsystem)
-  for (const [key, a] of want) if (!here.has(key)) {
+  if (!night.over) for (const [key, a] of want) if (!here.has(key)) { // (once the party's over, nobody more flies in)
     // She flies in from her soundsystem's side of the floor.
     const ang = Math.atan2(a.z - floor.z, a.x - floor.x), from = { x: floor.x + Math.cos(ang) * P.flyFrom, z: floor.z + Math.sin(ang) * P.flyFrom }, to = spot(r, floor, t);
     s.list.push({ id: s.nextId++, seed: Math.floor(r() * 1e6), area: key, ...from, y: P.flyHeight, facing: to.x >= from.x ? 1 : -1, away: to.z < from.z,
@@ -218,7 +330,7 @@ export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: numbe
   }
   // Flying in and out: eased along the line, coming down to land (or rising to leave).
   for (const w of s.list) {
-    if (w.state === "floor") continue;
+    if (w.state === "floor" || w.state === "gazing") continue;
     const k = Math.min(1, (time - w.since) / P.arriveTime), e = k * k * (3 - 2 * k);
     w.x = w.from.x + (w.to.x - w.from.x) * e; w.z = w.from.z + (w.to.z - w.from.z) * e;
     w.y = w.state === "arriving" ? P.flyHeight * (1 - e) : P.flyHeight * e;
@@ -229,7 +341,11 @@ export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: numbe
   // floor (simRangeTreetop over the treetops, where the swoops are meant to be seen from afar), nobody on it moves or picks
   // anything new; who's here is still kept. Coming back in range, they all pick something new at once, so it's lively.
   const near = !players.length || players.some(p => Math.hypot(p.x - floor.x, p.z - floor.z) <= (p.treetop ? P.simRangeTreetop : P.simRange));
-  if (!near) { s.idle = true; players.forEach((_, i) => { s.players[i] = { still: 0, activity: null, pose: null, partner: null, until: 0, facing: s.players[i]?.facing ?? 1 }; }); return; } // (a player far off isn't idling into it)
+  if (!near) {
+    // (out of sight, the stargazers are simply in their places, lying there; and nobody's with them)
+    for (const w of s.list) if (w.state === "gazing" && w.bed) Object.assign(w, { x: w.bed.x, z: w.bed.z, y: 0, activity: "rest", pose: "stargaze", facing: w.bed.facing, away: false, partner: null });
+    if (s.gaze) s.gaze.length = 0;
+    s.idle = true; players.forEach((_, i) => { s.players[i] = { still: 0, activity: null, pose: null, partner: null, until: 0, facing: s.players[i]?.facing ?? 1 }; }); return; } // (a player far off isn't idling into it)
   const byId = new Map<number, PartyWitch>(); for (const w of s.list) byId.set(w.id, w);
   if (s.idle) { s.idle = false; for (const w of s.list) if (w.state === "floor") { release(s, w, time); w.until = time; } }
   // On the floor: each activity, and a new one when it's done.
@@ -278,9 +394,16 @@ export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: numbe
     }
     if (w.activity !== "fly" && w.activity !== "swoop") { w.y = 0; keepIn(w, floor, t); }
   }
+  // The stargazers, and players keeping still by them.
+  if (P.gaze) { meetGazers(s, players, time, dt, t); for (const w of s.list) if (w.state === "gazing" && w.bed) stepGazer(s, w, players, dt, t); }
   // Players idling into the party.
   players.forEach((p, i) => {
     const I = (s.players[i] ??= { still: 0, activity: null, pose: null, partner: null, until: 0, facing: 1 });
+    if (s.gaze?.[i]?.still) { // (keeping still by a stargazer: that's what she's doing, not the party)
+      if (I.partner !== null) { const o = s.list.find(w => w.id === I.partner); if (o && o.partner === -1 - i) { o.partner = null; o.until = time; } }
+      Object.assign(I, { still: 0, activity: null, pose: null, partner: null });
+      return;
+    }
     const near = Math.hypot(p.x - floor.x, p.z - floor.z) < floor.radius * P.idleReach;
     if (!p.onFoot || p.moving || !near) {
       // Any input stops it at once (her partner picks something new).

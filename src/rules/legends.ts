@@ -7,7 +7,7 @@
 // sigil in her stack) and puts it down in the clearing of the legend she chooses (Ed, 2026-10-06). Buffs once earned are kept.
 // The legends' long, slow lobs and beams are combat's (stepLegendAttack). No drawing here.
 import raw from "../../config/legends.json";
-import type { Creature } from "./creatures";
+import { heal, type Creature } from "./creatures";
 import { inLegendClearing, type ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import { crownReach, type Plant } from "./forest";
@@ -18,7 +18,7 @@ export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
   /** Going back to sleep away from where it lay (Ed, 2026-10-06): it walks home at homeSpeed m/s first. */
   homeSpeed: number;
-  relics: { kinds: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number; clearOfCircle?: number };
+  relics: { kinds: string[]; /** one relic per this many areas (the ones the waves reach), at least one (Ed, 2026-10-11); 0 or none, one of each kind */ perAreas?: number; /** the bottles' colours (Ed, 2026-10-11): the i-th plain kind's own the i-th; each kind in each (relicKinds) */ colours?: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number; clearOfCircle?: number };
   attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[]; };
   healTime: number;
   charge: { species: string[]; windup: number; laneShown: number; speed: number; accel: number; turn: number; brake: number; arc: number; laneWidth: number; damage: number; knockback: number; returnSpeed: number; rest: number };
@@ -26,9 +26,22 @@ export interface LegendsData {
 }
 export const LEGENDS = raw as unknown as LegendsData;
 
+/** Every relic kind (Ed, 2026-10-11): each bottle of relics.kinds (mirrored ones end Flip) in each of relics.colours (the i-th
+ *  plain bottle's own colour the i-th: written as the bottle alone, any other as `<kind>~<colour>`); `look` is its bottle and
+ *  colour, mirrored or not, the pair a map never holds twice. */
+export function relicKinds(R: LegendsData["relics"]): { kind: string; look: string }[] {
+  const plain = R.kinds.filter(k => !k.endsWith("Flip")), cols = R.colours ?? [], out: { kind: string; look: string }[] = [];
+  for (const kind of R.kinds) {
+    const base = kind.replace(/Flip$/, ""), own = cols[plain.indexOf(base)];
+    if (!cols.length) { out.push({ kind, look: base }); continue; }
+    for (const c of cols) out.push({ kind: c === own ? kind : `${kind}~${c}`, look: `${base}~${c}` });
+  }
+  return out;
+}
+
 /** A relic: a giant half-buried party object (its kind: the art's party relic id), lying at (x, z)
  *  until she picks it up; then carried (in her leash's relics), then put down by a legend. */
-export interface Relic { id: number; kind: string; x: number; z: number; cell: [number, number]; state: "lying" | "carried" | "used"; legend?: number;
+export interface Relic { id: number; kind: string; x: number; z: number; cell: [number, number]; state: "lying" | "carried" | "used" | /** put down on the ground by her, off any legend's clearing (Ed, 2026-10-08): only its sigil lies there, at (sx, sz), to pick up again */ "dropped"; legend?: number;
   /** Its relic sigil on the ground, sigilOffset metres south of it (Ed, 2026-10-06): she picks the relic up by standing on this, like any sigil. */
   sx: number; sz: number }
 
@@ -59,8 +72,17 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
   const woods = (px: number, pz: number) => forest.treesNear(px, pz, 14).filter(t => Math.hypot(t.x - px, t.z - pz) < 14).length >= 3;
   const out: Relic[] = [];
   const gapTo = (x: number, z: number) => out.reduce((m, r) => Math.min(m, Math.hypot(r.x - x, r.z - z)), Infinity);
-  // The kinds in a seeded order: the first for home's, the rest for the map.
-  const kinds = [...R.kinds].sort((a, k) => hash2(a.length, a.charCodeAt(0) + a.charCodeAt(a.length - 1) * 7, map.seed + 7731) - hash2(k.length, k.charCodeAt(0) + k.charCodeAt(k.length - 1) * 7, map.seed + 7731));
+  // How many (Ed, 2026-10-11: one per relics.perAreas areas the waves reach, at least home's), and which: the kinds in a seeded
+  // order (relicKinds: bottle, mirrored or not, colour), never one bottle twice in a colour while they last (Ed: "We shouldn't use
+  // the same colour reflected on the same map"), then round again. The first is home's.
+  const all = relicKinds(R), count = R.perAreas && R.perAreas > 0 ? Math.max(1, Math.round((map.cells.length - 1) / R.perAreas)) : R.kinds.length;
+  const hashOf = (k: string) => { let h = 7; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) % 1000003; return hash2(h, k.length, map.seed + 7731); };
+  const order = all.map(k => ({ ...k, h: hashOf(k.kind) })).sort((a, c) => a.h - c.h), kinds: string[] = [];
+  for (let seen = new Set<string>(); kinds.length < count; seen = new Set()) {
+    const before = kinds.length;
+    for (const k of order) if (kinds.length < count && !seen.has(k.look)) { seen.add(k.look); kinds.push(k.kind); }
+    if (kinds.length === before) break;
+  }
   const put = (kind: string, x: number, z: number) => { const c = map.cellSafe(x, z).cell; out.push({ id: out.length, kind, x, z, cell: [c[0], c[1]], state: "lying", sx: x, sz: Math.min(b.maxZ - 1, z + R.sigilOffset) }); };
 
   // Home's: round from a seeded bearing, out along each ray to where the home area ends, then back
@@ -186,17 +208,20 @@ function walkHome(c: Creature, time: number, dt: number, data: LegendsData): voi
 
 /** Restlessness run its course: angry (hostile; its health whole). */
 export function anger(c: Creature, time: number): void {
+  heal(c, time);
   Object.assign(c, { legendState: "angry", stateAt: time, enraged: true, state: "enraged", hp: undefined, fight: undefined, siege: undefined, restlessness: 1, questOpen: false });
 }
 
 /** Made happy (a relic beside it): it defends, and gives its buff for good. */
 export function cheer(c: Creature, time: number): void {
+  heal(c, time);
   Object.assign(c, { legendState: "happy", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, questOpen: false, buffed: true, charge: undefined, legend: undefined });
 }
 
 /** Back to sleep (worn down, or calmed by one of its kind back in its area), its buff (if earned)
  *  kept; away from where it lay, it walks home first (homing; Ed, 2026-10-06). */
 export function lull(c: Creature, time: number): void {
+  heal(c, time);
   const away = c.lairX !== undefined && c.lairZ !== undefined && Math.hypot(c.x - c.lairX, c.z - c.lairZ) > 0.5;
   Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0, homing: away || undefined, questOpen: false });
 }
@@ -213,7 +238,7 @@ export const buffing = (c: Creature): boolean => !!c.buffed || c.legendState ===
 export function relicButton(relics: Relic[], carried: number[], creatures: Creature[], legendIds: number[], x: number, z: number, time: number, pickRadius: number, map: ForestMap, data: LegendsData = LEGENDS): { picked: Relic } | { placed: Relic; legend: Creature } | { outside: Creature } | null {
   // Standing on a relic's sigil (as on any placed sigil: within the leash's pickRadius of it) picks the relic up.
   let pick: Relic | null = null, pd = pickRadius;
-  for (const r of relics) if (r.state === "lying") { const d = Math.hypot(r.sx - x, r.sz - z); if (d <= pd) { pd = d; pick = r; } }
+  for (const r of relics) if (r.state === "lying" || r.state === "dropped") { const d = Math.hypot(r.sx - x, r.sz - z); if (d <= pd) { pd = d; pick = r; } }
   if (pick) { pick.state = "carried"; carried.push(pick.id); return { picked: pick }; }
   if (!carried.length) return null;
   let best: Creature | null = null, near: Creature | null = null, nd = Infinity;

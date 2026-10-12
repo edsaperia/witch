@@ -7,14 +7,14 @@ import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
 import { overrideFor, poseName, type Override } from "./overrides";
-import { propSprites, soundsystemSprites, treehouseSprites, witchSprites, type TreehouseArt, type WitchArt } from "./homeArt";
+import { entTreehouseSprites, propSprites, soundsystemGenSprites, soundsystemSprites, treehouseSprites, witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
-export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
+export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas; /** A creature's head (art pixels from its top left): bubbles point their tails at it (headPoint). */ head?: [number, number] }
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
 /** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
  *  drawn pixel rather than on its box. */
-export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean }
+export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean; /** A creature's head, art pixels from its top left (Baked.head). */ head?: [number, number] }
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
@@ -145,6 +145,7 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
     const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
     if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
+    b.head = headPoint(sp.m, b.w, b.h);
     out.push(b);
   }
   return out;
@@ -174,6 +175,20 @@ function eyeMask(m: ArrayLike<number>): Uint8Array | undefined {
   let any = false;
   for (let i = 0; i < m.length; i++) if (EYES.has(m[i])) { out[i] = 1; any = true; }
   return any ? out : undefined;
+}
+/** Where a creature's head is in its sprite (Ed, 2026-10-12: "can we have the tail of bubbles point at creatures' heads?"): the
+ *  middle of its eyes where they show, else the middle of its topmost few rows (turned away, its head's back and ears; asleep,
+ *  the top of the curl), in art pixels from its top left. */
+export function headPoint(m: ArrayLike<number>, w: number, h: number): [number, number] | undefined {
+  let n = 0, sx = 0, sy = 0, top = -1;
+  for (let i = 0; i < w * h; i++) { if (EYES.has(m[i])) { n++; sx += i % w; sy += Math.floor(i / w); } if (top < 0 && m[i]) top = Math.floor(i / w); }
+  if (n) return [sx / n + 0.5, sy / n + 0.5];
+  if (top < 0) return undefined;
+  let bottom = h - 1;
+  while (bottom > top && ![...Array(w).keys()].some(x => m[bottom * w + x])) bottom--;
+  const rows = Math.max(2, Math.round((bottom - top + 1) * 0.18));
+  for (let y = top; y < Math.min(h, top + rows); y++) for (let x = 0; x < w; x++) if (m[y * w + x]) { n++; sx += x; }
+  return [sx / n + 0.5, top + rows / 2];
 }
 /** Towards: frames 0 to 4n - 1 (level x n + walk frame, n its walk's frames: 2 unless it has its own cycle); away: the
  *  same, from 4n. */
@@ -210,7 +225,7 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
     // Its lowest drawn row (the sprite shader drops alpha under a half).
     let pad = 0;
     bottom: for (let row = s.h - 1; row >= 0; row--, pad++) for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) break bottom;
-    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(s.S ? { masked: true } : {}) };
+    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) };
   });
   return { albedo, normal, width: W, height: H, frames };
 }
@@ -233,17 +248,20 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "witch"; id: string; style: Style; genome: unknown; bare: boolean }
   | { kind: "props"; id: string; style: Style }
   | { kind: "soundsystems"; id: string; style: Style }
+  /** (id "home" the old treehouse; "ent:<deck height>:<radius>" the treehouse Ent holding the deck: rules/treehouse.ts) */
   | { kind: "treehouse"; id: string; style: Style }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
   | { kind: "pathPieces"; id: string; style: Style }
   /** Modern relics, playground and sports pieces, with the art's arrangements. */
   | { kind: "relics"; id: string; style: Style }
   /** The dancefloor's speakers: every drawn angle, state and frame. */
-  | { kind: "speakers"; id: string; style: Style }
+  | { kind: "speakers"; id: string; style: Style; /** The areas' rune stones' bake scale (runeMarkers.scale), the ring's stones baked at it. */ stone: number }
   /** Every scene's pieces (each drawn once) and each scene's layout, as authored and mirrored. */
   | { kind: "scenes"; id: string; style: Style }
   /** A party witch (#37): her look from partyWitch(seed) (or, seed null, our witch's own), in every party pose. */
   | { kind: "partyWitch"; id: string; seed: number | null; style: Style; /** our witch's genome (art/witchGenome.js), for seed null; else the classic witch */ genome?: unknown }
+  /** One area's generated soundsystem (art/soundsystemGen.js): its genome at its yaw (degrees) and size. */
+  | { kind: "soundsystem"; id: string; style: Style; genome: unknown; yaw: number; size: number; /** "play" (its 3 playing frames) or "damage" (its damage stages and rubble) */ part: "play" | "damage" }
   /** Every party object (#38) in each neon and balloon palette a placement can pick (campfires in their three frames), and the clusters' layouts. */
   | { kind: "partyObjects"; id: string; style: Style }
   /** The beach's decorations (art/beach.js): its finds, and each footprint at every heading. */
@@ -261,13 +279,23 @@ export interface PartyWitchArt { poses: Record<string, number[]>; fps: Record<st
 
 /** A scene piece in its atlas (by its name in the scenes' table), with its ground point; and each
  *  scene's pieces in metres from its middle, as authored and mirrored. */
-export interface SceneArt { pieces: Record<string, { frame: number; originX: number; originY: number; decal: boolean }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
+export interface SceneArt { pieces: Record<string, { frame: number; originX: number; originY: number; decal: boolean; /** drawn at this many art pixels a metre, not the game's own (the effects': art/effects.js EFFECT_PPM) */ ppm?: number }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
 export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean }
 
 /** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
-/** A home speaker's runestone, times an area's rune stone (Ed: "smaller runestones"): baked at that size. */
-export const SPEAKER_STONE = 0.55;
-export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The small runestone each home speaker starts as (Ed, 2026-10-06), and its ground point. */ stone?: number; stoneOrigin?: { x: number; y: number } }
+/** A home speaker's runestone: an area's rune stone, as tall and carved the same, at this share of its width (Ed, 2026-10-08:
+ *  "similar to normal runestones but half the width"; it was a 0.55 miniature). */
+export const SPEAKER_STONE_WIDTH = 0.5;
+/** What a ring stone is carved with, by its place in the ring (0 at the top, clockwise): a rune glyph or a creature's sigil. One
+ *  not listed carves RING_STONE_CARVING, Ed's pick (2026-10-08): "three glowing dots in a vertical stack, hinting at the speaker
+ *  that will replace it" (its bass, mid and tweeter). */
+type Carving = { rune?: number; sigil?: string; dots?: boolean };
+export const RING_STONE_CARVING: Carving = { dots: true };
+export const RING_STONE_CARVINGS: Record<number, Carving> = {};
+const carvingKey = (c?: Carving) => (c?.sigil ? `s:${c.sigil}` : c?.rune !== undefined ? `r:${c.rune}` : "");
+/** A ring stone's frame key in SpeakerArt.stones: its drawn angle and its carving. */
+export const ringStoneKey = (i: number, angle: number): string => `${angle}|${carvingKey(RING_STONE_CARVINGS[i])}`;
+export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The runestone each home speaker starts as (Ed, 2026-10-06), turned like the speakers (Ed, 2026-10-08: "face inwards, like the ring speakers do"): by ringStoneKey, its frame and its ground point. */ stones?: Record<string, number>; stoneOrigin?: Record<string, { x: number; y: number }>; /** And where its glowing dots' middles are in its frame (art pixels), by the same key: the game's glow round them (Ed, 2026-10-09). */ stoneDots?: Record<string, { x: number; y: number }[]> }
 
 /** The beach's edge of the woods in its atlas (render/beach.ts): palms as crown and trunk frames, shrubs and grass clumps whole. */
 export interface BeachEdgeArt { palms: { top: number; bot: number }[]; shrubs: number[]; grass: number[] }
@@ -284,7 +312,13 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt }
+export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt }
+
+/** The Harvest hat's sprouts (art/country.js scene pieces), one under each of its berries by its place in the ring. */
+export const HARVEST_SPROUTS = ["harvest-sprout-1", "harvest-sprout-2", "harvest-sprout-3"];
+/** The Cyclone's whirlwind's effects and their frames (art/effects.js), and the spell's neon its wind and motes take. */
+export const CYCLONE_FRAMES: [string, number][] = [["cycloneRise", 3], ["cyclone", 8], ["cycloneFall", 3]];
+export const CYCLONE_TINT = [190, 150, 255];
 
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
@@ -298,10 +332,22 @@ function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: Sc
       scenes.pieces[p.ref] = { frame: sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal };
     }
   }
+  // The hats' own art (#723, drawn each frame by render/view/hatArt.ts): the Harvest hat's sprouts, under its berries, and the
+  // Cyclone hat's whirlwind (art/effects.js: rising, its loop, falling apart), in the spell's neon, by its foot's middle.
+  for (const ref of HARVEST_SPROUTS) {
+    const piece = Art.scenePiece(ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean };
+    scenes.pieces[ref] = { frame: sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: false };
+  }
+  const fxColours = Art.effectColours(CYCLONE_TINT);
+  for (const [id, n] of CYCLONE_FRAMES) for (let f = 0; f < n; f++) {
+    const e = Art.effectSprite(id, { frame: f, variant: "light" }) as { sp: unknown; anchors: { base?: number[] }; px: number };
+    const b = Art.bake(e.sp, fxColours, st, "none", mk) as Baked, base = e.anchors.base ?? [b.w / 2, b.h - 1];
+    scenes.pieces[`fx:${id}/${f}`] = { frame: sprites.push(b) - 1, originX: base[0], originY: base[1], decal: false, ppm: e.px };
+  }
   return { sprites, scenes };
 }
 
-function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers: SpeakerArt } {
+function speakerSprites(st: Style, mk: MakeCanvas, stoneScale: number): { sprites: Baked[]; speakers: SpeakerArt } {
   const sprites: Baked[] = [], speakers: SpeakerArt = { frames: {}, origin: {} }, colours = Art.dancefloorSpeakerColours();
   for (const angle of Art.DANCEFLOOR_SPEAKER_ANGLES as number[])
     for (const [state, n] of Object.entries(Art.DANCEFLOOR_SPEAKER_STATES as Record<string, number>))
@@ -310,9 +356,17 @@ function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers
         speakers.frames[`${angle}:${state}:${frame}`] = sprites.push(Art.bake(r.sp, colours, st, st.cOutline, mk) as Baked) - 1;
         if (!speakers.origin[angle]) speakers.origin[angle] = r.origin;
       }
-  // the runestone it starts as (the areas' rune stone, cyan, its home rune): baked small, at SPEAKER_STONE of a rune stone's size, drawn at 1 (docs/STYLE.md rule 1)
-  const stone = (Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; makeCanvas: MakeCanvas }) => Baked)(st, { glow: "cyan", scale: SPEAKER_STONE, makeCanvas: mk });
-  speakers.stone = sprites.push(stone) - 1; speakers.stoneOrigin = { x: stone.w / 2, y: stone.h };
+  // the runestone it starts as (the areas' rune stone, cyan, carved with its three dots or its own carving): baked at the areas' stones' scale, so as
+  // tall as theirs, at SPEAKER_STONE_WIDTH of their width, at each of the speakers' angles (mirrored as they are), drawn at 1 (docs/STYLE.md rule 1)
+  type Stone = Baked & { origin: { x: number; y: number }; dots?: { x: number; y: number }[] };
+  const runeStone = Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; width: number; yaw: number; rune?: number; sigil?: string; dots?: boolean; makeCanvas: MakeCanvas }) => Stone;
+  speakers.stones = {}; speakers.stoneOrigin = {}; speakers.stoneDots = {};
+  const carvings = new Map<string, Carving>([["", RING_STONE_CARVING], ...Object.values(RING_STONE_CARVINGS).map(c => [carvingKey(c), c] as const)]);
+  for (const angle of Art.DANCEFLOOR_SPEAKER_ANGLES as number[])
+    for (const [key, c] of carvings) {
+      const stone = runeStone(st, { glow: "cyan", scale: stoneScale, width: SPEAKER_STONE_WIDTH, yaw: angle, ...c, makeCanvas: mk });
+      speakers.stones[`${angle}|${key}`] = sprites.push(stone) - 1; speakers.stoneOrigin[`${angle}|${key}`] = stone.origin; if (stone.dots) speakers.stoneDots[`${angle}|${key}`] = stone.dots;
+    }
   return { sprites, speakers };
 }
 
@@ -340,6 +394,16 @@ function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: Re
     if (d.family !== "farm" && d.family !== "street") continue;
     const r = Art.countrySprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
     relics.push({ id: d.id, family: "modern", decal: false, frame: sprites.push(Art.bake(r.whole, cc, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+  }
+  // The party relics' bottles (art/partyRelics.js; Ed, 2026-10-09: "Draw at today's size and show me!"), each half-buried in its
+  // mound, under "party:<kind>": drawn where a quest relic lies (render/view/scenery.ts).
+  // Each in its own glass ("party:<kind>") and every other ("party:<kind>~<glass>": Ed, 2026-10-11, recoloured for more kinds).
+  for (const id of Art.PARTY_RELIC_IDS as string[]) {
+    const r = Art.partyRelicSprite(id, st) as { sp: unknown; origin: { x: number; y: number } };
+    for (const glass of ["", ...(Art.PARTY_RELIC_GLASSES as string[])]) {
+      if (glass && glass === (Art.PARTY_RELIC_BY_ID as Record<string, { glass: string }>)[id].glass) continue;
+      relics.push({ id: `party:${id}${glass ? "~" + glass : ""}`, family: "party", decal: false, frame: sprites.push(Art.bake(r.sp, Art.partyRelicColours(id, st, glass || undefined), st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+    }
   }
   return { sprites, relics, layouts: Art.relicLayouts(st) as RelicLayouts };
 }
@@ -471,7 +535,8 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "witch") { const { sprites, witch } = witchSprites(job.style, job.genome, job.bare, mk); return { px: packPixels(sprites, 2048), ours: witch }; }
   if (job.kind === "props") return { px: packPixels(propSprites(job.style, mk), 1024) };
   if (job.kind === "soundsystems") return { px: packPixels(soundsystemSprites(job.style, mk), 2048) };
-  if (job.kind === "treehouse") { const { sprites, treehouse } = treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
+  if (job.kind === "soundsystem") { const { sprites, art } = soundsystemGenSprites(job.style, job.genome, job.yaw, job.size, mk, job.part); return { px: packPixels(sprites, 1024), ss: art }; }
+  if (job.kind === "treehouse") { const [ent, y, r] = job.id.split(":"), { sprites, treehouse } = ent === "ent" ? entTreehouseSprites(job.style, mk, +y, +r) : treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
@@ -480,7 +545,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
-  if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk); return { px: packPixels(sprites, 2048), speakers }; }
+  if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk, job.stone); return { px: packPixels(sprites, 2048), speakers }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "beachEdge") { const { sprites, beach } = beachEdgeSprites(job.style, job.K, mk); return { px: packPixels(sprites, 2048), beachEdge: beach }; }
   // (enraged: red eyes and the angry face; dressed up: the happy face; art/genome/expressions.js)
@@ -488,7 +553,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     for (let f = 0; f < 2; f++) {
       const { sp, colours } = Art.legendForm(job.species, job.style, { frame: f }) as { sp: { origin?: number[]; h: number; w: number }; colours: unknown };
-      sprites.push(Art.bake(sp, colours, job.style, "none", mk) as Baked);
+      const b = Art.bake(sp, colours, job.style, "none", mk) as Baked; b.head = headPoint((sp as unknown as { m: ArrayLike<number> }).m, b.w, b.h); sprites.push(b);
       ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
     }
     return { px: packPixels(sprites, 2048), ground, centre };
@@ -500,7 +565,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const gear = { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true } as unknown as null;
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
       const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
-      sprites.push(Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked);
+      const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
       ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
     }
     return { px: packPixels(sprites, 2048), ground, centre };

@@ -5,10 +5,15 @@ import type { Schema } from "./schema";
 
 export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "map.shape": { enum: ["circle", "square"] },
+  "music.latency": { enum: ["interactive", "balanced", "playback"] },
   "berries.cost.by": { enum: ["power", "value"] },
   "arena.curve": { enum: ["linear", "smooth"] },
+  "stringLights.mode": { enum: ["palette", "areaNeon"] },
+  "blood.style": { enum: ["prints", "prints+drops", "drops"] },
+  "blood.colour": { enum: ["red", "neon"] },
   "partyObjects.home.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "partyWitches.weights": { additionalProperties: { type: "number", minimum: 0 } },
   "grounds.radius": { additionalProperties: { type: "number", minimum: 0 } },
   "legendClearing.species": { additionalProperties: { type: "number", minimum: 0 } },
+  "population.swarm.classes": { additionalProperties: { type: "object", properties: { cap: { type: "number", minimum: 1 }, species: { type: "array", items: { type: "string" } } }, required: ["cap", "species"], additionalProperties: false } },
 };

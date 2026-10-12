@@ -5,8 +5,10 @@ import { setupArena } from "../rules/arena";
 import { cellKey } from "../rules/party";
 import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STEP, stepGame, type Game } from "../rules/game";
 import { AREA_TYPES } from "../rules/map";
+import { coastFacing } from "../rules/land";
 import { musicCue, type MusicCue } from "../rules/musicPlan";
 import type { Tuning } from "../rules/tuning";
+import { isHomeKey } from "../rules/speakers";
 import type { Bot } from "../rules/bot";
 import type { View } from "../render/view";
 import { bendPoint, groundHeight, placed } from "../render/height";
@@ -31,8 +33,8 @@ export function installHooks({ game, view, tuning, hud, sound, meter, shake, loa
   (window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
     guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
-    /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
-    lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) hud.showLoss(e); return e; },
+    /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's whole ring, "home:<i>" one speaker), as if destroyed. */
+    lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; if (key === "home") for (const [k, h] of game.combat.sounds) if (isHomeKey(k)) h.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e?.kind === "soundsystemLost") hud.showLoss(e); return e; },
     /** A debug hook (the dropped hat's previews): a hit on her now, as a creature's would be (her last one knocks her out). */
     hit: () => { hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
     get manual() { return loop.manual; }, set manual(on: boolean) { loop.manual = on; },
@@ -65,5 +67,5 @@ export function installHooks({ game, view, tuning, hud, sound, meter, shake, loa
       const add = (q: number[] | null) => (q ? [q[0] + gx, q[1] + gy] : null);
       return { steps, alpha, gx, gy, time: game.clock.time, witch: add(at.witch), witchWorld: at.witchWorld, probes: at.probes.map(add), creatures: at.creatures.map(add) };
     },
-    frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return loop.ready; } };
+    frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), coastFacing: (bearing: number) => (game.map.bounds.land ? coastFacing(game.map.bounds.land, bearing, 0.15) : null), areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return loop.ready; } };
 }

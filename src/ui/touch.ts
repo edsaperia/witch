@@ -46,6 +46,9 @@ export function setupTouch(root: HTMLElement, touch: TouchInput): void {
   button("#zoom-in", () => (touch.zoom -= 1));
   button("#zoom-out", () => (touch.zoom += 1));
   button("#sigil", () => (touch.sigil = true));
+  // (held: her hat, rules/hat.ts putHat)
+  const sg = root.querySelector<HTMLElement>("#sigil");
+  if (sg) { sg.addEventListener("pointerdown", () => (touch.sigilHeld = true)); for (const ev of ["pointerup", "pointerleave", "pointercancel"]) sg.addEventListener(ev, () => (touch.sigilHeld = false)); }
   button("#spell", () => (touch.spell = true));
   button("#dash", () => (touch.dash = true));
   // The 💌 fires while it's held, the way she's going.

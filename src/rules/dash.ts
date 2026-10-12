@@ -52,6 +52,9 @@ export function refundDash(d: DashState, time: number, max: number): void {
   d.readyAt = Math.min(d.readyAt, time);
 }
 
+/** How long a blink keeps her gone (dash.gone; with committed strikes on, long enough to blink through a lunge: dodge.a.gone). */
+export const blinkGone = (t: Tuning): number => (t.dodge?.a.on ? Math.max(t.dash.gone, t.dodge.a.gone) : t.dash.gone);
+
 /** Mid-blink: she's gone (not drawn, can't be hit). */
 export const dashing = (d: DashState, time: number) => time >= d.at && time < d.until;
 
@@ -68,17 +71,16 @@ export function dashCharge(d: DashState, time: number): number {
  *  steers. `clear(x, z)` says whether she can stand there. Returns whether she did. */
 export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: number, time: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean = () => true, max = 1, chain = 0, aimX = 0, aimZ = 0): boolean {
   rechargeDash(d, time, max, t.dash.cooldown);
-  if (time < d.readyAt || d.charges < 1 || w.mode !== "ground" || w.seated) return false;
+  if (time < d.readyAt || d.charges < 1 || w.mode !== "ground" || w.seated || w.perch) return false; // (no blinking off the treehouse deck)
   let dx = moveX, dz = moveZ, len = Math.hypot(dx, dz);
   const al = Math.hypot(aimX, aimZ);
-  // Toward the cursor (Ed's playtest, 2026-10-06: "dash should be in the direction of your cursor"):
-  // the ground under it from her (aimX, aimZ), or the way she faces when it's on her; with nothing
-  // to aim by (touch), the way she's steering, flying or facing, as before.
+  // The way she's moving (Ed, 2026-10-11: on the pad and on keyboard and mouse, not the way she's aiming): her
+  // steering; standing still, the way she's facing (up or down the screen by her heading, else left or right).
+  // toCursor (off; Ed's playtest, 2026-10-06, before): toward the ground under the cursor, the way she faces when it's on her.
   if (t.dash.toCursor && al > 0) { if (al >= t.dash.aimDead) { dx = aimX; dz = aimZ; len = al; } else { dx = w.facing; dz = 0; len = 1; } }
-  if (len < 0.1) { dx = w.vx; dz = w.vz; len = Math.hypot(dx, dz); }
-  if (len < 0.1) { dx = w.facing; dz = 0; len = 1; }
+  if (len < 0.1) { const v = w.heading === "up" || w.heading === "down"; dx = v ? 0 : w.facing; dz = !v ? 0 : w.heading === "up" ? -1 : 1; len = 1; }
   const D = t.dash;
-  d.dx = dx / len; d.dz = dz / len; d.at = time; d.until = time + D.gone;
+  d.dx = dx / len; d.dz = dz / len; d.at = time; d.until = time + blinkGone(t);
   if (d.charges >= max) d.chargeAt = time + D.cooldown;
   d.charges--;
   d.readyAt = d.charges >= 1 ? time + chain : d.chargeAt;

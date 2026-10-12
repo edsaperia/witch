@@ -29,6 +29,7 @@ const GR_STAMPS = {
   moss: r => [[0, -1, 2], [1, -1, 1], [-1, 0, 1], [0, 0, 1], [1, 0, 1], [2, 0, 0], [0, 1, 0], [1, 1, 0]].filter((_, i) => i !== 5 || r() < .5),
   flower: () => [[0, 0, 0], [0, -1, 1], [0, -2, 2], [1, -2, 2]],
   clover: () => [[0, -1, 2], [-1, 0, 1], [1, 0, 1], [0, 0, 1], [0, 1, 0]],
+  ripple: r => { const L = 6 + Math.floor(r() * 5), ph = r() * 6; return Array.from({ length: L }, (_, i) => { const y = Math.round(Math.sin(i * .5 + ph) * .7); return [[i, y, 2], [i, y + 1, 0]]; }).flat(); }, // a wind ripple in sand: a lit crest over its shadowed lee
   sprig: () => [[0, 0, 0], [0, -1, 0], [-1, -1, 1], [1, -2, 1], [0, -2, 2], [0, -3, 2]],
 };
 // Each floor kind's genome. mats: material names; "FLOWER" takes the area's flower colour.
@@ -55,7 +56,12 @@ export const GROUND_GENOMES = {
   stone: grG({ scale: [10, 7] }, [grD("slab", 8, GR_STONES), grD("pebble", 12, GR_STONES), grD("moss", 6, GR_GRASS)], { patches: [{ mat: "MOSS", n: 4, r: [4, 7] }] }),
   heather: grG({}, [grD("sprig", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("blade", 16, GR_GRASS)]),
   bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
+  sand: grG({ scale: [14, 4], cuts: [.36, .7] }, [grD("ripple", 34, GR_EARTH), grD("pebble", 5, GR_STONES), grD("blade", 6, GR_GRASS)]), // dunes and desert: long low swells, wind ripples, a few stones and blades
   clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
+  // the north's floors (Ed, 2026-10-11; no area uses them yet): snow with needles and grass poking through, lichen heath, glacier ice
+  snow: grG({ scale: [12, 6], cuts: [.3, .62] }, [grD("needle", 14, ["BODY2", "ACCENT", "ACCENT"]), grD("blade", 12, GR_GRASS), grD("pebble", 5, GR_STONES)], { patches: [{ mat: "STONE", n: 2, r: [2, 4] }] }),
+  lichen: grG({ scale: [6, 5] }, [grD("moss", 40, ["BODY2", "BODY", "BELLY"]), grD("sprig", 22, ["LEAF3", "LEAF", "FLOWER"]), grD("pebble", 10, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 5] }, { mat: "MOSS", n: 2, r: [3, 6] }] }),
+  ice: grG({ scale: [14, 5], cuts: [.34, .7] }, [grD("slab", 7, ["BODY2", "BODY", "BELLY"]), grD("pebble", 16, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 6] }], puddles: { n: 2, r: [3, 6] } }),
 };
 
 // The genome an area's floor grows from: its floor kind's, with the area's own `ground` over it.

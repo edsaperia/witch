@@ -1,6 +1,7 @@
 // Combat's data and shapes (split from rules/combat.ts, no change in behaviour): the attacks, levels and traits from
 // config/combat.json, strength by species, and the types the fight is made of (targets, shots, beams, events, the world it reads).
 import raw from "../../../config/combat.json";
+import TUNED from "../../../config/tuning.json";
 import { LEGEND, type Creature, type Level } from "../creatures";
 import { type State } from "../creatureStates";
 import { FIGHT } from "../movement";
@@ -58,7 +59,17 @@ export interface CombatData {
 }
 
 export type Trait = "flier" | "armoured" | "swarm" | "heavy" | "nimble" | "burrower";
+/** Species strength by class (Ed, 2026-10-08: population.swarm.classes in the tuning file): a class's species are as strong
+ *  as the reference class's cap over their class's (strength = 12 / cap: strong 6 ×2, light 16 ×0.75); the reference class
+ *  (swarm.reference, medium) and unlisted species 1. */
+export function classStrengths(swarm: { classes: Record<string, { cap: number; species: string[] }>; reference: string }): Record<string, number> {
+  const ref = swarm.classes[swarm.reference]?.cap ?? 12, out: Record<string, number> = {};
+  for (const c of Object.values(swarm.classes)) for (const sp of c.species) out[sp] = ref / Math.max(1, c.cap);
+  return out;
+}
 export const COMBAT = raw as unknown as CombatData;
+// (the classes' strengths, under any combat.json lists by species)
+COMBAT.strength = { species: { ...classStrengths((TUNED as unknown as { population: { swarm: Parameters<typeof classStrengths>[0] } }).population.swarm), ...(COMBAT.strength?.species ?? {}) } };
 /** A species' traits. */
 const TRAITS = new WeakMap<CombatData, Map<string, readonly Trait[]>>();
 /** A species' traits, worked out once a data set (two new arrays a call were a fight frame's allocator: every hit, every hurt
@@ -125,7 +136,7 @@ export interface Shot {
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { /** A legend's bombardment: the soundsystem it burns, and the damage a tick. */ sound?: { key: string; damage: number }; /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
 
-export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed";
+export type CombatEventKind = /** one of her posse drew it off her (rules/combat/hits.ts) */ "taunted" | "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed" | "swooped";
 /** A soundsystem's events carry its key; every other combat event its creature's id (witchHit: the witch's). */
 export type SoundEventKind = "soundHit" | "soundDestroyed";
 export interface CombatEventAt { x: number; z: number; at: number; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
@@ -202,17 +213,24 @@ export interface CombatWorld {
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */
   active: Creature[];
-  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number; /** in a calm legend's circle (rules/slowTime.ts): that legend's id; nothing else attacks her there */ shelter?: number }[];
+  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number; /** in a calm legend's circle (rules/slowTime.ts): that legend's id; nothing else attacks her there */ shelter?: number; /** her Stealth broom (rules/brooms.ts): unseen, but by what already went for her while it's within this many metres */ hidden?: number }[];
   /** Where a party animal's leash is fixed. */
   leashPoint: (id: number) => { x: number; z: number } | null;
   /** Whether a party animal is parked (at a sigil on the ground): it guards round it. */
   parked: (id: number) => boolean;
   /** The witch a creature is being invited by right now (it holds its fire on her: Ed's playtest), or -1. */
   talkingTo: (id: number) => number;
+  /** Where a creature at (x, z) heads for (tx, tz) round the lakes (rules/lakes.ts roundLakes): null, straight there; absent with none. */
+  round?: (x: number, z: number, tx: number, tz: number) => { x: number; z: number } | null;
   /** How far a creature at (x, z) runs to leave the map, and where (a point just past its edge). */
   exit: (x: number, z: number) => { x: number; z: number };
+  /** The map's centre (home): besiegers march inward, never on a soundsystem further from it than they are (rules/combat.ts). */
+  centre?: { x: number; z: number };
   /** Whether (x, z) is out of every witch's sight (far beyond the haze): a fleeing creature there is gone. */
   unseen: (x: number, z: number) => boolean;
+  /** The home area (the dancefloor's): whether (x, z) is in it, and a circle (x, z, r) holding all of it. A party animal parked
+   *  with its sigil in it guards the whole of it (Ed, 2026-10-11). */
+  home?: { inside: (x: number, z: number) => boolean; x: number; z: number; r: number };
   /** Whether (x, z) is in the creature's own area. */
   inArea: (c: Creature, x: number, z: number) => boolean;
   /** A wild creature still asleep (a dormant legend): no fighting. */

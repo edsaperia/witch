@@ -1,9 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { COMBAT } from "./combat";
 import { feed, newBerries, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
 import { invitable, leashSpeed, newLeash } from "./leash";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
+
+/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
+ *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
+const SAVED_STRENGTH = { ...COMBAT.strength!.species };
+const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
+const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 
 const map = generateMap(123, TUNING), t = TUNING;
 const bushesOk = (s: BerryState) => {
@@ -24,6 +31,7 @@ const run = (s: BerryState, cs: Creature[], points: Map<number, { x: number; z: 
 };
 
 describe("berries and evolving", () => {
+  beforeAll(plainStrength); afterAll(restoreStrength);
   it("every area has perArea berries, one per bush, and the same seed gives the same berries", () => {
     const s = newBerries(map, t), [lo, hi] = berryCounts(map, t).perArea; // (scaled to the areas' size)
     bushesOk(s);
@@ -60,11 +68,11 @@ describe("berries and evolving", () => {
     expect(s.berries.every(b => b.claimedBy === null)).toBe(true);
   });
 
-  it("evolves after 3 and 8 berries (its strength gained, Ed 2026-10-05; doubled 2026-10-06; the level gap 2026-10-07), on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
+  it("evolves after 1 and 8 berries (a baby's one: Ed, 2026-10-11; the youth's by its strength gained, Ed 2026-10-05; doubled 2026-10-06; the level gap 2026-10-07), on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
     const s = newBerries(map, t), [c, wild] = spawnCreatures(map), leash = newLeash();
     Object.assign(c, { leashed: true, level: 0 });
     leash.stack.push(c.id);
-    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([3, 8, Infinity]);
+    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([1, 8, Infinity]);
     let time = 0;
     for (const level of [0, 1] as Level[]) {
       expect(c.level).toBe(level);

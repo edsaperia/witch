@@ -10,6 +10,7 @@ import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { inLegendClearing } from "./map";
 import { stateOf } from "./creatureStates";
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Legends, redesigned (Ed, 2026-10-05; issue #87).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -18,6 +19,7 @@ const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) =
 function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: Creature | null } {
   const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;
+  g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
   const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
   const site = g.map.siteOf(L.cell[0], L.cell[1]), d = Math.hypot(site.x - L.x, site.z - L.z) || 1;
   g.witch = { ...g.witch, seated: false, x: L.x + ((site.x - L.x) / d) * 4, z: L.z + ((site.z - L.z) / d) * 4, mode: "ground", lift: 0 };
@@ -25,7 +27,9 @@ function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: 
   for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - L.x, c.z - L.z) < 120) c.gone = true;
   for (const c of g.creatures) if (c.boss && c !== L && Math.hypot(c.x - L.x, c.z - L.z) < 700) c.gone = true; // (no neighbouring legend turning angry too, and charging in)
   let mate: Creature | null = null;
-  if (kin) mate = put(g, L.species, 1, site.x, site.z, L.cell);
+  // (its kin at the area's site, or beside the legend where the site lies outside the area's own shape)
+  const inside = cellKey(g.map.cellSafe(site.x, site.z).cell) === cellKey(L.cell), kx = inside ? site.x : L.x + ((site.x - L.x) / d) * 8, kz = inside ? site.z : L.z + ((site.z - L.z) / d) * 8;
+  if (kin) mate = put(g, L.species, 1, kx, kz, L.cell);
   g.byArea = null;
   g.witches[0].health.hp = 1e6;
   return { g, L, mate };
@@ -34,7 +38,7 @@ const used = new Set<number>();
 function put(g: Game, species: string, level: Level, x: number, z: number, cell = g.map.cellSafe(x, z).cell as [number, number]): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !used.has(k.id) && Math.hypot(k.x - x, k.z - z) > 300)!;
   used.add(c.id);
-  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0, asleep: undefined, napUntil: undefined, wakeUntil: undefined, watchUntil: undefined, dazed: undefined, dazedUntil: undefined, stunUntil: undefined, fleeUntil: undefined }); // (none of what it was doing: a nap, a watch)
   g.byArea = null;
   return c;
 }
@@ -126,9 +130,9 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     g.combat.sounds.set(key, { hp: 4000, max: 4000, x: at.x, z: at.z, radius: 2 });
     mate!.gone = true; // (none of its kind left: restless, at its next look, within legends.json check seconds)
     let restlessAt = -1;
-    run(g, LEGENDS.check + 1, idle, () => { if (restlessAt < 0 && L.legendState === "restless") restlessAt = g.clock.time; });
+    for (let i = 0; i < (LEGENDS.check + 1) * 60 && restlessAt < 0; i++) { stepGame(g, idle, STEP); if (L.legendState === "restless") restlessAt = g.clock.time; } // (up to its next look)
     expect(restlessAt).toBeGreaterThan(0);
-    run(g, 2.5 - (g.clock.time - restlessAt));
+    run(g, 2.5);
     expect(L.legendState).toBe("restless"); // (the stomp's 3 s, not legends.json's)
     run(g, 1);
     expect(L.legendState).toBe("angry");
@@ -166,9 +170,9 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(L.fleeUntil).toBeUndefined();
   }), 60000);
 
-  it("lie relics about the map, one of each; she picks one up with the sigil button and puts it down by a sleeping legend: happy, and its buff hers for good", () => {
+  it("lie relics about the map, one per ten areas; she picks one up with the sigil button and puts it down by a sleeping legend: happy, and its buff hers for good", () => {
     const { g, L } = beside();
-    expect(g.relics.length).toBe(LEGENDS.relics.kinds.length); // (one of each; where: relics.test.ts)
+    expect(g.relics.length).toBe(Math.max(1, Math.round((g.map.cells.length - 1) / LEGENDS.relics.perAreas!))); // (one per perAreas areas; where: relics.test.ts)
     const r = g.relics[1], back = { x: g.witch.x, z: g.witch.z };
     g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil, south of it)
     run(g, 0.2, { ...idle, sigil: true });
@@ -212,6 +216,9 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
       const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
       g.witches[0].health.hp = 1e6;
       const lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+      // (the gift starts out of the circle: standing in it would finish the quest by itself, rules/sigilButton.ts questsFromStanding)
+      const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]];
+      Object.assign(gift, { x: lc.x + lc.r + 30, z: lc.z, tx: lc.x + lc.r + 30, tz: lc.z });
       if (!inside) {
         // a spot in its area, out of its circle
         let spot: [number, number] | null = null;
@@ -253,7 +260,8 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     g.clock.paused = false; g.party.paused = true;
     const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
     g.witches[0].health.hp = 1e6;
-    const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]];
+    const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]], lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+    Object.assign(gift, { x: lc.x + lc.r + 30, z: lc.z, tx: lc.x + lc.r + 30, tz: lc.z }); // (out of the circle until its sigil goes down)
     run(g, 0.1);
     expect(L.questOpen).toBe(true);
     run(g, 0.2, { ...idle, sigil: true });
@@ -303,6 +311,8 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     const other = L.species === "wolf" ? "fox" : "wolf";
     const target = put(g, other, 2, L.x + far, L.z); target.leashed = true; g.leash.placed.push({ id: target.id, x: target.x, z: target.z, at: 0 });
     const inLane = [put(g, "beetle", 1, L.x + 30, L.z + 1), put(g, "otter", 2, L.x + 50, L.z - 1.5)];
+    for (const c of g.creatures) if (!c.boss && c !== target && !inLane.includes(c) && Math.hypot(c.x - L.x, c.z - L.z) < 250) c.gone = true; // (no other wild crowd in its lanes)
+    g.byArea = null;
     // (wild ones: it charges only her and her posse, but tramples whatever's in its way)
     return { g, L, target, inLane };
   }
@@ -310,22 +320,23 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     const { g, L, target, inLane } = angryBoar();
     g.witch = { ...g.witch, mode: "ground", lift: 0, x: L.x + 60, z: L.z }; // (its target: nearer than her posse's wolf)
     const pins = inLane.map(c => [c, c.x] as const);
-    const hits = new Map<number, number>(); let witchHits = 0, x0 = 0, z0 = 0, ran = false, done = false;
+    const hits = new Map<number, number>(); let witchHits = 0, x0 = 0, z0 = 0, t0 = 0, thrown = -1, ran = false, done = false;
     run(g, 30, idle, () => {
-      if (L.run?.phase === "home" && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
+      if (L.run?.phase === "home" && ran && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
       for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
       if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
         if (e.kind === "hit" && e.id !== undefined && (e.id !== target.id || e.big)) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (its target: only the legend's own hits; the trampled wild may go for it after)
-        if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; }
+        if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; t0 = g.clock.time; }
       }
       if (L.run?.phase === "run") ran = true;
       if (L.run?.phase === "windup") g.witch = { ...g.witch, x: L.x + 60, z: L.z }; // (she stands in its lane till it sets off)
+      if (x0 && thrown < 0 && g.clock.time >= t0 + 1) thrown = Math.hypot(g.witch.x - x0, g.witch.z - z0); // (a second on: her throw over, before the fight round her moves her on)
     });
     expect(ran).toBe(true);
     for (const c of inLane) expect(hits.get(c.id), c.species).toBe(1);
     expect(hits.get(target.id) ?? 0).toBeLessThanOrEqual(1);
     expect(witchHits).toBe(1);
-    expect(Math.hypot(g.witch.x - x0, g.witch.z - z0)).toBeGreaterThan(LEGENDS.charge.knockback * 0.3); // (thrown, away from it: aside or on along its lane, by where it caught her)
+    expect(thrown).toBeGreaterThan(LEGENDS.charge.knockback * 0.3); // (thrown, away from it: aside or on along its lane, by where it caught her)
   }, 120000);
   it("curves toward its target, brakes in a wide arc past it, walks home, and charges again only once it's back", () => {
     const { g, L, target } = angryBoar(70);
@@ -354,7 +365,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
 
 describe("a wave on a legend's area (#87, found by the overnight playthrough)", () => {
   it("enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging", () => {
-    const g = newGame(123, withTuning({ legends: { ...TUNING.legends, share: 1 } })); // (a legend in the woken area: with legends.share 0.5 the first wave's may have none)
+    const g = newGame(123, withTuning({ ...PEOPLED, legends: { ...TUNING.legends, share: 1 } })); // (a young in it, and a legend in the woken area: with legends.share 0.5 the first wave's may have none)
     g.clock.paused = false;
     const before = new Set(g.party.areas.keys());
     run(g, 0.1, { ...idle, nextWave: true });
@@ -441,4 +452,20 @@ describe("legends going back to sleep (Ed, 2026-10-06)", () => {
     expect([L.x, L.z]).toEqual([home.x, home.z]);
     expect(L.legendState).toBe("asleep");
   }), 60000);
+});
+
+// Ed, 2026-10-09: "sleeping legends seem to change direction to face you, which doesn't make sense as they are sleeping".
+describe("a sleeping legend's facing", () => {
+  it("stays as it was laid while she walks round it", () => {
+    const { g, L } = beside();
+    const facing = L.facing, away = L.away;
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2;
+      g.witch = { ...g.witch, x: L.x + Math.cos(a) * 6, z: L.z + Math.sin(a) * 6, vx: 0, vz: 0 };
+      run(g, 0.5);
+      expect(L.legendState).toBe("asleep");
+      expect(L.facing).toBe(facing);
+      expect(L.away).toBe(away);
+    }
+  });
 });

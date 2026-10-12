@@ -10,6 +10,9 @@ import { hash2 } from "../../rules/random";
 import type { ForestLight, View } from "../view";
 import { inView } from "./culling";
 import { mark } from "./pops";
+import * as Art from "../../../art/generator.js";
+import { LEGENDS } from "../../rules/legends";
+import { beachFires } from "../beach";
 
 export function updateSources(v: View, time: number): void {
   const f = v.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], g = v.game;
@@ -45,6 +48,14 @@ export function updateSources(v: View, time: number): void {
       lights.push({ x: src.x, y: 2, z: src.z, reach: v.game.tuning.lights.stone.reach * src.size, rgb: [v.runeCyan, v.runeViolet, v.runeGreen][kind], strength: v.game.tuning.lights.stone.strength * pulse });
       if (inView(v, src.x, src.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: mark(v, "prop", src.x, src.z, 2.6) });
     }
+  }
+  // The beach witches' campfires (render/beach.ts), while the beach is showing: lit as ever, whatever the party's doing.
+  if (v.beachView.on) for (const c of beachFires(g)) {
+    const k = hash2(Math.round(c.x * 10), Math.round(c.z * 10), 7), flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
+    lights.push({ x: c.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: c.z, reach: g.tuning.lights.campfire.reach, rgb: v.fire, strength: g.tuning.lights.campfire.strength * flick });
+    if (v.partyObjects.ready) { v.worldFires.push({ x: c.x, z: c.z, scale: 1, flip: c.flip }); continue; }
+    const fr = f[Math.floor(time * 8 + k * 10) % 3];
+    if (inView(v, c.x, c.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: c.x, y: 0, z: c.z, frame: fr, flip: c.flip, fresh: mark(v, "prop", c.x, c.z, 2) });
   }
   v.propBatch.set(items);
   v.forestLights = lights;
@@ -94,3 +105,41 @@ export function sigilLights(v: View, time: number, hatY: number): ForestLight[] 
   return out;
 }
 const spillRgb = new Map<string, THREE.Vector3>();
+
+/** The party relic bottle a quest relic's kind draws as (art/partyRelics.js): its own if it names one, else the bottle at its
+ *  place in legends.json relics.kinds (wine, partyHat, discoBall, gramophone, present, mask: the kinds' names from before the
+ *  bottles; the rules seed their order by name, so they stay). */
+export function relicBottle(kind: string): string {
+  kind = kind.split("~")[0].replace(/Flip$/, ""); // (a mirrored kind draws its own bottle, flipped: relicFlipped; its colour: relicGlass)
+  const ids = Art.PARTY_RELIC_IDS as string[];
+  if (ids.includes(kind)) return kind;
+  const i = LEGENDS.relics.kinds.indexOf(kind);
+  return ids[(i >= 0 ? i : 0) % ids.length];
+}
+
+/** Whether a relic kind is one of the six mirror images (Ed, 2026-10-11: "flip the current kinds so there are now 12 kinds";
+ *  legends.json relics.kinds, `<kind>Flip`): its bottle drawn mirrored. */
+export const relicFlipped = (kind: string): boolean => kind.split("~")[0].endsWith("Flip");
+
+/** A relic kind's colour (Ed, 2026-10-11: recoloured bottles, `<kind>~<glass>`; legends.json relics.colours), or undefined: its own. */
+export const relicGlass = (kind: string): string | undefined => kind.split("~")[1];
+
+/** Its sprite's id in the relic atlas (render/artBuild.ts): the bottle, in another glass if recoloured. */
+export const relicArtId = (kind: string): string => { const g = relicGlass(kind); return `party:${relicBottle(kind)}${g ? "~" + g : ""}`; };
+
+/** The quest relics' bottles lying in the world (render/view/scenery.ts): each lights the ground round it in its liquid's own
+ *  colour (art/partyRelics.js partyRelicLight: its reach and height, a slow pulse), as bright as a magic stone, so a found bottle
+ *  reads as magic and not scenery. Only those near her. */
+export function relicLights(v: View, time: number): ForestLight[] {
+  const g = v.game, w = g.witch, out: ForestLight[] = [], S = g.tuning.lights.stone;
+  for (const r of g.relics) {
+    if (r.state !== "lying" || Math.abs(r.x - w.x) > 160 || Math.abs(r.z - w.z) > 160) continue;
+    const id = relicBottle(r.kind), glass = relicGlass(r.kind), L = (Art.partyRelicLight as (id: string, glass?: string) => { rgb: number[]; radius: number; height: number; pulse: number })(id, glass), key = relicArtId(r.kind);
+    let rgb = relicRgb.get(key);
+    if (!rgb) relicRgb.set(key, (rgb = new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255)));
+    const pulse = 0.85 + 0.15 * Math.sin((time / L.pulse) * Math.PI * 2 + r.id);
+    out.push({ x: r.x, y: L.height, z: r.z, reach: L.radius * 1.6, rgb, strength: S.strength * pulse });
+  }
+  return out;
+}
+const relicRgb = new Map<string, THREE.Vector3>();

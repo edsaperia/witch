@@ -158,6 +158,8 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 - **Tall set pieces and decor must be grey or brown stone and wood, not the grass colour.** The stone shrine and cairns in khaki read as pine cones or vanished (#112).
 - **One prop repeated in lines reads as something manufactured.** Identical broken stumps in rows read as a battery of little cannons (#112 v2 muddy forest). Vary height, angle and mirroring, break up the spacing, and mix in a second kind.
 - **Vary a prop's shape, not only where it stands.** One pool sprite three times, or one stump with a stick laid beside it, still reads as stamped (#112 v3). A prop generator should give each instance its own outline, and join parts that belong together (a broken branch to its stump).
+- **Water keeps its value apart from its rim, in every style.** Under bold and ref, a pool's teal water shifts green and takes one band, so it merges with a moss rim and reads as a lawn (#142). Keep the water darker than its shore, and its glints glowing, so the stylisation leaves them alone.
+- **Near-neutral greys drift warm under the key light.** A stone at 7% saturation looks blue-grey on the night sheet but khaki beside the grass by day (#142). Give a grey that must read as grey a little cool saturation, and judge it in play, not only on a sheet.
 - **Stacked regular rings read as haystacks or beehives.** Cairns drawn as even rings in straw colour (#112 v2 moor) need irregular grey stones and a leaning slab.
 - **Water edges are round and irregular.** Pointed lenses with hard edges read as boats or leaves (#112 v2 moor pools).
 - **Every area gets its own tuft mix and value.** The same bright lime grass tuft in every area makes them all one place, and reads as neon on a dark floor (#112).
@@ -193,6 +195,7 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 | Boar invisible in game | #112 v2 fern forest | Coat the same value as the floor | Lift the value, or a paler ridge |
 | Ram, v2 (a success) | #112 v2 tangly | White fleece, black face and legs, dark horns: three values that never merge | The model for a strong creature read |
 | Contour banding on big legends | #112 | The 3D bake's shading terraces at large size | Waits for the generator's next stage (Ed) |
+| Pools as lawns, khaki stones | #142 bold/ref, day | Water's tone matched its moss rim; a low-saturation grey took the warm light | Water darker than its rim, glints glowing; cooler, lighter stone |
 | Sleeping legend as a mound | round 14, lynx | Sunk to its belly and grown over, the lynx read as a rock; Ed couldn't tell what it was | Its own nap pose (`art/naps.js`), whole, eyes shut, a neon rim (#363) |
 | Legend cut by a straight line | round 14, a bird legend | Sunk into the ground, its lower body clipped flat along the ground plane | Barely sunk: the nap pose lies on the ground (`wildLegends.sink` down to 0.1) |
 | Floors drawn over actors | round 14, the pig at the sports field | Flat decals and floors wrote depth, so a creature walking on them was cut | Floors draw first and write no depth (`asFloor`, `FLOOR_ORDER`, #363) |

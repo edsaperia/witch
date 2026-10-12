@@ -9,7 +9,7 @@
 // poses and pairing (rules/partyWitches.ts), drawn by their own PartyWitchView, made only once
 // she's near. Most runs never come here, so a spot does nothing unless she's within its simRange.
 import { beachOf, type Bounds } from "./mapShape";
-import { pairOffset, type PartyWitch, type PlayerIdle } from "./partyWitches";
+import { MEET_SEQUENCE, pairOffset, type PartyWitch, type PlayerIdle } from "./partyWitches";
 import { hash2, rng } from "./random";
 import type { Tuning } from "./tuning";
 
@@ -27,26 +27,28 @@ export interface BeachWitches {
 }
 
 /** What she and a beach witch do together, round and round, turn seconds each. */
-export const SEQUENCE: { activity: PartyWitch["activity"]; pose: string }[] = [
-  { activity: "chat", pose: "laugh" }, { activity: "pair", pose: "holdHands" }, { activity: "pair", pose: "hug" }, { activity: "rest", pose: "stargaze" },
-];
+export const SEQUENCE = MEET_SEQUENCE; // (the stargazers by the party do the same: rules/partyWitches.ts)
 const REST = ["sitGround", "stargaze"];
 
 /** This run's spots of beach witches round the coast, or null (the square map, the beach off, or a run without them). */
 export function newBeachWitches(seed: number, bounds: Bounds, t: Tuning): BeachWitches[] | null {
   const B = t.beach, beach = beachOf(bounds, t);
   if (!B || !beach || hash2(seed, 77, 4111) >= B.witchChance) return null;
-  // A handful, spread round the whole coast: evenly, each nudged by up to a third of the gap either way, so never bunched.
-  const r = rng(seed * 6007 + 13), [lo, hi] = B.spots ?? [1, 1], n = Math.max(1, Math.round(lo + r() * (hi - lo))), gap = (Math.PI * 2) / n, a0 = r() * Math.PI * 2;
+  // A handful, spread round the whole of the sea's coast (its longest loop): evenly, each nudged by up to a third of the gap
+  // either way, so never bunched.
+  let loop = -1;
+  beach.land.loops.forEach((L, i) => { if (L.sea && (loop < 0 || L.length > beach.land.loops[loop].length)) loop = i; });
+  if (loop < 0) return null;
+  const r = rng(seed * 6007 + 13), [lo, hi] = B.spots ?? [1, 1], n = Math.max(1, Math.round(lo + r() * (hi - lo))), len = beach.land.loops[loop].length, gap = len / n, s0 = r() * len;
   const out: BeachWitches[] = [];
-  for (let k = 0; k < n; k++) out.push(beachSpot(r, a0 + k * gap + (r() - 0.5) * gap * 0.66, beach, B));
+  for (let k = 0; k < n; k++) out.push(beachSpot(r, loop, s0 + k * gap + (r() - 0.5) * gap * 0.66, beach, B));
   return out;
 }
 
-/** One spot of beach witches at angle `a` round the coast. */
-function beachSpot(r: () => number, angle: number, beach: NonNullable<ReturnType<typeof beachOf>>, B: NonNullable<Tuning["beach"]>): BeachWitches {
-  const a = Math.atan2(Math.sin(angle), Math.cos(angle)), d = beach.edge(a) - Math.min(30, beach.sandAt(a) * 0.4); // (in from where the edge holds her)
-  const nx = Math.cos(a), nz = Math.sin(a), tx = -nz, tz = nx, x = beach.x + nx * d, z = beach.z + nz * d;
+/** One spot of beach witches `s` metres round loop `loop` of the coast. */
+function beachSpot(r: () => number, loop: number, s: number, beach: NonNullable<ReturnType<typeof beachOf>>, B: NonNullable<Tuning["beach"]>): BeachWitches {
+  const c = beach.land.along(loop, s), d = Math.min(30, beach.sandAlong(loop, s) * 0.4); // (in from where the edge holds her)
+  const nx = c.nx, nz = c.nz, tx = -nz, tz = nx, x = c.x - nx * d, z = c.z - nz * d;
   const n = Math.max(1, Math.round(B.witches[0] + r() * (B.witches[1] - B.witches[0])));
   const list: PartyWitch[] = [];
   for (let i = 0; i < n; i++) {

@@ -24,19 +24,24 @@ import { bossBreath } from "../../render/leash";
 import type { CombatEventKind } from "../../rules/combat";
 import type { Sfx } from "./sfx";
 import { beachOf, type Beach } from "../../rules/mapShape";
+import { dolphinLeaps, krakenRising } from "../../rules/seaLife";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
-import { beatAt } from "../../rules/beat";
+import { beatAt, timeAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { musicMix, partyOverEase } from "../../rules/music";
 import { PARTY_CAST } from "../../rules/party";
 import { djGesture } from "../../../art/witch.js";
+import { djRoutineAt, djStrokes } from "../../rules/djSet";
 
 /** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
 import { nightKind } from "./night";
 import { AREA_TYPES } from "../../rules/map";
+import { leyPulse, pointerShown, type P2 } from "../../rules/leypulse";
+import { aggroOf } from "../../rules/wildWatch";
+import { fireworkShells, type Shell } from "../../rules/fireworks";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind>(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash"]);
@@ -66,8 +71,14 @@ export class SfxCues {
   private stonesOn = new Set<number>();
   /** The knockout (its ko.at) whose rewind has played. */
   private cutOf: number | null = null;
+  /** Her knockdowns' tempo bonus last heard, and when the crowd's cheer for its rise is due, on her clock or the game's (tempoUp). */
+  private bonusSeen = 0;
+  private tempoUpDue: { at: number; her: boolean } | null = null;
   /** The last half-beat heard at her decks (decks). */
   private deckHalf = -1;
+  /** The game time her routine's strokes were heard up to (NaN outside it), and whether her hand was up (its hype). */
+  private deckUpTo = NaN;
+  private deckHype = false;
   private soundsystemsUp = new Set<string>();
   /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
   private hp = -1;
@@ -100,6 +111,7 @@ export class SfxCues {
     this.soundsystems(h);
     this.booted(h);
     this.powered(h);
+    this.tempoUp(h);
     this.hurt(h);
     this.knocked(h);
     this.charges(h);
@@ -112,6 +124,10 @@ export class SfxCues {
     this.pond(h);
     this.picnic(h);
     this.sea(h);
+    this.sparkler(h);
+    this.aggro(h);
+    this.fireworks(h);
+    this.clears(h);
     this.night(h);
     this.ambience(h);
     this.primed = true;
@@ -134,6 +150,7 @@ export class SfxCues {
       else if (e.kind === "fizzled") S.land(pan(e.x), k); // (thrown its full range: down on the ground)
     }
     for (const e of g.leashEvents) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
+      else if (e.kind === "fizzled") S.nope(pan(e.x)); // (a sigil refused, too near one already down: Ed, 2026-10-07)
       else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 
@@ -192,11 +209,10 @@ export class SfxCues {
     }
   }
 
-  /** A soundsystem lost (Ed, 2026-10-05: the next wave comes sooner): the party grinding to a halt,
-   *  then the clock jumping on; heard anywhere (rules/game.ts's soundsystemLost; home's aside:
-   *  that's the run over), more urgent when the wave comes at once (left 0). */
+  /** A soundsystem lost: the party grinding to a halt; heard anywhere (rules/game.ts's soundsystemLost; home's aside:
+   *  that's the run over). */
   private soundsystems({ g }: Here): void {
-    for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; this.sfx.lost(e.left <= 0); }
+    for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; this.sfx.lost(); }
   }
 
   /** The boot-up over (party.bootUntil passed: home's speakers all on, the first wave's countdown
@@ -204,7 +220,7 @@ export class SfxCues {
   private booted({ g }: Here): void {
     if (this.boot) return;
     const over = g.party.bootUntil > 0 && g.clock.time >= g.party.bootUntil;
-    if (over && this.primed && g.tuning.party.interval < 1e9) this.sfx.stir();
+    if (over && this.primed && !g.party.paused) this.sfx.stir();
     if (over) this.boot = true;
   }
 
@@ -239,17 +255,17 @@ export class SfxCues {
     const me = g.witches[0], O = g.tuning.sfx.ouch;
     if (!me) return;
     const hp = me.health.hp, down = !!me.ko;
-    if (down && !this.down && this.primed) { this.sfx.knockdown(); this.duck(O.duck, O.duckTime * 2); }
+    // (Ed, 2026-10-09: "a record scratch on being knocked down": the old record scratched to a stop, the music cut under it)
+    if (down && !this.down && this.primed) { this.sfx.knockdown(); this.sfx.recordScratch(); this.duck(O.duck, O.duckTime * 2); }
     // the sad trumpet as her hat drops (Ed, 2026-10-07; hotel's knockout timeline), the music dipped under it; no hat to drop,
     // its shorter "wah-waaah" (sadTrumpet.bare)
     if (this.primed) {
       const T = g.tuning.sfx.sadTrumpet, ev = g.koEvents, hat = ev.some(e => e.kind === "hatDropped");
       if (hat || (T.bare > 0 && ev.some(e => e.kind === "down"))) { this.sfx.sadTrumpet(hat); this.duck(T.duck, hat ? 3.6 : 2); }
-      // (Ed, 2026-10-07: the hat's scene turns into her decks with a rewind) a backwards scratch cutting the trumpet's last
-      // note off, on art builder 3's rewind frame: the teleport's midpoint, (teleportAt + inAt) / 2 on her clock (its
-      // knockout event "cut"), once a knockout
+      // the trumpet let go as she's back at her decks and the needle drops on her new record (Ed, 2026-10-09: the record
+      // scratched as she went down; the rewind at the cut that was here would scratch twice), once a knockout
       const ko = me.ko;
-      if (ko && this.cutOf !== ko.at && g.herTime >= (ko.teleportAt + ko.inAt) / 2) { this.cutOf = ko.at; this.sfx.rewind(); }
+      if (ko && this.cutOf !== ko.at && typeof ko.inAt === "number" && g.herTime >= ko.inAt) { this.cutOf = ko.at; this.sfx.trumpetOff(); }
     }
     else if (this.primed && hp < this.hp && !down) { this.sfx.ouch(1 - Math.max(0, hp - 1) / Math.max(1, g.tuning.witchHealth.hits - 1)); this.duck(O.duck, O.duckTime); }
     this.hp = hp; this.down = down;
@@ -309,8 +325,24 @@ export class SfxCues {
 
   /** Her decks (the DJ witch, #356): while she stands behind them, the spell cast, her hands heard as the picture plays
    *  them (art/witch.js djGesture, on the beat clock): a stroke of the record on each half-beat of a scratch bar, and her
-   *  "woo-hoo!" on the first beat of a hype bar. */
+   *  "woo-hoo!" on the first beat of a hype bar; and her routine's strokes while it plays (rules/djSet.ts). */
   private decks({ g, time }: Here): void {
+    // her routine (art builder 4's rules/djSet.ts: the needle dropped and a little scratching after the spell, and the
+    // scratching through the wait behind her decks after a knockout): each of its strokes as this frame passes it, her
+    // woo-hoo as her hand goes up; come into it already well under way (a load, a long stall), only from here on
+    const r = djRoutineAt(g, time);
+    if (r) {
+      const from = Number.isNaN(this.deckUpTo) ? (time - r.start < 0.15 ? r.start - 1e-6 : time) : this.deckUpTo;
+      this.deckUpTo = time; this.deckHalf = Math.floor(beatAt(g.beat, time) * 2);
+      // (her wait after a knockdown, the music silent: her scratching on the new record the show, sfx.deck.respawn louder)
+      const loud = g.witches[0]?.ko ? g.tuning.sfx.deck.respawn ?? 1 : 1;
+      if (this.primed) for (const s of djStrokes(g, from + 1e-9, time + 1e-9)) this.sfx.deck(s.stroke, 0.1, loud);
+      const hype = r.gesture === "hype";
+      if (hype && !this.deckHype && this.primed) this.sfx.whoop(0.1);
+      this.deckHype = hype;
+      return;
+    }
+    this.deckUpTo = NaN; this.deckHype = false;
     const sp = g.party.spellAt;
     if (!g.witch.seated || g.witches[0]?.ko || typeof sp !== "number" || time < sp + PARTY_CAST) { this.deckHalf = -1; return; }
     const b = beatAt(g.beat, time), half = Math.floor(b * 2);
@@ -418,12 +450,117 @@ export class SfxCues {
     if (this.beach?.map !== g.map) this.beach = { map: g.map, at: beachOf(g.map.bounds, g.tuning) };
     const P = g.tuning.sfx.waves, B = this.beach.at;
     if (!P || !B) return;
-    // (metres from the water, by the coast's own edge that way: intoSea's quick path is only right about the side, well inland)
-    const w = g.witch, d = Math.hypot(w.x - B.x, w.z - B.z) || 1, off = B.edge(Math.atan2(w.z - B.z, w.x - B.x)) + B.out - d;
+    // (metres from the water, by the land map; panned toward the water's side of her)
+    const w = g.witch, off = -B.intoSea(w.x, w.z);
     if (off >= P.range) { this.sfx.sea(0); return; } // (Sfx.sea: nothing unless already made)
-    this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
+    this.sfx.sea(Math.max(0, 1 - off / P.range), -B.land.inward(w.x, w.z).x * 0.8);
+    this.seaLife(g, B, off);
   }
+
+  /** What lives in the sea (Ed, 2026-10-07; art builder 4's timetable, rules/seaLife.ts, read alike by the picture): each
+   *  dolphin's leap as it starts (its blow, then its splash as it falls back in), and the kraken's rising (a groan as it
+   *  begins, water pouring off each tentacle as it rises), heard within sfx.seaLife.range of her and panned by where it is. */
+  private seaLife(g: Game, B: Beach, off: number): void {
+    const L = g.tuning.sfx.seaLife, w = g.witch, time = g.clock.time;
+    if (!L || off > L.range) return;
+    const near = (x: number, z: number) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / Math.max(1, L.range)), pan = (x: number) => Math.max(-1, Math.min(1, (x - w.x) / 60));
+    const fresh = (at: number) => at <= time && at > time - 1 && !this.seaHeard.has(at) && (this.seaHeard.add(at), true);
+    for (const l of dolphinLeaps(g, B, time)) if (fresh(l.start)) { const k = near(l.x, l.z); if (k > 0 && this.primed) this.sfx.splash(Math.min(1, l.length / 8), pan(l.x), k, l.dur); }
+    const r = krakenRising(g, B, time);
+    if (r) {
+      const first = r.tentacles[0];
+      if (first && fresh(first.start - 1e-6)) { const k = near(first.x, first.z); if (k > 0 && this.primed) this.sfx.krakenGroan(pan(first.x), k); }
+      for (const t of r.tentacles) if (fresh(t.start)) { const k = near(t.x, t.z); if (k > 0 && this.primed) this.sfx.krakenPour(Math.min(6, t.dur * 0.35), pan(t.x), k); }
+      if (r.head && fresh(r.head.start + 1e-6)) { const k = near(r.head.x, r.head.z); if (k > 0 && this.primed) this.sfx.krakenGroan(pan(r.head.x), k * 0.8); }
+    }
+    if (this.seaHeard.size > 64) for (const at of this.seaHeard) if (at < time - 30) this.seaHeard.delete(at);
+  }
+  /** The sea life's starts already heard (world times). */
+  private seaHeard = new Set<number>();
   private beach: { map: Game["map"]; at: Beach | null } | null = null;
+
+  /** The ley line's drawn route of its current link (render/leylines.ts currentLink), when the game has a view: the
+   *  pulse's tip is heard where it's drawn. Without it, the straight link (rules/leypulse.ts). */
+  leyLink: (() => readonly P2[] | null) | null = null;
+
+  /** By the ley line's pulse, the sparkler's burning tip (art builder 2's #491): its fizz, while the pointer to it shows
+   *  (none while home boots up, nor once the party's over). */
+  private sparkler({ g, time, pan }: Here): void {
+    const P = g.tuning.sfx.sparkler, w = g.witch;
+    let level = 0, px = 0;
+    if (P && g.tuning.leyLines.on) {
+      const shown = pointerShown(g.party, g.map, time) * (1 - partyOverEase(g));
+      const tip = shown > 0 ? leyPulse(g.party, g.map, time, this.leyLink?.()) : null;
+      if (tip) { level = shown * Math.max(0, 1 - Math.hypot(tip.x - w.x, tip.z - w.z) / Math.max(1, P.range)) ** 2; px = tip.x; }
+    }
+    this.sfx.sparkler(level, pan(px));
+  }
+
+  /** An area cleared early (Ed, 2026-10-08; the rules' "areaCleared" in g.waveEvents, game.ts stepClear): the "cleared!"
+   *  sting from the new soundsystem, on the next half-beat after it (on the music's grid), once an event. */
+  private clears({ g, time, pan }: Here): void {
+    const C = g.tuning.sfx.cleared;
+    if (!C) return;
+    for (const e of g.waveEvents) {
+      if (e.kind !== "areaCleared" || this.clearsDue.some(d => d.key === e.key && d.at === e.at)) continue;
+      this.clearsDue.push({ key: e.key, at: e.at, x: e.x, z: e.z, play: timeAt(g.beat, Math.ceil(beatAt(g.beat, e.at) * 2 - 1e-9) / 2), done: false });
+    }
+    if (!this.clearsDue.length) return;
+    const w = g.witch;
+    for (const d of this.clearsDue) if (!d.done && time >= d.play) {
+      d.done = true;
+      this.sfx.cleared(pan(d.x), Math.max(C.floor, 1 - Math.hypot(d.x - w.x, d.z - w.z) / Math.max(1, C.range)));
+    }
+    this.clearsDue = this.clearsDue.filter(d => !d.done || time - d.at < 30);
+  }
+  private clearsDue: { key: string; at: number; x: number; z: number; play: number; done: boolean }[] = [];
+
+  /** Fireworks over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate; art builder
+   *  2's show, rules/fireworks.ts, the same shells the picture draws): each shell's whoosh as it launches (now and then
+   *  whistling), its burst when the sound of it reaches her (sound being slower than light; a crackle shell's glitter
+   *  crackling on), and the party cheering as the finale bursts. */
+  private fireworks({ g, time, pan }: Here): void {
+    const F = g.tuning.sfx.fireworks;
+    if (!F) return;
+    for (const e of g.waveEvents) {
+      if (e.kind !== "waveCelebrate" || this.shows.some(s => s.x === e.x && s.z === e.z && s.at === e.at)) continue;
+      const shells = fireworkShells(e.x, e.z, e.at, g.tuning);
+      if (shells.length) this.shows.push({ at: e.at, x: e.x, z: e.z, cheered: false, cheerAt: shells[shells.length - 1].burst, shells: shells.map(s => ({ ...s, launched: false, popped: false })) });
+    }
+    if (!this.shows.length) return;
+    const w = g.witch, S = this.sfx;
+    for (const show of this.shows) {
+      show.shells.forEach((s, i) => {
+        const d = Math.hypot(s.x - w.x, s.height, s.z - w.z), near = Math.max(0, 1 - d / F.range);
+        if (!s.launched && time >= s.launch) { s.launched = true; if (near > 0) S.fireworkWhoosh(s.burst - s.launch, (Math.floor(s.hue * 97) + i) % 3 === 0, pan(s.x), near); }
+        if (!s.popped && time >= s.burst + d / F.speed) { s.popped = true; if (near > 0) S.fireworkBurst(Math.min(1.5, s.radius / 9), pan(s.x), near, s.kind === "crackle"); }
+      });
+      if (!show.cheered && time >= show.cheerAt + 0.3) {
+        show.cheered = true;
+        const near = Math.max(0, 1 - Math.hypot(show.x - w.x, show.z - w.z) / F.cheerRange);
+        if (near > 0) S.fireworkCheer(pan(show.x), near);
+      }
+    }
+    this.shows = this.shows.filter(s => !s.cheered || s.shells.some(x => !x.popped));
+  }
+  private shows: { at: number; x: number; z: number; cheered: boolean; cheerAt: number; shells: (Shell & { launched: boolean; popped: boolean })[] }[] = [];
+
+  /** The wild watch's warning (art builder 3's aggroOf, rules/wildWatch.ts): rising while a wild area's watchers stare at
+   *  her; when it ends, a hit if the watch ran its course (they attack) or a fall if it was called off (she rose, left or
+   *  was knocked out). aggroOf goes null on the attack's own step too, so the last k tells which (art builder 3: k reaches
+   *  1 on the step the watch ends; a call-off leaves it below about 0.98). */
+  private aggro({ g }: Here): void {
+    if (!g.tuning.sfx.aggro) return;
+    const a = aggroOf(g);
+    if (a) { this.aggroK = a.k; this.aggroDanger = a.danger; this.sfx.aggro(a.k, a.danger); return; }
+    if (this.aggroK === null) return;
+    const w = g.witches[0], attacked = this.aggroK >= 0.98 && !!w && w.body.mode === "ground" && !w.ko;
+    this.aggroK = null;
+    if (attacked) this.sfx.aggro(1, this.aggroDanger);
+    this.sfx.aggro(null);
+  }
+  private aggroK: number | null = null;
+  private aggroDanger = 0;
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {
@@ -453,5 +590,22 @@ export class SfxCues {
     if ((this.flourished.get(id) ?? -Infinity) > time - 2) return;
     this.flourished.set(id, time);
     this.sfx.invited(g.creatures[id]?.level ?? 0, pan, k);
+  }
+
+  /** Knocked down, the party's tempo rises (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"; hotel's
+   *  rules/beat.ts knockdownTempo, g.beat.bonus), and the crowd's cheer greets her back at her decks at the faster tempo:
+   *  on her knockout's backAt (her clock), after the sad trumpet and the rewind, never over them; with no knockout under
+   *  way (a debug bump), on the bar line the rise starts from (g.beat.bonusAt). One cheer (fireworks.ts: three noise bands and a few whoops), at
+   *  sfx.tempoUp.volume. */
+  private tempoUp(h: Here): void {
+    const { g, time } = h, b = g.beat.bonus ?? 0, ko = g.witches[0]?.ko;
+    if (b > this.bonusSeen) this.tempoUpDue = ko ? { at: ko.backAt, her: true } : { at: timeAt(g.beat, g.beat.bonusAt ?? Math.ceil(beatAt(g.beat, time) - 1e-9)), her: false };
+    this.bonusSeen = b;
+    const due = this.tempoUpDue;
+    if (due && (due.her ? g.herTime : time) >= due.at) {
+      this.tempoUpDue = null;
+      const v = g.tuning.sfx.tempoUp?.volume ?? 0;
+      if (v > 0) this.sfx.fireworkCheer(0, v);
+    }
   }
 }

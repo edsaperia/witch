@@ -70,7 +70,7 @@ describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {
     const elk = layer("elk");
     expect(elk.length).toBeGreaterThan(4);
     // in the key: every pitched note of the layer on the style's scale
-    const a = style.arc[1], scale = style.scales[a.scale ?? style.scale].map(d => (d + style.root + (a.transpose ?? 0)) % 12);
+    const scale = style.scales[style.scale].map(d => (d + style.root) % 12);
     for (const n of elk) { const m = +n.split(":")[2]; if (!Number.isNaN(m)) expect(scale).toContain(((m % 12) + 12) % 12); }
     // the music under it unchanged
     const plan: BlockPlan = { section: "forest", start: 0, bars: 8, wave: 1, arc: 1 };

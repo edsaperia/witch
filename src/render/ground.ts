@@ -13,7 +13,8 @@ import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { LOOKS } from "../rules/map";
 import { speakerRadius } from "../rules/speakers";
-import { COAST_SAMPLES, type Beach } from "../rules/mapShape";
+import type { Beach, Bounds } from "../rules/mapShape";
+import { koiPonds, lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
@@ -61,12 +62,16 @@ uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a ro
 uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
-uniform vec4 uCircle;
-uniform vec4 uBeach; // the beach round the circular map: its centre x, z, how far in from the edge the sand starts, out past it the sea (metres); off while .z is 0
-uniform float uCoast[${COAST_SAMPLES}]; // the edge's radius round (rules/mapShape.ts beachOf: from angle -pi, eased between)
-uniform float uSand[${COAST_SAMPLES}]; // the sand's width round, likewise (its bays and narrows)
+uniform vec4 uCircle; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
+uniform vec4 uBeach; // the beach round the island: .x on (1) or off (0), .y how far past the coast the sea starts, .z half the land map's step (metres)
+uniform vec4 uLandBox; // the land map's grid (rules/land.ts): its first sample's x, z, and 1 over its width and depth (metres)
+uniform sampler2D uLand; // the land map: r, the signed distance to the coast (+ on land); g, the sand's width there; ba, the way to the nearest point of the coast (m; rules/mapShape.ts beachOf)
+uniform vec4 uLake; // the lakes (rules/lakes.ts): .x on (1) or off, .y half their map's step (metres)
+uniform vec4 uLakeBox; // the lakes' map's grid: its first sample's x, z, and 1 over its width and depth (metres)
+uniform sampler2D uLakes; // the lakes' map: r, how far into a lake (+ on the water, - ashore)
+uniform vec4 uKoi[8]; // the lakes with koi (rules/lakes.ts koiPonds): where they swim round, how far out (0: none), a seed and how many (seed + count / 10)
+uniform float uKoiSize; // a koi's scale: its length (m) over the shape's 1.12 (koiScale: a baby creature's size)
 uniform vec3 uMoonRoad; // the sky's moon on the screen (its x, a fraction from the left), the picture's width (px), 1 while it's up
-uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
 // The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
 uniform vec4 uLegendRings[6];
@@ -84,7 +89,6 @@ uniform float uLegendGlint[6];
 uniform vec4 uLegendStone[6];
 uniform vec4 uLegendDebris[6];
 uniform vec4 uLegendGrowth[6];
-uniform int uSweepCount; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
 uniform vec2 uClearing; // clearingSize, clearingFalloff: where trees, and so canopy, begin
@@ -121,16 +125,17 @@ void main() {
   vec2 j = vec2(vnoise(px / 5.0) - 0.5, vnoise(px / 5.0 + 17.0) - 0.5) * 0.9;
   // The beach and the sea (Ed, 2026-10-06; on only while she's near the edge: render/beach.ts).
   float shoreNear = 0.0; // (the forest floor near the sand: more moonlight, greener; Ed, 2026-10-06: "the forest still shows greens rather than black")
-  if (uBeach.z > 0.0) {
-    vec2 bv = p - uBeach.xy;
-    float ang = atan(bv.y, bv.x), cu = (ang + 3.14159265) / 6.2831853 * ${COAST_SAMPLES}.0, cf = fract(cu);
-    int c0 = int(mod(floor(cu), ${COAST_SAMPLES}.0)), c1 = int(mod(floor(cu) + 1.0, ${COAST_SAMPLES}.0));
-    float edge = mix(uCoast[c0], uCoast[c1], cf), sandW = mix(uSand[c0], uSand[c1], cf), sand = edge - sandW, shore = edge + uBeach.w;
-    float bd = length(bv), arc = ang * edge;
+  if (uBeach.x > 0.0) {
+    // (from the land map: how far past the coast this is (bd: + out to sea), where the sand starts (sand: its width in from the
+    // coast) and the sea (shore); off the map's grid, the sea, deeper the further off)
+    vec2 luv = (p - uLandBox.xy + uBeach.z) * uLandBox.zw, cuv = clamp(luv, vec2(0.0), vec2(1.0));
+    vec4 land = texture2D(uLand, cuv);
+    float bd = -land.r + length((luv - cuv) / uLandBox.zw), sandW = land.g, sand = -sandW, shore = uBeach.y;
+    vec2 cpt = p + land.ba; // (the nearest point of the coast: the scallop and the waves' timing go by it, the same all the way in)
     // The woods' edge (Ed, 2026-10-06: "The transition between beach and forest looks odd", with a photo of a real beach forest):
     // no speckled band; a clean, scalloped line, the bushes along it (render/beach.ts) spilling over it, a strip of beach
     // grass on the woods' side, and on the sand a soft dappled shadow under them before the clean pale sand.
-    float into = bd - sand - ((vnoise(vec2(arc / 7.0, 3.0)) - 0.5) * 7.0 + (vnoise(vec2(arc / 2.3, 11.0)) - 0.5) * 2.0) * clamp(sandW / 24.0, 0.3, 1.0); // metres past the line, sand side (scalloped less where the sand's narrow: render/beachEdge.ts scallop)
+    float into = bd - sand - ((vnoise(cpt / 7.0 + 3.0) - 0.5) * 7.0 + (vnoise(cpt / 2.3 + 11.0) - 0.5) * 2.0) * clamp(sandW / 24.0, 0.3, 1.0); // metres past the line, sand side (scalloped less where the sand's narrow: render/beachEdge.ts scallop)
     shoreNear = 1.0 - smoothstep(0.0, 16.0, -into);
     if (into <= 0.0 && into > -2.6) {
       // The beach grass: a strip of tussocks, blades lighter and darker, sand showing through at its outer edge.
@@ -144,7 +149,7 @@ void main() {
     }
     if (into > 0.0) {
       // The water's edge: a calm wave running up the sand and back, every seven seconds or so.
-      float lap = 0.5 + 0.5 * sin(uTime * 0.9 + vnoise(vec2(arc / 60.0, 7.0)) * 6.0);
+      float lap = 0.5 + 0.5 * sin(uTime * 0.9 + vnoise(cpt / 60.0 + 7.0) * 6.0);
       float front = shore - 1.0 - 4.0 * lap;
       vec3 col;
       if (bd > front + uPixel * 1.5) {
@@ -186,12 +191,12 @@ void main() {
       float g = vnoise(px / vec2(8.0, 5.0)) * 0.6 + vnoise(px / 1.7) * 0.4;
       col = vec3(0.6, 0.58, 0.54) * mix(1.0, g < 0.35 ? 0.93 : g > 0.68 ? 1.04 : 1.0, fine);
       if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 1.0 - 0.06 * fine; // ripples the wind left
-      float wet = shore - 6.0 + vnoise(vec2(arc / 20.0, 1.0)) * 1.5;
+      float wet = shore - 6.0 + vnoise(cpt / 20.0 + 1.0) * 1.5;
       if (bd > wet) col = mix(col, vec3(0.3, 0.31, 0.32), smoothstep(wet, wet + 1.5, bd));
       // The wave's edge (Ed, 2026-10-07: "a soft foamy pixel line that laps in and out on the sand"): a broken crest of foam
       // pixels at the front, bubbles thinning behind it, and as the wave draws back a lace of foam left on the wet sand; in
       // the night's own foam colour (art2's #364), the bubbles and lace smoothed where the pixels squash (fine).
-      float fd = front - bd, ebb = cos(uTime * 0.9 + vnoise(vec2(arc / 60.0, 7.0)) * 6.0); // (ebb > 0: running up; < 0: drawing back)
+      float fd = front - bd, ebb = cos(uTime * 0.9 + vnoise(cpt / 60.0 + 7.0) * 6.0); // (ebb > 0: running up; < 0: drawing back)
       float froth = vnoise(px / vec2(2.0, 1.0) + vec2(uTime * 0.7, 0.0)) * 0.65 + vnoise(px / 0.9 + 3.0) * 0.35;
       if (fd < uPixel * 1.5 && froth > 0.32) col = vec3(0.62, 0.68, 0.74); // the crest
       else if (fd < uPixel * 1.5) col = mix(col, vec3(0.62, 0.68, 0.74), 0.55);
@@ -376,6 +381,71 @@ void main() {
       }
     }
   }
+  // Lakes (Ed, 2026-10-11, rules/lakes.ts): no beach, a small shore: the area's own floor running down into the water, darker
+  // and wet over the last couple of metres, a pale line lapping at the edge; then shallows where the floor still shows under
+  // the water, deepening to a lake blue lighter than the sea's, the night sky in it (its stars, the moon's glint) and ripples.
+  if (uLake.x > 0.0) {
+    vec2 kuv = (p - uLakeBox.xy + uLake.y) * uLakeBox.zw;
+    if (kuv.x > 0.0 && kuv.y > 0.0 && kuv.x < 1.0 && kuv.y < 1.0) {
+      float ld = texture2D(uLakes, kuv).r + (vnoise(p / 5.0 + 23.0) - 0.5) * 1.4; // (+ on the water; its line wobbled a little)
+      if (ld > -2.6) {
+        float lap = 0.5 + 0.5 * sin(uTime * 1.1 + vnoise(p / 30.0 + 5.0) * 6.0), front = 0.35 * lap - 0.1; // (the edge laps in and out)
+        vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
+        if (ld < front) {
+          // the wet bank, and the foam's broken line at the water's edge
+          c *= 1.0 - 0.4 * smoothstep(-2.6, front, ld);
+          float froth = vnoise(px / vec2(2.0, 1.0) + vec2(uTime * 0.6, 0.0));
+          if (front - ld < uPixel * 1.5 && froth > 0.5) c = mix(c, vec3(0.5, 0.6, 0.63) / max(vec3(0.2), lit), 0.4);
+        } else {
+          vec3 V = normalize(cameraPosition - vec3(p.x, vWorld.y, p.y));
+          vec2 rip = vec2(vnoise(p * vec2(0.35, 1.2) + vec2(uTime * 0.3, 0.0)), vnoise(p * vec2(0.25, 0.9) + vec2(0.0, uTime * 0.22) + 19.0)) - 0.5;
+          vec3 R = reflect(-V, normalize(vec3(rip.x * 0.03, 1.0, rip.y * 0.06)));
+          float up = clamp(R.y, 0.0, 1.0), deep = smoothstep(front, front + 7.0, ld + (vnoise(p / 3.0 + 41.0) - 0.5) * 2.0);
+          vec3 water = mix(uHazeColour * 0.9 + vec3(0.14, 0.24, 0.28), vec3(0.15, 0.28, 0.37), smoothstep(0.0, 0.3, up)); // (lighter than the sea's 0.09, 0.18, 0.26)
+          water *= 0.92 + 0.2 * (rip.x + 0.5);
+          water = mix(c * lit * vec3(0.62, 0.82, 1.0) * 1.1 + vec3(0.02, 0.05, 0.07), water, 0.12 + 0.88 * deep); // (the floor under the shallows, fading as it deepens)
+          vec2 sc = floor(R.xz / max(0.08, R.y) * 26.0);
+          float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
+          if (hs > 0.997 && deep > 0.5) water += vec3(0.4, 0.44, 0.52) * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0)); // a star
+          vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
+          float spec = dot(R, moon);
+          if (spec > 0.993) water = mix(water, uMoon + vec3(0.25), 0.8);
+          else if (spec > 0.975) water = mix(water, uMoon * 0.7, 0.3);
+          else if (mod(px.y, 5.0) < 1.0 && vnoise(px / vec2(8.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.76) water += vec3(0.08, 0.12, 0.14); // ripples catching the light
+          // Koi (Ed, 2026-10-11; 2026-10-12: "large, similar to the size of a baby creature"): in some lakes a few, orange, white
+          // and gold, patched, swimming slow rounds under the water.
+          for (int i = 0; i < 8; i++) {
+            vec4 K = uKoi[i];
+            if (K.z <= 0.0) break;
+            vec2 q = p - K.xy;
+            if (dot(q, q) > (K.z + uKoiSize) * (K.z + uKoiSize)) continue;
+            float n = floor(fract(K.w) * 10.0 + 0.5);
+            for (int f = 0; f < 7; f++) {
+              if (float(f) >= n) break;
+              float s = floor(K.w) * 0.731 + float(f) * 3.71, r = max(uKoiSize * 1.4, K.z * (0.2 + 0.6 * fract(s * 0.37))); // (in toward the middle: they keep together)
+              r *= 1.0 + 0.12 * sin(uTime * 0.21 + s);
+              float dirn = fract(s * 2.13) > 0.5 ? 1.0 : -1.0, a = s * 1.7 + dirn * uTime * (0.35 + 0.25 * fract(s * 1.31)) * uKoiSize / max(2.0, r); // (a bigger fish swims faster)
+              vec2 fp = K.xy + vec2(cos(a), sin(a)) * r, hd = vec2(-sin(a), cos(a)) * dirn, d = p - fp;
+              float u = dot(d, hd) / uKoiSize, v = dot(d, vec2(-hd.y, hd.x)) / uKoiSize;
+              v += sin(uTime * 3.0 + s + u * 4.0) * 0.05 * (0.45 - u); // (its tail sways)
+              bool bodyIn = (u / 0.42) * (u / 0.42) + (v / 0.19) * (v / 0.19) < 1.0, tail = u < -0.38 && u > -0.7 && abs(v) < (-u - 0.33) * 0.55;
+              if (bodyIn || tail) {
+                float kind = fract(s * 5.31), blot = vnoise((vec2(u, v) + s) * 4.0);
+                vec3 kc = kind < 0.45 ? vec3(0.95, 0.42, 0.12) : kind < 0.8 ? vec3(0.92, 0.9, 0.84) : vec3(0.95, 0.75, 0.25);
+                if (kind >= 0.45 && kind < 0.8 && blot > 0.55) kc = vec3(0.92, 0.32, 0.1); // (white with orange patches)
+                if (kind < 0.45 && blot > 0.72) kc = vec3(0.92, 0.9, 0.84);
+                if (kind < 0.25 && blot < 0.22) kc = vec3(0.08, 0.07, 0.07); // (a few black spots)
+                water = mix(water, kc * (tail ? 0.75 : 0.95), 0.85 * deep);
+              }
+            }
+          }
+          if (ld < front + uPixel * 2.0 && mod(px.x + px.y, 2.0) < 1.0) water = mix(water, vec3(0.5, 0.6, 0.64), 0.25); // (the edge's thin shine, broken)
+          gl_FragColor = vec4(mix(water, haze(water, vWorld), 0.6), 1.0);
+          return;
+        }
+      }
+    }
+  }
   // Ponds: dark water mirroring the moon. The glint is a fake highlight from the view and a
   // moon mirrored into the sky ahead, so it slides as the camera moves, and shimmers.
   {
@@ -406,21 +476,6 @@ void main() {
       gl_FragColor = vec4(haze(water, vWorld), 1.0);
       return;
     }
-  }
-  // The party arriving: a front of glowing runes sweeping across the area, a soft glow behind it.
-  for (int i = 0; i < 4; i++) {
-    if (i >= uSweepCount) break;
-    float d = length(p - uSweeps[i].xy), front = uSweeps[i].z, k = uSweeps[i].w;
-    if (k <= 0.0 || d > front + 3.0) continue;
-    if (abs(d - front) < 2.2) {
-      vec2 cell = floor(px / 3.0);
-      if (fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453) > 0.55 && mod(px.x + px.y, 3.0) < 2.0) {
-        vec3 col = mod(cell.x + cell.y, 2.0) > 0.5 ? hsv(uCircle.x, 0.7, 1.0) : hsv(uCircle.y, 0.7, 1.0);
-        gl_FragColor = vec4(haze(col * k, vWorld), 1.0);
-        return;
-      }
-    }
-    if (d < front) c += hsv(uCircle.x, 0.6, 0.18) * k * (1.0 - smoothstep(0.0, 1.0, (front - d) / 30.0));
   }
   float moonK = 1.0;
   if (uCanopy.x > 0.0) {
@@ -513,11 +568,10 @@ export class Ground {
         uCanopy: { value: new THREE.Vector4() },
         uCircle: { value: new THREE.Vector4() },
         uBeach: { value: new THREE.Vector4() },
-        uCoast: { value: new Array(COAST_SAMPLES).fill(0) },
-        uSand: { value: new Array(COAST_SAMPLES).fill(0) },
+        uLandBox: { value: new THREE.Vector4() },
+        uLand: { value: null as THREE.DataTexture | null },
         uMoonRoad: { value: new THREE.Vector3() },
-        uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
-        uSweepCount: { value: 0 },
+        ...lakeUniforms(map.bounds, map.seed, lakeKnobs(map.tuning).koi, koiScale(st, metresPerPixel)),
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGlow: { value: new Array(6).fill(0) },
         uLegendRingCount: { value: 0 },
@@ -558,13 +612,6 @@ export class Ground {
     this.discoTiles.needsUpdate = true;
   }
 
-  /** The fronts of light sweeping across areas as the party arrives (up to 4). */
-  setSweeps(sweeps: { x: number; z: number; radius: number; strength: number }[]): void {
-    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uSweeps.value as THREE.Vector4[];
-    sweeps.slice(0, 4).forEach((w, i) => list[i].set(w.x, w.z, w.radius, w.strength));
-    u.uSweepCount.value = Math.min(4, sweeps.length);
-  }
-
   /** The sleeping legends' clearings nearest her (up to 6): their middles, radii, ring widths, and each ring's brightening (0-1). */
   setLegendRings(rings: readonly { x: number; z: number; r: number; edge: number; glow?: number }[], count = rings.length): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uLegendRings.value as THREE.Vector4[], glow = u.uLegendGlow.value as number[], n = Math.min(6, count);
@@ -597,8 +644,24 @@ export class Ground {
   moonRoad(x: number, widthPx: number, up: boolean): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uMoonRoad.value as THREE.Vector3).set(x, widthPx, up ? 1 : 0); }
   setBeach(b: Beach | null): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
-    if (b) { v.set(b.x, b.z, b.width, b.out); u.uCoast.value = Array.from(b.coast); u.uSand.value = Array.from(b.sand); } else v.set(0, 0, 0, 0);
+    if (!b) { v.set(0, 0, 0, 0); return; }
+    const L = b.land;
+    if (this.landFor !== b) {
+      // (the land map's distances, the sand's widths and the way to the coast, as a half-float texture eased between its samples)
+      this.landFor = b;
+      this.landTex?.dispose();
+      const N = L.cols * L.rows, data = new Uint16Array(N * 4), h = THREE.DataUtils.toHalfFloat;
+      for (let k = 0; k < N; k++) { data[k * 4] = h(L.dist[k]); data[k * 4 + 1] = h(b.sand[k]); data[k * 4 + 2] = h(b.toCoast[k * 2]); data[k * 4 + 3] = h(b.toCoast[k * 2 + 1]); }
+      const t = this.landTex = new THREE.DataTexture(data, L.cols, L.rows, THREE.RGBAFormat, THREE.HalfFloatType);
+      t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+      t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
+    }
+    u.uLand.value = this.landTex;
+    (u.uLandBox.value as THREE.Vector4).set(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows));
+    v.set(1, b.out, L.step / 2, 0);
   }
+  private landFor: Beach | null = null;
+  private landTex: THREE.DataTexture | null = null;
 
   setCircle(hue: number, hue2: number, brightness: number, turn: number): void {
     ((this.mesh.material as THREE.ShaderMaterial).uniforms.uCircle.value as THREE.Vector4).set(hue, hue2, brightness, turn);
@@ -673,7 +736,7 @@ export class Ground {
     return { uAreas: u.uAreas as { value: THREE.Texture }, uExtent: u.uExtent as { value: THREE.Vector4 } };
   }
 
-  dispose(): void { this.texture.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
+  dispose(): void { this.texture.dispose(); this.landTex?.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
 }
 
 /** The plaza round the floor (tuning dancefloor.paving), in the rim's stone (art/dancefloor.js DISCO_LOOK). */
@@ -699,3 +762,24 @@ function discoLooks(st: Style, radius: number) {
   for (let k = 1; k <= 3; k++) g.drawImage((Art.bake(Art.discoTileSprite("lit", { level: k }), Art.discoColours(k), st, "none") as { A: HTMLCanvasElement }).A, (k - 1) * 14, 0);
   return { base: tex(base), lit: tex(lit), tileM: radius / (Art.DISCO_RADIUS as number), pitch: fb.pitch, size: fb.size, gridOrigin: fb.gridOrigin, rimOuter: fb.rimOuter };
 }
+
+/** The lakes' map (rules/lakes.ts) for the ground shader: how far into a lake, as a half-float texture eased between its samples;
+ *  and their koi. */
+function lakeUniforms(bounds: Bounds, seed: number, share: number, koiSize: number): Record<string, THREE.IUniform> {
+  const L = bounds.lakes;
+  const koi = { value: Array.from({ length: 8 }, () => new THREE.Vector4()) };
+  if (!L) return { uLake: { value: new THREE.Vector4() }, uLakeBox: { value: new THREE.Vector4() }, uLakes: { value: null }, uKoi: koi, uKoiSize: { value: koiSize } };
+  koiPonds(bounds, seed, share).slice(0, 8).forEach((k, i) => koi.value[i].set(k.x, k.z, k.r, k.seed + k.count / 10));
+  const N = L.cols * L.rows, data = new Uint16Array(N), h = THREE.DataUtils.toHalfFloat;
+  for (let k = 0; k < N; k++) data[k] = h(Math.max(-60, Math.min(60, L.dist[k])));
+  const t = new THREE.DataTexture(data, L.cols, L.rows, THREE.RedFormat, THREE.HalfFloatType);
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
+  return { uLake: { value: new THREE.Vector4(1, L.step / 2, 0, 0) }, uLakeBox: { value: new THREE.Vector4(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows)) }, uLakes: { value: t }, uKoi: koi, uKoiSize: { value: koiSize } };
+}
+
+/** A koi's scale in the shader (Ed, 2026-10-12: "large, similar to the size of a baby creature"): as long as a baby creature is
+ *  drawn tall, about BABY_PX art pixels (art/creatures3d.js drawHeight1) times the style's creatureScale, at the art pixel's
+ *  metres; over the shape's own length (1.12). About 4.2 m at today's numbers. */
+const BABY_PX = 30;
+export const koiScale = (st: Style, metresPerPixel: number): number => (BABY_PX * ((st as { creatureScale?: number }).creatureScale ?? 1) * metresPerPixel) / 1.12;

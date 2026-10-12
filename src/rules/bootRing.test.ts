@@ -1,18 +1,20 @@
 // The boot-up as a ley ring (rules/bootRing.ts; Ed, 2026-10-06): the party spell sets it off, the line goes round the home
 // ring clockwise from the top at reveal x the pulse, and the pulse turns each stone into a speaker, the last as boot ends.
-// The first stone turns firstAfter (3 s) after she leaves her decks, and the boot's minutes run from it (Ed, 2026-10-06).
+// The pulse runs at the ley pulse's own speed (Ed, 2026-10-09: "Pure constant speed", boot included): the first stone about
+// 3 s off the decks (Ed, 2026-10-06), the boot over as it comes back round to where it came on to the ring.
 import { describe, expect, it } from "vitest";
 import type { ForestMap } from "./map";
 import { castPartySpell, newParty, stepParty, type PartyState } from "./party";
-import { bootLineAt, bootPath, bootPulseAt, ringOrder, ringRadius, stoneTurned, stonesTurned } from "./bootRing";
+import { bootLineAt, bootPath, bootPulseAt, bootSeconds, ringOrder, ringRadius, stoneTurned, stonesTurned } from "./bootRing";
 
 // The real ring's layout: 12 stones at ring angles 15, 45, ... 345 (0 due south, as map.ts places them), 27 m out.
-const B = 300, F = 3, cx = 100, cz = 100, R = 27;
+const V = 4, cx = 100, cz = 100, R = 27;
 const speakers = Array.from({ length: 12 }, (_, i) => { const ring = 15 + 30 * i, a = (ring * Math.PI) / 180; return { x: cx + R * Math.sin(a), z: cz + R * Math.cos(a), ring }; });
-const map = { dancefloor: { x: cx, z: cz, radius: 13.5, speakers }, treehouseFront: { x: cx, z: cz - 45 }, tuning: { boot: { time: B, firstAfter: F } } } as unknown as ForestMap;
+const map = { dancefloor: { x: cx, z: cz, radius: 13.5, speakers }, treehouseFront: { x: cx, z: cz - 45 }, tuning: { leyLines: { pulseSpeed: V } } } as unknown as ForestMap;
+const B = bootSeconds(map); // (the whole path at the pulse's speed)
 /** Cast at `at` and off the decks at once. */
-const cast = (at: number) => ({ spellAt: at, bootFrom: at, bootUntil: at + F + B, nextAt: at + F + B + 60, wave: 0, paused: false }) as unknown as PartyState;
-const waiting = () => ({ spellAt: null, bootUntil: B, nextAt: B + 60, wave: 0, paused: false }) as unknown as PartyState;
+const cast = (at: number) => ({ spellAt: at, bootFrom: at, bootUntil: at + B, nextAt: Infinity, wave: 0, paused: false }) as unknown as PartyState;
+const waiting = () => ({ spellAt: null, bootUntil: B, nextAt: Infinity, wave: 0, paused: false }) as unknown as PartyState;
 const bearing = (i: number) => { const s = speakers[i], b = Math.atan2(s.x - cx, -(s.z - cz)) * 180 / Math.PI; return (b + 360) % 360; };
 
 describe("the boot's ley ring", () => {
@@ -22,10 +24,12 @@ describe("the boot's ley ring", () => {
     for (let k = 1; k < b.length; k++) expect(b[k]).toBeGreaterThan(b[k - 1]);
     expect(b[3]).toBeCloseTo(105); expect(b[6]).toBeCloseTo(195); expect(b[9]).toBeCloseTo(285);
   });
-  it("starts at the treehouse's front and drops to the ring's top", () => {
-    const P = bootPath(map).path;
-    expect(P[0]).toEqual([cx, cz - 45]);
-    expect(P[1][0]).toBeCloseTo(cx); expect(P[1][1]).toBeCloseTo(cz - R, 0);
+  it("starts at the treehouse's front and comes down on to the ring along it, just past its top, before the first stone", () => {
+    const P = bootPath(map), on = P.path[P.path.length - 73], r = Math.hypot(on[0] - cx, on[1] - cz), b = (Math.atan2(on[0] - cx, -(on[1] - cz)) * 180) / Math.PI;
+    expect(P.path[0]).toEqual([cx, cz - 45]);
+    expect(r).toBeCloseTo(R, 3);
+    expect(b).toBeGreaterThan(0); expect(b).toBeLessThan(15); // (east of north, short of the first stone)
+    expect(maxTurn(P.path.slice(0, P.path.length - 60))).toBeLessThan(35); // (no right angle on to it)
   });
   it("moves nothing before the party spell", () => {
     const p = waiting();
@@ -36,50 +40,52 @@ describe("the boot's ley ring", () => {
   it("draws the line at reveal (3) times the pulse until the ring is whole", () => {
     const p = cast(10), P = bootPath(map);
     for (const t of [11, 30, 60]) expect(bootLineAt(p, map, t, 3)).toBeCloseTo(Math.min(P.length, 3 * bootPulseAt(p, map, t)));
-    expect(bootLineAt(p, map, 10 + F + B, 3)).toBeCloseTo(P.length);
+    expect(bootLineAt(p, map, 10 + B, 3)).toBeCloseTo(P.length);
   });
   it("waits at the treehouse after the cast until she leaves her decks", () => {
     const p = { ...cast(10), bootFrom: undefined } as unknown as PartyState;
     expect(bootPulseAt(p, map, 10.5)).toBe(0); // (bootUntil not yet reckoned from her leaving: the pulse sits at its start)
     expect(stonesTurned(p, map, 10.5)).toBe(0);
   });
-  it("turns the first stone firstAfter (3) seconds after she leaves her decks", () => {
-    const p = cast(10), P = bootPath(map), first = P.order[0];
+  it("runs at the pulse's speed from when she leaves her decks, turning the first stone as it gets there", () => {
+    const p = cast(10), P = bootPath(map), first = P.order[0], F = P.stoneAt[first] / V;
+    expect(bootPath(map).length / V).toBeCloseTo(B, 9);
     expect(bootPulseAt(p, map, 10 + F / 2)).toBeCloseTo(P.stoneAt[first] / 2); // (running down from the treehouse)
+    expect(bootPulseAt(p, map, 13)).toBeCloseTo(3 * V, 9); // (at a constant speed)
     expect(stoneTurned(p, map, 10 + F - 0.01, first)).toBe(false);
-    expect(stoneTurned(p, map, 10 + F, first)).toBe(true);
+    expect(stoneTurned(p, map, 10 + F + 1e-9, first)).toBe(true);
   });
   it("turns each stone into a speaker as the pulse reaches it, in order", () => {
-    const p = cast(10), P = bootPath(map), first = P.stoneAt[P.order[0]], last = P.stoneAt[P.order[11]];
+    const p = cast(10), P = bootPath(map);
     P.order.forEach((i, k) => {
       if (k === 0) return; // (the first: above)
-      const at = 10 + F + ((P.stoneAt[i] - first) / (last - first)) * B; // when the pulse is there
+      const at = 10 + P.stoneAt[i] / V; // when the pulse is there
       expect(stoneTurned(p, map, at - 0.01, i)).toBe(false);
       expect(stoneTurned(p, map, at + 0.01, i)).toBe(true);
       expect(stonesTurned(p, map, at + 0.01)).toBe(k + 1);
     });
   });
-  it("ends the boot as the 12th stone turns, boot.time after the first", () => {
-    const p = cast(10);
-    expect(stonesTurned(p, map, 10 + F + B - 0.01)).toBe(11);
-    expect(stonesTurned(p, map, 10 + F + B)).toBe(12);
-    expect(p.bootUntil).toBe(10 + F + B);
+  it("turns the 12th stone as the pulse reaches it, and ends the boot as it comes round to where it came on to the ring", () => {
+    const p = cast(10), P = bootPath(map), last = P.stoneAt[P.order[11]] / V;
+    expect(stonesTurned(p, map, 10 + last - 0.01)).toBe(11);
+    expect(stonesTurned(p, map, 10 + last + 1e-9)).toBe(12);
+    expect(p.bootUntil).toBeCloseTo(10 + P.length / V, 9);
   });
 });
 
 describe("the party spell", () => {
-  const T = { boot: { time: B, firstAfter: F, spell: true }, party: { startDelay: 0, interval: 60, areasPerWave: 1 } };
+  const T = { leyLines: { pulseSpeed: V }, boot: { transform: 1 }, party: { startDelay: 0, areasPerWave: 1 } };
   const fakeMap = { ...map, tuning: T, centreCell: [0, 0] } as unknown as ForestMap;
-  it("holds the party until it's cast and she leaves her decks, then the first stone turns 3 s later and the boot ends boot.time after it", () => {
-    const p = { spellAt: null, bootUntil: F + B, nextAt: F + B + 60, wave: 0, paused: false, areas: new Map(), next: [], afterNext: [], probable: [], areasPerWave: 1 } as unknown as PartyState;
+  it("holds the party until it's cast and she leaves her decks, then the boot runs at the pulse's speed and the wave's pulse sets off after it", () => {
+    const p = { spellAt: null, bootUntil: B, nextAt: Infinity, wave: 0, paused: false, areas: new Map(), next: [], afterNext: [], probable: [], areasPerWave: 1, pulse: { d: 0, at: B, v: V, lens: [] } } as unknown as PartyState;
     for (let t = 0; t < 100; t += 1) stepParty(p, fakeMap, t, 1);
-    expect(p.bootUntil).toBe(F + B + 100); // (frozen: shifted along with the clock)
+    expect(p.bootUntil).toBeCloseTo(B + 100, 9); // (frozen: shifted along with the clock)
     expect(castPartySpell(p, fakeMap, 100)).toBe(true);
     expect(p.spellAt).toBe(100);
     stepParty(p, fakeMap, 100, 1, true); stepParty(p, fakeMap, 101, 1, true); // (still at the decks, casting)
     expect(p.bootFrom).toBeUndefined();
     stepParty(p, fakeMap, 102, 1, false); // (off the decks)
-    expect(p.bootFrom).toBe(102); expect(p.bootUntil).toBe(102 + F + B); expect(p.nextAt).toBe(102 + F + B + 60);
+    expect(p.bootFrom).toBe(102); expect(p.bootUntil).toBeCloseTo(102 + B, 9); expect(p.pulse.at).toBeCloseTo(102 + B, 9);
     expect(castPartySpell(p, fakeMap, 120)).toBe(false); // (once)
   });
   void newParty;
@@ -105,11 +111,13 @@ describe("the ring and the way out are one path (Ed, 2026-10-06: \"it doesn't co
     for (const to of [{ x: d.x + 400, z: d.z + 300 }, { x: d.x - 500, z: d.z - 100 }]) {
       const route = departureRoute(g.map, to, TUNING.leyLines.depart.avoid, 4), r = (p: [number, number]) => Math.hypot(p[0] - d.x, p[1] - d.z);
       expect(route[0]).toEqual(P.path[0]); // (both from the treehouse's front)
-      // Never inside the ring, and its first stretch on it (within the smoothing's half metre or so) before it heads out.
+      // Never inside the ring; in from the treehouse's front onto it (the ring is the speakers' own circle, inside the front:
+      // Ed, 2026-10-07), a stretch on it (within the smoothing's half metre or so), then out.
       expect(Math.min(...route.map(r))).toBeGreaterThan(R - 0.6);
-      const onRing = route.slice(1).findIndex(p => r(p) > R + 1.5);
-      expect(onRing).toBeGreaterThan(2);
-      for (const p of route.slice(1, onRing)) expect(Math.abs(r(p) - R)).toBeLessThan(1.5);
+      const on = route.findIndex(p => Math.abs(r(p) - R) < 1.5), onRing = on + route.slice(on).findIndex(p => r(p) > R + 1.5);
+      expect(on).toBeGreaterThan(0);
+      expect(onRing - on).toBeGreaterThan(2);
+      for (const p of route.slice(on, onRing)) expect(Math.abs(r(p) - R)).toBeLessThan(1.5);
       // No right angle (Ed's second shot): onto the ring, round it and off it, each step turns gently.
       expect(maxTurn(route.slice(0, onRing + 12))).toBeLessThan(35);
     }
