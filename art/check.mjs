@@ -811,6 +811,18 @@ const report = await b.page.evaluate(async () => {
     for (const id of G.LEGEND_IDS) { const L = G.legendSprites(id, st); if (!L || !Object.keys(L).length) bad.push(`legend sprites ${id}`); seen.legends++; }
     res.push({ what: "every generator draws: the beach's finds and prints (every heading), the bedroom, every broom, the witch's hat both ways, every species' rune stone, a party patch, every legend's sprites; none empty, nothing NaN, every material coloured", good: !bad.length && seen.beach > 0 && seen.brooms >= 18, info: bad.slice(0, 6).join("; ") || `${seen.beach} beach pieces, ${seen.brooms} brooms, ${seen.stones} rune stones, ${seen.legends} legends` });
   }
+  { // the runestones' 20 forms (Ed, 2026-10-12): each draws, mildly unlike today's (its size within 0.85 to 1.25 of it), and mirrored at the
+    // same size with its carving the same glyph (as many lit pixels, the sigil stamped after the flip: never mirror-written)
+    const lit = b => { const d = b.A.getContext("2d").getImageData(0, 0, b.w, b.h).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] === 254) n++; return n; };
+    const base = G.runeStone(st, { sigil: "boar" }), bad = [];
+    for (let v = 0; v < G.RUNESTONE_FORMS; v++) {
+      const a = G.runeStone(st, { sigil: "boar", form: v }), f = G.runeStone(st, { sigil: "boar", form: v, flip: true });
+      if (!(a.h >= base.h * .85 && a.h <= base.h * 1.25 && a.w >= base.w * .85 && a.w <= base.w * 1.25)) bad.push(`form ${v} ${a.w}x${a.h} (today's ${base.w}x${base.h})`);
+      if (f.w !== a.w || f.h !== a.h) bad.push(`form ${v} mirrored ${f.w}x${f.h}`);
+      if (Math.abs(lit(f) - lit(a)) > 6 || lit(a) < 20) bad.push(`form ${v} carving ${lit(a)} / mirrored ${lit(f)}`);
+    }
+    res.push({ what: `the runestone's ${G.RUNESTONE_FORMS} forms draw, within 0.85 to 1.25 of today's size, mirrored the same size with the same carving`, good: G.RUNESTONE_FORMS === 20 && !bad.length, info: bad.slice(0, 4).join("; ") || `${G.RUNESTONE_FORMS} forms` });
+  }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {
     const a = G.areaAssets(A.id, st), props = [...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])];
@@ -820,6 +832,24 @@ const report = await b.page.evaluate(async () => {
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 ok(report.every(r => r.good), `${report.length} sprite checks`);
+// the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
+// every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle
+// reaching it), each tier different and the carved ones more detailed than the plain glyph (more edges), not a solid disc
+{
+  const D = await import("./sigilDetail.js"), S = await import("./sigils.js"), bad = [];
+  for (const id of [...S.SIGIL_IDS, "worldTree"]) {
+    const n = 128, t = [0, 1, 2].map(tier => D.sigilDetail(id, n, { tier })), ink = t.map(m => m.reduce((a, v) => a + v, 0));
+    if (t.some(m => m.some(v => v !== 0 && v !== 1))) bad.push(`${id}: not crisp`);
+    if (ink.some(k => k < 150)) bad.push(`${id}: ink ${ink.join("/")}`);
+    if (ink[2] > n * n * .6) bad.push(`${id}: too solid (${ink[2]})`);
+    if (t.some(m => { for (let i = 0; i < n; i++) if (m[i] || m[(n - 1) * n + i] || m[i * n] || m[i * n + n - 1]) return true; return false; })) bad.push(`${id}: touches its box's edge`);
+    if (t[1].every((v, i) => v === t[2][i]) || t[0].every((v, i) => v === t[1][i])) bad.push(`${id}: tiers alike`);
+    const edges = t.map(m => { let e = 0; for (let y = 0; y < n; y++) for (let x = 1; x < n; x++) e += m[y * n + x] !== m[y * n + x - 1] ? 1 : 0; return e; });
+    if (!(edges[1] > edges[0] * 1.3 && edges[2] > edges[0] * 1.3)) bad.push(`${id}: the carved tiers no more detailed than the plain glyph (edges ${edges.join("/")})`);
+  }
+  if (!(D.detailTier(32) === 0 && D.detailTier(96) === 1 && D.detailTier(200) === 2)) bad.push("detailTier");
+  ok(!bad.length, `detailed sigils: every species' and the World Tree (${S.SIGIL_IDS.length + 1}), plain glyph, carved bands and the carved emblem, crisp, clear of the box's edge, no circle, each tier its own${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 // party relics (art/partyRelics.js, #87): 6+ bottles, each half-buried, drawn at a third of their built size (Ed, 2026-10-11: 2.3 to 5.4 m across and 2 to 5.7 m tall),
 // sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
 // motes); the glass is see-through (a rim in its colour and a half-clear dither of empty glass); it carries a light; its 3 frames

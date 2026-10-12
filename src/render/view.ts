@@ -7,6 +7,8 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { deckOf } from "../rules/treehouse";
+import { TreehouseDeck } from "./treehouseDeck";
 import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
@@ -157,6 +159,8 @@ export class View {
   rideOff = 0;
   rideTime = NaN;
   treehouseBatch: SpriteBatch;
+  /** The treehouse deck's placeholder (rules/treehouse.ts), with the deck on. */
+  treehouseDeck: TreehouseDeck | null = null;
   markerArt: MarkerArt;
   markerBatch: SpriteBatch;
   markerFx = new MarkerFx();
@@ -240,6 +244,8 @@ export class View {
   nextStones: StoneIndicator[] = [];
   /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
   hatPointer: StoneIndicator | null = null;
+  /** The Dowsing hat's pointer toward the nearest relic (rules/hatSpells.ts). */
+  dowsePointer: StoneIndicator | null = null;
   /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */
   winPointer: StoneIndicator | null = null;
   /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
@@ -378,10 +384,13 @@ export class View {
       // (Placed each frame by placeTreehouse: where it stands depends on the camera's angle.)
       this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true });
       this.scene.add(...this.treehouseBatch.meshes);
+      // The deck (Ed, 2026-10-11; rules/treehouse.ts): its placeholder meshes in the old treehouse's place, till the Ent's art.
+      const deck = deckOf(this.game.map, t);
+      if (deck) { this.treehouseDeck = new TreehouseDeck(deck); this.scene.add(this.treehouseDeck.group); }
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     this.minimap = new Minimap(document.body, game.map);
-    this.markerArt = new MarkerArt(style, t);
+    this.markerArt = new MarkerArt(style, t, game.map);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
@@ -842,9 +851,13 @@ export class View {
       const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
       return { x: at.x + r.x * dx + u.x * dy, y: at.y + r.y * dx + u.y * dy, z: at.z + r.z * dx + u.z * dy };
     };
-    const thLights: ForestLight[] = T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
-      ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
-    }));
+    const deck = this.treehouseDeck ? deckOf(g.map, t) : null;
+    this.treehouseDeck?.update();
+    const thLights: ForestLight[] = deck // (the deck: one warm lantern over it, at the map table)
+      ? [{ x: deck.x, y: groundHeight(deck.x, deck.z) + deck.h + 3, z: deck.z, reach: t.treehouse.lightReach, rgb: new THREE.Vector3(1, 0.72, 0.42), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3)) }]
+      : T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
+        ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
+      }));
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);

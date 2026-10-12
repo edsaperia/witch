@@ -45,7 +45,7 @@ describe("the bot", () => {
   it("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it invites through the run and wins the night", () => {
     // (before: it stood at each next soundsystem before its wave, invited 3 to 5 all run and lost every night)
     const g = newGame(8919, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
-    g.clock.paused = false; g.witch = { ...g.witch, seated: false };
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; // (on the ground by the treehouse, as this run was tuned from; the deck's start shifts this chaotic run: 8 seeds from one spot invite about as many with it on as off)
     const bot = newBot("skilled");
     let invited = 0;
     for (let i = 0; i < 20 * 60 * 60 && g.win?.phase !== "won" && !g.partyOver; i++) {

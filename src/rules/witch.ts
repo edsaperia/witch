@@ -1,10 +1,12 @@
 // The witch: where she is, how fast she flies, and her two modes. Ground mode is slower and
 // under the trees; treetop mode is faster and above the canopy. One button rises or descends,
 // which takes riseTime or descendTime: `lift` runs from 0 (ground) to 1 (treetop).
+import { lakeKnobs, onLake, stopAtShore } from "./lakes";
 import { clamp, lerp, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
 import { beachOf, keepIn, softEdge, type Bounds } from "./mapShape";
 import { NO_LOAD, type LeashLoad } from "./leashWeight";
+import { keepOnDeck, overDeck, type Deck } from "./treehouse";
 
 export type Mode = "ground" | "rising" | "treetop" | "descending";
 
@@ -31,6 +33,8 @@ export interface WitchState {
   braking?: boolean;
   /** Sitting on the treehouse terrace (the start), until the first move or rise. */
   seated?: boolean;
+  /** On the treehouse deck (rules/treehouse.ts): landing on it, standing on it (mode "ground", its floor her ground), or rising off it. */
+  perch?: boolean;
   /** Lying on the beach looking at the stars (the tuning's beach): she flew on out over the sand, so landed; any other way gets her up. */
   stargazing?: boolean;
   /** How long she's been pushing on out over the sand (seconds). */
@@ -65,20 +69,25 @@ export function headingOf(vx: number, vz: number, was: Heading | undefined, minS
   return off < (was === want ? t.facing.headingLeave : t.facing.headingEnter) ? want : "side";
 }
 
+/** How high (lift, 0 to 1) she holds over a lake's water, coming down: she never lands on it. */
+const LAKE_HOVER = 0.3;
+
 export const NO_INTENT: Intent = { moveX: 0, moveZ: 0, toggleMode: false };
 
 export function newWitch(x: number, z: number): WitchState {
   return { x, z, vx: 0, vz: 0, lift: 0, mode: "ground", facing: 1, away: false, lean: false };
 }
 
-export const witchHeight = (w: WitchState, t: Tuning) => lerp(t.groundHeight, t.treetopHeight, smoothstep(w.lift));
+export const witchHeight = (w: WitchState, t: Tuning) => w.perch && t.treehouse.deck
+  ? lerp(t.treehouse.deck.height + t.groundHeight, t.treetopHeight, smoothstep(w.lift)) // (on the deck its floor is her ground)
+  : lerp(t.groundHeight, t.treetopHeight, smoothstep(w.lift));
 /** How much of the canopy shows: 0 in ground mode, 1 in treetop mode. */
 export const canopyShown = (w: WitchState) => smoothstep(w.lift);
 
 /** `load`: the pull of the sigils she carries (rules/leashWeight.ts): slower away from it, a little drift toward it, a
  *  slower rise, and over the treetops a slow sink (to leash.weight.floor while she flies on; all the way, and down to
  *  the ground, if she stops or the load is extreme). */
-export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: Bounds, load: LeashLoad = NO_LOAD): WitchState {
+export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: Bounds, load: LeashLoad = NO_LOAD, deck: Deck | null = null): WitchState {
   if (w.seated) {
     if (!intent.toggleMode && Math.hypot(intent.moveX, intent.moveZ) < 0.1) return w;
     w = { ...w, seated: false };
@@ -88,10 +97,12 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     if (!intent.toggleMode && seaward(w, intent, bounds) !== false) return w.vx || w.vz ? { ...w, vx: 0, vz: 0 } : w;
     w = { ...w, stargazing: false, beachPush: 0 };
   }
-  let { mode, lift } = w;
+  let { mode, lift } = w, perch = !!w.perch && !!deck && overDeck(deck, w.x, w.z); // (put somewhere else, she's off it)
   if (intent.toggleMode) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
+  // The treehouse deck (rules/treehouse.ts): coming down from the treetops over it, she lands on it; rising takes her off it.
+  if (deck && intent.toggleMode && mode === "descending" && overDeck(deck, w.x, w.z)) perch = true;
   const Wt = t.leash.weight, over = load.over, steering = Math.hypot(intent.moveX, intent.moveZ) > 0.1;
-  if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime * (1 + Wt.rise * over)); if (lift >= 1) { lift = 1; mode = "treetop"; } }
+  if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime * (1 + Wt.rise * over)); if (lift >= 1) { lift = 1; mode = "treetop"; perch = false; } }
   else if (mode === "descending") { lift -= dt / Math.max(1e-3, t.descendTime); if (lift <= 0) { lift = 0; mode = "ground"; } }
   else if (mode === "treetop") {
     // Loaded, she's slowly pulled down: to the floor while she flies on (never dropped into a fight she didn't choose),
@@ -103,6 +114,9 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     } else if (lift < 1) lift = Math.min(1, lift + dt / Math.max(1e-3, t.riseTime));
   }
 
+  // Never down on a lake's water (Ed, 2026-10-11: rules/lakes.ts): coming down over it, she holds a little off it, and lands
+  // once she's over the shore.
+  if (bounds.lakes && mode !== "rising" && mode !== "treetop" && w.mode !== "ground" && lift < LAKE_HOVER && onLake(bounds, w.x, w.z, lakeKnobs(t).pad)) { lift = LAKE_HOVER; mode = "descending"; }
   let mx = intent.moveX, mz = intent.moveZ;
   const len = Math.hypot(mx, mz);
   if (len > 1) { mx /= len; mz /= len; }
@@ -131,9 +145,20 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
     if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
   }
+  // On foot, a lake's shore stops her (sliding along it).
+  if (mode === "ground" && bounds.lakes) {
+    const q = stopAtShore(bounds, w.x, w.z, x, z, lakeKnobs(t).pad, 0);
+    if (q) { const into = -(vx * q.nx + vz * q.nz); if (into < 0) { vx += q.nx * into; vz += q.nz * into; } x = q.x; z = q.z; }
+  }
+  // On the deck (or coming down onto it): kept on it, inside its rail, round the map table and behind the decks.
+  if (perch && deck && mode !== "rising" && mode !== "treetop") {
+    const p = keepOnDeck(deck, x, z);
+    if (p.x !== x || p.z !== z) { if (mode === "ground") { vx = (p.x - w.x) / Math.max(dt, 1e-6); vz = (p.z - w.z) / Math.max(dt, 1e-6); } x = p.x; z = p.z; }
+  }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);
-  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking };
+  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking, ...(perch ? { perch: true } : {}) };
+  if (perch) return next; // (no beach up here)
   // Flying on out over the beach (Ed, 2026-10-06: "If you try and fly past the beach, you land and stargaze"): pushing seaward
   // against the edge's soft hold, on the sand, for restAfter seconds, she comes down (from the treetops too) and, landed, lies down.
   const B = t.beach, beach = B?.on ? beachOf(bounds, t) : null;

@@ -164,7 +164,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   yield* scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
   yield* scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
   // Berry bushes (rules/berries.ts): normal bushes of their area, a berry on some of them.
-  yield* scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
+  yield* scatter("berrybush", g.berries.bushes.filter(b => !b.harvest && Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
   yield* scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
   yield* scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
   // The rim kit round the legends' clearings (rules/forest.ts legendRim), drawn whole.
@@ -279,7 +279,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
     b?.set(list);
     if (sliceDone()) { yield; resume(); }
   }
-  { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: 7, d: 3.5, scenery: false }); } // soft, under the treehouse
+  { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: g.tuning.treehouse.deck?.on ? 9 : 7, d: g.tuning.treehouse.deck?.on ? 5 : 3.5, scenery: false }); } // soft, under the treehouse
   checkPops(v, "placed", !force);
   v.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
   v.stats.trees = nt; v.stats.bushes = nb;

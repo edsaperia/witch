@@ -11,6 +11,7 @@ import type { Ground } from "./ground";
 import { PartyWitchView } from "./partyWitches";
 import type { ShadowInstance } from "./shadows";
 import { pixelEmoji } from "./bubbles";
+import { hash2 } from "../rules/random";
 import { groundHeight, placed, shownOverBend } from "./height";
 import { SPRITE_UNIFORMS, SpriteBatch, asFloor, type SpriteInstance } from "./sprites";
 import { BeachDecor, type BeachItem } from "../rules/beachDecor";
@@ -21,6 +22,34 @@ import { KrakenView } from "./kraken";
 
 /** A heart rising off the two of them stargazing together: where it set off, when, its sway's phase; its image (pooled). */
 interface Heart { x: number; z: number; at: number; sway: number; el: HTMLImageElement }
+
+/** A campfire beside each spot of beach witches (Ed, 2026-10-12: "Campfires are spawned next to where beach witches are
+ *  spawned"): the world's campfire (view/lights.ts draws and lights it, flicker and smoke and all), to one side of the spot
+ *  (east or west, never in front: the camera looks north) just clear of its witches, and on the sand well clear of the woods
+ *  and the water. Where it is follows from the spot alone; worked out once a run. */
+export function beachFires(g: Game): { x: number; z: number; flip: boolean }[] {
+  const spots = g.beach;
+  if (!spots) return [];
+  let out = fires.get(spots);
+  if (out) return out;
+  const b = beachOf(g.map.bounds, g.tuning);
+  out = [];
+  if (b) for (const s of spots) {
+    const half = ((s.list.length - 1) / 2) * 2.2 + 0.6, k = hash2(Math.round(s.x), Math.round(s.z), 4127);
+    let best: { x: number; z: number; score: number } | null = null;
+    // Round the spot, a little past its witches: straight to one side best, behind next, never in front; on clear sand.
+    for (const r of [half + 3, half + 4.5]) for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2, dx = Math.cos(a), dz = Math.sin(a), x = s.x + dx * r, z = s.z + dz * r;
+      if (dz > 0.35 || b.intoSand(x, z) < 6 || b.intoSea(x, z) > -6) continue;
+      const score = Math.abs(dx) - Math.max(0, dz) * 2 - (r - half) * 0.05 + (dx > 0 === k < 0.5 ? 0.01 : 0);
+      if (!best || score > best.score) best = { x, z, score };
+    }
+    if (best) out.push({ x: best.x, z: best.z, flip: k < 0.25 || k > 0.75 });
+  }
+  fires.set(spots, out);
+  return out;
+}
+const fires = new WeakMap<object, { x: number; z: number; flip: boolean }[]>();
 
 export class BeachView {
   private at: { map: Game["map"]; beach: Beach | null } | null = null;

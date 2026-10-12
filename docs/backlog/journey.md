@@ -47,6 +47,10 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - Fits what's drawn today: the world's bend already curves the ground away toward the horizon.
 - **Sailing zooms in** (Ed, 2026-10-11, eventually): choosing an island on the chart transitions to it by zooming the chart's camera down into the island, all the way to the dancefloor at its centre, where the night begins.
 
+### Sigils, unified (Ed, 2026-10-12)
+
+The chart's detailed island sigils (#712, art/sigilDetail.js: plain glyph, carved bands, solid carved emblem by size) are good enough for now. Later, **update and unify all the sigils**: one sigil family drawn by one system everywhere they appear (placed sigils and runes, the stack, dream bubbles, the dancefloor, the sea chart, runestones, the World Tree), with the carved emblem style refined toward Ed's reference (previews/ed/refs/sigil-detail-reference.png on claude/ed-shots: fewer, bolder carved bands and spirals) and detail chosen by size.
+
 ### The end of the route (Ed, 2026-10-10)
 
 1. **Last call:** the wave pointer's 🎶 becomes **🎉** for the final stone.
@@ -68,6 +72,7 @@ Decisions (Ed, 2026-10-11, approving the plan):
 - **Animals route over the area map** (Ed chose this): a path from area to area that skips water areas, as travelling party animals already route along area borders (`rules/travel.ts`); used by besiegers marching on and her followers. Straight lines within an area, as now.
 - Unchanged: areas, the wave route (it rings outward by distance on any set of areas), creatures, combat, legends, sieges.
 - Watch: the ley line crossing a lake; home must stay well inland.
+- Built: the land map and the coast (#690), the island shapes by phase (#697), the lakes (rules/lakes.ts: from phase 1, never home or its neighbours, small shores, lighter water, koi in some, no landing on the water, on foot everyone stopped at the shore; creatures head round them along the shore, which stands in for routing over the area map). The ley line crosses a lake on about 10 to 15% of its links (tools/lakes/leylines.mjs): left as it is for Ed to judge. Next: the islands fitted together on the chart (tessellation).
 
 ### Difficulty: one master curve (Ed, 2026-10-10)
 
@@ -89,6 +94,10 @@ Using only today's 32 kinds and art:
 5. **Home** growing by one area per kind found.
 6. **All the islands** (Ed, 2026-10-11: "We should generate all the islands. For islands where we haven't designed the creatures yet, use '?'"): `config/kinds.json` holds all 64 kinds, today's 32 and 32 placeholders (`unknown-01`…`unknown-32`, `placeholder: true`): 14 introduced in phase 3 and 18 in phase 4, their bearings spread round the compass, each with the biome its direction suggests. Every island has a seed, size and coast (`islandOf`); a placeholder's shows on the sea chart as a bare outline like any island not yet found, not sailable ("Not yet charted"; a '?' under `?chart=all`), and no roster or night's deal ever holds a placeholder kind, nor does `?island=` play one. `?chart=all` shows all 64.
 Not yet: the Ent, the voyage, treehouse rooms, records, lakes, biomes.
+
+### The other 32 animals, and better shapes for all (Ed, 2026-10-12)
+
+When we design the 32 placeholder kinds (bringing the animals to 64), first **audit every creature shape and add-on**: today's four-legged animals are mostly the same three-ellipsoid "sausage" torso (art/creatures3d.js quad3d), so silhouettes differ only by their add-ons. Then **expand the set of body shapes and parts** (silhouette-first bodies lofted along a per-species spine and belly profile, separate neck, shoulder and haunch masses, bolder proportions, postures) **until it can make every animal we want**, and make all 64 as good as we can, the existing 32 included. A black-silhouette sheet at game size with a pairwise likeness score keeps them distinct.
 
 ### Mushrooms on the journey (Ed, 2026-10-10)
 

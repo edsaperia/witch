@@ -1,6 +1,6 @@
 # Hats and brooms
 
-Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
+Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring; the second, Hats A: Harvest, Dowsing, Sentry, Slingshot and Gathering, rules/hatSpells.ts; the third, Hats B: Bramble, Mine, Lullaby, Cyclone and Nursing). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
 
 ## The two slots
 
@@ -104,3 +104,5 @@ Suggested:
 - **Ranges:** Bramble 30 m; Sentry 30 m; Slingshot catches 💌s within 10 m and fires out to 40 m; Mine 15 m.
 - **Beacon dropped** ("isn't useful").
 - **Double blink**, a new broom: one more blink before the cooldown.
+- **Lullaby** (Ed, 2026-10-12): "Wild creatures that are asleep wake up when hit with an invitation." A lulled creature wakes to a 💌 of its own (the rule for napping creatures, #671), not to her landing in its area or a 💌 on a neighbour.
+- **Decoy dropped, Cyclone instead** (Ed, 2026-10-12: "Decoy isn't useful, how about a Cyclone spell that pushes creatures around in a circle, lifts them and throws them outwards?"): a placed hat. On putting it down, and every 20 s while it lies there, it catches the wild and enraged creatures within 10 m, sweeps them round it for 3 s (a turn a second) up to 3 m off the ground, then flings them 10 m outward, stunned 1.5 s after landing. Never her (Ed, 2026-10-12: "cyclone doesn't affect you"), her creatures, happy ones or legends; never hurt (proposed numbers; the tuning's spells.cyclone).

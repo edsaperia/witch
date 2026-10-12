@@ -4,6 +4,7 @@
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
+import { lakeKnobs, onLake } from "./lakes";
 import { watchStep } from "./wildWatch";
 import { coarseTurn, inFull, type LodCounts } from "./simLod";
 import { earlyQuest, questFor, type Quest } from "./quest";
@@ -178,6 +179,10 @@ export interface Creature {
   /** An idle nap's end by itself (game time): set only for a nap, whose own wake rules (NapRules) apply while it is; a
    *  sleep without it stays down till whoever set it clears it. */
   napUntil?: number;
+  /** Lulled by the Lullaby hat (rules/hatSpells.ts): its nap ends only at napUntil, when it may nap no longer, or when a 💌
+   *  lands on it (Ed, 2026-10-12: "Wild creatures that are asleep wake up when hit with an invitation"); her coming down in its
+   *  area, a 💌 landing on a neighbour, or naps off don't wake it. */
+  lulled?: boolean;
   /** Getting up (a stretch, a yawn) till this game time: still out of fights, its roam not yet resumed. */
   wakeUntil?: number;
   /** Holding off and watching her till then (world clock): just come down in its wild area (rules/wildWatch.ts). */
@@ -237,7 +242,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
     sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, siege: undefined,
     wanderTo: undefined, circle: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
-    stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined,
+    stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
   };
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
@@ -246,7 +251,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -321,19 +326,19 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
   if (keepsToCircle(c)) return pointInCircle(c.circle!, r); // (the circle's baby, wild or happy)
   // A hostile one idles in a loose cluster round its area's runestone: anywhere in a disc of stoneIdle.radius metres round it
   // (evenly, so they spread), keeping stoneIdle.clear metres off the stone itself; the rest of the area as before.
-  const S = map.tuning.stoneIdle;
+  const S = map.tuning.stoneIdle, shore = map.bounds.lakes ? lakeKnobs(map.tuning).shore : 0;
   if (S?.on && !c.anywhere && idlesAtStone(c)) {
     const st = map.soundsystemSpot(c.cell[0], c.cell[1]);
     for (let i = 0; i < 12; i++) {
       const a = r() * Math.PI * 2, d = Math.sqrt(S.clear ** 2 + r() * (S.radius ** 2 - S.clear ** 2)), x = st.x + Math.cos(a) * d, z = st.z + Math.sin(a) * d;
-      if (inCell(map, x, z, c.cell)) return [x, z];
+      if (inCell(map, x, z, c.cell) && !onLake(map.bounds, x, z, shore)) return [x, z];
     }
   }
   // (a dancing one keeps round its party spot, its anchor: rules/partyGuests.ts)
   const cx = c.dancing ? c.anchorX : c.homeX, cz = c.dancing ? c.anchorZ : c.homeZ;
   for (let i = 0; i < 12; i++) {
     const a = r() * Math.PI * 2, d = Math.sqrt(r()) * c.range, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d;
-    if (inCell(map, x, z, c.cell)) return [x, z];
+    if (inCell(map, x, z, c.cell) && !onLake(map.bounds, x, z, shore)) return [x, z]; // (never to a lake's water: rules/lakes.ts)
   }
   return [c.anchorX, c.anchorZ];
 }
@@ -428,7 +433,7 @@ export const napper = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss
 export const napping = (c: Creature, time: number): boolean => !!c.asleep || (c.wakeUntil !== undefined && time < c.wakeUntil);
 /** Up from a nap, slowly: `wake` seconds getting up. */
 export function wakeUp(c: Creature, time: number, wake: number): void {
-  c.asleep = false; c.napUntil = undefined; c.wakeUntil = time + wake; c.rest = 0;
+  c.asleep = false; c.napUntil = undefined; c.lulled = undefined; c.wakeUntil = time + wake; c.rest = 0;
 }
 
 /** Step only the creatures within `radius` metres of (x, z). One coming back into range after a
@@ -442,7 +447,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
   const tick = Math.round(time / dt);
   for (const c of all) {
     // A napper up when it's time, when she's on the ground in its area, or when it may nap no longer (wherever it is).
-    if (c.napUntil !== undefined && (!naps || time >= c.napUntil || !napper(c) || !naps.wild(c) || naps.roused(c))) wakeUp(c, time, naps?.wake ?? 0);
+    if (c.napUntil !== undefined && (time >= c.napUntil || !napper(c) || (!c.lulled && (!naps || !naps.wild(c) || naps.roused(c))))) wakeUp(c, time, naps?.wake ?? 0); // (a lulled one: only its own end, or a 💌)
     if (c.leashed || c.gone) continue;
     const ax = Math.abs(c.homeX - x), az = Math.abs(c.homeZ - z);
     if (ax > radius || az > radius) { if (counts) counts.frozen++; continue; }

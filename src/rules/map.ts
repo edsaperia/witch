@@ -17,7 +17,8 @@ import { PathNetwork } from "./paths";
 import { routeOf } from "./party";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
 import { makeLand, type LandMap } from "./land";
-import { growIsland, reachOf, shapeOf, type Candidate } from "./islandGrowth";
+import { lakeDepth, lakeKnobs } from "./lakes";
+import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate } from "./islandGrowth";
 import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
@@ -105,6 +106,8 @@ export interface ForestMap {
   playable(cx: number, cy: number): boolean;
   /** Is this area in the buffer ring: not playable, but where she can fly (scenery only)? */
   inBuffer(cx: number, cy: number): boolean;
+  /** Is this area a lake (Ed, 2026-10-11: from phase 1, never home)? Neither playable nor the buffer's: water (bounds.lakes). */
+  isLake(cx: number, cy: number): boolean;
   /** The coast (Ed, 2026-10-06: "slightly irregular"): every edge round home, at an angle (radians,
    *  atan2(dz, dx) from the dancefloor), as a factor of its round radius (1 on the square map). The
    *  playable areas reach radius x coast, the buffer theirs x coast; her flight's edge is the coast round them (bounds.land). */
@@ -228,8 +231,8 @@ function findNeighbours(p: Partition, lo: number, hi: number, perCell: number): 
 
 /** Only an island's land (rules/islandShape.ts: the sea chart's and the dreams' outlines): its land map, sampled every `step`
  *  metres, and home's middle; the areas grown as the map grows them, nothing else made. `island` the island (rules/rosters.ts). */
-export function islandLand(island: Island, tuning: Tuning, step = 16): { land: LandMap; home: { x: number; z: number }; areaSize: number; cells: string[] } {
-  return generateMap(island.seed, tuning, { landStep: step, island }) as unknown as { land: LandMap; home: { x: number; z: number }; areaSize: number; cells: string[] };
+export function islandLand(island: Island, tuning: Tuning, step = 16): { land: LandMap; lakes?: LandMap; home: { x: number; z: number }; areaSize: number; cells: string[] } {
+  return generateMap(island.seed, tuning, { landStep: step, island }) as unknown as { land: LandMap; lakes?: LandMap; home: { x: number; z: number }; areaSize: number; cells: string[] };
 }
 
 export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }): ForestMap {
@@ -352,11 +355,14 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // The island's areas (Ed, 2026-10-11): home and `island` more that own ground, grown out from home by its shape
   // (rules/islandGrowth.ts), in the order taken (a grown home's first 10 then the same every night: the growth's order doesn't
   // change with how many it takes); R then the furthest of them (in areas, by cell), for how remote each is.
-  let grownSet: Set<string> | null = null, growOrder: string[] = [];
+  // Its lakes (Ed, 2026-10-11: from phase 1, never home): areas of water among its own, grown with it (so it keeps its size
+  // in land) and kept off home and its neighbours (rules/islandGrowth.ts placeLakes).
+  let grownSet: Set<string> | null = null, growOrder: string[] = [], lakeCells = new Set<string>();
   if (island) {
-    const cand = new Map<string, Candidate>();
+    const cand = new Map<string, Candidate>(), plan = lakePlan(shapeK, shapeSeed), extra = plan.reduce((t, k) => t + k, 0);
     for (let cy = first; cy < first + n; cy++) for (let cx = first; cx < first + n; cx++) if (hasGround(cx, cy)) { const s = siteOf(cx, cy), k = cellKey(cx, cy); cand.set(k, { key: k, dx: (s.x - centre.x) / A, dz: (s.z - centre.z) / A }); }
-    growOrder = growIsland(cellKey(centreCell[0], centreCell[1]), island, cand, neighbours, shapeK, shapeSeed);
+    growOrder = growIsland(cellKey(centreCell[0], centreCell[1]), island + extra, cand, neighbours, shapeK, shapeSeed);
+    if (extra) { const L = placeLakes(growOrder, island, plan, neighbours, shapeSeed); growOrder = L.playable; lakeCells = L.lakes; }
     grownSet = new Set(growOrder);
     R = 1;
     for (const k of grownSet) { const [cx, cy] = k.split(",").map(Number); R = Math.max(R, Math.hypot(cx - centreCell[0], cy - centreCell[1])); }
@@ -364,7 +370,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const playable = (cx: number, cy: number) => cx >= first && cy >= first && cx < first + n && cy < first + n && (grownSet ? grownSet.has(cellKey(cx, cy)) : !round || fromHome(cx, cy) <= R * A) && hasGround(cx, cy);
   const cells: Cell[] = [];
   for (let cy = first; cy < first + n; cy++) for (let cx = first; cx < first + n; cx++) if (playable(cx, cy)) cells.push([cx, cy]);
-  const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && landCells.has(cellKey(cx, cy));
+  const isLake = (cx: number, cy: number) => lakeCells.has(cellKey(cx, cy));
+  const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && landCells.has(cellKey(cx, cy)) && !isLake(cx, cy);
   // (an island by roster: its areas' types from the roster, as few of a kind side by side as the swaps can manage)
   const others = cells.filter(([x, y]) => x !== centreCell[0] || y !== centreCell[1]);
   if (rosterIsland && !grown) assignRoster(rosterIsland, others, types, neighbours, shapeSeed);
@@ -388,7 +395,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // within the buffer of them), whole; its coast runs round their borders. Made once here, then asked how far from the water by
   // everything that cares. Past it, the sea.
   const landCells = new Set<string>();
-  let land: LandMap | undefined;
+  let land: LandMap | undefined, lakes: LandMap | undefined;
   if (round) {
     // (the playable areas, and every area that comes within the buffer's depth of them, `deep` metres: so everything placed for
     // play stands that far from the sea at least, whatever the island's shape; found on a coarse grid swept for its distance to
@@ -402,7 +409,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     for (let j = 0; j < gr; j++) for (let i = 0; i < gc; i++) {
       const [u, v] = toPart(px0 + i * G, pz0 + j * G), c = partition.partition(u, v), k = j * gc + i;
       at[k] = cellKey(c[0], c[1]);
-      if (playable(c[0], c[1])) dd[k] = 0;
+      if (playable(c[0], c[1]) || lakeCells.has(at[k])) dd[k] = 0; // (a lake is ringed by land as deep: never a lake on the coast)
     }
     const D2 = G * Math.SQRT2, relax = (k: number, q: number, w: number) => { if (dd[q] + w < dd[k]) dd[k] = dd[q] + w; };
     for (let j = 0; j < gr; j++) for (let i = 0; i < gc; i++) { const k = j * gc + i; if (i) relax(k, k - 1, G); if (j) { relax(k, k - gc, G); if (i) relax(k, k - gc - 1, D2); if (i < gc - 1) relax(k, k - gc + 1, D2); } }
@@ -420,8 +427,18 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     for (const k of landCells) { const [cx, cy] = k.split(",").map(Number), s = siteOf(cx, cy); x0 = Math.min(x0, s.x); x1 = Math.max(x1, s.x); z0 = Math.min(z0, s.z); z1 = Math.max(z1, s.z); }
     const isLand = (x: number, z: number) => { const [u, v] = toPart(x, z), c = partition.partition(u, v); return landCells.has(cellKey(c[0], c[1])); };
     land = makeLand(isLand, { minX: x0 - A, maxX: x1 + A, minZ: z0 - A, maxZ: z1 + A }, only?.landStep ?? LAND_STEP, 64, (A * 0.5) ** 2, only ? 1 : 2, true); // (crumbs under a quarter of an area's square taken as what's round them; slivers under about 16 m smoothed; ponds filled: no lakes but those meant)
-    if (only) return { land, home: centre, areaSize: A, cells: cells.map(c => cellKey(c[0], c[1])) } as unknown as ForestMap; // (islandLand: the land alone)
+    // The lakes' own map (the same kind, its "land" the lakes' water: + in a lake, - ashore), over the lakes' areas alone; the
+    // island's land above has them as land (her flight's edge, the beach and the sea are the sea's alone).
+    if (lakeCells.size) {
+      let lx0 = Infinity, lx1 = -Infinity, lz0 = Infinity, lz1 = -Infinity;
+      for (const k of lakeCells) { const [cx, cy] = k.split(",").map(Number), s = siteOf(cx, cy); lx0 = Math.min(lx0, s.x); lx1 = Math.max(lx1, s.x); lz0 = Math.min(lz0, s.z); lz1 = Math.max(lz1, s.z); }
+      const isLakeAt = (x: number, z: number) => { const [u, v] = toPart(x, z), c = partition.partition(u, v); return lakeCells.has(cellKey(c[0], c[1])); };
+      lakes = makeLand(isLakeAt, { minX: lx0 - A, maxX: lx1 + A, minZ: lz0 - A, maxZ: lz1 + A }, only?.landStep ?? LAND_STEP, 32, (A * 0.5) ** 2, only ? 1 : 2, true);
+    }
+    if (only) return { land, lakes, home: centre, areaSize: A, cells: cells.map(c => cellKey(c[0], c[1])) } as unknown as ForestMap; // (islandLand: the land alone)
   }
+  // (how far into a lake: rules/lakes.ts; nothing grows or is placed on one or its shore)
+  const lakeShore = lakeKnobs(tuning).shore, lakeAt = (x: number, z: number) => (lakes ? lakeDepth({ lakes } as Bounds, x, z) : -Infinity);
   const areaAt = (x: number, z: number): AreaSample => {
     // (toPart inline: no [u, v] tuple a call; phase 2's GC audit, the same sums)
     const uu = x / A, vv = z / A;
@@ -516,6 +533,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     for (const c of clearings.values()) if (Math.abs(x - c.x) < r + c.r + gap && Math.abs(z - c.z) < r + c.r + gap && Math.hypot(x - c.x, z - c.z) < r + c.r + gap) return true;
     if (Math.hypot(x - centre.x, z - centre.z) < r + floorClear + gap) return true;
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < r + TH.clear + gap) return true;
+    if (lakes && lakeAt(x, z) > -(r + lakeShore + gap)) return true; // (nothing placed on a lake or its shore: rules/lakes.ts)
     for (const g of grounds) if (Math.hypot(x - g.x, z - g.z) < r + g.r + gap) return true;
     for (const c of scenes) if (Math.hypot(x - c.x, z - c.z) < r + c.r + gap) return true;
     for (const k of [cellKey(cell[0], cell[1]), ...(neighbours.get(cellKey(cell[0], cell[1])) ?? [])]) {
@@ -529,11 +547,12 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // The beach and the sea past it (the tuning's beach): nothing grows or stands there.
   const pad = A * 0.5;
   const bounds: Bounds = land
-    ? { ...land.box, land, seed: shapeSeed }
+    ? { ...land.box, land, lakes, seed: shapeSeed }
     : { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad };
   const beach = beachOf(bounds, tuning);
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (beach && beach.intoSand(x, z) > 0) return true;
+    if (lakes && lakeAt(x, z) > -lakeShore) return true; // (a lake and its bare shore: rules/lakes.ts)
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     const lc = clearings.get(cellKey(cell[0], cell[1]));
     if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + (vnoise(x / 4, z / 4, seed + 93) - 0.5) * 3) return true; // a sleeping legend's clearing (its edge ragged by a metre and a half either way: the art director on #235)
@@ -573,10 +592,10 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
 
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (round ? R : n / 2));
   const map = {
-    seed, tuning, n, first, margin, shape, cells, playable, inBuffer, coast, areaSize: A, partition, centreCell, homeRadius,
+    seed, tuning, n, first, margin, shape, cells, playable, inBuffer, isLake, coast, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
     treehouse, treehouseFront: { x: treehouse.x, z: treehouse.z + tuning.treehouse.clear }, grounds, scenes,
-    start: { x: treehouse.x, z: treehouse.z + 1 },
+    start: { x: treehouse.x, z: treehouse.z + (tuning.treehouse.deck?.on ? tuning.treehouse.deck.seat : 1) }, // (her decks: on the treehouse deck, rules/treehouse.ts)
     bounds,
     extent: ext ? (land ? { minX: Math.min(ext.minX, land.box.minX - edgeK * A), maxX: Math.max(ext.maxX, land.box.maxX + edgeK * A), minZ: Math.min(ext.minZ, land.box.minZ - edgeK * A), maxZ: Math.max(ext.maxZ, land.box.maxZ + edgeK * A) } : ext) : { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A }, // (the forest past the coast all round)
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
