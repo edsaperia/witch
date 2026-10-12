@@ -1,0 +1,133 @@
+// Trunk shadows (Ed, 2026-10-12: "tree trunks casting shadows in ground mode from the witch's glow and from campfires"): on
+// the ground near a light, each tree's trunk (its bottom half's sprite) laid flat as its silhouette, stretching away from the
+// light, longer the lower the light and the farther the trunk, fading with distance from the light and toward its tip. Two
+// lights at most a trunk: her glow (slot 0: it moves with her, so the shadows swing as she walks) and the nearest campfire
+// (slot 1). One batch per area type (its trees' atlas), each drawn twice, a mesh a slot; all the aiming is on the GPU, the
+// trunks set only when the scenery's rebuilt. Multiplied over the ground, like render/shadows.ts.
+import * as THREE from "three";
+import { LIGHT_UNIFORMS } from "./lighting";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import type { Atlas } from "./atlas";
+import type { Frame } from "./artBuild";
+
+/** The fires that throw them (up to MAX_FIRES nearest her, set each frame: xyz, reach), how strong, hard (1: on the art's
+ *  pixels, two tones) or soft (0: a blurred silhouette, its penumbra widening toward its tip), and the longest a shadow
+ *  gets (times its trunk's height). */
+export const MAX_FIRES = 4;
+export const TRUNK_SHADOW_UNIFORMS = {
+  uFires: { value: Array.from({ length: MAX_FIRES }, () => new THREE.Vector4()) },
+  uFireCount: { value: 0 },
+  uTrunkStrength: { value: 0.55 },
+  uTrunkHard: { value: 0 },
+  uTrunkLong: { value: 2.5 },
+  uGlowReach: { value: 20 },
+  uGlowLift: { value: 2.5 },
+  uTrunkAcross: { value: 0.5 },
+};
+
+const VERT = /* glsl */ `
+attribute vec4 iTrunk; // x, z (its foot), width, height (metres)
+attribute vec4 iUv;    // its frame in the atlas (u0, v0 top, u1, v1 bottom; u0 > u1 mirrored)
+attribute float iPad;  // its empty rows at the bottom, a share of its height
+uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross;
+uniform vec3 uGlowPos;
+uniform vec4 uFires[${MAX_FIRES}];
+uniform int uFireCount;
+varying vec2 vTex;
+varying float vFade, vAlong;
+varying vec4 vFrame;
+${HEIGHT_VERT_GLSL}
+void main() {
+  vec2 foot = iTrunk.xy;
+  vec3 L; float reach;
+  if (uSlot < 0.5) { L = vec3(uGlowPos.x, uGlowLift, uGlowPos.z); reach = uGlowReach; } // (her glow, as from uGlowLift metres up: lower than it shines from, for shadows that read)
+  else { // the nearest fire whose reach it's in
+    float best = 1e9; L = vec3(0.0); reach = 0.0;
+    for (int i = 0; i < ${MAX_FIRES}; i++) { if (i >= uFireCount) break; vec4 F = uFires[i]; float d = length(foot - F.xz); if (d < F.w && d < best) { best = d; L = vec3(F.x, F.y - groundH(F.xz), F.z); reach = F.w; } }
+  }
+  vec2 off = foot - L.xz; float d = length(off);
+  if (reach <= 0.0 || d > reach || d < 0.4) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; } // (out of its light: nothing)
+  vec2 dir = off / d, side = vec2(dir.y, -dir.x); // (so across, along turn as x, z do: facing up, not culled)
+  float h = iTrunk.w * (1.0 - iPad), len = clamp(d * h / max(0.6, L.y), 0.6 * h, uTrunkLong * h);
+  float t = position.z + 0.5, u = position.x; // (along from its foot, across)
+  vec2 p = foot + dir * t * len + side * u * iTrunk.z * uTrunkAcross;
+  vTex = vec2(mix(iUv.x, iUv.z, 0.5 + u * uTrunkAcross), mix(iUv.w, iUv.y, iPad + t * (1.0 - iPad)));
+  vFrame = vec4(min(iUv.x, iUv.z), iUv.y, max(iUv.x, iUv.z), iUv.w);
+  float k = 1.0 - d / reach;
+  vFade = k * k; vAlong = t;
+  gl_Position = clipOf(onGround(vec3(p.x, 0.06, p.y)));
+
+}`;
+
+const FRAG = /* glsl */ `
+uniform sampler2D uAlbedo;
+uniform float uTrunkStrength, uTrunkHard;
+varying vec2 vTex;
+varying float vFade, vAlong;
+varying vec4 vFrame;
+float solid(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : step(0.5, texture2D(uAlbedo, q).a); }
+void main() {
+  float a;
+  if (uTrunkHard > 1.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } // (?trunks=debug: where they lie, magenta)
+  if (uTrunkHard > 0.5) {
+    a = solid(vTex) * (vFade * (1.0 - vAlong) > 0.12 ? 1.0 : 0.55) * step(0.03, vFade * (1.0 - vAlong)); // two tones, on the art's pixels
+  } else {
+    float px = 1.0 / float(textureSize(uAlbedo, 0).x), s = (1.0 + 4.0 * vAlong) * px; // (its penumbra widening toward the tip)
+    a = (solid(vTex) * 2.0 + solid(vTex + vec2(s, 0.0)) + solid(vTex - vec2(s, 0.0)) + solid(vTex + vec2(2.0 * s, 0.0)) * 0.5 + solid(vTex - vec2(2.0 * s, 0.0)) * 0.5) / 5.0;
+    a *= vFade * (1.0 - vAlong * vAlong);
+  }
+  a *= uTrunkStrength;
+  if (a < 0.004) discard;
+  gl_FragColor = vec4(vec3(1.0 - a), 1.0); // multiplied over the ground
+}`;
+
+/** A trunk: its foot (metres), width and height (metres), its frame and whether it's mirrored. */
+export interface TrunkShadow { x: number; z: number; w: number; h: number; frame: Frame; flip: boolean }
+
+export class TrunkShadowBatch {
+  readonly meshes: THREE.Mesh[] = [];
+  private geo = new THREE.InstancedBufferGeometry();
+  private capacity = 0;
+  private trunk!: THREE.InstancedBufferAttribute;
+  private uv!: THREE.InstancedBufferAttribute;
+  private pad!: THREE.InstancedBufferAttribute;
+
+  constructor(atlas: Atlas) {
+    const quad = new THREE.PlaneGeometry(1, 1, 1, 8).rotateX(-Math.PI / 2); // (divided along, to lie on the slopes)
+    this.geo.index = quad.index;
+    this.geo.setAttribute("position", quad.getAttribute("position"));
+    this.grow(256);
+    for (const slot of [0, 1]) {
+      const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG,
+        uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...TRUNK_SHADOW_UNIFORMS, uAlbedo: { value: atlas.albedo }, uSlot: { value: slot } },
+        depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+        transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor });
+      const m = new THREE.Mesh(this.geo, mat);
+      m.frustumCulled = false; m.renderOrder = 1;
+      this.meshes.push(m);
+    }
+  }
+
+  private grow(n: number): void {
+    this.capacity = Math.max(n, this.capacity * 2);
+    this.geo.dispose(); // (or three.js keeps drawing only the old capacity: SpriteBatch.grow)
+    const mk = (k: number) => { const a = new THREE.InstancedBufferAttribute(new Float32Array(this.capacity * k), k); a.setUsage(THREE.DynamicDrawUsage); return a; };
+    this.trunk = mk(4); this.uv = mk(4); this.pad = mk(1);
+    this.geo.setAttribute("iTrunk", this.trunk); this.geo.setAttribute("iUv", this.uv); this.geo.setAttribute("iPad", this.pad);
+  }
+
+  set(list: TrunkShadow[]): void {
+    if (list.length > this.capacity) this.grow(list.length);
+    const T = this.trunk.array as Float32Array, U = this.uv.array as Float32Array, P = this.pad.array as Float32Array;
+    list.forEach((s, i) => {
+      const uv = s.frame.uv;
+      T.set([s.x, s.z, s.w, s.h], i * 4);
+      U.set(s.flip ? [uv[2], uv[1], uv[0], uv[3]] : [uv[0], uv[1], uv[2], uv[3]], i * 4);
+      P[i] = (s.frame.pad ?? 0) / s.frame.h;
+    });
+    for (const a of [this.trunk, this.uv, this.pad]) a.needsUpdate = true;
+    this.geo.instanceCount = list.length;
+  }
+
+  set visible(on: boolean) { for (const m of this.meshes) m.visible = on; }
+}

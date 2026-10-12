@@ -65,6 +65,7 @@ import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { LightRings } from "./lightRings";
 import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
+import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS, type TrunkShadowBatch } from "./trunkShadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
@@ -279,6 +280,8 @@ export class View {
   /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
   readonly witchBase = { x: 0, y: 0, z: 0 };
   shadowList: ShadowInstance[] = [];
+  /** The trunks' shadows from her glow and the fires, a batch an area type (render/trunkShadows.ts). */
+  trunkShadowBatches = new Map<number, TrunkShadowBatch>();
   /** The witches' shadows drawn by the party's and the beach's views, and her dropped hat's (set each frame, before the creatures). */
   witchShadows: ShadowInstance[] = [];
   mist: Mist | null = null;
@@ -910,6 +913,16 @@ export class View {
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
     if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
+    { // the trunks' shadows (render/trunkShadows.ts): only on foot, from her glow and the nearest fires
+      const TS = t.shadows.trunks, on = !!TS && TS.mode !== "off" && w.mode === "ground" && !t.bare, U = TRUNK_SHADOW_UNIFORMS;
+      for (const b of this.trunkShadowBatches.values()) b.visible = on;
+      if (on) {
+        const fires = this.forestLights.filter(l => l.rgb === this.fire).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, MAX_FIRES);
+        fires.forEach((l, i) => U.uFires.value[i].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach));
+        U.uFireCount.value = fires.length; U.uTrunkHard.value = TS.mode === "debug" ? 2 : TS.mode === "hard" ? 1 : 0; U.uTrunkStrength.value = TS.strength; U.uTrunkLong.value = TS.long;
+        U.uGlowReach.value = TS.glowReach; U.uGlowLift.value = TS.glowHeight; U.uTrunkAcross.value = TS.across;
+      }
+    }
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
