@@ -22,6 +22,8 @@ import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
+import { OUTLINE_STEP } from "./chartWarm";
+import { cacheGet, cacheKey, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** The testing toggle's key (this browser): sail to any island with a creature. */
@@ -99,8 +101,6 @@ const HTML = `
   <div class="hint"></div>
 </div>`;
 
-/** The outlines' land sampled every so many metres: the chart's pixels are far coarser. */
-const OUTLINE_STEP = 32;
 
 /** Mount the sea chart in `host` (which it fills: give it a size and a position). */
 export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView {
@@ -136,22 +136,42 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     requestAnimationFrame(() => resize());
   };
 
-  // The real outlines, made in a worker (seconds each for the big islands, about a minute for them all): the chosen island and
-  // those nearest it first, each swapped in as it comes; the page never waits on them.
-  let worker: Worker | null = null;
-  function outlines(): void {
+  // The real outlines (seconds each for the big islands, about a minute for them all): those this browser has kept (app/
+  // chartCache.ts: made ahead in the night, app/chartWarm.ts, or on an earlier visit) straight away, in short slices so the page
+  // never stalls; the rest made in a worker, the chosen island and those nearest it first, each swapped in as it comes.
+  let worker: Worker | null = null, asked = 0;
+  const pending: OutlineDone[] = [];
+  const apply = (o: OutlineDone) => {
+    const isl = islands.find(i => i.id === o.id);
+    if (!isl || o.world !== worldNow()) return;
+    if ((isl.outline as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
+    isl.outline = o; chart.reshape(o.id, o);
+  };
+  const drain = () => { const t0 = performance.now(); while (pending.length && performance.now() - t0 < 10) apply(pending.shift()!); if (pending.length) setTimeout(drain, 0); }; // (in slices: frames come between)
+  const make = (): Worker | null => {
     if (!worker) {
-      try { worker = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { return; }
-      worker.onmessage = (e: MessageEvent<OutlineDone>) => {
-        const o = e.data, isl = islands.find(i => i.id === o.id);
-        if (!isl || o.world !== worldNow()) return;
-        if ((isl.outline as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
-        isl.outline = o; chart.reshape(o.id, o);
-      };
+      try { worker = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { return null; }
+      worker.onmessage = (e: MessageEvent<OutlineDone>) => apply(e.data);
     }
+    return worker;
+  };
+  /** An island's fine grid for the close zoom: kept, or made (the worker given the world first if it's new). */
+  async function detail(id: string): Promise<void> {
+    const w = worldNow(), found = [...save.found], o = await cacheGet<OutlineDone>(cacheKey(id, w, found, OUTLINE_STEP, OUTLINE_DETAIL));
+    if (o) { apply(o); return; }
+    const fresh = !worker, wk = make();
+    if (fresh) wk?.postMessage({ world: w, found, ids: [], step: OUTLINE_STEP } satisfies OutlineAsk);
+    wk?.postMessage({ detail: id } satisfies OutlineAsk);
+  }
+  async function outlines(): Promise<void> {
+    const n = ++asked, w = worldNow(), found = [...save.found];
     const from = islands.find(i => i.id === (chart.selected ?? save.voyages.at(-1)?.to ?? "home")) ?? islands[0];
     const ids = [...islands].sort((a, b) => Math.hypot(a.x - from.x, a.y - from.y) - Math.hypot(b.x - from.x, b.y - from.y)).map(i => i.id);
-    worker.postMessage({ world: worldNow(), found: [...save.found], ids, step: OUTLINE_STEP } satisfies OutlineAsk);
+    const kept = await Promise.all(ids.map(id => cacheGet<OutlineDone>(cacheKey(id, w, found, OUTLINE_STEP, OUTLINE_ACROSS))));
+    if (n !== asked) return; // (built again meanwhile: a newer ask has it)
+    const missing = ids.filter((_, i) => !kept[i]);
+    const had = !!pending.length; pending.push(...kept.filter((o): o is OutlineDone => !!o)); if (!had) drain();
+    if (missing.length) make()?.postMessage({ world: w, found, ids: missing, step: OUTLINE_STEP } satisfies OutlineAsk);
   }
 
   /** Every island, always: home and each found with its sigil, sailable; the rest bare land, the placeholders dimmest. */
@@ -176,7 +196,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     chart.select(id, instant);
     if (id && worker && !islands.find(i => i.id === id)?.outline) worker.postMessage({ first: id } satisfies OutlineAsk);
     // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
-    if (id && worker && !mini && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) worker.postMessage({ detail: id } satisfies OutlineAsk);
+    if (id && !mini && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) void detail(id);
     const isl = islands.find(i => i.id === id), card = $("card"), sail = $<HTMLAnchorElement>("sail");
     if (!isl || mini) { card.hidden = true; return; }
     card.hidden = false;
