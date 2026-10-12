@@ -10002,6 +10002,18 @@
             "sceneryMin": {
               "type": "number",
               "minimum": 0
+            },
+            "tint": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tintTrees": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowLight": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10017,7 +10029,10 @@
             "near",
             "cover",
             "scenery",
-            "sceneryMin"
+            "sceneryMin",
+            "tint",
+            "tintTrees",
+            "glowLight"
           ],
           "additionalProperties": false
         }

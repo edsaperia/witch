@@ -35,14 +35,22 @@ export const TRUNK_SHADOW_UNIFORMS = {
   uTrunkTaper: { value: 2 },
   uTrunkNear: { value: 6 },
   uTrunkCover: { value: 1 },
+  /** The fires' colour (one for them all); how far a shadow takes the complement of its light's colour (0: black; scenery, trees);
+   *  how light a glowing caster's shadow is, in its own colour (Ed, 2026-10-12: "they shouldn't be black"). */
+  uFireRgb: { value: new THREE.Vector3(1, 0.6, 0.3) },
+  uTintScenery: { value: 0 },
+  uTintTrees: { value: 0 },
+  uCasterLight: { value: 0 },
 };
 
 const VERT = /* glsl */ `
 attribute vec4 iTrunk; // x, z (its foot), width, height (metres)
 attribute vec4 iUv;    // its frame in the atlas (u0, v0 top, u1, v1 bottom; u0 > u1 mirrored)
-attribute vec2 iPad;   // its empty rows at the bottom, a share of its height; and how much it tapers at its foot (scenery: none)
-uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear;
-uniform vec3 uGlowPos;
+attribute vec3 iPad;   // its empty rows at the bottom, a share of its height; whether it tapers at its foot (scenery: no); scenery (1) or a tree (0)
+attribute vec4 iShade; // a glowing caster's own colour (0..1) and how much it glows (0: not at all)
+uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear, uTintScenery, uTintTrees, uCasterLight;
+uniform vec3 uGlowPos, uGlowRgb, uFireRgb;
+varying vec3 vShade;
 uniform vec4 uFires[${MAX_FIRES}];
 uniform float uFireFade[${MAX_FIRES}];
 uniform int uFireCount;
@@ -70,6 +78,14 @@ void main() {
   float k = 1.0 - d / reach;
   float near = uTrunkNear > 0.0 ? smoothstep(0.25 * uTrunkNear, uTrunkNear, length(foot - uGlowPos.xz)) : 1.0; // (to nothing as she comes up to its trunk)
   vFade = k * k * lit * near; vAlong = t; vLen = len; // (to nothing at its reach's edge: none pops in or out)
+  // Its colour at its darkest (Ed, 2026-10-12: "Can we have complementary colours in shadows cheaply?"): black, toward the
+  // complement of its light's colour by the tint (a fire's orange throws blue-violet), and a glowing caster's toward a soft shade of
+  // its own colour (a runestone's, a soundsystem's: lit with coloured light, never black)
+  vec3 lc = uSlot < 0.5 ? uGlowRgb : uFireRgb; float mx = max(max(lc.r, lc.g), lc.b), mn = min(min(lc.r, lc.g), lc.b);
+  vec3 comp = vec3(mx + mn) - lc; comp /= max(1e-3, max(max(comp.r, comp.g), comp.b));
+  vShade = comp * 0.45 * mix(uTintTrees, uTintScenery, iPad.z);
+  vec3 own = iShade.rgb / max(1e-3, max(max(iShade.r, iShade.g), iShade.b));
+  vShade = mix(vShade, mix(vec3(0.55), own, 0.6), clamp(iShade.w * uCasterLight, 0.0, 1.0));
   gl_Position = clipOf(onGround(vec3(p.x, 0.06, p.y)));
 
 }`;
@@ -80,6 +96,7 @@ uniform float uTrunkStrength, uTrunkHard, uTrunkCore, uTrunkFoot, uTrunkCover, u
 varying vec2 vTex, vUx;
 varying float vFade, vAlong, vLen, vU, vTaper;
 varying vec4 vFrame;
+varying vec3 vShade;
 float solid(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : step(0.5, texture2D(uAlbedo, q).a); }
 void main() {
   float a;
@@ -102,12 +119,12 @@ void main() {
   if (uTrunkFoot > 0.0) a *= smoothstep(0.0, uTrunkFoot, vAlong * vLen); // (from nothing at its trunk's foot)
   a *= uTrunkStrength * (uCover > 0.5 ? uTrunkCover : 1.0);
   if (a < 0.004) discard;
-  gl_FragColor = vec4(vec3(1.0 - a), 1.0); // multiplied over the ground
+  gl_FragColor = vec4(mix(vec3(1.0), vShade, a), 1.0); // multiplied over the ground (toward its shade: black, or a colour)
 }`;
 
 /** A trunk: its foot (metres), width and height (metres), its frame and whether it's mirrored; taper false for scenery (a temple's or
  *  a runestone's foot is its own width: render/view/scenery.ts). */
-export interface TrunkShadow { x: number; z: number; w: number; h: number; frame: Frame; flip: boolean; taper?: boolean }
+export interface TrunkShadow { x: number; z: number; w: number; h: number; frame: Frame; flip: boolean; taper?: boolean; /** a glowing caster's colour (0..1) and how much it glows (0 to 1) */ glow?: { rgb: ArrayLike<number>; k: number } }
 
 export class TrunkShadowBatch {
   readonly meshes: THREE.Mesh[] = [];
@@ -116,6 +133,7 @@ export class TrunkShadowBatch {
   private trunk!: THREE.InstancedBufferAttribute;
   private uv!: THREE.InstancedBufferAttribute;
   private pad!: THREE.InstancedBufferAttribute;
+  private shade!: THREE.InstancedBufferAttribute;
 
   constructor(readonly atlas: Atlas) {
     const quad = new THREE.PlaneGeometry(1, 1, 1, 8).rotateX(-Math.PI / 2); // (divided along, to lie on the slopes)
@@ -141,20 +159,21 @@ export class TrunkShadowBatch {
     this.capacity = Math.max(n, this.capacity * 2);
     this.geo.dispose(); // (or three.js keeps drawing only the old capacity: SpriteBatch.grow)
     const mk = (k: number) => { const a = new THREE.InstancedBufferAttribute(new Float32Array(this.capacity * k), k); a.setUsage(THREE.DynamicDrawUsage); return a; };
-    this.trunk = mk(4); this.uv = mk(4); this.pad = mk(2);
-    this.geo.setAttribute("iTrunk", this.trunk); this.geo.setAttribute("iUv", this.uv); this.geo.setAttribute("iPad", this.pad);
+    this.trunk = mk(4); this.uv = mk(4); this.pad = mk(3); this.shade = mk(4);
+    this.geo.setAttribute("iTrunk", this.trunk); this.geo.setAttribute("iUv", this.uv); this.geo.setAttribute("iPad", this.pad); this.geo.setAttribute("iShade", this.shade);
   }
 
   set(list: TrunkShadow[]): void {
     if (list.length > this.capacity) this.grow(list.length);
-    const T = this.trunk.array as Float32Array, U = this.uv.array as Float32Array, P = this.pad.array as Float32Array;
+    const T = this.trunk.array as Float32Array, U = this.uv.array as Float32Array, P = this.pad.array as Float32Array, S = this.shade.array as Float32Array;
     list.forEach((s, i) => {
       const uv = s.frame.uv;
       T.set([s.x, s.z, s.w, s.h], i * 4);
       U.set(s.flip ? [uv[2], uv[1], uv[0], uv[3]] : [uv[0], uv[1], uv[2], uv[3]], i * 4);
-      P[i * 2] = (s.frame.pad ?? 0) / s.frame.h; P[i * 2 + 1] = s.taper === false ? 0 : 1;
+      P[i * 3] = (s.frame.pad ?? 0) / s.frame.h; P[i * 3 + 1] = s.taper === false ? 0 : 1; P[i * 3 + 2] = s.taper === false ? 1 : 0; // (untapered: scenery)
+      const gl = s.glow; S[i * 4] = gl ? gl.rgb[0] : 0; S[i * 4 + 1] = gl ? gl.rgb[1] : 0; S[i * 4 + 2] = gl ? gl.rgb[2] : 0; S[i * 4 + 3] = gl ? gl.k : 0;
     });
-    for (const a of [this.trunk, this.uv, this.pad]) a.needsUpdate = true;
+    for (const a of [this.trunk, this.uv, this.pad, this.shade]) a.needsUpdate = true;
     this.geo.instanceCount = list.length;
   }
 

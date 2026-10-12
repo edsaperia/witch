@@ -118,7 +118,7 @@ export class SoundsystemGenView {
       if (this.shadows && casts) { // (its foot where it stands, as tall as it has risen; risen out of a rubble heap, as the rubble)
         const key = `ss:${bid}`; let sb = this.shadows.get(key);
         if (!sb) { sb = new TrunkShadowBatch(art.atlas); this.shadows.set(key, sb); this.scene.add(...sb.meshes); }
-        sb.set([{ x: d.x, z: d.z, w: f.w * this.mpp, h: h * d.rise, frame: f, flip: false, taper: false }]);
+        sb.set([{ x: d.x, z: d.z, w: f.w * this.mpp, h: h * d.rise, frame: f, flip: false, taper: false, glow: { rgb: [play.rgb[0] / 255, play.rgb[1] / 255, play.rgb[2] / 255], k: d.off || d.stage >= 4 ? 0 : 1 } }]); // (lit with its crystal's colour: a soft shade of it)
       }
       const at = (px: number, py: number) => { const a = (px - f.w / 2) * this.mpp, c = (f.h - py) * this.mpp; return { x: bx + R.x * a + U.x * c, y: by + R.y * a + U.y * c, z: bz + R.z * a + U.z * c }; };
       const proj = p ? at(p.x, p.y) : null;
