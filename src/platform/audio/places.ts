@@ -44,7 +44,7 @@ export class Pond {
 
   /** A frog: two or three low croaks, a rattle in each (a buzz through a low throat). */
   private frog(vol: number, pan: number): void {
-    const K = this.k, c = K.ctx, out = K.voice(pan), n = 2 + Math.floor(Math.random() * 2), f = 110 + Math.random() * 60;
+    const K = this.k, c = K.ctx, out = K.voice(pan, 0.1), n = 2 + Math.floor(Math.random() * 2), f = 110 + Math.random() * 60;
     let t = c.currentTime + 0.01;
     for (let i = 0; i < n; i++) {
       const dur = 0.11 + Math.random() * 0.06, lp = c.createBiquadFilter(), g = c.createGain(), am = c.createGain(), lfo = c.createOscillator(), d = c.createGain();
@@ -60,7 +60,7 @@ export class Pond {
 
   /** A drip into the water: a quick falling plink. */
   private drip(vol: number, pan: number): void {
-    const K = this.k, c = K.ctx, out = K.voice(pan), at = c.currentTime + 0.01, f = 1100 + Math.random() * 900, g = c.createGain();
+    const K = this.k, c = K.ctx, out = K.voice(pan, 0.1), at = c.currentTime + 0.01, f = 1100 + Math.random() * 900, g = c.createGain();
     g.connect(out); K.env(g, at, vol, 0.002, 0.09);
     const o = K.osc("sine", f, at, 0.1, g); o.frequency.exponentialRampToValueAtTime(f * 1.9, at + 0.05);
   }
@@ -124,7 +124,7 @@ export class Room {
     // the record's pops and ticks
     if (L > 0.05 && now >= this.nextPop) {
       this.nextPop = now + 0.05 + Math.random() * 0.35;
-      const at = now + 0.01, bp = c.createBiquadFilter(), g = c.createGain(), out = K.voice((Math.random() - 0.5) * 0.4);
+      const at = now + 0.01, bp = c.createBiquadFilter(), g = c.createGain(), out = K.voice((Math.random() - 0.5) * 0.4, 0.1);
       bp.type = "bandpass"; bp.frequency.value = 1500 + Math.random() * 3000; bp.Q.value = 2;
       g.connect(out); K.env(g, at, R.volume * R.crackle * L * (0.3 + 0.7 * Math.random() ** 3), 0.0005, 0.006);
       bp.connect(g); K.noiseBurst(at, 0.01, bp, Math.random());
@@ -137,7 +137,7 @@ export class Room {
 
   /** The treehouse's timber creaking: a slow, rough, low glide. */
   private creak(vol: number, pan: number): void {
-    const K = this.k, c = K.ctx, out = K.voice(pan), at = c.currentTime + 0.01, dur = 0.5 + Math.random() * 0.5, f = 90 + Math.random() * 60;
+    const K = this.k, c = K.ctx, out = K.voice(pan, 0.1), at = c.currentTime + 0.01, dur = 0.5 + Math.random() * 0.5, f = 90 + Math.random() * 60;
     const bp = c.createBiquadFilter(), g = c.createGain(), am = c.createGain(), lfo = c.createOscillator(), d = c.createGain();
     bp.type = "bandpass"; bp.frequency.value = f * 6; bp.Q.value = 5;
     am.gain.value = 0.6; d.gain.value = 0.4; lfo.type = "square"; lfo.frequency.value = 22 + Math.random() * 14; lfo.connect(d); d.connect(am.gain);
@@ -195,7 +195,7 @@ export class Sea {
   /** One calm wave: the swell rising and curling over (a lowpass opening), breaking into foam (a soft
    *  high fizz), then the wash running back down the sand (closing, fading). About 5 s. */
   private wave(vol: number, pan: number): void {
-    const K = this.k, c = K.ctx, at = c.currentTime + 0.02, out = K.voice(pan * 0.7), r = Math.random();
+    const K = this.k, c = K.ctx, at = c.currentTime + 0.02, out = K.voice(pan * 0.7, 0.1), r = Math.random();
     const rise = 1.3 + r * 0.6, brk = at + rise, end = brk + 3.2 + r;
     const loud = (len: number) => { const s = K.loopNoise(0.7 + 0.3 * Math.random()); s.start(at, Math.random() * 0.9); s.stop(at + len); return s; };
     // the body: the swell and its wash

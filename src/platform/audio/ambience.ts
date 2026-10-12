@@ -11,7 +11,7 @@ export function knock(K: SfxKit, metres: number, pan = 0): void {
   const N = K.T.knock, c = K.ctx, at = c.currentTime + 0.005, m = Math.max(0.5, metres), k = Math.min(1, m / 8);
   if (!K.ready("knock", 0.15)) return;
   K.thump(at, N.volume * (0.6 + 0.6 * k), pan);
-  const out = K.voice(pan), bp = c.createBiquadFilter(), g = c.createGain(), dur = 0.18 + 0.05 * Math.min(10, m);
+  const out = K.voice(pan, 0.9), bp = c.createBiquadFilter(), g = c.createGain(), dur = 0.18 + 0.05 * Math.min(10, m);
   bp.type = "bandpass"; bp.Q.value = 1.2;
   bp.frequency.setValueAtTime(2600, at); bp.frequency.exponentialRampToValueAtTime(380, at + dur);
   g.connect(out); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(N.volume * N.whoosh * (0.4 + 0.8 * k), at + dur * 0.3); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
@@ -24,7 +24,7 @@ export function impact(K: SfxKit, big: boolean, pan = 0, near = 1): void {
   const I = K.T.impact, c = K.ctx, at = c.currentTime + 0.005, vol = I.volume * near * (big ? 1 : I.small);
   if (!K.ready(big ? "impactBig" : "impact", big ? 0.3 : 0.08)) return;
   K.thump(at, vol, pan);
-  const out = K.voice(pan), lp = c.createBiquadFilter(), g = c.createGain(), dur = big ? 1.4 : 0.25;
+  const out = K.voice(pan, 0.3 + 0.5 * near, big ? 1.5 : 0.4), lp = c.createBiquadFilter(), g = c.createGain(), dur = big ? 1.4 : 0.25;
   lp.type = "lowpass"; lp.frequency.setValueAtTime(big ? 900 : 1600, at); lp.frequency.exponentialRampToValueAtTime(big ? 120 : 400, at + dur);
   g.connect(out); if (big) g.connect(K.space()); K.env(g, at, vol * (big ? 0.8 : 0.5), 0.004, dur);
   lp.connect(g); K.noiseBurst(at, dur + 0.05, lp, Math.random());
@@ -42,7 +42,7 @@ export class Charge {
 
   /** The charge's windup: a deep bellow, a low gritty roar swelling and sinking, breath behind it. */
   bellow(pan = 0, near = 1): void {
-    const K = this.k, C = K.T.charge, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan), vol = C.volume * C.bellow * near, dur = 1.1;
+    const K = this.k, C = K.T.charge, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan, 0.3 + 0.5 * near), vol = C.volume * C.bellow * near, dur = 1.1;
     if (!K.ready("bellow", 0.5)) return;
     const lp = c.createBiquadFilter(), g = c.createGain(), sh = c.createWaveShaper();
     lp.type = "lowpass"; lp.Q.value = 5; lp.frequency.setValueAtTime(220, at); lp.frequency.exponentialRampToValueAtTime(650, at + dur * 0.35); lp.frequency.exponentialRampToValueAtTime(200, at + dur);
@@ -56,7 +56,7 @@ export class Charge {
 
   /** One heavy hoofbeat (or, `light`, a trot's): a low thud and a spray of dirt. */
   hoof(pan = 0, near = 1, light = false): void {
-    const K = this.k, C = K.T.charge, c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), vol = C.volume * (light ? C.trot : C.hooves) * near;
+    const K = this.k, C = K.T.charge, c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 0.2 + 0.4 * near, 0.4), vol = C.volume * (light ? C.trot : C.hooves) * near;
     const g = c.createGain(); g.connect(out); K.env(g, at, vol, 0.002, light ? 0.09 : 0.16);
     const o = K.osc("sine", light ? 120 : 80, at, 0.2, g); o.frequency.exponentialRampToValueAtTime(light ? 60 : 34, at + (light ? 0.08 : 0.14));
     const lp = c.createBiquadFilter(), ng = c.createGain(); lp.type = "lowpass"; lp.frequency.value = light ? 1400 : 700;
@@ -113,7 +113,7 @@ export class Meadow {
       for (const [f, d] of [[196, 0], [203, 7]]) { const o = c.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(bp); o.start(now); }
       // the picnic's murmur: far-off voices, breath through a talker's two formant bands, rising and falling
       const ms = K.loopNoise(0.83);
-      this.murmurGain = c.createGain(); this.murmurGain.gain.value = 0; this.murmurGain.connect(K.voice(-0.3));
+      this.murmurGain = c.createGain(); this.murmurGain.gain.value = 0; this.murmurGain.connect(K.voice(-0.3, 1, Infinity));
       for (const [f, q] of [[480, 3], [1350, 4]]) { const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = f; b.Q.value = q; ms.connect(b); b.connect(this.murmurGain); }
       ms.start(now);
     }
@@ -144,7 +144,7 @@ export class Meadow {
 
   /** A balloon squeaking as it rubs on another: a rubbery tone wobbling up and down, quick and thin. */
   private squeak(vol: number, pan: number): void {
-    const K = this.k, c = K.ctx, out = K.voice(pan), at = c.currentTime + 0.01, dur = 0.12 + Math.random() * 0.18, f = 650 + Math.random() * 500;
+    const K = this.k, c = K.ctx, out = K.voice(pan, 0.1, 0.5), at = c.currentTime + 0.01, dur = 0.12 + Math.random() * 0.18, f = 650 + Math.random() * 500;
     const bp = c.createBiquadFilter(), g = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f * 2; bp.Q.value = 2;
     g.connect(out); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.02); g.gain.setValueAtTime(vol * 0.8, at + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
     bp.connect(g);
@@ -156,7 +156,7 @@ export class Meadow {
 
   /** A little birdsong phrase: three to six quick whistled chirps gliding up or down. */
   private bird(vol: number, pan: number): void {
-    const K = this.k, c = K.ctx, out = K.voice(pan), n = 3 + Math.floor(Math.random() * 4), base = 2600 + Math.random() * 1400, up = Math.random() < 0.5;
+    const K = this.k, c = K.ctx, out = K.voice(pan, 0.1), n = 3 + Math.floor(Math.random() * 4), base = 2600 + Math.random() * 1400, up = Math.random() < 0.5;
     let t = c.currentTime + 0.01;
     for (let i = 0; i < n; i++) {
       const f = base * (1 + 0.08 * Math.sin(i * 2.1)), dur = 0.05 + Math.random() * 0.05, g = c.createGain();
@@ -169,7 +169,7 @@ export class Meadow {
 
 /** Two cups touching (a picnic's): glass partials, the second a hair later and a little lower. */
 export function clink(K: SfxKit, vol: number, pan: number): void {
-  const c = K.ctx, out = K.voice(pan), at = c.currentTime + 0.01, f = 2200 + Math.random() * 900;
+  const c = K.ctx, out = K.voice(pan, 0.1, 0.5), at = c.currentTime + 0.01, f = 2200 + Math.random() * 900;
   for (const [dt, k] of [[0, 1], [0.045 + Math.random() * 0.03, 0.93]]) for (const [r, l, d] of [[1, 1, 0.25], [2.4, 0.45, 0.12], [4.1, 0.2, 0.06]]) {
     const g = c.createGain(); g.connect(out); K.env(g, at + dt, vol * l * (dt ? 0.7 : 1), 0.001, d);
     K.osc("sine", f * k * r, at + dt, d + 0.05, g);
@@ -179,7 +179,7 @@ export function clink(K: SfxKit, vol: number, pan: number): void {
 /** A legend turning angry (its restlessness run out): a roar, a deep gritty bellow rising and
  *  breaking, the ground's rumble under it, in the legends' big space. Heard from far off. */
 export function roar(K: SfxKit, pan = 0, near = 1): void {
-  const R = K.T.roar, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan), vol = R.volume * near, dur = 2.2;
+  const R = K.T.roar, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan, 0.8, 2.4), vol = R.volume * near, dur = 2.2;
   if (!K.ready("roar", 1)) return;
   const lp = c.createBiquadFilter(), g = c.createGain(), sh = c.createWaveShaper();
   lp.type = "lowpass"; lp.Q.value = 6; lp.frequency.setValueAtTime(300, at); lp.frequency.exponentialRampToValueAtTime(1400, at + dur * 0.3); lp.frequency.exponentialRampToValueAtTime(260, at + dur);
@@ -196,7 +196,7 @@ export function roar(K: SfxKit, pan = 0, near = 1): void {
 export function taps(K: SfxKit, n: number, pan = 0, near = 1): void {
   const S = K.T.shoes, c = K.ctx, at = c.currentTime + 0.005, vol = S.volume * near;
   for (let i = 0; i < Math.min(n, S.max); i++) {
-    const t = at + i * 0.018 + Math.random() * 0.012, out = K.voice(pan + (i - n / 2) * 0.12);
+    const t = at + i * 0.018 + Math.random() * 0.012, out = K.voice(pan + (i - n / 2) * 0.12, 0.15, 0.3);
     const hp = c.createBiquadFilter(), g = c.createGain(); hp.type = "bandpass"; hp.frequency.value = 2800 + Math.random() * 1600; hp.Q.value = 3;
     g.connect(out); K.env(g, t, vol * (0.7 + 0.3 * Math.random()), 0.001, 0.025);
     hp.connect(g); K.noiseBurst(t, 0.035, hp, Math.random());

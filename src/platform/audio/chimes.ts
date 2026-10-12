@@ -10,7 +10,7 @@ import { degree, grit, mtof } from "./dsp";
 export function hit(K: SfxKit, pan = 0, near = 1, spent = false): void {
   const H = K.T.hit;
   if (!K.ready(spent ? "hitSpent" : "hit", H.gap)) return;
-  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan);
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 0.9);
   const f = mtof(degree(K.root + 24, Math.floor(Math.random() * 5)));
   const vol = H.volume * near * (spent ? 0.3 : 1);
   for (const [ratio, lvl, dec] of [[1, 1, 0.35], [2.76, 0.45, 0.18], [5.4, 0.2, 0.08]] as const) {
@@ -22,7 +22,7 @@ export function hit(K: SfxKit, pan = 0, near = 1, spent = false): void {
 /** The affection meter filling: a tick that climbs the key as it fills (0-1). */
 export function fill(K: SfxKit, amount: number, pan = 0, near = 1): void {
   const F = K.T.fill;
-  const c = K.ctx, at = c.currentTime + 0.03, out = K.voice(pan);
+  const c = K.ctx, at = c.currentTime + 0.03, out = K.voice(pan, 0.9);
   const steps = Math.max(1, Math.round(5 * F.octaves)), k = Math.round(Math.max(0, Math.min(1, amount)) * steps);
   const f = mtof(degree(K.root + 36, k));
   const g = c.createGain(); g.connect(out); K.env(g, at, F.volume * near, 0.002, 0.05);
@@ -32,7 +32,7 @@ export function fill(K: SfxKit, amount: number, pan = 0, near = 1): void {
 /** Invited (the meter full, or talked round): a rising flourish up the key's bright side, longer
  *  and fuller the bigger the creature (level 0 baby to 3 legend), with a sparkle on top. */
 export function invited(K: SfxKit, level: number, pan = 0, near = 1): void {
-  const I = K.T.invited, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan);
+  const I = K.T.invited, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan, 1, 2);
   const n = 3 + Math.max(0, Math.min(3, level)), step = 0.07 - level * 0.006, vol = I.volume * near * (0.75 + level * 0.12);
   const base = K.root + 24 + 3; // (the relative major: brighter)
   for (let i = 0; i < n; i++) {
@@ -50,7 +50,7 @@ export function invited(K: SfxKit, level: number, pan = 0, near = 1): void {
 export function enraged(K: SfxKit, pan = 0, near = 1, many = 1): void {
   const E = K.T.enraged;
   if (!K.ready("enraged", E.gap)) return;
-  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), vol = E.volume * near * Math.min(1.6, 1 + 0.15 * (many - 1));
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 0.4 + 0.4 * near), vol = E.volume * near * Math.min(1.6, 1 + 0.15 * (many - 1));
   const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(1400, at); lp.frequency.exponentialRampToValueAtTime(260, at + 0.35); lp.Q.value = 4;
   const sh = c.createWaveShaper(); sh.curve = grit(); sh.connect(lp);
   const g = c.createGain(); g.connect(out); K.env(g, at, vol, 0.01, 0.38);
@@ -63,7 +63,7 @@ export function enraged(K: SfxKit, pan = 0, near = 1, many = 1): void {
 export function happy(K: SfxKit, pan = 0, near = 1): void {
   const H = K.T.happy;
   if (!K.ready("happy", H.gap)) return;
-  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), vol = H.volume * near;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 0.3 + 0.5 * near), vol = H.volume * near;
   const g = c.createGain(); g.connect(out); K.env(g, at, vol, 0.003, 0.09);
   const o = K.osc("sine", 380, at, 0.12, g); o.frequency.exponentialRampToValueAtTime(980, at + 0.07);
   const f = mtof(degree(K.root + 36 + 3, 2 + Math.floor(Math.random() * 3)));
@@ -76,7 +76,7 @@ export function happy(K: SfxKit, pan = 0, near = 1): void {
  *  clock ticking faster as the countdown jumps forward, and a soft chime. Heard anywhere.
  *  `urgent` (the wave comes at once): the clock runs quicker and longer, the chime a step higher. */
 export function lost(K: SfxKit, urgent = false): void {
-  const c = K.ctx, at = c.currentTime + 0.01, vol = K.T.lost.volume, out = K.voice(0);
+  const c = K.ctx, at = c.currentTime + 0.01, vol = K.T.lost.volume, out = K.voice(0, 1, 3);
   // the scratch: band-passed noise swept fast down and up
   const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 2.5;
   bp.frequency.setValueAtTime(3200, at); bp.frequency.exponentialRampToValueAtTime(700, at + 0.09); bp.frequency.exponentialRampToValueAtTime(2200, at + 0.16);
@@ -107,7 +107,7 @@ export function lost(K: SfxKit, urgent = false): void {
 /** A relic bottle spotted (or reached): a rare, magical chime, glass partials rising through a
  *  bright scale over a shimmer, in the legends' big space: a lucky find. */
 export function relic(K: SfxKit, pan = 0): void {
-  const R = K.T.relic, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan), vol = R.volume;
+  const R = K.T.relic, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan, 1, 2.5), vol = R.volume;
   const notes = [0, 4, 7, 11, 14, 18]; // (a lydian sparkle over the key's relative major)
   notes.forEach((m, i) => {
     const t = at + i * 0.085, f = mtof(K.root + 39 + m);
@@ -123,7 +123,7 @@ export function relic(K: SfxKit, pan = 0): void {
 
 /** Stunned: one soft twinkle of the dizzy loop (the cue plays them round and round while it lasts). */
 export function twinkle(K: SfxKit, i: number, pan = 0): void {
-  const N = K.T.knock, c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan + 0.4 * Math.sin(i * 1.3));
+  const N = K.T.knock, c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan + 0.4 * Math.sin(i * 1.3), 0.2, 0.6);
   const f = mtof(degree(K.root + 48, [0, 2, 4, 2, 1, 3][i % 6]));
   for (const [r, l] of [[1, 1], [2.76, 0.3]]) { const g = c.createGain(); g.connect(out); K.env(g, at, N.volume * N.twinkle * l, 0.002, 0.16); K.osc("sine", f * r, at, 0.2, g); }
 }
@@ -133,7 +133,7 @@ export function twinkle(K: SfxKit, i: number, pan = 0): void {
 export function land(K: SfxKit, pan = 0, near = 1): void {
   const L = K.T.land;
   if (!K.ready("land", L.gap)) return;
-  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), vol = L.volume * near;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 0.3 + 0.4 * near, 0.6), vol = L.volume * near;
   const bp = c.createBiquadFilter(), g = c.createGain(); bp.type = "bandpass"; bp.Q.value = 0.9;
   bp.frequency.setValueAtTime(2400, at); bp.frequency.exponentialRampToValueAtTime(900, at + 0.09);
   g.connect(out); K.env(g, at, vol, 0.006, 0.09);
@@ -148,7 +148,7 @@ export function land(K: SfxKit, pan = 0, near = 1): void {
 export function nope(K: SfxKit, pan = 0): void {
   const N = K.T.nope;
   if (!N || !K.ready("nope", N.gap)) return;
-  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), lp = c.createBiquadFilter();
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 1), lp = c.createBiquadFilter();
   lp.type = "lowpass"; lp.frequency.value = 1400; lp.Q.value = 2; lp.connect(out);
   const f = mtof(K.root - 9);
   for (const [dt, r, l] of [[0, 1, 1], [0.13, 2 ** (-1 / 12), 0.85]] as const) {
@@ -164,7 +164,7 @@ export function nope(K: SfxKit, pan = 0): void {
 export function cleared(K: SfxKit, pan = 0, near = 1): void {
   const C = K.T.cleared;
   if (!C) return;
-  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), vol = C.volume * near, hit = at + 0.22;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 1, 2), vol = C.volume * near, hit = at + 0.22;
   // the swoosh: noise through a band rising into the hit
   const bp = c.createBiquadFilter(), sg = c.createGain(); bp.type = "bandpass"; bp.Q.value = 1.4;
   bp.frequency.setValueAtTime(600, at); bp.frequency.exponentialRampToValueAtTime(5000, hit);
@@ -190,7 +190,7 @@ export function cleared(K: SfxKit, pan = 0, near = 1): void {
  *  low drone breathing in under the music, the key's chord opening above it, and a few far bells
  *  waking one by one, rising, in the legends' big space: the forest waking up, gently. */
 export function stir(K: SfxKit): void {
-  const S = K.T.stir, c = K.ctx, at = c.currentTime + 0.05, vol = S.volume, len = 4.5, out = K.voice(0);
+  const S = K.T.stir, c = K.ctx, at = c.currentTime + 0.05, vol = S.volume, len = 4.5, out = K.voice(0, 1, 5);
   // the drone and the chord: a low root swelling in, the chord's notes opening through a filter
   const lp = c.createBiquadFilter(), g = c.createGain(); lp.type = "lowpass"; lp.Q.value = 2;
   lp.frequency.setValueAtTime(250, at); lp.frequency.exponentialRampToValueAtTime(2600, at + len * 0.7); lp.frequency.exponentialRampToValueAtTime(600, at + len);

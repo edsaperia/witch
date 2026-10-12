@@ -65,6 +65,8 @@ export class Sfx {
   }
 
   get volume(): number { return this.k.volume; }
+  /** The one-shots' budget count (sfxKit.ts voice): the most at once, those never played, those cut short. */
+  get budget(): SfxKit["budget"] { return this.k.budget; }
   /** What reaches the speakers (the audio watchdog taps it). */
   get output(): AudioNode { return this.k.final; }
   /** Silenced for good and let go (the watchdog building afresh). */

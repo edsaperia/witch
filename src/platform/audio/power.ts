@@ -11,7 +11,7 @@ import { degree, mtof } from "./dsp";
 export function powerUp(K: SfxKit, step: number, pan = 0, near = 1, full = false): void {
   const P = K.T.power, c = K.ctx, at = c.currentTime + 0.01, vol = P.volume * near;
   if (vol <= 0.002 || !K.ready("power", P.gap)) return;
-  const out = K.voice(pan), r = () => Math.random();
+  const out = K.voice(pan, 0.7, 2.5), r = () => Math.random();
   const tone = mtof(degree(K.root - 12, step)), hum = mtof(degree(K.root - 36, 0)); // (its note up the scale; the hum the key's low root)
   const settle = at + 0.55 + r() * 0.1, end = settle + (full ? 1.6 : 0.7);
 
