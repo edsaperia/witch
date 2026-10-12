@@ -80,7 +80,15 @@ export class RigView {
     else body.serpent(meta, u2m, this.dt, drive, this.out);
     this.place(c, art, look, u2m);
     // Where its head is drawn (its head piece's joint): bubbles point their tails at it (Ed, 2026-10-12).
-    for (let k = 0; k < this.out.n; k++) { const it = this.out.items[k]; if (meta.head.includes(it.piece)) { let h = this.heads.get(c.id); if (!h) this.heads.set(c.id, (h = { x: 0, z: 0 })); h.x = c.x + (look.dx ?? 0) + it.x; h.z = c.z + (look.dz ?? 0) + it.z; break; } }
+    // (the middle of its head piece's sprite as placed: its pivot pixel on the joint, so the middle that far across from it)
+    for (let k = 0; k < this.out.n; k++) {
+      const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];
+      if (!f || !meta.head.includes(it.piece)) continue;
+      const px = it.flip ? f.w - it.piece.px : it.piece.px, dx = (px - f.w / 2) * this.mpp * look.scale, R = this.R;
+      let h = this.heads.get(c.id); if (!h) this.heads.set(c.id, (h = { x: 0, z: 0 }));
+      h.x = c.x + (look.dx ?? 0) + it.x - R.x * dx; h.z = c.z + (look.dz ?? 0) + it.z - R.z * dx;
+      break;
+    }
     this.stats.creatures++; this.stats.ms += performance.now() - t0;
     return true;
   }
