@@ -34,7 +34,7 @@ import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
 import { OutputMeter } from "./platform/audio/outputMeter";
 import { gameFromLink } from "./app/gameParams";
-import { styleFromLink, viewFromLink } from "./app/viewParams";
+import { gameStyle, styleFromLink, viewFromLink } from "./app/viewParams";
 import { setupDebugKeys } from "./app/keys";
 import { ScreenShake } from "./app/shake";
 import { playerPick as makePlayerPick } from "./app/playerPick";
@@ -47,6 +47,7 @@ import { wonText } from "./app/wonCard";
 import { ArrivalFlight } from "./app/arrive";
 import { readArrival } from "./app/arrival";
 
+performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
 if (seed === null) {
@@ -59,6 +60,7 @@ if (seed === null) {
 const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
 let musicCueNow = linkMusicCue;
 const game = newGame(seed, tuning);
+performance.mark("witch:game");
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
 const { WAVE_CHOICES, setPulseSpeed, waveChoice } = gameFromLink(game, tuning, params);
 const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -72,12 +74,9 @@ const savedLook = loadGenome();
 const hasHat = (g: unknown) => (g as { hat?: { shape?: string } } | null)?.hat?.shape !== "none" || game.spells.hat !== "none"; // (a hat with a spell is a hat, whatever its look: rules/spells.ts)
 const wearHat = (g: unknown) => { const H = game.witches[0].hat; H.has = hasHat(g); if (!H.has) H.down = null; };
 wearHat(savedLook);
-const view = new View(canvas, game, {
-  ...style, pixel: tuning.pixelSize,
-  // Trees taller by treeHeight; crowns wider by crownWidth in all (treeHeight widens them too).
-  treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight,
-}, savedLook);
+const view = new View(canvas, game, gameStyle(style, tuning), savedLook);
 loadTimes.view = performance.now();
+performance.mark("witch:view");
 viewFromLink(view, params); // (app/viewParams.ts)
 void installPixelUi(); // (the pixel font, for the HUD's edge cues' labels too: render/indicator.ts)
 const ATTACK_DEBUG = params.get("debug") === "attack";
@@ -157,6 +156,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   await view.prepare();
   ready = true;
   loadTimes.ready = performance.now();
+  performance.mark("witch:ready");
   startEl.classList.remove("loading");
   if (bot) start(); // (a bot game starts itself as soon as it can)
   arrival?.begin(game); // (the camera takes over from the chart's still)

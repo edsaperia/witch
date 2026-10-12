@@ -7,7 +7,7 @@ import { atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
 import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
-import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
+import { artCacheKey, cacheGet, cachePut, hashText } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
 
 export interface TypeArt {
@@ -130,9 +130,8 @@ export class AssetLibrary {
   }
 
   private key = (j: ArtJob) => j.kind + ":" + j.id;
-  /** Where a set is kept between visits: the art's code, the style, the set, and for an area type
-   *  its seed and scale. Party looks are per creature, so they aren't kept. */
-  private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
+  /** Where a set is kept between visits (render/artCache.ts). */
+  private cacheKey = (j: ArtJob) => artCacheKey(j, this.styleHash);
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
   /** Waiting jobs already moved to the front of the queue by an urgent ask. */

@@ -3,7 +3,7 @@
 // the art code's hash (ART_HASH, from vite.config.ts), the style and the set (seed and scale
 // included where they matter). Safe to miss: with storage blocked, full or failing, every call
 // quietly answers nothing and the sets are drawn as before.
-import type { ArtResult } from "./artBuild";
+import type { ArtJob, ArtResult } from "./artBuild";
 
 declare const __ART_HASH__: string;
 export const ART_HASH = typeof __ART_HASH__ === "string" ? __ART_HASH__ : "dev";
@@ -26,6 +26,11 @@ function open(): Promise<IDBDatabase | null> {
   return opening;
 }
 
+/** Where a set is kept between visits: the art's code, the style (its hash), the set, and for an area type its seed and scale.
+ *  Party looks are per creature, so they aren't kept (null). The game's art (render/assets.ts) and the landing's bake ahead
+ *  (app/landingBake.ts) both key by it. */
+export const artCacheKey = (j: ArtJob, styleHash: string): string | null => j.kind === "party" ? null : [ART_HASH, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
+
 /** A set drawn before, or null. */
 export async function cacheGet(key: string): Promise<ArtResult | null> {
   try {
@@ -41,16 +46,17 @@ export async function cacheGet(key: string): Promise<ArtResult | null> {
   } catch { return null; }
 }
 
-/** Keep a set for next time (in the background; failure is ignored). */
-export function cachePut(key: string, value: ArtResult): void {
-  open().then(db => {
-    if (!db) return;
+/** Keep a set for next time (in the background; failure is ignored). Settles once it's written, or not. */
+export function cachePut(key: string, value: ArtResult): Promise<void> {
+  return open().then(db => new Promise<void>(resolve => {
+    if (!db) return resolve();
     try {
       const tx = db.transaction(STORE, "readwrite");
-      tx.onerror = e => e.preventDefault(); // quota and the like: just not kept
+      tx.onerror = e => { e.preventDefault(); resolve(); }; // quota and the like: just not kept
+      tx.oncomplete = tx.onabort = () => resolve();
       tx.objectStore(STORE).put(value, key);
-    } catch { /* not kept */ }
-  }).catch(() => {});
+    } catch { resolve(); /* not kept */ }
+  })).catch(() => {});
 }
 
 /** A short hash of a string (FNV-1a), for the style's part of the key. */
