@@ -12,6 +12,7 @@ import { musicMix, partyOverEase } from "../rules/music";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import { nightStyle } from "../rules/musicSet";
+import { voiceRecordings } from "../platform/audio/voiceSamples";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import type { PlaytestLog } from "../platform/playtestLog";
@@ -55,10 +56,17 @@ export class Sound {
   /** A first press (the creator's): the context, resumed, and the sound effects. */
   wake(): void { try { this.audio ??= this.context(); void this.audio.resume(); this.ensureSfx(); } catch { /* no sound yet */ } }
 
+  /** The music's recorded voices (the singer's and the vocoder's), once loaded: given to each music made. */
+  private voices(): void {
+    const m = this.music, a = this.audio;
+    if (!m?.engine || !a) return;
+    void voiceRecordings(a).then(r => { m.engine?.setRecordings(r); if (r.whispers) m.engine?.setWhisper(r.whispers); });
+  }
+
   /** Play starts: the context, the music and the sound effects. */
   start(): void {
     const { tuning } = this;
-    try { this.audio ??= this.context(); void this.audio.resume(); if (!this.music && tuning.music.on) this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.ensureSfx(); } catch { /* no sound yet anyway */ }
+    try { this.audio ??= this.context(); void this.audio.resume(); if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); } this.ensureSfx(); } catch { /* no sound yet anyway */ }
   }
 
   /** The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second, a context suspended is
@@ -74,7 +82,7 @@ export class Sound {
         playtest.audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); }
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );

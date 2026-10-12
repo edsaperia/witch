@@ -16,7 +16,7 @@ import { islandCoast } from "../rules/islandShape";
 import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
-import { SeaChart, type ChartIsland } from "../render/chart/seaChart";
+import { CHART_PIXEL, SeaChart, type ChartIsland } from "../render/chart/seaChart";
 import { loadSave, newCampaign, unlocked, worldSeed, type ChartSave } from "./chartSave";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
@@ -141,7 +141,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const open = new Set(unlocked(save)), won = new Set(save.won), w = worldNow();
     const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
       const at = islandAt(id, w)!, unknown = isPlaceholder(id);
-      return { id, x: at.x, y: at.y, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
+      return { id, x: at.x, y: at.y, phase: id === "home" ? 0 : islandOf(id, w)?.phase ?? 1, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
     };
     islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
     for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
@@ -233,7 +233,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   });
 
   const resize = (cssW?: number, cssH?: number) => {
-    if (mini && opts.size) { const p = TUNING.pixelSize || 3; chart.resize(opts.size.w * p, opts.size.h * p); return; }
+    if (mini && opts.size) { const p = CHART_PIXEL; chart.resize(opts.size.w * p, opts.size.h * p); return; }
     chart.resize(cssW ?? (root.clientWidth || host.clientWidth || innerWidth), cssH ?? (root.clientHeight || host.clientHeight || innerHeight));
   };
   resize(); build();
