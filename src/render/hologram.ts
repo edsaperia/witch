@@ -9,7 +9,7 @@
 import * as THREE from "three";
 import { sigilColour, sigilGlyph } from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
-import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { GROUND_SEEN_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 export interface HologramTuning {
   on: boolean;
@@ -54,6 +54,7 @@ attribute vec2 aSway;  // turn (radians), height of its middle over the projecto
 varying vec2 vUv;
 varying vec4 vLook;
 varying vec4 vFx;
+varying vec3 vW;
 ${HEIGHT_VERT_GLSL}
 void main() {
   vec3 c = onGround(vec3(aAt.x, aAt.y + aSway.y, aAt.z));
@@ -62,7 +63,7 @@ void main() {
   float a = atan(toCam.y, toCam.x) + 1.5707963 + aSway.x;
   vec3 right = vec3(cos(a), 0.0, sin(a));
   vec3 w = c + right * position.x * aAt.w + vec3(0.0, position.y * aAt.w * aFx.w, 0.0);
-  vUv = position.xy + 0.5; vLook = aLook; vFx = aFx;
+  vUv = position.xy + 0.5; vLook = aLook; vFx = aFx; vW = w;
   gl_Position = clipOf(w);
 }`;
 
@@ -73,6 +74,8 @@ uniform float uTime;
 varying vec2 vUv;
 varying vec4 vLook;
 varying vec4 vFx;
+varying vec3 vW;
+${GROUND_SEEN_GLSL}
 float h1(float n) { return fract(sin(n * 91.345) * 47453.21); }
 float ink(vec2 g) { // the glyph's art pixel g (0..GLYPH-1), 0 outside
   if (g.x < 0.0 || g.y < 0.0 || g.x > ${GLYPH - 1}.0 || g.y > ${GLYPH - 1}.0) return 0.0;
@@ -95,6 +98,7 @@ void main() {
   vec3 col = vLook.rgb * (m * 1.0 + field) + vec3(1.0) * m * 0.25 + vec3(vLook.r * r * 0.6, 0.0, vLook.b * b * 0.6) * (1.0 - m);
   float k = vLook.a * scan * band;
   if (k * max(col.r, max(col.g, col.b)) <= 0.004) discard;
+  if (groundSeen(vW) < 0.5) discard; // (drawn over the trees, never through the earth: the bend's horizon or a hill hides it, Ed 2026-10-12)
   gl_FragColor = vec4(col * k, 1.0);
   gl_FragDepth = 1.0; // (the sky's depth: see the material)
 }`;
@@ -173,6 +177,7 @@ export class SigilHolograms {
       this.geos.push(geo);
       // The glyph writes the far depth (and so is drawn over whatever is behind it, without a depth test): the tilt-shift
       // takes it for sky and leaves it nearly sharp, as it does the stars, where over the leaves it smeared it into a ring.
+      // So the ground can't hide it by depth: its fragments test the bent ground themselves (groundSeen), cut off along the horizon.
       const glyph = vert === GLYPH_VERT;
       const mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({
         vertexShader: vert, fragmentShader: frag, uniforms: { ...HEIGHT_UNIFORMS, uTime: this.time, ...uniforms },

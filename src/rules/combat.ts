@@ -491,8 +491,10 @@ export function nearestHomeSpeaker(s: CombatState, x: number, z: number): string
 /** A soundsystem rises (a wave woke its area): its health, and the wild creatures of the area march on it. */
 export function startSiege(s: CombatState, key: string, at: { x: number; z: number }, cell: Cell, creatures: Creature[], t: Tuning, besiege = true): void {
   s.sounds.set(key, { hp: t.combat.soundsystemHealth, max: t.combat.soundsystemHealth, x: at.x, z: at.z, radius: t.combat.soundsystemRadius });
-  // Its wild creatures are enraged (#87: part-invited ones too, their meters lost; happy ones never) and besiege it.
-  if (besiege) for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && !c.fleeUntil && !c.dazed && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0 && enrage(c)) c.siege = key;
+  // Its wild creatures are enraged (#87: part-invited ones too, their meters lost; happy ones never) and besiege it. A friendly
+  // area's never (Ed, 2026-10-11: its legend's quest done, they stay as party animals guarding it; enraged, combat left them be,
+  // rules/game.ts, so they could never be knocked down and the night, rules/win.ts, could never be won).
+  if (besiege) for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && !c.fleeUntil && !c.dazed && !c.friendly && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0 && enrage(c)) c.siege = key;
 }
 
 /** A kind's top speed (m/s): its fight run, its movement profile's (movement.json speed) else combat.fightRun, a legend's
