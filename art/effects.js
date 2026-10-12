@@ -85,6 +85,11 @@ export const EFFECTS = [
   { id: "traitHeavy", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
   { id: "traitNimble", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
   { id: "traitBurrower", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
+  // the Cyclone hat's whirlwind (golf, Hats B #721, 2026-10-12): about 10 m across at its foot and 5 m tall, a turn a second at
+  // its fps; it rises, loops while it holds, then falls apart flinging what it holds outward (its sprite 12 m across for that)
+  { id: "cycloneRise", family: "spell", plane: "standing", frames: 3, fps: 8, loop: false, metres: [12, 6], attacks: [] },
+  { id: "cyclone", family: "spell", plane: "standing", frames: 8, fps: 8, loop: true, metres: [12, 6], attacks: [] },
+  { id: "cycloneFall", family: "spell", plane: "standing", frames: 3, fps: 8, loop: false, metres: [12, 6], attacks: [] },
 ];
 export const EFFECT_BY_ID = Object.fromEntries(EFFECTS.map(e => [e.id, e]));
 // Which effects each attack uses: what flies (or the beam's parts), its telegraph, where it lands, and what it leaves on the target.
@@ -354,11 +359,52 @@ const DRAW = {
   traitHeavy(c, f, S) { const cx = c.w / 2; c.ring(cx, c.h * .22, c.w * .12, Math.max(1, S), BODY); for (let y = Math.floor(c.h * .35); y < c.h - 1; y++) { const t = (y - c.h * .35) / (c.h * .62), hw = c.w * (.22 + .2 * t); for (let x = Math.ceil(cx - hw); x < cx + hw; x++) c.put(x, y, y > c.h - 2 - S || Math.abs(x + .5 - cx) > hw - S ? BODY : EDGE); } return {}; }, // a weight
   traitNimble(c, f, S) { const pts = [[.62, .05], [.32, .52], [.55, .52], [.38, .95]]; for (let j = 0; j + 1 < pts.length; j++) c.line(c.w * pts[j][0], c.h * pts[j][1], c.w * pts[j + 1][0], c.h * pts[j + 1][1], Math.max(1, S * 1.4), j === 1 ? CORE : BODY); return {}; }, // a lightning bolt
   traitBurrower(c, f, S) { const cx = c.w / 2, by = c.h - 2; for (let y = Math.floor(c.h * .55); y <= by; y++) { const t = (by - y) / (by - c.h * .55), hw = c.w * .42 * Math.sqrt(1 - t * t); for (let x = Math.ceil(cx - hw); x < cx + hw; x++) c.put(x, y, EDGE); } c.line(cx, 1, cx, c.h * .5, Math.max(1, S), BODY); for (const s of [-1, 1]) c.line(cx, c.h * .5, cx + s * c.w * .18, c.h * .32, Math.max(1, S), BODY); return {}; }, // a mound, an arrow down into it
+  cyclone(c, f, S) { return whirl(c, S, f / 8, 1, 0); }, // a turn every 8 frames
+  cycloneRise(c, f, S) { return whirl(c, S, f / 8, [.3, .6, .88][f], 0); }, // spinning up out of the ground
+  cycloneFall(c, f, S) { return whirl(c, S, f / 8, [.9, .7, .45][f], f + 1); }, // falling apart, what it holds flung outward
   dust(c, f) { // a puff of dust at its feet (lit, not glowing; drawn in stone greys)
     for (let k = 0; k < 6; k++) { const a = Math.PI * (.05 + .9 * k / 5), r = c.w * (.12 + .3 * (f + 1) / 4), x = c.w / 2 + Math.cos(a) * r, y = c.h - 2 - Math.sin(a) * r * .5, rr = c.h * (.22 - f * .03); if (rr > .5) c.disc(x, y, rr, M.STONE, { ball: true, tint: false, mat: (u, v) => v < -.2 ? M.BELLY : M.STONE }); }
     return { base: [c.w / 2, c.h - 1] };
   },
 };
+
+// The Cyclone's whirlwind (DRAW.cyclone*): a funnel of wind 10 m across at its foot (R: 5 m), narrowing to a waist and flaring a
+// little at its top, `grow` of its full height; its rings of air seen from the camera's pitch (squashed ellipses), glowing wind
+// streaks on them, leaves (their own green, not tinted) and motes (glowing) whirling round it, and dust (stone greys) churned up
+// round its foot. `turn`: how far round it has turned (0 to 1 a turn, so 8 frames at 1/8 loop exactly); `fling`: 0, or the fall's
+// frame (1 to 3), everything thrown further out and the streaks breaking up.
+function whirl(c, S, turn, grow, fling) {
+  const px = c.w / 12, cx = c.w / 2, by = c.h - 1 - S, R = 5 * px, H = 5.4 * px * grow, sq = .3, TAU = Math.PI * 2, out = 1 + fling * .22;
+  const rAt = t => R * (.32 + .68 * (1 - t) ** 2.2 + .22 * t * t) * (fling ? out : 1); // wide at its foot, a waist, a little flare
+  const at = (a, t, k = 1) => { const r = rAt(t) * k; return [cx + Math.cos(a) * r, by - t * H + Math.sin(a) * r * sq, Math.sin(a)]; };
+  const spin = turn * TAU;
+  // its streaks of wind: arcs on the rings, the back half first (dimmer), broken up as it falls
+  for (const back of [true, false]) for (let j = 0; j < 30; j++) {
+    const t = (Math.floor(j / 2) + .5 + (j % 2) * .35) / 15, a0 = j * 2.1 + (j % 2) * Math.PI + spin * (1 + t * .5), len = (2.2 - t * .6) * (.75 + .5 * hash2(j, 7, 41)) * (fling ? 1 - fling * .25 : 1), n = Math.ceil(len * rAt(t) / Math.max(1, S * .7));
+    for (let i = 0; i <= n; i++) {
+      const a = a0 + (i / n) * len, [x, y, z] = at(a, t);
+      if ((z < 0) !== back || (fling && hash2(j, i >> 2, 41 + fling) < fling * .22)) continue;
+      const w = Math.max(1, S * (back ? .8 : 1.1) * (.7 + .6 * Math.sin((i / n) * Math.PI)));
+      c.disc(x, y, w / 2, back ? EDGE : i / n > .7 ? CORE : BODY);
+    }
+  }
+  // dust churned up round its foot (lit, not glowing): a ring of puffs turning with it
+  for (let k = 0; k < 16; k++) {
+    const a = k * TAU / 16 + spin * 1.2, r = R * (.9 + .25 * hash2(k, 3, 7)) * (fling ? out : 1), x = cx + Math.cos(a) * r, y = by + Math.sin(a) * r * sq - (1 + 3 * hash2(k, 5, 7)) * S;
+    const rr = Math.max(1, (1.4 + 1.6 * hash2(k, 9, 7)) * S * (fling ? 1 - fling * .2 : grow < 1 ? .6 + grow * .4 : 1));
+    c.disc(x, y, rr, M.STONE, { ball: true, tint: false, mat: (u, v) => v < -.2 ? M.BELLY : M.STONE });
+  }
+  // leaves and motes whirling round it, each on its own height and turning faster up high; flung outward and up as it falls
+  for (let k = 0; k < 44; k++) {
+    const t = Math.min(.98, hash2(k, 1, 13) * (grow < 1 ? grow + .1 : 1)), a = k * 2.399 + spin * (1 + t * .5), k2 = .85 + .3 * hash2(k, 2, 13), fl = fling ? 1 + fling * (.25 + .2 * hash2(k, 4, 13)) : 1;
+    const [x, y] = at(a, t, k2 * fl), yy = y - (fling ? fling * 2 * S * hash2(k, 6, 13) : 0);
+    if (k % 3 === 0) { glow(c, x, yy, Math.max(.8, S * .9)); continue; } // a mote
+    const lw = Math.max(2, S * 1.5), tilt = Math.round(Math.sin(a * 2 + k) * S);
+    for (let i = 0; i < 2 * lw; i++) c.put(x + i, yy + (i >= lw ? tilt : 0), i < lw ? M.LEAF : M.TRUNK, [0, -.4, .9], false); // a leaf and its stalk
+    for (let d = 1; d < lw; d++) for (let i = 0; i < lw; i++) c.put(x + i, yy + d + (i >= lw ? tilt : 0), M.LEAF, [0, .2, .9], false); // (a leaf as thick as it is long)
+  }
+  return { base: [cx, c.h - 1], radiusPx: R };
+}
 
 // One frame of one effect: { sp (a Sprite; sp.tint the tint mask), anchors: { centre, ... } in pixels from the top-left, metres, px
 // (art pixels a metre at this zoom), period (a repeating strip's, in px), radiusPx (a ring's) }. variant "light" | "dark";
