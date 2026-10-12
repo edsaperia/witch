@@ -88,6 +88,7 @@ Suggested:
 
 - **Looks:** the hat room and broom room choose *which* hat and broom (their spells); their **shape and colour are styled while dressing**, with today's sliders.
 - **Matching items to powers, later** (Ed, 2026-10-12): eventually each hat and broom look will be matched to its power; for now the power is picked from a dropdown, independent of the look.
+- **One power per hat, one of each in play** (Ed, 2026-10-12, after #737): to design. Today (#737, the treehouse wardrobe) she can take any number of hats from her room, duplicates included, each keeping the power picked for it. Eventually each hat has its one power, and only one of each hat can be out at a time.
 - **The older hat spells, reworked as placed hats:** Berry patch → **Harvest hat**; Mend → **Nursing hat**; Second wind → **Healing ring hat** (placed: standing near it, she heals a hit every few seconds).
 
 ## Decisions (Ed, 2026-10-11, the go)
