@@ -25,7 +25,7 @@ import type { DecidePanel } from "./ui/decide";
 import { tuningFromLink } from "./app/linkParams";
 import { saveLoadout } from "./app/loadout";
 import { castable } from "./rules/spells";
-import { changeLoadout } from "./rules/hatSpells";
+import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { onTreehouse } from "./rules/treehouse";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { Hud } from "./app/hud";
@@ -162,12 +162,13 @@ const creator = new Creator(style, savedLook, tuning.pixelSize);
 let lookNow = JSON.stringify(savedLook);
 // Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
 creator.loadout = { hat: game.spells.hat, broom: game.spells.broom };
-creator.onLoadout = l => { changeLoadout(game.witches[0], l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(lookNow ? JSON.parse(lookNow) : savedLook); }; // (a hat swapped while hers lies elsewhere comes home: rules/hatSpells.ts)
+creator.onLoadout = l => { changeLoadout(game.witches[0], l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(lookNow ? JSON.parse(lookNow) : savedLook); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Back to her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4: "fly at treetop level to the treehouse to go back
 // to bedroom where time slows 10x. click an exit button (where the party scroll usually is) to go back to the island"): on the deck
 // (rules/treehouse.ts onTreehouse), the Bedroom button or F opens her room, the world running on at the deck's tenth; its way out
-// brings her back, standing on the deck, in her new look, hat and broom.
-creator.onExit = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
+// brings her back, standing on the deck, in her new look, hat and broom: a new hat on her head, any lying about staying where
+// they lie (Ed, 2026-10-12).
+creator.onExit = g => { newHatFromRoom(game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
 const bedroomBtn = document.getElementById("bedroom-btn");
 const toBedroom = () => { if (!bot && onTreehouse(game) && !creator.open && !game.witches[0].ko) { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.visit(); } };
 if (bedroomBtn) { for (const ev of ["pointerdown", "pointerup", "touchstart"]) bedroomBtn.addEventListener(ev, e => e.stopPropagation()); bedroomBtn.addEventListener("click", toBedroom); }

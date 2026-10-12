@@ -7,6 +7,10 @@
 // nothing new drops (DECISION FOR ED). A witch with no hat (the character creator's "none": Ed, "If she
 // chooses no hat in character creation, then she simply doesn't have this mechanic") drops nothing.
 // The rules don't know her look: main.ts says whether she has one (`has`).
+// Her other hats (Ed, 2026-10-12: "if her hat is placed in the world, she can go back to her room to pick up a new one and the
+// previous one(s) stay in the world. if she tries to pick up a hat while she's wearing one, she cannot"): a hat lying somewhere
+// when she takes a new one in her room stays where it lies, keeping its spell (`left`); any number can lie about at once. She
+// picks one up only bare-headed, and it goes on, its spell hers (her own lying hat, if any, then one of the left ones).
 
 export interface HatState {
   /** She has a hat at all (the character creator's look; false: none, and none of this). */
@@ -15,9 +19,14 @@ export interface HatState {
   down: { x: number; z: number; at: number } | null;
   /** When a press of the sigil button that did nothing began, while it's still held (putHat); absent when none. */
   hold?: number;
+  /** Her other hats lying in the world, each with its spell (rules/spells.ts), left there when she took a new one in her room. */
+  left: LeftHat[];
 }
 
-export const newHat = (has = true): HatState => ({ has, down: null });
+/** A hat of hers left lying in the world, and its spell. */
+export interface LeftHat { x: number; z: number; at: number; spell: string }
+
+export const newHat = (has = true): HatState => ({ has, down: null, left: [] });
 
 /** Is she wearing it now? (No hat at all: no.) */
 export const wearing = (h: HatState | undefined): boolean => !!h && h.has && !h.down;
@@ -29,13 +38,27 @@ export function dropHat(h: HatState, x: number, z: number, at: number, on = true
   return true;
 }
 
-/** The sigil button at (x, z): standing within `radius` of her hat, she picks it up and it goes
- *  straight back on. True if it did (the press is spent: nothing else under it is picked up). */
-export function hatButton(h: HatState, x: number, z: number, radius: number): boolean {
+/** She takes a new hat (in her room): the one lying somewhere stays there with its spell (`spell`), and she wears the new. */
+export function leaveHat(h: HatState, spell: string): void {
+  if (h.down) h.left.push({ ...h.down, spell });
+  h.down = null; delete h.hold;
+}
+
+/** The sigil button at (x, z), wearing a hat of spell `spell`: standing within `radius` of a hat of hers, bare-headed, she picks
+ *  it up and it goes straight on: her own first, else the nearest left one (her own, lying elsewhere, left in its place with
+ *  `spell`). Wearing one, she can't. Returns the spell she wears now if she picked one up (the press is spent: nothing else
+ *  under it is picked up), else null. */
+export function hatButton(h: HatState, x: number, z: number, radius: number, spell = ""): string | null {
   const d = h.down;
-  if (!d || Math.hypot(d.x - x, d.z - z) > radius) return false;
+  if (d && Math.hypot(d.x - x, d.z - z) <= radius) { h.down = null; return spell; }
+  if (!h.has || !d) return null; // (wearing one: Ed, "she cannot")
+  let best = -1, bd = radius;
+  h.left.forEach((q, i) => { const e = Math.hypot(q.x - x, q.z - z); if (e <= bd) { bd = e; best = i; } });
+  if (best < 0) return null;
+  const [q] = h.left.splice(best, 1);
+  h.left.push({ ...d, spell });
   h.down = null;
-  return true;
+  return q.spell;
 }
 
 /** Where the marker points (her hat on the ground), or null when there's nothing to find. */

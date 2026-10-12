@@ -137,6 +137,9 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const Hat = g.witches[0].hat;
   if (!v.bareAsked && Hat.has && !g.clock.paused && ht > 1) { v.bareAsked = true; setTimeout(() => { v.bareBatch ??= v.makeWitchBatch(true); }, 0); }
   const bare = Hat.has && !!Hat.down ? (v.bareBatch ??= v.makeWitchBatch(true)) : null;
+  // Her other hats lying about, left when she took a new one in her room (rules/hat.ts left; Ed, 2026-10-12), in the same batch.
+  const leftHats = Hat.left.length ? Hat.left : null;
+  if (leftHats) v.bareBatch ??= v.makeWitchBatch(true);
   const watlas = bare ? v.assets.witchBare() : v.assets.witch, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * v.mpp;
   // Stood by her frame's ground (art/witch.js liftShadow): the point under her on the model's ground lands on wyy, so on
   // foot her feet are on the ground, not on the bottom of a box that held a shadow drawn into her (Ed, 2026-10-06); and
@@ -162,7 +165,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       her.push({ x: up.x, y: up.y, z: up.z, frame: watlas.frames[djUpper], flip: false, scale: up.scale } as typeof b);
     } else { const up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
   }
-  const hatFrame = bare ? v.assets.witchBare().frames[v.assets.witchHatFrame] : undefined;
+  const hatFrame = bare || leftHats ? v.assets.witchBare().frames[v.assets.witchHatFrame] : undefined;
   { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
     const LV = v.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && v.foot < 0.05 && !v.partyWitchView.herIdle;
     const fwd = w.facing < 0 ? -1 : 1, k = flying ? LV.load : 0;
@@ -176,10 +179,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // side less as it settles and rocking with each swing (the sprite turned as it swings back), its shadow gathering under it.
   const fk = bare && hatFrame && KO && KO.floatUntil > KO.at ? Math.max(0, Math.min(1, (ht - KO.at) / (KO.floatUntil - KO.at))) : 1;
   const hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
-  v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
+  const lying = leftHats && hatFrame ? leftHats.map(q => ({ x: q.x + HAT_BESIDE, y: groundHeight(q.x + HAT_BESIDE, q.z), z: q.z, frame: hatFrame, flip: false })) : [];
+  v.bareBatch?.set([...(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []), ...lying]);
   // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];
   if (hat) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
+  for (const q of lying) v.witchShadows.push({ x: q.x, z: q.z, w: q.frame.w * v.mpp * 0.9, d: q.frame.w * v.mpp * 0.35 });
   // The rest of the screen dims while she's down with her hat floating off (render/post.ts uKoDim): in over half a second from
   // the knockdown, held till she sparkles away, out as she goes. No hat to lose, no dim.
   const KD = t.knockout.dim ?? 0;
