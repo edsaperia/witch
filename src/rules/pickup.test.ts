@@ -62,8 +62,8 @@ describe("leashing a happy creature by its sigil rune", () => {
     press(g);
     expect(c.leashed).toBe(true);
     // Another, a few metres off: it trots over to her, stopping short of her.
-    // (north of her: its rune lies south of it, so one south of her would have to walk past her and her followers to bring it)
-    const P = TUNING.leash.runePull, o = happyAt(g, g.witch.x, g.witch.z - (P.radius - 1));
+    // (south of her: it walks round her, and the follower just leashed, to bring its rune to her feet)
+    const P = TUNING.leash.runePull, o = happyAt(g, g.witch.x, g.witch.z + P.radius - 1);
     for (let i = 0; i < 6 * 60; i++) stepGame(g, C, 1 / 60);
     const d = Math.hypot(o.x - g.witch.x, o.z + S - g.witch.z); // (its rune comes to her)
     expect(d).toBeLessThan(P.stop + 0.5);
@@ -71,6 +71,23 @@ describe("leashing a happy creature by its sigil rune", () => {
     press(g);
     expect(o.leashed).toBe(true);
   }, 60000);
+
+  it("pulls from any side (Ed, 2026-10-12): a rune near her comes to her feet from north, south, east or west, round a follower in the way", () => {
+    const P = TUNING.leash.runePull;
+    for (const [ux, uz] of [[0, -1], [0, 1], [1, 0], [-1, 0]]) {
+      const g = game(), W = g.witches[0];
+      at(g, g.witch.x + 30, g.witch.z + 20);
+      const x = g.witch.x, z = g.witch.z;
+      // a follower of hers, standing where the creature would walk: between it and the spot north of her that puts its rune at her feet
+      const f = g.creatures.find(k => !k.boss && k.level < 3 && stateOf(k) === "wild" && Math.hypot(k.x - x, k.z - z) > 200)!;
+      Object.assign(f, { leashed: true, state: "leashed", x: x + ux * 1.5, z: z - S / 2 + uz * 1.5, tx: x + ux * 1.5, tz: z - S / 2 + uz * 1.5 });
+      W.leash.stack.push(f.id);
+      const o = happyAt(g, x + ux * (P.radius - 1), z + uz * (P.radius - 1), [f.id]);
+      for (let i = 0; i < 12 * 60; i++) { at(g, x, z); stepGame(g, C, 1 / 60); }
+      const d = Math.hypot(o.x - x, o.z + S - z);
+      expect(d, `from ${ux},${uz}`).toBeLessThan(P.stop + 0.5);
+    }
+  }, 120000);
 
   it("💌s no longer fill a second meter: a happy creature isn't invitable", () => {
     const g = game(), c = happyAt(g, g.witch.x + 5, g.witch.z), A = affectionOf(g);
