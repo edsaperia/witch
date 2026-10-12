@@ -12,6 +12,36 @@
       "default": 0, "apply": { "knob": "leash.sigilHalo" }
     },
     {
+      "id": "chartMoonShadow", "pr": 751, "group": "Chart moon", "label": "Island shadow darkness", "note": "How dark the islands' moon shadows are on the sea and in their valleys (0 none).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.6, "apply": { "knob": "chart.moon.shadow" }
+    },
+    {
+      "id": "chartMoonHeight", "pr": 751, "group": "Chart moon", "label": "Moon height (degrees)", "note": "How high the moon goes; lower makes the shadows longer.",
+      "control": { "type": "slider", "min": 6, "max": 60, "step": 1 },
+      "default": 22, "apply": { "knob": "chart.moon.height" }
+    },
+    {
+      "id": "chartMoonTurn", "pr": 751, "group": "Chart moon", "label": "Seconds a turn", "note": "How long the moon takes to go once round the chart.",
+      "control": { "type": "slider", "min": 30, "max": 600, "step": 10 },
+      "default": 240, "apply": { "knob": "chart.moon.turn" }
+    },
+    {
+      "id": "chartMoonRise", "pr": 751, "group": "Chart moon", "label": "Rise (s)", "note": "How long the moon takes to rise over the north-west edge as the chart opens.",
+      "control": { "type": "slider", "min": 0, "max": 15, "step": 0.5 },
+      "default": 6, "apply": { "knob": "chart.moon.rise" }
+    },
+    {
+      "id": "chartMoonDisc", "pr": 751, "group": "Chart moon", "label": "Moon disc in the sky", "note": "Draw the moon itself past the rim, where it is.",
+      "control": { "type": "toggle" },
+      "default": true, "apply": { "knob": "chart.moon.disc" }
+    },
+    {
+      "id": "chartEdgeBand", "pr": 751, "group": "Chart moon", "label": "Empty sea round the edge", "note": "How far the open sea reaches past the furthest islands, as a share of their radius.",
+      "control": { "type": "slider", "min": 0, "max": 0.6, "step": 0.02 },
+      "default": 0.18, "apply": { "knob": "chart.edgeBand" }
+    },
+    {
       "id": "trunkShadowStrength", "pr": 748, "group": "Trunk shadows", "label": "Shadow darkness", "note": "How dark a trunk's or palm's shadow is at its darkest (near its foot and the light).",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
       "default": 0.6, "apply": { "knob": "shadows.trunks.strength" }

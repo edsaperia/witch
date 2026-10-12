@@ -47,6 +47,20 @@ Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some
 | `lakes.biomeFrom` | number | 0 to … |
 | `lakes.biomeFirstShare` | number | 0 to … |
 
+### `chart`
+
+The sea chart (the map table and chart.html; render/chart/seaChart.ts, render/chart/moon.ts). moon (Ed, 2026-10-12: "islands casting shadows from the moon orbiting the map screen"; #746: "have the moon rise over the North West edge of the map as you open the map screen"): each time the chart opens the moon rises over its edge at bearing from (degrees, 0 north, clockwise: -45 the north-west) over rise seconds, from just under the horizon to height degrees, then goes round once every turn seconds; every island's relief throws a shadow away from it, across the sea and into its own valleys, shadow its darkest (0 none, 1 black), the hills' shading following it; disc: its disc drawn in the sky past the rim at its bearing (hidden behind the world). edgeBand (#746: "add empty sea around the edge of the map"): the empty sea past the furthest islands, the disc's radius beyond theirs as a share of it (0 as before; at most 0.6).
+
+| knob | type | range |
+|---|---|---|
+| `chart.moon.rise` | number | 0 to … |
+| `chart.moon.turn` | number | 0 to … |
+| `chart.moon.height` | number | 0 to … |
+| `chart.moon.from` | number |  |
+| `chart.moon.shadow` | number | 0 to … |
+| `chart.moon.disc` | boolean |  |
+| `chart.edgeBand` | number | 0 to … |
+
 ### `islands`
 
 Islands other than home (the wave 2 finale's dream bubbles and the sea chart; rules/islandShape.ts, art/islands.js; Ed, docs/backlog/journey.md): coast, the coastline's knobs as map.coast's (amp, the most it strays from round, a share of the radius; harmonics, how many bays and headlands; detail, the finer wobble), stronger than home's so every island has a shape of its own, read at a bubble's 30 pixels.
