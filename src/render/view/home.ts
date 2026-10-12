@@ -228,6 +228,8 @@ export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d:
  *  between them (metres: past the deck's radius and its rail). The DJ table's frames, her hands over it and the candles go in
  *  front of the near half as DJ_DEPTH says. */
 export const ENT_DEPTH = { far: 8, near: 7.6 };
+/** The Ent's carrier (art/carrier.js): a breath's seconds and how much taller it stands at its top (its height's share). */
+const CARRIER_BREATH = 4, CARRIER_SWELL = 0.006;
 /** A point `d` metres nearer the camera along the ray from it, and how much smaller to draw what stands there to cover the same
  *  pixels as at `p` (negative `d`: farther, bigger). */
 export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {
@@ -261,6 +263,20 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     at = { x: deckAt.x - R0.x * ox - U.x * oy, y: deckAt.y - R0.y * ox - U.y * oy, z: deckAt.z - R0.z * ox - U.z * oy };
   }
   const items: SpriteInstance[] = deckAt ? [ent(at, -ENT_DEPTH.far, f[0]), ent(at, ENT_DEPTH.near, f[1])] : [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+  // The island's legend carrying the Ent (art/carrier.js; Ed, 2026-10-10): its back's top under the Ent's roots' foot (the base
+  // anchor), its roots' foot planted T.carrier.sink pixels down in its fur, its feet on the ground (the art grows the Ent's trunk
+  // to fit): in front of the Ent's far half (pushed back along the rays with it, it would sink into the ground). Breathing slowly (drawing only): a touch taller and shorter about
+  // its feet, a breath every CARRIER_BREATH seconds.
+  if (deckAt && T.carrier) {
+    const C = T.carrier, fc = f[C.frame];
+    const bx = T.base.x - C.back.x + fc.w / 2, by = T.base.y + C.sink + (fc.h - C.back.y); // (its sprite's bottom middle, in the Ent's pixels)
+    const dx = (bx - f[0].w / 2) * mpp, dy = (f[0].h - by) * mpp;
+    const p0 = { x: at.x + R0.x * dx + U.x * dy, y: at.y + R0.y * dx + U.y * dy, z: at.z + R0.z * dx + U.z * dy };
+    // Stacked down the sprites' up (tilted back from the camera, steeply in the treetops) its feet would land under the ground:
+    // slid along the ray from the camera until they stand on it, the same pixels on screen (nearer, so drawn smaller).
+    const g0 = groundHeight(deckAt.x, deckAt.z), c = v.camera.position, Wy = p0.y + g0, t = p0.y < 0 && c.y > Wy ? -p0.y / (c.y - Wy) : 0;
+    items.push({ x: p0.x + (c.x - p0.x) * t, y: 0, z: p0.z + (c.z - p0.z) * t, frame: fc, flip: false, scale: 1 - t, sy: 1 + CARRIER_SWELL * Math.sin((time * 2 * Math.PI) / CARRIER_BREATH) });
+  }
   // The studio's DJ table over her (Ed, 2026-10-06): its crop where it shows in the base, a frame two to a beat (the platters
   // turning an eighth, the LEDs chasing), nearer the camera than her.
   if (T.hasFore) {
