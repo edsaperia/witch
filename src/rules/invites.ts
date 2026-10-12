@@ -51,18 +51,19 @@ export interface Letter {
   slot?: number;
   /** Thrown by her hat (the Sentry's), or flung by it (the Slingshot's): it isn't caught again. */
   hat?: boolean;
+  /** Caught by a Slingshot hat: where that hat lies. */
+  hx?: number;
+  hz?: number;
 }
 
-/** Her hat on the ground with a spell that throws 💌s (rules/spells.ts): where it lies, and its spell's numbers. The Sentry hat
- *  throws one at the nearest invitable creature within `range` every `every` seconds; the Slingshot hat catches her 💌s that
- *  fly within `catch` of it, holds them circling it (`radius` out) `hold` seconds, then flings each at the nearest invitable
- *  creature within `fire` of it (at most `max` held at once; one with none to fly at keeps circling, and goes after `hold`
- *  × 4). */
+/** Her hats on the ground with a spell that throws 💌s (rules/hatSpells.ts hatLetters): where each lies, and its spell's
+ *  numbers. Each Sentry hat throws one at the nearest invitable creature within `range` every `every` seconds; each Slingshot
+ *  hat catches her 💌s that fly within `catch` of it, holds them circling it (`radius` out) `hold` seconds, then flings each at
+ *  the nearest invitable creature within `fire` of it (at most `max` held at once; one with none to fly at keeps circling,
+ *  and goes after `hold` × 4). */
 export interface HatLetters {
-  x: number;
-  z: number;
-  sentry?: { range: number; every: number };
-  sling?: { catch: number; fire: number; hold: number; radius: number; max: number };
+  sentry: { x: number; z: number; range: number; every: number }[];
+  sling: { x: number; z: number; catch: number; fire: number; hold: number; radius: number; max: number }[];
 }
 
 /** A lantern on the ground (Glow-worm): any animal it touches before it goes out is a hit. */
@@ -208,8 +209,9 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
 
   // The creatures a letter could meet this step: those near any letter or lantern.
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
-  for (const p of [...s.letters, ...s.lanterns, ...(hat?.sentry || hat?.sling ? [hat] : [])]) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }
-  const pad = Math.max(H.cache.reach, H.orbit.reach, H.charm.range, I.homingRange, H.ricochet.range, hat?.sentry?.range ?? 0, hat?.sling?.fire ?? 0) + 4;
+  const sentries = hat?.sentry ?? [], slings = hat?.sling ?? [];
+  for (const p of [...s.letters, ...s.lanterns, ...sentries, ...slings]) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }
+  const pad = Math.max(H.cache.reach, H.orbit.reach, H.charm.range, I.homingRange, H.ricochet.range, ...sentries.map(q => q.range), ...slings.map(q => q.fire)) + 4;
   const near = x0 <= x1 ? creatures.filter(k => !k.gone && k.x > x0 - pad && k.x < x1 + pad && k.z > z0 - pad && k.z < z1 + pad) : [];
   /** The nearest invitable animal to (x, z) within r, not among `skip`. */
   const nearest = (x: number, z: number, r: number, skip: number[] = []): Creature | null => {
@@ -226,33 +228,36 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
   /** Stops it dead: an enraged animal (unless it slips past: Elk) or a legend. */
   const blocks = (L: Letter, k: Creature) => A.blocksLetters(k) && !(L.slip && !k.boss && k.level !== LEGEND);
 
-  // The Sentry hat: a 💌 at the nearest invitable creature in its reach, every few seconds, homing hard.
-  if (hat?.sentry && time >= (s.sentryAt ?? 0)) {
-    const k = nearest(hat.x, hat.z, hat.sentry.range);
-    if (k) {
-      const a = Math.atan2(k.z - hat.z, k.x - hat.x), L = letter(s, hat.x + Math.cos(a) * 0.6, hat.z + Math.sin(a) * 0.6, a, time, t, NO_MODS, { home: true, hat: true, range: hat.sentry.range * 1.5 });
-      s.sentryAt = time + hat.sentry.every;
-      s.events.push({ kind: "shot", x: hat.x, z: hat.z, at: time, n: L.n });
+  // The Sentry hats: each a 💌 at the nearest invitable creature in its reach, every few seconds, homing hard.
+  if (sentries.length && time >= (s.sentryAt ?? 0)) {
+    for (const q of sentries) {
+      const k = nearest(q.x, q.z, q.range);
+      if (!k) continue;
+      const a = Math.atan2(k.z - q.z, k.x - q.x), L = letter(s, q.x + Math.cos(a) * 0.6, q.z + Math.sin(a) * 0.6, a, time, t, NO_MODS, { home: true, hat: true, range: q.range * 1.5 });
+      s.sentryAt = time + q.every;
+      s.events.push({ kind: "shot", x: q.x, z: q.z, at: time, n: L.n });
     }
   }
-  const slung = hat?.sling ? s.letters.filter(L => L.kind === "sling").length : 0;
-  let caught = 0;
+  /** The Slingshot hat lying at (x, z), if one still does. */
+  const slingAt = (x?: number, z?: number) => slings.find(q => q.x === x && q.z === z);
+  const held = slings.map(q => s.letters.filter(L => L.kind === "sling" && L.hx === q.x && L.hz === q.z).length);
 
   const born: Letter[] = [];
   s.letters = s.letters.filter(L => {
     // The Slingshot hat: a 💌 of hers flying within its reach is caught, circling it; after its hold, flung at the nearest
     // invitable creature in its range (Ed, 2026-10-11: captured 💌s "hold in orbit for a period, then curve round the hat and
     // fly at the nearest creature it can invite").
-    const SL = hat?.sling;
-    if (SL && !L.kind && !L.hat && L.back === undefined && slung + caught < SL.max && Math.hypot(L.x - hat!.x, L.z - hat!.z) <= SL.catch) {
-      Object.assign(L, { kind: "sling", hat: true, until: time + SL.hold, slot: L.n % SL.max, hit: [] }); caught++;
+    if (!L.kind && !L.hat && L.back === undefined) {
+      const i = slings.findIndex((q, j) => held[j] < q.max && Math.hypot(L.x - q.x, L.z - q.z) <= q.catch);
+      if (i >= 0) { const q = slings[i]; Object.assign(L, { kind: "sling", hat: true, until: time + q.hold, slot: L.n % q.max, hit: [], hx: q.x, hz: q.z }); held[i]++; }
     }
     if (L.kind === "sling") {
+      const SL = slingAt(L.hx, L.hz);
       if (!SL) { s.events.push({ kind: "fizzled", x: L.x, z: L.z, at: time, n: L.n }); return false; } // (the hat picked up)
       const a = (time * 200 * Math.PI) / 180 + ((L.slot ?? 0) / SL.max) * Math.PI * 2;
-      L.x = hat!.x + Math.cos(a) * SL.radius; L.z = hat!.z + Math.sin(a) * SL.radius;
+      L.x = SL.x + Math.cos(a) * SL.radius; L.z = SL.z + Math.sin(a) * SL.radius;
       if (time < (L.until ?? 0)) return true;
-      const k = nearest(hat!.x, hat!.z, SL.fire);
+      const k = nearest(SL.x, SL.z, SL.fire);
       if (!k) { if (time >= (L.until ?? 0) + SL.hold * 3) { s.events.push({ kind: "fizzled", x: L.x, z: L.z, at: time, n: L.n }); return false; } return true; }
       Object.assign(L, { kind: undefined, home: true, range: SL.fire * 1.5, flown: 0, vx: I.speed, vz: 0 }); aimAt(L, k);
       s.events.push({ kind: "shot", x: L.x, z: L.z, at: time, n: L.n });
