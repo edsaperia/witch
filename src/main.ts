@@ -311,8 +311,12 @@ function frame(now: number): void {
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
   if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== attackTick) { attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
   const stepMs = performance.now() - step0;
-  // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, mid-night only to look.
-  if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart(!wavesOver(game));
+  // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
+  // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
+  if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart(href => {
+    if (!wavesOver(game) && !chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0);
+    location.href = href;
+  });
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
   // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart

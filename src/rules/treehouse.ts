@@ -49,13 +49,14 @@ export function keepOnDeck(d: Deck, x: number, z: number): { x: number; z: numbe
   let a = Math.atan2(dz, dx);
   if (r > out) r = out;
   if (r < inn) r = inn;
-  // the decks' table: an arc from inner to outer metres out, from..to degrees round; she's put back on its nearer side
+  // the decks' table: from where she stands behind it (inner metres out) to its front (outer), from..to degrees round; she's put
+  // back on its nearer side
   const { inner, outer, from, to } = d.decks, A = a / DEG;
-  if (A >= from && A <= to && r > inner - 0.35 && r < outer + 0.35) {
+  if (A >= from && A <= to && r > inner && r < outer + 0.35) {
     // (the decks against the rail: no way round outside them)
-    const toIn = r - (inner - 0.35), toOut = outer + 0.35 <= out ? outer + 0.35 - r : Infinity, toFrom = (A - from) * DEG * r, toTo = (to - A) * DEG * r;
+    const toIn = r - inner, toOut = outer + 0.35 <= out ? outer + 0.35 - r : Infinity, toFrom = (A - from) * DEG * r, toTo = (to - A) * DEG * r;
     const m = Math.min(toIn, toOut, toFrom, toTo);
-    if (m === toIn) r = inner - 0.35; else if (m === toOut) r = outer + 0.35; else if (m === toFrom) a = (from - 0.5) * DEG; else a = (to + 0.5) * DEG;
+    if (m === toIn) r = inner; else if (m === toOut) r = outer + 0.35; else if (m === toFrom) a = (from - 0.5) * DEG; else a = (to + 0.5) * DEG;
   }
   return { x: d.x + Math.cos(a) * r, z: d.z + Math.sin(a) * r };
 }

@@ -34,7 +34,7 @@ describe("the treehouse deck", () => {
     // the decks' arc is solid: no place in it is kept
     const a = (D.decks.from + D.decks.to) / 2 * Math.PI / 180, mid = (D.decks.inner + D.decks.outer) / 2;
     const p = keepOnDeck(d, d.x + Math.cos(a) * mid, d.z + Math.sin(a) * mid), pr = Math.hypot(p.x - d.x, p.z - d.z);
-    expect([pr, pr < D.decks.inner || pr > D.decks.outer]).toEqual([pr, true]);
+    expect([pr, pr <= D.decks.inner + 1e-6 || pr > D.decks.outer]).toEqual([pr, true]); // (behind them, where she stands to play, or past their front)
     expect(onTreehouse(g)).toBe(true);
   });
 

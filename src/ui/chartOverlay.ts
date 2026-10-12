@@ -1,18 +1,18 @@
 // The sea chart over the game (Ed, 2026-10-11: "The world map is in the centre" of the treehouse deck; rules/treehouse.ts): E at
 // the deck's map table opens the chart's own page (chart.html: render/chart/seaChart.ts, app/chartPage.ts) in a frame over the
-// game. Mid-night, only to look (?look=1: choose an island to read its card, no sailing); between nights (the night won or the
-// party over), to sail from, as the page does. Esc, E or the ✕ closes it. A placeholder for the chart's own view on the table.
+// game, to sail from at any time (Ed: "Sail anytime"): its sail asks `onSail` (the game records the night, unwon if it's still on,
+// then sails). Esc, E or the ✕ closes it. A stand-in for the chart's own embeddable view (mountChart, #702).
 
-let open: HTMLDivElement | null = null;
+let open: HTMLDivElement | null = null, sailing: ((href: string) => void) | null = null;
 
-/** Open the chart over the game: `look` mid-night (no sailing). Does nothing if it's already open. */
-export function openChart(look: boolean): void {
+/** Open the chart over the game; `onSail` with the island's link when she sails. Does nothing if it's already open. */
+export function openChart(onSail: (href: string) => void): void {
   if (open) return;
   const wrap = document.createElement("div");
   wrap.id = "chart-overlay";
   wrap.style.cssText = "position:fixed;inset:4vh 4vw;z-index:50;border:2px solid #3a2f5c;border-radius:8px;overflow:hidden;background:#05060e;box-shadow:0 0 0 100vmax rgba(5,6,14,.55)";
   const frame = document.createElement("iframe");
-  frame.src = `chart.html?${look ? "look=1" : "sail=1"}`;
+  frame.src = "chart.html";
   frame.title = "Sea chart";
   frame.style.cssText = "width:100%;height:100%;border:0;display:block";
   const close = document.createElement("button");
@@ -22,7 +22,7 @@ export function openChart(look: boolean): void {
   close.onclick = closeChart;
   wrap.append(frame, close);
   document.body.append(wrap);
-  open = wrap;
+  open = wrap; sailing = onSail;
   frame.addEventListener("load", () => frame.contentWindow?.focus());
 }
 
@@ -36,5 +36,8 @@ export function closeChart(): void {
 export const chartOpen = (): boolean => !!open;
 
 // The chart page asks to close (its Esc or E: app/chartPage.ts), as does Esc here.
-window.addEventListener("message", e => { if (e.data === "chart:close") closeChart(); });
+window.addEventListener("message", e => {
+  if (e.data === "chart:close") closeChart();
+  else if (open && typeof e.data?.chartSail === "string") { const go = sailing; closeChart(); go?.(new URL(e.data.chartSail, location.href).href); }
+});
 window.addEventListener("keydown", e => { if (open && e.key === "Escape") { e.preventDefault(); closeChart(); } });

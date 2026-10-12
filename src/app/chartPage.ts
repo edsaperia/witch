@@ -16,7 +16,9 @@ import { allSave, loadSave, newCampaign, unlocked, worldSeed } from "./chartSave
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 
-const params = new URLSearchParams(location.search), look = params.get("look") === "1", inFrame = window.parent !== window, showAll = params.get("chart") === "all" || params.has("all");
+// Over the game, opened at the treehouse deck's map table (ui/chartOverlay.ts): sailing asks the game to sail (it records the night first).
+const inFrame = window.parent !== window, sailFrom = (href: string) => window.parent.postMessage({ chartSail: href }, "*");
+const params = new URLSearchParams(location.search), showAll = params.get("chart") === "all" || params.has("all");
 let save = showAll ? allSave() : loadSave();
 // The world (golf, #685; Ed, 2026-10-11): the campaign's own seed, or ?world= for this look (shared links); the islands' links carry it on.
 const linkWorld = params.get("world"), worldNow = () => (linkWorld ? worldSeed(linkWorld) : save.world);
@@ -40,8 +42,6 @@ function build(): void {
   $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${showAll ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${showAll ? " · showing everything (?chart=all)" : ""}`;
   $("world").textContent = `World seed: ${w}${linkWorld ? " (from the link)" : ""}`;
   ($("home") as HTMLAnchorElement).href = sailHref("home");
-  // Over the game from the treehouse deck's map table (ui/chartOverlay.ts): mid-night only to look; between nights its links sail the game's page.
-  if (look) { $("home").hidden = true; $("start-over").hidden = true; } else if (inFrame) { ($("home") as HTMLAnchorElement).target = "_top"; ($("sail") as HTMLAnchorElement).target = "_top"; }
 }
 
 /** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
@@ -55,10 +55,11 @@ function choose(id: string | null, instant = false): void {
   $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
   $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
   $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "wake its legend to find it";
-  sail.hidden = !isl.sail || look; // (opened mid-night from the treehouse deck's map table: only to look, ui/chartOverlay.ts)
+  sail.hidden = !isl.sail;
   sail.href = sailHref(id!);
 }
-const sailTo = (id: string | null) => { const isl = islands.find(i => i.id === id); if (isl?.sail && !look) (inFrame ? window.parent : window).location.href = sailHref(id!); }; // (from the treehouse's table: the game's page sails)
+const sailTo = (id: string | null) => { const isl = islands.find(i => i.id === id); if (isl?.sail) { if (inFrame) sailFrom(sailHref(id!)); else location.href = sailHref(id!); } };
+if (inFrame) for (const a of [$("home"), $("sail")] as HTMLAnchorElement[]) a.addEventListener("click", e => { e.preventDefault(); sailFrom(a.href); });
 
 // Pointer: tap or click an island to choose it, again to sail; drag nothing (the camera only follows the choice); the wheel
 // or a pinch zooms.
