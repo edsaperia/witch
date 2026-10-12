@@ -54,7 +54,7 @@ export class Whale {
     const at = c.currentTime + 0.01, base = Wh.depth * (kind === "enraged" ? 0.8 : kind === "happy" ? 1.15 : 1);
     const dur = kind === "swell" ? Math.max(0.3, length) : ({ happy: 2.4, grumpy: 2, enraged: 3.2, sleep: 3, nightmare: 2.6 } as Record<string, number>)[kind] / sp;
     const vol = volume * near, pts = SHAPES[kind];
-    const out = K.voice(pan), g = c.createGain();
+    const out = K.voice(pan, 0.4 + 0.4 * near, dur + 3), g = c.createGain();
     g.connect(out); g.connect(K.space());
     // swell: builds to the end; the rest breathe in and out slowly
     g.gain.setValueAtTime(0.0001, at);

@@ -2,6 +2,81 @@
   "_note": "Ed's decisions panel (src/ui/decide.ts; ?decide or F2 in the game) and the pause page's test sliders (Esc: every entry, by group, down the left, with Copy values; Ed, 2026-10-12). Each entry: id, pr (the pull request that added it) and group (that PR's short name: the pause page's heading, \"#pr group\", newest PR first), label, a one-line note, a control (toggle, choice of 2 to 4 options, or slider with min, max and step), the shipped default, and what it changes: a tuning knob by its path (applied live to the running game) or a URL switch (param; reload: true when the game reads it only as it loads). Confirm opens a new GitHub issue labelled decision with the choice; the coordinator acts on those.",
   "decisions": [
     {
+      "id": "sigilBackingDark", "pr": 756, "group": "Sigil backing", "label": "Backing darkness", "note": "How dark the patch under every sigil on the ground is (0: none, and no opaque sigil either: as #752).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.85, "apply": { "knob": "leash.sigilBacking.dark" }
+    },
+    {
+      "id": "sigilBackingSize", "pr": 756, "group": "Sigil backing", "label": "Backing size (times the sigil)", "note": "How wide the dark patch is, times the sigil's own width.",
+      "control": { "type": "slider", "min": 0.8, "max": 2, "step": 0.05 },
+      "default": 1.1, "apply": { "knob": "leash.sigilBacking.size" }
+    },
+    {
+      "id": "sigilBackingInk", "pr": 756, "group": "Sigil backing", "label": "Sigil opacity", "note": "How solid the sigil is painted over its patch, times how much it shows (a fresh rune, the ghost fainter).",
+      "control": { "type": "slider", "min": 0, "max": 3, "step": 0.1 },
+      "default": 1.5, "apply": { "knob": "leash.sigilBacking.ink" }
+    },
+    {
+      "id": "trunkShadowFoot", "pr": 754, "group": "Trunk shadow fades", "label": "Fade at the foot (m)", "note": "How far from its trunk's foot a shadow fades in from nothing (0: none).",
+      "control": { "type": "slider", "min": 0, "max": 6, "step": 0.25 },
+      "default": 1.5, "apply": { "knob": "shadows.trunks.foot" }
+    },
+    {
+      "id": "trunkShadowTaper", "pr": 754, "group": "Trunk shadow fades", "label": "Taper at the foot (m)", "note": "How far from its foot a shadow opens out from a third of its width, so wide roots don't splay (0: none).",
+      "control": { "type": "slider", "min": 0, "max": 6, "step": 0.25 },
+      "default": 2, "apply": { "knob": "shadows.trunks.taper" }
+    },
+    {
+      "id": "trunkShadowNear", "pr": 754, "group": "Trunk shadow fades", "label": "Fade near her (m)", "note": "A trunk's shadow fades to nothing as she comes within this distance of the trunk (0: never).",
+      "control": { "type": "slider", "min": 0, "max": 20, "step": 0.5 },
+      "default": 6, "apply": { "knob": "shadows.trunks.near" }
+    },
+    {
+      "id": "trunkShadowCover", "pr": 754, "group": "Trunk shadow fades", "label": "Darkens grass and flowers", "note": "How much a shadow darkens the grass, flowers and tufts it falls on (1: as much as the ground; 0: not at all).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 1, "apply": { "knob": "shadows.trunks.cover" }
+    },
+    {
+      "id": "sceneryShadows", "pr": 759, "group": "Scenery shadows", "label": "Scenery casts shadows", "note": "Temples, castles, ruins, set pieces, relics, runestones and soundsystems cast shadows from her glow and the campfires, as the tree trunks do.",
+      "control": { "type": "toggle" },
+      "default": true, "apply": { "knob": "shadows.trunks.scenery" }
+    },
+    {
+      "id": "sceneryShadowMin", "pr": 759, "group": "Scenery shadows", "label": "Shortest that casts (m)", "note": "Scenery shorter than this casts no shadow.",
+      "control": { "type": "slider", "min": 0, "max": 6, "step": 0.1 },
+      "default": 1.2, "apply": { "knob": "shadows.trunks.sceneryMin" }
+    },
+    {
+      "id": "shadowTint", "pr": 759, "group": "Scenery shadows", "label": "Shadow colour (scenery)", "note": "How far scenery's shadows take the complement of the light throwing them (0: black; a campfire's orange throws blue-violet).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.6, "apply": { "knob": "shadows.trunks.tint" }
+    },
+    {
+      "id": "shadowTintTrees", "pr": 759, "group": "Scenery shadows", "label": "Shadow colour (trees)", "note": "The same for the trees' and palms' shadows (0: black, as before), to compare.",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0, "apply": { "knob": "shadows.trunks.tintTrees" }
+    },
+    {
+      "id": "shadowGlowLight", "pr": 759, "group": "Scenery shadows", "label": "Glowing casters' shadows", "note": "How light the shadows of things lit with their own colour are (runestones, soundsystems), in a soft shade of that colour (0: as dark as any).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.7, "apply": { "knob": "shadows.trunks.glowLight" }
+    },
+    {
+      "id": "sceneryShadowFoot", "pr": 759, "group": "Scenery shadows", "label": "Fade at the base (m)", "note": "Scenery's shadows (runestones, soundsystems, ruins...) fade in from nothing at their base, over this far past their own edge (0: no fade).",
+      "control": { "type": "slider", "min": 0, "max": 8, "step": 0.25 },
+      "default": 2, "apply": { "knob": "shadows.trunks.sceneryFoot" }
+    },
+    {
+      "id": "sceneryShadowTaper", "pr": 759, "group": "Scenery shadows", "label": "Taper (times its width)", "note": "Scenery's shadows are pinched at their base and open out over this share of the piece's width past its edge, so wide ruins and soundsystems open out over more ground than narrow runestones (0: no taper).",
+      "control": { "type": "slider", "min": 0, "max": 2, "step": 0.05 },
+      "default": 0.5, "apply": { "knob": "shadows.trunks.sceneryTaper" }
+    },
+    {
+      "id": "sfxVoices", "pr": 755, "group": "Sound voice budget", "label": "Most sound effects at once", "note": "The one-shot sound effects allowed at once; past it, the ones that matter least (far creatures, the beds' little details) aren't played and lesser ones playing are cut short for hers and the stings. 0: no limit. Lower it if the sound cuts out.",
+      "control": { "type": "slider", "min": 0, "max": 64, "step": 1 },
+      "default": 24, "apply": { "knob": "sfx.budget.voices" }
+    },
+    {
       "id": "sigilGlyph", "pr": 752, "group": "Sigil glow", "label": "Sigil strength", "note": "How bright every sigil is drawn (placed, runes, ghost, stack, treetops). 0.5 stays under the bloom; lift it if they're faint on bright ground.",
       "control": { "type": "slider", "min": 0, "max": 1.5, "step": 0.05 },
       "default": 0.5, "apply": { "knob": "leash.sigilGlyph" }
@@ -12,24 +87,54 @@
       "default": 0, "apply": { "knob": "leash.sigilHalo" }
     },
     {
+      "id": "chartMoonShadow", "pr": 751, "group": "Chart moon", "label": "Island shadow darkness", "note": "How dark the islands' moon shadows are on the sea and in their valleys (0 none).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.6, "apply": { "knob": "chart.moon.shadow" }
+    },
+    {
+      "id": "chartMoonHeight", "pr": 751, "group": "Chart moon", "label": "Moon height (degrees)", "note": "How high the moon goes; lower makes the shadows longer.",
+      "control": { "type": "slider", "min": 6, "max": 60, "step": 1 },
+      "default": 22, "apply": { "knob": "chart.moon.height" }
+    },
+    {
+      "id": "chartMoonTurn", "pr": 751, "group": "Chart moon", "label": "Seconds a turn", "note": "How long the moon takes to go once round the chart.",
+      "control": { "type": "slider", "min": 30, "max": 600, "step": 10 },
+      "default": 240, "apply": { "knob": "chart.moon.turn" }
+    },
+    {
+      "id": "chartMoonRise", "pr": 751, "group": "Chart moon", "label": "Rise (s)", "note": "How long the moon takes to rise over the north-west edge as the chart opens.",
+      "control": { "type": "slider", "min": 0, "max": 15, "step": 0.5 },
+      "default": 6, "apply": { "knob": "chart.moon.rise" }
+    },
+    {
+      "id": "chartMoonDisc", "pr": 751, "group": "Chart moon", "label": "Moon disc in the sky", "note": "Draw the moon itself past the rim, where it is.",
+      "control": { "type": "toggle" },
+      "default": true, "apply": { "knob": "chart.moon.disc" }
+    },
+    {
+      "id": "chartEdgeBand", "pr": 751, "group": "Chart moon", "label": "Empty sea round the edge", "note": "How far the open sea reaches past the furthest islands, as a share of their radius.",
+      "control": { "type": "slider", "min": 0, "max": 0.6, "step": 0.02 },
+      "default": 0.18, "apply": { "knob": "chart.edgeBand" }
+    },
+    {
       "id": "trunkShadowStrength", "pr": 748, "group": "Trunk shadows", "label": "Shadow darkness", "note": "How dark a trunk's or palm's shadow is at its darkest (near its foot and the light).",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
-      "default": 0.6, "apply": { "knob": "shadows.trunks.strength" }
+      "default": 0.75, "apply": { "knob": "shadows.trunks.strength" }
     },
     {
       "id": "trunkShadowLength", "pr": 748, "group": "Trunk shadows", "label": "Shadow length (times the trunk)", "note": "The longest a shadow stretches, times its trunk's height.",
       "control": { "type": "slider", "min": 0.3, "max": 3, "step": 0.1 },
-      "default": 1.2, "apply": { "knob": "shadows.trunks.long" }
+      "default": 2.5, "apply": { "knob": "shadows.trunks.long" }
     },
     {
       "id": "trunkShadowGlowReach", "pr": 748, "group": "Trunk shadows", "label": "Her glow's reach (m)", "note": "How far from her a trunk still casts a shadow from her glow (fading to nothing at the edge).",
-      "control": { "type": "slider", "min": 5, "max": 50, "step": 1 },
-      "default": 20, "apply": { "knob": "shadows.trunks.glowReach" }
+      "control": { "type": "slider", "min": 5, "max": 80, "step": 1 },
+      "default": 50, "apply": { "knob": "shadows.trunks.glowReach" }
     },
     {
       "id": "trunkShadowGlowHeight", "pr": 748, "group": "Trunk shadows", "label": "Her glow's height (m)", "note": "How high her glow casts from: lower makes longer shadows.",
       "control": { "type": "slider", "min": 0.5, "max": 10, "step": 0.25 },
-      "default": 2.5, "apply": { "knob": "shadows.trunks.glowHeight" }
+      "default": 1.25, "apply": { "knob": "shadows.trunks.glowHeight" }
     },
     {
       "id": "trunkShadowMode", "pr": 748, "group": "Trunk shadows", "label": "Shadow style", "note": "Soft (a blurred silhouette, as dark as hard at its core), hard (on the art's pixels, two tones) or off.",
@@ -39,17 +144,17 @@
     {
       "id": "trunkShadowCore", "pr": 748, "group": "Trunk shadows", "label": "Soft shadow's core", "note": "Soft: how soon it reaches full darkness toward its foot and the light (smaller: a bigger dark core).",
       "control": { "type": "slider", "min": 0.05, "max": 1, "step": 0.05 },
-      "default": 0.3, "apply": { "knob": "shadows.trunks.core" }
+      "default": 0.8, "apply": { "knob": "shadows.trunks.core" }
     },
     {
       "id": "trunkShadowAcross", "pr": 748, "group": "Trunk shadows", "label": "Width that casts", "note": "The share of a trunk's sprite width that casts (smaller: just the trunk; larger: its low boughs too).",
       "control": { "type": "slider", "min": 0.2, "max": 1, "step": 0.05 },
-      "default": 0.5, "apply": { "knob": "shadows.trunks.across" }
+      "default": 1, "apply": { "knob": "shadows.trunks.across" }
     },
     {
       "id": "trunkShadowFireReach", "pr": 748, "group": "Trunk shadows", "label": "A campfire's reach (m)", "note": "How far a campfire's light, and so its shadows, reach (it lights the ground that far too).",
-      "control": { "type": "slider", "min": 8, "max": 40, "step": 1 },
-      "default": 22, "apply": { "knob": "lights.campfire.reach" }
+      "control": { "type": "slider", "min": 8, "max": 60, "step": 1 },
+      "default": 40, "apply": { "knob": "lights.campfire.reach" }
     },
     {
       "id": "bubbleScale", "pr": 726, "group": "Dream bubbles grow", "label": "Bubble size", "note": "Every speech and dream bubble's pixel, the witch's and the creatures' (times each one's level share below).",

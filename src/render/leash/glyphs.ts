@@ -17,6 +17,12 @@ export const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.82, 0.52, 0.28], [0.91, 0.71
 export const PIXEL_DOT_MAX = 1.4;
 export const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 export const SQ = SLOTS * SLOTS - 1; // and the last a solid square
+/** The slot before it: the dark backing disc under a sigil on the ground (Ed, 2026-10-12, Bravo's o3: "the same width as the sigil,
+ *  darker, edges not too smooth"): near-black in chunky cells, its outer step lighter, drawn once and scaled to each glyph. */
+export const DISC = SQ - 1;
+/** How far a sigil's write-on has got, 0 to 1, over `secs` from `at`, both on the same clock (her clock: a placed sigil's stamp is
+ *  hers, rules/sigilButton.ts; on the world's it went negative after slowed time and the sigil's light turned black). */
+export const writeOn = (now: number, at: number, secs = 0.8): number => Math.min(1, Math.max(0, (now - at) / secs));
 export const LEGEND_LEVEL = 3, LEGEND_ROW = 10; // legendary sigils' 2 × 2 blocks fill rows 10 to 13 (16 of them); the rest from slot 1 up
 /** Whether a creature's sigil in the stack, as a leash point and its ghost, is the legendary one (art/sigils.js `legendary`):
  *  every legend's (in the stack only once she can carry one: a party legend, or a legend let go and invited). */
@@ -85,9 +91,10 @@ void main() {
 
 const INSTANCE_ATTRS = ["iPos", "iSize", "iUv", "iCol", "iDraw"];
 
-/** Whether an atlas rect is a sigil's glyph (every slot but the soft dot in slot 0 and the solid square in the last). */
+/** Whether an atlas rect is a sigil's glyph (every slot but the soft dot in slot 0, the backing disc and the solid square in the last). */
 export function isGlyph(uv: number[]): boolean {
-  return !(uv[0] === 0 && uv[1] === 1) && !(uv[0] === (SQ % SLOTS) / SLOTS && uv[1] === 1 - Math.floor(SQ / SLOTS) / SLOTS);
+  const at = (k: number) => uv[0] === (k % SLOTS) / SLOTS && uv[1] === 1 - Math.floor(k / SLOTS) / SLOTS;
+  return !(uv[0] === 0 && uv[1] === 1) && !at(SQ) && !at(DISC);
 }
 
 export class Instances {

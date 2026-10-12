@@ -193,6 +193,56 @@
       ],
       "additionalProperties": false
     },
+    "chart": {
+      "type": "object",
+      "properties": {
+        "moon": {
+          "type": "object",
+          "properties": {
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "from": {
+              "type": "number"
+            },
+            "shadow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "disc": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "rise",
+            "turn",
+            "height",
+            "from",
+            "shadow",
+            "disc"
+          ],
+          "additionalProperties": false
+        },
+        "edgeBand": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "moon",
+        "edgeBand"
+      ],
+      "additionalProperties": false
+    },
     "islands": {
       "type": "object",
       "properties": {
@@ -3389,6 +3439,29 @@
           "type": "number",
           "minimum": 0
         },
+        "sigilBacking": {
+          "type": "object",
+          "properties": {
+            "dark": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ink": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "dark",
+            "size",
+            "ink"
+          ],
+          "additionalProperties": false
+        },
         "restAbove": {
           "type": "number",
           "minimum": 0
@@ -3553,6 +3626,7 @@
         "placedThrough",
         "sigilGlyph",
         "sigilHalo",
+        "sigilBacking",
         "restAbove",
         "hex",
         "runePull",
@@ -5595,6 +5669,19 @@
           "type": "number",
           "minimum": 0
         },
+        "budget": {
+          "type": "object",
+          "properties": {
+            "voices": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "voices"
+          ],
+          "additionalProperties": false
+        },
         "voice": {
           "type": "object",
           "properties": {
@@ -6817,6 +6904,7 @@
         "on",
         "volume",
         "hear",
+        "budget",
         "voice",
         "hit",
         "fill",
@@ -7668,11 +7756,30 @@
     "arrive": {
       "type": "object",
       "properties": {
-        "push": {
-          "type": "number",
-          "minimum": 0
+        "warm": {
+          "type": "object",
+          "properties": {
+            "frames": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "frames",
+            "ms",
+            "max"
+          ],
+          "additionalProperties": false
         },
-        "pushTime": {
+        "maxStep": {
           "type": "number",
           "minimum": 0
         },
@@ -7744,8 +7851,8 @@
         }
       },
       "required": [
-        "push",
-        "pushTime",
+        "warm",
+        "maxStep",
         "fade",
         "speed",
         "minLeg",
@@ -9896,6 +10003,49 @@
             "core": {
               "type": "number",
               "minimum": 0
+            },
+            "foot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "taper": {
+              "type": "number",
+              "minimum": 0
+            },
+            "near": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cover": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scenery": {
+              "type": "boolean"
+            },
+            "sceneryMin": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tint": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tintTrees": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowLight": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sceneryFoot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sceneryTaper": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -9905,7 +10055,18 @@
             "glowReach",
             "glowHeight",
             "across",
-            "core"
+            "core",
+            "foot",
+            "taper",
+            "near",
+            "cover",
+            "scenery",
+            "sceneryMin",
+            "tint",
+            "tintTrees",
+            "glowLight",
+            "sceneryFoot",
+            "sceneryTaper"
           ],
           "additionalProperties": false
         }
@@ -10288,6 +10449,7 @@
     "mapAreas",
     "map",
     "lakes",
+    "chart",
     "islands",
     "beach",
     "areaSize",

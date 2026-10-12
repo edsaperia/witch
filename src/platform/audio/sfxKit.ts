@@ -34,13 +34,38 @@ export class SfxKit {
     return true;
   }
 
-  /** A gain into a panner into the bus: one sound's output. */
-  voice(pan: number): GainNode {
-    const c = this.ctx, g = c.createGain(), p = c.createStereoPanner();
+  /** A gain into a panner into the bus: one sound's output. Every one-shot is counted against the budget (the tuning's
+   *  sfx.budget.voices; Ed's playtest, 2026-10-12: "the sound is cutting out ... too many simultaneous sounds"): over it, a
+   *  sound that matters less than every one sounding (`prio`, 0 to 1: her own sounds and the stings 1, a creature's by how
+   *  near it is, the beds' scattered details low) is given a gain that goes nowhere (built, never heard, never rendered),
+   *  and one that matters more takes the place of the least that's sounding (faded out in 20 ms). `life`: how long it
+   *  sounds (s), Infinity for a lasting one (a bed's murmur), which isn't counted. */
+  voice(pan: number, prio = 0.5, life = 1.5): GainNode {
+    const c = this.ctx, g = c.createGain();
+    if (Number.isFinite(life)) {
+      const cap = this.T.budget?.voices ?? 0, now = c.currentTime, live = this.live;
+      let n = 0;
+      for (const v of live) if (v.end > now) live[n++] = v;
+      live.length = n;
+      if (cap > 0 && n >= cap) {
+        let low = 0;
+        for (let i = 1; i < n; i++) if (live[i].prio < live[low].prio) low = i;
+        if (prio <= live[low].prio) { this.budget.culled++; return g; } // (never connected: nothing of it is rendered)
+        const v = live[low]; v.g.gain.cancelScheduledValues(now); v.g.gain.setTargetAtTime(0, now, 0.02); v.end = now; live.splice(low, 1);
+        this.budget.stolen++;
+      }
+      live.push({ end: now + life, prio, g });
+      if (live.length > this.budget.peak) this.budget.peak = live.length;
+    }
+    const p = c.createStereoPanner();
     p.pan.value = Math.max(-1, Math.min(1, pan));
     g.connect(p); p.connect(this.out);
     return g;
   }
+  /** The one-shots sounding (or still to sound) by the budget's count. */
+  private live: { end: number; prio: number; g: GainNode }[] = [];
+  /** The budget's count since the start: the most at once, those never played and those cut short (the audit reads it). */
+  readonly budget = { peak: 0, culled: 0, stolen: 0 };
   env(g: GainNode, at: number, peak: number, attack: number, decay: number): void {
     g.gain.setValueAtTime(0.0001, at);
     g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), at + attack);
