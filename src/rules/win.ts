@@ -2,8 +2,12 @@
 //   Last call: the next wave's stone is the route's last (finalStone): the wave pointer shows 🎉 for it.
 //   Stragglers: the last wave landed, while any enraged animal lives, a pointer to the one nearest the centre (winTarget).
 //     Enraged legends don't count (Ed, 2026-10-11): they never hold the win up.
-//   Victory lap: none left, the pulse races back along the route to home (winPulse), every stone it passes firing its
-//     fireworks (a waveCelebrate event, as a celebrated wave's), the music on to its victory section (musicPlan's cue).
+//   The island cleared (Ed, 2026-10-12): every area cleared before its wave, the waves still to come would only celebrate, so
+//     the stragglers (then the lap) come at once, not when the wave's pulse reaches the route's end.
+//   Victory lap: none left, two fast pulses set off at once from where the wave's pulse is on the line (Ed, 2026-10-12), one
+//     racing back along the route to home (winPulse), the other on to the route's end (winPulseOut), every stone either passes
+//     firing its fireworks (a waveCelebrate event, as a celebrated wave's), the music on to its victory section (musicPlan's
+//     cue). The waves stop as the lap sets off.
 //   The win, as the lap reaches home: the island's sigil (islandSigil), the night's legends woken (Ed, 2026-10-11: not in the
 //     conga, but they come home and dance there as party legends) save any still enraged, which calm and go back to sleep in
 //     their clearing, their islands not found; every other animal on the island a party animal in one giant conga line round
@@ -16,6 +20,13 @@ import { LEGEND } from "./creatures";
 import { befriend } from "./creatureStates";
 import { lull } from "./legends";
 import { islandSigilOf } from "./dancefloor";
+import { allReached, cellKey } from "./party";
+import { leyChain } from "./leylines";
+import { pulseProgress } from "./leypulse";
+
+/** A point on one of the lap's pulses' runs: a stone (its key; "" for where it set off), where it stands, when the pulse passes
+ *  it, and its place along the ley route as drawn (links: home's stone 0, the route's j-th stone j). */
+export interface LapPoint { key: string; x: number; z: number; at: number; links: number }
 
 export type WinPhase = "stragglers" | "lap" | "won";
 
@@ -28,10 +39,15 @@ export interface WinState {
   /** The stragglers' pointer: the enraged animal nearest the centre, re-picked every win.retarget seconds. */
   target: number | null;
   pickedAt: number;
-  /** The lap's stones, last reached first, home last: where each stands and when the pulse passes it. */
-  lap: { key: string; x: number; z: number; at: number }[];
-  /** Fired so far (the lap's stones passed). */
+  /** The home pulse's run: where it set off (the wave's pulse's place as the lap began), then the stones reached, last first,
+   *  home last. */
+  lap: LapPoint[];
+  /** Fired so far (the lap's points passed, where it set off among them). */
   fired: number;
+  /** The outward pulse's run: where it set off, then the route's stones still ahead (each cleared before its wave), in order;
+   *  just where it set off when the route was done. And its points passed. */
+  out?: LapPoint[];
+  firedOut?: number;
   /** The island's sigil (islandSigil: a kind's island its kind's, home the World Tree's). */
   sigil: string;
   /** The night's dealt legends won (woken, their islands found: the card's, and the sea chart's), and those still enraged at the
@@ -46,7 +62,7 @@ export interface WinState {
 }
 
 export interface WinTuning {
-  /** The lap's pulse, m/s along the route back to home. */
+  /** The lap's pulses, m/s along the route (back to home, and on to its end). */
   lapSpeed: number;
   /** The conga: its pace round the dancefloor (m/s), the gap between dancers (m), and its smallest radius (m). */
   congaSpeed: number;
@@ -79,6 +95,10 @@ const isLegend = (c: Creature) => !!c.boss || c.level === LEGEND;
 
 /** The route's last wave has landed: no stone left to wake. */
 export const routeDone = (g: Game): boolean => g.party.wave > 0 && g.party.next.length === 0;
+
+/** The island's cleared (Ed, 2026-10-12): every area on it has the party (or is ruined) before the route's last wave, which
+ *  would only celebrate. */
+export const islandCleared = (g: Game): boolean => g.party.wave > 0 && allReached(g.party, g.map);
 
 /** The next wave's stone is the route's last (the wave pointer's 🎉). */
 export const finalStone = (g: Game): boolean => g.party.next.length > 0 && g.party.afterNext.length === 0;
@@ -114,26 +134,53 @@ export function winFlare(g: Game): { sigil: string; drawn: number } | null {
   return since < T.flare ? { sigil: w.sigil, drawn: Math.min(1, since / Math.max(1e-3, T.flareDraw)) } : null;
 }
 
-/** The lap's stones: the route's, last reached first, then home. */
-function lapStones(g: Game, from: number, speed: number): WinState["lap"] {
-  const p = g.party, order = [...(p.waveReached ?? new Map()).entries()].sort((a, b) => b[1].wave - a[1].wave || b[1].at - a[1].at);
-  const pts: { key: string; x: number; z: number }[] = [];
-  for (const [key] of order) { const [cx, cy] = key.split(",").map(Number); const s = g.map.soundsystemSpot(cx, cy); pts.push({ key, x: s.x, z: s.z }); }
-  pts.push({ key: "home", x: g.map.dancefloor.x, z: g.map.dancefloor.z });
-  let d = 0;
-  return pts.map((q, i) => { if (i > 0) d += Math.hypot(q.x - pts[i - 1].x, q.z - pts[i - 1].z); return { ...q, at: from + d / speed }; });
+/** The lap's two runs (Ed, 2026-10-12), both from where the wave's pulse is on the ley line now (at the route's last stone once
+ *  it's done): home, through every stone reached, last first; and out, through the stones still ahead, to the route's end. */
+function lapRuns(g: Game, from: number, speed: number): { home: LapPoint[]; out: LapPoint[] } {
+  const p = g.party, c = leyChain(p, g.map), S = c.stones, n = S.length;
+  const links = Math.max(0, Math.min(n - 1, c.current + (routeDone(g) ? 0 : pulseProgress(p, g.map, from))));
+  const k = Math.floor(links), a = S[k], b = S[Math.min(n - 1, k + 1)], f = links - k;
+  const start: LapPoint = { key: "", x: a.x + (b.x - a.x) * f, z: a.z + (b.z - a.z) * f, at: from, links };
+  const run = (stones: number[]): LapPoint[] => {
+    let d = 0, prev: { x: number; z: number } = start;
+    return [start, ...stones.map(i => { const s = S[i]; d += Math.hypot(s.x - prev.x, s.z - prev.z); prev = s; return { key: i === 0 ? "home" : cellKey(s.cell), x: s.x, z: s.z, at: from + d / speed, links: i }; })];
+  };
+  const home: number[] = [], out: number[] = [];
+  for (let i = k; i >= 0; i--) home.push(i);
+  for (let i = k + 1; i < n; i++) out.push(i);
+  return { home: run(home), out: run(out) };
 }
 
-/** Where the lap's pulse is: between which stones and how far (0 to 1), or null outside the lap. */
-/** (`links`: its place along the ley route as drawn, home's stone 0 and the route's j-th stone j: the stone it left, less the share.) */
-export function winPulse(g: Game): { from: { x: number; z: number }; to: { x: number; z: number }; share: number; x: number; z: number; links: number } | null {
-  const w = g.win;
-  if (!w || w.phase !== "lap" || w.lap.length < 2) return null;
-  const t = g.clock.time;
+/** Where a run's pulse is at time `t`: between which points and how far (0 to 1), and its place along the route; null once
+ *  it's there (or with nowhere to go). */
+function along(R: LapPoint[] | undefined, t: number): { from: { x: number; z: number }; to: { x: number; z: number }; share: number; x: number; z: number; links: number } | null {
+  if (!R || R.length < 2 || t >= R[R.length - 1].at) return null;
   let i = 0;
-  while (i < w.lap.length - 2 && t >= w.lap[i + 1].at) i++;
-  const a = w.lap[i], b = w.lap[i + 1], share = Math.max(0, Math.min(1, (t - a.at) / Math.max(1e-6, b.at - a.at)));
-  return { from: a, to: b, share, x: a.x + (b.x - a.x) * share, z: a.z + (b.z - a.z) * share, links: w.lap.length - 1 - i - share };
+  while (i < R.length - 2 && t >= R[i + 1].at) i++;
+  const a = R[i], b = R[i + 1], share = Math.max(0, Math.min(1, (t - a.at) / Math.max(1e-6, b.at - a.at)));
+  return { from: a, to: b, share, x: a.x + (b.x - a.x) * share, z: a.z + (b.z - a.z) * share, links: a.links + (b.links - a.links) * share };
+}
+
+/** Where the lap's home pulse is: between which points and how far (0 to 1), or null outside the lap. */
+/** (`links`: its place along the ley route as drawn, home's stone 0 and the route's j-th stone j.) */
+export function winPulse(g: Game): ReturnType<typeof along> {
+  const w = g.win;
+  return w?.phase === "lap" ? along(w.lap, g.clock.time) : null;
+}
+
+/** Where the lap's outward pulse is (on to the route's end, through the stones cleared before their waves), or null: none
+ *  outside the lap and after it, nor once it's there (it may still run after the win). */
+export function winPulseOut(g: Game): ReturnType<typeof along> {
+  const w = g.win;
+  return w && w.phase !== "stragglers" ? along(w.out, g.clock.time) : null;
+}
+
+/** How far along the route (links) the line is lit from the lap on (the outward pulse lights it as it goes; all of it once
+ *  it's there), or null before the lap. */
+export function winLit(g: Game): number | null {
+  const w = g.win;
+  if (!w || w.phase === "stragglers" || !w.out?.length) return null;
+  return winPulseOut(g)?.links ?? w.out[w.out.length - 1].links;
 }
 
 /** The conga's dancers: every animal on the island but the legends, in their places' order (round from the leader). */
@@ -211,21 +258,23 @@ export function stepWin(g: Game, dt: number): void {
   if (g.partyOver && g.win?.phase !== "won") return; // (lost first: the afterparty's)
   const time = g.clock.time, T = tuningOf(g);
   if (!g.win) {
-    if (!routeDone(g)) return;
+    if (!routeDone(g) && !islandCleared(g)) return;
     g.win = { phase: "stragglers", lastWaveAt: time, target: null, pickedAt: -Infinity, lap: [], fired: 0, sigil: islandSigil(g), found: [], lost: [], card: false, lead: 0, congaSize: 0 };
   }
   const w = g.win;
   if (w.phase === "stragglers") {
     if (time - w.pickedAt >= T.retarget) { w.target = nearestStraggler(g)?.id ?? null; w.pickedAt = time; }
-    if (w.target === null) { w.phase = "lap"; w.lapAt = time; w.lap = lapStones(g, time, T.lapSpeed); }
-    return;
+    if (w.target === null) { w.phase = "lap"; w.lapAt = time; const R = lapRuns(g, time, T.lapSpeed); w.lap = R.home; w.out = R.out; w.fired = 0; w.firedOut = 0; }
+    else return;
   }
+  // each stone a pulse passes fires its fireworks (the route's stones, either way; home's at the win, below)
+  const fire = (R: LapPoint[], i: number, upTo: number): number => {
+    for (; i < upTo && time >= R[i].at; i++) if (R[i].key) g.waveEvents.push({ kind: "waveCelebrate", key: R[i].key, x: R[i].x, z: R[i].z, at: time, wave: g.party.wave });
+    return i;
+  };
+  if (w.out) w.firedOut = fire(w.out, w.firedOut ?? 0, w.out.length);
   if (w.phase === "lap") {
-    // each stone the pulse passes fires its fireworks (the route's stones; home's at the win, below)
-    while (w.fired < w.lap.length - 1 && time >= w.lap[w.fired].at) {
-      const s = w.lap[w.fired++];
-      g.waveEvents.push({ kind: "waveCelebrate", key: s.key, x: s.x, z: s.z, at: time, wave: g.party.wave });
-    }
+    w.fired = fire(w.lap, w.fired, w.lap.length - 1);
     if (time < w.lap[w.lap.length - 1].at) return;
     w.fired = w.lap.length;
     win(g, time);

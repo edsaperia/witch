@@ -310,7 +310,8 @@ export class LeyLines {
     const mpp = this.u.uMpp.value as number;
     this.sparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
     this.ringSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
-    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.sparkler.meshes, ...this.ringSparkler.meshes];
+    this.outSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
+    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.sparkler.meshes, ...this.ringSparkler.meshes, ...this.outSparkler.meshes];
   }
 
   /** The drawn route of the line's links (each from one stone to the next). */
@@ -325,9 +326,14 @@ export class LeyLines {
   /** The wave's pulse on the current link: how far it's got (0-1), or null for none (leyPulse). */
   /** `head` false: lit only to there, with no pulse drawn (the boot: the wave's pulse waits at the treehouse, so the line the
    *  boot branches off is drawn as it will be when the boot ends, the not-yet-lit sketch, its tip running out ahead). */
-  /** The victory lap's pulse (rules/win.ts winPulse): its place along the route as drawn (links from home), or null. */
-  lap(links: number | null): void { this.lapAt = links; }
+  /** The victory lap's pulses (rules/win.ts winPulse, winPulseOut): their places along the route as drawn (links from home),
+   *  or null; and how far the line's lit (winLit: the outward pulse lights it as it goes), or null to leave the wave's. */
+  lap(home: number | null, out: number | null = null, lit: number | null = null): void {
+    this.lapAt = home; this.lapOut = out;
+    if (lit !== null) this.u.uPulse.value.set(lit - this.current, 1);
+  }
   private lapAt: number | null = null;
+  private lapOut: number | null = null;
   pulse(p: number | null, head = true): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); this.pulseHead = head; }
   /** Where on the first link the wave's sparkler is first drawn (a share of it): where it meets the boot ring, as the ring's own
    *  sparkler, done its lap, hands over there (Ed, 2026-10-07: "The two pulses or tips don't join correctly at the top of the
@@ -538,7 +544,9 @@ export class LeyLines {
    *  "The boot leyline pulse does not have the sparkler pulse"). */
   private sparkler: Sparkler;
   private ringSparkler: Sparkler;
-  private tipColours = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+  /** The victory lap's outward pulse (rules/win.ts winPulseOut), the same. */
+  private outSparkler: Sparkler;
+  private tipColours = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
   private tipPoints: LeyTip[] = this.tipColours.map(colour => ({ x: 0, z: 0, colour, links: 0 }));
   /** The front as last drawn (for tools), or null. */
   tip: LeyTip | null = null;
@@ -558,7 +566,8 @@ export class LeyLines {
     const R = this.ringLive, ringOn = !!R && R.pulse !== null;
     const ringPulse = ringOn ? this.pointAt(this.ringDrawn, R!.pulse!, time, 3) : null;
     const ringK = strength * (R?.strength ?? 0);
-    this.sparkler.update(pulse, time, strength); this.ringSparkler.update(ringPulse, time, ringK);
+    const outPulse = this.lapOut !== null ? this.pointAt(D, Math.max(0, Math.min(D.length, this.lapOut)), time, 5) : null;
+    this.sparkler.update(pulse, time, strength); this.ringSparkler.update(ringPulse, time, ringK); this.outSparkler.update(outPulse, time, strength);
     this.tip = tip; this.pulseTip = pulse;
     return tip;
   }
@@ -571,7 +580,7 @@ export class LeyLines {
     let i = 1;
     while (i < L.lens.length - 1 && L.lens[i] < want) i++;
     const a = L.pts[i - 1], b = L.pts[i], seg = L.lens[i] - L.lens[i - 1] || 1, u = (want - L.lens[i - 1]) / seg;
-    const dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, d = slot >= 2 ? 0 : leyDrift(want, f, k, time); // (the boot ring's slots: no drift)
+    const dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, d = slot === 2 || slot === 3 ? 0 : leyDrift(want, f, k, time); // (the boot ring's slots: no drift)
     const c = this.tipColours[slot].copy(L.from).lerp(L.to, 0.4 + 0.6 * f);
     if (slot % 2 === 1) c.lerp(WHITE, 0.35);
     const tip = this.tipPoints[slot]; // (one each, filled in place: nothing allocated a frame)
