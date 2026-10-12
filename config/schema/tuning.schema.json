@@ -4970,6 +4970,9 @@
     "runeMarkers": {
       "type": "object",
       "properties": {
+        "variants": {
+          "type": "boolean"
+        },
         "laser": {
           "type": "object",
           "properties": {
@@ -5099,6 +5102,7 @@
         }
       },
       "required": [
+        "variants",
         "laser",
         "scale",
         "beamHeight",

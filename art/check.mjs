@@ -811,6 +811,18 @@ const report = await b.page.evaluate(async () => {
     for (const id of G.LEGEND_IDS) { const L = G.legendSprites(id, st); if (!L || !Object.keys(L).length) bad.push(`legend sprites ${id}`); seen.legends++; }
     res.push({ what: "every generator draws: the beach's finds and prints (every heading), the bedroom, every broom, the witch's hat both ways, every species' rune stone, a party patch, every legend's sprites; none empty, nothing NaN, every material coloured", good: !bad.length && seen.beach > 0 && seen.brooms >= 18, info: bad.slice(0, 6).join("; ") || `${seen.beach} beach pieces, ${seen.brooms} brooms, ${seen.stones} rune stones, ${seen.legends} legends` });
   }
+  { // the runestones' 20 forms (Ed, 2026-10-12): each draws, mildly unlike today's (its size within 0.85 to 1.25 of it), and mirrored at the
+    // same size with its carving the same glyph (as many lit pixels, the sigil stamped after the flip: never mirror-written)
+    const lit = b => { const d = b.A.getContext("2d").getImageData(0, 0, b.w, b.h).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] === 254) n++; return n; };
+    const base = G.runeStone(st, { sigil: "boar" }), bad = [];
+    for (let v = 0; v < G.RUNESTONE_FORMS; v++) {
+      const a = G.runeStone(st, { sigil: "boar", form: v }), f = G.runeStone(st, { sigil: "boar", form: v, flip: true });
+      if (!(a.h >= base.h * .85 && a.h <= base.h * 1.25 && a.w >= base.w * .85 && a.w <= base.w * 1.25)) bad.push(`form ${v} ${a.w}x${a.h} (today's ${base.w}x${base.h})`);
+      if (f.w !== a.w || f.h !== a.h) bad.push(`form ${v} mirrored ${f.w}x${f.h}`);
+      if (Math.abs(lit(f) - lit(a)) > 6 || lit(a) < 20) bad.push(`form ${v} carving ${lit(a)} / mirrored ${lit(f)}`);
+    }
+    res.push({ what: `the runestone's ${G.RUNESTONE_FORMS} forms draw, within 0.85 to 1.25 of today's size, mirrored the same size with the same carving`, good: G.RUNESTONE_FORMS === 20 && !bad.length, info: bad.slice(0, 4).join("; ") || `${G.RUNESTONE_FORMS} forms` });
+  }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {
     const a = G.areaAssets(A.id, st), props = [...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])];

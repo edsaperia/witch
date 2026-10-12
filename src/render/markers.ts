@@ -8,7 +8,8 @@
 import * as THREE from "three";
 import { groundPoints, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import * as Art from "../../art/generator.js";
-import { AREA_TYPES } from "../rules/map";
+import { AREA_TYPES, type ForestMap } from "../rules/map";
+import { hash2 } from "../rules/random";
 import type { Tuning } from "../rules/tuning";
 import { packAtlas, type Atlas, type Baked } from "./atlas";
 import type { Style } from "./style";
@@ -16,32 +17,48 @@ import type { Style } from "./style";
 /** Frames per species: dormant, then the awake levels (brighter and brighter). */
 export const MARKER_LEVELS = 4;
 
+/** An area's runestone (Ed, 2026-10-12: "20 mild variations on runestones so that they don't all look identical. They can also be
+ *  flipped"): one of the art's seeded forms (art/areas.js runestoneForm) by the map's seed and its cell, mirrored at random as
+ *  scenes are; null with runeMarkers.variants off (every stone as before). */
+export function runestoneOf(map: ForestMap, cx: number, cy: number, t: Tuning): { form: number; flip: boolean } | null {
+  if (!t.runeMarkers.variants) return null;
+  const n = Art.RUNESTONE_FORMS as number;
+  return { form: Math.min(n - 1, Math.floor(hash2(cx, cy, map.seed + 901) * n)), flip: hash2(cx, cy, map.seed + 903) < 0.5 };
+}
+
 export class MarkerArt {
   readonly atlas: Atlas;
   private index = new Map<string, number>();
+  /** Each area's stone (by its cell's key, "cx,cy"): its baked stone's key. */
+  private stoneOf = new Map<string, string>();
   readonly colour = new Map<string, THREE.Vector3>();
-  /** Per species: how many art pixels the stone stands above its frame's bottom (to its topmost drawn row). */
-  readonly height = new Map<string, number>();
+  /** Per baked stone: how many art pixels the stone stands above its frame's bottom (to its topmost drawn row). */
+  private heights = new Map<string, number>();
   /** The scale the stones are baked at (runeMarkers.scale): drawn at runeMarkers.scale / this, so 1 (docs/STYLE.md §1). */
   readonly scale: number;
 
-  constructor(style: Style, t: Tuning) {
+  constructor(style: Style, t: Tuning, map: ForestMap) {
     const R = t.runeMarkers, sprites: Baked[] = [];
     this.scale = R.scale;
-    const species = [...new Set(AREA_TYPES.map(a => a.creature))];
+    for (const a of AREA_TYPES) { const c = Art.sigilColour(a.creature) as number[]; this.colour.set(a.creature, new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255)); }
     const levels = [R.dormant.glow, ...Array.from({ length: MARKER_LEVELS - 1 }, (_, i) => R.awake.glow[0] + ((R.awake.glow[1] - R.awake.glow[0]) * i) / (MARKER_LEVELS - 2))];
-    for (const sp of species) {
-      const base = (Art.runeStone as unknown as (st: Style, o: { glow: string; sigil: string; scale: number }) => Baked & { A: HTMLCanvasElement })(style, { glow: "cyan", sigil: sp, scale: R.scale });
+    // Only the stones this map stands (one an area: its species' sigil on its form).
+    for (const [cx, cy] of map.cells) {
+      const sp = AREA_TYPES[map.typeOf(cx, cy)].creature, v = runestoneOf(map, cx, cy, t), key = v ? `${sp}|${v.form}|${v.flip ? 1 : 0}` : sp;
+      this.stoneOf.set(`${cx},${cy}`, key);
+      if (this.index.has(key)) continue;
+      const base = (Art.runeStone as unknown as (st: Style, o: { glow: string; sigil: string; scale: number; form?: number; flip?: boolean }) => Baked & { A: HTMLCanvasElement })(style, { glow: "cyan", sigil: sp, scale: R.scale, ...(v ?? {}) });
       const c = Art.sigilColour(sp) as number[];
-      this.index.set(sp, sprites.length);
-      this.height.set(sp, drawnHeight(base.A));
-      this.colour.set(sp, new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255));
+      this.index.set(key, sprites.length);
+      this.heights.set(key, drawnHeight(base.A));
       for (const k of levels) sprites.push(recolour(base, c, k));
     }
     this.atlas = packAtlas(sprites, 2048);
   }
-  /** The frame for a species' stone at a level (0 dormant, 1.. awake). */
-  frame(species: string, level: number): number { return (this.index.get(species) ?? 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
+  /** The frame for an area's stone (by its cell) at a level (0 dormant, 1.. awake). */
+  frame(cell: readonly [number, number], level: number): number { return (this.index.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
+  /** How many art pixels an area's stone stands (its frame's drawn rows). */
+  height(cell: readonly [number, number]): number { return this.heights.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0; }
 }
 
 // Rows from the topmost drawn pixel to the lowest (sprites stand on their lowest drawn pixel).
