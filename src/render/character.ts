@@ -3,14 +3,18 @@
 // creature's id and the time, never stored in the rules, so it costs nothing to the sim and is the same every run.
 import raw from "../../config/character.json";
 import { hash2 } from "../rules/random";
+import { sectionOf } from "../rules/creatureConfig";
 
 export type Quirk = "sniff" | "perk" | "stomp" | "thump" | "scratch" | "shake" | "tailflick" | "tailslap" | "stretch" | "howl" | "rise" | "sentinel" | "rattle";
 /** A quirk a baked frame can show (it can't move a part, only the whole sprite): a hop, a puff (swelling as it breathes in),
  *  a look (turning to glance behind) or a shiver. */
 export type SpriteQuirk = "hop" | "puff" | "look" | "shiver";
 export interface Character { posture: { head: [number, number]; body: number }; quirk: Quirk; every: [number, number]; for: number; /** its quirk on a baked frame (the species' own, or its rig quirk's nearest) */ sprite: SpriteQuirk; /** the posture as the rig takes it (made once) */ rig: { hx: number; hy: number; by: number } }
-interface Raw { default: Character; bounce: { height: number; every: [number, number]; for: number }; species: Record<string, Partial<Character>> }
-const R = raw as unknown as Raw;
+export interface Raw { default: Character; bounce: { height: number; every: [number, number]; for: number }; species: Record<string, Partial<Character>> }
+const R0 = raw as unknown as Raw;
+/** The default, the bounce and each species' character (its own from its folder: rules/creatureConfig.ts). */
+export const CHARACTERS: Raw = { ...R0, species: { ...R0.species, ...(sectionOf("character") as Raw["species"]) } };
+const R = CHARACTERS;
 // a rig quirk's nearest on a baked frame (a species without a rig sets its own `sprite`)
 const SPRITE_OF: Record<Quirk, SpriteQuirk> = { sniff: "puff", perk: "puff", howl: "puff", rise: "puff", stretch: "puff", stomp: "hop", thump: "hop", scratch: "shiver", shake: "shiver", tailflick: "look", tailslap: "hop", sentinel: "puff", rattle: "shiver" };
 const cache = new Map<string, Character>();

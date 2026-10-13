@@ -1,0 +1,1 @@
+export const LEGEND_IBEX = { sink: .42, droop: .9, drop: [], over: { moss: .15, lichen: .3, ferns: 0, grass: 1, mushrooms: 0, roots: 1, stones: 6 } }; // the crags' ibex: lain down on a ledge, lichened like the rock

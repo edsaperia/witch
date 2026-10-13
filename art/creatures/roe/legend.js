@@ -1,0 +1,1 @@
+export const LEGEND_ROE = { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .6, lichen: .05, ferns: 4, grass: 3, mushrooms: 2, roots: 3, stones: 1, beard: 3 } }; // the mossy dell's roe: curled in the moss, ferns over it

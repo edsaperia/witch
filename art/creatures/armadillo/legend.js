@@ -1,0 +1,1 @@
+export const LEGEND_ARMADILLO = { ground: .2, droop: .4, drop: [], over: { moss: .1, lichen: .25, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 4 } }; // the scrub wash's armadillo (an area recipe's): its shell sunk in cracked clay like a boulder

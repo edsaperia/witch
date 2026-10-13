@@ -1,0 +1,1 @@
+export const LEGEND_CRAB = { ground: .18, droop: .3, drop: [], over: { moss: .3, lichen: .2, ferns: 0, grass: 2, mushrooms: 0, roots: 0, stones: 2 } }; // the mudflat's crab: dug half into the mud, its great claw laid over its shell, barnacled

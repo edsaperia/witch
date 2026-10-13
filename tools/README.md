@@ -14,18 +14,19 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`config/`](config/README.md): 1 script — schema.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
 - [`feel/`](feel/README.md): 1 script — trace.cjs
-- [`flora/`](flora/README.md): 3 scripts — bush-sheet.mjs, species-sheet.mjs, tuft-sheet.mjs
+- [`flora/`](flora/README.md): 4 scripts — bush-sheet.mjs, species-sheet.mjs, tuft-sheet.mjs, vignette.mjs
 - [`genome/`](genome/README.md): 1 script — compare.mjs
 - [`ground/`](ground/README.md): 1 script — ground-sheet.mjs
 - [`hats/`](hats/README.md): 3 scripts — art-shots.cjs, hats-out-shots.cjs, wardrobe-shots.cjs
 - [`hologram/`](hologram/README.md): 1 script — bend.cjs
 - [`islands/`](islands/README.md): 3 scripts — chart.mjs, map.mjs, sheet.mjs
+- [`labs/`](labs/README.md): 1 script — publish.mjs
 - [`lakes/`](lakes/README.md): 2 scripts — leylines.mjs, shots.cjs
 - [`leash/`](leash/README.md): 1 script — route-strip.mjs
 - [`lighting/`](lighting/README.md): 1 script — survey.cjs
 - [`making-of/`](making-of/README.md): 1 script — build.mjs
 - [`map/`](map/README.md): 5 scripts — leycurve.mjs, leydepart.mjs, leyroute.mjs, scenery.mjs, shape.mjs
-- [`music-lab/`](music-lab/README.md): 23 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, ingredients.ts, lab.ts, set.mjs, set.ts, silence.cjs, voices.mjs
+- [`music-lab/`](music-lab/README.md): 24 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, ingredients.ts, lab.ts, latency.cjs, set.mjs, set.ts, silence.cjs, voices.mjs
 - [`overrides/`](overrides/README.md): 1 script — png.ts
 - [`props/`](props/README.md): 1 script — ingame.cjs
 - [`qa/`](qa/README.md): 4 scripts — core.cjs, journey.cjs, leash-lake.cjs, win-strip.cjs

@@ -1,0 +1,1 @@
+export const LEGEND_FLYINGSQUIRREL = { sink: .45, droop: 1, drop: [160, 161], over: { moss: .55, lichen: .16, ferns: 2, grass: 2, mushrooms: 2, roots: 2, stones: 1 } }; // the mistwood's flying squirrel (an area recipe's): curled in the moss, its starry membrane drawn in, lichen over it
