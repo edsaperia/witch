@@ -1,0 +1,659 @@
+[
+ {
+  "row": "Cold",
+  "file": "01-cold.png",
+  "species": [
+   {
+    "id": "penguin",
+    "name": "Penguin",
+    "area": "rookery",
+    "builder": "penguin3d (one-off)",
+    "kit": "evolution kit",
+    "ratio": "1.24",
+    "issues": []
+   },
+   {
+    "id": "arcticfox",
+    "name": "Arctic fox",
+    "area": "snowfield",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.71",
+    "issues": [
+     "growth WARN: young→adult 0.15"
+    ]
+   },
+   {
+    "id": "polarbear",
+    "name": "Polar bear",
+    "area": "packice",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "3.11",
+    "issues": [
+     "growth WARN: adult→legend 0.12"
+    ]
+   },
+   {
+    "id": "frosttroll",
+    "name": "Frost troll",
+    "area": "trollwood",
+    "builder": "troll3d (one-off)",
+    "kit": "evolution kit",
+    "ratio": "2.51",
+    "issues": [
+     "growth WARN: baby→young 0.18, young→adult 0.19, adult→legend 0.13"
+    ]
+   }
+  ]
+ },
+ {
+  "row": "Mountains & glaciers",
+  "file": "02-mountains-glaciers.png",
+  "species": [
+   {
+    "id": "redpanda",
+    "name": "Red panda",
+    "area": "misty-terraces",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.53",
+    "issues": []
+   },
+   {
+    "id": "ibex",
+    "name": "Ibex",
+    "area": "crags",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "2.31",
+    "issues": []
+   },
+   {
+    "id": "snowleopard",
+    "name": "Snow leopard",
+    "area": "icefall",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "2.13",
+    "issues": [
+     "growth WARN: young→adult 0.12"
+    ]
+   },
+   {
+    "id": "frostwyrm",
+    "name": "Frost wyrm",
+    "area": "frostcave",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "3.51",
+    "issues": []
+   },
+   {
+    "id": "griffin",
+    "name": "Griffin",
+    "area": "eyrie",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "3.73",
+    "issues": []
+   }
+  ]
+ },
+ {
+  "row": "Cold rainforest",
+  "file": "03-cold-rainforest.png",
+  "species": [
+   {
+    "id": "flyingsquirrel",
+    "name": "Flying squirrel",
+    "area": "mistwood",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.24",
+    "issues": [
+     "growth WARN: young→adult 0.14, adult→legend 0.12"
+    ]
+   },
+   {
+    "id": "raccoon",
+    "name": "Raccoon",
+    "area": "mossy-creek",
+    "builder": "quad3d",
+    "kit": "elder (elders.js)",
+    "ratio": "1.53",
+    "issues": []
+   },
+   {
+    "id": "roe",
+    "name": "Roe deer",
+    "area": "mossy-dell",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "2.51",
+    "issues": []
+   },
+   {
+    "id": "unicorn",
+    "name": "Unicorn",
+    "area": "moonpool-glade",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "3.38",
+    "issues": [
+     "growth WARN: young→adult 0.14, adult→legend 0.16"
+    ]
+   }
+  ]
+ },
+ {
+  "row": "Temperate woodland",
+  "file": "04-temperate-woodland.png",
+  "species": [
+   {
+    "id": "dormouse",
+    "name": "Dormouse",
+    "area": "honeysuckle-tangle",
+    "builder": "quad3d",
+    "kit": "elder (elders.js)",
+    "ratio": "0.93",
+    "issues": []
+   },
+   {
+    "id": "hedgehog",
+    "name": "Hedgehog",
+    "area": "hazel-forest",
+    "builder": "hedgehog3d (one-off)",
+    "kit": "elder (elders.js)",
+    "ratio": "1.51",
+    "issues": [
+     "growth WARN: baby→young 0.12, young→adult 0.09"
+    ]
+   },
+   {
+    "id": "stoat",
+    "name": "Stoat",
+    "area": "alder-forest",
+    "builder": "quad3d",
+    "kit": "generic (ribbons, mane)",
+    "ratio": "1.20",
+    "issues": [
+     "legend: no elder yet (the generic ribbons and mane)",
+     "growth WARN: young→adult 0.09"
+    ]
+   },
+   {
+    "id": "squirrel",
+    "name": "Squirrel",
+    "area": "twiggy-forest",
+    "builder": "quad3d",
+    "kit": "elder (elders.js)",
+    "ratio": "1.38",
+    "issues": [
+     "growth WARN: young→adult 0.12"
+    ]
+   },
+   {
+    "id": "hare",
+    "name": "Hare",
+    "area": "bluebell-glade",
+    "builder": "quad3d",
+    "kit": "elder (elders.js)",
+    "ratio": "1.80",
+    "issues": []
+   },
+   {
+    "id": "fox",
+    "name": "Fox",
+    "area": "old-oaks",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "2.00",
+    "issues": []
+   },
+   {
+    "id": "wolf",
+    "name": "Wolf",
+    "area": "garden",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "3.00",
+    "issues": []
+   },
+   {
+    "id": "badger",
+    "name": "Badger",
+    "area": "wispy-forest",
+    "builder": "quad3d",
+    "kit": "elder (elders.js)",
+    "ratio": "1.38",
+    "issues": []
+   },
+   {
+    "id": "stag",
+    "name": "Stag",
+    "area": "ancient",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "3.24",
+    "issues": [
+     "pale lower jaw"
+    ]
+   }
+  ]
+ },
+ {
+  "row": "Temperate deep woods",
+  "file": "05-temperate-deep-woods.png",
+  "species": [
+   {
+    "id": "snail",
+    "name": "Snail",
+    "area": "muddy-forest",
+    "builder": "snail3d (one-off)",
+    "kit": "elder (elders.js)",
+    "ratio": "1.13",
+    "issues": []
+   },
+   {
+    "id": "mole",
+    "name": "Mole",
+    "area": "fern-forest",
+    "builder": "mole3d (one-off)",
+    "kit": "elder (elders.js)",
+    "ratio": "1.38",
+    "issues": []
+   },
+   {
+    "id": "spider",
+    "name": "Spider",
+    "area": "holly-thicket",
+    "builder": "spider3d (one-off)",
+    "kit": "generic (rose)",
+    "ratio": "1.24",
+    "issues": []
+   },
+   {
+    "id": "snake",
+    "name": "Snake",
+    "area": "norway",
+    "builder": "snake3d (one-off)",
+    "kit": "generic (shed)",
+    "ratio": "1.13",
+    "issues": [
+     "growth WARN: baby→young 0.11, young→adult 0.13"
+    ]
+   },
+   {
+    "id": "marten",
+    "name": "Pine marten",
+    "area": "old-pinewood",
+    "builder": "quad3d",
+    "kit": "elder (elders.js)",
+    "ratio": "1.71",
+    "issues": [
+     "growth WARN: young→adult 0.15, adult→legend 0.13"
+    ]
+   },
+   {
+    "id": "raven",
+    "name": "Raven",
+    "area": "deadwood",
+    "builder": "raven3d (one-off)",
+    "kit": "generic (hoard)",
+    "ratio": "1.87",
+    "issues": [
+     "growth WARN: baby→young 0.09, young→adult 0.15"
+    ]
+   },
+   {
+    "id": "ram",
+    "name": "Ram",
+    "area": "tangly-forest",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "2.38",
+    "issues": []
+   },
+   {
+    "id": "bear",
+    "name": "Bear",
+    "area": "berry-thicket",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "3.11",
+    "issues": [
+     "pale lower jaw",
+     "legend: no elder yet (a scaled adult)",
+     "growth WARN: adult→legend 0.12"
+    ]
+   }
+  ]
+ },
+ {
+  "row": "Temperate wetland",
+  "file": "06-temperate-wetland.png",
+  "species": [
+   {
+    "id": "newt",
+    "name": "Newt",
+    "area": "fen",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.00",
+    "issues": [
+     "growth WARN: young→adult 0.11"
+    ]
+   },
+   {
+    "id": "toad",
+    "name": "Toad",
+    "area": "wetland",
+    "builder": "toad3d (one-off)",
+    "kit": "generic (sac)",
+    "ratio": "1.38",
+    "issues": []
+   },
+   {
+    "id": "otter",
+    "name": "Otter",
+    "area": "stream",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.13",
+    "issues": [
+     "legend floats on its back here; stands in Golf's #861"
+    ]
+   },
+   {
+    "id": "heron",
+    "name": "Heron",
+    "area": "heronry",
+    "builder": "heron3d (one-off)",
+    "kit": "generic (stilts)",
+    "ratio": "3.11",
+    "issues": [
+     "growth WARN: baby→young 0.19, young→adult 0.19"
+    ]
+   },
+   {
+    "id": "beaver",
+    "name": "Beaver",
+    "area": "beaver-pond",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.64",
+    "issues": []
+   },
+   {
+    "id": "elk",
+    "name": "Elk",
+    "area": "bog",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "3.51",
+    "issues": []
+   }
+  ]
+ },
+ {
+  "row": "Temperate open & rocky",
+  "file": "07-temperate-open-rocky.png",
+  "species": [
+   {
+    "id": "moth",
+    "name": "Moth",
+    "area": "heath",
+    "builder": "moth3d (one-off)",
+    "kit": "generic (eyespots)",
+    "ratio": "1.24",
+    "issues": []
+   },
+   {
+    "id": "woodlouse",
+    "name": "Woodlouse",
+    "area": "moor",
+    "builder": "woodlouse3d (one-off)",
+    "kit": "evolution kit",
+    "ratio": "1.00",
+    "issues": []
+   },
+   {
+    "id": "bat",
+    "name": "Bat",
+    "area": "cave-mouth",
+    "builder": "bat3d (one-off)",
+    "kit": "generic (sonar)",
+    "ratio": "1.38",
+    "issues": []
+   },
+   {
+    "id": "salamander",
+    "name": "Salamander",
+    "area": "ravine",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.00",
+    "issues": [
+     "growth WARN: young→adult 0.12, adult→legend 0.12"
+    ]
+   },
+   {
+    "id": "beetle",
+    "name": "Stag beetle",
+    "area": "log-pile",
+    "builder": "beetle3d (one-off)",
+    "kit": "generic (antlers)",
+    "ratio": "1.24",
+    "issues": []
+   },
+   {
+    "id": "cat",
+    "name": "Wildcat",
+    "area": "meadow",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.73",
+    "issues": []
+   },
+   {
+    "id": "owl",
+    "name": "Owl",
+    "area": "stone-shrine",
+    "builder": "owl3d (one-off)",
+    "kit": "evolution kit",
+    "ratio": "2.38",
+    "issues": []
+   },
+   {
+    "id": "lynx",
+    "name": "Lynx",
+    "area": "rocky-slope",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "2.71",
+    "issues": []
+   },
+   {
+    "id": "boar",
+    "name": "Boar",
+    "area": "grassland",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "2.64",
+    "issues": []
+   }
+  ]
+ },
+ {
+  "row": "Badlands & rocky",
+  "file": "08-badlands-rocky.png",
+  "species": [
+   {
+    "id": "scorpion",
+    "name": "Scorpion",
+    "area": "red-canyon",
+    "builder": "scorpion3d (one-off)",
+    "kit": "evolution kit",
+    "ratio": "1.13",
+    "issues": []
+   },
+   {
+    "id": "rattlesnake",
+    "name": "Rattlesnake",
+    "area": "cactus-flats",
+    "builder": "rattlesnake3d (one-off)",
+    "kit": "evolution kit",
+    "ratio": "1.24",
+    "issues": []
+   },
+   {
+    "id": "armadillo",
+    "name": "Armadillo",
+    "area": "scrub-wash",
+    "builder": "armadillo3d (one-off)",
+    "kit": "elder (elders.js)",
+    "ratio": "1.24",
+    "issues": [
+     "growth WARN: baby→young 0.14, young→adult 0.15"
+    ]
+   },
+   {
+    "id": "meerkat",
+    "name": "Meerkat",
+    "area": "warren",
+    "builder": "quad3d",
+    "kit": "elder (elders.js)",
+    "ratio": "2.00",
+    "issues": []
+   },
+   {
+    "id": "komodo",
+    "name": "Komodo dragon",
+    "area": "dragon-scrub",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "1.53",
+    "issues": [
+     "growth WARN: young→adult 0.17, adult→legend 0.11"
+    ]
+   }
+  ]
+ },
+ {
+  "row": "Hot",
+  "file": "09-hot.png",
+  "species": [
+   {
+    "id": "fennec",
+    "name": "Fennec fox",
+    "area": "erg",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "1.53",
+    "issues": []
+   },
+   {
+    "id": "cheetah",
+    "name": "Cheetah",
+    "area": "plains",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "3.51",
+    "issues": []
+   },
+   {
+    "id": "rhino",
+    "name": "Rhino",
+    "area": "bushveld",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "2.87",
+    "issues": [
+     "growth WARN: young→adult 0.12"
+    ]
+   },
+   {
+    "id": "lion",
+    "name": "Lion",
+    "area": "savanna",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "3.38",
+    "issues": [
+     "pale lower jaw"
+    ]
+   }
+  ]
+ },
+ {
+  "row": "Jungle",
+  "file": "10-jungle.png",
+  "species": [
+   {
+    "id": "jaguar",
+    "name": "Black jaguar",
+    "area": "river-jungle",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "2.38",
+    "issues": []
+   },
+   {
+    "id": "tiger",
+    "name": "Tiger",
+    "area": "bamboo-jungle",
+    "builder": "quad3d",
+    "kit": "evolution kit",
+    "ratio": "2.87",
+    "issues": []
+   },
+   {
+    "id": "elephant",
+    "name": "Elephant",
+    "area": "temple-jungle",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "5.00",
+    "issues": []
+   }
+  ]
+ },
+ {
+  "row": "Mangrove swamp",
+  "file": "11-mangrove-swamp.png",
+  "species": [
+   {
+    "id": "crab",
+    "name": "Crab",
+    "area": "mudflat",
+    "builder": "crab3d (one-off)",
+    "kit": "evolution kit",
+    "ratio": "1.13",
+    "issues": [
+     "growth WARN: baby→young 0.13, young→adult 0.15"
+    ]
+   },
+   {
+    "id": "dragonfly",
+    "name": "Dragonfly",
+    "area": "mangrove-pools",
+    "builder": "dragonfly3d (one-off)",
+    "kit": "evolution kit",
+    "ratio": "1.24",
+    "issues": []
+   },
+   {
+    "id": "crocodile",
+    "name": "Crocodile",
+    "area": "mangrove",
+    "builder": "quad3d",
+    "kit": "elder kit",
+    "ratio": "1.73",
+    "issues": [
+     "growth WARN: young→adult 0.13"
+    ]
+   }
+  ]
+ }
+]
