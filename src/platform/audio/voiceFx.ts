@@ -23,9 +23,18 @@ export const NO_FX: VoiceFxSettings = { chorus: 0, saturation: 0, air: 0, delay:
 /** Whether any effect is on. */
 export const fxOn = (s: Partial<VoiceFxSettings> | undefined): boolean => !!s && VOICE_FX.some(k => (s[k] ?? 0) > 0);
 
-/** A seeded noise impulse decaying over `seconds`, its top rolled off by `dark` (0 bright to 1 dark), two channels. */
+/** A seeded noise impulse decaying over `seconds`, its top rolled off by `dark` (0 bright to 1 dark), two channels. Made once a
+ *  context for each length, darkness and seed and shared (a buffer can feed any number of convolvers), its envelope from a table of
+ *  ENV steps rather than a Math.pow a sample: the hall's 5.5 s and the shimmer's 3.5 s were about 190 ms on the page's thread the
+ *  first time the sung part played (the stall hunt, 2026-10-13); about a tenth of that now, once. */
+const IMPULSES = new WeakMap<BaseAudioContext, Map<string, AudioBuffer>>();
+const ENV = 4096;
 function impulse(ctx: BaseAudioContext, seconds: number, dark: number, seed: number): AudioBuffer {
+  let made = IMPULSES.get(ctx); if (!made) IMPULSES.set(ctx, made = new Map());
+  const key = `${seconds}|${dark}|${seed}`, had = made.get(key); if (had) return had;
   const n = Math.max(1, Math.floor(seconds * ctx.sampleRate)), b = ctx.createBuffer(2, n, ctx.sampleRate);
+  const env = new Float32Array(ENV + 1); for (let j = 0; j <= ENV; j++) env[j] = Math.pow(1 - j / ENV, 2.2);
+  const ramp = Math.max(1, Math.floor(n * 0.01)), perSample = ENV / n;
   for (let ch = 0; ch < 2; ch++) {
     const d = b.getChannelData(ch);
     let r = (seed + ch * 7919) >>> 0 || 1, lp = 0;
@@ -33,10 +42,10 @@ function impulse(ctx: BaseAudioContext, seconds: number, dark: number, seed: num
     for (let i = 0; i < n; i++) {
       r = (Math.imul(r, 1664525) + 1013904223) >>> 0;
       lp += k * ((r / 4294967296) * 2 - 1 - lp);
-      const t = i / n;
-      d[i] = lp * Math.pow(1 - t, 2.2) * (t < 0.01 ? t / 0.01 : 1);
+      d[i] = lp * env[Math.floor(i * perSample)] * (i < ramp ? i / ramp : 1);
     }
   }
+  made.set(key, b);
   return b;
 }
 
