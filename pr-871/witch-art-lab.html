@@ -3984,7 +3984,8 @@ const GENOME_ARCTICFOX = { id: "arcticfox", name: "Arctic fox", template: "quadr
 // the scrub wash's armadillo (Ed, 2026-10-12, unknown-06, the badlands): its own builder, a low domed shell banded across its middle,
 // a long tapering snout, upright ears, a ringed tail; its legend (Ed: "rolls into a glowing ball, with glowing seams between its
 // bands, rolling when it moves") curled into that ball (armadillo3d's level 3)
-const GENOME_ARMADILLO = { id: "armadillo", name: "Armadillo", template: "squat", builder: "armadillo", palette: { hue: .06, sat: .22, val: .58 }, legend: ["ball"], elder: { kind: "armadillo" }, texture: { kind: "plates" } };
+const GENOME_ARMADILLO = { id: "armadillo", name: "Armadillo", template: "squat", builder: "armadillo", palette: { hue: .06, sat: .22, val: .58 }, legend: ["ball"], elder: { kind: "armadillo" }, texture: { kind: "plates" },
+  levels: [{ body: { soft: 1, dome: 1.3, head: 1.35, snout: .6, ears: 1.5, tail: .5, legs: 1.5 } }, { body: { dome: 1.12, head: 1.12, snout: .8, ears: 1.2, tail: .75, legs: 1.2 } }, null, null] };
 
 
 // ---- inlined from art/creatures/badger/genome.js ----
@@ -4073,9 +4074,9 @@ const GENOME_CHEETAH = { id: "cheetah", name: "Cheetah", template: "quadruped", 
 
 // ---- inlined from art/creatures/crab/genome.js ----
 // the mangrove swamp's crab (Ed, 2026-10-12, unknown-26): a mudflat fiddler that scuttles sideways, its shell orange-red, one great claw
-// on an adult, barnacles; its legend the elder of its kind: one colossal gleaming claw bigger than its body, waved in a slow beckoning display, its eyes lit, its shell aged like a reef
+// on an adult, barnacles; a juvenile's claws tiny and its legs tucked in, both growing with age (the menagerie review); its legend the elder of its kind: one colossal gleaming claw bigger than its body, waved in a slow beckoning display, its eyes lit, its shell aged like a reef
 const GENOME_CRAB = { id: "crab", name: "Crab", template: "insectoid", builder: "crab", palette: { hue: .02, sat: .62, val: .58 }, legend: ["wave", "reef"], texture: { kind: "plates", size: 3 },
-  levels: [{ body: { shell: .85, claw: 1 } }, { body: { shell: 1, claw: 1.25 } }, { body: { shell: 1, claw: 1.8, barnacles: true } }, { body: { shell: 1.05, claw: 3.2, barnacles: true } }] };
+  levels: [{ body: { shell: .85, claw: .4, small: .4, stalk: 1.1, legs: .3 } }, { body: { shell: 1, claw: 1, small: .7, stalk: 1.1, legs: .5 } }, { body: { shell: 1, claw: 1.8, barnacles: true } }, { body: { shell: 1.05, claw: 3.2, barnacles: true } }] };
 
 
 // ---- inlined from art/creatures/crocodile/genome.js ----
@@ -4177,7 +4178,7 @@ const GENOME_FOX = { id: "fox", name: "Fox", template: "quadruped", builder: "qu
 // islands): a hulking, shaggy, mossy-stone troll, more cute than scary, knuckling along on great arms, big round eyes and a
 // bulb of a nose, a white beard, long arms down to its knuckles; a troll kid all eyes, a shaggy young, an adult, and its elder half turned to stone
 const GENOME_FROSTTROLL = { id: "frosttroll", name: "Frost troll", template: "squat", builder: "troll", palette: { hue: .55, sat: .12, val: .58, belly: "white", ear: [.98, .42, .9] }, body: { hr: .24, bw: .42, hunch: 1 }, head: { nose: 1, beard: 1, eyeK: 1 }, texture: { kind: "fur", size: 2 },
-  levels: [{ body: { hr: .3, bw: .34, hunch: .5 }, head: { nose: 1.1, beard: 0, eyeK: 1.35, tooth: true } }, { body: { hr: .26, bw: .38, hunch: .8 }, head: { beard: .45, eyeK: 1.15 }, coat: { moss: 3 } }, { head: { beard: 1 }, coat: { moss: 6 } }, { body: { hr: .25, bw: .46, hunch: 1.3 }, head: { nose: 1.3, beard: 1.6, eyeK: .9, lids: true }, coat: { moss: 9, stone: .48, beads: true } }] };
+  levels: [{ body: { hr: .3, bw: .34, hunch: .5, reach: .35 }, head: { nose: 1.1, beard: 0, eyeK: 1.35, tooth: true } }, { body: { hr: .26, bw: .38, hunch: .8, reach: .7 }, head: { beard: .45, eyeK: 1.15, tusks: .7 }, coat: { moss: 3 } }, { head: { beard: 1, tusks: 1 }, coat: { moss: 7, mossK: 1.6 } }, { body: { hr: .25, bw: .46, hunch: 1.3 }, head: { nose: 1.3, beard: 1.6, eyeK: .9, lids: true, tusks: 1.2 }, coat: { moss: 9, mossK: 1.4, stone: .48, beads: true, boulder: 1.4 } }] };
 
 
 // ---- inlined from art/creatures/frostwyrm/genome.js ----
@@ -4218,7 +4219,8 @@ const GENOME_HARE = { id: "hare", name: "Hare", template: "quadruped", builder: 
 
 
 // ---- inlined from art/creatures/hedgehog/genome.js ----
-const GENOME_HEDGEHOG = { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5, flower: [200, 44, 40] }, legend: [], elder: { kind: "hedgehog" }, texture: { kind: "bristles" } };
+const GENOME_HEDGEHOG = { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5, flower: [200, 44, 40] }, legend: [], elder: { kind: "hedgehog" }, texture: { kind: "bristles" },
+  levels: [{ body: { spines: .2, soft: 1, head: 1.5, round: 1.2, legs: 1.9 } }, { body: { spines: .45, spineFrom: 0, head: 1.1, round: .3 } }, null, null] }; // (a hoglet up on its legs, soft pale spines; a young spined only over its back)
 
 
 // ---- inlined from art/creatures/heron/genome.js ----
@@ -9049,17 +9051,21 @@ function finish(m, S, level, st, k, facing, ref = null) {
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
 const crystals3d = (m, pts) => pts.forEach(([b, h], i) => m.ell(v3.add(b, [0, h * .45, 0]), [h * .55, .07, .07], M.MAGIC, { dir: [(i % 3 - 1) * .25, 1, (i % 2 - .5) * .3], group: 80 + i % 2, extra: true, paint: p => p[2] > b[2] ? M.MAGIC2 : undefined }));
 
+// Its levels grow it (the menagerie review: "a baby with soft short spines, a young half-spined"; the genome's levels): body.spines
+// (their length, 1 the adult's), body.spineFrom (how far forward they reach: 1 over its whole back, lower only its rump and back),
+// body.soft (a hoglet's pale, soft spines), body.head (its snout's size), body.round (its body rounder and shorter), body.legs (a hoglet up on longer legs).
 function hedgehog3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
+  const legend = level === 3, m = new Model(), f = frame ? .03 : 0, q = { ...S.q, ...(S.levelQ?.[level] || {}) };
   if (legend && S.elder) return hedgehogElder(S, frame, st, facing);
-  for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .08; m.seg([x, .15, z], [x + d, .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); } // (a trot: diagonal pairs ahead, then behind)
-  const c = [0, .32, 0], r = [.5, .32, .38];
-  m.ell(c, r, M.BODY2, { paint: p => spotty(p, 22, .3) ? M.BODY3 : spotty(p, 19, .12) ? M.BELLY : undefined });
-  for (let i = 0; i < 64; i++) { const a = (i * 2.399) % (Math.PI * 2), t = (i / 64) * .9 + .05, d = v3.norm([Math.cos(a) * Math.sin(t * Math.PI * .5) - .25, Math.cos(t * Math.PI * .5) * .9 + .1, Math.sin(a) * Math.sin(t * Math.PI * .5)]); if (d[0] > .55) continue; m.ell(v3.add(Model.surface(c, r, d), v3.mul(d, .08)), [.17, .028, .028], i % 4 ? M.BODY2 : M.BODY3, { dir: v3.add(d, [-.3, .05, 0]), group: 1 }); } // signature: long spines bristling past the outline
-  const sn = [.48, .22, 0];
-  m.ell(sn, [.22, .14, .15], M.BELLY, { dir: [1, -.3, 0], group: 1 });
-  m.ell([.69, .16, 0], [.04, .04, .04], M.NOSE, { group: 1 });
-  eyesOn(m, sn, [.22, .14, .15], [[.3, .6, .55], [.3, .6, -.55]], .035, legend ? M.MAGIC2 : M.EYE);
+  const sp = q.spines ?? 1, reach = q.spineFrom ?? 1, soft = q.soft ?? 0, hk = q.head ?? 1, rd = q.round ?? 0, lift = ((q.legs ?? 1) - 1) * .12;
+  for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .08; m.seg([x * (1 - rd * .3), .15 + lift, z], [x * (1 - rd * .3) + d, .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x * (1 - rd * .3) + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); } // (a trot: diagonal pairs ahead, then behind)
+  const c = [0, .32 + lift, 0], r = [.5 * (1 - rd * .25), .32 * (1 + rd * .1), .38];
+  m.ell(c, r, soft ? M.BELLY : M.BODY2, { paint: p => soft ? (spotty(p, 22, .25) ? M.BODY2 : undefined) : spotty(p, 22, .3) ? M.BODY3 : spotty(p, 19, .12) ? M.BELLY : undefined });
+  for (let i = 0; i < 64; i++) { const a = (i * 2.399) % (Math.PI * 2), t = (i / 64) * .9 + .05, d = v3.norm([Math.cos(a) * Math.sin(t * Math.PI * .5) - .25, Math.cos(t * Math.PI * .5) * .9 + .1, Math.sin(a) * Math.sin(t * Math.PI * .5)]); if (d[0] > .55 - (1 - reach) * .9) continue; const len = .17 * sp, w = .028 * (soft ? 1.3 : 1); m.ell(v3.add(Model.surface(c, r, d), v3.mul(d, len * .47)), [len, w, w], soft ? (i % 3 ? M.BELLY : M.BODY2) : i % 4 ? M.BODY2 : M.BODY3, { dir: v3.add(d, [-.3 - (soft ? .4 : 0), .05, 0]), group: 1 }); } // signature: long spines bristling past the outline (a hoglet's short, soft and pale, laid back)
+  const sn = [.48 - rd * .08, .22 + lift + (hk - 1) * .08, 0], snr = [.22 * hk, .14 * hk, .15 * hk];
+  m.ell(sn, snr, M.BELLY, { dir: [1, -.3, 0], group: 1 });
+  m.ell([sn[0] + .21 * hk, sn[1] - .06 * hk, 0], [.04 * hk, .04 * hk, .04 * hk], M.NOSE, { group: 1 });
+  eyesOn(m, sn, snr, [[.3, .6, .55], [.3, .6, -.55]], .035 * hk, legend ? M.MAGIC2 : M.EYE);
   if (legend) crystals3d(m, [[[-.3, .55, .1], .35], [[-.05, .62, -.1], .5], [[.2, .55, .12], .4], [[-.15, .58, .2], .3]]);
   return finish(m, S, level, st, .6, facing);
 }
@@ -9129,7 +9135,7 @@ function troll3d(S, level, frame, st, facing = "towards") {
   const m = new Model(), q = { ...S.q, ...(S.levelQ?.[level] || {}) }, sw = frame ? 1 : -1;
   const F = [.8, 0, .6], R = [-.6, 0, .8]; // its front, turned to the camera, and its side
   const P = (f, u, s) => [F[0] * f + R[0] * s, u, F[2] * f + R[2] * s], D = (f, u, s) => v3.norm(P(f, u, s)), at = (c, f, u, s) => v3.add(c, P(f, u, s));
-  const hr = q.hr ?? .24, bw = q.bw ?? .42, hunch = q.hunch ?? 1, nose = q.nose ?? 1, beard = q.beard ?? 1, eyeK = q.eyeK ?? 1, stoneTo = q.stone ?? 0;
+  const hr = q.hr ?? .24, bw = q.bw ?? .42, hunch = q.hunch ?? 1, nose = q.nose ?? 1, beard = q.beard ?? 1, eyeK = q.eyeK ?? 1, stoneTo = q.stone ?? 0, reach = q.reach ?? 1, tusk = q.tusks ?? 0, mossK = q.mossK ?? 1, hump = q.boulder ?? 0;
   const fr = p => p[0] * F[0] + p[2] * F[2]; // how far forward a point is
   const stoned = (p, base) => stoneTo && p[1] < stoneTo + .05 * Math.sin(p[0] * 29 + p[2] * 23) + .03 * Math.sin(p[0] * 61 - p[2] * 47) ? (spotty(p, 22, .12) ? M.STONED : M.STONE) : base;
   const fur = (p, base) => stoned(p, spotty(p, 16, .1) ? M.BODY2 : base);
@@ -9159,17 +9165,24 @@ function troll3d(S, level, frame, st, facing = "towards") {
   const tip = at(hc, hr * 1.02, -hr * .2, 0);
   m.ell(tip, [hr * .34 * nose, hr * .3 * nose, hr * .34 * nose], M.EAR, { group: 1 });
   if (q.tooth) m.ell(at(hc, hr * .9, -hr * .62, hr * .12), [hr * .07, hr * .11, hr * .07], M.BELLY, { group: 1 });
+  if (tusk) for (const side of [-1, 1]) { const b = at(hc, hr * .8, -hr * .62, side * hr * .38); m.chain([[...b, hr * .09 * tusk], [...at(b, hr * .12, hr * .32 * tusk, side * hr * .08), hr * .05 * tusk], [...at(b, hr * .02, hr * .55 * tusk, side * hr * .02), hr * .012]], M.BELLY, { group: 10, extra: true }); } // its first tusks, up past its nose (the young's; the adult's longer)
   if (beard) for (let i = 0; i < 7; i++) { const s = (i / 6 - .5) * hr * 1.4, root = at(hc, hr * .85, -hr * .5, s), bl = hr * 1.5 * beard * (1 - Math.abs(i / 6 - .5) * .7), w = Math.sin(i * 2.3) * hr * .1;
     m.chain([[...root, hr * .24], [...at(root, hr * .3, -bl * .55, s * .15 + w), hr * .2], [...at(root, hr * .22, -bl, s * .1 - w), hr * .07]], M.BELLY, { group: 5 + (i % 2) * 3 }); } // (its own groups: not melted into its chest)
   // long arms hanging to its knuckles on the ground, a swing a frame
   for (const side of [-1, 1]) {
-    const g = side > 0 ? 7 : 2, d = -sw * side * .05, sh = P(.02, .78, side * bw * .85), el = P(.1 + d * .5, .45, side * (bw + .05)), wr = P(.2 + d, .15, side * (bw + .03));
+    const g = side > 0 ? 7 : 2, d = -sw * side * .05, wy = .78 - .63 * reach, sh = P(.02, .78, side * bw * .85), el = P(.1 * reach + d * .5, .78 - .33 * reach, side * (bw + .05)), wr = P(.2 * reach + d, wy, side * (bw + .03));
     m.chain([[...sh, .1], [...el, .075], [...wr, .09]], M.BODY, { group: g, paint: p => fur(p, M.BODY) });
-    m.ell(P(.23 + d, .09, side * (bw + .03)), [.12, .09, .1], M.BODY2, { dir: F, group: g, paint: p => stoned(p, M.BODY2) });
-    for (let k = 0; k < 3; k++) m.ell(P(.33 + d, .06, side * (bw + .03) + (k - 1) * .055), [.045, .045, .04], M.BODY2, { group: g, paint: p => stoned(p, M.BODY2) }); // knuckles
+    if (reach >= .9) { // knuckling along: its fists on the ground
+      m.ell(P(.23 + d, .09, side * (bw + .03)), [.12, .09, .1], M.BODY2, { dir: F, group: g, paint: p => stoned(p, M.BODY2) });
+      for (let k = 0; k < 3; k++) m.ell(P(.33 + d, .06, side * (bw + .03) + (k - 1) * .055), [.045, .045, .04], M.BODY2, { group: g, paint: p => stoned(p, M.BODY2) }); // knuckles
+    } else m.ell(P(.2 * reach + d + .02, wy - .07, side * (bw + .03)), [.09, .1, .09], M.BODY2, { group: g }); // a kid's hand, hanging short of the ground
   }
   // moss on its shoulders, and an elder's beads
-  for (let i = 0; i < (q.moss || 0); i++) { const a = (i / Math.max(1, q.moss - 1) - .5) * 2.4, c = P(-.1 + .05 * Math.cos(i * 1.7), .9 + .06 * Math.cos(a * 1.3), Math.sin(a) * bw * .85); m.ell(c, [.07, .045, .07], M.MOSS, { group: 3, extra: true }); }
+  for (let i = 0; i < (q.moss || 0); i++) { const a = (i / Math.max(1, q.moss - 1) - .5) * 2.4, c = P(-.1 + .05 * Math.cos(i * 1.7), .9 + .06 * Math.cos(a * 1.3), Math.sin(a) * bw * .85); m.ell(c, [.07 * mossK, .045 * mossK, .07 * mossK], M.MOSS, { group: 3, extra: true }); }
+  if (hump) { // an old troll's back grown into a mossy boulder, stones heaped on it
+    const hb = P(-.22, .98, 0); m.ell(hb, [.3 * hump, .26 * hump, bw * .8], M.STONE, { dir: F, up, paint: p => p[1] > hb[1] + .12 * hump && spotty(p, 9, .45) ? M.MOSS : spotty(p, 20, .15) ? M.STONED : undefined });
+    for (let k = 0; k < 4; k++) { const a = (k / 3 - .5) * 1.8; m.ell(at(hb, -.05 + .04 * Math.cos(k * 2.1), .22 * hump, Math.sin(a) * bw * .5), [.09, .08, .09], k % 2 ? M.STONED : M.STONE, { group: 11 + k, extra: true }); }
+  }
   if (q.beads) for (let i = 0; i < 9; i++) { const a = (i / 8 - .5) * 2.6; m.ell(P(.16 + Math.cos(a) * .14, .74 - Math.cos(a) * .05, Math.sin(a) * .26), [.04, .04, .04], i === 4 ? M.ACCENT : i % 2 ? M.STONE : M.BELLY, { group: 1 }); }
   m.anchors.head = { c: hc, r: Hr, top: at(hc, 0, hr, 0) };
   m.anchors.neck = { c: P(.1, .76, 0), r: .3, dir: D(.6, 1, 0) };
@@ -9395,23 +9408,27 @@ function armadilloBall(S, frame, st, facing) {
 
 // The badlands' armadillo (Ed, 2026-10-12): a low domed shell, its middle in bands, shields of scales before and behind; a small
 // head with a long tapering snout and upright ears, short clawed legs, a ringed tail.
+// Its levels grow it (the menagerie review: "a softer baby shell"; the genome's levels): body.soft (a pup's soft, pink, unbanded
+// shell), body.dome (its shell taller and shorter), body.head (its head), body.snout (its snout's length), body.ears, body.tail
+// (its tail's length), body.legs (up on longer legs).
 function armadillo3d(S, level, frame, st, facing = "towards") {
   if (level === 3) return armadilloBall(S, frame, st, facing);
-  const legend = false, m = new Model(), bob = frame ? .012 : 0;
-  for (const [x, z] of [[.26, .2], [.26, -.2], [-.28, .21], [-.28, -.21]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .06; m.seg([x, .14, z], [x + d, .03, z], .06, .05, M.SKIN, { group: z > 0 ? 6 : 2 }); for (let k = -1; k <= 1; k++) m.ell([x + d + .06, .02, z + k * .025], [.035, .012, .01], M.ACCENT, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); }
-  const c = [0, .3 + bob, 0], r = [.5, .27, .32], band = p => Math.floor((p[0] + .26) * 15);
-  m.ell(c, r, M.BODY, { paint: p => p[0] > -.26 && p[0] < .2 ? (band(p) % 2 ? M.BODY2 : M.BODY) : spotty(p, 26, .3) ? M.BODY3 : spotty(p, 22, .2) ? M.BODY2 : undefined }); // signature: the shell, banded across its middle
-  m.ell([0, .17 + bob, 0], [.46, .08, .3], M.SKIN, { group: 1 }); // its soft underside showing under the shell's rim
-  const hc = [.6, .22 + bob, 0], hr = [.14, .12, .12];
+  const legend = false, m = new Model(), bob = frame ? .012 : 0, q = { ...S.q, ...(S.levelQ?.[level] || {}) };
+  const soft = q.soft ?? 0, snout = q.snout ?? 1, ears = q.ears ?? 1, tail = q.tail ?? 1, dome = q.dome ?? 1, lift = ((q.legs ?? 1) - 1) * .1;
+  for (const [x, z] of [[.26, .2], [.26, -.2], [-.28, .21], [-.28, -.21]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .06; m.seg([x, .14 + lift, z], [x + d, .03, z], .06, .05, M.SKIN, { group: z > 0 ? 6 : 2 }); for (let k = -1; k <= 1; k++) m.ell([x + d + .06, .02, z + k * .025], [.035, .012, .01], M.ACCENT, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); }
+  const c = [0, .3 + bob + lift, 0], r = [.5 * (1 - (dome - 1) * .5), .27 * dome, .32], band = p => Math.floor((p[0] + .26) * 15);
+  m.ell(c, r, soft ? M.SKIN : M.BODY, { paint: soft ? p => spotty(p, 20, .25) ? M.BODY : undefined : p => p[0] > -.26 && p[0] < .2 ? (band(p) % 2 ? M.BODY2 : M.BODY) : spotty(p, 26, .3) ? M.BODY3 : spotty(p, 22, .2) ? M.BODY2 : undefined }); // signature: the shell, banded across its middle
+  m.ell([0, .17 + bob + lift, 0], [.46 * r[0] / .5, .08, .3], M.SKIN, { group: 1 }); // its soft underside showing under the shell's rim
+  const hk = q.head ?? 1, hc = [.6 * r[0] / .5 + (hk - 1) * .06, .22 + bob + lift + (hk - 1) * .06, 0], hr = [.14 * hk, .12 * hk, .12 * hk];
   m.ell(hc, hr, M.BODY, { paint: p => p[1] > hc[1] + .04 ? M.BODY2 : undefined });
-  m.seg(v3.add(hc, [.08, -.02, 0]), v3.add(hc, [.3, -.08, 0]), .055, .022, M.SKIN, { group: 1 }); // the long tapering snout
-  m.ell(v3.add(hc, [.31, -.08, 0]), [.025, .025, .028], M.NOSE, { group: 1 });
-  for (const side of [-1, 1]) m.ell(v3.add(hc, [-.03, .15, side * .07]), [.1, .035, .03], M.SKIN, { dir: [-.2, 1, side * .35], group: 1 }); // upright ears
+  m.seg(v3.add(hc, [.08 * hk, -.02, 0]), v3.add(hc, [.08 * hk + .22 * snout, -.08 * snout, 0]), .055 * hk, .022 * hk, M.SKIN, { group: 1 }); // the long tapering snout
+  m.ell(v3.add(hc, [.08 * hk + .23 * snout, -.08 * snout, 0]), [.025 * hk, .025 * hk, .028 * hk], M.NOSE, { group: 1 });
+  for (const side of [-1, 1]) m.ell(v3.add(hc, [-.03, (.15 + (ears - 1) * .08) * hk, side * .07 * hk]), [.1 * ears * hk, .035 * ears, .03 * ears], M.SKIN, { dir: [-.2, 1, side * .35], group: 1 }); // upright ears
   eyesOn(m, hc, hr, [[.55, .3, .6], [.55, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
-  m.chain([[-.46, .24 + bob, 0, .08], [-.66, .12, 0, .05], [-.86, .05, 0, .02]], M.BODY, { paint: p => Math.floor(p[0] * 30) % 2 ? M.BODY2 : undefined, group: 3 }); // the ringed tail
+  m.chain([[-.46 * r[0] / .5, .24 + bob + lift, 0, .08], [-.46 * r[0] / .5 - .2 * tail, .12 + lift * .5, 0, .05], [-.46 * r[0] / .5 - .4 * tail, .05, 0, .02]], M.BODY, { paint: p => Math.floor(p[0] * 30) % 2 ? M.BODY2 : undefined, group: 3 }); // the ringed tail
   m.anchors.head = { c: hc, r: hr, top: [hc[0], hc[1] + .16, 0] };
   m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(hc, hr, v3.norm([.55, .3, side * .6]))), size: .025 };
-  m.anchors.neck = { c: [.44, .22 + bob, 0], r: .12, dir: [1, -.1, 0] };
+  m.anchors.neck = { c: [.44 * r[0] / .5, .22 + bob + lift, 0], r: .12, dir: [1, -.1, 0] };
   if (legend) crystals3d(m, [[[-.2, .54, .1], .35], [[0, .57, -.1], .5], [[.18, .53, .1], .4], [[-.05, .56, .18], .3]]);
   return finish(m, S, level, st, .5, facing);
 }
@@ -9731,20 +9748,22 @@ function dragonfly3d(S, level, frame, st, facing = "towards") {
 // legend the elder of its kind (Ed, docs/ART-GUIDE.md §0c): one colossal gleaming claw, bigger than its body, raised and lowered frame
 // to frame in a slow beckoning wave (feature wave), its stalked eyes lit, its shell aged like a reef (feature reef): crusted with
 // barnacles, knobs of coral and old scars.
+// Its levels grow it (the menagerie review: "claws growing with age"): body.shell (its carapace), body.claw (the great claw, on the
+// right), body.small (the other claw), body.stalk (its eye stalks' length: a juvenile's long).
 function crab3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
-  const cw = q.shell ?? 1, big = q.claw ?? 1, y = .3 * cw;
+  const cw = q.shell ?? 1, big = q.claw ?? 1, small = q.small ?? 1, stalk = q.stalk ?? 1, span = q.legs ?? 1, y = .3 * cw;
   const shell = [0, y, 0], sr = [.42 * cw, .15 * cw, .28 * cw];
   for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, four a side, out along x (the way it scuttles): kneed high
     const z = .12 - i * .1, ph = ((i + (side > 0 ? 1 : 0) + frame) % 2 ? 1 : -1) * .05, base = [side * sr[0] * .8, y - .02, z * cw];
-    m.chain([[...base, .035 * cw], [side * (sr[0] + .2) * cw + ph, y + .14 * cw, (z - .04) * cw, .03 * cw], [side * (sr[0] + .34) * cw + ph * 1.6, .02, (z - .1) * cw, .015 * cw]], i % 2 ? M.BODY2 : M.BODY, { group: side > 0 ? 7 : 2 });
+    m.chain([[...base, .035 * cw], [side * (sr[0] + .2 * span) * cw + ph, y + .14 * cw * span, (z - .04) * cw, .03 * cw], [side * (sr[0] + .34 * span) * cw + ph * 1.6, .02, (z - .1) * cw, .015 * cw]], i % 2 ? M.BODY2 : M.BODY, { group: side > 0 ? 7 : 2 });
   }
   const reef = has("reef");
   m.ell(shell, sr, M.BODY, { paint: p => (q.barnacles && spotty(p, 18, reef ? .3 : .12)) ? M.BELLY : reef && Math.abs(Math.sin(p[0] * 30 + p[2] * 11)) < .05 ? M.BODY3 : p[1] > y + sr[1] * .55 ? M.BODYL : undefined }); // the carapace, its top lit (an elder's crusted and scarred)
   if (reef) for (let i = 0; i < 12; i++) { const a = i * 2.4, rr = .2 + (i % 4) * .2, c = [Math.cos(a) * sr[0] * rr - .08, y + sr[1] * (.95 - rr * .45), Math.sin(a) * sr[2] * rr * .8 - .04], h = (.07 + (i % 4) * .025) * cw; m.ell(v3.add(c, [0, h * .5, 0]), [h * .6, h, h * .6], M.BELLY, { group: 4, paint: p => p[1] > c[1] + h * 1.2 ? M.BODY3 : p[0] < c[0] - h * .2 ? M.BODY2 : undefined }); } // knobs of coral and barnacle cones
   m.ell([0, y - sr[1] * .4, sr[2] * .3], [sr[0] * .85, sr[1] * .55, sr[2] * .8], M.BELLY, { group: 1 }); // its pale underside in front
   for (const side of [-1, 1]) { // the claws, at the front (towards the camera); the right one a fiddler's great claw
-    const k = side > 0 ? big : 1, great = side > 0 && big > 1.2, cm = great ? M.BODY : M.BODY2, out = great ? .12 * (k - 1) : 0; // (the great claw held out to the side, clear of its face)
+    const k = side > 0 ? big : small, great = side > 0 && big > 1.2, cm = great ? M.BODY : M.BODY2, out = great ? .12 * (k - 1) : 0; // (the great claw held out to the side, clear of its face)
     const lift = side > 0 && has("wave") && !FORM ? (frame % 2 ? .1 : .32) : 0; // the legend's beckoning wave: raised, then lowered (not asleep)
     const sh = [side * .16 * cw, y - .04, sr[2] * .6], el = [side * .22 * cw, y - .02 + lift * .5, sr[2] * .9], hand = [side * (.24 + .06 * k + out) * cw, y + (.06 + .05 * k + lift) * cw, (sr[2] + .1 + .06 * k) * cw];
     m.seg(sh, el, .04 * cw, .035 * cw, M.BODY2, { group: side > 0 ? 6 : 5 });
@@ -9756,9 +9775,9 @@ function crab3d(S, level, frame, st, facing = "towards") {
     m.chain([[...v3.add(hand, [0, .03 * k * cw, .05 * k * cw]), .04 * k * cw], [...v3.lerp(hand, tipU, .6).map((v, j) => j === 1 ? v + .02 * k * cw : v), .025 * k * cw], [...tipU, .006]], cm, { group: side > 0 ? 6 : 5, paint: p => Math.hypot(...v3.sub(p, tipU)) < .05 * k * cw ? M.BELLY : undefined });
     m.chain([[...v3.add(hand, [0, -.03 * k * cw, .05 * k * cw]), .035 * k * cw], [...v3.lerp(hand, tipD, .6), .022 * k * cw], [...tipD, .006]], cm, { group: side > 0 ? 6 : 5 });
   }
-  for (const side of [-1, 1]) { const b = [side * .07 * cw, y + sr[1] * .6, sr[2] * .7], e = v3.add(b, [side * .02, .14 * cw, .04 * cw]); m.seg(b, e, .018 * cw, .014 * cw, M.BODY2, { group: 9 }); m.ell(e, [.04 * cw, .045 * cw, .04 * cw], legend ? M.MAGIC2 : M.EYE, { group: 9 }); } // eyes on stalks (a legend's lit)
+  for (const side of [-1, 1]) { const b = [side * .07 * cw, y + sr[1] * .6, sr[2] * .7], e = v3.add(b, [side * .02, .14 * cw * stalk, .04 * cw]); m.seg(b, e, .018 * cw, .014 * cw, M.BODY2, { group: 9 }); m.ell(e, [.04 * cw, .045 * cw, .04 * cw], legend ? M.MAGIC2 : M.EYE, { group: 9 }); } // eyes on stalks (a legend's lit)
   m.anchors.head = { c: [0, y + sr[1] * .7, sr[2] * .7], r: [.12, .1, .1], top: [0, y + sr[1] + .12, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => [side * .09 * cw, y + sr[1] * .6 + .14 * cw, sr[2] * .7 + .04 * cw]), size: .04 * cw };
+  m.anchors.eyes = { pts: [-1, 1].map(side => [side * .09 * cw, y + sr[1] * .6 + .14 * cw * stalk, sr[2] * .7 + .04 * cw]), size: .04 * cw };
   m.anchors.neck = { c: [0, y + sr[1] * .2, sr[2] * .6], r: .14 * cw, dir: [0, 0, 1] };
   return finish(m, S, level, st, .45, facing);
 }
