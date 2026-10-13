@@ -365,6 +365,12 @@
    "swipe",
    "bigswipe",
    "quake"
+  ],
+  "lion": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendCharge"
   ]
  },
  "kite": {
@@ -376,6 +382,7 @@
  },
  "temperament": {
   "curious": [
+   "lion",
    "squirrel",
    "fox",
    "arcticfox",
@@ -433,7 +440,8 @@
    "boar",
    "bear",
    "elk",
-   "stag"
+   "stag",
+   "lion"
   ],
   "nimble": [
    "hare",
