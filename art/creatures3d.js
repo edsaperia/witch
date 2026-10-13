@@ -824,6 +824,42 @@ export function owl3d(S, level, frame, st, facing = "towards") {
 }
 
 // ================= the other body plans, in 3D =================
+// The penguin (unknown-14's icy shore, Ed 2026-10-12: more animals for later islands; art builder 2's): upright, a black back and a
+// white front, flippers held out at its sides, a small head and a long beak, short orange feet; it waddles, rocking from foot to foot
+// (its two frames). A downy grey chick, a brown-grey young, a black-and-white adult with an orange patch at its neck, and the legend
+// crowned. (Its belly-slide is a movement, the game's to draw from this sprite laid down.)
+export function penguin3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, baby = level === 0, has = f => legend && !S.levelFeatures?.[3] && S.legend.includes(f), m = new Model(), q = { ...(S.levelQ?.[level] || {}) };
+  const rock = frame ? .12 : -.12, hr = S.sizes.head[level], hy = S.sizes.headY[level], down = !!q.down, young = !!q.young;
+  // feet: short and flat, orange (a chick's grey), one ahead of the other as it rocks
+  for (const side of [-1, 1]) { const f = side * rock * .5; m.ell([.1 + f, .03, side * .13], [.12, .03, .07], down ? M.BODY3 : M.FLOWER, { group: 2 }); m.anchors.feet.push({ c: [.1 + f, .03, side * .13], r: .07, group: 2 }); }
+  // the tail: a short stiff wedge at the back
+  m.ell([-.26, .14, 0], [.14, .04, .08], M.BODY, { dir: [-1, -.4, 0], group: 3 });
+  // body: a tall egg leaning a little forward, rocking side to side; its front white (a chick all grey down)
+  const tilt = [.12, 1, rock];
+  m.ell([0, .6, 0], [.58, .33, .3], down ? M.BELLY : young ? M.BODYL : M.BODY, { dir: tilt, up: [1, 0, 0], rough: down ? .035 : undefined, paint: p => down ? (spotty(p, 14, .45) ? M.BODYL : undefined) : p[0] > .1 - p[1] * .05 && p[1] < hy - hr * .6 ? (q.elder && spotty(p, 22, .12) ? M.STONE : M.BELLY) : q.elder ? (p[1] > .95 && spotty(p, 16, .5) ? M.WEB : spotty(p, 11, .3) ? M.STONED : spotty(p, 19, .1) ? M.MOSS : undefined) : undefined });
+  // flippers: flat, held out a little from its sides, their undersides pale (an adult's)
+  for (const side of [-1, 1]) m.ell([-.02, .6 + (q.oars ? .06 : 0), side * .32], [q.oars ? .56 : .4, .08, .035], down ? M.BELLY : young ? M.BODYL : M.BODY, { dir: q.oars ? [.05, -.75, side * (frame ? 1 : .8)] : [.2, -1, side * (frame ? .65 : .45)], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: !down && !young ? p => p[0] > .02 ? M.BELLY : undefined : undefined });
+  // head: small and round on a short neck, black (a young's grey-brown, a chick's down with a dark cap)
+  m.ell([.04, hy, 0], [hr, hr * .92, hr * .9], down ? M.BELLY : young ? M.BODYL : M.BODY, { rough: down ? .02 : undefined, paint: down ? p => p[1] > hy - hr * .1 ? M.BODY : undefined : young ? p => p[0] > .04 + hr * .3 && p[1] < hy ? M.BELLY : undefined : q.elder ? p => p[1] > hy + hr * .5 && spotty(p, 14, .5) ? M.WEB : spotty(p, 11, .3) ? M.STONED : undefined : undefined });
+  // the adult's orange patch at either side of its neck, fading down onto its breast
+  if (!down && !young) for (const side of [-1, 1]) m.ell([.1, hy - hr * .7, side * hr * .62], [hr * .55, hr * .3, hr * .16], M.FLOWER, { group: 1, dir: [.35, -1, side * .45] });
+  if (q.gorget) m.ell([.31, 1.0, 0], [.24, .045, .13], M.FLOWER, { group: 1, dir: [.12, -1, 0], up: [1, 0, 0] }); // the legend's gorget, blazing down its breast
+  // beak: long and pointed, dark with an orange stripe along it (an adult's)
+  const bc = Model.surface([.04, hy, 0], [hr, hr * .92, hr * .9], v3.norm([1, -.15, 0]));
+  m.ell(v3.add(bc, [hr * .4 * (q.beak ?? 1), -hr * .05, 0]), [hr * .55 * (q.beak ?? 1), hr * .13, hr * .12], M.BODY3, { dir: [1, -.18, 0], group: 1, paint: !down && !young ? p => p[1] < bc[1] - hr * .06 ? M.FLOWER : undefined : undefined });
+  if (q.elder) {
+    for (let k = 0; k < 3; k++) m.seg([.31, .74 - k * .14, .02 + k * .06], [.34, .52 - k * .14, .16 + k * .06], .02, .012, M.STONED, { group: 1, extra: true }); // old scars across its breast
+    for (let k = 0; k < 11; k++) { const a = Math.PI * (-.5 + k / 10), p = [.08 + Math.cos(a) * .3, hy - hr * .95 - Math.cos(a) * .05, Math.sin(a) * .27]; if (p[0] < -.05) continue; m.ell(p, k % 2 ? [.06, .05, .05] : [.07, .03, .07], k % 2 ? M.STONE : M.WEB, { group: 1, extra: true, dir: [0, 1, 0], up: [1, 0, 0] }); } // a necklace of offerings: pebbles and shells from the rookery
+  }
+  if (q.chick) { const c = [.34, .16, 0]; m.ell(c, [.17, .16, .15], M.BODYL, { group: 7, rough: .035, dir: [0, 1, 0], up: [1, 0, 0], paint: p => spotty(p, 30, .35) ? M.BELLY : undefined }); m.ell([c[0] + .03, c[1] + .2, 0], [.1, .095, .095], M.BELLY, { group: 7, paint: p => p[1] > c[1] + .21 || p[0] < c[0] - .02 ? M.BODY : undefined }); m.ell([c[0] + .14, c[1] + .19, 0], [.045, .014, .014], M.BODY3, { dir: [1, -.2, 0], group: 7 }); eyesOn(m, [c[0] + .03, c[1] + .2, 0], [.1, .095, .095], [[.6, .35, .55], [.6, .35, -.55]], .018, M.EYE, 7); } // its downy chick standing on its feet before it
+  eyesOn(m, [.04, hy, 0], [hr, hr * .92, hr * .9], [[.55, .3, .6], [.55, .3, -.6]], hr * .12, M.EYE);
+  if (has("crown")) crown3d(m, [.02, hy + hr * .95, 0], hr * .75);
+  m.anchors.neck = { c: [.02, hy - hr * .8, 0], r: hr * .8, dir: [0, 1, 0] };
+  return finish(m, S, level, st, .5, facing);
+}
+
+
 const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
   for (const d of dirs) m.ell(Model.surface(c, r, v3.norm(d)), [size, size * 1.2, size], mat, { group });
   m.anchors.head ||= { c, r }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size };
@@ -1277,6 +1313,87 @@ export function snake3d(S, level, frame, st, facing = "towards") {
   m.anchors.neck = { c: [.42, .36, pts[12][2] * .9], r: .075, dir: [.2, 1, 0] };
   m.part = "body";
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [0, .2, side * .05], side, .9, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
+  return finish(m, S, level, st, .45, facing);
+}
+
+// The rattlesnake (Ed, 2026-10-13: the badlands' cactus desert, unknown-21): a desert sidewinder, sandy with dark diamonds down its
+// back, a broad wedge of a head, its tail held up off the sand ending in the rattle (a stack of pale buttons, levelQ rattle: how many),
+// shaken between its two frames, the body throwing its S the other way. Its legend its own traits outsized (Ed: a legend "emphasises
+// the thing that makes that creature unusual"): great coils stacked under its raised head (levelQ coil) and a colossal rattle held
+// high, its shake rippling out through the sand in rings (feature ripple); the elder of its kind (Ed, docs/ART-GUIDE.md §0c): the
+// sidewinder's horns over its eyes grown great (feature horns), its scales scarred by epochs.
+/** Its warning (the genome's idle "rattle", IDLE_BUILDERS in art/creatures.js): still, its rattle raised and shaking between the frames. */
+export const rattle3d = (S, level, frame, st, facing) => { RATTLING = true; try { return rattlesnake3d(S, level, frame, st, facing); } finally { RATTLING = false; } };
+let RATTLING = false;
+export function rattlesnake3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
+  const ph = frame && !RATTLING ? Math.PI : 0, th = q.thick ?? 1, coil = q.coil ?? 0, nR = q.rattle ?? 3, pts = [];
+  const r0 = .055 * th, diamonds = p => { const u = Math.abs(((p[0] * 7 + p[2] * 7) % 1 + 1) % 1 - .5) + Math.abs(((p[0] * 7 - p[2] * 7) % 1 + 1) % 1 - .5); return p[1] > .05 * th && u < .32 ? M.BODY3 : undefined; };
+  if (coil) { // the legend's coils: three turns stacked, rising, under its raised neck
+    for (let i = 0; i <= 30; i++) { const t = i / 30, a = t * Math.PI * 2 * 2.6, R = (.55 - t * .25) * coil; pts.push([Math.cos(a) * R - .1, r0 + t * .32 * coil, Math.sin(a) * R * .8, r0 * (1.15 - t * .2)]); }
+  } else { // sidewinding: an S across the sand, thrown the other way each frame
+    for (let i = 0; i <= 14; i++) { const t = i / 14; pts.push([-.85 + t * 1.15, r0 * .9, Math.sin(t * Math.PI * 2 + ph) * .2 * (1 - t * .4), r0 * (.55 + .45 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2))]); }
+  }
+  const last = pts[pts.length - 1], neckTop = [last[0] + .12, last[1] + .26 * th + (coil ? .2 : 0), last[2] * .6];
+  pts.push([last[0] + .1, last[1] + .12 * th, last[2] * .8, r0 * .9], [...neckTop, r0 * .85]);
+  const scarred = p => has("horns") && Math.abs(Math.sin(p[0] * 23 + p[2] * 31)) < .05 ? M.BELLY : undefined;
+  m.chain(pts, M.BODY, { paint: p => p[1] < r0 * .5 ? M.BELLY : scarred(p) ?? diamonds(p) });
+  // the rattle: the tail's end lifted, a stack of buttons pointing up and back, shaken (tilted the other way) between frames
+  const sh = RATTLING ? (frame ? 1 : -1) : 0, tail = pts[0], up = [-.45 + sh * .08, 1, sh * .25], rk = has("rattleBig") ? 1.9 : 1;
+  let b = v3.add(tail.slice(0, 3), [-.02, .02, 0]);
+  for (let i = 0; i < nR; i++) { const w = r0 * .9 * rk * (1 - i * .04); m.ell(b, [w * .9, w * .55, w * .8], i % 2 ? M.BELLY : M.ACCENT, { dir: up, group: 12, paint: p => p[1] > b[1] + w * .3 ? M.BODYL : undefined }); b = v3.add(b, v3.mul(v3.norm(up), w * 1.05)); }
+  if (has("ripple") && RATTLING && frame) for (const R of [.5, .8, 1.1]) m.ell([tail[0] - .05, .004, tail[2]], [R * rk * .6, .004, R * rk * .45], M.LINE, { group: 0, paint: p => Math.hypot((p[0] - tail[0] + .05) / (R * rk * .6), (p[2] - tail[2]) / (R * rk * .45)) > .9 ? M.LINE : null }); // its shake through the sand
+  // the head: a broad flat wedge, heat pits, eyes under a brow, a forked tongue out on one frame
+  const hr = .085 * th, hc = v3.add(neckTop, [hr * 1.1, hr * .2, 0]);
+  m.ell(hc, [hr * 1.5, hr * .65, hr * 1.1], M.BODY, { dir: [1, -.2, 0], group: 1, paint: p => p[1] > hc[1] + hr * .3 ? M.BODY2 : undefined });
+  eyesOn(m, hc, [hr * 1.5, hr * .65, hr * 1.1], [[.45, .55, .7], [.45, .55, -.7]], hr * .2, legend ? M.MAGIC2 : M.EYE);
+  if (has("horns")) for (const sd of [-1, 1]) m.chain([[...v3.add(hc, [hr * .3, hr * .5, sd * hr * .6]), hr * .22], [...v3.add(hc, [hr * .1, hr * 1.2, sd * hr * .8]), hr * .12], [...v3.add(hc, [-hr * .4, hr * 1.7, sd * hr * .7]), hr * .02]], M.BELLY, { group: 1 }); // the elder's horns
+  if (!frame) for (const s2 of [-1, 1]) m.seg(v3.add(hc, [hr * 1.4, -hr * .25, 0]), v3.add(hc, [hr * 2.3, -hr * .35, s2 * hr * .25]), .008, .006, M.SKIN, { group: 1 });
+  m.anchors.feet.push({ c: v3.add(tail.slice(0, 3), [.04, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on its tail
+  m.anchors.neck = { c: v3.lerp(pts[pts.length - 2].slice(0, 3), neckTop, .5), r: r0 * 1.2, dir: [.2, 1, 0] };
+  return finish(m, S, level, st, .5, facing);
+}
+
+// The scorpion (Ed, 2026-10-13: the badlands' red rock canyon, unknown-22; "raised curled sting and pincers"): a flat plated body low
+// on eight legs, two great pincers reaching ahead, its tail of five segments arched up over its back and curling forward to the
+// bulb and sting. Its levels (levelQ: tail and pincer sizes): the baby pale and short-tailed, the adult dark with heavy pincers; the
+// legend its own traits outsized (Ed: a legend "emphasises the thing that makes that creature unusual"): a colossal curled tail and
+// sting (levelQ tail) and the scorpion's own trick, glowing blue-green under the moon along every plate's edge (feature fluoresce);
+// the elder of its kind (Ed, docs/ART-GUIDE.md §0c): its armour scarred by epochs, its young riding on its back as scorpions carry
+// them (feature brood), a mother of all scorpions.
+export function scorpion3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
+  const tk = q.tail ?? 1, pk = q.pincer ?? 1, glowEdge = has("fluoresce"), y = .14;
+  for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, kneed up, stepping in alternate sets
+    const x = .12 - i * .12, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .04 : -.04, base = [x, y, side * .1];
+    m.chain([[...base, .022], [x + ph + (1.5 - i) * .05, y + .1, side * .3, .018], [x + ph * 1.5 + (1.5 - i) * .1, .01, side * .42, .01]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
+  }
+  // the body: a head shield and seven plates, each edged (the legend's edges glowing)
+  const edge = (c, r) => p => p[0] < c[0] - r[0] * .7 ? (glowEdge ? M.MAGIC : M.BODY3) : glowEdge && Math.abs(Math.sin(p[0] * 47 + p[2] * 19)) < .05 ? M.BELLY : undefined; // (each plate's back edge: a dark seam, the legend's glowing; an elder's plates scarred)
+  m.ell([.16, y + .03, 0], [.12, .05, .11], M.BODY, { group: 1, paint: edge([.16, y + .03, 0], [.12, .05, .11]) });
+  for (let i = 0; i < 7; i++) { const c = [.04 - i * .065, y + .035, 0], r = [.045, .05, .12 - i * .004]; m.ell(c, r, i % 2 ? M.BODY2 : M.BODY, { group: 3, paint: edge(c, r) }); }
+  // the tail: five segments arching up over the back and forward, then the bulb and the curved sting
+  const r0 = [-.4, y + .04], K = [[0, 0], [-.12, .2], [-.08, .42], [.08, .55], [.24, .52], [.32, .42]]; // (up from its rear, back, over and forward)
+  const T = K.map(([dx, dy]) => [r0[0] + dx * tk, r0[1] + dy * tk, 0]);
+  for (let i = 0; i < 5; i++) m.seg(T[i], T[i + 1], (.042 - i * .003) * Math.sqrt(tk), (.04 - i * .003) * Math.sqrt(tk), i % 2 ? M.BODY2 : M.BODY, { group: 4, paint: glowEdge ? p => (Math.hypot(p[0] - T[i + 1][0], p[1] - T[i + 1][1]) < .02 * tk ? M.MAGIC : undefined) : undefined });
+  const bulb = v3.add(T[5], [.02 * tk, -.03 * tk, 0]);
+  m.ell(bulb, [.05 * tk, .04 * tk, .04 * tk], M.ACCENT, { group: 4 });
+  m.chain([[...v3.add(bulb, [.03 * tk, -.03 * tk, 0]), .018 * tk], [...v3.add(bulb, [.05 * tk, -.09 * tk, 0]), .01 * tk], [...v3.add(bulb, [.02 * tk, -.13 * tk, 0]), .003]], M.BODY3, { group: 4 }); // the sting, curving down
+  // the pincers: an arm forward each side, a broad claw and its two fingers
+  for (const side of [-1, 1]) {
+    const sh = [.24, y + .03, side * .07], el = [.36, y + .08, side * .2 * pk], hand = [.5 + .06 * pk, y + .06, side * .2 * pk];
+    m.chain([[...sh, .025], [...el, .03 * pk], [...hand, .035 * pk]], M.BODY2, { group: side > 0 ? 6 : 5 });
+    m.ell(hand, [.08 * pk, .045 * pk, .055 * pk], M.BODY, { group: side > 0 ? 6 : 5, dir: [1, 0, -side * .3] }); // (Ed: its glow at the seams only)
+    for (const dz of [.02, -.02]) m.chain([[...v3.add(hand, [.06 * pk, 0, side * dz * pk]), .025 * pk], [...v3.add(hand, [.15 * pk, 0, side * (dz * 2.2 - .02) * pk]), .004]], M.BODY3, { group: side > 0 ? 6 : 5 });
+  }
+  const hc = [.24, y + .06, 0];
+  eyesOn(m, hc, [.06, .03, .06], [[.2, 1, .25], [.2, 1, -.25]], .016, legend ? M.MAGIC2 : M.EYE);
+  if (has("brood")) for (let i = 0; i < 7; i++) { // its young riding on its back, pale, each a tiny body and tail curled up
+    const c = [.12 - i * .075, y + .12, ((i % 3) - 1) * .07], k = .9 + (i % 2) * .2;
+    m.ell(c, [.04 * k, .02 * k, .03 * k], M.BELLY, { group: 30 + i });
+    m.seg(v3.add(c, [-.035 * k, .01, 0]), v3.add(c, [-.04 * k, .05 * k, 0]), .01 * k, .006 * k, M.BELLY, { group: 30 + i });
+  }
+  m.anchors.neck = { c: [.2, y + .05, 0], r: .1, dir: [1, 0, 0] };
   return finish(m, S, level, st, .45, facing);
 }
 
