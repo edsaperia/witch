@@ -646,7 +646,7 @@ label.check input { accent-color: var(--accent); }
   var GENOME_BAT = { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: 0.78, sat: 0.25, val: 0.45 }, legend: ["sonar"], texture: { kind: "fur", size: 3 } };
 
   // art/creatures/bear/genome.js
-  var GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.42 }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true }, parts: { ears: { kind: "round", size: 0.9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, null, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "claws", size: 0.3, mat: "GLOW" }, { kind: "scars", count: 4 }] }] };
+  var GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.42 }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 0.9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, null, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "claws", size: 0.3, mat: "GLOW" }, { kind: "scars", count: 4 }] }] };
 
   // art/creatures/beaver/genome.js
   var GENOME_BEAVER = { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: 0.06, sat: 0.6, val: 0.45 }, body: { stance: "flat", hgt: 0.66, len: 0.62, chest: 0.34, tuck: 0.3, neck: 0.18, neckAng: 0.35, neckW: 0.6, hr: 0.3, legW: 1.25, back: "hump" }, head: { snout: 0.55, snoutD: 0.8, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "flat", feet: "paw" }, legend: ["moss"], levels: [{ body: { hgt: 0.66, len: 0.48, chest: 0.4, tuck: 0.38, back: "arch", legW: 1.4 }, head: { snout: 0.4, snoutD: 0.75, teeth: false }, parts: { ears: { kind: "round", size: 0.65 }, tail: "stub" } }, { body: { hgt: 0.7, len: 0.7, chest: 0.3, tuck: 0.26, back: "arch", legW: 1.1 }, head: { snout: 0.58 }, parts: { ears: { kind: "round", size: 0.5 } } }, null, { head: { bigTeeth: true, log: true } }] };
@@ -1070,7 +1070,7 @@ label.check input { accent-color: var(--accent); }
     builder: "quad",
     palette: { hue: 0.075, sat: 0.58, val: 0.66, belly: "white", magic: 0.09 },
     body: { hgt: 1.4, len: 0.78, chest: 0.6, tuck: 0.7, neck: 0.3, neckAng: 0.55, neckW: 0.44, hr: 0.25, legW: 1.05, bw: 0.27, profile: { shoulder: { w: 1.2, d: 1.06 }, ribcage: { w: 1.08 }, waist: { w: 0.78, d: 0.88 }, loin: { w: 0.85, d: 0.94 }, hip: { w: 0.95 } }, spine: { ribcage: -0.04, waist: -0.05, loin: -0.04, hip: -0.015 } },
-    head: { snout: 0.85, snoutD: 0.78, snoutTaper: 0.8, cheeks: true, whiskers: true },
+    head: { snout: 0.85, snoutD: 0.78, snoutTaper: 0.8, cheeks: true, whiskers: true, jawCoat: true },
     parts: { ears: { kind: "round", size: 0.7 }, tail: "tuft", feet: "paw" },
     coat: { belly: true },
     legend: ["mane"],
@@ -1123,7 +1123,7 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/otter/genome.js
-  var GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.45, belly: "white" }, body: { stance: "flat", hgt: 0.46, len: 1.15, chest: 0.32, tuck: 0.26, neck: 0.36, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { onBack: true } }] };
+  var GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.45, belly: "white" }, body: { stance: "flat", hgt: 0.46, len: 1.15, chest: 0.32, tuck: 0.26, neck: 0.36, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { pearl: true } }] };
 
   // art/creatures/owl/genome.js
   var GENOME_OWL = {
@@ -1388,7 +1388,29 @@ label.check input { accent-color: var(--accent); }
   var GENOME_SQUIRREL = { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: 0.03, sat: 0.75, val: 0.75, belly: "white" }, body: { hgt: 0.55, len: 0.45, chest: 0.35, tuck: 0.4, neck: 0.2, neckAng: 0.9, neckW: 0.35, hr: 0.3, legW: 0.8, haunch: 1.3, back: "arch" }, head: { snout: 0.55, snoutD: 0.65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "squirrel", tail: true, eye: "EYE" } };
 
   // art/creatures/stag/genome.js
-  var GENOME_STAG = { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: 0.08, sat: 0.5, val: 0.7 }, body: { hgt: 1.3, len: 0.6, chest: 0.6, tuck: 0.7, neck: 0.55, neckAng: 0.95, neckW: 0.32, hr: 0.2, legW: 0.75, profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.08 }, waist: { w: 0.72, d: 0.82 }, loin: { w: 0.8, d: 0.9 }, hip: { w: 0.95 } }, spine: { shoulder: 0.04, ribcage: 0.025 } }, head: { snout: 1.15, snoutD: 0.6, snoutTaper: 0.65 }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"], levels: [null, null, null, { head: { antlerK: 1.9, tineFlames: true } }] };
+  var GENOME_STAG = { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: 0.08, sat: 0.5, val: 0.7 }, body: { hgt: 1.3, len: 0.6, chest: 0.6, tuck: 0.7, neck: 0.55, neckAng: 0.95, neckW: 0.32, hr: 0.2, legW: 0.75, profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.08 }, waist: { w: 0.72, d: 0.82 }, loin: { w: 0.8, d: 0.9 }, hip: { w: 0.95 } }, spine: { shoulder: 0.04, ribcage: 0.025 } }, head: { snout: 1.15, snoutD: 0.6, snoutTaper: 0.65, jawCoat: true }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"], levels: [null, null, null, { head: { antlerK: 0.9, antlerLean: 1.15, tineFlames: true } }] };
+
+  // art/creatures/stegosaurus/genome.js
+  var GENOME_STEGOSAURUS = {
+    id: "stegosaurus",
+    name: "Stegosaurus",
+    template: "quadruped",
+    builder: "quad",
+    palette: { hue: 0.27, sat: 0.28, val: 0.38, belly: "white", flower: [214, 92, 48] },
+    body: { hgt: 1.36, len: 1.05, chest: 0.38, tuck: 0.45, neck: 0.18, neckAng: -0.6, neckW: 0.34, hr: 0.2, legW: 1.6, haunch: 1.5, hindFoot: 1.2, back: "arch", bw: 0.36, profile: { shoulder: { w: 0.82, d: 0.9 }, ribcage: { w: 1.05, d: 1.12 }, waist: { w: 1.08, d: 1.1 }, loin: { w: 1.06, d: 1.05 }, hip: { w: 1.12, d: 1.02 } }, spine: { shoulder: -0.02, ribcage: 0.02, waist: 0.05, loin: 0.07, hip: 0.05 } },
+    head: { snout: 0.8, snoutD: 0.5, muzzle: true, eyeK: 1.3 },
+    parts: { ears: { kind: "none" }, tail: "stego", feet: "paw" },
+    coat: { belly: true, spots: true, spotMat: "BODY2" },
+    legend: ["crystals"],
+    texture: { kind: "scales", size: 3 },
+    levels: [
+      { body: { len: 0.8 }, head: { eyeK: 1.6 }, features: [{ kind: "backPlates", count: 5, height: 0.5, width: 0.5, mat: "FLOWER", rim: "BODY3", from: 0.1, to: 0.75 }] },
+      { features: [{ kind: "backPlates", count: 7, height: 0.5, width: 0.48, mat: "FLOWER", rim: "BODY3", from: 0.05, to: 0.8 }] },
+      { features: [{ kind: "backPlates", count: 9, height: 0.66, width: 0.46, mat: "FLOWER", rim: "BODY3", from: 0, to: 0.85 }] },
+      { coat: { scarred: true }, parts: { tail: "stegoElder" }, head: { eyeGlow: true, frost: true }, features: [{ kind: "backPlates", count: 9, height: 0.85, width: 0.46, mat: "BODY3", rim: "NOSE", glow: true, chips: true, from: 0, to: 0.85 }, { kind: "moss", count: 6, size: 0.12 }] }
+      // its elder: an epoch-old survivor of the volcano (Ed's brief, ART-GUIDE §0c): plates of obsidian veined with lava, chipped by ages, old scars across its flank, ash-grey frost on its muzzle, moss in its folds, a gold ring offered round each spike, one spike broken short
+    ]
+  };
 
   // art/creatures/stoat/genome.js
   var GENOME_STOAT = { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: 0.1, sat: 0.25, val: 0.92 }, body: { hgt: 0.48, len: 1.05, chest: 0.3, tuck: 0.33, neck: 0.5, neckAng: 0.9, neckW: 0.3, hr: 0.25, legW: 0.8, back: "arch" }, head: { snout: 0.6, snoutD: 0.6, whiskers: true }, parts: { ears: { kind: "round", size: 0.6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, legend: ["ribbons", "mane"] };
@@ -1689,6 +1711,9 @@ label.check input { accent-color: var(--accent); }
 
   // art/creatures/stag/sigil.js
   var SIGIL_STAG = { neon: "magenta", strokes: [...pair(L([0.4, 0.42], [0.4, 0.68], [0.5, 0.9]), L([0.4, 0.44], [0.2, 0.4], [0.36, 0.52]), L([0.43, 0.4], [0.35, 0.26], [0.24, 0.07]), L([0.37, 0.3], [0.17, 0.25]), L([0.3, 0.17], [0.38, 0.07]), D(0.44, 0.56)), L([0.4, 0.42], [0.6, 0.42])] };
+
+  // art/creatures/stegosaurus/sigil.js
+  var SIGIL_STEGOSAURUS = { neon: "red", strokes: [bow([0.12, 0.66], [0.84, 0.7], 0.32), L([0.2, 0.52], [0.27, 0.33], [0.35, 0.47], [0.44, 0.25], [0.52, 0.45], [0.6, 0.3], [0.68, 0.5]), L([0.13, 0.66], [0.04, 0.54]), L([0.12, 0.68], [0.03, 0.76]), C(0.87, 0.72, 0.045), L([0.34, 0.74], [0.34, 0.86]), L([0.66, 0.74], [0.66, 0.86])] };
 
   // art/creatures/stoat/sigil.js
   var SIGIL_STOAT = { neon: "pink", strokes: [A(0.5, 0.54, 0.33, -40, 250), C(0.68, 0.26, 0.1), ...[[0.62, 0.18], [0.72, 0.16]].map(([x, y]) => L([x, y + 0.02], [x - 0.02, y - 0.07], [x + 0.03, y - 0.01])), D(0.71, 0.27), D(...at(0.5, 0.54, 0.33, 250))] };
@@ -2279,6 +2304,9 @@ label.check input { accent-color: var(--accent); }
 
   // art/creatures/stag/nap.js
   var NAP_STAG = { kind: "lie", sink: 0.06, droop: 0.5 };
+
+  // art/creatures/stegosaurus/nap.js
+  var NAP_STEGOSAURUS = { kind: "lie", sink: 0.06, droop: 0.8 };
 
   // art/creatures/stoat/nap.js
   var NAP_STOAT = { kind: "curl", sink: 0.03, droop: 1, curl: 4, tailDown: 0.25 };
@@ -3679,6 +3707,37 @@ label.check input { accent-color: var(--accent); }
     character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 }
   };
 
+  // art/creatures/stegosaurus/creature.js
+  var CREATURE_STEGOSAURUS = {
+    movement: {
+      speed: 11,
+      accel: 18,
+      fight: [{ kind: "arrive", w: 1 }, { kind: "separation", w: 0.5, radius: 9 }],
+      move: {
+        kind: "charge",
+        cooldown: 6,
+        from: 8,
+        to: 30,
+        speed: 22,
+        time: 1.4,
+        windup: 0.8,
+        accel: 25,
+        brake: 20,
+        turn: 90,
+        overshoot: 6
+      }
+    },
+    radius: 1.6,
+    voice: { family: "big", pitch: 0.55, volume: 0.9 },
+    buff: {
+      name: "Tail sweep",
+      kind: "shot",
+      scale: { "invites.radius": 1.6 },
+      label: "Stegosaurus's Tail sweep: each \u{1F48C} bursts wider"
+    },
+    character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "sniff", every: [4, 8], for: 1 }
+  };
+
   // art/creatures/stoat/creature.js
   var CREATURE_STOAT = {
     movement: {
@@ -3845,11 +3904,11 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/index.js
-  var CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
-  var CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
-  var CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
-  var CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
-  var CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
+  var CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
+  var CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
+  var CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
+  var CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
+  var CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
 
   // src/rules/creatureConfig.ts
   var CREATURES = CREATURE_CONFIGS;
@@ -5196,6 +5255,8 @@ label.check input { accent-color: var(--accent); }
     // the north's floors (Ed, 2026-10-11; no area uses them yet): snow with needles and grass poking through, lichen heath, glacier ice
     snow: grG({ scale: [12, 6], cuts: [0.3, 0.62] }, [grD("needle", 14, ["BODY2", "ACCENT", "ACCENT"]), grD("blade", 12, GR_GRASS), grD("pebble", 5, GR_STONES)], { patches: [{ mat: "STONE", n: 2, r: [2, 4] }] }),
     lichen: grG({ scale: [6, 5] }, [grD("moss", 40, ["BODY2", "BODY", "BELLY"]), grD("sprig", 22, ["LEAF3", "LEAF", "FLOWER"]), grD("pebble", 10, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 5] }, { mat: "MOSS", n: 2, r: [3, 6] }] }),
+    basalt: grG({ scale: [8, 5], cuts: [0.42, 0.7] }, [grD("crack", 9, ["ACCENT", "GLOW", "FLOWER"]), grD("slab", 10, GR_STONES), grD("pebble", 30, GR_STONES), grD("sprig", 6, GR_GRASS)], { patches: [{ mat: "STONED", n: 3, r: [4, 8] }] }),
+    // a volcano's flanks: black basalt and ash, lava glowing in its cracks, a few hardy sprigs
     ice: grG({ scale: [14, 5], cuts: [0.34, 0.7] }, [grD("slab", 7, ["BODY2", "BODY", "BELLY"]), grD("pebble", 16, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 6] }], puddles: { n: 2, r: [3, 6] } })
   };
 
@@ -5470,6 +5531,32 @@ label.check input { accent-color: var(--accent); }
         m.ell([x, 0.16, z], [0.07, 0.035, 0.07], M.ACCENT, { group: 40, paint: (p) => spHash(Math.floor(p[0] * 60), Math.floor(p[2] * 60)) < 0.2 ? M.BELLY : void 0 });
       }
     },
+    // cinder slopes: a small cinder cone, black scoria, its crater rim glowing, lava trickling down its near side, boulders round it
+    "cinder-cone"(m) {
+      const scoria = (p) => {
+        const n = spHash(Math.floor(p[0] * 10) + Math.floor(p[2] * 10) * 7, Math.floor(p[1] * 10));
+        return n < 0.2 ? M.NOSE : n > 0.88 ? M.BARK2 : void 0;
+      };
+      const R4 = (y) => 2.4 * (1 - Math.max(0, y - 0.2) / 1.75 * 0.72);
+      for (let i = 0; i < 7; i++) {
+        const t = i / 7, y = 0.2 + t * 1.75;
+        m.ell([0, y, 0], [R4(y), 0.38, R4(y) * 0.85], M.BARKD, { group: 1, rough: 0.05, paint: scoria });
+      }
+      m.ell([0, 2.05, 0], [0.78, 0.1, 0.64], M.GLOW, { group: 2, paint: (p) => {
+        const d = Math.hypot(p[0], p[2] / 0.82);
+        return d < 0.42 ? M.NOSE : d < 0.52 ? M.BODY2 : d > 0.72 ? M.ACCENT : void 0;
+      } });
+      const flow = [2, 1.7, 1.4, 1.1, 0.8, 0.5, 0.22].map((y, i) => [Math.sin(i * 1.3) * 0.18 + 0.1, y + 0.08, R4(y) * 0.85 + 0.02, 0.07 + i * 0.012]);
+      m.chain(flow, M.GLOW, { group: 3, extra: true, paint: (p) => {
+        const n = spHash(Math.floor(p[0] * 24), Math.floor(p[1] * 24 + p[2] * 11));
+        return n < 0.2 ? M.BODY2 : n > 0.85 ? M.ACCENT : void 0;
+      } });
+      m.ell([0.15, 0.05, 2.35], [0.55, 0.05, 0.3], M.ACCENT, { group: 3, extra: true, paint: (p) => Math.hypot(p[0] - 0.15, (p[2] - 2.35) * 1.7) < 0.3 ? M.GLOW : Math.hypot(p[0] - 0.15, (p[2] - 2.35) * 1.7) > 0.48 ? M.NOSE : void 0 });
+      for (let i = 0; i < 7; i++) {
+        const a = i / 7 * Math.PI * 2 + 0.4, d = 2.6 + spHash(i, 4) * 0.6, c = [Math.cos(a) * d, 0.14, Math.sin(a) * d * 0.8], r = [0.3 + spHash(i) * 0.2, 0.22, 0.26];
+        m.ell(c, r, M.BARKD, { group: 5 + i, rough: 0.025, paint: scoria });
+      }
+    },
     // Norway: a little log cabin with a turf roof, abandoned
     "turf-hut"(m) {
       m.box([0, 0.55, 0], [1, 0.55, 0.7], M.WOOD, { round: 0.04, group: 1, paint: (p) => p[1] * 7 % 1 < 0.18 ? M.BARKD : p[2] > 0.66 && Math.abs(p[0] + 0.2) < 0.2 && p[1] < 0.85 ? M.NOSE : p[2] > 0.66 && Math.abs(p[0] - 0.5) < 0.14 && Math.abs(p[1] - 0.7) < 0.12 ? M.SHADES : void 0 });
@@ -5693,7 +5780,7 @@ label.check input { accent-color: var(--accent); }
       builders: ["quad"],
       sockets: {
         ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.sail", "ear.none", "ear.fan"],
-        tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.glider", "tail.ringed", "tail.plume", "tail.banner", "tail.scarf", "tail.panda", "tail.croc", "tail.tiger", "tail.jaguar", "tail.monitor"],
+        tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.glider", "tail.stego", "tail.stegoElder", "tail.ringed", "tail.plume", "tail.banner", "tail.scarf", "tail.panda", "tail.croc", "tail.tiger", "tail.jaguar", "tail.monitor"],
         feet: ["foot.paw", "foot.hoof"],
         horns: ["horn.curl", "horn.twist", "horn.single"],
         antlers: ["antler.branch", "antler.palm"],
@@ -7115,6 +7202,7 @@ label.check input { accent-color: var(--accent); }
     armadillo: [L([0.32, 0.4], [0.32, 0.64]), L([0.64, 0.4], [0.64, 0.64]), D(0.82, 0.58), L([0.24, 0.5], [0.24, 0.64])],
     raccoon: [...pair(L([0.3, 0.36], [0.44, 0.4]), D(0.36, 0.9), D(0.42, 0.93))],
     cat: [L([0.42, 0.31], [0.42, 0.21], [0.46, 0.26], [0.5, 0.18], [0.54, 0.26], [0.58, 0.21], [0.58, 0.31])],
+    stegosaurus: [D(0.27, 0.42), D(0.44, 0.36), D(0.6, 0.4), L([0.4, 0.62], [0.56, 0.62])],
     spider: [...pair(D(0.47, 0.37)), L([0.5, 0.54], [0.5, 0.7]), L([0.44, 0.6], [0.56, 0.6])],
     dormouse: [C(0.32, 0.3, 0.035), L([0.3, 0.44], [0.18, 0.42]), L([0.3, 0.47], [0.19, 0.5]), ...rays(0.52, 0.58, 0.23, 0.28, [120, 160, 200])],
     beetle: [...pair(L([0.41, 0.46], [0.41, 0.84]), D(0.45, 0.31))]
@@ -7347,6 +7435,18 @@ label.check input { accent-color: var(--accent); }
     },
     low: { moss: 0.3, sprigs: 0.4 },
     colour: { hueAbs: 0.5, sat: 1.25, val: 1.05, glint: [230, 255, 255] }
+  };
+
+  // art/flora/species/cycad.js
+  var PLANT_CYCAD = {
+    name: "cycad",
+    form: "palm",
+    generator: "blob",
+    grow: "normal",
+    crown: { envelope: "umbrella", clumps: "fronds" },
+    params: { w: 150, wPad: 0, h: 125, trunk: { w: 11, len: 0.6, taper: 0.92, bend: 0.3, lean: 0.15, scars: 3, roots: 0.2 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [16, 20], len: [44, 56], leaflet: 5, droop: 0.45, spread: 2.7, fruit: { n: [1, 1], r: 4.5 } } } },
+    low: { sprigs: 0.1 },
+    colour: { hue: 0.03, sat: 0.8, val: 0.7, trunk: [0.07, 0.3, 0.34] }
   };
 
   // art/flora/species/datePalm.js
@@ -7846,7 +7946,7 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/flora/species/index.js
-  var FLORA_GENOMES = { acacia: PLANT_ACACIA, alder: PLANT_ALDER, ash: PLANT_ASH, aspen: PLANT_ASPEN, bamboo: PLANT_BAMBOO, baobab: PLANT_BAOBAB, beech: PLANT_BEECH, birch: PLANT_BIRCH, broad: PLANT_BROAD, cedar: PLANT_CEDAR, cherry: PLANT_CHERRY, chestnut: PLANT_CHESTNUT, crabApple: PLANT_CRABAPPLE, crystal: PLANT_CRYSTAL, datePalm: PLANT_DATEPALM, elder: PLANT_ELDER, elm: PLANT_ELM, fir: PLANT_FIR, flat: PLANT_FLAT, glowcap: PLANT_GLOWCAP, hawthorn: PLANT_HAWTHORN, hazel: PLANT_HAZEL, holly: PLANT_HOLLY, ironwood: PLANT_IRONWOOD, joshua: PLANT_JOSHUA, juniper: PLANT_JUNIPER, kapok: PLANT_KAPOK, larch: PLANT_LARCH, lime: PLANT_LIME, mangrove: PLANT_MANGROVE, oak: PLANT_OAK, ocotillo: PLANT_OCOTILLO, olive: PLANT_OLIVE, palm: PLANT_PALM, paloVerde: PLANT_PALOVERDE, pine: PLANT_PINE, pricklyPear: PLANT_PRICKLYPEAR, rowan: PLANT_ROWAN, saguaro: PLANT_SAGUARO, strangler: PLANT_STRANGLER, sycamore: PLANT_SYCAMORE, vinewood: PLANT_VINEWOOD, weepingBirch: PLANT_WEEPINGBIRCH, whitebeam: PLANT_WHITEBEAM, willow: PLANT_WILLOW, yew: PLANT_YEW };
+  var FLORA_GENOMES = { acacia: PLANT_ACACIA, alder: PLANT_ALDER, ash: PLANT_ASH, aspen: PLANT_ASPEN, bamboo: PLANT_BAMBOO, baobab: PLANT_BAOBAB, beech: PLANT_BEECH, birch: PLANT_BIRCH, broad: PLANT_BROAD, cedar: PLANT_CEDAR, cherry: PLANT_CHERRY, chestnut: PLANT_CHESTNUT, crabApple: PLANT_CRABAPPLE, crystal: PLANT_CRYSTAL, cycad: PLANT_CYCAD, datePalm: PLANT_DATEPALM, elder: PLANT_ELDER, elm: PLANT_ELM, fir: PLANT_FIR, flat: PLANT_FLAT, glowcap: PLANT_GLOWCAP, hawthorn: PLANT_HAWTHORN, hazel: PLANT_HAZEL, holly: PLANT_HOLLY, ironwood: PLANT_IRONWOOD, joshua: PLANT_JOSHUA, juniper: PLANT_JUNIPER, kapok: PLANT_KAPOK, larch: PLANT_LARCH, lime: PLANT_LIME, mangrove: PLANT_MANGROVE, oak: PLANT_OAK, ocotillo: PLANT_OCOTILLO, olive: PLANT_OLIVE, palm: PLANT_PALM, paloVerde: PLANT_PALOVERDE, pine: PLANT_PINE, pricklyPear: PLANT_PRICKLYPEAR, rowan: PLANT_ROWAN, saguaro: PLANT_SAGUARO, strangler: PLANT_STRANGLER, sycamore: PLANT_SYCAMORE, vinewood: PLANT_VINEWOOD, weepingBirch: PLANT_WEEPINGBIRCH, whitebeam: PLANT_WHITEBEAM, willow: PLANT_WILLOW, yew: PLANT_YEW };
 
   // art/flora/genomes.js
   var PLANT_GENOMES = {
@@ -9345,7 +9445,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "deep snow, grass and needles poking through", wall: "drifts and frozen stones", small: "snowy tussocks", big: "snow-laden junipers and firs, dwarf birch", set: "a ring of old stones half buried in a drift" },
     wall: [["stones", {}]],
     small: [["grass", { h: 0.9 }]],
-    big: [["tree", { type: "juniper", scale: 0.9 }], ["tree", { type: "fir", minor: true, scale: 0.95 }], ["tree", { type: "birch", minor: true, scale: 0.6 }], ["boulder", { sparse: 0.1 }]],
+    big: [["tree", { type: "juniper", variant: "windbent", scale: 0.9 }], ["tree", { type: "fir", minor: true, scale: 0.95 }], ["tree", { type: "birch", minor: true, scale: 0.6 }], ["boulder", { sparse: 0.1 }]],
     pathKinds: ["footpath"],
     setPiece: ["ring", "a ring of old stones half buried in a drift", 1, { member: "stone", centre: "stone", fallen: 2 }],
     layout: {
@@ -9377,7 +9477,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and wild olives", set: "a heap of glacier rubble with a slab on top" },
     wall: [["rockwall", {}]],
     small: [["stones", {}], ["shrub", { flower: [250, 210, 50], spiky: true }], ["shrub", { spiky: true }]],
-    big: [["spire", { sparse: 0.14 }], ["spire", { sparse: 0.08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", scale: 0.75 }], ["tree", { type: "olive", minor: true, scale: 0.95, gnarl: 1 }]],
+    big: [["spire", { sparse: 0.14 }], ["spire", { sparse: 0.08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: 0.75 }], ["tree", { type: "olive", minor: true, scale: 0.95, gnarl: 1 }]],
     steep: true,
     pathKinds: ["footpath"],
     setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [0.74, 0.14, 0.62], dark: [0.72, 0.16, 0.34], lichen: [0.74, 0.08, 0.84] } }],
@@ -9410,7 +9510,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, stunted pines, rowan and dwarf birch", set: "a ring of weathered posts round a stone" },
     wall: [["stones", {}]],
     small: [["stones", {}]],
-    big: [["cairn", { sparse: 0.12, tall: true }], ["standingstone", { sparse: 0.12 }], ["boulder", { big: true }], ["tree", { type: "rowan", scale: 0.6 }], ["tree", { type: "pine", minor: true, scale: 0.6 }], ["tree", { type: "birch", minor: true, scale: 0.5 }]],
+    big: [["cairn", { sparse: 0.12, tall: true }], ["standingstone", { sparse: 0.12 }], ["boulder", { big: true }], ["tree", { type: "rowan", variant: "stunted", scale: 0.6 }], ["tree", { type: "pine", minor: true, scale: 0.6 }], ["tree", { type: "birch", minor: true, scale: 0.5 }]],
     pathKinds: ["footpath"],
     setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
     layout: {
@@ -9441,7 +9541,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "deep wet moss", wall: "fallen nurse logs", small: "sword ferns and fungi", big: "giant spruce and cedar, tree ferns beneath", set: "a nurse log, a fallen giant with young spruce growing out of its back" },
     wall: [["log", { rot: true }], ["fern", {}]],
     small: [["fern", {}], ["fungi", {}]],
-    big: [["tree", { type: "fir", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
+    big: [["tree", { type: "fir", variant: "mossy", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
     wet: true,
     pathKinds: ["boardwalk"],
     setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", 0.95],
@@ -9474,7 +9574,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "frozen weeping birch and pine, snow-capped boulders", set: "a troll bridge over an iced stream" },
     wall: [["stones", {}]],
     small: [["fern", {}], ["stones", {}]],
-    big: [["tree", { type: "weepingBirch", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: 0.95 }], ["boulder", { big: true, sparse: 0.18 }]],
+    big: [["tree", { type: "weepingBirch", variant: "ancient", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: 0.95 }], ["boulder", { big: true, sparse: 0.18 }]],
     pathKinds: ["footpath"],
     setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: 0.3, top: "slab" }],
     layout: {
@@ -9491,6 +9591,38 @@ label.check input { accent-color: var(--accent); }
     },
     flora: { species: [["weepingBirch", 0.5], ["pine", 0.3], ["birch", 0.2]], palette: { sat: 0.55, val: 0.8 } },
     settings: { treeDensity: 0.55, groundCover: { density: 0.5, kinds: ["fern", "moss", "blades"] } }
+  };
+
+  // art/areas/cinder-slopes/recipe.js
+  var CINDER_SLOPES = {
+    slot: 30,
+    id: "cinder-slopes",
+    name: "Cinder slopes",
+    creature: "stegosaurus",
+    by: "recipe",
+    leaf: 0.27,
+    floor: ["basalt", 0.62, 0.1, 0.2],
+    text: { floor: "black basalt and ash, lava in its cracks", wall: "basalt boulders", small: "ferns and cinders", big: "cycads, tree ferns and stunted pines", set: "a cinder cone, its crater glowing, lava trickling down its side" },
+    wall: [["boulder", {}], ["rockwall", {}]],
+    small: [["fern", {}], ["stones", {}]],
+    big: [["tree", { type: "cycad", scale: 0.9 }], ["tree", { type: "pine", minor: true, scale: 0.8, gnarl: 0.8 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
+    steep: true,
+    pathKinds: ["stairs"],
+    setPiece: ["cinder-cone", "a cinder cone, its crater glowing, lava trickling down its side", 1.3],
+    layout: {
+      pattern: "stands",
+      density: 0.3,
+      clump: 0.8,
+      glades: { count: 2, size: [16, 24] },
+      heightMix: { sapling: 0.3, mature: 0.5, tall: 0.2, giant: 0 },
+      undergrowth: 0.35,
+      lean: { dir: 0, amount: 0 },
+      terrain: ["hollows"],
+      decor: { rate: 0.3, ruins: 0.1, rocks: 0.6, freak: 0.2, lake: 0, modern: 0.1 },
+      feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, stunted pines on the ridges, a little cinder cone smoking in the clearing."
+    },
+    flora: { species: [["cycad", 0.45], ["pine", 0.35], ["datePalm", 0.2]], palette: { sat: 0.7, val: 0.8 } },
+    settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["fern", "moss"] } }
   };
 
   // art/areas/alder-forest/flora.js
@@ -9584,7 +9716,7 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLORA_WISPY_FOREST = { species: [["lime", 0.4], ["birch", 0.25], ["aspen", 0.2], ["whitebeam", 0.15]], palette: { sat: 0.85, val: 1.12 } };
 
   // art/areas/index.js
-  var AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD];
+  var AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES];
   var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "holly-thicket": AREA_FLORA_HOLLY_THICKET, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
   var AREA_FOLDER_KINDS = [
     { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
@@ -9638,7 +9770,7 @@ label.check input { accent-color: var(--accent); }
     { "kind": "frostwyrm", "slot": 48, "phase": 4, "bearing": 45, "dir": "NE", "biome": "mountains and glaciers" },
     { "kind": "griffin", "slot": 49, "phase": 4, "bearing": 65, "dir": "ENE", "biome": "mountains and glaciers" },
     { "kind": "unknown-19", "slot": 50, "phase": 4, "bearing": 85, "dir": "E", "biome": "rocky", "placeholder": true },
-    { "kind": "unknown-20", "slot": 51, "phase": 4, "bearing": 105, "dir": "ESE", "biome": "rocky", "placeholder": true },
+    { "kind": "stegosaurus", "slot": 51, "phase": 4, "bearing": 105, "dir": "ESE", "biome": "volcanic" },
     { "kind": "rattlesnake", "slot": 52, "phase": 4, "bearing": 125, "dir": "SE", "biome": "badlands" },
     { "kind": "scorpion", "slot": 53, "phase": 4, "bearing": 145, "dir": "SE", "biome": "badlands" },
     { "kind": "rhino", "slot": 54, "phase": 4, "bearing": 165, "dir": "SSE", "biome": "hot" },
@@ -14555,7 +14687,7 @@ label.check input { accent-color: var(--accent); }
     _scenes: `Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own). featured: one of ids (seeded) placed on a map at its chance, in an area it suits if there is room, else in any (Ed, 2026-10-11: the temple ruins on most islands, "both": the Greek temple or the classical ruins, and "more variations": temple-* is every seeded classical ruin scene, art/landmarks.js CLASSICAL_PLANS; an id ending in * takes every scene it starts).`,
     scenes: { chance: 0.12, scale: 2.2, pad: 4, featured: { ids: ["greek-temple", "classical-ruins", "temple-*"], chance: 0.8 } },
     grounds: { chance: 0.035, kinds: ["playground"], radius: { playground: 12, tennis: 14, baseball: 14, football: 21, basketball: 5 } },
-    legendClearing: { radius: 9, edge: 2.5, top: 0.45, minFromStone: 45, minFromOtherStones: 15, floor: { on: true, overgrowth: 0.5, slab: 1.3, glint: 0 }, rim: { spacing: 1.3, chance: 0.85, out: 0.5, spread: 1.4, gap: 22 }, grove: { reach: 30, density: 0.65, tallest: 0.9, scale: 1.12, gap: 45, soft: 30, jitter: 0.3 }, species: { elk: 22, stag: 18, fox: 17, bear: 17, boar: 16, wolf: 16, ram: 14, snake: 13, raven: 13, lynx: 12, otter: 12, beetle: 12, marten: 11, beaver: 11, hare: 11, badger: 11, stoat: 11, newt: 10, flyingsquirrel: 10, cat: 12, salamander: 10 } },
+    legendClearing: { radius: 9, edge: 2.5, top: 0.45, minFromStone: 45, minFromOtherStones: 15, floor: { on: true, overgrowth: 0.5, slab: 1.3, glint: 0 }, rim: { spacing: 1.3, chance: 0.85, out: 0.5, spread: 1.4, gap: 22 }, grove: { reach: 30, density: 0.65, tallest: 0.9, scale: 1.12, gap: 45, soft: 30, jitter: 0.3 }, species: { elk: 22, stag: 18, fox: 17, bear: 17, boar: 16, wolf: 16, ram: 14, snake: 13, raven: 13, lynx: 12, otter: 12, beetle: 12, marten: 11, beaver: 11, hare: 11, badger: 11, stoat: 11, newt: 10, flyingsquirrel: 10, stegosaurus: 24, cat: 12, salamander: 10 } },
     _relics: "Modern relics (cars, trolleys, cones, highway slabs, a phone box, a sofa...): one chance per spacing-metre cell (chance, steered by the area's decor share of modern), nearRoad times as likely within 20 m of a road or railway; never on a path, in a central clearing or a ground; at least minGap metres from the next relic (Ed, v147: too numerous).",
     relics: { spacing: 34, chance: 67e-4, nearRoad: 4, minGap: 80 },
     _walls: "Wall objects as features (Ed, v147), per area: man-made and linear ones (garden walls, hedges, brambles, rock walls) as runs [min,max] of runLength [min,max] pieces joined end to end, along a path where one passes (with a gateway gap gateChance of the time; a garden's flower beds in a row along them); henge stones as rings [min,max] of ringStones [min,max] (the first round the shrine, others ringRadius [min,max] metres across in a glade), an avenue leading in avenueChance of the time, and a lone stone loneChance; water, reeds and boulders as clumps [min,max] of clumpSize [min,max] within clumpRadius metres. Open ground between.",
@@ -14667,7 +14799,7 @@ label.check input { accent-color: var(--accent); }
     _guard: `Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead (Ed, 2026-10-11: "Animals leashed inside the home area should aggro enemy creatures within that area"): any wild or enraged creature anywhere in it, never one outside it, whatever radius says.`,
     guard: { radius: 40 },
     _creatures: `Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and, from the start (Ed, 2026-10-07: his new core design, "no population growth on a clock"), more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat \xF7 the profile's mean F a creature \xD7 the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). byRoute.babies: babies in every area, start's included (Ed, 2026-10-07: about two, for quest sigils and berries), at most babyCap. byRoute.minHostile: at least this many young or adults in every wild area (Ed, 2026-10-07: "every wild area has at least one hostile wild creature"), any shortfall made up with young. The hostile swarm (Ed, 2026-10-08, the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts): its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. swarm.classes: strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong \xD72, light \xD70.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (\u03A3hp \xD7 \u03A3dps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage \u2212 swarm.start)\xB7p^swarm.curve creatures (1 + 11\xB7p^1.3), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the master curve's (Ed, 2026-10-10, 2026-10-11): by the area's wave, (wave \u2212 1)/(swarm.waves \u2212 1), so wave swarm.waves (64) brings today's final swarm, every island plays it from wave 1 as far as it has areas, and a bigger map holds there after. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more (a fraction carries over: 0.5 is one every other wave; balance, 2026-10-06, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters), each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.`,
-    population: { start: { babies: 1, young: 0, adults: 0 }, byRoute: { babies: 2, babyCap: 2, minHostile: 1 }, swarm: { start: 1, endAverage: 12, waves: 64, curve: 1.3, youngShare: [1, 0.2], reference: "medium", classes: { strong: { cap: 6, species: ["bear", "boar", "elk", "stag", "badger", "ram", "beaver", "lion", "frostwyrm", "griffin", "rhino", "polarbear", "tiger", "elephant"] }, medium: { cap: 12, species: [] }, light: { cap: 16, species: ["hedgehog", "mole", "dormouse", "newt", "fennec", "dragonfly", "crab", "rattlesnake", "scorpion", "toad", "snail", "salamander", "bat", "moth", "beetle", "spider", "flyingsquirrel", "woodlouse"] } }, capScales: true, mixTolerance: 0.1 }, growth: { on: true, perWave: 0.5, weights: [1, 1, 1], hide: 20 } },
+    population: { start: { babies: 1, young: 0, adults: 0 }, byRoute: { babies: 2, babyCap: 2, minHostile: 1 }, swarm: { start: 1, endAverage: 12, waves: 64, curve: 1.3, youngShare: [1, 0.2], reference: "medium", classes: { strong: { cap: 6, species: ["bear", "boar", "elk", "stag", "badger", "ram", "beaver", "lion", "frostwyrm", "griffin", "rhino", "polarbear", "tiger", "elephant", "stegosaurus"] }, medium: { cap: 12, species: [] }, light: { cap: 16, species: ["hedgehog", "mole", "dormouse", "newt", "fennec", "dragonfly", "crab", "rattlesnake", "scorpion", "toad", "snail", "salamander", "bat", "moth", "beetle", "spider", "flyingsquirrel", "woodlouse"] } }, capScales: true, mixTolerance: 0.1 }, growth: { on: true, perWave: 0.5, weights: [1, 1, 1], hide: 20 } },
     creatureSimRadius: 600,
     _simLod: "The simulation's level of detail (Ed, 2026-10-05: creatures far from the action frozen until she comes closer; rules/simLod.ts). Wild creatures roaming are simulated every step within full.ground metres of the witch on the ground, full.treetop over the treetops (each a little past the most the view shows from there at any zoom: 178 and 262 m in a 1900 by 1240 window); beyond, coarsely: once every `every` steps (60 a second), by that many steps' time at once, taking turns; past creatureSimRadius not at all. Besiegers marching on a soundsystem are simulated every step within full of her or within action metres of a soundsystem, a party animal or a happy legend's guard; elsewhere coarsely, marching `every` steps at a time. Going out, one stays in full until band metres past the line, so none flickers. The debug overlay's sim line counts them.",
     simLod: { full: { ground: 200, treetop: 300 }, action: 120, band: 30, every: 30 },
