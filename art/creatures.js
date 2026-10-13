@@ -66,6 +66,7 @@ function baseColours(s, st) {
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
     [M.BROW]: body[0] * .3 + body[1] * .55 + body[2] * .15 < 95 ? [226, 218, 204] : [30, 20, 28], // its brows: ink on a light coat, pale on a dark one
     [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: s.ear ? hsv2rgb(...s.ear) : hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
+    [M.MOUTH]: s.mouth || [150, 72, 70], // (an open mouth's inside: warm, not near-black: Ed, 2026-10-13)
     [M.IRIS]: s.plan === "owl" ? [255, 176, 40] : hsv2rgb(.12, .7, .85), [M.SKIN]: [238, 158, 192],
     // the evolution kit's area flourishes (creatures3d.js evolve3d): standing stones, their moonlit runes, moss and heather
     [M.GLOW]: [255, 178, 70], [M.WEB]: [236, 234, 226], [M.STONE]: [150, 148, 142], [M.STONED]: [84, 82, 84], [M.RUNE]: [170, 212, 255], [M.MOSS]: [98, 130, 60], [M.FLOWER]: s.flower || [176, 92, 168], [M.WOOD]: [178, 122, 58], // (WOOD: bronze, a ram legend's horns, the elders' jewellery)
