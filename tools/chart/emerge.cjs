@@ -32,12 +32,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   // The chart's clock driven by hand from the moment its land came (a real-time strip can't be shot here: a screenshot takes
   // longer than the rise under the software renderer): each frame's moment set, two frames drawn, then its picture.
   const rose = await page.evaluate(id => window.chart.chart.isles.get(id).rose, id);
+  console.log(`${id}'s island came at ${rose} s on the chart's clock`);
+  if (!(rose >= 0)) { console.error("its rise wasn't found (rose undefined): is the chart's clock driven?"); process.exit(1); }
   await page.evaluate(() => { const v = window.chart.view, f = v.update.bind(v); window.__at = 0; v.update = () => f(1 / 60, window.__at); });
   const frames = [];
   for (let at = 0; at <= SECONDS * 1000 + 1; at += EVERY) {
     await page.evaluate(({ rose, at }) => { window.__at = rose + at / 1000; }, { rose, at });
     await wait(120);
     const spot = await page.evaluate(id => window.chart.chart.screenOf(id), id);
+    if (at === 0) console.log(`on screen at ${Math.round(spot.x)}, ${Math.round(spot.y)}`);
     frames.push({ at, png: await page.screenshot({ clip: { x: Math.max(0, Math.round(spot.x - CROP / 2)), y: Math.max(0, Math.round(spot.y - CROP / 2)), width: CROP, height: CROP } }) });
   }
   // the strip: the frames side by side, each labelled by its time

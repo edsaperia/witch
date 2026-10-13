@@ -56,9 +56,11 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   }
   await page.screenshot({ path: path.join(out, MINI ? "decks.png" : "chart.png") });
   const heap = await page.evaluate(() => Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1e6));
+  fs.writeFileSync(path.join(out, "chart.cpuprofile"), JSON.stringify(profile));
   const nodes = new Map(profile.nodes.map(n => [n.id, n])), parent = new Map();
   for (const n of profile.nodes) for (const c of n.children ?? []) parent.set(c, n.id);
   const key = n => `${n.callFrame.functionName || "(anonymous)"} ${(n.callFrame.url || "").split("/").pop()}:${n.callFrame.lineNumber + 1}`;
+  const under = new Map(); // (what reshape's time is made of: the self time of each function beneath it)
   const self = new Map(), incl = new Map(), WATCH = ["reshape", "island", "computeVertexNormals", "moonFrame", "frame", "apply", "drain", "render", "(garbage collector)", "(program)", "(idle)", "ExtrudeGeometry", "ShapeGeometry", "onmessage", "update"];
   let total = 0;
   for (let i = 0; i < profile.samples.length; i++) {
@@ -66,6 +68,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     self.set(key(n), (self.get(key(n)) ?? 0) + dt);
     const stack = new Set(); let p = n.id; while (p !== undefined) { const q = nodes.get(p); if (q) stack.add(q.callFrame.functionName); p = parent.get(p); }
     for (const s of WATCH) if (stack.has(s)) incl.set(s, (incl.get(s) ?? 0) + dt);
+    if (stack.has("reshape")) under.set(key(n), (under.get(key(n)) ?? 0) + dt);
   }
   const ms = reshapes.map(r => r.ms).sort((a, b) => a - b), sum = ms.reduce((a, b) => a + b, 0);
   const report = { seconds: SECONDS, world: WORLD, mini: MINI, totalMs: Math.round(total), heapMb: heap, allIn: all, programs, errors: errors.slice(0, 6), reshapes: { n: ms.length, totalMs: Math.round(sum), median: ms[ms.length >> 1] ?? 0, worst: ms[ms.length - 1] ?? 0, list: reshapes }, loaf: loaf.slice(0, 40), incl: Object.fromEntries([...incl].map(([k, v]) => [k, Math.round(v)])), selfTop: [...self].sort((a, b) => b[1] - a[1]).slice(0, 30).map(([k, v]) => [k, Math.round(v)]) };
@@ -73,6 +76,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   console.log(`profile ${report.totalMs} ms; heap ${heap} MB; reshapes ${report.reshapes.n}: ${report.reshapes.totalMs} ms in all, median ${report.reshapes.median} ms, worst ${report.reshapes.worst} ms${MINI ? "" : `; every island in: ${all}; GL programs: ${programs}`}`);
   console.log("inclusive ms:", report.incl);
   console.log("self time, top 20:"); for (const [k, v] of report.selfTop.slice(0, 20)) console.log(`  ${String(v).padStart(6)} ms  ${k}`);
+  if (under.size) { console.log("under reshape (self ms):"); for (const [k, v] of [...under].sort((a, b) => b[1] - a[1]).slice(0, 12)) console.log(`  ${String(Math.round(v)).padStart(6)} ms  ${k}`); }
   console.log(`long animation frames: ${loaf.length}, over 100 ms: ${loaf.filter(l => l.ms >= 100).length}`); for (const l of loaf.slice(0, 10)) console.log(`  ${l.ms} ms: ${l.scripts.join(" | ")}`);
   if (errors.length) console.log("errors:", errors.slice(0, 3));
   await browser.close(); server.close();
