@@ -92,7 +92,9 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
     if (r) return r;
     if (layer === 0) r = [cx, cy];
     else {
-      const s = site(layer, cx, cy), p = nearest(layer - 1, s[0], s[1]);
+      // (a deeper layer's site inline, the two hashes ringOf writes: site()'s map lookup and tuple were a third of the
+      // partition's share of a map's making; home's push applies to layer 0 alone, never reached here)
+      const c = Math.pow(2, -layer), p = nearest(layer - 1, c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1)));
       r = root(layer - 1, p[0], p[1]);
     }
     rootCache.set(k, r);

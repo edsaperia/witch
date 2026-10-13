@@ -277,9 +277,10 @@ function prPost(m, v) {
   else m.box(at(top + .004), [.004, R * .95, R * .85], M.BELLY, { dir: up, up: [1, 0, 0], group: 2 }); // its cut end, pale
   for (let k = 0; k < 5; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R * 2, z = Math.sin(a) * R * 2; m.seg([x, 0, z], [x, .05 + r() * .09, z], .018, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 9 }); }
 }
-// Whether an area is open (no trees among its big objects): its rim leans to stones; wooded ones to toadstools and stumps.
+// Whether an area is open (no trees among its big objects, or only a few among its props: layout.treeShare): its rim leans to stones;
+// wooded ones to toadstools and stumps.
 const RIM_STONY_FLOORS = new Set(["stony", "scree", "stone", "gravel", "rock"]);
-const rimWooded = def => !!def?.big?.some(b => b[0] === "tree") && !RIM_STONY_FLOORS.has(def?.floor?.[0]) && !def?.layout?.terrain?.includes("rocky");
+const rimWooded = def => !!def?.big?.some(b => b[0] === "tree") && !def?.layout?.treeShare && !RIM_STONY_FLOORS.has(def?.floor?.[0]) && !def?.layout?.terrain?.includes("rocky");
 const rimAreaSeed = def => [...(def?.id ?? "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 99991, 3);
 /** The form of an area's k-th rim piece (seeded by the area and k, weighted by RIM_GENOMES.forms). */
 export function rimForm(def, k, n = 6) { return rimForms(def, n)[k % n]; }

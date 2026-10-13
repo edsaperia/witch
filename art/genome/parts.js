@@ -35,7 +35,7 @@ export function rigProject(p, h, s) {
 function rigCapture(id, level, st, face = null, gear = null) {
   const S = SPECIES_BY_ID[id]; let got = null;
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
-  form.motes = false;
+  form.motes = false; form.rig = true;
   const g = face || gear ? { ...gear, shoes: null, face, faceStyle: S.face } : null;
   withTexture({ S, level, st }, () => withGear(g, () => withForm(form, () => buildCreature(S, level, 0, st, "towards"))));
   const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;

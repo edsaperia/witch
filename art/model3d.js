@@ -71,7 +71,7 @@ export class Model {
     return this;
   }
   // A tapered limb from a (radius ra) to b (radius rb): a rounded cone, smooth along its length.
-  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut, part: o.part ?? this.part }); return this; }
+  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut, inside: !!o.inside, part: o.part ?? this.part }); return this; }
   // A limb through several points, each [x, y, z, radius].
   chain(pts, mat, o = {}) { for (let i = 0; i + 1 < pts.length; i++) this.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return this; }
   // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
@@ -124,7 +124,10 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
   const s = scale ?? height / Math.max(1e-6, u1b - u0b);
   if (measure) return { s };
-  let X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
+  // (o.inside: a stroke laid into the surface, such as an expression's brows, sizing nothing: its bounding sphere would widen the sprite
+  // past ink it never draws)
+  const sized = all.filter(q => !q.inside);
+  let X0 = Math.min(...sized.map(q => q.x0)), X1 = Math.max(...sized.map(q => q.x1)), U0 = Math.min(...sized.map(q => q.u0)), U1 = Math.max(...sized.map(q => q.u1));
   // model.phaseOnBody: its pixel grid set by its body alone, the extras (a long cloak's train) only widening the sprite by whole
   // pixels, so a thin band on the body lands on the same pixels however far an extra reaches (the witch: art/witch.js)
   if (model.phaseOnBody && body.length) {
