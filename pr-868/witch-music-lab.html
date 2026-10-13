@@ -623,8 +623,8 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.65, sat: 0.08, val: 0.45 },
-    body: { stance: "flat", hgt: 0.5, len: 0.82, chest: 0.18, tuck: 0.2, neck: 0.16, neckAng: 0, neckW: 0.55, hr: 0.26, legW: 1.4, bw: 0.38 },
-    head: { snout: 1.05, snoutD: 0.5, snoutTaper: 0.5, face: "badger" },
+    body: { stance: "flat", hgt: 0.5, len: 0.82, chest: 0.18, tuck: 0.2, neck: 0.2, neckAng: -0.22, neckW: 0.55, hr: 0.25, legW: 1.4, bw: 0.38, profile: { shoulder: { w: 1.3, d: 1.08 }, ribcage: { w: 1.18 }, waist: { w: 0.82, d: 0.9 }, loin: { w: 0.9, d: 0.95 }, hip: { w: 1 } } },
+    head: { snout: 1.3, snoutD: 0.55, snoutTaper: 0.45, skullY: 0.85, skullZ: 1.15, brow: 0.7, jaw: 0.7, face: "badger" },
     parts: { ears: { kind: "round", size: 0.7 }, tail: "stub", feet: "paw" },
     coat: { shaggy: true, legMat: "BODY3" },
     legend: [],
@@ -635,7 +635,7 @@ label.check input { accent-color: var(--accent); }
     levels: [
       { body: { len: 0.58, chest: 0.22, tuck: 0.24, hr: 0.3, legW: 1.1 }, head: { snout: 0.8, blaze: 1.6 } },
       { body: { len: 0.9, chest: 0.18, tuck: 0.2, neckAng: 0 }, head: { snout: 1.2, snoutTaper: 0.45, blaze: 1.3 } },
-      { body: { len: 1.6, hgt: 0.55, bw: 0.62, chest: 0.04, tuck: 0.05, legW: 1.7, hr: 0.3, neckAng: 0.12 }, head: { blaze: 1.8 }, features: [{ kind: "mane", from: 0.1, to: 0.85, height: 0.04, count: 16, lean: 0.95 }, { kind: "claws", size: 0.14 }] },
+      { body: { len: 1.6, hgt: 0.55, bw: 0.62, chest: 0.04, tuck: 0.05, legW: 1.7, hr: 0.28, neckAng: -0.15 }, head: { blaze: 1.8 }, features: [{ kind: "mane", from: 0.1, to: 0.85, height: 0.04, count: 16, lean: 0.95 }, { kind: "claws", size: 0.14 }] },
       // (Ed, 2026-10-07: low, wide and flat-backed on short legs, not a bear: art lint)
       { body: { len: 0.95, bw: 0.5, chest: 0.14, tuck: 0.16, legW: 1.8, neckAng: 0.25, hr: 0.3 }, head: { blaze: 1.6 }, features: [{ kind: "mane", from: 0.05, to: 0.9, height: 0.08, count: 20, lean: 1 }, { kind: "claws", size: 0.24 }] }
       // the elder (art/elders.js): grizzled, scarred, its stripes running down its back as chalk hill-figure lines, a bronze torc
@@ -755,15 +755,15 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.2, sat: 0.35, val: 0.32 },
-    body: { hgt: 0.7, len: 2.1, chest: 0.05, tuck: 0.05, neck: 0.12, neckAng: -0.04, neckW: 0.75, hr: 0.32, legW: 1.6, bw: 0.55 },
-    head: { snout: 4.4, snoutD: 0.9, snoutTaper: 0.9, flatJaw: true, eyeK: 1.15 },
+    body: { stance: "sprawl", sprawl: 0.3, hgt: 0.72, len: 2.1, chest: 0.05, tuck: 0.05, neck: 0.12, neckAng: -0.08, neckW: 0.75, hr: 0.3, legW: 1.5, bw: 0.55 },
+    head: { snout: 4, snoutD: 0.7, snoutTaper: 0.9, flatJaw: true, jawW: 1.05, jawLine: true, skullY: 0.7, skullZ: 1.5, eyeK: 1.15 },
     parts: { ears: { kind: "none" }, tail: "croc", feet: "paw" },
     coat: {},
     legend: [],
     texture: { kind: "scales", size: 5, contrast: 0.35 },
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"): enormous jaws, its scutes risen into a ridge
     // of standing stones down its back and tail root, its eyes glowing just above the water line
-    levels: [null, null, null, { body: { len: 2.3, bw: 0.62, hr: 0.38 }, head: { snout: 5, snoutD: 1.05, jawW: 0.78 }, features: [{ kind: "stones", from: 0.05, to: 0.95, count: 8, height: 1.05 }, { kind: "eyeglint", size: 0.05 }, { kind: "scars", count: 4, len: 0.55, width: 1 }, { kind: "beads", at: "snout", count: 22, size: 0.04, ry: 0.32, rz: 0.82, rings: [0.3, 0.5] }] }]
+    levels: [null, null, null, { body: { len: 2.3, bw: 0.62, hr: 0.38 }, head: { snout: 5, snoutD: 0.85, jawW: 1.2 }, features: [{ kind: "stones", from: 0.05, to: 0.95, count: 8, height: 1.05 }, { kind: "eyeglint", size: 0.05 }, { kind: "scars", count: 4, len: 0.55, width: 1 }, { kind: "beads", at: "snout", count: 22, size: 0.04, ry: 0.32, rz: 0.82, rings: [0.3, 0.5] }] }]
   };
 
   // art/creatures/dormouse/genome.js
@@ -1172,10 +1172,11 @@ label.check input { accent-color: var(--accent); }
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: the coat a long hanging
     // fleece; the legend brief: an elder, revered): a vast fleece hanging off it to the ground, a ruff, frost on its muzzle,
     // a necklace of bronze offerings with a stone at its throat
+    // Ed's review (2026-10-13): less loaf: a longer neck, the head lower and smaller, a higher shoulder (levels 0 to 2; the elder is its own)
     levels: [
-      null,
-      { body: { len: 0.72, legW: 1.152, neckW: 0.451, hr: 0.27, chest: 0.48, tuck: 0.5, profile: { shoulder: { w: 0.84, d: 0.84 }, ribcage: { w: 0.88 }, waist: { w: 0.78, d: 0.82 }, loin: { w: 0.86, d: 0.9 }, hip: { w: 0.88 } } } },
-      { body: { chest: 0.33, tuck: 0.4, profile: { shoulder: { w: 1.22, d: 1.18 }, ribcage: { w: 1.12 }, waist: { w: 0.9, d: 0.92 }, loin: { w: 0.95 }, hip: { w: 1.02 } } } },
+      { body: { len: 0.8, neck: 0.42, neckAng: -0.06, hr: 0.33, withers: 0.07, chest: 0.44, tuck: 0.46 } },
+      { body: { len: 0.72, legW: 1.152, neckW: 0.451, hr: 0.25, neck: 0.48, neckAng: -0.14, withers: 0.1, front: 1.1, chest: 0.48, tuck: 0.5, profile: { shoulder: { w: 0.9, d: 0.95 }, ribcage: { w: 0.9 }, waist: { w: 0.74, d: 0.8 }, loin: { w: 0.82, d: 0.88 }, hip: { w: 0.86 } } } },
+      { body: { chest: 0.33, tuck: 0.4, hr: 0.25, neck: 0.6, neckAng: -0.22, withers: 0.15, front: 1.18, brisket: 0.06, profile: { shoulder: { w: 1.26, d: 1.26 }, ribcage: { w: 1.14, d: 1.06 }, waist: { w: 0.86, d: 0.85 }, loin: { w: 0.92, d: 0.94 }, hip: { w: 1, d: 0.98 } } } },
       { body: { bw: 0.44, len: 0.954, chest: 0.3, tuck: 0.38, profile: { shoulder: { w: 1.34, d: 1.28 }, ribcage: { w: 1.2, d: 1.08 }, waist: { w: 0.96, d: 0.96 }, loin: { w: 1 }, hip: { w: 1.08, d: 1.04 } } }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: 0.42, count: 40, lean: 0.25, mat: "BELLY" }, { kind: "ruff", size: 0.28, count: 16 }, { kind: "beads", count: 11, size: 0.055, mat: "WOOD", pendant: "STONE" }] }
     ]
   };
@@ -1265,8 +1266,8 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.58, sat: 0.05, val: 0.46 },
-    body: { hgt: 1.15, len: 0.98, chest: 0.42, tuck: 0.44, neck: 0.24, neckAng: -0.18, neckW: 0.75, hr: 0.36, legW: 2.1, back: "hump", front: 1.15, humpK: 1.4, bw: 0.48 },
-    head: { snout: 1.35, snoutD: 0.78, snoutTaper: 0.7, noseHorn: 1 },
+    body: { hgt: 1.15, len: 0.98, chest: 0.42, tuck: 0.44, neck: 0.3, neckAng: -0.42, neckW: 0.75, hr: 0.34, legW: 2.1, back: "hump", front: 1.15, humpK: 1.4, bw: 0.48, profile: { shoulder: { w: 1.18, d: 1.1 }, ribcage: { w: 1.1, d: 1.04 }, waist: { w: 0.94, d: 0.96 }, loin: { w: 0.98 }, hip: { w: 1.04 } } },
+    head: { snout: 1.3, snoutD: 0.78, snoutTaper: 0.7, noseHorn: 2.2 },
     parts: { ears: { kind: "small", size: 1 }, tail: "thin", feet: "hoof" },
     coat: { folds: [-0.55, 0.35] },
     legend: [],
@@ -1274,7 +1275,8 @@ label.check input { accent-color: var(--accent); }
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: one giant horn; the legend
     // brief: an elder, revered): one colossal horn ringed with bronze offerings, the hide in heavy armour folds and old scars, a
     // necklace of offerings, the hump a hill
-    levels: [{ coat: { folds: [] } }, null, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: 0.56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: 0.9 }, coat: { folds: [-0.6, -0.35, 0.3, 0.55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: 0.4, width: 0.5 }] }]
+    // Ed's review (2026-10-13): a horn that grows by level (a calf's nub, a young one's short horn), the head carried low, a young of its own (lighter, smooth-hided, no hump yet)
+    levels: [{ body: { neckAng: -0.25, hr: 0.4 }, head: { noseHorn: 0.5 }, coat: { folds: [] } }, { body: { len: 0.88, hgt: 1.05, legW: 1.75, hr: 0.37, neck: 0.28, neckAng: -0.32, chest: 0.46, tuck: 0.48, humpK: 0.7, front: 1.05, bw: 0.42, profile: { shoulder: { w: 1.02, d: 1.02 }, ribcage: { w: 1 }, waist: { w: 0.88, d: 0.92 }, loin: { w: 0.94 }, hip: { w: 1 } } }, head: { noseHorn: 1.3, snout: 1.2 }, coat: { folds: [-0.5] } }, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: 0.56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: 0.9 }, coat: { folds: [-0.6, -0.35, 0.3, 0.55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: 0.4, width: 0.5 }] }]
   };
 
   // art/creatures/roe/genome.js
@@ -1364,18 +1366,18 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.12, sat: 0.1, val: 0.82, belly: "white" },
-    body: { hgt: 0.86, len: 0.66, chest: 0.52, tuck: 0.56, neck: 0.26, neckAng: 0.55, neckW: 0.44, hr: 0.27, legW: 1.05 },
+    body: { hgt: 0.94, len: 0.66, chest: 0.6, tuck: 0.64, neck: 0.26, neckAng: 0.55, neckW: 0.44, hr: 0.27, legW: 1.15, pawK: 1.35, tailK: 1.35 },
     head: { snout: 0.48, snoutD: 0.78, snoutTaper: 0.8, cheeks: true, whiskers: true },
     parts: { ears: { kind: "round", size: 0.7 }, tail: "banner", feet: "paw" },
     coat: { belly: true, spots: true },
     texture: { kind: "fur", size: 2 },
     levels: [
-      { body: { len: 0.5, chest: 0.5, hr: 0.31 }, parts: { ears: { kind: "round", size: 0.95 }, tail: "bushy" } },
-      { body: { len: 0.66, legW: 0.95 } },
-      { body: { len: 0.7, legW: 1.1 } },
+      { body: { len: 0.5, chest: 0.58, hr: 0.31 }, parts: { ears: { kind: "round", size: 0.95 }, tail: "bushy" } },
+      { body: { len: 0.66, legW: 1.05 } },
+      { body: { len: 0.7, legW: 1.2 } },
       // the elder of the snow leopards (docs/ART-GUIDE.md 0c): the high ice's ghost, its coat thick and pale as fresh snow, its
       // tail grown so long it wraps round it like a scarf, a grizzled muzzle, offerings of stone beads round its legs
-      { body: { len: 0.72, legW: 1.15, neckAng: 0.5 }, palette: { val: 0.9, sat: 0.07 }, head: { frost: true }, parts: { tail: "scarf" }, coat: { beads: true }, features: [
+      { body: { len: 0.72, legW: 1.25, neckAng: 0.5 }, palette: { val: 0.9, sat: 0.07 }, head: { frost: true }, parts: { tail: "scarf" }, coat: { beads: true }, features: [
         { kind: "ruff", size: 0.3, count: 20, mat: "BELLY" }
       ] }
     ]
@@ -1450,8 +1452,8 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.6, sat: 0.05, val: 0.95, magic: 0.13 },
-    body: { hgt: 1.35, len: 0.7, chest: 0.52, tuck: 0.6, neck: 0.8, neckAng: 1.15, neckW: 0.32, hr: 0.24, legW: 0.66 },
-    head: { snout: 1.1, snoutD: 0.65, snoutTaper: 0.75, eyeK: 1.3 },
+    body: { hgt: 1.42, len: 0.7, chest: 0.64, tuck: 0.72, neck: 1, neckAng: 1.05, neckW: 0.3, hr: 0.215, legW: 0.7, bw: 0.28, withers: 0.09, croup: 0.06, profile: { shoulder: { w: 1.08, d: 1.1 }, ribcage: { w: 1.02 }, waist: { w: 0.8, d: 0.86 }, loin: { w: 0.88, d: 0.92 }, hip: { w: 1 } } },
+    head: { snout: 1.5, snoutD: 0.52, snoutTaper: 0.6, eyeK: 1.15, brow: 0.8, jowl: 0.9, jaw: 0.8 },
     parts: { ears: { kind: "point", size: 0.8 }, tail: "brush", feet: "hoof", horns: "single" },
     coat: { socks: 0.25, legMat: "BELLY", maneHair: { mat: "BODY3" } },
     sizes: { horns: [0.4, 0.7, 1, 1.7] },
@@ -1463,7 +1465,7 @@ label.check input { accent-color: var(--accent); }
       null,
       null,
       null,
-      { body: { hgt: 1.45, neck: 0.85 }, head: { frost: true, hornLight: true }, coat: { beads: true, socks: 0.4 }, features: [
+      { body: { hgt: 1.52, neck: 1.05 }, head: { frost: true, hornLight: true }, coat: { beads: true, socks: 0.4 }, features: [
         { kind: "ruff", size: 0.18, count: 10, mat: "BELLY" }
       ] }
     ]
