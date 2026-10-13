@@ -24,6 +24,8 @@
     "fennec": {"posture": {"head": [0.02, 0.04], "body": 0}, "quirk": "perk", "every": [3, 6], "for": 1.2},
     "lion": {"posture": {"head": [0.0, 0.03], "body": 0.01}, "quirk": "stretch", "every": [7, 12], "for": 1.5},
     "cheetah": {"posture": {"head": [0.03, 0.02], "body": -0.01}, "quirk": "perk", "every": [4, 8], "for": 1.0},
+    "frostwyrm": {"posture": {"head": [0.02, 0.03], "body": 0}, "quirk": "tailslap", "every": [6, 11], "for": 1.4},
+    "griffin": {"posture": {"head": [0.03, 0.03], "body": 0}, "quirk": "shake", "every": [5, 10], "for": 1.2},
     "dormouse": {"posture": {"head": [0, 0.03], "body": 0}, "quirk": "sniff", "every": [2, 5], "for": 0.8},
     "snake": {"posture": {"head": [0, 0.02], "body": 0}, "quirk": "rise", "every": [5, 9], "for": 1.4},
     "owl": {"sprite": "look", "every": [4, 8], "for": 1.4},
