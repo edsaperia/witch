@@ -32,7 +32,8 @@ for (const id of list.split(",")) {
     // the script: [seconds, label, vx, vz (body lengths a second), drive]
     const mpp = 1 / 16, u2m = mpp * meta.s, bl = Math.max(.6, (meta.len || .6) * 2) * u2m, dt = 1 / 60;
     // QUIRK=1: its character instead (config/character.json): standing in its posture, its idle quirk, standing again
-    const CH = quirk ? await (await fetch("/config/character.json")).json() : null, ch = CH ? { ...CH.default, ...(CH.species[id] ?? {}), posture: { ...CH.default.posture, ...(CH.species[id]?.posture ?? {}) } } : null;
+    // (its own character from art/creatures/<id>/creature.js, the default from the file)
+    const CH = quirk ? await (await fetch("/config/character.json")).json() : null, own = quirk ? (Object.values(await import(`/art/creatures/${id}/creature.js`))[0]?.character ?? {}) : {}, ch = CH ? { ...CH.default, ...own, posture: { ...CH.default.posture, ...(own.posture ?? {}) } } : null;
     const posture = ch ? { hx: ch.posture.head[0], hy: ch.posture.head[1], by: ch.posture.body } : undefined;
     const script = ch ? [[0.4, "stand", 0, 0], [ch.for, ch.quirk, 0, 0, "quirk"], [0.4, "stand", 0, 0]] : [[1.2, "walk", 1, 0], [1.0, "turn", 0, 1], [0.5, "wind-up", 0, 0, "crouch"], [0.6, "charge", 4, 0, "charge"], [0.5, "leap", 1.5, 0, "leap"], [0.4, "land", 0.3, 0], [0.4, "stand", 0, 0], [0.8, "yawn", 0, 0, "yawn"]];
     const body = new R.RigBody(), frames = [];

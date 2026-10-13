@@ -1,0 +1,1 @@
+export const GENOME_TOAD = { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["sac"] }; // (its legend: its throat sac swollen into a great glowing balloon, docs/ART-GUIDE.md §0c)

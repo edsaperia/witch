@@ -1,17 +1,17 @@
 // Rosters (Ed, 2026-10-10/11; docs/backlog/journey.md "Rosters", "One rule for every island"): every kind of legend tells of
-// its own island, always the same one. Kind K, introduced in phase q (config/kinds.json), has its island in phase p = q + 1, on
+// its own island, always the same one. Kind K, introduced in phase q (the kinds table, src/rules/kinds.ts), has its island in phase p = q + 1, on
 // its bearing from home; the island's seed comes from where it lies (its bearing and phase ring), so its shape, size and roster
 // all follow from islandOf(K) alone. Its roster (its mix of area types, a kind being an area type's species): K plentiful (about
 // 1 area in 6), 1-3 kinds new to phase p from nearby on the chart, the rest by weight (nearby bearings strongly, opposite ones
 // almost never, recently introduced kinds favoured), about a third as many kinds as areas. Each night's legends (1 in 5 areas)
 // are dealt from the roster, favouring kinds whose islands aren't found yet, never K. Home: one area per kind she knows.
 import { archipelago } from "./archipelago";
-import KINDS_JSON from "../../config/kinds.json";
+import { KINDS_TABLE, type KindInfo } from "./kinds";
+export type { KindInfo };
 import { AREAS } from "../../art/areas.js";
 import { hash2, rng } from "./random";
 
-export interface KindInfo { phase: number; bearing: number; dir: string; /** the theme its island's direction suggests */ biome?: string; /** a kind not designed yet (Ed, 2026-10-11: shown as '?'): its island is on the sea chart only */ placeholder?: boolean }
-export const KINDS: Record<string, KindInfo> = (KINDS_JSON as { kinds: Record<string, KindInfo> }).kinds;
+export const KINDS: Record<string, KindInfo> = KINDS_TABLE;
 /** Every kind, placeholders too (about 64: one island each). */
 export const KIND_NAMES = Object.keys(KINDS);
 /** A kind not designed yet (unknown-NN): its island has a seed, size and coast, shown as '?' on the chart, but it's never played,

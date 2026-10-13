@@ -1,0 +1,1 @@
+export const LEGEND_SCORPION = { ground: .12, droop: .4, drop: [30, 31, 32, 33, 34, 35, 36], over: { moss: .05, lichen: .16, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 5 } }; // the red canyon's scorpion: dug into the scree, its tail laid along its back

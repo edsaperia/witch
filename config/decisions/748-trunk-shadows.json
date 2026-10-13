@@ -1,0 +1,153 @@
+{
+  "pr": 748,
+  "group": "Trunk shadows",
+  "decisions": [
+    {
+      "id": "trunkShadowStrength",
+      "pr": 748,
+      "group": "Trunk shadows",
+      "label": "Shadow darkness",
+      "note": "How dark a trunk's or palm's shadow is at its darkest (near its foot and the light).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.75,
+      "apply": {
+        "knob": "shadows.trunks.strength"
+      }
+    },
+    {
+      "id": "trunkShadowLength",
+      "pr": 748,
+      "group": "Trunk shadows",
+      "label": "Shadow length (times the trunk)",
+      "note": "The longest a shadow stretches, times its trunk's height.",
+      "control": {
+        "type": "slider",
+        "min": 0.3,
+        "max": 3,
+        "step": 0.1
+      },
+      "default": 2.5,
+      "apply": {
+        "knob": "shadows.trunks.long"
+      }
+    },
+    {
+      "id": "trunkShadowGlowReach",
+      "pr": 748,
+      "group": "Trunk shadows",
+      "label": "Her glow's reach (m)",
+      "note": "How far from her a trunk still casts a shadow from her glow (fading to nothing at the edge).",
+      "control": {
+        "type": "slider",
+        "min": 5,
+        "max": 80,
+        "step": 1
+      },
+      "default": 50,
+      "apply": {
+        "knob": "shadows.trunks.glowReach"
+      }
+    },
+    {
+      "id": "trunkShadowGlowHeight",
+      "pr": 748,
+      "group": "Trunk shadows",
+      "label": "Her glow's height (m)",
+      "note": "How high her glow casts from: lower makes longer shadows.",
+      "control": {
+        "type": "slider",
+        "min": 0.5,
+        "max": 10,
+        "step": 0.25
+      },
+      "default": 1.25,
+      "apply": {
+        "knob": "shadows.trunks.glowHeight"
+      }
+    },
+    {
+      "id": "trunkShadowMode",
+      "pr": 748,
+      "group": "Trunk shadows",
+      "label": "Shadow style",
+      "note": "Soft (a blurred silhouette, as dark as hard at its core), hard (on the art's pixels, two tones) or off.",
+      "control": {
+        "type": "choice",
+        "options": [
+          {
+            "value": "soft",
+            "label": "Soft"
+          },
+          {
+            "value": "hard",
+            "label": "Hard"
+          },
+          {
+            "value": "off",
+            "label": "Off"
+          }
+        ]
+      },
+      "default": "soft",
+      "apply": {
+        "knob": "shadows.trunks.mode"
+      }
+    },
+    {
+      "id": "trunkShadowCore",
+      "pr": 748,
+      "group": "Trunk shadows",
+      "label": "Soft shadow's core",
+      "note": "Soft: how soon it reaches full darkness toward its foot and the light (smaller: a bigger dark core).",
+      "control": {
+        "type": "slider",
+        "min": 0.05,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.8,
+      "apply": {
+        "knob": "shadows.trunks.core"
+      }
+    },
+    {
+      "id": "trunkShadowAcross",
+      "pr": 748,
+      "group": "Trunk shadows",
+      "label": "Width that casts",
+      "note": "The share of a trunk's sprite width that casts (smaller: just the trunk; larger: its low boughs too).",
+      "control": {
+        "type": "slider",
+        "min": 0.2,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 1,
+      "apply": {
+        "knob": "shadows.trunks.across"
+      }
+    },
+    {
+      "id": "trunkShadowFireReach",
+      "pr": 748,
+      "group": "Trunk shadows",
+      "label": "A campfire's reach (m)",
+      "note": "How far a campfire's light, and so its shadows, reach (it lights the ground that far too).",
+      "control": {
+        "type": "slider",
+        "min": 8,
+        "max": 60,
+        "step": 1
+      },
+      "default": 40,
+      "apply": {
+        "knob": "lights.campfire.reach"
+      }
+    }
+  ]
+}

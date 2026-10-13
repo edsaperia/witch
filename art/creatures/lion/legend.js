@@ -1,0 +1,1 @@
+export const LEGEND_LION = { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .14, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 4 } }; // the savanna's lion (an area recipe's): lying like a kopje in the long grass, its mane gone to dry grass and lichen

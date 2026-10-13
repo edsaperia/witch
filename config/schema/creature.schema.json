@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "movement": { "type": "object" },
+    "legendMoves": { "type": "object" },
+    "radius": { "type": "number", "minimum": 0 },
+    "attacks": { "type": "array", "items": { "type": "string", "nullable": true } },
+    "strength": { "type": "number", "minimum": 0 },
+    "ranged": { "type": "boolean" },
+    "kite": { "type": "boolean" },
+    "temperament": { "type": "string", "enum": ["curious", "skittish"] },
+    "traits": { "type": "array", "items": { "type": "string", "enum": ["flier", "armoured", "swarm", "heavy", "nimble", "burrower"] } },
+    "voice": { "type": "object" },
+    "buff": { "type": "object" },
+    "character": { "type": "object" }
+  }
+}

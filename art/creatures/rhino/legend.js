@@ -1,0 +1,1 @@
+export const LEGEND_RHINO = { sink: .45, droop: .8, drop: [], over: { moss: .45, lichen: .05, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 4 } }; // the bushveld's rhino (an area recipe's): sunk to its flanks in red earth like a great grey boulder, its horn standing out of the earth
