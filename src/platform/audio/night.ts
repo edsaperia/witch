@@ -21,9 +21,9 @@ export type NightKind = "pine" | "wood" | "oaks" | "wet" | "stream" | "ravine" |
 export const AREA_NIGHTS: Record<string, NightKind> = {
   norway: "pine", "old-pinewood": "pine", "holly-thicket": "pine",
   "fern-forest": "wood", "tangly-forest": "wood", "wispy-forest": "wood", "hazel-forest": "wood", "twiggy-forest": "wood",
-  "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood",
+  "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood", "misty-terraces": "pine", "mossy-dell": "wood",
   "old-oaks": "oaks", ancient: "oaks",
-  "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet", mangrove: "wet", "mossy-creek": "stream",
+  "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet", mangrove: "wet", "mangrove-pools": "wet", mudflat: "wet", "mossy-creek": "stream",
   stream: "stream", ravine: "ravine",
   meadow: "meadow", garden: "meadow", grassland: "meadow", "bluebell-glade": "meadow", heath: "meadow",
   "rocky-slope": "open", erg: "open", warren: "open", savanna: "meadow", plains: "meadow", moor: "stones", "stone-shrine": "stones", "cave-mouth": "cave", frostcave: "cave", eyrie: "stones", "scrub-wash": "open",
