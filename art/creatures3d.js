@@ -67,7 +67,12 @@ export function withTexture(tex, f) { const was = TEX; TEX = tex; try { return f
 // sprite; form.motes says whether the glowing motes still float round it.
 let FORM = null;
 export function withForm(form, f) { const was = FORM; FORM = form; try { return f(); } finally { FORM = was; } }
-const drawForm = (m, o, S, level) => FORM ? FORM(m, o, S, level) : render(m, o).sp, formMotes = () => !FORM || FORM.motes;
+// Another view for the tools (a sheet from above: art/preview.mjs TOP=1): { yaw, pitch } for model3d's render, at the scale the
+// usual view would give, so the two line up. Never in the game.
+let VIEW = null;
+export function withView(view, f) { const was = VIEW; VIEW = view; try { return f(); } finally { VIEW = was; } }
+export const viewKey = () => VIEW ? `view${VIEW.yaw ?? ""},${VIEW.pitch ?? ""}` : "";
+const drawForm = (m, o, S, level) => { if (VIEW) o = { ...o, scale: o.scale ?? render(m, { ...o, measure: true }).s, ...VIEW }; return FORM ? FORM(m, o, S, level) : render(m, o).sp; }, formMotes = () => !FORM || FORM.motes;
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 // A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
 // (SHOE_STYLES: sneakers, glitter, platform, heels, boots, lightup), fitted to the foot: "hoof" (narrow and
@@ -391,6 +396,14 @@ function evolve3d(m, feats, c) {
 }
 
 // ================= four-legged animals =================
+// A genome's body profile (quad3d: its girth along its length) as stations { w, d }, 1 where it says nothing; null without one.
+export const PROFILE_STATIONS = ["shoulder", "ribcage", "waist", "loin", "hip"];
+function profileOf(p) {
+  if (!p) return null;
+  const P = {};
+  for (const k of PROFILE_STATIONS) { const v = p[k]; P[k] = typeof v === "number" ? { w: v, d: v } : { w: v?.w ?? 1, d: v?.d ?? 1 }; }
+  return P;
+}
 export function quad3d(S, level, frame, st, facing = "towards") {
   // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
   const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && !S.levelFeatures?.[3] && S.legend.includes(f)) || (q.features || []).includes(f) || !!S.levelNamed?.[level]?.includes(f); // (an evolved legend, its genome levels[3], replaces its old legend feature)
@@ -436,12 +449,36 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // default by how it stands: a hoofed one's withers and croup stand up and its brisket is deep, a flat-footed one's shoulders are
   // rounder, a sprawler has none. ----
   const withers = q.withers ?? (sprawl ? 0 : hoof ? .07 : flat ? .04 : .05), croup = q.croup ?? (sprawl ? 0 : hoof ? .05 : .02), loin = q.loin ?? (sprawl ? 0 : .015), brisket = q.brisket ?? (hoof ? .08 : flat ? .04 : .03);
-  m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front], M.BODY, { paint: paintBody });
-  m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
-  m.ell([0, (top + (chest + tuck) / 2) / 2 + .02 - loin, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
-  if (withers) m.ell([len * .58, top - .1 + withers + hump * .4, 0], [len * .3, .13 + withers, bw * .8 * front], M.BODY, { paint: paintBody }); // the withers, over the shoulders
-  if (croup) m.ell([-len * .66, top - .11 + croup + arch * .5, 0], [len * .24, .12 + croup, bw * .74], M.BODY, { paint: paintBody }); // the pelvis
-  if (brisket) m.ell([len * .8, chest + .06 + brisket * .5, 0], [len * .22, .1 + brisket, bw * .62 * front], M.BODY, { paint: paintBody }); // the brisket, the chest's keel
+  // ---- its girth along its length (Ed, 2026-10-13: "a key issue with a lot of animals is that they end up sausage shaped; we need
+  // them to be able to have a thicker chest and a slimmer abdomen; this needs separate width and depth in the body"): q.profile, its
+  // stations from the front back (shoulder, ribcage, waist, loin, hip), each { w, d } (or one number for both): w its width side to
+  // side, d its depth back to belly, as multiples of the body as built there, the back line kept and the belly lifting as d falls; a
+  // station left out is 1. With no profile the three loaves draw exactly as before; with one the torso is lofted through the
+  // stations (and the rump's end and the chest's front, shaped as their neighbours), each slice the loaves' own envelope there, scaled.
+  // The forelegs stand as wide as the shoulder, the hind legs as the hip. ----
+  const loaves = [
+    [[len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front]], // the chest
+    [[-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93]], // the rump
+    [[0, (top + (chest + tuck) / 2) / 2 + .02 - loin, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9]], // the middle
+  ];
+  const P = profileOf(q.profile), wAt = k => P ? P[k].w : 1;
+  if (!P) for (const [c, r] of loaves) m.ell(c, r, M.BODY, { paint: paintBody });
+  else {
+    const envelope = x => { let w = 0, t = -Infinity, b = Infinity; for (const [c, r] of loaves) { const u = (x - c[0]) / r[0]; if (Math.abs(u) >= 1) continue; const f = Math.sqrt(1 - u * u); w = Math.max(w, r[2] * f); t = Math.max(t, c[1] + r[1] * f); b = Math.min(b, c[1] - r[1] * f); } return { w, t, b }; }; // the loaves at x: their widest, their back, their belly
+    const AT = [-.5, -.25, 0, .25, .48], K = ["hip", "loin", "waist", "ribcage", "shoulder"], station = u => { // the profile between its stations, straight lines, held past the ends
+      if (u <= AT[0]) return P.hip; if (u >= AT[4]) return P.shoulder;
+      for (let i = 0; i < 4; i++) if (u <= AT[i + 1]) { const f = (u - AT[i]) / (AT[i + 1] - AT[i]), a = P[K[i]], b = P[K[i + 1]]; return { w: a.w + (b.w - a.w) * f, d: a.d + (b.d - a.d) * f }; }
+      return P.shoulder;
+    };
+    for (let u = -.82; u <= .81; u += .09) { // a slice every .09 of the length, each reaching its neighbours, so the loft between the stations runs smooth
+      const x = u * len, e = envelope(x), s = station(u), depth = (e.t - e.b) * s.d;
+      if (e.w <= 0 || depth <= 0) continue;
+      m.ell([x, e.t - depth / 2, 0], [len * .2, depth / 2, e.w * s.w], M.BODY, { paint: paintBody });
+    }
+  }
+  if (withers) m.ell([len * .58, top - .1 + withers + hump * .4, 0], [len * .3, .13 + withers, bw * .8 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the withers, over the shoulders
+  if (croup) m.ell([-len * .66, top - .11 + croup + arch * .5, 0], [len * .24, .12 + croup, bw * .74 * wAt("hip")], M.BODY, { paint: paintBody }); // the pelvis
+  if (brisket) m.ell([len * .8, chest + .06 + brisket * .5, 0], [len * .22, .1 + brisket, bw * .62 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the brisket, the chest's keel
   if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); }
   // ---- legs: a real skeleton (the menagerie review, 2026-10-13: every leg was hip, a knee straight below it, a ball) ----
@@ -454,7 +491,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.rig = { legs: [], len, bw, top, chest, tuck }; // the live rig's joints (art/genome/parts.js), in model units
   const leg = (fore, side) => {
     m.part = `leg${fore ? "F" : "H"}${side > 0 ? "N" : "F"}`; // fore or hind, near or far
-    const z = side * bw * .62, x = fore ? len * .62 : -len * .62, a = (fore ? 1 : -1) * side * sw, topY = fore ? chest + .1 : tuck + .15, Y = topY + .12;
+    const z = side * bw * .62 * wAt(fore ? "shoulder" : "hip"), x = fore ? len * .62 : -len * .62, a = (fore ? 1 : -1) * side * sw, topY = fore ? chest + .1 : tuck + .15, Y = topY + .12;
     const swing = (fore ? side : -side) * (frame ? 1 : -1) > 0, lift = swing ? .06 : 0, flex = swing ? 1 : 0; // the leg swinging forward is lifted and flexed
     const hf = !fore ? (q.hindFoot || 1) : 1, out = sprawl ? side * .14 : 0, g = { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 };
     const hipTop = [x, Y, z * .8], mat = side > 0 ? (q.legMat || M.BODY) : (q.legMat ? M.BODY3 : M.BODY2);
@@ -723,6 +760,26 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "bushy") m.chain([[...tb, .1], [X(1.05) - .35, top - .05 + tw, 0, .17], [X(1.05) - .75, top - .2 + tw, 0, .18], [X(1.05) - 1.0, top - .35 + tw, 0, .1]], M.BODY, { ...o, paint: p => p[0] < X(1.05) - .82 ? M.BELLY : undefined });
   else if (kind === "stub" || kind === "deer" || kind === "bob") m.ell(v3.add(tb, [-.06, .02 + tw, 0]), [.1, .08, .07], kind === "deer" ? M.BELLY : M.BODY, { ...o, paint: kind === "bob" ? p => p[0] < tb[0] - .08 ? M.BODY3 : undefined : undefined });
   else if (kind === "puff") m.ell(v3.add(tb, [-.04, .02, 0]), [.11, .11, .1], M.BELLY, o);
+  else if (kind === "banner") m.chain([[...tb, .1], [X(1.15), top - .28 + tw, 0, .13], [X(1.6), .5, 0, .145], [X(2.15), .36 + tw, 0, .15], [X(2.6), .42, 0, .14], [X(2.9), .62 + tw, 0, .12], [X(2.95), .8, 0, .09]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.8) || Math.floor(-p[0] * 7) % 4 === 0 ? M.BODY3 : undefined }); // the snow leopard's: as long as its body and more, thick, trailing low, ringed, curling up at the end
+  else if (kind === "scarf") { // an elder's: so long it wraps snug round its shoulders and chest like a stole, ringed, its fur in tufts
+    const L = len, pts = [[...tb, .1], [X(.95), top - .32 + tw, .1, .1], [-L * .1, top - .12, .34, .11], [L * .35, top - .02, .38, .12], [L * .62, top + .04, .3, .12], [L * .78, top - .1, .08, .12], [L * .7, top + .02, -.22, .11], [L * .48, top + .14, -.3, .09]];
+    const ring = p => Math.floor((p[0] * 3 + p[2] * 4) * 2.2) % 4 === 0 ? M.BODY3 : undefined;
+    m.chain(pts, M.BODY, { ...o, extra: true, paint: ring });
+    for (let k = 0; k < 22; k++) { const u = .15 + .8 * k / 21, seg = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))), f2 = u * (pts.length - 1) - seg, a = pts[seg], b = pts[seg + 1];
+      const c = [0, 1, 2].map(q => a[q] + (b[q] - a[q]) * f2), r = a[3] + (b[3] - a[3]) * f2, th = k * 2.1, d = [Math.cos(th) * .4, .7 + Math.sin(th) * .3, Math.sin(th * 1.7) * .6], n = Math.hypot(...d), dn = d.map(v => v / n);
+      const base = v3.add(c, v3.mul(dn, r * .8)); m.seg(base, v3.add(base, v3.mul(dn, r * .45)), r * .28, r * .05, k % 4 ? M.BODY : M.BODY3, { group: 3, extra: true }); }
+  }
+  else if (kind === "plume") { // an elder's vast brush, swept low and back, its tip snow-white, its fur in tufts along it
+    const pts = [[...tb, .12], [X(1.1) - .35, top + .02 + tw, 0, .22], [X(1.1) - .85, top - .12 + tw, 0, .27], [X(1.1) - 1.35, top - .34 + tw, 0, .22], [X(1.1) - 1.6, top - .5, 0, .1]];
+    m.chain(pts, M.BODY, { ...o, paint: p => p[0] < X(1.1) - 1.38 ? M.BELLY : undefined });
+    for (let k = 0; k < 26; k++) { // tufts: short locks standing out of its surface, swept back, more at the tip
+      const u = .12 + .86 * (k / 25), seg = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))), f = u * (pts.length - 1) - seg, a = pts[seg], b = pts[seg + 1];
+      const c = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f], r = a[3] + (b[3] - a[3]) * f, th = k * 2.4;
+      const out = [Math.cos(th) * .25, Math.sin(th) * .8 + .2, Math.cos(th * 1.3) * .8], n = Math.hypot(...out), d = out.map(v => v / n);
+      const base = v3.add(c, v3.mul(d, r * .8)), tip = v3.add(base, v3.add(v3.mul(d, r * .55), [-r * .5, 0, 0]));
+      m.seg(base, tip, r * .32, r * .06, u > .85 ? M.BELLY : k % 3 ? M.BODY : M.BODY2, { group: 3 });
+    }
+  }
   else if (kind === "dormouse") m.chain([[...tb, .1], [X(1.3), top - .2 + tw, 0, .12], [X(1.7), top - .42, 0, .13], [X(2.05), top - .3 + tw, 0, .12], [X(2.2), top - .08, 0, .08]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) ? M.BODY2 : undefined }); // long, low and furry, curling up at its tip (the silhouette check: it read as a squirrel's)
   else if (kind === "squirrel" || kind === "star") m.chain([[...tb, .12], [X(1.3), top + .05 + tw, 0, .25], [X(1.3), top + .6 + tw, 0, .3], [X(1.0), top + .95 + tw, 0, .27], [X(.65), top + .9 + tw, 0, .16]], kind === "star" ? M.MAGIC : M.BODY, { ...o, extra: true, paint: kind === "star" ? p => spotty(p, 14, .12) ? M.GLINT : undefined : undefined });
   else if (kind === "croc") m.chain([[...tb, .3], [X(1.25), top - .25 + tw, 0, .26], [X(1.75), .3, 0, .19], [X(2.25), .18 + tw * .5, 0, .11], [X(2.7), .1 + tw, 0, .04]], M.BODY, { ...o, paint: p => p[1] > .28 && Math.sin(p[0] * 22) > .55 ? M.BODY2 : undefined }); // a crocodile's: thick at the root, long, low along the ground, scutes along its top

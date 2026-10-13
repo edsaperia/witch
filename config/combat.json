@@ -409,6 +409,7 @@
    "lion",
    "squirrel",
    "fox",
+   "arcticfox",
    "otter",
    "hedgehog",
    "dormouse",
@@ -424,6 +425,7 @@
   "skittish": [
    "cheetah",
    "unicorn",
+   "snowleopard",
    "hare",
    "roe",
    "stag",
@@ -442,7 +444,8 @@
    "woodlouse",
    "beetle",
    "snail",
-   "ram"
+   "ram",
+   "ibex"
   ]
  },
  "traits": {
