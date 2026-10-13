@@ -2,7 +2,7 @@
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 import { M, rng, uni, hash2 } from "./core.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
-import { faceUp } from "./genome/expressions.js";
+import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
@@ -659,7 +659,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // its jaw open (Ed, 2026-10-13: bites, roars and yawns; gear.jaw 0 shut to 1 wide): turned about a hinge at the back of the cheek
   // by up to q.gape radians, a third of it lifting the muzzle (so the mouth shows from the camera's height above) and the rest dropping
   // the lower jaw; teeth by q.bite: "fangs" (a meat eater's canines, small teeth between), "flat" (a grazer's), "croc" (rows of cones)
-  const jawK0 = q.beak ? 0 : (q.jaw ?? 1) * (baby ? .7 : 1), open = jawK0 ? Math.max(0, Math.min(1, GEAR?.jaw ?? 0)) : 0, bite = q.bite || (q.flatJaw ? "croc" : hoof ? "flat" : "fangs");
+  const jawK0 = q.beak ? 0 : (q.jaw ?? 1) * (baby ? .7 : 1), open = jawK0 ? Math.max(0, Math.min(1, GEAR?.jaw ?? JAW_FACES[GEAR?.face]?.jaw ?? 0)) : 0, bite = q.bite || (q.flatJaw ? "croc" : hoof ? "flat" : "fangs");
   const gapeAll = open * (q.gape ?? (bite === "flat" ? .55 : bite === "croc" ? .65 : 1)), lift = gapeAll * .35, gape = gapeAll - lift;
   const mouthY = sn[1] - Dm * (.45 + .12 * jawK0), hinge = [H[0] + hr * .25, mouthY + Dm * .08, 0];
   const rotAbout = a => { const c = Math.cos(a), s = Math.sin(a); return [p => [hinge[0] + (p[0] - hinge[0]) * c - (p[1] - hinge[1]) * s, hinge[1] + (p[0] - hinge[0]) * s + (p[1] - hinge[1]) * c, p[2]], d => [d[0] * c - d[1] * s, d[0] * s + d[1] * c, d[2]]]; };

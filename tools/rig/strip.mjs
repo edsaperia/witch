@@ -4,6 +4,7 @@
 // one frame every STEP seconds, in rows: previews/rig-strip-<species>.png.
 //   node tools/rig/strip.mjs wolf,snake [level] [scale]
 // QUIRK=1: its character instead (config/character.json): standing in its posture, its idle quirk, standing again: previews/rig-quirk-<species>.png.
+// The open jaw (Ed, 2026-10-13): it bites at the end of its wind-up and through its charge, and yawns at the end.
 // SHOES=sneakers (or any party shoe style): as a party animal in those shoes, its collar on: previews/rig-strip-<species>-<style>.png.
 import { build } from "esbuild";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -25,12 +26,15 @@ for (const id of list.split(",")) {
     for (const [mat, byR] of Object.entries(parts.discs)) { discs[mat] = {}; for (const [r, p] of Object.entries(byR)) { const d = add(p, "bare"); if (d) discs[mat][r] = d; } }
     const J = parts.joints, head = J.head && !Array.isArray(J.head) ? J.head : null;
     const meta = { template: parts.template, s: parts.s, shoe: parts.pieces.shoe ? all("shoe") : undefined, torso: all("torso"), head: all("head"), tail: all("tail"), discs, legs: J.legs ?? [], neck: head ? head.nb : J.head, headAt: head ? head.H : J.head, tailAt: J.tail ?? [0, 0, 0], top: J.top ?? 0, len: J.len ?? 0, spine: J.spine ?? [] };
+    // its faces (the open jaw's bite and yawn among them: art/genome/parts.js rigFaces), as the game swaps them in (rigView.ts withFace)
+    const faceHeads = Object.fromEntries(Object.entries(parts.faces ?? {}).map(([k, v]) => [k, (v ?? [null, null, null, null, null]).map(p => add(p))]));
+    const faced = f => (f && faceHeads[f] ? { ...meta, head: faceHeads[f] } : meta);
     // the script: [seconds, label, vx, vz (body lengths a second), drive]
     const mpp = 1 / 16, u2m = mpp * meta.s, bl = Math.max(.6, (meta.len || .6) * 2) * u2m, dt = 1 / 60;
     // QUIRK=1: its character instead (config/character.json): standing in its posture, its idle quirk, standing again
     const CH = quirk ? await (await fetch("/config/character.json")).json() : null, ch = CH ? { ...CH.default, ...(CH.species[id] ?? {}), posture: { ...CH.default.posture, ...(CH.species[id]?.posture ?? {}) } } : null;
     const posture = ch ? { hx: ch.posture.head[0], hy: ch.posture.head[1], by: ch.posture.body } : undefined;
-    const script = ch ? [[0.4, "stand", 0, 0], [ch.for, ch.quirk, 0, 0, "quirk"], [0.4, "stand", 0, 0]] : [[1.2, "walk", 1, 0], [1.0, "turn", 0, 1], [0.5, "wind-up", 0, 0, "crouch"], [0.6, "charge", 4, 0, "charge"], [0.5, "leap", 1.5, 0, "leap"], [0.4, "land", 0.3, 0]];
+    const script = ch ? [[0.4, "stand", 0, 0], [ch.for, ch.quirk, 0, 0, "quirk"], [0.4, "stand", 0, 0]] : [[1.2, "walk", 1, 0], [1.0, "turn", 0, 1], [0.5, "wind-up", 0, 0, "crouch"], [0.6, "charge", 4, 0, "charge"], [0.5, "leap", 1.5, 0, "leap"], [0.4, "land", 0.3, 0], [0.4, "stand", 0, 0], [0.8, "yawn", 0, 0, "yawn"]];
     const body = new R.RigBody(), frames = [];
     let x = 0, z = 0, t = 0, vx = 1, vz = 0;
     body.update(x, z, 0, bl, 0);
@@ -43,7 +47,9 @@ for (const id of list.split(",")) {
         body.update(x, z, dt, vx, vz);
         const drive = { crouch: mode === "crouch" ? Math.min(1, k * 2) : 0, charging: mode === "charge", air: mode === "leap" ? Math.sin(k * Math.PI) : 0, posture, quirk: ch?.quirk, quirkK: mode === "quirk" ? k : -1 };
         const out = new R.RigOut();
-        if (meta.template === "quadruped") body.quadruped(meta, u2m, dt, drive, out); else body.serpent(meta, u2m, dt, drive, out);
+        const face = mode === "yawn" ? "yawn" : mode === "charge" || (mode === "crouch" && k > .5) ? "bite" : undefined; // (as render/looks.ts expression: the end of a wind-up and the lunge bite; waking, a yawn)
+        const M2 = faced(face);
+        if (meta.template === "quadruped") body.quadruped(M2, u2m, dt, drive, out); else body.serpent(M2, u2m, dt, drive, out);
         const items = out.items.slice(0, out.n);
         if (Math.round(t / dt) % Math.round(step / dt) === 0) frames.push({ label, items: items.map(it => ({ ...it, y: it.y + (mode === "leap" ? Math.sin(k * Math.PI) * bl * .5 : 0) })) });
       }
