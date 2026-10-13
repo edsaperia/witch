@@ -227,12 +227,11 @@
       "dir": "ESE",
       "biome": "badlands"
     },
-    "unknown-06": {
+    "armadillo": {
       "phase": 3,
       "bearing": 141,
       "dir": "SE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
     "fennec": {
       "phase": 3,
@@ -390,12 +389,11 @@
       "biome": "jungle",
       "placeholder": true
     },
-    "unknown-30": {
+    "raccoon": {
       "phase": 4,
       "bearing": 305,
       "dir": "NW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "unknown-31": {
       "phase": 4,
