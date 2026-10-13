@@ -193,19 +193,17 @@
       "dir": "NNW",
       "biome": "temperate"
     },
-    "unknown-01": {
+    "arcticfox": {
       "phase": 3,
       "bearing": 12,
       "dir": "NNE",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     },
-    "unknown-02": {
+    "ibex": {
       "phase": 3,
       "bearing": 38,
       "dir": "NE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "redpanda": {
       "phase": 3,
@@ -213,12 +211,11 @@
       "dir": "ENE",
       "biome": "mountains and glaciers"
     },
-    "unknown-04": {
+    "komodo": {
       "phase": 3,
       "bearing": 89,
       "dir": "E",
-      "biome": "rocky",
-      "placeholder": true
+      "biome": "rocky"
     },
     "meerkat": {
       "phase": 3,
@@ -275,12 +272,11 @@
       "dir": "NW",
       "biome": "cold rainforest"
     },
-    "unknown-14": {
+    "penguin": {
       "phase": 3,
       "bearing": 346,
       "dir": "NNW",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     },
     "unknown-15": {
       "phase": 4,
@@ -289,12 +285,11 @@
       "biome": "cold",
       "placeholder": true
     },
-    "unknown-16": {
+    "snowleopard": {
       "phase": 4,
       "bearing": 25,
       "dir": "NNE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "frostwyrm": {
       "phase": 4,
@@ -322,19 +317,17 @@
       "biome": "rocky",
       "placeholder": true
     },
-    "unknown-21": {
+    "rattlesnake": {
       "phase": 4,
       "bearing": 125,
       "dir": "SE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
-    "unknown-22": {
+    "scorpion": {
       "phase": 4,
       "bearing": 145,
       "dir": "SE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
     "rhino": {
       "phase": 4,
@@ -386,12 +379,11 @@
       "dir": "NW",
       "biome": "cold rainforest"
     },
-    "unknown-31": {
+    "unicorn": {
       "phase": 4,
       "bearing": 325,
       "dir": "NW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "polarbear": {
       "phase": 4,
