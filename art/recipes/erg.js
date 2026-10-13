@@ -2,7 +2,7 @@
 export const ERG = {
   id: "erg", name: "Erg", creature: "fennec", by: "recipe", leaf: .2, floor: ["sand", .11, .42, .64],
   text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, a few thorn trees", set: "a ring of wind-worn stones round an old hearth" },
-  wall: [["water", { w: 1.2 }], ["reeds", {}]], small: [["grass", { h: .8 }], ["bush", { small: true }]],
+  wall: [["water", { w: 1.2 }], ["reeds", {}]], small: [["grass", { h: .8 }], ["shrub", { spiky: true }]],
   big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "acacia", minor: true, scale: .8 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["ring", "a ring of wind-worn stones round an old hearth", 1, { centre: "fire", member: "stone", embers: 1, rock: "sandstone" }],
