@@ -163,18 +163,6 @@ export const GENOMES = [
         { kind: "wisps", at: "mane", size: .28, count: 8, from: .5, to: 1, mat: "MAGIC2", lift: .3 },
       ] },
     ] },
-  // the plain's cheetah (a journey kind: unknown-08's, the hot south): slim and long-legged, a small head, solid spots, black tear lines and a
-  // long ringed tail; the cub in its silver mantle; its legend the wind's: legs longer still, its tears lit, wind streaming off its back
-  { id: "cheetah", name: "Cheetah", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .55, val: .82, belly: "white" }, body: { hgt: 1.3, len: .78, chest: .48, tuck: .78, neck: .32, neckAng: .55, neckW: .28, hr: .2, legW: .68, bw: .22 }, head: { snout: .5, snoutD: .7, snoutTaper: .85, whiskers: true, tears: true }, parts: { ears: { kind: "round", size: .6 }, tail: "ringed", feet: "paw" }, coat: { belly: true, spots: "solid" }, legend: ["mane"],
-    levels: [
-      { body: { len: .5, chest: .4, tuck: .48, hr: .27, legW: .95 }, head: { snout: .4 }, parts: { ears: { kind: "round", size: .8 } }, features: [{ kind: "mane", from: .15, to: 1, height: .1, count: 14, lean: .7, mat: "BELLY" }] },
-      { body: { len: .76, chest: .46, tuck: .72, legW: .66, neckW: .26 }, head: { snout: .48 }, features: [{ kind: "mane", from: .6, to: 1, height: .05, count: 6, lean: .8, mat: "BELLY" }] },
-      null,
-      { body: { len: .84, legW: .72, tuck: .82, hgt: 1.4 }, head: { snout: .55, eyeGlow: true, tears: "glow" }, features: [
-        { kind: "mane", from: .2, to: .95, height: .05, count: 14, lean: .9, mat: "BODY" },
-        { kind: "wisps", at: "mane", size: .26, count: 9, from: .05, to: .95, mat: "MAGIC2", lift: .1 },
-      ] },
-    ] },
   // the plains' cheetah (a journey kind: unknown-24's, the hot south): built to sprint, a greyhound of a cat. A very deep, narrow
   // chest, a waist tucked up tight, its spine arched, long thin legs, a small round head with small ears, solid black spots, black
   // tear lines and a long heavy ringed tail, its rudder; the cub in its silver mantle; its legend the wind's: longer and leaner still,
