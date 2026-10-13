@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import { buildIslandMesh, vertexNormals } from "./islandMesh";
 
-// A small island's ground: hills, a lake with a rust-pool look and a hot spring, a sinkhole, seeded.
+// A small island's ground: hills, a lake with a rust-pool look and a tar pit, a sinkhole, seeded.
 function ground(seed: number) {
   const cols = 24, rows = 20, n = cols * rows, h = new Float32Array(n), water = new Uint8Array(n), level = new Float32Array(n), looks = new Uint8Array(n);
   let s = seed; const rnd = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
@@ -11,7 +11,7 @@ function ground(seed: number) {
     h[i] = d > 0.8 ? -(d - 0.8) * 600 - 1 : 4 + (0.8 - d) * 40 + rnd() * 3;
     if (h[i] <= 0) water[i] = 1;
     if (d < 0.25 && c < cols / 2) { water[i] = 2; level[i] = h[i] + 1; looks[i] = 7; } // a rust pool
-    if (d < 0.22 && c >= cols / 2 && r < rows / 2) { water[i] = 2; level[i] = h[i] + 0.8; looks[i] = 6; } // a hot spring
+    if (d < 0.22 && c >= cols / 2 && r < rows / 2) { water[i] = 2; level[i] = h[i] + 0.8; looks[i] = 6; } // a tar pit
     if (d < 0.2 && c >= cols / 2 && r >= rows / 2) { water[i] = 2; level[i] = h[i] + 2; looks[i] = 4; } // a sinkhole
   }
   return { x0: -300, z0: -250, step: 25, cols, rows, h, water, level, looks };
@@ -39,7 +39,7 @@ describe("the chart's island meshes made off the page (render/chart/islandMesh.t
     expect(M.tmax).toBeGreaterThan(0); expect(Math.max(...M.tile)).toBe(255);
     expect(M.lakes).not.toBeNull();
     const L = M.lakes!;
-    expect(L.spring).toBe(true); expect(L.li.length % 3).toBe(0);
+    expect(L.li.length % 3).toBe(0);
     // a lake sample's water lies over its bed, in from its shore its special look reaches its middle, and a sinkhole has no water drawn
     let over = 0, pits = 0;
     for (let i = 0; i < G.cols * G.rows; i++) if (G.water[i] === 2) { if (L.lp[i * 3 + 1] > M.pos[i * 3 + 1]) over++; if (G.looks[i] === 4) pits++; }

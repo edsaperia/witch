@@ -6,7 +6,7 @@ export const DROWNED_WOOD = {
   slot: 31, id: "drowned-wood", name: "Drowned wood", creature: "hydra", by: "recipe", leaf: .28, floor: ["mud", .3, .25, .17],
   text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "tall larches drowned standing, trailing willows", set: "the drowned stones of an old wall" },
   wall: [["water", { w: 2.4, dark: true }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: .9 }]],
-  big: [["tree", { type: "larch", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
+  big: [["tree", { type: "larch", variant: "drowned", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["heap", "the drowned stones of an old wall", 1, { seed: 11, of: "rubble", moss: .5, top: "none" }],
   layout: {

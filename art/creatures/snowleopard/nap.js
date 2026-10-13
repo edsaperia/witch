@@ -1,1 +1,1 @@
-export const NAP_SNOWLEOPARD = { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .2 };
+export const NAP_SNOWLEOPARD = { kind: "curl", sink: .04, droop: 1, curl: 4.2, tailDown: .2 }; // (curled tighter since its longer legs, #866: its ground origin stays on the lower half of the sprite, as the nap check wants)

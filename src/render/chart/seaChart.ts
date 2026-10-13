@@ -16,7 +16,7 @@ import { sigilColour } from "../../../art/sigils.js";
 import { sigilDetail } from "../../../art/sigilDetail.js";
 import { Post, type PostTuning } from "../post";
 import { CHART_SCALE, K, SIGIL_TIERS } from "./chartScale";
-import { buildIslandMesh, RELIEF, TIER_STEP, type IslandMesh } from "./islandMesh";
+import { buildIslandMesh, RELIEF, type IslandMesh } from "./islandMesh";
 export { CHART_SCALE };
 /** Till an island's land comes, about how far it reaches (units) by its phase: its round coast drawn that big. */
 const REACH = [8, 5.5, 8, 11, 13, 15];
@@ -215,35 +215,19 @@ const SEA_WATER = { deep: new THREE.Color(0.08, 0.2, 0.34), pale: new THREE.Colo
 // jungle; chartOutlines.worker.ts LAKE_LOOKS, which picks each lake's, blending by bearing, and paints its rim on its shore): aLook 0 water (as the shallows), 1
 // ice (pale, frost white by the shore, faint cracks), 2 lava (glowing and slowly churning, crusting dark by the shore), 3 an
 // oasis (clear turquoise, pale sand under its edge), 4 a sinkhole (no water: a dry cliff-walled pit, which the ground draws); and the
-// diagonals': 5 a glacial tarn (milky turquoise meltwater, ice floes by its edge), 6 a hot spring (terraced milky turquoise pools
-// with scalloped cream lips spilling over, steam drifting off it), 7 a rust pool (a Yellowstone hot pool: rings from an orange rim through yellow, green and teal to a deep blue throat, a white lip), 8 a
+// diagonals': 5 a glacial tarn (milky turquoise meltwater, ice floes by its edge), 6 a tar pit (glossy black tar with the moon's
+// sheen on it, oil-slick rainbows drifting slowly over it, slow bubbles swelling and popping, bones half sunk by its edge), 7 a rust pool (a Yellowstone hot pool: rings from an orange rim through yellow, green and teal to a deep blue throat, a white lip), 8 a
 // lily pond (green water under giant pads, a few flowers).
-// A hot spring (Ed's reference, terraced travertine pools like Saturnia) steps down its slope: aS counts its tiers downhill, each
-// a step lower (uStep), its pools milky turquoise behind scalloped cream lips that spill white over into the next.
+// A tar pit (Ed, 2026-10-13: in place of the hot spring, which looked like somewhere you could walk) reads as a sticky black
+// trap: its sheen is the moon's light off a glossy surface (lit by where the camera looks from, its world place vW).
 const LAKE_VERT = /* glsl */ `
-uniform float uStep, uScale; attribute float aDepth, aLook, aS; varying float vD, vLook, vS; varying vec2 vP; varying vec3 vL;
-float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+attribute float aDepth, aLook; varying float vD, vLook; varying vec2 vP; varying vec3 vL, vW;
 void main() {
-  vD = aDepth; vLook = aLook; vL = position; vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xz;
-  vS = aS + (n(w.xz / uScale * 1.2) - 0.5) * 0.7; // (the tiers' lips curving, as travertine's do)
-  if (abs(aLook - 6.0) < 0.5) w.y -= floor(vS) * uStep;
+  vD = aDepth; vLook = aLook; vL = position; vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xz; vW = w.xyz;
   gl_Position = projectionMatrix * viewMatrix * w;
 }`;
-// The steam off a hot spring: a light, drifting veil a little above its pools (two, at different heights, for its rising).
-const STEAM_FRAG = /* glsl */ `
-uniform float uTime, uScale, uSeed; varying float vLook, vD; varying vec2 vP;
-float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
-void main() {
-  if (abs(vLook - 6.0) > 0.5 || vD <= 0.0) discard; // (over its water only)
-  vec2 p = vP / uScale; float t = uTime * (0.05 + uSeed * 0.03);
-  float s = n(p * 1.3 + vec2(t, t * 0.7) + uSeed * 9.0) * 0.65 + n(p * 3.2 - vec2(t * 1.6, -t * 0.4)) * 0.35;
-  float a = smoothstep(0.38, 0.8, s) * (0.5 - uSeed * 0.18);
-  gl_FragColor = vec4(vec3(0.86, 0.9, 0.94), a);
-}`;
 const LAKE_FRAG = /* glsl */ `
-uniform float uDim, uTime, uScale; uniform vec3 uDeep, uPale; varying float vD, vLook, vS; varying vec2 vP; varying vec3 vL;
+uniform float uDim, uTime, uScale; uniform vec3 uDeep, uPale; varying float vD, vLook; varying vec2 vP; varying vec3 vL, vW;
 ${SHADOW_TILE}
 float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
@@ -277,12 +261,33 @@ void main() {
     c = mix(vec3(0.36, 0.62, 0.62), vec3(0.62, 0.8, 0.78), a * a);
     vec2 f = dots(p * 3.0, 0.42); float floe = step(0.0, f.x) * step(0.35, a) * step(0.3, f.y + a * 0.6);
     c = mix(c, vec3(0.78, 0.86, 0.9) * (0.92 + 0.08 * f.x), floe);
-  } else if (uLook == 6) { // (stepped pools: f runs 0 at a pool's top to 1 at its lip, which scallops; past it, white water spills over)
-    float f = fract(vS), lip = 0.88 + (n(p * 8.0) - 0.5) * 0.08;
-    c = mix(vec3(0.3, 0.58, 0.58), vec3(0.48, 0.74, 0.72), smoothstep(0.0, lip, f));
-    c = mix(c, vec3(0.74, 0.72, 0.64) * (0.9 + 0.1 * n(p * 12.0)), smoothstep(lip - 0.02, lip + 0.02, f));
-    c = mix(c, vec3(0.66, 0.74, 0.76), smoothstep(0.1, 0.0, f) * step(0.5, n(p * 10.0 + vec2(0.0, uTime * 0.5))) * 0.7);
-    c = mix(c, vec3(0.74, 0.72, 0.64), smoothstep(0.05, 0.0, d)); // (the cream rim at its shore)
+  } else if (uLook == 6) { // (a tar pit: near-black, a glossy sheen, oil-slick rainbows drifting, slow bubbles, bones by its edge)
+    float t = uTime * 0.02;
+    vec2 q = p * 0.8 + (vec2(n(p * 0.5 + vec2(t, 2.0)), n(p * 0.5 - vec2(t, 7.0))) - 0.5) * 2.4; // (the swirls: p warped, slowly)
+    vec2 e = vec2(0.04, 0.0); float g0 = n(q * 1.5), gx = n((q + e) * 1.5) - g0, gz = n((q + e.yx) * 1.5) - g0;
+    vec3 N = normalize(vec3(-gx * 6.0, 1.0, -gz * 6.0)), V = normalize(cameraPosition - vW); // (its slow, heavy undulation)
+    float spec = pow(max(dot(N, normalize(uMoonV + V)), 0.0), 30.0), fres = pow(1.0 - max(V.y, 0.0), 3.0);
+    c = vec3(0.028, 0.025, 0.03) + vec3(0.12, 0.13, 0.16) * (0.5 * fres + 0.6 * smoothstep(0.5, 0.85, g0)); // (black, the sky's sheen at a slant and along its swells)
+    float slick = smoothstep(0.44, 0.66, n(q * 0.6 + 13.0)) * smoothstep(0.02, 0.2, d); // (patches of oil, not at its very edge)
+    vec3 rainbow = 0.5 + 0.5 * cos(6.2832 * (n(q * 1.3 - vec2(t * 3.0, 0.0)) * 2.0 + d * 0.6 + vec3(0.0, 0.33, 0.67)));
+    c += rainbow * rainbow * slick * (0.36 + 0.2 * fres); // (squared: purer bands, as a film's)
+    // the bubbles: a few cells each swelling a dome for most of its cycle, then a ring as it pops
+    vec2 bc = floor(p * 0.8), bf = fract(p * 0.8) - 0.5 - (vec2(h(bc), h(bc + 4.1)) - 0.5) * 0.4;
+    float ph = fract(uTime * (0.06 + 0.05 * h(bc + 8.3)) + h(bc + 2.9)), live = step(0.55, h(bc + 6.7)) * step(0.15, d), r = length(bf);
+    float dome = step(ph, 0.86) * smoothstep(0.0, 0.86, ph) * 0.32, pop = step(0.86, ph) * (ph - 0.86) / 0.14;
+    float inDome = live * step(r, dome);
+    c = mix(c, vec3(0.03, 0.03, 0.035) + vec3(0.45, 0.45, 0.5) * smoothstep(0.45, 0.0, length(bf + vec2(0.35, 0.35) * dome) / max(dome, 1e-3)), inDome); // (a dome, lit up and to the left)
+    c += live * step(0.0, dome - 0.02) * smoothstep(0.03, 0.0, abs(r - dome)) * vec3(0.2, 0.2, 0.24); // (its rim)
+    c += live * pop * smoothstep(0.04, 0.0, abs(r - 0.06 - pop * 0.34)) * (1.0 - pop) * vec3(0.4, 0.4, 0.45);
+    c += vec3(0.75, 0.78, 0.9) * spec * (1.0 - inDome * 0.5);
+    // half-sunk bones by its edge: a rib cage's arcs, or a skull, pale and sparse
+    vec2 kc = floor(p * 2.2), kf = fract(p * 2.2) - 0.5; float ko = h(kc + 1.7);
+    if (ko > 0.88 && d < 0.22) {
+      float arcs = 0.0; for (int k = 0; k < 3; k++) { vec2 o = kf - vec2(-0.18 + 0.18 * float(k), 0.08); arcs = max(arcs, smoothstep(0.07, 0.0, abs(length(o) - 0.16)) * step(o.y, 0.0)); }
+      float skull = smoothstep(0.17, 0.12, length((kf - vec2(0.05, -0.05)) * vec2(1.0, 1.3)));
+      c = mix(c, vec3(0.95, 0.9, 0.76) * (0.85 + 0.15 * n(kf * 9.0 + kc)), ko > 0.94 ? skull : arcs);
+    }
+    c = mix(c, vec3(0.07, 0.055, 0.045), smoothstep(0.05, 0.0, d)); // (its dull, sticky lip)
   } else if (uLook == 7) { // (Ed's reference, a Yellowstone pool from above: a deep blue throat, teal, green, a wide yellow and orange band, a white lip)
     float r = clamp(d + (n(p * 3.0) - 0.5) * 0.08, 0.0, 1.0);
     c = mix(vec3(0.95, 0.42, 0.06), vec3(1.0, 0.72, 0.12), smoothstep(0.08, 0.32, r));
@@ -298,7 +303,6 @@ void main() {
   } else c = mix(uDeep, uPale, a * a);
   gl_FragColor = vec4(c * uDim * moonLit(vL, 1.0 / uYScale), 1.0);
 }`;
-/** A hot spring's pools: how far apart down its slope (m), and how far each steps down (m, as the ground's heights). */
 /** How far in from its shore (m) a special lake's edge reaches. */
 
 /** One island's meshes and where it is. */
@@ -482,13 +486,8 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     // the lakes: still water at each one's level, in its hollow, pale where it's shallow by its shore
     if (M.lakes) {
       const L = M.lakes, lg = new THREE.BufferGeometry();
-      lg.setAttribute("position", new THREE.BufferAttribute(L.lp, 3)); lg.setAttribute("aDepth", new THREE.BufferAttribute(L.ld, 1)); lg.setAttribute("aLook", new THREE.BufferAttribute(L.lk, 1)); lg.setAttribute("aS", new THREE.BufferAttribute(L.ts, 1)); lg.setIndex(new THREE.BufferAttribute(L.li, 1));
-      const uStep = { value: TIER_STEP * k * RELIEF };
-      g.add(new THREE.Mesh(lg, new THREE.ShaderMaterial({ vertexShader: LAKE_VERT, fragmentShader: LAKE_FRAG, uniforms: { ...this.moonShared, ...tileU, uDim: { value: 0.6 + 0.4 * dim }, uTime: this.uTime, uScale: { value: 30 * k }, uStep, uDeep: { value: LAKE_WATER.deep }, uPale: { value: LAKE_WATER.pale } } })));
-      if (L.spring) for (const [up, seed] of [[6, 0], [16, 1]]) { // (its steam)
-        const veil = new THREE.Mesh(lg, new THREE.ShaderMaterial({ vertexShader: LAKE_VERT, fragmentShader: STEAM_FRAG, uniforms: { uTime: this.uTime, uScale: { value: 30 * k }, uSeed: { value: seed }, uStep }, transparent: true, depthWrite: false }));
-        veil.position.y = up * k * RELIEF; veil.renderOrder = 2; g.add(veil);
-      }
+      lg.setAttribute("position", new THREE.BufferAttribute(L.lp, 3)); lg.setAttribute("aDepth", new THREE.BufferAttribute(L.ld, 1)); lg.setAttribute("aLook", new THREE.BufferAttribute(L.lk, 1)); lg.setIndex(new THREE.BufferAttribute(L.li, 1));
+      g.add(new THREE.Mesh(lg, new THREE.ShaderMaterial({ vertexShader: LAKE_VERT, fragmentShader: LAKE_FRAG, uniforms: { ...this.moonShared, ...tileU, uDim: { value: 0.6 + 0.4 * dim }, uTime: this.uTime, uScale: { value: 30 * k }, uDeep: { value: LAKE_WATER.deep }, uPale: { value: LAKE_WATER.pale } } })));
     }
     g.add(body);
     { const hb = new THREE.Mesh(body.geometry, this.heightMat); hb.matrixAutoUpdate = false; hb.frustumCulled = false; this.hScene.add(hb); this.hBodies.push({ hb, body }); g.userData.hb = hb; this.markHeights(); }

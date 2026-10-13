@@ -9,6 +9,7 @@ import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type Beac
 import type { Style } from "./style";
 import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
+import { trunkCut } from "./trunkCut";
 
 export interface TypeArt {
   atlas: Atlas; layout: TypeLayout;
@@ -216,13 +217,11 @@ export class AssetLibrary {
       const px = r.result.px, cut = new Map<number, number>(), share = this.crownShare;
       for (const p of r.result.layout!.big) {
         if (p.top === null) continue;
-        const f = px.frames[p.top], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height), rows = new Array<number>(f.h).fill(0);
-        let total = 0;
-        for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) { rows[y]++; total++; }
-        if (!total) continue;
-        let row = 0, seen = 0;
-        for (let y = 0; y < f.h; y++) { seen += rows[y]; if (seen >= total * share) { row = y; break; } }
-        cut.set(p.bot, (row + 1) / f.h);
+        const counts = (k: number) => { const f = px.frames[k], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height), rows = new Array<number>(f.h).fill(0);
+          for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) rows[y]++;
+          return rows; };
+        const c = trunkCut(counts(p.top), counts(p.bot), share); // (never above the trunk's own top: trunkCut.ts)
+        if (c !== undefined) cut.set(p.bot, c);
       }
       this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);

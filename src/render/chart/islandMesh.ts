@@ -12,8 +12,6 @@ export const RELIEF = 5;
 export const SHALLOWS = 240;
 /** How deep (m) a lake's shallows reach by its shore. */
 export const LAKE_SHALLOWS = 6;
-/** A hot spring's tiers (m between them, as the grid's step counts) and how far up each stands (units). */
-export const TIER = 60, TIER_STEP = 1.5;
 /** How far (m) in from a lake's shore its special look reaches its middle. */
 export const LAKE_RIM = 40;
 
@@ -27,8 +25,8 @@ export interface IslandMesh {
   /** its highest drawn point (units) */ top: number;
   /** each sample's height over the water as a byte of the highest, and that highest */ tile: Uint8Array; tmax: number;
   /** the shallows: every sample flat on the sea, its depth (0 land or a lake, to 1 past the shallows), its triangles */ flat: Float32Array; depth: Float32Array; wi: Uint16Array | Uint32Array;
-  /** the lakes: positions at their levels, depths (or how far in, for the special looks), looks, a spring's tiers, triangles, and whether any is a hot spring (its steam) */
-  lakes: { lp: Float32Array; ld: Float32Array; lk: Float32Array; ts: Float32Array; li: Uint16Array | Uint32Array; spring: boolean } | null;
+  /** the lakes: positions at their levels, depths (or how far in, for the special looks), looks, triangles */
+  lakes: { lp: Float32Array; ld: Float32Array; lk: Float32Array; li: Uint16Array | Uint32Array } | null;
 }
 
 /** Triangle indices as three.js's setIndex would keep them: 16-bit unless any reaches 65535. */
@@ -99,7 +97,7 @@ export function buildIslandMesh(G: GroundLike, k: number): IslandMesh {
       const i = r * cols + c; if (W[i] === 2) continue;
       for (const j of [i - 1, i + 1, i - cols, i + cols]) if (j >= 0 && j < N && W[j] === 2) { lp[i * 3 + 1] = 0.06 + LV[j] * k * RELIEF; break; }
     }
-    const lk = new Float32Array(N), ts = new Float32Array(N);
+    const lk = new Float32Array(N);
     if (G.looks) for (let i = 0; i < N; i++) lk[i] = G.looks[i];
     { // (the special lakes: by how far in from its shore, not how deep, so a shallow one still has a middle; a rust pool's
       // rings by how far in it is of the furthest in its pool reaches, so every pool runs rim to throat)
@@ -115,7 +113,7 @@ export function buildIslandMesh(G: GroundLike, k: number): IslandMesh {
         if (c < cols - 1) v = Math.min(v, far[i + 1] + 1); if (r < rows - 1) { v = Math.min(v, far[i + cols] + 1); if (c < cols - 1) v = Math.min(v, far[i + cols + 1] + D); if (c > 0) v = Math.min(v, far[i + cols - 1] + D); }
         far[i] = v;
       }
-      const part = new Int32Array(N).fill(-1), most: number[] = [], stack: number[] = [], spring = new Int8Array(N).fill(-1);
+      const part = new Int32Array(N).fill(-1), most: number[] = [], stack: number[] = [];
       for (let i0 = 0; i0 < N; i0++) {
         if (lk[i0] !== 7 || W[i0] !== 2 || part[i0] >= 0) continue;
         const id = most.length; let m = 0; most.push(0); stack.push(i0); part[i0] = id;
@@ -124,23 +122,6 @@ export function buildIslandMesh(G: GroundLike, k: number): IslandMesh {
           for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < N && W[j] === 2 && part[j] < 0) { part[j] = id; stack.push(j); }
         }
         most[id] = m;
-      }
-      // a hot spring's tiers: down its slope (the plane through the ground round it), one every TIER m
-      for (let i0 = 0; i0 < N; i0++) {
-        if (lk[i0] !== 6 || spring[i0] >= 0) continue;
-        const cells: number[] = []; stack.push(i0); spring[i0] = 1;
-        while (stack.length) {
-          const i = stack.pop()!, c = i % cols; cells.push(i);
-          for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < N && lk[j] === 6 && spring[j] < 0) { spring[j] = 1; stack.push(j); }
-        }
-        let cx = 0, cz = 0, hm = 0, m = 0;
-        for (const i of cells) if (W[i] !== 2) { cx += pos[i * 3]; cz += pos[i * 3 + 2]; hm += G.h[i]; m++; }
-        if (!m) continue;
-        cx /= m; cz /= m; hm /= m;
-        let gx = 0, gz = 0;
-        for (const i of cells) if (W[i] !== 2) { gx += (pos[i * 3] - cx) * (G.h[i] - hm); gz += (pos[i * 3 + 2] - cz) * (G.h[i] - hm); }
-        const gl = Math.hypot(gx, gz) || 1, dx = -gx / gl, dz = -gz / gl;
-        for (const i of cells) ts[i] = ((pos[i * 3] - cx) * dx + (pos[i * 3 + 2] - cz) * dz) / (TIER * k) + 0.5;
       }
       for (let i = 0; i < N; i++) {
         if (W[i] !== 2 || !lk[i]) continue;
@@ -152,7 +133,7 @@ export function buildIslandMesh(G: GroundLike, k: number): IslandMesh {
       if (lk[a] === 4 || lk[b] === 4 || lk[e] === 4 || lk[f] === 4) continue; // (a sinkhole's a dry pit: the ground draws it)
       if (W[a] === 2 || W[b] === 2 || W[e] === 2 || W[f] === 2) li.push(a, e, b, b, e, f);
     }
-    if (li.length) lakes = { lp, ld, lk, ts, li: indices(li), spring: lk.includes(6) };
+    if (li.length) lakes = { lp, ld, lk, li: indices(li) };
   }
   return { pos, normal, idx: index, top: hi, tile, tmax, flat, depth, wi: indices(wi), lakes };
 }
@@ -160,6 +141,6 @@ export function buildIslandMesh(G: GroundLike, k: number): IslandMesh {
 /** The mesh's buffers, to hand on from a worker without a copy. */
 export function meshBuffers(m: IslandMesh): ArrayBuffer[] {
   const out = [m.pos.buffer, m.normal.buffer, m.idx.buffer, m.tile.buffer, m.flat.buffer, m.depth.buffer, m.wi.buffer];
-  if (m.lakes) out.push(m.lakes.lp.buffer, m.lakes.ld.buffer, m.lakes.lk.buffer, m.lakes.ts.buffer, m.lakes.li.buffer);
+  if (m.lakes) out.push(m.lakes.lp.buffer, m.lakes.ld.buffer, m.lakes.lk.buffer, m.lakes.li.buffer);
   return out as ArrayBuffer[];
 }
