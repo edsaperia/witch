@@ -27,6 +27,7 @@ export const NAP_POSES = {
   elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
   bear: { kind: "lie", sink: .05, droop: 1 }, badger: { kind: "lie", sink: .04, droop: 1 }, ram: { kind: "lie", sink: .06, droop: .6 },
   beaver: { kind: "lie", sink: .04, droop: 1 }, hare: { kind: "lie", sink: .05, droop: .6 }, otter: { kind: "lie", sink: .03, droop: 1, curl: .7 },
+  armadillo: { kind: "lie", sink: .02, droop: .4, curl: .3 },
   meerkat: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 },
   newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
   crocodile: { kind: "lie", sink: .02, droop: .3 }, // (its head held low already: a full droop pushes its long jaw past its ground line)
@@ -37,6 +38,7 @@ export const NAP_POSES = {
   // tuck
   owl: { kind: "tuck", ground: .14, tuck: .35, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101] },
   raven: { kind: "tuck", ground: .26, tuck: .45, drop: [40, 50, 95, 96, 97, 98, 99, 100] },
+  cheetah: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, // curled round, its long tail over its nose
   lion: { kind: "curl", sink: .04, droop: 1, curl: 2.6, tailDown: .25 }, // sprawled on its side, its tail curled round
   fennec: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 }, // curled in its brush, ears laid back
   heron: { kind: "tuck", ground: .56, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101] },

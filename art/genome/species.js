@@ -145,6 +145,10 @@ export const GENOMES = [
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
   // dark round its eyes, a thin dark-tipped tail
   { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: .09, sat: .35, val: .72, belly: "white" }, body: { hgt: .8, len: .62, chest: .44, tuck: .5, neck: .34, neckAng: .75, neckW: .26, hr: .2, legW: .55, bw: .2, back: "arch" }, head: { snout: .8, snoutD: .45, snoutTaper: .4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: .45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 } },
+  // the scrub wash's armadillo (Ed, 2026-10-12, unknown-06, the badlands): its own builder, a low domed shell banded across its middle,
+  // a long tapering snout, upright ears, a ringed tail; its legend (Ed: "rolls into a glowing ball, with glowing seams between its
+  // bands, rolling when it moves") curled into that ball (armadillo3d's level 3)
+  { id: "armadillo", name: "Armadillo", template: "squat", builder: "armadillo", palette: { hue: .06, sat: .22, val: .58 }, legend: ["ball"], texture: { kind: "plates" } },
   // the erg's fennec fox (a journey kind: unknown-07's, the hot south): a small pale sand fox that's mostly ears, a black-tipped brush; its
   // legend the dunes' own: ears like sails, a white mask, turquoise beads, heat-shimmer rising off its back
   { id: "fennec", name: "Fennec fox", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .32, val: .93, belly: "white", ear: [.97, .32, .9], magic: .12 }, body: { hgt: .62, len: .55, chest: .4, tuck: .48, neck: .28, neckAng: .78, neckW: .3, hr: .28, legW: .7 }, head: { snout: .8, snoutD: .42, snoutTaper: .5, eyeK: 1.35 }, parts: { ears: { kind: "sail", size: 2 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["tails"],
@@ -169,6 +173,20 @@ export const GENOMES = [
         { kind: "ruff", size: .42, count: 28, mat: "BODY3" },
         { kind: "mane", from: .6, to: 1, height: .14, count: 10, lean: .7, mat: "BODY3" },
         { kind: "wisps", at: "mane", size: .28, count: 8, from: .5, to: 1, mat: "MAGIC2", lift: .3 },
+      ] },
+    ] },
+  // the plains' cheetah (a journey kind: unknown-24's, the hot south): built to sprint, a greyhound of a cat. A very deep, narrow
+  // chest, a waist tucked up tight, its spine arched, long thin legs, a small round head with small ears, solid black spots, black
+  // tear lines and a long heavy ringed tail, its rudder; the cub in its silver mantle; its legend the wind's: longer and leaner still,
+  // its tears lit, wind streaming off its back
+  { id: "cheetah", name: "Cheetah", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .6, val: .84, belly: "white", magic: .13 }, body: { hgt: 1.4, len: .66, chest: .47, tuck: .86, neck: .36, neckAng: .5, neckW: .24, hr: .17, legW: .58, bw: .17, back: "arch", archK: 1.8 }, head: { snout: .4, snoutD: .75, snoutTaper: .85, whiskers: true, tears: true }, parts: { ears: { kind: "round", size: .5 }, tail: "ringed", feet: "paw" }, coat: { belly: true, spots: "solid" }, legend: ["mane"],
+    levels: [
+      { body: { len: .5, chest: .42, tuck: .5, hr: .25, legW: .9, bw: .22, archK: .6 }, head: { snout: .35 }, parts: { ears: { kind: "round", size: .7 } }, features: [{ kind: "mane", from: .15, to: 1, height: .1, count: 14, lean: .7, mat: "BELLY" }] },
+      { body: { len: .64, chest: .46, tuck: .8, legW: .6, archK: 1.4 }, features: [{ kind: "mane", from: .6, to: 1, height: .05, count: 6, lean: .8, mat: "BELLY" }] },
+      null,
+      { body: { len: .72, legW: .62, tuck: .9, hgt: 1.5, archK: 2.2 }, head: { snout: .45, eyeGlow: true, tears: "glow" }, features: [
+        { kind: "mane", from: .2, to: .95, height: .05, count: 14, lean: .9, mat: "BODY" },
+        { kind: "wisps", at: "mane", size: .26, count: 9, from: .05, to: .95, mat: "MAGIC2", lift: .1 },
       ] },
     ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
