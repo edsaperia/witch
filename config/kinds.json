@@ -239,12 +239,11 @@
       "dir": "SSE",
       "biome": "hot"
     },
-    "unknown-08": {
+    "lion": {
       "phase": 3,
       "bearing": 192,
       "dir": "SSW",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "unknown-09": {
       "phase": 3,
