@@ -11,7 +11,7 @@
   {
    "name": "Mountains & glaciers",
    "biomes": ["mountains and glaciers"],
-   "areas": ["misty-terraces", "frostcave", "eyrie"]
+   "areas": ["misty-terraces", "crags", "icefall", "frostcave", "eyrie"]
   },
   {
    "name": "Cold rainforest",
