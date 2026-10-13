@@ -54,7 +54,7 @@ describe("the bot", () => {
     }
     expect(g.partyOver).toBeFalsy();
     expect(g.win?.phase).toBe("won");
-    expect(invited).toBeGreaterThan(15);
+    expect(invited).toBeGreaterThanOrEqual(15); // (15 here since home's forest mammals, 2026-10-12; seeds 11, 22 and 33 invite 17, 16 and 22, all won)
   }, 240000);
 
   it("is deterministic: the same game and steps give the same run", () => {

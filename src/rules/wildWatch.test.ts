@@ -8,6 +8,7 @@ import { cellKey } from "./party";
 import { aggroOf, watcher } from "./wildWatch";
 import { legendRings } from "./slowTime";
 import { napping } from "./creatures";
+import { hit } from "./affection";
 
 /** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
  *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
@@ -95,6 +96,35 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     land(g, at.x, at.z); run(g, STEP);
     expect(g.wildEntry.get(key)!.at, "a new watch").toBeGreaterThan(first);
     expect(aggroOf(g)!.k).toBeLessThan(0.05);
+  }, 120_000);
+
+  it("comes out after her if she snipes from just outside its edge, as far as its chase band, and no further (Ed, 2026-10-13: no sniping or kiting from the edge)", () => {
+    const { g, key, at } = overWild(), T = TUNING, band = T.combat.leaveArea * T.fight.scale;
+    // the edge along a straight line out into a neighbouring area (as above), one of the area's watchers 8 m inside it
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]], edgeOf = ([dx, dz]: number[]) => { let r = 0; while (cellKey(g.map.cellSafe(at.x + dx * (r + 1), at.z + dz * (r + 1)).cell) === key && r < 400) r++; return r; };
+    const [dx, dz] = dirs.find(d => { const r = edgeOf(d); return r < 400 && isInside(g.map.bounds, at.x + d[0] * (r + band * 2.5), at.z + d[1] * (r + band * 2.5), 60); })!;
+    const r = edgeOf([dx, dz]), ex = at.x + dx * r, ez = at.z + dz * r;
+    const c = here(g, key)[0];
+    for (const o of here(g, key)) if (o !== c) o.gone = true; // (just the one she snipes)
+    Object.assign(c, { x: ex - dx * 8, z: ez - dz * 8, tx: ex - dx * 8, tz: ez - dz * 8 });
+    const out = (k: number) => ({ x: ex + dx * k, z: ez + dz * k }), place = (k: number) => { const p = out(k); g.witch = { ...g.witch, ...p, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false }; };
+    const inside = () => cellKey(g.map.cellSafe(c.x, c.z).cell) === key, onHer = () => c.fight?.target?.kind === "witch";
+    // she stands 6 m out, never having been in it: it leaves her be
+    place(6); run(g, 2, () => place(6));
+    expect(onHer(), "not provoked: it leaves her be").toBe(false);
+    // her 💌 lands on it: provoked, it comes out across its edge after her
+    expect(hit({ time: g.clock.time, leash: () => {} }, c, 1)).toBe(true);
+    let left = false;
+    run(g, 3, () => { place(6); left ||= !inside(); });
+    expect(onHer(), "provoked: after her").toBe(true);
+    expect(left, "out of its area after her").toBe(true);
+    // she backs off to half its band past the edge: it keeps after her
+    run(g, 2, () => place(band * 0.5));
+    expect(onHer(), "still after her within its band").toBe(true);
+    // past its band: it gives her up
+    let gaveUp = false;
+    run(g, 6, () => { place(band * 2); gaveUp ||= !onHer(); });
+    expect(gaveUp, "gives up past its band").toBe(true);
   }, 120_000);
 
   it("lets her walk out on foot before they make up their minds, and nobody follows (Ed: time to run away)", () => {
