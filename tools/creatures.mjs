@@ -258,11 +258,11 @@ if (cmd === "list") {
   const known = new Set(ids());
   for (const part of PARTS) {
     const file = join(ROOT, part.registry); let text = readFileSync(file, "utf8");
-    const { entries, start, end } = entriesOf(text, part.object);
+    let { entries, start, end } = entriesOf(text, part.object);
     let neons = null;
     if (part.object === "SIGILS") { const n = entriesOf(text, "SIGIL_NEON"); neons = n; for (const e of entries) { const ne = n.entries.find(x => x.key === e.key); if (ne) e.neon = JSON.parse(ne.text.replace(/'/g, '"')); } }
     const mine = entries.filter(e => known.has(e.key));
-    if (part.object === "SIGILS" && ownHelpers(text).length) { text = withoutHelpers(text); writeFileSync(file, text); console.log(`${part.registry}: its own building blocks out (art/sigils/strokes.js has them)`); if (!mine.length) continue; const again = entriesOf(text, part.object); entries.length = 0; entries.push(...again.entries); Object.assign(neons ?? {}, {}); }
+    if (part.object === "SIGILS" && ownHelpers(text).length) { text = withoutHelpers(text); writeFileSync(file, text); console.log(`${part.registry}: its own building blocks out (art/sigils/strokes.js has them)`); if (!mine.length) continue; ({ entries, start, end } = entriesOf(text, part.object)); neons = entriesOf(text, "SIGIL_NEON"); for (const e of entries) { const ne = neons.entries.find(x => x.key === e.key); if (ne) e.neon = JSON.parse(ne.text.replace(/'/g, '"')); } mine.length = 0; mine.push(...entries.filter(e => known.has(e.key))); } // (the helpers' removal moved every offset: scan again)
     for (const e of mine) {
       const out = join(DIR, e.key, part.file);
       mkdirSync(join(DIR, e.key), { recursive: true });

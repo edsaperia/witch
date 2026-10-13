@@ -424,11 +424,11 @@ export class SfxCues {
     if (!A) return;
     const w = g.witch, a = g.map.areaAt(w.x, w.z), home = a.cell[0] === g.map.centreCell[0] && a.cell[1] === g.map.centreCell[1], T = AREA_TYPES[a.type];
     const music = Math.max(0, Math.min(1, musicMix(g, w).volume)), level = (1 - partyOverEase(g, OVER_DEBUG)) * (A.quiet + (1 - A.quiet) * (1 - music));
-    this.sfx.ambience(home ? null : nightKind(T.id, !!T.wet), home ? 0 : level);
+    this.sfx.ambience(home || g.map.zoo ? null : nightKind(T.id, !!T.wet), home || g.map.zoo ? 0 : level); // (the zoo: its night instead, below)
   }
 
   private night({ g, pan }: Here): void {
-    const N = g.tuning.sfx.night, ease = partyOverEase(g, OVER_DEBUG);
+    const N = g.tuning.sfx.night, ease = g.map.zoo ? 1 : partyOverEase(g, OVER_DEBUG); // (the zoo, rules/zoo.ts: each area's night all the while; Ed, 2026-10-13)
     if (!N) return;
     const level = ease <= N.from ? 0 : Math.min(1, (ease - N.from) / Math.max(0.01, 1 - N.from));
     const w = g.witch, a = g.map.areaAt(w.x, w.z), home = a.cell[0] === g.map.centreCell[0] && a.cell[1] === g.map.centreCell[1], T = AREA_TYPES[a.type];
@@ -437,7 +437,7 @@ export class SfxCues {
     const R = N.snore.range, near: Creature[] = [];
     for (const c of g.creatures) {
       // (the sleepers the look draws 😴 over, render/leash.ts drawSnores: not hers, not a legend (it moans in its sleep: whale.ts), not one the rules keep awake)
-      if (c.gone || c.leashed || c.level === 3 || c.boss || (c as { asleep?: boolean }).asleep === false) continue;
+      if (c.gone || c.leashed || c.level === 3 || c.boss || (c as { asleep?: boolean }).asleep === false || (g.map.zoo && !(c as { asleep?: boolean }).asleep)) continue; // (in the zoo only the ones asleep)
       if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) near.push(c);
     }
     near.sort((p, q) => (p.x - w.x) ** 2 + (p.z - w.z) ** 2 - ((q.x - w.x) ** 2 + (q.z - w.z) ** 2));
