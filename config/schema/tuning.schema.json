@@ -4208,6 +4208,10 @@
         "inviteWakes": {
           "type": "boolean"
         },
+        "provoked": {
+          "type": "number",
+          "minimum": 0
+        },
         "time": {
           "type": "number",
           "minimum": 0
@@ -4236,6 +4240,7 @@
       "required": [
         "on",
         "inviteWakes",
+        "provoked",
         "time",
         "forget",
         "hangBack",
