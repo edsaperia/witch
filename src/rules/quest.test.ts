@@ -91,7 +91,7 @@ describe("legends.questCap: dreams from anywhere but the truly far (Ed, 2026-10-
     const map = generateMap(seed, withTuning({ legends: { ...TUNING.legends, questCap, questLater: false, share: 0.5 } })), out: { d: number; far: number }[] = [];
     for (const L of spawnCreatures(map).filter(c => c.boss && c.quest)) {
       const s = map.siteOf(L.cell[0], L.cell[1]);
-      out.push({ far: L.quest!.far!, d: Math.min(...map.cells.filter(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature === L.quest!.species).map(([cx, cy]) => { const t = map.siteOf(cx, cy); return Math.hypot(t.x - s.x, t.z - s.z); })) / map.areaSize });
+      out.push({ far: L.quest!.far!, d: Math.min(...map.cells.filter(([cx, cy]) => !(cx === map.centreCell[0] && cy === map.centreCell[1]) && AREA_TYPES[map.typeOf(cx, cy)].creature === L.quest!.species).map(([cx, cy]) => { const t = map.siteOf(cx, cy); return Math.hypot(t.x - s.x, t.z - s.z); })) / map.areaSize });
     }
     return out.sort((a, b) => a.d - b.d);
   };
