@@ -155,6 +155,24 @@ const configText = (id, entry) => `// ${id}: what the game's rules and sounds kn
 export const ${configName(id)} = ${js(Object.fromEntries(CREATURE_KEYS.filter(k => k in entry).map(k => [k, entry[k]])))};
 `;
 
+/** Two record texts the same but for whitespace (a merge pasted back what the folder already holds). */
+const sameText = (a, b) => a.replace(/\s+/g, " ").trim() === b.replace(/\s+/g, " ").trim();
+/** The folder file's own export (its text after `export const NAME = `, without the trailing semicolon and comment). */
+const exportedText = (text, name) => { const m = new RegExp(`export const ${name} = ([\\s\\S]*?);(\\s*//.*)?\\s*$`).exec(text.replace(/^import .*\n/gm, "")); return m ? m[1] : ""; };
+/** The module's text with `import { names } from "<from>"` in it (after its last import, or at the top). */
+function withImport(text, names, from) {
+  if (text.includes(`from "${from}"`)) return text;
+  const line = `import { ${names.join(", ")} } from "${from}";\n`, imports = [...text.matchAll(/^import .*\n/gm)], at = imports.length ? imports[imports.length - 1].index + imports[imports.length - 1][0].length : 0;
+  return text.slice(0, at) + line + text.slice(at);
+}
+/** A pasted record against the folder's: "same" (dropped), "replaced" (the pasted one, newer, written over it) or "new". */
+function placeRecord(out, name, text, id, file) {
+  if (!existsSync(out)) { writeFileSync(out, text); return "new"; }
+  const had = exportedText(readFileSync(out, "utf8"), name), got = exportedText(text, name);
+  if (sameText(had, got)) return "same";
+  writeFileSync(out, text); console.log(`  (${id}'s ${file} differed from the pasted one: the pasted one written over it; check the diff)`); return "replaced";
+}
+
 /** The index's text for these ids. */
 const indexText = list => `// The species, assembled from art/creatures/<id>/genome.js, sorted by id. Written by \`node tools/creatures.mjs index\`:
 // never edit by hand (add a folder and run the tool; CI's src/creatures.test.ts fails if this is stale).
@@ -207,12 +225,17 @@ if (cmd === "list") {
   const text = readFileSync(SPECIES, "utf8"), { records, rest } = recordsIn(text);
   for (const r of records) {
     const dir = join(DIR, r.id);
-    if (existsSync(join(dir, "genome.js"))) throw new Error(`${r.id}: art/creatures/${r.id}/genome.js exists already and species.js still has a record: merge them by hand`);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, "genome.js"), r.text);
-    console.log(`art/creatures/${r.id}/genome.js`);
+    const how = placeRecord(join(dir, "genome.js"), ident(r.id), r.text, r.id, "genome.js");
+    console.log(`art/creatures/${r.id}/genome.js${how === "new" ? "" : ` (${how})`}`);
   }
-  if (records.length) writeFileSync(SPECIES, rest);
+  if (records.length) {
+    // (the array keeps only the index's spread: a merge that brought the old array back loses it)
+    let text = withImport(rest, ["CREATURE_GENOMES"], "../creatures/index.js");
+    const open = text.indexOf("export const GENOMES = ["), close = text.indexOf("\n];", open);
+    if (open >= 0 && close >= 0 && !text.slice(open, close).includes("...CREATURE_GENOMES")) text = text.slice(0, text.indexOf("\n", open) + 1) + "  ...CREATURE_GENOMES,\n" + text.slice(close + 1);
+    writeFileSync(SPECIES, text);
+  }
   let moved = records.length;
   const known = new Set(ids());
   for (const part of PARTS) {
@@ -223,8 +246,9 @@ if (cmd === "list") {
     const mine = entries.filter(e => known.has(e.key));
     for (const e of mine) {
       const out = join(DIR, e.key, part.file);
-      if (existsSync(out)) throw new Error(`${e.key}: art/creatures/${e.key}/${part.file} exists already and ${part.registry} still has its entry: merge them by hand`);
-      writeFileSync(out, partText(part, e.key, e)); console.log(`art/creatures/${e.key}/${part.file}`); moved++;
+      mkdirSync(join(DIR, e.key), { recursive: true });
+      const how = placeRecord(out, partName(part, e.key), partText(part, e.key, e), e.key, part.file);
+      console.log(`art/creatures/${e.key}/${part.file}${how === "new" ? "" : ` (${how})`}`); moved++;
     }
     if (mine.length) {
       // the registry keeps what isn't a creature's, spread after the assembled entries
@@ -232,6 +256,7 @@ if (cmd === "list") {
       const body = [`\n  ...${spreadName},`, ...keep.map(e => `\n${e.before.map(c => "  " + c + "\n").join("")}  ${e.key}: ${e.text},${e.after ? " " + e.after : ""}`)].join("") + "\n";
       text = text.slice(0, start) + body + text.slice(end);
       if (neons) { const n = entriesOf(text, "SIGIL_NEON"), keepN = n.entries.filter(e => !known.has(e.key)); text = text.slice(0, n.start) + ` ...CREATURE_NEONS${keepN.map(e => `, ${e.key}: ${e.text}`).join("")} ` + text.slice(n.end); }
+      text = withImport(text, part.object === "SIGILS" ? ["CREATURE_SIGILS", "CREATURE_NEONS"] : [part.assembled], "./creatures/index.js"); // (last: it moves what's after it)
       writeFileSync(file, text);
     }
   }
