@@ -1029,7 +1029,7 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.09, sat: 0.3, val: 0.36, belly: "yellow" },
-    body: { hgt: 0.62, len: 1.3, chest: 0.26, tuck: 0.22, neck: 0.34, neckAng: 0.18, neckW: 0.42, hr: 0.22, legW: 1.6, bw: 0.4 },
+    body: { hgt: 0.62, len: 1.3, chest: 0.26, tuck: 0.22, neck: 0.66, neckAng: 0.22, neckW: 0.3, hr: 0.22, legW: 1.6, bw: 0.4, brisket: 0, profile: { shoulder: { d: 0.8 }, ribcage: { d: 0.92 } } },
     head: { snout: 1, snoutD: 0.72, snoutTaper: 0.9, tongue: 1.1 },
     parts: { ears: { kind: "none" }, tail: "monitor", feet: "paw" },
     coat: { belly: true },
@@ -1039,7 +1039,7 @@ label.check input { accent-color: var(--accent); }
       { body: { len: 1.2, legW: 1.1 }, coat: { bands: { n: 5, mat: "BELLY" } } },
       { body: { bw: 0.32, hr: 0.2 }, head: { snout: 0.85, snoutD: 0.65 }, coat: { spots: true, spotMat: "belly" } },
       // a slim speckled young, its head still short
-      { head: { snout: 1.4, snoutD: 0.95 }, body: { hr: 0.26, neckW: 0.55, chest: 0.3, profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.1 } } }, features: [{ kind: "dewlap", size: 1.4 }] },
+      { head: { snout: 1.4, snoutD: 0.95 }, body: { hr: 0.26, neckW: 0.4, profile: { shoulder: { w: 1.15, d: 0.85 }, ribcage: { w: 1.1, d: 0.95 } } }, features: [{ kind: "dewlap", size: 1.4 }] },
       { head: { tongue: 1.6 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: 0.16 }] }
     ]
   };
@@ -1405,12 +1405,12 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.1, sat: 0.25, val: 0.92 },
-    body: { hgt: 0.48, len: 1.05, chest: 0.3, tuck: 0.33, neck: 0.5, neckAng: 0.9, neckW: 0.3, hr: 0.25, legW: 0.8, back: "arch" },
+    body: { hgt: 0.48, len: 1.05, chest: 0.3, tuck: 0.33, neck: 0.85, neckAng: 0.55, neckW: 0.2, hr: 0.25, legW: 0.8, back: "arch", brisket: 0, profile: { shoulder: { w: 0.9, d: 0.8 }, ribcage: { d: 0.9 } } },
     head: { snout: 0.6, snoutD: 0.6, whiskers: true },
     parts: { ears: { kind: "round", size: 0.6 }, tail: "stoat", feet: "paw" },
     coat: { belly: true },
     legend: ["ribbons", "mane"],
-    levels: [null, { body: { len: 0.7, neck: 0.34, hr: 0.31, hgt: 0.48, legW: 0.9, tailK: 0.7 }, head: { snout: 0.48 } }, { body: { len: 1.15, hgt: 0.44, neck: 0.55 } }, null]
+    levels: [null, { body: { len: 0.7, neck: 0.34, hr: 0.31, hgt: 0.48, legW: 0.9, tailK: 0.7 }, head: { snout: 0.48 } }, { body: { len: 1.15, hgt: 0.44, neck: 0.92 } }, null]
   };
 
   // art/creatures/tiger/genome.js
