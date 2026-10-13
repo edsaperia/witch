@@ -77,7 +77,7 @@ export interface Witch {
   hat: HatState;
   /** Up against a party legend's leash (rules/partyLegend.ts, the Easter egg): which, and since when; for the view. */
   pinned?: Pinned | null;
-  /** Slowed (a snail's slime, a glow-worm's flash) until then: her speeds times slowMult. */
+  /** Slowed (a snail's slime, a flash) until then: her speeds times slowMult. */
   slowUntil?: number;
   slowMult?: number;
   /** Her time she last landed (from the treetops): she can't rise again till riseCooldown seconds after it. */

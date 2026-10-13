@@ -19,7 +19,7 @@ export const LEGEND_FRAMES = { asleep: 2 };
 
 // How each species sleeps. ground: the ground line in model units (y up from its feet; for the
 // four-legged, a share of the way up from its belly to its back, `sink`). droop: how far its head
-// comes down to rest on the ground. drop: groups not drawn while it sleeps (spirit wings, manes,
+// comes down to rest on the ground. lay: groups of long ears folded back flat along it while it sleeps; drop: groups not drawn while it sleeps (spirit wings, manes,
 // ribbons: its magic is gone into it). lid: the closed eye's colour. wood: groups whose glow turns
 // to old wood (antlers and horns, like dead branches). over: what has grown over it, by count:
 // moss and lichen (shares of its surface), ferns, grass, mushrooms (brackets: on its flanks),
@@ -27,7 +27,7 @@ export const LEGEND_FRAMES = { asleep: 2 };
 // glowing legend eyes are in (1 unless given).
 // Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail. Batch 2: wolf, fox,
 // badger, boar, stag, hare, bear. Batch 3: lynx, otter, beaver, ram, squirrel, dormouse, salamander.
-// Batch 4: toad, raven, mole, hedgehog, woodlouse. Batch 5: snake, moth, glow-worm, spider, stag beetle.
+// Batch 4: toad, raven, mole, hedgehog, woodlouse. Batch 5: snake, moth, spider, stag beetle.
 export const LEGEND_POSES = {
   bat: { ground: .3, droop: 0, drop: [0, 10, 11], cloak: { c: [-.05, .38, 0], r: [.42, .46, .38] }, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } },
   marten: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .45, lichen: .05, ferns: 3, grass: 3, mushrooms: 3, roots: 3, stones: 1, sapling: "pine" } },
@@ -40,7 +40,8 @@ export const LEGEND_POSES = {
   badger: { sink: .5, droop: 1, drop: [], over: { moss: .55, lichen: .1, ferns: 1, grass: 6, mushrooms: 0, roots: 1, stones: 3 } },
   boar: { sink: .45, droop: .8, drop: [], over: { moss: .4, lichen: .04, ferns: 6, grass: 2, mushrooms: 2, roots: 3, stones: 1 } },
   stag: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .55, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 5, stones: 2, beard: 6 } },
-  hare: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 1, stones: 1, flowers: 6 } },
+  hare: { sink: .45, droop: 1, drop: [99, 162], lay: [5, 25], // (its elder's moon set and its ear rings off while it sleeps, its long ears laid back)
+    over: { moss: .3, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 1, stones: 1, flowers: 6 } },
   bear: { sink: .48, droop: .9, drop: [89], over: { moss: .55, lichen: .05, ferns: 3, grass: 3, mushrooms: 4, roots: 3, stones: 2 } },
   lynx: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .18, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 6 } },
   otter: { sink: .5, droop: 1, drop: [90, 91, 92], over: { moss: .5, lichen: .08, ferns: 2, grass: 5, mushrooms: 1, roots: 2, stones: 5 } },
@@ -67,7 +68,7 @@ export const LEGEND_POSES = {
   woodlouse: { ground: .09, droop: 0, drop: [9], over: { moss: .5, lichen: .1, ferns: 1, grass: 2, mushrooms: 4, roots: 2, stones: 0 } },
   snake: { ground: .04, droop: 1, drop: [40, 50], over: { moss: .45, lichen: .06, ferns: 2, grass: 6, mushrooms: 2, roots: 2, stones: 1 } },
   moth: { ground: .4, droop: 0, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .42, 0], r: [.6, .3, .45] }, over: { moss: .35, lichen: .16, ferns: 0, grass: 4, mushrooms: 1, roots: 1, stones: 2, flowers: 4 } },
-  glowworm: { ground: .14, droop: 0, drop: [], over: { moss: .45, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 1, stones: 0, flowers: 5 } },
+  cat: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .1, ferns: 0, grass: 5, mushrooms: 0, roots: 1, stones: 3, flowers: 5 } },
   spider: { ground: .3, droop: .5, drop: [95, 96, 97, 98, 99], over: { moss: .4, lichen: .1, ferns: 3, grass: 2, mushrooms: 3, roots: 2, stones: 1 } },
   beetle: { ground: .2, droop: .4, drop: [], wood: [8], over: { moss: .45, lichen: .08, ferns: 1, grass: 2, mushrooms: 4, brackets: 3, roots: 2, stones: 0 } },
 };
@@ -159,6 +160,8 @@ function lgForm(S, { breath }) {
     const G = pose.ground ?? belly + (1 - belly) * pose.sink;
     // what it has given up while it sleeps
     m.parts = m.parts.filter(q => !pose.drop.includes(q.group)); m.flats = m.flats.filter(f => !pose.drop.includes(f.group));
+    // its long ears laid flat back along it (`lay`: their groups), not standing up out of its mound
+    for (const f of m.flats) if (pose.lay?.includes(f.group)) { const base = v3.sub(f.c, v3.mul(f.v, f.sv)), side = Math.sign(f.c[2]) || 1, v = v3.norm([-1, -.12, side * .35]); f.v = v; f.u = v3.norm(v3.cross([0, 1, 0], v)); f.sv *= .45; f.c = v3.add(base, v3.mul(v, f.sv)); } // (folded: under half their length shows)
     // its colours: glow to stone (antlers to old wood), eyes shut, moss over it
     const eyeMats = [M.EYE, M.IRIS, M.PUPIL, M.GLINT], lid = pose.lid ?? M.BODY;
     const remap = (mat, g) => {

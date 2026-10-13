@@ -460,12 +460,22 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // strait apart, the coast running along the strait where an area would reach over)
     // (by its true distance from the patch's edge near it: the edge crosses the way out from home's middle at a slant)
     const rim = patch ? Array.from(patch, (r, a) => { const t = (a / patch.length) * Math.PI * 2; return [Math.cos(t) * r, Math.sin(t) * r]; }) : [];
+    // (each rim segment's middle and half its length: a sample further from the middle than that half plus half a strait, and
+    // a metre over for rounding, is further than half a strait from every point of it, so the segment is skipped untested;
+    // the rest are measured as before. The land map's samples went round all 96 segments each: a fifth of an island's making.)
+    const rimMid = new Float64Array(rim.length * 3);
+    for (let i = 0; i < rim.length; i++) {
+      const [ax, az] = rim[i], [bx, bz] = rim[(i + 1) % rim.length], half = Math.hypot(bx - ax, bz - az) / 2 + STRAIT / 2 + 1;
+      rimMid[i * 3] = (ax + bx) / 2; rimMid[i * 3 + 1] = (az + bz) / 2; rimMid[i * 3 + 2] = half * half;
+    }
     const inStrait = (x: number, z: number) => {
       if (!patch) return true;
       const dx = x - centre.x, dz = z - centre.z, r = Math.hypot(dx, dz), out = patchAt(patch, Math.atan2(dz, dx));
       if (r > out - STRAIT / 2) return false;
       if (r < out - STRAIT * 3) return true;
       for (let i = 0; i < rim.length; i++) {
+        const mx = dx - rimMid[i * 3], mz = dz - rimMid[i * 3 + 1];
+        if (mx * mx + mz * mz > rimMid[i * 3 + 2]) continue;
         const [ax, az] = rim[i], [bx, bz] = rim[(i + 1) % rim.length], ex = bx - ax, ez = bz - az, f = Math.max(0, Math.min(1, ((dx - ax) * ex + (dz - az) * ez) / (ex * ex + ez * ez || 1)));
         if (Math.hypot(dx - ax - ex * f, dz - az - ez * f) < STRAIT / 2) return false;
       }

@@ -38,7 +38,7 @@
     "moth": {"family": "bug", "pitch": 1.2, "am": [120, 0.7], "noise": 0.3, "volume": 1.2},
     "woodlouse": {"family": "bug", "pitch": 1.1, "dur": 0.4, "extra": 1, "volume": 1.3},
     "spider": {"family": "bug", "pitch": 0.9, "am": [45, 0.7], "noise": 0.25, "volume": 1.2},
-    "glowworm": {"family": "bug", "pitch": 1.6, "am": [140, 0.6], "pure": true},
+    "cat": {"family": "cat", "pitch": 1.3, "volume": 0.35},
     "snake": {"family": "snake"},
     "toad": {"family": "amphibian"},
     "salamander": {"family": "amphibian", "pitch": 1.6, "am": [48, 0.7]},
