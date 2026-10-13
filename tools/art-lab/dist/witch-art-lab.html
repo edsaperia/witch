@@ -4674,7 +4674,7 @@ function meerkatDress(m, { head, neck, chest, hr, sun = .2 }) {
   r1.forEach((p, i) => m.ell(p, [.03, .03, .03], [M.WEB, M.FLOWER, M.BODY3][i % 3], ex(150 + i % 2)));
   const fp = surfaceFrom(m, chest, v3.norm([1, -.1, .5]), .02);
   charm(m, "sun", v3.add(fp, [0, sun * .45, 0]), sun, 152);
-  const H = head.c, R = Array.isArray(hr) ? Math.max(...hr) : hr, band = fitRing(m, v3.add(H, [-R * .1, R * .3, 0]), [-.3, 1, 0], R * .12, 0, 16);
+  const H = head.c, R = Array.isArray(hr) ? Math.max(...hr) : hr, band = fitRing(m, v3.add(H, [-R * .3, R * .55, 0]), [-.55, 1, 0], R * .12, 0, 16); // (worn back on its crown, clear of its brows)
   for (let i = 0; i < band.length; i++) m.seg(band[i], band[(i + 1) % band.length], R * .12, R * .12, i % 2 ? M.FLOWER : M.WOOD, ex(160));
   drawOn(m, [[v3.add(H, [R * .1, R * .5, 0]), v3.add(H, [R * .4, R * .05, 0])]], [0, .2, 1], R * .07, M.BELLY);
 }
@@ -12224,7 +12224,7 @@ const LEGEND_FRAMES = { asleep: 2 };
 
 // How each species sleeps. ground: the ground line in model units (y up from its feet; for the
 // four-legged, a share of the way up from its belly to its back, `sink`). droop: how far its head
-// comes down to rest on the ground. drop: groups not drawn while it sleeps (spirit wings, manes,
+// comes down to rest on the ground. lay: groups of long ears folded back flat along it while it sleeps; drop: groups not drawn while it sleeps (spirit wings, manes,
 // ribbons: its magic is gone into it). lid: the closed eye's colour. wood: groups whose glow turns
 // to old wood (antlers and horns, like dead branches). over: what has grown over it, by count:
 // moss and lichen (shares of its surface), ferns, grass, mushrooms (brackets: on its flanks),

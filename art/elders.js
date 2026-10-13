@@ -206,7 +206,7 @@ export function meerkatDress(m, { head, neck, chest, hr, sun = .2 }) {
   r1.forEach((p, i) => m.ell(p, [.03, .03, .03], [M.WEB, M.FLOWER, M.BODY3][i % 3], ex(150 + i % 2)));
   const fp = surfaceFrom(m, chest, v3.norm([1, -.1, .5]), .02);
   charm(m, "sun", v3.add(fp, [0, sun * .45, 0]), sun, 152);
-  const H = head.c, R = Array.isArray(hr) ? Math.max(...hr) : hr, band = fitRing(m, v3.add(H, [-R * .1, R * .3, 0]), [-.3, 1, 0], R * .12, 0, 16);
+  const H = head.c, R = Array.isArray(hr) ? Math.max(...hr) : hr, band = fitRing(m, v3.add(H, [-R * .3, R * .55, 0]), [-.55, 1, 0], R * .12, 0, 16); // (worn back on its crown, clear of its brows)
   for (let i = 0; i < band.length; i++) m.seg(band[i], band[(i + 1) % band.length], R * .12, R * .12, i % 2 ? M.FLOWER : M.WOOD, ex(160));
   drawOn(m, [[v3.add(H, [R * .1, R * .5, 0]), v3.add(H, [R * .4, R * .05, 0])]], [0, .2, 1], R * .07, M.BELLY);
 }
