@@ -30,6 +30,10 @@ export interface PlaytestSample {
   marching: number;
   /** The witch's hits left. */
   hits: number;
+  /** The frames of the last two seconds (platform/frameStats.ts; Ed's overlay, 2026-10-13: "gpu 21.4 ms median", so a log shows
+   *  where a slow frame's time goes): their length and the page's own work (ms, median and p95), the GPU's own time where the
+   *  browser can time it, the share over 20 ms, and what was drawn (draw calls, trees, bushes, creatures, the mode and zoom). */
+  frames?: { ms: number; p95: number; cpu: number; cpu95: number; gpu: number | null; gpu95: number | null; over20: number; draws: number; trees: number; bushes: number; creatures: number; mode: string; zoom: number };
   /** The sound (round 13: the music stopping): the context's state, the music's volume now, the damage heard, metres to the music. */
   /** Where she was and how it was seen (Ed's circle bug, 2026-10-13: the log couldn't say where a picture went wrong): her place,
    *  mode and area, the camera's zoom step, the world's time scale (under 1 in a sleeping legend's circle, where the world beyond
@@ -51,7 +55,9 @@ export class PlaytestLog {
   private run: PlaytestRun;
   private next = EVERY;
   /** The sound as it is now, for each sample (main.ts sets it). */
-  audioState?: () => PlaytestSample["audio"];
+  audioState?: () => PlaytestSample["audio"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
+  /** The frames' stats (main.ts sets it: the overlay's own numbers). */
+  frameState?: () => PlaytestSample["frames"];
   /** Where she is and how it's seen, for each sample (main.ts sets it). */
   viewState?: () => PlaytestSample["view"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
   constructor(private game: Game, build: string) {
@@ -71,6 +77,7 @@ export class PlaytestLog {
       sieges: p.sieges.map(s => ({ key: s.key, value: round(s.value), count: s.count, hp: Math.round(s.hp) })), marching: round(p.marching),
       hits: g.witches[0].health.hp,
       audio: this.audioState?.(),
+      frames: this.frameState?.(),
       view: (v => (v && pressed ? { ...v, pressed: true } : v))(this.viewState?.()),
     });
     this.save();

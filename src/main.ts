@@ -365,6 +365,12 @@ meter.onSilence = e => {
   const own = playtest.audioState, cw = meter.clockWatch;
   playtest.audioState = () => ({ ...(own?.() ?? { state: "none", volume: 0, distort: 0, distance: 0, mends: 0 }), clock: { slow: cw.slow, fast: cw.fast, drift: cw.drift, played: cw.outDrift, underruns: cw.underruns, underrunMs: cw.underrunMs, verdict: cw.verdict() } });
 }
+// each sample's frames too (Ed's overlay, 2026-10-13: a GPU-bound night; the L log shows which it was)
+playtest.frameState = () => {
+  const r = frameStats.recent(), pct = (a: number[], p: number) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return Math.round(s[Math.min(s.length - 1, Math.floor(p * s.length))] * 10) / 10; };
+  const S = view.stats, w = game.witch;
+  return { ms: pct(r.frames, 0.5) ?? 0, p95: pct(r.frames, 0.95) ?? 0, cpu: pct(r.cpu, 0.5) ?? 0, cpu95: pct(r.cpu, 0.95) ?? 0, gpu: pct(r.gpu, 0.5), gpu95: pct(r.gpu, 0.95), over20: r.frames.length ? Math.round((100 * r.frames.filter(x => x > 20).length) / r.frames.length) : 0, draws: S.drawCalls ?? 0, trees: S.trees, bushes: S.bushes, creatures: S.creatures, mode: w.mode, zoom: game.camera.zoomStep };
+};
 const micWanted = params.get("micCheck") === "1";
 let lastShedS = -1; // (the sound's safety valve, checked once a second: platform/audio/shed.ts)
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
@@ -490,4 +496,4 @@ requestAnimationFrame(frame);
 
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
-installHooks({ game, view, tuning, hud, sound, meter, shake, loadTimes, loop });
+installHooks({ game, view, tuning, hud, sound, meter, shake, frameStats, loadTimes, loop });

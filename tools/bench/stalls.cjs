@@ -29,6 +29,7 @@ const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
 const root = path.resolve(__dirname, "../..", env("DIST", "dist-prof"));
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../bench-out"));
 const SEED = env("SEED", "2267"), X = Number(env("X", 2673)), Z = Number(env("Z", 2484)), ZOOM = Number(env("ZOOM", 3));
+const MODE = env("MODE", "treetop"), WAVES = Number(env("WAVES", 0)); // (MODE=ground: on foot at the spot; WAVES=N: N waves brought on first, as N does)
 const SECONDS = Number(env("SECONDS", 60)), WARM = Number(env("WARM", 8)), RUN_MS = Number(env("RUN_MS", 50));
 const [W, H] = env("SIZE", "640x360").split("x").map(Number), NODRAW = env("NODRAW", "1") !== "0";
 const HEAP = env("HEAP", "0") !== "0", HEAP_LIVE = env("HEAP", "0") === "live", HEAP_EVERY = Number(env("HEAP_EVERY", 4096));
@@ -94,7 +95,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await page.keyboard.press("Space"); await wait(800);
   await page.evaluate(({ X, Z, ZOOM }) => { const g = window.witch.game, w = g.witch; w.x = X; w.z = Z; w.vx = w.vz = 0; g.camera.zoomStep = ZOOM; }, { X, Z, ZOOM });
   // Up into the treetops: Space only while she's on the ground (pressed again mid-rise it brings her back down), then wait.
-  for (let i = 0; i < 40; i++) { const mode = await page.evaluate(() => window.witch.game.witch.mode); if (mode === "treetop") break; if (mode === "ground") await page.keyboard.press("Space"); await wait(500); }
+  if (MODE === "treetop") for (let i = 0; i < 40; i++) { const mode = await page.evaluate(() => window.witch.game.witch.mode); if (mode === "treetop") break; if (mode === "ground") await page.keyboard.press("Space"); await wait(500); }
+  for (let i = 0; i < WAVES; i++) { await page.keyboard.press("KeyN"); await wait(400); }
   const where = await page.evaluate(() => { const g = window.witch.game, w = g.witch, a = g.map.areaAt(w.x, w.z); return { mode: w.mode, x: Math.round(w.x), z: Math.round(w.z), area: g.map.typeOf ? a.type : a.type, zoom: g.camera.zoomStep, wave: g.party.wave, t: Math.round(g.clock.time) }; });
   lap(`at the spot: ${JSON.stringify(where)}; settling ${WARM} s`);
   await wait(WARM * 1000);

@@ -89,6 +89,10 @@ varying float vHole;   // crowns and cut trunks: the radius of the hole round he
 varying float vCrownD; // and how far the nearest of its crown is from the hole's middle on screen (pixels)
 uniform vec4 uCutShape;
 varying float vOverHer; // over her on screen and nearer the camera: it could hide her
+uniform float uCutWhole, uTopFade, uFadePass, uIsScenery, uAppear, uFlat;
+uniform vec4 uSilhouette;
+uniform vec2 uScenery, uHazeCentre;
+uniform float uCanopyReach;
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
@@ -165,13 +169,16 @@ void main() {
   // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
   // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
   vHole = 1.0; vOverHer = 0.0; vCrownD = 0.0;
+  // Its rectangle on screen (pixels): its middle and half-widths, from its foot and its top.
+  vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
+  vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
+  float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
+  vec2 cc = (s0 + s1) * 0.5;
+  float wob = 0.5 * uCutout.w * uCutShape.x; // (the hole's edge wobbles this far either way)
   if (abs(iFlags.y) > 0.001) {
-    vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
-    vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
     // Its own radius for the hole (vHole here: in pixels): each tree's own, spread round the hole's (uCutShape.w), and the
     // outline ragged round her, its bays and points drifting slowly round (uCutShape.z: Ed, 2026-10-06, "circle": no round line).
-    float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
-    vec2 cc = (s0 + s1) * 0.5, off = cc - uCutout.xy;
+    vec2 off = cc - uCutout.xy;
     float j = fract(sin(dot(floor(iPos.xz * 2.0), vec2(12.9898, 78.233))) * 43758.5453), ang = atan(off.y, off.x), tw = uWind.w;
     float rag = 0.5 * sin(ang * 3.0 + tw * 0.07 + 1.3) + 0.3 * sin(ang * 5.0 - tw * 0.05 + 4.1) + 0.2 * sin(ang * 7.0 + tw * 0.11 + 2.2);
     vHole = uCutout.z * (1.0 + uCutShape.w * (j - 0.5) * 2.0) * (1.0 + uCutShape.z * rag);
@@ -180,6 +187,37 @@ void main() {
     vCrownD = length(max(abs(off) - vec2(hw, hh) * 0.5, 0.0));
     // Whether it could hide her: over her sprite on screen and nearer the camera than her.
     vOverHer = abs(cc.x - uWitch.x) < hw + uWitch.z && abs(cc.y - uWitch.y) < hh + uWitch.w && uWitchDepth + (viewMatrix * vec4(base, 1.0)).z > 0.0 ? 1.0 : 0.0;
+  }
+  // What the pixels could never show, left undrawn whole (the ground-mode GPU cost, the coordinator's ask from Ed's overlay,
+  // 2026-10-13: the scenery's quads rasterised twice over, the see-through pass discarding nearly every pixel after its taps). Its
+  // rectangle with a margin for the wind, the lean, the watch and the snap, in pixels. Conservative: a quad kept whenever any of
+  // its pixels might be drawn, so the picture is the same to the pixel (tools/bench).
+  float pxm = 2.0 * hh / max(iSize.y, 0.01); // (screen pixels a metre, up the sprite)
+  vec2 halfPx = vec2(hw, hh) + 4.0 + pxm * (abs(uWind.x) * abs(iFlags.w) * 1.3 * min(1.0, iSize.y / 8.0) + abs(uLean.x) * iSize.y + abs(uLean.y) * iSize.x + abs(uWatch.w) * abs(iFlags.w));
+  // A crown wholly inside the hole (every pixel of it cut away, in either pass): its farthest corner still within the hole's inner edge.
+  if (iFlags.y > 0.5 && uTopFade < 0.004) {
+    vec2 far = abs(uCutout.xy - cc) + halfPx;
+    if (mix(length(far) + wob, vCrownD, uCutWhole) + 1.0 < vHole - uCutout.w) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  }
+  // The see-through pass: only what could have a see-through pixel (the fragment shader's \`see\`): a tall thing over her circle
+  // and nearer than her; a crown or a cut trunk whose fade reaches into the hole's band; scenery at its budget's edge (or its
+  // batch still appearing). Anything else is wholly the opaque pass's.
+  if (uFadePass > 0.5 && uSilhouette.a <= 0.0) {
+    bool need = uIsScenery > 0.5 && uAppear < 0.996;
+    if (uFlat < 0.5 && uOcc.w > 0.0 && vFront > 0.0) {
+      float R = (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
+      vec2 d = max(abs(uWitch.xy - cc) - halfPx, 0.0);
+      if (dot(d, d) < R * R) need = true;
+    }
+    if (abs(iFlags.y) > 0.001 && uTopFade < 0.996) {
+      vec2 d = max(abs(uCutout.xy - cc) - halfPx, 0.0);
+      if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0) need = true;
+    }
+    if (uIsScenery > 0.5) {
+      float r = max(uScenery.x, iFlags.y > 0.5 ? uCanopyReach : 0.0);
+      if (length(iPos.xz - uHazeCentre) + iSize.x * 0.5 + 2.0 > r - uScenery.y) need = true;
+    }
+    if (!need) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   }
 }
 `;
@@ -548,6 +586,9 @@ export class SpriteBatch {
       this.meshes.push(sil); this.sil = sil;
     }
   }
+
+  /** Named, for the probes' draw-call lists (tools/bench/gpu.cjs): its meshes carry the name, the see-through one marked. */
+  name(n: string): this { this.meshes.forEach((m, i) => { m.name = i === 0 ? n : `${n} (${i === 1 && this.meshes.length > 1 && m !== this.sil ? "see-through" : "silhouette"})`; }); return this; }
 
   /** Its art swapped for another set's (the same frames: a stand-in replaced by the art workers' set when it arrives). */
   setAtlas(atlas: Atlas): void {
