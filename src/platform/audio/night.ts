@@ -23,7 +23,7 @@ export const AREA_NIGHTS: Record<string, NightKind> = {
   "fern-forest": "wood", "tangly-forest": "wood", "wispy-forest": "wood", "hazel-forest": "wood", "twiggy-forest": "wood",
   "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood", "bamboo-jungle": "wood", 
   "old-oaks": "oaks", ancient: "oaks",
-  "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet", "temple-jungle": "wet",
+  "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet", "temple-jungle": "wet", "river-jungle": "stream",
   stream: "stream", ravine: "ravine",
   meadow: "meadow", garden: "meadow", grassland: "meadow", "bluebell-glade": "meadow", heath: "meadow",
   "rocky-slope": "open", erg: "open", warren: "open", savanna: "meadow", plains: "meadow", moor: "stones", "stone-shrine": "stones", "cave-mouth": "cave", "scrub-wash": "open",

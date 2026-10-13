@@ -20,8 +20,9 @@ import { ERG } from "./recipes/erg.js";
 import { SAVANNA } from "./recipes/savanna.js";
 import { BAMBOO_JUNGLE } from "./recipes/bambooJungle.js";
 import { TEMPLE_JUNGLE } from "./recipes/templeJungle.js";
+import { RIVER_JUNGLE } from "./recipes/riverJungle.js";
 import { PLAINS } from "./recipes/plains.js";
-export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, BAMBOO_JUNGLE, TEMPLE_JUNGLE];
+export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
