@@ -23,6 +23,7 @@
     "elk": {"family": "big", "pitch": 1.4, "glide": 1.25, "dur": 1.5, "noise": 0.15, "am": [0, 0], "volume": 0.8},
     "stag": {"family": "big", "pitch": 1.2, "glide": 0.8, "dur": 1.6, "noise": 0.2},
     "ram": {"family": "big", "pitch": 1.6, "am": [12, 0.5], "vowel": 1, "noise": 0.1},
+    "ibex": {"family": "big", "pitch": 1.85, "am": [16, 0.45], "vowel": 0.8, "noise": 0.15},
     "badger": {"family": "big", "pitch": 1.8, "dur": 0.6},
     "hare": {"family": "small"},
     "squirrel": {"family": "small", "pitch": 1.2, "extra": 3, "gap": 0.25, "volume": 0.75},

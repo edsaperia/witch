@@ -67,6 +67,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "fen": look("granite", "reeds", "moss", 0.65, true),
   "heronry": look("granite", "reeds", "lichen", 0.55, true),
   "snowfield": look("granite", "needles", "lichen", 0.4),
+  "crags": look("slate", "pebbles", "lichen", 0.4),
 };
 /** Any area not hand-tuned: weathered granite, leaf litter, moss. */
 export const FALLBACK_LOOK: FloorLook = look("granite", "leaves", "moss", 0.5);

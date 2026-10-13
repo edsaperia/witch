@@ -53,6 +53,7 @@ export function setPropVariant(kind, seed = 0, over = {}) {
     else { const x = g[0] + (g[1] - g[0]) * r(); v[k] = Number.isInteger(g[0]) && Number.isInteger(g[1]) && g[1] - g[0] >= 1 ? Math.round(x) : x; }
   }
   v.seed = seed; v.r = r;
+  if (over.colour) v.colour = over.colour; // (an area's own colours over the genome's: its stone, dark stone, wood, moss, lichen)
   return Object.assign(v, Object.fromEntries(Object.entries(over).filter(([k]) => k in G && k !== "colour")));
 }
 const gsGrain = (p, d, k = 9) => { const s = v3.dot(p, d) * k; return (s - Math.floor(s)) < .12 ? M.BARKD : undefined; }; // plank seams across a direction
@@ -182,7 +183,7 @@ function gsRing(m, v) {
 function gsHeap(m, v) {
   const r = v.r, Wh = v.width * GS_U / 2, Hh = v.height * GS_U, Dh = Wh * v.depth;
   const at = (u, w) => { const x = u * Wh, z = w * Dh, k = 1 - (u * u + w * w); return [x, Math.max(0, Hh * Math.sqrt(Math.max(0, k))), z]; }; // a point on its dome
-  const mossy = q => q[1] > Hh * (1 - v.moss) ? M.MOSS : undefined;
+  const mossy = q => v.moss > 0 && q[1] > Hh * (1 - v.moss) ? M.MOSS : undefined; // (none at all when it has none)
   const n = v.of === "brush" ? Math.round(v.pieces * 1.6) : v.pieces;
   for (let i = 0; i < n; i++) {
     const t = i / n, ring = Math.sqrt(1 - t) * .95, a = r() * Math.PI * 2, base = at(Math.cos(a) * ring, Math.sin(a) * ring), g = 2 + (i % 24);
@@ -204,14 +205,14 @@ const GS_BUILD = { punt: gsPunt, jetty: gsJetty, ring: gsRing, heap: gsHeap };
 function gsTone(c, r, k) { if (Array.isArray(c[0])) c = pickByWeight(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
 // Its colours: wood and stone from its genome; mud, moss, reeds, grass and water from the area's ground (art/ground.js), so it sits in its floor.
 function gsColours(kind, v, def, st) {
-  const C = SET_PROP_GENOMES[kind].colour, r = rng((v.seed * 7919 + 29) >>> 0), k = C.spread, leaf = def?.leaf ?? .26, g = def?.floor ? groundColours(def, { sat: 1, trunkHue: .07, ...st }) : null;
+  const C = { ...SET_PROP_GENOMES[kind].colour, ...v.colour }, r = rng((v.seed * 7919 + 29) >>> 0), k = C.spread, leaf = def?.leaf ?? .26, g = def?.floor ? groundColours(def, { sat: 1, trunkHue: .07, ...st }) : null;
   const wood = gsTone(C.wood ?? [.07, .38, .32], r, k), dark = wood.map(c => Math.round(c * .45)), light = wood.map(c => Math.min(255, Math.round(c * 1.35 + 12)));
   const stone = gsTone(C.stone ?? [.6, .08, .55], r, k), stoneD = C.dark ? gsTone(C.dark, r, k) : stone.map(c => Math.round(c * .55));
   return {
     [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.LEAF3]: g && kind === "ring" ? g[M.BODY] : hsv2rgb(leaf + .02, .5, .34), [M.LINE]: [24, 22, 30],
     [M.WOOD]: wood, [M.TRUNK]: kind === "punt" || kind === "jetty" ? dark.map(c => Math.round(c * 1.5)) : wood, [M.BARKD]: dark, [M.BARKL]: light,
     [M.STONE]: stone, [M.STONED]: stoneD, [M.MOSS]: C.moss ? gsTone(C.moss, r, k) : g ? g[M.MOSS] : hsv2rgb(.25, .45, .38),
-    [M.BELLY]: kind === "ring" && v.member !== "stone" ? light : kind === "heap" && v.of === "logs" ? hsv2rgb(.1, .3, .7) : g ? g[M.BELLY] : hsv2rgb(.2, .1, .72), // trodden earth, lichen, or a sawn face
+    [M.BELLY]: kind === "ring" && v.member !== "stone" ? light : kind === "heap" && v.of === "logs" ? hsv2rgb(.1, .3, .7) : C.lichen ? gsTone(C.lichen, r, k) : g ? g[M.BELLY] : hsv2rgb(.2, .1, .72), // trodden earth, lichen, or a sawn face
     [M.ACCENT]: kind === "ring" || kind === "heap" ? dark : hsv2rgb(.62, .35, .5), // a stump's rings; a pool's sky
     [M.WATER]: hsv2rgb(.6, .45, .38), [M.BODY2]: kind === "heap" || kind === "ring" ? hsv2rgb(.62, .55, .16) : hsv2rgb(.62, .55, .18), [M.WEB]: hsv2rgb(.58, .14, .8), [M.GLINT]: hsv2rgb(.55, .2, .95),
     [M.BODY]: g ? g[M.BODY] : hsv2rgb(.08, .35, .32), [M.BARK2]: g ? g[M.BODY2] : hsv2rgb(.08, .4, .24),

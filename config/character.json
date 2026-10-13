@@ -18,6 +18,7 @@
     "beaver": {"posture": {"head": [0.02, -0.02], "body": -0.01}, "quirk": "tailslap", "every": [5, 9], "for": 0.7},
     "stoat": {"posture": {"head": [0, 0.05], "body": 0}, "quirk": "perk", "every": [3, 6], "for": 1.0},
     "ram": {"posture": {"head": [0.04, -0.04], "body": 0}, "quirk": "stomp", "every": [4, 8], "for": 1.0},
+    "ibex": {"posture": {"head": [0.05, 0.02], "body": 0}, "quirk": "stomp", "every": [5, 9], "for": 0.9},
     "marten": {"posture": {"head": [0.02, 0.02], "body": -0.01}, "quirk": "sniff", "every": [3, 6], "for": 1.0},
     "salamander": {"posture": {"head": [0.03, -0.02], "body": -0.01}, "quirk": "tailflick", "every": [4, 8], "for": 1.2},
     "newt": {"posture": {"head": [0.03, 0.01], "body": -0.01}, "quirk": "tailflick", "every": [4, 8], "for": 1.0},

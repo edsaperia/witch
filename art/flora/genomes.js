@@ -90,6 +90,12 @@ export const PLANT_GENOMES = {
     params: { w: 160, h: 95, trunk: { w: 9, len: .38, taper: .65, bend: 2, lean: .9 }, levels: [{ n: [3, 4], at: [.6, 1], len: [.5, .7], angle: [.7, 1.1], up: .1, bend: 1.8, shape: "even" }, { n: [2, 2], at: [.5, 1], len: [.4, .55], angle: [.4, .7], bend: 1.6 }],
       crown: { blobs: [3, 5], r: [13, 17], flat: .8, stamp: "round", stampSize: 2.5, back: .25, holes: .05, dots: { mat: "FLOWER", share: .035, size: 2 } } },
     low: { moss: .5, sprigs: .6, boughs: .4 }, colour: { hue: .05, val: .9, dot: [226, 182, 52] } },
+  // the crags' wild olive (an area recipe's, the north-east's mountains): a low gnarled tree, its grey trunk twisted and split into
+  // two leaning stems, a wide open crown of small silvery grey-green tufts, a few dark olives
+  olive: { name: "wild olive", form: "tree", generator: "blob", grow: "small", crown: { envelope: "sphere", clumps: "4-6 small silvery tufts, open" },
+    params: { w: 175, h: 100, trunk: { w: 11, len: .4, taper: .55, bend: 2.6, lean: .8, stems: 2, fan: .7, mat: "BARK2" }, levels: [{ n: [3, 4], at: [.55, 1], len: [.5, .7], angle: [.75, 1.2], up: .05, bend: 2.2, shape: "even" }, { n: [2, 3], at: [.45, 1], len: [.35, .5], angle: [.4, .8], bend: 1.8 }],
+      crown: { blobs: [4, 6], r: [11, 15], flat: .65, stamp: "leaf", stampSize: 2, tones: [0, .3], back: .3, holes: .16, stampShade: .4, dots: { mat: "FLOWER", share: .02, size: 2 } } },
+    low: { moss: .1, sprigs: .3 }, colour: { hue: .06, sat: .42, val: 1.12, trunk: [.1, .1, .58], dot: [58, 52, 72] } },
   elder: { name: "elder", form: "shrub", generator: "blob", grow: "small", crown: { envelope: "umbrella", clumps: "flat blobs, flower plates" },
     params: { w: 150, h: 105, trunk: { w: 6, len: .55, taper: .55, bend: 1.4, stems: 4, fan: 1.1, top: true, roots: .5 }, levels: [{ n: [2, 3], at: [.6, 1], len: [.35, .5], angle: [.6, 1], up: .15 }],
       crown: { blobs: [5, 7], r: [16, 21], flat: .55, stamp: "leaf", stampSize: 3, back: .35, holes: .08, twigs: .5, dots: { mat: "FLOWER", share: .012, size: 3 } } },
