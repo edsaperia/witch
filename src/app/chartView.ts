@@ -157,7 +157,10 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const isl = islands.find(i => i.id === o.id);
     if (!isl || o.world !== worldNow()) return;
     if ((isl.outline as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
-    isl.outline = o; chart.reshape(o.id, o);
+    // (the miniature, 64 px on the map table's top: an island's real coast, but not its ground: its heightfield, shallows and
+    // lakes were 20 to 70 ms of meshes each on the page's thread, 64 islands over the first minute of every night, at the decks
+    // (the stall hunt, 2026-10-13); at that size the coast alone draws the same)
+    isl.outline = o; chart.reshape(o.id, mini ? { ...o, ground: undefined } : o);
   };
   const drain = () => { const t0 = performance.now(); while (pending.length && performance.now() - t0 < 10) apply(pending.shift()!); if (pending.length) setTimeout(drain, 0); }; // (in slices: frames come between)
   const make = (): Worker | null => {

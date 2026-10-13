@@ -708,23 +708,34 @@ export class MusicEngine {
     o.start(t); o.stop(t + decay);
   }
 
+  /** The impulses made, by their length: the shed's short reverb (level 3) and the full one swap without being made again. */
+  private impulses = new Map<number, AudioBuffer>();
   private impulse(seconds: number): AudioBuffer {
+    const had = this.impulses.get(seconds); if (had) return had;
     // decorrelated noise in each ear, after a short pre-delay, decaying, and darkening as it goes
     // (a one-pole low-pass closing over the tail, as air and walls soak up the highs)
+    // (The envelope and the low-pass's coefficient come from a table of ENV steps over the tail, not a Math.pow a sample: the
+    // 2.4 s impulse and the circle's 3.8 s one were 135 ms on the page's thread at the first speaker, and again when the sound
+    // shed to level 3 (the stall hunt, 2026-10-13).)
     const c = this.ctx, rate = c.sampleRate, pre = Math.floor(0.015 * rate), n = Math.max(pre + 1, Math.floor(seconds * rate)), b = c.createBuffer(2, n, rate);
+    const ENV = 4096, env = new Float32Array(ENV + 1), coef = new Float32Array(ENV + 1);
+    for (let j = 0; j <= ENV; j++) { const k = j / ENV, a = 0.85 - 0.75 * k; coef[j] = a; env[j] = Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a)); }
+    const perSample = ENV / Math.max(1, n - pre);
     let r = 777;
     for (let ch = 0; ch < 2; ch++) {
       const d = b.getChannelData(ch);
       let y = 0;
       for (let i = pre; i < n; i++) {
         r = (Math.imul(r, 1664525) + 1013904223) >>> 0;
-        const k = (i - pre) / (n - pre), a = 0.85 - 0.75 * k;
+        const j = Math.min(ENV, Math.floor((i - pre) * perSample)), a = coef[j];
         y += a * ((r / 4294967296) * 2 - 1 - y);
-        d[i] = y * Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a));
+        d[i] = y * env[j];
       }
     }
+    this.impulses.set(seconds, b);
     return b;
   }
+
 }
 
 /** An AudioParam worked out once a 128-sample block rather than every sample (about 3 ms: nothing heard in a filter's sweep,
