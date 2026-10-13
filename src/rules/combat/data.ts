@@ -244,6 +244,6 @@ export interface CombatWorld {
   hitWitch: (id: number, time: number, blow?: { x: number; z: number; knockback: number; rams: boolean }) => void;
   /** A party animal is lost for the run. */
   loseParty: (id: number) => void;
-  /** A witch is slowed (a snail's slime, a glow-worm's flash): her speed times mult until then. */
+  /** A witch is slowed (a snail's slime, a flash): her speed times mult until then. */
   slowWitch?: (id: number, until: number, mult: number) => void;
 }

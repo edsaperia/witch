@@ -45,10 +45,9 @@ export function headingOf(w: CombatWorld, tg: Target): { x: number; z: number } 
   return m > 1.5 ? { x: vx / m, z: vz / m } : null;
 }
 
-/** Lights within R of a creature: glow-worms and soundsystems (moths are drawn to them). */
-export function lightsNear(w: CombatWorld, s: CombatState, c: Creature, R: number): { x: number; z: number }[] {
+/** Lights within R of a creature: soundsystems (moths are drawn to them). */
+export function lightsNear(_w: CombatWorld, s: CombatState, c: Creature, R: number): { x: number; z: number }[] {
   const out: { x: number; z: number }[] = [];
-  for (const o of w.active) if (o !== c && o.species === "glowworm" && !o.gone && Math.abs(o.x - c.x) < R && Math.abs(o.z - c.z) < R) out.push(o);
   for (const h of s.sounds.values()) if (h.hp > 0 && Math.hypot(h.x - c.x, h.z - c.z) < R) out.push(h);
   return out;
 }

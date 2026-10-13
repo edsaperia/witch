@@ -56,7 +56,7 @@ export function boonWords(species: string): string | null {
   return `${def.name}, ${what}`;
 }
 
-const AGES = ["baby", "young", "adult"], NAMES: Record<string, string> = { glowworm: "glow-worm", beetle: "stag beetle" };
+const AGES = ["baby", "young", "adult"], NAMES: Record<string, string> = { beetle: "stag beetle", cat: "wildcat" };
 /** A creature in words, its age first: "a young elk", "an adult otter". */
 export function creatureWords(species: string, level: number): string {
   const w = `${AGES[level] ?? ""} ${NAMES[species] ?? species}`.trim();
