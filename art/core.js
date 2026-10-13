@@ -68,6 +68,7 @@ export const M = {
   WEB: 51,     // pale silk and cotton: spider webs, cotton grass (lit, not glowing)
   BROW: 52,
   BODYL: 53,   // the lifted top tone of a creature's coat (genome/texture.js)
+  NIGHT: 54, NIGHT2: 55, // a night sky's deep blue and a lighter one (the elder snail's starry shell, art/elders.js)
     // a creature's expression's brows: dark ink on a light coat, pale on a dark one (genome/expressions.js)
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
