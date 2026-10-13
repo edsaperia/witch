@@ -55,13 +55,13 @@ const VARIANTS = [
   await page.waitForFunction(() => window.witch?.ready, null, { timeout: 180000 });
   lap("ready");
   // Off the decks (Space takes her up; a second press brings her down), to the spot on foot, at the zoom, the waves brought on.
-  await page.keyboard.press("Space"); await wait(800);
-  for (let i = 0; i < 40; i++) { const mode = await page.evaluate(() => window.witch.game.witch.mode); if (mode === "treetop") break; await wait(500); }
+  // (a frame here can take seconds under the software renderer: each key waited for by what it does, not by the clock)
+  const mode = () => page.evaluate(() => window.witch.game.witch.mode);
+  await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
   await page.evaluate(({ X, Z, ZOOM }) => { const g = window.witch.game, w = g.witch; w.x = X; w.z = Z; w.vx = w.vz = 0; g.camera.zoomStep = ZOOM; }, { X, Z, ZOOM });
-  await page.keyboard.press("Space");
-  for (let i = 0; i < 40; i++) { const mode = await page.evaluate(() => window.witch.game.witch.mode); if (mode === "ground") break; await wait(500); }
-  for (let i = 0; i < WAVES; i++) { await page.keyboard.press("KeyN"); await wait(400); } // (a frame here can take seconds: the presses land on the frames after)
-  if (WAVES) await page.waitForFunction(n => window.witch.game.party.wave >= n, WAVES, { timeout: 120000 }).catch(() => {});
+  await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000 });
+  for (let i = 1; i <= WAVES; i++) { await page.keyboard.press("KeyN"); await page.waitForFunction(n => window.witch.game.party.wave >= n, i, { timeout: 120000 }).catch(() => {}); }
+  void mode;
   const where = await page.evaluate(() => { const g = window.witch.game, w = g.witch, a = g.map.areaAt(w.x, w.z); return { mode: w.mode, x: Math.round(w.x), z: Math.round(w.z), area: a?.type, zoom: g.camera.zoomStep, wave: g.party.wave, gpuTimer: !!window.witch.frameStats.recent().gpu.length || !!window.witch.view.renderer.getContext().getExtension("EXT_disjoint_timer_query_webgl2") }; });
   lap(`at the spot: ${JSON.stringify(where)}; settling ${WARM} s`);
   await wait(WARM * 1000);
