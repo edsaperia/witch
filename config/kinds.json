@@ -252,12 +252,11 @@
       "biome": "mangrove swamp",
       "placeholder": true
     },
-    "unknown-10": {
+    "dragonfly": {
       "phase": 3,
       "bearing": 243,
       "dir": "WSW",
-      "biome": "mangrove swamp",
-      "placeholder": true
+      "biome": "mangrove swamp"
     },
     "tiger": {
       "phase": 3,
@@ -272,12 +271,11 @@
       "biome": "cold rainforest",
       "placeholder": true
     },
-    "unknown-13": {
+    "roe": {
       "phase": 3,
       "bearing": 321,
       "dir": "NW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "unknown-14": {
       "phase": 3,
@@ -360,12 +358,11 @@
       "biome": "mangrove swamp",
       "placeholder": true
     },
-    "unknown-26": {
+    "crab": {
       "phase": 4,
       "bearing": 225,
       "dir": "SW",
-      "biome": "mangrove swamp",
-      "placeholder": true
+      "biome": "mangrove swamp"
     },
     "unknown-27": {
       "phase": 4,
