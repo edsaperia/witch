@@ -14,8 +14,9 @@ The earlier baseline is `docs/perf/BASELINE-2026-10-07.md` (the rules at late wa
 | the tests | 7 m 44 s wall, 28 minutes of CPU; 307 map builds in the suite at about 0.95 s each | #809 takes a quarter off each build; the rest is the simulations themselves (below) |
 | CI | 8.5 minutes a run, 7 m 49 s of it `npm test`; the smoke job 5 minutes beside it | nothing changed: options below |
 | the rules' frame work | an island at wave 28: 0.2 ms a step at p50, 1 ms at p99 | the baseline's 3 ms steps were the radius map's 2,000 creatures: gone with it |
+| the view's frame work | over the treetops at wave 28: about 4 ms of CPU a frame hovering, 8.5 flying (20 at p95: the streaming as she moves); the heap flat at 330 MB | nothing worth a change; the numbers are in section 7 |
 | dead code, duplication | `tsc --noUnusedLocals` clean; no module nothing imports; 297 exports used only in their own file (types and knobs, mostly); nothing worth a sweep with twenty animal PRs open | left; the list is below |
-| stale docs | eight tool folders missing from `tools/README.md`; three dead paths in `docs/ART-GUIDE.md`; the bench's late-game probe now plays an island, not the radius map the baseline describes | listed below for the owners |
+| stale docs | eight tool folders missing from `tools/README.md`; three dead paths in `docs/ART-GUIDE.md`; the bench's late probe's spot in the sea on an island | #814 (the inventory regenerated, the paths fixed), #817 (the probe's spot) | |
 
 ## How it was measured
 
@@ -54,8 +55,8 @@ Ed's overnight programme (2026-10-07) stopped committing the tools' pictures (th
 
 **Done, #803**: the config files' `_` notes dropped at build: `config/tuning.json` is 187 kB minified and 159 kB of it is notes; the other config files carry 32 kB more; nothing in the game reads a key starting with `_`. A Vite plugin (`configNotes`, build only; dev, the tests and the tools read the files as they are) strips them: chartView 1,547 → 1,387 kB (gzip 501 → 441), the chart worker 596 → 437 kB, main 1,469 → 1,444 kB. 344 kB raw and 71 kB gzipped off the first load.
 
-**Left, worth doing when the owners are free** (small, each its own call):
-- The FOF voice's wasm module (46 kB in main) isn't in the game (CLAUDE.md: "FOF isn't in the game"); a dynamic import where the worklet is loaded would take it off the first load.
+**Then** (small ones):
+- **Done, #816**: the FOF voice's wasm module (46 kB in main) isn't in the game (CLAUDE.md: "FOF isn't in the game"); now a dynamic import where the worklet is loaded: main 1,469 → 1,422 kB (gzip 526 → 509).
 - `changelog.ts` bundles all 493 fragments (54 kB) into main for the three the start screen shows; a changelog page would want them all, so this is only worth it if there's none planned.
 - The art generators ride in three bundles (the shared chunk, the art worker, the chart worker): 600 kB twice over. The workers need them; the main page needs them for the character creator and the previews. Unavoidable without a bigger rework.
 
@@ -152,7 +153,26 @@ The baseline's 3 ms steps at 2,200 creatures were the radius map's; an island ne
 
 **About 3 ms of CPU a frame besides `draw`**, where the baseline had 11 (7.4 of view and 3.5 of rules): the island cut the creature count twenty-fold and the frame work with it. 86 draw calls (95 at most). The heap holds at 321 MB from the first timed frame to the last (325 at most): no growth over the run, so no leak in play; what it holds from load is the art's pixel data and the ground tiles, as the baseline found.
 
-Two caveats. This run stayed on the ground by the dancefloor: the probe puts her over the treetops with a mode toggle, which the rules refuse while she's seated at her decks (the start since the party spell), so it timed the ground view (3 trees drawn); a treetop run needs her stepped off first, a two-line fix to `tools/bench/late.cjs` noted below. And `draw`'s 206 ms is the cloud's software rasteriser, not a number for Ed's machine; the `?perf=1` HUD is the way to read it there.
+Two caveats. This run stayed on the ground at the map's edge: the probe took its spot in map metres (Ed's 1059,1499 on the old radius map), and on an island map, whose home lies wherever the archipelago put it (2,548, 2,509 on this seed), that spot is in the sea, so she was held at the edge and the probe timed the ground view with nothing drawn. Fixed in #817 (`AT` is now metres from the dancefloor, and the probe fails rather than time the wrong view); the treetop run with it:
+
+`node tools/bench/late.cjs` as fixed, seed 871136 at wave 28, 300 m east and 200 m south of the dancefloor over the treetops, 120 frames at 1280×720 (60 hovering, 60 flying north): 1,570 trees drawn hovering, up to 1,937 flying; 97 draw calls; the sim 9 full, 15 coarse.
+
+| | hovering | flying |
+|---|---|---|
+| the rules' step, p50 / p95 | 0.5 / 1.5 ms | 0.6 / 1.7 ms |
+| the view's CPU work besides `draw`, p50 / p95 / worst | 3.5 / 7.5 / 9.6 ms | 8.0 / 19.0 / 20.6 ms |
+| `witch` (her sprite, the ride, the camera), mean / p95 | 0.39 / 1.1 | 1.34 / 7.2 |
+| `refresh` (the art and ground round her as she moves) | 0.01 / 0.1 | 1.25 / 4.6 |
+| `hud` | 0.79 / 3.8 | 0.83 / 1.9 |
+| `grass+lights` | 0.65 / 1.9 | 0.81 / 1.9 |
+| `leash` | 0.58 / 0.9 | 0.61 / 3.7 |
+| `heightsAhead`, `heights`, `groundTiles`, `prefetch` (the rolling ground and its tiles ahead of her) | about 0.05 together | 0.60, 0.47, 0.52, 0.53 (p95 2.0, 3.3, 2.2, 2.4) |
+| `party`, `creatures`, `markers`, `uniforms` | 0.25, 0.23, 0.22, 0.09 | 0.29, 0.26, 0.19, 0.14 |
+| `draw` (the software rasteriser here) | 2,085 ms mean | |
+
+So **hovering over the treetops costs about 4 ms of CPU a frame, and flying about 8.5 at the median and 20 at p95**, the difference being the streaming as she moves: the ground's heights and tiles ahead, the art's refresh and prefetch, and her own part (the ride over the rolling ground). None of it is one hot spot; the p95s are the frames where a new tile or a new sprite set comes in. The heap went 330 to 333 MB over the 120 frames (337 at most), the art and tiles coming in; no leak. On Ed's machine the `?perf=1` HUD gives the same parts against his GPU.
+
+And `draw`'s 206 ms is the cloud's software rasteriser, not a number for Ed's machine; the `?perf=1` HUD is the way to read it there.
 
 ## 8. Allocation churn
 
@@ -178,9 +198,9 @@ None of it is worth a rules change tonight: a minor collection a second is not w
 
 ## 10. Stale docs and config
 
-- `tools/README.md` doesn't mention eight of the 42 tool folders: `hologram`, `islands`, `lakes`, `qa`, `samples`, `shadows`, `soundsystem`, `voice`.
-- `docs/ART-GUIDE.md` points at `tools/art-iterations/sheets.mjs` (line 120) and `silhouettes.mjs` (line 164), which don't exist (the folder has `evolutions.js` and `ladder.mjs`), and at `docs/art-iterations/README.md` (line 7), which doesn't either.
-- `tools/bench/late.cjs` (and `hitch.cjs`, `viewalloc.cjs`, which rise the same way) toggle to the treetops before she has left her decks, where the rules hold her seated since the party spell (2026-10-06): the probe times the ground view instead. The fix is to feed a second of `moveZ` before the toggle.
+- `tools/README.md` didn't mention eight of the 42 tool folders (`hats`, `hologram`, `islands`, `lakes`, `qa`, `samples`, `shadows`, `soundsystem`, `voice` had no README), and seven folders' counts were behind: `node tools/inventory.mjs` run again in #814.
+- `docs/ART-GUIDE.md` pointed at `tools/art-iterations/sheets.mjs` and `silhouettes.mjs` (#97's, never merged) and `docs/art-iterations/README.md`: now the art-iterations README, the area sheet and the silhouette sheet `art/preview.mjs` draws (#814).
+- `tools/bench/late.cjs` took its spot in map metres, the radius map's; on an island that's the sea (#817 fixes it: metres from the dancefloor).
 - `docs/perf/BASELINE-2026-10-07.md` section 1 and `tools/bench/perf.ts` describe the radius map; the probe now plays an island (section 6 above).
 - CLAUDE.md's Testing section says the bench's `rules.ts` is "brought to wave 30"; `run.mjs --quick` goes to 10 and the frames' scenes are described twice (once under Testing, once in the bench README). Harmless.
 - `config/changelog/` holds 493 fragment files (2 MB on disk for 54 kB of text); the archive rule froze `archive.json` at round 9. A second archive of everything with a version would keep the folder small; it's Ed's call since the rule was his.
