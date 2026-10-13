@@ -193,10 +193,10 @@ void main() {
   // rectangle with a margin for the wind, the lean, the watch and the snap, in pixels. Conservative: a quad kept whenever any of
   // its pixels might be drawn, so the picture is the same to the pixel (tools/bench).
   float pxm = 2.0 * hh / max(iSize.y, 0.01); // (screen pixels a metre, up the sprite)
-  vec2 half = vec2(hw, hh) + 4.0 + pxm * (abs(uWind.x) * abs(iFlags.w) * 1.3 * min(1.0, iSize.y / 8.0) + abs(uLean.x) * iSize.y + abs(uLean.y) * iSize.x + abs(uWatch.w) * abs(iFlags.w));
+  vec2 halfPx = vec2(hw, hh) + 4.0 + pxm * (abs(uWind.x) * abs(iFlags.w) * 1.3 * min(1.0, iSize.y / 8.0) + abs(uLean.x) * iSize.y + abs(uLean.y) * iSize.x + abs(uWatch.w) * abs(iFlags.w));
   // A crown wholly inside the hole (every pixel of it cut away, in either pass): its farthest corner still within the hole's inner edge.
   if (iFlags.y > 0.5 && uTopFade < 0.004) {
-    vec2 far = abs(uCutout.xy - cc) + half;
+    vec2 far = abs(uCutout.xy - cc) + halfPx;
     if (mix(length(far) + wob, vCrownD, uCutWhole) + 1.0 < vHole - uCutout.w) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   }
   // The see-through pass: only what could have a see-through pixel (the fragment shader's \`see\`): a tall thing over her circle
@@ -206,11 +206,11 @@ void main() {
     bool need = uIsScenery > 0.5 && uAppear < 0.996;
     if (uFlat < 0.5 && uOcc.w > 0.0 && vFront > 0.0) {
       float R = (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
-      vec2 d = max(abs(uWitch.xy - cc) - half, 0.0);
+      vec2 d = max(abs(uWitch.xy - cc) - halfPx, 0.0);
       if (dot(d, d) < R * R) need = true;
     }
     if (abs(iFlags.y) > 0.001 && uTopFade < 0.996) {
-      vec2 d = max(abs(uCutout.xy - cc) - half, 0.0);
+      vec2 d = max(abs(uCutout.xy - cc) - halfPx, 0.0);
       if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0) need = true;
     }
     if (uIsScenery > 0.5) {
