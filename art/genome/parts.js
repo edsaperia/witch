@@ -9,7 +9,7 @@ import { M, Sprite } from "../core.js";
 import { Model, render, spotty, PITCH } from "../model3d.js";
 import { withForm, withGear, withTexture, shoe3d } from "../creatures3d.js";
 import { textureSprite } from "./texture.js";
-import { EXPRESSIONS } from "./expressions.js";
+import { EXPRESSIONS, JAW_FACES } from "./expressions.js";
 import { SPECIES_BY_ID, buildCreature, textureSeed } from "../creatures.js";
 
 export const RIG_HEADINGS = [-Math.PI / 2, -Math.PI / 4, 0, Math.PI / 4, Math.PI / 2];
@@ -50,10 +50,11 @@ function rigShoe(leg, style, s, st) {
   shoe3d(m, { c: [0, 0, 0], r: Math.max(leg.fl, lw * 1.1), group: 2, fit: leg.hoof ? "hoof" : "paw" }, style, { extra: false });
   return RIG_HEADINGS.map(h => { const r = render(m, { scale: s, yaw: h }), [px, py] = r.project([0, 0, 0]); return rigCropped(r.sp, px, py); });
 }
-// Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }, and a legend's asleep.
+// Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }, a legend's asleep, and a snouted four-legged one's open jaw (bite, yawn).
 function rigFaces(id, level, st, pivot, s, gear) {
   const out = {};
   for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st });
+  if (SPECIES_BY_ID[id]?.plan === "quad" && !SPECIES_BY_ID[id]?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
   return out;
 }
 // A model of only the primitives labelled with one of `labels`.
