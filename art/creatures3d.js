@@ -67,7 +67,12 @@ export function withTexture(tex, f) { const was = TEX; TEX = tex; try { return f
 // sprite; form.motes says whether the glowing motes still float round it.
 let FORM = null;
 export function withForm(form, f) { const was = FORM; FORM = form; try { return f(); } finally { FORM = was; } }
-const drawForm = (m, o, S, level) => FORM ? FORM(m, o, S, level) : render(m, o).sp, formMotes = () => !FORM || FORM.motes;
+// Another view for the tools (a sheet from above: art/preview.mjs TOP=1): { yaw, pitch } for model3d's render, at the scale the
+// usual view would give, so the two line up. Never in the game.
+let VIEW = null;
+export function withView(view, f) { const was = VIEW; VIEW = view; try { return f(); } finally { VIEW = was; } }
+export const viewKey = () => VIEW ? `view${VIEW.yaw ?? ""},${VIEW.pitch ?? ""}` : "";
+const drawForm = (m, o, S, level) => { if (VIEW) o = { ...o, scale: o.scale ?? render(m, { ...o, measure: true }).s, ...VIEW }; return FORM ? FORM(m, o, S, level) : render(m, o).sp; }, formMotes = () => !FORM || FORM.motes;
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 // A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
 // (SHOE_STYLES: sneakers, glitter, platform, heels, boots, lightup), fitted to the foot: "hoof" (narrow and
@@ -370,6 +375,14 @@ function evolve3d(m, feats, c) {
 }
 
 // ================= four-legged animals =================
+// A genome's body profile (quad3d: its girth along its length) as stations { w, d }, 1 where it says nothing; null without one.
+export const PROFILE_STATIONS = ["shoulder", "ribcage", "waist", "loin", "hip"];
+function profileOf(p) {
+  if (!p) return null;
+  const P = {};
+  for (const k of PROFILE_STATIONS) { const v = p[k]; P[k] = typeof v === "number" ? { w: v, d: v } : { w: v?.w ?? 1, d: v?.d ?? 1 }; }
+  return P;
+}
 export function quad3d(S, level, frame, st, facing = "towards") {
   // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
   const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && !S.levelFeatures?.[3] && S.legend.includes(f)) || (q.features || []).includes(f) || !!S.levelNamed?.[level]?.includes(f); // (an evolved legend, its genome levels[3], replaces its old legend feature)
@@ -415,12 +428,30 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // default by how it stands: a hoofed one's withers and croup stand up and its brisket is deep, a flat-footed one's shoulders are
   // rounder, a sprawler has none. ----
   const withers = q.withers ?? (sprawl ? 0 : hoof ? .07 : flat ? .04 : .05), croup = q.croup ?? (sprawl ? 0 : hoof ? .05 : .02), loin = q.loin ?? (sprawl ? 0 : .015), brisket = q.brisket ?? (hoof ? .08 : flat ? .04 : .03);
-  m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front], M.BODY, { paint: paintBody });
-  m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
-  m.ell([0, (top + (chest + tuck) / 2) / 2 + .02 - loin, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
-  if (withers) m.ell([len * .58, top - .1 + withers + hump * .4, 0], [len * .3, .13 + withers, bw * .8 * front], M.BODY, { paint: paintBody }); // the withers, over the shoulders
-  if (croup) m.ell([-len * .66, top - .11 + croup + arch * .5, 0], [len * .24, .12 + croup, bw * .74], M.BODY, { paint: paintBody }); // the pelvis
-  if (brisket) m.ell([len * .8, chest + .06 + brisket * .5, 0], [len * .22, .1 + brisket, bw * .62 * front], M.BODY, { paint: paintBody }); // the brisket, the chest's keel
+  // ---- its girth along its length (Ed, 2026-10-13: "a key issue with a lot of animals is that they end up sausage shaped; we need
+  // them to be able to have a thicker chest and a slimmer abdomen; this needs separate width and depth in the body"): q.profile, its
+  // stations from the front back (shoulder, ribcage, waist, loin, hip), each { w, d } (or one number for both): w its width side to
+  // side, d its depth back to belly, as multiples of the body as built there, the back line kept and the belly lifting as d falls; a
+  // station left out is 1. With no profile the three loaves draw exactly as before; with one the torso is lofted through the
+  // stations (and the rump's end and the chest's front, shaped as their neighbours), each slice the loaves' own envelope there, scaled.
+  // The forelegs stand as wide as the shoulder, the hind legs as the hip. ----
+  const loaves = [
+    [[len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front]], // the chest
+    [[-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93]], // the rump
+    [[0, (top + (chest + tuck) / 2) / 2 + .02 - loin, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9]], // the middle
+  ];
+  const P = profileOf(q.profile), wAt = k => P ? P[k].w : 1;
+  if (!P) for (const [c, r] of loaves) m.ell(c, r, M.BODY, { paint: paintBody });
+  else {
+    const envelope = x => { let w = 0, t = -Infinity, b = Infinity; for (const [c, r] of loaves) { const u = (x - c[0]) / r[0]; if (Math.abs(u) >= 1) continue; const f = Math.sqrt(1 - u * u); w = Math.max(w, r[2] * f); t = Math.max(t, c[1] + r[1] * f); b = Math.min(b, c[1] - r[1] * f); } return { w, t, b }; }; // the loaves at x: their widest, their back, their belly
+    for (const [k, at, rx] of [["hip", -.82, .32], ["hip", -.5, .36], ["loin", -.25, .36], ["waist", 0, .36], ["ribcage", .25, .36], ["shoulder", .48, .36], ["shoulder", .8, .32]]) {
+      const x = at * len, e = envelope(x), s = P[k], depth = (e.t - e.b) * s.d;
+      m.ell([x, e.t - depth / 2, 0], [len * rx, depth / 2, e.w * s.w], M.BODY, { paint: paintBody });
+    }
+  }
+  if (withers) m.ell([len * .58, top - .1 + withers + hump * .4, 0], [len * .3, .13 + withers, bw * .8 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the withers, over the shoulders
+  if (croup) m.ell([-len * .66, top - .11 + croup + arch * .5, 0], [len * .24, .12 + croup, bw * .74 * wAt("hip")], M.BODY, { paint: paintBody }); // the pelvis
+  if (brisket) m.ell([len * .8, chest + .06 + brisket * .5, 0], [len * .22, .1 + brisket, bw * .62 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the brisket, the chest's keel
   if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); }
   // ---- legs: a real skeleton (the menagerie review, 2026-10-13: every leg was hip, a knee straight below it, a ball) ----
@@ -433,7 +464,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.rig = { legs: [], len, bw, top, chest, tuck }; // the live rig's joints (art/genome/parts.js), in model units
   const leg = (fore, side) => {
     m.part = `leg${fore ? "F" : "H"}${side > 0 ? "N" : "F"}`; // fore or hind, near or far
-    const z = side * bw * .62, x = fore ? len * .62 : -len * .62, a = (fore ? 1 : -1) * side * sw, topY = fore ? chest + .1 : tuck + .15, Y = topY + .12;
+    const z = side * bw * .62 * wAt(fore ? "shoulder" : "hip"), x = fore ? len * .62 : -len * .62, a = (fore ? 1 : -1) * side * sw, topY = fore ? chest + .1 : tuck + .15, Y = topY + .12;
     const swing = (fore ? side : -side) * (frame ? 1 : -1) > 0, lift = swing ? .06 : 0, flex = swing ? 1 : 0; // the leg swinging forward is lifted and flexed
     const hf = !fore ? (q.hindFoot || 1) : 1, out = sprawl ? side * .14 : 0, g = { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 };
     const hipTop = [x, Y, z * .8], mat = side > 0 ? (q.legMat || M.BODY) : (q.legMat ? M.BODY3 : M.BODY2);

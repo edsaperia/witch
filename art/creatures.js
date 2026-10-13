@@ -6,7 +6,7 @@ import { GENOMES, speciesOf } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
 import { napForm } from "./naps.js";
 export const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
-import { withForm, withGear, withTexture, height3d, quad3d, owl3d, hedgehog3d, toad3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, armadillo3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, moth3d, spider3d, dragonfly3d, crab3d } from "./creatures3d.js";
+import { withForm, withGear, withTexture, withView, viewKey, height3d, quad3d, owl3d, hedgehog3d, toad3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, armadillo3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, moth3d, spider3d, dragonfly3d, crab3d } from "./creatures3d.js";
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
 const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d })); // body plan -> 3D builder; four-legged species all use quad3d
@@ -96,7 +96,7 @@ export function walkGait(id) { return GAITS[id] ?? { frames: 2, step: 0.3 }; }
 export function critter(spId, level, frame, st, facing = "towards", gear = null) {
   if (facing === "away" && gear?.face) gear = { ...gear, face: null }; // (its face can't be seen from behind)
   const S = (typeof spId === "object" ? spId : SPECIES_BY_ID[spId]) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || gear.idle || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : "", g.idle ? "idle" : ""].join(",") : ""].join("|");
+  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : "", g.idle ? "idle" : ""].join(",") : "", viewKey()].join("|");
   let sp = cache.get(key);
   if (!sp) {
     // asleep (gear.nap: art/naps.js): lying down, eyes shut, frame its breath; its walk's first frame laid down
@@ -109,3 +109,4 @@ export function critter(spId, level, frame, st, facing = "towards", gear = null)
   }
   return sp;
 }
+export { withView }; // (the tools' view from above: art/preview.mjs TOP=1)
