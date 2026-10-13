@@ -5,7 +5,7 @@ export const SNOWFIELD = {
   id: "snowfield", name: "Snowfield", creature: "arcticfox", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86], snow: 1,
   text: { floor: "deep snow, grass and needles poking through", wall: "drifts and frozen stones", small: "snowy tussocks", big: "snow-laden junipers and firs, dwarf birch", set: "a ring of old stones half buried in a drift" },
   wall: [["stones", {}]], small: [["grass", { h: .9 }]],
-  big: [["tree", { type: "juniper", scale: .9 }], ["tree", { type: "fir", minor: true, scale: .95 }], ["tree", { type: "birch", minor: true, scale: .6 }], ["boulder", { sparse: .1 }]],
+  big: [["tree", { type: "juniper", variant: "windbent", scale: .9 }], ["tree", { type: "fir", minor: true, scale: .95 }], ["tree", { type: "birch", minor: true, scale: .6 }], ["boulder", { sparse: .1 }]],
   pathKinds: ["footpath"],
   setPiece: ["ring", "a ring of old stones half buried in a drift", 1, { member: "stone", centre: "stone", fallen: 2 }],
   layout: {

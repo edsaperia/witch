@@ -10038,7 +10038,7 @@ const MISTWOOD = {
   id: "mistwood", name: "Mistwood", creature: "flyingsquirrel", by: "recipe", leaf: .31, floor: ["moss", .3, .45, .26],
   text: { floor: "deep wet moss", wall: "fallen nurse logs", small: "sword ferns and fungi", big: "giant spruce and cedar, tree ferns beneath", set: "a nurse log, a fallen giant with young spruce growing out of its back" },
   wall: [["log", { rot: true }], ["fern", {}]], small: [["fern", {}], ["fungi", {}]],
-  big: [["tree", { type: "fir", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
+  big: [["tree", { type: "fir", variant: "mossy", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
   wet: true, pathKinds: ["boardwalk"],
   setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", .95],
   layout: {
@@ -10318,7 +10318,7 @@ const SNOWFIELD = {
   id: "snowfield", name: "Snowfield", creature: "arcticfox", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86], snow: 1,
   text: { floor: "deep snow, grass and needles poking through", wall: "drifts and frozen stones", small: "snowy tussocks", big: "snow-laden junipers and firs, dwarf birch", set: "a ring of old stones half buried in a drift" },
   wall: [["stones", {}]], small: [["grass", { h: .9 }]],
-  big: [["tree", { type: "juniper", scale: .9 }], ["tree", { type: "fir", minor: true, scale: .95 }], ["tree", { type: "birch", minor: true, scale: .6 }], ["boulder", { sparse: .1 }]],
+  big: [["tree", { type: "juniper", variant: "windbent", scale: .9 }], ["tree", { type: "fir", minor: true, scale: .95 }], ["tree", { type: "birch", minor: true, scale: .6 }], ["boulder", { sparse: .1 }]],
   pathKinds: ["footpath"],
   setPiece: ["ring", "a ring of old stones half buried in a drift", 1, { member: "stone", centre: "stone", fallen: 2 }],
   layout: {
@@ -10341,7 +10341,7 @@ const CRAGS = {
   id: "crags", name: "Crags", creature: "ibex", by: "recipe", leaf: .3, floor: ["lichen", .3, .22, .44], snow: .45,
   text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and wild olives", set: "a heap of glacier rubble with a slab on top" },
   wall: [["rockwall", {}]], small: [["stones", {}], ["shrub", { flower: [250, 210, 50], spiky: true }], ["shrub", { spiky: true }]],
-  big: [["spire", { sparse: .14 }], ["spire", { sparse: .08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", scale: .75 }], ["tree", { type: "olive", minor: true, scale: .95, gnarl: 1 }]],
+  big: [["spire", { sparse: .14 }], ["spire", { sparse: .08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: .75 }], ["tree", { type: "olive", minor: true, scale: .95, gnarl: 1 }]],
   steep: true, pathKinds: ["footpath"],
   setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [.74, .14, .62], dark: [.72, .16, .34], lichen: [.74, .08, .84] } }],
   layout: {
@@ -10365,7 +10365,7 @@ const ICEFALL = {
   id: "icefall", name: "Icefall", creature: "snowleopard", by: "recipe", leaf: .38, floor: ["ice", .56, .12, .8], snow: .8,
   text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, stunted pines, rowan and dwarf birch", set: "a ring of weathered posts round a stone" },
   wall: [["stones", {}]], small: [["stones", {}]],
-  big: [["cairn", { sparse: .12, tall: true }], ["standingstone", { sparse: .12 }], ["boulder", { big: true }], ["tree", { type: "rowan", scale: .6 }], ["tree", { type: "pine", minor: true, scale: .6 }], ["tree", { type: "birch", minor: true, scale: .5 }]],
+  big: [["cairn", { sparse: .12, tall: true }], ["standingstone", { sparse: .12 }], ["boulder", { big: true }], ["tree", { type: "rowan", variant: "stunted", scale: .6 }], ["tree", { type: "pine", minor: true, scale: .6 }], ["tree", { type: "birch", minor: true, scale: .5 }]],
   pathKinds: ["footpath"],
   setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
   layout: {
@@ -10410,7 +10410,7 @@ const TROLLWOOD = {
   id: "trollwood", name: "Trollwood", creature: "frosttroll", by: "recipe", leaf: .32, floor: ["snow", .6, .08, .78], snow: .9,
   text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "frozen weeping birch and pine, snow-capped boulders", set: "a troll bridge over an iced stream" },
   wall: [["stones", {}]], small: [["fern", {}], ["stones", {}]],
-  big: [["tree", { type: "weepingBirch", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: .95 }], ["boulder", { big: true, sparse: .18 }]],
+  big: [["tree", { type: "weepingBirch", variant: "ancient", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: .95 }], ["boulder", { big: true, sparse: .18 }]],
   pathKinds: ["footpath"],
   setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: .3, top: "slab" }],
   layout: {

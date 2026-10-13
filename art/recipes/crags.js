@@ -6,7 +6,7 @@ export const CRAGS = {
   id: "crags", name: "Crags", creature: "ibex", by: "recipe", leaf: .3, floor: ["lichen", .3, .22, .44], snow: .45,
   text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and wild olives", set: "a heap of glacier rubble with a slab on top" },
   wall: [["rockwall", {}]], small: [["stones", {}], ["shrub", { flower: [250, 210, 50], spiky: true }], ["shrub", { spiky: true }]],
-  big: [["spire", { sparse: .14 }], ["spire", { sparse: .08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", scale: .75 }], ["tree", { type: "olive", minor: true, scale: .95, gnarl: 1 }]],
+  big: [["spire", { sparse: .14 }], ["spire", { sparse: .08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: .75 }], ["tree", { type: "olive", minor: true, scale: .95, gnarl: 1 }]],
   steep: true, pathKinds: ["footpath"],
   setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [.74, .14, .62], dark: [.72, .16, .34], lichen: [.74, .08, .84] } }],
   layout: {
