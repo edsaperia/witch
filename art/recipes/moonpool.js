@@ -11,7 +11,7 @@ export const MOONPOOL = {
   layout: {
     pattern: "stands", density: .45, clump: .7, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .15, mature: .45, tall: .3, giant: .1 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
-    terrain: ["pools"], decor: { rate: .2, ruins: .3, rocks: .2, freak: .1, lake: .6, modern: 0 },
+    terrain: ["pools"], decor: { rate: .2, ruins: .15, rocks: .15, freak: .1, lake: .6, modern: 0 },
     feel: "Silver birches and old dark yews round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright.",
   },
   flora: { species: [["birch", .5], ["yew", .3], ["weepingBirch", .2]], palette: { sat: .75, val: 1 } },
