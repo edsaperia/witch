@@ -189,6 +189,34 @@ export const GENOMES = [
         { kind: "wisps", at: "mane", size: .26, count: 9, from: .05, to: .95, mat: "MAGIC2", lift: .1 },
       ] },
     ] },
+  // the frost cave's frost wyrm (a journey kind: unknown-17's, mountains and glaciers; mock): a wingless ice dragon, long and low, a
+  // long neck and a crocodile's snout, swept-back horns, a crest of ice-blue plates and a long tapering tail; its legend the thing
+  // that makes it a wyrm: a body and tail so long it winds like a river of ice, great horns and a beard of icicles
+  { id: "frostwyrm", name: "Frost wyrm", template: "quadruped", builder: "quad", palette: { hue: .6, sat: .55, val: .9, belly: "white", accent: [.55, .1, .98], magic: .52 }, body: { hgt: 1.4, len: .95, chest: .52, tuck: .56, neck: .7, neckAng: .95, neckW: .3, hr: .21, legW: 1.0, bw: .27 }, head: { snout: 1.3, snoutD: .5, snoutTaper: .6, eyeK: .8, horn: { length: 3, curl: .7, twist: 1, back: .25, up: 0, r: .3, out: .2 } }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw", horns: "twist" }, coat: { belly: true, ridge: 1.4, ridgeMat: "BELLY" }, legend: ["mane"], texture: { kind: "scales" },
+    levels: [
+      { body: { len: .7, neck: .4, hr: .3, legW: 1.2 }, head: { snout: .8, horn: { length: 1.4, curl: .2, twist: 1, r: .28 } }, coat: { ridge: .8 } },
+      { body: { len: 1.0, neck: .55 }, head: { snout: 1.2, horn: { length: 2.4, curl: .3, twist: 1, r: .3 } } },
+      { features: [{ kind: "claws", size: .14 }] },
+      { body: { len: 1.15, hgt: 1.55, neck: .85, legW: 1.1 }, head: { snout: 1.4, frost: true, eyeGlow: true, horn: { length: 4.6, curl: .8, twist: 1.5, back: .3, up: 0, r: .38, out: .25 } }, features: [
+        { kind: "ruff", size: .3, count: 18, mat: "BELLY" },
+        { kind: "claws", size: .2 },
+      ] },
+    ] },
+  // the eyrie's griffin (a journey kind: unknown-18's, mountains and glaciers; mock): an eagle's white head, hooked gold beak and
+  // feathered ear tufts on a lion's tawny body, eagle's wings and talons on its forelegs, a lion's tufted tail; its legend the thing
+  // that makes it a griffin: wings vast as a sail, a crest of long white feathers, gold talons
+  { id: "griffin", name: "Griffin", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .5, val: .72, belly: "white", accent: [.12, .75, .95], magic: .12 }, body: { hgt: 1.5, len: .72, chest: .55, tuck: .66, neck: .32, neckAng: .75, neckW: .4, hr: .25, legW: 1.05, bw: .28 }, head: { beak: 1, eyeK: .9, mask: true }, parts: { ears: { kind: "tuft", size: .9 }, tail: "tuft", feet: "paw" }, coat: { belly: true }, legend: ["mane"], texture: { kind: "feathers" },
+    levels: [
+      { body: { len: .5, hr: .32, legW: 1.2 }, head: { beak: .7 }, features: [{ kind: "wings", feathered: true, nub: true, size: .8, mat: "BELLY", mat2: "BODY" }] },
+      { body: { len: .7 }, features: [{ kind: "wings", feathered: true, size: .8, mat: "BODY", mat2: "BELLY" }, { kind: "ruff", size: .1, count: 10, mat: "BELLY" }] },
+      { features: [{ kind: "wings", feathered: true, size: 1, mat: "BODY", mat2: "BELLY" }, { kind: "ruff", size: .16, count: 14, mat: "BELLY" }, { kind: "claws", size: .16, mat: "ACCENT" }] },
+      { body: { hgt: 1.6, len: .78, front: 1.1 }, head: { beak: 1.15, eyeGlow: true }, features: [
+        { kind: "wings", feathered: true, size: 1.7, mat: "BODY", mat2: "BELLY" },
+        { kind: "ruff", size: .34, count: 22, mat: "BELLY" },
+        { kind: "mane", from: .75, to: 1, height: .3, count: 9, lean: .6, mat: "BELLY" },
+        { kind: "claws", size: .24, mat: "ACCENT" },
+      ] },
+    ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
