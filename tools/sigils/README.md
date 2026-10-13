@@ -17,3 +17,7 @@ Every species' sigil: large as neon vector, bare, as the 12 and 16 px pixel glyp
 ```
 node tools/sigils/sheet.mjs <out.png> [species,...]
 ```
+
+## Also here
+
+- `detail-sheet.html`
