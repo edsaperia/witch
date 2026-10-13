@@ -41,3 +41,7 @@ Discussion notes (Ed, 2026-10-09). **Nothing here is started; don't start withou
 
 - Synth rebuilt in Godot, or pre-rendered layers?
 - Which porting partner, and when to approach them.
+
+## Saving the night in progress
+
+Ed, 2026-10-13. Today the browser keeps the character, the sea chart (found, won, played, voyages, world seed) and small settings, but not the night being played: a reload (including the one on a lost graphics context, #884) restarts it. Save the night too (the wave, her stack and leashed creatures, placed sigils, the areas' state, the clock) every few seconds and on leaving the page, and offer to resume it on the next load. Local storage or IndexedDB, not cookies.
