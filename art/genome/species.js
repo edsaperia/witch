@@ -161,7 +161,7 @@ export const GENOMES = [
       { body: { bw: .36 }, head: { horn: { length: 3.4, r: .42, curl: .62, twist: 0, ridges: 1, segs: 22, out: .22, ease: 1.2, tighten: .1, mat: "BODY3" } } },
       // the elder of the ibex (docs/ART-GUIDE.md 0c): the peaks' oldest, its horns grown vast and knobbled with the years, a long
       // shaggy beard, lichen on its flanks like the rock it lies on, offerings of stone beads round its legs
-      { body: { bw: .4, legW: 1.15 }, head: { horn: { length: 6.4, r: .66, curl: .74, twist: 0, ridges: 1, segs: 38, out: .26, ease: 1.2, tighten: .12, mat: "BODY3" } }, coat: { beads: true }, features: [
+      { body: { bw: .4, legW: 1.15 }, head: { horn: { length: 6.4, r: .58, curl: .74, twist: 0, ridges: 1, segs: 38, out: .26, ease: 1.2, tighten: .12, mat: "BODY3" } }, coat: { beads: true }, features: [
         { kind: "ruff", size: .2, count: 16, mat: "BODY" },
         { kind: "moss", count: 7, size: .085 },
       ] },
