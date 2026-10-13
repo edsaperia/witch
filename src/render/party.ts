@@ -78,7 +78,8 @@ export class PartyView {
       const beat = 0.85 + 0.15 * Math.sin(time * 8);
       // Spooky (render/mood.ts): the party is the warm light in a cold wood, its pools wider and warmer.
       const rgb = warm ? warm[s.variant % 3] : I ? this.rgbOf(I.rgb) : CRYSTAL[s.variant % 3];
-      if (rise > 0) lights.push({ x: s.x, y: 3, z: s.z, reach: t.lightReach * (M?.partyReach ?? 1), rgb, strength: t.lightStrength * (M?.partyStrength ?? 1) * beat * rise * (1 + (1 - p) * 2) });
+      // (and the trees, props and scenery round it cast shadows from it, as from a campfire: render/trunkShadows.ts; Ed, 2026-10-13)
+      if (rise > 0) lights.push({ x: s.x, y: 3, z: s.z, reach: t.lightReach * (M?.partyReach ?? 1), rgb, strength: t.lightStrength * (M?.partyStrength ?? 1) * beat * rise * (1 + (1 - p) * 2), shadow: { x: s.x, y: 3, z: s.z, k: rise } });
     });
     return { items, lights, playing, projectors };
   }

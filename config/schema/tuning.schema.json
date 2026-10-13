@@ -10081,6 +10081,10 @@
             "sceneryTaper": {
               "type": "number",
               "minimum": 0
+            },
+            "lightReach": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10099,7 +10103,8 @@
             "sceneryMin",
             "glowLight",
             "sceneryFoot",
-            "sceneryTaper"
+            "sceneryTaper",
+            "lightReach"
           ],
           "additionalProperties": false
         }
