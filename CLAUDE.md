@@ -59,6 +59,15 @@ The start screen shows a **What's new** panel: the last three entries of the cha
 - `config/changelog/archive.json` holds everything up to round 9 and is frozen: never edit it. There is no shared list to edit.
 - Fragments with the same version make one entry (the newest file's items first); the current build's (`version: null`) shows as the build being played. `src/changelog.test.ts` checks every file's shape.
 
+## Fixing bugs (Ed, 2026-10-13)
+
+Bring a bug back to Ed early rather than guess: he can answer questions, take a log or test in play faster than a builder can work round a gap.
+
+- **Check the report first.** If it lacks something you need (the version, what he was doing, a screenshot, the L log), ask straight away, through the coordinator.
+- **15 minutes to reproduce.** Can't make it happen by then? Stop and report what you tried and exactly what you need from Ed: a question, a log taken a certain way, or something to try in play.
+- **No unconfirmed "fixed".** If you can't see the bug go away yourself, say so in the PR and give Ed a short in-game check (e.g. "load v36xx with an empty cache, start a night: is the witch visible?").
+- **Make the next sighting count.** If the L log wouldn't show what went wrong, add the logging that would.
+
 ## Testing
 
 CI (`.github/workflows/ci.yml`) runs on every push and pull request, in this order:
