@@ -56,6 +56,7 @@
     "beetle":     { "name": "Fan",            "kind": "shot", "mods": { "fan": 1 },                 "label": "Beetle's Fan: each shot a 3-way spread" },
     "woodlouse":  { "name": "Rear guard",     "kind": "shot", "mods": { "rear": 1 },                "label": "Woodlouse's Rear guard: each burst also fires a 💌 behind you" },
     "wolf":       { "name": "Howl",           "kind": "shot", "mods": { "ring": 1 },                "label": "Wolf's Howl: every 5th burst a ring of 💌s round you" },
+    "frosttroll": { "name": "Long stride",    "kind": "move", "scale": { "groundSpeed": 1.12, "riseTime": 0.8 }, "label": "Frost troll's Long stride: quicker on foot, and a quicker climb to the treetops" },
     "bear":       { "name": "Wind-up",        "kind": "shot", "mods": { "charge": 1 },              "label": "Bear's Wind-up: hold to charge, let go for a big volley" },
     "owl":        { "name": "Echo",           "kind": "shot", "mods": { "echo": 1 },                "label": "Owl's Echo: each burst fires again half a second later" },
     "roe":        { "name": "Spring",         "kind": "move", "scale": { "dash.cooldown": 0.7 }, "label": "Roe's Spring: your dodge comes back sooner" },

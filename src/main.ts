@@ -51,6 +51,8 @@ performance.mark("witch:main"); // (the load's steps, for timing the arrival: wi
 const params = new URLSearchParams(location.search);
 // The zoo (?zoo; rules/zoo.ts): straight in, as ?creator=0 (no bedroom, no party spell), unless the link says otherwise.
 if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
+// (its controls, src/zoo/panel.ts, loaded only for it, once the game is made)
+let zooPanel: import("./zoo/panel").ZooPanel | null = null;
 let seed = parseSeed(params.get("seed"));
 if (seed === null) {
   seed = Math.floor(Math.random() * 1000000);
@@ -62,6 +64,7 @@ if (seed === null) {
 const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
 let musicCueNow = linkMusicCue;
 const game = newGame(seed, tuning);
+if (game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(game); });
 performance.mark("witch:game");
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
 const { WAVE_CHOICES, setPulseSpeed, waveChoice } = gameFromLink(game, tuning, params);
@@ -313,6 +316,8 @@ if (arrival) { /* (no card, no bedroom: the still, then the flight) */ } else if
   if (keys) creator.addTab("controls", "❔ Controls", [keys]);
   if (news) creator.addTab("news", "📜 What's new", [news]);
   if (shakeEl) creator.addTab("options", "⚙ Options", [shakeEl]);
+  // The zoo (Ed, 2026-10-13: ?zoo, "plus a Zoo button"): every creature in its own block, out of a run.
+  creator.addButton("Zoo", () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); });
 } else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
@@ -441,6 +446,7 @@ function frame(now: number): void {
   if (!ready) return;
   hud.losses();
   hud.clock();
+  zooPanel?.update(); // (the zoo's block bar: src/zoo/panel.ts)
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   // (arriving: the flight's shot on the view, every frame; landed, the night starts)

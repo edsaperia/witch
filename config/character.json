@@ -12,6 +12,7 @@
     "roe": {"posture": {"head": [-0.01, 0.06], "body": 0.0}, "quirk": "perk", "every": [3, 7], "for": 1.2},
     "stag": {"posture": {"head": [-0.02, 0.07], "body": 0.01}, "quirk": "perk", "every": [5, 10], "for": 1.6},
     "hare": {"posture": {"head": [0, 0.04], "body": 0}, "quirk": "thump", "every": [4, 8], "for": 0.8},
+    "frosttroll": {"posture": {"head": [0.03, -0.02], "body": 0.03}, "quirk": "scratch", "every": [5, 10], "for": 1.8},
     "bear": {"posture": {"head": [0.04, -0.04], "body": 0}, "quirk": "scratch", "every": [6, 11], "for": 1.6},
     "squirrel": {"posture": {"head": [0, 0.04], "body": 0}, "quirk": "tailflick", "every": [2, 4], "for": 0.7},
     "flyingsquirrel": {"posture": {"head": [0, 0.05], "body": 0}, "quirk": "sniff", "every": [2, 5], "for": 0.6},

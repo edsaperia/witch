@@ -62,7 +62,7 @@ export const NAP_POSES = {
   moth: { kind: "flat", ground: .12, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .3, 0], r: [.55, .24, .4] } },
   bat: { kind: "flat", ground: .2, drop: [0, 10, 11], cloak: { c: [-.05, .38, 0], r: [.42, .46, .38] } },
   cat: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 }, snail: { kind: "flat", ground: .04, droop: 1, drop: [5] },
-  toad: { kind: "flat", ground: .2, droop: .5 }, mole: { kind: "flat", ground: .22, droop: .4 }, hedgehog: { kind: "flat", ground: .1, droop: .6, curl: 1 },
+  toad: { kind: "flat", ground: .2, droop: .5 }, frosttroll: { kind: "flat", ground: .2, droop: .5 }, mole: { kind: "flat", ground: .22, droop: .4 }, hedgehog: { kind: "flat", ground: .1, droop: .6, curl: 1 },
 };
 const DEFAULT = { kind: "lie", sink: .05, droop: 1 };
 export const napPose = id => NAP_POSES[id] ?? DEFAULT;
