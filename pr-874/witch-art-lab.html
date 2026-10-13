@@ -9691,13 +9691,14 @@ function woodlouse3d(S, level, frame, st, facing = "towards") {
 
 function snake3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, baby = level === 0, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
-  for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), .03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]); }
-  pts.push([.38, .25, pts[12][2], .07], [.42, .45, pts[12][2] * .8, .065]);
+  const girth = [.9, .82, 1, 1][level], rise = [1, .85, 1.15, 1.15][level]; // (the young a slim whip, the adult heavy, its head held high)
+  for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), (.03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)) * girth]); }
+  pts.push([.38, .07 + .18 * rise, pts[12][2], .07 * girth], [.42, .07 + .38 * rise, pts[12][2] * .8, .065 * girth]);
   // (Ed's review, 2026-10-13: "the baby and young are copies") its pattern comes in with age: the hatchling plain, the young
   // faintly spotted, the adult's spots and dark bands across its back; and the hatchling's head big for its body
   const spots = baby ? 0 : young ? .15 : .3, bands = level >= 2;
   m.chain(pts, M.BODY, { paint: p => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05 && p[1] > .06 ? M.BELLY : p[1] < .05 && p[0] < .35 ? M.BELLY : (bands && p[1] > .07 && Math.sin(p[0] * 26) > .72) || (spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots)) ? M.BODY3 : undefined });
-  const hc = [.5, .5, pts[13][2] * .8], hr = baby ? .13 : young ? .105 : .09;
+  const hc = [.5, .07 + .43 * rise, pts[13][2] * .8], hr = baby ? .13 : young ? .105 : .09;
   m.rig = { spine: pts.map(p => p.slice()), head: hc, hr }; // the live rig's spine (tail to head, each [x, y, z, radius]) and head, in model units
   m.part = "head";
   m.ell(hc, [hr * 1.5, hr * .75, hr], M.BODY, { dir: [1, -.15, 0], group: 1 });
