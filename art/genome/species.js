@@ -185,4 +185,8 @@ export const ELDER_GENOMES = [
   elderOf("hare", { ears: true, eye: "EYE" }),
   elderOf("meerkat", { eye: "GLOW" }, { palette: { hue: .09, sat: .35, val: .72, belly: "white", flower: [168, 76, 50] } }),
   elderOf("armadillo", {}),
+  // the second pass (the coordinator's notes): "<id>Elder2"
+  { ...elderOf("stoat", { eye: "EYE", v: 2 }), id: "stoatElder2" },
+  { ...elderOf("dormouse", { tail: true, eye: "EYE", v: 2 }), id: "dormouseElder2" },
+  { ...elderOf("marten", { eye: "EYE", v: 2 }), id: "martenElder2" },
 ];

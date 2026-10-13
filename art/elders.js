@@ -90,6 +90,7 @@ export function lift(m, dy) {
 const X = (c, k) => -c.len * k;
 export function elderQuad(m, S, c) {
   const kind = S.elder.kind, { H, hr, nb, len, top, chest, bw, tb } = c, N = m.anchors.neck, earBase = side => [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5];
+  if (S.elder.v === 2 && PASS2[kind]) return PASS2[kind](m, S, c, { N, earBase });
   if (kind === "raccoon") {
     // the thief-king: grizzled grey, its mask worn deep, hung with a lifetime's stolen trinkets, a stolen crown askew
     grizzle(m, p => p[0] > H[0] - hr * .4 ? .3 : .12, M.WEB);
@@ -205,3 +206,56 @@ export function sentinelHeap(m, dy) {
   const st = [[0, 0, 0, .2], [.2, -.02, .14, .14], [-.18, -.02, .12, .15], [.12, -.02, -.18, .13], [-.12, .0, -.16, .12], [.3, -.04, -.05, .1], [-.3, -.04, .02, .11], [.05, .14, .05, .14], [-.08, .12, -.05, .12], [.16, .1, -.02, .1]];
   st.forEach(([x, y, z, r], i) => m.box([x, dy * .45 + y * dy * 1.4 + r * .3, z], [r, r * .7, r * .85], i % 3 ? M.FLOWER : M.ACCENT, { group: 200 + i % 3, round: r * .3, rough: r * .12, dir: [1, .1 * (i % 3 - 1), .2 * (i % 2 - .5)], paint: p => spotty(p, 30, .12) ? M.STONED : undefined }));
 }
+
+// ---------- the second pass (the coordinator's notes on the first: the stoat, dormouse and marten read wrong or weak) ----------
+const PASS2 = {
+  // the ermine elder: winter-white, an ermine mantle (white, small black tail-tip spots) hanging from its shoulders and flowing back
+  // over its body and down its flanks to a ragged, curving hem, its crimson lining just showing at the edge; a gold circlet
+  stoat(m, S, c) {
+    const { H, hr, len, top, chest } = c, mid = (top + chest) / 2;
+    recolour(m, { [M.BODY]: M.WEB, [M.BODY2]: M.BELLY });
+    const ermine = p => spotty(p, 24, .1) ? M.BODY3 : M.WEB, n = 16, o = ex(150, { paint: ermine });
+    for (let i = 0; i <= n; i++) {
+      const u = i / n, x = len * (.82 - u * 1.78), ragged = .5 * Math.sin(i * 2.3) + .35 * Math.sin(i * 5.1 + 1), reach = (100 + 22 * u + 9 * ragged) * Math.PI / 180, pts = [];
+      for (let k = -8; k <= 8; k++) { const a = reach * k / 8, d = [0, Math.cos(a), Math.sin(a)]; pts.push(surfaceFrom(m, [x, mid + .02, 0], d, .03 + .02 * u, .8)); }
+      const ends = [pts[0], pts[pts.length - 1]].map(e => { const side = Math.sign(e[2]) || 1, drop = (.09 + .1 * u) * (1 + .45 * ragged) * (i % 2 ? .8 : 1.1), h1 = v3.add(e, [-.02, -drop, side * .04]); return [h1, v3.add(h1, [-.03, -drop * .9, side * .05])]; }); pts.unshift(ends[0][1], ends[0][0]); pts.push(...ends[1]); // the hem hanging free below the body's widest, in folds
+      const r = len * 1.78 / n * .62;
+      m.chain(pts.map((p, j) => [...p, r * (j === 0 || j === pts.length - 1 ? .8 : 1)]), M.WEB, o);
+      for (const j of [0, pts.length - 1]) m.ell(v3.add(pts[j], [0, -r * .2, Math.sign(pts[j][2]) * r * .1]), [r * 1.15, r * .7, r * .75], M.FLOWER, ex(151)); // the crimson lining showing at its hem
+    }
+    m.ell([len * .72, top + .02, 0], [len * .26, .1, c.bw * 1.3], M.WEB, ex(152, { paint: ermine })); // its collar, gathered at the shoulders
+    m.ell(surfaceFrom(m, [len * .95, top - .08, 0], [.7, .1, .7], .03, .8), [.05, .05, .03], M.WOOD, ex(153, { dir: [.49, .5, .72] })); // a gold clasp
+    ring(m, v3.add(m.anchors.head.top, [0, -hr * .2, 0]), [-.2, 1, 0], hr * .62, hr * .06, M.WOOD, ex(160)); // the gold circlet
+    m.ell(v3.add(H, [hr * .55, hr * .62, 0]), [hr * .08, hr * .1, hr * .08], M.GLOW, ex(161));
+  },
+  // the drowsy elder: hugging its own long golden tail, wrapped from its rump round its near side and curled up in front of its
+  // chest and paws; heavy lids; a ring of hazelnuts in green husks standing up on its head; a grey muzzle
+  dormouse(m, S, c) {
+    const { H, hr, len, top, chest, bw, tb } = c, f = c.frame ? .02 : 0;
+    m.part = "tail";
+    m.chain([[...tb, .1], [-len * 1.15, chest + .02, bw * .7, .13], [-len * .55, .13, bw * 1.3, .15], [len * .2, .13 + f, bw * 1.4, .16], [len * .9, .14, bw * 1.15, .16], [len * 1.35, .2, bw * .3, .15], [len * 1.4, .32, -bw * .35, .13], [len * 1.2, .45, -bw * .45, .11], [len * 1.08, .5, -bw * .15, .08]], M.BODY, { group: 3, extra: true, paint: p => p[0] > len * 1.15 && p[1] > .38 ? M.BELLY : p[1] < .1 ? M.BODY2 : spotty(p, 30, .18) ? M.BODYL : undefined });
+    m.part = "head";
+    grizzle(m, p => p[0] > H[0] + hr * .3 ? .6 : p[0] > H[0] - hr * .5 ? .2 : 0);
+    for (const e of m.anchors.eyes.pts) m.ell(v3.add(e, v3.add(v3.mul(v3.norm(v3.sub(e, H)), hr * .06), [0, hr * .1, 0])), [hr * .3, hr * .16, hr * .28], M.BODY2, { group: 1 }); // heavy lids, half down
+    const t = m.anchors.head.top;
+    for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2 + .9, out = [Math.cos(a) * .35, 1, Math.sin(a) * .35], b = v3.add(t, [Math.cos(a) * hr * .3, -hr * .04, Math.sin(a) * hr * .3]), nut = v3.add(b, v3.mul(v3.norm(out), hr * .42));
+      m.ell(nut, [hr * .38, hr * .27, hr * .27], M.WOOD, ex(160, { dir: out, up: [1, 0, 0], paint: q => v3.dot(v3.sub(q, nut), v3.norm(out)) > hr * .26 ? M.TRUNK : undefined })); // the nut, its tip darker
+      for (let k = 0; k < 5; k++) { const ak = k / 5 * Math.PI * 2, d = v3.norm(v3.add(v3.norm(out), [Math.cos(ak) * .55, 0, Math.sin(ak) * .55])); m.ell(v3.add(b, v3.mul(d, hr * .3)), [hr * .34, hr * .07, hr * .13], k % 2 ? M.LEAF : M.LEAF2, ex(161, { dir: d })); } } // its husk: ragged green bracts round the nut's lower half
+    m.part = "body";
+  },
+  // the elder marten: its cream bib grown into a heater shield on its chest, from throat to mid-chest, bronze-rimmed with a faint
+  // carved mark; scarred, notched, grizzled at the muzzle; the amber pendant hanging over it
+  marten(m, S, c, { N, earBase }) {
+    const { H, hr, nb, len, top, chest, bw } = c, mid = (top + chest) / 2;
+    grizzle(m, p => p[0] > H[0] + hr * .3 ? .35 : .08);
+    notch(m, [{ c: v3.add(earBase(1), [hr * .14, hr * .3, 0]), r: [hr * .08, hr * .1, hr * .2] }, { c: v3.add(earBase(-1), [-hr * .1, hr * .3, 0]), r: [hr * .07, hr * .08, hr * .2] }]);
+    drawOn(m, [0, 1, 2].map(k => [[len * (.05 - k * .12), top - .05, 0], [len * (-.12 - k * .12), mid - .05, 0], [len * (-.25 - k * .12), chest + .05, 0]]), [0, .1, 1], .03, M.BELLY);
+    const n = v3.norm([.75, .12, .65]), v = v3.norm(v3.sub([0, 1, 0], v3.mul(n, n[1]))), u = v3.norm(v3.cross(n, v)), sv = (top + .12 - chest) * .5, su = bw * .95;
+    const cc = surfaceFrom(m, [len * .8, chest + sv * .75, 0], n, .05, .8);
+    const heater = (s, t, k) => t > 1 * k ? false : t >= -.05 ? Math.abs(s) < k : Math.abs(s) < k * (1 - Math.pow(-t / k, 1.7)); // straight top and sides, curving to a point
+    m.flat(cc, u, v, su, sv, (s, t) => { if (!heater(s, t, 1)) return null; if (!heater(s, t * 1.0 - .02, .82)) return M.WOOD; const mark = (Math.abs(s) < .05 && t > -.45 && t < .55) || (t > .05 && t < .45 && Math.abs(Math.abs(s) - (t - .05) * .9) < .05); return mark ? M.BODY2 : M.WEB; }, { group: 155, extra: true, bend: 0 }); // the shield
+    const r1 = fitRing(m, v3.lerp(nb, H, .2), N.dir, .016, .2);
+    m.chain(closed(r1, .016), M.TRUNK, ex(150));
+    charm(m, "amber", frontPts(r1, 1)[0], .2, 151);
+  },
+};
