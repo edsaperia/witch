@@ -12,7 +12,7 @@ export const TERRACES = {
     pattern: "rows", along: "paths", density: .5, clump: .7, glades: { count: 2, size: [12, 18] },
     heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: .05 },
     terrain: ["hollows"], decor: { rate: .25, ruins: .25, rocks: .45, freak: .1, lake: .15, modern: .05 },
-    feel: "Stepped mossy ledges under wild cherry, fir and rowan in rows along the ledges, mist lying in the hollows; high, cool and green, a red panda curled on a bough.",
+    feel: "Stepped mossy ledges under fir, rowan and birch, mist lying in the hollows; high, cool and green, a red panda curled on a bough.",
   },
   flora: { species: [["cherry", .4], ["fir", .25], ["rowan", .2], ["birch", .15]], palette: { sat: .9, val: .9 } },
   settings: { treeDensity: .55, groundCover: { density: .75, kinds: ["moss", "blades"] } },
