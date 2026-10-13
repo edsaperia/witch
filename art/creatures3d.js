@@ -308,13 +308,14 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const legK = sz("legK");
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
   const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
-  const hump = q.back === "hump" ? q.hump ?? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
+  const hump = q.back === "hump" ? q.hump ?? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 * (q.archK ?? 1) : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   const paintBody = p => {
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
-    if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
+    if (q.spots === "solid") { const k = 24, f = p.map(c => c * k - Math.floor(c * k) - .5); if (f[0] * f[0] + f[1] * f[1] + f[2] * f[2] < .16 && spotty(p, k, .6)) return M.NOSE; } // a cheetah's: small round solid dots all over
+    if (q.spots && q.spots !== "solid" && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
     if (q.bands && p[1] > chest && p[0] > -len * 1.1 && Math.floor((p[1] - chest) / Math.max(.01, top + hump - chest) * q.bands.n * 2 + .5) % 2) return M[q.bands.mat || "BELLY"]; // a piglet's stripes, running its length
     if (q.folds && p[1] < top - .02 && Math.abs(p[2]) > bw * .45 && q.folds.some(f => Math.abs(p[0] - f * len - (p[1] - chest) * .25) < .016 * (q.foldW ?? 1))) return M.BODY3; // a rhino's armour: deep folds of hide down its flanks (folds: where, -1 rump to 1 chest)
@@ -348,18 +349,24 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.part = "head"; // the neck, head, ears, eyes, horns, antlers and tusks: one piece, hung from the neck's base
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
   m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
+  const tearAt = p => { // a cheetah's black tear lines, eye to mouth (lit on its legend)
+    if (!q.tears) return undefined;
+    const z = Math.sign(p[2]) || 1, E = [H[0] + hr * .78, H[1] + hr * .28, z * hr * .5], F = [H[0] + hr * 1.2, H[1] - hr * .62, z * hr * .28], d = v3.sub(F, E), t = Math.max(0, Math.min(1, v3.dot(v3.sub(p, E), d) / v3.dot(d, d))), w = v3.sub(p, v3.add(E, v3.mul(d, t)));
+    return v3.dot(w, w) < (hr * .13) ** 2 ? (q.tears === "glow" ? M.MAGIC2 : M.NOSE) : undefined;
+  };
   const headPaint = p => {
     if (q.face === "badger") return Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? (q.blazeGlow && Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) && p[1] > H[1] - hr * .1 ? M.RUNE : M.BELLY) : M.BODY3; // blaze: the stripe's width; blazeGlow: it glows in moonlight
     if (q.face === "dark") return M.BODY2;
     if (q.face === "meerkat" && p[0] > H[0] - hr * .05 && Math.abs(p[1] - (H[1] + hr * .27)) < hr * .3 && Math.abs(Math.abs(p[2]) - hr * .5) < hr * .38) return M.BODY3; // dark patches round its eyes
     if (q.frost && p[0] > H[0] + hr * .7 && spotty(p, 26, .45)) return M.WEB; // frost on its muzzle
+    const tear = tearAt(p); if (tear) return tear;
     if (q.mask && p[0] > H[0] + hr * .15 && p[1] > H[1] - hr * .4 && p[1] < H[1] + hr * .45) return M.BELLY; // a white mask over its eyes and muzzle
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
     return undefined;
   };
   m.ell(H, [hr * 1.05, hr * .92, hr * .88], M.BODY, { paint: headPaint });
   const L = hr * q.snout * sz("snout"), Dm = hr * q.snoutD * .55, sn = [H[0] + hr * .65 + L * .5, H[1] - hr * .28, 0];
-  m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => (q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p) });
+  m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
   const tip = [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0];
   m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
   // eyes: both show; legends' glow
@@ -504,6 +511,8 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
+  else if (kind === "ringed") m.chain([[...tb, .085], [X(1.2), top - .3, 0, .075], [X(1.5), top - .62 + tw, 0, .068], [X(1.85), .24 + tw, 0, .06], [X(2.1), .36 + tw, 0, .05]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) && p[1] > .3 + tw ? M.BELLY : p[0] < X(1.45) && Math.sin(p[0] * 26) > .25 ? M.BODY3 : undefined }); // a cheetah's: long and heavy (its rudder), low, curling up at its end, black rings and a white tip
+  else if (kind === "tuft") { m.chain([[...tb, .06], [X(1.2), top - .35, 0, .045], [X(1.45), .32 + tw, 0, .04], [X(1.7), .26 + tw, 0, .035]], M.BODY, o); m.ell([X(1.78), .3 + tw, 0], [.08, .11, .07], M.BODY3, o); } // a lion's: long, hanging low and curling up, a dark tuft at its end
   else if (kind === "meerkat") m.chain([[...tb, .06], [X(1.2), top - .05 + tw, 0, .045], [X(1.55), top + .12 + tw, 0, .035], [X(1.7), top + .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[1] > top + .2 ? M.BODY3 : undefined }); // long and thin, held up in a curve, dark-tipped (the meerkat's)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }
