@@ -1,12 +1,12 @@
 // The bamboo jungle (the journey's west: unknown-11's island, the jungle biome): an area type as a recipe (art/recipes.js says what
-// each field is). Dense groves of bamboo under tall kapoks, a jungle shrine in the clearing, the tiger its creature.
+// each field is). Dense groves of bamboo under tall kapoks, a heap of old temple rubble in the clearing, the tiger its creature.
 export const BAMBOO_JUNGLE = {
   id: "bamboo-jungle", name: "Bamboo jungle", creature: "tiger", by: "recipe", leaf: .26, floor: ["leaves", .11, .55, .32],
-  text: { floor: "bamboo leaf litter", wall: "walls of bamboo", small: "ferns and long grass", big: "bamboo groves under kapok", set: "a jungle shrine with a stone tiger" },
+  text: { floor: "bamboo leaf litter", wall: "walls of bamboo", small: "ferns and long grass", big: "bamboo groves under kapok", set: "a heap of mossed temple rubble" },
   wall: [["fern", {}], ["shrub", {}]], small: [["fern", {}], ["grass", { h: 1.6 }]],
   big: [["tree", { type: "bamboo", scale: 1 }], ["tree", { type: "kapok", minor: true, scale: 1.25 }]],
   pathKinds: ["footpath"],
-  setPiece: ["tiger-shrine", "a jungle shrine with a stone tiger", 1.1],
+  setPiece: ["heap", "a heap of mossed temple rubble", 1, { of: "rubble", top: "slab", moss: .5 }],
   layout: {
     pattern: "groves", density: .65, clump: .85, glades: { count: 2, size: [10, 16] },
     heightMix: { sapling: .15, mature: .5, tall: .25, giant: .1 }, undergrowth: .75, lean: { dir: 0, amount: .05 },

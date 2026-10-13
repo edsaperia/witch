@@ -219,22 +219,7 @@ const spSETS = {
     for (const [c, r] of [[[-.6, 1.6, 0], [.6, .3, .75]], [[.5, 1.65, 0], [.65, .3, .75]], [[-.95, .9, -.55], [.25, .65, .25]], [[.95, .8, -.6], [.25, .55, .25]], [[-.9, .7, .62], [.22, .5, .2]], [[.2, 1.3, -.65], [.5, .4, .2]]]) m.ell(c, r, M.LEAF, { group: 4, rough: .04, paint: bloom });
     m.box([0, .4, -.35], [.6, .04, .15], M.WOOD, { round: .02, group: 5 }); for (const x of [-.5, .5]) m.seg([x, 0, -.35], [x, .38, -.35], .03, .03, M.WOOD, { group: 5 }); // a bench
   },
-  // bamboo jungle (the tiger's): a jungle shrine, a stone tiger crouched on a plinth between two stone lanterns, a strangler's roots
-  // creeping over the plinth, offerings at its foot
-  "tiger-shrine"(m) {
-    const moss = p => p[1] > .55 && spHash(Math.floor(p[0] * 9), Math.floor(p[2] * 9)) < .45 ? M.MOSS : Math.abs(Math.sin(p[0] * 11 + p[2] * 7)) < .05 ? M.STONED : undefined;
-    m.box([0, .3, 0], [1.1, .3, .7], M.STONE, { round: .04, rough: .01, group: 1, paint: moss }); m.box([0, .7, 0], [.9, .1, .55], M.STONE, { round: .03, rough: .01, group: 1, paint: moss });
-    const T = [0, .8, 0]; // the stone tiger, crouched, looking out
-    m.ell(v3.add(T, [-.1, .32, 0]), [.62, .28, .28], M.STONE, { group: 2, rough: .01, paint: p => p[1] > 1.3 && spHash(Math.floor(p[0] * 7)) < .5 ? M.MOSS : (p[0] * 6 % 1 + 1) % 1 < .12 ? M.STONED : undefined }); // its body, worn stripes
-    m.ell(v3.add(T, [.55, .55, 0]), [.24, .22, .22], M.STONE, { group: 2, rough: .01 }); m.ell(v3.add(T, [.74, .5, 0]), [.12, .1, .12], M.STONE, { group: 2 }); // head and muzzle
-    for (const z of [-.13, .13]) { m.ell(v3.add(T, [.5, .76, z]), [.06, .07, .05], M.STONE, { group: 2 }); m.seg(v3.add(T, [.42, .05, z * 1.6]), v3.add(T, [.7, .05, z * 1.6]), .07, .06, M.STONE, { group: 2 }); } // ears, forepaws
-    m.chain([[-.7, 1.05, 0, .06], [-1.0, .9, 0, .05], [-1.05, .6, .2, .04]], M.STONE, { group: 2 }); // its tail down the plinth
-    for (const x of [-1.6, 1.6]) { m.box([x, .45, .35], [.13, .45, .13], M.STONE, { round: .02, group: 3, paint: moss }); m.box([x, 1.0, .35], [.24, .1, .24], M.STONE, { round: .03, group: 3 }); m.box([x, .93, .35], [.08, .06, .08], M.NOSE, { group: 3 }); } // stone lanterns, cold
-    spLimb(m, [[-1.2, 1.2, -.6, .14], [-1.0, .65, -.3, .1], [-.6, .3, .45, .06], [-.3, .02, .9, .04]], 4); spLimb(m, [[-1.2, 1.2, -.6, .12], [-1.5, .4, -.2, .07], [-1.8, .02, .4, .04]], 4); // a strangler's roots over the plinth
-    spLimb(m, [[-1.3, 0, -.7, .2], [-1.25, 1.3, -.65, .16], [-1.1, 2.4, -.6, .1]], 5); spCrown(m, [-1.0, 2.6, -.6], [.8, .45, .6], 6);
-    m.ell([.4, .05, .85], [.12, .05, .1], M.EAR, { group: 7 }); m.ell([-.1, .05, .9], [.08, .04, .07], M.FLOWER, { group: 7 }); m.ell([.15, .05, .95], [.07, .04, .06], M.ACCENT, { group: 7 }); // offerings: a bowl, flowers, fruit
-    spTufts(m, 22, 2.4, 10, 13, .45);
-  },
+
 };
 // The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale); a generated kind
 // (art/props/sets.js) may add a fourth item, its seed and any numbers to fix.
