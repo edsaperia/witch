@@ -1,6 +1,6 @@
 // Sigils snap to a world-fixed hex grid (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"; leash.hex): the cell
 // nearest her decides, a taken one picking its sigil up (no fizzling), a free one taking the sigil in its middle; cells under
-// runestones, soundsystems and home's speakers are skipped. And parked animals rest leash.restAbove (5 m) north of their sigil.
+// runestones, soundsystems and home's speakers are skipped. (Parked animals rest north of their sigil by their size: runeOffset.test.ts.)
 import { describe, expect, it } from "vitest";
 import { hexCell, hexCentre, hexSpot, newLeash, stepLeash, type LeashState } from "./leash";
 import { TUNING } from "./tuning";
@@ -92,5 +92,4 @@ describe("hex sigils (leash.hex)", () => {
     expect(n).toBeGreaterThan(10);
   });
 
-  it("parked animals rest 5 m north of their sigil (leash.restAbove, from 10)", () => expect(TUNING.leash.restAbove).toBe(5));
 });

@@ -8,6 +8,7 @@
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
 // No drawing here.
 import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, scatterSpot, stepBaby, trailPoint, updateTrail } from "./babies";
+import { runeOffset } from "./runeOffset";
 import { heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { befriend, invitableNow, stateOf } from "./creatureStates";
@@ -272,7 +273,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
       s.events.push({ kind: "picked", id: p.id, x: p.x, z: p.z, at: time });
     } else if (rune) {
       // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
-      inviteCreature(s, rune, rune.x, rune.z + (t.leash.restAbove ?? 0), time, "picked"); // (where its rune lay, south of it)
+      inviteCreature(s, rune, rune.x, rune.z + runeOffset(rune, t), time, "picked"); // (where its rune lay, south of it)
     } else if (stackBottom(s)?.kind === "relic") {
       // A relic's sigil at the bottom (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you put down when you press
       // e"): by a sleeping legend the sigil button has given it already (rules/legends.ts relicButton); anywhere else it goes
@@ -322,10 +323,9 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     stepBaby(c, to.x, to.z, witch.x, witch.z, leashSpeed(c, t) * (t.leash.pace ?? 1), herSpeed, dt, t);
   }
   for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend && !(babies.length && isBaby(byId(id)))) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
-  // Parked, it rests restAbove metres north of its sigil (up the screen, -z), so the sigil stays in sight and easy to pick up
-  // (Ed, 2026-10-10: "Leashed animals should come to rest 10m above their placed sigil"; 2026-10-11: 5 m).
-  const above = t.leash.restAbove ?? 0;
-  for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z - above, dt, t);
+  // Parked, it rests north of its sigil (up the screen, -z), so the sigil stays in sight and easy to pick up (Ed, 2026-10-10: "Leashed
+  // animals should come to rest 10m above their placed sigil"; 2026-10-13: the sigil's top just below its feet, by its size: rules/runeOffset.ts).
+  for (const p of s.placed) if (!busy(p.id)) { const c = byId(p.id); stepLeashed(c, p.x, p.z - runeOffset(c, t, 1), dt, t); }
 }
 
 /** The hex cell (axial q, r) nearest (x, z), on a world-fixed grid `size` metres between neighbours (rows along x, each
