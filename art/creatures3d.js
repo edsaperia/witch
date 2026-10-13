@@ -255,6 +255,15 @@ function evolve3d(m, feats, c) {
         m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, S * (f.nub ? .1 : .2))), u, v, Math.hypot(...span) * .55, S * (f.nub ? .22 : .4), dragonWing(mem), { group: g + 2, extra: true, bend: .2 });
       }
     }
+    if (f.kind === "backPlates") { // a stegosaur's plates: two staggered rows of flat kite-shaped plates along its back, tallest over its hips; glow: lava in their veins (a legend's)
+      m.part = "body";
+      const n = f.count ?? 11, H0 = f.height ?? .32, mat = M[f.mat || "BODY3"], rim = M[f.rim || "BODY2"], vein = f.glow ? M.GLOW : null;
+      for (let i = 0; i < n; i++) {
+        const t = (f.from ?? .12) + ((f.to ?? .92) - (f.from ?? .12)) * i / (n - 1), prof = Math.max(0, 1 - Math.abs(t - .3) / .7) ** .8, h = H0 * (.35 + .65 * prof) * (.9 + .2 * Math.abs(Math.sin(i * 2.3)));
+        const b = c.backAt(t), z = (i % 2 ? 1 : -1) * c.bw * .14, up = v3.norm([(t - .45) * .25, 1, z * .6]), mid = v3.add([b[0], b[1] - .02, z], v3.mul(up, h * .48));
+        m.flat(mid, [1, 0, 0], up, h * (f.width ?? .42), h * .52, (a, bb) => { let w = bb < 0 ? .62 + .38 * Math.sqrt(1 - bb * bb) : Math.pow(1 - bb, .75); if (f.chips && Math.abs(Math.sin(bb * 9 + i * 2.3)) > .86) w -= .22; if (Math.abs(a) > w) return null; if (Math.abs(a) > w - .14 || bb > .86) return rim; if (vein && (Math.abs(a - Math.sin(bb * 5) * .12) < .07 || Math.abs(bb - .2 - a * .3) < .05)) return vein; return mat; }, { group: 190 + (i % 4), extra: true, bend: .05 });
+      }
+    }
     if (f.kind === "patagium" && m.rig?.legs) { // a flying squirrel's gliding membrane: loose furred skin from each wrist to its ankle along the flank, its rim pale; spread: how far it hangs out (a legend's, its night sky)
       m.part = "body";
       const mat = M[f.mat || "BODY"], rim = M[f.rim || "BELLY"], spread = f.spread ?? .5, sky = f.stars;
@@ -302,6 +311,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const paintBody = p => {
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
+    if (q.scarred && p[2] > bw * .5 && p[1] > chest + .05 && Math.abs(((p[0] * 2.2 + p[1] * 1.6) % .55 + .55) % .55 - .1) < .025 && Math.sin(p[0] * 7) > -.2) return M.BELLY; // old pale scars raked across its flank (an elder's)
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
     if (q.bands && p[1] > chest && p[0] > -len * 1.1 && Math.floor((p[1] - chest) / Math.max(.01, top + hump - chest) * q.bands.n * 2 + .5) % 2) return M[q.bands.mat || "BELLY"]; // a piglet's stripes, running its length
@@ -480,6 +490,10 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
+  else if (kind === "stego" || kind === "stegoElder") { // a stegosaur's: long, thick and tapering, held off the ground, its thagomizer of four spikes near the tip (an elder's: a gold ring round each spike's foot, offerings of those who revere it; one spike broken short)
+    const mid = [X(1.75), top - .62 + tw * .5, 0], tip = [X(2.25), top - .75 + tw, 0]; m.chain([[tb[0] + .05, tb[1] - .2, 0, .24], [X(1.35), top - .5 + tw * .3, 0, .18], [...mid, .11], [...tip, .05]], M.BODY, { ...o, paint: p => p[1] < top - .5 ? M.BODY2 : undefined });
+    for (const [k, side] of [[.3, 1], [.3, -1], [.78, 1], [.78, -1]]) { const b = v3.lerp(mid, tip, k), L = (.62 + k * .1) * (kind === "stegoElder" && side > 0 && k > .5 ? .7 : 1); if (kind === "stegoElder") m.ell(v3.add(b, [-.04 * L, .1 * L, side * .24 * L]), [.1, .08, .1], M.GLINT, { ...o, extra: true }); m.seg(b, v3.add(b, [-.3 * L, .32 * L, side * .78 * L]), .075, .01, M.BELLY, { ...o, extra: true, paint: p => Math.hypot(p[0] - b[0], p[2] - b[2]) > .55 * L ? M.NOSE : undefined }); } // its thagomizer: four long bone spikes splayed up and out, their tips dark
+  }
   else if (kind === "glider") { m.seg(tb, [X(1.2), top - .12 + tw, 0], .09, .1, M.BODY, o); m.ell([X(1.65), top - .16 + tw * .7, 0], [.5, .06, .2], M.BODY, { ...o, dir: [1, .12, 0], paint: p => p[0] < X(1.95) ? M.BODY3 : Math.abs(p[2]) > .13 ? M.BODY2 : undefined }); } // a flying squirrel's: flat and feathered either side, held level behind (its rudder in a glide), its tip dark
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }

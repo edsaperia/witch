@@ -61,6 +61,7 @@
     "newt":       { "name": "Wriggle",        "kind": "shot", "scale": { "invites.speed": 1.2, "invites.range": 1.2 }, "label": "Newt's Wriggle: 💌s fly a little faster and further" },
     "fennec":     { "name": "Ears",           "kind": "shot", "scale": { "invites.range": 1.35 }, "label": "Fennec's Ears: 💌s reach further" },
     "flyingsquirrel": { "name": "Glide",      "kind": "move", "scale": { "treetopSpeed": 1.1, "dash.distance": 1.2 }, "label": "Flying squirrel's Glide: a little quicker over the treetops, and a longer blink" },
+    "stegosaurus": { "name": "Tail sweep",   "kind": "shot", "scale": { "invites.radius": 1.6 }, "label": "Stegosaurus's Tail sweep: each 💌 bursts wider" },
     "salamander": { "name": "Quick fire",     "kind": "shot", "scale": { "invites.cooldown": 0.6 }, "label": "Salamander's Quick fire: less wait between bursts" },
     "snake":      { "name": "Strike",         "kind": "shot", "scale": { "invites.speed": 1.4 },    "label": "Snake's Strike: 💌s fly faster" },
     "spider":     { "name": "Long thread",    "kind": "shot", "scale": { "invites.range": 1.5 },    "label": "Spider's Long thread: 💌s fly further" },

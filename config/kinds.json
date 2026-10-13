@@ -324,12 +324,11 @@
       "biome": "rocky",
       "placeholder": true
     },
-    "unknown-20": {
+    "stegosaurus": {
       "phase": 4,
       "bearing": 105,
       "dir": "ESE",
-      "biome": "rocky",
-      "placeholder": true
+      "biome": "volcanic"
     },
     "unknown-21": {
       "phase": 4,

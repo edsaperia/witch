@@ -162,5 +162,14 @@ export const GENOMES = [
       { features: [{ kind: "patagium", spread: .6 }] },
       { head: { eyeGlow: true }, features: [{ kind: "patagium", spread: 1, mat: "BODY2", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: .09 }] },
     ] },
+  // the volcano's stegosaurus (Ed, 2026-10-12: "stegosaurus (good for volcano)", unknown-20's): a heavy, high-hipped plant-eater, its
+  // small head low, two rows of plates along its back and a thagomizer of four spikes; a legend's plates veined with lava
+  { id: "stegosaurus", name: "Stegosaurus", template: "quadruped", builder: "quad", palette: { hue: .27, sat: .28, val: .38, belly: "white", flower: [214, 92, 48] }, body: { hgt: 1.36, len: 1.05, chest: .38, tuck: .45, neck: .18, neckAng: -.6, neckW: .34, hr: .2, legW: 1.6, haunch: 1.5, hindFoot: 1.2, back: "arch", bw: .36 }, head: { snout: .8, snoutD: .5, muzzle: true, eyeK: 1.3 }, parts: { ears: { kind: "none" }, tail: "stego", feet: "paw" }, coat: { belly: true, spots: true, spotMat: "BODY2" }, legend: ["crystals"], texture: { kind: "scales", size: 3 },
+    levels: [
+      { body: { len: .8 }, head: { eyeK: 1.6 }, features: [{ kind: "backPlates", count: 5, height: .5, width: .5, mat: "FLOWER", rim: "BODY3", from: .1, to: .75 }] },
+      { features: [{ kind: "backPlates", count: 7, height: .5, width: .48, mat: "FLOWER", rim: "BODY3", from: .05, to: .8 }] },
+      { features: [{ kind: "backPlates", count: 9, height: .66, width: .46, mat: "FLOWER", rim: "BODY3", from: 0, to: .85 }] },
+      { coat: { scarred: true }, parts: { tail: "stegoElder" }, head: { eyeGlow: true, frost: true }, features: [{ kind: "backPlates", count: 9, height: .85, width: .46, mat: "BODY3", rim: "NOSE", glow: true, chips: true, from: 0, to: .85 }, { kind: "moss", count: 6, size: .12 }] }, // its elder: an epoch-old survivor of the volcano (Ed's brief, ART-GUIDE §0c): plates of obsidian veined with lava, chipped by ages, old scars across its flank, ash-grey frost on its muzzle, moss in its folds, a gold ring offered round each spike, one spike broken short
+    ] },
   { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },
 ];
