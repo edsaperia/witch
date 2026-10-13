@@ -290,6 +290,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
     if (q.bands && p[1] > chest && p[0] > -len * 1.1 && Math.floor((p[1] - chest) / Math.max(.01, top + hump - chest) * q.bands.n * 2 + .5) % 2) return M[q.bands.mat || "BELLY"]; // a piglet's stripes, running its length
+    if (q.folds && p[1] < top - .02 && Math.abs(p[2]) > bw * .45 && q.folds.some(f => Math.abs(p[0] - f * len - (p[1] - chest) * .25) < .016 * (q.foldW ?? 1))) return M.BODY3; // a rhino's armour: deep folds of hide down its flanks (folds: where, -1 rump to 1 chest)
     return undefined;
   };
   // ---- torso: a deep chest, a tucked waist, a rump ----
@@ -372,6 +373,13 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
+  if (q.noseHorn) { // a rhino's: a great horn near the tip of its nose and a smaller one behind it, in line, curving up and back (noseHorn: the front one's size)
+    const k = q.noseHorn * Math.max(.35, sz("tusks") || 0);
+    for (const [at, s] of [[.4, 1], [.02, .45]]) {
+      const b = [sn[0] + L * at, sn[1] + Dm * .5, 0], h = hr * .9 * k * s, tip = [b[0] - h * .22, b[1] + h * 1.05, 0];
+      m.chain([[...b, h * .22], [b[0] + h * .06, b[1] + h * .45, 0, h * .13], [b[0] - h * .06, b[1] + h * .85, 0, h * .06], [...tip, h * .015]], M.ACCENT, { group: 8 }); tuskTips.push(tip);
+    }
+  }
   if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }

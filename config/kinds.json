@@ -345,12 +345,11 @@
       "biome": "badlands",
       "placeholder": true
     },
-    "unknown-23": {
+    "rhino": {
       "phase": 4,
       "bearing": 165,
       "dir": "SSE",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "unknown-24": {
       "phase": 4,

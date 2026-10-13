@@ -20,6 +20,7 @@
     "marten": {"posture": {"head": [0.02, 0.02], "body": -0.01}, "quirk": "sniff", "every": [3, 6], "for": 1.0},
     "salamander": {"posture": {"head": [0.03, -0.02], "body": -0.01}, "quirk": "tailflick", "every": [4, 8], "for": 1.2},
     "meerkat": {"posture": {"head": [0, 0.06], "body": 0.01}, "quirk": "sentinel", "every": [5, 9], "for": 3.5},
+    "rhino": {"posture": {"head": [0.04, -0.07], "body": 0}, "quirk": "stomp", "every": [5, 9], "for": 1.2},
     "newt": {"posture": {"head": [0.03, 0.01], "body": -0.01}, "quirk": "tailflick", "every": [4, 8], "for": 1.0},
     "fennec": {"posture": {"head": [0.02, 0.04], "body": 0}, "quirk": "perk", "every": [3, 6], "for": 1.2},
     "dormouse": {"posture": {"head": [0, 0.03], "body": 0}, "quirk": "sniff", "every": [2, 5], "for": 0.8},
