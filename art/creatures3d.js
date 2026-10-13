@@ -439,6 +439,20 @@ function evolve3d(m, feats, c) {
       const mat = M[f.mat || "WOOD"], k = f.at ?? .3;
       for (const L of m.rig.legs) { if (L.fore ? f.fore === false : f.hind === false) continue; m.part = L.name; const a = L.hock ?? L.knee, b = L.foot, p = v3.lerp(b, a, k), d = v3.norm(v3.sub(a, b)), r = L.r[2] * (f.width ?? 1.4), h = L.r[2] * (f.height ?? .6); m.seg(v3.add(p, v3.mul(d, -h)), v3.add(p, v3.mul(d, h)), r, r, mat, { group: 180 + (L.side > 0 ? 0 : 1), extra: true }); }
     }
+    if (f.kind === "darken") { // an old coat gone darker with the years (the stoat's elder, an old brown ermine): its coat's own colour drawn in a deeper shade of it
+      const to = M[f.mat || "BODY2"];
+      for (const q of m.parts) if (q.mat === M.BODY) q.mat = to;
+      for (const F of m.flats) if (F.mat === M.BODY) F.mat = to;
+    }
+    if (f.kind === "crown") { // a crown of spikes round the top of its head, leaning out (the polar bear's of ice, the komodo's of spines): count, size, mat
+      m.part = "head";
+      const H = c.H, hr = c.hr, n = f.count ?? 7, L = hr * (f.size ?? .9), mat = M[f.mat || "CRYSTAL"], spread = f.spread ?? .9; // spread: how far round the crown runs (1 a full ring)
+      for (let i = 0; i < n; i++) {
+        const a = (n > 1 ? i / (n - 1) - .5 : 0) * Math.PI * 2 * spread * .5, out = v3.norm([Math.cos(a) * .35 - .1, 1, Math.sin(a) * .9]), base = v3.add(H, v3.mul(out, hr * .78));
+        const len = L * (1 - Math.abs(a) / Math.PI * .6) * (i % 2 ? .75 : 1); // taller in the middle, every other one shorter
+        m.seg(base, v3.add(base, v3.mul(v3.norm(v3.add(out, [0, .6, 0])), len)), hr * .13, hr * .02, mat, { group: 186, extra: true });
+      }
+    }
     if (f.kind === "wreath" && m.anchors.neck) { // the elder kit's wreath: flowers and leaves wound round its neck, sagging at the front (an offering)
       m.part = "head";
       const N = m.anchors.neck, d = v3.norm(N.dir), u = v3.norm(v3.cross(d, Math.abs(d[2]) < .9 ? [0, 0, 1] : [1, 0, 0])), w = v3.cross(d, u), n = f.count ?? 14, sz = Math.max(.03, N.r * (f.size ?? .2));
@@ -1641,13 +1655,14 @@ export function woodlouse3d(S, level, frame, st, facing = "towards") {
 
 export function snake3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, baby = level === 0, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
-  for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), .03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]); }
-  pts.push([.38, .25, pts[12][2], .07], [.42, .45, pts[12][2] * .8, .065]);
+  const girth = [.9, .82, 1, 1][level], rise = [1, .85, 1.15, 1.15][level]; // (the young a slim whip, the adult heavy, its head held high)
+  for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), (.03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)) * girth]); }
+  pts.push([.38, .07 + .18 * rise, pts[12][2], .07 * girth], [.42, .07 + .38 * rise, pts[12][2] * .8, .065 * girth]);
   // (Ed's review, 2026-10-13: "the baby and young are copies") its pattern comes in with age: the hatchling plain, the young
   // faintly spotted, the adult's spots and dark bands across its back; and the hatchling's head big for its body
   const spots = baby ? 0 : young ? .15 : .3, bands = level >= 2;
   m.chain(pts, M.BODY, { paint: p => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05 && p[1] > .06 ? M.BELLY : p[1] < .05 && p[0] < .35 ? M.BELLY : (bands && p[1] > .07 && Math.sin(p[0] * 26) > .72) || (spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots)) ? M.BODY3 : undefined });
-  const hc = [.5, .5, pts[13][2] * .8], hr = baby ? .13 : young ? .105 : .09;
+  const hc = [.5, .07 + .43 * rise, pts[13][2] * .8], hr = baby ? .13 : young ? .105 : .09;
   m.rig = { spine: pts.map(p => p.slice()), head: hc, hr }; // the live rig's spine (tail to head, each [x, y, z, radius]) and head, in model units
   m.part = "head";
   m.ell(hc, [hr * 1.5, hr * .75, hr], M.BODY, { dir: [1, -.15, 0], group: 1 });
