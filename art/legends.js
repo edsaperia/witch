@@ -73,9 +73,12 @@ export const LEGEND_POSES = {
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
   raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },
+  penguin: { ground: .5, droop: .5, drop: [], over: { moss: .1, lichen: .3, ferns: 0, grass: 2, mushrooms: 0, roots: 0, stones: 7, nest: true } }, // the rookery's penguin (an area recipe's): the elder god hunched down over its chick on its nest of pebbles, its head sunk in its shoulders, lichened like a sea rock
   mole: { ground: .2, droop: .4, drop: [], over: { moss: .4, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 2, stones: 1, flowers: 0 } },
   hedgehog: { ground: .18, droop: .5, drop: [], over: { moss: .45, lichen: .05, ferns: 1, grass: 4, mushrooms: 3, roots: 1, stones: 1 } },
   woodlouse: { ground: .09, droop: 0, drop: [9], over: { moss: .5, lichen: .1, ferns: 1, grass: 2, mushrooms: 4, roots: 2, stones: 0 } },
+  rattlesnake: { ground: .06, droop: 1, drop: [0], over: { moss: .08, lichen: .14, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the cactus flats' rattlesnake: coiled half under the sand, its rattle laid over its coils, pebbles drifted over it
+  scorpion: { ground: .12, droop: .4, drop: [30, 31, 32, 33, 34, 35, 36], over: { moss: .05, lichen: .16, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 5 } }, // the red canyon's scorpion: dug into the scree, its tail laid along its back
   snake: { ground: .04, droop: 1, drop: [40, 50], over: { moss: .45, lichen: .06, ferns: 2, grass: 6, mushrooms: 2, roots: 2, stones: 1 } },
   dragonfly: { ground: .38, droop: 0, drop: [0, 10, 11, 12, 13, 14, 15], cloak: { c: [-.2, .42, 0], r: [.65, .22, .4] }, over: { moss: .4, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 3, stones: 1 } }, // the mangrove pools' dragonfly: settled on the mud, wings laid flat, reeds and roots over it
   crab: { ground: .18, droop: .3, drop: [], over: { moss: .3, lichen: .2, ferns: 0, grass: 2, mushrooms: 0, roots: 0, stones: 2 } }, // the mudflat's crab: dug half into the mud, its great claw laid over its shell, barnacled

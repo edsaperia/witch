@@ -112,6 +112,18 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `silhouettes: no two species alike at ${G.SILHOUETTE_SIZE} px (${["", "young", "adult"][level]}s, every pair 0.15 apart or more)`, good: !close.length, info: (close.length ? close : pairs.slice(0, 3)).map(p => `${p.a}/${p.b} ${p.d.toFixed(2)}`).join(", ") });
     }
   }
+  { // growth, not scale (docs/ART-GUIDE.md 0b, the menagerie review): each level's shape against the level before it, both scaled into
+    // the same 24 px box (1 - overlap over union): a step under LEVEL_STEP is a scaled copy. A warning today (the review's baseline has
+    // mole 0.07 baby to young, bear 0.11 young to adult, marten 0.11 adult to legend); it fails once every species clears it.
+    const LEVEL_STEP = .2, bad = [], all = [];
+    for (const S of G.SPECIES) {
+      const sh = [0, 1, 2, 3].map(l => G.silhouette(G.critter(S.id, l, 0, st)));
+      const d = [1, 2, 3].map(l => G.silhouetteDistance(sh[l - 1], sh[l]));
+      all.push(`${S.id} ${d.map(x => x.toFixed(2)).join("/")}`);
+      d.forEach((x, i) => { if (x < LEVEL_STEP) bad.push(`${S.id} ${["baby→young", "young→adult", "adult→legend"][i]} ${x.toFixed(2)}`); });
+    }
+    res.push({ what: `growth, not scale: every level's silhouette ${LEVEL_STEP} or more from the level before, scaled to one box (${G.SPECIES.length} species)`, good: true, warn: bad.length ? "scaled copies: " + bad.join(", ") : "", info: all.join("; ") });
+  }
   { // the live rig's parts (#79 stage 4): every four-legged species and the snake, at each level, baked as pieces at the five headings (torso, head:
     // the four-legged, and their tails where they have one; the serpent's head), each with its pivot near it, four legs with two bones each, discs to string them
     const bad = [];
@@ -846,6 +858,7 @@ const report = await b.page.evaluate(async () => {
   return res;
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
+for (const r of report) if (r.good && r.warn) console.log(`WARN ${r.what} — ${r.warn}`); // (a warning: reported, not failed)
 ok(report.every(r => r.good), `${report.length} sprite checks`);
 // the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
 // every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle
