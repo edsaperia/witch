@@ -358,7 +358,8 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       // swarm growing to the last runestone, the same danger whatever its kind, weaker kinds in larger numbers (Ed, 2026-10-08):
       // rules/growth.ts routePopulation.
       const species = AREA_TYPES[map.typeOf(cx, cy)].creature, at = route.get(`${cx},${cy}`) ?? route.size + 1;
-      const [babies, young, adults] = routePopulation(at, route.size, map.tuning.population.byRoute, map.tuning.population.swarm, pop, species);
+      // (the zoo: every block its group, calm: rules/zoo.ts, config/zoo.json; Ed, 2026-10-13: "Default state: calm")
+      const [babies, young, adults] = map.zoo ? [map.zoo.group.babies, map.zoo.group.young, map.zoo.group.adults] : routePopulation(at, route.size, map.tuning.population.byRoute, map.tuning.population.swarm, pop, species);
       for (let i = 0; i < babies; i++) make(0);
       for (let i = 0; i < young; i++) make(1);
       for (let i = 0; i < adults; i++) make(2);

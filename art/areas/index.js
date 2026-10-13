@@ -30,6 +30,7 @@ import { SNOWFIELD } from "./snowfield/recipe.js";
 import { CRAGS } from "./crags/recipe.js";
 import { ICEFALL } from "./icefall/recipe.js";
 import { MISTWOOD } from "./mistwood/recipe.js";
+import { TROLLWOOD } from "./trollwood/recipe.js";
 import { AREA_FLORA_ALDER_FOREST } from "./alder-forest/flora.js";
 import { AREA_FLORA_ANCIENT } from "./ancient/flora.js";
 import { AREA_FLORA_BEAVER_POND } from "./beaver-pond/flora.js";
@@ -60,7 +61,7 @@ import { AREA_FLORA_TANGLY_FOREST } from "./tangly-forest/flora.js";
 import { AREA_FLORA_TWIGGY_FOREST } from "./twiggy-forest/flora.js";
 import { AREA_FLORA_WETLAND } from "./wetland/flora.js";
 import { AREA_FLORA_WISPY_FOREST } from "./wispy-forest/flora.js";
-export const AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD];
+export const AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD];
 export const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "holly-thicket": AREA_FLORA_HOLLY_THICKET, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
 export const AREA_FOLDER_KINDS = [
   {"kind":"hedgehog","slot":0,"phase":0,"bearing":170,"dir":"S","biome":"temperate"},
@@ -109,7 +110,7 @@ export const AREA_FOLDER_KINDS = [
   {"kind":"flyingsquirrel","slot":43,"phase":3,"bearing":295,"dir":"WNW","biome":"cold rainforest"},
   {"kind":"roe","slot":44,"phase":3,"bearing":321,"dir":"NW","biome":"cold rainforest"},
   {"kind":"penguin","slot":45,"phase":3,"bearing":346,"dir":"NNW","biome":"cold"},
-  {"kind":"unknown-15","slot":46,"phase":4,"bearing":5,"dir":"N","biome":"cold","placeholder":true},
+  {"kind":"frosttroll","slot":46,"phase":4,"bearing":5,"dir":"N","biome":"cold"},
   {"kind":"snowleopard","slot":47,"phase":4,"bearing":25,"dir":"NNE","biome":"mountains and glaciers"},
   {"kind":"frostwyrm","slot":48,"phase":4,"bearing":45,"dir":"NE","biome":"mountains and glaciers"},
   {"kind":"griffin","slot":49,"phase":4,"bearing":65,"dir":"ENE","biome":"mountains and glaciers"},

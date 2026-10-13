@@ -182,6 +182,8 @@ export function tuningFromLink(params: URLSearchParams) {
     }
   }
 
+  // The zoo (?zoo; rules/zoo.ts, Ed 2026-10-13): every area a block of a square grid, a row per biome; no island, no roster.
+  if (params.has("zoo") && tuning.map) tuning.map = { ...tuning.map, shape: "zoo", island: "", islandAreas: 0 };
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
   // where footpaths come into a clearing (placed with the map, so set before it is made).
   tuning.paths = { ...tuning.paths, fingerposts: true };
