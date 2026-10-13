@@ -6,10 +6,10 @@ import { GENOMES, speciesOf } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
 import { napForm } from "./naps.js";
 export const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
-import { withForm, withGear, withTexture, height3d, quad3d, owl3d, hedgehog3d, toad3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, moth3d, glowworm3d, spider3d } from "./creatures3d.js";
+import { withForm, withGear, withTexture, height3d, quad3d, owl3d, hedgehog3d, toad3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, armadillo3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, moth3d, glowworm3d, spider3d } from "./creatures3d.js";
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
-const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, glowworm: glowworm3d, spider: spider3d })); // body plan -> 3D builder; four-legged species all use quad3d
+const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, glowworm: glowworm3d, spider: spider3d })); // body plan -> 3D builder; four-legged species all use quad3d
 
 // Idle poses (a genome's `idle`; Ed, 2026-10-12): drawn as a baked frame while it stands still now and then (render/view/creatures.ts),
 // the four-legged rig standing aside. The meerkat sat up as a sentinel.
@@ -62,7 +62,7 @@ function baseColours(s, st) {
   return {
     [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02 - hs * .04, Math.min(1, s.sat * sat * 1.2 + .05 + hs * .1), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03 - hs * .07, Math.min(1, s.sat * sat * 1.3 + .1 + hs * .15), s.val * v * .4),
     [M.BODYL]: hsv2rgb(s.hue - .01 + hs * .04, s.sat * sat * st.sat * (.85 - hs * .25), Math.min(1, s.val * v * 1.22 + .05 + hs * .08)), // the coat's lifted top tone (genome/texture.js)
-    [M.BELLY]: belly, [M.ACCENT]: pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
+    [M.BELLY]: belly, [M.ACCENT]: s.accent ? hsv2rgb(...s.accent) : pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
     [M.BROW]: body[0] * .3 + body[1] * .55 + body[2] * .15 < 95 ? [226, 218, 204] : [30, 20, 28], // its brows: ink on a light coat, pale on a dark one
     [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: s.ear ? hsv2rgb(...s.ear) : hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
