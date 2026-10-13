@@ -16,6 +16,7 @@
 // She flies between areas over the treetops and fights on the ground, as a player does. Seeded and deterministic: no
 // clock, no Math.random; the same game and the same steps give the same controls.
 import { deckOf, overDeck } from "./treehouse";
+import { runeOffset } from "./runeOffset";
 import { AREA_TYPES } from "./map";
 import { cellKey } from "./party";
 import { hexSpot, stackBottom, toBottom } from "./leash";
@@ -530,9 +531,9 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           if (pk) pickUp(pk); else { feeding = null; feedAgain = time + 20; }
         }
         if (feeding && time - (feeding.until === Infinity ? time : feeding.until) > 40) { feeding.phase = "collect"; } // (never stuck waiting)
-      } else if (b.mode === "ground" && !b.seated && runeNear(g.creatures, b.x, b.z, 25, time, undefined, t.leash.restAbove ?? 0)) {
+      } else if (b.mode === "ground" && !b.seated && runeNear(g.creatures, b.x, b.z, 25, time, undefined, k => runeOffset(k, t))) {
         // One won over (happy): its sigil lies as a rune south of it; pick it up to leash it (E; Ed, 2026-10-06).
-        const south = t.leash.restAbove ?? 0, rn = runeNear(g.creatures, b.x, b.z, 25, time, undefined, south)!, rx = rn.x, rz = rn.z + south, rd = Math.hypot(rx - b.x, rz - b.z); // (its rune lies south of it)
+        const rn = runeNear(g.creatures, b.x, b.z, 25, time, undefined, k => runeOffset(k, t))!, rx = rn.x, rz = rn.z + runeOffset(rn, t), rd = Math.hypot(rx - b.x, rz - b.z); // (its rune lies south of it)
         bot.doing = `picking up ${article(rn.species)}'s rune`;
         if (rd > t.leash.pickRadius * 0.6) { mx = (rx - b.x) / rd; mz = (rz - b.z) / rd; } else if (step % 10 === 0) place = true;
       } else {

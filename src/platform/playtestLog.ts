@@ -35,6 +35,10 @@ export interface PlaytestSample {
    *  browser can time it, the share over 20 ms, and what was drawn (draw calls, trees, bushes, creatures, the mode and zoom). */
   frames?: { ms: number; p95: number; cpu: number; cpu95: number; gpu: number | null; gpu95: number | null; over20: number; draws: number; trees: number; bushes: number; creatures: number; mode: string; zoom: number };
   /** The sound (round 13: the music stopping): the context's state, the music's volume now, the damage heard, metres to the music. */
+  /** Where she was and how it was seen (Ed's circle bug, 2026-10-13: the log couldn't say where a picture went wrong): her place,
+   *  mode and area, the camera's zoom step, the world's time scale (under 1 in a sleeping legend's circle, where the world beyond
+   *  greys), and whether L took this sample (the moment Ed saw something). */
+  view?: { x: number; z: number; mode: string; area: string; zoom: number; timeScale: number; pressed?: boolean };
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }
 
@@ -54,13 +58,15 @@ export class PlaytestLog {
   audioState?: () => PlaytestSample["audio"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
   /** The frames' stats (main.ts sets it: the overlay's own numbers). */
   frameState?: () => PlaytestSample["frames"];
+  /** Where she is and how it's seen, for each sample (main.ts sets it). */
+  viewState?: () => PlaytestSample["view"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
   constructor(private game: Game, build: string) {
     this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.leyLines.pulseSpeed, samples: [] };
   }
   /** Call once a frame: takes a sample whenever another logEvery seconds of game time have gone. */
-  update(): void {
+  update(pressed = false): void {
     const g = this.game;
-    if (g.clock.time < this.next) return;
+    if (!pressed && g.clock.time < this.next) return;
     this.next = Math.floor(g.clock.time / EVERY) * EVERY + EVERY;
     const p = powerReport(g.creatures, g.witches, g.combat.sounds);
     this.run.interval = g.party.paused ? 0 : g.tuning.leyLines.pulseSpeed; // (the start screen's choice: the ley pulse's speed, m/s, 0 off; Ed 2026-10-09)
@@ -72,6 +78,7 @@ export class PlaytestLog {
       hits: g.witches[0].health.hp,
       audio: this.audioState?.(),
       frames: this.frameState?.(),
+      view: (v => (v && pressed ? { ...v, pressed: true } : v))(this.viewState?.()),
     });
     this.save();
   }
@@ -115,7 +122,7 @@ export class PlaytestLog {
   }
   /** Every run kept on this browser (this one included), as a JSON file to save. */
   download(): void {
-    this.save();
+    this.update(true); // (a sample of this moment: what Ed saw when he pressed L)
     const runs = readRuns(), all = runs.some(r => r.started === this.run.started) ? runs : [...runs, this.run];
     const blob = new Blob([JSON.stringify(all, null, 1)], { type: "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

@@ -34,6 +34,7 @@ import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
 import { COUNTRY } from "../../art/country.js";
+import { runeOffset } from "./runeOffset";
 // The rules' every kind of scenery on, as before the small islands' cuts (Ed, 2026-10-11: no set pieces, sports grounds, rocks, freak
 // trees or path pieces; ruins twice): this file tests how each is placed, so it keeps them all; "the small islands' scenery" below
 // checks the game's own tuning.
@@ -907,7 +908,7 @@ describe("inviting and leashing", () => {
   });
 
   it("stacks last in, first out: places the newest, picks up back onto the bottom (put down freely: leash.hex off)", () => {
-    const all = fresh(), s = newLeash(), TUNING = withTuning({ leash: { ...TOP.leash, hex: { ...TOP.leash.hex!, size: 0 } } }); // (on the hex grid: hexSigils.test.ts)
+    const all = fresh(), s = newLeash(), TUNING = withTuning({ leash: { ...TOP.leash, spacing: TOP.leash.pickRadius + 1, hex: { ...TOP.leash.hex!, size: 0 } } }); // (on the hex grid: hexSigils.test.ts; a spacing past pickRadius, so there's room between them to fizzle)
     const a = inviteOne(all, s, 0), b = inviteOne(all, s, 0, a.t), c = inviteOne(all, s, 1, b.t);
     expect(s.stack).toEqual([a.c.id, b.c.id, c.c.id]);
     const here = { x: 500, z: 500 };
@@ -950,7 +951,7 @@ describe("inviting and leashing", () => {
     const all = fresh(), s = newLeash(), { c, w } = inviteOne(all, s, 0);
     const to = { x: w.x + 60, z: w.z + 20 };
     stepLeash(s, all, { sigil: true }, to, true, 50, 0.1, TUNING);
-    const L = TUNING.leash.length, rest = { x: to.x, z: to.z - (TUNING.leash.restAbove ?? 0) }; // (parked, it rests north of its sigil)
+    const L = TUNING.leash.length, rest = { x: to.x, z: to.z - runeOffset(c, TUNING, 1) }; // (parked, it rests north of its sigil, by its size)
     let arrived = -1, px = c.x, pz = c.z, outside = 0;
     for (let i = 0; i < 1200; i++) {
       stepLeash(s, all, none, { x: 0, z: 0 }, true, 50 + i * 0.1, 0.1, TUNING);

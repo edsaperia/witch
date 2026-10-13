@@ -3473,7 +3473,7 @@
           ],
           "additionalProperties": false
         },
-        "restAbove": {
+        "runeGap": {
           "type": "number",
           "minimum": 0
         },
@@ -3638,7 +3638,7 @@
         "sigilGlyph",
         "sigilHalo",
         "sigilBacking",
-        "restAbove",
+        "runeGap",
         "hex",
         "runePull",
         "weight",
@@ -10085,6 +10085,10 @@
             "sceneryTaper": {
               "type": "number",
               "minimum": 0
+            },
+            "lightReach": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10103,7 +10107,8 @@
             "sceneryMin",
             "glowLight",
             "sceneryFoot",
-            "sceneryTaper"
+            "sceneryTaper",
+            "lightReach"
           ],
           "additionalProperties": false
         }
