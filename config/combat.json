@@ -310,7 +310,6 @@
   "bat",
   "raven",
   "moth",
-  "glowworm",
   "spider",
   "toad",
   "salamander",
@@ -366,6 +365,24 @@
    "bigswipe",
    "quake"
   ],
+  "tiger": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendCharge"
+  ],
+  "jaguar": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendCharge"
+  ],
+  "elephant": [
+   null,
+   "slam",
+   "bigslam",
+   "quake"
+  ],
   "lion": [
    null,
    "swipe",
@@ -388,6 +405,7 @@
  },
  "temperament": {
   "curious": [
+   "tiger",
    "lion",
    "squirrel",
    "fox",
@@ -400,11 +418,13 @@
    "mole",
    "raven",
    "wolf",
-   "boar"
+   "boar",
+   "redpanda"
   ],
   "skittish": [
    "cheetah",
    "hare",
+   "roe",
    "stag",
    "elk",
    "owl",
@@ -417,7 +437,7 @@
    "stoat",
    "snake",
    "spider",
-   "glowworm",
+   "cat",
    "woodlouse",
    "beetle",
    "snail",
@@ -446,6 +466,8 @@
    "bear",
    "elk",
    "stag",
+   "tiger",
+   "elephant",
    "lion",
    "frostwyrm",
    "griffin"

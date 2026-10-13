@@ -66,7 +66,7 @@ describe("a quest animal standing in its legend's circle", () => {
     expect(broughtLine(g, near())).toBeNull(); // (done)
     expect(creatureWords("elk", 1)).toBe("a young elk");
     expect(creatureWords("otter", 2)).toBe("an adult otter");
-    expect(creatureWords("glowworm", 0)).toBe("a baby glow-worm");
+    expect(creatureWords("cat", 0)).toBe("a baby wildcat");
   }, 60000);
   it("Ed's own case (seed 162218 on his 196-area map): the twiggy forest's legend dreams of a young one of a kind; his parked adults of it are named, a young one finishes it", () => {
     const T = withTuning({ mapAreas: 14, map: { ...TUNING.map, radius: 14 / Math.sqrt(Math.PI) } } as never), g = newGame(162218, T);

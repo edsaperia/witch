@@ -388,7 +388,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         c.moveReadyAt = time + (P.move.every ?? 0.5);
       }
       if (P.move?.kind === "flash" && time >= (c.moveReadyAt ?? 0) && d <= (P.move.radius ?? 10) * S) {
-        // The glow-worm's flash: a pulse of light dazzling the other side round it (slowed a moment).
+        // A flash: a pulse of light dazzling the other side round it (slowed a moment).
         const R = (P.move.radius ?? 10) * S, until = time + (P.move.time ?? 1.5), side = sideOf(c);
         for (const o of grid.near(c.x, c.z, R)) if (o !== c && targetable(o) && foes(sideOf(o), side) && !truce(c, o) && Math.hypot(o.x - c.x, o.z - c.z) <= R) o.slowUntil = Math.max(o.slowUntil ?? 0, until);
         if (huntsWitch(side)) for (const v of w.witches) if (v.onGround && !v.down && !sheltered(v, c) && Math.hypot(v.x - c.x, v.z - c.z) <= R) w.slowWitch?.(v.id, until, P.move.slow ?? 0.6);
