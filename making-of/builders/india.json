@@ -1,7 +1,7 @@
 {
   "builder": "India",
   "phase": "The menagerie: how animals are generated",
-  "slice": "The creature generator reviewed and lifted at the root: jointed legs, a frame under the coat, faces with bones, an elder kit for legends, a growth check; then Ed's body profile and spine, so no animal is a sausage",
+  "slice": "The creature generator reviewed and lifted at the root: jointed legs, a frame under the coat, faces with bones, an elder kit for legends, a growth check; then Ed's body profile and spine, so no animal is a sausage; then the growth batch, Ed's review sheets and the six bodies he approved from them",
   "prs": [
     800,
     812,
@@ -10,7 +10,11 @@
     821,
     819,
     833,
-    834
+    834,
+    843,
+    849,
+    859,
+    866
   ],
   "built": [
     "`docs/art-review/menagerie-review.md`: the creature pipeline end to end and its weaknesses measured (knee angles, level-to-level silhouette distances)",
@@ -21,14 +25,20 @@
     "The growth-not-scale check: each level's silhouette against the level before, scaled to one box",
     "The body profile (`body.profile`): width and depth set apart at five stations along the body (shoulder, ribcage, waist, loin, hip), the torso lofted through them; a wide deep chest and a slim waist for the big cats, the canids and the deer",
     "The spine (`body.spine`): a crest standing on the back line or a groove cut between the back muscles, by station; the boar's bristled crest, the cats' and the wolf's groove, the deer's shoulder line",
-    "A view from straight above for the tools (`TOP=1` on the lineup preview), so a body's girth can be judged on a sheet"
+    "A view from straight above for the tools (`TOP=1` on the lineup preview), so a body's girth can be judged on a sheet",
+    "The growth batch: levels that grow as animals, not as scaled copies, for the species the growth check warned on (#843, #849, #859)",
+    "Ed's animal review sheets: one a biome row as the zoo lays them out, each species on a line at game size from baby to legend with the adult zoomed, the witch for scale, its builder named and its known issues marked (on the shots branch, `previews/ed/review/`)",
+    "Six bodies from Ed's review (#866): the polar bear's head low on a longer neck over a high shoulder, the unicorn tall on long legs with a horse's head, the badger's shoulders, waist and wedge head, the rhino's horn growing by level and its own young, the crocodile's wide flat head with its jaw line and its legs out to the sides, the snow leopard's longer legs, thicker tail and bigger paws",
+    "The body knobs those needed (`quad3d`, each 1 or off as built): `body.tailK` (tail thickness), `body.pawK` (paw size), `body.sprawl` (how far a sprawler's legs go out), `head.skullY` and `head.skullZ` (a flatter or wider skull) and `head.jawLine` (a flat jaw's mouth as a dark line between the jaws, drawn while it's shut)"
   ],
   "learned": [
     "Measure before you draw: one script through `rigParts` showed nineteen species standing on four vertical columns, which no amount of shading could fix.",
     "A generator change lifts every animal at once, but every knob needs a default that keeps a species itself, or the forty records drift together.",
     "At game scale the smooth union eats small holes: an earring reads as a ring only once its hole is wider than the blend.",
     "Lofting a body through five stations looked right from the side and lumpy from above until the slices ran every tenth of the length with the stations interpolated: the smooth union only hides bumps smaller than its blend.",
-    "A groove down the back needs a waist first: cut into a tube it reads as a scratch, cut between two muscle masses it reads as a spine."
+    "A groove down the back needs a waist first: cut into a tube it reads as a scratch, cut between two muscle masses it reads as a spine.",
+    "A review sheet is only useful if everything on it is on one scale: once every species stood beside the witch at game size, Ed could point at six bodies in one pass, and each fix was a few numbers in a genome record.",
+    "A longer-legged body lifts everything it carries: the snow leopard's nap failed the art check (its ground origin above the sprite's middle) until the curl was tightened, so a body change has to be checked asleep too."
   ],
   "previews": [
     {
@@ -46,6 +56,10 @@
     {
       "src": "media/builders/india-spine.webp",
       "caption": "The spine: with the profile but no spine above, with a crest or a groove below (boar, lion, tiger, jaguar; cheetah, wolf, stag, elk)"
+    },
+    {
+      "src": "media/builders/india-bodies.webp",
+      "caption": "Ed's six bodies, before above and after below in the review format: polar bear, unicorn, badger, rhino, crocodile, snow leopard"
     }
   ]
 }
