@@ -10,7 +10,7 @@ import { routeIndex, routePopulation } from "./growth";
 import { POWER_TABLE, buildSwarm, capAt, capOf, classOf, estimatedPower, powerOf, referenceAt, swarmTotals, targetPower, type PowerTable } from "./swarm";
 import { classStrengths, strengthOf } from "./combat/data";
 import { spawnCreatures } from "./creatures";
-import { generateMap, AREA_TYPES } from "./map";
+import { generateMap, AREA_TYPES, CLASSIC_TYPES } from "./map";
 import { befriend } from "./creatureStates";
 import { leyChain, waveReached } from "./leylines";
 import { leyPulse, leyReachTimes, straightLink } from "./leypulse";
@@ -77,8 +77,11 @@ describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm p
     expect(capAt("hedgehog", 1, W)).toBe(16); expect(capAt("bear", 1, W)).toBe(6); expect(capAt("wolf", 0, W)).toBe(2);
   });
 
-  it("at the last runestone the swarms average endAverage (12), none over 16; mostly young early, mostly adults late", () => {
-    const end = kinds.map(sp => buildSwarm(1, W, sp)).map(([y, a]) => y + a);
+  it("at the last runestone the swarms average endAverage (12) over the classic map's kinds, none over 16; mostly young early, mostly adults late", () => {
+    // (the classic roster's: the later islands' kinds each shift the mean by their class, light, medium or strong, as they're added)
+    const classic = [...new Set(CLASSIC_TYPES.map(t => AREA_TYPES[t].creature))];
+    const end = classic.map(sp => buildSwarm(1, W, sp)).map(([y, a]) => y + a);
+    expect(Math.max(...kinds.map(sp => buildSwarm(1, W, sp)).map(([y, a]) => y + a))).toBeLessThanOrEqual(16);
     expect(Math.abs(end.reduce((x, y) => x + y, 0) / end.length - W.endAverage)).toBeLessThanOrEqual(0.5);
     expect(Math.max(...end)).toBeLessThanOrEqual(16);
     const share = (p: number) => { const s = kinds.map(sp => buildSwarm(p, W, sp)); return s.reduce((x, [y]) => x + y, 0) / s.reduce((x, [y, a]) => x + y + a, 0); };
