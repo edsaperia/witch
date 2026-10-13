@@ -227,12 +227,11 @@
       "dir": "ESE",
       "biome": "badlands"
     },
-    "unknown-06": {
+    "armadillo": {
       "phase": 3,
       "bearing": 141,
       "dir": "SE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
     "unknown-07": {
       "phase": 3,
