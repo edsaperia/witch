@@ -33,15 +33,20 @@ export function crownReach(map: ForestMap): number {
   return map.tuning.crownHeight / Math.sin(pitch);
 }
 
-/** Which area's plants grow at (x, z): the area a little way off, by a seeded low-frequency
- *  offset plus a per-plant stray, so each area's trees and bushes reach a little into its
- *  neighbours with a ragged edge (Ed, 2026-10-03). Only the look blends: everything else (where
- *  creatures roam, partifying, the party border, which area you're in) uses the exact partition. */
+/** Which area's plants grow at (x, z): the area a little way off, so each area's trees and bushes reach into
+ *  its neighbours (Ed, 2026-10-03). Since Ed's #887 (2026-10-13: "doesn't blend them very well. They mostly appear
+ *  as clumps of similar trees rather than a blend of different kinds of tree"), the offset is mostly the plant's
+ *  own, drawn independently of its neighbours' and as the sum of two draws (triangular), so across the band
+ *  width metres either side of a border the share of the neighbour's plants ramps from about half at the border to
+ *  none, the kinds interleaved plant by plant; a smooth noise (1 - stray of it, scale metres across) keeps the band
+ *  from running dead straight. Only the look blends: everything else (where creatures roam, partifying, the party
+ *  border, which area you're in) uses the exact partition. */
 export function plantType(map: ForestMap, x: number, z: number, i: number, j: number, salt: number): number {
   const E = map.tuning.areaEdgeBlend, s = map.seed;
   if (E.width <= 0) return map.areaAt(x, z).look;
-  const nx = (vnoise(x / E.scale, z / E.scale, s + 81) - 0.5) * 2 * E.width + (hash2(i, j, salt + 1) - 0.5) * E.width * E.stray;
-  const nz = (vnoise(x / E.scale, z / E.scale, s + 82) - 0.5) * 2 * E.width + (hash2(i, j, salt + 2) - 0.5) * E.width * E.stray;
+  const k = Math.min(1, E.stray), own = (a: number) => 2 * hash2(i, j, salt + a) - 1;
+  const nx = ((vnoise(x / E.scale, z / E.scale, s + 81) - 0.5) * 2 * (1 - k) + own(1) * k) * E.width;
+  const nz = ((vnoise(x / E.scale, z / E.scale, s + 82) - 0.5) * 2 * (1 - k) + own(2) * k) * E.width;
   return map.areaAt(x + nx, z + nz).look;
 }
 
