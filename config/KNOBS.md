@@ -1478,6 +1478,7 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.on` | boolean |  |
 | `music.volume` | number | 0 to … |
 | `music.latency` | string | "interactive" / "balanced" / "playback" |
+| `music.buffer` | number | 0 to … |
 | `music.dropLayers` | number | 0 to … |
 | `music.nearDist` | number | 0 to … |
 | `music.farDist` | number | 0 to … |
