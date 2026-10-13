@@ -371,6 +371,12 @@
    "swipe",
    "bigswipe",
    "legendCharge"
+  ],
+  "frostwyrm": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendNova"
   ]
  },
  "kite": {
@@ -442,7 +448,8 @@
    "bear",
    "elk",
    "stag",
-   "lion"
+   "lion",
+   "frostwyrm"
   ],
   "nimble": [
    "cheetah",
