@@ -5,9 +5,9 @@
 export const ROOKERY = {
   id: "rookery", name: "Penguin rookery", creature: "penguin", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86],
   ground: { patches: [{ mat: "STONE", n: 6, r: [4, 9] }] },
-  text: { floor: "snow over dark wet shingle", wall: "black sea rocks", small: "tussock grass and pebbles", big: "wind-stunted pines and birches", set: "the rookery's ring of pebble nests" },
+  text: { floor: "snow over dark wet shingle", wall: "black sea rocks", small: "tussock grass and pebbles", big: "wind-stunted firs, pines and birches", set: "the rookery's ring of pebble nests" },
   wall: [["boulder", { big: true }], ["stones", { big: true }]], small: [["stones", {}], ["grass", { h: 1.1 }]],
-  big: [["tree", { type: "pine", scale: .6, gnarl: .8 }], ["tree", { type: "birch", minor: true, scale: .55, gnarl: .7 }]],
+  big: [["tree", { type: "fir", scale: .6, gnarl: .8 }], ["tree", { type: "birch", minor: true, scale: .55, gnarl: .7 }]],
   pathKinds: ["animal"],
   setPiece: ["ring", "the rookery's ring of pebble nests", 1, { member: "stone", count: 12, height: 1.1, width: .6, centre: "stone", fallen: 0, gap: 1, lean: .05, embers: 0 }],
   layout: {
@@ -16,6 +16,6 @@ export const ROOKERY = {
     terrain: ["rocky"], decor: { rate: .3, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
     feel: "A cold bright shore: snow drifted over black shingle and sea rocks, tussock grass in the lee of the boulders, a few stunted pines and birches crouched flat by the wind; loud, busy and huddled.",
   },
-  flora: { species: [["pine", .5], ["birch", .3], ["fir", .2]], palette: { sat: .6, val: .75 } },
+  flora: { species: [["fir", .5], ["birch", .3], ["pine", .2]], palette: { sat: .6, val: .75 } },
   settings: { treeDensity: .22, groundCover: { density: .5, kinds: ["blades", "pebbles"] } },
 };
