@@ -465,7 +465,7 @@ export const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, 
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
 // How tall a species grows as a mature tree (px at the style's tree size), measured once per species and tree size.
 const statureCache = new Map();
-function speciesStature(type, st) { const key = type + ":" + st.treeSize; if (!statureCache.has(key)) statureCache.set(key, treeSpecies(type).bare(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
+function speciesStature(type, st) { const key = type + ":" + st.treeSize; if (!statureCache.has(key)) statureCache.set(key, (treeSpecies(type).raw ?? treeSpecies(type).bare)(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
 export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE, flora = null } = {}) {
   const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
   const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);

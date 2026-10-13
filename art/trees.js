@@ -123,9 +123,9 @@ function leafTexture(sp, c, rx, ry, r, { grain = 2, holes = 0, flecks = .16, dot
 // `spreadA`, forking `depth` times; clumps of `clumpR` [rx range] and `flat` (ry / rx) at the tips,
 // then a leaf texture. trunks: several stems; lean; dome: an extra crown of clumps over the top.
 function broadleaf(r, st, s, P) {
-  const k = spread(st) * (P.wide || 1), W = Math.round(240 * s * k + 70 * s), H = Math.round((P.tall || 140) * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const [PX, PY] = st.treePad || [0, 0], k = spread(st) * (P.wide || 1), W = Math.round(240 * s * k + 70 * s), H = Math.round((P.tall || 140) * s), sp = new Sprite(W + 2 * PX, H + PY), bx = W / 2 + PX, gy = H + PY; // (st.treePad: unclipped)
   const n = st.treeTrunks || P.trunks || 1, tw = (P.tw || 12) * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * .4 * st.gnarl + (st.treeLean || 0) + (P.lean || 0);
-  const tips = []; let crownY = H;
+  const tips = []; let crownY = gy;
   const grow = (p, ang, len, w, d) => {
     const b = bough(sp, p, ang, len, w, w * .65, st, r, { group: 12, mat: P.limbMat || M.TRUNK, bend: P.bend ?? 1 });
     if (d === 0) { tips.push(b.end); return; }
@@ -270,11 +270,25 @@ function genomeTree(id, g) {
   if (!g.style && TREE_GENERATORS[id] === gen) return gen;
   return (r, st, s) => gen(r, genomeStyle(st, g.style), s, P);
 }
+// A generator's tree whole (Ed, 2026-10-13: "The tops of some treetops are cut off"): a tree draws on a canvas its genome sizes,
+// and a crown that grows past it (a tall variant, a leaning or gnarled one, big blobs high up) was cut off flat at its edge.
+// Drawn as before, its random draws kept; only if it touches its canvas's top or sides is it drawn again with room round it
+// (st.treePad), from the same draws, so a tree that fitted stays exactly as it was. (Its textures' noise is by the pixel, so
+// the one redrawn differs in its grain, not its shape.)
+export const clippedAt = sp => { let top = 0, side = 0; for (let x = 0; x < sp.w; x++) if (sp.m[x]) top++; for (let y = 0; y < sp.h; y++) { if (sp.m[y * sp.w]) side++; if (sp.m[y * sp.w + sp.w - 1]) side++; } return top || side ? { top, side } : null; };
+function unclipped(gen) {
+  return (r, st, s) => {
+    const drawn = [], t = gen(() => { const v = r(); drawn.push(v); return v; }, st, s);
+    if (st.treePad || !clippedAt(t.sp)) return t;
+    let i = 0;
+    return gen(() => (i < drawn.length ? drawn[i++] : r()), { ...st, treePad: [Math.ceil(t.sp.w / 2), t.sp.h] }, s);
+  };
+}
 export const TREE_SPECIES = {};
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
-  const bare = genomeTree(id, g);
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
+  const raw = genomeTree(id, g), bare = unclipped(raw);
+  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, raw, /* raw: as drawn on its canvas alone, cut or not (areas.js speciesStature: the order an area deals its kinds into its height classes, kept as it was) */ name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
@@ -287,7 +301,7 @@ export function floraPick(q) {
   return q.split(",").map(x => x.trim()).filter(x => TREE_SPECIES[x]);
 }
 // the original six kinds by their old names (the style's tree-type knobs, the lab): grown from their genomes by the blob generator now
-export const broadTree = TREE_SPECIES.broad.bare, firTree = TREE_SPECIES.fir.bare, willowTree = TREE_SPECIES.willow.bare, birchTree = TREE_SPECIES.birch.bare, flatTree = TREE_SPECIES.flat.bare, palmTree = genomeTree("palm", PLANT_GENOMES.palm);
+export const broadTree = TREE_SPECIES.broad.bare, firTree = TREE_SPECIES.fir.bare, willowTree = TREE_SPECIES.willow.bare, birchTree = TREE_SPECIES.birch.bare, flatTree = TREE_SPECIES.flat.bare, palmTree = unclipped(genomeTree("palm", PLANT_GENOMES.palm));
 const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).flatMap(([id, S]) => [[S.fn, { id, ...S }], [S.bare, { id, ...S }]]));
 export const treeSpecies = type => TREE_SPECIES[type] || TREE_SPECIES.broad;
 // What a species' canopy looks like from the treetops, as numbers: its crown (the top half of a mature

@@ -27,14 +27,15 @@ uniform vec4 uPart[4];      // x, z, radius, on: where tufts part (the witch, cr
 uniform vec4 uClear[8];     // x, z, radius, on: trampled flat round placed sigils (Ed, v233)
 uniform vec4 uGrass;        // metres per art pixel, sway, part, (unused)
 attribute vec4 iTuft;       // x, z, size, flip
-attribute vec4 iUv;         // its frame in the tuft atlas
+attribute vec4 iUv;         // its frame in the tuft atlas, in atlas pixels: x, y (top), width, height
 attribute vec3 iPx;         // its size in art pixels (w, h), and how much it sways (from its sway mask)
 attribute float iOpen;      // how open the ground is there: where the canopy is
 uniform vec4 uCanopy;       // the ground's canopy shadow: strength (0 off), height, cover, wind speed
 uniform vec2 uClearing;     // clearingSize, clearingFalloff
 uniform vec3 uMoonDir;
 uniform float uTime;
-varying vec2 vUv;
+varying vec4 vRect; // its frame (atlas pixels)
+varying vec2 vLocal; // where in it, in its own pixels (0 to width, 0 to height down from its top)
 varying vec3 vWorld;
 varying float vMoonK;
 ${HEIGHT_VERT_GLSL}
@@ -65,7 +66,7 @@ ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
     if (r < uPart[k].z && r > 1e-3) { float a = (1.0 - r / uPart[k].z) * uGrass.z; w.xz += d / r * top * hgt * a; w.y -= top * hgt * a * 0.5; }
   }
   float u = iTuft.w > 0.5 ? 1.0 - uv.x : uv.x;
-  vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
+  vRect = iUv; vLocal = vec2(u * iUv.z, (1.0 - uv.y) * iUv.w);
   vWorld = w;
   // In the canopy's dappled shade as the ground under it is (Ed, 2026-10-04): the ground's own
   // canopy layer, worked out once at the tuft's root.
@@ -82,13 +83,18 @@ ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
 
 const FRAG = /* glsl */ `
 uniform sampler2D uTufts, uTuftN;
+uniform vec2 uTuftSize; // the atlas, in pixels
 uniform vec3 uRight, uUp, uFacing;
 uniform vec4 uFade; // centre x, z, radius, how much shows (0 in the treetops)
-varying vec2 vUv;
+varying vec4 vRect;
+varying vec2 vLocal;
 varying vec3 vWorld;
 varying float vMoonK;
 ${LIGHT_GLSL}
 ${BAYER_GLSL}void main() {
+  // Its texel picked in its own pixels and sampled at that texel's centre (the bench, 2026-10-13: as fractions of the atlas, which texel
+  // a fragment landed on shifted with the atlas's height, so a new area's tufts moved every tuft's pixels everywhere)
+  vec2 vUv = (vRect.xy + clamp(floor(vLocal), vec2(0.0), vRect.zw - 1.0) + 0.5) / uTuftSize;
   vec4 m = texture2D(uTufts, vUv);
   if (m.a < 0.5) discard;
   // Fading out towards the edge of the cover, and as she rises, in an ordered dither.
@@ -113,6 +119,7 @@ export class GrassView {
   private pxA: THREE.InstancedBufferAttribute;
   /** The tuft art: every area type's tufts in one atlas; per type, its frames, their shares (running total) and sways. */
   private atlas: Atlas;
+  private atlasW = 1; private atlasH = 1; // its size in pixels
   private kinds: { frame: number; upTo: number; sway: number }[][] = [];
   /** Each area's rushes (or any area's), for the reeds that ring ponds. */
   private rushes: ({ frame: number; sway: number } | undefined)[] = [];
@@ -151,6 +158,7 @@ export class GrassView {
     const anyRushes = this.rushes.find(r => r);
     for (let i = 0; i < LOOKS.length; i++) this.rushes[i] ??= anyRushes;
     this.atlas = packAtlas(sprites, 512);
+    const img = this.atlas.albedo.image as { width: number; height: number }; this.atlasW = img.width; this.atlasH = img.height;
     this.geo = new THREE.InstancedBufferGeometry();
     const quad = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
     this.geo.index = quad.index; this.geo.setAttribute("position", quad.getAttribute("position")); this.geo.setAttribute("uv", quad.getAttribute("uv"));
@@ -163,7 +171,7 @@ export class GrassView {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFacing: SPRITE_UNIFORMS.uFacing, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
-        uTufts: { value: this.atlas.albedo }, uTuftN: { value: this.atlas.normal }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
+        uTufts: { value: this.atlas.albedo }, uTuftN: { value: this.atlas.normal }, uTuftSize: { value: new THREE.Vector2(this.atlasW, this.atlasH) }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
         uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() },
         uCanopy: ground?.uCanopy ?? { value: new THREE.Vector4() }, uClearing: ground?.uClearing ?? { value: new THREE.Vector2(1, 1) } },
       // its pixels marked in the stencil's second bit (scenery's is the first, sprites.ts), so the placed sigils show through it (render/leash.ts)
@@ -257,7 +265,7 @@ export class GrassView {
         if (!f || !kd) { T[n * 4 + 2] = 0; continue; } // (an empty slot: no size, nothing drawn)
         const fr = F[kd.frame];
         T[n * 4] = f.x; T[n * 4 + 1] = f.z; T[n * 4 + 2] = f.size; T[n * 4 + 3] = f.flip ? 1 : 0;
-        U[n * 4] = fr.uv[0]; U[n * 4 + 1] = fr.uv[1]; U[n * 4 + 2] = fr.uv[2]; U[n * 4 + 3] = fr.uv[3];
+        U[n * 4] = Math.round(fr.uv[0] * this.atlasW); U[n * 4 + 1] = Math.round(fr.uv[1] * this.atlasH); U[n * 4 + 2] = fr.w; U[n * 4 + 3] = fr.h; // (its frame in atlas pixels)
         P[n * 3] = fr.w; P[n * 3 + 1] = fr.h; P[n * 3 + 2] = kd.sway;
         O[n] = f.open;
       }

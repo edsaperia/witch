@@ -576,8 +576,10 @@ const SPRITE_CHECKS = async ({ names, only }) => {
       const rising = order.filter(c => classes.has(c)).every((c, k, arr) => k === 0 || mean(c) > mean(arr[k - 1]) * (A.big.some(([, o]) => o.type === "willow") ? .98 : 1.05));
       const sane = vs.every(v => v.whole.h > 8 && v.whole.w > 4 && v.whole.h < 1200 && v.crownY > 0 && v.crownY < v.whole.h && v.top.h > 0 && v.bot.h > 0 && v.metres.height > 0);
       if (!(vs.length >= 8 && classes.size >= 3 && rising && sane)) bad.push(`${A.id}: ${vs.length} variants, ${classes.size} classes${rising ? "" : ", not rising"}${sane ? "" : ", bounds"}`);
+      // no crown cut off flat by its canvas (Ed, 2026-10-13: "The tops of some treetops are cut off"): its sprite's top row empty
+      vs.forEach((v, i) => { if (v.face) return; const d = v.whole.A.getContext("2d").getImageData(0, 0, v.whole.w, 1).data; let n = 0; for (let x = 0; x < v.whole.w; x++) if (d[x * 4 + 3]) n++; if (n) bad.push(`${A.id} #${i} ${v.species} ${v.heightClass}: its crown cut off at the top (${n} px)`); });
     }
-    res.push({ what: "tree variety: every wooded area has 8+ variants over 3+ height classes, taller by class (willows wider instead), sane bounds", good: !bad.length, info: bad.slice(0, 6).join("; ") || "ok" });
+    res.push({ what: "tree variety: every wooded area has 8+ variants over 3+ height classes, taller by class (willows wider instead), sane bounds, no crown cut off at its top", good: !bad.length, info: bad.slice(0, 6).join("; ") || "ok" });
   });
   task("tree-species", async () => { // tree species (Ed: the forest should vary from area to area, mostly UK kinds): every species draws, standing, its crown line inside;
     // seen from the treetops each species' crown differs measurably from every other's (fill, shade shares, leaf grain, outline, colour);
