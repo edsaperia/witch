@@ -366,8 +366,8 @@ void shade() {
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
   // Standing in a cast shadow (a trunk's, a palm's, scenery's: render/castShadows.ts), darkened and tinted by it where it falls on
   // this pixel's ground spot; not a crown up in the canopy, nor what lies flat on the ground (the shadow's drawn over that already).
-  vec3 cast = uLies > 0.5 || vFlags.y > 0.5 ? vec3(1.0) : castShadow(vGround);
-  if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld) * cast, alpha); return; }
+  vec3 castK = uLies > 0.5 || vFlags.y > 0.5 ? vec3(1.0) : castShadow(vGround);
+  if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld) * castK, alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
   // Scenery in her pool takes her light's own colour as the ground does (lighting.ts glowPool), so her light on green
   // crowns from the treetops reads amber, not lime (the art director via golf, #237). Characters keep their colours.
@@ -407,7 +407,7 @@ void shade() {
   // A legend's light in a few steps (Ed's round 14 playtest: a legend at its size read airbrushed, "smooth gradients, glossy
   // highlights", beside the pixel art round it): banded by brightness, its hue kept, so its shading is a short ramp of tones.
   if (uSteps > 0.5) { float l = max(1e-3, dot(col, vec3(0.3, 0.55, 0.15))), q = (floor(l * uSteps) + 0.6) / uSteps; col *= min(q / l, 3.0); }
-  gl_FragColor = vec4(haze(min(vec3(1.0), col) * cast, vWorld), alpha);
+  gl_FragColor = vec4(haze(min(vec3(1.0), col) * castK, vWorld), alpha);
 }
 void main() {
   vec2 rdx = dFdx(vUv), rdy = dFdy(vUv); // (taken here, in uniform flow: one screen pixel, one art pixel, along the sprite)
