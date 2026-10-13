@@ -35,10 +35,10 @@ export const LEGEND_POSES = {
   stoat: { sink: .4, droop: 1, drop: [60, 61, 90, 91, 92], over: { moss: .3, lichen: .16, ferns: 1, grass: 3, mushrooms: 0, roots: 2, stones: 5 } },
   owl: { ground: .58, droop: 0, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101], lid: M.BELLY, over: { moss: .4, lichen: .06, ferns: 2, grass: 2, mushrooms: 3, brackets: 4, roots: 2, stones: 0, nest: true } },
   snail: { ground: .2, droop: 1, drop: [5], eyes: [5], over: { moss: .4, lichen: .08, ferns: 3, grass: 3, mushrooms: 4, roots: 1, stones: 1 } },
-  wolf: { sink: .45, droop: 1, drop: [40, 50, 60, 61], over: { moss: .45, lichen: .06, ferns: 2, grass: 5, mushrooms: 2, roots: 3, stones: 2, sapling: "broad" } },
+  wolf: { sink: .68, droop: 1, drop: [40, 50, 60, 61, 77], over: { moss: .45, lichen: .06, ferns: 2, grass: 5, mushrooms: 2, roots: 3, stones: 2, sapling: "broad" } },
   fox: { sink: .42, droop: 1, drop: [70, 71], over: { moss: .35, lichen: .14, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 5 } },
   badger: { sink: .5, droop: 1, drop: [], over: { moss: .55, lichen: .1, ferns: 1, grass: 6, mushrooms: 0, roots: 1, stones: 3 } },
-  boar: { sink: .45, droop: .8, drop: [], over: { moss: .4, lichen: .04, ferns: 6, grass: 2, mushrooms: 2, roots: 3, stones: 1 } },
+  boar: { sink: .45, droop: .8, drop: [78], over: { moss: .4, lichen: .04, ferns: 6, grass: 2, mushrooms: 2, roots: 3, stones: 1 } },
   stag: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .55, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 5, stones: 2, beard: 6 } },
   hare: { sink: .45, droop: 1, drop: [99, 162], lay: [5, 25], // (its elder's moon set and its ear rings off while it sleeps, its long ears laid back)
     over: { moss: .3, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 1, stones: 1, flowers: 6 } },
@@ -53,10 +53,14 @@ export const LEGEND_POSES = {
   raccoon: { sink: .5, droop: 1, drop: [], over: { moss: .6, lichen: .1, ferns: 3, grass: 2, mushrooms: 2, roots: 2, stones: 2 } }, // the mossy creek's raccoon (an area recipe's): curled under moss and ferns
   meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
+  elephant: { sink: .4, droop: .8, drop: [], over: { moss: .6, lichen: .08, ferns: 4, grass: 4, mushrooms: 2, roots: 4, stones: 3 } }, // the temple jungle's elephant: a matriarch knelt among the temple stones, mossed like one of them, her bells green with age
+  jaguar: { sink: .45, droop: 1, drop: [], over: { moss: .55, lichen: .05, ferns: 4, grass: 2, mushrooms: 3, roots: 4, stones: 1 } }, // the river jungle's black jaguar: stretched along a root by the water, mossed over, its beads green with age
+  tiger: { sink: .45, droop: 1, drop: [], over: { moss: .35, lichen: .06, ferns: 3, grass: 3, mushrooms: 1, roots: 3, stones: 2 } }, // the bamboo jungle's tiger (an area recipe's): stretched out under ferns and roots, its garland gone to dry stalks and its stripes to bark and shadow
   roe: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .6, lichen: .05, ferns: 4, grass: 3, mushrooms: 2, roots: 3, stones: 1, beard: 3 } }, // the mossy dell's roe: curled in the moss, ferns over it
   redpanda: { sink: .45, droop: 1, drop: [], over: { moss: .5, lichen: .08, ferns: 3, grass: 2, mushrooms: 2, roots: 3, stones: 3, flowers: 2 } }, // the misty terraces' red panda: curled on a mossy ledge, tail over its nose
   crocodile: { sink: .55, droop: 1, drop: [120, 121, 140, 141, 142, 143, 144, 145, 146, 147], over: { moss: .35, lichen: .06, ferns: 0, grass: 4, mushrooms: 1, roots: 3, stones: 1 } }, // the mangrove's crocodile (an area recipe's): sunk in the mud like a log, its ridge of stones standing out of it, roots over it
   rhino: { sink: .45, droop: .8, drop: [], over: { moss: .45, lichen: .05, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 4 } }, // the bushveld's rhino (an area recipe's): sunk to its flanks in red earth like a great grey boulder, its horn standing out of the earth
+  polarbear: { sink: .5, droop: .9, drop: [], over: { moss: .25, lichen: .02, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 5 } }, // the pack ice's polar bear (an area recipe's): sunk in the ice like a drift of old snow, its long coat laid back over it
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
   griffin: { sink: .4, droop: 1, drop: [], over: { moss: .08, lichen: .2, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the eyrie's griffin (an area recipe's): folded down on its ledge, wings laid flat, feathers gone grey with lichen
   frostwyrm: { sink: .4, droop: 1, drop: [], over: { moss: .04, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }, // the frost cave's wyrm (an area recipe's): coiled down into the ice, rimed and stone-grey with age

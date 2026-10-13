@@ -21,11 +21,11 @@ export const GENOMES = [
       { body: { len: .5, hr: .29, legW: 1.5 }, head: { snout: .6 }, parts: { ears: { kind: "small", size: 1.2 }, tail: "stub" } },
       { body: { len: .74, chest: .52, tuck: .72, legW: .95, neckW: .34 }, head: { snout: 1 } },
       { body: { front: 1.08, legW: 1.05, bw: .25, hgt: 1.2, tuck: .72 }, head: { snout: 1.05 }, features: [{ kind: "mane", from: .6, to: 1, height: .26, count: 14, lean: .5, mat: "BODY2" }] },
-      { body: { front: 1.22, humpK: .8, back: "hump", legW: 1.35, bw: .26, len: .72, tuck: .66 }, head: { snout: 1.1, eyeGlow: true, frost: true }, features: [
-        { kind: "mane", from: .3, to: 1, height: .5, count: 26, lean: .35, mat: "BODY" },
-        { kind: "mane", belly: true, from: .55, to: 1, height: .22, count: 10, lean: .3, mat: "BODY2" },
-        { kind: "wisps", at: "mane", size: .26, count: 7, from: .05, to: .95, mat: "MAGIC2", lift: .32 },
-        { kind: "grizzle", amount: .6 }, { kind: "worn", ear: "near" }, { kind: "torc", mat: "WOOD" }, // the elder kit: an old wolf, grey-muzzled, an ear torn in some long-ago fight, a bronze torc
+      { body: { front: 1.22, humpK: .8, back: "hump", legW: 1.35, bw: .26, len: .72, tuck: .66 }, head: { snout: 1.1, eyeGlow: true, frost: true }, features: [ // (the elder: its howl made visible, docs/ART-GUIDE.md §0c)
+        { kind: "mane", from: .55, to: 1, height: .3, count: 16, lean: .5, mat: "BODY" },
+        { kind: "ruff", size: .2, count: 16, mat: "WEB" },
+        { kind: "scars", count: 3, from: .35 },
+        { kind: "howl", count: 3, size: .1 },
       ] },
     ] },
   { id: "fox", name: "Fox", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .8, val: .9, belly: "white", flower: [190, 40, 34] }, body: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, legW: .9 }, head: { snout: 1.05, snoutD: .5, snoutTaper: .6 }, parts: { ears: { kind: "point", size: 1.35 }, tail: "bushy", feet: "paw" }, coat: { belly: true, socks: .3 }, legend: ["tails"],
@@ -67,12 +67,12 @@ export const GENOMES = [
         { kind: "mane", belly: true, from: .3, to: .95, height: .16, count: 10, lean: .4 },
         { kind: "wisps", at: "tusks", size: .3 },
         { kind: "wisps", at: "horns", size: .32 },
-        { kind: "wisps", at: "mane", size: .26, count: 5, from: .4, to: .9 },
         { kind: "eyeglint", size: .06 },
-        { kind: "grizzle", amount: .5 }, { kind: "worn", ear: "far", tusk: "far", at: .72 }, { kind: "rings", on: "tusks", count: 2, from: .22, to: .5 }, // the elder kit: grey about the snout, one tusk broken short, bronze bands on its tusks
+        { kind: "furrow" },
+        { kind: "scars", count: 3, from: .35 },
       ] },
     ] },
-  { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .5, val: .7 }, body: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, legW: .75 }, head: { snout: 1.15, snoutD: .6, snoutTaper: .65 }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"] },
+  { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .5, val: .7 }, body: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, legW: .75 }, head: { snout: 1.15, snoutD: .6, snoutTaper: .65 }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", antlerK: 1.9, rump: true }, legend: ["antlersGlow"] },
   { id: "hare", name: "Hare", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .4, val: .72 }, body: { hgt: .72, len: .5, chest: .4, tuck: .45, neck: .2, neckAng: .9, neckW: .35, hr: .27, legW: .85, haunch: 1.35, hindFoot: 1.6, back: "arch" }, head: { snout: .65, snoutD: .7, whiskers: true }, parts: { ears: { kind: "long", size: 2.4 }, tail: "puff", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "hare", ears: true, eye: "EYE" } },
   { id: "owl", name: "Owl", template: "avian", builder: "owl", palette: { hue: .08, sat: .5, val: .55 }, legend: ["eyesRing", "wings"],
     // its evolution (docs/art-guide/EVOLUTIONS.md): a downy owlet with huge eyes and no tufts, a smooth young with short tufts, an
@@ -82,15 +82,15 @@ export const GENOMES = [
       { body: { down: true }, head: { tufts: 0 } },
       { head: { tufts: .7 } },
       { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
-      { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, eyesRing: true } },
+      { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }, // (its disc grown into a great dish, eyes like moons: docs/ART-GUIDE.md §0c)
     ] },
-  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
+  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true }, parts: { ears: { kind: "round", count: 4, size: .9, mat: "GLOW" }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
   { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5, flower: [200, 44, 40] }, legend: [], elder: { kind: "hedgehog" }, texture: { kind: "bristles" } },
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "squirrel", tail: true, eye: "EYE" } },
-  { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },
+  { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown", "sac"] },
   { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { hgt: .46, len: 1.15, chest: .32, tuck: .26, neck: .36, neckAng: .5, neckW: .6, hr: .27, legW: 1.2, back: "arch" }, head: { snout: .55, snoutD: .55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] },
   { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .45, val: .75 }, body: { hgt: 1.08, len: .5, chest: .56, tuck: .62, neck: .25, neckAng: .8, neckW: .4, hr: .27, legW: .95 }, head: { snout: .5, snoutD: .75, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.5 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"] },
-  { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .38 }, body: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, legW: .9, back: "hump" }, head: { snout: 1.6, snoutD: .9, snoutTaper: .85 }, parts: { ears: { kind: "point", size: .9 }, tail: "stub", feet: "hoof", antlers: "palm" }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"] },
+  { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .38 }, body: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, legW: .9, back: "hump" }, head: { snout: 1.6, snoutD: .9, snoutTaper: .85 }, parts: { ears: { kind: "point", size: .9 }, tail: "stub", feet: "hoof", antlers: "palm", antlerK: 1.75 }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"] },
   { id: "raven", name: "Raven", template: "avian", builder: "raven", palette: { hue: .68, sat: .35, val: .3 }, legend: ["wings", "eyesRing"] },
   { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3 } },
   { id: "mole", name: "Mole", template: "squat", builder: "mole", palette: { hue: .7, sat: .15, val: .32, flower: [70, 190, 150] }, legend: [], elder: { kind: "mole" }, texture: { kind: "fur", size: 3 } },
@@ -118,7 +118,7 @@ export const GENOMES = [
       { body: { bw: .4, legW: 1.2 }, coat: { legMat: "BODY3" }, parts: { horns: "twist" }, head: { horn: { length: 6, r: .7, curl: 3.3, twist: 0, ridges: 1, segs: 44, out: .8, ease: 1, tighten: .72, mat: "ACCENT", back: .4, wide: .15 } }, features: [
         { kind: "ruff", size: .28, count: 18, mat: "BODY" },
         { kind: "grizzle", amount: .3, back: true }, { kind: "worn", ear: false, horn: "far", at: .72 },
-        { kind: "rings", on: "horns", count: 3, from: .18, to: .55 }, { kind: "bells", at: "throat", size: .2 }, { kind: "garland", count: 16 }, // the elder kit: the bellwether's bronze-ringed horns, its bell and its heather
+        { kind: "rings", on: "horns", count: 3, from: .18, to: .55 }, { kind: "bells", at: "throat", size: .2 }, { kind: "wreath", count: 16 }, // the elder kit: the bellwether's bronze-ringed horns, its bell and its heather
       ] },
     ] },
   { id: "woodlouse", name: "Woodlouse", template: "insectoid", builder: "woodlouse", palette: { hue: .65, sat: .12, val: .45 }, legend: ["crystals"],
@@ -159,8 +159,59 @@ export const GENOMES = [
     // brief: an elder, revered): one colossal horn ringed with bronze offerings, the hide in heavy armour folds and old scars, a
     // necklace of offerings, the hump a hill
     levels: [{ coat: { folds: [] } }, null, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: .56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: .9 }, coat: { folds: [-.6, -.35, .3, .55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: .4, width: .5 }] }] },
+  // the pack ice's polar bear (an area recipe's, phase 4): a long-necked white bear, its coat shaggy
+  { id: "polarbear", name: "Polar bear", template: "quadruped", builder: "quad", palette: { hue: .14, sat: .05, val: .9 }, body: { hgt: 1.25, len: .9, chest: .38, tuck: .42, neck: .34, neckAng: .02, neckW: .55, hr: .3, legW: 1.8, bw: .36 }, head: { snout: .85, snoutD: .6, snoutTaper: .75, muzzle: true }, parts: { ears: { kind: "small", size: .8 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: [],
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: the coat a long hanging
+    // fleece; the legend brief: an elder, revered): a vast fleece hanging off it to the ground, a ruff, frost on its muzzle,
+    // a necklace of bronze offerings with a stone at its throat
+    levels: [null, null, null, { body: { bw: .44 }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 40, lean: .25, mat: "BELLY" }, { kind: "ruff", size: .28, count: 16 }, { kind: "beads", count: 11, size: .055, mat: "WOOD", pendant: "STONE" }] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
+  // the jungle's tiger (the journey's west, unknown-11's island): a big striped cat, low and long, heavy in the shoulder. Its evolution:
+  // a round, big-pawed cub with soft broad stripes, a lanky young, a heavy-shouldered adult with a ruff of cheek fur, and the legend:
+  // the elder of the tigers, huge and grizzled, its stripes worn thin with age, old scars raked across its flanks and brow, a white
+  // ruff, and a garland of red flowers and bronze beads round its neck, the jungle's offerings
+  { id: "tiger", name: "Tiger", template: "quadruped", builder: "quad", palette: { hue: .065, sat: .85, val: .9, belly: "white", flower: [214, 48, 58] }, body: { hgt: 1.1, len: .86, chest: .5, tuck: .56, neck: .28, neckAng: .5, neckW: .52, hr: .3, legW: 1.3, bw: .32 }, head: { snout: .55, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true, muzzle: true }, parts: { ears: { kind: "round", size: .75 }, tail: "tiger", feet: "paw" }, coat: { belly: true, stripes: { n: 11, w: .3 } }, legend: ["mane"],
+    levels: [
+      { body: { len: .6, hr: .34, legW: 1.55 }, coat: { stripes: { n: 7, w: .28, legN: 4 } }, parts: { ears: { kind: "round", size: 1.05 } } },
+      { body: { len: .84, legW: 1.15, chest: .54 } },
+      { body: { front: 1.12, legW: 1.45, bw: .35, hgt: 1.15 }, features: [{ kind: "ruff", size: .15, count: 12 }] },
+      { body: { front: 1.22, legW: 1.6, bw: .37, len: .95, hgt: 1.25 }, head: { muzzle: true }, coat: { stripes: { n: 9, w: .2, wave: .35 }, scars: 4 }, features: [ // (Ed, 2026-10-13, ART-GUIDE 0c: the elder of its kind)
+        { kind: "ruff", size: .3, count: 18, mat: "BELLY" },
+        { kind: "garland", count: 18, size: .1, mat: "FLOWER", alt: "WOOD", every: 4, drop: .6, out: 1.45 },
+        { kind: "claws", size: .13, mat: "BODY3" },
+      ] },
+    ] },
+  // the jungle's elephant (the journey's west, unknown-28's island): the biggest creature in the game, grey and wrinkled, a trunk, fan
+  // ears and tusks. Its evolution: a round calf with a short trunk and huge ears, a young with its first tusks, a great tusker, and the
+  // legend: the elder of the elephants, an ancient matriarch, her vast trunk raised in a trumpet, her tusks long and worn, banded
+  // in bronze, hung with temple bells from a red saddle-cloth, a jewelled cloth on her brow and a garland of flowers
+  { id: "elephant", name: "Elephant", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .22, val: .5, flower: [168, 32, 44] }, body: { hgt: 1.9, len: .95, chest: .58, tuck: .62, neck: .2, neckAng: .15, neckW: .75, hr: .5, legW: 2.1, bw: .3, back: "arch", front: 1.05 }, head: { snout: .3, snoutD: .95, trunk: { len: 1, curl: .5 }, eyeK: .65 }, parts: { ears: { kind: "fan", size: 1 }, tail: "thin", feet: "paw", tusks: true }, texture: { kind: "smooth" }, legend: ["moss"],
+    levels: [
+      { body: { len: .72, hr: .56, legW: 2.3, chest: .5, tuck: .54 }, head: { trunk: { len: .6, curl: .3 } }, parts: { ears: { kind: "fan", size: 1.15 } } },
+      { head: { tuskSize: .6, tuskCurl: .45, trunk: { len: .9, curl: .45 } } },
+      { body: { hgt: 2.0 }, head: { tuskSize: 1.5, tuskCurl: .55 } },
+      { body: { hgt: 2.05, legW: 2.4, bw: .33 }, head: { tuskSize: 3.2, tuskCurl: .6, tuskBands: 3, trunk: { len: 2, curl: .9, raise: 1, r: .4 } }, coat: { scars: 3 }, features: [ // (Ed, 2026-10-13, ART-GUIDE 0c: the elder of its kind, an ancient matriarch)
+        { kind: "bells", count: 4, from: .25, to: .8, size: .1 },
+        { kind: "headcloth", size: .7 },
+        { kind: "garland", count: 16, size: .09, mat: "FLOWER", alt: "WOOD", every: 3, drop: .5, out: 1.25 },
+      ] },
+    ] },
+  // the jungle river's black jaguar (the journey's west, unknown-29's island): a melanistic jaguar, stocky and short-legged with a big
+  // head, black with rosettes a shade darker that show only in the light, gold-green eyes. Its evolution: a round, big-headed cub
+  // whose rosettes still show, a lithe young, a heavy-jawed adult, and the legend: a huge head and a crushing jaw, its hidden rosettes
+  // surfacing black on black in the moonlight, rippling like light on water as it moves; the elder of its kind, its muzzle grey, old
+  // scars on its flanks and brow, a collar of jade and bronze beads
+  { id: "jaguar", name: "Black jaguar", template: "quadruped", builder: "quad", palette: { hue: .7, sat: .16, val: .3, flower: [60, 176, 132] }, body: { hgt: .95, len: .84, chest: .46, tuck: .52, neck: .26, neckAng: .5, neckW: .48, hr: .29, legW: 1.25, bw: .3 }, head: { snout: .5, snoutD: .8, snoutTaper: .82, cheeks: true, whiskers: true, eyeK: 1.1 }, parts: { ears: { kind: "round", size: .7 }, tail: "jaguar", feet: "paw" }, coat: { rosettes: { k: 8, density: .75 } }, legend: ["mane"],
+    levels: [
+      { body: { len: .6, hr: .33, legW: 1.45 }, coat: { rosettes: { k: 6, density: .8 } }, parts: { ears: { kind: "round", size: .95 } } },
+      { body: { len: .86, legW: 1.1, chest: .5 } },
+      { body: { front: 1.08, legW: 1.4, bw: .33, hgt: .95, hr: .4, len: .74, chest: .42 }, head: { snoutD: .88 } }, // (a big head on a short, deep body: tells apart from the tiger at game size),
+      { body: { front: 1.15, legW: 1.55, bw: .34, len: .9, hgt: 1.08, hr: .4 }, head: { snoutD: 1.15, snoutTaper: .95, jaw: 1.5, muzzle: true }, coat: { rosettes: { k: 8, density: .85, mat: "BODYL", ripple: .18 }, scars: 3 }, features: [
+        { kind: "garland", count: 14, size: .11, mat: "FLOWER", alt: "WOOD", every: 4, drop: .3, out: 1.7 },
+        { kind: "claws", size: .14, mat: "BODY3" },
+      ] }, // (Ed, 2026-10-13: its huge head and crushing jaw; the hidden rosettes, black on black, surfacing in the moonlight and rippling like light on water)
+    ] },
   // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;
   // every level flies (Ed: the baby a small dragonfly); its legend the elder of its kind, a coal-forest giant: all eye, vast tattered wings, scarred
   { id: "dragonfly", name: "Dragonfly", template: "flyer", builder: "dragonfly", palette: { hue: .5, sat: .62, val: .62 }, legend: ["eyesHuge", "ancient"], texture: { kind: "plates", size: 2 },
@@ -178,7 +229,7 @@ export const GENOMES = [
   { id: "armadillo", name: "Armadillo", template: "squat", builder: "armadillo", palette: { hue: .06, sat: .22, val: .58 }, legend: ["ball"], elder: { kind: "armadillo" }, texture: { kind: "plates" } },
   // the cold rainforest's raccoon (Ed, 2026-10-12, unknown-30): grey and hunched, a black bandit mask between white brows and muzzle,
   // dark legs and hands, a thick ringed tail (not Delta's red panda: grey, not russet); its legend to come (Ed's elder brief, docs/ART-GUIDE.md 0c)
-  { id: "raccoon", name: "Raccoon", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .07, val: .55, flower: [196, 58, 44] }, body: { hgt: .62, len: .6, chest: .36, tuck: .4, neck: .2, neckAng: .45, neckW: .45, hr: .28, legW: .95, back: "arch" }, head: { snout: .7, snoutD: .55, snoutTaper: .5, face: "raccoon", whiskers: true }, parts: { ears: { kind: "round", size: .95 }, tail: "ringed", feet: "paw" }, coat: { legMat: "BODY3", shaggy: true }, legend: [], elder: { kind: "raccoon", eye: "EYE" }, texture: { kind: "fur", size: 3 } },
+  { id: "raccoon", name: "Raccoon", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .07, val: .55, flower: [196, 58, 44] }, body: { hgt: .62, len: .6, chest: .36, tuck: .4, neck: .2, neckAng: .45, neckW: .45, hr: .28, legW: .95, back: "arch" }, head: { snout: .7, snoutD: .55, snoutTaper: .5, face: "raccoon", whiskers: true }, parts: { ears: { kind: "round", size: .95 }, tail: "ringed", feet: "paw" }, coat: { legMat: "BODY3", shaggy: true }, legend: [], elder: { kind: "raccoon", eye: "EYE" }, texture: { kind: "fur", size: 3, lumps: 0 } },
   // the erg's fennec fox (a journey kind: unknown-07's, the hot south): a small pale sand fox that's mostly ears, a black-tipped brush; its
   // legend the dunes' own: ears like sails, a white mask, turquoise beads, heat-shimmer rising off its back
   { id: "fennec", name: "Fennec fox", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .32, val: .93, belly: "white", ear: [.97, .32, .9], magic: .12 }, body: { hgt: .62, len: .55, chest: .4, tuck: .48, neck: .28, neckAng: .78, neckW: .3, hr: .28, legW: .7 }, head: { snout: .8, snoutD: .42, snoutTaper: .5, eyeK: 1.35 }, parts: { ears: { kind: "sail", size: 2 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["tails"],
