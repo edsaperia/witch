@@ -176,7 +176,7 @@ export const GENOMES = [
     levels: [
       { body: { len: .6, hr: .33, legW: 1.45 }, coat: { rosettes: { k: 6, density: .8 } }, parts: { ears: { kind: "round", size: .95 } } },
       { body: { len: .86, legW: 1.1, chest: .5 } },
-      { body: { front: 1.08, legW: 1.4, bw: .33, hgt: 1 }, head: { snoutD: .88 } },
+      { body: { front: 1.08, legW: 1.4, bw: .33, hgt: .95, hr: .4, len: .74, chest: .42 }, head: { snoutD: .88 } }, // (a big head on a short, deep body: tells apart from the tiger at game size),
       { body: { front: 1.15, legW: 1.55, bw: .34, len: .9, hgt: 1.08, hr: .4 }, head: { snoutD: 1.15, snoutTaper: .95, jaw: 1.5, muzzle: true }, coat: { rosettes: { k: 8, density: .85, mat: "BODYL", ripple: .18 }, scars: 3 }, features: [
         { kind: "garland", count: 14, size: .11, mat: "FLOWER", alt: "WOOD", every: 4, drop: .3, out: 1.7 },
         { kind: "claws", size: .14, mat: "BODY3" },
