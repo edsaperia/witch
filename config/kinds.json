@@ -303,12 +303,11 @@
       "biome": "mountains and glaciers",
       "placeholder": true
     },
-    "unknown-17": {
+    "frostwyrm": {
       "phase": 4,
       "bearing": 45,
       "dir": "NE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "unknown-18": {
       "phase": 4,
