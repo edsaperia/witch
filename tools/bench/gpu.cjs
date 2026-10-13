@@ -60,7 +60,8 @@ const VARIANTS = [
   await page.evaluate(({ X, Z, ZOOM }) => { const g = window.witch.game, w = g.witch; w.x = X; w.z = Z; w.vx = w.vz = 0; g.camera.zoomStep = ZOOM; }, { X, Z, ZOOM });
   await page.keyboard.press("Space");
   for (let i = 0; i < 40; i++) { const mode = await page.evaluate(() => window.witch.game.witch.mode); if (mode === "ground") break; await wait(500); }
-  for (let i = 0; i < WAVES; i++) { await page.keyboard.press("KeyN"); await wait(400); }
+  for (let i = 0; i < WAVES; i++) { await page.keyboard.press("KeyN"); await wait(400); } // (a frame here can take seconds: the presses land on the frames after)
+  if (WAVES) await page.waitForFunction(n => window.witch.game.party.wave >= n, WAVES, { timeout: 120000 }).catch(() => {});
   const where = await page.evaluate(() => { const g = window.witch.game, w = g.witch, a = g.map.areaAt(w.x, w.z); return { mode: w.mode, x: Math.round(w.x), z: Math.round(w.z), area: a?.type, zoom: g.camera.zoomStep, wave: g.party.wave, gpuTimer: !!window.witch.frameStats.recent().gpu.length || !!window.witch.view.renderer.getContext().getExtension("EXT_disjoint_timer_query_webgl2") }; });
   lap(`at the spot: ${JSON.stringify(where)}; settling ${WARM} s`);
   await wait(WARM * 1000);
@@ -87,8 +88,9 @@ const VARIANTS = [
     lap(`${V.id}: gap ${f1(row.gap50)} ms (p95 ${f1(row.gap95)}), draw ${f1(row.draw50)} ms, scene ${f1(row.scene50)} ms, gpu ${f1(row.gpu50)} ms, calls ${row.calls}, tris ${row.tris}`);
   }
   const base = rows.find(r => r.id === "base");
+  const end = await page.evaluate(() => { const g = window.witch.game, v = window.witch.view; return { wave: g.party.wave, lights: v.stats?.lights, trees: v.stats?.trees, bushes: v.stats?.bushes, creatures: g.creatures.length, cover: v.grass?.count }; });
   const lines = [
-    `GPU ablation: ${where.area} at ${where.x}, ${where.z}, ${where.mode}, zoom ${where.zoom}, wave ${where.wave}, ${W}x${H}, ${FRAMES} frames a variant, the software renderer (gpu timer: ${where.gpuTimer})`,
+    `GPU ablation: area ${where.area} at ${where.x}, ${where.z}, ${where.mode}, zoom ${where.zoom}, wave ${end.wave} (${JSON.stringify(end)}), ${W}x${H}, ${FRAMES} frames a variant, the software renderer (gpu timer: ${where.gpuTimer})`,
     "",
     "| variant | frame gap ms (p50 / p95) | draw on the page ms | scene pass ms | gpu ms | draw calls | triangles | vs base |",
     "|---|---|---|---|---|---|---|---|",
