@@ -33,11 +33,13 @@ export const SET_PROP_GENOMES = {
     radius: [2.8, 3.5], count: [7, 11], member: [["stone", 3], ["post", 2], ["stump", 2]], height: [1.1, 2], width: [.5, .8], // m
     gap: [0, 1], lean: [0, .22], fallen: [0, 2], centre: [["fire", 2], ["stone", 2], ["stump", 1], ["altar", 1]], embers: [0, 1], // a way in (a chance); a fire pit's embers glow (a chance)
     colour: { stone: [.61, .14, .62], dark: [.65, .16, .38], wood: [.07, .38, .32], moss: [.24, .45, .38], spread: .06 },
+    rock: [["grey", 1]], // its stone: grey, or (only when a recipe asks) the hot south's "sandstone" (last, so the other draws stay as they were)
   },
   heap: {
     of: [["stones", 3], ["logs", 2], ["brush", 1], ["rubble", 2]], width: [6.2, 7.8], height: [1.8, 3], depth: [.55, .8], // what; m across; how deep into the picture, times across
     pieces: [36, 60], moss: [.1, .5], spill: [5, 11], top: [["none", 2], ["post", 1], ["slab", 1]],
     colour: { stone: [.61, .14, .6], dark: [.65, .16, .36], wood: [.07, .38, .34], moss: [.24, .45, .38], cloth: [[.0, .5, .6, 1], [.6, .3, .6, 1], [.13, .4, .75, 1]], spread: .06 },
+    rock: [["grey", 1]],
   },
 };
 export const SET_PROP_KINDS = Object.keys(SET_PROP_GENOMES);
@@ -206,7 +208,7 @@ function gsTone(c, r, k) { if (Array.isArray(c[0])) c = pickByWeight(r, c.map(x 
 function gsColours(kind, v, def, st) {
   const C = SET_PROP_GENOMES[kind].colour, r = rng((v.seed * 7919 + 29) >>> 0), k = C.spread, leaf = def?.leaf ?? .26, g = def?.floor ? groundColours(def, { sat: 1, trunkHue: .07, ...st }) : null;
   const wood = gsTone(C.wood ?? [.07, .38, .32], r, k), dark = wood.map(c => Math.round(c * .45)), light = wood.map(c => Math.min(255, Math.round(c * 1.35 + 12)));
-  const stone = gsTone(C.stone ?? [.6, .08, .55], r, k), stoneD = C.dark ? gsTone(C.dark, r, k) : stone.map(c => Math.round(c * .55));
+  const sandstone = v.rock === "sandstone", stone = gsTone(sandstone ? [.08, .38, .7] : C.stone ?? [.6, .08, .55], r, k), stoneD = sandstone ? gsTone([.05, .45, .42], r, k) : C.dark ? gsTone(C.dark, r, k) : stone.map(c => Math.round(c * .55));
   return {
     [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.LEAF3]: g && kind === "ring" ? g[M.BODY] : hsv2rgb(leaf + .02, .5, .34), [M.LINE]: [24, 22, 30],
     [M.WOOD]: wood, [M.TRUNK]: kind === "punt" || kind === "jetty" ? dark.map(c => Math.round(c * 1.5)) : wood, [M.BARKD]: dark, [M.BARKL]: light,
