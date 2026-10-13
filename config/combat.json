@@ -409,6 +409,7 @@
    "lion",
    "squirrel",
    "fox",
+   "arcticfox",
    "otter",
    "hedgehog",
    "dormouse",
@@ -423,6 +424,7 @@
   ],
   "skittish": [
    "cheetah",
+   "unicorn",
    "hare",
    "roe",
    "stag",

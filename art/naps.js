@@ -24,18 +24,19 @@ import { render, v3 } from "./model3d.js";
 // parts). cloak: wings wrapped round it ({ c: centre, r: radii } in model units, as legends.js).
 export const NAP_POSES = {
   // lie
-  elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, roe: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
+  elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, unicorn: { kind: "lie", sink: .06, droop: .5 }, roe: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
   bear: { kind: "lie", sink: .05, droop: 1 }, badger: { kind: "lie", sink: .04, droop: 1 }, ram: { kind: "lie", sink: .06, droop: .6 },
   beaver: { kind: "lie", sink: .04, droop: 1 }, hare: { kind: "lie", sink: .05, droop: .6 }, otter: { kind: "lie", sink: .03, droop: 1, curl: .7 },
   armadillo: { kind: "lie", sink: .02, droop: .4, curl: .3 },
   raccoon: { kind: "curl", sink: .03, droop: 1, curl: 3.2, tailDown: .25 },
+  komodo: { kind: "lie", sink: .03, droop: 1, curl: .35 },
   meerkat: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 },
   rhino: { kind: "lie", sink: .05, droop: .7 },
   polarbear: { kind: "lie", sink: .05, droop: 1 },
   newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
   crocodile: { kind: "lie", sink: .02, droop: .3 }, // (its head held low already: a full droop pushes its long jaw past its ground line)
   // curl
-  fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 },
+  fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, arcticfox: { kind: "curl", sink: .04, droop: 1, curl: 3.8, tailDown: .2 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 },
   marten: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 }, stoat: { kind: "curl", sink: .03, droop: 1, curl: 4, tailDown: .25 },
   squirrel: { kind: "curl", sink: .04, droop: 1, curl: 3.2, tailDown: .5 }, dormouse: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .3 }, redpanda: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .4 },
   // tuck
@@ -48,9 +49,11 @@ export const NAP_POSES = {
   frostwyrm: { kind: "curl", sink: .04, droop: 1, curl: 3.2, tailDown: .25 }, // coiled round on itself, its tail over its snout
   cheetah: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, // curled round, its long tail over its nose
   lion: { kind: "curl", sink: .04, droop: 1, curl: 2.6, tailDown: .25 }, // sprawled on its side, its tail curled round
+  penguin: { kind: "tuck", ground: .2, tuck: .4, drop: [] }, // hunched, its head sunk into its shoulders
   fennec: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 }, // curled in its brush, ears laid back
   heron: { kind: "tuck", ground: .56, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101] },
   // coil
+  rattlesnake: { kind: "coil", ground: 0, droop: .6, curl: 5, drop: [0] }, scorpion: { kind: "flat", ground: .14, droop: .4 },
   snake: { kind: "coil", ground: 0, droop: .6, curl: 5.5, drop: [40, 50] },
   // flat
   beetle: { kind: "flat", ground: .32, droop: .4 }, woodlouse: { kind: "flat", ground: .14, drop: [9] }, spider: { kind: "flat", ground: .26, droop: .5, drop: [95, 96, 97, 98, 99] },

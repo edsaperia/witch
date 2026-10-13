@@ -11,7 +11,7 @@ export type RigFace = "neutral" | "angry" | "happy" | "dazed" | "asleep";
 /** A baked piece: its atlas frame and the pixel (from its top left) its joint lands on. */
 export interface RigPiece { frame: number; px: number; py: number }
 type V3 = [number, number, number];
-export interface RigLeg { name: string; fore: boolean; side: number; hip: V3; knee: V3; foot: V3; r: [number, number, number]; fl: number; mat: number; hoof: boolean }
+export interface RigLeg { name: string; fore: boolean; side: number; hip: V3; knee: V3; /** The joint between the knee and the foot as the art bakes it (the hock, or a foreleg's wrist; art/creatures3d.js quad3d), if it has one. */ hock?: V3; foot: V3; r: [number, number, number]; fl: number; mat: number; hoof: boolean }
 /** What the rig needs besides the atlas: its template, its scale (art pixels per model unit), the
  *  pieces at each of the five baked headings (null where it has none), the discs by material and
  *  radius in pixels, and its joints in model units. */

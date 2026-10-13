@@ -202,9 +202,21 @@ export class RigBody {
       // thigh into shin into foot: the thigh full at the hip (blending into the body) tapering to the knee; a hind leg bends
       // again at the hock, back from the line knee-to-foot, its cannon bone slim and upright down to the foot
       this.bone(discs, L.hip[0], hipY, kx, ky, z, L.r[0] * 1.1, L.r[1], a, flip, u2m, m.s, bias, out, kz);
-      if (!L.fore) {
-        const dx = ex - kx, dy = ey - ky, l = Math.hypot(dx, dy) || 1, back = 0.16 * l * (1 - 0.5 * drive.air);
-        const hx = kx + dx * 0.55 - Math.abs(dy / l) * back, hy = ky + dy * 0.55 + Math.abs(dx / l) * back * 0.3, hz = kz + (fz - kz) * 0.55;
+      // the lower leg bends again at the hock (a hind leg) or the wrist (a foreleg), where the art bakes that joint (L.hock: kept
+      // at the same place along and off the knee-to-foot line, so the cannon stays as long and as upright as the species' own;
+      // the bend eased out in the air); without one baked, a hind leg's hock is guessed back from the line as before
+      const dx = ex - kx, dy = ey - ky, l = Math.hypot(dx, dy) || 1, air = 1 - 0.5 * drive.air;
+      let hx = 0, hy = 0, bent = false;
+      if (L.hock) {
+        const bx = L.foot[0] - L.knee[0], by = L.foot[1] - L.knee[1], bl = Math.hypot(bx, by) || 1, wx = L.hock[0] - L.knee[0], wy = L.hock[1] - L.knee[1];
+        const along = (wx * bx + wy * by) / (bl * bl), off = ((bx * wy - by * wx) / bl / bl) * air; // its share along the baked line, and off it (signed)
+        if (Math.abs(off) * l > 0.005) { hx = kx + dx * along - dy * off; hy = ky + dy * along + dx * off; bent = true; }
+      } else if (!L.fore) {
+        const back = 0.16 * l * air;
+        hx = kx + dx * 0.55 - Math.abs(dy / l) * back; hy = ky + dy * 0.55 + Math.abs(dx / l) * back * 0.3; bent = true;
+      }
+      if (bent) {
+        const hz = kz + (fz - kz) * 0.55;
         this.bone(discs, kx, ky, hx, hy, kz, L.r[1], (L.r[1] + L.r[2]) / 2, a, flip, u2m, m.s, bias, out, hz);
         this.bone(discs, hx, hy, ex, ey, hz, (L.r[1] + L.r[2]) / 2 * 0.9, L.r[2], a, flip, u2m, m.s, bias, out, fz);
       } else this.bone(discs, kx, ky, ex, ey, kz, L.r[1], L.r[2], a, flip, u2m, m.s, bias, out, fz);
