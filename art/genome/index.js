@@ -2,11 +2,11 @@
 // (templates.js), turned into what the builders draw from (speciesOf), checked (genomeProblems),
 // and hashed for the bake cache (genomeHash).
 import { M } from "../core.js";
-import { GENOMES, ELDER_GENOMES } from "./species.js";
+import { GENOMES } from "./species.js";
 import { TEMPLATES, TEMPLATE_IDS } from "./templates.js";
 import { faceProblems } from "./expressions.js";
 import { textureProblems } from "./texture.js";
-export { GENOMES, ELDER_GENOMES, TEMPLATES, TEMPLATE_IDS };
+export { GENOMES, TEMPLATES, TEMPLATE_IDS };
 export const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 
 // The builder's species object, as art/creatures.js always had it: id, name, plan, hue, sat, val,
@@ -15,7 +15,7 @@ export const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 export function speciesOf(g) {
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
-  if (g.elder) S.elder = g.elder; // MOCK: the elder legend's look (art/elders.js)
+  if (g.elder) S.elder = g.elder; // its legend as the elder of its kind (art/elders.js): { kind, tail, ears, eye }
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
   if (g.palette.ear) S.ear = g.palette.ear; // its inner ears' own colour [h, s, v] (the fennec's pink)
   if (g.palette.magic != null) S.magic = g.palette.magic; // its own magic glow's hue (else the style's, nudged by its coat)
