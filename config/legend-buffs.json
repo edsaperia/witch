@@ -76,7 +76,7 @@
     "toad":       { "name": "Spawn",          "kind": "shot", "mods": { "split": 1 },               "label": "Toad's Spawn: a 💌 that lands splits into 3 small ones" },
     "snail":      { "name": "Spiral",         "kind": "shot", "mods": { "boomerang": 1 },           "label": "Snail's Spiral: 💌s come back to you, landing on the way" },
     "elk":        { "name": "Slip past",      "kind": "shot", "mods": { "slip": 1 },                "label": "Elk's Slip past: 💌s slip through enraged animals" },
-    "glowworm":   { "name": "Lanterns",       "kind": "shot", "mods": { "trail": 1 },               "label": "Glow-worm's Lanterns: 💌s leave a glowing trail that lands too" },
+    "cat":        { "name": "Paw prints",     "kind": "shot", "mods": { "trail": 1 },               "label": "Wildcat's Paw prints: 💌s leave a trail of paw prints that lands too" },
     "squirrel":   { "name": "Cache",          "kind": "shot", "mods": { "cache": 1 },               "label": "Squirrel's Cache: you drop 💌s that wait and fly at animals that come near" },
     "dormouse":   { "name": "Lullaby orbit",  "kind": "shot", "mods": { "orbit": 1 },               "label": "Dormouse's Lullaby orbit: two 💌s circle you and fly at animals close by" },
     "hare":       { "name": "Dash bursts",    "kind": "move", "mods": { "charges": 2 },             "label": "Hare's Dash bursts: 2 more blink charges" },

@@ -31,7 +31,7 @@ const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number
 /** What a hit throws off a creature (render: the contact's bits): feathers off birds, chips off a shell or plates, tufts of fur
  *  off the rest; confetti (in its neon) off a party animal. */
 const HIT_BITS = { feather: { r: 0.95, g: 0.95, b: 0.9 }, chip: { r: 0.72, g: 0.78, b: 0.86 }, fur: { r: 0.85, g: 0.7, b: 0.52 }, confetti: { r: 1, g: 1, b: 1 } };
-const FEATHERED = new Set(["owl", "raven", "heron"]), SHELLED = new Set(["beetle", "spider", "woodlouse", "snail", "glowworm", "moth", "hedgehog", "dragonfly", "crab"]);
+const FEATHERED = new Set(["owl", "raven", "heron"]), SHELLED = new Set(["beetle", "spider", "woodlouse", "snail", "moth", "hedgehog", "dragonfly", "crab"]);
 const hitBits = (species: string, party: boolean) => party ? HIT_BITS.confetti : FEATHERED.has(species) ? HIT_BITS.feather : SHELLED.has(species) ? HIT_BITS.chip : HIT_BITS.fur;
 /** A species' coat, for the bits a hit throws off it (the art director, #193: a wolf throws grey, a fox rust): its lit coat
  *  material (BODYL) from its palette row, toned down toward the night floor; worked out once per species. */
@@ -95,7 +95,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     if (e.kind === "slept" && close(e.x, e.z, 150)) for (let i = 0; i < 3; i++) lv.fx.push({ kind: "puff", x: e.x + (i - 1) * 1.2, y: 0.4, z: e.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: e.at * 7 + i });
     if ((e.kind === "burrowed" || e.kind === "surfaced" || e.kind === "slammed") && close(e.x, e.z)) lv.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.6, r: 0.55, g: 0.42, b: 0.3, seed: e.at * 41 + (e.id ?? 0) });
     if (e.kind === "sprung" && close(e.x, e.z)) lv.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
-    // Ed's species pass: a glow-worm's flash (a burst of its light), a block (a white glint), digging in (earth thrown up).
+    // Ed's species pass: a flash (a burst of light), a block (a white glint), digging in (earth thrown up).
     // (Ed, 2026-10-05: the new moves' feedback bigger and brighter, to read at normal zoom on dark ground)
     if (e.kind === "flash" && c && close(e.x, e.z)) {
       const col = neon(c.species), R = (profileOf(c.species)?.move?.radius ?? 9) * FIGHT.scale, hot = { r: col.r * 0.4 + 0.6, g: col.g * 0.4 + 0.6, b: col.b * 0.4 + 0.6 };
