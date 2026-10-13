@@ -281,6 +281,10 @@
         "on": {
           "type": "boolean"
         },
+        "grain": {
+          "type": "number",
+          "minimum": 0
+        },
         "width": {
           "type": "number",
           "minimum": 0
@@ -677,6 +681,7 @@
       },
       "required": [
         "on",
+        "grain",
         "width",
         "shore",
         "vary",

@@ -125,8 +125,12 @@ export function drawCreatures(v: View, time = 0): void {
     // (Ed's round 14 playtest, "it's hard to make out what it is at all": with wildLegends.seen.nap its nap, art/naps.js, the animal itself lying asleep, not a mound)
     const slept = sleeping ? (g.tuning.wildLegends.seen?.nap ? v.assets.napArt(c.species) : v.assets.sleepArt(c.species)) : undefined;
     // Lain down asleep (more than half way: the rig, where it draws, carries it there and back), its nap (art/naps.js), its level's frames.
-    const napped = !st && lying > 0.5 ? v.assets.napArt(c.species, party ? { id: c.id, colour: look === "leashed" ? sigilColour(c.species) : null } : undefined) : undefined; // (a party animal asleep in its party gear: Ed, 2026-10-06)
-    const art = napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = napped ? (party ? `nap-${look === "happy" ? "happy" : "party"}-${c.id}` : `nap-${c.species}`) : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
+    const asleepArt = !st && lying > 0.5 ? v.assets.napArt(c.species, party ? { id: c.id, colour: look === "leashed" ? sigilColour(c.species) : null } : undefined) : undefined; // (a party animal asleep in its party gear: Ed, 2026-10-06)
+    // Its idle pose (Ed, 2026-10-12: the meerkat "sits up as a sentinel when idle"; config/character.json's "sentinel" quirk, art/creatures.js
+    // IDLE_BUILDERS): while the quirk plays and it stands still, wild, its own baked frames stand in for the rig, as a nap's do.
+    const ch0 = characterOf(c.species), idlePose = !asleepArt && !party && !woken && !st && lying <= 0 && ch0.quirk === "sentinel" && !c.moving && !c.charge && !c.leap && quirkAt(c.id, ch0, time) >= 0 ? v.assets.idleArt(c.species) : undefined;
+    const napped = asleepArt ?? idlePose;
+    const art = napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = idlePose && !asleepArt ? `idle-${c.species}` : napped ? (party ? `nap-${look === "happy" ? "happy" : "party"}-${c.id}` : `nap-${c.species}`) : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
     if (!art) continue;
     const lk = c.boss && !c.leashed && g.tuning.wildLegends.seen ? `legend-${key}` : key; // (a wild legend in a batch of its own: its rim and its light in steps)
     if (lk !== key) legendKeys.set(lk, c.species);
@@ -219,7 +223,7 @@ export function drawCreatures(v: View, time = 0): void {
     // body's middle lies from its place (a sleeping form's frame is often off-centre: a curl, a legend's tails).
     const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, RT = SPRITE_UNIFORMS.uRight.value;
     let rigged = false;
-    if (!(v.rig && !form && (rigged = v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx * csx, sy: feel.sy * breathY * csy, dx: cx, dz: cz, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined })))) // the rig draws it, if it can
+    if (!(v.rig && !form && !idlePose && (rigged = v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx * csx, sy: feel.sy * breathY * csy, dx: cx, dz: cz, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined })))) // the rig draws it, if it can
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
       spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
       const turned = flip !== SQ.turned, k = -mid * v.mpp * scale * (turned ? -1 : 1) + SQ.x * fh;
