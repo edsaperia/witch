@@ -101,8 +101,10 @@ const SPRITE_CHECKS = async ({ names, only }) => {
   } });
   task("genomes-masks", async () => { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
     // its hash its own; the builders' species are the records' (speciesOf)
-    const probs = G.GENOMES.flatMap(g => G.genomeProblems(g)), hashes = new Set(G.GENOMES.map(g => G.genomeHash(g)));
-    res.push({ what: `genomes: every one of the ${SPECIES.length} species a record on one of the ${G.TEMPLATE_IDS.length} templates, its parts in its sockets, no clashes, every hash different`, good: G.GENOMES.length === SPECIES.length && SPECIES.every(s => G.GENOME_BY_ID[s.id]) && !probs.length && hashes.size === G.GENOMES.length, info: probs.join("; ") || `${G.GENOMES.length} records` });
+    // (--only: the selected species' records, each hash its own among all of them; the count of records against species only on a full run)
+    const recs = only ? G.GENOMES.filter(g => SPECIES.some(s => s.id === g.id)) : G.GENOMES, probs = recs.flatMap(g => G.genomeProblems(g)), hashOf = new Map(G.GENOMES.map(g => [g.id, G.genomeHash(g)]));
+    const shared = recs.filter(g => G.GENOMES.some(h => h.id !== g.id && hashOf.get(h.id) === hashOf.get(g.id))).map(g => g.id + " shares its hash");
+    res.push({ what: `genomes: every one of the ${SPECIES.length} species a record on one of the ${G.TEMPLATE_IDS.length} templates, its parts in its sockets, no clashes, every hash different`, good: (only || G.GENOMES.length === SPECIES.length) && SPECIES.every(s => G.GENOME_BY_ID[s.id]) && !probs.length && !shared.length, info: [...probs, ...shared].join("; ") || `${recs.length} records` });
     // masks and palettes (stage 2): a sprite's material mask painted with its palette row is its bake, pixel for pixel, in every outline mode
     const bad = [];
     for (const S of SPECIES) for (const level of [0, 1, 2, 3]) for (const facing of ["towards", "away"]) for (const gear of [null, { woken: true }, { woken: true, face: "angry" }, { face: "happy" }, { face: "dazed" }]) {
@@ -196,7 +198,7 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     // row, its origin on the sprite and every material coloured; sunk (its ground line above its feet), no taller than the legend awake, nothing glowing,
     // eyes shut, its two breaths different
     const glows = sp => { let n = 0; for (const m of sp.m) if (G.EMISSIVE.has(m)) n++; return n; };
-    for (const id of G.LEGEND_IDS) for (const facing of ["towards", "away"]) {
+    for (const id of G.LEGEND_IDS.filter(id => SPECIES.some(S => S.id === id))) for (const facing of ["towards", "away"]) { // (--only: the selected species' legends)
       const fs = [0, 1].map(frame => G.legendForm(id, st, { frame, facing })), bad = [], aw = G.critter(id, 3, 0, st, facing);
       fs.forEach(({ sp, colours }, i) => { const s = stats(sp), o = sp.origin, nan = sp.n.some(Number.isNaN), miss = [...new Set(sp.m)].filter(m => m && m !== G.M.LINE && !colours[m]);
         if (!(s.n > 200 && s.bottom > 0 && o && o[0] >= 0 && o[0] <= sp.w && o[1] >= 0 && o[1] <= sp.h + 1 && !nan && !miss.length)) bad.push(`asleep${i} ${s.w}x${s.h}${nan ? " NaN" : ""}${miss.length ? " uncoloured " + miss : ""}${o ? "" : " no origin"}`);
@@ -735,7 +737,7 @@ const SPRITE_CHECKS = async ({ names, only }) => {
       a.big.forEach(b => { const [kind, o] = A.big[b.from]; if (!G.TALL_KINDS.includes(kind)) return; let bottom = 0; const d = b.sp.A.getContext("2d").getImageData(0, b.sp.h - 1, b.sp.w, 1).data; for (let k = 3; k < d.length; k += 4) if (d[k]) bottom++;
         if (!(bottom > 0 && b.metres && b.metres.height >= 4.5 && b.metres.height <= 12 && (o.sparse > 0 && o.sparse <= .3 || o.big))) bad.push(`${A.id} ${kind} ${b.metres?.height} m${bottom ? "" : ", floating"}`); });
     }
-    const open = ["moor", "stone-shrine", "log-pile", "ravine"].map(id => `${id} ${tallest[id].toFixed(1)} m`).join(", ");
+    const open = ["moor", "stone-shrine", "log-pile", "ravine"].filter(id => tallest[id] != null).map(id => `${id} ${tallest[id].toFixed(1)} m`).join(", ");
     res.push({ what: "something tall in every area: a big piece 4 m+ in each; the open areas' tall pieces stand, 4.5 to 12 m, sparse", good: !bad.length, info: bad.join("; ") || `the open areas' tallest: ${open}` });
   });
   task("layouts", async () => { // layouts: every area has a sound layout descriptor, and between them they use most of the patterns; no pattern for more than
@@ -744,10 +746,10 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     // each area different: the pattern is one axis of it)
     const bad = AREAS.map(A => [A.id, G.layoutProblems(A)]).filter(([, p]) => p.length).map(([id, p]) => id + ": " + p.join(", "));
     const uses = {}; for (const A of AREAS) if (A.layout) uses[A.layout.pattern] = (uses[A.layout.pattern] || 0) + 1;
-    const cap = Math.max(8, Math.ceil(AREAS.length / 4)), varied = Object.keys(uses).length >= 6 && Math.max(...Object.values(uses)) <= cap;
+    const cap = Math.max(8, Math.ceil(AREAS.length / 4)), varied = !!only || Object.keys(uses).length >= 6 && Math.max(...Object.values(uses)) <= cap; // (--only: the roster's spread of patterns isn't the selection's to meet)
     const sig = L => [L.pattern, Math.round(L.density * 10) / 10, Math.round(L.clump * 10) / 10, L.glades?.count ?? 0, L.heightMix ? Object.entries(L.heightMix).sort((a, b) => b[1] - a[1])[0][0] : "-", (L.terrain ?? []).join("+")].join("|");
-    const bySig = {}; for (const A of AREAS) if (A.layout) (bySig[sig(A.layout)] ??= []).push(A.id);
-    const alike = Object.values(bySig).filter(ids => ids.length > 1).map(ids => ids.join(" = "));
+    const bySig = {}; for (const A of G.AREAS) if (A.layout) (bySig[sig(A.layout)] ??= []).push(A.id); // (every area, so a selected one is still compared with the rest)
+    const alike = Object.values(bySig).filter(ids => ids.length > 1 && ids.some(id => AREAS.some(A => A.id === id))).map(ids => ids.join(" = "));
     res.push({ what: `layouts: every area has a sound layout (pattern, density, glades, heightMix iff wooded, terrain, decor weights, feel), 6+ patterns in use, none in more than a quarter of the ${AREAS.length} areas (${cap}), and no two areas' layouts alike (pattern, density, clump, glades, tallest class, terrain)`, good: !bad.length && varied && !alike.length, info: bad.slice(0, 4).join("; ") || (alike.length ? "alike: " + alike.slice(0, 4).join("; ") + "; " : "") + Object.entries(uses).map(([k, n]) => k + " " + n).join(", ") });
   });
   task("set-pieces", async () => { // set pieces: every area has one; the new ones (built in 3D) stand on the ground and are landmark-sized, 6 to 12 m across or tall
@@ -760,7 +762,7 @@ const SPRITE_CHECKS = async ({ names, only }) => {
       const o = x.origin, inside = o && o.x >= 0 && o.x <= x.sp.w && o.y >= 0 && o.y <= x.sp.h, tight = x.metres.height * 16 === x.sp.h || Math.abs(x.metres.height * 16 - x.sp.h) < 1; // its origin on the sprite; metres match the cropped sprite
       if (!(big >= 6 && big <= 12 && bottom > 0 && inside && tight)) bad.push(`${A.id} ${x.metres.width}x${x.metres.height} m${bottom ? "" : ", floating"}${inside ? "" : ", origin"}${tight ? "" : ", metres"}`);
     }
-    res.push({ what: "set pieces: every area has one; the new ones (20 or more) stand on the ground, 6 to 12 m across or tall, cropped (metres match the sprite), their origin on it", good: !bad.length && sizes.length >= 20, info: bad.join(", ") || `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
+    res.push({ what: "set pieces: every area has one; the new ones (20 or more) stand on the ground, 6 to 12 m across or tall, cropped (metres match the sprite), their origin on it", good: !bad.length && (!!only || sizes.length >= 20), info: bad.join(", ") || (sizes.length ? `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` : "none new selected") }); // (--only: the 20 is the roster's)
   });
   task("modern-relics", async () => { // modern relics, the playground, the sports grounds: each standing (decals flat), sized, tall ones split, only the flagged ones glow; arrangements name real pieces, at most one glowing piece each; sports grounds 15 to 30 m across
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
