@@ -235,6 +235,25 @@ const spSETS = {
     m.ell([.4, .05, .85], [.12, .05, .1], M.EAR, { group: 7 }); m.ell([-.1, .05, .9], [.08, .04, .07], M.FLOWER, { group: 7 }); m.ell([.15, .05, .95], [.07, .04, .06], M.ACCENT, { group: 7 }); // offerings: a bowl, flowers, fruit
     spTufts(m, 22, 2.4, 10, 13, .45);
   },
+  // temple jungle (the elephant's): temple steps, a stepped stone ruin with a dark doorway, a strangler fig rooted on its top and
+  // pouring its roots down the steps, two stone elephants flanking the stair
+  "temple-steps"(m) {
+    const block = p => (p[1] * 5 % 1 + 1) % 1 < .07 || ((p[0] + (Math.floor(p[1] * 5) % 2) * .2) * 2.5 % 1 + 1) % 1 < .05 ? M.STONED : p[1] > .2 && spHash(Math.floor(p[0] * 6), Math.floor(p[1] * 6) + Math.floor(p[2] * 6)) < .22 ? M.MOSS : undefined;
+    [[1.9, .3, 1.3], [1.5, .3, 1.0], [1.1, .3, .75], [.75, .35, .5]].reduce((y, [w, h, d], i) => { m.box([0, y + h, -.4], [w, h, d], M.STONE, { round: .03, rough: .012, group: 1 + i, paint: block }); return y + h * 2; }, 0);
+    m.box([0, .3, .95], [.35, .3, .3], M.STONE, { group: 1, paint: p => (p[1] * 10 % 1 + 1) % 1 < .15 ? M.STONED : undefined }); // the stair up its face
+    m.box([0, 2.2, .12], [.22, .3, .2], M.NOSE, { group: 4, cut: true }); // a dark doorway at the top
+    const fig = [.2, 2.55, -.5]; spLimb(m, [[...fig, .2], [.15, 3.6, -.5, .15], [0, 4.4, -.5, .09]], 10); spCrown(m, [0, 4.6, -.5], [1.5, .7, 1.0], 11); spCrown(m, [1.0, 4.2, -.3], [.8, .45, .6], 12);
+    for (const [a, l] of [[-1.2, 1.4], [-.4, 1.2], [.5, 1.3], [1.3, 1.5]]) { const e = [Math.sin(a) * l, 0, Math.cos(a) * l * .9 - .2]; spLimb(m, [[...fig, .1], [fig[0] + e[0] * .45, 1.8, fig[2] + e[2] * .5, .07], [e[0], .02, e[2] + .1, .04]], 13); } // roots pouring down the steps
+    const elephant = (x, g) => { // a stone elephant facing out, trunk down
+      m.ell([x, .7, .9], [.32, .3, .5], M.STONE, { group: g, rough: .01, paint: p => p[1] > .9 && spHash(Math.floor(p[2] * 8)) < .4 ? M.MOSS : undefined });
+      m.ell([x, .85, 1.38], [.24, .24, .2], M.STONE, { group: g }); for (const s of [-1, 1]) m.ell([x + s * .26, .85, 1.3], [.04, .2, .17], M.STONED, { group: g });
+      m.chain([[x, .75, 1.55, .08], [x, .45, 1.65, .06], [x, .15, 1.6, .05]], M.STONE, { group: g });
+      for (const [dx, dz] of [[-.18, .62], [.18, .62], [-.18, 1.15], [.18, 1.15]]) m.seg([x + dx, 0, dz], [x + dx, .5, dz], .09, .09, M.STONE, { group: g });
+      m.box([x, .02, 1.0], [.45, .04, .7], M.STONE, { group: g, round: .02 });
+    };
+    elephant(-1.2, 20); elephant(1.2, 21);
+    spTufts(m, 26, 3.0, 30, 17, .45);
+  },
 };
 // The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale); a generated kind
 // (art/props/sets.js) may add a fourth item, its seed and any numbers to fix.

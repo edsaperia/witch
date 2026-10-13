@@ -371,6 +371,12 @@
    "swipe",
    "bigswipe",
    "legendCharge"
+  ],
+  "elephant": [
+   null,
+   "slam",
+   "bigslam",
+   "quake"
   ]
  },
  "kite": {
@@ -439,7 +445,8 @@
    "bear",
    "elk",
    "stag",
-   "tiger"
+   "tiger",
+   "elephant"
   ],
   "nimble": [
    "hare",
