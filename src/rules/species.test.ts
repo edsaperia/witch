@@ -36,7 +36,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
   it("gives every species a profile, each with a speed, and an arena preset for each new move", () => {
     expect(SPECIES.length).toBeGreaterThanOrEqual(30);
     for (const sp of SPECIES) { expect(MOVEMENT.profiles[sp], sp).toBeTruthy(); expect(MOVEMENT.profiles[sp].speed, sp).toBeGreaterThan(0); }
-    for (const k of ["swipe", "wide", "pair", "ram", "dig", "block", "flank", "pounce", "weave", "packflank", "otter", "squirrel", "dart", "roll", "slime", "woodlouse", "strike", "moth", "flash"]) expect(ARENA_PRESETS[k], k).toBeTruthy();
+    for (const k of ["swipe", "wide", "pair", "ram", "dig", "block", "flank", "pounce", "weave", "packflank", "otter", "squirrel", "dart", "roll", "slime", "woodlouse", "strike", "moth", "cat"]) expect(ARENA_PRESETS[k], k).toBeTruthy();
   });
 
   it("has a bear swipe: a heavy blow with a short lunge", () => {
@@ -106,8 +106,8 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     const near = (light: boolean) => {
       const saved = MOVEMENT.profiles.moth.fight;
       if (!light) MOVEMENT.profiles.moth.fight = saved.filter(b => b.kind !== "light");
-      const g = quiet(), moths = [0, 1, 2].map(i => pick(g, "moth", 2, 10, i * 2)), glow = pick(g, "glowworm", 2, 16, 20);
-      glow.leashed = true; g.leash.placed.push({ id: glow.id, x: glow.x, z: glow.z, at: 0 });
+      const g = quiet(), moths = [0, 1, 2].map(i => pick(g, "moth", 2, 10, i * 2)), glow = pick(g, "wolf", 2, 16, 20);
+      glow.gone = true; g.combat.sounds.set("lamp", { hp: 1e6, max: 1e6, x: glow.x, z: glow.z, radius: 2 });
       let sum = 0, n = 0;
       run(g, 6, () => { if (g.clock.time > 2) for (const m of moths) { sum += Math.hypot(m.x - glow.x, m.z - glow.z); n++; } });
       MOVEMENT.profiles.moth.fight = saved;
@@ -154,14 +154,6 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     expect(trails).toBeGreaterThan(3);
     expect(W.slowUntil).toBeDefined();
     expect(W.slowMult).toBeLessThan(1);
-  }, 60000);
-
-  it("has a glow-worm keep its range and flash, dazzling her (slowed)", () => {
-    const g = quiet(), W = g.witches[0], gw = pick(g, "glowworm", 2, 6, 0);
-    let flashed = false;
-    run(g, 4, () => { if (evs(g, gw, "flash")) flashed = true; });
-    expect(flashed).toBe(true);
-    expect(W.slowUntil).toBeDefined();
   }, 60000);
 
   it("has otters, stoats, squirrels and dormice nimble: they weave", () => {

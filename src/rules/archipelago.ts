@@ -56,10 +56,24 @@ const AREA_METRES = 168, HOME_AREAS = 64;
 const ARM_OUT = 0.6, CORE = 1.15;
 const MINGLE = 1.2, BEARING = 0.03, RADIAL = 0.03, ROUNDS = 200, SETTLE = 60, TURN_EVERY = 30, TURN_TRIES = 16, SHAPE_ANGLES = 72, PROBE = 28;
 
-interface Site { id: string; phase: number; bearing: number; x: number; y: number; turn: number; /** its shape's reach by angle, unturned */ table: Float32Array; /** metres a unit of reach, and its coast past that */ k: number; pad: number; most: number; /** its body's furthest coast (m): its arms past it */ core: number; aim: number; mass: number }
+interface Site { id: string; phase: number; bearing: number; x: number; y: number; turn: number; /** its shape's reach by angle, unturned */ table: Float32Array; /** metres a unit of reach, and its coast past that */ k: number; pad: number; most: number; /** its body's furthest coast (m): its arms past it */ core: number; aim: number; mass: number;
+  /** Its coast at the PROBE angles as last turned (coastAt, and that point's offset from its middle: cos and sin of the angle
+   *  times it), the turn they were measured at: into() and the rim keep probing the same points, so each is worked out once a turn. */
+  pr: Float64Array; px: Float64Array; py: Float64Array; pTurn: number }
 
 /** Where an island's coast is foreseen, from its middle (m), at an angle. */
 const coastAt = (s: Site, t: number) => s.k * patchAt(s.table, t - s.turn) + s.pad;
+const PROBE_T = Float64Array.from({ length: PROBE }, (_, p) => (p / PROBE) * (Math.PI * 2)), PROBE_COS = PROBE_T.map(t => Math.cos(t)), PROBE_SIN = PROBE_T.map(t => Math.sin(t));
+/** The site's coast at the probe angles, as it is turned now (measured again only once its turn has changed). */
+const probed = (s: Site): Site => {
+  if (s.pTurn !== s.turn) {
+    for (let p = 0; p < PROBE; p++) { const r = coastAt(s, PROBE_T[p]); s.pr[p] = r; s.px[p] = PROBE_COS[p] * r; s.py[p] = PROBE_SIN[p] * r; }
+    s.pTurn = s.turn;
+  }
+  return s;
+};
+/** The rounding a lerp between a table's entries can put past its biggest: a bound that skips nothing it shouldn't. */
+const SLACK = 1e-6;
 
 const made = new Map<string, Archipelago>();
 /** The archipelago of a world: `kinds` every island's kind with its phase (its kind's + 1), table bearing (degrees from north,
@@ -85,17 +99,20 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
     const areas = (phase ? 10 * phase : HOME_AREAS) + lakePlan(K, seed).reduce((t, n) => t + n, 0), k = AREA_METRES * Math.sqrt((2 * areas) / I), pad = COAST_PAD[Math.min(5, phase)];
     const h = Math.floor(seed * 7919) % 100003, aim = phase ? Math.max(ring[1] * 0.5, Math.min(0.95, ring[phase] + MINGLE * ringGap * (2 * hash2(h, 13, 9031 + world) - 1))) * R : 0;
     const b = (bearing * Math.PI) / 180, turn = phase ? hash2(h, 17, 9041 + world) * TAU : 0;
-    return { id, phase, bearing, x: Math.sin(b) * aim, y: -Math.cos(b) * aim, turn, table, k, pad, most: k * Math.max(...table) + pad, core: k * [...table].sort((p, q) => p - q)[SHAPE_ANGLES >> 1] * CORE + pad, aim, mass: phase ? k * k : Infinity };
+    return { id, phase, bearing, x: Math.sin(b) * aim, y: -Math.cos(b) * aim, turn, table, k, pad, most: k * Math.max(...table) + pad, core: k * [...table].sort((p, q) => p - q)[SHAPE_ANGLES >> 1] * CORE + pad, pr: new Float64Array(PROBE), px: new Float64Array(PROBE), py: new Float64Array(PROBE), pTurn: NaN, aim, mass: phase ? k * k : Infinity };
   };
   const sites: Site[] = [siteOf("home", 0, 0, homeSeed), ...kinds.map(k => siteOf(k.id, k.phase, k.bearing, k.seed))];
   // The sea wanted between two coasts (m): wider where the sea's open.
   const wantOf = (a: Site, b: Site) => STRAIT * (GAP[0] + (GAP[1] - GAP[0]) * vnoise(((a.x + b.x) / 2 / R) * OPEN_SCALE + 40, ((a.y + b.y) / 2 / R) * OPEN_SCALE + 40, 9021 + world));
   // How far a's coast comes inside b's coast and its wanted sea (m; under 0, that much more sea than wanted): a's coast probed.
   const into = (a: Site, b: Site, want: number) => {
+    const { px, py } = probed(a), bMost = b.most + want;
     let v = -Infinity;
     for (let p = 0; p < PROBE; p++) {
-      const t = (p / PROBE) * TAU, r = coastAt(a, t), dx = a.x + Math.cos(t) * r - b.x, dy = a.y + Math.sin(t) * r - b.y;
-      v = Math.max(v, coastAt(b, Math.atan2(dy, dx)) + want - Math.hypot(dx, dy));
+      const dx = a.x + px[p] - b.x, dy = a.y + py[p] - b.y, d = Math.hypot(dx, dy);
+      // (b's coast is at most b.most: a probe that couldn't come out above v even there is left unmeasured, the most unchanged)
+      if (bMost - d + SLACK < v) continue;
+      v = Math.max(v, coastAt(b, Math.atan2(dy, dx)) + want - d);
     }
     return v;
   };
@@ -111,16 +128,17 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
   // Each island turned to fit its neighbours: the turn whose coast comes least inside theirs, then sits closest to them.
   const turnAll = () => {
     for (let i = 1; i < sites.length; i++) {
-      const s = sites[i], near = sites.filter(q => q !== s && Math.hypot(q.x - s.x, q.y - s.y) < q.most + s.most + STRAIT * GAP[1]);
+      const s = sites[i], near = sites.filter(q => q !== s && Math.hypot(q.x - s.x, q.y - s.y) < q.most + s.most + STRAIT * GAP[1]), wants = near.map(q => wantOf(s, q));
       // (an outer island: its longest arm out to sea, toward the rim, not past the arms' rim)
       const outer = Math.hypot(s.x, s.y) + s.core > R - STRAIT * GAP[1] * 2, out = Math.atan2(s.y, s.x);
       const seaward = () => {
         let reach = 0, over = 0;
         for (let p = -3; p <= 3; p++) reach = Math.max(reach, coastAt(s, out + (p / 3) * 0.5) - s.core);
-        for (let p = 0; p < PROBE; p++) { const t = (p / PROBE) * TAU, r = coastAt(s, t); over = Math.max(over, Math.hypot(s.x + Math.cos(t) * r, s.y + Math.sin(t) * r) + STRAIT - OUT); }
+        const { px, py } = probed(s);
+        for (let p = 0; p < PROBE; p++) over = Math.max(over, Math.hypot(s.x + px[p], s.y + py[p]) + STRAIT - OUT);
         return -ARM_OUT * reach + 2 * over;
       };
-      const score = () => { let t = outer ? seaward() : 0; for (const q of near) { const want = wantOf(s, q), v = overlap(s, q, want); t += v > 0 ? v + (v * v) / want : 0.15 * Math.min(-v, want * 2); } return t; };
+      const score = () => { let t = outer ? seaward() : 0; for (let n = 0; n < near.length; n++) { const q = near[n], want = wants[n], v = overlap(s, q, want); t += v > 0 ? v + (v * v) / want : 0.15 * Math.min(-v, want * 2); } return t; };
       const was = s.turn;
       let best = was, bs = score() - 1e-6;
       for (let c = 0; c < TURN_TRIES; c++) { s.turn = was + ((c + 1) / (TURN_TRIES + 1)) * TAU; const sc = score(); if (sc < bs) { bs = sc; best = s.turn; } }
@@ -152,10 +170,13 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
     // (its body in from the bodies' rim by a strait, its arms from the arms' rim)
     for (const s of sites) {
       if (!s.phase) continue;
+      // (an island whose furthest coast can't reach the bodies' rim, wherever it points, isn't pushed: its probes go unmeasured)
+      if (Math.hypot(s.x, s.y) + s.most + STRAIT - R + SLACK <= 0) continue;
       let v = 0;
+      const { pr, px, py } = probed(s);
       for (let p = 0; p < PROBE; p++) {
-        const t = (p / PROBE) * TAU, r = coastAt(s, t), d = (q: number) => Math.hypot(s.x + Math.cos(t) * q, s.y + Math.sin(t) * q) + STRAIT;
-        v = Math.max(v, d(Math.min(r, s.core)) - R, d(r) - OUT);
+        const r = pr[p], c = Math.min(r, s.core);
+        v = Math.max(v, Math.hypot(s.x + PROBE_COS[p] * c, s.y + PROBE_SIN[p] * c) + STRAIT - R, Math.hypot(s.x + px[p], s.y + py[p]) + STRAIT - OUT);
       }
       if (v > 0) { const d = Math.hypot(s.x, s.y) || 1e-6, k = v * (settling ? 0.3 : 0.6); s.x -= (s.x / d) * k; s.y -= (s.y / d) * k; }
     }
@@ -168,7 +189,11 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
     const owns = (px: number, py: number) => {
       if (px * px + py * py > OUT * OUT) return false;
       const own = Math.hypot(px - s.x, py - s.y) - coastAt(s, Math.atan2(py - s.y, px - s.x));
-      for (const q of near) if (Math.hypot(px - q.x, py - q.y) - coastAt(q, Math.atan2(py - q.y, px - q.x)) < own) return false;
+      for (const q of near) {
+        const d = Math.hypot(px - q.x, py - q.y);
+        if (d - q.most - SLACK >= own) continue; // (its coast is at most q.most: nearer than own it can't be)
+        if (d - coastAt(q, Math.atan2(py - q.y, px - q.x)) < own) return false;
+      }
       return true;
     };
     const patch = new Float32Array(PATCH_ANGLES), step = 40;

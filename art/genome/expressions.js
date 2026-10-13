@@ -44,7 +44,7 @@ function faceDraw(m, face, st, u) { // u: one pixel, in model units
   const near = (q, e) => q.type === "ell" && faceEyeMats.has(q.mat) && Math.hypot(...v3.sub(q.c, e)) < Math.max(eyes.size * 1.6, u);
   const eyeMat = e => m.parts.find(q => near(q, e) && (q.mat === M.EYE || q.mat === M.MAGIC2))?.mat ?? M.EYE;
   const drop = e => { m.parts = m.parts.filter(q => !near(q, e)); };
-  const o = { group: 63, extra: true, part: "head" }, line = Math.max(E * .3, u * .6); // a stroke: a pixel wide at least
+  const o = { group: 63, extra: true, inside: true, part: "head" }, line = Math.max(E * .3, u * .6); // a stroke: a pixel wide at least
   const across = e => eyes.pts.length > 1 ? unitVec(v3.sub(e, mid)) : unitVec(v3.cross(fwd, up)); // out to the side, away from the middle
   for (const e of eyes.pts) {
     const out = unitVec(v3.sub(e, head.c)), a = across(e), mat = eyeMat(e);

@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
 import { applyKnobParams, byPr, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, parseValue, setKnob, valuesText } from "./decide";
 
-/** The URL switches the game reads (src/main.ts), and their values. */
-const PARAMS: Record<string, string[]> = { style: ["bold", "ref"] };
+/** The URL switches the game reads (src/main.ts, app/linkParams.ts), and their values (a slider's: any number). */
+const PARAMS: Record<string, string[]> = { style: ["bold", "ref"], fightScale: [], fightSpeed: [], fightMomentum: [], treetopSpeed: [], areaSize: [] };
 
 describe("the decisions panel", () => {
   it("has sound entries: unique ids, 2 to 4 options, a default inside its control, a real knob or switch", () => {
