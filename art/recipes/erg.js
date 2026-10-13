@@ -9,9 +9,9 @@ export const ERG = {
   layout: {
     pattern: "groves", density: .25, clump: .85, glades: { count: 3, size: [18, 30] },
     heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
-    terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .4, rocks: .4, freak: 0, lake: .3, modern: 0 },
+    terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .3, rocks: .4, freak: 0, lake: .3, modern: 0 },
     feel: "Long gold dunes rippled by the wind, date palms clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
   },
-  flora: { species: [["datePalm", .75], ["acacia", .25]], palette: { sat: .8, val: .95 } },
+  flora: { species: [["datePalm", .65], ["acacia", .25], ["baobab", .1]], palette: { sat: .8, val: .95 } },
   settings: { treeDensity: .3, groundCover: { density: .35, kinds: ["blades"] } },
 };
