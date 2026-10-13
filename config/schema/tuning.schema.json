@@ -6975,6 +6975,10 @@
             "playback"
           ]
         },
+        "buffer": {
+          "type": "number",
+          "minimum": 0
+        },
         "dropLayers": {
           "type": "number",
           "minimum": 0
@@ -7106,6 +7110,7 @@
         "on",
         "volume",
         "latency",
+        "buffer",
         "dropLayers",
         "nearDist",
         "farDist",
