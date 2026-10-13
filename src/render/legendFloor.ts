@@ -67,6 +67,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "mossy-dell": look("granite", "leaves", "moss", 0.7, false, 0.6),
   "misty-terraces": look("granite", "needles", "moss", 0.6, false, 0.5),
   "fen": look("granite", "reeds", "moss", 0.65, true),
+  "bamboo-jungle": look("limestone", "leaves", "moss", 0.6), // old shrine stone, bamboo litter over it
   "heronry": look("granite", "reeds", "lichen", 0.55, true),
   "mangrove-pools": look("granite", "reeds", "moss", 0.6, true), // dark wet stone among the roots,
   "mudflat": look("granite", "pebbles", "lichen", 0.5, true), // mud-washed stone, barnacled,

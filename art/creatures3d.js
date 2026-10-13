@@ -1,6 +1,6 @@
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
-import { M, rng, uni } from "./core.js";
+import { M, rng, uni, hash2 } from "./core.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
@@ -149,6 +149,8 @@ function gearUp(m) {
 //   tails: { count, length, spread, tip, replace }: brush tails rooted along its rump, sweeping up and back together like flames, of
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
+//   garland: { count, size, mat, alt, every, drop }: a garland of flowers or beads round its neck (an elder's offerings), mat (FLOWER:
+//     its palette's flower colour) with every `every`th bead alt, hanging lower at the front by drop.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
 //   scars: { count, mat, len }: old healed scars on its flanks, each three parallel claw rakes, pale (WEB) by default: the wear of epochs.
 //   beads: { count, size, mat, pendant }: a necklace of offerings round its neck, bronze (WOOD) by default, a bigger pendant (its mat,
@@ -230,6 +232,11 @@ function evolve3d(m, feats, c) {
         m.chain([[...root, w * .55], [...b1, w * 1.25], [...v3.lerp(b1, e, .6), w * .95], [...e, w * .35]], i % 2 ? M.BODY2 : M.BODY, { group: 72 + (i % 2), extra: true, paint: p => Math.hypot(...v3.sub(p, e)) < w * 1.1 ? (f.tip === "MAGIC2" ? M.MAGIC2 : M.BELLY) : undefined });
         if (f.tip === "MAGIC2") m.flat(v3.add(e, [-.02, w * .6, 0]), [1, 0, 0], v3.norm([-.35, 1, 0]), w * .9, w * 1.6, masks.flame(M.MAGIC2, M.MAGIC), { group: 74 + (i % 2), extra: true }); // fox-fire at its tip
       }
+    }
+    if (f.kind === "garland" && m.anchors.neck) { // a garland of flowers (marigolds, jade beads...) round its neck: an offering
+      m.part = "head";
+      const N = m.anchors.neck, n = f.count ?? 16, sz = f.size ?? .07, d = v3.norm(N.dir), u = v3.norm(v3.cross(d, [0, 0, 1])), w = v3.cross(d, u);
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, out = v3.norm(v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a)))), b = v3.add(v3.add(N.c, v3.mul(out, N.r * (f.out ?? 1.3))), v3.mul(d, -N.r * (f.drop ?? .3) * Math.max(0, -Math.cos(a)))); m.ell(b, [sz, sz, sz], M[i % (f.every ?? 3) === 0 && f.alt ? f.alt : f.mat || "FLOWER"], { group: 78, extra: true }); }
     }
     if (f.kind === "ruff" && m.anchors.neck) { // locks of fur round its neck and cheeks, swept back
       m.part = "head";
@@ -329,11 +336,14 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // an elder's marks (docs/ART-GUIDE.md 0c): old scars across its hide, a hoard frozen into it, an old gold harness
   const SCARS = [[.4, .75, .3, -.6, .9], [-.2, .7, .35, .5, .85], [.15, .6, -.32, -.4, .9], [-.5, .65, -.3, .7, .7], [.65, .7, .25, .2, 1], [0, .55, .3, -.9, .4]];
   const scarAt = p => { for (let i = 0; i < (q.scars || 0); i++) { const [x, y, z, a, b] = SCARS[i % SCARS.length], c = [x * len, y * top + (1 - y) * chest, z], d = v3.norm([Math.cos(a), Math.sin(a) * b, 0]), w = v3.sub(p, c), along = v3.dot(w, d), across = Math.abs(v3.dot(w, v3.norm([-d[1], d[0], 0]))); if (Math.abs(along) < .16 && across < .014 && p[2] * Math.sign(z || 1) > -bw * .2) return M.BELLY; } return undefined; };
+  // stripes (a tiger's): dark bands across its body from the spine down, wavering, narrowing toward the belly, none on it
+  const stripeAt = p => { const T = q.stripes, n = T.n ?? 10, w = T.w ?? .3, low = (p[1] - chest) / Math.max(.01, top + hump - chest); if (low < .05) return false; const u = (p[0] + len * 1.2) / (len * 2.4) * n + Math.sin(p[1] * 9 + p[2] * 5 + p[0] * 3) * (T.wave ?? .2) + Math.abs(p[2]) * 1.1, f = u - Math.floor(u); return f < w * Math.min(1, .35 + low); };
   const paintBody = p => {
     const sc = scarAt(p); if (sc) return sc;
     if (q.hoard && p[1] < (chest + top) / 2 && spotty(p, 34, .14)) return M.FLOWER; // its hoard frozen into its underside: coins and cups in the ice of its belly
     if (q.harness && (Math.abs(p[0] - len * .32) < .045 || (p[0] > len * .9 && p[1] < top - .12))) return M.FLOWER; // the girth strap and the breastplate of an old gold harness
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
+    if (q.stripes && stripeAt(p)) return M[q.stripes.mat || "BODY3"];
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots === "solid") { const k = 24, f = p.map(c => c * k - Math.floor(c * k) - .5); if (f[0] * f[0] + f[1] * f[1] + f[2] * f[2] < .16 && spotty(p, k, .6)) return M.NOSE; } // a cheetah's: small round solid dots all over
     if (q.spots && q.spots !== "solid" && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
@@ -359,7 +369,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     const knee = [x + Math.sin(a) * .2 + (fore ? .02 : .1), Math.max(.3, topY * .55), z], foot = [x + Math.sin(a) * .42, .05 + lift, z];
     const hipTop = [x, topY + .12, z * .8], mat = side > 0 ? (q.legMat || M.BODY) : (q.legMat ? M.BODY3 : M.BODY2);
     const pts = fore ? [[...hipTop, lw * 1.5], [...knee, lw * 1.05], [...foot, lw * .9]] : [[...hipTop, lw * 2 * (q.haunch || 1)], [...v3.add(knee, [-.12, .06, 0]), lw * 1.2], [...v3.add(foot, [-.06 * (q.hindFoot || 1), .12, 0]), lw * .9], [...foot, lw * .9]];
-    m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.socks || q.beads ? p => q.beads && p[1] > .12 && p[1] < (q.socks ?? 0) + .45 && Math.floor(p[1] * 16) % 3 === 0 && spotty(p, 30, .55) ? M.STONE : q.socks && p[1] < q.socks ? M.BODY3 : undefined : undefined }); // beads: stone-grey prayer beads round its legs
+    m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.stripes ? p => p[1] > .1 && p[1] < topY && ((p[1] * (q.stripes.legN ?? 6) + p[0] * .8 + side * .3) % 1 + 1) % 1 < (q.stripes.w ?? .3) * .75 ? M[q.stripes.mat || "BODY3"] : undefined : q.socks || q.beads ? p => q.beads && p[1] > .12 && p[1] < (q.socks ?? 0) + .45 && Math.floor(p[1] * 16) % 3 === 0 && spotty(p, 30, .55) ? M.STONE : q.socks && p[1] < q.socks ? M.BODY3 : undefined : undefined }); // beads: stone-grey prayer beads round its legs
     const fl = (q.paw === "hoof" ? .07 : .09) * (q.legW ** .5) * (!fore ? (q.hindFoot || 1) : 1);
     m.ell(v3.add(foot, [fl * .5, -.01, 0]), [fl, lw * .9, lw * 1.1], q.paw === "hoof" ? M.NOSE : mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
     m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2, fit: q.paw === "hoof" ? "hoof" : "paw" });
@@ -382,6 +392,8 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.face === "raccoon") { const band = H[1] + hr * .12; if (p[0] > H[0] - hr * .35 && Math.abs(p[1] - band) < hr * .27) return M.BODY3; if (p[0] > H[0] - hr * .1 && p[1] >= band + hr * .27 && p[1] < band + hr * .5) return M.BELLY; if (p[0] > H[0] + hr * .2 && p[1] < band - hr * .27) return M.BELLY; return undefined; } // the bandit mask: black across its eyes, white brows over it and a white muzzle under
     if (q.face === "meerkat" && p[0] > H[0] - hr * .05 && Math.abs(p[1] - (H[1] + hr * .27)) < hr * .3 && Math.abs(Math.abs(p[2]) - hr * .5) < hr * .38) return M.BODY3; // dark patches round its eyes
     if (q.frost && p[0] > H[0] + hr * .7 && spotty(p, 26, .45)) return M.WEB; // frost on its muzzle
+    if (q.scars && Math.abs((p[0] - H[0] - hr * .3) * .8 + (p[1] - H[1] - hr * .1)) < hr * .035 && Math.abs(p[0] - H[0] - hr * .3) < hr * .45 && p[2] > 0) return M.BELLY; // a scar across its brow and eye
+    if (q.stripes && p[1] > H[1] - hr * .1 && p[0] < H[0] + hr * .55 && (((p[1] - H[1]) / hr * 3.2 + Math.abs(p[2]) / hr * 1.6 - (p[0] - H[0]) / hr) % 1 + 1) % 1 < .24) return M[q.stripes.mat || "BODY3"]; // stripes over its brow and cheeks
     const tear = tearAt(p); if (tear) return tear;
     if (q.mask && p[0] > H[0] + hr * .15 && p[1] > H[1] - hr * .4 && p[1] < H[1] + hr * .45) return M.BELLY; // a white mask over its eyes and muzzle
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
@@ -548,6 +560,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
+  else if (kind === "tiger") m.chain([[...tb, .09], [X(1.3), top - .25 + tw, 0, .08], [X(1.55), top - .6, 0, .07], [X(1.7), .45 + tw, 0, .065], [X(1.82), .5 + tw, 0, .06]], M.BODY, { ...o, paint: p => p[0] < X(1.75) || Math.sin((p[0] + p[1]) * 26) > .45 ? M.BODY3 : undefined }); // long and thick, ringed, its tip black and lifting
   else if (kind === "ringed") m.chain([[...tb, .085], [X(1.2), top - .3, 0, .075], [X(1.5), top - .62 + tw, 0, .068], [X(1.85), .24 + tw, 0, .06], [X(2.1), .36 + tw, 0, .05]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) && p[1] > .3 + tw ? M.BELLY : p[0] < X(1.45) && Math.sin(p[0] * 26) > .25 ? M.BODY3 : undefined }); // a cheetah's: long and heavy (its rudder), low, curling up at its end, black rings and a white tip
   else if (kind === "tuft") { m.chain([[...tb, .06], [X(1.2), top - .35, 0, .045], [X(1.45), .32 + tw, 0, .04], [X(1.7), .26 + tw, 0, .035]], M.BODY, o); m.ell([X(1.78), .3 + tw, 0], [.08, .11, .07], M.BODY3, o); } // a lion's: long, hanging low and curling up, a dark tuft at its end
   else if (kind === "meerkat") m.chain([[...tb, .06], [X(1.2), top - .05 + tw, 0, .045], [X(1.55), top + .12 + tw, 0, .035], [X(1.7), top + .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[1] > top + .2 ? M.BODY3 : undefined }); // long and thin, held up in a curve, dark-tipped (the meerkat's)

@@ -365,6 +365,12 @@
    "bigswipe",
    "quake"
   ],
+  "tiger": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendCharge"
+  ],
   "lion": [
    null,
    "swipe",
@@ -387,6 +393,7 @@
  },
  "temperament": {
   "curious": [
+   "tiger",
    "lion",
    "squirrel",
    "fox",
@@ -447,6 +454,7 @@
    "bear",
    "elk",
    "stag",
+   "tiger",
    "lion",
    "frostwyrm",
    "griffin"

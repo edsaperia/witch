@@ -936,6 +936,19 @@ const PLANT_GENOMES = {
     params: { w: 250, h: 165, trunk: { w: 11, len: .5, taper: .6, bend: 1.2, lean: .2, roots: 0, stilts: { n: [8, 11], at: [.15, .5], reach: [16, 40], w: .42 } }, levels: [{ n: [4, 6], at: [.55, 1], len: [.3, .45], angle: [.9, 1.4], up: .05, bend: 1.2, w: .55 }],
       crown: { blobs: [8, 11], r: [17, 25], flat: .6, stamp: "leaf", stampSize: 3, back: .3, lift: 2 } },
     low: { moss: .4, sprigs: .3 }, colour: { hue: .04, sat: .85, val: .6, trunk: [.07, .3, .38] } },
+  // ---- the jungle (the journey's west: the tiger's and the elephant's islands) ----
+  kapok: { name: "kapok", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "umbrella", clumps: "flat layers high on a tall pale trunk" },
+    params: { w: 230, wPad: 40, h: 240, trunk: { w: 13, len: .68, taper: .55, bend: .4, lean: .1, roots: 2.4, mat: "BARK2" }, levels: [{ n: [4, 5], at: [.85, 1], len: [.38, .5], angle: [1.05, 1.4], up: .05, bend: 1.1, w: .5, tips: true }, { n: [2, 2], at: [.5, 1], len: [.3, .4], angle: [.3, .6], up: .1 }],
+      crown: { blobs: [9, 12], r: [30, 40], flat: .3, lift: 3, stamp: "leaf", stampSize: 3.5, back: .3 } },
+    low: { ivy: .6, sprigs: .3 }, colour: { hue: .02, sat: .95, val: 1.05, trunk: [.1, .12, .72] } },
+  strangler: { name: "strangler fig", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "dome", clumps: "broad blobs, hanging roots" },
+    params: { w: 260, wPad: 40, h: 170, trunk: { w: 16, len: .48, taper: .7, bend: 1.5, lean: .2, roots: 1.6, stems: 4, fan: .5 }, levels: [{ n: [3, 4], at: [.7, 1], len: [.4, .55], angle: [.8, 1.2], up: .05, bend: 1.3, w: .5 }],
+      crown: { blobs: [10, 13], r: [20, 27], flat: .42, lift: 3, stamp: "round", stampSize: 3.5, back: .35, backDark: .4, vines: { share: .5, len: [30, 70], budEvery: 99, bud: "BARKD" } } },
+    low: { ivy: 1, moss: .5 }, colour: { hue: .08, sat: 1.15, val: .55, trunk: [.08, .2, .55] } },
+  bamboo: { name: "bamboo", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "column", clumps: "sprays of narrow leaves up tall culms" },
+    params: { w: 110, wPad: 20, h: 210, narrow: 1, trunk: { w: 6, len: .95, taper: .8, bend: .5, lean: .15, stems: 7, fan: .45, bands: .07, roots: 0, mat: "BARK2", limbMat: "LEAF3" }, levels: [{ n: [6, 8], at: [.4, 1], len: [.07, .12], angle: [.5, .9], up: .1, w: .3, tips: true }],
+      crown: { blobs: [18, 24], r: [8, 12], flat: .38, stamp: "needle", stampSize: 2.5, back: .3, holes: .15 } },
+    low: { sprigs: .9, boughs: .3 }, colour: { hue: -.03, sat: .9, val: 1.05, trunk: [.2, .45, .62] } },
   vinewood: { name: "vinewood", form: "tree", generator: "blob", grow: "wide", fantasy: true, crown: { envelope: "weeping", clumps: "broad blobs, hanging vines with glowing buds" },
     params: { w: 210, h: 135, trunk: { w: 14, len: .4, taper: .6, bend: 1.6, lean: .6 }, levels: [{ n: [3, 4], at: [.6, 1], len: [.5, .65], angle: [.8, 1.2], up: .05, bend: 1.4, shape: "even" }, { n: [2, 2], at: [.5, 1], len: [.4, .5], angle: [.3, .6], up: .15 }],
       crown: { blobs: [4, 6], r: [17, 22], flat: .6, stamp: "leaf", stampSize: 3, back: .35, vines: { share: .55, len: [28, 60], budEvery: 9, bud: "GLOW" } } },
@@ -3922,6 +3935,21 @@ const GENOMES = [
     levels: [null, null, null, { body: { bw: .44 }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 40, lean: .25, mat: "BELLY" }, { kind: "ruff", size: .28, count: 16 }, { kind: "beads", count: 11, size: .055, mat: "WOOD", pendant: "STONE" }] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
+  // the jungle's tiger (the journey's west, unknown-11's island): a big striped cat, low and long, heavy in the shoulder. Its evolution:
+  // a round, big-pawed cub with soft broad stripes, a lanky young, a heavy-shouldered adult with a ruff of cheek fur, and the legend:
+  // the elder of the tigers, huge and grizzled, its stripes worn thin with age, old scars raked across its flanks and brow, a white
+  // ruff, and a garland of red flowers and bronze beads round its neck, the jungle's offerings
+  { id: "tiger", name: "Tiger", template: "quadruped", builder: "quad", palette: { hue: .065, sat: .85, val: .9, belly: "white", flower: [214, 48, 58] }, body: { hgt: 1.1, len: .86, chest: .5, tuck: .56, neck: .28, neckAng: .5, neckW: .52, hr: .3, legW: 1.3, bw: .32 }, head: { snout: .55, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true, muzzle: true }, parts: { ears: { kind: "round", size: .75 }, tail: "tiger", feet: "paw" }, coat: { belly: true, stripes: { n: 11, w: .3 } }, legend: ["mane"],
+    levels: [
+      { body: { len: .6, hr: .34, legW: 1.55 }, coat: { stripes: { n: 7, w: .28, legN: 4 } }, parts: { ears: { kind: "round", size: 1.05 } } },
+      { body: { len: .84, legW: 1.15, chest: .54 } },
+      { body: { front: 1.12, legW: 1.45, bw: .35, hgt: 1.15 }, features: [{ kind: "ruff", size: .15, count: 12 }] },
+      { body: { front: 1.22, legW: 1.6, bw: .37, len: .95, hgt: 1.25 }, head: { muzzle: true }, coat: { stripes: { n: 9, w: .2, wave: .35 }, scars: 4 }, features: [ // (Ed, 2026-10-13, ART-GUIDE 0c: the elder of its kind)
+        { kind: "ruff", size: .3, count: 18, mat: "BELLY" },
+        { kind: "garland", count: 18, size: .1, mat: "FLOWER", alt: "WOOD", every: 4, drop: .6, out: 1.45 },
+        { kind: "claws", size: .13, mat: "BODY3" },
+      ] },
+    ] },
   // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;
   // every level flies (Ed: the baby a small dragonfly); its legend the elder of its kind, a coal-forest giant: all eye, vast tattered wings, scarred
   { id: "dragonfly", name: "Dragonfly", template: "flyer", builder: "dragonfly", palette: { hue: .5, sat: .62, val: .62 }, legend: ["eyesHuge", "ancient"], texture: { kind: "plates", size: 2 },
@@ -4054,7 +4082,7 @@ const TEMPLATES = {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.sail", "ear.none"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.ringed", "tail.panda", "tail.croc"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.ringed", "tail.panda", "tail.croc", "tail.tiger"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
@@ -4354,7 +4382,7 @@ function speciesOf(g) {
 }
 
 // The evolution kit's features (creatures3d.js evolve3d).
-const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads"];
+const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland"];
 // A level's overrides, in the builders' bag (as speciesOf makes q).
 function levelQ(l) {
   const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
@@ -4448,6 +4476,7 @@ const NAP_POSES = {
   // tuck
   owl: { kind: "tuck", ground: .14, tuck: .35, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101] },
   raven: { kind: "tuck", ground: .26, tuck: .45, drop: [40, 50, 95, 96, 97, 98, 99, 100] },
+  tiger: { kind: "curl", sink: .04, droop: 1, curl: 2.4, tailDown: .25 }, // sprawled on its side, its tail laid round
   griffin: { kind: "curl", sink: .04, droop: 1, curl: 2.8, tailDown: .25 }, // curled like a cat, its head under a wing
   frostwyrm: { kind: "curl", sink: .04, droop: 1, curl: 3.2, tailDown: .25 }, // coiled round on itself, its tail over its snout
   cheetah: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, // curled round, its long tail over its nose
@@ -4935,6 +4964,8 @@ function gearUp(m) {
 //   tails: { count, length, spread, tip, replace }: brush tails rooted along its rump, sweeping up and back together like flames, of
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
+//   garland: { count, size, mat, alt, every, drop }: a garland of flowers or beads round its neck (an elder's offerings), mat (FLOWER:
+//     its palette's flower colour) with every `every`th bead alt, hanging lower at the front by drop.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
 //   scars: { count, mat, len }: old healed scars on its flanks, each three parallel claw rakes, pale (WEB) by default: the wear of epochs.
 //   beads: { count, size, mat, pendant }: a necklace of offerings round its neck, bronze (WOOD) by default, a bigger pendant (its mat,
@@ -5016,6 +5047,11 @@ function evolve3d(m, feats, c) {
         m.chain([[...root, w * .55], [...b1, w * 1.25], [...v3.lerp(b1, e, .6), w * .95], [...e, w * .35]], i % 2 ? M.BODY2 : M.BODY, { group: 72 + (i % 2), extra: true, paint: p => Math.hypot(...v3.sub(p, e)) < w * 1.1 ? (f.tip === "MAGIC2" ? M.MAGIC2 : M.BELLY) : undefined });
         if (f.tip === "MAGIC2") m.flat(v3.add(e, [-.02, w * .6, 0]), [1, 0, 0], v3.norm([-.35, 1, 0]), w * .9, w * 1.6, masks.flame(M.MAGIC2, M.MAGIC), { group: 74 + (i % 2), extra: true }); // fox-fire at its tip
       }
+    }
+    if (f.kind === "garland" && m.anchors.neck) { // a garland of flowers (marigolds, jade beads...) round its neck: an offering
+      m.part = "head";
+      const N = m.anchors.neck, n = f.count ?? 16, sz = f.size ?? .07, d = v3.norm(N.dir), u = v3.norm(v3.cross(d, [0, 0, 1])), w = v3.cross(d, u);
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, out = v3.norm(v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a)))), b = v3.add(v3.add(N.c, v3.mul(out, N.r * (f.out ?? 1.3))), v3.mul(d, -N.r * (f.drop ?? .3) * Math.max(0, -Math.cos(a)))); m.ell(b, [sz, sz, sz], M[i % (f.every ?? 3) === 0 && f.alt ? f.alt : f.mat || "FLOWER"], { group: 78, extra: true }); }
     }
     if (f.kind === "ruff" && m.anchors.neck) { // locks of fur round its neck and cheeks, swept back
       m.part = "head";
@@ -5115,11 +5151,14 @@ function quad3d(S, level, frame, st, facing = "towards") {
   // an elder's marks (docs/ART-GUIDE.md 0c): old scars across its hide, a hoard frozen into it, an old gold harness
   const SCARS = [[.4, .75, .3, -.6, .9], [-.2, .7, .35, .5, .85], [.15, .6, -.32, -.4, .9], [-.5, .65, -.3, .7, .7], [.65, .7, .25, .2, 1], [0, .55, .3, -.9, .4]];
   const scarAt = p => { for (let i = 0; i < (q.scars || 0); i++) { const [x, y, z, a, b] = SCARS[i % SCARS.length], c = [x * len, y * top + (1 - y) * chest, z], d = v3.norm([Math.cos(a), Math.sin(a) * b, 0]), w = v3.sub(p, c), along = v3.dot(w, d), across = Math.abs(v3.dot(w, v3.norm([-d[1], d[0], 0]))); if (Math.abs(along) < .16 && across < .014 && p[2] * Math.sign(z || 1) > -bw * .2) return M.BELLY; } return undefined; };
+  // stripes (a tiger's): dark bands across its body from the spine down, wavering, narrowing toward the belly, none on it
+  const stripeAt = p => { const T = q.stripes, n = T.n ?? 10, w = T.w ?? .3, low = (p[1] - chest) / Math.max(.01, top + hump - chest); if (low < .05) return false; const u = (p[0] + len * 1.2) / (len * 2.4) * n + Math.sin(p[1] * 9 + p[2] * 5 + p[0] * 3) * (T.wave ?? .2) + Math.abs(p[2]) * 1.1, f = u - Math.floor(u); return f < w * Math.min(1, .35 + low); };
   const paintBody = p => {
     const sc = scarAt(p); if (sc) return sc;
     if (q.hoard && p[1] < (chest + top) / 2 && spotty(p, 34, .14)) return M.FLOWER; // its hoard frozen into its underside: coins and cups in the ice of its belly
     if (q.harness && (Math.abs(p[0] - len * .32) < .045 || (p[0] > len * .9 && p[1] < top - .12))) return M.FLOWER; // the girth strap and the breastplate of an old gold harness
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
+    if (q.stripes && stripeAt(p)) return M[q.stripes.mat || "BODY3"];
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots === "solid") { const k = 24, f = p.map(c => c * k - Math.floor(c * k) - .5); if (f[0] * f[0] + f[1] * f[1] + f[2] * f[2] < .16 && spotty(p, k, .6)) return M.NOSE; } // a cheetah's: small round solid dots all over
     if (q.spots && q.spots !== "solid" && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
@@ -5145,7 +5184,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
     const knee = [x + Math.sin(a) * .2 + (fore ? .02 : .1), Math.max(.3, topY * .55), z], foot = [x + Math.sin(a) * .42, .05 + lift, z];
     const hipTop = [x, topY + .12, z * .8], mat = side > 0 ? (q.legMat || M.BODY) : (q.legMat ? M.BODY3 : M.BODY2);
     const pts = fore ? [[...hipTop, lw * 1.5], [...knee, lw * 1.05], [...foot, lw * .9]] : [[...hipTop, lw * 2 * (q.haunch || 1)], [...v3.add(knee, [-.12, .06, 0]), lw * 1.2], [...v3.add(foot, [-.06 * (q.hindFoot || 1), .12, 0]), lw * .9], [...foot, lw * .9]];
-    m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.socks || q.beads ? p => q.beads && p[1] > .12 && p[1] < (q.socks ?? 0) + .45 && Math.floor(p[1] * 16) % 3 === 0 && spotty(p, 30, .55) ? M.STONE : q.socks && p[1] < q.socks ? M.BODY3 : undefined : undefined }); // beads: stone-grey prayer beads round its legs
+    m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.stripes ? p => p[1] > .1 && p[1] < topY && ((p[1] * (q.stripes.legN ?? 6) + p[0] * .8 + side * .3) % 1 + 1) % 1 < (q.stripes.w ?? .3) * .75 ? M[q.stripes.mat || "BODY3"] : undefined : q.socks || q.beads ? p => q.beads && p[1] > .12 && p[1] < (q.socks ?? 0) + .45 && Math.floor(p[1] * 16) % 3 === 0 && spotty(p, 30, .55) ? M.STONE : q.socks && p[1] < q.socks ? M.BODY3 : undefined : undefined }); // beads: stone-grey prayer beads round its legs
     const fl = (q.paw === "hoof" ? .07 : .09) * (q.legW ** .5) * (!fore ? (q.hindFoot || 1) : 1);
     m.ell(v3.add(foot, [fl * .5, -.01, 0]), [fl, lw * .9, lw * 1.1], q.paw === "hoof" ? M.NOSE : mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
     m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2, fit: q.paw === "hoof" ? "hoof" : "paw" });
@@ -5168,6 +5207,8 @@ function quad3d(S, level, frame, st, facing = "towards") {
     if (q.face === "raccoon") { const band = H[1] + hr * .12; if (p[0] > H[0] - hr * .35 && Math.abs(p[1] - band) < hr * .27) return M.BODY3; if (p[0] > H[0] - hr * .1 && p[1] >= band + hr * .27 && p[1] < band + hr * .5) return M.BELLY; if (p[0] > H[0] + hr * .2 && p[1] < band - hr * .27) return M.BELLY; return undefined; } // the bandit mask: black across its eyes, white brows over it and a white muzzle under
     if (q.face === "meerkat" && p[0] > H[0] - hr * .05 && Math.abs(p[1] - (H[1] + hr * .27)) < hr * .3 && Math.abs(Math.abs(p[2]) - hr * .5) < hr * .38) return M.BODY3; // dark patches round its eyes
     if (q.frost && p[0] > H[0] + hr * .7 && spotty(p, 26, .45)) return M.WEB; // frost on its muzzle
+    if (q.scars && Math.abs((p[0] - H[0] - hr * .3) * .8 + (p[1] - H[1] - hr * .1)) < hr * .035 && Math.abs(p[0] - H[0] - hr * .3) < hr * .45 && p[2] > 0) return M.BELLY; // a scar across its brow and eye
+    if (q.stripes && p[1] > H[1] - hr * .1 && p[0] < H[0] + hr * .55 && (((p[1] - H[1]) / hr * 3.2 + Math.abs(p[2]) / hr * 1.6 - (p[0] - H[0]) / hr) % 1 + 1) % 1 < .24) return M[q.stripes.mat || "BODY3"]; // stripes over its brow and cheeks
     const tear = tearAt(p); if (tear) return tear;
     if (q.mask && p[0] > H[0] + hr * .15 && p[1] > H[1] - hr * .4 && p[1] < H[1] + hr * .45) return M.BELLY; // a white mask over its eyes and muzzle
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
@@ -5334,6 +5375,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
+  else if (kind === "tiger") m.chain([[...tb, .09], [X(1.3), top - .25 + tw, 0, .08], [X(1.55), top - .6, 0, .07], [X(1.7), .45 + tw, 0, .065], [X(1.82), .5 + tw, 0, .06]], M.BODY, { ...o, paint: p => p[0] < X(1.75) || Math.sin((p[0] + p[1]) * 26) > .45 ? M.BODY3 : undefined }); // long and thick, ringed, its tip black and lifting
   else if (kind === "ringed") m.chain([[...tb, .085], [X(1.2), top - .3, 0, .075], [X(1.5), top - .62 + tw, 0, .068], [X(1.85), .24 + tw, 0, .06], [X(2.1), .36 + tw, 0, .05]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) && p[1] > .3 + tw ? M.BELLY : p[0] < X(1.45) && Math.sin(p[0] * 26) > .25 ? M.BODY3 : undefined }); // a cheetah's: long and heavy (its rudder), low, curling up at its end, black rings and a white tip
   else if (kind === "tuft") { m.chain([[...tb, .06], [X(1.2), top - .35, 0, .045], [X(1.45), .32 + tw, 0, .04], [X(1.7), .26 + tw, 0, .035]], M.BODY, o); m.ell([X(1.78), .3 + tw, 0], [.08, .11, .07], M.BODY3, o); } // a lion's: long, hanging low and curling up, a dark tuft at its end
   else if (kind === "meerkat") m.chain([[...tb, .06], [X(1.2), top - .05 + tw, 0, .045], [X(1.55), top + .12 + tw, 0, .035], [X(1.7), top + .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[1] > top + .2 ? M.BODY3 : undefined }); // long and thin, held up in a curve, dark-tipped (the meerkat's)
@@ -7604,6 +7646,8 @@ const SIGILS = {
   // the misty terraces' red panda, face on: a round face, big round rimmed ears, white cheeks, a dark nose, tear-marks under its eyes
   redpanda: [C(.5, .55, .26), ...pair(C(.3, .3, .1), C(.3, .3, .05), D(.41, .5), L([.41, .56], [.39, .66]), bow([.3, .62], [.4, .74], .3)), D(.5, .66), L([.5, .68], [.5, .74])],
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
+  // the tiger: a broad round face, round ears, the mark on its brow, stripes on its cheeks, a wide muzzle
+  tiger: [C(.5, .55, .34), ...pair(A(.24, .26, .09, 120, 330), D(.38, .5), L([.17, .55], [.29, .58]), L([.17, .65], [.29, .66])), L([.43, .31], [.57, .31]), L([.44, .39], [.56, .39]), L([.5, .25], [.5, .43]), E(.5, .72, .12, .08), D(.5, .68)],
   // the dragonfly from above: a big-eyed head, a thorax, a long thin tail, two pairs of long wings out straight
   dragonfly: [C(.5, .2, .055), ...pair(D(.47, .18)), E(.5, .33, .04, .065), L([.5, .4], [.5, .95]), ...pair(L([.47, .3], [.3, .22], [.08, .21], [.06, .27], [.3, .32], [.47, .35]), L([.47, .38], [.3, .39], [.1, .45], [.12, .51], [.3, .46], [.47, .42]))],
   // the fiddler crab front on: a broad shell, eyes up on stalks, legs out to each side, one small claw and one great one
@@ -7739,6 +7783,7 @@ const LEGEND_DETAIL = {
   redpanda: [...pair(L([.27, .78], [.2, .9]), L([.33, .82], [.3, .94])), L([.5, .82], [.5, .9])],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
   crocodile: [...pair(D(.42, .3), D(.36, .3), L([.465, .5], [.465, .76])), D(.5, .28)],
+  tiger: [...pair(L([.2, .44], [.3, .47]), L([.45, .79], [.44, .86]))],
   griffin: [L([.36, .5], [.3, .58]), D(.62, .46)],
   frostwyrm: [...pair(L([.336, .27], [.303, .205])), ...pair(D(.475, .746))],
   cheetah: [...pair(D(.3, .62)), ...pair(D(.34, .42)), D(.5, .36)],
@@ -7867,7 +7912,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
+const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -8663,6 +8708,7 @@ const spSETS = {
     for (const [c, r] of [[[-.6, 1.6, 0], [.6, .3, .75]], [[.5, 1.65, 0], [.65, .3, .75]], [[-.95, .9, -.55], [.25, .65, .25]], [[.95, .8, -.6], [.25, .55, .25]], [[-.9, .7, .62], [.22, .5, .2]], [[.2, 1.3, -.65], [.5, .4, .2]]]) m.ell(c, r, M.LEAF, { group: 4, rough: .04, paint: bloom });
     m.box([0, .4, -.35], [.6, .04, .15], M.WOOD, { round: .02, group: 5 }); for (const x of [-.5, .5]) m.seg([x, 0, -.35], [x, .38, -.35], .03, .03, M.WOOD, { group: 5 }); // a bench
   },
+
 };
 // The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale); a generated kind
 // (art/props/sets.js) may add a fourth item, its seed and any numbers to fix.
@@ -9087,6 +9133,27 @@ const SAVANNA = {
 };
 
 
+// ---- inlined from art/recipes/bambooJungle.js ----
+// The bamboo jungle (the journey's west: unknown-11's island, the jungle biome): an area type as a recipe (art/recipes.js says what
+// each field is). Dense groves of bamboo under tall kapoks, a heap of old temple rubble in the clearing, the tiger its creature.
+const BAMBOO_JUNGLE = {
+  id: "bamboo-jungle", name: "Bamboo jungle", creature: "tiger", by: "recipe", leaf: .26, floor: ["leaves", .11, .55, .32],
+  text: { floor: "bamboo leaf litter", wall: "walls of bamboo", small: "ferns and long grass", big: "bamboo groves under kapok", set: "a heap of mossed temple rubble" },
+  wall: [["fern", {}], ["shrub", {}]], small: [["fern", {}], ["grass", { h: 1.6 }]],
+  big: [["tree", { type: "bamboo", scale: 1 }], ["tree", { type: "kapok", minor: true, scale: 1.25 }]],
+  pathKinds: ["footpath"],
+  setPiece: ["heap", "a heap of mossed temple rubble", 1, { of: "rubble", top: "slab", moss: .5 }],
+  layout: {
+    pattern: "groves", density: .65, clump: .85, glades: { count: 2, size: [10, 16] },
+    heightMix: { sapling: .15, mature: .5, tall: .25, giant: .1 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
+    terrain: ["paths", "hollows"], decor: { rate: .2, ruins: .5, rocks: .25, freak: .15, lake: 0, modern: .1 },
+    feel: "Tall bamboo in dense groves, its stems knocking in the wind, a few kapoks standing far above it; striped light and shadow, close and watchful.",
+  },
+  flora: { species: [["bamboo", .55], ["kapok", .25], ["strangler", .2]], palette: { sat: 1, val: .95 } },
+  settings: { treeDensity: .7, groundCover: { density: .8, kinds: ["blades", "fern"] } },
+};
+
+
 // ---- inlined from art/recipes/plains.js ----
 // The plains (a journey kind: unknown-24's, the hot south): open short grass running to the horizon, the odd whistling thorn and
 // termite mounds to look out from, the cheetah its creature (the lion's savanna is the taller grass under acacias and baobabs).
@@ -9259,7 +9326,7 @@ const TERRACES = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE];
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, BAMBOO_JUNGLE];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -12773,6 +12840,7 @@ const LEGEND_POSES = {
   raccoon: { sink: .5, droop: 1, drop: [], over: { moss: .6, lichen: .1, ferns: 3, grass: 2, mushrooms: 2, roots: 2, stones: 2 } }, // the mossy creek's raccoon (an area recipe's): curled under moss and ferns
   meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
+  tiger: { sink: .45, droop: 1, drop: [], over: { moss: .35, lichen: .06, ferns: 3, grass: 3, mushrooms: 1, roots: 3, stones: 2 } }, // the bamboo jungle's tiger (an area recipe's): stretched out under ferns and roots, its garland gone to dry stalks and its stripes to bark and shadow
   roe: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .6, lichen: .05, ferns: 4, grass: 3, mushrooms: 2, roots: 3, stones: 1, beard: 3 } }, // the mossy dell's roe: curled in the moss, ferns over it
   redpanda: { sink: .45, droop: 1, drop: [], over: { moss: .5, lichen: .08, ferns: 3, grass: 2, mushrooms: 2, roots: 3, stones: 3, flowers: 2 } }, // the misty terraces' red panda: curled on a mossy ledge, tail over its nose
   crocodile: { sink: .55, droop: 1, drop: [120, 121, 140, 141, 142, 143, 144, 145, 146, 147], over: { moss: .35, lichen: .06, ferns: 0, grass: 4, mushrooms: 1, roots: 3, stones: 1 } }, // the mangrove's crocodile (an area recipe's): sunk in the mud like a log, its ridge of stones standing out of it, roots over it
