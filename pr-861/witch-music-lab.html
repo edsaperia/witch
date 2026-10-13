@@ -661,7 +661,7 @@ label.check input { accent-color: var(--accent); }
     // flames off their tips and a dark shaggy mane along its spine and belly
     levels: [
       { body: { len: 0.6, chest: 0.3, tuck: 0.34, back: "arch" }, coat: { ridge: false, bands: { n: 2, mat: "BELLY" } } },
-      null,
+      { body: { len: 0.648, legW: 0.738, neckW: 0.495, chest: 0.43, tuck: 0.54, profile: { shoulder: { w: 0.9, d: 0.9 }, ribcage: { w: 0.92 }, waist: { w: 0.8, d: 0.85 }, loin: { w: 0.88, d: 0.92 }, hip: { w: 0.92 } } } },
       { body: { humpK: 2.4, neckAng: -0.42, front: 1.25, legW: 1, hgt: 1.05 }, head: { tuskSize: 1.15, tuskCurl: 0.75, horn: { length: 0.75, r: 0.3, curl: 0.12, twist: 0.5, ridges: 2, segs: 6, out: 0.3, mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [{ kind: "mane", from: 0.45, to: 0.98, height: 0.14, count: 10, lean: 0.45 }] },
       { body: { humpK: 2.8, neckAng: -0.45, front: 1.36, legW: 1.45, chest: 0.3 }, head: { tuskSize: 1.7, tuskCurl: 1.25, eyeGlow: true, horn: { length: 5.2, r: 0.46, curl: 0.9, twist: 2.5, ridges: 3, segs: 24, out: 0.3, tip: "MAGIC2", mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [
         // (Ed, 2026-10-05: head down to charge, a battering ram; its eye glints under the hump, flames rise over it)
@@ -692,8 +692,8 @@ label.check input { accent-color: var(--accent); }
     // cheek fur gone pale with age, long claws, a collar of beads round each leg, and her crown
     levels: [
       null,
-      null,
-      null,
+      { body: { len: 0.612, legW: 0.476, neckW: 0.324, chest: 0.45, tuck: 0.52, profile: { shoulder: { w: 0.9, d: 0.9 }, ribcage: { w: 0.92 }, waist: { w: 0.8, d: 0.85 }, loin: { w: 0.88, d: 0.92 }, hip: { w: 0.92 } } } },
+      { body: { chest: 0.37, profile: { shoulder: { w: 1.2, d: 1.12 }, ribcage: { w: 1.08 }, waist: { w: 0.8, d: 0.88 }, loin: { w: 0.88, d: 0.95 }, hip: { w: 0.95 } } } },
       { body: { hgt: 0.8, len: 0.72, chest: 0.44 }, head: { frost: true }, coat: { beads: true, socks: 0.3 }, features: [
         "crown",
         { kind: "ruff", size: 0.32, count: 18, mat: "BELLY" },
@@ -717,8 +717,8 @@ label.check input { accent-color: var(--accent); }
     texture: { kind: "fur", size: 3, lumps: 15e-4 },
     levels: [
       { body: { len: 0.5, chest: 0.42, tuck: 0.5, hr: 0.25, legW: 0.9, bw: 0.22, archK: 0.6 }, head: { snout: 0.35 }, parts: { ears: { kind: "round", size: 0.7 } }, features: [{ kind: "mane", from: 0.15, to: 1, height: 0.1, count: 14, lean: 0.7, mat: "BELLY" }] },
-      { body: { len: 0.64, chest: 0.46, tuck: 0.8, legW: 0.6, archK: 1.4 }, features: [{ kind: "mane", from: 0.6, to: 1, height: 0.05, count: 6, lean: 0.8, mat: "BELLY" }] },
-      null,
+      { body: { archK: 1.4, len: 0.594, legW: 0.476, neckW: 0.216, chest: 0.52, tuck: 0.9, profile: { shoulder: { w: 1.05, d: 0.95 }, ribcage: { w: 0.98 }, waist: { w: 0.66, d: 0.8 }, loin: { w: 0.74, d: 0.88 }, hip: { w: 0.9 } } }, features: [{ kind: "mane", from: 0.6, to: 1, height: 0.05, count: 6, lean: 0.8, mat: "BELLY" }] },
+      { body: { chest: 0.44, profile: { shoulder: { w: 1.3, d: 1.12 }, ribcage: { w: 1.14 }, waist: { w: 0.68, d: 0.8 }, loin: { w: 0.78, d: 0.9 }, hip: { w: 0.95 } } } },
       { body: { len: 0.72, legW: 0.62, tuck: 0.9, hgt: 1.5, archK: 2.2 }, head: { snout: 0.45, eyeGlow: true, tears: "glow" }, features: [
         { kind: "mane", from: 0.2, to: 0.95, height: 0.05, count: 14, lean: 0.9, mat: "BODY" },
         { kind: "wisps", at: "mane", size: 0.26, count: 9, from: 0.05, to: 0.95, mat: "MAGIC2", lift: 0.1 }
@@ -1067,13 +1067,18 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/lynx/genome.js
-  var GENOME_LYNX = { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: 0.09, sat: 0.45, val: 0.75 }, body: { hgt: 1.08, len: 0.5, chest: 0.56, tuck: 0.62, neck: 0.25, neckAng: 0.8, neckW: 0.4, hr: 0.27, legW: 0.95 }, head: { snout: 0.5, snoutD: 0.75, snoutTaper: 0.8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.5 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"], levels: [null, null, null, { head: { plume: true } }] };
+  var GENOME_LYNX = { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: 0.09, sat: 0.45, val: 0.75 }, body: { hgt: 1.08, len: 0.5, chest: 0.56, tuck: 0.62, neck: 0.25, neckAng: 0.8, neckW: 0.4, hr: 0.27, legW: 0.95 }, head: { snout: 0.5, snoutD: 0.75, snoutTaper: 0.8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.5 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"], levels: [
+    null,
+    { body: { len: 0.45, legW: 0.779, neckW: 0.36, chest: 0.61, tuck: 0.66, profile: { shoulder: { w: 0.9, d: 0.9 }, ribcage: { w: 0.92 }, waist: { w: 0.8, d: 0.85 }, loin: { w: 0.88, d: 0.92 }, hip: { w: 0.92 } } } },
+    { body: { chest: 0.53, profile: { shoulder: { w: 1.2, d: 1.12 }, ribcage: { w: 1.08 }, waist: { w: 0.8, d: 0.88 }, loin: { w: 0.88, d: 0.95 }, hip: { w: 0.95 } } } },
+    { head: { plume: true } }
+  ] };
 
   // art/creatures/marten/genome.js
   var GENOME_MARTEN = { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.6, val: 0.45 }, body: { hgt: 0.68, len: 0.78, chest: 0.35, tuck: 0.42, neck: 0.3, neckAng: 0.55, neckW: 0.35, hr: 0.25, legW: 0.85, back: "arch" }, head: { snout: 0.65, snoutD: 0.6 }, parts: { ears: { kind: "round", size: 1.3 }, tail: "marten", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "marten", eye: "EYE" } };
 
   // art/creatures/meerkat/genome.js
-  var GENOME_MEERKAT = { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: 0.09, sat: 0.35, val: 0.72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: 0.8, len: 0.62, chest: 0.44, tuck: 0.5, neck: 0.34, neckAng: 0.75, neckW: 0.26, hr: 0.2, legW: 0.55, bw: 0.2, back: "arch" }, head: { snout: 0.8, snoutD: 0.45, snoutTaper: 0.4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 } };
+  var GENOME_MEERKAT = { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: 0.09, sat: 0.35, val: 0.72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: 0.8, len: 0.62, chest: 0.44, tuck: 0.5, neck: 0.34, neckAng: 0.75, neckW: 0.26, hr: 0.2, legW: 0.55, bw: 0.2, back: "arch" }, head: { snout: 0.8, snoutD: 0.45, snoutTaper: 0.4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 }, levels: [null, { body: { len: 0.521, legW: 0.396, neckW: 0.221, hr: 0.184, chest: 0.52, tuck: 0.56, profile: { shoulder: { w: 0.86, d: 0.86 }, ribcage: { w: 0.9 }, waist: { w: 0.74, d: 0.8 }, loin: { w: 0.85, d: 0.9 }, hip: { w: 0.9 } } } }, { body: { chest: 0.39, tuck: 0.48, profile: { shoulder: { w: 1.22, d: 1.16 }, ribcage: { w: 1.08 }, waist: { w: 0.78, d: 0.88 }, loin: { w: 0.88 }, hip: { w: 0.98 } } } }, null] };
 
   // art/creatures/mole/genome.js
   var GENOME_MOLE = { id: "mole", name: "Mole", template: "squat", builder: "mole", palette: { hue: 0.7, sat: 0.15, val: 0.32, flower: [70, 190, 150] }, legend: [], elder: { kind: "mole" }, texture: { kind: "fur", size: 3 } };
@@ -1098,7 +1103,7 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/otter/genome.js
-  var GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.45, belly: "white" }, body: { stance: "flat", hgt: 0.46, len: 1.15, chest: 0.32, tuck: 0.26, neck: 0.36, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { onBack: true } }] };
+  var GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.45, belly: "white" }, body: { stance: "flat", hgt: 0.46, len: 1.15, chest: 0.32, tuck: 0.26, neck: 0.36, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { pearl: true } }] };
 
   // art/creatures/owl/genome.js
   var GENOME_OWL = {
@@ -1147,11 +1152,16 @@ label.check input { accent-color: var(--accent); }
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: the coat a long hanging
     // fleece; the legend brief: an elder, revered): a vast fleece hanging off it to the ground, a ruff, frost on its muzzle,
     // a necklace of bronze offerings with a stone at its throat
-    levels: [null, null, null, { body: { bw: 0.44 }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: 0.42, count: 40, lean: 0.25, mat: "BELLY" }, { kind: "ruff", size: 0.28, count: 16 }, { kind: "beads", count: 11, size: 0.055, mat: "WOOD", pendant: "STONE" }] }]
+    levels: [
+      null,
+      { body: { len: 0.72, legW: 1.152, neckW: 0.451, hr: 0.27, chest: 0.48, tuck: 0.5, profile: { shoulder: { w: 0.84, d: 0.84 }, ribcage: { w: 0.88 }, waist: { w: 0.78, d: 0.82 }, loin: { w: 0.86, d: 0.9 }, hip: { w: 0.88 } } } },
+      { body: { chest: 0.33, tuck: 0.4, profile: { shoulder: { w: 1.22, d: 1.18 }, ribcage: { w: 1.12 }, waist: { w: 0.9, d: 0.92 }, loin: { w: 0.95 }, hip: { w: 1.02 } } } },
+      { body: { bw: 0.44, len: 0.954, chest: 0.3, tuck: 0.38, profile: { shoulder: { w: 1.34, d: 1.28 }, ribcage: { w: 1.2, d: 1.08 }, waist: { w: 0.96, d: 0.96 }, loin: { w: 1 }, hip: { w: 1.08, d: 1.04 } } }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: 0.42, count: 40, lean: 0.25, mat: "BELLY" }, { kind: "ruff", size: 0.28, count: 16 }, { kind: "beads", count: 11, size: 0.055, mat: "WOOD", pendant: "STONE" }] }
+    ]
   };
 
   // art/creatures/raccoon/genome.js
-  var GENOME_RACCOON = { id: "raccoon", name: "Raccoon", template: "quadruped", builder: "quad", palette: { hue: 0.62, sat: 0.07, val: 0.55, flower: [196, 58, 44] }, body: { hgt: 0.62, len: 0.6, chest: 0.36, tuck: 0.4, neck: 0.2, neckAng: 0.45, neckW: 0.45, hr: 0.28, legW: 0.95, back: "arch" }, head: { snout: 0.7, snoutD: 0.55, snoutTaper: 0.5, face: "raccoon", whiskers: true }, parts: { ears: { kind: "round", size: 0.95 }, tail: "ringed", feet: "paw" }, coat: { legMat: "BODY3", shaggy: true }, legend: [], elder: { kind: "raccoon", eye: "EYE" }, texture: { kind: "fur", size: 3, lumps: 0 } };
+  var GENOME_RACCOON = { id: "raccoon", name: "Raccoon", template: "quadruped", builder: "quad", palette: { hue: 0.62, sat: 0.07, val: 0.55, flower: [196, 58, 44] }, body: { hgt: 0.62, len: 0.6, chest: 0.36, tuck: 0.4, neck: 0.2, neckAng: 0.45, neckW: 0.45, hr: 0.28, legW: 0.95, back: "arch" }, head: { snout: 0.7, snoutD: 0.55, snoutTaper: 0.5, face: "raccoon", whiskers: true }, parts: { ears: { kind: "round", size: 0.95 }, tail: "ringed", feet: "paw" }, coat: { legMat: "BODY3", shaggy: true }, legend: [], elder: { kind: "raccoon", eye: "EYE" }, texture: { kind: "fur", size: 3, lumps: 0 }, levels: [null, { body: { len: 0.504, legW: 0.684, neckW: 0.383, hr: 0.258, chest: 0.44, tuck: 0.46, profile: { shoulder: { w: 0.86, d: 0.86 }, ribcage: { w: 0.9 }, waist: { w: 0.76, d: 0.8 }, loin: { w: 0.85, d: 0.9 }, hip: { w: 0.9 } } } }, { body: { chest: 0.31, tuck: 0.38, profile: { shoulder: { w: 1.24, d: 1.16 }, ribcage: { w: 1.1 }, waist: { w: 0.82, d: 0.9 }, loin: { w: 0.9 }, hip: { w: 1 } } } }, null] };
 
   // art/creatures/ram/genome.js
   var GENOME_RAM = {
@@ -1219,8 +1229,8 @@ label.check input { accent-color: var(--accent); }
     // prayer beads wound round its legs
     levels: [
       null,
-      null,
-      null,
+      { body: { len: 0.48, legW: 0.612, neckW: 0.357, hr: 0.294, chest: 0.38, tuck: 0.42, profile: { shoulder: { w: 0.86, d: 0.86 }, ribcage: { w: 0.9 }, waist: { w: 0.76, d: 0.8 }, loin: { w: 0.85, d: 0.9 }, hip: { w: 0.9 } } } },
+      { body: { chest: 0.25, tuck: 0.34, profile: { shoulder: { w: 1.24, d: 1.16 }, ribcage: { w: 1.1 }, waist: { w: 0.82, d: 0.9 }, loin: { w: 0.9 }, hip: { w: 1 } } } },
       { body: { hgt: 0.72, len: 0.66, chest: 0.32 }, head: { frost: true }, coat: { beads: true, socks: 0.3 }, features: [
         { kind: "ruff", size: 0.24, count: 16, mat: "BELLY" },
         { kind: "claws", size: 0.14 }
