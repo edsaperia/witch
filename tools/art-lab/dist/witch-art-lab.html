@@ -5790,18 +5790,22 @@ function quad3d(S, level, frame, st, facing = "towards") {
 }
 
 // Rolled half over about its long axis (onto its back), then set down again with its lowest point on the ground; each paint reads
-// its part where it was before the roll, and the anchors roll with it.
+// its part where it was before the roll, and the anchors roll with it. Its head doesn't roll: it sits where the rolled head would, upright,
+// facing forward and up as an otter floats (else its face, eyes and expressions all point at the ground under it).
 function rollOver(m) {
-  const R = p => [p[0], -p[1], -p[2]];
-  for (const P of m.parts) { if (P.c) P.c = R(P.c); if (P.a) { P.a = R(P.a); P.b = R(P.b); } if (P.axes) P.axes = P.axes.map(R); if (P.paint) { const f = P.paint; P.paint = p => f(R(p)); } }
-  for (const F of m.flats) { F.c = R(F.c); F.u = R(F.u); F.v = R(F.v); }
-  let low = Infinity; for (const P of m.parts) low = Math.min(low, P.c ? P.c[1] - Math.max(...(P.r || P.h || [0])) : Math.min(P.a[1] - P.r1, P.b[1] - P.r2));
-  const up = .04 - low, U = p => [p[0], p[1] + up, p[2]];
-  for (const P of m.parts) { if (P.c) P.c = U(P.c); if (P.a) { P.a = U(P.a); P.b = U(P.b); } if (P.paint) { const f = P.paint; P.paint = p => f([p[0], p[1] - up, p[2]]); } }
-  for (const F of m.flats) F.c = U(F.c);
-  const A = m.anchors, RU = p => U(R(p));
-  for (const k of ["head", "neck"]) if (A[k]?.c) A[k] = { ...A[k], c: RU(A[k].c), ...(A[k].top ? { top: RU(A[k].top) } : {}), ...(A[k].dir ? { dir: R(A[k].dir) } : {}) };
-  if (A.eyes?.pts) A.eyes = { ...A.eyes, pts: A.eyes.pts.map(RU) };
+  const R = p => [p[0], -p[1], -p[2]], body = P => P.part !== "head";
+  for (const P of m.parts) { if (!body(P)) continue; if (P.c) P.c = R(P.c); if (P.a) { P.a = R(P.a); P.b = R(P.b); } if (P.axes) P.axes = P.axes.map(R); if (P.paint) { const f = P.paint; P.paint = p => f(R(p)); } }
+  for (const F of m.flats) { if (!body(F)) continue; F.c = R(F.c); F.u = R(F.u); F.v = R(F.v); }
+  let low = Infinity; for (const P of m.parts) if (body(P)) low = Math.min(low, P.c ? P.c[1] - Math.max(...(P.r || P.h || [0])) : Math.min(P.a[1] - P.r1, P.b[1] - P.r2));
+  const up = .04 - low, U = p => [p[0], p[1] + up, p[2]], A = m.anchors, RU = p => U(R(p));
+  for (const P of m.parts) { if (!body(P)) continue; if (P.c) P.c = U(P.c); if (P.a) { P.a = U(P.a); P.b = U(P.b); } if (P.paint) { const f = P.paint; P.paint = p => f([p[0], p[1] - up, p[2]]); } }
+  for (const F of m.flats) if (body(F)) F.c = U(F.c);
+  const at = A.head?.c || A.neck?.c || [0, 0, 0], d = v3.sub(RU(at), at), T = p => v3.add(p, d); // the head: upright, where the rolled one would lie (out in front of its chest)
+  for (const P of m.parts) { if (body(P)) continue; if (P.c) P.c = T(P.c); if (P.a) { P.a = T(P.a); P.b = T(P.b); } if (P.paint) { const f = P.paint; P.paint = p => f(v3.sub(p, d)); } }
+  for (const F of m.flats) if (!body(F)) F.c = T(F.c);
+  if (A.neck?.c) A.neck = { ...A.neck, c: RU(A.neck.c), ...(A.neck.top ? { top: RU(A.neck.top) } : {}), ...(A.neck.dir ? { dir: R(A.neck.dir) } : {}) };
+  if (A.head?.c) A.head = { ...A.head, c: T(A.head.c), ...(A.head.top ? { top: T(A.head.top) } : {}) };
+  if (A.eyes?.pts) A.eyes = { ...A.eyes, pts: A.eyes.pts.map(T) };
   A.feet = (A.feet || []).map(f => ({ ...f, c: RU(f.c) }));
 }
 
