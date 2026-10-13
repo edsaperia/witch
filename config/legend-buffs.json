@@ -60,6 +60,7 @@
     "owl":        { "name": "Echo",           "kind": "shot", "mods": { "echo": 1 },                "label": "Owl's Echo: each burst fires again half a second later" },
     "roe":        { "name": "Spring",         "kind": "move", "scale": { "dash.cooldown": 0.7 }, "label": "Roe's Spring: your dodge comes back sooner" },
     "redpanda":   { "name": "Cuddle",         "kind": "shot", "scale": { "invites.radius": 1.5 }, "label": "Red panda's Cuddle: 💌s land on animals a little wider of where they strike" },
+    "penguin":    { "name": "Toboggan",       "kind": "move", "scale": { "groundSpeed": 1.1, "groundAcceleration": 1.5 }, "label": "Penguin's Toboggan: a little quicker on foot, and quicker off the mark" },
     "heron":      { "name": "Stride",         "kind": "move", "scale": { "groundSpeed": 1.1, "dash.distance": 1.25 }, "label": "Heron's Stride: a little quicker on foot, and a longer blink" },
     "crocodile":  { "name": "Snap",           "kind": "move", "scale": { "dash.cooldown": 0.6 },   "label": "Crocodile's Snap: your blink comes back quicker" },
     "rhino":      { "name": "Charge",         "kind": "move", "scale": { "groundSpeed": 1.25, "groundAcceleration": 0.7 }, "label": "Rhino's Charge: much faster on the ground, slower to get going" },
