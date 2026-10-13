@@ -1,10 +1,16 @@
 {
   "builder": "India",
   "phase": "The menagerie: how animals are generated",
-  "slice": "The creature generator reviewed and lifted at the root: jointed legs, a frame under the coat, faces with bones, an elder kit for legends, and a growth check",
+  "slice": "The creature generator reviewed and lifted at the root: jointed legs, a frame under the coat, faces with bones, an elder kit for legends, a growth check; then Ed's body profile and spine, so no animal is a sausage",
   "prs": [
     800,
-    812
+    812,
+    822,
+    823,
+    821,
+    819,
+    833,
+    834
   ],
   "built": [
     "`docs/art-review/menagerie-review.md`: the creature pipeline end to end and its weaknesses measured (knee angles, level-to-level silhouette distances)",
@@ -12,12 +18,17 @@
     "A frame under the coat: withers, a pelvis, a loin, a brisket, a nape and a throat",
     "Faces with bones: a brow ridge, cheeks, a lower jaw with a mouth line, whiskers",
     "The elder kit: grizzle, a torn ear, a broken tusk or horn, a torc, rings, earrings, leg bands, a garland, bells, for any legend (`evolve3d`)",
-    "The growth-not-scale check: each level's silhouette against the level before, scaled to one box"
+    "The growth-not-scale check: each level's silhouette against the level before, scaled to one box",
+    "The body profile (`body.profile`): width and depth set apart at five stations along the body (shoulder, ribcage, waist, loin, hip), the torso lofted through them; a wide deep chest and a slim waist for the big cats, the canids and the deer",
+    "The spine (`body.spine`): a crest standing on the back line or a groove cut between the back muscles, by station; the boar's bristled crest, the cats' and the wolf's groove, the deer's shoulder line",
+    "A view from straight above for the tools (`TOP=1` on the lineup preview), so a body's girth can be judged on a sheet"
   ],
   "learned": [
     "Measure before you draw: one script through `rigParts` showed nineteen species standing on four vertical columns, which no amount of shading could fix.",
     "A generator change lifts every animal at once, but every knob needs a default that keeps a species itself, or the forty records drift together.",
-    "At game scale the smooth union eats small holes: an earring reads as a ring only once its hole is wider than the blend."
+    "At game scale the smooth union eats small holes: an earring reads as a ring only once its hole is wider than the blend.",
+    "Lofting a body through five stations looked right from the side and lumpy from above until the slices ran every tenth of the length with the stations interpolated: the smooth union only hides bumps smaller than its blend.",
+    "A groove down the back needs a waist first: cut into a tube it reads as a scratch, cut between two muscle masses it reads as a spine."
   ],
   "previews": [
     {
@@ -27,6 +38,14 @@
     {
       "src": "media/builders/india-elder.webp",
       "caption": "The elder kit on four legends: a torc and a torn ear, a broken tusk and bronze bands, a bellwether's rings and bells, a shrine fox's earrings"
+    },
+    {
+      "src": "media/builders/india-profile.webp",
+      "caption": "The body profile: the body as built above, with a width/depth profile below, from the side and from straight above (cheetah, lion, tiger, jaguar, wolf; fox, fennec, stag, roe, elk)"
+    },
+    {
+      "src": "media/builders/india-spine.webp",
+      "caption": "The spine: with the profile but no spine above, with a crest or a groove below (boar, lion, tiger, jaguar; cheetah, wolf, stag, elk)"
     }
   ]
 }
