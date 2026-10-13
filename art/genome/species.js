@@ -144,6 +144,10 @@ export const GENOMES = [
       null,
       { coat: { ridge: 2.2 }, features: [{ kind: "claws", hind: true }] },
     ] },
+  // the penguin (unknown-14's icy shore, Ed 2026-10-12: more animals for later islands; art builder 2's record and builder): upright,
+  // black and white, a downy grey chick, a brown-grey young, an adult with an orange patch at its neck, and the island's legend crowned
+  { id: "penguin", name: "Penguin", template: "avian", builder: "penguin", palette: { hue: .62, sat: .2, val: .2, belly: "white", flower: [242, 150, 38] }, sizes: { head: [.34, .27, .24, .24], headY: [.98, 1.18, 1.24, 1.24] }, legend: ["crown"], texture: { kind: "feathers" },
+    levels: [{ body: { down: true } }, { body: { young: true } }, null, null] },
   // the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
   { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .4, len: 1.1, chest: .1, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .28, legW: .6, bw: .22 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "newt", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: 2.4 }, legend: ["crystals"], texture: { kind: "smooth" } },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
