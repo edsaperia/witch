@@ -163,7 +163,7 @@
       "dir": "S",
       "biome": "temperate"
     },
-    "glowworm": {
+    "cat": {
       "phase": 2,
       "bearing": 205,
       "dir": "SSW",
@@ -300,19 +300,17 @@
       "biome": "mountains and glaciers",
       "placeholder": true
     },
-    "unknown-17": {
+    "frostwyrm": {
       "phase": 4,
       "bearing": 45,
       "dir": "NE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
-    "unknown-18": {
+    "griffin": {
       "phase": 4,
       "bearing": 65,
       "dir": "ENE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "unknown-19": {
       "phase": 4,
@@ -390,12 +388,11 @@
       "biome": "jungle",
       "placeholder": true
     },
-    "unknown-30": {
+    "raccoon": {
       "phase": 4,
       "bearing": 305,
       "dir": "NW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "unknown-31": {
       "phase": 4,
