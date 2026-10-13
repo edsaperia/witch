@@ -227,12 +227,11 @@
       "dir": "ESE",
       "biome": "badlands"
     },
-    "unknown-06": {
+    "armadillo": {
       "phase": 3,
       "bearing": 141,
       "dir": "SE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
     "fennec": {
       "phase": 3,
@@ -349,12 +348,11 @@
       "biome": "hot",
       "placeholder": true
     },
-    "unknown-24": {
+    "cheetah": {
       "phase": 4,
       "bearing": 185,
       "dir": "S",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "unknown-25": {
       "phase": 4,

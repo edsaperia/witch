@@ -23,6 +23,7 @@
     "newt": {"posture": {"head": [0.03, 0.01], "body": -0.01}, "quirk": "tailflick", "every": [4, 8], "for": 1.0},
     "fennec": {"posture": {"head": [0.02, 0.04], "body": 0}, "quirk": "perk", "every": [3, 6], "for": 1.2},
     "lion": {"posture": {"head": [0.0, 0.03], "body": 0.01}, "quirk": "stretch", "every": [7, 12], "for": 1.5},
+    "cheetah": {"posture": {"head": [0.03, 0.02], "body": -0.01}, "quirk": "perk", "every": [4, 8], "for": 1.0},
     "dormouse": {"posture": {"head": [0, 0.03], "body": 0}, "quirk": "sniff", "every": [2, 5], "for": 0.8},
     "rattlesnake": {"posture": {"head": [0, 0.03], "body": 0}, "quirk": "rattle", "every": [5, 9], "for": 1.4},
     "scorpion": {"sprite": "shiver", "every": [3, 7], "for": 0.5},

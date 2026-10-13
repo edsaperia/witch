@@ -68,6 +68,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "heronry": look("granite", "reeds", "lichen", 0.55, true),
   "cactus-flats": look("buffSandstone", "pebbles", "lichen", 0.25), // pale sandstone, drifted over
   "red-canyon": look("buffSandstone", "pebbles", "lichen", 0.35), // red rock, scree over it
+  "plains": look("redSandstone", "grass", "lichen", 0.35), // red earth and short grass
   "savanna": look("redSandstone", "grass", "lichen", 0.45), // sun-baked sandstone, the long grass over it
   "erg": look("buffSandstone", "pebbles", "lichen", 0.3), // sand-scoured sandstone, drifted over
 };
