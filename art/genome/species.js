@@ -184,6 +184,16 @@ export const GENOMES = [
         { kind: "wisps", at: "mane", size: .26, count: 9, from: .05, to: .95, mat: "MAGIC2", lift: .1 },
       ] },
     ] },
+  // the unicorn (Ed, 2026-10-13: magical creatures for the outer islands; unknown-31, the cold rainforest): a wild white horse of the
+  // misty old forest, one spiral horn from its brow, a nub on the foal growing longer by level; its legend's horn is light
+  { id: "unicorn", name: "Unicorn", template: "quadruped", builder: "quad", palette: { hue: .6, sat: .05, val: .95, magic: .13 }, body: { hgt: 1.35, len: .7, chest: .52, tuck: .6, neck: .8, neckAng: 1.15, neckW: .32, hr: .24, legW: .66 }, head: { snout: 1.1, snoutD: .65, snoutTaper: .75, eyeK: 1.3 }, parts: { ears: { kind: "point", size: .8 }, tail: "brush", feet: "hoof", horns: "single" }, coat: { socks: .25, legMat: "BELLY", maneHair: { mat: "BODY3" } }, sizes: { horns: [.4, .7, 1, 1.7] }, legend: [],
+    // its legend, the first unicorn (docs/ART-GUIDE.md 0c): ancient and great, a goat's beard and a long mane, its muzzle gone
+    // grey, feathered hooves, and the bead garlands of those who came to it to be healed wound round its legs; its horn smooth
+    // and glowing bright gold-white (Ed, 2026-10-13: "no spiral on the horn; instead make it glow brightly gold-white")
+    levels: [null, null, null,
+      { body: { hgt: 1.45, neck: .85 }, head: { frost: true, hornLight: true }, coat: { beads: true, socks: .4 }, features: [
+        { kind: "ruff", size: .18, count: 10, mat: "BELLY" },
+      ] }] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
