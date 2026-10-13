@@ -285,12 +285,11 @@
       "biome": "cold",
       "placeholder": true
     },
-    "unknown-16": {
+    "snowleopard": {
       "phase": 4,
       "bearing": 25,
       "dir": "NNE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "frostwyrm": {
       "phase": 4,

@@ -4078,6 +4078,20 @@ const GENOMES = [
   // on an adult, barnacles; its legend the elder of its kind: one colossal gleaming claw bigger than its body, waved in a slow beckoning display, its eyes lit, its shell aged like a reef
   { id: "crab", name: "Crab", template: "insectoid", builder: "crab", palette: { hue: .02, sat: .62, val: .58 }, legend: ["wave", "reef"], texture: { kind: "plates", size: 3 },
     levels: [{ body: { shell: .85, claw: 1 } }, { body: { shell: 1, claw: 1.25 } }, { body: { shell: 1, claw: 1.8, barnacles: true } }, { body: { shell: 1.05, claw: 3.2, barnacles: true } }] },
+  // the icefall's snow leopard (an area recipe's, the north-north-east's island of high glaciers): a long, low, pale smoky cat with
+  // rosettes, small round ears, a broad face and a very long thick tail; a fluffy cub, a lean young, a heavy adult, and the
+  // elder the high ice's ghost, its long ringed tail worn round its shoulders like a stole, frost-muzzled, stone beads
+  { id: "snowleopard", name: "Snow leopard", template: "quadruped", builder: "quad", palette: { hue: .12, sat: .1, val: .82, belly: "white" }, body: { hgt: .86, len: .66, chest: .52, tuck: .56, neck: .26, neckAng: .55, neckW: .44, hr: .27, legW: 1.05 }, head: { snout: .48, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "round", size: .7 }, tail: "banner", feet: "paw" }, coat: { belly: true, spots: true }, texture: { kind: "fur", size: 2 },
+    levels: [
+      { body: { len: .5, chest: .5, hr: .31 }, parts: { ears: { kind: "round", size: .95 }, tail: "bushy" } },
+      { body: { len: .66, legW: .95 } },
+      { body: { len: .7, legW: 1.1 } },
+      // the elder of the snow leopards (docs/ART-GUIDE.md 0c): the high ice's ghost, its coat thick and pale as fresh snow, its
+      // tail grown so long it wraps round it like a scarf, a grizzled muzzle, offerings of stone beads round its legs
+      { body: { len: .72, legW: 1.15, neckAng: .5 }, palette: { val: .9, sat: .07 }, head: { frost: true }, parts: { tail: "scarf" }, coat: { beads: true }, features: [
+        { kind: "ruff", size: .3, count: 20, mat: "BELLY" },
+      ] },
+    ] },
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
   // dark round its eyes, a thin dark-tipped tail
   { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: .09, sat: .35, val: .72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: .8, len: .62, chest: .44, tuck: .5, neck: .34, neckAng: .75, neckW: .26, hr: .2, legW: .55, bw: .2, back: "arch" }, head: { snout: .8, snoutD: .45, snoutTaper: .4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: .45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 } },
@@ -4226,7 +4240,7 @@ const TEMPLATES = {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.sail", "ear.none", "ear.fan"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.ringed", "tail.plume", "tail.panda", "tail.croc", "tail.tiger", "tail.jaguar", "tail.monitor"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.ringed", "tail.plume", "tail.banner", "tail.scarf", "tail.panda", "tail.croc", "tail.tiger", "tail.jaguar", "tail.monitor"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl", "horn.twist", "horn.single"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
@@ -4615,7 +4629,7 @@ const NAP_POSES = {
   newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
   crocodile: { kind: "lie", sink: .02, droop: .3 }, // (its head held low already: a full droop pushes its long jaw past its ground line)
   // curl
-  fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, arcticfox: { kind: "curl", sink: .04, droop: 1, curl: 3.8, tailDown: .2 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 },
+  fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, arcticfox: { kind: "curl", sink: .04, droop: 1, curl: 3.8, tailDown: .2 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 }, snowleopard: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .2 },
   marten: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 }, stoat: { kind: "curl", sink: .03, droop: 1, curl: 4, tailDown: .25 },
   squirrel: { kind: "curl", sink: .04, droop: 1, curl: 3.2, tailDown: .5 }, dormouse: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .3 }, redpanda: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .4 },
   // tuck
@@ -5724,6 +5738,15 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "bushy") m.chain([[...tb, .1], [X(1.05) - .35, top - .05 + tw, 0, .17], [X(1.05) - .75, top - .2 + tw, 0, .18], [X(1.05) - 1.0, top - .35 + tw, 0, .1]], M.BODY, { ...o, paint: p => p[0] < X(1.05) - .82 ? M.BELLY : undefined });
   else if (kind === "stub" || kind === "deer" || kind === "bob") m.ell(v3.add(tb, [-.06, .02 + tw, 0]), [.1, .08, .07], kind === "deer" ? M.BELLY : M.BODY, { ...o, paint: kind === "bob" ? p => p[0] < tb[0] - .08 ? M.BODY3 : undefined : undefined });
   else if (kind === "puff") m.ell(v3.add(tb, [-.04, .02, 0]), [.11, .11, .1], M.BELLY, o);
+  else if (kind === "banner") m.chain([[...tb, .1], [X(1.15), top - .28 + tw, 0, .13], [X(1.6), .5, 0, .145], [X(2.15), .36 + tw, 0, .15], [X(2.6), .42, 0, .14], [X(2.9), .62 + tw, 0, .12], [X(2.95), .8, 0, .09]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.8) || Math.floor(-p[0] * 7) % 4 === 0 ? M.BODY3 : undefined }); // the snow leopard's: as long as its body and more, thick, trailing low, ringed, curling up at the end
+  else if (kind === "scarf") { // an elder's: so long it wraps snug round its shoulders and chest like a stole, ringed, its fur in tufts
+    const L = len, pts = [[...tb, .1], [X(.95), top - .32 + tw, .1, .1], [-L * .1, top - .12, .34, .11], [L * .35, top - .02, .38, .12], [L * .62, top + .04, .3, .12], [L * .78, top - .1, .08, .12], [L * .7, top + .02, -.22, .11], [L * .48, top + .14, -.3, .09]];
+    const ring = p => Math.floor((p[0] * 3 + p[2] * 4) * 2.2) % 4 === 0 ? M.BODY3 : undefined;
+    m.chain(pts, M.BODY, { ...o, extra: true, paint: ring });
+    for (let k = 0; k < 22; k++) { const u = .15 + .8 * k / 21, seg = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))), f2 = u * (pts.length - 1) - seg, a = pts[seg], b = pts[seg + 1];
+      const c = [0, 1, 2].map(q => a[q] + (b[q] - a[q]) * f2), r = a[3] + (b[3] - a[3]) * f2, th = k * 2.1, d = [Math.cos(th) * .4, .7 + Math.sin(th) * .3, Math.sin(th * 1.7) * .6], n = Math.hypot(...d), dn = d.map(v => v / n);
+      const base = v3.add(c, v3.mul(dn, r * .8)); m.seg(base, v3.add(base, v3.mul(dn, r * .45)), r * .28, r * .05, k % 4 ? M.BODY : M.BODY3, { group: 3, extra: true }); }
+  }
   else if (kind === "plume") { // an elder's vast brush, swept low and back, its tip snow-white, its fur in tufts along it
     const pts = [[...tb, .12], [X(1.1) - .35, top + .02 + tw, 0, .22], [X(1.1) - .85, top - .12 + tw, 0, .27], [X(1.1) - 1.35, top - .34 + tw, 0, .22], [X(1.1) - 1.6, top - .5, 0, .1]];
     m.chain(pts, M.BODY, { ...o, paint: p => p[0] < X(1.1) - 1.38 ? M.BELLY : undefined });
@@ -8138,6 +8161,8 @@ const SIGILS = {
   ram: [...pair(L([.4, .34], [.41, .74], [.5, .86]), spiral(.24, .38, .05, .19, 1.15, 330), D(.44, .52)), L([.4, .34], [.6, .34])],
   // the crags' ibex: a long goat's face, great horns sweeping up and back in knobbled arcs, a beard
   ibex: [...pair(L([.44, .34], [.39, .2], [.3, .09], [.17, .05]), L([.4, .19], [.35, .21]), L([.33, .11], [.29, .14]), L([.44, .34], [.37, .44], [.43, .72], [.5, .78]), D(.41, .5)), L([.44, .34], [.56, .34]), L([.5, .8], [.5, .95])],
+  // the icefall's snow leopard: a broad cat's face, small round ears, whisker pads, a rosette on the brow
+  snowleopard: [...pair(L([.4, .3], [.28, .2], [.18, .26], [.16, .5], [.28, .72], [.5, .82]), L([.3, .62], [.1, .6]), D(.37, .47)), L([.4, .3], [.6, .3]), A(.5, .18, .06, -90, 270), D(.5, .64)],
   // a segmented oval shell seen from above, its feelers and little legs
   woodlouse: [E(.5, .55, .24, .36), ...[.36, .48, .6, .72].map(y => L([.5 - Math.sqrt(1 - ((y - .55) / .36) ** 2) * .24, y], [.5 + Math.sqrt(1 - ((y - .55) / .36) ** 2) * .24, y])), ...pair(L([.43, .2], [.24, .06]), L([.27, .44], [.14, .42]), L([.26, .58], [.12, .6]), L([.29, .72], [.16, .78]))],
   // coiled round in a ring, its head raised in the middle, a forked tongue
@@ -8300,6 +8325,7 @@ const LEGEND_DETAIL = {
   snail: [...rays(.44, .5, .21, .29, [195, 245, 295]), D(.14, .9), D(.28, .91), D(.42, .9)],
   ram: [...pair(...rays(.24, .38, .12, .2, [75, 135, 195, 255]), D(.46, .78)), L([.4, .34], [.45, .41], [.5, .35], [.55, .41], [.6, .34])],
   ibex: [...pair(L([.36, .15], [.32, .18]), L([.25, .07], [.21, .1]), L([.42, .6], [.36, .62])), L([.46, .86], [.5, .9], [.54, .86])],
+  snowleopard: [...pair(L([.12, .62], [.04, .6]), L([.14, .68], [.06, .72]), D(.3, .36)), D(.5, .4), L([.5, .7], [.5, .76])],
   woodlouse: [...pair(L([.24, .06], [.16, .1]), L([.43, .9], [.39, .97]), D(.43, .27))],
   rattlesnake: [...pair(L([.62, .26], [.6, .2])), D(.4, .6), D(.5, .66)],
   scorpion: [D(.5, .54), D(.5, .62), D(.5, .7)],
@@ -8445,7 +8471,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { arcticfox: "cyan", ibex: "orange", rattlesnake: "lemon", scorpion: "mint", fennec: "orange", komodo: "orange", unicorn: "violet", penguin: "blue", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
+const SIGIL_NEON = { arcticfox: "cyan", ibex: "orange", snowleopard: "violet", rattlesnake: "lemon", scorpion: "mint", fennec: "orange", komodo: "orange", unicorn: "violet", penguin: "blue", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -10039,6 +10065,30 @@ const CRAGS = {
 };
 
 
+// ---- inlined from art/recipes/icefall.js ----
+// The icefall (the north-north-east's island of high glaciers, phase 4): an area type as a recipe (art/recipes.js says what each
+// field is). High on a glacier: blue-white ice and old snow, its stones and moraine, cairns and standing stones the herders left,
+// stunted pines, rowan and dwarf birch in the lee of the rocks (Ed: trees in every area), a ring of weathered posts round a stone
+// where the prayer flags flew; the snow leopard its creature. (Kept apart from the crags' lichen and rock spires: ice and snow,
+// no spires.)
+const ICEFALL = {
+  id: "icefall", name: "Icefall", creature: "snowleopard", by: "recipe", leaf: .38, floor: ["ice", .56, .12, .8], snow: .8,
+  text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, stunted pines, rowan and dwarf birch", set: "a ring of weathered posts round a stone" },
+  wall: [["stones", {}]], small: [["stones", {}]],
+  big: [["cairn", { sparse: .12, tall: true }], ["standingstone", { sparse: .12 }], ["boulder", { big: true }], ["tree", { type: "rowan", scale: .6 }], ["tree", { type: "pine", minor: true, scale: .6 }], ["tree", { type: "birch", minor: true, scale: .5 }]],
+  pathKinds: ["footpath"],
+  setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
+  layout: {
+    pattern: "lone", density: .15, clump: .4, glades: { count: 1, size: [22, 32] },
+    heightMix: { sapling: .4, mature: .5, tall: .1, giant: 0 }, undergrowth: .2, lean: { dir: .8, amount: .2 },
+    terrain: ["rocky", "hollows"], decor: { rate: .25, ruins: .1, rocks: .7, freak: .05, lake: .1, modern: .05 },
+    feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, stunted wind-bent pines, rowan and dwarf birch in the lee of the rocks (Ed: trees in every area); bright, cold and still.",
+  },
+  flora: { species: [["rowan", .4], ["pine", .4], ["birch", .2]], palette: { sat: .6, val: .78 } },
+  settings: { treeDensity: .2, groundCover: { density: .3, kinds: ["moss", "blades"] } },
+};
+
+
 // ---- inlined from art/recipes/moonpool.js ----
 // The moonpool glade (Ed, 2026-10-13: magical creatures for the last outer islands; the unicorn's, unknown-31, the cold
 // rainforest): silver birches and old yews round a still, moonlit pool, a ring of white stones in the clearing; the unicorn its
@@ -10061,7 +10111,7 @@ const MOONPOOL = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS];
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -13566,6 +13616,7 @@ const LEGEND_POSES = {
   hare: { sink: .45, droop: 1, drop: [99, 162], lay: [5, 25], // (its elder's moon set and its ear rings off while it sleeps, its long ears laid back)
     over: { moss: .3, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 1, stones: 1, flowers: 6 } },
   bear: { sink: .48, droop: .9, drop: [89], over: { moss: .55, lichen: .05, ferns: 3, grass: 3, mushrooms: 4, roots: 3, stones: 2 } },
+  snowleopard: { sink: .38, droop: 1, drop: [], over: { moss: .05, lichen: .25, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }, // the icefall's snow leopard: curled on a ledge, its tail over its face
   lynx: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .18, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 6 } },
   otter: { sink: .5, droop: 1, drop: [90, 91, 92], over: { moss: .5, lichen: .08, ferns: 2, grass: 5, mushrooms: 1, roots: 2, stones: 5 } },
   beaver: { sink: .5, droop: 1, drop: [89], over: { moss: .45, lichen: .04, ferns: 1, grass: 4, mushrooms: 2, roots: 4, stones: 0 } },

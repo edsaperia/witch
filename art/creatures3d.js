@@ -760,6 +760,15 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "bushy") m.chain([[...tb, .1], [X(1.05) - .35, top - .05 + tw, 0, .17], [X(1.05) - .75, top - .2 + tw, 0, .18], [X(1.05) - 1.0, top - .35 + tw, 0, .1]], M.BODY, { ...o, paint: p => p[0] < X(1.05) - .82 ? M.BELLY : undefined });
   else if (kind === "stub" || kind === "deer" || kind === "bob") m.ell(v3.add(tb, [-.06, .02 + tw, 0]), [.1, .08, .07], kind === "deer" ? M.BELLY : M.BODY, { ...o, paint: kind === "bob" ? p => p[0] < tb[0] - .08 ? M.BODY3 : undefined : undefined });
   else if (kind === "puff") m.ell(v3.add(tb, [-.04, .02, 0]), [.11, .11, .1], M.BELLY, o);
+  else if (kind === "banner") m.chain([[...tb, .1], [X(1.15), top - .28 + tw, 0, .13], [X(1.6), .5, 0, .145], [X(2.15), .36 + tw, 0, .15], [X(2.6), .42, 0, .14], [X(2.9), .62 + tw, 0, .12], [X(2.95), .8, 0, .09]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.8) || Math.floor(-p[0] * 7) % 4 === 0 ? M.BODY3 : undefined }); // the snow leopard's: as long as its body and more, thick, trailing low, ringed, curling up at the end
+  else if (kind === "scarf") { // an elder's: so long it wraps snug round its shoulders and chest like a stole, ringed, its fur in tufts
+    const L = len, pts = [[...tb, .1], [X(.95), top - .32 + tw, .1, .1], [-L * .1, top - .12, .34, .11], [L * .35, top - .02, .38, .12], [L * .62, top + .04, .3, .12], [L * .78, top - .1, .08, .12], [L * .7, top + .02, -.22, .11], [L * .48, top + .14, -.3, .09]];
+    const ring = p => Math.floor((p[0] * 3 + p[2] * 4) * 2.2) % 4 === 0 ? M.BODY3 : undefined;
+    m.chain(pts, M.BODY, { ...o, extra: true, paint: ring });
+    for (let k = 0; k < 22; k++) { const u = .15 + .8 * k / 21, seg = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))), f2 = u * (pts.length - 1) - seg, a = pts[seg], b = pts[seg + 1];
+      const c = [0, 1, 2].map(q => a[q] + (b[q] - a[q]) * f2), r = a[3] + (b[3] - a[3]) * f2, th = k * 2.1, d = [Math.cos(th) * .4, .7 + Math.sin(th) * .3, Math.sin(th * 1.7) * .6], n = Math.hypot(...d), dn = d.map(v => v / n);
+      const base = v3.add(c, v3.mul(dn, r * .8)); m.seg(base, v3.add(base, v3.mul(dn, r * .45)), r * .28, r * .05, k % 4 ? M.BODY : M.BODY3, { group: 3, extra: true }); }
+  }
   else if (kind === "plume") { // an elder's vast brush, swept low and back, its tip snow-white, its fur in tufts along it
     const pts = [[...tb, .12], [X(1.1) - .35, top + .02 + tw, 0, .22], [X(1.1) - .85, top - .12 + tw, 0, .27], [X(1.1) - 1.35, top - .34 + tw, 0, .22], [X(1.1) - 1.6, top - .5, 0, .1]];
     m.chain(pts, M.BODY, { ...o, paint: p => p[0] < X(1.1) - 1.38 ? M.BELLY : undefined });
