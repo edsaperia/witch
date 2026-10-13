@@ -18,12 +18,15 @@
 // if it isn't the default lie, nap.js (`NAP_<ID>`), and creature.js (`CREATURE_<ID>`: its movement profile, body radius,
 // legend moves, attacks, strength, traits, temperament, voice, buff and character, the config files' sections: the schema is
 // config/schema/creature.schema.json), run `node tools/creatures.mjs index`, and commit the lot. Not here: its island in
-// config/kinds.json (an ordered table: it takes a placeholder's place) and the tuning file's heavy and swarm-class lists.
+// its area's art/areas/<id>/kind.json (its line of the kinds table: it takes a placeholder's slot, and that placeholder's
+// config/kinds/<id>.json goes; tools/data.mjs areas) and the tuning file's heavy and swarm-class lists.
 // CI runs `check` (src/creatures.test.ts). Named exports, not default ones: the Art Lab's build (tools/art-lab/build.mjs)
 // inlines every module into one page and only knows `import { ... } from`.
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { entriesOf, exportedText, sameText, withImport } from "./lib/entries.mjs";
+import { ident, recordsIn } from "./lib/genomeRecords.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), ".."), DIR = join(ROOT, "art/creatures"), SPECIES = join(ROOT, "art/genome/species.js"), INDEX = join(DIR, "index.js");
 const cmd = process.argv[2] ?? "list";
@@ -31,7 +34,6 @@ const cmd = process.argv[2] ?? "list";
 /** The folders' ids, sorted. */
 const ids = () => (existsSync(DIR) ? readdirSync(DIR, { withFileTypes: true }).filter(d => d.isDirectory() && existsSync(join(DIR, d.name, "genome.js"))).map(d => d.name).sort() : []);
 /** The record's export name: GENOME_<ID> ("red-panda" -> GENOME_RED_PANDA). */
-const ident = id => "GENOME_" + id.toUpperCase().replace(/[^A-Z0-9]/g, "_");
 
 /** The per-creature files besides the genome: [file, export prefix, the registry it came from and assembles into]. */
 const PARTS = [
@@ -42,34 +44,6 @@ const PARTS = [
 const partName = (part, id) => part.prefix + id.toUpperCase().replace(/[^A-Z0-9]/g, "_");
 const has = (id, file) => existsSync(join(DIR, id, file));
 
-/** The top-level entries of the object literal `export const <name> = {` in a module's text: [{ key, text (the value's source),
- *  before (comment lines of its own above it), after (a comment on its line after it) }], and the text's start and end
- *  (the braces' insides). A small scanner: strings, comments and nesting respected. */
-function entriesOf(text, name) {
-  const open = text.indexOf(`export const ${name} = {`);
-  if (open < 0) throw new Error(`no "export const ${name} = {"`);
-  let i = text.indexOf("{", open) + 1, depth = 1, start = i;
-  const entries = [];
-  let pendingComments = [], key = null, valueStart = 0;
-  const skipString = q => { i++; while (i < text.length && text[i] !== q) { if (text[i] === "\\") i++; i++; } i++; };
-  while (i < text.length && depth > 0) {
-    const ch = text[i], two = text.slice(i, i + 2);
-    if (ch === '"' || ch === "'" || ch === "`") { skipString(ch); continue; }
-    if (two === "//") { const end = text.indexOf("\n", i), line = text.slice(i, end < 0 ? text.length : end); if (depth === 1 && key === null) { const lineStart = text.lastIndexOf("\n", i) + 1; if (!text.slice(lineStart, i).trim()) pendingComments.push(line); else if (entries.length) entries[entries.length - 1].after = line; } else if (depth === 1 && key !== null) { /* inside a value's line: kept in the value text */ } i = end < 0 ? text.length : end; continue; }
-    if (two === "/*") { i = text.indexOf("*/", i) + 2; continue; }
-    if (ch === "{" || ch === "[" || ch === "(") depth++;
-    else if (ch === "}" || ch === "]" || ch === ")") { depth--; if (depth === 0) break; }
-    else if (depth === 1 && key === null && /[A-Za-z_$"']/.test(ch)) {
-      const m = /^("[^"]+"|'[^']+'|[A-Za-z_$][\w$]*)\s*:/.exec(text.slice(i));
-      if (m) { key = m[1].replace(/^["']|["']$/g, ""); i += m[0].length; while (text[i] === " ") i++; valueStart = i; continue; }
-    } else if (depth === 1 && key !== null && ch === ",") {
-      entries.push({ key, text: text.slice(valueStart, i).trim(), before: pendingComments, after: "" }); pendingComments = []; key = null;
-    }
-    i++;
-  }
-  if (key !== null) { entries.push({ key, text: text.slice(valueStart, i).trim(), before: pendingComments, after: "" }); pendingComments = []; }
-  return { entries, start, end: i, trailing: pendingComments };
-}
 const HELPER_NAMES = ["L", "A", "D", "C", "E", "at", "stave", "FOOT", "mirror", "pair", "bow", "wave", "spiral", "rays"];
 const helpersUsed = text => { const t = text.replace(/\.\.\./g, " "); return HELPER_NAMES.filter(h => new RegExp(`(^|[^\\w$.])${h}(?=[^\\w$]|$)`).test(t)); }; // (a spread's dots are not a property access)
 
@@ -173,16 +147,6 @@ const configText = (id, entry) => `// ${id}: what the game's rules and sounds kn
 export const ${configName(id)} = ${js(Object.fromEntries(CREATURE_KEYS.filter(k => k in entry).map(k => [k, entry[k]])))};
 `;
 
-/** Two record texts the same but for whitespace (a merge pasted back what the folder already holds). */
-const sameText = (a, b) => a.replace(/\s+/g, " ").trim() === b.replace(/\s+/g, " ").trim();
-/** The folder file's own export (its text after `export const NAME = `, without the trailing semicolon and comment). */
-const exportedText = (text, name) => { const m = new RegExp(`export const ${name} = ([\\s\\S]*?);(\\s*//.*)?\\s*$`).exec(text.replace(/^import .*\n/gm, "")); return m ? m[1] : ""; };
-/** The module's text with `import { names } from "<from>"` in it (after its last import, or at the top). */
-function withImport(text, names, from) {
-  if (text.includes(`from "${from}"`)) return text;
-  const line = `import { ${names.join(", ")} } from "${from}";\n`, imports = [...text.matchAll(/^import .*\n/gm)], at = imports.length ? imports[imports.length - 1].index + imports[imports.length - 1][0].length : 0;
-  return text.slice(0, at) + line + text.slice(at);
-}
 /** A pasted record against the folder's: "same" (dropped), "replaced" (the pasted one, newer, written over it) or "new". */
 function placeRecord(out, name, text, id, file) {
   if (!existsSync(out)) { writeFileSync(out, text); return "new"; }
@@ -205,32 +169,6 @@ export const CREATURE_CONFIGS = { ${list.filter(id => has(id, "creature.js")).ma
 
 /** Records still written in species.js's GENOMES array: [{ id, text }] with the text as a module would export it, and the
  *  file's text with the array emptied. */
-function recordsIn(text) {
-  const open = text.indexOf("export const GENOMES = ["), close = text.indexOf("\n];", open);
-  if (open < 0 || close < 0) return { records: [], rest: text };
-  const body = text.slice(text.indexOf("\n", open) + 1, close + 1), lines = body.split("\n"), records = [];
-  let cur = null, pending = [];
-  const flush = () => { if (cur) { records.push(cur); cur = null; } };
-  for (const line of lines) {
-    if (/^  \{ id: "/.test(line)) { flush(); cur = { lines: [...pending, line] }; pending = []; }
-    else if (/^  \/\//.test(line) && !cur?.open) { pending.push(line); } // (a comment at the record's own indent before the next record)
-    else if (cur) cur.lines.push(line);
-    else pending.push(line);
-    if (cur) { const depth = cur.lines.filter(l => !/^\s*\/\//.test(l)).join("\n"); const opens = (depth.match(/[{[]/g) || []).length, closes = (depth.match(/[}\]]/g) || []).length; cur.open = opens > closes; if (!cur.open) { flush(); } }
-  }
-  flush();
-  for (const r of records) {
-    while (r.lines.length && !r.lines[r.lines.length - 1].trim()) r.lines.pop();
-    const id = /^  \{ id: "([^"]+)"/.exec(r.lines.find(l => /^  \{ id: "/.test(l)))[1];
-    const out = r.lines.map(l => l.replace(/^  /, "")); // (the record's own indent off: it stands at the module's top level)
-    const last = out.length - 1, m = /^(.*?)(\s*\/\/.*)?$/.exec(out[last]); // (the record's trailing comma off, before any comment after it)
-    out[last] = m[1].replace(/,\s*$/, "") + ";" + (m[2] ?? "");
-    const at = out.findIndex(l => /^\{ id: "/.test(l)); out[at] = `export const ${ident(id)} = ` + out[at];
-    r.id = id; r.text = out.join("\n") + "\n";
-  }
-  const rest = text.slice(0, text.indexOf("\n", open) + 1) + text.slice(close + 1);
-  return { records, rest };
-}
 
 if (cmd === "list") {
   const all = await Promise.all(ids().map(async id => ({ id, g: (await import(pathToFileURL(join(DIR, id, "genome.js")).href))[ident(id)], files: readdirSync(join(DIR, id)).join(" ") })));
